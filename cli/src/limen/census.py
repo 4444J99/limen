@@ -37,10 +37,16 @@ head or a chat):
             :func:`tiering`; ``test_census`` drift-guards it against a closed sentinel set. Remaining
             OpenCode consumes the provider-neutral live capability selector; Warp/Oz delegate the
             changing underlying catalog to provider Auto.  Model names remain runtime outputs.
+  * DONE  — peer-conduct execution metadata is homed on ``Vendor.execution`` and projected by
+            :func:`execution_profiles`; health, auth, concurrency, and meters stay live references,
+            never cached model catalogs or numeric fallback tops.
+  * DONE  — ``capacity.DEFAULT_FILL_AGENTS`` derives from execution-profile eligibility, while ianva
+            transport drift tests reconcile every primary native adapter against the same profiles.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 
@@ -79,6 +85,27 @@ class Status:
 
 
 @dataclass(frozen=True)
+class ExecutionProfile:
+    """Provider-neutral execution and peer-conduct metadata for one native lane.
+
+    The profile deliberately records *references* for health, auth, concurrency, and metering.
+    Those values are live runtime state and must not become fixed catalog snapshots or numeric
+    fallback tops in this register.  The fields shared with ``ConductorSessionV1`` can be copied
+    directly when a healthy native session registers with the conduct broker.
+    """
+
+    capabilities: frozenset[str]
+    transport: str
+    native_fanout: bool
+    harvest_method: str
+    concurrency_ref: str
+    meter_ref: str
+    health_ref: str
+    auth_ref: str
+    daily_fill: bool = False
+
+
+@dataclass(frozen=True)
 class Vendor:
     """One provider of dispatchable work-capacity, with every scattered fact homed here."""
 
@@ -94,7 +121,33 @@ class Vendor:
     tiering: str  # which model-selection layer owns its model choice
     budget: Budget
     status: Status
+    execution: ExecutionProfile
     doc: str = ""
+
+
+def _execution(
+    name: str,
+    *,
+    capabilities: tuple[str, ...],
+    transport: str,
+    native_fanout: bool,
+    harvest_method: str,
+    concurrency_scope: str,
+    daily_fill: bool = False,
+) -> ExecutionProfile:
+    """Build one profile while deriving every per-lane live-state reference from its name."""
+
+    return ExecutionProfile(
+        capabilities=frozenset(capabilities),
+        transport=transport,
+        native_fanout=native_fanout,
+        harvest_method=harvest_method,
+        concurrency_ref=f"capacity:{concurrency_scope}/{name}",
+        meter_ref=f"logs/usage.json#/vendors/{name}",
+        health_ref=f"limen.capacity:agent_status/{name}",
+        auth_ref=f"limen.census:vendors/{name}/auth_mode",
+        daily_fill=daily_fill,
+    )
 
 
 # ── THE REGISTER ─────────────────────────────────────────────────────────────────────────────
@@ -116,6 +169,15 @@ VENDORS: tuple[Vendor, ...] = (
             100_000_000, "tokens", "5h rolling", "ESTIMATE - tune to plan (/status)", "estimate", "openai-plan"
         ),
         status=Status(True, "live", "ChatGPT-plan OAuth lane"),
+        execution=_execution(
+            "codex",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=True,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="claude",
@@ -132,6 +194,15 @@ VENDORS: tuple[Vendor, ...] = (
             100_000_000, "tokens", "5h rolling", "ESTIMATE - tune to plan (/status)", "estimate", "claude-plan"
         ),
         status=Status(True, "live", "Claude-plan OAuth lane; shim pins the per-spawn floor tier"),
+        execution=_execution(
+            "claude",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=True,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="opencode",
@@ -146,6 +217,15 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="provider_selection",  # provider_selection.py + live `opencode models --verbose`
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
         status=Status(True, "live", "capabilities and pricing discovered from the live catalog"),
+        execution=_execution(
+            "opencode",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=True,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="agy",
@@ -163,6 +243,23 @@ VENDORS: tuple[Vendor, ...] = (
         # (see the gemini record). agy is healed, not archived: _bridge_agy_scratch carries its
         # scratch-dir work into the worktree; agy-noop-shim stops a mid-run browser sign-in.
         status=Status(True, "live", "Google Antigravity CLI; the migration target off Code-Assist OAuth"),
+        execution=_execution(
+            "agy",
+            capabilities=(
+                "conduct",
+                "execute",
+                "code",
+                "review",
+                "inspect",
+                "local-worktree",
+                "scratch-bridge",
+            ),
+            transport="ianva-stdio",
+            native_fanout=False,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="gemini",
@@ -196,6 +293,15 @@ VENDORS: tuple[Vendor, ...] = (
             lever="L-FLEET-CAPACITY",  # upstream root: L-CARD-FRAUD-HOLD
             deprecated_paths=("oauth_code_assist",),
         ),
+        execution=_execution(
+            "gemini",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=False,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="ollama",
@@ -213,6 +319,14 @@ VENDORS: tuple[Vendor, ...] = (
         # that can produce. Self-activating: reachable only once a model is pulled.
         budget=Budget(None, "runs", "none", "local unmetered floor (no cap)", "measured"),
         status=Status(True, "live_if_model_pulled", "one `ollama pull` from a live floor lane"),
+        execution=_execution(
+            "ollama",
+            capabilities=("conduct", "execute", "review", "inspect", "local-worktree"),
+            transport="native-cli",
+            native_fanout=False,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+        ),
     ),
     Vendor(
         name="jules",
@@ -227,6 +341,15 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="none",
         budget=Budget(100, "runs", "24h", "known hard cap", "measured"),
         status=Status(True, "live", "async cloud lane; first pick for genuine big-task horizons"),
+        execution=_execution(
+            "jules",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "github-remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="jules-remote",
+            concurrency_scope="provider-headroom",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="copilot",
@@ -241,6 +364,15 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="none",
         budget=Budget(None, "runs", "none", "not modeled (issue-assignment lane)", "unmodeled"),
         status=Status(True, "live", "GitHub-issue assignment lane"),
+        execution=_execution(
+            "copilot",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "github-remote"),
+            transport="ianva-stdio",
+            native_fanout=True,
+            harvest_method="github-receipt",
+            concurrency_scope="provider-headroom",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="warp",
@@ -255,6 +387,14 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
+        execution=_execution(
+            "warp",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="provider-receipt",
+            concurrency_scope="provider-headroom",
+        ),
     ),
     Vendor(
         name="oz",
@@ -269,6 +409,14 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
+        execution=_execution(
+            "oz",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="provider-receipt",
+            concurrency_scope="provider-headroom",
+        ),
     ),
     Vendor(
         name="github_actions",
@@ -283,6 +431,14 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="none",
         budget=Budget(None, "runs", "none", "not modeled (CI lane)", "unmodeled"),
         status=Status(True, "live", "GitHub Actions lane"),
+        execution=_execution(
+            "github_actions",
+            capabilities=("conduct", "execute", "review", "inspect", "verify", "github-remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="provider-receipt",
+            concurrency_scope="provider-headroom",
+        ),
     ),
 )
 
@@ -341,6 +497,40 @@ def kinds() -> dict[str, str]:
 def tiering() -> dict[str, str]:
     """name -> which model-selection layer owns its model choice (drift-guard for dispatch)."""
     return {v.name: v.tiering for v in VENDORS}
+
+
+def execution_profiles() -> dict[str, ExecutionProfile]:
+    """Return every canonical lane's model-neutral execution/conduct profile.
+
+    This is an inventory, not a preference list.  Callers combine it with live health, auth,
+    provider headroom, ownership, and packet requirements before selecting an executor.
+    """
+
+    return {v.name: v.execution for v in VENDORS}
+
+
+def conduct_capabilities(
+    health: Mapping[str, bool] | None = None,
+) -> dict[str, ExecutionProfile]:
+    """Return the currently eligible peer-conduct profiles.
+
+    ``health`` is the live capacity/broker observation when a caller has one.  Without it the
+    register's fail-closed availability state is used; this never probes binaries or provider
+    catalogs at import time.  Capability matching and ranking remain runtime operations.
+    """
+
+    live = health or {}
+    return {
+        vendor.name: vendor.execution
+        for vendor in VENDORS
+        if "conduct" in vendor.execution.capabilities and bool(live.get(vendor.name, vendor.status.available))
+    }
+
+
+def default_fill_agents() -> tuple[str, ...]:
+    """Lanes included in daily capacity-fill reporting, derived from their profiles."""
+
+    return tuple(v.name for v in VENDORS if v.execution.daily_fill)
 
 
 def lane_cascade() -> list[str]:

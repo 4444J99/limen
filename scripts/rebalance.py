@@ -18,7 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
-from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, queue_lock  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from limen.dispatch import (  # noqa: E402
     _deps_met,
     _dispatchable,
@@ -114,7 +115,7 @@ def main() -> int:
                     continue
                 task.target_agent = assigned
                 applied += 1
-            save_limen_file(path, fresh)
+            apply_limen_file_sync(path, fresh, agent="rebalance", session_id="apply")
         print(f"APPLIED -> tasks.yaml ({applied} target_agent update(s))")
     else:
         print("dry-run (pass --apply to write)")

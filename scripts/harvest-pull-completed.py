@@ -28,6 +28,10 @@ HARVEST = Path.home() / "Workspace" / "session-meta" / "scheduler" / "jules" / "
 _STATUS_KW = ["completed", "failed", "planning", "awaiting", "paused", "in progress", "running", "queued"]
 
 
+def _logical_session(entry: dict) -> str:
+    return str(entry.get("logical_session_id") or entry.get("session_id") or "")
+
+
 def _jules(args: list[str], timeout: int = 90) -> subprocess.CompletedProcess:
     """Run a `jules` command. Fails OPEN (returncode 1), never raises — mirrors gitvs.py:_gh.
 
@@ -54,7 +58,7 @@ def dispatched_by_session() -> dict[str, str]:
         if t.get("target_agent") != "jules" or t.get("status") not in ("dispatched", "in_progress"):
             continue
         for entry in reversed(t.get("dispatch_log", []) or []):
-            sid = str(entry.get("session_id") or "")
+            sid = _logical_session(entry)
             if sid.isdigit() and len(sid) >= 12:
                 by_sid[sid] = t["id"]
                 break

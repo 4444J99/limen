@@ -74,6 +74,9 @@ def test_chronic_open_task_parks_in_failed_blocked(tmp_path):
     )
     assert out["CHRONIC1"]["status"] == "failed_blocked", out["CHRONIC1"]
     assert "chronic-fleet-debt" in out["CHRONIC1"]["labels"]
+    assert out["CHRONIC1"]["dispatch_log"][-1]["lifecycle_repair"] == "fleet-debt-park"
+    assert out["CHRONIC1"]["dispatch_log"][-1]["fleet_debt_source"] == "dispatch-verify"
+    assert out["CHRONIC1"]["dispatch_log"][-1]["fleet_debt_count"] == 3
     assert out["FRESH1"]["status"] == "open", "non-chronic untouched"
 
 
@@ -134,6 +137,9 @@ def test_chronic_dispatched_no_pr_parks(tmp_path):
     )
     assert out["CHRONIC2"]["status"] == "failed_blocked", out["CHRONIC2"]
     assert "chronic-fleet-debt" in out["CHRONIC2"]["labels"]
+    assert out["CHRONIC2"]["dispatch_log"][-1]["lifecycle_repair"] == "fleet-debt-park"
+    assert out["CHRONIC2"]["dispatch_log"][-1]["fleet_debt_source"] == "dispatch-verify"
+    assert out["CHRONIC2"]["dispatch_log"][-1]["fleet_debt_count"] == 3
 
 
 def test_needs_human_with_chronic_evidence_is_rehomed(tmp_path):
@@ -150,6 +156,9 @@ def test_needs_human_with_chronic_evidence_is_rehomed(tmp_path):
     for tid in ("MIG1", "MIG2", "MIG3"):
         assert out[tid]["status"] == "failed_blocked", out[tid]
         assert "chronic-fleet-debt" in out[tid]["labels"]
+        assert out[tid]["dispatch_log"][-1]["lifecycle_repair"] == "fleet-debt-park"
+        assert out[tid]["dispatch_log"][-1]["fleet_debt_source"] == "prior-chronic-log"
+        assert out[tid]["dispatch_log"][-1]["fleet_debt_count"] == 1
 
 
 def test_needs_human_human_authored_is_untouched(tmp_path):
@@ -181,6 +190,9 @@ def test_needs_human_label_is_the_his_hand_opt_out(tmp_path):
     assert out["LBL1"]["status"] == "needs_human", out["LBL1"]
     assert out["LBL2"]["status"] == "needs_human", out["LBL2"]
     assert "chronic-fleet-debt" not in out["LBL2"]["labels"]
+    assert out["LBL2"]["dispatch_log"][-1]["lifecycle_repair"] == "human-gate-reconcile"
+    assert out["LBL2"]["dispatch_log"][-1]["fleet_debt_source"] == "dispatch-verify"
+    assert out["LBL2"]["dispatch_log"][-1]["fleet_debt_count"] == 3
     # the "kept" write must never look like a machine escalation to the re-home predicate
     assert "escalat" not in out["LBL2"]["dispatch_log"][-1]["output"]
 
@@ -200,6 +212,10 @@ def test_human_gated_chronic_stays_on_the_human_surface(tmp_path):
     )
     assert out["HG1"]["status"] == "needs_human", out["HG1"]
     assert "chronic-fleet-debt" not in (out["HG1"].get("labels") or [])
+    assert "needs-human" in (out["HG1"].get("labels") or [])
+    assert out["HG1"]["dispatch_log"][-1]["lifecycle_repair"] == "human-gate-reconcile"
+    assert out["HG1"]["dispatch_log"][-1]["fleet_debt_source"] == "dispatch-verify"
+    assert out["HG1"]["dispatch_log"][-1]["fleet_debt_count"] == 3
     assert out["HG2"]["status"] == "needs_human", out["HG2"]
 
 

@@ -188,32 +188,18 @@ def main() -> int:
               f"{len(capped)} tasks, then route + dispatch.")
         return 0
 
-    # validated append via the limen schema
+    # Validated, append-only submission to the record keeper.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-    from limen.io import load_limen_file, save_limen_file
-    from limen.models import Task
     from limen.tabularius import submit_task_upsert
 
-    # TABVLARIVS producer path (Step 2.1). LIMEN_TICKETS_PRODUCE=1 → stop writing tasks.yaml directly;
-    # hand each mined task to the record-keeper as an upsert ticket (the helper validates it, exactly
-    # like the legacy Task(**t) fail-fast). The keeper folds them next beat. `capped` is already
-    # deduped against the live board above, so every id is brand-new (upsert never clobbers a live id).
-    # Default OFF preserves the legacy validated direct append until the cutover flip.
-    if os.environ.get("LIMEN_TICKETS_PRODUCE") == "1":
-        session_id = os.environ.get("LIMEN_SESSION_ID", "mine-backlog")
-        for t in capped:
-            submit_task_upsert(tasks_path, t, agent="mine-backlog", session_id=session_id)
-        print(f"\nsubmitted {len(capped)} upsert tickets to the keeper's inbox "
-              f"(TABVLARIVS folds them onto {tasks_path} next beat).")
-        print("next: the record-keeper seals them, then   python3 scripts/route.py --apply")
-        return 0
-
-    limen = load_limen_file(tasks_path)
+    session_id = os.environ.get("LIMEN_SESSION_ID", "mine-backlog")
     for t in capped:
-        limen.tasks.append(Task(**t))
-    save_limen_file(tasks_path, limen)
-    print(f"\napplied: appended {len(capped)} open tasks -> {tasks_path}")
-    print("next: python3 scripts/route.py --apply   then   limen dispatch --agent <v> --live")
+        submit_task_upsert(tasks_path, t, agent="mine-backlog", session_id=session_id)
+    print(
+        f"\nsubmitted {len(capped)} upsert tickets to the keeper's inbox "
+        f"(TABVLARIVS folds them onto {tasks_path} next beat)."
+    )
+    print("next: the record-keeper seals them, then   python3 scripts/route.py --apply")
     return 0
 
 

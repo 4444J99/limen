@@ -2,8 +2,8 @@
 
 Operating discipline for every Claude Code session in this repo. Complements (does **not** duplicate):
 
-- `AGENTS.md` — the dispatch/task contract and `dispatch_log` done-recording.
-- `GEMINI.md` — the swarm worktree-isolation and PR-babysitting lifecycle.
+- `AGENTS.md` — the dispatch/task contract, Peer Conductor Contract, and receipt rules.
+- `GEMINI.md` — Gemini's native transport adapter.
 
 When a rule below also lives in those files, **they are the source of truth** and this charter points to them.
 If prose and executable predicates disagree, the executable predicate wins; update the prose to match
@@ -11,11 +11,11 @@ the script/schema/code rather than trusting memory.
 
 ## Instruction File Maintenance
 
-- `AGENTS.md` owns operating modes, task states, dispatch protocol, budget semantics, safety, and
-  `dispatch_log` shape.
+- `AGENTS.md` owns operating modes, task states, the Peer Conductor Contract, budget semantics,
+  safety, and receipt/projection rules.
 - `CLAUDE.md` owns Claude-specific execution discipline: closeout, merge cadence, credential
   handling, output style, worktree isolation, and compliant gate reroutes.
-- `GEMINI.md` owns conductor/MCP workflow details and PR babysitting mechanics.
+- `GEMINI.md` owns only Gemini-specific conduct/MCP transport details.
 - `CONTRIBUTING.md` owns human contributor guidance.
 - `docs/agent-instruction-standard.md` owns the rationale and cross-surface standard.
 - If you change task states, precedence, agent names, referenced scripts, or status examples, update
@@ -26,13 +26,24 @@ How the agent-instruction files (this charter, `AGENTS.md`, `GEMINI.md`, and the
 
 ## Architecture & Orientation
 
-Limen is a **cross-agent, cross-repo, budget-capped task intake system**. The single source of truth is `tasks.yaml` at `$LIMEN_ROOT` (fallback `./tasks.yaml`); every AI agent reads it at session start, claims a task, executes, and writes results back via a `dispatch_log` (the contract is `AGENTS.md`). Around that core file are a CLI, a published SaaS surface, and a fleet of self-keeping "organs."
+Limen is a **cross-agent, cross-repo, budget-capped task intake system**. TABVLARIVS is the
+deterministic state, lease, and budget authority; `tasks.yaml` at `$LIMEN_ROOT` (fallback
+`./tasks.yaml`) is its local read-only projection. Every native lane submits bounded work and
+receipts through the authenticated conduct broker under `AGENTS.md` → **Peer Conductor Contract**.
+Around that kernel are a CLI, a published SaaS surface, and a fleet of self-keeping "organs."
 
-In a direct human-request session, do not claim unrelated queue work or mutate `tasks.yaml` unless
-the request explicitly asks for Limen queue execution. `AGENTS.md` → **Operating Modes** is the
-authoritative rule.
+In a direct human-request session, do not claim unrelated queue work. Submit any requested task
+transition through the broker; never change the projection directly. `AGENTS.md` → **Operating
+Modes** is the authoritative rule.
 
-**The lifecycle is the durable contract — providers are replaceable adapters.** A task moves `open → dispatched → in_progress → done → archived`; from `in_progress` it may instead go `failed`, `failed_blocked`, or `needs_human`, and a stale claim is released back to `open`. The canonical state set, the cross-agent precedence ladder, and the startup checklist live in `AGENTS.md` (**Task States** / **Precedence** / **Startup Checklist**) and are enforced by `scripts/check-agent-docs.py`. Surfaces are gated by persona (owner / client / public) via bearer tokens. Firebase hosting serves only public-safe static shells + public contracts; everything internal loads at runtime from a Cloudflare Worker (or the FastAPI adapter). Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud Run/Next.js/FastAPI can be swapped.
+**The lifecycle and peer-conductor protocol are durable; providers are native adapters.** The
+canonical states, transitions, authority attenuation, protected-session rules, and startup
+checklist live in `AGENTS.md` and are enforced by `scripts/check-agent-docs.py`. Claude has no
+special rank: conductor is a temporary capability. Surfaces are gated by persona (owner / client /
+public) via bearer tokens. Firebase hosting serves only public-safe static shells + public
+contracts; everything internal loads at runtime from a Cloudflare Worker (or the FastAPI adapter).
+Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud
+Run/Next.js/FastAPI can be swapped.
 
 **Components** (each owns its remaining work — see [Closeout Definition](#closeout-definition)):
 
@@ -42,14 +53,17 @@ authoritative rule.
 | `web/api/` | FastAPI runtime adapter (`main.py`). Same HTTP contract as the Worker. | `uvicorn main:app` / Docker; tests in `web/api/tests/` |
 | `web/worker/` | Cloudflare Worker — the **live** runtime, GitHub-Contents storage. Deploys on-demand via wrangler (not on merge). | `npm run dev` / `npm run deploy`; lint `npm run check` |
 | `web/app/` | Next.js dashboard (static export → Cloudflare Pages `limen-dashboard.pages.dev`; the Firebase Hosting step is dormant — its GCP credential exists nowhere, road-not-taken). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
-| `mcp/` | MCP server exposing limen over the Model Context Protocol (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
+| `mcp/` | MCP adapter exposing the same authenticated conduct protocol and task-compatibility events (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
 | `ianva/` | MCP doorway/aggregator package. | `pip install -e ianva/` |
 | `moneta/` | **MONETA** — the sovereign cash organ (sibling of `quaestor`: quaestor *finds* money, MONETA *intakes* it). Self-hosted Bitcoin licence mint: takes BTC to an owner-controlled address, confirms against a **keyless** public explorer (mempool.space/Esplora), and signs each product's own offline ECDSA-P256 Pro licence — **no processor in the path**. Unconfigured, it *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set. `Dockerfile`-ready for a $0 deploy. | `cd moneta && npm test` (vitest + `tsc`); tests in `moneta/src/__tests__/` |
 | `spec/contracts/` + `spec/*.schema.json` | Portable JSON Schemas the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
 | `scripts/` (~120 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
 | `organs/`, `organ-ladder.json`, `pillars.yaml`, `his-hand-levers.json` | Declarative registries: the self-* organ ladder, platform pillars, and the owned human-gated lever registry. | data files |
 
-**Storage modes** (`io.py`): local file (`LIMEN_TASKS=/path`) for dev; GitHub Contents (`LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_TOKEN`, optional `_BRANCH`/`_PATH`) for the hosted runtime. Persona tokens: `LIMEN_OWNER_TOKEN`/`LIMEN_API_TOKEN`, `LIMEN_CLIENT_TOKEN`; absent → local owner-scoped dev mode.
+**Storage modes** (`io.py`): local files are development projections; the authenticated Worker
+plus GitHub Contents projection is the durable hosted keeper. Agents never treat a local
+`LIMEN_TASKS` file as an independent writer. Persona tokens: `LIMEN_OWNER_TOKEN`/
+`LIMEN_API_TOKEN`, `LIMEN_CLIENT_TOKEN`; absent → local owner-scoped dev mode.
 
 **Common commands** (beyond the [CI Gate Matrix](#worktree-isolation--ci-gate-matrix)):
 
@@ -140,6 +154,10 @@ Tokens, secrets, API keys, logins, env vars are **system burden, not the human o
 
 For any search or recon whose scope spans multiple domains, **fan out parallel read-only workers — one per distinct domain** (each remote, each local floor, each repo), launched in a single batch.
 
+- **Reserve every child before launch.** Call `limen conduct split` or `conduct_split` before
+  invoking Task/Workflow subagents, teams, or any separate capacity. Pass the returned root,
+  parent, run, lease generation, task, conductor, and execution-hash identities into the native
+  child. Hidden fanout is rejected; native tooling does not broaden the parent's authority.
 - Give each worker a **strict read-only scope** and require a **structured packet**: `{ found: [...], not_found: [...], confidence }`.
 - **Wait for ALL workers**, then **merge into one ground-truth report that flags conflicts** between packets.
 - **Never park the search early, and never guess a timeframe** — verify every location and timeframe explicitly before reporting. Default to ~3 parallel explorers for non-trivial recon.
@@ -232,11 +250,11 @@ so the PR path is never harder than the side door. The system's own findings are
 githubbed the same way: **`scripts/sync-censor-issues.py`** (beat-wired, dry-run until
 `LIMEN_CENSOR_ISSUES_APPLY=1` arms it) mirrors live censor residuals to public `censor`-labelled
 issues and auto-closes them when the lineage clears — so insight→correction work arrives as an
-issue and leaves as a PR that cites it. Machine board writes (`tasks.yaml` via the keeper/worker)
-are not a side door: Tabularius keeps the local projection dirty, publishes only through the stable
-`tabularius/board-projection` branch, and opens an exact-head PR for the normal merge queue. The
-remote no-bypass `pull_request` rule rejects every direct `main` push, including automation and
-admins.
+issue and leaves as a PR that cites it. TABVLARIVS is the only logical board-projection writer:
+the keeper commits accepted events with SHA compare-and-swap and publishes only through the stable
+`tabularius/board-projection` branch, whose exact head enters the normal merge queue. Agent sessions
+never push `tasks.yaml`, and the keeper never pushes `main`; the remote no-bypass `pull_request`
+rule rejects every direct default-branch push, including automation and admins.
 
 **Merge authority (standing grant).** Claude merges its own PRs into `main` *without asking*, the moment they are green and mergeable. Do not defer routine merges to the human operator. The grant has exactly one guardrail.
 

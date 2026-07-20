@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file  # noqa: E402
 from limen.jules_landing_custody import completed_sessions  # noqa: E402
 from limen.jules_landing_transaction import process_session  # noqa: E402
+from limen.models import dispatch_session_id  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -40,7 +41,7 @@ def main() -> int:
     session_to_task: dict[str, str] = {}
     for task in board.tasks:
         for entry in task.dispatch_log or []:
-            session_id = str(entry.session_id or "")
+            session_id = dispatch_session_id(entry)
             if session_id.isdigit():
                 session_to_task[session_id] = task.id
 

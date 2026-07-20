@@ -24,6 +24,7 @@ from typing import Callable, Iterable, Iterator, Mapping, Protocol, Sequence
 from urllib.parse import quote
 
 from limen import census
+from limen.models import dispatch_agent, dispatch_session_id
 from limen.remote_predicate import (
     DIGEST_RE,
     REPO_RE,
@@ -130,7 +131,11 @@ def verification_context_for_task(task: object, tasks_by_id: Mapping[str, object
         for entry in reversed(list(getattr(parent, "dispatch_log", None) or [])):
             status = str(getattr(entry, "status", "") or "").lower()
             text = " ".join(
-                str(getattr(entry, name, "") or "") for name in ("session_id", "output", "provider_url")
+                (
+                    dispatch_session_id(entry),
+                    str(getattr(entry, "output", "") or ""),
+                    str(getattr(entry, "provider_url", "") or ""),
+                )
             ).lower()
             if status not in {"done", "archived"}:
                 continue
@@ -140,7 +145,7 @@ def verification_context_for_task(task: object, tasks_by_id: Mapping[str, object
                 continue
             custody_event = {
                 "timestamp": str(getattr(entry, "timestamp", "") or ""),
-                "agent": str(getattr(entry, "agent", "") or ""),
+                "agent": dispatch_agent(entry),
                 "status": status,
                 "event_digest": digest_text(text),
             }

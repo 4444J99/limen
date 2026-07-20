@@ -11,9 +11,9 @@ OUT_DIR="$LOGS/insight-cadence"
 TOOL="$SOURCE_ROOT/scripts/insight-cadence.py"
 mkdir -p "$LOGS"
 if [ -f "$SOURCE_ROOT/tasks.yaml" ]; then
-    cp "$SOURCE_ROOT/tasks.yaml" "$LIMEN_TASKS"
+    cp "$SOURCE_ROOT/tasks.yaml" "$LIMEN_TASKS" # task-writer-audit: allow-derived-sandbox
 else
-    printf 'version: "1.0"\ntasks: []\n' > "$LIMEN_TASKS"
+    printf 'version: "1.0"\ntasks: []\n' > "$LIMEN_TASKS" # task-writer-audit: allow-derived-sandbox
 fi
 echo "0. Verification sandbox retained at $VERIFY_ROOT"
 

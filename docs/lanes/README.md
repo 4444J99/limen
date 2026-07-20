@@ -16,8 +16,9 @@ stream — the 10–20-mixed-PRs sprawl. The cure is one field plus one invarian
 ## The field (real, not a label)
 
 `Task.workstream` (`cli/src/limen/models.py`) is a first-class field, normalized to a kebab handle.
-It flows through TABVLARIVS (the single writer) untouched, because every ticket is validated via
-`Task.model_validate`. This **promotes** the old label-only convention into enforced machinery.
+It flows through the authenticated TABVLARIVS conduct projection untouched; compatibility packets
+validate it before the remote GitHub compare-and-swap. This **promotes** the old label-only
+convention into enforced machinery.
 
 - keep `repo` pointed at the real project repo;
 - keep `target_agent` in the canonical agent set (the *vendor* lane — orthogonal to the channel);
@@ -44,12 +45,13 @@ cell conductor:
 
 ```bash
 cell new contrib-run
-cell conduct contrib-run --workstream contributions   # sees ONLY the contributions board
+LIMEN_AGENT=opencode cell conduct contrib-run --workstream contributions
 ```
 
-`cell conduct --workstream <handle>` runs `limen channels --scope <handle> --emit tasks.cell.yaml`,
-so the scoped conductor cannot reach another channel's work. The human-facing scaffolder stamps the
-channel into its kickoff packet:
+`cell conduct --workstream <handle>` registers that native lane and worktree with the authenticated
+conduct broker, carrying the workstream in the registered surface metadata. Cells do not emit or own
+`tasks.cell.yaml`; task and lifecycle state stays with the canonical keeper. The human-facing
+scaffolder stamps the channel into its kickoff packet:
 
 ```bash
 limen workstream --workstream contributions --prompt 'drain the code lane' limen contrib-run

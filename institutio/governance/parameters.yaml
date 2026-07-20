@@ -129,6 +129,12 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Seconds allowed for a directly owned probe server to exit after TERM before its isolated process group receives KILL."
+  LIMEN_PROBE_CONDUCT_TOKEN:
+    default: "conduct-probe-token"
+    env: LIMEN_PROBE_CONDUCT_TOKEN
+    self_update: none
+    owner: dispatch
+    note: "Disposable local-only bearer used by the Worker runtime probe to exercise authenticated conduct routes. It is written only to the private temporary probe environment and is never a production credential."
 
   LIMEN_LOCAL_FLOOR:
     default: 0
@@ -598,12 +604,36 @@ parameters:
     self_update: none
     owner: continuity
     note: "Per-root directory visit cap for external/archive session inventory roots."
-  LIMEN_CURRENT_SESSION_JSONL:
+  LIMEN_CURRENT_SESSION:
     default: ""
-    env: LIMEN_CURRENT_SESSION_JSONL
+    env: LIMEN_CURRENT_SESSION
     self_update: none
     owner: continuity
-    note: "Optional explicit Codex session JSONL for current-session fanout. Blank means derive the latest local Codex transcript."
+    note: "Optional native session locator for agent-neutral current-session fanout. Blank means discover the newest supported Codex, Claude, Copilot, Agy, or OpenCode session."
+  LIMEN_SESSION_SOURCE_AGENT:
+    default: "auto"
+    env: LIMEN_SESSION_SOURCE_AGENT
+    self_update: none
+    owner: continuity
+    note: "Native session corpus to inspect for current-session fanout. Auto derives the newest healthy supported source without replacing its agent identity."
+  LIMEN_MIN_PLANNERS:
+    default: 10
+    env: LIMEN_MIN_PLANNERS
+    self_update: none
+    owner: continuity
+    note: "Minimum capability-selected planner packets emitted by current-session fanout before executor routing. This supersedes the Codex-specific planner knob."
+  LIMEN_PLANNER_LANES:
+    default: "auto"
+    env: LIMEN_PLANNER_LANES
+    self_update: none
+    owner: continuity
+    note: "Comma-separated planner lane preference for current-session fanout. Auto derives eligible lanes from the live capability registry."
+  LIMEN_FANOUT_RUNWAY_SECONDS:
+    default: 3600
+    env: LIMEN_FANOUT_RUNWAY_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Finite 1..86400 second deadline applied to the reserved current-session fanout graph."
   LIMEN_ORIENT_TASKS:
     default: ""
     env: LIMEN_ORIENT_TASKS
@@ -640,12 +670,6 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional retained sandbox root for done-insight-cadence.sh verification. Blank means create a private temporary proof root and retain it for inspection instead of deleting it."
-  LIMEN_MIN_CODEX_PLANNERS:
-    default: 10
-    env: LIMEN_MIN_CODEX_PLANNERS
-    self_update: none
-    owner: continuity
-    note: "Minimum Codex planner packets emitted by current-session fanout before executor waterfalling."
   LIMEN_CURRENT_SESSION_FANOUT_REPO:
     default: "organvm/limen"
     env: LIMEN_CURRENT_SESSION_FANOUT_REPO
@@ -1084,6 +1108,165 @@ parameters:
     self_update: none
     owner: continuity
     note: "The opaque session ID recorded in the dispatch log during task claims."
+
+  # --- peer conduct broker and runtime identity envelope -----------------------
+  LIMEN_CONDUCT_URL:
+    default: ""
+    env: LIMEN_CONDUCT_URL
+    self_update: none
+    owner: dispatch
+    note: "Authenticated remote conduct-broker endpoint. Blank fails closed for new conduct transitions unless the explicit local test adapter is configured."
+  LIMEN_CONDUCT_TOKEN:
+    default: ""
+    env: LIMEN_CONDUCT_TOKEN
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Credential-wall-owned bearer for an authenticated conduct client or Worker. It is consumed by the adapter and removed before launching a model process."
+  LIMEN_CONDUCT_TOKENS:
+    default: ""
+    env: LIMEN_CONDUCT_TOKENS
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Optional comma-separated Worker bearer rotation set. Values remain secret-owned and are never emitted in receipts."
+  LIMEN_CONDUCT_STATE:
+    default: ""
+    env: LIMEN_CONDUCT_STATE
+    self_update: none
+    owner: dispatch
+    note: "Explicit local SQLite conduct adapter used by tests and isolated development only. Blank prevents a local broker from silently replacing the remote keeper."
+  LIMEN_API_CONDUCT_SESSION_ID:
+    default: "limen-web-api-compat"
+    env: LIMEN_API_CONDUCT_SESSION_ID
+    self_update: none
+    owner: dispatch
+    note: "Stable server-owned session identity used by Web API compatibility mutations submitted through the conduct broker."
+  LIMEN_INITIATOR_AGENT:
+    default: null
+    env: LIMEN_INITIATOR_AGENT
+    self_update: "injected from the immutable parent work packet"
+    owner: dispatch
+    note: "Native identity of the agent that initiated a conducted graph. Unset outside conducted execution."
+  LIMEN_CONDUCTOR_AGENT:
+    default: "auto"
+    env: LIMEN_CONDUCTOR_AGENT
+    self_update: "injected at conducted packet or protected workstream launch"
+    owner: dispatch
+    note: "Temporary conductor identity for the current graph edge. Auto lets fanout derive an eligible conductor from live capabilities."
+  LIMEN_CONDUCTOR_SESSION_ID:
+    default: null
+    env: LIMEN_CONDUCTOR_SESSION_ID
+    self_update: "injected at conducted packet or protected workstream launch"
+    owner: dispatch
+    note: "Opaque registered conductor session that owns cooperative graph operations; it conveys no authority beyond the packet envelope."
+  LIMEN_ROOT_RUN_ID:
+    default: null
+    env: LIMEN_ROOT_RUN_ID
+    self_update: "injected from the immutable conduct graph"
+    owner: dispatch
+    note: "Root run identity shared by every descendant in one bounded conduct DAG."
+  LIMEN_PARENT_RUN_ID:
+    default: null
+    env: LIMEN_PARENT_RUN_ID
+    self_update: "injected from the immutable conduct graph"
+    owner: dispatch
+    note: "Immediate parent run identity for a conducted child. Blank only at the graph root."
+  LIMEN_RUN_ID:
+    default: null
+    env: LIMEN_RUN_ID
+    self_update: "assigned by the conduct broker"
+    owner: dispatch
+    note: "Current broker-assigned run identity; never inherited as an initiator identity for a different child."
+  LIMEN_NATIVE_RUN_ID:
+    default: null
+    env: LIMEN_NATIVE_RUN_ID
+    self_update: "injected from the native provider receipt"
+    owner: dispatch
+    note: "Provider-native run identity retained alongside the canonical conduct run."
+  LIMEN_NATIVE_SESSION_ID:
+    default: null
+    env: LIMEN_NATIVE_SESSION_ID
+    self_update: "injected from the native provider session"
+    owner: dispatch
+    note: "Provider-native session identity retained without replacing canonical agent or conduct identities."
+  LIMEN_SURFACE:
+    default: "cli"
+    env: LIMEN_SURFACE
+    self_update: "set by the launching adapter"
+    owner: dispatch
+    note: "Native transport surface recorded for a registered conduct session, such as cli, workstream, MCP, or relay."
+  LIMEN_WORKTREE:
+    default: null
+    env: LIMEN_WORKTREE
+    self_update: "set to the isolated checkout owned by the registered session"
+    owner: dispatch
+    note: "Exact worktree path bound to the active conduct session; unset for non-filesystem remote lanes."
+  LIMEN_AGENT_CAPABILITIES:
+    default: ""
+    env: LIMEN_AGENT_CAPABILITIES
+    self_update: "derived from the live canonical lane registry"
+    owner: dispatch
+    note: "Space-separated live capability set injected into a native workstream session; never a static provider catalog."
+  LIMEN_LEASE_ID:
+    default: null
+    env: LIMEN_LEASE_ID
+    self_update: "assigned by the conduct broker"
+    owner: dispatch
+    note: "Active resource-lease identity for the current bounded work packet."
+  LIMEN_LEASE_GENERATION:
+    default: null
+    env: LIMEN_LEASE_GENERATION
+    self_update: "assigned monotonically by the conduct broker"
+    owner: dispatch
+    note: "Fencing generation for the active lease. Late generations remain evidence but cannot mutate current state."
+  LIMEN_LEASE_TOKEN:
+    default: ""
+    env: LIMEN_LEASE_TOKEN
+    self_update: "issued per lease by the conduct broker"
+    owner: dispatch
+    note: "Ephemeral capability token for heartbeat or report operations on one exact lease; never persisted in a receipt."
+  LIMEN_EXECUTION_HASH:
+    default: null
+    env: LIMEN_EXECUTION_HASH
+    self_update: "injected from the immutable work packet"
+    owner: dispatch
+    note: "Canonical execution-envelope hash used to bind a child process and its receipt to the reserved packet."
+  LIMEN_HUMAN_PROTECTED:
+    default: "0"
+    env: LIMEN_HUMAN_PROTECTED
+    self_update: "set to 1 only by direct protected-session registration"
+    owner: dispatch
+    note: "Marks a direct human session protected from peer steal, retune, cancellation, signaling, or reaping."
+  LIMEN_CAPSULE_ID:
+    default: null
+    env: LIMEN_CAPSULE_ID
+    self_update: "derived from the admitted workstream contract"
+    owner: continuity
+    note: "Stable slug for the currently admitted continuation capsule."
+  LIMEN_CAPSULE_DIR:
+    default: null
+    env: LIMEN_CAPSULE_DIR
+    self_update: "derived from the admitted workstream contract"
+    owner: continuity
+    note: "Tracked directory containing the active continuation capsule and its machine-readable workstream contract."
+  LIMEN_CAPSULE_README:
+    default: null
+    env: LIMEN_CAPSULE_README
+    self_update: "derived from the admitted capsule directory"
+    owner: continuity
+    note: "Tracked capsule README supplied as the native successor agent's initial prompt."
+  LIMEN_CLI_BIN:
+    default: "limen"
+    env: LIMEN_CLI_BIN
+    self_update: none
+    owner: continuity
+    note: "Optional path or command name for the Limen CLI used to register a protected workstream session."
+  LIMEN_WORKSTREAM_SESSION_ID:
+    default: null
+    env: LIMEN_WORKSTREAM_SESSION_ID
+    self_update: "inherited from an admitted successor or generated once at launch"
+    owner: continuity
+    note: "Optional opaque session override for one workstream successor; blank derives a finite launch identity."
+
   LIMEN_CONTINUATION:
     default: "1"
     env: LIMEN_CONTINUATION

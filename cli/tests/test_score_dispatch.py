@@ -81,6 +81,22 @@ def test_chronic_needs_human_is_wasted(tmp_path: Path):
     assert recs["CHRONIC"]["sunk"] > 0
 
 
+def test_broker_logical_pr_receipt_is_shipped(tmp_path: Path):
+    task = _task("BROKER-PR", "done")
+    task["dispatch_log"].append(
+        {
+            "status": "done",
+            "session_id": "keeper-session",
+            "logical_session_id": "https://github.com/o/r/pull/42",
+        }
+    )
+
+    records = _records(_run(tmp_path, [task], "--backfill", "--print"))
+
+    assert records[0]["grade"] == "worth_it"
+    assert records[0]["pr"] == "o/r#42"
+
+
 def test_chronic_failed_blocked_is_wasted_nonchronic_not_weighed(tmp_path: Path):
     # heal-dispatch now parks chronic fleet-debt in failed_blocked (off the human surface);
     # the sunk-cost accounting must follow it there. A genuinely externally-blocked task

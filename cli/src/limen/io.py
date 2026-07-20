@@ -170,6 +170,42 @@ def queue_lock(tasks_path: Path, timeout: int = 90) -> Iterator[bool]:
                 pass
 
 
+@contextlib.contextmanager
+def local_conduct_projection_lock(conduct_state: Path, timeout: float = 20.0) -> Iterator[bool]:
+    """Serialize one local keeper submit plus its temporary cache refresh.
+
+    This lock is deliberately distinct from ``queue_lock``: the keeper must
+    protect its SQLite projection even when a producer does not hold the legacy
+    board mutex. It never signals or reaps a live owner.
+    """
+
+    state = Path(conduct_state).expanduser().resolve()
+    lockd = state.with_name(f".{state.name}.projection.lock.d")
+    lockd.parent.mkdir(parents=True, exist_ok=True)
+    got = False
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        try:
+            lockd.mkdir()
+            _write_lock_metadata(lockd)
+            got = True
+            break
+        except FileExistsError:
+            _try_reap_stale_queue_lock(lockd)
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(0.05)
+    try:
+        yield got
+    finally:
+        if got:
+            try:
+                _clear_lock_metadata(lockd)
+                lockd.rmdir()
+            except OSError:
+                pass
+
+
 def _sanitize_dispatch_logs(raw: dict[str, object]) -> int:
     """NEVER-"NO" data-layer guard: tolerate torn writes. The shared tasks.yaml is written by many
     uncoordinated processes; a recurring corruption lands a whole Task object inside some task's
@@ -331,3 +367,77 @@ def save_limen_file(path: Path, limen: LimenFile, *, allow_shrink: bool = False)
             )
 
     atomic_write_text(path, text)
+
+
+def save_derived_limen_projection(
+    path: Path,
+    limen: LimenFile,
+    *,
+    canonical_path: Path,
+) -> None:
+    """Serialize a noncanonical read-only projection.
+
+    This seam exists only for exports such as ``limen channels --emit``. It
+    cannot target the configured canonical board, so it carries no lifecycle
+    authority and cannot become a second TABVLARIVS writer.
+    """
+
+    target = Path(path).expanduser().resolve()
+    canonical_targets = {Path(canonical_path).expanduser().resolve()}
+    if configured := os.environ.get("LIMEN_TASKS", "").strip():
+        canonical_targets.add(Path(configured).expanduser().resolve())
+    if configured_root := os.environ.get("LIMEN_ROOT", "").strip():
+        canonical_targets.add((Path(configured_root).expanduser() / "tasks.yaml").resolve())
+    if target in canonical_targets:
+        raise ValueError(
+            "derived projection target resolves to the canonical tasks.yaml; "
+            "submit lifecycle work through the authenticated conduct keeper"
+        )
+    save_limen_file(target, limen, allow_shrink=True)
+
+
+def save_local_conduct_projection(
+    path: Path,
+    limen: LimenFile,
+    *,
+    conduct_state: Path,
+) -> None:
+    """Refresh a temporary board cache after the explicit local keeper commits.
+
+    Remote conduct never enters this serializer. The configured SQLite adapter
+    must exactly match ``conduct_state`` and live beside the target projection,
+    which confines this compatibility path to one isolated test/development
+    workspace rather than granting another writer for the repository board.
+    """
+
+    if os.environ.get("LIMEN_CONDUCT_URL", "").strip():
+        raise ValueError("remote conduct projections are owned by the authenticated keeper")
+    configured = os.environ.get("LIMEN_CONDUCT_STATE", "").strip()
+    if not configured:
+        raise ValueError("local conduct projection requires explicit LIMEN_CONDUCT_STATE")
+    state = Path(conduct_state).expanduser().resolve()
+    if Path(configured).expanduser().resolve() != state:
+        raise ValueError("local conduct projection state does not match the configured keeper")
+    target = Path(path).expanduser().resolve()
+    temporary_root = Path(tempfile.gettempdir()).resolve()
+    fixed_temporary_roots = tuple(
+        Path(root).resolve()
+        for root in (
+            "/tmp",
+            "/var/tmp",
+            "/private/tmp",
+            "/private/var/folders",
+        )
+    )
+    under_fixed_temporary_root = any(
+        state.is_relative_to(root) and target.is_relative_to(root) for root in fixed_temporary_roots
+    )
+    if (
+        not state.is_relative_to(temporary_root)
+        or not target.is_relative_to(temporary_root)
+        or not under_fixed_temporary_root
+    ):
+        raise ValueError("local conduct projection is restricted to the operating-system temporary root")
+    if not target.is_relative_to(state.parent):
+        raise ValueError("local conduct projection must stay inside its isolated keeper directory")
+    save_limen_file(target, limen, allow_shrink=True)

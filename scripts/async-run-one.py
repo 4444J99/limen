@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.dispatch import _REMOTE_SUBMISSION_RECEIPTS, _queue_lock, call_agent_dispatch  # noqa: E402
+from limen.models import dispatch_agent, dispatch_session_id  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -124,7 +125,12 @@ def _load_verified_task(
                 actual_hash,
             )
         last = task.dispatch_log[-1] if task.dispatch_log else None
-        if last is None or last.session_id != reservation_id or last.status != "dispatched" or last.agent != agent:
+        if (
+            last is None
+            or dispatch_session_id(last) != reservation_id
+            or last.status != "dispatched"
+            or dispatch_agent(last) != agent
+        ):
             return (
                 task,
                 False,
@@ -192,9 +198,9 @@ def _publish_result(
             and current.status == "dispatched"
             and current_hash == expected_hash
             and last is not None
-            and last.session_id == reservation_id
+            and dispatch_session_id(last) == reservation_id
             and last.status == "dispatched"
-            and last.agent == agent
+            and dispatch_agent(last) == agent
         )
         if not publication_safe:
             out["result"] = "__notask__"

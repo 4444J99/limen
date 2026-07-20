@@ -56,7 +56,7 @@ else
   PORT="$(choose_port)"
 fi
 
-cat > "$TASKS_PATH" <<'YAML'
+cat > "$TASKS_PATH" <<'YAML' # task-writer-audit: allow-derived-sandbox
 version: '1.0'
 portal:
   name: Runtime Probe
@@ -200,7 +200,8 @@ for ((attempt = 0; attempt < ATTEMPTS; attempt++)); do
     --task-id PROBE-001 \
     --verify-task-id PROBE-VERIFY \
     --assign-task-id PROBE-ASSIGN \
-    --archive-task-id PROBE-ARCHIVE >"$PROBE_LOG" 2>&1; then
+    --archive-task-id PROBE-ARCHIVE \
+    --expect-mutations-unavailable >"$PROBE_LOG" 2>&1; then
     cat "$PROBE_LOG"
     exit 0
   fi

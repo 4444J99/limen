@@ -64,7 +64,8 @@ from limen.capacity import (  # noqa: E402
     task_has_github_issue,
 )
 from limen.model_selection import _claude_fable_classes, _claude_opus_classes  # noqa: E402
-from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, queue_lock  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from limen.dispatch import _down_lanes, _reset_budget_if_needed  # noqa: E402
 from limen.workstream import UNASSIGNED, assign_channel  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
@@ -724,7 +725,7 @@ def main() -> int:
                 if handle != UNASSIGNED:
                     task.workstream = handle
                     ws_applied += 1
-        save_limen_file(tasks_path, lf)
+        apply_limen_file_sync(tasks_path, lf, agent="route", session_id="route-apply")
     print(
         f"applied target_agent assignments ({applied}) -> {tasks_path} "
         f"(dispatch separately, gated: limen dispatch --agent <v> --live)"

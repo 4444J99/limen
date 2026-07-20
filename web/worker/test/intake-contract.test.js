@@ -48,7 +48,7 @@ test("Worker normalizes only a selected owned legacy task and fails closed when 
   assert.throws(() => normalizeSelectedLegacyTask(unowned), /exact owner\/repo/);
 });
 
-test("GitHub-backed Worker mutations fail closed before any Contents PUT while reads stay live", async (t) => {
+test("GitHub-backed Worker mutations fail closed at the missing conduct keeper while reads stay live", async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -60,8 +60,13 @@ test("GitHub-backed Worker mutations fail closed before any Contents PUT while r
     "tasks:",
     "  - id: WORKER-1",
     "    title: Keeper-owned task",
+    "    repo: organvm/limen",
     "    target_agent: codex",
+    "    priority: high",
+    "    budget_cost: 1",
     "    status: dispatched",
+    "    predicate: pytest -q",
+    "    receipt_target: git:organvm/limen:tasks.yaml#WORKER-1",
     "    created: '2026-07-01'",
     "    dispatch_log: []",
     "",
@@ -109,11 +114,6 @@ test("GitHub-backed Worker mutations fail closed before any Contents PUT while r
 
   const mutations = [
     new Request("https://limen.test/api/release-stale?hours=0&dry_run=false", { method: "POST" }),
-    new Request("https://limen.test/api/dispatch", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ agent: "codex", live: true }),
-    }),
     new Request("https://limen.test/api/tasks/WORKER-1/verify", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -124,24 +124,12 @@ test("GitHub-backed Worker mutations fail closed before any Contents PUT while r
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ target_agent: "codex" }),
     }),
-    new Request("https://limen.test/api/tasks/WORKER-1/archive", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({}),
-    }),
   ];
   for (const request of mutations) {
     const mutation = await worker.fetch(request, env);
-    assert.equal(mutation.status, 409);
+    assert.equal(mutation.status, 503);
     const receipt = await mutation.json();
-    assert.equal(receipt.status, "mutation_deferred");
-    assert.equal(receipt.code, "board_mutation_deferred");
-    assert.equal(receipt.retryable, true);
-    assert.equal(receipt.owner, "tabularius");
-    assert.equal(receipt.target.access, "read_only");
-    assert.equal(receipt.target.writable, false);
-    assert.equal(receipt.target.branch, "tabularius/board-projection");
-    assert.equal("released" in receipt, false);
+    assert.match(receipt.detail, /conduct keeper binding is not configured/);
   }
-  assert.deepEqual(calls.map((call) => call.method), ["GET", "GET"]);
+  assert.deepEqual(calls.map((call) => call.method), ["GET", "GET", "GET", "GET", "GET"]);
 });

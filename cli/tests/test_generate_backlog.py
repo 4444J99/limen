@@ -16,6 +16,8 @@ from pathlib import Path
 
 import yaml
 
+from limen.tabularius import drain_once
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "generate-backlog.py"
 
@@ -89,6 +91,12 @@ def _run(
         },
     )
     assert p.returncode == 0, p.stderr
+    if "--apply" in args:
+        # Producers submit immutable tickets; the keeper owns the canonical
+        # transition and only then refreshes this isolated test projection.
+        drained = drain_once(path)
+        assert not drained.deferred, drained.note
+        assert drained.rejected == 0, drained.note
     return p.stdout
 
 

@@ -4,7 +4,10 @@ import copy
 import importlib.util
 from pathlib import Path
 
+import limen.tabularius as tabularius
 import pytest
+import yaml
+from limen.conduct.client import BrokerUnavailable
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "claim-task.py"
@@ -20,7 +23,15 @@ def load_claim_module():
 
 def board(budget_cost=2):
     return {
-        "portal": {"budget": {"track": {"spent": 3, "per_agent": {"codex": 1}}}},
+        "portal": {
+            "budget": {
+                "track": {
+                    "date": "2026-07-18",
+                    "spent": 3,
+                    "per_agent": {"codex": 1},
+                }
+            }
+        },
         "tasks": [
             {
                 "id": "TASK-1",
@@ -29,10 +40,38 @@ def board(budget_cost=2):
                 "target_agent": "any",
                 "status": "open",
                 "budget_cost": budget_cost,
+                "created": "2026-07-18",
                 "dispatch_log": [],
             }
         ],
     }
+
+
+class FakeClaimBroker:
+    def __init__(self, task):
+        self.task = dict(task)
+        self.sessions = []
+        self.packets = []
+
+    def register(self, session):
+        self.sessions.append(session)
+        return {"status": "registered"}
+
+    def submit(self, packet):
+        self.packets.append(packet)
+        intent = dict(packet.intent)
+        projected = {**self.task, **dict(intent["patch"])}
+        projected["id"] = intent["task_id"]
+        self.task = projected
+        return {
+            "status": "accepted",
+            "projection_receipts": [{"task_id": projected["id"], "task": projected}],
+        }
+
+
+def write_tasks(path: Path) -> bytes:
+    path.write_text(yaml.safe_dump(board(), sort_keys=False))
+    return path.read_bytes()
 
 
 def test_claim_task_reserves_open_task_and_budget() -> None:
@@ -133,3 +172,100 @@ def test_claim_task_fails_closed_when_legacy_owner_cannot_be_derived() -> None:
         claim.claim_task(data, "TASK-1", "codex", "session-1")
 
     assert data == before
+
+
+def test_live_claim_uses_broker_receipt_and_keeps_local_projection_byte_identical(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    claim = load_claim_module()
+    tasks_path = tmp_path / "tasks.yaml"
+    before = write_tasks(tasks_path)
+    owner = FakeClaimBroker(board()["tasks"][0])
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: owner)
+    monkeypatch.setattr(
+        claim.sys,
+        "argv",
+        [
+            "claim-task.py",
+            "TASK-1",
+            "codex",
+            "--tasks",
+            str(tasks_path),
+            "--session-id",
+            "live-session",
+            "--live",
+        ],
+    )
+
+    assert claim.main() == 0
+
+    assert tasks_path.read_bytes() == before
+    assert len(owner.sessions) == 1
+    assert len(owner.packets) == 1
+    intent = owner.packets[0].intent
+    assert intent["kind"] == "task.claim"
+    assert intent["expected_status"] == "open"
+    assert intent["patch"]["target_agent"] == "codex"
+    assert intent["patch"]["status"] == "dispatched"
+    assert "budget_debit" not in intent
+    assert owner.task["status"] == "dispatched"
+    assert "canonical conduct broker" in capsys.readouterr().out
+
+
+def test_live_claim_fails_closed_when_broker_is_unavailable(tmp_path, monkeypatch) -> None:
+    claim = load_claim_module()
+    tasks_path = tmp_path / "tasks.yaml"
+    before = write_tasks(tasks_path)
+
+    def unavailable():
+        raise BrokerUnavailable("test broker unavailable")
+
+    monkeypatch.setattr(tabularius, "client_from_env", unavailable)
+    monkeypatch.setattr(
+        claim.sys,
+        "argv",
+        [
+            "claim-task.py",
+            "TASK-1",
+            "codex",
+            "--tasks",
+            str(tasks_path),
+            "--session-id",
+            "blocked-session",
+            "--live",
+        ],
+    )
+
+    with pytest.raises(BrokerUnavailable, match="test broker unavailable"):
+        claim.main()
+
+    assert tasks_path.read_bytes() == before
+
+
+def test_dry_run_remains_a_local_preview_without_contacting_broker(tmp_path, monkeypatch, capsys) -> None:
+    claim = load_claim_module()
+    tasks_path = tmp_path / "tasks.yaml"
+    before = write_tasks(tasks_path)
+
+    def unexpected_broker():
+        raise AssertionError("dry-run must not contact the conduct broker")
+
+    monkeypatch.setattr(tabularius, "client_from_env", unexpected_broker)
+    monkeypatch.setattr(
+        claim.sys,
+        "argv",
+        [
+            "claim-task.py",
+            "TASK-1",
+            "codex",
+            "--tasks",
+            str(tasks_path),
+            "--session-id",
+            "preview-session",
+        ],
+    )
+
+    assert claim.main() == 0
+
+    assert tasks_path.read_bytes() == before
+    assert "DRY-RUN claim" in capsys.readouterr().out

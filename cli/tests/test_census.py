@@ -108,6 +108,62 @@ def test_vendor_tiering_is_derived():
     }
 
 
+def test_execution_profiles_are_complete_model_neutral_conduct_metadata():
+    """Every canonical lane exposes one conduct-compatible profile with live-state references."""
+
+    profiles = census.execution_profiles()
+    assert set(profiles) == set(census.paid_agent_order())
+    assert set(profiles) == {vendor.name for vendor in census.VENDORS}
+    for name, profile in profiles.items():
+        assert "conduct" in profile.capabilities
+        assert "execute" in profile.capabilities
+        assert profile.transport
+        assert profile.harvest_method
+        assert profile.concurrency_ref.startswith("capacity:")
+        assert profile.meter_ref == f"logs/usage.json#/vendors/{name}"
+        assert profile.health_ref == f"limen.capacity:agent_status/{name}"
+        assert profile.auth_ref == f"limen.census:vendors/{name}/auth_mode"
+        assert not hasattr(profile, "model")
+        assert not hasattr(profile, "concurrency")
+
+
+def test_primary_peer_conductors_preserve_native_identity_and_fanout_contract():
+    profiles = census.execution_profiles()
+    assert {name: profiles[name].transport for name in ("codex", "claude", "opencode", "agy", "copilot")} == {
+        "codex": "ianva-http",
+        "claude": "ianva-http",
+        "opencode": "ianva-http",
+        "agy": "ianva-stdio",
+        "copilot": "ianva-stdio",
+    }
+    assert {name for name, profile in profiles.items() if profile.native_fanout} == {
+        "codex",
+        "claude",
+        "opencode",
+        "copilot",
+    }
+    for name in ("codex", "claude", "opencode", "agy", "copilot"):
+        assert {"conduct", "execute", "code", "review"} <= profiles[name].capabilities
+
+
+def test_conduct_capabilities_filter_by_live_health_without_fallback_order():
+    defaults = census.conduct_capabilities()
+    assert "gemini" not in defaults
+    assert "codex" in defaults
+
+    observed = census.conduct_capabilities({"codex": False, "gemini": True})
+    assert "codex" not in observed
+    assert "gemini" in observed
+    assert observed["gemini"] is census.by_name("gemini").execution
+
+
+def test_capacity_default_fill_agents_derive_from_execution_profiles():
+    expected = tuple(name for name, profile in census.execution_profiles().items() if profile.daily_fill)
+    assert census.default_fill_agents() == expected
+    assert capacity.DEFAULT_FILL_AGENTS == expected
+    assert set(expected) == {"codex", "claude", "opencode", "agy", "gemini", "jules", "copilot"}
+
+
 def test_capacity_canonical_agent_still_resolves_aliases():
     """capacity.canonical_agent reads AGENT_ALIASES; the derivation must keep it working."""
     assert capacity.canonical_agent("antigravity") == "agy"
@@ -138,7 +194,7 @@ def test_every_vendor_record_is_well_formed():
         for alias in v.aliases:
             assert census.canonical(alias) == v.name
         # budget/status are always present (never a bare None record)
-        assert v.budget is not None and v.status is not None
+        assert v.budget is not None and v.status is not None and v.execution is not None
 
 
 def test_gemini_status_is_homed_in_the_register():

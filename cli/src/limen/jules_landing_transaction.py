@@ -17,15 +17,17 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
-from limen.io import load_limen_file, queue_lock, save_limen_file
+from limen.io import load_limen_file, queue_lock
 from limen.jules_landing_custody import landed_pr_url, landing_branch, land_one
 from limen.models import (
     JULES_LANDING_HOLD_LABEL,
     DispatchLogEntry,
     Task,
+    dispatch_agent,
+    dispatch_session_id,
     has_jules_landing_hold,
 )
-from limen.tabularius import task_state_sha256
+from limen.tabularius import apply_limen_file_sync, task_state_sha256
 
 LANDING_LOCK_TIMEOUT_SECONDS = 2.0
 LANDING_LOCK_POLL_SECONDS = 0.05
@@ -52,6 +54,72 @@ class LandingPlan:
 
     task: Task
     selection: LandingSelection
+
+
+def _submit_landing_projection(
+    tasks_path: Path,
+    before_task: Task,
+    desired_task: Task,
+    *,
+    session_id: str,
+) -> Task:
+    """Submit one task delta and require its canonical projected task receipt."""
+
+    cached = load_limen_file(tasks_path)
+    index = next(
+        (position for position, task in enumerate(cached.tasks) if task.id == before_task.id),
+        None,
+    )
+    if index is None:
+        raise RuntimeError(f"task {before_task.id} is absent from the local projection")
+    before = cached.model_copy(deep=True)
+    before.tasks[index] = before_task.model_copy(deep=True)
+    desired = before.model_copy(deep=True)
+    desired.tasks[index] = desired_task.model_copy(deep=True)
+    result = apply_limen_file_sync(
+        tasks_path,
+        desired,
+        agent="jules",
+        session_id=session_id,
+        before=before,
+    )
+    projected = result.projected_tasks.get(before_task.id)
+    if result.applied != 1 or not isinstance(projected, dict):
+        raise RuntimeError(f"conduct keeper omitted the canonical projected task receipt for {before_task.id}")
+    acknowledged = Task.model_validate(projected)
+    if acknowledged.id != before_task.id:
+        raise RuntimeError(f"conduct keeper projected {acknowledged.id}, expected {before_task.id}")
+    return acknowledged
+
+
+def _advance_landing_execution(
+    tasks_path: Path,
+    task: Task,
+    selection: LandingSelection,
+) -> Task:
+    """Honor dispatched -> in_progress before a terminal landing transition."""
+
+    if task.status != "dispatched":
+        return task
+    desired = task.model_copy(deep=True)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    desired.status = "in_progress"
+    desired.updated = now
+    desired.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="jules",
+            session_id=f"jules-land-active:{selection.intent_token[:16]}",
+            status="in_progress",
+            output=f"jules-land: external custody completed for session {selection.session_id}",
+        )
+    )
+    return _submit_landing_projection(
+        tasks_path,
+        task,
+        desired,
+        session_id=f"jules-land-active-{selection.intent_token[:16]}",
+    )
 
 
 def _landing_intent_token(
@@ -99,7 +167,7 @@ def session_has_pr(task: Task, session_id: str) -> bool:
     """Return whether this exact Jules session owns a durable PR receipt."""
     entries = list(task.dispatch_log or [])
     dispatch_index = max(
-        (index for index, entry in enumerate(entries) if str(entry.session_id or "") == str(session_id)),
+        (index for index, entry in enumerate(entries) if dispatch_session_id(entry) == str(session_id)),
         default=None,
     )
     next_dispatch_index = (
@@ -107,7 +175,7 @@ def session_has_pr(task: Task, session_id: str) -> bool:
             (
                 index
                 for index, entry in enumerate(entries)
-                if dispatch_index is not None and index > dispatch_index and str(entry.session_id or "").isdigit()
+                if dispatch_index is not None and index > dispatch_index and dispatch_session_id(entry).isdigit()
             ),
             default=len(entries),
         )
@@ -116,7 +184,7 @@ def session_has_pr(task: Task, session_id: str) -> bool:
     )
     named_session = re.compile(r"\bsession\s+([0-9]+)\b", re.IGNORECASE)
     for index, entry in enumerate(entries):
-        if "/pull/" not in str(entry.session_id or ""):
+        if "/pull/" not in dispatch_session_id(entry):
             continue
         named = named_session.search(str(entry.output or ""))
         if named is not None:
@@ -135,12 +203,12 @@ def session_has_pr(task: Task, session_id: str) -> bool:
 def _jules_claim_is_current(task: Task, session_id: str) -> bool:
     numeric_claims = [
         (
-            str(entry.session_id or ""),
-            str(entry.agent or ""),
+            dispatch_session_id(entry),
+            dispatch_agent(entry),
             str(entry.status or ""),
         )
         for entry in (task.dispatch_log or [])
-        if str(entry.session_id or "").isdigit()
+        if dispatch_session_id(entry).isdigit()
     ]
     return not (
         task.target_agent not in {"jules", "any"}
@@ -202,6 +270,7 @@ def _persisted_landing_selection(
         or not has_jules_landing_hold(task)
         or not _jules_claim_is_current(task, session_id)
         or intent.agent != "jules"
+        or dispatch_agent(intent) != "jules"
         or intent.status != prior_status
     ):
         return None
@@ -213,7 +282,7 @@ def _persisted_landing_selection(
         len(claim_sha256) != 64
         or token != _landing_intent_token(task.id, str(session_id), claim_sha256)
         or branch != landing_branch(task.id, str(session_id))
-        or intent.session_id != f"jules-land-intent:{token}"
+        or dispatch_session_id(intent) != f"jules-land-intent:{token}"
         or prior_status not in {"dispatched", "failed", "done"}
     ):
         return None
@@ -226,7 +295,7 @@ def _persisted_landing_selection(
             or str(getattr(entry, "landing_event", "")) != "attempt"
             or getattr(entry, "landing_terminal", False) is not False
             or getattr(entry, "landing_attempt", None) != attempt_count
-            or entry.status != "failed"
+            or entry.status != prior_status
         ):
             return None
     before = task.model_dump(mode="json")
@@ -263,6 +332,22 @@ def _new_landing_selection(
         branch=landing_branch(task.id, str(session_id)),
         attempt_count=0,
     )
+
+
+def _current_landing_task(
+    tasks_path: Path,
+    selection: LandingSelection,
+) -> Task | None:
+    """Reload the keeper projection and require the exact selected row."""
+
+    fresh = load_limen_file(tasks_path)
+    task = next(
+        (candidate for candidate in fresh.tasks if candidate.id == selection.task_id),
+        None,
+    )
+    if task is None or _persisted_landing_selection(task, selection.session_id) != selection:
+        return None
+    return task
 
 
 def prepare_landing_intent(
@@ -308,7 +393,8 @@ def prepare_landing_intent(
         if not apply:
             return LandingPlan(task.model_copy(deep=True), selection), ""
 
-        before = task.model_dump(mode="json")
+        before_task = task.model_copy(deep=True)
+        before = before_task.model_dump(mode="json")
         now = datetime.datetime.now(datetime.timezone.utc)
         task.labels = list(task.labels or []) + [JULES_LANDING_HOLD_LABEL]
         task.updated = now
@@ -328,12 +414,15 @@ def prepare_landing_intent(
                 landing_prior_updated=before["updated"],
             )
         )
-        save_limen_file(tasks_path, fresh)
-        persisted_file = load_limen_file(tasks_path)
-        persisted_task = next(candidate for candidate in persisted_file.tasks if candidate.id == task_id)
+        persisted_task = _submit_landing_projection(
+            tasks_path,
+            before_task,
+            task,
+            session_id=f"jules-land-intent-{selection.intent_token[:16]}",
+        )
         persisted = _persisted_landing_selection(persisted_task, session_id)
         if persisted is None:
-            raise RuntimeError(f"failed to validate persisted landing intent for {task_id}")
+            raise RuntimeError(f"conduct keeper returned no valid landing intent for {task_id}")
         return LandingPlan(persisted_task.model_copy(deep=True), persisted), ""
 
 
@@ -373,25 +462,30 @@ def commit_landing_receipt(
     tasks_path: Path,
     selection: LandingSelection,
     pr_url: str,
+    *,
+    base_task: Task,
 ) -> bool:
     """Commit one PR receipt iff the exact selected claim still owns the row."""
     with queue_lock(tasks_path) as got:
         if not got:
             print(f"  FENCE {selection.task_id}: queue busy after PR creation; left {pr_url} for reconciliation")
             return False
-        fresh = load_limen_file(tasks_path)
-        task = next(
-            (candidate for candidate in fresh.tasks if candidate.id == selection.task_id),
-            None,
-        )
-        if task is None or _persisted_landing_selection(task, selection.session_id) != selection:
+        if _persisted_landing_selection(base_task, selection.session_id) != selection:
             print(
                 f"  FENCE {selection.task_id}: Jules claim changed while PR work ran; left {pr_url} for reconciliation"
             )
             return False
+        task = _current_landing_task(tasks_path, selection)
+        if task is None:
+            print(
+                f"  FENCE {selection.task_id}: Jules claim changed while PR work ran; left {pr_url} for reconciliation"
+            )
+            return False
+        task = _advance_landing_execution(tasks_path, task, selection)
+        desired = task.model_copy(deep=True)
         now = datetime.datetime.now(datetime.timezone.utc)
         _append_terminal_outcome(
-            task,
+            desired,
             selection,
             status="done",
             outcome="pr",
@@ -399,7 +493,12 @@ def commit_landing_receipt(
             session_id=pr_url,
             now=now,
         )
-        save_limen_file(tasks_path, fresh)
+        _submit_landing_projection(
+            tasks_path,
+            task,
+            desired,
+            session_id=f"jules-land-pr-{selection.intent_token[:16]}",
+        )
         return True
 
 
@@ -410,23 +509,25 @@ def commit_terminal_landing_outcome(
     status: str,
     outcome: str,
     output: str,
+    base_task: Task,
 ) -> bool:
     """Commit a non-PR terminal receipt and release the landing hold."""
     with queue_lock(tasks_path) as got:
         if not got:
             print(f"  FENCE {selection.task_id}: queue busy while recording {outcome}")
             return False
-        fresh = load_limen_file(tasks_path)
-        task = next(
-            (candidate for candidate in fresh.tasks if candidate.id == selection.task_id),
-            None,
-        )
-        if task is None or _persisted_landing_selection(task, selection.session_id) != selection:
+        if _persisted_landing_selection(base_task, selection.session_id) != selection:
             print(f"  FENCE {selection.task_id}: owner changed while recording {outcome}")
             return False
+        task = _current_landing_task(tasks_path, selection)
+        if task is None:
+            print(f"  FENCE {selection.task_id}: owner changed while recording {outcome}")
+            return False
+        task = _advance_landing_execution(tasks_path, task, selection)
+        desired = task.model_copy(deep=True)
         now = datetime.datetime.now(datetime.timezone.utc)
         _append_terminal_outcome(
-            task,
+            desired,
             selection,
             status=status,
             outcome=outcome,
@@ -434,7 +535,12 @@ def commit_terminal_landing_outcome(
             session_id=f"jules-land-{outcome}:{selection.intent_token[:16]}",
             now=now,
         )
-        save_limen_file(tasks_path, fresh)
+        _submit_landing_projection(
+            tasks_path,
+            task,
+            desired,
+            session_id=f"jules-land-{outcome}-{selection.intent_token[:16]}",
+        )
         return True
 
 
@@ -442,20 +548,22 @@ def commit_landing_failure(
     tasks_path: Path,
     selection: LandingSelection,
     failure: str,
+    *,
+    base_task: Task,
 ) -> str:
     """Append one bounded retry receipt, terminalizing at the finite cap."""
     with queue_lock(tasks_path) as got:
         if not got:
             print(f"  FENCE {selection.task_id}: queue busy while recording failed attempt")
             return "queue_busy"
-        fresh = load_limen_file(tasks_path)
-        task = next(
-            (candidate for candidate in fresh.tasks if candidate.id == selection.task_id),
-            None,
-        )
-        if task is None or _persisted_landing_selection(task, selection.session_id) != selection:
+        if _persisted_landing_selection(base_task, selection.session_id) != selection:
             print(f"  FENCE {selection.task_id}: owner changed while recording failed attempt")
             return "fenced"
+        current = _current_landing_task(tasks_path, selection)
+        if current is None:
+            print(f"  FENCE {selection.task_id}: owner changed while recording failed attempt")
+            return "fenced"
+        task = current.model_copy(deep=True)
         now = datetime.datetime.now(datetime.timezone.utc)
         attempt = selection.attempt_count + 1
         task.updated = now
@@ -474,10 +582,30 @@ def commit_landing_failure(
                 landing_intent_token=selection.intent_token,
             )
         )
+        acknowledged = _submit_landing_projection(
+            tasks_path,
+            current,
+            task,
+            session_id=f"jules-land-attempt-{selection.intent_token[:16]}-{attempt}",
+        )
         if attempt >= LANDING_RETRY_LIMIT:
+            terminal_selection = LandingSelection(
+                task_id=selection.task_id,
+                session_id=selection.session_id,
+                task_state_sha256=selection.task_state_sha256,
+                intent_token=selection.intent_token,
+                branch=selection.branch,
+                attempt_count=attempt,
+            )
+            acknowledged = _advance_landing_execution(
+                tasks_path,
+                acknowledged,
+                terminal_selection,
+            )
+            terminal = acknowledged.model_copy(deep=True)
             _append_terminal_outcome(
-                task,
-                selection,
+                terminal,
+                terminal_selection,
                 status="failed",
                 outcome="failed",
                 output=(f"jules-land: retry cap {LANDING_RETRY_LIMIT} reached; last outcome: {failure}"),
@@ -485,10 +613,15 @@ def commit_landing_failure(
                 now=now,
                 attempt_count=attempt,
             )
+            _submit_landing_projection(
+                tasks_path,
+                acknowledged,
+                terminal,
+                session_id=f"jules-land-failed-{selection.intent_token[:16]}",
+            )
             result = "terminal"
         else:
             result = "retry"
-        save_limen_file(tasks_path, fresh)
         return result
 
 
@@ -541,6 +674,7 @@ def process_session(
                 status="failed_blocked",
                 outcome="blocked",
                 output=message,
+                base_task=plan.task,
             )
             return False
         if message.startswith("no-op"):
@@ -550,10 +684,16 @@ def process_session(
                 status="failed",
                 outcome="noop",
                 output=message,
+                base_task=plan.task,
             )
             return False
         if not message.startswith("LANDED"):
-            commit_landing_failure(tasks_path, plan.selection, message)
+            commit_landing_failure(
+                tasks_path,
+                plan.selection,
+                message,
+                base_task=plan.task,
+            )
             return False
         pr_url = landed_pr_url(message, "")
         if "/pull/" not in pr_url:
@@ -561,6 +701,12 @@ def process_session(
                 tasks_path,
                 plan.selection,
                 f"FAIL {task_id}: landed result had no durable PR URL",
+                base_task=plan.task,
             )
             return False
-        return commit_landing_receipt(tasks_path, plan.selection, pr_url)
+        return commit_landing_receipt(
+            tasks_path,
+            plan.selection,
+            pr_url,
+            base_task=plan.task,
+        )

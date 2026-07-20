@@ -13,11 +13,10 @@ This is alchemical progress toward ideal form (the fleet repairing its OWN work)
 Safety / shape (matches the sibling organs exactly):
   • SCAN side is identical to merge-drain.py (same OWNERS, same `gh search prs --author @me`,
     the same assess() classifier: READY / CI-RED / CI-PENDING / CONFLICT). Read-only `gh`.
-  • EMIT side uses the ONE safe shared-append path every tasks.yaml writer uses: acquire the
-    daemon's queue-lock (logs/.queue.lock.d, the heal-dispatch.py convention), RELOAD fresh
-    under the lock, append validated limen Task objects, save via the atomic writer
-    (limen.io.save_limen_file → temp file + fsync + os.replace). Never a naive open()/dump,
-    so it can NEVER race the daemon or torn-read tasks.yaml.
+  • EMIT side acquires the daemon's queue-lock (logs/.queue.lock.d, the heal-dispatch.py
+    convention), RELOADS the read-only projection under the lock, constructs validated Limen Task
+    objects, and submits the delta through TABVLARIVS. The remote keeper is the only lifecycle
+    writer; this organ never rewrites tasks.yaml or pushes the default branch.
   • IDEMPOTENT: each heal task has a STABLE id derived from kind+owner+repo+num
     (HEAL-cifix-… / HEAL-rebase-…). If that id already exists in tasks.yaml (any status), no
     duplicate is emitted — re-running is a no-op until the PR's state changes.
@@ -45,9 +44,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from _pr_scan import (  # noqa: E402
     enumerate_open_prs,
     merge_queue_capability,
@@ -445,8 +445,9 @@ def main():
             print("| (none — every sick PR already has an open heal task) |  |  |  |")
         return 0
 
-    # LIVE: acquire the daemon's queue-lock, RELOAD fresh under it, dedupe by stable id, append
-    # validated Task objects, save atomically. This is the ONLY safe shared-append path.
+    # LIVE: acquire the daemon's queue-lock, RELOAD the hot projection under it, dedupe by stable
+    # id, and submit the desired delta to TABVLARIVS. Only the remote keeper mutates lifecycle
+    # state; this process never writes the canonical board.
     if not acquire_lock():
         print("[self-heal] queue lock held by daemon — skipping this pass (retry next tick)")
         return 0
@@ -468,7 +469,7 @@ def main():
             lf.tasks.append(build_task(verdict, repo, num, url, stamp))
             emitted.append(tid)
         if emitted:
-            save_limen_file(tasks_path, lf)
+            apply_limen_file_sync(tasks_path, lf, agent="self-heal", session_id="emit")
     finally:
         try:
             LOCKD.rmdir()

@@ -4,8 +4,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from limen.io import save_limen_file
-from limen.models import DispatchLogEntry, LimenFile, Task
+from limen.models import DispatchLogEntry, LimenFile, Task, dispatch_agent, dispatch_session_id
 from limen.provider_selection import execution_profile_for
 from limen.remote_execution import (
     ReceiptStore,
@@ -19,6 +18,7 @@ from limen.remote_execution import (
     remote_request_from_task,
     verification_context_for_task,
 )
+from limen.tabularius import apply_limen_file_sync
 
 
 def _get_jules_sessions(harvest_dir: Path) -> dict[str, str]:
@@ -102,7 +102,7 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
 
         session_id = session_mapping.get(task.id)
         if not session_id and task.dispatch_log:
-            session_id = task.dispatch_log[-1].session_id
+            session_id = dispatch_session_id(task.dispatch_log[-1])
 
         if session_id:
             diff_file = harvest_dir / f"{session_id}.diff"
@@ -155,7 +155,7 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
                 DispatchLogEntry(
                     timestamp=now,
                     agent="jules",
-                    session_id=task.dispatch_log[-1].session_id if task.dispatch_log else "harvest",
+                    session_id=dispatch_session_id(task.dispatch_log[-1]) if task.dispatch_log else "harvest",
                     status="done",
                     output=result[:500],
                 )
@@ -408,7 +408,7 @@ def check_remote_harvest(
                 continue
             if entry is None:
                 continue
-        provider = entry.agent
+        provider = dispatch_agent(entry)
         if agent and provider != agent:
             continue
         adapter = adapters.get(provider)
@@ -627,7 +627,7 @@ def harvest_results(
     updated.extend(check_remote_harvest(limen, tasks_path, agent=agent))
 
     if updated:
-        save_limen_file(tasks_path, limen)
+        apply_limen_file_sync(tasks_path, limen, agent=agent or "harvest", session_id="harvest")
         print(f"Harvested {len(updated)} task(s): {', '.join(updated)}")
     else:
         print("No completed tasks to harvest")

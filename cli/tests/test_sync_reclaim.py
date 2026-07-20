@@ -195,9 +195,8 @@ def test_parked_with_tracked_dirt_preserves_then_unparks(checkout, tmp_path):
     assert "uncommitted session work" in preserved  # dirt committed + pushed, not dropped
 
 
-def test_parked_unpark_preserves_live_tasks_yaml(checkout, tmp_path):
-    """The daemon-owned live queue is the ONE tracked-dirt exception: preserved across the
-    unpark switch AND the follow-on ff (the committed copies are stale snapshots)."""
+def test_parked_unpark_refuses_dirty_tasks_cache_without_copy_or_restore(checkout, tmp_path):
+    """A dirty remote-owned board cache blocks unpark without rewriting or carrying it."""
     clone, bare = checkout
     _commit(clone, "tasks.yaml", "queue: v0\n", "queue snapshot")
     _git("push", "-q", "origin", "main", cwd=clone)
@@ -205,12 +204,14 @@ def test_parked_unpark_preserves_live_tasks_yaml(checkout, tmp_path):
     _commit(clone, "tasks.yaml", "queue: branch-snapshot\n", "branch queue snapshot")
     _git("push", "-q", "-u", "origin", "work", cwd=clone)
     release = _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
-    (clone / "tasks.yaml").write_text("queue: LIVE\n")  # daemon-owned dirt, the sole exception
+    (clone / "tasks.yaml").write_text("queue: LIVE\n")  # unsanctioned local cache drift
     r = _run_sync(clone)
     assert r.returncode == 0
-    assert "UNPARKED" in r.stdout, r.stdout + r.stderr
-    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == release
-    assert (clone / "tasks.yaml").read_text() == "queue: LIVE\n"  # live queue won end-to-end
+    assert "local tasks.yaml cache is dirty" in r.stdout
+    assert "refusing to copy/restore/discard it" in r.stdout
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "work"
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() != release
+    assert (clone / "tasks.yaml").read_text() == "queue: LIVE\n"
 
 
 def test_parked_unpark_clears_untracked_release_collision(checkout, tmp_path):

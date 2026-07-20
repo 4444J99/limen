@@ -15,13 +15,23 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import limen.dispatch as D
+import limen.tabularius as T
 from limen.capacity import PAID_AGENT_ORDER, agent_status, capacity_census, format_capacity_census, select_lanes
+from limen.conduct.client import BrokerUnavailable
+from limen.conduct.broker import ConductError
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.execution_contract import execution_contract_hash
 from limen.io import load_limen_file
 from limen.jules_remote import JulesRemoteSnapshot
-from limen.models import JULES_LANDING_HOLD_LABEL, BudgetTrack, DispatchLogEntry, LimenFile, Task
+from limen.models import (
+    JULES_LANDING_HOLD_LABEL,
+    BudgetTrack,
+    DispatchLogEntry,
+    LimenFile,
+    Task,
+    dispatch_session_id,
+)
 from limen.status import print_status
 from limen.workstream_contract import packet_contract
 
@@ -70,6 +80,25 @@ def write_board(path: Path, tasks: list[dict]) -> None:
 
 def read_board(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
+
+
+def capture_canonical_deltas(monkeypatch) -> list[LimenFile]:
+    """Capture intended remote projections without mutating the local hot cache."""
+
+    projections: list[LimenFile] = []
+
+    def capture(_tasks_path, limen, **_kwargs):
+        projections.append(limen.model_copy(deep=True))
+
+    monkeypatch.setattr(D, "apply_limen_file_sync", capture)
+    return projections
+
+
+def force_broker_unavailable(monkeypatch) -> None:
+    def unavailable():
+        raise BrokerUnavailable("test conduct broker unavailable")
+
+    monkeypatch.setattr(T, "client_from_env", unavailable)
 
 
 def test_always_working_timeout_fails_open_by_default(tmp_path: Path, monkeypatch, capsys) -> None:
@@ -975,6 +1004,7 @@ def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
         }
     )
     tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+    before = tasks_path.read_bytes()
     calls: list[str] = []
 
     def fake_dispatch(agent, task, dry_run=False):
@@ -983,14 +1013,17 @@ def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
 
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
     monkeypatch.setattr(D, "call_agent_dispatch", fake_dispatch)
+    force_broker_unavailable(monkeypatch)
 
-    dispatch_parallel(stale, tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1, dry_run=False)
+    with pytest.raises(BrokerUnavailable, match="test conduct broker unavailable"):
+        dispatch_parallel(stale, tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1, dry_run=False)
 
     tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
     assert set(tasks) == {"DISPATCH-ME", "CONCURRENT"}
-    assert tasks["DISPATCH-ME"]["status"] == "dispatched"
+    assert tasks["DISPATCH-ME"]["status"] == "open"
     assert tasks["CONCURRENT"]["status"] == "open"
-    assert calls == ["DISPATCH-ME"]
+    assert tasks_path.read_bytes() == before
+    assert calls == []  # no execution without an acknowledged reservation
 
 
 def test_dispatch_parallel_does_not_dispatch_stale_open_task(
@@ -1077,6 +1110,7 @@ def test_dispatch_serial_commit_survives_concurrent_board_write(
         ],
     )
     stale = load_limen_file(tasks_path)
+    local_cache_after_peer: list[bytes] = []
 
     def fold_then_succeed(agent, task, dry_run=False):
         _concurrent_fold(tasks_path)
@@ -1085,21 +1119,26 @@ def test_dispatch_serial_commit_survives_concurrent_board_write(
         dispatched["predicate"] = "pytest -q concurrent-owner-check"
         dispatched["receipt_target"] = "git:someorg/dispatch-lab:receipts/concurrent-owner.json"
         tasks_path.write_text(yaml.safe_dump(concurrent, sort_keys=False))
+        local_cache_after_peer.append(tasks_path.read_bytes())
         return True
 
     monkeypatch.setattr(D, "_down_lanes", lambda: set())
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
     monkeypatch.setattr(D, "call_agent_dispatch", fold_then_succeed)
+    projections = capture_canonical_deltas(monkeypatch)
 
     dispatch_tasks(stale, tasks_path, agent="codex", dry_run=False)
 
-    tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
-    assert set(tasks) == {"DISPATCH-ME", "CONCURRENT-FOLD"}
-    assert tasks["DISPATCH-ME"]["status"] == "open"
-    assert tasks["DISPATCH-ME"]["dispatch_log"] == []
-    assert tasks["DISPATCH-ME"]["predicate"] == "pytest -q concurrent-owner-check"
-    assert tasks["DISPATCH-ME"]["receipt_target"].endswith("concurrent-owner.json")
-    assert tasks["CONCURRENT-FOLD"]["status"] == "open"
+    assert tasks_path.read_bytes() == local_cache_after_peer[-1]
+    local_tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
+    assert local_tasks["DISPATCH-ME"]["status"] == "open"
+    intended = {task.id: task for task in projections[-1].tasks}
+    assert set(intended) == {"DISPATCH-ME", "CONCURRENT-FOLD"}
+    assert intended["DISPATCH-ME"].status == "open"
+    assert intended["DISPATCH-ME"].dispatch_log == []
+    assert intended["DISPATCH-ME"].predicate == "pytest -q concurrent-owner-check"
+    assert intended["DISPATCH-ME"].receipt_target.endswith("concurrent-owner.json")
+    assert intended["CONCURRENT-FOLD"].status == "open"
     assert "FENCE DISPATCH-ME: execution or lifecycle ownership changed" in capsys.readouterr().out
 
 
@@ -1123,19 +1162,22 @@ def test_dispatch_budget_reset_persist_survives_concurrent_board_write(
     stale = load_limen_file(tasks_path)
 
     _concurrent_fold(tasks_path)
+    before = tasks_path.read_bytes()
 
     monkeypatch.setattr(D, "_down_lanes", lambda: set())
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    projections = capture_canonical_deltas(monkeypatch)
 
     dispatch_tasks(stale, tasks_path, agent="codex", dry_run=False)
 
-    board = read_board(tasks_path)
-    assert "CONCURRENT-FOLD" in {task["id"] for task in board["tasks"]}
-    assert board["portal"]["budget"]["track"]["per_agent"]["codex"] == 0
+    assert tasks_path.read_bytes() == before
+    assert "CONCURRENT-FOLD" in {task.id for task in projections[-1].tasks}
+    assert projections[-1].portal.budget.track.per_agent["codex"] == 0
 
 
 def test_release_stale_apply_survives_concurrent_board_write(
     tmp_path: Path,
+    monkeypatch,
 ) -> None:
     """release-stale APPLY re-selects and mutates a FRESH board under the queue lock; saving
     the caller's snapshot would erase concurrent writes."""
@@ -1159,14 +1201,16 @@ def test_release_stale_apply_survives_concurrent_board_write(
     stale = load_limen_file(tasks_path)
 
     _concurrent_fold(tasks_path)
+    before = tasks_path.read_bytes()
+    force_broker_unavailable(monkeypatch)
 
-    report = release_stale_tasks(stale, tasks_path, hours=24, dry_run=False)
+    with pytest.raises(BrokerUnavailable, match="test conduct broker unavailable"):
+        release_stale_tasks(stale, tasks_path, hours=24, dry_run=False)
 
     tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
     assert set(tasks) == {"STALE-CLAIM", "CONCURRENT-FOLD"}
-    assert tasks["STALE-CLAIM"]["status"] == "open"
-    assert report["status"] == "applied"
-    assert report["released"] == ["STALE-CLAIM"]
+    assert tasks["STALE-CLAIM"]["status"] == "dispatched"
+    assert tasks_path.read_bytes() == before
 
 
 def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch) -> None:
@@ -2524,7 +2568,8 @@ def test_parallel_result_commit_lock_busy_cleans_owned_receipts(
     current = read_board(tasks_path)["tasks"][0]
     assert current["status"] == "dispatched"
     assert len(current["dispatch_log"]) == 1
-    assert current["dispatch_log"][0]["session_id"] == "reserve"
+    assert current["dispatch_log"][0]["session_id"] == "dispatch-parallel-reserve"
+    assert dispatch_session_id(current["dispatch_log"][0]) == "reserve"
     assert task_id not in D._MODEL_SELECTION_RECEIPTS
     assert task_id not in D._REMOTE_SUBMISSION_RECEIPTS
     assert "queue busy" in capsys.readouterr().out
@@ -2727,21 +2772,45 @@ def test_dispatch_parallel_records_blocked_without_counting_failure(tmp_path: Pa
             }
         ],
     )
+    before = tasks_path.read_bytes()
     monkeypatch.setattr(
         D,
         "call_agent_dispatch",
         lambda agent, task, dry_run=False: D._blocked_result("repo unavailable: organvm/missing"),
     )
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    projections = capture_canonical_deltas(monkeypatch)
 
     dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1)
 
     output = capsys.readouterr().out
-    task = read_board(tasks_path)["tasks"][0]
-    assert task["status"] == "failed_blocked"
-    assert task["dispatch_log"][-1]["status"] == "failed_blocked"
+    assert tasks_path.read_bytes() == before
+    intended = {task.id: task for task in projections[-1].tasks}["BLOCKED-PARALLEL"]
+    assert intended.status == "failed_blocked"
+    assert intended.dispatch_log[-1].status == "failed_blocked"
     assert "1 blocked" in output
     assert "0 failed" in output
+
+    class RejectTerminalReceipt:
+        def register(self, _session):
+            return {"status": "registered"}
+
+        def submit(self, packet):
+            assert packet.intent["expected_status"] == "dispatched"
+            assert packet.intent["patch"]["status"] == "failed_blocked"
+            assert packet.intent["log"]["lifecycle_repair"] == "provider-terminal"
+            raise ConductError("remote terminal receipt rejected")
+
+    monkeypatch.setattr(T, "client_from_env", lambda: RejectTerminalReceipt())
+    with pytest.raises(ConductError, match="remote terminal receipt rejected"):
+        T.apply_limen_file_sync(
+            tasks_path,
+            projections[-1],
+            agent="dispatch-parallel",
+            session_id="results",
+            before=projections[-2],
+        )
+    assert tasks_path.read_bytes() == before
 
 
 def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkeypatch) -> None:
@@ -3038,7 +3107,7 @@ def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:
     assert tasks_path.read_text() == before
 
 
-def test_release_stale_apply_reopens_task(tmp_path: Path) -> None:
+def test_release_stale_apply_reopens_task(tmp_path: Path, monkeypatch) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -3056,19 +3125,22 @@ def test_release_stale_apply_reopens_task(tmp_path: Path) -> None:
             }
         ],
     )
+    before = tasks_path.read_bytes()
+    projections = capture_canonical_deltas(monkeypatch)
 
     report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=False)
 
-    task = read_board(tasks_path)["tasks"][0]
-    assert task["status"] == "open"
-    assert task["dispatch_log"][-1]["status"] == "open"
+    assert tasks_path.read_bytes() == before
+    task = projections[-1].tasks[0]
+    assert task.status == "open"
+    assert task.dispatch_log[-1].status == "open"
     assert report["status"] == "applied"
     assert report["count"] == 1
     assert report["released"] == ["LIMEN-002"]
     assert report["restored_done"] == []
 
 
-def test_release_stale_restores_prior_done_instead_of_reopening(tmp_path: Path) -> None:
+def test_release_stale_restores_prior_done_instead_of_reopening(tmp_path: Path, monkeypatch) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -3093,12 +3165,15 @@ def test_release_stale_restores_prior_done_instead_of_reopening(tmp_path: Path) 
             }
         ],
     )
+    before = tasks_path.read_bytes()
+    projections = capture_canonical_deltas(monkeypatch)
 
     report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=False)
 
-    task = read_board(tasks_path)["tasks"][0]
-    assert task["status"] == "done"
-    assert task["dispatch_log"][-1]["status"] == "done"
+    assert tasks_path.read_bytes() == before
+    task = projections[-1].tasks[0]
+    assert task.status == "done"
+    assert task.dispatch_log[-1].status == "done"
     assert report["released"] == []
     assert report["restored_done"] == ["DONE-REOPENED"]
 
@@ -3147,13 +3222,15 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
             },
         ],
     )
+    before = tasks_path.read_bytes()
+    projections = capture_canonical_deltas(monkeypatch)
 
     dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="external", dry_run=False, limit=3)
 
-    board = read_board(tasks_path)
-    statuses = {task["id"]: task["status"] for task in board["tasks"]}
+    assert tasks_path.read_bytes() == before
+    statuses = {task.id: task.status for task in projections[-1].tasks}
     assert statuses == {"LIMEN-003": "dispatched", "LIMEN-004": "dispatched", "LIMEN-005": "open"}
-    assert board["portal"]["budget"]["track"]["per_agent"]["external"] == 2
+    assert projections[-1].portal.budget.track.per_agent["external"] == 2
 
 
 def test_dispatch_skips_lane_marked_down_by_usage_meter(tmp_path: Path, monkeypatch) -> None:

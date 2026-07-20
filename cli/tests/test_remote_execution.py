@@ -13,7 +13,7 @@ from typing import Callable, Sequence
 
 import pytest
 
-from limen.census import Budget, Status, Vendor
+from limen.census import Budget, ExecutionProfile, Status, Vendor
 from limen.harvest import check_remote_harvest
 from limen.io import save_limen_file
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
@@ -253,6 +253,20 @@ def test_verification_context_requires_terminal_same_repo_implementation_custody
     parent.dispatch_log[-1].output = "opened https://github.com/organvm/limen/pull/7"
     with pytest.raises(RemoteExecutionError, match="terminal custody event"):
         verification_context_for_task(child, {parent.id: parent, child.id: child})
+
+
+def test_verification_context_reads_logical_identity_from_keeper_projection() -> None:
+    child = verification_task()
+    parent = implementation_parent()
+    entry = parent.dispatch_log[-1]
+    entry.agent = "dispatch-async"
+    entry.session_id = "dispatch-async-harvest"
+    entry.logical_agent = "codex"
+    entry.logical_session_id = "https://github.com/organvm/limen/pull/7"
+
+    context = verification_context_for_task(child, {parent.id: parent, child.id: child})
+
+    assert context["implementation_custody"][0]["custody_event"]["agent"] == "codex"  # type: ignore[index]
 
 
 def test_request_rejects_malformed_direct_verification_custody_context() -> None:
@@ -779,6 +793,16 @@ def vendor(name: str = "renamed-actions") -> Vendor:
         tiering="none",
         budget=Budget(None, "runs", "none", "test", "unmodeled"),
         status=Status(True, "live", "fixture"),
+        execution=ExecutionProfile(
+            capabilities=frozenset({"conduct", "execute", "review", "inspect", "verify", "github-remote"}),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="provider-receipt",
+            concurrency_ref="lane:renamed-actions:concurrency",
+            meter_ref="lane:renamed-actions:meter",
+            health_ref="lane:renamed-actions:health",
+            auth_ref="lane:renamed-actions:auth",
+        ),
     )
 
 

@@ -19,11 +19,14 @@ def _load():
     return mod
 
 
-def _args(session: Path, min_codex_planners: int = 10) -> Namespace:
+def _args(session: Path, min_planners: int = 10, source_agent: str = "codex") -> Namespace:
     return Namespace(
         session=str(session),
-        min_codex_planners=min_codex_planners,
+        source_agent=source_agent,
+        min_planners=min_planners,
+        planner_lanes="auto",
         executor_lanes="auto",
+        conductor_agent="auto",
         include_contrib=True,
         allow_reset_spend=False,
         runway="2d",
@@ -156,8 +159,8 @@ def test_current_session_fanout_extracts_full_plan_set_and_marks_duplicates(
     assert "full-fleet-overnight" in snap["themes"]
     expected_plan_hashes = [event["hash"] for event in snap["unique_plan_sources"]]
     assert len(snap["planner_packets"]) >= 10
-    assert {packet["target_agent"] for packet in snap["planner_packets"]} == {"codex"}
-    assert {packet["target_agent"] for packet in snap["executor_packets"]} == {"opencode"}
+    assert {packet["target_agent"] for packet in snap["planner_packets"]} == {"codex", "opencode"}
+    assert {packet["target_agent"] for packet in snap["executor_packets"]} == {"codex", "opencode"}
     assert snap["workstream_contract"]["runway"]["duration_seconds"] == 172_800
     assert snap["workstream_contract"]["runway"]["started_epoch"] == parent_started
     assert snap["workstream_contract"]["runway"]["deadline_epoch"] == parent_deadline
@@ -253,18 +256,27 @@ def test_current_session_fanout_emits_plan_02_executor_criteria_and_safe_markdow
     )
     monkeypatch.setattr(mod, "digest_blockers", lambda: [])
 
-    snap = mod.build_snapshot(_args(session, min_codex_planners=2))
+    snap = mod.build_snapshot(_args(session, min_planners=2, source_agent="claude"))
     plan_02 = next(packet for packet in snap["planner_packets"] if packet["theme"] == "full-fleet-overnight")
 
     assert plan_02["id"] == "PLAN-02-ea38d4d8"
     assert plan_02["owner_packet"]["owner_repo"] == "organvm/limen"
-    assert any("PAID_AGENT_ORDER" in item for item in plan_02["owner_packet"]["criteria"])
+    assert any("canonical census execution profiles" in item for item in plan_02["owner_packet"]["criteria"])
     assert any(
         "dispatch-async.py --lanes auto --dry-run" in item
         for item in plan_02["owner_packet"]["verification_predicates"]
     )
-    assert snap["executor_packets"][0]["target_agent"] == "agy"
+    assert {packet["target_agent"] for packet in snap["executor_packets"]} == {"agy", "codex"}
     assert snap["executor_packets"][0]["verification_predicates"]
+    assert snap["initiator_agent"] == "claude"
+    assert snap["conductor_agent"] in {"agy", "codex"}
+    for packet in snap["planner_packets"] + snap["executor_packets"]:
+        assert packet["runtime_env"]["LIMEN_AGENT"] == packet["target_agent"]
+        assert packet["runtime_env"]["LIMEN_INITIATOR_AGENT"] == "claude"
+        assert packet["runtime_env"]["LIMEN_AGENT"] != packet["runtime_env"]["LIMEN_INITIATOR_AGENT"] or (
+            packet["target_agent"] == "claude"
+        )
+        assert packet["runtime_env"]["LIMEN_ROOT_RUN_ID"] == snap["root_run_id"]
 
     markdown = mod.render_markdown(snap)
     assert "## Plan Source Proof" in markdown
@@ -303,7 +315,11 @@ def test_current_session_fanout_uses_registry_lanes_and_rejects_unbounded_runway
         encoding="utf-8",
     )
     mod = _load()
-    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex", "jules", "agy", "opencode", "copilot"))
+    monkeypatch.setattr(
+        mod,
+        "paid_agent_order",
+        lambda: ("codex", "jules", "agy", "opencode", "copilot"),
+    )
     rows = [
         {
             "agent": agent,
@@ -320,7 +336,7 @@ def test_current_session_fanout_uses_registry_lanes_and_rejects_unbounded_runway
 
     monkeypatch.setattr(mod, "lane_rows", lambda: rows)
     monkeypatch.setattr(mod, "digest_blockers", lambda: [])
-    args = _args(session, min_codex_planners=1)
+    args = _args(session, min_planners=1)
     args.runway = "forever"
     with pytest.raises(mod.ContractError):
         mod.build_snapshot(args)

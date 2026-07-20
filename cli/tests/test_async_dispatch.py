@@ -26,7 +26,16 @@ sys.path.insert(0, str(CLI_SRC))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.execution_contract import execution_contract_hash  # noqa: E402
-from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
+from limen.models import (  # noqa: E402
+    Budget,
+    BudgetTrack,
+    DispatchLogEntry,
+    LimenFile,
+    Portal,
+    Task,
+    dispatch_agent,
+    dispatch_session_id,
+)
 from limen.provider_selection import execution_profile_for  # noqa: E402
 from limen.remote_execution import verification_context_for_task  # noqa: E402
 from limen.remote_predicate import (  # noqa: E402
@@ -86,12 +95,14 @@ def _remote_harvest_fixture(tmp_path):
     task.receipt_target = f"artifact:organvm/limen:task:{task.id}"
     task.status = "dispatched"
     reservation_id = f"async-reserve:{'a' * 32}"
+    contract_hash = execution_contract_hash(task)
     task.dispatch_log.append(
         DispatchLogEntry(
             timestamp=datetime.datetime.now(datetime.timezone.utc),
             agent="github_actions",
             session_id=reservation_id,
             status="dispatched",
+            execution_contract_hash=contract_hash,
         )
     )
     lf.tasks.append(
@@ -844,7 +855,11 @@ def test_harvest_applies_pr_result_and_cleans(tmp_path):
     )
     assert da.harvest() == 1
     t0 = _board(tmp_path)["T0"]
-    assert any("pull/9" in str(e.session_id) for e in t0.dispatch_log)
+    assert any("pull/9" in str(e.output) for e in t0.dispatch_log)
+    assert t0.dispatch_log[-1].session_id == "dispatch-async-harvest"
+    assert dispatch_session_id(t0.dispatch_log[-1]) == "https://github.com/x/y/pull/9"
+    assert t0.dispatch_log[-1].agent == "dispatch-async"
+    assert dispatch_agent(t0.dispatch_log[-1]) == "codex"
     assert not (da.RUNS / "T0.result.json").exists()
     assert not (da.RUNS / "T0__codex.running").exists()
     track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
@@ -860,7 +875,10 @@ def test_remote_harvest_accepts_only_complete_hash_bound_identity(tmp_path):
     task = _board(tmp_path)["T0"]
     entry = task.dispatch_log[-1]
     metadata = result["remote_submission"]
-    assert entry.session_id == metadata["provider_run_id"]
+    assert entry.session_id == "dispatch-async-harvest"
+    assert dispatch_session_id(entry) == metadata["provider_run_id"]
+    assert entry.agent == "dispatch-async"
+    assert dispatch_agent(entry) == "github_actions"
     assert entry.provider_run_id == metadata["provider_run_id"]
     assert entry.provider_url == metadata["provider_url"]
     assert entry.base_sha == metadata["base_sha"]
@@ -887,6 +905,8 @@ def test_remote_preflight_blocker_is_consumed_once_without_run_metadata(tmp_path
     assert task.status == "failed_blocked"
     assert task.dispatch_log[-1].status == "failed_blocked"
     assert task.dispatch_log[-1].output == "control workflow unavailable"
+    assert task.dispatch_log[-1].lifecycle_repair == "provider-terminal"
+    assert task.dispatch_log[-1].execution_result_kind == "failed_blocked"
     assert not result_path.exists()
     assert da.harvest() == 0
     assert sum(entry.status == "failed_blocked" for entry in _board(tmp_path)["T0"].dispatch_log) == 1
@@ -1205,7 +1225,10 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     dispatched = [t for t in load_limen_file(tmp_path / "tasks.yaml").tasks if t.status == "dispatched"]
     assert len(dispatched) == 2
     assert all(t.dispatch_log[-1].status == "dispatched" for t in dispatched)
-    reservation_ids = [t.dispatch_log[-1].session_id for t in dispatched]
+    assert all(t.dispatch_log[-1].session_id == "dispatch-async-reserve" for t in dispatched)
+    assert all(t.dispatch_log[-1].agent == "dispatch-async" for t in dispatched)
+    assert all(dispatch_agent(t.dispatch_log[-1]) == "codex" for t in dispatched)
+    reservation_ids = [dispatch_session_id(t.dispatch_log[-1]) for t in dispatched]
     assert all(re.fullmatch(r"async-reserve:[0-9a-f]{32}", value) for value in reservation_ids)
     assert len(set(reservation_ids)) == len(reservation_ids)
     assert all(t.predicate and t.receipt_target for t in dispatched)
@@ -1230,7 +1253,8 @@ def test_spawn_failure_reopens_refunds_and_releases_machine_lease(tmp_path, monk
 
     task = _board(tmp_path)["T0"]
     assert task.status == "open"
-    assert task.dispatch_log[-1].session_id == "async-launch-failed"
+    assert task.dispatch_log[-1].session_id == "dispatch-async-launch-failure"
+    assert dispatch_session_id(task.dispatch_log[-1]) == "async-launch-failed"
     assert load_limen_file(tmp_path / "tasks.yaml").portal.budget.track.spent == 0
     assert not dispatch_module._admission_lease_path("T0").exists()
 
@@ -1889,7 +1913,8 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
     assert (da.RUNS / "LIVE__codex.running").exists()
     board = _board(tmp_path)
     assert board["DEAD"].status == "open" and board["LIVE"].status == "dispatched"
-    assert board["DEAD"].dispatch_log[-1].session_id == "async-reap-stale"
+    assert board["DEAD"].dispatch_log[-1].session_id == "dispatch-async-reap-stale"
+    assert dispatch_session_id(board["DEAD"].dispatch_log[-1]) == "async-reap-stale"
 
 
 def test_nonce_scoped_result_prevents_matching_dead_marker_reap(tmp_path):
@@ -2032,7 +2057,8 @@ def test_reaper_restores_prior_done_instead_of_reopening(tmp_path):
     task = _board(tmp_path)["DONE-DEAD"]
     assert task.status == "done"
     assert task.dispatch_log[-1].status == "done"
-    assert task.dispatch_log[-1].session_id == "async-reap-stale"
+    assert task.dispatch_log[-1].session_id == "dispatch-async-reap-stale"
+    assert dispatch_session_id(task.dispatch_log[-1]) == "async-reap-stale"
 
 
 def test_reaper_restores_prior_pr_open_instead_of_reopening(tmp_path):
@@ -2074,7 +2100,8 @@ def test_reaper_restores_prior_pr_open_instead_of_reopening(tmp_path):
     task = _board(tmp_path)["PR-DEAD"]
     assert task.status == "dispatched"
     assert task.dispatch_log[-1].status == "dispatched"
-    assert task.dispatch_log[-1].session_id == "async-reap-stale"
+    assert task.dispatch_log[-1].session_id == "dispatch-async-reap-stale"
+    assert dispatch_session_id(task.dispatch_log[-1]) == "async-reap-stale"
 
 
 def test_reaper_reopens_markerless_async_reservation(tmp_path):
@@ -2109,7 +2136,8 @@ def test_reaper_reopens_markerless_async_reservation(tmp_path):
     assert reaped == ["MARKERLESS"]
     task = _board(tmp_path)["MARKERLESS"]
     assert task.status == "open"
-    assert task.dispatch_log[-1].session_id == "async-reap-stale"
+    assert task.dispatch_log[-1].session_id == "dispatch-async-reap-stale"
+    assert dispatch_session_id(task.dispatch_log[-1]) == "async-reap-stale"
     assert "markerless async reservation" in task.dispatch_log[-1].output
 
 
@@ -2153,7 +2181,8 @@ def test_reaper_restores_markerless_prior_pr_open_instead_of_reopening(tmp_path)
     task = _board(tmp_path)["PR-MARKERLESS"]
     assert task.status == "dispatched"
     assert task.dispatch_log[-1].status == "dispatched"
-    assert task.dispatch_log[-1].session_id == "async-reap-stale"
+    assert task.dispatch_log[-1].session_id == "dispatch-async-reap-stale"
+    assert dispatch_session_id(task.dispatch_log[-1]) == "async-reap-stale"
 
 
 def test_async_reserve_counts_inflight_against_launch_room(tmp_path):
@@ -2246,7 +2275,7 @@ def test_async_reserve_projects_stale_budget_reset_before_selection(tmp_path, mo
     assert load_limen_file(tmp_path / "tasks.yaml").portal.budget.track.per_agent["jules"] == 100
 
 
-def test_async_reserve_persists_stale_budget_reset_even_without_launches(tmp_path, monkeypatch):
+def test_async_reserve_leaves_budget_window_to_keeper_without_launches(tmp_path, monkeypatch):
     now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.timezone.utc)
     stale = (now - datetime.timedelta(days=2)).isoformat()
     da = _load(tmp_path, n_open=0)
@@ -2265,9 +2294,9 @@ def test_async_reserve_persists_stale_budget_reset_even_without_launches(tmp_pat
     assert da.reserve_and_launch(["jules"], per_agent=8, cap=0, dry=False) == []
 
     track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
-    assert track.per_agent["jules"] == 0
-    assert track.spent == 0
-    assert track.per_agent_reset["jules"] == now.isoformat()
+    assert track.per_agent["jules"] == 100
+    assert track.spent == 100
+    assert track.per_agent_reset["jules"] == stale
 
 
 def test_async_reserve_skips_open_task_with_prior_done(tmp_path):
@@ -3112,7 +3141,8 @@ def test_exact_orphan_recovery_command_reopens_once_and_is_idempotent(tmp_path, 
     assert second["recovered_count"] == 0
     assert current[task.id].status == "open"
     assert current["T1"].status == "open"
-    assert current[task.id].dispatch_log[-1].session_id == "async-recover-exact"
+    assert current[task.id].dispatch_log[-1].session_id == "dispatch-async-recover-exact"
+    assert dispatch_session_id(current[task.id].dispatch_log[-1]) == "async-recover-exact"
 
 
 def test_reaper_rechecks_nonce_result_under_lock_before_reopening(tmp_path, monkeypatch):
@@ -3242,7 +3272,7 @@ def test_exact_open_task_launches_new_nonce_despite_stale_nonce_artifacts(tmp_pa
 
     assert launched == [(agent, task_id)]
     current = _board(tmp_path)[task_id]
-    reservation_b = current.dispatch_log[-1].session_id
+    reservation_b = dispatch_session_id(current.dispatch_log[-1])
     assert re.fullmatch(r"async-reserve:[0-9a-f]{32}", reservation_b)
     assert reservation_b != reservation_a
     assert worker_argv[0][worker_argv[0].index("--reservation-id") + 1] == reservation_b
@@ -3375,7 +3405,7 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
     assert da.reserve_and_launch([agent], 1, 1, False, task_id=task_id) == [(agent, task_id)]
     task_a = _board(tmp_path)[task_id]
     contract_hash = execution_contract_hash(task_a)
-    reservation_a = task_a.dispatch_log[-1].session_id
+    reservation_a = dispatch_session_id(task_a.dispatch_log[-1])
     assert re.fullmatch(r"async-reserve:[0-9a-f]{32}", reservation_a)
     marker_a = da._running_marker_path(task_id, agent, reservation_a)
     marker_a_payload = json.loads(marker_a.read_text(encoding="utf-8"))
@@ -3396,7 +3426,7 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
 
     assert da.reserve_and_launch([agent], 1, 1, False, task_id=task_id) == [(agent, task_id)]
     task_b = _board(tmp_path)[task_id]
-    reservation_b = task_b.dispatch_log[-1].session_id
+    reservation_b = dispatch_session_id(task_b.dispatch_log[-1])
     assert re.fullmatch(r"async-reserve:[0-9a-f]{32}", reservation_b)
     assert reservation_b != reservation_a
     marker_b = da._running_marker_path(task_id, agent, reservation_b)

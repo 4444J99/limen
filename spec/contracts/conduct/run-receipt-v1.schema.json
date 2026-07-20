@@ -1,0 +1,336 @@
+{
+  "$defs": {
+    "AgentIdentityV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "title": "Agent",
+          "type": "string"
+        },
+        "native_run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Run Id"
+        },
+        "provider_identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Identity"
+        },
+        "schema_version": {
+          "const": "limen.agent_identity.v1",
+          "default": "limen.agent_identity.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "surface": {
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "surface",
+        "session_id"
+      ],
+      "title": "AgentIdentityV1",
+      "type": "object"
+    },
+    "CheckEvidenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "head": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Head"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "failure",
+            "pending",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "required": [
+        "name",
+        "status"
+      ],
+      "title": "CheckEvidenceV1",
+      "type": "object"
+    },
+    "PredicateEvidenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "title": "Command",
+          "type": "string"
+        },
+        "exit_code": {
+          "title": "Exit Code",
+          "type": "integer"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "summary": {
+          "default": "",
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "exit_code"
+      ],
+      "title": "PredicateEvidenceV1",
+      "type": "object"
+    },
+    "ReviewEvidenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "disposition": {
+          "enum": [
+            "approved",
+            "commented",
+            "changes_requested",
+            "none"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "fully_paginated": {
+          "default": false,
+          "title": "Fully Paginated",
+          "type": "boolean"
+        },
+        "head": {
+          "title": "Head",
+          "type": "string"
+        },
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "unresolved_threads": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Unresolved Threads",
+          "type": "integer"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "required": [
+        "provider",
+        "head",
+        "disposition"
+      ],
+      "title": "ReviewEvidenceV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "changed_paths": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Changed Paths",
+      "type": "array"
+    },
+    "checks": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CheckEvidenceV1"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "child_runs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Child Runs",
+      "type": "array"
+    },
+    "completed_at": {
+      "format": "date-time",
+      "title": "Completed At",
+      "type": "string"
+    },
+    "executor": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "lease_generation": {
+      "minimum": 1,
+      "title": "Lease Generation",
+      "type": "integer"
+    },
+    "lease_id": {
+      "title": "Lease Id",
+      "type": "string"
+    },
+    "observed_heads_after": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Observed Heads After",
+      "type": "object"
+    },
+    "observed_heads_before": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Observed Heads Before",
+      "type": "object"
+    },
+    "outcome": {
+      "enum": [
+        "succeeded",
+        "failed",
+        "blocked",
+        "cancelled",
+        "partial"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "predicate": {
+      "$ref": "#/$defs/PredicateEvidenceV1"
+    },
+    "provider_identity": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider Identity"
+    },
+    "provider_run_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider Run Url"
+    },
+    "receipt_id": {
+      "title": "Receipt Id",
+      "type": "string"
+    },
+    "reviews": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ReviewEvidenceV1"
+      },
+      "title": "Reviews",
+      "type": "array"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.run_receipt.v1",
+      "default": "limen.run_receipt.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "spend": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Spend",
+      "type": "object"
+    }
+  },
+  "required": [
+    "receipt_id",
+    "run_id",
+    "lease_id",
+    "lease_generation",
+    "executor",
+    "predicate",
+    "outcome"
+  ],
+  "title": "RunReceiptV1",
+  "type": "object"
+}

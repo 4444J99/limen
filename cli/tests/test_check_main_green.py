@@ -19,9 +19,11 @@ from limen.models import (  # noqa: E402
     JULES_LANDING_HOLD_LABEL,
     Budget,
     BudgetTrack,
+    DispatchLogEntry,
     LimenFile,
     Portal,
 )
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 
 
 def _seed(tmp: Path, conclusion: str) -> None:
@@ -152,10 +154,31 @@ def test_recurrence_reopens_healed_task(tmp_path):
     run(tmp_path, apply=True)
     tasks_path = tmp_path / "tasks.yaml"
 
-    # simulate the heal landing: mark the singleton done
-    lf = load_limen_file(tasks_path)
-    lf.tasks[0].status = "done"
-    save_limen_file(tasks_path, lf)
+    # Simulate the heal landing through the keeper's legal lifecycle.
+    for status in ("dispatched", "in_progress", "done"):
+        before = load_limen_file(tasks_path)
+        desired = before.model_copy(deep=True)
+        task = desired.tasks[0]
+        task.status = status
+        if status == "dispatched":
+            task.target_agent = "codex"
+        task.updated = dt.datetime.now(dt.timezone.utc)
+        task.dispatch_log.append(
+            DispatchLogEntry(
+                timestamp=task.updated,
+                agent="codex",
+                session_id=f"heal-{status}",
+                status=status,
+                output=f"simulated heal {status}",
+            )
+        )
+        apply_limen_file_sync(
+            tasks_path,
+            desired,
+            agent="codex",
+            session_id=f"heal-{status}",
+            before=before,
+        )
 
     # trunk goes red again → reopen the same ticket, not a duplicate
     run(tmp_path, apply=True)
@@ -163,6 +186,7 @@ def test_recurrence_reopens_healed_task(tmp_path):
     assert len(tasks) == 1
     assert tasks[0].id == "HEAL-mainred-organvm-limen"
     assert tasks[0].status == "open"  # reopened
+    assert tasks[0].dispatch_log[-1].lifecycle_repair == "recurrence-reopen"
 
 
 def test_recurrence_does_not_reopen_successor_required_singleton(tmp_path):

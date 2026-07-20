@@ -47,6 +47,19 @@ out="$(LIMEN_ROOT="$tmp/live" LIMEN_RELEASE_BRANCH=main bash "$script" 2>&1)" \
   || { echo "FAIL: sync-release exited nonzero"; echo "$out"; exit 1; }
 
 cur="$(git -C "$tmp/live" symbolic-ref --short HEAD)"
+[ "$cur" = codex/work ] || { echo "FAIL: dirty board cache did not fence unpark (HEAD on '$cur')"; echo "$out"; exit 1; }
+printf '%s' "$out" | grep -q "local tasks.yaml cache is dirty" \
+  || { echo "FAIL: dirty board cache emitted no exact refusal"; echo "$out"; exit 1; }
+grep -q v2-dirty "$tmp/live/docs/branch-hygiene.md" \
+  || { echo "FAIL: fenced unpark lost parked tracked dirt"; echo "$out"; exit 1; }
+grep -q task2 "$tmp/live/tasks.yaml" \
+  || { echo "FAIL: fenced unpark changed the dirty board cache"; echo "$out"; exit 1; }
+
+# Once the local cache is clean, the same valve may preserve the unrelated dirt and unpark.
+git -C "$tmp/live" checkout -q -- tasks.yaml
+out="$(LIMEN_ROOT="$tmp/live" LIMEN_RELEASE_BRANCH=main bash "$script" 2>&1)" \
+  || { echo "FAIL: clean-cache sync-release exited nonzero"; echo "$out"; exit 1; }
+cur="$(git -C "$tmp/live" symbolic-ref --short HEAD)"
 [ "$cur" = main ] || { echo "FAIL: not unparked to main (HEAD on '$cur')"; echo "$out"; exit 1; }
 
 git -C "$tmp/live" fetch -q origin codex/work

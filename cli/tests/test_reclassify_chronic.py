@@ -60,9 +60,13 @@ def test_apply_parks_chronic_flips_buildable_keeps_human(tmp_path):
     _, out = _run(tmp_path, board)
     assert out["CHR1"]["status"] == "failed_blocked", out["CHR1"]
     assert "chronic-fleet-debt" in (out["CHR1"].get("labels") or []), out["CHR1"]
+    assert out["CHR1"]["dispatch_log"][-1]["lifecycle_repair"] == "fleet-debt-park"
+    assert out["CHR1"]["dispatch_log"][-1]["fleet_debt_source"] == "prior-chronic-log"
+    assert out["CHR1"]["dispatch_log"][-1]["fleet_debt_count"] == 1
     assert out["CHR-CRED"]["status"] == "needs_human", out["CHR-CRED"]
     assert out["BUILD1"]["status"] == "open", out["BUILD1"]
     assert "reclassified-from-needs-human" in (out["BUILD1"].get("labels") or []), out["BUILD1"]
+    assert out["BUILD1"]["dispatch_log"][-1]["status"] == "open"
 
 
 def test_dry_run_reports_chronic_and_changes_nothing(tmp_path):

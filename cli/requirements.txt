@@ -6,9 +6,11 @@ click==8.4.2
     # via limen (pyproject.toml)
 pydantic==2.13.4
     # via limen (pyproject.toml)
-pydantic-core==2.47.0
+pydantic-core==2.46.4
     # via pydantic
 pyyaml==6.0.3
+    # via limen (pyproject.toml)
+rfc8785==0.1.4
     # via limen (pyproject.toml)
 typing-extensions==4.16.0
     # via

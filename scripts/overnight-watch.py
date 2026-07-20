@@ -41,7 +41,7 @@ from limen.dispatch import agent_can_run_task  # noqa: E402
 from limen.execution_contract import execution_contract_hash, execution_contract_payload  # noqa: E402
 from limen.intake import validate_intake_contract  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
-from limen.models import Task  # noqa: E402
+from limen.models import Task, dispatch_session_id  # noqa: E402
 from limen.tabularius import (  # noqa: E402
     INTENT_UPSERT,
     Ticket,
@@ -749,15 +749,16 @@ def _current_async_reservation_id(task_id: str) -> str | None:
         return None
     current = next((task for task in board.tasks if task.id == task_id), None)
     last = current.dispatch_log[-1] if current is not None and current.dispatch_log else None
+    reservation_id = dispatch_session_id(last) if last is not None else ""
     if (
         current is None
         or current.status != "dispatched"
         or last is None
         or last.status != "dispatched"
-        or (last.session_id != "async-reserve" and not _ASYNC_RESERVATION_RE.fullmatch(last.session_id))
+        or (reservation_id != "async-reserve" and not _ASYNC_RESERVATION_RE.fullmatch(reservation_id))
     ):
         return None
-    return last.session_id
+    return reservation_id
 
 
 def _artifact_matches_reservation(artifact_reservation_id: object, current_reservation_id: str) -> bool:

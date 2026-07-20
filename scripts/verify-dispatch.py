@@ -59,6 +59,10 @@ def _parse_ts(v):
         return None
 
 
+def _logical_session(entry):
+    return str(entry.get("logical_session_id") or entry.get("session_id") or "")
+
+
 def chronic_tasks(all_tasks, min_reopens=3, eligible_dispatched_ids=None):
     """Unowned tasks reopened by heal/recover >= min_reopens times without producing a PR.
 
@@ -80,7 +84,7 @@ def chronic_tasks(all_tasks, min_reopens=3, eligible_dispatched_ids=None):
         # every reopen mechanism (release-stale / recover / heal-dispatch) appends a
         # status=="open" entry — count those, robust across all three.
         reopens = sum(1 for e in log if str(e.get("status")) == "open")
-        ever_pr = any(PR_RE.search(str(e.get("session_id", ""))) for e in log)
+        ever_pr = any(PR_RE.search(_logical_session(e)) for e in log)
         if reopens < min_reopens or ever_pr:
             continue
         if active_typed_pr_owner_id(t, all_tasks) is not None:
@@ -138,7 +142,7 @@ def main():
         tid = t.get("id")
         agent = t.get("target_agent")
         log = t.get("dispatch_log") or []
-        sid = log[-1].get("session_id", "") if log else ""
+        sid = _logical_session(log[-1]) if log else ""
         m = PR_RE.search(str(sid))
         if m:
             owner, repo, num = m.group(1), m.group(2), m.group(3)

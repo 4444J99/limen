@@ -1,4 +1,11 @@
 import YAML from "yaml";
+import {
+  ConductKeeperDurableObject,
+  forwardCompatibilityPacket,
+  forwardConductRequest,
+} from "./conduct/durable-object.js";
+import { readInlineProjection } from "./conduct/projection.js";
+import { canonicalHash } from "./conduct/schemas.js";
 
 const GITHUB_API = "https://api.github.com";
 const VERIFY_STATUSES = new Set(["done", "needs_human", "failed", "failed_blocked"]);
@@ -16,7 +23,6 @@ const EXECUTABLES = new Set([
   "pnpm", "py.test", "pytest", "python", "python3", "ruby", "sh", "test", "tox", "uv", "yarn", "zsh",
 ]);
 const TABULARIUS_TICKET_ACTION = "Submit a TABVLARIVS ticket and let the keeper publish the board projection PR";
-let inlineBoardText = null;
 // Parsed-board cache: keyed by sha so re-parse only happens when content changes.
 let boardCache = null; // { sha: string, data: object }
 
@@ -632,8 +638,7 @@ function decodeBase64(value) {
 async function loadBoard(env) {
   const inline = inlineBoardSource(env);
   if (inline) {
-    inlineBoardText ??= inline;
-    return { data: YAML.parse(inlineBoardText) || { portal: {}, tasks: [] }, sha: null };
+    return { data: readInlineProjection(env), sha: null };
   }
   const branch = env.LIMEN_GITHUB_BRANCH || "main";
   const baseUrl = `${githubUrl(env)}?ref=${encodeURIComponent(branch)}`;
@@ -662,12 +667,6 @@ async function loadBoard(env) {
   return { data, sha };
 }
 
-async function saveBoard(env, data, sha) {
-  requireMutableBoard(env);
-  inlineBoardText = YAML.stringify(data);
-  void sha;
-}
-
 function inlineBoardSource(env) {
   if (env.LIMEN_INLINE_TASKS_YAML) return env.LIMEN_INLINE_TASKS_YAML;
   if (env.LIMEN_INLINE_TASKS_YAML_B64) return decodeBase64(env.LIMEN_INLINE_TASKS_YAML_B64);
@@ -693,10 +692,127 @@ function dispatchCandidates(data, agent = "jules", taskId = null) {
     .sort((a, b) => (priority[a.priority] ?? 99) - (priority[b.priority] ?? 99));
 }
 
-function appendLog(task, agent, sessionId, status, output = "") {
-  task.dispatch_log = task.dispatch_log || [];
-  task.dispatch_log.push({ timestamp: nowIso(), agent, session_id: sessionId, status, output });
-  task.updated = nowIso();
+function compatibilityIdentity() {
+  return {
+    schema_version: "limen.agent_identity.v1",
+    agent: "api",
+    surface: "worker",
+    session_id: "worker-owner-compatibility",
+    native_run_id: null,
+    provider_identity: "cloudflare-worker",
+  };
+}
+
+async function compatibilityPacket(env, intent, task) {
+  const identity = compatibilityIdentity();
+  const execution = {
+    adapter: "tabularius",
+    projection: "tasks.yaml",
+    observed_heads: {},
+  };
+  const rawRevision = task?.updated
+    || task?.dispatch_log?.at(-1)?.timestamp
+    || task?.created
+    || (intent.expected_absent ? "absent" : String(task?.status || "unknown"));
+  const revision = String(rawRevision);
+  const canonicalIntent = {
+    ...intent,
+    expected_revision: /^\d{4}-\d{2}-\d{2}T/.test(revision) && Number.isFinite(Date.parse(revision))
+      ? new Date(revision).toISOString()
+      : revision,
+  };
+  const intentHash = await canonicalHash(canonicalIntent);
+  const executionHash = await canonicalHash(execution);
+  const operationHash = await canonicalHash({ intent: canonicalIntent, execution });
+  const workId = `worker-task-${operationHash.slice(0, 32)}`;
+  const repository = String(env.LIMEN_GITHUB_REPO || "organvm/limen");
+  const deadline = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  return {
+    session: {
+      schema_version: "limen.conductor_session.v1",
+      session_id: identity.session_id,
+      identity,
+      origin: "relay",
+      capabilities: ["task-submit"],
+      transport: "durable-object",
+      native_fanout: false,
+      harvest_method: "receipt",
+      concurrency: 1,
+      meter: null,
+      registered_at: nowIso(),
+      heartbeat_at: nowIso(),
+      human_protected: false,
+      accepting_work: true,
+    },
+    packet: {
+      schema_version: "limen.work_packet.v1",
+      root_run_id: null,
+      parent_run_id: null,
+      work_id: workId,
+      work_key: workId,
+      intent: canonicalIntent,
+      intent_hash: intentHash,
+      execution,
+      execution_hash: executionHash,
+      initiator: identity,
+      conductor: identity,
+      preferred_agent: "tabularius",
+      required_capabilities: ["board-write"],
+      resource_claims: [{
+        schema_version: "limen.resource_claim.v1",
+        key: `task/${canonicalIntent.task_id}`,
+        mode: "exclusive",
+      }],
+      predicate: `test -n "${canonicalIntent.task_id}"`,
+      receipt_target: `git:${repository}:tasks.yaml#${canonicalIntent.task_id}`,
+      authority: {
+        schema_version: "limen.authority_envelope.v1",
+        actions: [canonicalIntent.kind],
+        repositories: [repository],
+        path_prefixes: ["tasks.yaml"],
+        external_effects: [],
+        may_delegate: false,
+      },
+      deadline,
+      spend: {
+        schema_version: "limen.spend_envelope.v1",
+        unit: "runs",
+        limit: 0,
+        reserve: 0,
+      },
+      retry: {
+        schema_version: "limen.retry_policy.v1",
+        max_attempts: 1,
+        transient_only: true,
+      },
+      depth: 0,
+      fanout: {
+        schema_version: "limen.fanout_bounds.v1",
+        max_children: 0,
+        max_depth: 0,
+      },
+      effect: "write",
+      task_id: canonicalIntent.task_id,
+    },
+  };
+}
+
+async function submitTaskMutation(env, intent, task = null) {
+  const { session, packet } = await compatibilityPacket(env, intent, task);
+  const result = await forwardCompatibilityPacket(env, session, packet);
+  const projection = result.projection_receipts?.at(-1);
+  if (!projection?.task) {
+    throw new Error(`conduct keeper returned no canonical task projection for ${intent.task_id}`);
+  }
+  return {
+    task: projection.task,
+    broker_receipt: {
+      run_id: result.run_id,
+      lease_id: result.lease?.lease_id,
+      event_id: projection.event_id,
+      status: projection.status,
+    },
+  };
 }
 
 async function withBoard(env, fn) {
@@ -709,6 +825,7 @@ async function route(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
 
+  if (path.startsWith("/api/conduct/")) return forwardConductRequest(request, env);
   if (path === "/health") return json({ status: "ok", time: nowIso(), storage: storageStatus(env) }, 200, env);
   if (path === "/api/public-status" && request.method === "GET") return withBoard(env, (data) => json({ status: "ok", surface: "public", summary: publicSummary(data) }, 200, env));
   if (path === "/api/surface-manifest" && request.method === "GET") {
@@ -751,20 +868,36 @@ async function route(request, env) {
     if (!Number.isFinite(hoursRaw) || hoursRaw < 0 || hoursRaw > 8760) return error("hours must be a number between 0 and 8760", 422, env);
     const hours = hoursRaw;
     const dryRun = (url.searchParams.get("dry_run") || "true") !== "false";
-    if (!dryRun) requireMutableBoard(env);
     const doc = await loadBoard(env);
     const candidates = releaseStaleCandidates(doc.data, hours);
+    const brokerReceipts = [];
+    const released = [];
     if (!dryRun) {
-      const ids = new Set(candidates.map((task) => task.id));
-      for (const task of doc.data.tasks || []) {
-        if (ids.has(task.id)) {
-          task.status = "open";
-          appendLog(task, "api", "release-stale", "open", `Released stale claim older than ${hours} hours`);
-        }
+      for (const candidate of candidates) {
+        const current = findTask(doc.data, candidate.id);
+        const mutation = await submitTaskMutation(env, {
+          kind: "task.status",
+          task_id: current.id,
+          expected_status: current.status,
+          patch: { status: "open" },
+          log: {
+            agent: "api",
+            session_id: "release-stale",
+            status: "open",
+            output: `Released stale claim older than ${hours} hours`,
+          },
+        }, current);
+        released.push(candidate.id);
+        brokerReceipts.push(mutation.broker_receipt);
       }
-      await saveBoard(env, doc.data, doc.sha);
     }
-    return json({ status: dryRun ? "dry_run" : "released", count: candidates.length, candidates, released: dryRun ? [] : candidates.map((task) => task.id) }, 200, env);
+    return json({
+      status: dryRun ? "dry_run" : "released",
+      count: dryRun ? candidates.length : released.length,
+      candidates,
+      released,
+      broker_receipts: brokerReceipts,
+    }, 200, env);
   }
 
   if (path === "/api/dispatch" && request.method === "POST") {
@@ -806,7 +939,6 @@ async function route(request, env) {
     const action = taskMatch[2];
     if (!action && request.method === "GET") return withBoard(env, (data) => json(findTask(data, taskId.value), 200, env));
     if (request.method !== "POST") return error("method not allowed", 405, env);
-    requireMutableBoard(env);
     let rawBody;
     try { rawBody = await request.json(); } catch { return error("invalid JSON body", 422, env); }
     const body = safeParseBody(rawBody, ["status", "note", "session_id", "target_agent", "priority", "budget_cost", "predicate", "receipt_target"]);
@@ -820,16 +952,31 @@ async function route(request, env) {
       const note = validateText(body.note, "note", env, { defaultValue: "", max: 2000 });
       if (note.response) return note.response;
       if (!["dispatched", "in_progress", "needs_human", "failed", "failed_blocked", "done"].includes(task.status)) return error("only active, attention, or done tasks can be verified", 409, env);
-      task.status = status.value;
-      appendLog(task, "qa", sessionId.value, task.status, note.value || `QA verified task as ${task.status}`);
-      await saveBoard(env, doc.data, doc.sha);
-      return json({ status: "verified", task, verified_status: task.status }, 200, env);
+      const mutation = await submitTaskMutation(env, {
+        kind: "task.status",
+        task_id: task.id,
+        expected_status: task.status,
+        patch: { status: status.value },
+        log: {
+          agent: "qa",
+          session_id: sessionId.value,
+          status: status.value,
+          output: note.value || `QA verified task as ${status.value}`,
+        },
+      }, task);
+      return json({
+        status: "verified",
+        task: mutation.task,
+        verified_status: status.value,
+        broker_receipt: mutation.broker_receipt,
+      }, 200, env);
     }
     if (action === "assign") {
       const sessionId = validateText(body.session_id, "session_id", env, { defaultValue: "assignment", max: 128 });
       if (sessionId.response) return sessionId.response;
       const note = validateText(body.note, "note", env, { defaultValue: "", max: 2000 });
       if (note.response) return note.response;
+      const prospective = structuredClone(task);
       const before = {
         target_agent: task.target_agent,
         priority: task.priority,
@@ -841,51 +988,67 @@ async function route(request, env) {
       if (body.target_agent !== undefined) {
         const targetAgent = validateEnum(body.target_agent, VALID_AGENTS, "target_agent", env);
         if (targetAgent.response) return targetAgent.response;
-        task.target_agent = targetAgent.value;
+        prospective.target_agent = targetAgent.value;
       }
       if (body.priority !== undefined) {
         const priority = validateEnum(body.priority, VALID_PRIORITIES, "priority", env);
         if (priority.response) return priority.response;
-        task.priority = priority.value;
+        prospective.priority = priority.value;
       }
       if (body.budget_cost !== undefined) {
         const cost = validateInteger(body.budget_cost, "budget_cost", env, { min: 1, max: 100 });
         if (cost.response) return cost.response;
-        task.budget_cost = cost.value;
+        prospective.budget_cost = cost.value;
       }
       if (body.predicate !== undefined) {
         const predicate = validateText(body.predicate, "predicate", env, { max: 2000 });
         if (predicate.response) return predicate.response;
-        task.predicate = predicate.value;
+        prospective.predicate = predicate.value;
       }
       if (body.receipt_target !== undefined) {
         const receiptTarget = validateText(body.receipt_target, "receipt_target", env, { max: 2048 });
         if (receiptTarget.response) return receiptTarget.response;
-        task.receipt_target = receiptTarget.value;
+        prospective.receipt_target = receiptTarget.value;
       }
       if (body.status !== undefined) {
         const status = validateEnum(body.status, VALID_STATUSES, "status", env);
         if (status.response) return status.response;
-        task.status = status.value;
+        prospective.status = status.value;
       }
       try {
-        validateIntakeContract(task);
+        validateIntakeContract(prospective);
       } catch (err) {
         if (err instanceof IntakeContractError) return error(`typed intake contract rejected: ${err.message}`, 422, env);
         throw err;
       }
       const after = {
-        target_agent: task.target_agent,
-        priority: task.priority,
-        budget_cost: task.budget_cost,
-        status: task.status,
-        predicate: task.predicate,
-        receipt_target: task.receipt_target,
+        target_agent: prospective.target_agent,
+        priority: prospective.priority,
+        budget_cost: prospective.budget_cost,
+        status: prospective.status,
+        predicate: prospective.predicate,
+        receipt_target: prospective.receipt_target,
       };
       const changed = Object.keys(after).filter((key) => before[key] !== after[key]);
-      appendLog(task, "api", sessionId.value, "assigned", note.value || `Assigned via steering controls: ${changed.join(", ") || "no field changes"}`);
-      await saveBoard(env, doc.data, doc.sha);
-      return json({ status: "assigned", task, changed }, 200, env);
+      const patch = Object.fromEntries(changed.map((key) => [key, after[key]]));
+      const mutation = await submitTaskMutation(env, {
+        kind: "task.mutate",
+        task_id: task.id,
+        expected_status: task.status,
+        patch,
+        log: {
+          agent: "api",
+          session_id: sessionId.value,
+          status: "assigned",
+          output: note.value || `Assigned via steering controls: ${changed.join(", ") || "no field changes"}`,
+        },
+      }, task);
+      return json({
+        status: "assigned",
+        task: mutation.task,
+        changed,
+        broker_receipt: mutation.broker_receipt,
+      }, 200, env);
     }
     if (action === "archive") {
       const sessionId = validateText(body.session_id, "session_id", env, { defaultValue: "archive", max: 128 });
@@ -894,9 +1057,23 @@ async function route(request, env) {
       if (note.response) return note.response;
       if (!["done", "archived"].includes(task.status)) return error("only done tasks can be archived", 409, env);
       if (task.status !== "archived") {
-        task.status = "archived";
-        appendLog(task, "api", sessionId.value, "archived", note.value || "Archived from QA steering");
-        await saveBoard(env, doc.data, doc.sha);
+        const mutation = await submitTaskMutation(env, {
+          kind: "task.status",
+          task_id: task.id,
+          expected_status: "done",
+          patch: { status: "archived" },
+          log: {
+            agent: "api",
+            session_id: sessionId.value,
+            status: "archived",
+            output: note.value || "Archived from QA steering",
+          },
+        }, task);
+        return json({
+          status: "archived",
+          task: mutation.task,
+          broker_receipt: mutation.broker_receipt,
+        }, 200, env);
       }
       return json({ status: "archived", task }, 200, env);
     }
@@ -919,12 +1096,19 @@ export default {
           owner: err.owner,
           target: err.target,
           detail: err.message,
-          next_action: "Submit a TABVLARIVS ticket and let the keeper publish the board projection PR",
+          next_action: TABULARIUS_TICKET_ACTION,
         }, 409, env);
       }
-      return error(err instanceof Error ? err.message : "runtime error", 500, env);
+      const status = Number.isInteger(err?.status) ? err.status : 500;
+      return error(err instanceof Error ? err.message : "runtime error", status, env);
     }
   },
 };
 
-export { isDurableReceiptTarget, isExecutablePredicate, normalizeSelectedLegacyTask, validateIntakeContract };
+export {
+  ConductKeeperDurableObject,
+  isDurableReceiptTarget,
+  isExecutablePredicate,
+  normalizeSelectedLegacyTask,
+  validateIntakeContract,
+};

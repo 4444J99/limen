@@ -600,5 +600,8 @@ def test_recover_escalates_repeated_noop_failures(tmp_path, monkeypatch):
     assert task.target_agent == "codex"
     assert task.labels == ["noop", "tried:codex", "chronic-fleet-debt"]
     assert task.dispatch_log[-1].status == "failed_blocked"
+    assert task.dispatch_log[-1].lifecycle_repair == "fleet-debt-park"
+    assert task.dispatch_log[-1].fleet_debt_source == "repeated-noop"
+    assert task.dispatch_log[-1].fleet_debt_count == 2
     assert "repeated no-op failures (2)" in task.dispatch_log[-1].output
     assert "failed_blocked" in task.dispatch_log[-1].output

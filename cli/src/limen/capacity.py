@@ -54,16 +54,17 @@ class CapacityFillSnapshot(TypedDict):
     blockers: list[dict[str, str]]
 
 
-# These six were once hand-maintained literals here; they are now DERIVED VIEWS of the single
+# These structures were once hand-maintained literals here; they are now DERIVED VIEWS of the single
 # vendor register in `census.py` (one record per vendor owns every fact). Editing a vendor — or
 # recording that one went dark (see census: gemini) — is a one-record edit there, not six here.
-# test_census locks each of these against its historical value so the derivation can never drift.
+# test_census locks the compatibility projections against their historical values and derives the
+# daily-fill subset from execution-profile eligibility so those views cannot silently drift.
 # (ollama is the LOCAL, UNMETERED floor of the cascade — the pilot light: no budget, no window, so
 # when every metered/cloud vendor is spent the beat still has a lane that can produce. Reachable
 # only once a model is pulled — see agent_status / census ollama record.)
 PAID_AGENT_ORDER: tuple[str, ...] = census.paid_agent_order()
 
-DEFAULT_FILL_AGENTS: tuple[str, ...] = ("jules", "claude", "opencode", "agy", "gemini", "codex", "copilot")
+DEFAULT_FILL_AGENTS: tuple[str, ...] = census.default_fill_agents()
 DEFAULT_DAILY_TASK_TARGETS: dict[str, int] = {
     # Human contract: Claude should get a deliberately programmed/check-up batch daily.
     "claude": 15,

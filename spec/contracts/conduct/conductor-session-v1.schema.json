@@ -1,0 +1,189 @@
+{
+  "$defs": {
+    "AgentIdentityV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "title": "Agent",
+          "type": "string"
+        },
+        "native_run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Run Id"
+        },
+        "provider_identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Identity"
+        },
+        "schema_version": {
+          "const": "limen.agent_identity.v1",
+          "default": "limen.agent_identity.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "surface": {
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "surface",
+        "session_id"
+      ],
+      "title": "AgentIdentityV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "accepting_work": {
+      "default": true,
+      "title": "Accepting Work",
+      "type": "boolean"
+    },
+    "capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Capabilities",
+      "type": "array",
+      "uniqueItems": true
+    },
+    "concurrency": {
+      "default": 1,
+      "maximum": 1024,
+      "minimum": 1,
+      "title": "Concurrency",
+      "type": "integer"
+    },
+    "harvest_method": {
+      "default": "receipt",
+      "title": "Harvest Method",
+      "type": "string"
+    },
+    "heartbeat_at": {
+      "format": "date-time",
+      "title": "Heartbeat At",
+      "type": "string"
+    },
+    "human_protected": {
+      "default": false,
+      "title": "Human Protected",
+      "type": "boolean"
+    },
+    "identity": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "meter": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Meter"
+    },
+    "native_fanout": {
+      "default": false,
+      "title": "Native Fanout",
+      "type": "boolean"
+    },
+    "native_run_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Native Run Id"
+    },
+    "native_session_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Native Session Id"
+    },
+    "origin": {
+      "enum": [
+        "direct",
+        "dispatched",
+        "relay"
+      ],
+      "title": "Origin",
+      "type": "string"
+    },
+    "registered_at": {
+      "format": "date-time",
+      "title": "Registered At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.conductor_session.v1",
+      "default": "limen.conductor_session.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session_id": {
+      "title": "Session Id",
+      "type": "string"
+    },
+    "transport": {
+      "default": "native",
+      "title": "Transport",
+      "type": "string"
+    },
+    "worktree": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Worktree"
+    }
+  },
+  "required": [
+    "session_id",
+    "identity",
+    "origin"
+  ],
+  "title": "ConductorSessionV1",
+  "type": "object"
+}

@@ -1,38 +1,20 @@
-"""TABVLARIVS — the one record-keeper over the board (`tasks.yaml`).
+"""TABVLARIVS compatibility relay for the authenticated conduct keeper.
 
-The disease this dissolves: ~32 uncoordinated writers each do *read-whole-board → mutate →
-rewrite-whole-board* on the single `tasks.yaml` blob. `io.atomic_write_text` already stops torn
-*bytes* (temp-file + `os.replace`), but two writers that both `load→save` still lost-update-clobber
-(last-writer-wins on the whole board), and the worst offenders (the MCP server) skip even the
-atomic write. Locking every `save` would give write-*atomicity* but not read-modify-write
-*isolation* — the clobber survives. The only correct cure is the **single-writer principle**:
-workers stop mutating shared state and instead APPEND one immutable *ticket* per unit of work to a
-lock-free inbox; exactly **one** keeper drains the inbox, folds the tickets onto the board in
-timestamp order, validates (per-task + the collapse-guard), and seals the result with the atomic
-write. It is the only process that ever holds the write lock, so there is no interleave to tear.
-
-This is Step 2+3 of `board-is-event-log-projection` (PR#543): `materialize.fold` is the proven pure
-reducer — this module gives it a live stream to consume. A ticket **is** a `materialize` Event with
-provenance (who did the work, when), and the archived ticket files are the append-only event log
-that the board is a projection of (`board = fold(events)`).
+The historical implementation made this process a local ``tasks.yaml`` writer. That still allowed
+the laptop cache to diverge from the GitHub-backed owner and gave local Git plumbing an independent
+authority path. The conduct broker is now the sole logical record keeper: producers may append
+immutable outbound tickets locally, but this module can only translate them into bounded conduct
+packets and archive a ticket after the remote projection receipt is acknowledged.
 
 Ticket lifecycle::
 
-    logs/tickets/inbox/<id>.json  --drain-->  applied → archive/   (the event log)
-                                              rejected → rejected/  (+ <id>.reason.txt)
+    logs/tickets/inbox/<id>.json  --relay-->  acknowledged → archive/
+                                              invalid      → rejected/ (+ <id>.reason.txt)
+                                              unavailable  → remains in inbox
 
-Design invariants (each carried over from a shipped safety precedent):
-  * **A worker never touches `tasks.yaml`.** It calls `submit_ticket`, an exclusive atomic create
-    into the inbox — no read, no lock, no collapse risk, no interleave. (Preserves the one writer
-    the fleet must never starve, `ingest-backlog.py`, which deliberately skipped the lock.)
-  * **One bad ticket never rejects the batch.** Each ticket is applied + validated individually;
-    a bad one is quarantined to `rejected/` and the rest still land (the `_sanitize_dispatch_logs`
-    tolerate-and-salvage philosophy from `io.py`).
-  * **The seal is collapse-guarded.** The board is written through `save_limen_file`, so the
-    2026-06-26 shrink-to-1 clobber remains impossible; a batch that would collapse the board is
-    rejected whole and the good board is left intact.
-  * **Never dead-stop the beat.** If the queue lock is held (a legacy writer, mid-migration), the
-    keeper defers to the next beat rather than blocking — exactly like `heal-board.py`.
+The local board is read only as an optimistic cache for exact revision guards. A stale cache is
+fenced by the remote owner. Broker absence leaves valid tickets pending and acknowledges no
+transition. Unsupported metadata, ordering, removal, and server-owned field mutations fail closed.
 """
 
 from __future__ import annotations
@@ -40,20 +22,46 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import tempfile
 import uuid
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
 
+from limen.conduct.broker import ConductError
+from limen.conduct.client import BrokerUnavailable, LocalConductClient, client_from_env
+from limen.conduct.models import (
+    AgentIdentityV1,
+    AuthorityEnvelopeV1,
+    ConductorSessionV1,
+    FanoutBoundsV1,
+    ResourceClaimV1,
+    RetryPolicyV1,
+    SpendEnvelopeV1,
+    WorkPacketV1,
+    canonical_hash,
+)
 from limen.intake import validate_intake_contract
-from limen.io import BoardCollapseError, load_limen_file, queue_lock, save_limen_file
-from limen.materialize import EV_BOARD_META, EV_BOARD_ORDER, EV_TASK_UPSERT, Event, fold
+from limen.io import (
+    load_limen_file,
+    local_conduct_projection_lock,
+    queue_lock,
+    save_local_conduct_projection,
+)
+from limen.materialize import (
+    EV_BOARD_META,
+    EV_BOARD_ORDER,
+    EV_TASK_REMOVE,
+    EV_TASK_UPSERT,
+    Event,
+    diff_boards,
+)
 from limen.models import VALID_STATUSES, LimenFile, Task
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
 
@@ -66,6 +74,89 @@ INTENT_META = "board.meta"  # set board version/portal (patch = {"version":..,"p
 _INTENTS = frozenset({INTENT_UPSERT, INTENT_STATUS, INTENT_REMOVE, INTENT_ORDER, INTENT_META})
 BOARD_PUBLICATION_BRANCH = "tabularius/board-projection"
 BOARD_PUBLICATION_TITLE = "tabularius: publish board projection"
+_PATCHABLE_TASK_FIELDS = frozenset(
+    {
+        "title",
+        "description",
+        "repo",
+        "type",
+        "target_agent",
+        "workstream",
+        "priority",
+        "budget_cost",
+        "status",
+        "labels",
+        "urls",
+        "context",
+        "predicate",
+        "receipt_target",
+        "execution_requirements",
+        "workstream_contract",
+        "claude_tier",
+        "depends_on",
+    }
+)
+_STRUCTURED_LOG_FIELDS = frozenset(
+    {
+        "route_to",
+        "execution_profile",
+        "selected_model",
+        "selection_source",
+        "catalog_hash",
+        "provider_run_id",
+        "provider_url",
+        "base_sha",
+        "control_repo",
+        "control_ref",
+        "control_ref_kind",
+        "control_sha",
+        "workflow_id",
+        "workflow_path",
+        "workflow_event",
+        "verification_context_digest",
+        "remote_state",
+        "remote_request_id",
+        "remote_receipt",
+        "landing_event",
+        "landing_terminal",
+        "landing_outcome",
+        "landing_session_id",
+        "landing_branch",
+        "landing_intent_token",
+        "landing_claim_sha256",
+        "landing_prior_status",
+        "landing_prior_updated",
+        "landing_attempt_count",
+        "landing_attempt",
+        "lifecycle_repair",
+        "fleet_debt_source",
+        "fleet_debt_count",
+        "pr_observed_state",
+        "pr_observed_ref",
+        "routine_name",
+        "routine_observed_state",
+        "execution_started",
+        "execution_contract_hash",
+        "execution_reservation_id",
+        "execution_result_kind",
+        "liveness_evidence",
+        "liveness_reservation_id",
+        "liveness_pid",
+        "liveness_age_seconds",
+        "recurrence_source",
+        "recurrence_head_sha",
+    }
+)
+_CANONICAL_TRANSITIONS = {
+    "open": frozenset({"open", "dispatched"}),
+    "dispatched": frozenset({"open", "dispatched", "in_progress"}),
+    "in_progress": frozenset({"in_progress", "done", "failed", "failed_blocked", "needs_human"}),
+    "failed": frozenset({"failed", "open"}),
+    "failed_blocked": frozenset({"failed_blocked", "open"}),
+    "needs_human": frozenset({"needs_human", "open"}),
+    "done": frozenset({"done", "archived"}),
+    "archived": frozenset({"archived"}),
+}
 
 
 class Ticket(BaseModel):
@@ -247,6 +338,7 @@ class DrainResult:
     note: str = ""
     applied_ids: list[str] = field(default_factory=list)
     rejected_ids: list[str] = field(default_factory=list)
+    projected_tasks: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -296,14 +388,12 @@ def pending_task_ids(board_path: Path) -> set[str]:
     return ids
 
 
-def _git(repo: Path, args: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
-    merged_env = os.environ.copy()
-    if env:
-        merged_env.update(env)
+def _gh(repo: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
+    """Run the legacy publication check dispatcher without granting board-write authority."""
+
     return subprocess.run(
-        ["git", *args],
+        ["gh", *args],
         cwd=str(repo),
-        env=merged_env,
         capture_output=True,
         text=True,
         timeout=120,
@@ -314,207 +404,12 @@ def _short_output(proc: subprocess.CompletedProcess[str]) -> str:
     return (proc.stderr or proc.stdout or "").strip().replace("\n", " ")[:220]
 
 
-def _commit_identity_env(repo: Path, env: dict[str, str]) -> dict[str, str]:
-    """Provide commit-tree identity defaults without mutating repo git config."""
-    identity = dict(env)
-    name = _git(repo, ["config", "user.name"], env=env).stdout.strip() or "Limen Tabularius"
-    email = _git(repo, ["config", "user.email"], env=env).stdout.strip() or "tabularius@limen.local"
-    identity.setdefault("GIT_AUTHOR_NAME", os.environ.get("GIT_AUTHOR_NAME", name))
-    identity.setdefault("GIT_AUTHOR_EMAIL", os.environ.get("GIT_AUTHOR_EMAIL", email))
-    identity.setdefault("GIT_COMMITTER_NAME", os.environ.get("GIT_COMMITTER_NAME", name))
-    identity.setdefault("GIT_COMMITTER_EMAIL", os.environ.get("GIT_COMMITTER_EMAIL", email))
-    return identity
-
-
-def _gh(repo: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["gh", *args],
-        cwd=str(repo),
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-
-
-def _gh_json(repo: Path, args: list[str]) -> tuple[Any, str]:
-    result = _gh(repo, args)
-    if result.returncode != 0:
-        return None, _short_output(result)
-    try:
-        return json.loads(result.stdout or "null"), ""
-    except json.JSONDecodeError as exc:
-        return None, f"invalid-json:{exc}"
-
-
-def _repository_slug(repo: Path) -> tuple[str, str]:
-    result = _gh(repo, ["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])
-    slug = result.stdout.strip()
-    if result.returncode != 0 or "/" not in slug:
-        return "", _short_output(result) or "repository-unresolved"
-    return slug, ""
-
-
-def _remote_branch_sha(repo: Path, remote: str, branch: str) -> tuple[str, str]:
-    result = _git(repo, ["ls-remote", "--heads", remote, f"refs/heads/{branch}"])
-    if result.returncode != 0:
-        return "", _short_output(result)
-    line = result.stdout.strip()
-    if not line:
-        return "", ""
-    fields = line.split()
-    if len(fields) != 2 or fields[1] != f"refs/heads/{branch}":
-        return "", "malformed-remote-ref"
-    return fields[0], ""
-
-
-_PUBLICATION_PR_FIELDS = (
-    "number,headRefOid,baseRefName,isDraft,state,autoMergeRequest,mergeStateStatus,statusCheckRollup"
-)
-
-
-def _open_publication_pr(repo: Path, slug: str, publication_branch: str) -> tuple[dict[str, Any] | None, str]:
-    data, error = _gh_json(
-        repo,
-        [
-            "pr",
-            "list",
-            "--repo",
-            slug,
-            "--state",
-            "open",
-            "--head",
-            publication_branch,
-            "--limit",
-            "1",
-            "--json",
-            _PUBLICATION_PR_FIELDS,
-        ],
-    )
-    if error:
-        return None, error
-    if not isinstance(data, list):
-        return None, "unexpected-pr-list"
-    return (data[0] if data else None), ""
-
-
-def _view_publication_pr(repo: Path, slug: str, pr_number: int) -> tuple[dict[str, Any] | None, str]:
-    data, error = _gh_json(
-        repo,
-        ["pr", "view", str(pr_number), "--repo", slug, "--json", _PUBLICATION_PR_FIELDS],
-    )
-    if error:
-        return None, error
-    if not isinstance(data, dict):
-        return None, "unexpected-pr-view"
-    return data, ""
-
-
-def _publication_pr_error(pr: dict[str, Any], *, expected_head: str, base_branch: str) -> str:
-    """Validate the exact immutable PR custody contract."""
-
-    if str(pr.get("state") or "") != "OPEN":
-        return "pr-not-open"
-    if bool(pr.get("isDraft")):
-        return "pr-is-draft"
-    if str(pr.get("baseRefName") or "") != base_branch:
-        return "pr-base-mismatch"
-    if str(pr.get("headRefOid") or "") != expected_head:
-        return "pr-head-mismatch"
-    return ""
-
-
-def _publication_diff_error(
-    repo: Path,
-    *,
-    base_sha: str,
-    head_sha: str,
-    rel_board: str,
-) -> str:
-    """Require the full PR diff—not merely the newest commit—to be exactly the board."""
-
-    merge_base = _git(repo, ["merge-base", base_sha, head_sha])
-    if merge_base.returncode != 0 or not merge_base.stdout.strip():
-        return f"publication-merge-base-failed:{_short_output(merge_base)}"
-    changed = _git(repo, ["diff", "--name-only", merge_base.stdout.strip(), head_sha])
-    if changed.returncode != 0:
-        return f"publication-diff-failed:{_short_output(changed)}"
-    paths = {line.strip() for line in changed.stdout.splitlines() if line.strip()}
-    if paths != {rel_board}:
-        extras = sorted(paths - {rel_board})
-        if extras:
-            return f"publication-non-board-paths:{','.join(extras[:8])}"
-        return "publication-empty-or-missing-board-diff"
-    return ""
-
-
-def _ensure_publication_pr(
-    repo: Path,
-    *,
-    slug: str,
-    base_branch: str,
-    publication_branch: str,
-    expected_head: str,
-) -> tuple[int, str]:
-    existing, error = _open_publication_pr(repo, slug, publication_branch)
-    if error:
-        return 0, f"pr-list-failed:{error}"
-    if existing:
-        validation_error = _publication_pr_error(
-            existing,
-            expected_head=expected_head,
-            base_branch=base_branch,
-        )
-        if validation_error:
-            return 0, validation_error
-        return int(existing["number"]), ""
-
-    created = _gh(
-        repo,
-        [
-            "pr",
-            "create",
-            "--repo",
-            slug,
-            "--base",
-            base_branch,
-            "--head",
-            publication_branch,
-            "--title",
-            BOARD_PUBLICATION_TITLE,
-            "--body",
-            (
-                "Keeper-owned `tasks.yaml` projection. The branch is data-only, "
-                "fast-forward-only, and must enter `main` through the normal merge queue."
-            ),
-        ],
-    )
-    if created.returncode != 0:
-        return 0, f"pr-create-failed:{_short_output(created)}"
-    try:
-        pr_number = int(created.stdout.strip().rstrip("/").rsplit("/", 1)[-1])
-    except ValueError:
-        return 0, "pr-create-returned-no-number"
-
-    viewed, error = _view_publication_pr(repo, slug, pr_number)
-    if error:
-        return 0, f"pr-view-failed:{error}"
-    validation_error = _publication_pr_error(
-        viewed or {},
-        expected_head=expected_head,
-        base_branch=base_branch,
-    )
-    if validation_error:
-        return 0, f"pr-exact-head-unproven:{validation_error}"
-    return pr_number, ""
-
-
 def _dispatch_pr_gate(repo: Path, slug: str, publication_branch: str) -> str:
-    """Give an Actions-authored PR its required check without polling.
+    """Compatibility helper for an already-created publication PR.
 
-    GitHub suppresses ordinary workflow cascades created by ``GITHUB_TOKEN``.
-    ``workflow_dispatch`` is the documented exception, so the scheduled
-    publisher explicitly starts the existing PR gate on the exact publication
-    branch. Local/keyring pushes use the normal ``pull_request`` event.
+    The conduct broker remains the only board writer. This helper can only ask
+    GitHub to evaluate an existing exact branch; it cannot create, push, or
+    advance a board projection.
     """
 
     if os.environ.get("GITHUB_ACTIONS", "").lower() != "true":
@@ -526,210 +421,761 @@ def _dispatch_pr_gate(repo: Path, slug: str, publication_branch: str) -> str:
     return "" if result.returncode == 0 else f"pr-gate-dispatch-failed:{_short_output(result)}"
 
 
-def _arm_publication_pr(repo: Path, slug: str, pr_number: int, expected_head: str) -> str:
-    """Arm the exact head; the remote squash-only queue owns the eventual merge method."""
+def _ticket_from_event(event: Event, *, agent: str, session_id: str, now: datetime) -> Ticket:
+    """Translate one pure projection delta into its immutable keeper receipt."""
 
-    result = _gh(
-        repo,
-        [
-            "pr",
-            "merge",
-            str(pr_number),
-            "--repo",
-            slug,
-            "--auto",
-            "--squash",
-            "--match-head-commit",
-            expected_head,
-        ],
+    event_type = str(event.get("type") or "")
+    ticket_id = new_ticket_id(session_id, now)
+    if event_type == EV_BOARD_META:
+        return Ticket(
+            ticket_id=ticket_id,
+            timestamp=now,
+            agent=agent,
+            session_id=session_id,
+            intent=INTENT_META,
+            patch=dict(event.get("data") or {}),
+        )
+    if event_type == EV_BOARD_ORDER:
+        return Ticket(
+            ticket_id=ticket_id,
+            timestamp=now,
+            agent=agent,
+            session_id=session_id,
+            intent=INTENT_ORDER,
+            patch=dict(event.get("data") or {}),
+        )
+    if event_type == EV_TASK_UPSERT:
+        return Ticket(
+            ticket_id=ticket_id,
+            timestamp=now,
+            agent=agent,
+            session_id=session_id,
+            intent=INTENT_UPSERT,
+            task_id=str(event["task_id"]),
+            patch=dict(event.get("data") or {}),
+        )
+    if event_type == EV_TASK_REMOVE:
+        return Ticket(
+            ticket_id=ticket_id,
+            timestamp=now,
+            agent=agent,
+            session_id=session_id,
+            intent=INTENT_REMOVE,
+            task_id=str(event["task_id"]),
+        )
+    raise ValueError(f"unknown event type: {event_type!r}")
+
+
+def _safe_identifier(value: str, fallback: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9._:/@+-]+", "-", str(value)).strip("-")
+    if not cleaned or not cleaned[0].isalnum():
+        cleaned = fallback
+    return cleaned[:256]
+
+
+def _canonical_revision(fields: dict[str, Any]) -> str:
+    value: Any = fields.get("updated")
+    if value is None and fields.get("dispatch_log"):
+        value = fields["dispatch_log"][-1].get("timestamp")
+    if value is None:
+        value = fields.get("created") or fields.get("status")
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    if isinstance(value, date):
+        return value.isoformat()
+    rendered = str(value)
+    if re.match(r"^\d{4}-\d{2}-\d{2}T", rendered):
+        try:
+            parsed = datetime.fromisoformat(rendered.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        except ValueError:
+            pass
+    return rendered
+
+
+def _compatibility_intent(ticket: Ticket, base: dict[str, Any] | None) -> dict[str, Any]:
+    log = dict(ticket.log or {})
+    # ``agent``/``session_id`` in the packet log are untrusted workflow
+    # correlation. The keeper projects them under logical names while deriving
+    # canonical dispatch-log identity from the authenticated conductor event.
+    log.setdefault("agent", ticket.agent)
+    log.setdefault("session_id", ticket.session_id)
+    if ticket.intent in {INTENT_REMOVE, INTENT_META, INTENT_ORDER}:
+        raise ValueError(
+            f"{ticket.intent} has no authenticated remote compatibility transition; "
+            "file a bounded broker protocol extension instead of mutating the local projection"
+        )
+    if not ticket.task_id:
+        raise ValueError(f"{ticket.intent} requires task_id")
+    patch = dict(ticket.patch or {})
+    if base is None:
+        if ticket.intent != INTENT_UPSERT:
+            raise ValueError(f"task {ticket.task_id} is absent from the hot projection")
+        supplied = {**patch, "id": ticket.task_id}
+        return {
+            "kind": "task.upsert",
+            "task_id": ticket.task_id,
+            "expected_absent": True,
+            "task": supplied,
+            "log": log,
+        }
+
+    precondition = ticket.precondition or {}
+    if precondition.get("absent") is True:
+        raise ValueError(f"task precondition failed: {ticket.task_id} is no longer absent")
+    if "status" in precondition and base.get("status") != precondition["status"]:
+        raise ValueError(
+            f"task precondition failed: {ticket.task_id} status is {base.get('status')!r}, "
+            f"expected {precondition['status']!r}"
+        )
+    if "task_sha256" in precondition and task_state_sha256(base) != precondition["task_sha256"]:
+        raise ValueError(f"task precondition failed: {ticket.task_id} exact state changed")
+
+    desired = {**base, **patch}
+    changed = {key: value for key, value in desired.items() if key in _PATCHABLE_TASK_FIELDS and base.get(key) != value}
+    unsupported = sorted(
+        key
+        for key, value in desired.items()
+        if key not in _PATCHABLE_TASK_FIELDS | {"id", "created", "updated", "dispatch_log"} and base.get(key) != value
     )
-    return "" if result.returncode == 0 else f"pr-auto-merge-failed:{_short_output(result)}"
+    if unsupported:
+        raise ValueError(f"task {ticket.task_id} changes unsupported remote fields: {', '.join(unsupported)}")
+    prior_status = str(base.get("status") or "")
+    next_status = str(desired.get("status") or prior_status)
+    if prior_status == "open" and next_status == "dispatched":
+        kind = "task.claim"
+    elif next_status != prior_status:
+        kind = "task.status"
+    else:
+        kind = "task.mutate"
+    return {
+        "kind": kind,
+        "task_id": ticket.task_id,
+        "expected_status": prior_status,
+        "expected_revision": _canonical_revision(base),
+        "patch": changed,
+        "log": log,
+    }
 
 
-def _pr_gate_observed(pr: dict[str, Any]) -> bool:
-    return any(
-        str(check.get("name") or check.get("context") or "") == "pr-gate"
-        for check in (pr.get("statusCheckRollup") or [])
-        if isinstance(check, dict)
+def _local_conduct_log(event: dict[str, Any], status: str, fallback_output: str) -> dict[str, Any]:
+    log = dict((event.get("intent") or {}).get("log") or {})
+    structured = {key: value for key, value in log.items() if key in _STRUCTURED_LOG_FIELDS and value is not None}
+    return {
+        "timestamp": str(event["timestamp"]),
+        "agent": str(event["agent"]),
+        "session_id": str(event["session_id"]),
+        "logical_agent": str(log.get("agent") or event["agent"]),
+        "logical_session_id": str(log.get("session_id") or event["session_id"]),
+        "status": status,
+        "output": str(log.get("output") if log.get("output") is not None else fallback_output),
+        **structured,
+        "conduct_event_id": str(event["event_id"]),
+        "conduct_run_id": str(event["run_id"]),
+        "conduct_lease_id": str(event["lease_id"]),
+        "conduct_generation": int(event["generation"]),
+    }
+
+
+def _reset_local_budget_window(budget: dict[str, Any], timestamp: str) -> None:
+    track = budget.setdefault("track", {"date": "", "spent": 0, "per_agent": {}})
+    current_date = timestamp[:10]
+    if str(track.get("date") or "") == current_date:
+        return
+    track["date"] = current_date
+    track["spent"] = 0
+    track["per_agent"] = {str(agent): 0 for agent in (budget.get("per_agent") or {})}
+
+
+def _local_budget_debit(
+    board: dict[str, Any], task: dict[str, Any], event: dict[str, Any], patch: dict[str, Any]
+) -> None:
+    amount = task.get("budget_cost", 0)
+    if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
+        raise ValueError(f"task {task['id']} has invalid canonical budget_cost")
+    agent = str(patch.get("target_agent") or task.get("target_agent") or "")
+    if not agent or agent == "any":
+        raise ValueError(f"task {task['id']} claim requires one concrete target_agent")
+    if task.get("target_agent") not in {None, "", "any", agent}:
+        raise ValueError(f"task {task['id']} targets {task.get('target_agent')}, not claim agent {agent}")
+    budget = (board.get("portal") or {}).get("budget") or {}
+    if not budget or not amount:
+        return
+    _reset_local_budget_window(budget, str(event["timestamp"]))
+    track = budget["track"]
+    track.setdefault("per_agent", {})
+    prior_total = int(track.get("spent") or 0)
+    prior_agent = int(track["per_agent"].get(agent) or 0)
+    daily_limit = int(budget.get("daily", 2**63 - 1))
+    agent_limit = int((budget.get("per_agent") or {}).get(agent, daily_limit))
+    if prior_total + amount > daily_limit or prior_agent + amount > agent_limit:
+        raise ValueError(f"task {task['id']} exceeds live {agent} compatibility budget")
+    track["spent"] = prior_total + amount
+    track["per_agent"][agent] = prior_agent + amount
+
+
+def _local_budget_refund(board: dict[str, Any], task: dict[str, Any], event: dict[str, Any]) -> None:
+    amount = task.get("budget_cost", 0)
+    agent = str(task.get("target_agent") or "")
+    if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0 or not agent or agent == "any":
+        raise ValueError(f"task {task['id']} cannot derive a canonical budget refund")
+    budget = (board.get("portal") or {}).get("budget") or {}
+    if not budget or not amount:
+        return
+    _reset_local_budget_window(budget, str(event["timestamp"]))
+    track = budget["track"]
+    track.setdefault("per_agent", {})
+    track["spent"] = max(0, int(track.get("spent") or 0) - amount)
+    track["per_agent"][agent] = max(0, int(track["per_agent"].get(agent) or 0) - amount)
+
+
+def _held_jules_landing_recovery(task: dict[str, Any], next_status: str, log: dict[str, Any]) -> bool:
+    return bool(
+        task.get("status") == "failed"
+        and "jules:landing-held" in (task.get("labels") or [])
+        and log.get("landing_event") == "terminal"
+        and log.get("landing_terminal") is True
+        and log.get("landing_intent_token")
+        and next_status in {"done", "failed", "failed_blocked"}
     )
 
 
-def _pr_merge_armed(pr: dict[str, Any]) -> bool:
-    return pr.get("autoMergeRequest") is not None or str(pr.get("mergeStateStatus") or "") == "QUEUED"
+def _logical_log_session(entry: dict[str, Any]) -> str:
+    return str(entry.get("logical_session_id") or entry.get("session_id") or "")
 
 
-def _ensure_publication_effects(
-    repo: Path,
-    *,
-    slug: str,
-    publication_branch: str,
-    pr: dict[str, Any],
-    expected_head: str,
-) -> str:
-    """Recoverably install the check and exact-head auto-merge effects once."""
+def _prior_chronic_evidence(task: dict[str, Any]) -> bool:
+    from limen.chronic import CHRONIC_ESCALATION_RE
 
-    if os.environ.get("GITHUB_ACTIONS", "").lower() == "true" and not _pr_gate_observed(pr):
-        dispatch_error = _dispatch_pr_gate(repo, slug, publication_branch)
-        if dispatch_error:
-            return dispatch_error
-    if not _pr_merge_armed(pr):
-        return _arm_publication_pr(repo, slug, int(pr.get("number") or 0), expected_head)
-    return ""
+    for entry in reversed(task.get("dispatch_log") or []):
+        if str(entry.get("status") or "") != "needs_human":
+            continue
+        return bool(CHRONIC_ESCALATION_RE.search(str(entry.get("output") or "")))
+    return False
 
 
-def board_publication_preflight(
+def _repeated_noop_evidence(task: dict[str, Any]) -> int:
+    return sum(
+        1
+        for entry in (task.get("dispatch_log") or [])
+        if str(entry.get("status") or "") == "failed"
+        and ("no-op" in str(entry.get("output") or "").lower() or "noop" in str(entry.get("output") or "").lower())
+    )
+
+
+def _lifecycle_repair_authorized(
+    task: dict[str, Any],
+    next_status: str,
+    log: dict[str, Any],
+    patch: dict[str, Any],
+) -> bool:
+    """Validate one explicit exceptional transition against its exact evidence."""
+
+    marker = str(log.get("lifecycle_repair") or "")
+    prior_status = str(task.get("status") or "")
+    labels = {str(label) for label in patch.get("labels", task.get("labels") or [])}
+
+    if marker == "prior-done":
+        return bool(
+            next_status == "done"
+            and prior_status != "archived"
+            and any(entry.get("status") == "done" for entry in (task.get("dispatch_log") or []))
+        )
+    if marker == "human-gate-reconcile":
+        return bool(
+            prior_status in {"open", "dispatched", "failed"}
+            and next_status == "needs_human"
+            and "needs-human" in labels
+        )
+    if marker == "fleet-debt-park":
+        source = str(log.get("fleet_debt_source") or "")
+        count = log.get("fleet_debt_count")
+        evidence_ok = bool(
+            isinstance(count, int)
+            and not isinstance(count, bool)
+            and (
+                (source == "dispatch-verify" and count >= 3)
+                or (source == "prior-chronic-log" and count >= 1 and _prior_chronic_evidence(task))
+                or (source == "repeated-noop" and count >= 2 and _repeated_noop_evidence(task) >= count)
+            )
+        )
+        return bool(
+            prior_status in {"open", "dispatched", "failed", "needs_human"}
+            and next_status == "failed_blocked"
+            and "chronic-fleet-debt" in labels
+            and evidence_ok
+        )
+    if marker == "pr-observed-terminal":
+        ref = str(log.get("pr_observed_ref") or "")
+        observed = str(log.get("pr_observed_state") or "")
+        ref_match = re.fullmatch(r"([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([1-9][0-9]*)", ref)
+        task_repo = str(patch.get("repo", task.get("repo")) or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "done"
+            and observed in {"open", "merged"}
+            and ref_match
+            and (not task_repo or ref_match.group(1) == task_repo)
+        )
+    if marker == "routine-recovered":
+        name = str(log.get("routine_name") or "")
+        return bool(
+            prior_status == "needs_human"
+            and next_status == "done"
+            and "routine-freshness" in labels
+            and log.get("routine_observed_state") == "recovered"
+            and name
+            and task.get("id") == f"ASK-routine-{name}"
+        )
+    prior_log = (task.get("dispatch_log") or [])[-1:] or [{}]
+    prior_entry = prior_log[0]
+    prior_reservation = _logical_log_session(prior_entry)
+    if marker == "provider-terminal":
+        contract_hash = str(log.get("execution_contract_hash") or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status in {"done", "failed", "failed_blocked"}
+            and log.get("execution_started") is True
+            and log.get("execution_result_kind") == next_status
+            and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
+            and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
+            and str(log.get("execution_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+        )
+    if marker == "stale-successor-hold":
+        evidence = str(log.get("liveness_evidence") or "")
+        pid = log.get("liveness_pid")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "failed"
+            and "workstream:successor-required" in labels
+            and str(log.get("liveness_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+            and evidence in {"dead-process", "defunct-process", "markerless-expired", "launch-failed"}
+            and isinstance(log.get("liveness_age_seconds"), (int, float))
+            and not isinstance(log.get("liveness_age_seconds"), bool)
+            and float(log["liveness_age_seconds"]) >= 0
+            and (
+                (
+                    evidence in {"dead-process", "defunct-process"}
+                    and isinstance(pid, int)
+                    and not isinstance(pid, bool)
+                    and pid > 0
+                )
+                or (evidence in {"markerless-expired", "launch-failed"} and pid is None)
+            )
+        )
+    if marker == "recurrence-reopen":
+        head = str(log.get("recurrence_head_sha") or "")
+        predicate = str(patch.get("predicate", task.get("predicate")) or "")
+        title = str(patch.get("title", task.get("title")) or "")
+        return bool(
+            prior_status in {"done", "archived"}
+            and next_status == "open"
+            and log.get("recurrence_source") == "main-green"
+            and re.fullmatch(r"[0-9a-f]{40}", head)
+            and str(task.get("id") or "").startswith("HEAL-mainred-")
+            and {"ci", "mainred"}.issubset(labels)
+            and head in predicate
+            and head[:8] in title
+        )
+    return False
+
+
+def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[LimenFile, dict[str, Any]]:
+    """Apply the keeper event in memory; serialization happens only after broker commit."""
+
+    data = board.model_dump(mode="json", exclude_none=True)
+    tasks = data.setdefault("tasks", [])
+    intent = dict(event.get("intent") or {})
+    kind = str(intent.get("kind") or "")
+    task_id = str(intent.get("task_id") or event.get("task_id") or "")
+    if not task_id:
+        raise ValueError("compatibility event requires task_id")
+    existing = next((task for task in tasks if task.get("id") == task_id), None)
+    event_id = str(event["event_id"])
+    if existing and any(entry.get("conduct_event_id") == event_id for entry in (existing.get("dispatch_log") or [])):
+        return board, {
+            "status": "duplicate",
+            "mode": "local-sqlite",
+            "task": dict(existing),
+            "event_id": event_id,
+        }
+
+    if kind == "task.upsert":
+        if intent.get("expected_absent") and existing:
+            raise ValueError(f"task {task_id} already exists")
+        supplied = dict(intent.get("task") or {})
+        if supplied.get("id") != task_id:
+            raise ValueError(f"task projection id {supplied.get('id')} does not match {task_id}")
+        task = dict(supplied)
+        is_new = existing is None
+        if existing:
+            if supplied.get("status") != existing.get("status"):
+                raise ValueError(f"task {task_id} upsert cannot change lifecycle status; submit task.status")
+            history = list(existing.get("dispatch_log") or [])
+            created = existing.get("created")
+            task = {**existing, **{key: value for key, value in supplied.items() if key in _PATCHABLE_TASK_FIELDS}}
+            task["dispatch_log"] = history
+            if created is not None:
+                task["created"] = created
+        else:
+            tasks.append(task)
+        task["updated"] = str(event["timestamp"])
+        task.setdefault("dispatch_log", [])
+        task["dispatch_log"].append(
+            _local_conduct_log(
+                event,
+                str(task.get("status") or "open"),
+                f"Created by {event['agent']} through the conduct keeper",
+            )
+        )
+        validated = Task.model_validate(task)
+        validate_intake_contract(validated, is_new=is_new)
+    else:
+        if kind not in {"task.status", "task.claim", "task.mutate"}:
+            raise ValueError(f"unsupported task compatibility intent: {kind}")
+        if existing is None:
+            raise ValueError(f"task {task_id} not found in canonical board")
+        if "expected_revision" in intent and str(intent["expected_revision"]) != _canonical_revision(existing):
+            raise ValueError(f"task {task_id} exact revision moved")
+        expected = intent.get("expected_status")
+        expected_statuses = expected if isinstance(expected, list) else [expected]
+        if existing.get("status") not in expected_statuses:
+            raise ValueError(
+                f"task {task_id} is {existing.get('status')}; "
+                f"compatibility event requires {' or '.join(map(str, expected_statuses))}"
+            )
+        patch = dict(intent.get("patch") or {})
+        forbidden = sorted(set(patch) - _PATCHABLE_TASK_FIELDS)
+        if forbidden:
+            raise ValueError(
+                f"task {task_id} compatibility patch contains server-owned or unsupported fields: "
+                f"{', '.join(forbidden)}"
+            )
+        if kind == "task.status" and "status" not in patch:
+            raise ValueError(f"task {task_id} status intent requires a status patch")
+        prior_status = str(existing.get("status") or "")
+        next_status = str(patch.get("status") or prior_status)
+        log = dict(intent.get("log") or {})
+        recovery = _held_jules_landing_recovery(existing, next_status, log)
+        repair = kind == "task.status" and _lifecycle_repair_authorized(existing, next_status, log, patch)
+        if not recovery and not repair:
+            if kind == "task.claim" and (prior_status != "open" or next_status != "dispatched"):
+                raise ValueError(f"task {task_id} claim requires open -> dispatched")
+            if next_status not in _CANONICAL_TRANSITIONS.get(prior_status, frozenset()):
+                raise ValueError(f"task {task_id} cannot transition from {prior_status} to {next_status}")
+        if kind == "task.claim":
+            _local_budget_debit(data, existing, event, patch)
+        if kind == "task.status" and prior_status == "dispatched" and next_status == "open":
+            _local_budget_refund(data, existing, event)
+        existing.update(patch)
+        existing["updated"] = str(event["timestamp"])
+        existing.setdefault("dispatch_log", [])
+        existing["dispatch_log"].append(
+            _local_conduct_log(
+                event,
+                str(existing.get("status") or ""),
+                str(log.get("session_id") or f"{kind} applied through the conduct keeper"),
+            )
+        )
+        Task.model_validate(existing)
+        task = existing
+
+    projected = LimenFile.model_validate(data)
+    canonical = next(item for item in projected.tasks if item.id == task_id).model_dump(mode="json", exclude_none=True)
+    return projected, {
+        "status": "committed",
+        "mode": "local-sqlite",
+        "task": canonical,
+        "event_id": event_id,
+    }
+
+
+def _materialize_local_result(
     board_path: Path,
+    ticket: Ticket,
+    result: dict[str, Any],
     *,
-    branch: str = "main",
-    remote: str = "origin",
-    publication_branch: str = BOARD_PUBLICATION_BRANCH,
-) -> PreserveResult:
-    """Admit an ephemeral producer only when no prior board publication is outstanding.
+    conduct_state: Path,
+) -> dict[str, Any]:
+    receipts = result.get("projection_receipts")
+    receipt = receipts[-1] if isinstance(receipts, list) and receipts else None
+    if not isinstance(receipt, dict) or not isinstance(receipt.get("task"), dict):
+        raise RuntimeError(
+            f"local conduct broker did not acknowledge canonical projection for {ticket.task_id}; "
+            f"status={result.get('status')}"
+        )
+    projection = result.get("board_projection")
+    if not isinstance(projection, dict):
+        raise RuntimeError("local conduct broker returned no full canonical board projection")
+    board = LimenFile.model_validate(projection)
+    canonical = next(
+        (task.model_dump(mode="json", exclude_none=True) for task in board.tasks if task.id == str(ticket.task_id)),
+        None,
+    )
+    if canonical is None:
+        raise RuntimeError(f"local conduct board projection omitted task {ticket.task_id}")
+    try:
+        save_local_conduct_projection(board_path, board, conduct_state=conduct_state)
+    except OSError as exc:
+        raise BrokerUnavailable(f"local conduct projection cache refresh failed: {exc}") from exc
+    return canonical
 
-    The two Actions producers share a repository-wide concurrency group, but a previous run may
-    already have a board PR waiting on CI or the merge queue. This probe runs before either producer
-    mutates its disposable checkout. It also recovers a pushed-but-not-opened publication branch,
-    verifies the complete PR diff is data-only, and arms exact-head auto-merge.
+
+def _submit_compatibility_ticket(
+    ticket: Ticket,
+    intent: dict[str, Any],
+    remote: Any,
+    work_id: str,
+    *,
+    board_path: Path | None = None,
+    local_board: LimenFile | None = None,
+) -> dict[str, Any]:
+    identity = AgentIdentityV1(
+        agent=_safe_identifier(ticket.agent, "tabularius-relay"),
+        surface="tabularius-relay",
+        session_id=_safe_identifier(
+            f"{ticket.agent}-{ticket.session_id}",
+            "tabularius-relay-session",
+        ),
+        provider_identity="limen-cli",
+    )
+    registration_now = datetime.now(timezone.utc)
+    session = ConductorSessionV1(
+        session_id=identity.session_id,
+        identity=identity,
+        origin="relay",
+        capabilities=frozenset({"task-submit"}),
+        transport="ianva",
+        harvest_method="receipt",
+        registered_at=registration_now,
+        heartbeat_at=registration_now,
+    )
+    owner = os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "organvm/limen"
+    execution = {"adapter": "tabularius", "projection": "tasks.yaml", "observed_heads": {}}
+    work_key = f"task-compat-{canonical_hash({'intent': intent, 'execution': execution})}"
+    packet = WorkPacketV1(
+        work_id=work_id,
+        work_key=work_key,
+        intent=intent,
+        execution=execution,
+        initiator=identity,
+        conductor=identity,
+        preferred_agent="tabularius",
+        required_capabilities=frozenset({"board-write"}),
+        resource_claims=(ResourceClaimV1(key=f"task/{ticket.task_id}", mode="exclusive"),),
+        predicate="python3 scripts/validate-task-board.py --tasks tasks.yaml",
+        receipt_target=f"git:{owner}:tasks.yaml#{ticket.task_id}",
+        authority=AuthorityEnvelopeV1(
+            actions=frozenset({str(intent["kind"])}),
+            repositories=frozenset({owner}),
+            path_prefixes=frozenset({"tasks.yaml"}),
+            may_delegate=False,
+        ),
+        deadline=datetime.now(timezone.utc) + timedelta(minutes=5),
+        spend=SpendEnvelopeV1(limit=0),
+        retry=RetryPolicyV1(max_attempts=1, transient_only=True),
+        fanout=FanoutBoundsV1(max_children=0, max_depth=0),
+        effect="write",
+        task_id=ticket.task_id,
+    )
+    remote.register(session)
+
+    if isinstance(remote, LocalConductClient):
+        if board_path is None or local_board is None:
+            raise RuntimeError("local conduct submission lost its temporary projection")
+
+        def project_local(event: dict[str, Any]) -> dict[str, Any]:
+            stored_projection = event.get("board_projection")
+            current = (
+                LimenFile.model_validate(stored_projection) if isinstance(stored_projection, dict) else local_board
+            )
+            projected_board, receipt = _project_local_task_event(current, event)
+            receipt["board_projection"] = projected_board.model_dump(mode="json", exclude_none=True)
+            return receipt
+
+        result = remote.submit_projection(packet, project_local)
+        return _materialize_local_result(board_path, ticket, result, conduct_state=remote.path)
+
+    result = remote.submit(packet)
+    receipts = result.get("projection_receipts")
+    receipt = receipts[-1] if isinstance(receipts, list) and receipts else None
+    projected = receipt.get("task") if isinstance(receipt, dict) else None
+    if not isinstance(projected, dict):
+        raise RuntimeError(
+            f"conduct broker did not acknowledge canonical projection for {ticket.task_id}; "
+            f"status={result.get('status')}"
+        )
+    return projected
+
+
+def _relay_ticket(
+    ticket: Ticket,
+    base: dict[str, Any] | None,
+    *,
+    client=None,
+    board_path: Path | None = None,
+) -> dict[str, Any]:
+    remote = client or client_from_env()
+    # Bind replay identity to the entire immutable ticket, not its display ID.
+    # Sanitizing/truncating ticket_id alone can collide, and an ID reused with
+    # different intent must never receive an unrelated stored projection.
+    work_id = f"ticket-{canonical_hash(ticket.model_dump(mode='json'))}"
+    if isinstance(remote, LocalConductClient):
+        if board_path is None:
+            raise RuntimeError("local conduct projection requires an explicit temporary board path")
+        with local_conduct_projection_lock(remote.path) as locked:
+            if not locked:
+                raise BrokerUnavailable("local conduct projection lock is held")
+            replay = remote.replay_projection(work_id)
+            if replay is not None:
+                return _materialize_local_result(board_path, ticket, replay, conduct_state=remote.path)
+            stored_projection = remote.local_board_projection()
+            local_board = (
+                LimenFile.model_validate(stored_projection)
+                if isinstance(stored_projection, dict)
+                else load_limen_file(board_path)
+            )
+            local_base = next(
+                (
+                    task.model_dump(mode="json", exclude_none=True)
+                    for task in local_board.tasks
+                    if task.id == str(ticket.task_id)
+                ),
+                None,
+            )
+            intent = _compatibility_intent(ticket, local_base)
+            return _submit_compatibility_ticket(
+                ticket,
+                intent,
+                remote,
+                work_id,
+                board_path=board_path,
+                local_board=local_board,
+            )
+    intent = _compatibility_intent(ticket, base)
+    return _submit_compatibility_ticket(ticket, intent, remote, work_id)
+
+
+def apply_limen_file_sync(
+    board_path: Path,
+    limen: LimenFile,
+    *,
+    agent: str,
+    session_id: str = "unknown",
+    allow_shrink: bool = False,
+    before: LimenFile | None = None,
+    now: datetime | None = None,
+) -> DrainResult:
+    """Submit a legacy in-memory delta to the authenticated conduct keeper.
+
+    ``tasks.yaml`` is only a hot local projection. This compatibility seam
+    derives bounded per-task packets and waits for remote projection receipts;
+    it never writes, commits, pushes, or refreshes the local file. Unsupported
+    board metadata, ordering, removal, or field mutations fail closed.
     """
 
     board_path = Path(board_path)
-    top = _git(board_path.parent, ["rev-parse", "--show-toplevel"])
-    if top.returncode != 0 or not top.stdout.strip():
-        return PreserveResult(reason="not-a-git-repo", branch=publication_branch)
-    repo = Path(top.stdout.strip())
-    try:
-        rel_board = board_path.resolve().relative_to(repo.resolve()).as_posix()
-    except ValueError:
-        return PreserveResult(reason="board-outside-git-root", branch=publication_branch)
+    del allow_shrink
+    previous = before
+    if previous is None and board_path.exists():
+        previous = load_limen_file(board_path)
+    events = diff_boards(previous, limen)
+    if not events:
+        return DrainResult(note="no board change")
 
-    current = _git(repo, ["symbolic-ref", "--quiet", "--short", "HEAD"])
-    if current.returncode != 0 or current.stdout.strip() != branch:
-        return PreserveResult(reason=f"not-on-{branch}", branch=publication_branch)
-    fetch = _git(repo, ["fetch", "--quiet", remote, branch])
-    if fetch.returncode != 0:
-        return PreserveResult(reason=f"fetch-failed:{_short_output(fetch)}", branch=publication_branch)
-    base_sha = _git(repo, ["rev-parse", f"{remote}/{branch}"]).stdout.strip()
-    if not base_sha:
-        return PreserveResult(reason=f"missing-{remote}/{branch}", branch=publication_branch)
+    timestamp = now or datetime.now(timezone.utc)
+    previous_data = (
+        previous.model_dump(mode="json", exclude_none=True)
+        if previous is not None
+        else {"version": "1.0", "portal": None, "tasks": []}
+    )
+    desired_data = limen.model_dump(mode="json", exclude_none=True)
+    prior_portal = dict(previous_data.get("portal") or {})
+    desired_portal = dict(desired_data.get("portal") or {})
+    for portal in (prior_portal, desired_portal):
+        budget = portal.get("budget")
+        if isinstance(budget, dict):
+            budget = dict(budget)
+            budget.pop("track", None)
+            portal["budget"] = budget
+    if prior_portal != desired_portal or previous_data.get("version") != desired_data.get("version"):
+        raise RuntimeError("board metadata mutation has no authenticated remote compatibility transition")
 
-    slug, error = _repository_slug(repo)
-    if error:
-        return PreserveResult(reason=f"github-unavailable:{error}", branch=publication_branch)
-    open_pr, error = _open_publication_pr(repo, slug, publication_branch)
-    if error:
-        return PreserveResult(reason=f"pr-list-failed:{error}", branch=publication_branch)
-    publication_sha, error = _remote_branch_sha(repo, remote, publication_branch)
-    if error:
-        return PreserveResult(reason=f"publication-ref-failed:{error}", branch=publication_branch)
-    if publication_sha:
-        fetched = _git(repo, ["fetch", "--quiet", remote, f"refs/heads/{publication_branch}"])
-        if fetched.returncode != 0:
-            return PreserveResult(
-                reason=f"publication-fetch-failed:{_short_output(fetched)}",
-                branch=publication_branch,
+    prior_by_id = {str(task["id"]): task for task in previous_data.get("tasks", [])}
+    tickets = []
+    for event in events:
+        event_type = str(event.get("type") or "")
+        if event_type == EV_BOARD_META:
+            continue
+        if event_type in {EV_BOARD_ORDER, EV_TASK_REMOVE}:
+            raise RuntimeError(f"{event_type} has no authenticated remote compatibility transition")
+        ticket = _ticket_from_event(event, agent=agent, session_id=session_id, now=timestamp)
+        if event_type == EV_TASK_UPSERT:
+            task_id = str(event["task_id"])
+            prior = prior_by_id.get(task_id)
+            desired = dict(event.get("data") or {})
+            ticket = ticket.model_copy(
+                update={
+                    "precondition": (
+                        {"task_sha256": task_state_sha256(prior)} if prior is not None else {"absent": True}
+                    )
+                }
             )
+            if prior is not None:
+                prior_log = list(prior.get("dispatch_log") or [])
+                desired_log = list(desired.get("dispatch_log") or [])
+                if desired_log != prior_log:
+                    if len(desired_log) != len(prior_log) + 1 or desired_log[:-1] != prior_log:
+                        raise RuntimeError(
+                            f"task {task_id} compatibility transition must append exactly one dispatch receipt"
+                        )
+                    ticket = ticket.model_copy(update={"log": dict(desired_log[-1])})
+        tickets.append(ticket)
+    if not tickets:
+        return DrainResult(note="no task transition; budget-window metadata is derived by the remote keeper")
+    remote = client_from_env()
+    projected_tasks: dict[str, dict[str, Any]] = {}
+    for ticket in tickets:
+        task = _relay_ticket(
+            ticket,
+            prior_by_id.get(str(ticket.task_id)),
+            client=remote,
+            board_path=board_path,
+        )
+        prior_by_id[str(ticket.task_id)] = task
+        projected_tasks[str(ticket.task_id)] = task
+    return DrainResult(
+        pending=len(tickets),
+        applied=len(tickets),
+        wrote=isinstance(remote, LocalConductClient),
+        note="broker-committed",
+        applied_ids=[ticket.ticket_id for ticket in tickets],
+        projected_tasks=projected_tasks,
+    )
 
-    if open_pr:
-        pr_number = int(open_pr.get("number") or 0)
-        validation_error = _publication_pr_error(
-            open_pr,
-            expected_head=publication_sha,
-            base_branch=branch,
-        )
-        if not publication_sha or validation_error:
-            return PreserveResult(
-                reason=validation_error or "publication-pr-head-missing",
-                branch=publication_branch,
-                pr_number=pr_number,
-            )
-        diff_error = _publication_diff_error(
-            repo,
-            base_sha=base_sha,
-            head_sha=publication_sha,
-            rel_board=rel_board,
-        )
-        if diff_error:
-            return PreserveResult(reason=diff_error, branch=publication_branch, pr_number=pr_number)
-        effect_error = _ensure_publication_effects(
-            repo,
-            slug=slug,
-            publication_branch=publication_branch,
-            pr=open_pr,
-            expected_head=publication_sha,
-        )
-        if effect_error:
-            return PreserveResult(reason=effect_error, branch=publication_branch, pr_number=pr_number)
-        return PreserveResult(
-            published=True,
-            deferred=True,
-            reason="publication-in-flight",
-            commit=publication_sha,
-            branch=publication_branch,
-            pr_number=pr_number,
-        )
 
-    if not publication_sha:
-        return PreserveResult(published=True, skipped=True, reason="preflight-clear", branch=publication_branch)
-    base_blob = _git(repo, ["rev-parse", f"{base_sha}:{rel_board}"]).stdout.strip()
-    publication_blob = _git(repo, ["rev-parse", f"{publication_sha}:{rel_board}"]).stdout.strip()
-    if not publication_blob:
-        return PreserveResult(reason="publication-board-missing", branch=publication_branch)
-    branch_tree_diff = _git(repo, ["diff", "--quiet", base_sha, publication_sha])
-    if branch_tree_diff.returncode not in {0, 1}:
-        return PreserveResult(
-            reason=f"publication-diff-failed:{_short_output(branch_tree_diff)}",
-            branch=publication_branch,
-        )
-    if branch_tree_diff.returncode == 0:
-        return PreserveResult(published=True, skipped=True, reason="preflight-clear", branch=publication_branch)
-    diff_error = _publication_diff_error(
-        repo,
-        base_sha=base_sha,
-        head_sha=publication_sha,
-        rel_board=rel_board,
-    )
-    if diff_error:
-        return PreserveResult(reason=diff_error, branch=publication_branch)
-    if publication_blob == base_blob:
-        return PreserveResult(published=True, skipped=True, reason="preflight-clear", branch=publication_branch)
-    pr_number, error = _ensure_publication_pr(
-        repo,
-        slug=slug,
-        base_branch=branch,
-        publication_branch=publication_branch,
-        expected_head=publication_sha,
-    )
-    if error:
-        return PreserveResult(reason=error, commit=publication_sha, branch=publication_branch)
-    pr, error = _view_publication_pr(repo, slug, pr_number)
-    if error:
-        return PreserveResult(
-            reason=f"pr-view-failed:{error}",
-            commit=publication_sha,
-            branch=publication_branch,
-            pr_number=pr_number,
-        )
-    effect_error = _ensure_publication_effects(
-        repo,
-        slug=slug,
-        publication_branch=publication_branch,
-        pr=pr or {},
-        expected_head=publication_sha,
-    )
-    if effect_error:
-        return PreserveResult(
-            reason=effect_error,
-            commit=publication_sha,
-            branch=publication_branch,
-            pr_number=pr_number,
-        )
-    return PreserveResult(
-        published=True,
-        deferred=True,
-        reason="publication-recovered",
-        commit=publication_sha,
-        branch=publication_branch,
-        pr_number=pr_number,
+def restore_limen_projection_text(
+    board_path: Path,
+    text: str,
+    *,
+    agent: str,
+    session_id: str,
+    now: datetime | None = None,
+) -> DrainResult:
+    """Reject local cache replacement; refetch the canonical remote projection."""
+
+    del board_path, text, agent, session_id, now
+    raise RuntimeError(
+        "local tasks.yaml recovery is retired; refetch the GitHub-backed projection "
+        "through the authenticated conduct owner"
     )
 
 
@@ -743,421 +1189,35 @@ def preserve_board_projection(
     dry_run: bool = False,
     lock_timeout: int = 2,
 ) -> PreserveResult:
-    """Publish the sealed board on a stable, fast-forward-only PR branch.
+    """Retired local Git bridge.
 
-    ``main`` is never pushed or advanced locally. The temporary index starts
-    from current ``origin/main`` (and, when needed, a synthetic merge parent
-    that joins the prior publication head to current main), stages only the
-    board, and pushes a normal fast-forward commit to
-    ``tabularius/board-projection``. Exactly one open PR owns that immutable
-    remote head; newer local board state coalesces while it is in flight.
-    Competing publishers serialize at the remote ref because a stale
-    non-fast-forward push is rejected. No force push or TOCTOU queue-ref probe
-    is involved.
+    The authenticated remote projection performs GitHub SHA compare-and-swap before acknowledging
+    a transition. A local process must never commit, push, reset, or advance the canonical board.
     """
-    board_path = Path(board_path)
-    with queue_lock(board_path, timeout=lock_timeout) as locked:
-        if not locked:
-            return PreserveResult(deferred=True, reason="queue-lock-held", branch=publication_branch)
 
-        top = _git(board_path.parent, ["rev-parse", "--show-toplevel"])
-        if top.returncode != 0 or not top.stdout.strip():
-            return PreserveResult(skipped=True, reason="not-a-git-repo", branch=publication_branch)
-        repo = Path(top.stdout.strip())
-        try:
-            rel_board = board_path.resolve().relative_to(repo.resolve()).as_posix()
-        except ValueError:
-            return PreserveResult(skipped=True, reason="board-outside-git-root", branch=publication_branch)
+    del board_path, branch, remote, manage_pr, dry_run, lock_timeout
+    return PreserveResult(
+        skipped=True,
+        reason="remote-keeper-owns-projection",
+        branch=publication_branch,
+    )
 
-        status = _git(repo, ["status", "--porcelain", "--", rel_board])
-        if status.returncode != 0:
-            return PreserveResult(
-                skipped=True,
-                reason=f"status-failed:{_short_output(status)}",
-                branch=publication_branch,
-            )
-        if not status.stdout.strip():
-            return PreserveResult(published=True, skipped=True, reason="no-board-changes", branch=publication_branch)
-        if dry_run:
-            return PreserveResult(
-                changed=True,
-                skipped=True,
-                reason=f"would-publish:{rel_board}",
-                branch=publication_branch,
-            )
 
-        current = _git(repo, ["symbolic-ref", "--quiet", "--short", "HEAD"])
-        if current.returncode != 0 or current.stdout.strip() != branch:
-            return PreserveResult(skipped=True, reason=f"not-on-{branch}", branch=publication_branch)
-        fetch = _git(repo, ["fetch", "--quiet", remote, branch])
-        if fetch.returncode != 0:
-            return PreserveResult(
-                skipped=True,
-                reason=f"fetch-failed:{_short_output(fetch)}",
-                branch=publication_branch,
-            )
-        remote_ref = f"{remote}/{branch}"
-        base_sha = _git(repo, ["rev-parse", remote_ref]).stdout.strip()
-        if not base_sha:
-            return PreserveResult(changed=True, skipped=True, reason=f"missing-{remote_ref}", branch=publication_branch)
+def board_publication_preflight(
+    board_path: Path,
+    *,
+    branch: str = "main",
+    remote: str = "origin",
+    publication_branch: str = BOARD_PUBLICATION_BRANCH,
+) -> PreserveResult:
+    """Fail closed rather than revive the retired local publication writer."""
 
-        slug = ""
-        open_pr: dict[str, Any] | None = None
-        if manage_pr:
-            slug, error = _repository_slug(repo)
-            if error:
-                return PreserveResult(
-                    changed=True,
-                    deferred=True,
-                    reason=f"github-unavailable:{error}",
-                    branch=publication_branch,
-                )
-            open_pr, error = _open_publication_pr(repo, slug, publication_branch)
-            if error:
-                return PreserveResult(
-                    changed=True,
-                    deferred=True,
-                    reason=f"pr-list-failed:{error}",
-                    branch=publication_branch,
-                )
-
-        publication_sha, error = _remote_branch_sha(repo, remote, publication_branch)
-        if error:
-            return PreserveResult(
-                changed=True,
-                deferred=True,
-                reason=f"publication-ref-failed:{error}",
-                branch=publication_branch,
-            )
-        if publication_sha:
-            fetch_publication = _git(
-                repo,
-                [
-                    "fetch",
-                    "--quiet",
-                    remote,
-                    f"refs/heads/{publication_branch}",
-                ],
-            )
-            if fetch_publication.returncode != 0:
-                return PreserveResult(
-                    changed=True,
-                    deferred=True,
-                    reason=f"publication-fetch-failed:{_short_output(fetch_publication)}",
-                    branch=publication_branch,
-                )
-
-        local_blob = _git(repo, ["hash-object", "--", rel_board]).stdout.strip()
-        publication_blob = (
-            _git(repo, ["rev-parse", f"{publication_sha}:{rel_board}"]).stdout.strip() if publication_sha else ""
-        )
-
-        if open_pr:
-            pr_number = int(open_pr.get("number") or 0)
-            validation_error = _publication_pr_error(
-                open_pr,
-                expected_head=publication_sha,
-                base_branch=branch,
-            )
-            if not publication_sha or validation_error:
-                return PreserveResult(
-                    changed=True,
-                    deferred=True,
-                    reason=validation_error or "publication-pr-head-missing",
-                    branch=publication_branch,
-                    pr_number=pr_number,
-                )
-            diff_error = _publication_diff_error(
-                repo,
-                base_sha=base_sha,
-                head_sha=publication_sha,
-                rel_board=rel_board,
-            )
-            if diff_error:
-                return PreserveResult(
-                    changed=True,
-                    deferred=True,
-                    reason=diff_error,
-                    commit=publication_sha,
-                    branch=publication_branch,
-                    pr_number=pr_number,
-                )
-            effect_error = _ensure_publication_effects(
-                repo,
-                slug=slug,
-                publication_branch=publication_branch,
-                pr=open_pr,
-                expected_head=publication_sha,
-            )
-            return PreserveResult(
-                changed=True,
-                published=bool(not effect_error and local_blob and local_blob == publication_blob),
-                deferred=True,
-                reason=effect_error or "publication-in-flight",
-                commit=publication_sha,
-                branch=publication_branch,
-                pr_number=pr_number,
-            )
-
-        base_blob = _git(repo, ["rev-parse", f"{base_sha}:{rel_board}"]).stdout.strip()
-        if local_blob and local_blob == base_blob:
-            return PreserveResult(
-                changed=True,
-                published=True,
-                skipped=True,
-                reason="already-on-main",
-                commit=base_sha,
-                branch=publication_branch,
-            )
-
-        if manage_pr and publication_sha and publication_blob != base_blob:
-            diff_error = _publication_diff_error(
-                repo,
-                base_sha=base_sha,
-                head_sha=publication_sha,
-                rel_board=rel_board,
-            )
-            if diff_error:
-                return PreserveResult(
-                    changed=True,
-                    deferred=True,
-                    reason=diff_error,
-                    commit=publication_sha,
-                    branch=publication_branch,
-                )
-            if publication_blob:
-                pr_number, error = _ensure_publication_pr(
-                    repo,
-                    slug=slug,
-                    base_branch=branch,
-                    publication_branch=publication_branch,
-                    expected_head=publication_sha,
-                )
-                if error:
-                    return PreserveResult(
-                        changed=True,
-                        deferred=True,
-                        reason=error,
-                        commit=publication_sha,
-                        branch=publication_branch,
-                    )
-                pr, error = _view_publication_pr(repo, slug, pr_number)
-                if error:
-                    return PreserveResult(
-                        changed=True,
-                        deferred=True,
-                        reason=f"pr-view-failed:{error}",
-                        commit=publication_sha,
-                        branch=publication_branch,
-                        pr_number=pr_number,
-                    )
-                effect_error = _ensure_publication_effects(
-                    repo,
-                    slug=slug,
-                    publication_branch=publication_branch,
-                    pr=pr or {},
-                    expected_head=publication_sha,
-                )
-                return PreserveResult(
-                    changed=True,
-                    published=bool(not effect_error and local_blob and local_blob == publication_blob),
-                    deferred=True,
-                    reason=effect_error or "publication-in-flight",
-                    commit=publication_sha,
-                    branch=publication_branch,
-                    pr_number=pr_number,
-                )
-            return PreserveResult(
-                changed=True,
-                deferred=True,
-                reason="publication-board-missing",
-                commit=publication_sha,
-                branch=publication_branch,
-            )
-
-        parent_sha = base_sha
-        read_tree_sha = base_sha
-        if publication_sha:
-            base_is_ancestor = _git(repo, ["merge-base", "--is-ancestor", base_sha, publication_sha])
-            if base_is_ancestor.returncode == 0:
-                parent_sha = publication_sha
-                read_tree_sha = publication_sha
-            else:
-                base_tree = _git(repo, ["rev-parse", f"{base_sha}^{{tree}}"])
-                if base_tree.returncode != 0 or not base_tree.stdout.strip():
-                    return PreserveResult(
-                        changed=True,
-                        deferred=True,
-                        reason=f"base-tree-failed:{_short_output(base_tree)}",
-                        branch=publication_branch,
-                    )
-                bridge = _git(
-                    repo,
-                    [
-                        "commit-tree",
-                        base_tree.stdout.strip(),
-                        "-p",
-                        publication_sha,
-                        "-p",
-                        base_sha,
-                        "-m",
-                        f"tabularius: reconcile board branch with {branch} {base_sha[:12]}",
-                    ],
-                    env=_commit_identity_env(repo, {}),
-                )
-                if bridge.returncode != 0 or not bridge.stdout.strip():
-                    return PreserveResult(
-                        changed=True,
-                        deferred=True,
-                        reason=f"bridge-commit-failed:{_short_output(bridge)}",
-                        branch=publication_branch,
-                    )
-                parent_sha = bridge.stdout.strip()
-                read_tree_sha = parent_sha
-
-        with tempfile.NamedTemporaryFile(prefix="tabularius-board-index-") as tmp:
-            env = {"GIT_INDEX_FILE": tmp.name}
-            read_tree = _git(repo, ["read-tree", read_tree_sha], env=env)
-            if read_tree.returncode != 0:
-                return PreserveResult(
-                    changed=True,
-                    skipped=True,
-                    reason=f"read-tree-failed:{_short_output(read_tree)}",
-                    branch=publication_branch,
-                )
-            add = _git(repo, ["add", "-A", "--", rel_board], env=env)
-            if add.returncode != 0:
-                return PreserveResult(
-                    changed=True,
-                    skipped=True,
-                    reason=f"add-failed:{_short_output(add)}",
-                    branch=publication_branch,
-                )
-            # DATA_ONLY invariant: the publication branch may carry only the
-            # board projection; all code reaches main through its own PR.
-            staged = _git(repo, ["diff", "--cached", "--name-only", parent_sha], env=env)
-            staged_paths = {line.strip() for line in staged.stdout.splitlines() if line.strip()}
-            if not staged_paths <= {rel_board}:
-                raise AssertionError(
-                    f"tabularius publication would carry non-board paths {sorted(staged_paths - {rel_board})}; "
-                    "the DATA_ONLY invariant (only tasks.yaml may reach the board PR) was violated"
-                )
-            diff = _git(repo, ["diff", "--cached", "--quiet", parent_sha, "--", rel_board], env=env)
-            if diff.returncode == 0:
-                return PreserveResult(
-                    published=True,
-                    skipped=True,
-                    reason="no-index-diff",
-                    commit=parent_sha,
-                    branch=publication_branch,
-                )
-            tree = _git(repo, ["write-tree"], env=env)
-            if tree.returncode != 0 or not tree.stdout.strip():
-                return PreserveResult(
-                    changed=True,
-                    skipped=True,
-                    reason=f"write-tree-failed:{_short_output(tree)}",
-                    branch=publication_branch,
-                )
-            stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-            commit = _git(
-                repo,
-                [
-                    "commit-tree",
-                    tree.stdout.strip(),
-                    "-p",
-                    parent_sha,
-                    "-m",
-                    f"tabularius: preserve board projection {stamp}",
-                ],
-                env=_commit_identity_env(repo, env),
-            )
-            if commit.returncode != 0 or not commit.stdout.strip():
-                return PreserveResult(
-                    changed=True,
-                    skipped=True,
-                    reason=f"commit-tree-failed:{_short_output(commit)}",
-                    branch=publication_branch,
-                )
-            commit_sha = commit.stdout.strip()
-
-        candidate_diff_error = _publication_diff_error(
-            repo,
-            base_sha=base_sha,
-            head_sha=commit_sha,
-            rel_board=rel_board,
-        )
-        if candidate_diff_error:
-            return PreserveResult(
-                changed=True,
-                deferred=True,
-                reason=candidate_diff_error,
-                commit=commit_sha,
-                branch=publication_branch,
-            )
-
-        push = _git(repo, ["push", remote, f"{commit_sha}:refs/heads/{publication_branch}"])
-        if push.returncode != 0:
-            return PreserveResult(
-                changed=True,
-                deferred=True,
-                reason=f"push-rejected:{_short_output(push)}",
-                branch=publication_branch,
-            )
-
-        if not manage_pr:
-            return PreserveResult(
-                changed=True,
-                pushed=True,
-                published=True,
-                commit=commit_sha,
-                branch=publication_branch,
-            )
-
-        pr_number, error = _ensure_publication_pr(
-            repo,
-            slug=slug,
-            base_branch=branch,
-            publication_branch=publication_branch,
-            expected_head=commit_sha,
-        )
-        if error:
-            return PreserveResult(
-                changed=True,
-                pushed=True,
-                deferred=True,
-                reason=error,
-                commit=commit_sha,
-                branch=publication_branch,
-            )
-        pr, error = _view_publication_pr(repo, slug, pr_number)
-        if error:
-            return PreserveResult(
-                changed=True,
-                pushed=True,
-                deferred=True,
-                reason=f"pr-view-failed:{error}",
-                commit=commit_sha,
-                branch=publication_branch,
-                pr_number=pr_number,
-            )
-        effect_error = _ensure_publication_effects(
-            repo,
-            slug=slug,
-            publication_branch=publication_branch,
-            pr=pr or {},
-            expected_head=commit_sha,
-        )
-        return PreserveResult(
-            changed=True,
-            pushed=True,
-            published=not effect_error,
-            deferred=bool(effect_error),
-            reason=effect_error,
-            commit=commit_sha,
-            branch=publication_branch,
-            pr_number=pr_number,
-        )
+    del board_path, branch, remote
+    return PreserveResult(
+        skipped=True,
+        reason="remote-keeper-preflight-required",
+        branch=publication_branch,
+    )
 
 
 def _parse_pending(inbox: Path) -> tuple[list[tuple[Path, Ticket]], list[tuple[Path, str]]]:
@@ -1341,11 +1401,12 @@ def _quarantine(rejected: list[tuple[Path, str]], dest_dir: Path) -> None:
 
 
 def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 20) -> DrainResult:
-    """Drain the inbox once: fold every pending ticket onto the board, seal, archive.
+    """Relay one inbox snapshot to the authenticated keeper.
 
-    The whole load→fold→seal runs under the queue lock, and the keeper is the only drainer, so there
-    is no read-modify-write race. An empty inbox is an instant no-op (no lock, no board I/O) — which
-    is what makes it safe to run every beat while no producers exist yet.
+    The queue lock serializes only local ticket custody. ``tasks.yaml`` is read as an optimistic
+    cache and remains byte-identical. A ticket moves to ``archive`` only after a projection receipt
+    names the canonical task. Invalid tickets are quarantined; broker unavailability leaves the
+    current ticket and every unattempted suffix in the inbox for an idempotent retry.
     """
     board_path = Path(board_path)
     inbox = _inbox(board_path)
@@ -1359,15 +1420,33 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
     if dry_run:
         good, bad = _parse_pending(inbox)
         admitted, precondition_rejections = _admit_exact_preconditions(good)
+        dry_tasks: dict[str, dict[str, Any]] = {}
+        if board_path.exists():
+            board = load_limen_file(board_path)
+            dry_tasks = {task.id: task.model_dump(mode="json", exclude_none=True) for task in board.tasks}
+        applicable: list[tuple[Path, Ticket]] = []
+        dry_rejected: list[tuple[Path, str]] = [*bad, *precondition_rejections]
+        for path, ticket in admitted:
+            try:
+                intent = _compatibility_intent(ticket, dry_tasks.get(str(ticket.task_id)))
+                if intent["kind"] == "task.upsert":
+                    dry_tasks[str(ticket.task_id)] = dict(intent["task"])
+                else:
+                    dry_tasks[str(ticket.task_id)] = {
+                        **dry_tasks[str(ticket.task_id)],
+                        **dict(intent.get("patch") or {}),
+                    }
+                applicable.append((path, ticket))
+            except Exception as exc:
+                dry_rejected.append((path, f"compatibility validation failed: {exc}"))
         pending = len(good) + len(bad)
         return DrainResult(
             pending=pending,
-            applied=len(admitted),
-            rejected=len(bad) + len(precondition_rejections),
-            note=(
-                f"dry-run: {len(admitted)} applicable, "
-                f"{len(bad)} unparseable, {len(precondition_rejections)} precondition conflict(s)"
-            ),
+            applied=len(applicable),
+            rejected=len(dry_rejected),
+            note=(f"dry-run: {len(applicable)} broker-compatible, {len(dry_rejected)} invalid/conflicting"),
+            applied_ids=[ticket.ticket_id for _, ticket in applicable],
+            rejected_ids=[path.stem for path, _ in dry_rejected],
         )
 
     with queue_lock(board_path, timeout=lock_timeout) as locked:
@@ -1382,43 +1461,43 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
         if pending == 0:
             return DrainResult(note="inbox empty")
 
-        board = load_limen_file(board_path)
-        board_json = board.model_dump(mode="json", exclude_none=True)
-        tasks: OrderedDict[str, dict[str, Any]] = OrderedDict((t["id"], t) for t in board_json.get("tasks", []))
-        meta: dict[str, Any] = {"version": board_json.get("version", "1.0"), "portal": board_json.get("portal")}
-
+        tasks: dict[str, dict[str, Any]] = {}
+        if board_path.exists():
+            board = load_limen_file(board_path)
+            tasks = {task.id: task.model_dump(mode="json", exclude_none=True) for task in board.tasks}
         applied: list[tuple[Path, Ticket]] = []
         admitted, precondition_rejections = _admit_exact_preconditions(good)
         rejected: list[tuple[Path, str]] = [*bad, *precondition_rejections]
-        for p, ticket in admitted:
-            try:
-                _apply(ticket, tasks, meta)
-                applied.append((p, ticket))
-            except Exception as exc:
-                rejected.append((p, f"apply failed: {exc}"))
+        try:
+            remote = client_from_env()
+        except BrokerUnavailable as exc:
+            _quarantine(rejected, _rejected(board_path))
+            return DrainResult(
+                pending=pending,
+                rejected=len(rejected),
+                deferred=True,
+                note=f"conduct broker unavailable; valid tickets remain pending: {exc}",
+                rejected_ids=[path.stem for path, _ in rejected],
+            )
 
-        wrote = False
-        if applied:
-            events: list[Event] = [
-                {"type": EV_BOARD_META, "data": {"version": meta["version"], "portal": meta["portal"]}}
-            ]
-            for tid, fields in tasks.items():
-                events.append({"type": EV_TASK_UPSERT, "task_id": tid, "data": fields})
-            if meta.get("order"):
-                events.append({"type": EV_BOARD_ORDER, "data": {"ids": meta["order"]}})
+        deferred_reason = ""
+        for path, ticket in admitted:
             try:
-                new_board = fold(events)  # the proven reducer assembles + validates the whole board
+                projected = _relay_ticket(
+                    ticket,
+                    tasks.get(str(ticket.task_id)),
+                    client=remote,
+                    board_path=board_path,
+                )
+                tasks[str(ticket.task_id)] = projected
+                applied.append((path, ticket))
+            except BrokerUnavailable as exc:
+                deferred_reason = str(exc)
+                break
+            except (ConductError, RuntimeError, ValueError) as exc:
+                rejected.append((path, f"broker rejected compatibility ticket: {exc}"))
             except Exception as exc:
-                rejected.extend((p, f"batch rejected by board validation: {exc}") for p, _ in applied)
-                applied = []
-            else:
-                try:
-                    save_limen_file(board_path, new_board)  # collapse-guard + atomic seal
-                    wrote = True
-                except BoardCollapseError as exc:
-                    # the batch would collapse the board — never write; quarantine it whole, board intact
-                    rejected.extend((p, f"batch rejected by collapse-guard: {exc}") for p, _ in applied)
-                    applied = []
+                rejected.append((path, f"unexpected compatibility relay failure: {exc}"))
 
         _move([p for p, _ in applied], _archive(board_path))
         _quarantine(rejected, _rejected(board_path))
@@ -1427,8 +1506,13 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
         pending=pending,
         applied=len(applied),
         rejected=len(rejected),
-        wrote=wrote,
-        note=("sealed" if wrote else "no board change"),
+        wrote=isinstance(remote, LocalConductClient),
+        deferred=bool(deferred_reason),
+        note=(
+            f"conduct broker unavailable after {len(applied)} acknowledgment(s); unacknowledged tickets remain pending"
+            if deferred_reason
+            else ("broker-committed" if applied else "no remote projection")
+        ),
         applied_ids=[t.ticket_id for _, t in applied],
         rejected_ids=[p.stem for p, _ in rejected],
     )

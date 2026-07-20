@@ -72,8 +72,12 @@ def test_apply_parks_chronic_including_legacy_strings_and_still_flips_buildable(
     for tid in ("CHR1", "CHR2"):
         assert board[tid]["status"] == "failed_blocked", board[tid]
         assert "chronic-fleet-debt" in board[tid]["labels"], board[tid]
+        assert board[tid]["dispatch_log"][-1]["lifecycle_repair"] == "fleet-debt-park"
+        assert board[tid]["dispatch_log"][-1]["fleet_debt_source"] == "prior-chronic-log"
+        assert board[tid]["dispatch_log"][-1]["fleet_debt_count"] == 1
     # the drain still works for genuinely mis-parked fleet-buildable work
     assert board["FLIP1"]["status"] == "open", board["FLIP1"]
+    assert board["FLIP1"]["dispatch_log"][-1]["status"] == "open"
 
 
 def test_human_marked_chronic_stays_keep(tmp_path):

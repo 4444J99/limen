@@ -15,6 +15,8 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 from limen import runtime_requirements  # noqa: E402
+from limen.models import LimenFile  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 VALID_CLAIM_AGENTS = {
@@ -152,7 +154,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     data = load_board(args.tasks)
+    before = LimenFile.model_validate(data)
     task = claim_task(data, args.task_id, args.agent, args.session_id)
+    desired = LimenFile.model_validate(data)
 
     if not args.live:
         print(
@@ -160,9 +164,14 @@ def main() -> int:
         )
         return 0
 
-    with args.tasks.open("w") as stream:
-        yaml.safe_dump(data, stream, default_flow_style=False, sort_keys=False)
-    print(f"claimed {task['id']} for {task['target_agent']} in {args.tasks}")
+    apply_limen_file_sync(
+        args.tasks,
+        desired,
+        agent=args.agent,
+        session_id=args.session_id,
+        before=before,
+    )
+    print(f"submitted claim {task['id']} for {task['target_agent']} to the canonical conduct broker")
     return 0
 
 

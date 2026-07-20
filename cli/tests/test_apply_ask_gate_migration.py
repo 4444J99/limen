@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 
 from limen.io import load_limen_file, save_limen_file
-from limen.models import LimenFile
+from limen.models import LimenFile, dispatch_agent, dispatch_session_id
 from limen.tabularius import drain_once, tickets_root
 
 
@@ -31,6 +31,34 @@ def _module():
 
 def _payload() -> dict:
     return json.loads(RECEIPT.read_text(encoding="utf-8"))
+
+
+def _frozen_board_with_source_status(payload: dict, task_id: str) -> LimenFile:
+    source = load_limen_file(BOARD)
+    frozen = set(payload["frozen_ids"])
+    row = payload["tasks"][task_id]
+    terminal_status = str((row.get("status_patch") or {}).get("status") or "")
+    tasks = []
+    for task in source.tasks:
+        if task.id not in frozen:
+            continue
+        if task.id == task_id:
+            history = [
+                entry
+                for entry in task.dispatch_log
+                if not (
+                    entry.status == terminal_status
+                    and "ask-gate-migration-2026-07-12: parents:" in (entry.output or "")
+                )
+            ]
+            task = task.model_copy(
+                update={
+                    "status": str(row["source_status"]),
+                    "dispatch_log": history,
+                }
+            )
+        tasks.append(task)
+    return LimenFile(tasks=tasks)
 
 
 def test_non_merged_live_prerequisite_fails_closed() -> None:
@@ -354,16 +382,17 @@ def test_retry_identity_uses_first_honest_child_event_without_collision(tmp_path
     child = {task.id: task for task in load_limen_file(board).tasks}[str(first[0].task_id)]
     assert len(child.dispatch_log) == 1
     assert child.dispatch_log[0].agent == "codex"
-    assert child.dispatch_log[0].session_id == "first-invocation"
+    assert dispatch_agent(child.dispatch_log[0]) == "codex"
+    assert child.dispatch_log[0].session_id == "codex-first-invocation"
+    assert dispatch_session_id(child.dispatch_log[0]) == "first-invocation"
 
 
 def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_path: Path) -> None:
     compiler = _module()
     payload = _payload()
-    source = load_limen_file(BOARD)
-    frozen = set(payload["frozen_ids"])
+    task_id = "DISCOVER-organvm-arca"
     board = tmp_path / "tasks.yaml"
-    save_limen_file(board, LimenFile(tasks=[task for task in source.tasks if task.id in frozen]))
+    save_limen_file(board, _frozen_board_with_source_status(payload, task_id))
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
     kwargs = {"timestamp": timestamp, "agent": "codex", "session_id": "concurrent-parent"}
     children = compiler.compile_child_tickets(payload, **kwargs)
@@ -371,7 +400,6 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
     assert drain_once(board).applied == 29
     parents = compiler.compile_parent_tickets(payload, board, **kwargs)
 
-    task_id = "DISCOVER-organvm-arca"
     row = payload["tasks"][task_id]
     claim = compiler.Ticket(
         ticket_id="concurrent-claim-before-parent",
@@ -401,11 +429,9 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
 def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path: Path, claim_status: str) -> None:
     compiler = _module()
     payload = _payload()
-    source = load_limen_file(BOARD)
-    frozen = set(payload["frozen_ids"])
-    board = tmp_path / "tasks.yaml"
-    save_limen_file(board, LimenFile(tasks=[task for task in source.tasks if task.id in frozen]))
     task_id = "DISCOVER-organvm-arca"
+    board = tmp_path / "tasks.yaml"
+    save_limen_file(board, _frozen_board_with_source_status(payload, task_id))
     baseline = {task.id: task for task in load_limen_file(board).tasks}[task_id]
     archived_before = sum(entry.status == "archived" for entry in baseline.dispatch_log)
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
@@ -414,9 +440,28 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
     compiler.submit_compiled_tickets(board, children)
     assert drain_once(board).applied == 29
     parents = compiler.compile_parent_tickets(payload, board, **kwargs)
-    compiler.submit_compiled_tickets(board, parents)
 
     row = payload["tasks"][task_id]
+    if claim_status == "in_progress":
+        prior_claim = compiler.Ticket(
+            ticket_id="prior-dispatched-claim",
+            timestamp=timestamp - timedelta(seconds=1),
+            agent="jules",
+            session_id="prior-dispatched",
+            intent="task.upsert",
+            task_id=task_id,
+            patch={
+                "predicate": row["predicate"],
+                "receipt_target": row["receipt_target"],
+                "status": "dispatched",
+            },
+            log={"status": "dispatched", "output": "prior valid claim"},
+        )
+        compiler.submit_ticket(board, prior_claim)
+        prior_drain = drain_once(board)
+        assert (prior_drain.applied, prior_drain.rejected) == (1, 0)
+
+    compiler.submit_compiled_tickets(board, parents)
     later_claim = compiler.Ticket(
         ticket_id=f"later-{claim_status}-claim",
         timestamp=timestamp + timedelta(seconds=1),

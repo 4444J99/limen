@@ -4,8 +4,8 @@ Context: on 2026-06-19 tasks.yaml was truncated to 0 bytes by a non-atomic write
 and — separately — the heartbeat read the file *mid-write* as None, saw total=0 open=0,
 and went idle (the downtime). save_limen_file was made atomic; these tests pin that
 behavior AND assert load_limen_file refuses a None/empty file instead of crashing the
-fleet downstream. Every tasks.yaml writer (route.py / batch-dispatch.py / auto-scale.py /
-append-tasks.py) now routes through atomic_write_text — see limen/io.py.
+fleet downstream. The authenticated remote keeper now owns lifecycle projection; this module's
+serializer remains for explicitly noncanonical cache/export files and rejects the canonical target.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from limen.io import (
     atomic_write_text,
     load_limen_file,
     load_limen_text,
+    save_derived_limen_projection,
     save_limen_file,
 )
 from limen.models import LimenFile
@@ -84,6 +85,33 @@ def test_save_then_load_roundtrips(tmp_path: Path) -> None:
     save_limen_file(target, model)
     loaded = load_limen_file(target)
     assert isinstance(loaded, LimenFile)
+
+
+def test_derived_projection_cannot_target_canonical_board(tmp_path: Path) -> None:
+    canonical = tmp_path / "tasks.yaml"
+    model = LimenFile.model_validate(_board())
+    canonical.write_text("canonical bytes\n")
+
+    with pytest.raises(ValueError, match="canonical tasks.yaml"):
+        save_derived_limen_projection(
+            canonical,
+            model,
+            canonical_path=canonical,
+        )
+
+    assert canonical.read_text() == "canonical bytes\n"
+
+
+def test_derived_projection_writes_only_a_distinct_export(tmp_path: Path) -> None:
+    canonical = tmp_path / "tasks.yaml"
+    export = tmp_path / "channel.yaml"
+    canonical.write_text("canonical bytes\n")
+    model = LimenFile.model_validate(_board())
+
+    save_derived_limen_projection(export, model, canonical_path=canonical)
+
+    assert canonical.read_text() == "canonical bytes\n"
+    assert load_limen_file(export).model_dump(mode="json") == model.model_dump(mode="json")
 
 
 def test_save_then_load_preserves_board_extensions(tmp_path: Path) -> None:

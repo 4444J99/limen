@@ -1,0 +1,382 @@
+{
+  "$defs": {
+    "AgentIdentityV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "title": "Agent",
+          "type": "string"
+        },
+        "native_run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Run Id"
+        },
+        "provider_identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Identity"
+        },
+        "schema_version": {
+          "const": "limen.agent_identity.v1",
+          "default": "limen.agent_identity.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "surface": {
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "surface",
+        "session_id"
+      ],
+      "title": "AgentIdentityV1",
+      "type": "object"
+    },
+    "AuthorityEnvelopeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Actions",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "external_effects": {
+          "items": {
+            "type": "string"
+          },
+          "title": "External Effects",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "may_delegate": {
+          "default": true,
+          "title": "May Delegate",
+          "type": "boolean"
+        },
+        "path_prefixes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Path Prefixes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "repositories": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Repositories",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": "limen.authority_envelope.v1",
+          "default": "limen.authority_envelope.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "AuthorityEnvelopeV1",
+      "type": "object"
+    },
+    "FanoutBoundsV1": {
+      "additionalProperties": false,
+      "properties": {
+        "max_children": {
+          "default": 0,
+          "maximum": 10000,
+          "minimum": 0,
+          "title": "Max Children",
+          "type": "integer"
+        },
+        "max_depth": {
+          "default": 0,
+          "maximum": 64,
+          "minimum": 0,
+          "title": "Max Depth",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "limen.fanout_bounds.v1",
+          "default": "limen.fanout_bounds.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "FanoutBoundsV1",
+      "type": "object"
+    },
+    "ResourceClaimV1": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "mode": {
+          "default": "exclusive",
+          "enum": [
+            "shared",
+            "exclusive"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.resource_claim.v1",
+          "default": "limen.resource_claim.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "title": "ResourceClaimV1",
+      "type": "object"
+    },
+    "RetryPolicyV1": {
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "default": 1,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "limen.retry_policy.v1",
+          "default": "limen.retry_policy.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "transient_only": {
+          "default": true,
+          "title": "Transient Only",
+          "type": "boolean"
+        }
+      },
+      "title": "RetryPolicyV1",
+      "type": "object"
+    },
+    "SpendEnvelopeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "reserve": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Reserve",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "limen.spend_envelope.v1",
+          "default": "limen.spend_envelope.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "unit": {
+          "default": "runs",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "SpendEnvelopeV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority": {
+      "$ref": "#/$defs/AuthorityEnvelopeV1"
+    },
+    "conductor": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "deadline": {
+      "format": "date-time",
+      "title": "Deadline",
+      "type": "string"
+    },
+    "depth": {
+      "default": 0,
+      "maximum": 64,
+      "minimum": 0,
+      "title": "Depth",
+      "type": "integer"
+    },
+    "effect": {
+      "default": "write",
+      "enum": [
+        "read",
+        "write",
+        "external"
+      ],
+      "title": "Effect",
+      "type": "string"
+    },
+    "execution": {
+      "additionalProperties": true,
+      "title": "Execution",
+      "type": "object"
+    },
+    "execution_hash": {
+      "default": "",
+      "title": "Execution Hash",
+      "type": "string"
+    },
+    "fanout": {
+      "$ref": "#/$defs/FanoutBoundsV1"
+    },
+    "initiator": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "intent": {
+      "additionalProperties": true,
+      "title": "Intent",
+      "type": "object"
+    },
+    "intent_hash": {
+      "default": "",
+      "title": "Intent Hash",
+      "type": "string"
+    },
+    "parent_run_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Run Id"
+    },
+    "predicate": {
+      "title": "Predicate",
+      "type": "string"
+    },
+    "preferred_agent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Preferred Agent"
+    },
+    "receipt_target": {
+      "title": "Receipt Target",
+      "type": "string"
+    },
+    "required_capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Capabilities",
+      "type": "array",
+      "uniqueItems": true
+    },
+    "resource_claims": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ResourceClaimV1"
+      },
+      "title": "Resource Claims",
+      "type": "array"
+    },
+    "retry": {
+      "$ref": "#/$defs/RetryPolicyV1"
+    },
+    "root_run_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Root Run Id"
+    },
+    "schema_version": {
+      "const": "limen.work_packet.v1",
+      "default": "limen.work_packet.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "spend": {
+      "$ref": "#/$defs/SpendEnvelopeV1"
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Task Id"
+    },
+    "work_id": {
+      "title": "Work Id",
+      "type": "string"
+    },
+    "work_key": {
+      "title": "Work Key",
+      "type": "string"
+    }
+  },
+  "required": [
+    "work_id",
+    "work_key",
+    "intent",
+    "initiator",
+    "conductor",
+    "predicate",
+    "receipt_target",
+    "authority",
+    "deadline"
+  ],
+  "title": "WorkPacketV1",
+  "type": "object"
+}

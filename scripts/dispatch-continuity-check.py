@@ -273,9 +273,10 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
     try:
         sys.path.insert(0, str(ROOT / "cli" / "src"))
         from datetime import date  # noqa: PLC0415
-        from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: PLC0415
+        from limen.io import load_limen_file, queue_lock  # noqa: PLC0415
         from limen.intake import contract_fields, github_issue_owner_contract  # noqa: PLC0415
         from limen.models import Task, has_jules_landing_hold  # noqa: PLC0415
+        from limen.tabularius import apply_limen_file_sync  # noqa: PLC0415
         from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: PLC0415
     except Exception as e:
         print(f"  [continuity] ledger import failed ({e}); starved atom not hung", flush=True)
@@ -341,7 +342,12 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
             )
             changed = True
         if changed:
-            save_limen_file(LEDGER, lf)
+            apply_limen_file_sync(
+                LEDGER,
+                lf,
+                agent="dispatch-continuity",
+                session_id=f"starved-{lane}",
+            )
             print(f"  [continuity] hung/refreshed starved atom: {tid}", flush=True)
         else:
             print(f"  [continuity] starved atom already current: {tid}", flush=True)

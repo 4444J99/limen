@@ -24,11 +24,13 @@ brew install ./limen.rb
 ### Quick start
 
 ```bash
-# Initialize a task board
-limen init
+# Point the CLI at the authenticated conduct owner, then inspect live capabilities
+export LIMEN_CONDUCT_URL=https://<authenticated-conduct-endpoint>
+# LIMEN_CONDUCT_TOKEN is injected by the credential wall; never commit or paste it.
+limen conduct capabilities
 
-# Add tasks by editing tasks.yaml directly
-# (see tasks.yaml for the schema)
+# Submit bounded work; the remote keeper owns tasks.yaml projection
+limen conduct submit --packet path/to/work-packet.json
 
 # Check readiness and stale claims before dispatching
 limen doctor --agent jules
@@ -63,15 +65,16 @@ Mounts `./tasks.yaml` into the API container.
 
 | Command | Flags | Description |
 |---------|-------|-------------|
-| `limen init` | `--root`, `--budget` (default 100) | Scaffold a new tasks.yaml in LIMEN_ROOT or current directory. |
-| `limen dispatch` | `--agent`, `--budget`, `--dry-run/--live`, `--task`, `--limit` | Read tasks.yaml and dispatch open tasks to agents. |
+| `limen init` | `--root`, `--budget` | Retired local bootstrap; fails closed with the authenticated remote-owner hydration instruction. |
+| `limen conduct` | `capabilities`, `register`, `submit`, `split`, `graph`, `heartbeat`, `report`, `harvest`, `adopt`, `cancel`, `request-stop` | Use the symmetric authenticated conduct protocol. |
+| `limen dispatch` | `--agent`, `--budget`, `--dry-run/--live`, `--task`, `--limit` | Inspect the local cache and submit eligible lifecycle work to the conduct keeper. |
 | `limen release-stale` | `--hours` (default 24), `--agent`, `--dry-run/--apply`, `--json-output`, `--report-file` | Reopen dispatched/in-progress tasks whose latest event is stale. |
 | `limen doctor` | `--agent` (default jules), `--json-output`, `--report-file` | Report local readiness for dispatch and stale-claim recovery. |
 | `limen qa` | `--agent` (default jules), `--json-output`, `--report-file` | Report QA lifecycle gates and steering queues without mutating tasks. |
 | `limen status` | `--agent`, `--status` | Show the task board. |
 | `limen progress` | `--view`, `--scope`, `--level`, `--all`, `--json-output`, `--report-file`, `--ascii` | Inspect the partial board-progress and source-coverage lens. |
 | `limen harvest` | `--agent` | Check for completed dispatches and update task states. |
-| `limen workstream` | `--from`, `--prompt`, `--prompt-file`, `--codex`, `--shell` | Create/reuse a repo worktree plus a private `.limen-workstream/README.md` and `kickstart.sh`. |
+| `limen workstream` | `--from`, `--prompt`, `--prompt-file`, `--agent auto\|LANE`, `--conduct`, `--shell` | Create/reuse a repo worktree plus a private agent-neutral `.limen-workstream/README.md` and `kickstart.sh`; optionally register a protected direct conductor session. |
 
 The installer also creates a terminal-neutral shortcut in `~/.local/bin`:
 

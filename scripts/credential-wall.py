@@ -117,6 +117,27 @@ CI_SECRETS: list[dict] = [
         "hand": "INSTALLED ✓ — op is promptless forever (fleet + every shell), verified via `op whoami`. Scope residual: the saved SA token carries zero vault grants, so op *re-reads* return nothing — the fleet runs off the already-valid `~/.limen.env` (see `creds-hydrate.py --verify`). For op itself to re-read/rotate secrets (true full sweep), grant the SA read access to the vault(s) holding them in the 1Password console (service accounts read shared vaults; personal-vault items may need moving into one). Non-blocking.",
         "issue": "#288",
     },
+    {
+        "name": "LIMEN_CONDUCT_TOKEN / LIMEN_CONDUCT_TOKENS",
+        "home": "1Password credential organ + Cloudflare Worker secret rotation set",
+        "used": "authenticated peer-conductor endpoint; one principal-bound credential per native lane",
+        "hand": "gated — mint/install only after principal binding and executor-only lease delivery are exact-head green",
+        "issue": "#320",
+    },
+    {
+        "name": "LIMEN_GITHUB_TOKEN",
+        "home": "Cloudflare Worker secret with least-authority access to the GitHub-owned task projection",
+        "used": "TABVLARIVS Contents API SHA compare-and-swap for `tasks.yaml`",
+        "hand": "gated — credential-wall installation; value never enters repository or chat",
+        "issue": "#320",
+    },
+    {
+        "name": "COPILOT_MCP_LIMEN_CONDUCT_TOKEN",
+        "home": "organization Agents secret backed by the Copilot principal entry in the credential organ",
+        "used": "organization-level `limen-conductor` custom-agent authenticated remote MCP header",
+        "hand": "gated — install after the remote endpoint is deployed; no paid seat or secret mint is automatic",
+        "issue": "#320",
+    },
 ]
 
 _HEADER = """\

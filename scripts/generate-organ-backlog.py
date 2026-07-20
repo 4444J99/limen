@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import select_lanes  # noqa: E402
-from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, queue_lock  # noqa: E402
 from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
@@ -282,18 +282,10 @@ def main() -> int:
         if not to_add:
             print("\n(all planned tasks already present after fresh re-read — nothing applied.)")
             return 0
-        # TABVLARIVS producer path (Step 2.1). LIMEN_TICKETS_PRODUCE=1 → submit each fresh-deduped task
-        # as an upsert ticket instead of writing tasks.yaml directly; the keeper folds them next beat.
-        # Default OFF keeps the legacy validated append. submit_ticket is itself lock-free (os.link).
-        if os.environ.get("LIMEN_TICKETS_PRODUCE") == "1":
-            session_id = os.environ.get("LIMEN_SESSION_ID", "generate-organ-backlog")
-            for t in to_add:
-                submit_task_upsert(path, t, agent="generate-organ-backlog", session_id=session_id)
-            print(f"\nsubmitted {len(to_add)} organ upsert tickets to the keeper's inbox (folds onto {path} next beat).")
-            return 0
-        fresh.tasks.extend(to_add)
-        save_limen_file(path, fresh)
-    print(f"\napplied: appended {len(to_add)} organ tasks -> {path} (route+dispatch separately).")
+        session_id = os.environ.get("LIMEN_SESSION_ID", "generate-organ-backlog")
+        for task in to_add:
+            submit_task_upsert(path, task, agent="generate-organ-backlog", session_id=session_id)
+    print(f"\nsubmitted {len(to_add)} organ upsert tickets to the keeper's inbox (folds onto {path} next beat).")
     for t in to_add:
         print(f"  + {t.id}")
     return 0

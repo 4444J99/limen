@@ -26,8 +26,8 @@ surfaces:
     disposition: isolated-jules-branch-pr
     expected: {push_literal: 1}
   cli/src/limen/tabularius.py:
-    disposition: stable-board-projection-pr
-    expected: {push_literal: 1}
+    disposition: remote-keeper-relay-no-git-writer
+    expected: {}
   mcp/src/limen_mcp/server.py:
     disposition: repository-mutations-deferred-to-tabularius
     expected: {}
@@ -67,6 +67,9 @@ surfaces:
   scripts/sync-release.sh:
     disposition: parked-topic-branch-only-actual-default-refused
     expected: {git_push: 2}
+  scripts/task-writer-audit.py:
+    disposition: audit-regex-literal-only
+    expected: {git_push: 1}
   scripts/worktree-pr-receipts.py:
     disposition: nondefault-worktree-branch-pr-default-refused
     expected: {git_push: 1}

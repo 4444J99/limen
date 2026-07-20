@@ -1,10 +1,10 @@
-"""route.py must TOLERATE torn writes and never perpetuate them.
+"""route.py must tolerate torn writes without claiming local projection authority.
 
 A recurring corruption writes a whole Task object into some task's dispatch_log (an entry missing
 timestamp/agent/session_id). Before the fix, route.py read tasks.yaml with raw yaml.safe_load and
-re-encoded that garbage every beat — spamming a pydantic "Field required" trace and keeping the
-corruption alive. route.py now reads through the resilient loader (sanitizes) and writes through the
-validated save under the queue lock, so the trace stops AND the file is healed on write.
+spammed a pydantic "Field required" trace. route.py now reads through the resilient loader for its
+decision snapshot. TABVLARIVS owns the canonical projection, so route never rewrites the local cache
+merely to heal malformed source bytes.
 """
 
 from __future__ import annotations
@@ -74,14 +74,12 @@ def test_route_tolerates_torn_write_dry_run(tmp_path: Path):
     assert "tolerated 1 malformed" in r.stderr
 
 
-def test_route_apply_heals_the_file(tmp_path: Path):
+def test_route_apply_leaves_torn_cache_for_keeper_projection(tmp_path: Path):
     p = tmp_path / "tasks.yaml"
     _board_with_torn_write(p)
+    before = p.read_bytes()
     r = _run(p, "--apply")
     assert r.returncode == 0, r.stderr
     assert "Field required" not in r.stderr
-    # the rewritten file must be CLEAN: the malformed dispatch_log entry is gone, the valid one stays.
-    doc = yaml.safe_load(p.read_text())
-    dls = [e for t in doc["tasks"] for e in (t.get("dispatch_log") or [])]
-    assert len(dls) == 1, f"garbage dispatch_log entry survived the rewrite: {dls}"
-    assert {"timestamp", "agent", "session_id", "status"}.issubset(dls[0].keys())
+    assert "tolerated 1 malformed" in r.stderr
+    assert p.read_bytes() == before

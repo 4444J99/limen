@@ -21,7 +21,8 @@ from pathlib import Path
 from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, queue_lock  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from limen.jules_remote import (  # noqa: E402
     JulesRemoteSnapshot,
     classify_jules_claim,
@@ -135,6 +136,9 @@ def _recover(args: argparse.Namespace, path: Path) -> int:
                         agent="limen",
                         session_id="heal",
                         status="failed_blocked",
+                        lifecycle_repair="fleet-debt-park",
+                        fleet_debt_source="repeated-noop",
+                        fleet_debt_count=repeated_noop_count,
                         output=(
                             f"recover: repeated no-op failures ({repeated_noop_count}) "
                             "-> failed_blocked (fleet-debt, off the human surface)"
@@ -203,7 +207,7 @@ def _recover(args: argparse.Namespace, path: Path) -> int:
     if args.apply:
         changed = bool(restored_done or reopened_failed or reopened_orphan or reopened_remote_failed or escalated_noop)
         if changed:
-            save_limen_file(path, lf)
+            apply_limen_file_sync(path, lf, agent="recover", session_id="apply")
             print("  APPLIED -> tasks.yaml")
         else:
             print("  UNCHANGED -> tasks.yaml")

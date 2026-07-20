@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.execution_contract import execution_contract_hash  # noqa: E402
-from limen.models import DispatchLogEntry, LimenFile, Task  # noqa: E402
+from limen.models import DispatchLogEntry, LimenFile, Task, dispatch_agent  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("dispatch_async", str(ROOT / "scripts" / "dispatch-async.py"))
 dispatch_async = importlib.util.module_from_spec(_spec)
@@ -36,27 +36,25 @@ def board(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
     runs = tmp_path / "logs" / "async-runs"
     runs.mkdir(parents=True)
+    task = Task(
+        id="T1",
+        title="t",
+        target_agent="jules",
+        status="dispatched",
+        created=date(2026, 7, 1),
+    )
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=datetime.now(timezone.utc),
+            agent="jules",
+            session_id="async-reserve",
+            status="dispatched",
+            execution_contract_hash=execution_contract_hash(task),
+        )
+    )
     save_limen_file(
         tasks_path,
-        LimenFile(
-            tasks=[
-                Task(
-                    id="T1",
-                    title="t",
-                    target_agent="jules",
-                    status="dispatched",
-                    created=date(2026, 7, 1),
-                    dispatch_log=[
-                        DispatchLogEntry(
-                            timestamp=datetime.now(timezone.utc),
-                            agent="jules",
-                            session_id="async-reserve",
-                            status="dispatched",
-                        )
-                    ],
-                )
-            ]
-        ),
+        LimenFile(tasks=[task]),
     )
     monkeypatch.setattr(dispatch_async, "TASKS", tasks_path)
     monkeypatch.setattr(dispatch_async, "RUNS", runs)
@@ -97,6 +95,9 @@ def test_reap_stale_holds_successor_required_task_failed(board):
     assert task.status == "failed"
     assert "workstream:successor-required" in task.labels
     assert task.dispatch_log[-1].status == "failed"
+    assert task.dispatch_log[-1].lifecycle_repair == "stale-successor-hold"
+    assert task.dispatch_log[-1].liveness_evidence == "markerless-expired"
+    assert task.dispatch_log[-1].liveness_reservation_id == "async-reserve"
 
 
 def test_reap_stale_leaves_marker_when_result_present(board):
@@ -218,7 +219,8 @@ def test_harvest_archives_result_receipt_before_unlink(board):
     assert archived["raw_sha256"]
     assert archived["receipt"]["err"] == "token [REDACTED_TOKEN] and contact [REDACTED_EMAIL]"
     got = {t.id: t for t in load_limen_file(tasks_path).tasks}
-    assert got["T1"].dispatch_log[-1].agent == "jules"
+    assert got["T1"].dispatch_log[-1].agent == "dispatch-async"
+    assert dispatch_agent(got["T1"].dispatch_log[-1]) == "jules"
 
 
 def test_harvest_archives_malformed_result_receipt_before_unlink(board):

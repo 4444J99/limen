@@ -59,6 +59,28 @@ def test_chronic_tasks_flags_reopened_without_pr(tmp_path, monkeypatch):
     assert [c[0] for c in m.chronic_tasks(tasks)] == ["CH"]
 
 
+def test_chronic_tasks_honors_broker_logical_pr_receipt(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    task = {
+        "id": "BROKER-PR",
+        "status": "failed",
+        "target_agent": "codex",
+        "repo": "x/y",
+        "dispatch_log": [
+            {"status": "open"},
+            {"status": "open"},
+            {"status": "open"},
+            {
+                "status": "dispatched",
+                "session_id": "keeper-session",
+                "logical_session_id": "https://github.com/x/y/pull/42",
+            },
+        ],
+    }
+
+    assert m.chronic_tasks([task]) == []
+
+
 def test_chronic_tasks_excludes_successor_required_terminal_owner(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     task = {

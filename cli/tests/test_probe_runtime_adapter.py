@@ -256,6 +256,7 @@ class FakeRuntime:
     def __init__(self, probe: ModuleType) -> None:
         self.probe = probe
         self.calls: list[dict[str, Any]] = []
+        self.mutations_unavailable = False
         self.tasks = {
             "TASK-DENIED": {"id": "TASK-DENIED", "status": "in_progress"},
             "TASK-VERIFY": {"id": "TASK-VERIFY", "status": "in_progress"},
@@ -338,6 +339,11 @@ class FakeRuntime:
             return self.response(200, task)
         if method != "POST":
             return self.response(405, {"detail": "method not allowed"})
+        if self.mutations_unavailable:
+            return self.response(
+                503,
+                {"detail": "authenticated conduct broker is required; set LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN"},
+            )
         if action == "verify":
             task["status"] = body.get("status", "done")
             return self.response(200, {"status": "verified", "verified_status": task["status"], "task": task})
@@ -430,6 +436,47 @@ def test_main_verifies_optional_owner_mutations(
     assert fake.tasks["TASK-ASSIGN"]["predicate"].startswith('test "$(gh pr list')
     assert fake.tasks["TASK-ASSIGN"]["receipt_target"] == "github:organvm/limen:pull-request:TASK-ASSIGN"
     assert fake.tasks["TASK-ARCHIVE"]["status"] == "archived"
+
+
+def test_main_proves_owner_mutations_fail_closed_without_broker(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    probe = load_probe()
+    fake = FakeRuntime(probe)
+    fake.mutations_unavailable = True
+
+    run_probe_main(
+        monkeypatch,
+        probe,
+        fake,
+        [
+            "--api-url",
+            "https://runtime.test",
+            "--owner-token",
+            OWNER_TOKEN,
+            "--client-token",
+            CLIENT_TOKEN,
+            "--verify-task-id",
+            "TASK-VERIFY",
+            "--assign-task-id",
+            "TASK-ASSIGN",
+            "--archive-task-id",
+            "TASK-ARCHIVE",
+            "--expect-mutations-unavailable",
+        ],
+    )
+
+    assert "Runtime adapter probe passed" in capsys.readouterr().out
+    assert fake.tasks["TASK-VERIFY"]["status"] == "in_progress"
+    assert fake.tasks["TASK-ASSIGN"]["status"] == "needs_human"
+    assert fake.tasks["TASK-ARCHIVE"]["status"] == "done"
+    mutation_calls = [
+        call
+        for call in fake.calls
+        if call["method"] == "POST" and call["path"].rsplit("/", 1)[-1] in {"verify", "assign", "archive"}
+    ]
+    assert len(mutation_calls) == 3
 
 
 def test_request_encodes_json_and_decodes_success(monkeypatch: pytest.MonkeyPatch) -> None:

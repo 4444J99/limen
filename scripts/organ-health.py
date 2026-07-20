@@ -473,7 +473,7 @@ def _registry():
             voice="tabularius",
             gate="LIMEN_TABVLARIVS",
             gate_default="1",
-            what="the record-keeper — sole writer of the board: drain the lock-free ticket inbox → fold onto tasks.yaml → seal (single-writer principle over the SSOT)",
+            what="the conduct relay — submit the lock-free ticket inbox to the authenticated remote keeper and archive only acknowledged projection receipts",
             probe=lambda: _mtime(LOGS / "tabularius-organ-state.json"),
         ),
         # no cadence_key: runs as a metabolize.sh pre-beat check (section 0h), not a

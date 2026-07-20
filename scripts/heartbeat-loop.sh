@@ -352,11 +352,10 @@ while true; do
     # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
     # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
     python3 "$LIMEN_ROOT/scripts/heal-board.py" 2>&1 | tail -1 || true
-    # RECORD-KEEPER (TABVLARIVS) — the single writer of the board. Drain the lock-free ticket inbox
-    # (logs/tickets/inbox), fold each worker's ticket onto the just-healed board under the queue
-    # lock, and seal via the collapse-guarded atomic write. Runs AFTER heal-board (fold onto a
-    # healthy board) and BEFORE the body's own queue mutation. Idempotent: an empty inbox is an
-    # instant no-op (no lock, no board I/O), so it is safe every beat while no producers exist yet.
+    # TABVLARIVS RELAY — submit the lock-free ticket inbox to the authenticated remote conduct
+    # keeper. Archive only tickets with canonical projection receipts; broker outages leave the
+    # unacknowledged suffix pending. The local tasks.yaml is read-only cache evidence, never a
+    # lifecycle writer. Idempotent: an empty inbox is an instant no-op.
     [ "${LIMEN_TABVLARIVS:-1}" = "1" ] && python3 "$LIMEN_ROOT/scripts/tabularius-organ.py" 2>&1 | tail -1 || true
     # ENACTMENT — surface any declared-ON fleet flag that is dark/stale in THIS running beat (memory:
     # enacted-not-declared). THE LIVE-LOOP HOME: metabolize.sh has the same advisory but the daemon

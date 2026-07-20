@@ -243,6 +243,10 @@ def test_retire_recovered_atom_and_idempotent(tmp_path, monkeypatch):
     # routine no longer down → retire
     res1 = mod.retire_recovered_atoms(set(), ["omega-scorecard"])
     assert res1["retired"] == ["ASK-routine-omega-scorecard"]
+    retired = load_limen_file(tasks).tasks[0]
+    assert retired.dispatch_log[-1].lifecycle_repair == "routine-recovered"
+    assert retired.dispatch_log[-1].routine_name == "omega-scorecard"
+    assert retired.dispatch_log[-1].routine_observed_state == "recovered"
 
     # second run: already done → not retired again (idempotent)
     res2 = mod.retire_recovered_atoms(set(), ["omega-scorecard"])

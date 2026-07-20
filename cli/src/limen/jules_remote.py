@@ -11,6 +11,8 @@ from contextlib import suppress
 from dataclasses import dataclass, field, replace
 from typing import Callable, Iterable, Mapping, Sequence
 
+from limen.models import dispatch_session_id
+
 
 JULES_RECOVERY_STATES = frozenset(
     {
@@ -377,7 +379,7 @@ def probe_jules_remote_session_absences(
 
 def task_jules_session_id(task: object) -> str:
     for entry in reversed(getattr(task, "dispatch_log", None) or []):
-        session_id = str(getattr(entry, "session_id", "") or "")
+        session_id = dispatch_session_id(entry)
         if session_id.isdigit() and len(session_id) >= 12:
             return session_id
     return ""

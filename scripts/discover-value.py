@@ -34,7 +34,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_pr_contract, is_durable_receipt_target  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
@@ -285,20 +285,13 @@ def main() -> int:
         print("\n(nothing new to discover)")
         return 0
     if args.apply:
-        # TABVLARIVS producer path (Step 2.1). LIMEN_TICKETS_PRODUCE=1 → hand each NEW discovery task
-        # to the record-keeper as an upsert ticket instead of writing tasks.yaml directly; `new` is
-        # already deduped so every id is brand-new. Default OFF keeps the legacy validated append.
-        if os.environ.get("LIMEN_TICKETS_PRODUCE") == "1":
-            session_id = os.environ.get("LIMEN_SESSION_ID", "discover-value")
-            for t in new:
-                submit_task_upsert(path, t, agent="discover-value", session_id=session_id)
-            print(
-                f"\nsubmitted {len(new)} discovery upsert tickets to the keeper's inbox (folds onto {path} next beat)."
-            )
-            return 0
-        lf.tasks.extend(new)
-        save_limen_file(path, lf)
-        print(f"\napplied: appended {len(new)} discovery tasks -> {path} (route+dispatch separately)")
+        session_id = os.environ.get("LIMEN_SESSION_ID", "discover-value")
+        for task in new:
+            submit_task_upsert(path, task, agent="discover-value", session_id=session_id)
+        print(
+            f"\nsubmitted {len(new)} discovery upsert tickets to the keeper's inbox "
+            f"(folds onto {path} next beat)."
+        )
     else:
         print(f"\ndry-run — re-run with --apply to append {len(new)} discovery tasks.")
     return 0

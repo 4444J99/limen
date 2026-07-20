@@ -18,6 +18,8 @@ from pathlib import Path
 
 import yaml
 
+from limen.tabularius import drain_once
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "discover-value.py"
 _THINK = {"codex", "claude", "opencode"}
@@ -73,6 +75,12 @@ def _run(
         [sys.executable, str(SCRIPT), "--tasks", str(path), *args], capture_output=True, text=True, timeout=60, env=env
     )
     assert p.returncode == 0, p.stderr
+    if "--apply" in args:
+        # Discovery submits immutable tickets; observe output only after the
+        # keeper acknowledges and refreshes this isolated test projection.
+        drained = drain_once(path)
+        assert not drained.deferred, drained.note
+        assert drained.rejected == 0, drained.note
     return p.stdout
 
 

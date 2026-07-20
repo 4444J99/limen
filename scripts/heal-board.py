@@ -46,8 +46,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.dispatch import _restore_done_status  # noqa: E402
-from limen.io import atomic_write_text, load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, queue_lock  # noqa: E402
 from limen.models import VALID_STATUSES, DispatchLogEntry, Task  # noqa: E402
+from limen.tabularius import apply_limen_file_sync, restore_limen_projection_text  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -129,6 +130,7 @@ def _reconcile_needs_human(task: Task, now: datetime) -> bool:
             agent="heal-board",
             session_id="heal-board",
             status="needs_human",
+            lifecycle_repair="human-gate-reconcile",
             output="heal-board: reconciled needs-human label to needs_human status",
         )
     )
@@ -260,7 +262,7 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         fresh = load_limen_file(BOARD)
         reopened, reconciled, mismatched = _apply_lifecycle_repairs(fresh.tasks, now)
         if reopened or reconciled or mismatched:
-            save_limen_file(BOARD, fresh)
+            apply_limen_file_sync(BOARD, fresh, agent="heal-board", session_id="lifecycle-repair")
     cleared = sum(_clear_async_markers(task_id) for task_id in reopened)
     parts = []
     if reopened:
@@ -328,7 +330,12 @@ def main(argv: list[str] | None = None) -> int:
             preserved.write_text(BOARD.read_text(errors="ignore"))
     except OSError:
         pass
-    atomic_write_text(BOARD, snap)
+    restore_limen_projection_text(
+        BOARD,
+        snap,
+        agent="heal-board",
+        session_id=f"restore-{stamp}",
+    )
     print(
         f"heal-board: RESTORED {BOARD.name} from HEAD — {s_total} tasks ({s_active} active); "
         f"collapsed board preserved to {preserved.relative_to(ROOT)}"

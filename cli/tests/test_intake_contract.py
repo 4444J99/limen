@@ -219,7 +219,6 @@ def test_every_tabularius_task_producer_declares_typed_fields() -> None:
         Path("scripts/batch-dispatch.py"),
         Path("scripts/converge-organ.py"),
         Path("scripts/corpus-converge.py"),
-        Path("scripts/current-session-fanout.py"),
         Path("scripts/discover-value.py"),
         Path("scripts/generate-backlog.py"),
         Path("scripts/generate-organ-backlog.py"),
@@ -234,6 +233,15 @@ def test_every_tabularius_task_producer_declares_typed_fields() -> None:
         assert "submit_task_upsert" in text
         assert "predicate" in text or "contract_fields" in text, relative
         assert "receipt_target" in text or "contract_fields" in text, relative
+
+    # Current-session fanout no longer creates lifecycle tasks. It reserves a
+    # bounded conduct DAG before any native child can consume capacity.
+    fanout = (ROOT / "scripts/current-session-fanout.py").read_text(encoding="utf-8")
+    assert "WorkPacketV1" in fanout
+    assert "client.submit" in fanout
+    assert "client.split" in fanout
+    assert "predicate=" in fanout
+    assert "receipt_target=" in fanout
 
     direct_or_assignment_producers = {
         Path("scripts/check-main-green.py"),

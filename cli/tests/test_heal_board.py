@@ -70,7 +70,8 @@ def test_heal_board_repairs_reopened_done_task(tmp_path: Path) -> None:
     task = data["tasks"][0]
     assert task["status"] == "done"
     assert task["dispatch_log"][-1]["status"] == "done"
-    assert task["dispatch_log"][-1]["session_id"] == "heal-board"
+    assert task["dispatch_log"][-1]["session_id"] == "heal-board-lifecycle-repair"
+    assert task["dispatch_log"][-1]["conduct_event_id"]
 
 
 def test_heal_board_reconciles_needs_human_label(tmp_path: Path) -> None:
@@ -114,6 +115,7 @@ def test_heal_board_reconciles_needs_human_label(tmp_path: Path) -> None:
     by_id = {t["id"]: t for t in data["tasks"]}
     assert by_id["GH-organvm-limen-999"]["status"] == "needs_human"
     assert by_id["GH-organvm-limen-999"]["dispatch_log"][-1]["status"] == "needs_human"
+    assert by_id["GH-organvm-limen-999"]["dispatch_log"][-1]["lifecycle_repair"] == "human-gate-reconcile"
     # an ordinary open task is untouched
     assert by_id["NORMAL-OPEN"]["status"] == "open"
 
@@ -182,7 +184,8 @@ def test_heal_board_reconciles_log_mismatch(tmp_path: Path) -> None:
     # the log head now restates the authoritative open status; the invariant holds
     assert by_id["STALE-DISPATCH"]["status"] == "open"
     assert by_id["STALE-DISPATCH"]["dispatch_log"][-1]["status"] == "open"
-    assert by_id["STALE-DISPATCH"]["dispatch_log"][-1]["session_id"] == "heal-board"
+    assert by_id["STALE-DISPATCH"]["dispatch_log"][-1]["session_id"] == "heal-board-lifecycle-repair"
+    assert by_id["STALE-DISPATCH"]["dispatch_log"][-1]["logical_session_id"] == "heal-board"
     # an already-aligned open task gains no spurious event
     assert len(by_id["ALIGNED-OPEN"]["dispatch_log"]) == 1
 

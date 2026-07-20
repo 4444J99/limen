@@ -52,7 +52,7 @@ ok "PII-free: no clinical literal in generator source or digest"
 # 4. idempotent — two consecutive runs are byte-identical for a stable input snapshot
 tasks_snapshot="$(mktemp)"
 echo "● retained verification snapshot: $tasks_snapshot"
-cp "tasks.yaml" "$tasks_snapshot"
+cp "tasks.yaml" "$tasks_snapshot" # task-writer-audit: allow-derived-sandbox
 git_section=""
 branch="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
 if [ -n "$branch" ]; then

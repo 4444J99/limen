@@ -1,53 +1,55 @@
-"""Tests for TABVLARIVS — the single-writer record-keeper (limen.tabularius).
+"""Tests for the broker-backed TABVLARIVS compatibility relay.
 
-What is under test: workers hand the keeper immutable tickets in a lock-free inbox, and the keeper
-is the ONLY writer of tasks.yaml — it drains, folds each ticket onto the board in order, validates,
-and seals through the collapse-guard. The invariants that make it safe to run every beat:
-  * an empty inbox is a no-op that never touches the board;
-  * a submitted ticket folds onto the board and is archived (the event log);
-  * one bad ticket is quarantined and never takes the good ones (or the board) down;
-  * a held queue lock defers the drain, never blocks;
-  * a batch that would collapse the board is rejected whole, board intact.
+The local ``tasks.yaml`` file is a read-only hot projection. Producers may
+append immutable compatibility tickets locally, but a drain may archive a
+ticket only after the authenticated conduct broker acknowledges the canonical
+task projection. Broker outages leave unacknowledged tickets pending.
 """
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
-import subprocess
+from typing import Any
 
 import limen.tabularius as tabularius
 import pytest
+from limen.conduct.client import BrokerUnavailable
 from limen.io import load_limen_file, queue_lock, save_limen_file
-from limen.models import LimenFile, Task
+from limen.models import LimenFile
 from limen.tabularius import (
     INTENT_META,
-    INTENT_ORDER,
     INTENT_REMOVE,
     INTENT_STATUS,
     INTENT_UPSERT,
     Ticket,
+    _admit_exact_preconditions,
+    _apply,
     _archive,
     _inbox,
     _rejected,
+    apply_limen_file_sync,
     drain_once,
     new_ticket_id,
     pending_count,
+    pending_task_ids,
     preserve_board_projection,
-    submit_ticket,
     submit_task_status,
+    submit_task_upsert,
+    submit_ticket,
     task_state_sha256,
 )
 
 _NOW = datetime(2026, 7, 2, 12, 0, 0, tzinfo=timezone.utc)
 
 
-def _task(tid: str, **over) -> dict:
-    base = {
+def _task(tid: str, **over: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
         "id": tid,
         "title": f"task {tid}",
         "repo": "organvm/limen",
-        "target_agent": "jules",
+        "target_agent": "codex",
         "created": "2026-07-01",
         "predicate": f"pytest -q -k {tid}",
         "receipt_target": f"github:organvm/limen:pull-request:{tid}",
@@ -56,32 +58,17 @@ def _task(tid: str, **over) -> dict:
     return base
 
 
-def _board(tasks: list[dict]) -> LimenFile:
+def _board(tasks: list[dict[str, Any]]) -> LimenFile:
     return LimenFile.model_validate({"version": "1.0", "tasks": tasks})
 
 
 def _seed_board(tmp_path: Path, n: int = 6) -> Path:
-    """A board with n tasks (above the collapse-guard floor of 5) at tmp_path/tasks.yaml."""
     board = tmp_path / "tasks.yaml"
     save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(n)]))
     return board
 
 
-def _git(repo: Path, *args: str) -> str:
-    proc = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=True)
-    return proc.stdout.strip()
-
-
-def _commit_all(repo: Path, msg: str) -> None:
-    _git(repo, "add", ".")
-    subprocess.run(
-        ["git", "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", msg],
-        cwd=repo,
-        check=True,
-    )
-
-
-def _ticket(intent: str, task_id: str | None = None, ts: datetime = _NOW, **over) -> Ticket:
+def _ticket(intent: str, task_id: str | None = None, ts: datetime = _NOW, **over: Any) -> Ticket:
     return Ticket(
         ticket_id=over.pop("ticket_id", new_ticket_id("test", ts)),
         timestamp=ts,
@@ -95,787 +82,456 @@ def _ticket(intent: str, task_id: str | None = None, ts: datetime = _NOW, **over
     )
 
 
-# --- the no-op contract (why it is safe every beat) ----------------------------------------------
-def test_empty_inbox_is_noop(tmp_path):
+class FakeConductClient:
+    """Minimal owner-compatible conduct client with observable acknowledgements."""
+
+    def __init__(
+        self,
+        tasks: list[dict[str, Any]],
+        *,
+        fail_after: int | None = None,
+        unavailable_on_register: bool = False,
+    ):
+        self.tasks = {str(task["id"]): dict(task) for task in tasks}
+        self.fail_after = fail_after
+        self.unavailable_on_register = unavailable_on_register
+        self.registered: list[Any] = []
+        self.packets: list[Any] = []
+
+    def register(self, session):
+        if self.unavailable_on_register:
+            raise BrokerUnavailable("test broker unavailable")
+        self.registered.append(session)
+        return {"session": session.model_dump(mode="json")}
+
+    def submit(self, packet):
+        if self.fail_after is not None and len(self.packets) >= self.fail_after:
+            raise BrokerUnavailable("test broker interrupted")
+        self.packets.append(packet)
+        intent = dict(packet.intent)
+        task_id = str(intent["task_id"])
+        if intent["kind"] == "task.upsert":
+            projected = dict(intent["task"])
+        else:
+            projected = {**self.tasks[task_id], **dict(intent.get("patch") or {})}
+        projected["id"] = task_id
+        self.tasks[task_id] = projected
+        return {
+            "status": "accepted",
+            "projection_receipts": [{"task_id": task_id, "task": dict(projected)}],
+        }
+
+
+def _fake_for_board(board: Path, **kwargs: Any) -> FakeConductClient:
+    tasks = [task.model_dump(mode="json", exclude_none=True) for task in load_limen_file(board).tasks]
+    return FakeConductClient(tasks, **kwargs)
+
+
+# Local ticket primitives remain durable and deterministic.
+def test_ticket_ids_are_unique_and_time_sortable():
+    first = new_ticket_id("session", _NOW)
+    second = new_ticket_id("session", _NOW)
+    assert first != second
+    assert first.startswith("20260702T120000_000000Z-session-")
+    assert second.startswith("20260702T120000_000000Z-session-")
+
+
+def test_submit_ticket_is_exclusive_and_pending_ids_are_visible(tmp_path):
     board = _seed_board(tmp_path)
-    before = board.read_text()
-    result = drain_once(board)
-    assert result.applied == 0 and result.wrote is False and result.pending == 0
-    assert board.read_text() == before  # board byte-untouched
-
-
-def test_missing_inbox_is_noop(tmp_path):
-    board = _seed_board(tmp_path)
-    # no logs/tickets/inbox dir exists at all
-    assert not _inbox(board).exists()
-    result = drain_once(board)
-    assert result.wrote is False and "empty" in result.note
-
-
-def test_tabularius_publishes_board_pr_branch_without_moving_main_or_local_index(tmp_path):
-    origin = tmp_path / "origin.git"
-    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
-    repo = tmp_path / "repo"
-    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
-    _git(repo, "switch", "-c", "main")
-    board = repo / "tasks.yaml"
-    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
-    _commit_all(repo, "base")
-    _git(repo, "push", "-u", "origin", "main")
-
-    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done", "output": "ok"}))
-    assert drain_once(board).wrote is True
-    base = _git(repo, "rev-parse", "HEAD")
-    result = preserve_board_projection(board, manage_pr=False)
-
-    assert result.pushed is True
-    assert result.branch == tabularius.BOARD_PUBLICATION_BRANCH
-    assert _git(repo, "rev-parse", "HEAD") == base
-    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml")
-    assert _git(repo, "ls-remote", "origin", "refs/heads/main").split()[0] == base
-    remote_board = subprocess.run(
-        [
-            "git",
-            "--git-dir",
-            str(origin),
-            "show",
-            f"{tabularius.BOARD_PUBLICATION_BRANCH}:tasks.yaml",
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
-    assert "status: done" in remote_board
-
-
-def test_tabularius_coalesces_newer_local_board_while_publication_pr_is_open(tmp_path, monkeypatch):
-    origin = tmp_path / "origin.git"
-    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
-    repo = tmp_path / "repo"
-    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
-    _git(repo, "switch", "-c", "main")
-    board = repo / "tasks.yaml"
-    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
-    _commit_all(repo, "base")
-    _git(repo, "push", "-u", "origin", "main")
-    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done", "output": "ok"}))
-    assert drain_once(board).wrote is True
-    first = preserve_board_projection(board, manage_pr=False)
-    assert first.pushed is True
-
-    submit_ticket(
-        board,
-        _ticket(
-            INTENT_STATUS,
-            task_id="T-2",
-            ts=datetime(2026, 7, 2, 12, 1, tzinfo=timezone.utc),
-            log={"status": "failed", "output": "later"},
-        ),
-    )
-    assert drain_once(board).wrote is True
-    monkeypatch.setattr(tabularius, "_repository_slug", lambda _repo: ("organvm/limen", ""))
-    monkeypatch.setattr(
-        tabularius,
-        "_open_publication_pr",
-        lambda _repo, _slug, _branch: (
-            {
-                "number": 77,
-                "headRefOid": first.commit,
-                "baseRefName": "main",
-                "isDraft": False,
-                "state": "OPEN",
-                "autoMergeRequest": {"enabledAt": "2026-07-18T00:00:00Z"},
-                "mergeStateStatus": "CLEAN",
-                "statusCheckRollup": [{"name": "pr-gate"}],
-            },
-            "",
-        ),
-    )
-    result = preserve_board_projection(board)
-
-    assert result.deferred is True
-    assert result.reason == "publication-in-flight"
-    assert result.published is False
-    assert result.pr_number == 77
-    assert (
-        _git(
-            repo,
-            "ls-remote",
-            "origin",
-            f"refs/heads/{tabularius.BOARD_PUBLICATION_BRANCH}",
-        ).split()[0]
-        == first.commit
-    )
-    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml")
-
-
-def test_tabularius_publication_fast_forwards_and_joins_advanced_main(tmp_path):
-    origin = tmp_path / "origin.git"
-    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
-    repo = tmp_path / "repo"
-    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
-    _git(repo, "switch", "-c", "main")
-    board = repo / "tasks.yaml"
-    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
-    _commit_all(repo, "base")
-    _git(repo, "push", "-u", "origin", "main")
-
-    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done"}))
-    assert drain_once(board).wrote is True
-    first = preserve_board_projection(board, manage_pr=False)
-    assert first.pushed is True
-
-    peer = tmp_path / "peer"
-    subprocess.run(["git", "clone", "-q", str(origin), str(peer)], check=True)
-    _git(peer, "switch", "main")
-    (peer / "code.txt").write_text("concurrent code\n")
-    _commit_all(peer, "advance main")
-    _git(peer, "push", "origin", "main")
-    advanced_main = _git(peer, "rev-parse", "HEAD")
-
-    submit_ticket(
-        board,
-        _ticket(
-            INTENT_STATUS,
-            task_id="T-2",
-            ts=datetime(2026, 7, 2, 12, 1, tzinfo=timezone.utc),
-            log={"status": "done"},
-        ),
-    )
-    assert drain_once(board).wrote is True
-    second = preserve_board_projection(board, manage_pr=False)
-
-    assert second.pushed is True
-    assert (
-        subprocess.run(
-            ["git", "--git-dir", str(origin), "merge-base", "--is-ancestor", first.commit, second.commit]
-        ).returncode
-        == 0
-    )
-    assert (
-        subprocess.run(
-            ["git", "--git-dir", str(origin), "merge-base", "--is-ancestor", advanced_main, second.commit]
-        ).returncode
-        == 0
-    )
-    assert _git(repo, "rev-parse", "HEAD") != advanced_main
-    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml")
-
-
-def test_publication_pr_is_verified_at_exact_remote_head(tmp_path, monkeypatch):
-    seen: list[list[str]] = []
-    monkeypatch.setattr(tabularius, "_open_publication_pr", lambda *_args: (None, ""))
-
-    def fake_gh(_repo: Path, args: list[str]):
-        seen.append(args)
-        return subprocess.CompletedProcess(
-            ["gh", *args],
-            0,
-            "https://github.com/organvm/limen/pull/77\n",
-            "",
-        )
-
-    monkeypatch.setattr(tabularius, "_gh", fake_gh)
-    monkeypatch.setattr(
-        tabularius,
-        "_gh_json",
-        lambda *_args: (
-            {
-                "number": 77,
-                "state": "OPEN",
-                "headRefOid": "abc123",
-                "baseRefName": "main",
-                "isDraft": False,
-                "autoMergeRequest": None,
-                "mergeStateStatus": "CLEAN",
-                "statusCheckRollup": [],
-            },
-            "",
-        ),
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-new",
+        patch=_task("T-new", status="open"),
+        ticket_id="fixed-ticket",
     )
 
-    number, error = tabularius._ensure_publication_pr(
-        tmp_path,
-        slug="organvm/limen",
-        base_branch="main",
-        publication_branch=tabularius.BOARD_PUBLICATION_BRANCH,
-        expected_head="abc123",
-    )
+    submit_ticket(board, ticket)
+    with pytest.raises(FileExistsError):
+        submit_ticket(board, ticket)
 
-    assert (number, error) == (77, "")
-    create = seen[0]
-    assert create[:2] == ["pr", "create"]
-    assert create[create.index("--head") + 1] == tabularius.BOARD_PUBLICATION_BRANCH
-    assert "--admin" not in create
-
-
-@pytest.mark.parametrize(
-    ("overrides", "expected"),
-    [
-        ({"state": "CLOSED"}, "pr-not-open"),
-        ({"isDraft": True}, "pr-is-draft"),
-        ({"baseRefName": "release"}, "pr-base-mismatch"),
-        ({"headRefOid": "other"}, "pr-head-mismatch"),
-    ],
-)
-def test_publication_pr_rejects_non_exact_custody(overrides, expected):
-    pr = {
-        "number": 77,
-        "state": "OPEN",
-        "headRefOid": "abc123",
-        "baseRefName": "main",
-        "isDraft": False,
-    }
-    pr.update(overrides)
-    assert tabularius._publication_pr_error(pr, expected_head="abc123", base_branch="main") == expected
-
-
-def test_full_publication_diff_rejects_inherited_non_board_paths(tmp_path):
-    repo = tmp_path / "repo"
-    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
-    board = repo / "tasks.yaml"
-    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
-    _commit_all(repo, "base")
-    base = _git(repo, "rev-parse", "HEAD")
-    board.write_text(board.read_text().replace("status: open", "status: done", 1))
-    (repo / "code.txt").write_text("must not ride the board branch\n")
-    _commit_all(repo, "mixed publication")
-    head = _git(repo, "rev-parse", "HEAD")
-
-    error = tabularius._publication_diff_error(
-        repo,
-        base_sha=base,
-        head_sha=head,
-        rel_board="tasks.yaml",
-    )
-
-    assert error == "publication-non-board-paths:code.txt"
-
-
-def test_exact_head_auto_merge_has_no_admin_or_direct_fallback(tmp_path, monkeypatch):
-    success = subprocess.CompletedProcess(["gh"], 0, "", "")
-    monkeypatch.setattr(tabularius, "_gh", lambda _repo, args: success)
-    seen: list[list[str]] = []
-
-    def record(_repo, args):
-        seen.append(args)
-        return success
-
-    monkeypatch.setattr(tabularius, "_gh", record)
-    assert tabularius._arm_publication_pr(tmp_path, "organvm/limen", 77, "abc123") == ""
-    assert seen == [
-        [
-            "pr",
-            "merge",
-            "77",
-            "--repo",
-            "organvm/limen",
-            "--auto",
-            "--squash",
-            "--match-head-commit",
-            "abc123",
-        ]
-    ]
-    assert "--admin" not in seen[0]
-    assert "--merge" not in seen[0]
-    assert "--rebase" not in seen[0]
-    assert "--squash" in seen[0]
-
-
-def test_preflight_defers_before_producer_when_exact_board_pr_is_open(tmp_path, monkeypatch):
-    origin = tmp_path / "origin.git"
-    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
-    repo = tmp_path / "repo"
-    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
-    _git(repo, "switch", "-c", "main")
-    board = repo / "tasks.yaml"
-    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
-    _commit_all(repo, "base")
-    _git(repo, "push", "-u", "origin", "main")
-    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done"}))
-    assert drain_once(board).wrote is True
-    publication = preserve_board_projection(board, manage_pr=False)
-    assert publication.pushed
-    monkeypatch.setattr(tabularius, "_repository_slug", lambda _repo: ("organvm/limen", ""))
-    monkeypatch.setattr(
-        tabularius,
-        "_open_publication_pr",
-        lambda *_args: (
-            {
-                "number": 77,
-                "headRefOid": publication.commit,
-                "baseRefName": "main",
-                "isDraft": False,
-                "state": "OPEN",
-                "autoMergeRequest": {"enabledAt": "2026-07-18T00:00:00Z"},
-                "mergeStateStatus": "CLEAN",
-                "statusCheckRollup": [{"name": "pr-gate"}],
-            },
-            "",
-        ),
-    )
-
-    result = tabularius.board_publication_preflight(board)
-
-    assert result.published is True
-    assert result.deferred is True
-    assert result.reason == "publication-in-flight"
-    assert result.pr_number == 77
-
-
-# --- the core lifecycle: submit → drain → board updated → archived -------------------------------
-def test_upsert_creates_new_task_and_archives_ticket(tmp_path):
-    board = _seed_board(tmp_path)
-    tk = _ticket(INTENT_UPSERT, task_id="T-new", patch=_task("T-new", status="open", priority="high"))
-    submit_ticket(board, tk)
     assert pending_count(board) == 1
-
-    result = drain_once(board)
-    assert result.applied == 1 and result.wrote is True
-
-    lf = load_limen_file(board)
-    new = {t.id: t for t in lf.tasks}["T-new"]
-    assert new.priority == "high" and len(lf.tasks) == 7
-    # the ticket moved out of the inbox and into the archive (the event log)
-    assert pending_count(board) == 0
-    assert (_archive(board) / f"{tk.ticket_id}.json").exists()
+    assert pending_task_ids(board) == {"T-new"}
 
 
-def test_status_ticket_sets_status_and_appends_dispatch_log(tmp_path):
-    board = _seed_board(tmp_path)
-    tk = _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done", "output": "shipped PR #999"})
-    submit_ticket(board, tk)
-    drain_once(board)
-
-    t1 = {t.id: t for t in load_limen_file(board).tasks}["T-1"]
-    assert t1.status == "done"
-    assert len(t1.dispatch_log) == 1
-    entry = t1.dispatch_log[0]
-    assert entry.agent == "claude" and entry.status == "done" and entry.output == "shipped PR #999"
-
-
-def test_submit_task_status_emits_status_ticket(tmp_path):
-    board = _seed_board(tmp_path)
-    submit_task_status(
-        board,
-        "T-1",
-        status="failed",
-        agent="codex",
-        session_id="sess-status",
-        output="predicate failed",
-        patch={"priority": "high"},
-        now=_NOW,
-    )
-
-    result = drain_once(board)
-
-    assert result.applied == 1 and result.wrote is True
-    t1 = {t.id: t for t in load_limen_file(board).tasks}["T-1"]
-    assert t1.status == "failed"
-    assert t1.priority == "high"
-    assert len(t1.dispatch_log) == 1
-    assert t1.dispatch_log[0].agent == "codex"
-    assert t1.dispatch_log[0].session_id == "sess-status"
-    assert t1.dispatch_log[0].status == "failed"
-    assert t1.dispatch_log[0].output == "predicate failed"
-
-
-def test_submit_task_status_rejects_invalid_or_conflicting_status(tmp_path):
-    import pytest
-
+def test_submit_helpers_validate_before_emitting(tmp_path):
     board = _seed_board(tmp_path)
     with pytest.raises(ValueError, match="status must be one of"):
         submit_task_status(board, "T-1", status="completed", agent="codex")
     with pytest.raises(ValueError, match="conflicts"):
-        submit_task_status(board, "T-1", status="done", agent="codex", patch={"status": "failed"})
+        submit_task_status(
+            board,
+            "T-1",
+            status="done",
+            agent="codex",
+            patch={"status": "failed"},
+        )
+    with pytest.raises(Exception):
+        submit_task_upsert(board, {"title": "missing id"}, agent="codex")
     assert pending_count(board) == 0
 
 
-def test_partial_patch_preserves_other_fields(tmp_path):
-    board = _seed_board(tmp_path)
-    # seed T-2 with a description, then patch only its priority — description must survive
-    save_limen_file(
-        board,
-        _board(
-            [_task("T-2", status="open", description="keep me", priority="low")]
-            + [_task(f"P-{i}", status="open") for i in range(5)]  # distinct filler ids (no T-2 collision)
-        ),
+# The pure reducer remains useful for validating legacy ticket syntax. It does
+# not authorize a local projection write.
+def test_pure_reducer_merges_fields_and_appends_status_receipt():
+    tasks: OrderedDict[str, dict[str, Any]] = OrderedDict(
+        [("T-1", _task("T-1", status="open", description="preserve me"))]
     )
-    submit_ticket(board, _ticket(INTENT_UPSERT, task_id="T-2", patch={"priority": "high"}))
-    drain_once(board)
+    meta: dict[str, Any] = {"version": "1.0", "portal": None}
+    ticket = _ticket(
+        INTENT_STATUS,
+        task_id="T-1",
+        patch={"status": "dispatched", "priority": "high"},
+        log={"status": "dispatched", "output": "claimed"},
+    )
 
-    t2 = {t.id: t for t in load_limen_file(board).tasks}["T-2"]
-    assert t2.priority == "high" and t2.description == "keep me"
+    _apply(ticket, tasks, meta)
 
-
-def test_remove_ticket_drops_task(tmp_path):
-    board = _seed_board(tmp_path, n=6)  # 6 → 5 does not trip the guard (floor 5)
-    submit_ticket(board, _ticket(INTENT_REMOVE, task_id="T-0"))
-    drain_once(board)
-    ids = {t.id for t in load_limen_file(board).tasks}
-    assert "T-0" not in ids and len(ids) == 5
-
-
-# --- ordering: concurrent tickets replay in one deterministic total order ------------------------
-def test_tickets_apply_in_timestamp_order(tmp_path):
-    board = _seed_board(tmp_path)
-    early = datetime(2026, 7, 2, 10, 0, 0, tzinfo=timezone.utc)
-    late = datetime(2026, 7, 2, 11, 0, 0, tzinfo=timezone.utc)
-    # submit the LATER one first on disk; the keeper must still apply early→late
-    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", ts=late, log={"status": "done"}))
-    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", ts=early, log={"status": "in_progress"}))
-    drain_once(board)
-
-    t1 = {t.id: t for t in load_limen_file(board).tasks}["T-1"]
-    assert [e.status for e in t1.dispatch_log] == ["in_progress", "done"]
-    assert t1.status == "done"  # latest ticket wins the final status
+    assert tasks["T-1"]["description"] == "preserve me"
+    assert tasks["T-1"]["priority"] == "high"
+    assert tasks["T-1"]["status"] == "dispatched"
+    assert tasks["T-1"]["dispatch_log"][-1]["output"] == "claimed"
 
 
-def test_exact_task_precondition_rejects_archive_after_concurrent_claim(tmp_path):
-    board = _seed_board(tmp_path)
-    original = {task.id: task for task in load_limen_file(board).tasks}["T-1"]
-    original_state = original.model_dump(mode="json", exclude_none=True)
+def test_batch_admission_rejects_stale_exact_state_ticket():
+    base = _task("T-1", status="open")
+    archive = _ticket(
+        INTENT_UPSERT,
+        task_id="T-1",
+        patch={"status": "archived"},
+        precondition={"status": "open", "task_sha256": task_state_sha256(base)},
+        ticket_id="archive",
+    )
     claim = _ticket(
         INTENT_STATUS,
         task_id="T-1",
-        ts=datetime(2026, 7, 2, 12, 0, tzinfo=timezone.utc),
-        log={"status": "dispatched", "output": "concurrent claim"},
-    )
-    archive = _ticket(
-        INTENT_UPSERT,
-        task_id="T-1",
-        ts=datetime(2026, 7, 2, 12, 1, tzinfo=timezone.utc),
-        patch={"status": "archived"},
-        log={"status": "archived", "output": "stale migration"},
-        precondition={"status": "open", "task_sha256": task_state_sha256(original_state)},
-    )
-    submit_ticket(board, claim)
-    submit_ticket(board, archive)
-
-    result = drain_once(board)
-
-    assert (result.applied, result.rejected) == (1, 1)
-    current = {task.id: task for task in load_limen_file(board).tasks}["T-1"]
-    assert current.status == "dispatched"
-    reason = (_rejected(board) / f"{archive.ticket_id}.json.reason.txt").read_text()
-    assert "invalidated regardless of timestamp order" in reason
-
-
-@pytest.mark.parametrize("claim_status", ["dispatched", "in_progress"])
-def test_batch_admission_rejects_archive_before_later_active_claim(tmp_path, claim_status):
-    board = _seed_board(tmp_path)
-    original = {task.id: task for task in load_limen_file(board).tasks}["T-1"]
-    original_state = original.model_dump(mode="json", exclude_none=True)
-    archive = _ticket(
-        INTENT_UPSERT,
-        task_id="T-1",
-        ts=datetime(2026, 7, 2, 12, 0, tzinfo=timezone.utc),
-        patch={"status": "archived"},
-        log={"status": "archived", "output": "migration archive"},
-        precondition={"status": "open", "task_sha256": task_state_sha256(original_state)},
-    )
-    later_claim = _ticket(
-        INTENT_STATUS,
-        task_id="T-1",
-        ts=datetime(2026, 7, 2, 12, 1, tzinfo=timezone.utc),
-        log={"status": claim_status, "output": "later concurrent claim"},
-    )
-    submit_ticket(board, archive)
-    submit_ticket(board, later_claim)
-
-    preview = drain_once(board, dry_run=True)
-    assert (preview.applied, preview.rejected, preview.pending) == (1, 1, 2)
-    result = drain_once(board)
-
-    assert (result.applied, result.rejected) == (1, 1)
-    current = {task.id: task for task in load_limen_file(board).tasks}["T-1"]
-    assert current.status == claim_status
-    assert [entry.status for entry in current.dispatch_log] == [claim_status]
-    reason = (_rejected(board) / f"{archive.ticket_id}.json.reason.txt").read_text()
-    assert "invalidated regardless of timestamp order" in reason
-
-
-# --- one bad ticket never breaks the batch or the board -----------------------------------------
-def test_bad_ticket_quarantined_good_ticket_survives(tmp_path):
-    board = _seed_board(tmp_path)
-    good = _ticket(INTENT_UPSERT, task_id="T-ok", patch=_task("T-ok", status="open"))
-    # a status ticket for a task that does not exist AND lacks the required created field → invalid
-    bad = _ticket(INTENT_STATUS, task_id="T-ghost", log={"status": "done"})
-    submit_ticket(board, good)
-    submit_ticket(board, bad)
-
-    result = drain_once(board)
-    assert result.applied == 1 and result.rejected == 1
-
-    ids = {t.id for t in load_limen_file(board).tasks}
-    assert "T-ok" in ids and "T-ghost" not in ids
-    # the bad ticket landed in rejected/ with a reason sidecar, board still valid
-    assert (_rejected(board) / f"{bad.ticket_id}.json").exists()
-    assert (_rejected(board) / f"{bad.ticket_id}.json.reason.txt").exists()
-
-
-def test_bypassed_untyped_new_ticket_is_quarantined_without_blocking_typed_sibling(tmp_path):
-    board = _seed_board(tmp_path)
-    good = _ticket(INTENT_UPSERT, task_id="T-typed", patch=_task("T-typed", status="open"))
-    bad_patch = _task("T-untyped", status="open")
-    bad_patch.pop("predicate")
-    bad_patch.pop("receipt_target")
-    bad = _ticket(INTENT_UPSERT, task_id="T-untyped", patch=bad_patch)
-    submit_ticket(board, bad)
-    submit_ticket(board, good)
-
-    result = drain_once(board)
-
-    assert result.applied == 1 and result.rejected == 1
-    assert "T-typed" in {task.id for task in load_limen_file(board).tasks}
-    assert "T-untyped" not in {task.id for task in load_limen_file(board).tasks}
-    reason = (_rejected(board) / f"{bad.ticket_id}.json.reason.txt").read_text()
-    assert "predicate must be one executable command" in reason
-
-
-def test_bypassed_legacy_active_transition_is_quarantined_without_blocking_sibling(tmp_path):
-    board = _seed_board(tmp_path)
-    current = load_limen_file(board)
-    legacy = next(task for task in current.tasks if task.id == "T-0")
-    legacy.status = "needs_human"
-    legacy.predicate = None
-    legacy.receipt_target = None
-    save_limen_file(board, current)
-
-    bad = _ticket(INTENT_STATUS, task_id="T-0", log={"status": "dispatched"})
-    good = _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done"})
-    submit_ticket(board, bad)
-    submit_ticket(board, good)
-
-    result = drain_once(board)
-
-    assert result.applied == 1 and result.rejected == 1
-    tasks = {task.id: task for task in load_limen_file(board).tasks}
-    assert tasks["T-0"].status == "needs_human"
-    assert tasks["T-1"].status == "done"
-    assert (
-        "predicate must be one executable command"
-        in (_rejected(board) / f"{bad.ticket_id}.json.reason.txt").read_text()
+        patch={"status": "dispatched"},
+        log={"status": "dispatched"},
+        ticket_id="claim",
     )
 
+    admitted, rejected = _admit_exact_preconditions([(Path("archive.json"), archive), (Path("claim.json"), claim)])
 
-def test_bad_meta_ticket_quarantined_good_ticket_survives(tmp_path):
+    assert [ticket.ticket_id for _, ticket in admitted] == ["claim"]
+    assert rejected[0][0] == Path("archive.json")
+    assert "invalidated regardless of timestamp order" in rejected[0][1]
+
+
+# Empty/no-op operations never need the broker and never touch the projection.
+def test_empty_inbox_is_noop_and_projection_is_byte_untouched(tmp_path):
     board = _seed_board(tmp_path)
-    good = _ticket(INTENT_UPSERT, task_id="T-ok", patch=_task("T-ok", status="open"))
-    bad = _ticket(INTENT_META, patch={"portal": {"budget": "not-a-mapping"}})
-    submit_ticket(board, good)
-    submit_ticket(board, bad)
-
-    result = drain_once(board)
-
-    assert result.applied == 1 and result.rejected == 1
-    ids = {t.id for t in load_limen_file(board).tasks}
-    assert "T-ok" in ids
-    assert (_rejected(board) / f"{bad.ticket_id}.json").exists()
-
-
-def test_bad_order_ticket_quarantined_good_ticket_survives(tmp_path):
-    board = _seed_board(tmp_path)
-    good = _ticket(INTENT_UPSERT, task_id="T-ok", patch=_task("T-ok", status="open"))
-    bad = _ticket(INTENT_ORDER, patch={"ids": "T-2"})
-    submit_ticket(board, good)
-    submit_ticket(board, bad)
-
-    result = drain_once(board)
-
-    assert result.applied == 1 and result.rejected == 1
-    ids = {t.id for t in load_limen_file(board).tasks}
-    assert "T-ok" in ids
-    assert (_rejected(board) / f"{bad.ticket_id}.json").exists()
-
-
-def test_unparseable_ticket_is_quarantined(tmp_path):
-    board = _seed_board(tmp_path)
-    inbox = _inbox(board)
-    inbox.mkdir(parents=True, exist_ok=True)
-    (inbox / "garbage.json").write_text("{ this is not valid json ")
-    result = drain_once(board)
-    assert result.rejected == 1 and result.applied == 0
-    assert (_rejected(board) / "garbage.json").exists()
-
-
-# --- never dead-stop: a held lock defers, and the collapse-guard fences a bad batch --------------
-def test_held_lock_defers_without_touching_board(tmp_path, monkeypatch):
-    board = _seed_board(tmp_path)
-    submit_ticket(board, _ticket(INTENT_UPSERT, task_id="T-x", patch=_task("T-x", status="open")))
-    before = board.read_text()
-    real_parse = tabularius._parse_pending
-    parse_calls = 0
-
-    def counted_parse(inbox):
-        nonlocal parse_calls
-        parse_calls += 1
-        return real_parse(inbox)
-
-    monkeypatch.setattr(tabularius, "_parse_pending", counted_parse)
-    # simulate a legacy writer holding the queue lock
-    with queue_lock(board) as locked:
-        assert locked
-        result = drain_once(board, lock_timeout=1)
-    assert result.deferred is True and result.wrote is False
-    assert parse_calls == 0  # publisher's locked phase was never observed as a prefix
-    assert board.read_text() == before  # board untouched
-    assert pending_count(board) == 1  # ticket still waiting
-
-    # once the lock is free, the same ticket lands
-    assert drain_once(board).applied == 1
-    assert parse_calls == 1
-    assert "T-x" in {t.id for t in load_limen_file(board).tasks}
-
-
-def test_collapse_guard_rejects_a_shrinking_batch(tmp_path):
-    board = _seed_board(tmp_path, n=6)
-    # remove 5 of 6 tasks in one batch: 6 → 1 trips the collapse-guard (< floor 5)
-    for i in range(5):
-        submit_ticket(
-            board, _ticket(INTENT_REMOVE, task_id=f"T-{i}", ts=datetime(2026, 7, 2, 12, i, tzinfo=timezone.utc))
-        )
-    result = drain_once(board)
-
-    assert result.wrote is False  # board never shrunk
-    assert len(load_limen_file(board).tasks) == 6  # good board intact
-    assert result.rejected == 5  # the whole batch quarantined
-
-
-# --- the Step-2 migration safety invariant: producer path ≡ legacy direct write -----------------
-def test_producer_path_matches_legacy_direct_write(tmp_path):
-    """The conversion contract for every writer: swapping `load → extend → save_limen_file` for
-    `submit_task_upsert(...) + drain` yields the SAME board — identical existing tasks, identical
-    new-task fields, identical order — save only for the keeper's added `updated` provenance stamp.
-    This is what turns each generator conversion into a mechanical, provable change, not surgery."""
-    from limen.tabularius import submit_task_upsert
-
-    existing = [_task(f"T-{i}", status="open") for i in range(6)]
-    new_tasks = [
-        Task.model_validate(_task("N-1", status="open", priority="high", repo="organvm/limen")),
-        Task.model_validate(_task("N-2", status="open", priority="medium", labels=["mined"])),
-        Task.model_validate(_task("N-3", status="open", type="content")),
-    ]
-
-    # Path A — legacy direct write: load → extend → save
-    board_a = tmp_path / "a" / "tasks.yaml"
-    board_a.parent.mkdir(parents=True)
-    lf = _board(existing)
-    lf.tasks.extend(new_tasks)
-    save_limen_file(board_a, lf)
-
-    # Path B — producer tickets drained by the keeper (monotonic ts pins the append order)
-    board_b = tmp_path / "b" / "tasks.yaml"
-    board_b.parent.mkdir(parents=True)
-    save_limen_file(board_b, _board(existing))
-    for i, t in enumerate(new_tasks):
-        submit_task_upsert(
-            board_b, t, agent="gen", session_id="s", now=datetime(2026, 7, 2, 12, i, tzinfo=timezone.utc)
-        )
-    result = drain_once(board_b)
-    assert result.applied == 3 and result.wrote is True
-
-    a_tasks = load_limen_file(board_a).tasks
-    b_tasks = load_limen_file(board_b).tasks
-    assert [t.id for t in a_tasks] == [t.id for t in b_tasks]  # same set AND order
-    da = {t.id: t.model_dump(mode="json", exclude_none=True) for t in a_tasks}
-    db = {t.id: t.model_dump(mode="json", exclude_none=True) for t in b_tasks}
-    for tid in da:
-        a, b = dict(da[tid]), dict(db[tid])
-        # the keeper additionally stamps `updated` provenance on each folded task — a strict add,
-        # not a divergence; every other field must match the legacy write byte-for-byte.
-        a.pop("updated", None)
-        b.pop("updated", None)
-        assert a == b, f"field divergence on {tid}: {a} vs {b}"
-
-
-def test_submit_task_upsert_validates_before_emitting(tmp_path):
-    """The producer validates the task up front (fail-fast, like the legacy `Task(**t)`), so an
-    invalid task never reaches the inbox as a silently-quarantined ticket."""
-    import pytest
-
-    from limen.tabularius import submit_task_upsert
-
-    board = _seed_board(tmp_path)
-    # a dict missing the required `id` — must raise at submit, not land a ticket
-    with pytest.raises((ValueError, Exception)):
-        submit_task_upsert(board, {"title": "no id"}, agent="gen")
-    untyped = _task("NEW-UNTYPED", status="open")
-    untyped.pop("predicate")
-    untyped.pop("receipt_target")
-    with pytest.raises(ValueError, match="predicate"):
-        submit_task_upsert(board, untyped, agent="gen")
-    assert pending_count(board) == 0  # nothing entered the inbox
-
-
-def test_submit_task_upsert_is_create_only(tmp_path):
-    from limen.tabularius import submit_task_upsert
-
-    board = _seed_board(tmp_path)
-    submit_task_upsert(board, Task.model_validate(_task("T-1", status="open")), agent="gen", now=_NOW)
+    before = board.read_bytes()
 
     result = drain_once(board)
 
     assert result.applied == 0
-    assert result.rejected == 1
-    assert {task.id: task for task in load_limen_file(board).tasks}["T-1"].status == "open"
+    assert result.wrote is False
+    assert result.pending == 0
+    assert board.read_bytes() == before
 
 
-def test_keeper_preserves_successor_terminal_hold_against_status_and_raw_upsert_tickets(tmp_path):
-    board = tmp_path / "tasks.yaml"
-    save_limen_file(
+def test_sync_noop_neither_calls_broker_nor_touches_projection(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+
+    def unexpected_client():
+        raise AssertionError("no-op sync must not contact broker")
+
+    monkeypatch.setattr(tabularius, "client_from_env", unexpected_client)
+    result = apply_limen_file_sync(
         board,
-        _board(
-            [
-                _task(
-                    "T-held",
-                    status="failed",
-                    labels=["workstream:successor-required"],
-                )
-            ]
-            + [_task(f"T-{i}", status="open") for i in range(5)]
-        ),
+        load_limen_file(board),
+        agent="legacy-adapter",
+        session_id="sync-noop",
     )
-    submit_task_status(board, "T-held", status="open", agent="codex", now=_NOW)
-    submit_ticket(
+
+    assert result.wrote is False
+    assert result.note == "no board change"
+    assert board.read_bytes() == before
+
+
+def test_sync_relays_claim_to_broker_without_writing_projection(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+    fake = _fake_for_board(board)
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks[1].status = "dispatched"
+
+    result = apply_limen_file_sync(
         board,
-        _ticket(
-            INTENT_UPSERT,
-            task_id="T-held",
-            ts=datetime(2026, 7, 2, 12, 0, 1, tzinfo=timezone.utc),
-            patch={"status": "open", "labels": []},
-        ),
+        desired,
+        agent="legacy-adapter",
+        session_id="sync-relay",
+        now=_NOW,
     )
-    submit_ticket(
-        board,
-        _ticket(
-            INTENT_UPSERT,
-            task_id="T-held",
-            ts=datetime(2026, 7, 2, 12, 0, 2, tzinfo=timezone.utc),
-            patch={"status": "done", "labels": []},
-        ),
+
+    assert result.applied == 1
+    assert result.wrote is False
+    assert result.note == "broker-committed"
+    assert fake.packets[0].intent["kind"] == "task.claim"
+    assert fake.tasks["T-1"]["status"] == "dispatched"
+    assert board.read_bytes() == before
+    assert not _archive(board).exists()
+
+
+def test_sync_fails_closed_on_unsupported_remove_without_writing(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+    fake = _fake_for_board(board)
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks = desired.tasks[1:]
+
+    with pytest.raises(RuntimeError, match="no authenticated remote compatibility transition"):
+        apply_limen_file_sync(
+            board,
+            desired,
+            agent="legacy-adapter",
+            session_id="sync-remove",
+        )
+
+    assert fake.packets == []
+    assert board.read_bytes() == before
+
+
+def test_drain_archives_only_broker_acknowledged_ticket(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+    fake = _fake_for_board(board)
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    acknowledged = _ticket(
+        INTENT_STATUS,
+        task_id="T-1",
+        patch={"status": "dispatched"},
+        log={"status": "dispatched", "output": "claimed"},
+        ticket_id="acknowledged",
     )
-    submit_ticket(
-        board,
-        _ticket(
-            INTENT_REMOVE,
-            task_id="T-held",
-            ts=datetime(2026, 7, 2, 12, 0, 3, tzinfo=timezone.utc),
-        ),
+    unsupported = _ticket(
+        INTENT_META,
+        patch={"portal": {"budget": "invalid"}},
+        ticket_id="unsupported",
     )
-    submit_task_status(
-        board,
-        "T-held",
-        status="done",
-        agent="codex",
-        now=datetime(2026, 7, 2, 12, 0, 4, tzinfo=timezone.utc),
-    )
+    submit_ticket(board, acknowledged)
+    submit_ticket(board, unsupported)
 
     result = drain_once(board)
 
-    held = {task.id: task for task in load_limen_file(board).tasks}["T-held"]
+    assert (result.applied, result.rejected, result.wrote) == (1, 1, False)
+    assert (_archive(board) / "acknowledged.json").exists()
+    assert not (_archive(board) / "unsupported.json").exists()
+    assert (_rejected(board) / "unsupported.json").exists()
+    assert pending_count(board) == 0
+    assert fake.tasks["T-1"]["status"] == "dispatched"
+    assert board.read_bytes() == before
+
+
+def test_equivalent_tickets_share_a_deterministic_remote_work_key(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    fake = _fake_for_board(board)
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    first = _ticket(
+        INTENT_STATUS,
+        task_id="T-1",
+        patch={"status": "dispatched"},
+        log={"status": "dispatched", "output": "claimed"},
+        ticket_id="decomposition-a",
+    )
+    second = first.model_copy(update={"ticket_id": "decomposition-b"})
+    base = dict(fake.tasks["T-1"])
+
+    tabularius._relay_ticket(first, base, client=fake)
+    tabularius._relay_ticket(second, base, client=fake)
+
+    assert fake.packets[0].work_id != fake.packets[1].work_id
+    assert fake.packets[0].work_key == fake.packets[1].work_key
+
+
+def test_drain_defers_all_tickets_when_broker_is_unavailable(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+    ticket = _ticket(
+        INTENT_STATUS,
+        task_id="T-1",
+        patch={"status": "dispatched"},
+        log={"status": "dispatched"},
+        ticket_id="waiting",
+    )
+    submit_ticket(board, ticket)
+
+    def unavailable():
+        raise BrokerUnavailable("test broker unavailable")
+
+    monkeypatch.setattr(tabularius, "client_from_env", unavailable)
+    result = drain_once(board)
+
+    assert result.deferred is True
+    assert result.applied == 0
+    assert result.rejected == 0
+    assert result.wrote is False
+    assert pending_count(board) == 1
+    assert (_inbox(board) / "waiting.json").exists()
+    assert not _archive(board).exists()
+    assert not list(_rejected(board).glob("*.json"))
+    assert board.read_bytes() == before
+
+
+def test_local_retry_replays_committed_full_projection_after_cache_write_crash(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    ticket = _ticket(
+        INTENT_STATUS,
+        task_id="T-1",
+        patch={"status": "dispatched"},
+        log={"status": "dispatched", "output": "claimed once"},
+        ticket_id="crash-retry",
+    )
+    submit_ticket(board, ticket)
+    real_save = tabularius.save_local_conduct_projection
+    attempts = 0
+
+    def fail_first_cache_write(*args, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise OSError("simulated post-commit cache crash")
+        return real_save(*args, **kwargs)
+
+    monkeypatch.setattr(tabularius, "save_local_conduct_projection", fail_first_cache_write)
+    first = drain_once(board)
+
+    assert first.deferred is True
+    assert first.applied == 0
+    assert pending_count(board) == 1
+    assert load_limen_file(board).tasks[1].status == "open"
+
+    second = drain_once(board)
+    projected = load_limen_file(board)
+    task = projected.tasks[1]
+
+    assert second.deferred is False
+    assert second.applied == 1
+    assert pending_count(board) == 0
+    assert task.status == "dispatched"
+    assert projected.portal.budget.track.spent == task.budget_cost
+    assert sum(bool(entry.conduct_event_id) for entry in task.dispatch_log) == 1
+    assert attempts == 2
+
+
+def test_mid_drain_outage_archives_acknowledged_prefix_and_leaves_rest_pending(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+    fake = _fake_for_board(board, fail_after=1)
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    first = _ticket(
+        INTENT_STATUS,
+        task_id="T-1",
+        patch={"status": "dispatched"},
+        log={"status": "dispatched"},
+        ticket_id="01-first",
+    )
+    second = _ticket(
+        INTENT_STATUS,
+        task_id="T-2",
+        patch={"status": "dispatched"},
+        log={"status": "dispatched"},
+        ticket_id="02-second",
+    )
+    submit_ticket(board, first)
+    submit_ticket(board, second)
+
+    result = drain_once(board)
+
+    assert result.deferred is True
     assert result.applied == 1
-    assert result.rejected == 4
-    assert held.status == "done"
-    assert held.labels == ["workstream:successor-required"]
-    assert [entry.status for entry in held.dispatch_log] == ["done"]
+    assert result.rejected == 0
+    assert (_archive(board) / "01-first.json").exists()
+    assert (_inbox(board) / "02-second.json").exists()
+    assert pending_count(board) == 1
+    assert board.read_bytes() == before
+
+
+def test_unparseable_ticket_is_quarantined_without_contacting_broker(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+    inbox = _inbox(board)
+    inbox.mkdir(parents=True, exist_ok=True)
+    (inbox / "garbage.json").write_text("{ this is not valid json ")
+    fake = _fake_for_board(board)
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+
+    result = drain_once(board)
+
+    assert result.rejected == 1
+    assert result.applied == 0
+    assert fake.packets == []
+    assert (_rejected(board) / "garbage.json").exists()
+    assert board.read_bytes() == before
+
+
+def test_held_queue_lock_defers_without_contacting_broker(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+    submit_ticket(
+        board,
+        _ticket(
+            INTENT_STATUS,
+            task_id="T-1",
+            patch={"status": "dispatched"},
+            log={"status": "dispatched"},
+        ),
+    )
+
+    def unexpected_client():
+        raise AssertionError("held-lock drain must not contact broker")
+
+    monkeypatch.setattr(tabularius, "client_from_env", unexpected_client)
+    with queue_lock(board) as locked:
+        assert locked
+        result = drain_once(board, lock_timeout=1)
+
+    assert result.deferred is True
+    assert result.wrote is False
+    assert pending_count(board) == 1
+    assert board.read_bytes() == before
+
+
+def test_preserve_projection_is_retired_noop(tmp_path):
+    board = _seed_board(tmp_path)
+    before = board.read_bytes()
+
+    result = preserve_board_projection(board)
+
+    assert result.pushed is False
+    assert result.changed is False
+    assert result.skipped is True
+    assert "remote" in result.reason or "retired" in result.reason
+    assert board.read_bytes() == before
+
+
+def test_reducer_preserves_successor_terminal_hold():
+    held = _task(
+        "T-held",
+        status="failed",
+        labels=["workstream:successor-required"],
+    )
+    tasks: OrderedDict[str, dict[str, Any]] = OrderedDict([("T-held", held)])
+    meta: dict[str, Any] = {}
+
+    forbidden = [
+        _ticket(INTENT_STATUS, task_id="T-held", patch={"status": "open"}),
+        _ticket(INTENT_UPSERT, task_id="T-held", patch={"status": "done", "labels": []}),
+        _ticket(INTENT_REMOVE, task_id="T-held"),
+    ]
+    for ticket in forbidden:
+        with pytest.raises(ValueError, match="successor-required"):
+            _apply(ticket, tasks, meta)
+
+    completion = _ticket(
+        INTENT_STATUS,
+        task_id="T-held",
+        patch={"status": "done"},
+        log={"status": "done", "output": "terminal receipt"},
+    )
+    _apply(completion, tasks, meta)
+
+    assert tasks["T-held"]["status"] == "done"
+    assert tasks["T-held"]["labels"] == ["workstream:successor-required"]

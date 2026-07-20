@@ -16,9 +16,12 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def _restore_os_environ():
-    """Snapshot ``os.environ`` before each test and restore it afterward."""
+def _restore_os_environ(tmp_path):
+    """Give each test one isolated explicit keeper and restore its environment."""
     saved = dict(os.environ)
+    os.environ.pop("LIMEN_CONDUCT_URL", None)
+    os.environ.pop("LIMEN_CONDUCT_TOKEN", None)
+    os.environ["LIMEN_CONDUCT_STATE"] = str(tmp_path / "conduct.sqlite3")
     try:
         yield
     finally:

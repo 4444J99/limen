@@ -18,6 +18,7 @@ is the input side; this is the output side — every item measured: done right, 
 
 READ-ONLY on tasks.yaml. Fail-open: any error scores nothing rather than crash the beat.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,6 +39,10 @@ PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 _RESOLVED = {"done", "archived"}
 
 
+def _logical_session(entry: dict) -> str:
+    return str(entry.get("logical_session_id") or entry.get("session_id") or "")
+
+
 def _positive_int(value, default: int = 1) -> int:
     try:
         if isinstance(value, bool):
@@ -49,8 +54,8 @@ def _positive_int(value, default: int = 1) -> int:
 
 
 def _pr_ref(t: dict) -> str | None:
-    for e in (t.get("dispatch_log") or []):
-        m = PR_RE.search(str(e.get("session_id", "")))
+    for e in t.get("dispatch_log") or []:
+        m = PR_RE.search(_logical_session(e))
         if m:
             return f"{m.group(1)}/{m.group(2)}#{m.group(3)}"
     return None
@@ -64,7 +69,7 @@ def _attempts(t: dict) -> int:
 def _is_chronic(t: dict, min_reopens: int = 3) -> bool:
     log = t.get("dispatch_log") or []
     reopens = sum(1 for e in log if str(e.get("status")) == "open")
-    ever_pr = any(PR_RE.search(str(e.get("session_id", ""))) for e in log)
+    ever_pr = any(PR_RE.search(_logical_session(e)) for e in log)
     return reopens >= min_reopens and not ever_pr
 
 
@@ -140,11 +145,9 @@ def _already_scored() -> set[str]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=str(TASKS), help="board to weigh (default: $LIMEN_TASKS / tasks.yaml)")
-    ap.add_argument("--backfill", action="store_true",
-                    help="score every resolved task once (the first full verdict)")
+    ap.add_argument("--backfill", action="store_true", help="score every resolved task once (the first full verdict)")
     ap.add_argument("--limit", type=int, default=0, help="cap new records this run (0 = no cap)")
-    ap.add_argument("--print", dest="print_only", action="store_true",
-                    help="print the new records; do not append")
+    ap.add_argument("--print", dest="print_only", action="store_true", help="print the new records; do not append")
     args = ap.parse_args()
 
     try:
@@ -170,9 +173,11 @@ def main() -> int:
     by_grade = {}
     for r in new:
         by_grade[r["grade"]] = by_grade.get(r["grade"], 0) + 1
-    print(f"score-dispatch: {len(new)} newly-weighed tasks "
-          f"({by_grade.get('worth_it',0)} worth_it, {by_grade.get('marginal',0)} marginal, "
-          f"{by_grade.get('wasted',0)} wasted)")
+    print(
+        f"score-dispatch: {len(new)} newly-weighed tasks "
+        f"({by_grade.get('worth_it', 0)} worth_it, {by_grade.get('marginal', 0)} marginal, "
+        f"{by_grade.get('wasted', 0)} wasted)"
+    )
 
     if args.print_only:
         for r in new:
@@ -185,8 +190,9 @@ def main() -> int:
     with LEDGER.open(mode) as fh:
         for r in new:
             fh.write(json.dumps(r) + "\n")
-    print(f"score-dispatch: appended {len(new)} records -> {LEDGER}"
-          + (" (backfill: rewrote)" if args.backfill else ""))
+    print(
+        f"score-dispatch: appended {len(new)} records -> {LEDGER}" + (" (backfill: rewrote)" if args.backfill else "")
+    )
     return 0
 
 

@@ -35,13 +35,15 @@ import json
 import os
 import re
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _human_signals
 from limen.chronic import CHRONIC_FLEET_DEBT_LABEL, chronic_escalated_to_needs_human  # noqa: E402
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
+from limen.models import DispatchLogEntry  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 from _human_signals import HUMAN_ID_PREFIXES, HUMAN_SIGNALS, LEVER_MARKER, lever_ids, task_blob  # noqa: E402
@@ -209,7 +211,7 @@ def main() -> int:
     fresh = load_limen_file(path)
     flip_set = set(flip_ids)
     chronic_set = set(chronic_ids)
-    stamp = date.today().isoformat()
+    now = datetime.now(timezone.utc)
     flipped = parked = 0
     for t in fresh.tasks:
         if t.status != "needs_human":
@@ -218,20 +220,41 @@ def main() -> int:
             continue
         if t.id in flip_set:
             t.status = "open"
-            t.updated = stamp
+            t.updated = now
             if "reclassified-from-needs-human" not in (t.labels or []):
                 t.labels = list(t.labels or []) + ["reclassified-from-needs-human"]
+            t.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="reclassify-needs-human",
+                    session_id="apply",
+                    status="open",
+                    output="reclassify-needs-human: fleet-buildable task released to open",
+                )
+            )
             flipped += 1
         elif t.id in chronic_set:
             t.status = "failed_blocked"
-            t.updated = stamp
+            t.updated = now
             if CHRONIC_FLEET_DEBT_LABEL not in (t.labels or []):
                 t.labels = list(t.labels or []) + [CHRONIC_FLEET_DEBT_LABEL]
+            t.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="reclassify-needs-human",
+                    session_id="apply",
+                    status="failed_blocked",
+                    lifecycle_repair="fleet-debt-park",
+                    fleet_debt_source="prior-chronic-log",
+                    fleet_debt_count=1,
+                    output="reclassify-needs-human: chronic fleet debt parked in failed_blocked",
+                )
+            )
             parked += 1
     if not (flipped or parked):
         print("\n(nothing to change after fresh re-read — already applied.)")
         return 0
-    save_limen_file(path, fresh)
+    apply_limen_file_sync(path, fresh, agent="reclassify-needs-human", session_id="apply")
     print(
         f"\napplied: flipped {flipped} needs_human->open, parked {parked} needs_human->failed_blocked "
         f"-> {path} (route+dispatch separately)."

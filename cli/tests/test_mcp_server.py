@@ -3,8 +3,57 @@ import sys
 import types
 from pathlib import Path
 
-import pytest
 import yaml
+
+
+class FakeConductClient:
+    def __init__(self):
+        self.sessions = []
+        self.packets = []
+        self.calls = []
+
+    def register(self, session):
+        self.sessions.append(session)
+        return session.model_dump(mode="json")
+
+    def submit(self, packet):
+        self.packets.append(packet)
+        return {"status": "reserved", "run_id": f"run-{packet.work_id}"}
+
+    def capabilities(self):
+        return {"schema_version": "limen.conduct_capabilities.v1", "sessions": []}
+
+    def split(self, parent_run, packet):
+        self.calls.append(("split", parent_run, packet))
+        return {"status": "reserved", "run_id": "run-child"}
+
+    def graph(self, root_run):
+        self.calls.append(("graph", root_run))
+        return {"root_run_id": root_run, "nodes": []}
+
+    def heartbeat(self, lease, capability_token, *, observed_heads):
+        self.calls.append(("heartbeat", lease, capability_token, observed_heads))
+        return {"status": "active"}
+
+    def report(self, lease, capability_token, receipt):
+        self.calls.append(("report", lease, capability_token, receipt))
+        return {"mutation_authorized": True}
+
+    def harvest(self, root_run):
+        self.calls.append(("harvest", root_run))
+        return {"root_run_id": root_run, "unharvested": []}
+
+    def adopt(self, run, session_id):
+        self.calls.append(("adopt", run, session_id))
+        return {"status": "adopted"}
+
+    def cancel(self, run, session_id):
+        self.calls.append(("cancel", run, session_id))
+        return {"status": "cancelled"}
+
+    def request_stop(self, run, session_id):
+        self.calls.append(("request_stop", run, session_id))
+        return {"status": "stop_requested", "cooperative": True}
 
 
 def _load_server():
@@ -53,7 +102,7 @@ def _load_server():
     return module
 
 
-def test_agent_claim_preserves_board_extensions_and_reserves_budget(tmp_path, monkeypatch):
+def test_agent_claim_submits_atomic_compatibility_event_without_mutating_projection(tmp_path, monkeypatch):
     server = _load_server()
     tasks = tmp_path / "tasks.yaml"
     tasks.write_text(
@@ -98,25 +147,28 @@ def test_agent_claim_preserves_board_extensions_and_reserves_budget(tmp_path, mo
         )
     )
     monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    before = tasks.read_bytes()
+    client = FakeConductClient()
+    monkeypatch.setattr(server, "_conduct_client", lambda: client)
 
-    assert server.agent_claim("TASK-1", "opencode") == "opencode claimed task TASK-1 (status=dispatched)"
+    result = server.agent_claim("TASK-1", "opencode")
 
-    data = yaml.safe_load(tasks.read_text())
-    assert data["portal"]["agents"]["opencode"]["status"] == "idle"
-    assert data["portal"]["budget"]["track"]["spent"] == 7
-    assert data["portal"]["budget"]["track"]["per_agent"]["opencode"] == 5
-    assert data["portal"]["budget"]["track"]["per_agent_reset"]["opencode"] == "2026-07-02T00:00:00+00:00"
-    task = data["tasks"][0]
-    assert task["status"] == "dispatched"
-    assert task["target_agent"] == "opencode"
-    assert task["claude_tier"] == "sonnet"
-    assert task["depends_on"] == ["TASK-0"]
-    assert task["custom_extension"] == {"keep": True}
-    assert task["dispatch_log"][-1]["status"] == "dispatched"
-    assert "execution_requirements" not in task
-    # normalize_selected_legacy_task derived the merged-PR fallback contract from the task's repo
-    assert "gh pr list --repo organvm/limen" in task["predicate"]
-    assert task["receipt_target"] == "github:organvm/limen:pull-request:TASK-1"
+    assert "submitted claim for opencode" in result
+    assert "status=reserved" in result
+    assert tasks.read_bytes() == before
+    assert len(client.sessions) == 1
+    assert len(client.packets) == 1
+    packet = client.packets[0]
+    assert packet.intent["kind"] == "task.claim"
+    assert packet.intent["expected_status"] == "open"
+    assert "budget_debit" not in packet.intent
+    assert "budget_agent" not in packet.intent
+    assert packet.intent["patch"]["target_agent"] == "opencode"
+    assert packet.intent["patch"]["status"] == "dispatched"
+    assert packet.intent["patch"]["target_agent"] == "opencode"
+    assert "gh pr list --repo organvm/limen" in packet.intent["patch"]["predicate"]
+    assert packet.resource_claims[0].key == "task/TASK-1"
+    assert packet.required_capabilities == frozenset({"board-write"})
 
 
 def test_agent_claim_rejects_successor_required_open_row_without_mutating(tmp_path, monkeypatch):
@@ -283,17 +335,19 @@ def test_agent_claim_accepts_available_explicit_mount(tmp_path, monkeypatch):
         "ismount",
         lambda path: path == "/runtime/available",
     )
+    client = FakeConductClient()
+    monkeypatch.setattr(server, "_conduct_client", lambda: client)
+    before = tasks.read_bytes()
 
     result = server.agent_claim("TASK-MOUNT", "opencode")
 
-    assert result == "opencode claimed task TASK-MOUNT (status=dispatched)"
-    saved = yaml.safe_load(tasks.read_text(encoding="utf-8"))
-    assert saved["tasks"][0]["status"] == "dispatched"
-    assert saved["portal"]["budget"]["track"]["spent"] == 1
-    assert saved["tasks"][0]["execution_requirements"] == [{"kind": "mount", "path": "/runtime/available"}]
+    assert "submitted claim for opencode" in result
+    assert tasks.read_bytes() == before
+    assert "budget_debit" not in client.packets[0].intent
+    assert client.packets[0].intent["patch"]["target_agent"] == "opencode"
 
 
-def test_mcp_save_preserves_execution_requirement_field_absence(tmp_path, monkeypatch):
+def test_mcp_server_has_no_direct_board_writer_or_git_sync(tmp_path, monkeypatch):
     server = _load_server()
     tasks = tmp_path / "tasks.yaml"
     tasks.write_text(
@@ -328,48 +382,33 @@ def test_mcp_save_preserves_execution_requirement_field_absence(tmp_path, monkey
         encoding="utf-8",
     )
     monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    before = tasks.read_bytes()
 
-    server._save_data(server._load_data())
-
-    saved = yaml.safe_load(tasks.read_text(encoding="utf-8"))
-    by_id = {task["id"]: task for task in saved["tasks"]}
-    assert "execution_requirements" not in by_id["LEGACY-ABSENT"]
-    assert by_id["EXPLICIT-NULL"]["execution_requirements"] is None
-    assert by_id["EXPLICIT-EMPTY"]["execution_requirements"] == []
-    # Do not globally switch to exclude_none: established optional-field serialization stays intact.
-    assert "description" in by_id["LEGACY-ABSENT"]
-    assert by_id["LEGACY-ABSENT"]["description"] is None
+    assert not hasattr(server, "_save_data")
+    source = Path(server.__file__).read_text(encoding="utf-8")
+    assert "git stash" not in source
+    assert "git pull --rebase" not in source
+    assert "yaml.dump" not in source
+    assert tasks.read_bytes() == before
 
 
-def test_repository_backed_mcp_mutations_fail_closed_without_touching_checkout(tmp_path, monkeypatch):
+def test_task_add_and_status_are_conduct_compatibility_events(tmp_path, monkeypatch):
     server = _load_server()
-    repo = tmp_path / "repo"
-    repo.mkdir()
-    (repo / ".git").mkdir()
-    tasks = repo / "tasks.yaml"
+    tasks = tmp_path / "tasks.yaml"
     tasks.write_text(
         yaml.safe_dump(
             {
                 "version": "1.0",
-                "portal": {
-                    "budget": {
-                        "track": {
-                            "date": "2026-07-18",
-                            "spent": 0,
-                            "per_agent": {"opencode": 0},
-                        }
-                    }
-                },
                 "tasks": [
                     {
-                        "id": "TASK-1",
-                        "title": "Keeper-owned task",
+                        "id": "TASK-STATUS",
+                        "title": "Status event",
                         "repo": "organvm/limen",
                         "target_agent": "any",
-                        "status": "open",
+                        "status": "in_progress",
                         "created": "2026-07-18",
-                        "predicate": "python3 scripts/check.py",
-                        "receipt_target": "git:organvm/limen:logs/check.json",
+                        "predicate": "pytest -q",
+                        "receipt_target": "git:organvm/limen:logs/status.json",
                     }
                 ],
             },
@@ -378,24 +417,34 @@ def test_repository_backed_mcp_mutations_fail_closed_without_touching_checkout(t
         encoding="utf-8",
     )
     monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    client = FakeConductClient()
+    monkeypatch.setattr(server, "_conduct_client", lambda: client)
+    before = tasks.read_bytes()
+
+    added = server.add_task(
+        "New task",
+        "organvm/limen",
+        "pytest -q",
+        "github:organvm/limen:pull-request:LIMEN-001",
+        agent="codex",
+    )
+    updated = server.update_task_status("TASK-STATUS", "done", context="predicate passed")
+
+    assert "submitted task upsert" in added
+    assert "submitted status done" in updated
+    assert [packet.intent["kind"] for packet in client.packets] == ["task.upsert", "task.status"]
+    assert tasks.read_bytes() == before
+
+
+def test_mcp_conduct_tools_forward_the_identical_protocol_models(monkeypatch):
+    server = _load_server()
+    client = FakeConductClient()
+    monkeypatch.setattr(server, "_conduct_client", lambda: client)
     monkeypatch.setattr(server, "CIRCUIT_BREAKER_TRIPPED", False)
 
-    actions = [
-        lambda: server.add_task(
-            "A new keeper-owned task",
-            "organvm/limen",
-            "python3 scripts/check.py",
-            "git:organvm/limen:logs/new-check.json",
-        ),
-        lambda: server.update_task_status("TASK-1", "done"),
-        lambda: server.agent_claim("TASK-1", "opencode"),
-    ]
-    before = tasks.read_bytes()
-    for action in actions:
-        with pytest.raises(server.BoardMutationDeferred) as raised:
-            action()
-        assert raised.value.code == "board_mutation_deferred"
-        assert raised.value.retryable is True
-        assert raised.value.owner == "tabularius"
-        assert "projection PR" in str(raised.value)
-        assert tasks.read_bytes() == before
+    assert server.conduct_capabilities()["schema_version"] == "limen.conduct_capabilities.v1"
+    assert server.conduct_graph("run-root")["root_run_id"] == "run-root"
+    assert server.conduct_harvest("run-root")["unharvested"] == []
+    assert server.conduct_adopt("run-root", "session-a")["status"] == "adopted"
+    assert server.conduct_cancel("run-root", "session-a")["status"] == "cancelled"
+    assert server.conduct_request_stop("run-root", "session-a")["cooperative"] is True

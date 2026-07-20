@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Limen Pipeline MCP Server"
 requires-python = ">=3.11"
 dependencies = [
+    "limen>=0.1.0",
     "mcp[fastmcp]",
     "pyyaml>=6.0",
     "pydantic>=2.0",
@@ -15,3 +16,6 @@ dependencies = [
 
 [project.scripts]
 limen-mcp = "limen_mcp.server:mcp.run"
+
+[tool.uv.sources]
+limen = { path = "../cli", editable = true }

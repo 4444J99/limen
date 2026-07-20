@@ -14,9 +14,9 @@ how to claim it, and how to report results.
 Use this protocol in the right mode:
 
 - **Direct-session mode:** if the human gives an explicit request in the current session, satisfy
-  that request first. Do not claim unrelated queue work, reserve budget, or mutate `tasks.yaml`
-  unless the request is to work from the Limen queue or the requested work itself requires a task
-  state update.
+  that request first. Do not claim unrelated queue work or reserve budget. If the requested work
+  requires a task transition, submit it through the conduct broker; never edit the `tasks.yaml`
+  projection.
 - **Dispatch mode:** if launched by the scheduler, `limen dispatch`, MCP task tooling, or an
   explicit "take the next task" request, follow the startup checklist and session rituals below.
 
@@ -28,12 +28,16 @@ system / developer / runtime constraint.
 For dispatch-mode sessions:
 
 1. **Identify** yourself — set `LIMEN_AGENT` (`agy | claude | codex | copilot | gemini | github_actions | jules | opencode | oz | warp`).
-2. **Read** `$LIMEN_ROOT/tasks.yaml` (fallback `./tasks.yaml`) — parse the budget and the full task list.
-3. **Claim** the highest-priority `open` task targeted at you (or `any`) that fits the remaining budget.
-4. **Update status** before (`dispatched` → `in_progress`) and after (`done` / `failed`) execution.
+2. **Inspect** the broker capabilities plus `$LIMEN_ROOT/tasks.yaml` (fallback `./tasks.yaml`) —
+   the file is a read-only local projection of the canonical keeper.
+3. **Register** the native session, including its real lane, surface, capabilities, worktree, and
+   protection status.
+4. **Claim** through the Limen CLI/MCP compatibility tools or accept a broker-assigned
+   `WorkPacketV1`; both paths reserve the same canonical lease and budget debit.
 5. **Verify** before reporting `done` — run the task predicate, or the repo predicate
    (`scripts/verify-whole.sh`) when no narrower predicate is defined.
-6. **Close out** — release stale claims back to `open`, restore budget, commit `tasks.yaml`.
+6. **Close out** — report the lease receipt, harvest children, and release any reservation that
+   never started through the broker.
 
 Each step is detailed below.
 
@@ -43,13 +47,39 @@ When instructions conflict, the higher rule wins:
 
 1. System / developer / runtime constraints (the harness)
 2. The human's explicit instructions for this session
-3. `tasks.yaml` — the single source of truth for task **state**
+3. TABVLARIVS broker events and their `tasks.yaml` projection — the source of truth for task **state**
 4. `AGENTS.md` — the cross-agent dispatch **protocol**
 5. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) — per-agent behavior
 6. General repository docs (`README.md`, `docs/**`)
 
-`tasks.yaml` is authoritative for *state*; `AGENTS.md` is authoritative for *protocol*. Where a
-tool charter restates a rule from this file, this file is the source of truth.
+TABVLARIVS is authoritative for *state* and `tasks.yaml` is its cache/projection; `AGENTS.md` is
+authoritative for *protocol*. Where a tool charter restates a rule from this file, this file is the
+source of truth.
+
+## Peer Conductor Contract
+
+Conductor is a temporary capability, never a rank. There is no master agent or model hierarchy:
+any registered peer may conduct, execute, review, or combine those roles while TABVLARIVS remains
+the deterministic record keeper and lease authority.
+
+- Agents do not control one another. They submit bounded `WorkPacketV1` children through the shared
+  conduct broker and observe receipts; the broker atomically assigns work to a healthy native lane.
+- A child may only reduce its parent's authority, repository/path scope, spend, deadline, retry
+  runway, depth, and fanout. Cycles and repeated ancestry work keys are rejected.
+- Preserve native identity end to end: Codex executes as Codex, Claude as Claude, Copilot as
+  Copilot, Agy as Agy, OpenCode as OpenCode, and every other lane as itself. A preferred target is
+  a routing hint, not authority to substitute one provider identity for another.
+- Register direct human sessions with `human_protected: true`. Autonomous peers may observe them
+  but must not steal, adopt, retune, cancel, signal, stash, reset, or reap them.
+- Reserve a child run before invoking native subagents, teams, `/fleet`, workflows, or other
+  fanout that consumes separate capacity or mutates state. Hidden native fanout is rejected.
+- Only the broker may accept lifecycle transitions, budget debits, leases, or projection writes.
+  Never edit `tasks.yaml` directly; CLI/MCP task compatibility tools submit the same broker events.
+- Conductor loss does not cancel live children. After absence is proven, another registered peer
+  may adopt the graph. Cancellation before start is broker-owned; after start, stop requests are
+  cooperative.
+- If the authenticated broker is unavailable, inspection and already-leased local work may
+  continue, but new claims, children, and lifecycle transitions fail closed.
 
 ## Correction Propagation
 
@@ -441,8 +471,8 @@ claim is released back to `open` (see Session End Ritual). There is **no** `comp
 
 ### Transition Rules
 
-- Append a `dispatch_log` entry for every state transition; do not rewrite prior entries except to
-  correct your own unpushed typo.
+- Submit every transition to the broker. TABVLARIVS appends the corresponding `dispatch_log`
+  projection entry; agents do not rewrite prior events or the projection.
 - `open` may move to `dispatched` when budget is reserved for a specific agent/session.
 - `dispatched` may move to `in_progress` when execution starts.
 - `dispatched` may move back to `open` only if no execution occurred; restore the reserved budget.
@@ -452,11 +482,14 @@ claim is released back to `open` (see Session End Ritual). There is **no** `comp
 ## Where to Find Tasks
 
 ```bash
-# Path is always:
+# Read-only local projection:
 $LIMEN_ROOT/tasks.yaml
 
 # Fallback if env var is unset:
 ./tasks.yaml
+
+# Canonical conduct state:
+limen conduct capabilities
 ```
 
 ## Session Start Ritual
@@ -471,13 +504,17 @@ export LIMEN_AGENT="${LIMEN_AGENT:-$(basename $0)}"
 # Expected values: agy | claude | codex | copilot | gemini | github_actions | jules | opencode | oz | warp
 ```
 
-### 2. Read the Task File
+### 2. Inspect the Projection and Register
 
 Read `$LIMEN_ROOT/tasks.yaml` (or `./tasks.yaml` if unset). Parse the full file. Pay
 attention to:
 - `portal.budget.track` — how much budget has been spent today
 - `portal.budget.per_agent.<your_name>` — your per-agent cap
 - The `tasks` list — all pending and in-progress work
+
+Then query `limen conduct capabilities` and register the real native session with
+`limen conduct register`. Direct human sessions add `--human-protected`. Never register under the
+initiator's identity when the executor is a different lane.
 
 ### 3. Find Available Tasks
 
@@ -497,71 +534,22 @@ Then run: `limen status` to show the full board (if CLI installed), or just exit
 
 ### 5. Claim a Task
 
-Pick the highest-priority task. Prefer the Limen CLI/MCP claim path when available (for example,
-`limen dispatch --agent <your_name> --live` or the MCP task tools). If editing `tasks.yaml`
-directly, re-read it immediately before writing and abort if the task status, budget, or
-`dispatch_log` changed.
-
-Update `tasks.yaml` and append to `dispatch_log`:
-
-```yaml
-# Change this:
-  - id: "LIMEN-001"
-    status: open
-
-# To this:
-  - id: "LIMEN-001"
-    status: dispatched
-    updated: "<now>"  # ISO-8601 UTC from: date -u +"%Y-%m-%dT%H:%M:%SZ"
-    dispatch_log:
-      - timestamp: "<now>"  # same timestamp format
-        agent: "<your_name>"
-        session_id: "<current_session_id>"
-        status: dispatched
-```
-
-Also reserve budget by incrementing `spent` counters:
-```yaml
-portal:
-  budget:
-    track:
-      spent: <previous + budget_cost>
-      per_agent:
-        <your_name>: <previous + budget_cost>
-```
+Pick the highest-priority task, then use `limen dispatch --agent <your_name> --live`, the MCP task
+compatibility tools, or `limen conduct submit --packet <file>`. A successful response includes the
+canonical run/lease identity and reserves the task/resource claims plus one budget debit atomically.
+If the broker is unavailable or returns busy, do not mutate the projection or begin unleased work.
 
 ### 6. Execute
 
-Begin work on the task. When you start actual execution (not just planning), update
-status to `in_progress` and append a `dispatch_log` entry.
+Begin work only after receiving the lease. Heartbeat it while executing and submit any bounded child
+with `limen conduct split <parent-run> --packet <file>` (or `conduct_split` over MCP).
 
 ### 7. Report Results
 
-On completion:
-```yaml
-  - id: "LIMEN-001"
-    status: done
-    updated: "<now>"
-    dispatch_log:
-      - timestamp: "<now>"
-        agent: "<your_name>"
-        session_id: "<current_session_id>"
-        status: done
-        output: "<summary of what was done, files changed, outcomes>"
-```
-
-On failure:
-```yaml
-  - id: "LIMEN-001"
-    status: failed
-    updated: "<now>"
-    dispatch_log:
-      - timestamp: "<now>"
-        agent: "<your_name>"
-        session_id: "<current_session_id>"
-        status: failed
-        output: "<what went wrong, why it failed>"
-```
+Submit a schema-valid `RunReceiptV1` with `limen conduct report <lease> --receipt <file>` (or
+`conduct_report` over MCP), then harvest the root graph. The receipt records the executor/provider
+identity, exact old/new heads, changed paths, provider run URL, predicate/check/review evidence,
+spend, child runs, and terminal outcome.
 
 Choose the terminal state precisely:
 
@@ -571,9 +559,9 @@ Choose the terminal state precisely:
   (reopened ≥3×, never a PR — keep `needs_human` for genuinely human-gated atoms).
 - `needs_human` — the next required action is a real human decision or manual step.
 
-For `done`, include the evidence: predicate command, result, changed paths, PR/commit if any, and
-any scoped caveats. If a higher-priority runtime constraint prevents verification, do not claim a
-verified `done`; record the blocker instead.
+For `done`, include the evidence in the receipt: predicate command, result, changed paths, PR/commit
+if any, and any scoped caveats. If a higher-priority runtime constraint prevents verification, do
+not claim a verified `done`; record the blocker instead.
 
 ---
 
@@ -581,32 +569,18 @@ verified `done`; record the blocker instead.
 
 ### 1. Release Stale Claims
 
-For any tasks you have in `dispatched` status where no execution occurred:
-```yaml
-  - id: "LIMEN-001"
-    status: open
-    updated: "<now>"
-```
-
-Also restore budget for claims released before execution. Do not refund budget for work that
-actually ran unless the task owner explicitly records that policy in `tasks.yaml`.
+For a reserved run where execution never started, use `limen conduct cancel <run>` (or
+`conduct_cancel` over MCP). The broker releases its claims and applies the configured budget policy.
 
 For tasks already in `in_progress`, do not silently reopen after partial work. Move them to
-`failed`, `failed_blocked`, or `needs_human` with evidence, unless an explicit scheduler policy says
-to release stale partial work.
+`failed`, `failed_blocked`, or `needs_human` through a receipt with evidence, unless an explicit
+scheduler policy says to release stale partial work.
 
-### 2. Commit and Push
+### 2. Commit and Push Work
 
-If `$LIMEN_ROOT` is a git repo, commit and push `tasks.yaml`:
-```bash
-git -C "$LIMEN_ROOT" add tasks.yaml
-git -C "$LIMEN_ROOT" commit -m "limen: update task states"
-git -C "$LIMEN_ROOT" push
-```
-
-Stage only `tasks.yaml` for board updates. Do not force-push, rewrite unrelated history, or include
-unrelated work in the task-state commit. If the runtime or human instruction forbids git writes,
-report the exact uncommitted board change instead.
+Commit and push only the leased work paths and durable receipts. Do not stage the local
+`tasks.yaml` projection, force-push, rewrite unrelated history, or include unrelated work. The
+keeper commits accepted task-state projections remotely with SHA compare-and-swap.
 
 ## Safety & Evidence
 
@@ -630,8 +604,8 @@ checks.
 
 ### Claude
 - You are Claude. Read this file as part of your startup instructions.
-- You have access to the full filesystem — `$LIMEN_ROOT/tasks.yaml` is a regular file.
-- Support `limen` as a subagent: when asked, run the limen CLI or read/write tasks.yaml directly.
+- Support Limen as a native peer: use the conduct CLI/MCP surface and preserve Claude identity in
+  every session, packet, and receipt.
 - **Fleet launches never wait on permissions.** Limen-owned non-interactive Claude dispatch uses
   `--permission-mode dontAsk` with an explicit file-mutation allowlist. Bash/network policy remains
   owned by effective user/project/managed rules; Limen does not inject a blanket shell grant. A tool
@@ -643,24 +617,23 @@ checks.
 - **Fable plans, cheaper tiers build.** Fable's role is PLAN-ONLY: it does the deep analysis, emits a build packet into a worktree, and hands off to a cheaper tier (Opus/Sonnet/Haiku) that builds; building on Fable is prohibited. It is acceptance-gated (`scripts/fable-allotment.py accept ...`, `LIMEN_FABLE_ACCEPTANCE=<receipt>`) AND live runtime-capped against actual weekly tokens burned (40% deliberate / 50% hard, `scripts/fable-allotment.py balance` → `logs/fable-allotment.json`, enforced in `cli/src/limen/model_selection.py`). Full doctrine + caps: `docs/fable-allotment.md`.
 
 ### Gemini
-- You are Gemini CLI (v0.44.1+). Read `$LIMEN_ROOT/tasks.yaml` at session start.
+- You are Gemini CLI (v0.44.1+). Inspect the projection and register your native session at start.
 - Use `--sandbox $LIMEN_ROOT` if you need repo context.
-- You do not have background async dispatch — you claim and execute in the same session.
+- Submit or accept broker-leased packets; never create hidden fanout.
 - Your per-agent budget is tracked separately from Jules.
 
 ### Jules
 - You are Jules (Google async coding agent). You do not have interactive sessions.
 - Your dispatch is managed by `limen dispatch --agent jules` or the scheduler.
-- Read `tasks.yaml` to understand the task queue; your harvest cycle checks results.
+- Read the projection to understand the queue; the provider relay returns schema-valid receipts.
 - You are the workhorse: 100 runs/day budget is primarily allocated to you.
 
 ### OpenCode
-- You are OpenCode. Read `$LIMEN_ROOT/tasks.yaml` at session start.
-- Support `--task <id>` flag for targeted dispatch to a single task.
-- Write results back to tasks.yaml on completion.
+- You are OpenCode. Register through ianva and preserve OpenCode identity in every child receipt.
+- Support `--task <id>` only as a broker-backed targeted packet; do not mutate the projection.
 
 ### Agy
-- You are Agy / Antigravity CLI. Read `$LIMEN_ROOT/tasks.yaml` at session start.
+- You are Agy / Antigravity CLI. Use the `agy-conductor` skill as a thin conduct adapter.
 - Run only bounded, lane-safe work packets with a specific repo/worktree scope and verification
   command.
 - If work lands in Antigravity scratch space, preserve the per-run delta and return a receipt so
@@ -673,8 +646,9 @@ checks.
 
 ### Copilot
 - You are GitHub Copilot. Treat this file as repository guidance.
-- If you cannot update `tasks.yaml` directly, report task state and evidence in the PR or commit
-  output so a writable agent can sync the board.
+- Use the authenticated Limen conductor custom-agent profile published from
+  `integrations/copilot/limen-conductor.agent.md` when available. Return native Copilot identity and
+  exact-head evidence; do not merge or close PRs independently.
 
 ### GitHub Actions
 - You are a GitHub Actions dispatch lane. Work from the exact workflow input/task payload supplied
@@ -705,10 +679,15 @@ checks.
 
 | Action | Command |
 |---|---|
-| Read tasks | `cat $LIMEN_ROOT/tasks.yaml` |
-| Claim a task | Use CLI/MCP, or final re-read then edit `status: open` → `status: dispatched` |
-| Start execution | Edit `status: dispatched` → `status: in_progress` |
-| Report done | Edit `status: in_progress` → `status: done` + add output |
+| Inspect tasks | `limen status` plus the read-only `$LIMEN_ROOT/tasks.yaml` projection |
+| Discover lanes | `limen conduct capabilities` |
+| Register session | `limen conduct register --agent <name> --session-id <id> ...` |
+| Submit root | `limen conduct submit --packet <file>` |
+| Reserve child | `limen conduct split <parent-run> --packet <file>` |
+| Observe graph | `limen conduct graph <root-run>` |
+| Heartbeat lease | `limen conduct heartbeat <lease>` |
+| Report result | `limen conduct report <lease> --receipt <file>` |
+| Harvest graph | `limen conduct harvest <root-run>` |
 | Show board | `limen status` (if CLI installed) |
 | Show macro/micro progress | `limen progress` (`--view`, `--scope`, `--all`, or `--json-output`) |
 | Dispatch | `limen dispatch --agent <name> --live` |

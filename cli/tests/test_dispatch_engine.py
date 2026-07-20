@@ -259,10 +259,10 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
         json.dumps(
             {
                 "detail": {
-                    "PR_MERGED": [{"id": "M"}],
+                    "PR_MERGED": [{"id": "M", "ref": "x/y#11"}],
                     "PR_CLOSED": [{"id": "C"}],
                     "DISPATCHED_NO_PR": [{"id": "N"}],
-                    "PR_OPEN": [{"id": "O"}],
+                    "PR_OPEN": [{"id": "O", "ref": "x/y#12"}],
                 }
             }
         )
@@ -279,9 +279,15 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert "1 merged→done, 1 open-pr→done, 2 stuck→open" in result.stdout
-    st = {t.id: t.status for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
-    assert st["M"] == "done" and st["O"] == "done", st  # merged / open-PR → done
-    assert st["C"] == "open" and st["N"] == "open", st  # closed / no-PR → reopened
+    tasks_by_id = {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+    assert tasks_by_id["M"].status == "done" and tasks_by_id["O"].status == "done"
+    assert tasks_by_id["C"].status == "open" and tasks_by_id["N"].status == "open"
+    assert tasks_by_id["M"].dispatch_log[-1].lifecycle_repair == "pr-observed-terminal"
+    assert tasks_by_id["M"].dispatch_log[-1].pr_observed_state == "merged"
+    assert tasks_by_id["M"].dispatch_log[-1].pr_observed_ref == "x/y#11"
+    assert tasks_by_id["O"].dispatch_log[-1].lifecycle_repair == "pr-observed-terminal"
+    assert tasks_by_id["O"].dispatch_log[-1].pr_observed_state == "open"
+    assert tasks_by_id["O"].dispatch_log[-1].pr_observed_ref == "x/y#12"
 
 
 def test_reload_fresh_commit_preserves_concurrent_write(tmp_path):

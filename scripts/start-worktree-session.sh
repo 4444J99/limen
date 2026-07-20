@@ -4,14 +4,22 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/start-worktree-session.sh [--autonomous] [--codex] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
+  scripts/start-worktree-session.sh [--autonomous] [--agent auto|<canonical-lane>] [--conduct] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
 
 Examples:
   scripts/start-worktree-session.sh portvs triptych-story
-  scripts/start-worktree-session.sh --codex portvs triptych-story
-  scripts/start-worktree-session.sh --autonomous --codex --runway 8h --prompt-file /tmp/next-session.md limen next-epoch
+  scripts/start-worktree-session.sh --agent claude portvs triptych-story
+  scripts/start-worktree-session.sh --autonomous --agent auto --conduct --runway 8h --prompt-file /tmp/next-session.md limen next-epoch
   scripts/start-worktree-session.sh --shell --prompt-file /tmp/prompt.md domus package-map
   scripts/start-worktree-session.sh --workstream contributions --prompt 'drain the code lane' limen contrib-run
+
+--agent selects and launches a native agent CLI. "auto" derives an available installed CLI from the
+canonical Limen census. Omitting --agent creates the capsule without launching; its kickstart uses
+the same live-derived Auto selection with a login-shell fallback.
+
+--conduct registers the launched direct session with the shared broker as human-protected. Broker
+credentials are read from the environment, never written into the capsule or command line, and
+removed before the native agent process starts.
 
 --workstream pins the worker to ONE purpose channel (contributions/correspondence/… — see
 docs/lanes/). It is stamped into the kickoff packet so the session stays single-purpose.
@@ -19,7 +27,7 @@ docs/lanes/). It is stamped into the kickoff packet so the session stays single-
 --runway sets the finite workstream admission window (15m..30d; default 1d). The clock starts at the
 first kickstart, survives successor sessions, and is never silently reset by a rerender.
 
---autonomous requires an explicit prompt and turns the README into the initial Codex prompt. The
+--autonomous requires an explicit prompt and turns the README into the selected agent's initial prompt. The
 packet defines live probes and completion/switch predicates; it never predeclares the ending.
 
 Aliases:
@@ -31,7 +39,7 @@ Aliases:
 Creates or reuses:
   <repo>/.worktrees/<slug> on branch work/<slug>
   <repo>/.worktrees/<slug>/.limen-workstream/README.md as a thin prompt index
-  <repo>/.worktrees/<slug>/.limen-workstream/{manifest,intent,runtime,closeout}.md
+  <repo>/.worktrees/<slug>/.limen-workstream/{manifest,workstream,intent,runtime,closeout}.md
   <repo>/.worktrees/<slug>/docs/continuations/<slug>/workstream.json as a tracked redacted receipt
 
 The target repo's .git/info/exclude is updated so .worktrees/ and the private
@@ -39,9 +47,15 @@ capsule never appear as Git noise. The receipt remains visible for commit and re
 USAGE
 }
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=scripts/lib/workstream-capsule.sh
+source "$script_dir/lib/workstream-capsule.sh"
+
 autonomous=0
-launch_codex=0
+launch_agent=0
 launch_shell=0
+conduct=0
+requested_agent=""
 from_ref=""
 prompt_text=""
 prompt_file=""
@@ -56,8 +70,18 @@ while [[ $# -gt 0 ]]; do
       autonomous=1
       shift
       ;;
-    --codex)
-      launch_codex=1
+    --agent)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --agent" >&2
+        usage >&2
+        exit 2
+      fi
+      requested_agent="$2"
+      launch_agent=1
+      shift 2
+      ;;
+    --conduct)
+      conduct=1
       shift
       ;;
     --shell)
@@ -142,8 +166,12 @@ if [[ "$autonomous" -eq 1 && "$write_readme" -ne 1 ]]; then
   echo "--autonomous cannot be combined with --no-readme" >&2
   exit 2
 fi
-if [[ "$launch_codex" -eq 1 && "$write_readme" -ne 1 ]]; then
-  echo "--codex cannot be combined with --no-readme because launch requires a validated contract" >&2
+if [[ "$launch_agent" -eq 1 && "$write_readme" -ne 1 ]]; then
+  echo "--agent cannot be combined with --no-readme because launch requires a validated contract" >&2
+  exit 2
+fi
+if [[ "$conduct" -eq 1 && "$write_readme" -ne 1 ]]; then
+  echo "--conduct cannot be combined with --no-readme" >&2
   exit 2
 fi
 if [[ "$autonomous" -eq 1 && -z "$prompt_text" && -z "$prompt_file" ]]; then
@@ -155,7 +183,6 @@ if [[ -n "$prompt_file" && ! -f "$prompt_file" ]]; then
   exit 1
 fi
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 contract_helper="$script_dir/../cli/src/limen/workstream_contract.py"
 if [[ ! -f "$contract_helper" ]]; then
   echo "workstream contract helper not found: $contract_helper" >&2
@@ -166,6 +193,87 @@ if [[ "$runway_explicit" -eq 1 ]]; then
     exit 2
   fi
   runway="${normalized_runway%%:*}"
+fi
+
+agent=""
+registry_binary=""
+agent_capabilities=""
+allow_shell_fallback=1
+if [[ -n "$requested_agent" ]]; then
+  allow_shell_fallback=0
+fi
+agent_resolution="$(
+  PYTHONPATH="$script_dir/../cli/src${PYTHONPATH:+:$PYTHONPATH}" \
+    python3 - "${requested_agent:-auto}" <<'PY'
+import os
+import shutil
+import sys
+
+from limen.census import VENDORS, by_name, canonical
+
+
+def candidates(vendor):
+    env_key = f"LIMEN_{vendor.name.upper().replace('-', '_')}_BIN"
+    override = os.environ.get(env_key, "").strip()
+    values = (override, vendor.name, vendor.binary if vendor.binary == vendor.name else "")
+    return tuple(dict.fromkeys(value for value in values if value))
+
+
+def direct_native(vendor):
+    profile = getattr(vendor, "execution", None)
+    if profile is None:
+        return vendor.local_checkout
+    return profile.transport == "native-cli" or profile.transport.startswith("ianva-")
+
+
+requested = sys.argv[1].strip().lower()
+if requested == "auto":
+    preferred = canonical(os.environ.get("LIMEN_AGENT"))
+    ordered = list(VENDORS)
+    if preferred and by_name(preferred):
+        ordered.sort(key=lambda vendor: vendor.name != preferred)
+    eligible = [
+        vendor
+        for vendor in ordered
+        if vendor.status.available and vendor.status.state == "live" and direct_native(vendor)
+    ]
+    selected = next(
+        (
+            (vendor, binary)
+            for vendor in eligible
+            for binary in candidates(vendor)
+            if shutil.which(binary)
+        ),
+        None,
+    )
+    if selected is None:
+        if not eligible:
+            raise SystemExit("no live canonical Limen lane supports native execution")
+        vendor = eligible[0]
+        binary = next(iter(candidates(vendor)), vendor.name)
+    else:
+        vendor, binary = selected
+else:
+    name = canonical(requested)
+    vendor = by_name(name)
+    if vendor is None:
+        allowed = ", ".join(item.name for item in VENDORS)
+        raise SystemExit(f"unknown Limen agent lane {requested!r}; canonical lanes: {allowed}")
+    binary = next((item for item in candidates(vendor) if shutil.which(item)), vendor.name)
+
+print(vendor.name)
+print(binary)
+profile = getattr(vendor, "execution", None)
+capabilities = profile.capabilities if profile is not None else frozenset({"code", "conduct", "review"})
+print(" ".join(sorted(capabilities)))
+PY
+)"
+agent="$(printf '%s\n' "$agent_resolution" | sed -n '1p')"
+registry_binary="$(printf '%s\n' "$agent_resolution" | sed -n '2p')"
+agent_capabilities="$(printf '%s\n' "$agent_resolution" | sed -n '3p')"
+if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry_binary" >/dev/null; then
+  echo "native CLI not found for canonical lane $agent" >&2
+  exit 127
 fi
 
 repo_arg="$1"
@@ -272,6 +380,8 @@ fi
 echo "$created worktree: $wt"
 echo "branch: $branch"
 [[ -n "$workstream" ]] && echo "workstream: $workstream"
+echo "agent: $agent"
+[[ "$conduct" -eq 1 ]] && echo "conduct: human-protected direct session"
 
 if [[ "$write_readme" -eq 1 ]]; then
   capsule_dir="$wt/.limen-workstream"
@@ -285,14 +395,13 @@ if [[ "$write_readme" -eq 1 ]]; then
     prompt_payload="No explicit prompt was supplied. Add one bounded objective and its owner contract before execution."
   fi
 
-  # shellcheck source=scripts/lib/workstream-capsule.sh
-  source "$script_dir/lib/workstream-capsule.sh"
   render_workstream_capsule \
     "$wt" "$repo" "$slug" "$branch" "$workstream" "$from_ref" "$autonomous" \
-    "$prompt_payload" "$script_dir/../spec/continuation-capsule" "$runway" "$contract_helper"
+    "$prompt_payload" "$script_dir/../spec/continuation-capsule" "$runway" "$contract_helper" \
+    "$agent" "$registry_binary" "$conduct" "$allow_shell_fallback" "$agent_capabilities"
 fi
 
-if [[ "$launch_codex" -eq 1 ]]; then
+if [[ "$launch_agent" -eq 1 ]]; then
   exec bash "$kickstart"
 fi
 
@@ -304,4 +413,8 @@ fi
 echo
 echo "Next:"
 echo "  cd $wt"
-echo "  codex"
+if [[ "$write_readme" -eq 1 ]]; then
+  echo "  bash $wt/.limen-workstream/kickstart.sh"
+else
+  echo "  $registry_binary"
+fi

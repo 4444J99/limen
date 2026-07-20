@@ -29,7 +29,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.intake import contract_fields, github_pr_contract  # noqa: E402
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
 
@@ -234,15 +234,10 @@ def main() -> int:
     if not to_add:
         print("\n(all planned tasks already present after fresh re-read — nothing applied.)")
         return 0
-    if os.environ.get("LIMEN_TICKETS_PRODUCE") == "1":
-        session_id = os.environ.get("LIMEN_SESSION_ID", "generate-seo-backlog")
-        for t in to_add:
-            submit_task_upsert(path, t, agent="generate-seo-backlog", session_id=session_id)
-        print(f"\nsubmitted {len(to_add)} seo upsert tickets to the keeper's inbox.")
-        return 0
-    fresh.tasks.extend(to_add)
-    save_limen_file(path, fresh)
-    print(f"\napplied: appended {len(to_add)} seo tasks -> {path}")
+    session_id = os.environ.get("LIMEN_SESSION_ID", "generate-seo-backlog")
+    for task in to_add:
+        submit_task_upsert(path, task, agent="generate-seo-backlog", session_id=session_id)
+    print(f"\nsubmitted {len(to_add)} seo upsert tickets to the keeper's inbox.")
     return 0
 
 

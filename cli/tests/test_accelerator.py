@@ -19,7 +19,8 @@ from pathlib import Path
 import pytest
 
 import limen.dispatch as D
-from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task
+from limen.io import load_limen_file, save_limen_file
+from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task, dispatch_session_id
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 
@@ -169,7 +170,7 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
     lf = _lf({"jules": 100}, {"jules": 5}, reset)
     lf.tasks = tasks
     tp = tmp_path / "tasks.yaml"
-    picked: list[tuple[str, str]] = []
+    save_limen_file(tp, lf)
     monkeypatch.setattr(D, "_deps_met", lambda t, by: True)
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
     monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: True)
@@ -178,12 +179,13 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
     # The accelerated tail beyond the 3 base picks must be REVENUE (win) tasks, never COVERAGE (waste).
     # Re-run non-dry to see which got reserved=dispatched.
     D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=False)
-    disp = [t.id for t in lf.tasks if t.status == "dispatched"]
+    acknowledged = load_limen_file(tp)
+    dispatched = [t for t in acknowledged.tasks if t.status == "dispatched"]
+    disp = [t.id for t in dispatched]
     assert len(disp) > 3, "accelerator dispatched more than the base 3 toward the cliff"
     assert all(i.startswith("REV") for i in disp), f"tail must be win-class only, got {disp}"
-    assert all(t.dispatch_log[-1].status == "dispatched" for t in lf.tasks if t.status == "dispatched")
-    assert all(t.dispatch_log[-1].session_id == "reserve" for t in lf.tasks if t.status == "dispatched")
-    _ = picked
+    assert all(t.dispatch_log[0].status == "dispatched" for t in dispatched)
+    assert all(dispatch_session_id(t.dispatch_log[0]) == "reserve" for t in dispatched)
 
 
 # ── codex provider-auto selection ───────────────────────────────────────────────────────────────

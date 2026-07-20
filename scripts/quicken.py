@@ -434,9 +434,10 @@ def _hang_asks(entries: list[dict]) -> dict:
     try:
         sys.path.insert(0, str(ROOT / "cli" / "src"))
         from datetime import date, datetime, timezone
-        from limen.io import load_limen_file, queue_lock, save_limen_file
+        from limen.io import load_limen_file, queue_lock
         from limen.intake import contract_fields, github_issue_owner_contract
         from limen.models import Task, has_jules_landing_hold
+        from limen.tabularius import apply_limen_file_sync
         from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
     except Exception as e:  # never dead-stop the apply if the cli pkg isn't importable
         res["error"] = f"ledger unavailable ({e}); residue digest still written"
@@ -498,7 +499,7 @@ def _hang_asks(entries: list[dict]) -> dict:
                 changed = True
                 res["created"].append(tid)
         if changed:
-            save_limen_file(LEDGER, lf)
+            apply_limen_file_sync(LEDGER, lf, agent="quicken", session_id="hang-asks")
     return res
 
 

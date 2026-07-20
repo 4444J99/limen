@@ -11,7 +11,8 @@ A **cell** is one parallel idea made concrete:
 - **one worktree** at `.claude/worktrees/<slug>` — a full, isolated checkout
 - **one branch** `cell/<slug>`, always cut from `origin/main` (never your drifted local HEAD)
 - **optionally one scoped conductor** — a heartbeat bound to that worktree, with its own
-  `LIMEN_ROOT`, tasks file, branch namespace (`cell-<slug>-`), pidfile, lock and log
+  `LIMEN_ROOT`, branch namespace (`cell-<slug>-`), identity receipt, lock and log; every
+  task/lease transition still goes through the canonical conduct broker
 
 Cells are isolated *by construction*, so N of them run side-by-side without racing each
 other or the live daemon. Each cell tears itself down loss-free when you're done.
@@ -35,7 +36,7 @@ cell new   <slug>            # create a cell (worktree off origin/main) → prin
 cell ls                      # list cells: branch · ahead/behind · dirty · conductor · size
 cell cd    <slug>            # print the cell path:  cd "$(cell cd foo)"
 cell conduct <slug> [--loop] # start this cell's scoped conductor (bg). --loop = continuous
-cell stop  <slug>            # stop this cell's conductor
+cell stop  <slug>            # request cooperative run stop, or gracefully stop a registration-only loop
 cell merge <slug>            # push + hand off to the standing merge grant (merge-policy.sh)
 cell reap  <slug>            # stop + hand off to receipt-backed reclaim/reap organs
 cell reap-dead               # preview every provably-dead cell (clean+content-preserved+idle)
@@ -81,7 +82,14 @@ cell ls                           # see which cells have a live conductor (PID) 
 cell stop mail-digest             # stop it
 ```
 
-Logs land in `logs/cells/<slug>.conduct.log`; the PID in `logs/cells/<slug>.pid`.
+Logs land in `logs/cells/<slug>.conduct.log`. `logs/cells/<slug>.pid` is a structured
+`limen.cell_registration.v1` receipt, not a bare PID: it binds the PID to its process-start
+identity, unique command marker, cell/session, run owner, and protection flag.
+
+`cell stop` never sends `KILL`. For a conducted run it asks the broker for cooperative stop and
+leaves the registration loop alive for liveness/harvest. For a registration-only loop it sends
+`TERM` only after the PID, start identity, and command marker all match the receipt. Stale, reused,
+foreign, or human-protected identities are refused rather than signalled.
 
 **When to run multiple conductors:** when each idea has enough self-contained backlog to
 keep a loop busy (e.g. a big refactor with its own task list). For a quick one-off edit,
@@ -132,7 +140,8 @@ cell reap-dead --apply      # actually reclaim after operator acceptance
 |---|---|
 | Stale base reverting main | `new` always branches from freshly-fetched `origin/main` |
 | Conductors racing `main` | scoped conductor: own branch namespace, fleet merges OFF |
-| Conductors racing each other | own `LIMEN_ROOT` + tasks file + pidfile + lock per cell |
+| Conductors racing each other | isolated worktrees plus canonical broker leases; no cell-local board writer |
+| Stale PID signalling a peer | exact PID/start/command proof; foreign and protected processes are refused |
 | Losing uncommitted work | `reap` refuses dirty/unpushed; physical removal requires acceptance receipts |
 | Disk leak | known worktree roots swept; loss-free gates; live-session guard |
 | Hardcoded knobs | every `LIMEN_*` toggle declared in `institutio/governance/parameters.yaml` |

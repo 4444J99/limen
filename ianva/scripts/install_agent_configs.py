@@ -79,6 +79,9 @@ def apply_json(path: Path, top_key: str, entry: dict, apply: bool) -> None:
     existing = data.get(top_key)
     if not isinstance(existing, dict):
         existing = {}
+    if existing.get("ianva") == entry:
+        print("    unchanged")
+        return
     existing["ianva"] = entry
     data[top_key] = existing
     warn = "  ⚠ comments will be dropped (backup saved)" if had_comments else ""
@@ -140,9 +143,13 @@ def main() -> int:
         if only and e.key not in only:
             continue
         print(f"[{e.label}]")
-        if e.fmt in ("json_mcpservers",):
+        if e.fmt in {"json_mcpservers", "json_stdio_mcpservers"}:
+            if e.payload is None:
+                raise RuntimeError(f"{e.key} JSON renderer returned no structured payload")
             apply_json(Path(e.path), "mcpServers", e.payload["mcpServers"]["ianva"], args.apply)
         elif e.fmt == "json_opencode":
+            if e.payload is None:
+                raise RuntimeError(f"{e.key} JSON renderer returned no structured payload")
             apply_json(Path(e.path), "mcp", e.payload["mcp"]["ianva"], args.apply)
         elif e.fmt == "toml_codex":
             apply_toml_codex(Path(e.path), e.rendered, args.apply)

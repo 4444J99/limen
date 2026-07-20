@@ -8,17 +8,17 @@
 # lives under the reclaim organ's sweep, and `reap` tears it down loss-free.
 #
 # A CELL = one parallel idea = one worktree (.claude/worktrees/<slug>) on branch cell/<slug>,
-# optionally running its own scoped conductor (a heartbeat loop bound to that worktree).
-# Conductors are isolated: own LIMEN_ROOT, own tasks file, own branch namespace, own pidfile
-# + lock + log — so you can run several at once without them racing each other or the daemon.
+# optionally registering its own scoped conductor capability with the canonical broker.
+# Conductors are isolated: own worktree, branch namespace, pidfile + log. They share the
+# authenticated keeper and never create a second mutable task-board authority.
 #
 # Usage:
 #   cell new   <slug>            # create a cell (worktree off origin/main) → prints its path
 #   cell ls                      # list cells: branch · ahead/behind · dirty · conductor · size
 #   cell cd    <slug>            # print the cell path (use: cd "$(cell cd foo)")
 #   cell conduct <slug> [--loop] [--workstream <handle>]  # start this cell's scoped conductor (bg).
-#                                # --loop = continuous. --workstream pins the cell to ONE channel:
-#                                # the conductor sees only that channel's board (one-worker-one-lane).
+#                                # --loop = refresh registration. --workstream passes one purpose
+#                                # channel to the native adapter (one-worker-one-lane).
 #   cell stop  <slug>            # stop this cell's conductor
 #   cell merge <slug>            # push + open/merge its PR via merge-policy (the standing grant)
 #   cell reap  <slug>            # stop + hand off removal to receipt-backed reclaim/reap organs
@@ -34,30 +34,104 @@ LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 WT_DIR="$LIMEN_ROOT/.claude/worktrees"
 CELL_LOGS="$LIMEN_ROOT/logs/cells"
 BRANCH_PREFIX="cell/"
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
 mkdir -p "$CELL_LOGS"
 
 die() { echo "cell: $*" >&2; exit 1; }
-write_empty_board() {
-  local out="${1:?write_empty_board needs a path}"
-  # Write atomically (temp in the same dir + rename) so a reader — the daemon, or a test polling
-  # for the board to appear — never observes the empty/partial window between create and flush that
-  # a plain `cat > "$out"` leaves. mv within one filesystem is atomic: the board appears complete or
-  # not at all. (Fixes the intermittent test_cells.py None-read: `yaml.safe_load` of a half-written
-  # board returned None → data["tasks"] TypeError.)
-  local tmp="$out.tmp.$$"
-  cat > "$tmp" <<'YAML'
-version: "1.0"
-portal:
-  name: scoped-empty
-tasks: []
-YAML
-  mv -f "$tmp" "$out"
-}
 slug_ok() { [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || die "bad slug '$1' (use letters/digits/._-)"; }
 cell_path() { echo "$WT_DIR/$1"; }
 cell_branch() { echo "${BRANCH_PREFIX}$1"; }
 pidfile() { echo "$CELL_LOGS/$1.pid"; }
-conductor_running() { local pf; pf="$(pidfile "$1")"; [ -f "$pf" ] && kill -0 "$(cat "$pf")" 2>/dev/null; }
+receipt_value() {
+  local receipt="${1:?receipt_value needs a receipt}" key="${2:?receipt_value needs a key}"
+  [ -f "$receipt" ] || return 1
+  awk -F= -v wanted="$key" '
+    $1 == wanted {
+      print substr($0, length($1) + 2)
+      exit
+    }
+  ' "$receipt"
+}
+process_start_identity() {
+  ps -p "${1:?process_start_identity needs a pid}" -o lstart= 2>/dev/null \
+    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+process_command_identity() {
+  ps -p "${1:?process_command_identity needs a pid}" -o command= 2>/dev/null \
+    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+write_cell_receipt() {
+  local slug="${1:?write_cell_receipt needs a slug}"
+  local state="${2:?write_cell_receipt needs a state}"
+  local registration_status="${3:?write_cell_receipt needs registration status}"
+  local cpid="${4:?write_cell_receipt needs a pid}"
+  local start_identity="${5:-}"
+  local owner_token="${6:?write_cell_receipt needs an owner token}"
+  local session_id="${7:?write_cell_receipt needs a session id}"
+  local agent="${8:?write_cell_receipt needs an agent}"
+  local surface="${9:?write_cell_receipt needs a surface}"
+  local p="${10:?write_cell_receipt needs a cell path}"
+  local loop="${11:?write_cell_receipt needs a loop flag}"
+  local workstream="${12:-}"
+  local run_id="${13:-}"
+  local run_owner_session_id="${14:-}"
+  local human_protected="${15:-0}"
+  local receipt tmp
+  receipt="$(pidfile "$slug")"
+  tmp="${receipt}.tmp.$$"
+  (
+    umask 077
+    printf '%s\n' \
+      "schema=limen.cell_registration.v1" \
+      "state=$state" \
+      "registration_status=$registration_status" \
+      "pid=$cpid" \
+      "start_identity=$start_identity" \
+      "owner_token=$owner_token" \
+      "script_path=$SCRIPT_PATH" \
+      "slug=$slug" \
+      "session_id=$session_id" \
+      "agent=$agent" \
+      "surface=$surface" \
+      "cell_path=$p" \
+      "loop=$loop" \
+      "workstream=$workstream" \
+      "run_id=$run_id" \
+      "run_owner_session_id=$run_owner_session_id" \
+      "human_protected=$human_protected" > "$tmp"
+  )
+  mv "$tmp" "$receipt"
+}
+process_ownership_status() {
+  local slug="${1:?process_ownership_status needs a slug}" receipt state cpid expected_start actual_start
+  local owner_token command_identity
+  receipt="$(pidfile "$slug")"
+  [ -f "$receipt" ] || { echo "missing"; return 0; }
+  [ "$(receipt_value "$receipt" schema)" = "limen.cell_registration.v1" ] \
+    || { echo "invalid-receipt"; return 0; }
+  state="$(receipt_value "$receipt" state)"
+  case "$state" in
+    exited|failed|stopped) echo "terminal"; return 0 ;;
+    starting|registered) ;;
+    *) echo "invalid-state"; return 0 ;;
+  esac
+  cpid="$(receipt_value "$receipt" pid)"
+  [[ "$cpid" =~ ^[1-9][0-9]*$ ]] || { echo "invalid-pid"; return 0; }
+  kill -0 "$cpid" 2>/dev/null || { echo "dead"; return 0; }
+  expected_start="$(receipt_value "$receipt" start_identity)"
+  actual_start="$(process_start_identity "$cpid")"
+  [ -n "$expected_start" ] && [ "$actual_start" = "$expected_start" ] \
+    || { echo "stale-start"; return 0; }
+  owner_token="$(receipt_value "$receipt" owner_token)"
+  [ -n "$owner_token" ] || { echo "invalid-token"; return 0; }
+  command_identity="$(process_command_identity "$cpid")"
+  [[ "$command_identity" == *"$SCRIPT_PATH _registration-loop $slug "* ]] \
+    && [[ "$command_identity" == *" $owner_token "* || "$command_identity" == *" $owner_token" ]] \
+    || { echo "foreign-process"; return 0; }
+  echo "owned"
+}
+conductor_running() { [ "$(process_ownership_status "$1")" = "owned" ]; }
+conductor_pid() { receipt_value "$(pidfile "$1")" pid; }
 current_branch() { git -C "$1" rev-parse --abbrev-ref HEAD 2>/dev/null || true; }
 require_cell() {
   local slug="${1:?require_cell needs a slug}" p b expected
@@ -100,7 +174,11 @@ cmd_ls() {
     behind="$(git -C "$p" rev-list --count HEAD..origin/main 2>/dev/null || echo '?')"
     ab="+${ahead}/-${behind}"
     dirty="$([ -n "$(git -C "$p" status --porcelain 2>/dev/null)" ] && echo yes || echo no)"
-    cond="$(conductor_running "$slug" && echo "PID $(cat "$(pidfile "$slug")")" || echo '—')"
+    case "$(process_ownership_status "$slug")" in
+      owned) cond="PID $(conductor_pid "$slug")" ;;
+      invalid-*|stale-start|foreign-process) cond="REFUSED" ;;
+      *) cond="—" ;;
+    esac
     size="$(du -sh "$p" 2>/dev/null | cut -f1)"
     printf "%-26s %-22s %-12s %-6s %-10s %-7s\n" "$slug" "$b" "$ab" "$dirty" "$cond" "$size"
   done
@@ -110,7 +188,14 @@ cmd_conduct() {
   local slug="${1:-}"; shift || true; [ -n "$slug" ] || die "usage: cell conduct <slug> [--loop] [--workstream <handle>]"
   local p b; p="$(cell_path "$slug")"; b="$(cell_branch "$slug")"
   require_cell "$slug"
-  conductor_running "$slug" && die "conductor for '$slug' already running (PID $(cat "$(pidfile "$slug")"))"
+  local ownership_status
+  ownership_status="$(process_ownership_status "$slug")"
+  case "$ownership_status" in
+    owned) die "conductor for '$slug' already running (PID $(conductor_pid "$slug"))" ;;
+    invalid-*|stale-start|foreign-process)
+      die "refusing to overwrite untrusted registration receipt for '$slug' ($ownership_status)"
+      ;;
+  esac
   local loop=0 workstream=""
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -119,46 +204,160 @@ cmd_conduct() {
       *) die "cell conduct: unknown option '$1' (want: --loop, --workstream <handle>)" ;;
     esac
   done
+  local agent="${LIMEN_AGENT:-}"
+  local surface="cell${workstream:+:$workstream}"
+  local run_id="${LIMEN_RUN_ID:-}"
+  local run_owner_session_id="${LIMEN_CONDUCTOR_SESSION_ID:-${LIMEN_SESSION_ID:-}}"
+  local human_protected="${LIMEN_HUMAN_PROTECTED:-0}"
+  local origin="direct"
+  [ -n "$agent" ] || die "cell conduct requires LIMEN_AGENT; executor identity is never inherited or guessed"
+  [ "$human_protected" = "0" ] || [ "$human_protected" = "1" ] \
+    || die "LIMEN_HUMAN_PROTECTED must be 0 or 1"
+  if [ -n "$run_id" ]; then
+    origin="dispatched"
+    [ -n "$run_owner_session_id" ] \
+      || die "a conducted LIMEN_RUN_ID requires LIMEN_CONDUCTOR_SESSION_ID for cooperative stop"
+  fi
+  if [ -z "${LIMEN_CONDUCT_URL:-}" ] && [ -z "${LIMEN_CONDUCT_STATE:-}" ]; then
+    die "cell conduct requires the canonical broker (set LIMEN_CONDUCT_URL or explicit test LIMEN_CONDUCT_STATE)"
+  fi
   local log="$CELL_LOGS/$slug.conduct.log"
-  local cell_board="$p/tasks.cell.yaml"
-  # Scoped + isolated: own LIMEN_ROOT (the cell), own tasks file, own branch namespace.
-  # Fleet-wide merge/dispatch beats are OFF by default so parallel conductors never race main
-  # or each other; the cell conductor builds/verifies within its own branch.
-  (
-    cd "$p" || exit 1
-    export LIMEN_ROOT="$p"
-    export LIMEN_BRANCH_PREFIX="cell-$slug-"
-    export LIMEN_MERGE_DRAIN=0 LIMEN_JULES_LAND=0   # no fleet-wide GitHub merges from a cell
-    if [ -n "$workstream" ]; then
-      # ONE-WORKER-ONE-WORKSTREAM invariant: feed the conductor ONLY this channel's tasks, so it
-      # structurally cannot mix purposes (the cure for 10-20 mixed PRs per session). Read the full
-      # board ($p/tasks.yaml) and emit the filtered subset to the cell board.
-      export LIMEN_WORKSTREAM="$workstream"
-      if ! LIMEN_TASKS="$p/tasks.yaml" limen channels --scope "$workstream" --emit "$cell_board" >/dev/null 2>&1; then
-        echo "cell: scoped board emit failed for workstream '$workstream'; writing empty board to preserve isolation" >&2
-        write_empty_board "$cell_board"
-      fi
-    else
-      [ -f "$cell_board" ] || cp "$p/tasks.yaml" "$cell_board" 2>/dev/null || write_empty_board "$cell_board"
-    fi
-    export LIMEN_TASKS="$cell_board"
-    if [ "$loop" = "1" ]; then
-      exec bash "$p/scripts/heartbeat-loop.sh"          # continuous (while-true) conductor
-    else
-      bash "$p/scripts/heartbeat.sh" 2>&1 || true       # single one-shot beat (cheap, inspectable)
-    fi
-  ) >"$log" 2>&1 &
+  local canonical_root="$LIMEN_ROOT"
+  local owner_token
+  owner_token="$(
+    printf '%s' "$slug:$$:$RANDOM:$(date +%s)" \
+      | shasum -a 256 \
+      | awk '{print $1}'
+  )"
+  # A cell is an isolated worktree/view. Registration and every lifecycle mutation go through the
+  # same canonical broker; no tasks.cell.yaml projection is emitted or writable by the cell.
+  bash "$SCRIPT_PATH" _registration-loop \
+    "$slug" "$agent" "$surface" "$p" "$canonical_root" "$loop" "$workstream" \
+    "$owner_token" "$run_id" "$run_owner_session_id" "$human_protected" "$origin" \
+    >"$log" 2>&1 &
   local cpid=$!
-  echo "$cpid" > "$(pidfile "$slug")"
+  local receipt_ready=0 _
+  for _ in {1..50}; do
+    if [ "$(receipt_value "$(pidfile "$slug")" owner_token 2>/dev/null || true)" = "$owner_token" ]; then
+      receipt_ready=1
+      break
+    fi
+    kill -0 "$cpid" 2>/dev/null || break
+    sleep 0.02
+  done
+  [ "$receipt_ready" = "1" ] \
+    || die "registration loop for '$slug' did not establish an exact PID identity receipt"
   echo "cell '$slug' conductor started (PID $cpid, $([ "$loop" = 1 ] && echo loop || echo single-beat)$([ -n "$workstream" ] && echo ", workstream=$workstream")) → $log"
 }
 
 cmd_stop() {
-  local slug="${1:?usage: cell stop <slug>}"; local pf; pf="$(pidfile "$slug")"
-  conductor_running "$slug" || { echo "cell '$slug': no conductor running"; rm -f "$pf"; return 0; }
-  local cpid; cpid="$(cat "$pf")"
-  kill "$cpid" 2>/dev/null; sleep 1; kill -9 "$cpid" 2>/dev/null || true
-  rm -f "$pf"; echo "cell '$slug' conductor stopped (was PID $cpid)"
+  local slug="${1:?usage: cell stop <slug>}" receipt ownership_status
+  receipt="$(pidfile "$slug")"
+  [ -f "$receipt" ] || { echo "cell '$slug': no conductor registration receipt"; return 0; }
+  ownership_status="$(process_ownership_status "$slug")"
+  case "$ownership_status" in
+    terminal|dead)
+      echo "cell '$slug': no live conductor registration loop (receipt retained)"
+      return 0
+      ;;
+    owned) ;;
+    *)
+      die "ownership proof failed for '$slug' ($ownership_status); refusing to signal recorded PID"
+      ;;
+  esac
+  [ "$(receipt_value "$receipt" human_protected)" != "1" ] \
+    || die "cell '$slug' is human-protected; autonomous stop may not signal it"
+  local run_id run_owner_session_id cpid
+  run_id="$(receipt_value "$receipt" run_id)"
+  run_owner_session_id="$(receipt_value "$receipt" run_owner_session_id)"
+  cpid="$(receipt_value "$receipt" pid)"
+  if [ -n "$run_id" ]; then
+    [ -n "$run_owner_session_id" ] \
+      || die "cell '$slug' owns run '$run_id' but has no conductor session for cooperative stop"
+    limen conduct request-stop "$run_id" --session-id "$run_owner_session_id" \
+      || die "broker rejected cooperative stop for cell '$slug' run '$run_id'"
+    echo "cell '$slug' cooperative stop requested for run '$run_id'; local registration loop remains owned"
+    return 0
+  fi
+  kill -TERM "$cpid" 2>/dev/null \
+    || die "exact owned registration loop PID $cpid could not receive graceful TERM"
+  local _
+  for _ in {1..20}; do
+    kill -0 "$cpid" 2>/dev/null || break
+    sleep 0.1
+  done
+  if kill -0 "$cpid" 2>/dev/null; then
+    echo "cell '$slug' graceful stop is still pending for exact PID $cpid; no force signal sent" >&2
+    return 2
+  fi
+  echo "cell '$slug' registration loop stopped gracefully (was PID $cpid; receipt retained)"
+}
+
+registration_loop() {
+  local slug="${1:?registration loop needs a slug}"
+  local agent="${2:?registration loop needs an agent}"
+  local surface="${3:?registration loop needs a surface}"
+  local p="${4:?registration loop needs a cell path}"
+  local canonical_root="${5:?registration loop needs the canonical root}"
+  local loop="${6:?registration loop needs a loop flag}"
+  local workstream="${7:-}"
+  local owner_token="${8:?registration loop needs an owner token}"
+  local run_id="${9:-}"
+  local run_owner_session_id="${10:-}"
+  local human_protected="${11:-0}"
+  local origin="${12:-direct}"
+  local session_id="cell-$slug"
+  local cpid="$$"
+  local start_identity registration_status="pending" registration_final_state="exited"
+  start_identity="$(process_start_identity "$cpid")"
+  write_cell_receipt \
+    "$slug" "starting" "$registration_status" "$cpid" "$start_identity" "$owner_token" \
+    "$session_id" "$agent" "$surface" "$p" "$loop" "$workstream" "$run_id" \
+    "$run_owner_session_id" "$human_protected"
+  trap 'registration_final_state="stopped"; exit 0' TERM INT
+  trap 'write_cell_receipt "$slug" "$registration_final_state" "$registration_status" "$cpid" "$start_identity" "$owner_token" "$session_id" "$agent" "$surface" "$p" "$loop" "$workstream" "$run_id" "$run_owner_session_id" "$human_protected"' EXIT
+  cd "$p" || { registration_status="failed"; registration_final_state="failed"; return 1; }
+  export LIMEN_ROOT="$p"
+  export LIMEN_LIVE_ROOT="$canonical_root"
+  export LIMEN_AGENT="$agent"
+  export LIMEN_SESSION_ID="$session_id"
+  export LIMEN_WORKTREE="$p"
+  export LIMEN_BRANCH_PREFIX="cell-$slug-"
+  export LIMEN_MERGE_DRAIN=0 LIMEN_JULES_LAND=0
+  if [ -n "$workstream" ]; then
+    export LIMEN_WORKSTREAM="$workstream"
+  fi
+  local -a register_args=(
+    conduct register
+    --agent "$agent"
+    --surface "$surface"
+    --session-id "$session_id"
+    --origin "$origin"
+    --worktree "$p"
+  )
+  if [ -n "$run_id" ]; then
+    register_args+=(--native-run-id "$run_id")
+  fi
+  if [ "$human_protected" = "1" ]; then
+    register_args+=(--human-protected)
+  fi
+  local _
+  while true; do
+    if ! limen "${register_args[@]}"; then
+      registration_status="failed"
+      registration_final_state="failed"
+      return 1
+    fi
+    registration_status="accepted"
+    write_cell_receipt \
+      "$slug" "registered" "$registration_status" "$cpid" "$start_identity" "$owner_token" \
+      "$session_id" "$agent" "$surface" "$p" "$loop" "$workstream" "$run_id" \
+      "$run_owner_session_id" "$human_protected"
+    [ "$loop" = "1" ] || return 0
+    for _ in {1..30}; do
+      sleep 1
+    done
+  done
 }
 
 cmd_merge() {
@@ -175,7 +374,18 @@ cmd_reap() {
   [ $# -eq 0 ] || die "cell reap: unexpected argument '$1'"
   local p b; p="$(cell_path "$slug")"; b="$(cell_branch "$slug")"
   require_cell "$slug"
-  conductor_running "$slug" && cmd_stop "$slug"
+  local ownership_status
+  ownership_status="$(process_ownership_status "$slug")"
+  case "$ownership_status" in
+    owned)
+      cmd_stop "$slug" || die "cell '$slug' did not reach a graceful stop boundary"
+      conductor_running "$slug" \
+        && die "cell '$slug' still owns a live registration loop; wait for the cooperative run stop receipt"
+      ;;
+    invalid-*|stale-start|foreign-process)
+      die "cell '$slug' has an untrusted registration receipt ($ownership_status); liveness owner must reconcile it"
+      ;;
+  esac
   [ -n "$(git -C "$p" status --porcelain 2>/dev/null)" ] && die "cell '$slug' is DIRTY — commit/push before reclaim"
   local head; head="$(git -C "$p" rev-parse HEAD 2>/dev/null)"
   if [ -n "$head" ] && ! git -C "$p" for-each-ref --format='%(refname)' refs/remotes | while read -r r; do
@@ -195,6 +405,7 @@ cmd_reap_dead() {
 }
 
 case "${1:-help}" in
+  _registration-loop) shift; registration_loop "$@" ;;
   new)        shift; cmd_new "$@" ;;
   cd)         shift; cmd_cd "$@" ;;
   ls|list)    shift; cmd_ls "$@" ;;

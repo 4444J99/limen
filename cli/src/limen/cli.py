@@ -13,9 +13,10 @@ from limen.doctor import (
     readiness_report,
     write_report,
 )
+from limen.conduct.cli import conduct_group
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.harvest import harvest_results
-from limen.io import load_limen_file, load_limen_text
+from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
 from limen.progress import build_progress_snapshot, render_progress
 from limen.status import print_status
 
@@ -57,11 +58,14 @@ def main():
     pass
 
 
+main.add_command(conduct_group)
+
+
 @main.command()
 @click.option("--root", default=None, help="Where to create the portal")
 @click.option("--budget", default=100, type=int, help="Daily run budget")
 def init(root, budget):
-    """Scaffold a new tasks.yaml in LIMEN_ROOT or current directory."""
+    """Report the remote-owner bootstrap required for a new portal."""
     target = Path(root).expanduser().resolve() if root else resolve_root()
     tasks_file = target / "tasks.yaml"
 
@@ -69,27 +73,11 @@ def init(root, budget):
         click.echo(f"tasks.yaml already exists at {tasks_file}")
         return
 
-    target.mkdir(parents=True, exist_ok=True)
-    content = f"""version: "1.0"
-portal:
-  name: "Universal Task Intake"
-  description: "One file to aim every agent you have"
-  budget:
-    daily: {budget}
-    unit: "runs"
-    per_agent: {{}}
-    track:
-      date: ""
-      spent: 0
-      per_agent: {{}}
-tasks: []
-"""
-    tasks_file.write_text(content)
-    click.echo(f"Created {tasks_file} with daily budget of {budget}")
-    ag = target / "AGENTS.md"
-    if not ag.exists():
-        ag.write_text("# Limen Agent Protocol\n\nSee https://github.com/4444J99/limen\n")
-        click.echo(f"Created {ag}")
+    del budget
+    raise click.ClickException(
+        "local tasks.yaml bootstrap is retired: initialize the GitHub-backed "
+        "board through the authenticated conduct owner, then hydrate this cache"
+    )
 
 
 @main.command()
@@ -341,7 +329,6 @@ def channels(scope, emit, prs_mode, json_output):
     channel taxonomy to bucket the open-PR pile, so session/PR sprawl reads on the purpose axis too.
     """
     from limen import workstream as ws
-    from limen.io import save_limen_file
 
     root = resolve_root()
 
@@ -372,7 +359,11 @@ def channels(scope, emit, prs_mode, json_output):
         filtered = ws.filter_board(limen, scope, root)
         out = Path(emit).expanduser()
         out.parent.mkdir(parents=True, exist_ok=True)
-        save_limen_file(out, filtered, allow_shrink=True)  # a single channel is legitimately small
+        save_derived_limen_projection(
+            out,
+            filtered,
+            canonical_path=tasks_path,
+        )  # a single channel is an explicitly noncanonical read-only projection
         click.echo(f"wrote {len(filtered.tasks)} tasks for channel '{ws.canonical_handle(scope, root)}' to {out}")
         return
 
@@ -396,13 +387,19 @@ def harvest(agent):
 @click.option(
     "--autonomous",
     is_flag=True,
-    help="Require a prompt, render the modular live contract, and start Codex with the README index.",
+    help="Require a prompt and pass the modular live contract to the selected native agent.",
 )
 @click.option(
-    "--codex",
-    "launch_codex",
+    "--agent",
+    "agent_name",
+    default=None,
+    metavar="auto|LANE",
+    help="Select and launch a canonical native lane; auto derives an available installed CLI.",
+)
+@click.option(
+    "--conduct",
     is_flag=True,
-    help="Open Codex in the worktree after creating the packet.",
+    help="Register the launched direct session with the conduct broker as human-protected.",
 )
 @click.option(
     "--shell",
@@ -443,7 +440,8 @@ def harvest(agent):
 @click.argument("slug")
 def workstream(
     autonomous,
-    launch_codex,
+    agent_name,
+    conduct,
     launch_shell,
     from_ref,
     prompt_text,
@@ -460,8 +458,10 @@ def workstream(
     args = ["bash", str(script)]
     if autonomous:
         args.append("--autonomous")
-    if launch_codex:
-        args.append("--codex")
+    if agent_name:
+        args.extend(["--agent", agent_name])
+    if conduct:
+        args.append("--conduct")
     if launch_shell:
         args.append("--shell")
     if from_ref:
@@ -477,7 +477,7 @@ def workstream(
     if no_readme:
         args.append("--no-readme")
     args.extend([repo, slug])
-    if launch_codex or launch_shell:
+    if agent_name or launch_shell:
         result = subprocess.run(args)
     else:
         result = subprocess.run(args, text=True, capture_output=True)
