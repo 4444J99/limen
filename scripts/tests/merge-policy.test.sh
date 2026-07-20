@@ -42,6 +42,11 @@ GREEN='[{"name":"python","status":"COMPLETED","conclusion":"SUCCESS"},{"name":"w
 FAILING='[{"name":"python","status":"COMPLETED","conclusion":"FAILURE"}]'
 PENDING='[{"name":"python","status":"IN_PROGRESS","conclusion":null}]'
 NONE='[]'
+# Dedupe fixtures: GitHub attaches every re-run of a check to the same commit, so the rollup can
+# carry a stale run AND a fresh run of the same check name. The predicate must judge by the LATEST
+# run per name (recency by completedAt/startedAt), matching GitHub's own mergeability.
+SUPERSEDED_OK='[{"name":"review","status":"COMPLETED","conclusion":"CANCELLED","startedAt":"2026-07-18T00:00:00Z"},{"name":"review","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T05:00:00Z"},{"name":"python","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"}]'
+DUP_LATEST_FAIL='[{"name":"review","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"},{"name":"review","status":"COMPLETED","conclusion":"FAILURE","startedAt":"2026-07-18T05:00:00Z"},{"name":"python","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"}]'
 DOC_FILES='[{"path":"docs/x.md"}]'
 WEB_FILES='[{"path":"web/api/main.py"}]'
 
@@ -90,6 +95,7 @@ check_output "clean non-deploy + green" 0 "MERGE-MODE: direct"
 mkjson OPEN false CLEAN "$WEB_FILES" "$GREEN"
 check_output "clean website-sensitive + green" 0 "MERGE-MODE: direct"
 mkjson OPEN false HAS_HOOKS "$DOC_FILES" "$GREEN"; check "has_hooks non-deploy + green" 0
+mkjson OPEN false CLEAN "$DOC_FILES" "$SUPERSEDED_OK"; check "superseded CANCELLED, latest SUCCESS" 0
 
 # BLOCKED (exit 3) — GitHub itself refuses the merge
 mkjson OPEN false DIRTY   "$DOC_FILES" "$GREEN"; check "DIRTY (conflicts)"              3
@@ -103,6 +109,7 @@ mkjson OPEN false UNKNOWN  "$DOC_FILES" "$GREEN";   check "UNKNOWN (still comput
 mkjson OPEN false BLOCKED  "$WEB_FILES" "$PENDING"; check "BLOCKED + pending (wait)"    2
 mkjson OPEN true  CLEAN    "$DOC_FILES" "$GREEN";   check "DRAFT"                        2
 mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"; check "failing check"               2
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$DUP_LATEST_FAIL"; check "dup check, latest FAILURE (not masked)" 2
 mkjson OPEN false UNSTABLE "$WEB_FILES" "$PENDING"; check "website-sensitive + pending" 2
 mkjson OPEN false CLEAN    "$WEB_FILES" "$NONE";    check "website-sensitive + 0 checks" 2
 mkjson OPEN false UNSTABLE "$DOC_FILES" "$PENDING"; check "non-deploy + pending"        2

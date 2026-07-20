@@ -124,14 +124,23 @@ sensitive=0
 [ "$STALE" = 1 ] && sensitive=1   # fail-safe: uncertain classification ⇒ treat as a live deploy
 
 # CI rollup: count failing / pending across CheckRuns (conclusion/status) and StatusContexts (state).
-failing=$(jq '[.statusCheckRollup[]? | (.conclusion // .state // "" | ascii_upcase)
+# Dedupe to the LATEST run per check name first. GitHub attaches every re-run of a check (a
+# concurrency-cancel, a flaky-test retry, a manual re-run) to the same commit, so the rollup can
+# carry both a stale CANCELLED/FAILURE run and a fresh SUCCESS run of the same check name. GitHub's
+# own mergeability uses latest-run-per-check; without this dedupe merge-policy is stricter in the
+# WRONG direction — a superseded failure counts forever and false-HOLDs a genuinely green PR (the
+# claude-review self-cancel jam, #1218 era: review=[CANCELLED@t0, SUCCESS@t1] read as 1 failing).
+# Key on .name (CheckRun) or .context (StatusContext); recency by .completedAt then .startedAt.
+LATEST='[.statusCheckRollup[]? | . + {_k:(.name // .context // ""), _t:(.completedAt // .startedAt // "")}]
+        | group_by(._k) | map(max_by(._t))'
+failing=$(jq "$LATEST"' | [.[] | (.conclusion // .state // "" | ascii_upcase)
              | select(.=="FAILURE" or . =="CANCELLED" or . =="TIMED_OUT" or . =="ERROR"
                       or . =="ACTION_REQUIRED" or . =="STARTUP_FAILURE")] | length' "$j")
-pending=$(jq '[.statusCheckRollup[]?
+pending=$(jq "$LATEST"' | [.[]
              | ((.status // "" | ascii_upcase) as $s | (.state // "" | ascii_upcase) as $st
                 | select($s=="QUEUED" or $s=="IN_PROGRESS" or $s=="PENDING" or $st=="PENDING" or $st=="EXPECTED"))]
              | length' "$j")
-total_checks=$(jq '[.statusCheckRollup[]?] | length' "$j")
+total_checks=$(jq "$LATEST"' | length' "$j")
 
 echo "PR #$PR — $title"
 echo "  $url"
