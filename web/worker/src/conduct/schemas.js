@@ -3,6 +3,7 @@ import addFormats from "ajv-formats";
 import { canonicalize } from "json-canonicalize";
 
 import conductorSessionSchema from "../../../../spec/contracts/conduct/conductor-session-v1.schema.json" with { type: "json" };
+import executorAttemptSchema from "../../../../spec/contracts/conduct/executor-attempt-v1.schema.json" with { type: "json" };
 import leaseSchema from "../../../../spec/contracts/conduct/lease-v1.schema.json" with { type: "json" };
 import runReceiptSchema from "../../../../spec/contracts/conduct/run-receipt-v1.schema.json" with { type: "json" };
 import workPacketSchema from "../../../../spec/contracts/conduct/work-packet-v1.schema.json" with { type: "json" };
@@ -21,6 +22,7 @@ addFormats(ajv);
 
 const validators = {
   session: ajv.compile(conductorSessionSchema),
+  attempt: ajv.compile(executorAttemptSchema),
   lease: ajv.compile(leaseSchema),
   receipt: ajv.compile(runReceiptSchema),
   packet: ajv.compile(workPacketSchema),
@@ -254,4 +256,42 @@ export function validateLease(payload) {
   assertDate(lease.heartbeat_at, "heartbeat_at");
   assertDate(lease.hard_deadline, "hard_deadline");
   return lease;
+}
+
+export function validateExecutorAttempt(payload, now = new Date()) {
+  const source = clone(payload);
+  const timestamp = now.toISOString();
+  const candidate = {
+    schema_version: "limen.executor_attempt.v1",
+    provider_run_id: null,
+    provider_run_url: null,
+    failure_class: null,
+    submitted_at: timestamp,
+    updated_at: timestamp,
+    detail: "",
+    ...source,
+  };
+  if (candidate.executor) candidate.executor = identityDefaults(candidate.executor);
+  const attempt = validateSchema("attempt", candidate);
+  for (const field of ["attempt_id", "run_id", "lease_id", "adapter"]) {
+    assertIdentifier(attempt[field], field);
+  }
+  if (!Number.isSafeInteger(attempt.lease_generation) || attempt.lease_generation < 1) {
+    fail("lease_generation must be a positive integer");
+  }
+  attempt.executor = identityDefaults(attempt.executor);
+  assertIdentity(attempt.executor, "executor");
+  if (attempt.provider_run_id !== null) assertIdentifier(attempt.provider_run_id, "provider_run_id");
+  if (!["launching", "submitted", "running", "succeeded", "failed", "blocked"].includes(attempt.status)) {
+    fail("executor attempt status is unsupported");
+  }
+  for (const field of ["provider_run_url", "detail"]) {
+    if (attempt[field] !== null
+        && (typeof attempt[field] !== "string" || attempt[field].length > 4096 || attempt[field].includes("\0"))) {
+      fail(`${field} must be bounded and contain no NUL`);
+    }
+  }
+  assertDate(attempt.submitted_at, "submitted_at");
+  assertDate(attempt.updated_at, "updated_at");
+  return attempt;
 }

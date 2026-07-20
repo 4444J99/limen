@@ -1,0 +1,318 @@
+{
+  "$defs": {
+    "AgentIdentityV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "title": "Agent",
+          "type": "string"
+        },
+        "native_run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Run Id"
+        },
+        "provider_identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Identity"
+        },
+        "schema_version": {
+          "const": "limen.agent_identity.v1",
+          "default": "limen.agent_identity.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "surface": {
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "surface",
+        "session_id"
+      ],
+      "title": "AgentIdentityV1",
+      "type": "object"
+    },
+    "FanoutLeafV1": {
+      "additionalProperties": false,
+      "description": "One independently receiptable leaf with no provider/model coupling.",
+      "properties": {
+        "allowed_paths": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Paths",
+          "type": "array"
+        },
+        "deadline": {
+          "format": "date-time",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "dependencies": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "effect": {
+          "default": "write",
+          "enum": [
+            "read",
+            "write"
+          ],
+          "title": "Effect",
+          "type": "string"
+        },
+        "exact_base": {
+          "title": "Exact Base",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "intended_effect": {
+          "title": "Intended Effect",
+          "type": "string"
+        },
+        "owner_repository": {
+          "title": "Owner Repository",
+          "type": "string"
+        },
+        "plan_hash": {
+          "title": "Plan Hash",
+          "type": "string"
+        },
+        "predicate": {
+          "title": "Predicate",
+          "type": "string"
+        },
+        "prompt_hash": {
+          "title": "Prompt Hash",
+          "type": "string"
+        },
+        "receipt_target": {
+          "title": "Receipt Target",
+          "type": "string"
+        },
+        "required_capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Capabilities",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "resource_claims": {
+          "items": {
+            "$ref": "#/$defs/ResourceClaimV1"
+          },
+          "title": "Resource Claims",
+          "type": "array"
+        },
+        "retry": {
+          "$ref": "#/$defs/RetryPolicyV1"
+        },
+        "schema_version": {
+          "const": "limen.fanout_leaf.v1",
+          "default": "limen.fanout_leaf.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "spend": {
+          "$ref": "#/$defs/SpendEnvelopeV1"
+        },
+        "topic_branch": {
+          "title": "Topic Branch",
+          "type": "string"
+        },
+        "work_id": {
+          "title": "Work Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "work_id",
+        "idempotency_key",
+        "owner_repository",
+        "exact_base",
+        "topic_branch",
+        "allowed_paths",
+        "resource_claims",
+        "intended_effect",
+        "predicate",
+        "receipt_target",
+        "deadline",
+        "prompt_hash",
+        "plan_hash"
+      ],
+      "title": "FanoutLeafV1",
+      "type": "object"
+    },
+    "ResourceClaimV1": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "mode": {
+          "default": "exclusive",
+          "enum": [
+            "shared",
+            "exclusive"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.resource_claim.v1",
+          "default": "limen.resource_claim.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "title": "ResourceClaimV1",
+      "type": "object"
+    },
+    "RetryPolicyV1": {
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "default": 1,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "limen.retry_policy.v1",
+          "default": "limen.retry_policy.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "transient_only": {
+          "default": true,
+          "title": "Transient Only",
+          "type": "boolean"
+        }
+      },
+      "title": "RetryPolicyV1",
+      "type": "object"
+    },
+    "SpendEnvelopeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "reserve": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Reserve",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "limen.spend_envelope.v1",
+          "default": "limen.spend_envelope.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "unit": {
+          "default": "runs",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "SpendEnvelopeV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Canonical direct-session graph; it never contains task-board state.",
+  "properties": {
+    "conductor": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "deadline": {
+      "format": "date-time",
+      "title": "Deadline",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "initiator": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "leaves": {
+      "items": {
+        "$ref": "#/$defs/FanoutLeafV1"
+      },
+      "title": "Leaves",
+      "type": "array"
+    },
+    "predicate": {
+      "title": "Predicate",
+      "type": "string"
+    },
+    "receipt_target": {
+      "title": "Receipt Target",
+      "type": "string"
+    },
+    "root_work_id": {
+      "title": "Root Work Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.fanout_manifest.v1",
+      "default": "limen.fanout_manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "root_work_id",
+    "idempotency_key",
+    "initiator",
+    "conductor",
+    "predicate",
+    "receipt_target",
+    "deadline",
+    "leaves"
+  ],
+  "title": "FanoutManifestV1",
+  "type": "object"
+}

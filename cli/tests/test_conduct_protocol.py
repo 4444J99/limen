@@ -14,6 +14,7 @@ from limen.conduct import (
     ConductBroker,
     ConductConflict,
     ConductPrincipalV1,
+    ExecutorAttemptV1,
     FanoutBoundsV1,
     MemoryStateStore,
     ResourceClaimV1,
@@ -145,6 +146,16 @@ def test_rfc8785_hash_fixture_matches_worker_runtime() -> None:
         assert canonical_hash(vector["value"]) == vector["sha256"]
 
 
+def test_executor_attempt_schema_matches_python_runtime() -> None:
+    schema_path = (
+        Path(__file__).resolve().parents[2] / "spec" / "contracts" / "conduct" / "executor-attempt-v1.schema.json"
+    )
+    assert json.loads(schema_path.read_text(encoding="utf-8")) == {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        **ExecutorAttemptV1.model_json_schema(mode="validation"),
+    }
+
+
 def test_path_prefix_overlap_and_review_writer_coexistence() -> None:
     assert resources_overlap(
         ResourceClaimV1(key="path/organvm/limen/main/cli"),
@@ -273,6 +284,276 @@ def test_principals_bind_sessions_and_executor_claims_without_leaking_tokens() -
             principal=attacker_conductor,
             now=NOW,
         )
+
+
+def test_executor_attempts_are_capability_bound_idempotent_and_publicly_token_free() -> None:
+    codex = session("codex")
+    broker = broker_with(codex)
+    reserved = broker.submit(
+        packet(work_id="attempt-bound", conductor=codex.identity),
+        now=NOW,
+    )
+    lease = reserved["lease"]
+    token = capability(broker, reserved)
+    launching = ExecutorAttemptV1(
+        attempt_id="attempt-bound-1",
+        run_id=reserved["run_id"],
+        lease_id=lease["lease_id"],
+        lease_generation=lease["generation"],
+        executor=codex.identity,
+        adapter="fixture-remote",
+        status="launching",
+        submitted_at=NOW,
+        updated_at=NOW,
+    )
+    created = broker.heartbeat(
+        lease["lease_id"],
+        token,
+        generation=lease["generation"],
+        observed_heads={"pr": "abc123"},
+        attempt=launching,
+        now=NOW,
+    )
+    assert created["attempt_created"] is True
+    submitted = launching.model_copy(
+        update={
+            "provider_run_id": "provider-run-1",
+            "provider_run_url": "https://executor.example/runs/1",
+            "status": "submitted",
+        }
+    )
+    updated = broker.heartbeat(
+        lease["lease_id"],
+        token,
+        generation=lease["generation"],
+        observed_heads={"pr": "abc123"},
+        attempt=submitted,
+        now=NOW,
+    )
+    assert updated["attempt_created"] is False
+    graph = broker.graph(reserved["run_id"])
+    assert graph["nodes"][0]["attempts"] == [submitted.model_dump(mode="json")]
+    assert "capability_token_hash" not in graph["nodes"][0]["lease"]
+    with pytest.raises(ConductConflict, match="provider receipt identity changed"):
+        broker.heartbeat(
+            lease["lease_id"],
+            token,
+            generation=lease["generation"],
+            observed_heads={"pr": "abc123"},
+            attempt=submitted.model_copy(update={"provider_run_id": "provider-run-2"}),
+            now=NOW,
+        )
+
+
+def test_attempt_limit_is_keeper_enforced() -> None:
+    codex = session("codex")
+    broker = broker_with(codex)
+    reserved = broker.submit(packet(work_id="attempt-limit", conductor=codex.identity), now=NOW)
+    lease = reserved["lease"]
+    token = capability(broker, reserved)
+    for number in (1, 2):
+        attempt = ExecutorAttemptV1(
+            attempt_id=f"attempt-limit-{number}",
+            run_id=reserved["run_id"],
+            lease_id=lease["lease_id"],
+            lease_generation=lease["generation"],
+            executor=codex.identity,
+            adapter=f"fixture-{number}",
+            status="failed",
+            submitted_at=NOW,
+            updated_at=NOW,
+        )
+        broker.heartbeat(
+            lease["lease_id"],
+            token,
+            generation=lease["generation"],
+            observed_heads={"pr": "abc123"},
+            attempt=attempt,
+            now=NOW,
+        )
+    third = ExecutorAttemptV1(
+        attempt_id="attempt-limit-3",
+        run_id=reserved["run_id"],
+        lease_id=lease["lease_id"],
+        lease_generation=lease["generation"],
+        executor=codex.identity,
+        adapter="fixture-3",
+        status="failed",
+        submitted_at=NOW,
+        updated_at=NOW,
+    )
+    with pytest.raises(ConductConflict, match="attempt limit"):
+        broker.heartbeat(
+            lease["lease_id"],
+            token,
+            generation=lease["generation"],
+            observed_heads={"pr": "abc123"},
+            attempt=third,
+            now=NOW,
+        )
+
+
+def test_transient_attempt_reroutes_to_another_executor_principal() -> None:
+    broker = ConductBroker(
+        MemoryStateStore(),
+        capability_secret="reroute-principal-capability-secret",
+    )
+    conductor_principal = principal("reroute-conductor", "codex", "observer", "conductor")
+    first_principal = principal("reroute-first", "claude", "observer", "executor")
+    second_principal = principal("reroute-second", "jules", "observer", "executor")
+    conductor = ConductorSessionV1.model_validate(
+        broker.register(
+            session(
+                "spoofed",
+                session_id="reroute-conductor-session",
+                capabilities=frozenset({"conduct"}),
+            ),
+            principal=conductor_principal,
+            now=NOW,
+        )
+    )
+    broker.register(
+        session("spoofed", session_id="reroute-first-session", capabilities=frozenset({"code"})),
+        principal=first_principal,
+        now=NOW,
+    )
+    broker.register(
+        session("spoofed", session_id="reroute-second-session", capabilities=frozenset({"code"})),
+        principal=second_principal,
+        now=NOW,
+    )
+    reserved = broker.submit(
+        packet(
+            work_id="attempt-reroute",
+            conductor=conductor.identity,
+            preferred_agent="claude",
+        ),
+        principal=conductor_principal,
+        now=NOW,
+    )
+    old_lease = reserved["lease"]
+    old_claim = broker.claim(
+        old_lease["lease_id"],
+        old_lease["generation"],
+        principal=first_principal,
+        now=NOW,
+    )
+    failed = ExecutorAttemptV1(
+        attempt_id="attempt-reroute-1",
+        run_id=reserved["run_id"],
+        lease_id=old_lease["lease_id"],
+        lease_generation=old_lease["generation"],
+        executor=AgentIdentityV1.model_validate(old_lease["executor"]),
+        adapter="fixture-first",
+        status="failed",
+        failure_class="transient",
+        submitted_at=NOW,
+        updated_at=NOW,
+    )
+    rerouted = broker.heartbeat(
+        old_lease["lease_id"],
+        old_claim["capability_token"],
+        generation=old_lease["generation"],
+        principal=first_principal,
+        observed_heads={"pr": "abc123"},
+        attempt=failed,
+        now=NOW,
+    )
+    assert rerouted["status"] == "rerouted"
+    assert rerouted["lease"]["generation"] > old_lease["generation"]
+    assert rerouted["lease"]["executor"]["agent"] == "jules"
+    with pytest.raises(ConductConflict, match="another executor principal"):
+        broker.claim(
+            rerouted["lease"]["lease_id"],
+            rerouted["lease"]["generation"],
+            principal=first_principal,
+            now=NOW,
+        )
+    broker.claim(
+        rerouted["lease"]["lease_id"],
+        rerouted["lease"]["generation"],
+        principal=second_principal,
+        now=NOW,
+    )
+    graph = broker.graph(reserved["run_id"])
+    assert graph["nodes"][0]["attempts"] == [failed.model_dump(mode="json")]
+    assert "capability_token_hash" not in graph["nodes"][0]["lease"]
+
+
+def test_spend_limit_and_permanent_failure_stop_retry() -> None:
+    codex = session("codex")
+    broker = broker_with(codex)
+    bounded = packet(work_id="attempt-spend", conductor=codex.identity).model_copy(
+        update={
+            "spend": SpendEnvelopeV1(limit=1),
+            "retry": RetryPolicyV1(max_attempts=2, transient_only=True),
+        }
+    )
+    reserved = broker.submit(bounded, now=NOW)
+    lease = reserved["lease"]
+    token = capability(broker, reserved)
+    failed = ExecutorAttemptV1(
+        attempt_id="attempt-spend-1",
+        run_id=reserved["run_id"],
+        lease_id=lease["lease_id"],
+        lease_generation=lease["generation"],
+        executor=codex.identity,
+        adapter="fixture",
+        status="failed",
+        failure_class="permanent",
+        submitted_at=NOW,
+        updated_at=NOW,
+    )
+    heartbeat = broker.heartbeat(
+        lease["lease_id"],
+        token,
+        generation=lease["generation"],
+        observed_heads={"pr": "abc123"},
+        attempt=failed,
+        now=NOW,
+    )
+    assert heartbeat["status"] == "active"
+    with pytest.raises(ConductConflict, match="spend limit"):
+        broker.heartbeat(
+            lease["lease_id"],
+            token,
+            generation=lease["generation"],
+            observed_heads={"pr": "abc123"},
+            attempt=failed.model_copy(update={"attempt_id": "attempt-spend-2"}),
+            now=NOW,
+        )
+
+
+def test_read_receipt_cannot_change_paths_or_heads() -> None:
+    codex = session("codex")
+    broker = broker_with(codex)
+    reserved = broker.submit(
+        packet(work_id="read-no-mutation", conductor=codex.identity, effect="read"),
+        now=NOW,
+    )
+    lease = reserved["lease"]
+    token = capability(broker, reserved)
+    receipt = RunReceiptV1(
+        receipt_id="receipt-read-mutated",
+        run_id=reserved["run_id"],
+        lease_id=lease["lease_id"],
+        lease_generation=lease["generation"],
+        executor=codex.identity,
+        observed_heads_before={"pr": "abc123"},
+        observed_heads_after={"pr": "different"},
+        changed_paths=("cli/changed.py",),
+        predicate=PredicateEvidenceV1(command="pytest -q", exit_code=0),
+        spend={"runs": 1},
+        outcome="succeeded",
+    )
+    result = broker.report(
+        lease["lease_id"],
+        token,
+        receipt,
+        generation=lease["generation"],
+        now=NOW,
+    )
+    assert result["mutation_authorized"] is False
 
 
 def test_graph_submission_is_atomic_and_idempotent() -> None:

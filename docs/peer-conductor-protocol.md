@@ -46,6 +46,12 @@ configured.
   generations, observed Git heads, a hashed capability token, heartbeat, and hard deadline.
 - `RunReceiptV1` records exact executor/provider identity, old/new heads, changed paths, checks,
   reviews, predicate evidence, spend, children, and terminal outcome.
+- `ExecutorAttemptV1` records one provider launch identity and monotonic lifecycle in keeper state.
+  It is bound to the exact run, lease generation, and authenticated executor. Provider run IDs and
+  URLs are durable and readable; lease capability tokens and their hashes are never returned.
+  The keeper rejects attempts beyond the packet limit and refuses a new attempt while an earlier one
+  remains live. A read-effect receipt is authorized only when its changed-path set is empty and its
+  before/after head maps are identical.
 
 Delegation is a bounded DAG. A child reserves through the broker before it consumes separate
 capacity or mutates state. Its authority, repository/path scope, deadline, spend, retry, depth, and
@@ -92,12 +98,13 @@ generation, and executor principal, so a lost response is recoverable while cros
 stale-generation replays fail closed. Graph submission is one serialized all-or-nothing keeper
 transition and excludes task-board packets, keeping direct fanout board-independent.
 
-Production remains disabled until this code is merged, the fresh Worker is deployed with its
-credential-wall secrets, and the native-lane canary passes.
+Production fanout is admitted only through a freshly deployed Worker with credential-wall secrets
+and a native-lane canary receipt for that exact merged runtime.
 
 Required production configuration is credential-wall owned:
 
-- one client-side `LIMEN_CONDUCT_TOKEN` per native lane;
+- one conductor-only client-side `LIMEN_CONDUCT_TOKEN` per native lane;
+- a distinct executor-only token per remote executor service;
 - secret Worker `LIMEN_CONDUCT_PRINCIPAL_REGISTRY` binding bearers to principal metadata and roles;
 - secret Worker `LIMEN_CONDUCT_CAPABILITY_SECRET`;
 - `LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_BRANCH`, and `LIMEN_GITHUB_PATH`;

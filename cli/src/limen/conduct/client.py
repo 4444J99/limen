@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from limen.conduct.broker import ConductBroker, ConductError
-from limen.conduct.models import ConductorSessionV1, RunReceiptV1, WorkPacketV1
+from limen.conduct.models import ConductorSessionV1, ExecutorAttemptV1, RunReceiptV1, WorkPacketV1
 from limen.conduct.store import SQLiteStateStore
 
 
@@ -96,6 +96,7 @@ class HttpConductClient:
         *,
         generation: int,
         observed_heads: dict[str, str] | None = None,
+        attempt: ExecutorAttemptV1 | None = None,
     ) -> dict[str, Any]:
         lease = urllib.parse.quote(lease_id, safe="")
         return self._request(
@@ -105,6 +106,7 @@ class HttpConductClient:
                 "capability_token": capability_token,
                 "generation": generation,
                 "observed_heads": observed_heads or {},
+                **({"attempt": attempt.model_dump(mode="json")} if attempt is not None else {}),
             },
         )
 
@@ -200,12 +202,14 @@ class LocalConductClient:
         *,
         generation: int,
         observed_heads: dict[str, str] | None = None,
+        attempt: ExecutorAttemptV1 | None = None,
     ) -> dict[str, Any]:
         return self.broker.heartbeat(
             lease_id,
             capability_token,
             generation=generation,
             observed_heads=observed_heads,
+            attempt=attempt,
         )
 
     def report(

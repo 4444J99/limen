@@ -16,6 +16,7 @@ from limen.doctor import (
 )
 from limen.conduct.cli import conduct_group
 from limen.dispatch import dispatch_tasks, release_stale_tasks
+from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
@@ -61,6 +62,7 @@ def main():
 
 
 main.add_command(conduct_group)
+main.add_command(fanout_group)
 
 
 def _host_owner() -> tuple[str, int]:

@@ -67,6 +67,7 @@ Mounts `./tasks.yaml` into the API container.
 |---------|-------|-------------|
 | `limen init` | `--root`, `--budget` | Retired local bootstrap; fails closed with the authenticated remote-owner hydration instruction. |
 | `limen conduct` | `capabilities`, `register`, `submit`, `split`, `graph`, `heartbeat`, `report`, `harvest`, `adopt`, `cancel`, `request-stop` | Use the symmetric authenticated conduct protocol. |
+| `limen fanout` | `plan`, `start`, `status`, `harvest` | Plan and run board-independent, remote-first work graphs through the authenticated keeper. |
 | `limen dispatch` | `--agent`, `--budget`, `--dry-run/--live`, `--task`, `--limit` | Inspect the local cache and submit eligible lifecycle work to the conduct keeper. |
 | `limen release-stale` | `--hours` (default 24), `--agent`, `--dry-run/--apply`, `--json-output`, `--report-file` | Reopen dispatched/in-progress tasks whose latest event is stale. |
 | `limen doctor` | `--agent` (default jules), `--json-output`, `--report-file` | Report local readiness for dispatch and stale-claim recovery. |

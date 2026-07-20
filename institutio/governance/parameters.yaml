@@ -1134,6 +1134,42 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Credential-wall-owned bearer for exactly one authenticated conduct principal. The Worker derives principal, native lane, surface, and roles from LIMEN_CONDUCT_PRINCIPAL_REGISTRY; this client-side value is consumed by the adapter and removed before launching a model process."
+  LIMEN_CONDUCT_EXECUTOR_TOKEN:
+    default: ""
+    env: LIMEN_CONDUCT_EXECUTOR_TOKEN
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Credential-wall bearer for a dynamically discovered executor plugin that explicitly declares this environment reference. It must bind an executor-only principal and is never reused as the conductor token or by another adapter."
+  LIMEN_CONDUCT_TOKEN_JULES:
+    default: ""
+    env: LIMEN_CONDUCT_TOKEN_JULES
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Executor-only conduct bearer for the authenticated Jules service pump. The value remains private and is passed only to the detached executor process."
+  LIMEN_CONDUCT_TOKEN_CODEX_CLOUD:
+    default: ""
+    env: LIMEN_CONDUCT_TOKEN_CODEX_CLOUD
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Executor-only conduct bearer for the Codex Cloud service pump. It is eligible only when live environment discovery proves repository support."
+  LIMEN_CODEX_BIN:
+    default: "codex"
+    env: LIMEN_CODEX_BIN
+    self_update: none
+    owner: dispatch
+    note: "Executable reference used only for live Codex Cloud capability discovery and receipt retrieval."
+  LIMEN_CODEX_CLOUD_ENVIRONMENTS:
+    default: "{}"
+    env: LIMEN_CODEX_CLOUD_ENVIRONMENTS
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Private repository-to-current-environment-ID map used to prove Codex Cloud eligibility at runtime. An absent mapping excludes the adapter; it never selects a model or tier."
+  LIMEN_FANOUT_WORKER_DEADLINE:
+    default: ""
+    env: LIMEN_FANOUT_WORKER_DEADLINE
+    self_update: runtime
+    owner: dispatch
+    note: "Server-derived finite campaign deadline passed only to a detached executor service. It is not operator configuration and cannot extend the packet deadline."
   LIMEN_CONDUCT_PRINCIPAL_REGISTRY:
     default: ""
     env: LIMEN_CONDUCT_PRINCIPAL_REGISTRY

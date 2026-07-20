@@ -57,7 +57,7 @@ function coveredAtoms(child, parent) {
 }
 
 function coveredPaths(child, parent) {
-  if (parent.includes("*")) return true;
+  if (parent.includes("*") || parent.includes(".")) return true;
   return child.every((path) => parent.some((base) =>
     path === base || path.startsWith(`${base.replace(/\/+$/, "")}/`)));
 }
@@ -160,6 +160,7 @@ export class ConductKernel {
         payload.generation,
         payload.principal,
         payload.observed_heads,
+        payload.attempt,
       );
       case "report": return this.report(
         payload.lease_id,
@@ -325,7 +326,7 @@ export class ConductKernel {
     if (asDate(packet.deadline) <= this.now) {
       throw new ConductError("work packet deadline has already passed", 422);
     }
-    this.expireLeases();
+    await this.expireLeases();
     const conductor = this.state.sessions[packet.conductor.session_id];
     if (!conductor) {
       throw new ConductError("packet conductor must be a registered session");
@@ -343,11 +344,19 @@ export class ConductKernel {
     if (!conductor.capabilities.includes(neededCapability)) {
       throw new ConductError(`packet conductor lacks required ${neededCapability} capability`);
     }
-    const parent = this.validateLineage(packet, enforced ? principal.principal_id : null);
     const byId = this.state.work_index[packet.work_id];
     const byKey = this.state.work_key_index[packet.work_key];
     if (byId && byKey && byId !== byKey) {
       throw new ConductError("work id/key indexes disagree");
+    }
+    if (packet.parent_run_id && byKey) {
+      let cursor = this.state.runs[packet.parent_run_id];
+      while (cursor) {
+        if (packet.work_key === cursor.packet.work_key) {
+          throw new ConductError("repeated ancestry work_key/cycle rejected");
+        }
+        cursor = cursor.parent_run_id ? this.state.runs[cursor.parent_run_id] : null;
+      }
     }
     const duplicateRunId = byId || byKey;
     if (duplicateRunId) {
@@ -375,6 +384,7 @@ export class ConductKernel {
       }
       return this.submitResult(run, true);
     }
+    const parent = this.validateLineage(packet, enforced ? principal.principal_id : null);
     const executor = this.selectExecutor(packet);
     const claims = this.effectiveClaims(packet);
     const conflicts = [];
@@ -465,6 +475,7 @@ export class ConductKernel {
       status: "reserved",
       children: [],
       receipts: [],
+      attempts: [],
       projection_receipts: [],
       compatibility_projection: isTaskCompatibilityPacket(packet),
       created_at: this.timestamp,
@@ -528,8 +539,11 @@ export class ConductKernel {
     const originalMutated = this.mutated;
     const results = [];
     try {
-      for (const packet of packets) {
-        const result = await this.submit(packet, principal);
+      for (const [index, packet] of packets.entries()) {
+        const dependencies = packet.execution?.dependencies || [];
+        const result = dependencies.length
+          ? await this.deferDependencyPacket(packet, principal)
+          : await this.submit(packet, principal);
         if (result.status === "busy") {
           this.state = originalState;
           this.projectionEvents = originalEvents;
@@ -542,6 +556,16 @@ export class ConductKernel {
           };
         }
         results.push(result);
+        if (index === 0 && packet.intent?.kind === "fanout-root" && result.status !== "duplicate") {
+          const run = this.state.runs[result.run_id];
+          const lease = this.state.leases[run.lease_id];
+          lease.state = "released";
+          lease.heartbeat_at = this.timestamp;
+          run.status = "running";
+          run.executor_session_id = null;
+          run.updated_at = this.timestamp;
+          this.recordEvent("fanout.campaign_started", { run_id: run.run_id });
+        }
       }
     } catch (error) {
       this.state = originalState;
@@ -554,6 +578,95 @@ export class ConductKernel {
       status: "reserved",
       root_run_id: results[0].root_run_id,
       runs: results,
+    };
+  }
+
+  async deferDependencyPacket(packet, principal) {
+    if (asDate(packet.deadline) <= this.now) {
+      throw new ConductError("work packet deadline has already passed", 422);
+    }
+    const dependencies = packet.execution?.dependencies || [];
+    if (!dependencies.length) throw new ConductError("dependency deferral requires dependencies", 422);
+    const conductor = this.state.sessions[packet.conductor.session_id];
+    if (!conductor || !identitiesEqual(conductor.identity, packet.conductor)) {
+      throw new ConductError("packet conductor must be its registered session");
+    }
+    if (this.state.session_principals[conductor.session_id] !== principal.principal_id) {
+      throw new ConductError("packet conductor is not bound to the authenticated principal", 403);
+    }
+    const duplicateRunId = this.state.work_index[packet.work_id]
+      || this.state.work_key_index[packet.work_key];
+    if (duplicateRunId) {
+      const duplicate = this.state.runs[duplicateRunId];
+      if (duplicate.packet.intent_hash !== packet.intent_hash
+          || duplicate.packet.execution_hash !== packet.execution_hash
+          || duplicate.packet.work_key !== packet.work_key) {
+        throw new ConductError("work id/key was reused with different immutable hashes");
+      }
+      return {
+        schema_version: "limen.conduct_submit_result.v1",
+        status: "duplicate",
+        duplicate: true,
+        work_id: packet.work_id,
+        run_id: duplicate.run_id,
+        root_run_id: duplicate.root_run_id,
+        executor_session_id: duplicate.executor_session_id,
+        lease: null,
+      };
+    }
+    const parent = this.validateLineage(packet, principal.principal_id);
+    const dependencyRunIds = dependencies.map((workId) => {
+      const runId = this.state.work_index[workId];
+      if (!runId) throw new ConductError(`fanout dependency is not registered: ${workId}`);
+      if (this.state.runs[runId].root_run_id !== parent.root_run_id) {
+        throw new ConductError("fanout dependency belongs to another graph");
+      }
+      return runId;
+    });
+    const digest = await canonicalHash({
+      work_id: packet.work_id,
+      intent_hash: packet.intent_hash,
+      execution_hash: packet.execution_hash,
+    });
+    const runId = `run-${digest.slice(0, 32)}`;
+    const run = {
+      run_id: runId,
+      root_run_id: parent.root_run_id,
+      parent_run_id: packet.parent_run_id,
+      packet: clone(packet),
+      conductor_session_id: packet.conductor.session_id,
+      conductor_principal_id: principal.principal_id,
+      executor_session_id: null,
+      lease_id: null,
+      status: "waiting",
+      children: [],
+      receipts: [],
+      attempts: [],
+      projection_receipts: [],
+      compatibility_projection: false,
+      dependency_run_ids: dependencyRunIds,
+      created_at: this.timestamp,
+      updated_at: this.timestamp,
+    };
+    this.state.runs[runId] = run;
+    this.state.work_index[packet.work_id] = runId;
+    this.state.work_key_index[packet.work_key] = runId;
+    parent.children.push(runId);
+    parent.updated_at = this.timestamp;
+    this.recordEvent("fanout.run_waiting", {
+      run_id: runId,
+      root_run_id: parent.root_run_id,
+      dependencies: dependencyRunIds,
+    });
+    return {
+      schema_version: "limen.conduct_submit_result.v1",
+      status: "waiting",
+      duplicate: false,
+      work_id: packet.work_id,
+      run_id: runId,
+      root_run_id: parent.root_run_id,
+      executor_session_id: null,
+      lease: null,
     };
   }
 
@@ -570,7 +683,13 @@ export class ConductKernel {
     const rootRunId = selected.root_run_id;
     const nodes = Object.values(this.state.runs)
       .filter((run) => run.root_run_id === rootRunId)
-      .map(clone)
+      .map((run) => {
+        const node = clone(run);
+        if (run.lease_id && this.state.leases[run.lease_id]) {
+          node.lease = this.publicLease(this.state.leases[run.lease_id]);
+        }
+        return node;
+      })
       .sort((left, right) => left.created_at.localeCompare(right.created_at) || left.run_id.localeCompare(right.run_id));
     return {
       schema_version: "limen.conduct_graph.v1",
@@ -580,7 +699,7 @@ export class ConductKernel {
   }
 
   async claim(leaseId, generation, requestedPrincipal = null) {
-    this.expireLeases();
+    await this.expireLeases();
     const lease = this.state.leases[leaseId];
     if (!lease) throw new ConductError(`unknown lease: ${leaseId}`, 404);
     const { principal, enforced } = this.principalForIdentity(lease.executor, requestedPrincipal);
@@ -625,8 +744,9 @@ export class ConductKernel {
     generation = null,
     principal = null,
     observedHeads = {},
+    attempt = null,
   ) {
-    this.expireLeases();
+    await this.expireLeases();
     const lease = await this.authorizedLease(
       leaseId,
       capabilityToken,
@@ -645,11 +765,25 @@ export class ConductKernel {
         const reason = actual === undefined
           ? `required observed head omitted for ${resource}`
           : `observed head moved for ${resource}`;
+        if (run.packet?.intent?.kind === "fanout-leaf") {
+          run.receipts = [{
+            schema_version: "limen.fanout_fence_receipt.v1",
+            receipt_id: `fence-${run.run_id}`,
+            run_id: run.run_id,
+            outcome: "blocked",
+            expected_heads: clone(lease.observed_heads || {}),
+            observed_heads: clone(observedHeads),
+            reason,
+            mutation_authorized: true,
+            accepted_at: this.timestamp,
+          }];
+        }
         this.recordEvent("lease.fenced", {
           lease_id: leaseId,
           run_id: lease.run_id,
           reason,
         });
+        await this.advanceFanoutGraph(run.root_run_id);
         this.taskEvent(run, lease, {
           kind: "task.fenced",
           status: "failed",
@@ -661,9 +795,24 @@ export class ConductKernel {
       }
     }
     const wasReserved = lease.state === "reserved";
-    lease.heartbeat_at = this.timestamp;
-    lease.state = "active";
     const run = this.state.runs[lease.run_id];
+    lease.heartbeat_at = this.timestamp;
+    lease.hard_deadline = new Date(Math.min(
+      asDate(run.packet.deadline).getTime(),
+      this.now.getTime() + this.leaseTtlMs,
+    )).toISOString();
+    lease.state = "active";
+    const attemptCreated = attempt ? this.recordAttempt(run, lease, attempt) : false;
+    if (attempt) {
+      const rerouted = await this.rerouteAfterAttempt(run, lease, attempt);
+      if (rerouted) {
+        return {
+          status: "rerouted",
+          lease: this.publicLease(rerouted),
+          attempt_created: attemptCreated,
+        };
+      }
+    }
     run.status = "running";
     run.updated_at = this.timestamp;
     const session = this.state.sessions[run.executor_session_id];
@@ -678,11 +827,146 @@ export class ConductKernel {
         output: `Conduct executor started ${run.run_id}`,
       });
     }
-    return { status: "active", lease: this.publicLease(lease) };
+    return {
+      status: "active",
+      lease: this.publicLease(lease),
+      attempt_created: attemptCreated,
+    };
+  }
+
+  recordAttempt(run, lease, attempt) {
+    if (attempt.run_id !== run.run_id
+        || attempt.lease_id !== lease.lease_id
+        || attempt.lease_generation !== lease.generation
+        || !identitiesEqual(attempt.executor, lease.executor)) {
+      throw new ConductError("executor attempt does not belong to the lease/run");
+    }
+    run.attempts ||= [];
+    const prior = run.attempts.find((row) => row.attempt_id === attempt.attempt_id);
+    if (!prior) {
+      if (run.attempts.length >= run.packet.retry.max_attempts) {
+        throw new ConductError("executor attempt limit exhausted");
+      }
+      if (run.attempts.length >= run.packet.spend.limit) {
+        throw new ConductError("executor spend limit exhausted");
+      }
+      if (run.attempts.some((row) => !["failed", "blocked"].includes(row.status))) {
+        throw new ConductError("a prior executor attempt is still live");
+      }
+      run.attempts.push(clone(attempt));
+      return true;
+    }
+    for (const field of [
+      "run_id",
+      "lease_id",
+      "lease_generation",
+      "executor",
+      "adapter",
+      "submitted_at",
+    ]) {
+      if (stableStringify(prior[field]) !== stableStringify(attempt[field])) {
+        throw new ConductError("executor attempt identity changed");
+      }
+    }
+    for (const field of ["provider_run_id", "provider_run_url"]) {
+      if (prior[field] && attempt[field] !== prior[field]) {
+        throw new ConductError("executor provider receipt identity changed");
+      }
+    }
+    const transitions = {
+      launching: new Set(["launching", "submitted", "running", "succeeded", "failed", "blocked"]),
+      submitted: new Set(["submitted", "running", "succeeded", "failed", "blocked"]),
+      running: new Set(["running", "succeeded", "failed", "blocked"]),
+      // Provider success precedes exact landing validation.
+      succeeded: new Set(["succeeded", "failed", "blocked"]),
+      failed: new Set(["failed"]),
+      blocked: new Set(["blocked"]),
+    };
+    if (!transitions[prior.status]?.has(attempt.status)) {
+      throw new ConductError("executor attempt status regressed");
+    }
+    Object.assign(prior, clone(attempt));
+    return false;
+  }
+
+  async rerouteAfterAttempt(run, lease, attempt) {
+    if (!["failed", "blocked"].includes(attempt.status)) return null;
+    const attempts = run.attempts || [];
+    if (
+      attempts.length >= run.packet.retry.max_attempts
+      || attempts.length >= run.packet.spend.limit
+      || (run.packet.retry.transient_only && attempt.failure_class !== "transient")
+    ) {
+      return null;
+    }
+    let executor;
+    try {
+      executor = this.selectExecutor(run.packet, {
+        excludeSessions: new Set([run.executor_session_id]),
+        ignoreRequiredSession: true,
+      });
+    } catch (error) {
+      if (error instanceof ConductError) return null;
+      throw error;
+    }
+    const generation = Number(this.state.next_generation || 0) + 1;
+    this.state.next_generation = generation;
+    const resourceGenerations = {};
+    for (const claim of lease.resources) {
+      const next = Number(this.state.resource_generations[claim.key] || 0) + 1;
+      this.state.resource_generations[claim.key] = next;
+      resourceGenerations[claim.key] = next;
+    }
+    const leaseId = `lease-${generation}-${run.run_id.slice(4, 20)}`;
+    const executorPrincipalId = this.state.session_principals[executor.session_id];
+    if (!executorPrincipalId) {
+      throw new ConductError("reroute executor has no authenticated principal binding");
+    }
+    const token = await capabilityToken(
+      this.capabilitySecret,
+      leaseId,
+      generation,
+      executorPrincipalId,
+    );
+    const replacement = {
+      schema_version: "limen.lease.v1",
+      lease_id: leaseId,
+      run_id: run.run_id,
+      executor: clone(executor.identity),
+      executor_principal_id: executorPrincipalId,
+      resources: clone(lease.resources),
+      observed_heads: clone(lease.observed_heads),
+      generation,
+      resource_generations: resourceGenerations,
+      capability_token_hash: await sha256Text(token),
+      acquired_at: this.timestamp,
+      heartbeat_at: this.timestamp,
+      hard_deadline: new Date(Math.min(
+        asDate(run.packet.deadline).getTime(),
+        this.now.getTime() + this.leaseTtlMs,
+      )).toISOString(),
+      state: "reserved",
+    };
+    lease.state = "released";
+    lease.heartbeat_at = this.timestamp;
+    this.state.leases[leaseId] = replacement;
+    const priorExecutorSessionId = run.executor_session_id;
+    run.executor_session_id = executor.session_id;
+    run.lease_id = leaseId;
+    run.status = "reserved";
+    run.updated_at = this.timestamp;
+    this.recordEvent("run.rerouted", {
+      run_id: run.run_id,
+      prior_executor_session_id: priorExecutorSessionId,
+      executor_session_id: executor.session_id,
+      lease_id: leaseId,
+      generation,
+    });
+    return replacement;
   }
 
   async report(leaseId, capabilityToken, generation, principal, receipt) {
-    this.expireLeases();
+    await this.expireLeases();
     const lease = await this.authorizedLease(
       leaseId,
       capabilityToken,
@@ -708,6 +992,10 @@ export class ConductKernel {
       receipt.changed_paths,
       packet.authority.path_prefixes,
     );
+    const readOnlyAuthorized = packet.effect !== "read"
+      || (receipt.changed_paths.length === 0
+        && stableStringify(receipt.observed_heads_after)
+          === stableStringify(receipt.observed_heads_before));
     const spendValue = receipt.spend[packet.spend.unit] ?? 0;
     const spendAuthorized = typeof spendValue === "number"
       && Number.isFinite(spendValue)
@@ -724,6 +1012,7 @@ export class ConductKernel {
       && identitiesEqual(receipt.executor, lease.executor)
       && headsMatch
       && changedPathsAuthorized
+      && readOnlyAuthorized
       && spendAuthorized
       && childRunsAuthorized
       && predicateAuthorized;
@@ -749,6 +1038,7 @@ export class ConductKernel {
         outcome: receipt.outcome,
         receipt_id: receipt.receipt_id,
       });
+      await this.advanceFanoutGraph(run.root_run_id);
       const taskStatus = {
         succeeded: "done",
         failed: "failed",
@@ -785,6 +1075,83 @@ export class ConductKernel {
     return result;
   }
 
+  async advanceFanoutGraph(rootRunId) {
+    let progress = true;
+    while (progress) {
+      progress = false;
+      const waiting = Object.values(this.state.runs)
+        .filter((run) => run.root_run_id === rootRunId && run.status === "waiting")
+        .map((run) => clone(run));
+      for (const waitingRun of waiting) {
+        const dependencyStates = (waitingRun.dependency_run_ids || [])
+          .map((runId) => this.state.runs[runId].status);
+        if (dependencyStates.some((status) =>
+          ["failed", "blocked", "cancelled", "fenced", "expired"].includes(status))) {
+          const current = this.state.runs[waitingRun.run_id];
+          current.status = "blocked";
+          current.updated_at = this.timestamp;
+          current.receipts.push({
+            schema_version: "limen.fanout_dependency_receipt.v1",
+            receipt_id: `dependency-${current.run_id}`,
+            run_id: current.run_id,
+            outcome: "blocked",
+            mutation_authorized: true,
+            accepted_at: this.timestamp,
+          });
+          this.recordEvent("fanout.run_dependency_blocked", { run_id: current.run_id });
+          progress = true;
+          continue;
+        }
+        if (!dependencyStates.length || dependencyStates.some((status) => status !== "succeeded")) continue;
+        const original = clone(this.state);
+        const packet = waitingRun.packet;
+        delete this.state.runs[waitingRun.run_id];
+        delete this.state.work_index[packet.work_id];
+        delete this.state.work_key_index[packet.work_key];
+        const parent = this.state.runs[packet.parent_run_id];
+        parent.children = parent.children.filter((child) => child !== waitingRun.run_id);
+        const session = this.state.sessions[packet.conductor.session_id];
+        const principal = {
+          schema_version: "limen.conduct_principal.v1",
+          principal_id: waitingRun.conductor_principal_id,
+          agent: session.identity.agent,
+          surface: session.identity.surface,
+          roles: ["conductor"],
+        };
+        try {
+          const promoted = await this.submit(packet, principal);
+          if (promoted.status === "busy") {
+            this.state = original;
+            continue;
+          }
+        } catch {
+          this.state = original;
+          continue;
+        }
+        this.recordEvent("fanout.run_promoted", { run_id: waitingRun.run_id });
+        progress = true;
+      }
+    }
+    const root = this.state.runs[rootRunId];
+    if (!root || root.packet?.intent?.kind !== "fanout-root") return;
+    const children = root.children.map((runId) => this.state.runs[runId]);
+    if (!children.length || children.some((child) =>
+      ["waiting", "reserved", "running", "stop_requested"].includes(child.status))) return;
+    const outcome = children.every((child) => child.status === "succeeded") ? "succeeded" : "blocked";
+    root.status = outcome;
+    root.updated_at = this.timestamp;
+    root.receipts = [{
+      schema_version: "limen.fanout_campaign_receipt.v1",
+      receipt_id: `campaign-${rootRunId}`,
+      run_id: rootRunId,
+      outcome,
+      child_runs: [...root.children],
+      mutation_authorized: true,
+      accepted_at: this.timestamp,
+    }];
+    this.recordEvent("fanout.campaign_settled", { run_id: rootRunId, outcome });
+  }
+
   harvest(runId) {
     const graph = this.graph(runId);
     const byStatus = {};
@@ -799,7 +1166,9 @@ export class ConductKernel {
       run_count: graph.nodes.length,
       receipt_count: receiptCount,
       by_status: Object.fromEntries(Object.entries(byStatus).sort(([left], [right]) => left.localeCompare(right))),
-      unharvested: graph.nodes.filter((node) => ACTIVE_RUN_STATES.has(node.status)).map((node) => node.run_id),
+      unharvested: graph.nodes
+        .filter((node) => node.status === "waiting" || ACTIVE_RUN_STATES.has(node.status))
+        .map((node) => node.run_id),
       nodes: graph.nodes,
     };
   }
@@ -974,7 +1343,10 @@ export class ConductKernel {
     return parent;
   }
 
-  selectExecutor(packet) {
+  selectExecutor(packet, {
+    excludeSessions = new Set(),
+    ignoreRequiredSession = false,
+  } = {}) {
     if (isTaskCompatibilityPacket(packet)) {
       return {
         session_id: "tabularius-conduct-keeper",
@@ -989,19 +1361,32 @@ export class ConductKernel {
       };
     }
     const load = this.activeLoad();
+    const requiredSessionId = ignoreRequiredSession
+      ? ""
+      : String(packet.execution?.executor_session_id || "");
     const candidates = Object.values(this.state.sessions).filter((session) => {
+      if (excludeSessions.has(session.session_id)) return false;
+      if (requiredSessionId && session.session_id !== requiredSessionId) return false;
       if (!session.accepting_work || this.now - asDate(session.heartbeat_at) > this.sessionTtlMs) return false;
+      if (session.quota_remaining === 0) return false;
       if (packet.required_capabilities.some((capability) => !session.capabilities.includes(capability))) return false;
+      if (packet.execution?.local_heavy_allowed === false
+          && (session.capabilities.includes("local-heavy")
+            || session.capabilities.includes("local-worktree"))) return false;
       if (session.human_protected && session.session_id !== packet.conductor.session_id) return false;
       return (load[session.session_id] || 0) < session.concurrency;
     });
     if (!candidates.length) {
-      throw new ConductError("no healthy native lane satisfies the packet capabilities and bounds");
+      const suffix = requiredSessionId ? ` for executor session ${requiredSessionId}` : "";
+      throw new ConductError(`no healthy native lane satisfies the packet capabilities and bounds${suffix}`);
     }
     candidates.sort((left, right) => {
       const leftPreferred = packet.preferred_agent && left.identity.agent === packet.preferred_agent ? 0 : 1;
       const rightPreferred = packet.preferred_agent && right.identity.agent === packet.preferred_agent ? 0 : 1;
       return leftPreferred - rightPreferred
+        || Number(right.receipt_quality || 0) - Number(left.receipt_quality || 0)
+        || Number(left.cost_per_run ?? Number.POSITIVE_INFINITY)
+          - Number(right.cost_per_run ?? Number.POSITIVE_INFINITY)
         || (load[left.session_id] || 0) / left.concurrency - (load[right.session_id] || 0) / right.concurrency
         || left.identity.agent.localeCompare(right.identity.agent)
         || left.session_id.localeCompare(right.session_id);
@@ -1090,7 +1475,8 @@ export class ConductKernel {
     return load;
   }
 
-  expireLeases() {
+  async expireLeases() {
+    const rootsToAdvance = new Set();
     for (const lease of Object.values(this.state.leases)) {
       if (!ACTIVE_LEASE_STATES.has(lease.state) || asDate(lease.hard_deadline) > this.now) continue;
       lease.state = "expired";
@@ -1099,6 +1485,20 @@ export class ConductKernel {
       if (run && ACTIVE_RUN_STATES.has(run.status)) {
         run.status = "expired";
         run.updated_at = this.timestamp;
+        if (run.packet?.intent?.kind === "fanout-leaf") {
+          run.receipts = [{
+            schema_version: "limen.fanout_expiry_receipt.v1",
+            receipt_id: `expiry-${run.run_id}`,
+            run_id: run.run_id,
+            outcome: "blocked",
+            expected_heads: clone(lease.observed_heads || {}),
+            observed_heads: {},
+            reason: "executor lease expired without a timely authenticated heartbeat",
+            mutation_authorized: true,
+            accepted_at: this.timestamp,
+          }];
+          rootsToAdvance.add(run.root_run_id);
+        }
       }
       this.recordEvent("lease.expired", { lease_id: lease.lease_id, run_id: lease.run_id });
       if (run) {
@@ -1111,6 +1511,7 @@ export class ConductKernel {
         });
       }
     }
+    for (const rootRunId of rootsToAdvance) await this.advanceFanoutGraph(rootRunId);
   }
 
   async authorizedLease(
@@ -1234,7 +1635,7 @@ export class SerializedConductService {
         "request_stop",
       ].includes(operation)) {
         const preflight = new ConductKernel(state, { ...options, now });
-        preflight.expireLeases();
+        await preflight.expireLeases();
         if (preflight.mutated) {
           for (const event of preflight.projectionEvents) await this.projectTaskEvent(event);
           await this.store.save(preflight.state);

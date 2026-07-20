@@ -83,6 +83,9 @@ def capabilities() -> None:
 @click.option("--native-fanout/--no-native-fanout", default=None)
 @click.option("--harvest-method", default=None)
 @click.option("--meter", default=None)
+@click.option("--quota-remaining", type=click.FloatRange(min=0), default=None)
+@click.option("--cost-per-run", type=click.FloatRange(min=0), default=None)
+@click.option("--receipt-quality", type=click.FloatRange(0, 1), default=0, show_default=True)
 @click.option("--native-session-id", default=None)
 @click.option("--native-run-id", default=None)
 @click.option("--provider-identity", default=None)
@@ -101,6 +104,9 @@ def register(
     native_fanout: bool | None,
     harvest_method: str | None,
     meter: str | None,
+    quota_remaining: float | None,
+    cost_per_run: float | None,
+    receipt_quality: float,
     native_session_id: str | None,
     native_run_id: str | None,
     provider_identity: str | None,
@@ -136,6 +142,9 @@ def register(
             native_fanout=(native_fanout if native_fanout is not None else bool(defaults.get("native_fanout", False))),
             harvest_method=harvest_method or defaults.get("harvest_method", "receipt"),
             meter=meter or defaults.get("meter"),
+            quota_remaining=quota_remaining,
+            cost_per_run=cost_per_run,
+            receipt_quality=receipt_quality,
             accepting_work=accepting_work,
         )
     _emit(client_from_env().register(session))

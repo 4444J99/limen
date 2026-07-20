@@ -78,6 +78,19 @@
       "title": "Concurrency",
       "type": "integer"
     },
+    "cost_per_run": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cost Per Run"
+    },
     "harvest_method": {
       "default": "receipt",
       "title": "Harvest Method",
@@ -145,6 +158,26 @@
       ],
       "title": "Origin",
       "type": "string"
+    },
+    "quota_remaining": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Quota Remaining"
+    },
+    "receipt_quality": {
+      "default": 0,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Receipt Quality",
+      "type": "number"
     },
     "registered_at": {
       "format": "date-time",

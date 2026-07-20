@@ -13,6 +13,7 @@ import {
 } from "./projection.js";
 import {
   ConductValidationError,
+  validateExecutorAttempt,
   validateReceipt,
   validateSession,
   validateWorkPacket,
@@ -122,6 +123,14 @@ function observedHeads(body) {
   return heads;
 }
 
+function executorAttempt(body) {
+  if (body.attempt === undefined) return null;
+  if (!body.attempt || typeof body.attempt !== "object" || Array.isArray(body.attempt)) {
+    throw new ConductValidationError("attempt must be an object");
+  }
+  return validateExecutorAttempt(body.attempt);
+}
+
 export class ConductKeeperDurableObject {
   constructor(ctx, env) {
     this.ctx = ctx;
@@ -223,6 +232,7 @@ export class ConductKeeperDurableObject {
         generation: bodyGeneration(body),
         principal,
         observed_heads: observedHeads(body),
+        attempt: executorAttempt(body),
       }), 200, this.env);
     }
     match = path.match(/^\/api\/conduct\/leases\/([^/]+)\/receipt$/);

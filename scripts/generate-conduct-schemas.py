@@ -13,17 +13,21 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.conduct.models import (  # noqa: E402
     ConductorSessionV1,
+    ExecutorAttemptV1,
     LeaseV1,
     RunReceiptV1,
     WorkPacketV1,
 )
+from limen.fanout import FanoutManifestV1  # noqa: E402
 
 
 MODELS = {
     "conductor-session-v1.schema.json": ConductorSessionV1,
     "work-packet-v1.schema.json": WorkPacketV1,
     "lease-v1.schema.json": LeaseV1,
+    "executor-attempt-v1.schema.json": ExecutorAttemptV1,
     "run-receipt-v1.schema.json": RunReceiptV1,
+    "fanout-manifest-v1.schema.json": FanoutManifestV1,
 }
 
 
