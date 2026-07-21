@@ -1787,6 +1787,30 @@ parameters:
     self_update: none
     owner: mail
     note: "Safety cap on how many SAFE-tier replies send_drafts.py may send per run, so an armed run can never blast the whole ledger."
+  LIMEN_MAIL_UMA_SYNC:
+    default: 1
+    env: LIMEN_MAIL_UMA_SYNC
+    self_update: none
+    owner: mail
+    note: "Gate for the C_MAIL beat's UMA-checkout auto-sync (mail-beat.sh step 0). 1 (default) = fast-forward $UMA_ROOT to origin/main each beat so the beat never runs stale mail code (the drift that ran the pre-merge tree). Only a clean, on-main, fast-forwardable checkout is advanced — a dirty tree or work branch is left untouched (never a merge/rebase; untracked files don't count as dirty). 0 disables the sync (run whatever checkout is present)."
+  LIMEN_MAIL_ARCHIVED_SCAN:
+    default: 1
+    env: LIMEN_MAIL_ARCHIVED_SCAN
+    self_update: none
+    owner: mail
+    note: "Gate for the C_MAIL archived-but-unanswered scan (mail-beat.sh step 1c → archived_scan.py). 1 (default) = one account per beat, round-robin via a persisted cursor, writes a READ-ONLY per-account receipt (audit/archived_scan-*.json) that obligations_build folds into the ledger — surfacing owed replies on threads that were archived out of the INBOX. Flags/moves nothing. Needs the macOS Automation grant (self-skips when absent). 0 disables the scan."
+  LIMEN_MAIL_ARCHIVED_LIMIT:
+    default: 500
+    env: LIMEN_MAIL_ARCHIVED_LIMIT
+    self_update: none
+    owner: mail
+    note: "Max messages archived_scan.py reads per mailbox (Archive + Sent) each beat — bounds the AppleScript enumeration so a large All-Mail never full-materializes. Paired with the scanner's --since-days window."
+  LIMEN_MAIL_ARCHIVED_CURSOR:
+    default: "~/Workspace/limen/logs/.mail-archived-scan-cursor"
+    env: LIMEN_MAIL_ARCHIVED_CURSOR
+    self_update: none
+    owner: mail
+    note: "Path of the round-robin cursor file for the archived-scan (mail-beat.sh step 1c): holds the last-scanned account index so each beat advances to the next account and every account is covered over a full cycle. A missing/corrupt cursor restarts the cycle at account 0 (fail-open)."
   LIMEN_MAIL_HOLD_SEND:
     default: "safe_only"
     env: LIMEN_MAIL_HOLD_SEND

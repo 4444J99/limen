@@ -166,6 +166,27 @@ PY
   exit 0
 fi
 
+# 0) SYNC the UMA checkout so the beat never runs stale mail code. The beat executes scripts
+#    straight out of $UMA_ROOT, and nothing kept that checkout current — it drifted commits
+#    behind origin (the archived-scan feature merged while the beat ran the pre-merge tree).
+#    ONLY a clean, on-`main`, fast-forwardable checkout is advanced: a dirty tree or a work
+#    branch is left untouched (never a merge/rebase — fail-open). Untracked files (e.g. a local
+#    .worktrees/) don't count as dirty. Opt out with LIMEN_MAIL_UMA_SYNC=0.
+if [ "${LIMEN_MAIL_UMA_SYNC:-1}" = "1" ] && [ -d "$UMA_ROOT/.git" ]; then
+  uma_branch="$(git -C "$UMA_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
+  uma_dirty="$(git -C "$UMA_ROOT" status --porcelain --untracked-files=no 2>/dev/null)"
+  if [ "$uma_branch" = "main" ] && [ -z "$uma_dirty" ]; then
+    if bounded 60 git -C "$UMA_ROOT" fetch --quiet origin main 2>/dev/null \
+       && bounded 30 git -C "$UMA_ROOT" merge --ff-only --quiet origin/main 2>/dev/null; then
+      echo "mail-beat: UMA checkout fast-forwarded to origin/main"
+    else
+      echo "mail-beat: UMA sync skipped (offline, non-fast-forward, or busy) — running current checkout"
+    fi
+  else
+    echo "mail-beat: UMA checkout off-main ($uma_branch) or dirty — sync skipped, running as-is"
+  fi
+fi
+
 # 1) SWEEP — reversible flag+archive per account (mutating; needs the Automation grant).
 #    Account names come straight from Mail (no creds, no python import). The futile Gmail
 #    archive is skipped; iCloud/Outlook (folder stores) archive reliably; fires flag
@@ -202,6 +223,39 @@ if [ "${LIMEN_MAIL_SWEEP:-1}" = "1" ] && [ "${LIMEN_MAIL_GMAIL_ARCHIVE:-1}" = "1
       --limit "$SWEEP_LIMIT" --receipt "$LIMEN_ROOT/logs/gmail-archive-latest.json"
   else
     echo "mail-beat: Gmail IMAP archive SKIPPED — GMAIL_APP_PASSWORD/GMAIL_USER not hydrated; the Gmail inbox will NOT auto-clean (creds-hydrate --verify flags this; root cause: op:// item unreadable by the service account, Wall #320)"
+  fi
+fi
+
+# 1c) ARCHIVED-SCAN — surface archived-but-UNANSWERED threads the INBOX-only sweep can't see (a
+#     reply owed on a thread that was archived drops out of the ledger silently). READ-ONLY +
+#     count-first: it FLAGS/MOVES nothing, just writes a per-account receipt (audit/archived_scan-
+#     *.json) that step 2's obligations_build folds in. Runs BEFORE the build so the receipt is
+#     fresh. It's expensive (AppleScript over Archive + Sent), so exactly ONE account per beat,
+#     round-robin via a persisted cursor — every account is covered over a full cycle without ever
+#     fanning out. Independent of the mutation gate (read-only); gated by its own
+#     LIMEN_MAIL_ARCHIVED_SCAN=1 (default on), fail-open, bounded. No grant / no accounts ⇒ skipped.
+if [ "${LIMEN_MAIL_ARCHIVED_SCAN:-1}" = "1" ] && [ -f "$UMA_ROOT/archived_scan.py" ]; then
+  scan_accts="$(bounded 20 osascript -e 'tell application "Mail" to get name of every account' 2>/dev/null || true)"
+  if [ -n "$scan_accts" ]; then
+    CURSOR_FILE="${LIMEN_MAIL_ARCHIVED_CURSOR:-$LIMEN_ROOT/logs/.mail-archived-scan-cursor}"
+    OLDIFS="$IFS"; IFS=','; set -f
+    ACCT_LIST=()
+    for a in $scan_accts; do
+      a="${a#"${a%%[![:space:]]*}"}"; a="${a%"${a##*[![:space:]]}"}"   # trim
+      [ -z "$a" ] && continue
+      ACCT_LIST+=("$a")
+    done
+    IFS="$OLDIFS"; set +f
+    n="${#ACCT_LIST[@]}"
+    if [ "$n" -gt 0 ]; then
+      last="$(cat "$CURSOR_FILE" 2>/dev/null || echo -1)"
+      case "$last" in ''|*[!0-9-]*) last=-1 ;; esac   # non-numeric cursor ⇒ restart the cycle
+      next=$(( (last + 1) % n ))
+      target="${ACCT_LIST[$next]}"
+      printf '%s\n' "$next" > "$CURSOR_FILE" 2>/dev/null || true
+      echo "mail-beat: archived-scan account $((next + 1))/$n — $target"
+      run_tmp 240 "$PY" "$UMA_ROOT/archived_scan.py" --account "$target" --limit "${LIMEN_MAIL_ARCHIVED_LIMIT:-500}"
+    fi
   fi
 fi
 
