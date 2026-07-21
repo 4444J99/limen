@@ -65,6 +65,10 @@ Run it from any terminal with:
 bash <repo>/.worktrees/<slug>/.limen-workstream/kickstart.sh
 ```
 
+Autonomous Codex capsules preserve the interactive UI when standard input and output are attached
+to a terminal. In a shell runner without a terminal, the same command uses Codex's noninteractive
+`exec` transport instead of failing at provider handoff.
+
 The README only defines module order and the launch command. Each module has one reason to change.
 Identical reruns preserve `created_at` and an admitted runway, rewrite no bytes, and report
 `unchanged`. The

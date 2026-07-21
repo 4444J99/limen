@@ -402,7 +402,7 @@ if [[ "$write_readme" -eq 1 ]]; then
 fi
 
 if [[ "$launch_agent" -eq 1 ]]; then
-  exec bash "$kickstart"
+  exec bash "$wt/.limen-workstream/kickstart.sh"
 fi
 
 if [[ "$launch_shell" -eq 1 ]]; then

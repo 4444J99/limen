@@ -119,7 +119,11 @@ workstream_launch_native_agent() {
     IFS= read -r -d '' capsule_prompt < "$readme" || true
     case "$agent" in
       codex)
-        exec "$binary" --ask-for-approval never --sandbox workspace-write "$capsule_prompt"
+        if [[ -t 0 && -t 1 ]]; then
+          exec "$binary" --ask-for-approval never --sandbox workspace-write "$capsule_prompt"
+        fi
+        # Shell runners do not provide a terminal; use Codex's noninteractive transport.
+        exec "$binary" --ask-for-approval never --sandbox workspace-write exec "$capsule_prompt"
         ;;
       opencode)
         exec "$binary" --prompt "$capsule_prompt"
