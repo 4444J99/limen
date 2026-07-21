@@ -21,14 +21,37 @@ export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"  # gemin
 cd "$LIMEN_ROOT" || exit 1
 
 SESSION_END_SOURCE="${LIMEN_SESSION_END_BREADCRUMBS:-${XDG_STATE_HOME:-$HOME/.local/state}/limen/session-end-breadcrumbs.jsonl}"
+SESSION_END_TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
 
 # SessionEnd itself is constant-time; this heartbeat-owned drain performs the
 # slow closeout consumers with finite retries and bounded receipts.
-timeout "${LIMEN_SESSION_END_CONSUMER_TIMEOUT:-90}" \
-  python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
-    --source "$SESSION_END_SOURCE" \
-    --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
-    --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
+drain_session_end_breadcrumbs() {
+  if [ -n "$SESSION_END_TIMEOUT_BIN" ]; then
+    "$SESSION_END_TIMEOUT_BIN" "${LIMEN_SESSION_END_CONSUMER_TIMEOUT:-90}" \
+      python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
+        --source "$SESSION_END_SOURCE" \
+        --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
+        --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
+  else
+    python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
+      --source "$SESSION_END_SOURCE" \
+      --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
+      --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
+  fi
+}
+
+mkdir -p "$LIMEN_ROOT/logs"
+LOCK="$LIMEN_ROOT/logs/.saturate.lock"
+
+# single-instance guard, shared with saturate.sh (macOS has no flock -> mkdir fallback)
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"$LOCK"; flock -n 9 || { echo "$(date '+%F %T') lock held — skip tick"; exit 0; }
+else
+  mkdir "$LOCK.d" 2>/dev/null || { echo "$(date '+%F %T') lock held — skip tick"; exit 0; }
+  trap 'rmdir "$LOCK.d" 2>/dev/null' EXIT
+fi
+
+drain_session_end_breadcrumbs
 
 MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
 if [ "$MODE" = "paused" ]; then
@@ -55,16 +78,6 @@ DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-50}"
 JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"
 MINE_LIMIT="${LIMEN_MINE_LIMIT:-25}"
-mkdir -p "$LIMEN_ROOT/logs"
-LOCK="$LIMEN_ROOT/logs/.saturate.lock"
-
-# single-instance guard, shared with saturate.sh (macOS has no flock -> mkdir fallback)
-if command -v flock >/dev/null 2>&1; then
-  exec 9>"$LOCK"; flock -n 9 || { echo "$(date '+%F %T') lock held — skip tick"; exit 0; }
-else
-  mkdir "$LOCK.d" 2>/dev/null || { echo "$(date '+%F %T') lock held — skip tick"; exit 0; }
-  trap 'rmdir "$LOCK.d" 2>/dev/null' EXIT
-fi
 
 resolve_dispatch_lanes() {
   python3 - "$1" <<'PY'

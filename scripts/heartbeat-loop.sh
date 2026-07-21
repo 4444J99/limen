@@ -124,6 +124,22 @@ dispatch_bounded() {  # dispatch_bounded <cmd...> — run dispatch under the SIG
   fi
 }
 
+SESSION_END_SOURCE="${LIMEN_SESSION_END_BREADCRUMBS:-${XDG_STATE_HOME:-$HOME/.local/state}/limen/session-end-breadcrumbs.jsonl}"
+drain_session_end_breadcrumbs() {
+  if [ -n "$DISPATCH_TIMEOUT_BIN" ]; then
+    "$DISPATCH_TIMEOUT_BIN" "${LIMEN_SESSION_END_CONSUMER_TIMEOUT:-90}" \
+      python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
+        --source "$SESSION_END_SOURCE" \
+        --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
+        --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
+  else
+    python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
+      --source "$SESSION_END_SOURCE" \
+      --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
+      --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
+  fi
+}
+
 # SINGLETON GUARD (ATOMIC) — only one heartbeat-loop may run. mkdir is atomic, so two
 # near-simultaneous launchd respawns cannot both win (the pidfile read-then-write did).
 # Stale-lock (dead holder) is recovered with a single rmdir+retry; lose that race → exit.
@@ -291,6 +307,10 @@ while true; do
   VITALS_PRESSURE=0
   VITALS_THROTTLE=0
   echo "──── beat $c $(date '+%F %T') ────"
+  # Drain local SessionEnd work while this process owns the singleton, even when
+  # autonomy is paused or the network is offline. The consumer remains bounded
+  # and fail-open so lifecycle work cannot wedge the daemon.
+  drain_session_end_breadcrumbs
   MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
   if [ "$MODE" = "paused" ]; then
     # Stay the singleton owner. Exiting here made launchd KeepAlive respawn a fresh
@@ -352,15 +372,6 @@ while true; do
     # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
     # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
     python3 "$LIMEN_ROOT/scripts/heal-board.py" 2>&1 | tail -1 || true
-    # SESSION-END DRAIN — Claude's hook writes only a constant-time breadcrumb.
-    # Slow handoff, watcher, claim, model-audit, and lifecycle consumers resume
-    # here with finite retries and per-session receipts.
-    SESSION_END_SOURCE="${LIMEN_SESSION_END_BREADCRUMBS:-${XDG_STATE_HOME:-$HOME/.local/state}/limen/session-end-breadcrumbs.jsonl}"
-    timeout "${LIMEN_SESSION_END_CONSUMER_TIMEOUT:-90}" \
-      python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
-        --source "$SESSION_END_SOURCE" \
-        --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
-        --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
     # TABVLARIVS RELAY — submit the lock-free ticket inbox to the authenticated remote conduct
     # keeper. Archive only tickets with canonical projection receipts; broker outages leave the
     # unacknowledged suffix pending. The local tasks.yaml is read-only cache evidence, never a

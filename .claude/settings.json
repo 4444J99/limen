@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/session-closeout.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/session-closeout.sh\" || true",
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ ! -x \"$PROJECT_ROOT/scripts/hooks/session-closeout.sh\" ]; then PROJECT_ROOT=\"${LIMEN_LIVE_ROOT:-$HOME/Workspace/limen}\"; fi; [ -x \"$PROJECT_ROOT/scripts/hooks/session-closeout.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/session-closeout.sh\" || true",
             "timeout": 5
           }
         ]

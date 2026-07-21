@@ -52,6 +52,27 @@ def _decode(raw: bytes) -> tuple[dict[str, Any], bool]:
     return (value, True) if isinstance(value, dict) else ({}, False)
 
 
+def _transcript_marker(payload: Mapping[str, Any]) -> str:
+    """Return a metadata-only marker that changes when a resumed transcript grows."""
+
+    raw_path = payload.get("transcript_path")
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        return ""
+    try:
+        stat_result = Path(raw_path).expanduser().stat()
+    except OSError:
+        return ""
+    return ":".join(
+        str(value)
+        for value in (
+            stat_result.st_dev,
+            stat_result.st_ino,
+            stat_result.st_size,
+            stat_result.st_mtime_ns,
+        )
+    )
+
+
 def breadcrumb(
     raw: bytes,
     *,
@@ -59,6 +80,8 @@ def breadcrumb(
     environ: Mapping[str, str] | None = None,
     now: float | None = None,
 ) -> dict[str, Any]:
+    """Build one redacted occurrence breadcrumb from a bounded hook payload."""
+
     environ = os.environ if environ is None else environ
     payload, valid = _decode(raw)
     raw_digest = hashlib.sha256(raw[:MAX_INPUT_BYTES]).hexdigest()
@@ -69,14 +92,28 @@ def breadcrumb(
         payload.get("cwd") or environ.get("CLAUDE_PROJECT_DIR") or environ.get("PWD"),
         MAX_CWD,
     )
-    event_id = hashlib.sha256(f"claude\0{session_id}".encode()).hexdigest()
+    ended_epoch = round(time.time() if now is None else now, 6)
+    occurrence_marker = _transcript_marker(payload)
+    occurrence_basis = "transcript" if occurrence_marker else "fallback"
+    if not occurrence_marker:
+        # A source-neutral payload identity lets the consumer pair the global and
+        # project deliveries even when they straddle an arbitrary time boundary.
+        # The delivery id below remains unique so a repeated same-source end starts
+        # a fresh occurrence when no readable transcript revision is available.
+        occurrence_marker = f"payload:{raw_digest}"
+    event_id = hashlib.sha256(f"claude\0{session_id}\0{raw_digest}\0{occurrence_marker}".encode()).hexdigest()
+    delivery_id = hashlib.sha256(
+        f"{event_id}\0{source}\0{ended_epoch}\0{os.getpid()}\0{time.monotonic_ns()}".encode()
+    ).hexdigest()
     return {
         "schema": SCHEMA,
         "event_id": event_id,
+        "delivery_id": delivery_id,
+        "occurrence_basis": occurrence_basis,
         "provider": "claude",
         "session_id": session_id,
         "source": _bounded(source, 32) or "unknown",
-        "ended_epoch": round(time.time() if now is None else now, 6),
+        "ended_epoch": ended_epoch,
         "cwd": cwd,
         "payload_valid": valid,
         "payload_sha256": raw_digest,
@@ -114,10 +151,14 @@ def produce(
     environ: Mapping[str, str] | None = None,
     now: float | None = None,
 ) -> bool:
+    """Create and append one breadcrumb, returning false only on a fail-open write."""
+
     return append_breadcrumb(output, breadcrumb(raw, source=source, environ=environ, now=now))
 
 
 def main() -> int:
+    """Run the constant-time stdin-to-queue producer CLI."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", default="project")
     parser.add_argument("--root", type=Path)

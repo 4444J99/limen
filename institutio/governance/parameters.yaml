@@ -729,13 +729,13 @@ parameters:
     env: LIMEN_SESSION_LIFECYCLE_TIMEOUT
     self_update: none
     owner: continuity
-    note: "Hard process-group timeout for the low-priority SessionEnd lifecycle-pressure refresh. Timeout is fail-open and never kills an unrelated peer."
+    note: "Legacy standalone lifecycle-pressure wrapper ceiling. Project SessionEnd no longer invokes that wrapper; the heartbeat consumer owns deferred refresh timing."
   LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT:
     default: 30
     env: LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT
     self_update: none
     owner: continuity
-    note: "Narrow worktree-debt subprocess timeout injected only by the SessionEnd lifecycle-pressure hook."
+    note: "Narrow worktree-debt subprocess timeout propagated by the heartbeat lifecycle-pressure consumer and retained by the legacy standalone wrapper."
   LIMEN_SESSION_END_BREADCRUMBS:
     default: "${XDG_STATE_HOME:-$HOME/.local/state}/limen/session-end-breadcrumbs.jsonl"
     env: LIMEN_SESSION_END_BREADCRUMBS
