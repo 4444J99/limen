@@ -20,6 +20,16 @@ export PYTHONPATH="$LIMEN_ROOT/cli/src"
 export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"  # gemini runs headless in throwaway worktrees
 cd "$LIMEN_ROOT" || exit 1
 
+SESSION_END_SOURCE="${LIMEN_SESSION_END_BREADCRUMBS:-${XDG_STATE_HOME:-$HOME/.local/state}/limen/session-end-breadcrumbs.jsonl}"
+
+# SessionEnd itself is constant-time; this heartbeat-owned drain performs the
+# slow closeout consumers with finite retries and bounded receipts.
+timeout "${LIMEN_SESSION_END_CONSUMER_TIMEOUT:-90}" \
+  python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
+    --source "$SESSION_END_SOURCE" \
+    --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
+    --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
+
 MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
 if [ "$MODE" = "paused" ]; then
   echo "heartbeat paused by autonomy governor"

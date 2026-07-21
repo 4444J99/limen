@@ -109,9 +109,7 @@ Do not delete the store to seize admission. Inspect it with `status`. A live lea
 and expiry; a stale/dead/PID-reused lease is reaped on the next operation. A corrupt store is an
 owner-routed blocker because silently replacing it would make concurrent work look absent.
 
-The SessionEnd lifecycle refresh separately preserves the useful low-priority closeout ideas from
-draft PR #744 against current `main`: one dead-PID/stale-safe singleton, a process-group timeout,
-`nice -n 10`, a narrower worktree-debt timeout, and a declared maximum number of roots per size
-scan with explicit partial receipts. Combined with host admission and the existing bounded
-`closeout-fast` queue/test timeouts, this supersedes #744; its old conflicting branch is not merge
-or cherry-pick authority.
+Claude `SessionEnd` is a separate constant-time breadcrumb seam. It does not refresh handoff,
+inspect watchers or transcripts, audit models, or evaluate lifecycle pressure synchronously; those
+consumers are heartbeat-owned and idempotent. See
+[`docs/session-end-breadcrumbs.md`](session-end-breadcrumbs.md).

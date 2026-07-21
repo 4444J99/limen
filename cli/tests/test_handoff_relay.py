@@ -247,13 +247,16 @@ def test_check_rejects_missing_or_stale_provider_truth(monkeypatch, tmp_path, ca
     assert "provider headroom stale" in capsys.readouterr().out
 
 
-def test_handoff_refresh_is_wired_across_heartbeat_metabolize_and_session_end():
+def test_handoff_refresh_is_wired_across_heartbeat_metabolize_and_breadcrumb_consumer():
     heartbeat = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
     metabolize = (ROOT / "scripts" / "metabolize.sh").read_text(encoding="utf-8")
     session_end = (ROOT / "scripts" / "hooks" / "session-closeout.sh").read_text(encoding="utf-8")
+    consumer = (ROOT / "scripts" / "consume-session-end-breadcrumbs.py").read_text(encoding="utf-8")
 
     # Observe-mode and normal dispatch beats both refresh; metabolize remains independently wired.
     assert heartbeat.count('python3 "$LIMEN_ROOT/scripts/handoff-relay.py"') >= 2
     assert 'python3 "$LIMEN_ROOT/scripts/handoff-relay.py"' in metabolize
-    # Every SessionEnd refreshes before the worktree-only early return.
-    assert session_end.index('python3 "$HANDOFF_ROOT/scripts/handoff-relay.py"') < session_end.index('case "$CWD" in')
+    assert "consume-session-end-breadcrumbs.py" in heartbeat
+    assert '"handoff-relay.py"' in consumer
+    # SessionEnd itself never performs the slow refresh.
+    assert "handoff-relay.py" not in session_end

@@ -352,6 +352,15 @@ while true; do
     # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
     # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
     python3 "$LIMEN_ROOT/scripts/heal-board.py" 2>&1 | tail -1 || true
+    # SESSION-END DRAIN — Claude's hook writes only a constant-time breadcrumb.
+    # Slow handoff, watcher, claim, model-audit, and lifecycle consumers resume
+    # here with finite retries and per-session receipts.
+    SESSION_END_SOURCE="${LIMEN_SESSION_END_BREADCRUMBS:-${XDG_STATE_HOME:-$HOME/.local/state}/limen/session-end-breadcrumbs.jsonl}"
+    timeout "${LIMEN_SESSION_END_CONSUMER_TIMEOUT:-90}" \
+      python3 "$LIMEN_ROOT/scripts/consume-session-end-breadcrumbs.py" \
+        --source "$SESSION_END_SOURCE" \
+        --max-sessions "${LIMEN_SESSION_END_CONSUMER_BATCH:-8}" \
+        --runway-seconds "${LIMEN_SESSION_END_CONSUMER_RUNWAY:-60}" 2>&1 | tail -1 || true
     # TABVLARIVS RELAY — submit the lock-free ticket inbox to the authenticated remote conduct
     # keeper. Archive only tickets with canonical projection receipts; broker outages leave the
     # unacknowledged suffix pending. The local tasks.yaml is read-only cache evidence, never a

@@ -1246,7 +1246,7 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
         encoding="utf-8",
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     (capability_root / "skills" / "local-skill").mkdir(parents=True)
     (capability_root / "skills" / "local-skill" / "SKILL.md").write_text("# Local Skill\n", encoding="utf-8")
     (capability_root / "plugin" / ".claude-plugin").mkdir(parents=True)
@@ -1331,7 +1331,7 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
 
     snapshot = blockers.build_snapshot()
     paths = {item["id"]: item for item in snapshot["blockers"]}
@@ -1405,7 +1405,7 @@ def test_session_blockers_filter_remote_missing_branches_with_preservation_recei
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
 
     snapshot = blockers.build_snapshot()
     ids = {item["id"] for item in snapshot["blockers"]}
@@ -1448,7 +1448,7 @@ def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_pat
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     (capability_root / "skills" / "artifact-resurfacing").mkdir(parents=True)
     (capability_root / "skills" / "artifact-resurfacing" / "SKILL.md").write_text("# Body not read\n", encoding="utf-8")
     (capability_root / ".claude-plugin").mkdir()
@@ -1517,7 +1517,7 @@ def test_session_blockers_promotes_unhealthy_network_receipt(tmp_path: Path):
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
     blockers.NETWORK_HEALTH_INDEX.write_text(
         json.dumps(
@@ -1581,7 +1581,7 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
     blockers.NETWORK_HEALTH_INDEX.write_text(
         json.dumps(
@@ -1681,7 +1681,7 @@ def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: P
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     blockers.CONSOLIDATION_INDEX.parent.mkdir(parents=True, exist_ok=True)
     blockers.CONSOLIDATION_INDEX.write_text(
         json.dumps(

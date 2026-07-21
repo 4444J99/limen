@@ -736,6 +736,30 @@ parameters:
     self_update: none
     owner: continuity
     note: "Narrow worktree-debt subprocess timeout injected only by the SessionEnd lifecycle-pressure hook."
+  LIMEN_SESSION_END_BREADCRUMBS:
+    default: "${XDG_STATE_HOME:-$HOME/.local/state}/limen/session-end-breadcrumbs.jsonl"
+    env: LIMEN_SESSION_END_BREADCRUMBS
+    self_update: none
+    owner: continuity
+    note: "One host-stable, private JSONL queue shared by project and installed global Claude SessionEnd producers across runtime upgrades. It must not live under a versioned runtime or checkout; cursor and consumer receipts remain in the live Limen logs directory."
+  LIMEN_SESSION_END_CONSUMER_TIMEOUT:
+    default: 90
+    env: LIMEN_SESSION_END_CONSUMER_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Outer heartbeat process timeout in seconds for one bounded SessionEnd breadcrumb drain. Timeout is fail-open; per-session receipts retain finite retry state for the next beat."
+  LIMEN_SESSION_END_CONSUMER_BATCH:
+    default: 8
+    env: LIMEN_SESSION_END_CONSUMER_BATCH
+    self_update: none
+    owner: continuity
+    note: "Maximum session receipts selected by one heartbeat breadcrumb drain before later receipts roll to a future beat."
+  LIMEN_SESSION_END_CONSUMER_RUNWAY:
+    default: 60
+    env: LIMEN_SESSION_END_CONSUMER_RUNWAY
+    self_update: none
+    owner: continuity
+    note: "Internal monotonic-time runway in seconds for one breadcrumb drain; no new slow consumer begins after this deadline."
   LIMEN_LIFECYCLE_SIZE_SCAN_MAX_ROOTS:
     default: 50
     env: LIMEN_LIFECYCLE_SIZE_SCAN_MAX_ROOTS

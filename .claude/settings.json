@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" || true"
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/session-orient.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/session-orient.sh\" || true"
           }
         ]
       }
@@ -66,11 +66,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" || true"
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/worktree-commit-guard.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/worktree-commit-guard.sh\" || true"
           },
           {
             "type": "command",
-            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" || true"
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/pytest-scope-guard.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/pytest-scope-guard.sh\" || true"
           }
         ]
       }
@@ -81,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" || true"
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/lint-edited-file.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/lint-edited-file.sh\" || true"
           }
         ]
       }
@@ -91,11 +91,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" || true"
-          },
-          {
-            "type": "command",
-            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" || true"
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/session-closeout.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/session-closeout.sh\" || true",
+            "timeout": 5
           }
         ]
       }

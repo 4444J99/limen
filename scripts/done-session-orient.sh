@@ -15,6 +15,9 @@ GEN="scripts/session-orient.py"
 HOOK="scripts/hooks/session-orient.sh"
 PRESSURE_GEN="scripts/session-lifecycle-pressure.py"
 PRESSURE_HOOK="scripts/hooks/session-lifecycle-pressure.sh"
+BREADCRUMB_PRODUCER="scripts/session-end-breadcrumb.py"
+BREADCRUMB_CONSUMER="scripts/consume-session-end-breadcrumbs.py"
+CLOSEOUT_HOOK="scripts/hooks/session-closeout.sh"
 DIGEST="logs/session-orientation.md"
 fail() { echo "✗ $*"; exit 1; }
 ok()   { echo "✓ $*"; }
@@ -25,8 +28,14 @@ ok()   { echo "✓ $*"; }
 [ -x "$HOOK" ] || fail "hook not executable $HOOK"
 [ -f "$PRESSURE_GEN" ] || fail "missing lifecycle pressure generator $PRESSURE_GEN"
 [ -f "$PRESSURE_HOOK" ] || fail "missing lifecycle pressure hook $PRESSURE_HOOK"
+[ -f "$BREADCRUMB_PRODUCER" ] || fail "missing SessionEnd producer $BREADCRUMB_PRODUCER"
+[ -f "$BREADCRUMB_CONSUMER" ] || fail "missing SessionEnd consumer $BREADCRUMB_CONSUMER"
+[ -f "$CLOSEOUT_HOOK" ] || fail "missing SessionEnd hook $CLOSEOUT_HOOK"
 [ -x "$PRESSURE_GEN" ] || fail "lifecycle pressure generator not executable $PRESSURE_GEN"
 [ -x "$PRESSURE_HOOK" ] || fail "lifecycle pressure hook not executable $PRESSURE_HOOK"
+[ -x "$BREADCRUMB_PRODUCER" ] || fail "SessionEnd producer not executable $BREADCRUMB_PRODUCER"
+[ -x "$BREADCRUMB_CONSUMER" ] || fail "SessionEnd consumer not executable $BREADCRUMB_CONSUMER"
+[ -x "$CLOSEOUT_HOOK" ] || fail "SessionEnd hook not executable $CLOSEOUT_HOOK"
 ok "artifacts present and executable"
 
 # 2. generators run, print digests, write cached fallbacks, exit 0
@@ -95,6 +104,7 @@ if command -v ruff >/dev/null 2>&1 || python3 -m ruff --version >/dev/null 2>&1;
 fi
 bash -n "$HOOK" || fail "bash syntax error in $HOOK"
 bash -n "$PRESSURE_HOOK" || fail "bash syntax error in $PRESSURE_HOOK"
+bash -n "$CLOSEOUT_HOOK" || fail "bash syntax error in $CLOSEOUT_HOOK"
 ok "bash syntax ok: hooks"
 
 # 8. activation status
@@ -104,7 +114,12 @@ if grep -q "session-orient.sh" "$SET" 2>/dev/null; then
 else
   echo "● ACTIVATION: PENDING — paste the SessionStart block into $SET (harness-gated; his hand)"
 fi
-grep -q "session-lifecycle-pressure.sh" "$SET" 2>/dev/null || fail "SessionEnd pressure hook is not wired in $SET"
-ok "SessionEnd lifecycle pressure hook is wired"
+grep -q "session-closeout.sh" "$SET" 2>/dev/null || fail "constant-time SessionEnd hook is not wired in $SET"
+if grep -q "session-lifecycle-pressure.sh" "$SET" 2>/dev/null; then
+  fail "slow lifecycle pressure hook remains registered at SessionEnd"
+fi
+grep -q '"timeout": 5' "$SET" 2>/dev/null || fail "SessionEnd outer timeout is not five seconds"
+grep -q "consume-session-end-breadcrumbs.py" scripts/heartbeat-loop.sh || fail "heartbeat consumer is not wired"
+ok "SessionEnd is breadcrumb-only; heartbeat owns slow consumers"
 
 echo "session-orientation organ: DONE (built, PII-free, idempotent, fail-open)"

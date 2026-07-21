@@ -581,15 +581,29 @@ def hook_and_pressure_blockers(
         settings_text = PROJECT_SETTINGS.read_text(encoding="utf-8", errors="replace")
     except OSError:
         pass
-    hook_wired = "session-lifecycle-pressure.sh" in settings_text
+    try:
+        heartbeat_text = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        heartbeat_text = ""
+    hook_wired = (
+        "session-closeout.sh" in settings_text
+        and "session-lifecycle-pressure.sh" not in settings_text
+        and (
+            "consume-session-end-breadcrumbs.py" in heartbeat_text
+            or "consume-session-end-breadcrumbs.py" in settings_text
+        )
+    )
     if not hook_wired:
         add_blocker(
             blockers,
             blocker_id="session-pressure-hook-not-wired",
             category="hook_lifecycle",
-            evidence="SessionEnd does not refresh local/remote lifecycle pressure.",
+            evidence="SessionEnd breadcrumb production or heartbeat lifecycle consumption is not fully wired.",
             owner="limen hooks",
-            route="Wire `scripts/hooks/session-lifecycle-pressure.sh` so sessions surface local disk and remote preservation drift.",
+            route=(
+                "Wire the constant-time `scripts/hooks/session-closeout.sh` producer and the heartbeat "
+                "`consume-session-end-breadcrumbs.py` drain; never run lifecycle pressure synchronously."
+            ),
             status="needs_repair",
             source=".claude/settings.json",
         )
