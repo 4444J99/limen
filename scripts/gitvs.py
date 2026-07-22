@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import calendar
 import fnmatch
+import hashlib
 import json
 import os
 import shlex
@@ -64,6 +65,8 @@ STAMP = ROOT / "logs" / "gitvs.json"
 # gitignored runtime sink, NEVER the git-tracked ledger: private repo names stay out of the public
 # tree, and volatile fields (size, pushed_at) never churn the ledger's idempotent fixed point.
 FACTS = ROOT / "logs" / "gitvs-census-facts.json"
+PR_DEBT_LEDGER = ROOT / "docs" / "github-pr-debt-ledger.json"
+PR_DEBT_FACTS = ROOT / "logs" / "gitvs-pr-debt-facts.json"
 # The classify receipt (per-repo proposals + rationale + path histograms — private names included):
 # a gitignored RECEIPT, never the durable record. The durable record is estate.yaml's repo_overrides,
 # landed by PR from `classify --emit-overrides` output — registry edits are never auto-written.
@@ -75,7 +78,7 @@ REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "statu
 VALID_STATUS = {"active", "envisioned"}
 REQUIRED_CLASS_FIELDS = ("match", "visibility", "branch_protection", "required_checks", "owner", "note")
 VALID_VISIBILITY = {"public", "private", "any"}
-VALID_MATCH_FACT_KEYS = {"fork", "archived", "private"}      # census-fact keys a class may match on
+VALID_MATCH_FACT_KEYS = {"fork", "archived", "private"}  # census-fact keys a class may match on
 VALID_PUBLISH_ELIGIBLE = {"never", "form_twin"}
 VALID_SEO_KEYS = {"description", "topics_min", "homepage", "readme"}
 VALID_SEO_REQ = {"required", "optional"}
@@ -96,6 +99,7 @@ EFFECTOR_KINDS = {"delegate", "file-atom", "reap"}
 EFFECTOR_KINDS_WITH_COMMAND = {"delegate", "reap"}
 
 LEDGER_SCHEMA = "limen.github_estate.v1"
+PR_DEBT_SCHEMA = "limen.github_pr_debt.v1"
 
 
 # ── auth (reuse the cascade; never touch App creds directly) ───────────────────────────────────
@@ -306,6 +310,389 @@ def _owner_open_pr_counts(owner: str, token: str | None) -> dict[str, int] | Non
             except (KeyError, TypeError, ValueError, json.JSONDecodeError):
                 return None
     return None
+
+
+def _resolve_owner_login(owner: str, token: str | None) -> str | None:
+    """Resolve aliases and renamed accounts to GitHub's current canonical login."""
+
+    del token
+    result = _gh_user(["api", f"/users/{owner}", "--jq", ".login"], timeout=30)
+    login = (result.stdout or "").strip()
+    return login if result.returncode == 0 and login else None
+
+
+def _owner_repo_inventory(owner: str, token: str | None) -> dict | None:
+    """Enumerate one canonical owner's complete repository graph.
+
+    Repository pages are reconciled against GraphQL ``totalCount``. Each row
+    carries the repository's exact open-PR total so zero-PR repositories do not
+    require a second request while every non-empty repository still gets its
+    own independently paginated PR cursor.
+    """
+
+    del token
+    for root_kind in ("organization", "user"):
+        cursor: str | None = None
+        expected_total: int | None = None
+        repositories: dict[str, dict] = {}
+        page_count = 0
+        while True:
+            affiliation = ",ownerAffiliations:OWNER" if root_kind == "user" else ""
+            query = (
+                "query($login:String!,$cursor:String){"
+                f"{root_kind}(login:$login){{repositories(first:100,after:$cursor{affiliation}){{"
+                "totalCount nodes{nameWithOwner isPrivate pullRequests(states:OPEN){totalCount}}"
+                "pageInfo{hasNextPage endCursor}}}}"
+            )
+            args = ["api", "graphql", "-f", f"query={query}", "-F", f"login={owner}"]
+            if cursor:
+                args.extend(["-F", f"cursor={cursor}"])
+            result = _gh_user(args, timeout=90)
+            if result.returncode != 0:
+                if cursor is None:
+                    break
+                return None
+            try:
+                payload = json.loads(result.stdout or "{}")
+                owner_data = (payload.get("data") or {}).get(root_kind)
+                if owner_data is None:
+                    break
+                block = owner_data["repositories"]
+                total = int(block["totalCount"])
+                if expected_total is None:
+                    expected_total = total
+                elif total != expected_total:
+                    return None
+                for node in block.get("nodes") or []:
+                    name = str(node["nameWithOwner"])
+                    if name in repositories:
+                        return None
+                    repositories[name] = {
+                        "name_with_owner": name,
+                        "private": bool(node.get("isPrivate")),
+                        "open_pr_total": int((node.get("pullRequests") or {})["totalCount"]),
+                    }
+                page_count += 1
+                page = block["pageInfo"]
+                if not page.get("hasNextPage"):
+                    if expected_total != len(repositories):
+                        return None
+                    return {
+                        "owner": owner,
+                        "repository_total": expected_total,
+                        "page_count": page_count,
+                        "repositories": [repositories[name] for name in sorted(repositories)],
+                    }
+                cursor = str(page.get("endCursor") or "")
+                if not cursor:
+                    return None
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+                return None
+    return None
+
+
+def _repo_open_prs(repo: str, expected_total: int, token: str | None) -> dict:
+    """Page every open PR in one repository and reconcile its live total."""
+
+    del token
+    if expected_total == 0:
+        return {"exhaustive": True, "expected_total": 0, "page_count": 0, "rows": [], "error": None}
+    try:
+        owner, name = repo.split("/", 1)
+    except ValueError:
+        return {
+            "exhaustive": False,
+            "expected_total": expected_total,
+            "page_count": 0,
+            "rows": [],
+            "error": "invalid-repository-name",
+        }
+    cursor: str | None = None
+    rows: dict[int, dict] = {}
+    page_count = 0
+    while True:
+        query = (
+            "query($owner:String!,$name:String!,$cursor:String){"
+            "repository(owner:$owner,name:$name){pullRequests(states:OPEN,first:100,after:$cursor,"
+            "orderBy:{field:UPDATED_AT,direction:DESC}){totalCount "
+            "nodes{number url title isDraft updatedAt headRefName headRefOid body "
+            "author{login} assignees(first:10){nodes{login}} labels(first:50){nodes{name}}} "
+            "pageInfo{hasNextPage endCursor}}}}"
+        )
+        args = [
+            "api",
+            "graphql",
+            "-f",
+            f"query={query}",
+            "-F",
+            f"owner={owner}",
+            "-F",
+            f"name={name}",
+        ]
+        if cursor:
+            args.extend(["-F", f"cursor={cursor}"])
+        result = _gh_user(args, timeout=90)
+        if result.returncode != 0:
+            return {
+                "exhaustive": False,
+                "expected_total": expected_total,
+                "page_count": page_count,
+                "rows": list(rows.values()),
+                "error": "pull-request-page-failed",
+            }
+        try:
+            payload = json.loads(result.stdout or "{}")
+            repository = (payload.get("data") or {}).get("repository")
+            if not isinstance(repository, dict):
+                raise ValueError("repository unavailable")
+            block = repository["pullRequests"]
+            if int(block["totalCount"]) != expected_total:
+                raise ValueError("pull-request-total-moved")
+            for node in block.get("nodes") or []:
+                number = int(node["number"])
+                if number in rows:
+                    raise ValueError("duplicate-pull-request-cursor-row")
+                rows[number] = dict(node)
+            page_count += 1
+            page = block["pageInfo"]
+            if not page.get("hasNextPage"):
+                if len(rows) != expected_total:
+                    raise ValueError("pull-request-total-not-reconciled")
+                return {
+                    "exhaustive": True,
+                    "expected_total": expected_total,
+                    "page_count": page_count,
+                    "rows": [rows[number] for number in sorted(rows)],
+                    "error": None,
+                }
+            cursor = str(page.get("endCursor") or "")
+            if not cursor:
+                raise ValueError("pull-request-cursor-missing")
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            return {
+                "exhaustive": False,
+                "expected_total": expected_total,
+                "page_count": page_count,
+                "rows": list(rows.values()),
+                "error": str(exc),
+            }
+
+
+def _pr_owner(row: dict, owner_label_prefix: str) -> tuple[str | None, str | None]:
+    labels = sorted(
+        str(node.get("name") or "") for node in ((row.get("labels") or {}).get("nodes") or []) if isinstance(node, dict)
+    )
+    labelled = [label[len(owner_label_prefix) :].strip() for label in labels if label.startswith(owner_label_prefix)]
+    labelled = [owner for owner in labelled if owner]
+    if len(labelled) == 1:
+        return labelled[0], "label"
+    assignees = sorted(
+        str(node.get("login") or "")
+        for node in ((row.get("assignees") or {}).get("nodes") or [])
+        if isinstance(node, dict) and node.get("login")
+    )
+    if assignees:
+        return assignees[0], "assignee"
+    author = row.get("author") or {}
+    if isinstance(author, dict) and author.get("login"):
+        return str(author["login"]), "author"
+    return None, None
+
+
+def _classify_open_pr(repo: str, row: dict, policy: dict, now: datetime) -> dict:
+    number = int(row["number"])
+    owner_label_prefix = str(policy.get("owner_label_prefix") or "owner:")
+    owner, owner_source = _pr_owner(row, owner_label_prefix)
+    head_oid = str(row.get("headRefOid") or "")
+    labels = {
+        str(node.get("name") or "") for node in ((row.get("labels") or {}).get("nodes") or []) if isinstance(node, dict)
+    }
+    body = str(row.get("body") or "")
+    markers = [str(marker) for marker in (policy.get("preservation_markers") or []) if str(marker)]
+    preservation = bool(labels.intersection(policy.get("preservation_labels") or [])) or any(
+        marker in body for marker in markers
+    )
+    predicate = f"github:required-checks:{repo}@{head_oid}" if head_oid else None
+    merge_condition = f"github:merge-queue:{repo}#{number}:ready-and-required-checks-green" if head_oid else None
+    base = {
+        "repository": repo,
+        "number": number,
+        "url": row.get("url"),
+        "private": False,
+        "owner": owner,
+        "owner_source": owner_source,
+        "predicate": predicate,
+        "merge_condition": merge_condition,
+        "head_oid": head_oid or None,
+        "updated_at": row.get("updatedAt"),
+    }
+    if preservation and owner and head_oid:
+        return {**base, "classification": "preservation", "classification_reason": "remote-preservation-marker"}
+
+    try:
+        updated = datetime.fromisoformat(str(row.get("updatedAt") or "").replace("Z", "+00:00"))
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+        age_hours = max(0.0, (now - updated.astimezone(timezone.utc)).total_seconds() / 3600)
+    except ValueError:
+        age_hours = float("inf")
+    max_age = int(policy.get("active_owner_max_age_hours") or 168)
+    if owner and head_oid and age_hours <= max_age:
+        return {
+            **base,
+            "classification": "active_custody",
+            "classification_reason": "fresh-remote-owner-and-head",
+            "age_hours": round(age_hours, 2),
+        }
+    if owner and predicate and merge_condition:
+        return {
+            **base,
+            "classification": "owner_route",
+            "classification_reason": "stale-or-inactive-routed-to-live-owner",
+            "age_hours": None if age_hours == float("inf") else round(age_hours, 2),
+        }
+    return {
+        **base,
+        "classification": "untyped",
+        "classification_reason": "missing-owner-or-remote-head",
+        "age_hours": None if age_hours == float("inf") else round(age_hours, 2),
+    }
+
+
+def _redact_pr_row(row: dict) -> dict:
+    if not row.get("private"):
+        return row
+    repo = str(row.get("repository") or "")
+    number = int(row.get("number") or 0)
+    owner = str(row.get("owner") or "")
+    return {
+        **row,
+        "repository": None,
+        "number": None,
+        "url": None,
+        "owner": None,
+        "head_oid": None,
+        "predicate": None,
+        "merge_condition": None,
+        "pr_key": hashlib.sha256(f"{repo}#{number}".encode()).hexdigest(),
+        "owner_key": hashlib.sha256(owner.encode()).hexdigest() if owner else None,
+    }
+
+
+def pr_debt_census(estate: dict, *, now: datetime | None = None) -> tuple[dict, dict]:
+    """Return the full private runtime receipt and its tracked redacted projection."""
+
+    observed = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    online = not os.environ.get("LIMEN_OFFLINE") and shutil.which("gh") is not None
+    token = "user-native" if online else None
+    requested_owners = owners(estate)
+    failures: list[str] = []
+    canonical_owners: list[str] = []
+    for requested in requested_owners:
+        canonical = _resolve_owner_login(requested, token) if token else None
+        if not canonical:
+            failures.append(f"owner-unavailable:{requested}")
+            continue
+        if canonical not in canonical_owners:
+            canonical_owners.append(canonical)
+
+    repositories: dict[str, dict] = {}
+    repository_pages = 0
+    for owner in canonical_owners:
+        inventory = _owner_repo_inventory(owner, token)
+        if inventory is None:
+            failures.append(f"repository-cursor-failed:{owner}")
+            continue
+        repository_pages += int(inventory["page_count"])
+        for repository in inventory["repositories"]:
+            name = str(repository["name_with_owner"])
+            prior = repositories.get(name)
+            if prior is not None and prior != repository:
+                failures.append(f"repository-reconciliation-conflict:{name}")
+                continue
+            repositories[name] = repository
+
+    policy = estate.get("pr_debt_policy") or {}
+    classified: list[dict] = []
+    pr_pages = 0
+    expected_pr_total = sum(int(repo["open_pr_total"]) for repo in repositories.values())
+    for repo_name in sorted(repositories):
+        repository = repositories[repo_name]
+        page = _repo_open_prs(repo_name, int(repository["open_pr_total"]), token)
+        pr_pages += int(page["page_count"])
+        if not page["exhaustive"]:
+            failures.append(f"pull-request-cursor-failed:{repo_name}:{page['error']}")
+        for pr in page["rows"]:
+            row = _classify_open_pr(repo_name, pr, policy, observed)
+            row["private"] = bool(repository["private"])
+            classified.append(row)
+
+    if len(classified) != expected_pr_total:
+        failures.append(f"open-pr-total-not-reconciled:{len(classified)}/{expected_pr_total}")
+    counts: dict[str, int] = {}
+    for row in classified:
+        category = str(row["classification"])
+        counts[category] = counts.get(category, 0) + 1
+    exhaustive = not failures
+    full = {
+        "schema": PR_DEBT_SCHEMA,
+        "generated_at": observed.isoformat().replace("+00:00", "Z"),
+        "exhaustive": exhaustive,
+        "requested_owner_count": len(requested_owners),
+        "canonical_owner_count": len(canonical_owners),
+        "canonical_owners": sorted(canonical_owners),
+        "repository_count": len(repositories),
+        "private_repository_count": sum(bool(repo["private"]) for repo in repositories.values()),
+        "open_pr_count": len(classified),
+        "expected_open_pr_count": expected_pr_total,
+        "classification_counts": dict(sorted(counts.items())),
+        "untyped_count": counts.get("untyped", 0),
+        "cursor_reconciliation": {
+            "repository_pages": repository_pages,
+            "pull_request_pages": pr_pages,
+            "failures": failures,
+        },
+        "pull_requests": classified,
+    }
+    public_rows = [_redact_pr_row(row) for row in classified]
+    tracked = {
+        **{key: value for key, value in full.items() if key not in {"canonical_owners", "pull_requests"}},
+        "canonical_owner_count": len(canonical_owners),
+        "cursor_reconciliation": {
+            "repository_pages": repository_pages,
+            "pull_request_pages": pr_pages,
+            "failure_count": len(failures),
+        },
+        "pull_requests": public_rows,
+    }
+    tracked["content_sha256"] = hashlib.sha256(
+        json.dumps(
+            {key: value for key, value in tracked.items() if key not in {"generated_at", "content_sha256"}},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    return full, tracked
+
+
+def pr_debt(estate: dict, *, check: bool, print_json: bool, write_ledger: bool) -> int:
+    full, tracked = pr_debt_census(estate)
+    if write_ledger:
+        PR_DEBT_LEDGER.parent.mkdir(parents=True, exist_ok=True)
+        PR_DEBT_LEDGER.write_text(json.dumps(tracked, indent=2, sort_keys=True) + "\n")
+        PR_DEBT_FACTS.parent.mkdir(parents=True, exist_ok=True)
+        PR_DEBT_FACTS.write_text(json.dumps(full, indent=2, sort_keys=True) + "\n")
+    if print_json:
+        print(json.dumps(tracked, indent=2, sort_keys=True))
+    ok = bool(full["exhaustive"] and full["untyped_count"] == 0)
+    if not print_json:
+        mark = "✓" if ok else "✗"
+        print(
+            f"{mark} gitvs pr-debt: repos={full['repository_count']} "
+            f"open_prs={full['open_pr_count']} exhaustive={str(full['exhaustive']).lower()} "
+            f"untyped={full['untyped_count']}"
+        )
+    return 1 if check and not ok else 0
 
 
 def _org_app_estate(token: str | None, online: bool) -> dict:
@@ -821,9 +1208,7 @@ def parity(estate: dict) -> list[str]:
             if field not in org_row:
                 fails.append(f"org-class '{oname}': missing '{field}'")
         pok = org_row.get("plan_ok")
-        if pok is not None and (
-            not isinstance(pok, list) or not pok or not all(isinstance(p, str) and p for p in pok)
-        ):
+        if pok is not None and (not isinstance(pok, list) or not pok or not all(isinstance(p, str) and p for p in pok)):
             fails.append(f"org-class '{oname}': plan_ok must be a non-empty string list")
     return fails
 
@@ -1070,14 +1455,12 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
                 if isinstance(ceiling, int) and (ob.get("repos") or 0) > ceiling:
                     drifts.append(f"{org}: holds {ob.get('repos')} repo(s), declared {ceiling}")
             if drifts:
-                atom = (estate.get("human_atoms") or {}).get("enterprise_cancel", {}).get(
-                    "lever", "L-ORG-TEAM-UPGRADE"
-                )
+                atom = (estate.get("human_atoms") or {}).get("enterprise_cancel", {}).get("lever", "L-ORG-TEAM-UPGRADE")
                 more = f"; +{len(drifts) - 4} more" if len(drifts) > 4 else ""
-                line = f"[L org-posture] {len(drifts)} org(s) off account policy ({'; '.join(drifts[:4])}{more}) → {atom}"
-                (cites if atom in homed else fails).append(
-                    line + (" (owned, open)" if atom in homed else " (UNHOMED)")
+                line = (
+                    f"[L org-posture] {len(drifts)} org(s) off account policy ({'; '.join(drifts[:4])}{more}) → {atom}"
                 )
+                (cites if atom in homed else fails).append(line + (" (owned, open)" if atom in homed else " (UNHOMED)"))
 
     # A/D are per-repo posture rungs — the census surfaces the inputs; the full per-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.
@@ -1240,9 +1623,7 @@ def _pubpolicy():
     try:
         import importlib.util
 
-        spec = importlib.util.spec_from_file_location(
-            "publication_policy", str(SCRIPT_DIR / "publication-policy.py")
-        )
+        spec = importlib.util.spec_from_file_location("publication_policy", str(SCRIPT_DIR / "publication-policy.py"))
         pp = importlib.util.module_from_spec(spec)
         sys.modules["publication_policy"] = pp
         spec.loader.exec_module(pp)
@@ -1289,9 +1670,7 @@ def _registry_repo_set(path: Path, key: str = "repos") -> set[str]:
         return set()
 
 
-def classify_estate(
-    estate: dict, *, fresh: bool, sample_max: int, emit: bool, only: str | None
-) -> int:
+def classify_estate(estate: dict, *, fresh: bool, sample_max: int, emit: bool, only: str | None) -> int:
     """Propose a publication class per repo (R1–R9 over census facts + path sampling). Writes the
     gitignored receipt (DECISIONS); --emit-overrides prints ready-to-paste registry rows. The
     PROPOSAL engine — the durable decision is the estate.yaml row a human-reviewed PR lands."""
@@ -1385,10 +1764,7 @@ def classify_estate(
     try:
         DECISIONS.parent.mkdir(parents=True, exist_ok=True)
         DECISIONS.write_text(
-            json.dumps(
-                {"schema": "limen.estate_decisions.v1", "rows": decisions}, indent=2, sort_keys=True
-            )
-            + "\n"
+            json.dumps({"schema": "limen.estate_decisions.v1", "rows": decisions}, indent=2, sort_keys=True) + "\n"
         )
     except Exception as e:
         print(f"[gitvs] note: decisions receipt write skipped ({str(e)[:80]})")
@@ -1510,7 +1886,9 @@ def usage(estate: dict, *, check: bool, print_json: bool) -> int:
     org = owners(estate)[0]
     month_data = _usage_month(org, now.year, now.month)
     if month_data is None:
-        print(f"[gitvs] usage: SKIP (billing usage endpoint unreadable for {org} — needs the user-scoped keyring token)")
+        print(
+            f"[gitvs] usage: SKIP (billing usage endpoint unreadable for {org} — needs the user-scoped keyring token)"
+        )
         return 0
     canary_repo = os.environ.get("LIMEN_BILLING_CANARY_REPO") or "organvm/limen"
     canary_green, canary_detail = _billing_canary(canary_repo)
@@ -1590,6 +1968,14 @@ def main(argv: list[str] | None = None) -> int:
         "--check", action="store_true", help="exit 1 when projected spend exceeds budget or the canary is red"
     )
     pu.add_argument("--print", action="store_true", help="print the usage doc JSON to stdout too")
+    ppd = sub.add_parser("pr-debt", help="exact paginated open-PR custody and owner-route predicate")
+    ppd.add_argument("--check", action="store_true", help="exit 1 unless enumeration is exhaustive and typed")
+    ppd.add_argument("--json", action="store_true", help="print the redacted machine-readable census")
+    ppd.add_argument(
+        "--write-ledger",
+        action="store_true",
+        help="write the tracked redacted ledger and gitignored private facts receipt",
+    )
     args = ap.parse_args(argv)
 
     estate = load_estate()
@@ -1627,6 +2013,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "usage":
         return usage(estate, check=bool(args.check), print_json=bool(args.print))
+
+    if args.cmd == "pr-debt":
+        return pr_debt(
+            estate,
+            check=bool(args.check),
+            print_json=bool(args.json),
+            write_ledger=bool(args.write_ledger),
+        )
 
     return 2
 

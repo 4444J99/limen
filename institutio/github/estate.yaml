@@ -32,6 +32,15 @@
 
 schema_version: 0.1
 
+pr_debt_policy:
+  active_owner_max_age_hours: 168
+  owner_label_prefix: "owner:"
+  preservation_labels: ["custody:preservation"]
+  preservation_markers:
+    - "Lifecycle preservation PR opened by `scripts/worktree-pr-receipts.py`."
+  owner: gitvs
+  note: "Runtime policy for typing every exhaustively enumerated open PR without encoding owners, repositories, or provider names in the engine."
+
 # ── the machine identity contract ────────────────────────────────────────────────────────────
 # The App is the estate's actor. `expected_permissions` is the least-privilege posture the doctor
 # holds the live App installation to — it fails on an OVER-grant (drift toward more-than-declared),
