@@ -153,6 +153,17 @@
         "work_id": {
           "title": "Work Id",
           "type": "string"
+        },
+        "work_loan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WorkLoanV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -256,6 +267,114 @@
       },
       "title": "SpendEnvelopeV1",
       "type": "object"
+    },
+    "WorkLoanV1": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "external_deadline": {
+                "const": true
+              }
+            },
+            "required": [
+              "external_deadline"
+            ]
+          },
+          "then": {
+            "properties": {
+              "due_at": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "due_at"
+            ]
+          }
+        }
+      ],
+      "description": "The collateral required before one bounded run may consume capacity.",
+      "properties": {
+        "budget_cost": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Budget Cost",
+          "type": "integer"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "external_deadline": {
+          "default": false,
+          "title": "External Deadline",
+          "type": "boolean"
+        },
+        "horizon": {
+          "enum": [
+            "past",
+            "present",
+            "future"
+          ],
+          "title": "Horizon",
+          "type": "string"
+        },
+        "owner_surface": {
+          "maxLength": 8192,
+          "minLength": 1,
+          "pattern": "^[^\\x00]*[^\\s\\x00][^\\x00]*$",
+          "title": "Owner Surface",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.work_loan.v1",
+          "default": "limen.work_loan.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_origin": {
+          "enum": [
+            "obligation",
+            "human_prompt",
+            "agent_recommendation",
+            "system_debt"
+          ],
+          "title": "Source Origin",
+          "type": "string"
+        },
+        "value_case": {
+          "maxLength": 8192,
+          "minLength": 1,
+          "pattern": "^[^\\x00]*[^\\s\\x00][^\\x00]*$",
+          "title": "Value Case",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_origin",
+        "horizon",
+        "value_case",
+        "budget_cost",
+        "owner_surface"
+      ],
+      "title": "WorkLoanV1",
+      "type": "object"
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -301,6 +420,17 @@
       "default": "limen.fanout_manifest.v1",
       "title": "Schema Version",
       "type": "string"
+    },
+    "work_loan": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkLoanV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

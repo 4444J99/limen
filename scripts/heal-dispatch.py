@@ -30,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for
 from limen.chronic import CHRONIC_FLEET_DEBT_LABEL, chronic_escalated_to_needs_human  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
+from limen.intake import contract_fields, github_issue_owner_contract  # noqa: E402
 from limen.models import DispatchLogEntry, Task, dispatch_session_id, has_jules_landing_hold  # noqa: E402
 from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
@@ -77,6 +78,14 @@ def ensure_heal_singleton(
     """
     tid = heal_task_key(repo, symptom)
     stamp = now.date().isoformat()
+    contract = contract_fields(github_issue_owner_contract(repo, tid))
+    collateral = {
+        "origin": "system_debt",
+        "horizon": "past",
+        "value_case": f"Resolve the recurring {symptom} lifecycle defect for {repo}",
+        "owner_surface": repo,
+        **contract,
+    }
     existing = next((t for t in lf.tasks if t.id == tid), None)
     if existing is not None:
         if has_jules_landing_hold(existing):
@@ -84,11 +93,15 @@ def ensure_heal_singleton(
         if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (existing.labels or []):
             return None
         if existing.status in _ACTIVE_STATES:
+            for key, value in collateral.items():
+                setattr(existing, key, value)
             return None  # already being worked — converge, idempotent
         # prior episode closed; reopen the canonical singleton
         existing.status = "open"
         existing.title = title
         existing.context = context
+        for key, value in collateral.items():
+            setattr(existing, key, value)
         existing.updated = now
         existing.dispatch_log.append(
             DispatchLogEntry(
@@ -114,6 +127,7 @@ def ensure_heal_singleton(
             labels=["lifecycle", "heal-dispatch"],
             urls=[],
             context=context,
+            **collateral,
             depends_on=[],
             created=stamp,
             dispatch_log=[],

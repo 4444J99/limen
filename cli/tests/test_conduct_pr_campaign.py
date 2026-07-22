@@ -142,12 +142,17 @@ def test_campaign_packet_decomposition_is_deterministic_and_bounded() -> None:
     )
     cohorts = list(children("run-root"))
     assert root.work_key.endswith(census.snapshot_digest)
+    assert root.work_loan is not None
+    assert root.work_loan.budget_cost == root.spend.limit == 10
     assert len(cohorts) == 1
     assert cohorts[0].parent_run_id == "run-root"
     assert cohorts[0].authority.repositories == frozenset({"organvm/two"})
     assert cohorts[0].fanout.max_children == 3
+    assert cohorts[0].work_loan is not None
+    assert cohorts[0].work_loan.owner_surface == "github:organvm/two"
     leaves = list(children.leaves("run-cohort", cohorts[0]))
     assert [leaf.intent["number"] for leaf in leaves] == [1, 2]
     assert all(leaf.parent_run_id == "run-cohort" for leaf in leaves)
     assert all(leaf.intent["head"] in leaf.predicate for leaf in leaves)
     assert all(leaf.resource_claims[0].key.endswith(f"@{leaf.intent['head']}") for leaf in leaves)
+    assert all(leaf.work_loan is not None and leaf.work_loan.budget_cost == 1 for leaf in leaves)

@@ -147,6 +147,7 @@ export async function validateWorkPacket(payload) {
     execution: {},
     intent_hash: "",
     execution_hash: "",
+    work_loan: null,
     preferred_agent: null,
     required_capabilities: [],
     resource_claims: [],

@@ -243,6 +243,8 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
             new.append(Task(
                 id=tid, title=title.format(**fmt), repo=repo, type="code",
                 target_agent="any", priority=prio, budget_cost=2, status="open",
+                origin="agent_recommendation", horizon="present",
+                value_case=f"Advance {product} along its recorded first-dollar path: {path}",
                 # labels[0] = lever key (dedup handle); the rest are win-classes (ride the accelerator).
                 labels=[key, "revenue", "product", "ship-order", "generated"], urls=[],
                 context=ctx.format(**fmt)

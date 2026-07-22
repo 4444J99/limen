@@ -217,6 +217,8 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
             new.append(Task(
                 id=tid, title=title.format(**fmt), repo=org["repo"], type="content",
                 target_agent="any", priority=prio, budget_cost=2, status="open",
+                origin="agent_recommendation", horizon="future",
+                value_case=f"Increase durable institutional maturity for {pillar}",
                 # labels[0] = lever key (dedup handle); pillar:<x> scopes dedup; rest = organ win-classes.
                 labels=[key, f"pillar:{pillar}", "organ", "institution", "vltima", "generated"], urls=[],
                 context=ctx.format(**fmt)

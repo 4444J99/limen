@@ -366,6 +366,10 @@ def test_upsert_idempotent_writes_once(tmp_path, monkeypatch):
     doc = yaml.safe_load(tasks_file.read_text())
     starved_tasks = [t for t in doc.get("tasks", []) if t.get("id") == "ASK-lane-starved-jules"]
     assert len(starved_tasks) == 1
+    assert starved_tasks[0]["origin"] == "system_debt"
+    assert starved_tasks[0]["horizon"] == "present"
+    assert starved_tasks[0]["value_case"] == "Restore dispatch continuity for the starved jules lane"
+    assert starved_tasks[0]["owner_surface"] == "organvm/limen"
 
 
 # ── artifact + voice stamp ────────────────────────────────────────────────────

@@ -255,6 +255,12 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
 
             ex = index.get(tid)
             contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
+            collateral = {
+                "origin": "obligation",
+                "horizon": "present",
+                "value_case": f"Restore delivery for the declared cloud routine {name}",
+                "owner_surface": "organvm/limen",
+            }
             if (
                 ex
                 and ex.status != "done"
@@ -262,6 +268,10 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
                 and not has_jules_landing_hold(ex)
             ):
                 refreshed = False
+                for key, value in collateral.items():
+                    if getattr(ex, key) != value:
+                        setattr(ex, key, value)
+                        refreshed = True
                 if ex.status != "needs_human":
                     ex.status = "needs_human"
                     ex.dispatch_log.append(
@@ -304,6 +314,7 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
                         status="needs_human",
                         labels=["routine-freshness", "needs-human"],
                         context=ctx,
+                        **collateral,
                         **contract,
                         created=_date.today(),
                         updated=now_dt,

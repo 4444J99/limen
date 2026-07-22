@@ -22,9 +22,17 @@ from collections import Counter
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from limen.models import LimenFile, Task
+from limen.work_loan import (
+    task_due,
+    task_horizon,
+    task_origin,
+    task_source_lineage,
+    task_value_case,
+    task_work_loan_readiness,
+)
 from limen.workstream import assign_channel
 
 # Keep the original schema identifier so existing JSON consumers continue to
@@ -60,89 +68,12 @@ LIFECYCLE_STAGE = {
     "archived": 100,
 }
 
-_ORIGIN_ALIASES = {
-    "ask": "human_prompt",
-    "human": "human_prompt",
-    "human_ask": "human_prompt",
-    "prompt": "human_prompt",
-    "human_prompt": "human_prompt",
-    "due": "obligation",
-    "external": "obligation",
-    "obligation": "obligation",
-    "agent": "agent_recommendation",
-    "agent_recommendation": "agent_recommendation",
-    "recommendation": "agent_recommendation",
-    "system": "system_debt",
-    "debt": "system_debt",
-    "system_debt": "system_debt",
-}
-_HORIZON_ALIASES = {
-    "past": "past",
-    "recovery": "past",
-    "present": "present",
-    "now": "present",
-    "current": "present",
-    "next": "future",
-    "future": "future",
-    "later": "future",
-}
-
 
 def _slug(value: Any) -> str | None:
     if value is None:
         return None
     normalized = re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()).strip("_")
     return normalized or None
-
-
-def _field_or_label(task: Task, fields: Iterable[str], label_prefixes: Iterable[str]) -> str | None:
-    """Read explicit metadata without guessing from a title or task ID."""
-
-    for field in fields:
-        value = getattr(task, field, None)
-        if value is not None and str(value).strip():
-            return str(value).strip()
-    prefixes = tuple(f"{prefix}:" for prefix in label_prefixes)
-    for label in task.labels:
-        lowered = str(label).strip().lower()
-        for prefix in prefixes:
-            if lowered.startswith(prefix) and lowered[len(prefix) :].strip():
-                return lowered[len(prefix) :].strip()
-    return None
-
-
-def task_origin(task: Task) -> str:
-    raw = _field_or_label(
-        task,
-        ("intent_origin", "work_origin", "origin"),
-        ("origin", "intent-origin", "work-origin"),
-    )
-    value = _slug(raw)
-    return _ORIGIN_ALIASES.get(value or "", value or "unknown")
-
-
-def task_horizon(task: Task) -> str:
-    raw = _field_or_label(task, ("time_horizon", "horizon"), ("horizon", "time-horizon"))
-    value = _slug(raw)
-    return _HORIZON_ALIASES.get(value or "", value or "unknown")
-
-
-def task_due(task: Task) -> str | None:
-    return _field_or_label(
-        task,
-        ("due_at", "due_on", "due_date", "deadline"),
-        ("due", "due-at", "due-on", "deadline"),
-    )
-
-
-def task_value_case(task: Task) -> str | None:
-    """Return the explicit reason this task deserves scarce work capacity."""
-
-    return _field_or_label(
-        task,
-        ("value_case", "expected_value", "work_credit"),
-        ("value", "value-case", "work-credit"),
-    )
 
 
 def _percent(numerator: int, denominator: int) -> float:
@@ -162,14 +93,8 @@ def _task_row(task: Task, root: Path) -> dict[str, Any]:
     origin = task_origin(task)
     horizon = task_horizon(task)
     value_case = task_value_case(task)
-    underwriting_ready = bool(
-        task.repo
-        and origin != "unknown"
-        and horizon != "unknown"
-        and value_case
-        and task.predicate
-        and task.receipt_target
-    )
+    readiness = task_work_loan_readiness(task)
+    underwriting_ready = readiness.ready
     # This lens does not execute predicates or dereference receipts.  Credit is
     # verified only when an owning producer has recorded an explicit boolean
     # verification receipt on the task; absence is debt, never inferred PASS.
@@ -184,6 +109,7 @@ def _task_row(task: Task, root: Path) -> dict[str, Any]:
         "title": task.title,
         "repo": task.repo or "unknown",
         "workstream": assign_channel(task, root),
+        "source_lineage": task_source_lineage(task),
         "origin": origin,
         "horizon": horizon,
         "due": task_due(task),
@@ -201,6 +127,7 @@ def _task_row(task: Task, root: Path) -> dict[str, Any]:
         "receipt_target_present": bool(task.receipt_target),
         "contract_ready": contract_ready,
         "underwriting_ready": underwriting_ready,
+        "underwriting_denial": readiness.reason_code,
         "work_loan_cost_runs": task.budget_cost,
         "debit_requested_runs": task.budget_cost,
         "updated": task.updated.isoformat() if task.updated else None,
@@ -224,6 +151,9 @@ def _summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     unsubstantiated_terminal_claims = sum(row["credit_booking"] == "unsubstantiated_terminal_claim" for row in rows)
     verified_receipt_claims = sum(bool(row["receipt_verified"]) for row in rows)
     verified_receipt_debt = complete - verified_receipt_claims
+    underwriting_denial_counts = Counter(
+        str(row["underwriting_denial"]) for row in rows if not row["complete"] and row.get("underwriting_denial")
+    )
     return {
         "total": total,
         "complete": complete,
@@ -248,6 +178,7 @@ def _summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "verified_receipt_claims": verified_receipt_claims,
         "verified_receipt_debt": verified_receipt_debt,
         "verified_receipt_coverage_pct": _percent(verified_receipt_claims, complete),
+        "underwriting_denial_counts": dict(sorted(underwriting_denial_counts.items())),
     }
 
 
@@ -587,7 +518,8 @@ def build_progress_snapshot(limen: LimenFile, root: Path, *, now: datetime | Non
         "summary": summary,
         "status_counts": dict(sorted(Counter(row["status"] for row in rows).items())),
         "dimensions": {
-            field: _groups(rows, field) for field in ("workstream", "origin", "horizon", "agent", "repo", "status")
+            field: _groups(rows, field)
+            for field in ("workstream", "source_lineage", "origin", "horizon", "agent", "repo", "status")
         },
         "source_coverage": source_rows,
         "tasks": rows,

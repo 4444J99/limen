@@ -536,6 +536,12 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
             contract = contract_fields(github_main_green_contract(REPO, head_sha, WORKFLOW))
         except IntakeContractError:
             return None  # stale/partial cache cannot create an exact-head contract; retry after live refresh
+        collateral = {
+            "origin": "system_debt",
+            "horizon": "present",
+            "value_case": f"Restore {REPO} protected main to green at exact head {head_sha}",
+            "owner_surface": REPO,
+        }
         if existing is not None:
             if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (existing.labels or []):
                 return None
@@ -546,6 +552,7 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
                     "context": context,
                     "predicate": contract["predicate"],
                     "receipt_target": contract["receipt_target"],
+                    **collateral,
                 }.items():
                     if getattr(existing, key) != value:
                         setattr(existing, key, value)
@@ -570,6 +577,8 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
             existing.priority = "critical"
             existing.predicate = contract["predicate"]
             existing.receipt_target = contract["receipt_target"]
+            for key, value in collateral.items():
+                setattr(existing, key, value)
             if url and url not in (existing.urls or []):
                 existing.urls = [*(existing.urls or []), url]
             existing.updated = _now()
@@ -606,6 +615,7 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
                 urls=[url] if url else [],
                 context=context,
                 **contract,
+                **collateral,
                 depends_on=[],
                 created=stamp,
                 dispatch_log=[],

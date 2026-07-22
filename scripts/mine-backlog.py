@@ -114,6 +114,9 @@ def _to_task(issue: dict) -> dict:
         # mine it straight into the needs_human STATUS so label and status never contradict
         # (an `open` needs-human task fails the board validator + gets re-picked forever).
         "status": "needs_human" if "needs-human" in labels else "open",
+        "origin": "obligation",
+        "horizon": "present",
+        "value_case": f"Close the source-owned GitHub obligation {nwo}#{num}",
         "labels": labels,
         "urls": [issue["url"]],
         "context": f"GitHub issue {nwo}#{num}. {excerpt}".strip(),

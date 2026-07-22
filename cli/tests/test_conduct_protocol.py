@@ -156,6 +156,16 @@ def test_executor_attempt_schema_matches_python_runtime() -> None:
     }
 
 
+def test_work_packet_schema_exposes_optional_work_loan_compatibly() -> None:
+    schema_path = Path(__file__).resolve().parents[2] / "spec" / "contracts" / "conduct" / "work-packet-v1.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    assert schema == {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        **WorkPacketV1.model_json_schema(mode="validation"),
+    }
+    assert "work_loan" not in schema["required"]
+
+
 def test_path_prefix_overlap_and_review_writer_coexistence() -> None:
     assert resources_overlap(
         ResourceClaimV1(key="path/organvm/limen/main/cli"),

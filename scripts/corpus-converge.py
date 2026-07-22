@@ -403,6 +403,9 @@ def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
             target_agent="any",
             priority="low",
             type="corpus-gap",
+            origin="system_debt",
+            horizon="past",
+            value_case=f"Preserve and close the prompt-corpus gap surfaced from {origin}",
             context=f"corpus gap surfaced by convergence of {origin}",
             **contract_fields(github_pr_contract("organvm/limen", gid)),
         )

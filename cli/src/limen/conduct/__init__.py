@@ -16,6 +16,7 @@ from limen.conduct.models import (
     WorkPacketV1,
 )
 from limen.conduct.store import MemoryStateStore, SQLiteStateStore
+from limen.work_loan import WorkLoanV1
 
 __all__ = [
     "AgentIdentityV1",
@@ -35,4 +36,5 @@ __all__ = [
     "SQLiteStateStore",
     "SpendEnvelopeV1",
     "WorkPacketV1",
+    "WorkLoanV1",
 ]

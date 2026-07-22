@@ -3,6 +3,7 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
 import yaml
 
 
@@ -426,6 +427,7 @@ def test_task_add_and_status_are_conduct_compatibility_events(tmp_path, monkeypa
         "organvm/limen",
         "pytest -q",
         "github:organvm/limen:pull-request:LIMEN-001",
+        "Deliver the explicitly requested MCP task",
         agent="codex",
     )
     updated = server.update_task_status("TASK-STATUS", "done", context="predicate passed")
@@ -434,6 +436,25 @@ def test_task_add_and_status_are_conduct_compatibility_events(tmp_path, monkeypa
     assert "submitted status done" in updated
     assert [packet.intent["kind"] for packet in client.packets] == ["task.upsert", "task.status"]
     assert tasks.read_bytes() == before
+
+
+def test_task_add_rejects_noncanonical_work_loan_enums() -> None:
+    server = _load_server()
+    arguments = (
+        "New task",
+        "organvm/limen",
+        "pytest -q",
+        "github:organvm/limen:pull-request:LIMEN-001",
+        "Deliver the explicitly requested MCP task",
+    )
+    with pytest.raises(ValueError, match="origin must be one of"):
+        server.add_task(*arguments, origin="urgent")
+    with pytest.raises(ValueError, match="horizon must be one of"):
+        server.add_task(*arguments, horizon="soon")
+    with pytest.raises(ValueError, match="due_at is required"):
+        server.add_task(*arguments, external_deadline=True)
+    with pytest.raises(ValueError, match="valid ISO date"):
+        server.add_task(*arguments, external_deadline=True, due_at="soon")
 
 
 def test_mcp_conduct_tools_forward_the_identical_protocol_models(monkeypatch):

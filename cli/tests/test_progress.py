@@ -48,7 +48,7 @@ def _board() -> LimenFile:
                         "money",
                     ],
                     "predicate": "test -f receipt.json",
-                    "receipt_target": "receipt.json",
+                    "receipt_target": "git:organvm/finance:receipts/DUE-1.json",
                     "value_case": "Clears a time-bound financial liability",
                     "created": "2026-07-13",
                 },
@@ -111,6 +111,9 @@ def test_snapshot_keeps_origins_horizons_and_unknown_coverage_distinct(
     assert snapshot["summary"]["closure_pct"] == 25.0
     assert snapshot["summary"]["contract_ready_active"] == 1
     assert snapshot["summary"]["underwritten_active"] == 1
+    assert snapshot["summary"]["underwriting_denial_counts"] == {
+        "task-not-underwritten:value_case,predicate,receipt_target": 2,
+    }
     assert snapshot["summary"]["underwriting_coverage_pct"] == 33.3
     assert snapshot["summary"]["requested_active_debit_runs"] == 3
     assert snapshot["summary"]["underwritten_active_debit_runs"] == 1
@@ -133,6 +136,7 @@ def test_snapshot_keeps_origins_horizons_and_unknown_coverage_distinct(
         "system_debt",
         "agent_recommendation",
     }
+    assert snapshot["dimensions"]["source_lineage"][0]["source_lineage"] == "unknown"
 
 
 def test_snapshot_marks_missing_sensors_dark_and_does_not_invent_zero(

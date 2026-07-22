@@ -20,7 +20,7 @@ const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PLACEHOLDER_RE = /<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b/i;
 const ACTIVE_STATUSES = new Set(["open", "dispatched", "in_progress"]);
 const EXECUTABLES = new Set([
-  "[", "bash", "bundle", "cargo", "curl", "gh", "git", "go", "just", "make", "node", "nox", "npm",
+  "[", "bash", "bundle", "cargo", "curl", "gh", "git", "go", "just", "limen", "make", "node", "nox", "npm",
   "pnpm", "py.test", "pytest", "python", "python3", "ruby", "sh", "test", "tox", "uv", "yarn", "zsh",
 ]);
 const TABULARIUS_TICKET_ACTION = "Submit a TABVLARIVS ticket and let the keeper publish the board projection PR";

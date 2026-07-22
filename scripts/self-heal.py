@@ -294,6 +294,10 @@ def build_task(verdict, repo, num, url, stamp):
         urls=[url] if url else [],
         context=spec["context"].format(repo=repo, num=num, url=url or f"{repo}#{num}")
         + f" [auto-emitted {stamp} by self-heal so merge-drain can land it]",
+        origin="system_debt",
+        horizon="past",
+        value_case=f"Resolve the recurring {verdict} pull-request defect for {repo}#{num}",
+        owner_surface=repo,
         **contract,
         depends_on=[],
         created=stamp,

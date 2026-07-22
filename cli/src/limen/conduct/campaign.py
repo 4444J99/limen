@@ -24,6 +24,7 @@ from limen.conduct.models import (
     WorkPacketV1,
     canonical_hash,
 )
+from limen.work_loan import WorkLoanV1
 
 
 REPOSITORIES_QUERY = """
@@ -378,6 +379,8 @@ def campaign_packets(
 
     if not census.complete:
         raise ValueError("incomplete census cannot underwrite a campaign")
+    if spend_limit <= 0:
+        raise ValueError("campaign spend_limit must be positive and explicitly underwritten")
     eligible_by_repo: dict[str, list[PullRequestLeafV1]] = {}
     for leaf in census.leaves:
         if leaf.eligible_action:
@@ -403,6 +406,13 @@ def campaign_packets(
             f"--digest {census.snapshot_digest}"
         ),
         receipt_target=f"git:organvm/limen:{receipt_path}",
+        work_loan=WorkLoanV1(
+            source_origin="system_debt",
+            horizon="present",
+            value_case=f"Close exact-head lifecycle debt across the live {census.owner} pull-request census",
+            budget_cost=spend_limit,
+            owner_surface=f"github:{census.owner}",
+        ),
         authority=AuthorityEnvelopeV1(
             actions=frozenset({"pr.inspect", "pr.review", "pr.repair"}),
             repositories=frozenset(eligible_by_repo),
@@ -461,6 +471,13 @@ class CampaignPacketFactory:
                     f"--digest {self.census.snapshot_digest} --repo {shlex.quote(repo)}"
                 ),
                 receipt_target=f"git:organvm/limen:{self.receipt_path}",
+                work_loan=WorkLoanV1(
+                    source_origin="system_debt",
+                    horizon="present",
+                    value_case=f"Route and close the live exact-head pull-request cohort for {repo}",
+                    budget_cost=min(self.spend_limit, len(leaves)),
+                    owner_surface=f"github:{repo}",
+                ),
                 authority=AuthorityEnvelopeV1(
                     actions=frozenset({"pr.inspect", "pr.review", "pr.repair"}),
                     repositories=frozenset({repo}),
@@ -527,6 +544,13 @@ class CampaignPacketFactory:
                 ),
                 predicate=predicate,
                 receipt_target=leaf.receipt_target,
+                work_loan=WorkLoanV1(
+                    source_origin="system_debt",
+                    horizon="present",
+                    value_case=f"Resolve or owner-route exact-head lifecycle debt for {repo}#{leaf.number}",
+                    budget_cost=min(self.spend_limit, 1),
+                    owner_surface=f"github:{repo}#{leaf.number}",
+                ),
                 authority=AuthorityEnvelopeV1(
                     actions=frozenset({"pr.inspect", "pr.review", "pr.repair"}),
                     repositories=frozenset({repo}),

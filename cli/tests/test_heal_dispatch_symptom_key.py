@@ -72,6 +72,10 @@ def test_two_calls_same_repo_symptom_yield_one_task():
     assert id2 is None, "second call must return None (already active, converge silently)"
     matching = [t for t in lf.tasks if t.id == id1]
     assert len(matching) == 1, f"exactly one singleton task; got {len(matching)}"
+    assert matching[0].origin == "system_debt"
+    assert matching[0].horizon == "past"
+    assert matching[0].value_case == ("Resolve the recurring dispatched-no-pr lifecycle defect for organvm/limen")
+    assert matching[0].owner_surface == "organvm/limen"
 
 
 def test_different_symptoms_yield_different_tasks():

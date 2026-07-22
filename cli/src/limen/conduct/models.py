@@ -10,6 +10,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 import rfc8785
 
+from limen.work_loan import WorkLoanV1
+
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@*+-]{0,1023}$")
@@ -195,6 +197,9 @@ class WorkPacketV1(ProtocolModel):
     resource_claims: tuple[ResourceClaimV1, ...] = ()
     predicate: str
     receipt_target: str
+    # Optional at the schema boundary so old stored runs remain inspectable.
+    # Admission is activated separately after producer adoption.
+    work_loan: WorkLoanV1 | None = None
     authority: AuthorityEnvelopeV1
     deadline: datetime
     spend: SpendEnvelopeV1 = Field(default_factory=SpendEnvelopeV1)

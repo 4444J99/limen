@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "quicken.py"
@@ -37,7 +39,7 @@ def test_breathe_numeric_env_falls_back(monkeypatch, capsys):
     assert "within cap=1" in capsys.readouterr().out
 
 
-def test_hang_residue_does_not_refresh_unchanged_human_ask(tmp_path, monkeypatch):
+def test_hang_residue_backfills_work_loan_once_then_converges(tmp_path, monkeypatch):
     quicken = _load()
     tasks = tmp_path / "tasks.yaml"
     atom = "land the credential/secret (your account/identity)"
@@ -80,9 +82,18 @@ tasks:
     )
 
     assert result["created"] == []
-    assert result["refreshed"] == []
-    assert result["homed"] == [f"{atom} \u2192 ASK-quicken-credential"]
-    assert tasks.read_text(encoding="utf-8") == before
+    assert result["refreshed"] == ["ASK-quicken-credential"]
+    task = yaml.safe_load(tasks.read_text(encoding="utf-8"))["tasks"][0]
+    assert task["origin"] == "human_prompt"
+    assert task["horizon"] == "present"
+    assert task["value_case"] == f"Resolve the irreducible operator atom: {atom}"
+    assert task["owner_surface"] == "organvm/limen"
+
+    after_backfill = tasks.read_text(encoding="utf-8")
+    repeated = quicken.hang_residue([{"state": "STALLED", "title": title, "decision": {"residue": atom}}])
+    assert repeated["refreshed"] == []
+    assert repeated["homed"] == [f"{atom} \u2192 ASK-quicken-credential"]
+    assert tasks.read_text(encoding="utf-8") == after_backfill
 
 
 def test_write_residue_splits_queued_unblocks_before_deduping(monkeypatch):

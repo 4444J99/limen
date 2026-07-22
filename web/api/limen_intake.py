@@ -40,6 +40,7 @@ EXECUTABLES = frozenset(
         "git",
         "go",
         "just",
+        "limen",
         "make",
         "node",
         "nox",

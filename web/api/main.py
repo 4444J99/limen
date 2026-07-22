@@ -160,6 +160,18 @@ class TaskCreate(BaseModel):
     context: str = Field(default="", max_length=10000)
     predicate: str = Field(max_length=2000)
     receipt_target: str = Field(max_length=2048)
+    # Optional at the compatibility boundary so historical clients remain
+    # readable during adoption. Sanctioned producers populate these fields;
+    # admission is activated by the follow-on enforcement change.
+    origin: str | None = Field(
+        default=None,
+        pattern=r"^(obligation|human_prompt|agent_recommendation|system_debt)$",
+    )
+    horizon: str | None = Field(default=None, pattern=r"^(past|present|future)$")
+    value_case: str | None = Field(default=None, max_length=8192)
+    owner_surface: str | None = Field(default=None, max_length=512)
+    external_deadline: bool = False
+    due_at: str | None = Field(default=None, max_length=128)
 
     @field_validator("priority")
     @classmethod
@@ -187,9 +199,19 @@ class TaskCreate(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
-    @field_validator("title", "context", "predicate", "receipt_target")
+    @field_validator(
+        "title",
+        "context",
+        "predicate",
+        "receipt_target",
+        "value_case",
+        "owner_surface",
+        "due_at",
+    )
     @classmethod
-    def validate_text(cls, v: str) -> str:
+    def validate_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         return reject_control_chars(v, "text")
 
     @field_validator("repo")
@@ -218,6 +240,15 @@ class TaskUpdate(BaseModel):
     labels: list[str] | None = Field(default=None, max_length=MAX_TASK_LIST_LENGTH)
     predicate: str | None = Field(default=None, max_length=2000)
     receipt_target: str | None = Field(default=None, max_length=2048)
+    origin: str | None = Field(
+        default=None,
+        pattern=r"^(obligation|human_prompt|agent_recommendation|system_debt)$",
+    )
+    horizon: str | None = Field(default=None, pattern=r"^(past|present|future)$")
+    value_case: str | None = Field(default=None, max_length=8192)
+    owner_surface: str | None = Field(default=None, max_length=512)
+    external_deadline: bool | None = None
+    due_at: str | None = Field(default=None, max_length=128)
 
     @field_validator("status")
     @classmethod
@@ -226,7 +257,17 @@ class TaskUpdate(BaseModel):
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
 
-    @field_validator("output", "agent", "session_id", "context", "predicate", "receipt_target")
+    @field_validator(
+        "output",
+        "agent",
+        "session_id",
+        "context",
+        "predicate",
+        "receipt_target",
+        "value_case",
+        "owner_surface",
+        "due_at",
+    )
     @classmethod
     def validate_text(cls, v: str | None) -> str | None:
         if v is None:
@@ -253,6 +294,15 @@ class AssignmentRequest(BaseModel):
     session_id: str = Field(default="assignment", max_length=128)
     predicate: str | None = Field(default=None, max_length=2000)
     receipt_target: str | None = Field(default=None, max_length=2048)
+    origin: str | None = Field(
+        default=None,
+        pattern=r"^(obligation|human_prompt|agent_recommendation|system_debt)$",
+    )
+    horizon: str | None = Field(default=None, pattern=r"^(past|present|future)$")
+    value_case: str | None = Field(default=None, max_length=8192)
+    owner_surface: str | None = Field(default=None, max_length=512)
+    external_deadline: bool | None = None
+    due_at: str | None = Field(default=None, max_length=128)
 
     @field_validator("priority")
     @classmethod
@@ -282,7 +332,15 @@ class AssignmentRequest(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
-    @field_validator("note", "session_id", "predicate", "receipt_target")
+    @field_validator(
+        "note",
+        "session_id",
+        "predicate",
+        "receipt_target",
+        "value_case",
+        "owner_surface",
+        "due_at",
+    )
     @classmethod
     def validate_text(cls, v: str | None) -> str | None:
         if v is None:
@@ -1431,7 +1489,7 @@ def create_task(req: TaskCreate, authorization: str | None = Header(None)) -> di
     data = load_board()
     if any(task.get("id") == req.id for task in data.get("tasks", [])):
         raise HTTPException(status_code=409, detail=f"task {req.id} already exists")
-    task = req.model_dump()
+    task = req.model_dump(exclude_none=True)
     task["created"] = now_iso()
     task["updated"] = task["created"]
     task["dispatch_log"] = []
@@ -1501,6 +1559,12 @@ def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None 
         "priority": task.get("priority"),
         "budget_cost": task.get("budget_cost"),
         "status": task.get("status"),
+        "origin": task.get("origin"),
+        "horizon": task.get("horizon"),
+        "value_case": task.get("value_case"),
+        "owner_surface": task.get("owner_surface"),
+        "external_deadline": task.get("external_deadline"),
+        "due_at": task.get("due_at"),
     }
     if req.target_agent is not None:
         prospective["target_agent"] = req.target_agent
@@ -1512,6 +1576,18 @@ def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None 
         prospective["predicate"] = req.predicate
     if req.receipt_target is not None:
         prospective["receipt_target"] = req.receipt_target
+    if req.origin is not None:
+        prospective["origin"] = req.origin
+    if req.horizon is not None:
+        prospective["horizon"] = req.horizon
+    if req.value_case is not None:
+        prospective["value_case"] = req.value_case
+    if req.owner_surface is not None:
+        prospective["owner_surface"] = req.owner_surface
+    if req.external_deadline is not None:
+        prospective["external_deadline"] = req.external_deadline
+    if req.due_at is not None:
+        prospective["due_at"] = req.due_at
     if req.status is not None:
         prospective["status"] = req.status
     try:
@@ -1523,6 +1599,12 @@ def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None 
         "priority": prospective.get("priority"),
         "budget_cost": prospective.get("budget_cost"),
         "status": prospective.get("status"),
+        "origin": prospective.get("origin"),
+        "horizon": prospective.get("horizon"),
+        "value_case": prospective.get("value_case"),
+        "owner_surface": prospective.get("owner_surface"),
+        "external_deadline": prospective.get("external_deadline"),
+        "due_at": prospective.get("due_at"),
     }
     changed = [key for key, value in after.items() if before.get(key) != value]
     output = req.note or f"Assigned via steering controls: {', '.join(changed) if changed else 'no field changes'}"

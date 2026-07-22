@@ -71,7 +71,14 @@ def manifest_payload() -> dict:
         "required_capabilities": ["code"],
         "intended_effect": "implement leaf A",
         "predicate": "pytest -q cli/tests/test_a.py",
-        "receipt_target": "github:organvm/limen:pr",
+        "receipt_target": "github:organvm/limen:pull-request:leaf-a",
+        "work_loan": {
+            "source_origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Deliver independently receiptable leaf A",
+            "budget_cost": 2,
+            "owner_surface": "organvm/limen",
+        },
         "deadline": FUTURE,
         "retry": {"max_attempts": 2, "transient_only": True},
         "spend": {"unit": "runs", "limit": 2},
@@ -84,10 +91,32 @@ def manifest_payload() -> dict:
         "initiator": identity,
         "conductor": identity,
         "predicate": "limen fanout status campaign --json",
-        "receipt_target": "conduct:campaign",
+        "receipt_target": "git:organvm/limen:docs/receipts/fanout/campaign.json",
+        "work_loan": {
+            "source_origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Deliver the bounded direct-session fanout campaign",
+            "budget_cost": 2,
+            "owner_surface": "organvm/limen",
+        },
         "deadline": FUTURE,
         "leaves": [leaf],
     }
+
+
+def sync_manifest_budget(payload: dict) -> None:
+    payload["work_loan"]["budget_cost"] = sum(leaf["spend"]["limit"] for leaf in payload["leaves"])
+
+
+def test_legacy_manifest_remains_readable_during_work_loan_adoption() -> None:
+    payload = manifest_payload()
+    payload.pop("work_loan")
+    payload["leaves"][0].pop("work_loan")
+
+    manifest = FanoutManifestV1.model_validate(payload)
+
+    assert manifest.work_loan is None
+    assert manifest.leaves[0].work_loan is None
 
 
 def session(
@@ -149,6 +178,7 @@ def test_conflicts_become_dependencies_and_all_entry_hashes_match() -> None:
         }
     )
     payload["leaves"].append(second)
+    sync_manifest_budget(payload)
     manifest = FanoutManifestV1.model_validate(payload)
     canonical = serialize_resource_conflicts(manifest)
 
@@ -191,6 +221,7 @@ def test_dynamic_route_prefers_remote_and_caps_local_fallback() -> None:
         }
     )
     payload["leaves"].append(second)
+    sync_manifest_budget(payload)
     with pytest.raises(FanoutError, match="local fallback limit 1"):
         route_manifest(FanoutManifestV1.model_validate(payload), no_remote, local_max=1)
 
@@ -423,6 +454,7 @@ def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
         }
     )
     payload["leaves"].append(second)
+    sync_manifest_budget(payload)
     manifest = FanoutManifestV1.model_validate(payload)
     keeper = LocalConductClient(tmp_path / "keeper.sqlite")
     conductor_identity = AgentIdentityV1.model_validate(payload["conductor"])
@@ -551,6 +583,7 @@ def test_start_launches_disjoint_remote_leaves_while_dependency_waits(
         }
     )
     payload["leaves"].extend([disjoint, dependent])
+    sync_manifest_budget(payload)
     manifest = FanoutManifestV1.model_validate(payload)
     keeper = LocalConductClient(tmp_path / "disjoint.sqlite")
     adapter = FakeExecutionAdapter()

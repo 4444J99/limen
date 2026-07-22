@@ -191,6 +191,15 @@ class Task(BaseModel):
     # and keeper seams, and selected legacy work is normalized before dispatch.
     predicate: str | None = None
     receipt_target: str | None = None
+    # WorkLoanV1 source/value collateral. Optional on the storage model so the
+    # historical board stays readable while sanctioned producers adopt it.
+    origin: str | None = None
+    horizon: str | None = None
+    value_case: str | None = None
+    owner_surface: str | None = None
+    external_deadline: bool = False
+    due_at: str | None = None
+    receipt_verified: bool | None = None
     # Optional live prerequisites. Missing/empty keeps legacy tasks dispatchable; an explicit
     # requirement is evaluated dynamically by handoff and every dispatch selector.
     execution_requirements: list[ExecutionRequirement] | None = None

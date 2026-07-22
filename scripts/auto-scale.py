@@ -188,6 +188,9 @@ def main() -> int:
                 # SCHEMA.md §2.3: the state machine starts at `open`;
                 # `dispatched` requires an agent claim (+ dispatch_log).
                 "status": "open",
+                "origin": "obligation",
+                "horizon": "present",
+                "value_case": f"Close the source-owned GitHub issue at {url}",
                 "labels": ["jules-ready"],
                 "urls": [url],
                 "created": today,

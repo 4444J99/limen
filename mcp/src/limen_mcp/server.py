@@ -20,6 +20,7 @@ from limen.conduct.models import (
     WorkPacketV1,
     canonical_hash,
 )
+from limen.work_loan import WorkLoanV1
 from limen_mcp import runtime_requirements
 from limen_mcp.intake import normalize_selected_legacy_task, validate_intake_contract
 
@@ -39,6 +40,8 @@ VALID_AGENTS = {
     "any",
 }
 CLAIMABLE_AGENTS = VALID_AGENTS - {"any"}
+VALID_WORK_ORIGINS = {"obligation", "human_prompt", "agent_recommendation", "system_debt"}
+VALID_WORK_HORIZONS = {"past", "present", "future"}
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
 
@@ -125,6 +128,13 @@ class Task(BaseModel):
     context: Optional[str] = None
     predicate: Optional[str] = None
     receipt_target: Optional[str] = None
+    origin: Optional[str] = None
+    horizon: Optional[str] = None
+    value_case: Optional[str] = None
+    owner_surface: Optional[str] = None
+    external_deadline: bool = False
+    due_at: Optional[str] = None
+    receipt_verified: Optional[bool] = None
     execution_requirements: Optional[List[ExecutionRequirement]] = None
     claude_tier: Optional[str] = None
     depends_on: List[str] = Field(default_factory=list)
@@ -519,17 +529,41 @@ def add_task(
     repo: str,
     predicate: str,
     receipt_target: str,
+    value_case: str,
     agent: str = "jules",
     priority: str = "medium",
     budget_cost: int = 1,
+    origin: str = "human_prompt",
+    horizon: str = "present",
+    owner_surface: str | None = None,
+    external_deadline: bool = False,
+    due_at: str | None = None,
 ) -> str:
     """Add a new task to the pipeline."""
     title = _validate_text(title, "title", 512)
     repo = _validate_text(repo, "repo", 256)
+    value_case = _validate_text(value_case, "value_case", 8192)
     agent = _validate_optional_enum(agent, VALID_AGENTS, "agent") or "jules"
     priority = _validate_optional_enum(priority, VALID_PRIORITIES, "priority") or "medium"
+    origin = _validate_optional_enum(origin, VALID_WORK_ORIGINS, "origin") or "human_prompt"
+    horizon = _validate_optional_enum(horizon, VALID_WORK_HORIZONS, "horizon") or "present"
+    if owner_surface is not None:
+        owner_surface = _validate_text(owner_surface, "owner_surface", 8192)
+    if due_at is not None:
+        due_at = _validate_text(due_at, "due_at", 128)
+    if type(external_deadline) is not bool:
+        raise ValueError("external_deadline must be a boolean")
     if type(budget_cost) is not int or budget_cost < 1 or budget_cost > 100:
         raise ValueError("budget_cost must be an integer between 1 and 100")
+    WorkLoanV1(
+        source_origin=origin,
+        horizon=horizon,
+        value_case=value_case,
+        budget_cost=budget_cost,
+        owner_surface=owner_surface or repo,
+        external_deadline=external_deadline,
+        due_at=due_at,
+    )
     _check_circuit_breaker()
     data = _load_data()
 
@@ -554,6 +588,12 @@ def add_task(
         status="open",
         predicate=predicate,
         receipt_target=receipt_target,
+        origin=origin,
+        horizon=horizon,
+        value_case=value_case,
+        owner_surface=owner_surface,
+        external_deadline=external_deadline,
+        due_at=due_at,
         created=date.today(),
     )
     validate_intake_contract(new_task, is_new=True)

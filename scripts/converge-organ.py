@@ -114,6 +114,9 @@ def _emit_gaps(gap_texts: list[str], origin_id: str, apply: bool) -> int:
             target_agent="any",
             priority="low",
             type="converge-gap",
+            origin="system_debt",
+            horizon="past",
+            value_case=f"Close the divergent implementation gap surfaced from {origin_id}",
             context=f"gap surfaced by converge from {origin_id}",
             **contract_fields(github_pr_contract("organvm/limen", gid)),
         )

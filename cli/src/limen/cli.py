@@ -275,7 +275,7 @@ def status(agent, status):
 @main.command()
 @click.option(
     "--view",
-    type=click.Choice(["workstream", "origin", "horizon", "agent", "repo", "status"]),
+    type=click.Choice(["workstream", "source_lineage", "origin", "horizon", "agent", "repo", "status"]),
     default="workstream",
     show_default=True,
     help="Macro grouping and micro drill-down dimension.",

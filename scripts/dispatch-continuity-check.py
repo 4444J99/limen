@@ -307,6 +307,12 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
         lf = load_limen_file(LEDGER)
         index = {t.id: t for t in lf.tasks}
         contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
+        collateral = {
+            "origin": "system_debt",
+            "horizon": "present",
+            "value_case": f"Restore dispatch continuity for the starved {lane} lane",
+            "owner_surface": "organvm/limen",
+        }
         changed = False
         ex = index.get(tid)
         if (
@@ -315,6 +321,10 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
             and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (ex.labels or [])
             and not has_jules_landing_hold(ex)
         ):
+            for key, value in collateral.items():
+                if getattr(ex, key) != value:
+                    setattr(ex, key, value)
+                    changed = True
             if ex.context != ctx:
                 ex.context = ctx
                 ex.updated = now
@@ -335,6 +345,7 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
                     status="needs_human",
                     labels=["dispatch-continuity", "needs-human"],
                     context=ctx,
+                    **collateral,
                     **contract,
                     created=date.today(),
                     updated=now,

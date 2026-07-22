@@ -100,6 +100,10 @@ def test_red_verdict_emits_one_idempotent_task(tmp_path):
     assert tasks[0].priority == "critical" and "mainred" in tasks[0].labels
     assert "deadbeef" * 5 in tasks[0].predicate
     assert "gh pr list" not in tasks[0].predicate
+    assert tasks[0].origin == "system_debt"
+    assert tasks[0].horizon == "present"
+    assert tasks[0].value_case == (f"Restore organvm/limen protected main to green at exact head {'deadbeef' * 5}")
+    assert tasks[0].owner_surface == "organvm/limen"
     # idempotent: a second run adds nothing
     run(tmp_path, apply=True)
     assert len(load_limen_file(tmp_path / "tasks.yaml").tasks) == 1
