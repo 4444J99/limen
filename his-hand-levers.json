@@ -683,6 +683,14 @@
       "gate": "outward-facing domain identity — only the owner can sanction which hostname maps to which surface; once approved the DNS attach itself is fleet-executable",
       "note": "The effector (scripts/cf-wrangler.sh) already drives wrangler custom-domain commands headlessly. The apex 4444j99.dev additionally requires a new Cloudflare Pages project created from organvm/portfolio before the custom domain can be attached. studio.objectlessons.film is excluded from this signoff — its gate is L-STUDIO-GOLIVE (#538) which requires NS delegation at the registrar (a separate action not covered by cf-wrangler.sh). See institutio/identity/url-map.yaml for the full taxonomy with current_url, canonical_secondary, and deploy_mechanism per entry.",
       "issue": 1258
+    },
+    {
+      "id": "L-CCE-PROVIDER-BUNDLES",
+      "label": "Download conversation export bundles from the 6 non-scriptable AI-chat vendors (Gemini Takeout, Grok, Perplexity, Copilot, DeepSeek, Mistral) and drop each archive under the CCE source-drop inbox (conversation-corpus-check: cce provider import picks them up). ChatGPT + Claude are already live-session-scripted and imported (2026-07-22, 320MB); this lever only widens dossier coverage — the constellation program is green without it.",
+      "owner": "yours",
+      "cost": "~5-10 min per vendor, once per refresh cycle",
+      "status": "open",
+      "gate": "vendor-portal logins the organ cannot perform (interactive export flows)"
     }
   ]
 }

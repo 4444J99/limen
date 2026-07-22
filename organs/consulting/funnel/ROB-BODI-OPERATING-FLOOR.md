@@ -90,7 +90,7 @@ what single staged artifact would move it most?
 
 ## 4. What's blocked on Rob (owed atoms — homed, not nagged)
 
-These live in `organs/consulting/engagements/rob.yaml → channels.owed_by_rob`,
+These live in `organs/consulting/engagements/rob.yaml → channels.owed_by_partner`,
 the durable owner. The floor runs degraded-but-running without them:
 
 - personal BODi affiliate/referral link (until then, offer drafts carry an
