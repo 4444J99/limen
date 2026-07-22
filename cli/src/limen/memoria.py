@@ -377,7 +377,9 @@ def drain_memory_once(memdir: Path | str | None = None, *, dry_run: bool = False
         try:
             fcntl.flock(lf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            return MemoryDrainResult(pending=pending_hint, deferred=True, note="memory lock held; deferred to next beat")
+            return MemoryDrainResult(
+                pending=pending_hint, deferred=True, note="memory lock held; deferred to next beat"
+            )
 
         good, bad = _parse_pending(inbox)
         pending = len(good) + len(bad)

@@ -102,7 +102,7 @@ def test_submit_then_drain_round_trip(memdir: Path):
 
 
 def test_verbatim_body_used_when_provided(memdir: Path):
-    body = "---\nname: beta-atom\ndescription: \"custom\"\nmetadata:\n  node_type: memory\n  type: project\n---\n\nverbatim body text\n"
+    body = '---\nname: beta-atom\ndescription: "custom"\nmetadata:\n  node_type: memory\n  type: project\n---\n\nverbatim body text\n'
     submit_memory_ticket(_ticket("beta-atom", body=body))
     drain_memory_once()
     assert _read(memdir / "beta-atom.md") == body
@@ -127,9 +127,7 @@ def test_update_replaces_line_in_place_order_identical(memdir: Path):
     # create the target atom via a first ticket... actually seed the atom too so this is an UPDATE
     (memdir / "target.md").write_text("original atom body\n", encoding="utf-8")
 
-    submit_memory_ticket(
-        _ticket("target", title="Target", desc="UPDATED summary", body="new atom body\n")
-    )
+    submit_memory_ticket(_ticket("target", title="Target", desc="UPDATED summary", body="new atom body\n"))
     result = drain_memory_once()
     assert result.applied == 1
 
@@ -247,6 +245,7 @@ def test_organ_memory_pass_noop_when_flag_off(memdir: Path, tmp_path: Path):
     assert after == before
     assert not (memdir / "would-fold.md").exists()
     assert len(list((memdir / ".covenant-inbox").glob("*.json"))) == 1
+
 
 def test_desc_newlines_stripped_at_construction():
     """MemoryTicket.desc must not contain embedded newlines — they would corrupt the MEMORY.md index.
