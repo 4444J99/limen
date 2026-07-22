@@ -264,7 +264,7 @@ orgs:
 classes:
   conductor:
     match: ["organvm/limen"]
-    visibility: private                    # flipped 2026-07-16 (publication-engine double-dark, his deliberate act)
+    visibility: public                     # 2026-07-22 owner decision: conductor stays public (free-tier CI dependency; resolves the observed-public drift); supersedes the 2026-07-16 private flip
     branch_protection: required
     required_checks: ["pr-gate", "python", "web", "worker"]
     app_installed: required
