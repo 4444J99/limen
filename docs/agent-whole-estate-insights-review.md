@@ -7,7 +7,8 @@ Generated: `2026-07-16` · Window: 30 days (`2026-06-16` → `2026-07-16`)
 This is the estate-wide friction/insights synthesis — the companion to
 `docs/agent-session-audit-rollup.md` (which covers prompt/session *structure*). This
 report covers *friction* across **every** agent surface, not Claude alone: Claude Code,
-Codex, OpenCode, Antigravity (the `agy` CLI), Cline, and Jules.
+Codex, OpenCode, Antigravity (the `agy` CLI), Cline, and Jules — plus GitHub Copilot CLI, added
+2026-07-22 (see the Copilot addendum at the end).
 
 Inputs (all read-only, this session):
 
@@ -318,3 +319,57 @@ while GCP is suspended).
 | Tier derivation | #1128 | `dispatch._claude_tier_for` derives the correct model tier from packet class; no more free-tier model on conflict work |
 | Outcome-derived lane-fitness routing | in flight | Route each packet class to the lane with the lowest observed failure rate for that class; derives from the 30d artifact audit above |
 | gemini trustedFolders | #305 (domus-genoma) | Template renders byte-identical to the verified live file; local gates green |
+
+---
+
+## Addendum — 2026-07-22: Copilot adapter — the last named estate gap closed
+
+*The Jul-16 review covered Claude, Codex, OpenCode, Antigravity (`agy`), Cline, and Jules — but
+**GitHub Copilot CLI** (`/opt/homebrew/bin/copilot`, v1.0.x) was never adapted, so it was invisible
+to the whole-estate friction picture. A request to run insights "for the whole system — codex,
+copilot, agy, opencode" surfaced the hole: three of the four named agents were already covered
+(codex ✓, opencode ✓, agy = Antigravity ✓); Copilot was the one missing adapter. This addendum
+records the seventh adapter, added to `scripts/insight-cross-vendor-ingest.py`.*
+
+### Store shape
+
+Copilot keeps live session data in `~/.copilot/session-store.db` (SQLite) — **not** `data.db`,
+whose `sessions` table is empty by design (it holds project/workspace metadata). Three tables carry
+signal: `sessions` (id, repository, branch, created_at), `turns` (session_id, turn_index), and a
+rich `assistant_usage_events` (per-model-call token counts, `total_nano_aiu`, `duration_ms`,
+`time_to_first_token_ms`, `finish_reason`, `content_filter_triggered`). **PII firewall:** the adapter
+reads integer/enum columns only — never `turns.user_message`, `turns.assistant_response`, or
+`sessions.summary`. Hermetic regression test: `scripts/tests/insight-cross-vendor-copilot.test.py`.
+
+### Copilot profile (30-day window, this run)
+
+| Metric | Value |
+|---|---:|
+| Sessions | 10 |
+| Turns/session (avg) | 2.2 |
+| Single-turn (abandoned) sessions | **9 (90%)** |
+| Input / output tokens | 324.3M / 1.9M |
+| Total nano-AIU (cost proxy) | 16.7T |
+| Top model | `gpt-5.5` (901 calls) |
+| Avg latency (TTFT / duration) | 4,460 ms / 8,773 ms |
+| Abnormal finishes / content-filter hits | 0 / 0 |
+
+**What this adds to the cross-cutting findings.** Copilot joins the estate's **systemic
+session-abandonment signature** (finding 1): its 90% single-turn rate is the Copilot face of the
+same pattern already seen in Codex (16.6% single-entry), OpenCode (55% rapid-abandon), and Claude
+(mid-session stalls) — "start work without a bound that lets it finish." The sample (10 sessions) is
+thin like Antigravity/Cline, so treat the 90% as directional, not a rate. Notably, Copilot's
+`assistant_usage_events` is the estate's richest per-call telemetry (latency + finish_reason +
+content_filter), so once volume grows it will give the cleanest read on model-side friction of any
+lane.
+
+### Residuals (owner-named)
+
+- **Codex data-quality gap** — the adapter reads the sparse `~/.local/share/codex/history.jsonl`
+  (197 sessions) while a richer store exists at `~/.codex/` (1,709 history records + a ~2,500-file
+  session tree + SQLite DBs). A future adapter revision could switch to the richer source. Owner:
+  a follow-up revision to `scripts/insight-cross-vendor-ingest.py` (not this change — one concern
+  per branch).
+- **Beat wiring (P3, unchanged)** — the ingest still runs manually; packets go stale between runs.
+  Promoting it to a registered beat sensor (`institutio/governance/sensors.yaml`) remains
+  proposal-only and lever-gated per the original P3. Copilot is now included whenever P3 arms.

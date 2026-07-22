@@ -56,6 +56,11 @@ VENDOR_REGISTRY = {
         "dormant": False,
         "description": "OpenCode SQLite session store",
     },
+    "copilot": {
+        "path": HOME / ".copilot" / "session-store.db",
+        "dormant": False,
+        "description": "GitHub Copilot CLI SQLite session store (sessions/turns/assistant_usage_events)",
+    },
     "antigravity": {
         "path": HOME / ".gemini" / "antigravity-cli",
         "dormant": False,
@@ -748,6 +753,181 @@ def _ingest_cline(window_start: datetime) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Adapter: GitHub Copilot CLI — ~/.copilot/session-store.db SQLite
+# ---------------------------------------------------------------------------
+#
+# Store shape (v1.0.x): the live session data lives in session-store.db, NOT
+# data.db (data.db.sessions is empty by design — it holds project/workspace
+# metadata; the session-store is authoritative). Three tables carry signal:
+#   sessions               (id, repository, branch, created_at, updated_at)  — datetime('now') text
+#   turns                  (session_id, turn_index, timestamp)               — user↔assistant pairs
+#   assistant_usage_events (session_id, model, *_tokens, total_nano_aiu,
+#                           duration_ms, time_to_first_token_ms, finish_reason,
+#                           content_filter_triggered)                        — per-model-call rows
+#
+# PII firewall: we read integer/enum columns only (token counts, timestamps,
+# finish_reason enum, content_filter flag, model id). We NEVER read the text
+# columns turns.user_message / turns.assistant_response / sessions.summary.
+
+def _ingest_copilot(window_start: datetime) -> dict:
+    db_path = VENDOR_REGISTRY["copilot"]["path"]
+    if not db_path.exists():
+        return _empty_packet("copilot", window_start, ["session-store.db not found"])
+
+    # sessions.created_at is SQLite datetime('now') → "YYYY-MM-DD HH:MM:SS" (UTC).
+    # Lexical string comparison on this ISO-like format is a correct window filter.
+    window_iso = window_start.strftime("%Y-%m-%d %H:%M:%S")
+    quality_notes: list[str] = []
+
+    try:
+        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+
+        # Session count in window
+        cur.execute("SELECT COUNT(*) FROM sessions WHERE created_at >= ? LIMIT 1", (window_iso,))
+        sessions_seen = int(cur.fetchone()[0] or 0)
+
+        # Turn totals + single-turn (abandon) sessions in window, bounded
+        cur.execute(
+            """
+            SELECT COUNT(*) AS turn_total FROM turns
+            WHERE session_id IN (SELECT id FROM sessions WHERE created_at >= ? LIMIT 5000)
+            LIMIT 1
+            """,
+            (window_iso,),
+        )
+        turn_total = int(cur.fetchone()[0] or 0)
+
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM sessions s
+            WHERE s.created_at >= ?
+            AND (SELECT COUNT(*) FROM turns t WHERE t.session_id = s.id) <= 1
+            LIMIT 1
+            """,
+            (window_iso,),
+        )
+        single_turn_count = int(cur.fetchone()[0] or 0)
+
+        # Usage-event aggregates for in-window sessions (bounded subquery)
+        cur.execute(
+            """
+            SELECT
+                COALESCE(SUM(input_tokens), 0)  AS in_tok,
+                COALESCE(SUM(output_tokens), 0) AS out_tok,
+                COALESCE(SUM(total_nano_aiu), 0) AS nano_aiu,
+                AVG(duration_ms)                AS avg_dur,
+                AVG(time_to_first_token_ms)     AS avg_ttft,
+                COALESCE(SUM(content_filter_triggered), 0) AS cf_hits,
+                COUNT(*)                        AS event_count
+            FROM assistant_usage_events
+            WHERE session_id IN (SELECT id FROM sessions WHERE created_at >= ? LIMIT 5000)
+            LIMIT 1
+            """,
+            (window_iso,),
+        )
+        row = cur.fetchone()
+        total_input_tokens = int(row["in_tok"] or 0)
+        total_output_tokens = int(row["out_tok"] or 0)
+        total_nano_aiu = int(row["nano_aiu"] or 0)
+        avg_duration_ms = float(row["avg_dur"] or 0)
+        avg_ttft_ms = float(row["avg_ttft"] or 0)
+        content_filter_hits = int(row["cf_hits"] or 0)
+        event_count = int(row["event_count"] or 0)
+
+        # finish_reason distribution (enum only, no text). 'stop'/'tool_calls'/
+        # 'tool_use' are normal terminations; everything else (length,
+        # content_filter, error, …) is an abnormal finish = friction.
+        cur.execute(
+            """
+            SELECT finish_reason, COUNT(*) AS cnt
+            FROM assistant_usage_events
+            WHERE session_id IN (SELECT id FROM sessions WHERE created_at >= ? LIMIT 5000)
+            GROUP BY finish_reason
+            ORDER BY cnt DESC
+            LIMIT 20
+            """,
+            (window_iso,),
+        )
+        finish_dist: dict[str, int] = {}
+        normal_finish = {"stop", "tool_calls", "tool_use", "end_turn", None, ""}
+        abnormal_finish_count = 0
+        for r in cur.fetchall():
+            fr = r["finish_reason"]
+            finish_dist[str(fr)] = int(r["cnt"] or 0)
+            if fr not in normal_finish:
+                abnormal_finish_count += int(r["cnt"] or 0)
+
+        # Model distribution (top-10)
+        cur.execute(
+            """
+            SELECT model, COUNT(*) AS cnt
+            FROM assistant_usage_events
+            WHERE session_id IN (SELECT id FROM sessions WHERE created_at >= ? LIMIT 5000)
+              AND model IS NOT NULL
+            GROUP BY model ORDER BY cnt DESC LIMIT 10
+            """,
+            (window_iso,),
+        )
+        model_dist = {r["model"]: r["cnt"] for r in cur.fetchall()}
+
+        con.close()
+
+    except sqlite3.Error as e:
+        return _empty_packet("copilot", window_start, [f"SQLite error: {type(e).__name__}"])
+
+    friction_signals = []
+    if single_turn_count > 0:
+        friction_signals.append({
+            "signal": "single_turn_sessions",
+            "count": single_turn_count,
+            "description": f"{single_turn_count} sessions with <=1 turn (opened then abandoned)",
+        })
+    if abnormal_finish_count > 0:
+        friction_signals.append({
+            "signal": "abnormal_finish_reasons",
+            "count": abnormal_finish_count,
+            "description": f"{abnormal_finish_count} model calls ended on a non-normal finish_reason "
+                           f"(length/content_filter/error)",
+            "classification": finish_dist,
+        })
+    if content_filter_hits > 0:
+        friction_signals.append({
+            "signal": "content_filter_triggered",
+            "count": content_filter_hits,
+            "description": f"{content_filter_hits} model calls tripped the content filter",
+        })
+
+    notable_patterns = []
+    if sessions_seen > 0:
+        avg_turns = turn_total / sessions_seen
+        notable_patterns.append(f"avg_turns_per_session: {avg_turns:.1f}")
+    if event_count > 0:
+        notable_patterns.append(f"total_tokens: input={total_input_tokens} output={total_output_tokens}")
+        notable_patterns.append(f"total_nano_aiu: {total_nano_aiu} (Copilot AI-unit cost proxy)")
+        notable_patterns.append(f"avg_response_latency_ms: ttft={avg_ttft_ms:.0f} duration={avg_duration_ms:.0f}")
+        if model_dist:
+            top_model = max(model_dist, key=model_dist.get)
+            notable_patterns.append(f"top_model: {top_model} ({model_dist[top_model]} calls)")
+    if sessions_seen > 0 and single_turn_count / sessions_seen > 0.4:
+        notable_patterns.append("HIGH single-turn rate: >40% of sessions abandoned after one turn")
+
+    quality_notes.append(f"session-store.db queried read-only; window filter created_at >= '{window_iso}'")
+    quality_notes.append("data.db.sessions is empty by design — session-store.db is the live store")
+    quality_notes.append("Text columns (turns.user_message/assistant_response, sessions.summary) NOT read (PII firewall)")
+
+    return {
+        "vendor": "copilot",
+        "description": VENDOR_REGISTRY["copilot"]["description"],
+        "sessions_seen": sessions_seen,
+        "friction_signals": friction_signals,
+        "notable_patterns": notable_patterns,
+        "data_quality_notes": quality_notes,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -780,6 +960,7 @@ ADAPTERS = {
     "claude": _ingest_claude,
     "codex": _ingest_codex,
     "opencode": _ingest_opencode,
+    "copilot": _ingest_copilot,
     "antigravity": _ingest_antigravity,
     "cline": _ingest_cline,
 }
