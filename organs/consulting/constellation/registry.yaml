@@ -188,3 +188,68 @@ people:
         public_face_state: none
         dossier: null
         notes: dormant channel; protocol review only — no build, no outreach
+
+  - slug: john-f
+    tier: T3
+    engagement_ref: organs/consulting/engagements/john-f.yaml
+    funnel_instance_ref: null
+    projects:
+      - name: financial-gaming
+        repo: null
+        keywords: [financial app, gaming, fantasy finance, finance niche]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-categorized with john-m (2026-07-22) — same project space; protocol review before any build
+
+  - slug: mike-s
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: security-firm
+        repo: null
+        keywords: [security firm, private security, investigations, executive protection, security consulting]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-named lane (2026-07-22); domain expertise is offline — dossier first, build on evidence
+
+  - slug: aaron
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: education-suite
+        repo: null
+        keywords: [education, student interactions, writing, teaching, tutoring, curriculum, composition]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: education/writing domain cluster (operator-named 2026-07-22); cluster is open-ended — the demand review surfaces further names from the corpus
+
+  - slug: chris
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: education-suite
+        repo: null
+        keywords: [education, student interactions, writing, teaching, tutoring, curriculum, composition]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: education/writing domain cluster (operator-named 2026-07-22); shares the cluster with aaron
+
+  - slug: shari
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: party-game-suite
+        repo: null
+        keywords: [party game, card game, game night, tabletop, social game, icebreaker]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-named lane (2026-07-22); dossier first, build on evidence

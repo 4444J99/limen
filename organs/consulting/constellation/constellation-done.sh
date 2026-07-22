@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Constellation program done-predicate. Exit 0 ⟺ the program is done:
-# valid register, every protocol PROVEN-shaped, the CONST- DAG fully seeded,
-# every dossier-stage project carrying both dossier halves, and no PII on any
-# touched public surface. Idempotent — a re-run performs no writes.
+# valid register, every registered slug's protocol PROVEN-shaped (the slug
+# list derives from registry.yaml — never a hand-maintained roster), the
+# CONST- DAG fully seeded, every dossier-stage project carrying both dossier
+# halves, and no PII on any touched public surface. Idempotent — a re-run
+# performs no writes.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -11,9 +13,9 @@ C=organs/consulting/constellation
 echo "── registry ──"
 python3 "$C/validate-constellation.py" --quiet
 
-echo "── protocols (all 9) ──"
+echo "── protocols (every registered slug) ──"
 fail=0
-for slug in maddie jessica rob charles scott ari dustin david john-m; do
+for slug in $(python3 -c "import sys, yaml; print(' '.join(str(p['slug']) for p in yaml.safe_load(open(sys.argv[1]))['people']))" "$C/registry.yaml"); do
   "$C/check.py" proto "$slug" || fail=1
 done
 
