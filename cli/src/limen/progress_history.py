@@ -74,6 +74,9 @@ def normalize_adapter(value: dict[str, Any]) -> dict[str, Any]:
         "kind_field": value.get("kind_field"),
         "ask_kind_values": sorted({str(item).lower() for item in ask_kind_values}),
         "timestamp_fields": _text_list(value.get("timestamp_fields", ["created_at"]), "timestamp_fields"),
+        "evidence_fields": _text_list(value["evidence_fields"], "evidence_fields")
+        if value.get("evidence_fields")
+        else [],
     }
 
 
@@ -116,6 +119,30 @@ def _field(row: Mapping[str, Any], candidates: Sequence[str]) -> Any:
         if value is not None and value != "":
             return value
     return None
+
+
+def _nested(row: Mapping[str, Any], field: str) -> Any:
+    value: Any = row
+    for part in field.split("."):
+        if not isinstance(value, Mapping) or part not in value:
+            return None
+        value = value[part]
+    return value
+
+
+def _evidence(row: Mapping[str, Any], fields: Sequence[str]) -> list[dict[str, str]]:
+    evidence: list[dict[str, str]] = []
+    for field in fields:
+        value = _nested(row, field)
+        values = value if isinstance(value, list) else [value]
+        for item in values:
+            if item is None or item == "" or isinstance(item, (dict, list)):
+                continue
+            rendered = " ".join(str(item).split())[:4096]
+            if rendered:
+                evidence.append({"field": field, "value": rendered})
+    unique = {(item["field"], item["value"]): item for item in evidence}
+    return [unique[key] for key in sorted(unique)]
 
 
 def _timestamp(value: Any) -> str | None:
@@ -172,6 +199,7 @@ def _normalize_leaf(source_id: str, raw: dict[str, Any], adapter: dict[str, Any]
         "is_ask": kind in adapter["ask_kind_values"],
         "opened_at": _timestamp(opened_at),
         "actual": _actual_usage(raw, adapter.get("actual_field")),
+        "evidence": _evidence(raw, adapter["evidence_fields"]),
         "content_sha256": canonical_sha256(raw),
     }
 

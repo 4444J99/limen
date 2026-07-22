@@ -5,6 +5,12 @@
     "logs/github-estate-census-facts.json",
     "docs/github-estate-census.json"
   ],
+  "evidence_fields": [
+    "url",
+    "owner",
+    "predicate",
+    "merge_condition"
+  ],
   "identity_fields": [
     "leaf_id",
     "leaf_key"

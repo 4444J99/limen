@@ -5,6 +5,11 @@
     "logs/work-loan-facts.json",
     "docs/work-loan-journal.json"
   ],
+  "evidence_fields": [
+    "collateral.predicate",
+    "collateral.receipt_target",
+    "verification_digest"
+  ],
   "identity_fields": [
     "loan_id",
     "loan_key"

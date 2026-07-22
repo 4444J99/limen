@@ -7,6 +7,13 @@
     "logs/progress-prompt-lineage-facts.json",
     "docs/progress-prompt-lineage.json"
   ],
+  "evidence_fields": [
+    "task_receipts",
+    "pull_request_receipts",
+    "worktree_receipts",
+    "durable_receipts",
+    "predicates"
+  ],
   "identity_fields": [
     "leaf_id",
     "leaf_key"

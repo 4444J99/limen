@@ -52,6 +52,7 @@ def write_adapter(root: Path, source_id: str = "renamed-source") -> None:
                 "schema": "limen.progress-history-adapter.v1",
                 "source_id": source_id,
                 "document_paths": ["runtime/facts.json"],
+                "evidence_fields": ["receipt"],
                 "leaf_field": "items",
                 "identity_fields": ["opaque_id"],
                 "state_fields": ["phase"],
