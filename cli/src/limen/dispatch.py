@@ -899,6 +899,27 @@ def _dispatchable(task: Task) -> bool:
     return task_work_loan_readiness(task).ready and task_execution_ready(task)
 
 
+def _effective_target_agent(task: Task) -> str:
+    """Return the live claim lane without mutating durable ownership metadata.
+
+    ``target_agent`` is the task's durable eligibility/ownership constraint. A
+    bounded provider failure may route the next claim through the latest OPEN
+    receipt; that executor lives in ``dispatch_log.route_to`` and does not
+    rewrite the task itself.
+    """
+
+    if task.status == "open" and task.dispatch_log:
+        latest = task.dispatch_log[-1]
+        if latest.status == "open" and latest.route_to:
+            return canonical_agent(latest.route_to)
+    return canonical_agent(task.target_agent)
+
+
+def _task_targets_agent(task: Task, agent: str) -> bool:
+    target = _effective_target_agent(task)
+    return target in {canonical_agent(agent), "any"}
+
+
 def _entry_text(entry: DispatchLogEntry) -> str:
     return " ".join(
         str(part or "")
@@ -4849,7 +4870,7 @@ def dispatch_tasks(
     for t in tasks:
         if not _dispatchable(t):
             continue
-        if t.target_agent != agent_filter and t.target_agent != "any":
+        if not _task_targets_agent(t, agent_filter):
             continue
         if not agent_can_run_task(agent_filter, t):
             continue
@@ -5003,7 +5024,6 @@ def _apply_result(
         entry.status = "open"
         entry.route_to = nxt
         entry.output = f"rate limited on {agent}; reopened to live fleet route"
-        task.target_agent = nxt
         task.status = "open"
     elif result == _TIMEOUT:
         if _control_host_task(task):
@@ -5025,7 +5045,6 @@ def _apply_result(
             entry.status = "open"
             entry.route_to = "jules"
             entry.output = f"timeout on {agent}; reopened to asynchronous lane"
-            task.target_agent = "jules"
             task.status = "open"
             if "slow" not in task.labels:
                 task.labels.append("slow")
@@ -5057,13 +5076,11 @@ def _apply_result(
             entry.status = "open"
             entry.route_to = fallback
             entry.output = "remote/service lane failed; reopened to healthy fleet cascade"
-            task.target_agent = fallback
             task.status = "open"
         elif next_lane := _next_lane(agent):
             entry.status = "open"
             entry.route_to = next_lane
             entry.output = f"{agent} lane failed; reopened to healthy fleet cascade"
-            task.target_agent = next_lane
             task.status = "open"
         else:
             entry.status = "failed"
@@ -5408,7 +5425,7 @@ def _select_parallel_reservations(
         for t in limen.tasks:
             if not _dispatchable(t):
                 continue
-            if t.target_agent != agent and t.target_agent != "any":
+            if not _task_targets_agent(t, agent):
                 continue
             if not agent_can_run_task(agent, t):
                 continue

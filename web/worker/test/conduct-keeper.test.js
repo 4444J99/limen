@@ -1870,6 +1870,78 @@ test("task claims derive canonical debit and identity while canonical transition
   );
 });
 
+test("claim-time executor receipts preserve durable target_agent ownership", () => {
+  const task = (id, targetAgent, dispatchLog = []) => ({
+    id,
+    title: id,
+    repo: "organvm/limen",
+    target_agent: targetAgent,
+    priority: "high",
+    budget_cost: 2,
+    origin: "system_debt",
+    horizon: "present",
+    value_case: `Preserve durable ${targetAgent} ownership for ${id}`,
+    predicate: "npm test",
+    receipt_target: `git:organvm/limen:tasks.yaml#${id}`,
+    status: "open",
+    created: "2026-07-01",
+    dispatch_log: dispatchLog,
+  });
+  const claim = (id, agent) => ({
+    schema_version: "limen.task_packet_projection_event.v1",
+    event_id: `conduct:claim-time:${id}:${agent}`,
+    kind: "task.claim",
+    timestamp: NOW.toISOString(),
+    task_id: id,
+    run_id: `run-${id}`,
+    lease_id: `lease-${id}`,
+    generation: 1,
+    agent,
+    session_id: `${agent}-session`,
+    intent: {
+      kind: "task.claim",
+      task_id: id,
+      expected_status: "open",
+      patch: { status: "dispatched" },
+      log: { agent, session_id: `${agent}-session`, status: "dispatched" },
+    },
+  });
+  const board = {
+    portal: {
+      budget: {
+        daily: 20,
+        per_agent: { codex: 20, opencode: 20 },
+        track: { date: "2026-07-18", spent: 0, per_agent: {} },
+      },
+    },
+    tasks: [
+      task("ANY", "any"),
+      task("ROUTED", "codex", [{
+        timestamp: "2026-07-18T14:00:00.000Z",
+        agent: "codex",
+        session_id: "prior",
+        status: "open",
+        route_to: "opencode",
+      }]),
+      task("OWNED", "codex"),
+    ],
+  };
+
+  const anyClaim = applyTaskPacketProjectionEvent(board, claim("ANY", "opencode"));
+  assert.equal(anyClaim.task.target_agent, "any");
+  assert.equal(anyClaim.task.dispatch_log.at(-1).agent, "opencode");
+  assert.equal(anyClaim.board.portal.budget.track.per_agent.opencode, 2);
+
+  const routedClaim = applyTaskPacketProjectionEvent(board, claim("ROUTED", "opencode"));
+  assert.equal(routedClaim.task.target_agent, "codex");
+  assert.equal(routedClaim.task.dispatch_log.at(-1).agent, "opencode");
+
+  assert.throws(
+    () => applyTaskPacketProjectionEvent(board, claim("OWNED", "opencode")),
+    /targets codex, not claim agent opencode/,
+  );
+});
+
 test("exceptional task transitions require exact structured evidence", () => {
   const task = (overrides = {}) => ({
     id: "TASK-REPAIR",

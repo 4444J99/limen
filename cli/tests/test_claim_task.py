@@ -86,11 +86,12 @@ def test_claim_task_reserves_open_task_and_budget() -> None:
 
     task = claim.claim_task(data, "TASK-1", "codex", "session-1")
 
-    assert task["target_agent"] == "codex"
+    assert task["target_agent"] == "any"
     assert task["status"] == "dispatched"
     assert data["portal"]["budget"]["track"]["spent"] == 5
     assert data["portal"]["budget"]["track"]["per_agent"]["codex"] == 3
     assert task["dispatch_log"][-1]["session_id"] == "session-1"
+    assert task["dispatch_log"][-1]["agent"] == "codex"
     assert task["predicate"] and task["receipt_target"]
 
 
@@ -103,6 +104,27 @@ def test_claim_task_rejects_unknown_agent_without_mutating() -> None:
         claim.claim_task(data, "TASK-1", "goose", "session-1")
 
     assert data == before
+
+
+def test_claim_task_uses_latest_route_receipt_without_rewriting_owner() -> None:
+    claim = load_claim_module()
+    data = board()
+    data["tasks"][0]["target_agent"] = "codex"
+    data["tasks"][0]["dispatch_log"] = [
+        {
+            "timestamp": "2026-07-18T12:00:00Z",
+            "agent": "codex",
+            "session_id": "prior",
+            "status": "open",
+            "route_to": "opencode",
+        }
+    ]
+
+    task = claim.claim_task(data, "TASK-1", "opencode", "session-2")
+
+    assert task["target_agent"] == "codex"
+    assert task["status"] == "dispatched"
+    assert task["dispatch_log"][-1]["agent"] == "opencode"
 
 
 def test_claim_task_rejects_successor_required_open_row_without_mutating() -> None:
@@ -228,7 +250,7 @@ def test_live_claim_uses_broker_receipt_and_keeps_local_projection_byte_identica
     intent = owner.packets[0].intent
     assert intent["kind"] == "task.claim"
     assert intent["expected_status"] == "open"
-    assert intent["patch"]["target_agent"] == "codex"
+    assert "target_agent" not in intent["patch"]
     assert intent["patch"]["status"] == "dispatched"
     assert "budget_debit" not in intent
     assert owner.task["status"] == "dispatched"

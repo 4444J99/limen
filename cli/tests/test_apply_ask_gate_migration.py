@@ -404,7 +404,7 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
     claim = compiler.Ticket(
         ticket_id="concurrent-claim-before-parent",
         timestamp=timestamp - timedelta(seconds=1),
-        agent="jules",
+        agent="agy",
         session_id="concurrent-claim",
         intent="task.upsert",
         task_id=task_id,
@@ -449,7 +449,7 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
         prior_claim = compiler.Ticket(
             ticket_id="prior-dispatched-claim",
             timestamp=timestamp - timedelta(seconds=1),
-            agent="jules",
+            agent="agy",
             session_id="prior-dispatched",
             intent="task.upsert",
             task_id=task_id,
@@ -471,7 +471,7 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
     later_claim = compiler.Ticket(
         ticket_id=f"later-{claim_status}-claim",
         timestamp=timestamp + timedelta(seconds=1),
-        agent="jules",
+        agent="agy",
         session_id=f"later-{claim_status}",
         intent="task.upsert",
         task_id=task_id,

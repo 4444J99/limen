@@ -333,12 +333,14 @@ function resetBudgetWindow(budget, event) {
   );
 }
 
-function canonicalClaimAgent(task, patch) {
-  const agent = String(patch.target_agent || task.target_agent || "");
+function canonicalClaimAgent(task, event) {
+  const agent = String(event.agent || "");
   if (!agent || agent === "any") {
-    throw new ConductProjectionError(`task ${task.id} claim requires one concrete target_agent`, 422);
+    throw new ConductProjectionError(`task ${task.id} claim requires one concrete authenticated agent`, 422);
   }
-  if (task.target_agent && task.target_agent !== "any" && task.target_agent !== agent) {
+  const latest = task.dispatch_log?.at(-1);
+  const routeTo = latest?.status === "open" ? String(latest?.route_to || "") : "";
+  if (task.target_agent && task.target_agent !== "any" && task.target_agent !== agent && routeTo !== agent) {
     throw new ConductProjectionError(
       `task ${task.id} targets ${task.target_agent}, not claim agent ${agent}`,
       409,
@@ -352,7 +354,7 @@ function applyCanonicalBudgetDebit(board, task, event, patch) {
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0) {
     throw new ConductProjectionError(`task ${task.id} has invalid canonical budget_cost`, 422);
   }
-  const agent = canonicalClaimAgent(task, patch);
+  const agent = canonicalClaimAgent(task, event);
   const budget = board.portal?.budget;
   if (!budget || !amount) return;
   resetBudgetWindow(budget, event);
@@ -370,7 +372,8 @@ function applyCanonicalBudgetDebit(board, task, event, patch) {
 
 function applyCanonicalBudgetRefund(board, task, event) {
   const amount = Number(task.budget_cost || 0);
-  const agent = String(task.target_agent || "");
+  const latest = task.dispatch_log?.at(-1);
+  const agent = String(latest?.logical_agent || latest?.agent || "");
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0 || !agent || agent === "any") {
     throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund`, 422);
   }

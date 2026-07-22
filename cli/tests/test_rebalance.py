@@ -1,10 +1,7 @@
-"""Test rebalance.py honors the lane-down filter (this session's change): open local-lane tasks
-are fanned across the PRODUCTIVE lanes only — a down lane (logs/lanes-down.txt) never receives work
-and its tasks are redistributed. _resolve_repo_dir is monkeypatched so the test needs no clones."""
+"""Rebalance plans productive claim lanes without mutating durable task ownership."""
 
 import importlib.util
 import sys
-from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -48,13 +45,12 @@ def test_rebalance_skips_down_lanes(tmp_path, monkeypatch):
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     monkeypatch.setattr(m, "_resolve_repo_dir", lambda t: tmp_path)  # always "cloned"
-    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "codex,claude,gemini", "--apply"])
-    m.main()
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "codex,claude,gemini"])
+    assert m.main() == 0
 
-    lanes = Counter(t.target_agent for t in load_limen_file(tmp_path / "tasks.yaml").tasks)
-    assert lanes.get("gemini", 0) == 0, f"down lane got work: {lanes}"
-    assert set(lanes) == {"codex", "claude"}, f"expected only productive lanes: {lanes}"
-    assert lanes["codex"] == 3 and lanes["claude"] == 3, f"not evenly fanned: {lanes}"
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+    assert {t.target_agent for t in load_limen_file(tmp_path / "tasks.yaml").tasks} == {"codex"}
 
 
 def test_rebalance_skips_unsafe_agy_registry_discovery(tmp_path, monkeypatch):
@@ -104,12 +100,14 @@ def test_rebalance_skips_unsafe_agy_registry_discovery(tmp_path, monkeypatch):
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     monkeypatch.setattr(m, "_resolve_repo_dir", lambda t: tmp_path)
-    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "agy,opencode", "--apply"])
-    m.main()
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "agy,opencode"])
+    assert m.main() == 0
 
     tasks = {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
     assert tasks["DISCOVER-organvm-example"].target_agent == "opencode"
-    assert tasks["HEAL-cifix-organvm-example-1"].target_agent == "agy"
+    assert tasks["HEAL-cifix-organvm-example-1"].target_agent == "opencode"
 
 
 def test_rebalance_does_not_steal_timeout_to_jules_task(tmp_path, monkeypatch):
@@ -168,9 +166,34 @@ def test_rebalance_does_not_steal_timeout_to_jules_task(tmp_path, monkeypatch):
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     monkeypatch.setattr(m, "_resolve_repo_dir", lambda t: tmp_path)
-    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "agy,opencode", "--apply"])
-    m.main()
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "agy,opencode"])
+    assert m.main() == 0
 
     tasks = {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
     assert tasks["SLOW"].target_agent == "codex"
-    assert tasks["NORMAL"].target_agent == "agy"
+    assert tasks["NORMAL"].target_agent == "codex"
+
+
+def test_rebalance_apply_flag_fails_closed_without_board_mutation(tmp_path, monkeypatch):
+    import datetime
+
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
+    today = datetime.date.today()
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=10, per_agent={}, track=BudgetTrack(date=str(today)))),
+        tasks=[Task(id="T", title="t", repo="x/y", target_agent="codex", status="open", created=today)],
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir()
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    spec = importlib.util.spec_from_file_location("rebalance_apply_retired_uut", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    monkeypatch.setattr(m, "_resolve_repo_dir", lambda _t: tmp_path)
+    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "codex", "--apply"])
+
+    assert m.main() == 2
+    assert (tmp_path / "tasks.yaml").read_bytes() == before

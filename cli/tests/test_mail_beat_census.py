@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 
 
@@ -72,3 +73,44 @@ def test_mail_beat_census_reads_uma_status_only(tmp_path):
     assert census["sends_allowed"] is False
     assert census["wrapper"] is True
     assert "private" not in encoded.lower()
+
+
+def test_mail_status_timeout_emits_blocked_receipt_and_returns(tmp_path):
+    limen = tmp_path / "limen"
+    uma = tmp_path / "universal-mail--automation"
+    home = tmp_path / "home"
+    status_path = limen / "logs" / "uma-mail-status.json"
+    (limen / "logs").mkdir(parents=True)
+    uma.mkdir()
+    home.mkdir()
+    (uma / "cli.py").write_text(
+        "import time\ntime.sleep(30)\n",
+        encoding="utf-8",
+    )
+
+    started = time.monotonic()
+    subprocess.run(
+        ["bash", str(ROOT / "scripts" / "mail-beat.sh")],
+        capture_output=True,
+        text=True,
+        timeout=5,
+        env={
+            **os.environ,
+            "HOME": str(home),
+            "LIMEN_ROOT": str(limen),
+            "UMA_ROOT": str(uma),
+            "LIMEN_MAIL_STATUS_OUT": str(status_path),
+            "LIMEN_MAIL_STATUS_TIMEOUT": "1",
+            "LIMEN_MAIL_SWEEP": "0",
+            "LIMEN_MAIL_ARCHIVED_SCAN": "0",
+            "LIMEN_MAIL_UMA_SYNC": "0",
+            "LIMEN_CORRESPONDENCE_WALK": "0",
+        },
+        check=True,
+    )
+
+    assert time.monotonic() - started < 5
+    receipt = json.loads(status_path.read_text(encoding="utf-8"))
+    assert receipt["status"] == "blocked"
+    assert receipt["mode"] == {"mailbox_mutations": False, "read_only": True, "sends": False}
+    assert "timeout" in receipt["blockers"][0]["detail"]

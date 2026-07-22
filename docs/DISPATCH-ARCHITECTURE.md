@@ -11,6 +11,11 @@ The heartbeat (`scripts/heartbeat-loop.sh`, launchd `com.limen.heartbeat`) runs 
 beat repeatedly: drain → heal → feed (mine) → route/rebalance → **dispatch** → reconcile → web.
 Dispatch is where open tasks become worktree→PR. There are two interchangeable dispatch engines.
 
+Route and rebalance are read-only planners. `target_agent` is durable eligibility/ownership metadata,
+not a heartbeat scratch field. A bounded failure records the next live lane in the latest open
+`dispatch_log.route_to`; selection consumes that receipt at claim time, and the claim receipt records
+the actual authenticated executor. Neither planning nor fallback rewrites `target_agent`.
+
 ## The two engines
 
 ### SYNC (default) — `scripts/dispatch-parallel.py` → `dispatch.dispatch_parallel()`
@@ -63,9 +68,9 @@ immediately**.
   (`logs/.queue.lock.d`, sibling of tasks.yaml). The heartbeat releases it BEFORE the slow dispatch
   so supervisors (seed/heal/verify) aren't starved; dispatch self-locks its reserve and
   **reloads-fresh at commit** so a write made mid-run isn't clobbered.
-- **Lane-down filter** (`dispatch._down_lanes` ← `logs/lanes-down.txt`, derive-not-pin): rebalance
-  + both dispatchers skip unproductive lanes (currently gemini=ratelimited-to-0, agy=bin-missing)
-  and re-route their tasks to productive lanes (codex, claude). Remove a line when a lane recovers.
+- **Lane-down filter** (`dispatch._down_lanes` ← `logs/lanes-down.txt`, derive-not-pin): the planners
+  and both dispatchers skip unproductive lanes. The plan may nominate a productive executor, but it
+  leaves durable task ownership byte-identical; a runtime fallback is carried by `dispatch_log.route_to`.
 - **Reconcile** (`scripts/verify-dispatch.py` → `scripts/heal-dispatch.py`): every C_HEAL beat,
   verify each `dispatched` task's real PR state on GitHub; PR_MERGED/PR_OPEN→done, PR_CLOSED/
   DISPATCHED_NO_PR→open (re-dispatch). Respects async `.running` markers (won't reopen a live run).

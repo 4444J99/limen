@@ -27,12 +27,12 @@ Cost model (the "tiering", one level up from model-tiering):
     across every reachable capable lane so no paid service sits idle while work
     exists.
 
-Read-only by default: prints a routing plan. With --apply it only rewrites each
-task's target_agent in tasks.yaml (reversible) — it never dispatches. Dispatch
-stays a separate, explicitly-gated step (`limen dispatch --agent X --live`).
+Read-only: prints a routing plan. Live executor selection happens while a task is
+claimed and is recorded in dispatch_log. target_agent remains the durable
+eligibility/ownership constraint and is never rewritten by this planner.
 
 Usage:
-  python3 route.py [--tasks tasks.yaml] [--apply] [--workdir ~/Workspace]
+  python3 route.py [--tasks tasks.yaml] [--workdir ~/Workspace]
 """
 
 from __future__ import annotations
@@ -64,10 +64,8 @@ from limen.capacity import (  # noqa: E402
     task_has_github_issue,
 )
 from limen.model_selection import _claude_fable_classes, _claude_opus_classes  # noqa: E402
-from limen.io import load_limen_file, queue_lock  # noqa: E402
-from limen.tabularius import apply_limen_file_sync  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.dispatch import _down_lanes, _reset_budget_if_needed  # noqa: E402
-from limen.workstream import UNASSIGNED, assign_channel  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 
@@ -624,9 +622,14 @@ def main() -> int:
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
     ap.add_argument("--workdir", default=os.environ.get("LIMEN_WORKDIR", str(Path.home() / "Workspace")))
     ap.add_argument(
-        "--apply", action="store_true", help="rewrite target_agent in tasks.yaml (reversible); never dispatches"
+        "--apply",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
     args = ap.parse_args()
+    if args.apply:
+        print("--apply is retired: routing is selected at claim time and recorded in dispatch_log", file=sys.stderr)
+        return 2
 
     # PRODUCE the self-improve proposal (low cadence) before we CONSUME it in routing below — this is
     # the live home of the improve producer (the heartbeat loop has no separate self-improve step).
@@ -638,8 +641,7 @@ def main() -> int:
     # so route never re-emits / re-encodes the malformed dispatch_log rows that produced the
     # "dispatch_log.*.agent Field required" trace every beat. Decisions run on a (possibly stale)
     # snapshot WITHOUT the lock, because the capacity census/health probes shell out (which/gh) and
-    # we must not hold the queue mutex across slow work. The actual write re-reads fresh UNDER the
-    # lock below, so we only ever clobber our own target_agent field, never a dispatcher's append.
+    # the planner never writes the board.
     data = _load_limen_for_routing(tasks_path).model_dump(mode="json", exclude_none=True)
     census = capacity_census(data)
     health = _fleet_health(data)
@@ -675,7 +677,6 @@ def main() -> int:
     # per-agent daily budget drives the distribution (derived from tasks.yaml, never pinned).
     budget = (data.get("portal", {}).get("budget", {}) or {}).get("per_agent", {}) or {}
     tally: Counter = Counter()
-    assignments: dict[str, str] = {}  # task id -> chosen vendor (decisions only; applied under lock)
     for t in opens:
         # pass the running tally as the assigned-so-far counts so load spreads across lanes,
         # and the live runway so the split steers toward the freshest refresh window.
@@ -687,50 +688,9 @@ def main() -> int:
             vendor, reason = route_task(t, health, workdir, assigned=tally, budget=budget, runway=runway)
         tally[vendor] += 1
         print(f"| {t['id']} | {t.get('repo', '-')} | {vendor} | {reason} |")
-        if vendor not in ("unroutable",):
-            assignments[t["id"]] = vendor
 
     print(f"\nrouted: {dict(tally)}")
-    if not args.apply:
-        print("dry-run (no changes). re-run with --apply to set target_agent.")
-        return 0
-
-    # Apply UNDER the queue lock with a FRESH sanitized re-read, so route stops racing the
-    # dispatchers (the race that wrote a Task into a dispatch_log = the torn-write source). We
-    # mutate ONLY target_agent on tasks that are still open, then write through the validated
-    # save_limen_file (never a raw dump). If the lock is busy, skip this pass — a missed routing
-    # write is harmless and self-corrects next beat (never block the beat / never dead-stop).
-    with queue_lock(tasks_path) as got:
-        if not got:
-            print("queue busy — skipped applying target_agent this pass (self-corrects next beat).")
-            return 0
-        lf = load_limen_file(tasks_path)
-        _reset_budget_if_needed(lf, _now_utc())
-        applied = 0
-        ws_applied = 0
-        for task in lf.tasks:
-            if not _route_open_task(task):
-                continue
-            v = assignments.get(task.id)
-            if v and task.target_agent != v:
-                task.target_agent = v
-                applied += 1
-            # PURPOSE partition (workstream) — the axis ABOVE target_agent, without which the
-            # channels organ's scoped `cell conduct --workstream <handle>` conductors draw an empty
-            # lane. Stamp only when EMPTY (honor explicit intent) and only a RESOLVED channel (leave
-            # UNASSIGNED as None so it re-derives next beat when new signal appears). Same lock, same
-            # fresh re-read, same validated save — a sibling of the vendor assignment above.
-            if not task.workstream:
-                handle = assign_channel(task, ROOT)
-                if handle != UNASSIGNED:
-                    task.workstream = handle
-                    ws_applied += 1
-        apply_limen_file_sync(tasks_path, lf, agent="route", session_id="route-apply")
-    print(
-        f"applied target_agent assignments ({applied}) -> {tasks_path} "
-        f"(dispatch separately, gated: limen dispatch --agent <v> --live)"
-    )
-    print(f"applied workstream assignments ({ws_applied}) -> {tasks_path} (purpose partition)")
+    print("read-only plan (target_agent remains unchanged; claim-time dispatch records the executor)")
     return 0
 
 

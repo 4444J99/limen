@@ -6,10 +6,8 @@ The vendor-tiering router (route.py) prefers codex and only falls back to agy/cl
 which leaves those lanes idle. This deliberately fans the dispatchable local work
 across every live lane to use all available capacity.
 
-Safe: only rewrites `target_agent` on tasks that are status==open AND already routed
-to a local lane AND whose repo resolves to a local checkout (i.e. already
-dispatchable). Uses Limen's own loader/saver so tasks.yaml round-trips identically
-to a normal dispatch. Read-only unless --apply.
+Read-only. It reports the claim-time distribution for eligible local work while
+leaving durable `target_agent` ownership unchanged.
 """
 import argparse
 import os
@@ -18,8 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
-from limen.io import load_limen_file, queue_lock  # noqa: E402
-from limen.tabularius import apply_limen_file_sync  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.dispatch import (  # noqa: E402
     _deps_met,
     _dispatchable,
@@ -77,7 +74,6 @@ def main() -> int:
         and not _timeout_to_jules(t)
     ]
     counts = {x: 0 for x in lanes}
-    assignments = {}
     skipped = 0
     lane_index = 0
     for t in cands:
@@ -91,34 +87,15 @@ def main() -> int:
         if assigned is None:
             skipped += 1
             continue
-        assignments[t.id] = assigned
-        t.target_agent = assigned
         counts[assigned] += 1
 
     print(f"rebalanced {sum(counts.values())} dispatchable local tasks across {lanes}: {counts}")
     if skipped:
         print(f"skipped {skipped} task(s) with no safe productive lane")
     if args.apply:
-        with queue_lock(path) as got:
-            if not got:
-                print("queue busy — skipped applying rebalance this pass (self-corrects next beat).")
-                return 0
-            fresh = load_limen_file(path)
-            applied = 0
-            for task in fresh.tasks:
-                assigned = assignments.get(task.id)
-                if not assigned:
-                    continue
-                if task.status != "open" or canonical_agent(task.target_agent) not in LOCAL:
-                    continue
-                if _timeout_to_jules(task) or not agent_can_run_task(assigned, task):
-                    continue
-                task.target_agent = assigned
-                applied += 1
-            apply_limen_file_sync(path, fresh, agent="rebalance", session_id="apply")
-        print(f"APPLIED -> tasks.yaml ({applied} target_agent update(s))")
-    else:
-        print("dry-run (pass --apply to write)")
+        print("--apply is retired: rebalance is a claim-time plan and target_agent is durable", file=sys.stderr)
+        return 2
+    print("read-only plan (target_agent remains unchanged)")
     return 0
 
 

@@ -29,6 +29,7 @@ STATUS_OUT="${LIMEN_MAIL_STATUS_OUT:-$LIMEN_ROOT/logs/uma-mail-status.json}"
 OPS_REPORT="${UMA_OPS_REPORT_PATH:-$HOME/System/Reports/mail-triage/latest.json}"
 HISTORY_REPORT="${UMA_HISTORICAL_MAIL_PATH:-$HOME/System/Reports/mail-history/latest.json}"
 MAX_AGE_HOURS="${LIMEN_MAIL_STATUS_MAX_AGE_HOURS:-24}"
+STATUS_TIMEOUT="${LIMEN_MAIL_STATUS_TIMEOUT:-120}"
 
 # DAEMON-SAFETY: never let a hung/slow Mail AppleScript block the heartbeat beat. Two
 # structural bounds: (1) the sweep reads only the most-recent N messages (new arrivals —
@@ -62,7 +63,7 @@ PY
 }
 
 run_status() {
-  "$PY" - "$STATUS_OUT" "$OPS_REPORT" "$HISTORY_REPORT" "$MAX_AGE_HOURS" "$(uma_cmd_json)" <<'PY'
+  "$PY" - "$STATUS_OUT" "$OPS_REPORT" "$HISTORY_REPORT" "$MAX_AGE_HOURS" "$STATUS_TIMEOUT" "$(uma_cmd_json)" <<'PY'
 import json
 import subprocess
 import sys
@@ -72,7 +73,8 @@ out = Path(sys.argv[1])
 ops = sys.argv[2]
 history = sys.argv[3]
 max_age = sys.argv[4]
-cmd = json.loads(sys.argv[5])
+timeout_seconds = max(1.0, float(sys.argv[5]))
+cmd = json.loads(sys.argv[6])
 command = [
     *cmd,
     "mail-status",
@@ -85,7 +87,24 @@ command = [
     "--output",
     str(out),
 ]
-proc = subprocess.run(command, text=True, capture_output=True, check=False)
+try:
+    proc = subprocess.run(
+        command,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=timeout_seconds,
+    )
+except subprocess.TimeoutExpired as exc:
+    timed_stdout = exc.stdout or ""
+    if isinstance(timed_stdout, bytes):
+        timed_stdout = timed_stdout.decode("utf-8", errors="replace")
+    proc = subprocess.CompletedProcess(
+        command,
+        124,
+        stdout=timed_stdout,
+        stderr=f"mail-status exceeded {timeout_seconds:g}s timeout",
+    )
 if proc.returncode not in (0, 2):
     out.parent.mkdir(parents=True, exist_ok=True)
     detail = (proc.stderr.strip() or proc.stdout.strip() or "unknown failure")[:500]

@@ -1804,8 +1804,10 @@ def test_rate_limit_and_timeout_events_are_canonical_routes(monkeypatch) -> None
     )
     D._apply_result(rate_limited, "codex", D._RATELIMIT, now, BudgetTrack(date="2026-07-10"))
     assert rate_limited.status == "open"
+    assert rate_limited.target_agent == "codex"
     assert rate_limited.dispatch_log[-1].status == "open"
     assert rate_limited.dispatch_log[-1].route_to == "opencode"
+    assert D._effective_target_agent(rate_limited) == "opencode"
 
     timed_out = Task(
         id="TIME",
@@ -1816,8 +1818,10 @@ def test_rate_limit_and_timeout_events_are_canonical_routes(monkeypatch) -> None
     )
     D._apply_result(timed_out, "codex", D._TIMEOUT, now, BudgetTrack(date="2026-07-10"))
     assert timed_out.status == "open"
+    assert timed_out.target_agent == "codex"
     assert timed_out.dispatch_log[-1].status == "open"
     assert timed_out.dispatch_log[-1].route_to == "jules"
+    assert D._effective_target_agent(timed_out) == "jules"
     assert D.agent_can_run_task("codex", timed_out) is False
 
 
@@ -2993,7 +2997,8 @@ def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkey
     D._apply_result(task, "claude", False, now, BudgetTrack(date="2026-06-27"))
 
     assert task.status == "open"
-    assert task.target_agent == "jules"
+    assert task.target_agent == "claude"
+    assert D._effective_target_agent(task) == "jules"
     assert task.dispatch_log[-1].status == "open"
     assert task.dispatch_log[-1].route_to == "jules"
     assert "tried:claude" in task.labels
@@ -3020,7 +3025,8 @@ def test_remote_service_failure_skips_unarmed_ollama_floor(monkeypatch) -> None:
     D._apply_result(task, "jules", False, now, BudgetTrack(date="2026-07-09"))
 
     assert task.status == "open"
-    assert task.target_agent == "opencode"
+    assert task.target_agent == "jules"
+    assert D._effective_target_agent(task) == "opencode"
     assert task.dispatch_log[-1].status == "open"
     assert task.dispatch_log[-1].route_to == "opencode"
     assert task.dispatch_log[-1].output == "remote/service lane failed; reopened to healthy fleet cascade"
@@ -3050,7 +3056,8 @@ def test_remote_service_failure_can_use_armed_matching_ollama_floor(monkeypatch)
     D._apply_result(task, "jules", False, now, BudgetTrack(date="2026-07-09"))
 
     assert task.status == "open"
-    assert task.target_agent == "ollama"
+    assert task.target_agent == "jules"
+    assert D._effective_target_agent(task) == "ollama"
     assert task.dispatch_log[-1].status == "open"
     assert task.dispatch_log[-1].route_to == "ollama"
     assert "tried:jules" in task.labels

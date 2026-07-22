@@ -17,7 +17,7 @@ import limen.tabularius as tabularius
 import pytest
 from limen.conduct.client import BrokerUnavailable
 from limen.io import load_limen_file, queue_lock, save_limen_file
-from limen.models import LimenFile
+from limen.models import DispatchLogEntry, LimenFile
 from limen.tabularius import (
     INTENT_META,
     INTENT_REMOVE,
@@ -307,6 +307,14 @@ def test_sync_relays_claim_to_broker_without_writing_projection(tmp_path, monkey
     monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
     desired = load_limen_file(board)
     desired.tasks[1].status = "dispatched"
+    desired.tasks[1].dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=_NOW,
+            agent="codex",
+            session_id="claim-session",
+            status="dispatched",
+        )
+    )
 
     result = apply_limen_file_sync(
         board,
@@ -320,6 +328,7 @@ def test_sync_relays_claim_to_broker_without_writing_projection(tmp_path, monkey
     assert result.wrote is False
     assert result.note == "broker-committed"
     assert fake.packets[0].intent["kind"] == "task.claim"
+    assert fake.packets[0].initiator.agent == "legacy-adapter"
     assert fake.tasks["T-1"]["status"] == "dispatched"
     assert board.read_bytes() == before
     assert not _archive(board).exists()
@@ -433,6 +442,7 @@ def test_local_retry_replays_committed_full_projection_after_cache_write_crash(t
         task_id="T-1",
         patch={"status": "dispatched"},
         log={"status": "dispatched", "output": "claimed once"},
+        agent="codex",
         ticket_id="crash-retry",
     )
     submit_ticket(board, ticket)

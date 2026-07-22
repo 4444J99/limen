@@ -62,6 +62,7 @@ from limen.dispatch import (  # noqa: E402
     _dispatchable,
     task_work_loan_readiness,
     _down_lanes,
+    _effective_target_agent,
     _has_done_transition,
     _is_blocked_result,
     _queue_lock,
@@ -1203,13 +1204,14 @@ def _targeted_zero_launch_blocker(task_id: str, lanes: list[str]) -> dict[str, o
             "task_id": task_id,
             "reason": f"exact task {task_id} status is {task.status}; not in a dispatchable state",
         }
-    if task.target_agent not in lanes and task.target_agent != "any":
+    effective_target = _effective_target_agent(task)
+    if effective_target not in lanes and effective_target != "any":
         return {
             "id": "targeted-lane-mismatch",
             "task_id": task_id,
-            "reason": f"exact task targets {task.target_agent}; requested lanes {lanes}",
+            "reason": f"exact task routes to {effective_target}; requested lanes {lanes}",
         }
-    agent = task.target_agent if task.target_agent != "any" else (lanes[0] if lanes else "")
+    agent = effective_target if effective_target != "any" else (lanes[0] if lanes else "")
     if agent and not agent_can_run_task(agent, task):
         return {
             "id": "targeted-agent-capability-refused",
@@ -1564,7 +1566,7 @@ def _pick_reservations(
             for t in lf.tasks
             if _dispatchable(t)
             and (task_id is None or t.id == task_id)
-            and (t.target_agent == agent or t.target_agent == "any")
+            and _effective_target_agent(t) in {agent, "any"}
             and agent_can_run_task(agent, t)
             and t.budget_cost <= rem
             and _deps_met(t, id2)

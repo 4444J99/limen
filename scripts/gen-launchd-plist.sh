@@ -33,10 +33,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 ROOT="$(cd "$(resolve "${LIMEN_ROOT:-$SCRIPT_DIR/..}")" && pwd -P)"
 HOME_DIR="${HOME:?HOME is unset}"
 WORKDIR="${LIMEN_WORKDIR:-$(cd "$ROOT/.." && pwd)}"        # parent of the repo
+SCRATCH_ROOT="${LIMEN_SCRATCH_ROOT:-/Volumes/Scratch}"
 if [ -n "${LIMEN_WORKTREES:-}" ]; then
   WORKTREES="$LIMEN_WORKTREES"
-elif [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
-  WORKTREES="/Volumes/Scratch/limen-worktrees"
+elif [ -d "$SCRATCH_ROOT" ] && [ -w "$SCRATCH_ROOT" ]; then
+  WORKTREES="$SCRATCH_ROOT/limen-worktrees"
 else
   WORKTREES="$WORKDIR/.limen-worktrees"
 fi

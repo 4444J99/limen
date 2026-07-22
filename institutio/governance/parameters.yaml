@@ -1763,6 +1763,12 @@ parameters:
     self_update: none
     owner: mail
     note: "Maximum accepted age for UMA mail status receipts before wrappers refresh."
+  LIMEN_MAIL_STATUS_TIMEOUT:
+    default: 120
+    env: LIMEN_MAIL_STATUS_TIMEOUT
+    self_update: none
+    owner: mail
+    note: "Hard wall-clock bound in seconds for the read-only UMA mail-status subprocess so a provider or report stall cannot wedge the heartbeat packet boundary."
   LIMEN_MAIL_SWEEP:
     default: 1
     env: LIMEN_MAIL_SWEEP

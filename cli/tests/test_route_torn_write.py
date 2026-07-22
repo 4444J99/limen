@@ -74,12 +74,12 @@ def test_route_tolerates_torn_write_dry_run(tmp_path: Path):
     assert "tolerated 1 malformed" in r.stderr
 
 
-def test_route_apply_leaves_torn_cache_for_keeper_projection(tmp_path: Path):
+def test_route_apply_is_retired_without_touching_torn_cache(tmp_path: Path):
     p = tmp_path / "tasks.yaml"
     _board_with_torn_write(p)
     before = p.read_bytes()
     r = _run(p, "--apply")
-    assert r.returncode == 0, r.stderr
+    assert r.returncode == 2
     assert "Field required" not in r.stderr
-    assert "tolerated 1 malformed" in r.stderr
+    assert "--apply is retired" in r.stderr
     assert p.read_bytes() == before

@@ -630,10 +630,13 @@ def _local_budget_debit(
     amount = task.get("budget_cost", 0)
     if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
         raise ValueError(f"task {task['id']} has invalid canonical budget_cost")
-    agent = str(patch.get("target_agent") or task.get("target_agent") or "")
+    log = dict((event.get("intent") or {}).get("log") or {})
+    agent = str(log.get("logical_agent") or log.get("agent") or "")
     if not agent or agent == "any":
-        raise ValueError(f"task {task['id']} claim requires one concrete target_agent")
-    if task.get("target_agent") not in {None, "", "any", agent}:
+        raise ValueError(f"task {task['id']} claim requires one concrete executor")
+    latest = (task.get("dispatch_log") or [])[-1:] or [{}]
+    route_to = str(latest[0].get("route_to") or "") if latest[0].get("status") == "open" else ""
+    if task.get("target_agent") not in {None, "", "any", agent} and route_to != agent:
         raise ValueError(f"task {task['id']} targets {task.get('target_agent')}, not claim agent {agent}")
     budget = (board.get("portal") or {}).get("budget") or {}
     if not budget or not amount:
@@ -653,7 +656,11 @@ def _local_budget_debit(
 
 def _local_budget_refund(board: dict[str, Any], task: dict[str, Any], event: dict[str, Any]) -> None:
     amount = task.get("budget_cost", 0)
-    agent = str(task.get("target_agent") or "")
+    claim: dict[str, Any] = next(
+        (entry for entry in reversed(task.get("dispatch_log") or []) if entry.get("status") == "dispatched"),
+        {},
+    )
+    agent = str(claim.get("logical_agent") or claim.get("agent") or task.get("target_agent") or "")
     if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0 or not agent or agent == "any":
         raise ValueError(f"task {task['id']} cannot derive a canonical budget refund")
     budget = (board.get("portal") or {}).get("budget") or {}
