@@ -99,6 +99,11 @@ from limen.workstream_contract import (
     WORKSTREAM_SUCCESSOR_REQUIRED_LABEL,
     validate_packet_contract,
 )
+from limen.work_loan_journal import (
+    WorkLoanJournalError,
+    default_store as default_work_loan_journal_store,
+    work_loan_selection_key,
+)
 
 
 def _int_or_default(raw: object, default: int) -> int:
@@ -1187,6 +1192,7 @@ def sort_value_gate_candidates(
         key=lambda task: (
             _dispatch_focus_bucket(task, value_repos),
             _PRIORITY_ORDER.get(task.priority, 99),
+            *work_loan_selection_key(task),
             str(task.id),
         ),
     )
@@ -1605,6 +1611,52 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
             reasons = ",".join(exc.decision.get("reasons") or ["host-admission-denied"])
             return _blocked_result(f"host admission denied local {agent} execution: {reasons}")
     return _run_cmd(["agent-dispatch", agent, _build_prompt(task)], task, dry_run)
+
+
+def _journaled_agent_dispatch(
+    agent: str,
+    task: Task,
+    dry_run: bool,
+    reservation_id: str,
+    journal_root: Path | None = None,
+) -> bool | str:
+    """Run one provider only after its work-capacity reservation is durable."""
+
+    if dry_run:
+        return call_agent_dispatch(agent, task, dry_run=True)
+    store = default_work_loan_journal_store() if journal_root is None else default_work_loan_journal_store(journal_root)
+    try:
+        store.record_reservation(task, agent=canonical_agent(agent), reservation_id=reservation_id)
+    except WorkLoanJournalError as exc:
+        return _blocked_result(f"work-loan reservation failed: {exc}")
+    started = time.monotonic()
+    try:
+        result = call_agent_dispatch(agent, task, dry_run=False)
+    except Exception:
+        elapsed_seconds = max(0.0, time.monotonic() - started)
+        store.record_actual(
+            task,
+            agent=canonical_agent(agent),
+            reservation_id=reservation_id,
+            elapsed_seconds=elapsed_seconds,
+            local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
+            metrics={"runs": 1},
+        )
+        raise
+    elapsed_seconds = max(0.0, time.monotonic() - started)
+    launched_runs = 0 if _is_blocked_result(result) or _is_workstream_successor_result(result) else 1
+    try:
+        store.record_actual(
+            task,
+            agent=canonical_agent(agent),
+            reservation_id=reservation_id,
+            elapsed_seconds=elapsed_seconds,
+            local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
+            metrics={"runs": launched_runs},
+        )
+    except WorkLoanJournalError as exc:
+        return _blocked_result(f"work-loan actual accounting failed after provider launch: {exc}")
+    return result
 
 
 def _remote_receipt_store() -> ReceiptStore:
@@ -4935,7 +4987,13 @@ def dispatch_tasks(
         selected_contract_hash = execution_contract_hash(task)
         selected_lifecycle_token = _lifecycle_ownership_token(task)
         try:
-            result = call_agent_dispatch(agent_filter, task, dry_run)
+            result = _journaled_agent_dispatch(
+                agent_filter,
+                task,
+                dry_run,
+                selected_lifecycle_token,
+                tasks_path.parent,
+            )
         finally:
             if not dry_run:
                 _release_machine_admission(task.id)
@@ -5637,7 +5695,13 @@ def dispatch_parallel(
     def run_one(at: tuple[str, str]) -> DispatchResult:
         agent, tid = at
         try:
-            res = call_agent_dispatch(agent, id2task[tid], dry_run=False)
+            res = _journaled_agent_dispatch(
+                agent,
+                id2task[tid],
+                False,
+                selected_lifecycle_tokens[tid],
+                tasks_path.parent,
+            )
         except Exception as e:  # never let one task kill the pool
             print(f"  ERROR {agent} {tid}: {str(e)[:160]}")
             res = False
