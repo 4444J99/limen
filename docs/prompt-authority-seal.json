@@ -1,36 +1,36 @@
 {
-  "adapter_gaps_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "adapter_gaps_digest": "78c633157f9a2d8182ab6a4683bfb33d35593728096472666e4b059cd8a4346c",
   "authority_ready": false,
-  "content_hash": "a938f2f994dcd14c2d6e2219e4a2ff6e44b968f286959499ee0c81ba76687043",
+  "content_hash": "e9df53b4478f342330929d77eaebcf2a6d85540159df8d2cd8ec6c8a05c4a5a6",
   "coverage": {
     "assessed_atoms": 0,
-    "atoms": 738547,
-    "current_intents": 738547,
-    "current_unresolved_atoms": 738547,
-    "derived_occurrences": 61703,
+    "atoms": 741827,
+    "current_intents": 741827,
+    "current_unresolved_atoms": 741827,
+    "derived_occurrences": 61856,
     "excluded_occurrences": 47731,
-    "lineages": 163978,
-    "occurrences": 81491,
+    "lineages": 164048,
+    "occurrences": 81644,
     "operator_occurrences": 7125
   },
   "hashes": {
-    "adapted_unit_receipts": "608f4f694e7842085cfb1e213bae5d7c581cbb153cdaa788fd5aef08bd6a55d0",
+    "adapted_unit_receipts": "77f1f77bd337b1e3edad897f65e0fbb94ec2ef7848150d9f8eaf3baf16c6e259",
     "all_source_manifest": null,
-    "excluded_unit_receipts": "6573717b7818bd7e2e7d44d714a33c314f6e36c83cab9a0b88f8bba29ef477e1",
+    "excluded_unit_receipts": "03793212bffba039796be63ea35359821a592e2b5ce7bf4c35bbf81a63c8d551",
     "policy": "085f51203feb1e70a82bc8e7d55c134b33c7f03399f71444a500878a62a7719a",
-    "semantic": "6c88ce0abdc7149aaba5e598815639da5d286de5e15b023da7e533beb44ad802",
+    "semantic": "4be3599771560ffaa0725e289082a2c3744370a5604a35612c4f3f8802c461d4",
     "source_adapter_contract": "c8888c39d346dc862d75419d1645d235230c8575139abd675ffd037f52c964f9",
-    "source_cursor": "d2b341d9e8fb862658d067e7e477630c82d601979c4479ec4acdd1da714fa557",
-    "source_families": "100bbb03d8545deaf40cec8a73adee63934e73c7103bbf5331ac50511bdfcd66",
-    "source_manifest": "37986906a756790a54c51d529df1dd5b973dcea4149ccf125507a094aa28bdf1",
+    "source_cursor": "5cd33a8731bd6001b9febbb8f02bf90363b55bd9bbf9daeaba734b071286fe62",
+    "source_families": "6e0b58de2838c36bf03205db00262d355441feb9a9c19169fcf828dc6af1aa89",
+    "source_manifest": "9b395c7a562e5117093cb803c13f49fb40758c816b0cb36d4b584aa65fba4580",
     "source_scan_payload": null,
     "source_scan_receipt": null,
     "source_scanner_code": null,
-    "source_units": "711b8787c55d0165ea45a708b6cd70566948b808a0bdfd2c82697a8d0f4b54af",
-    "unresolved_units": "70cf8ebc755e428fe4910371b23de439a52af932ba61faf92468f2d83ee7ff77",
+    "source_units": "3af766fad6016c40303e09401867ed33cf9aa580d53b8897477c9009b866b0dd",
+    "unresolved_units": "b8712da0690bddec14871ac06fe4dc2fbbaa9eb061104fa676a2666b518fc22a",
     "unsupported_units": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
   },
-  "public_projection_digest": "d93135a6030b3893f7b76e82d85dac2e6904782756012d3e1f6cf3d4d4167002",
+  "public_projection_digest": "0deb933163e23f287e31c6b4050e9434fe964dc4734bcf27f54696833f126e80",
   "schema": "limen.prompt-authority-seal.v1",
   "schema_version": 1,
   "scope": {
@@ -60,16 +60,16 @@
     "other": 0,
     "prompt_grounding_failed": 0,
     "source_changed": 0,
-    "source_unavailable": 0
+    "source_unavailable": 3
   },
   "source_families": {
     "agy-cli-conversations": {
-      "adapted": 104,
-      "converged": 104,
+      "adapted": 0,
+      "converged": 0,
       "discovered": 501,
-      "errors": 0,
+      "errors": 1,
       "excluded": 0,
-      "pending": 397,
+      "pending": 501,
       "unsupported": 0
     },
     "agy-cli-history": {
@@ -84,37 +84,37 @@
     "claude-file-history": {
       "adapted": 0,
       "converged": 0,
-      "discovered": 6600,
+      "discovered": 7395,
       "errors": 0,
       "excluded": 0,
-      "pending": 6600,
+      "pending": 7395,
       "unsupported": 0
     },
     "claude-plans": {
       "adapted": 0,
       "converged": 0,
-      "discovered": 86,
+      "discovered": 108,
       "errors": 0,
       "excluded": 0,
-      "pending": 86,
+      "pending": 108,
       "unsupported": 0
     },
     "claude-projects": {
-      "adapted": 59,
-      "converged": 110,
-      "discovered": 8454,
-      "errors": 0,
-      "excluded": 10,
-      "pending": 8334,
+      "adapted": 13,
+      "converged": 16,
+      "discovered": 9003,
+      "errors": 1,
+      "excluded": 16,
+      "pending": 8987,
       "unsupported": 0
     },
     "claude-tasks": {
       "adapted": 0,
       "converged": 0,
-      "discovered": 251,
-      "errors": 0,
+      "discovered": 246,
+      "errors": 1,
       "excluded": 0,
-      "pending": 251,
+      "pending": 246,
       "unsupported": 0
     },
     "codex-attachments": {
@@ -136,21 +136,21 @@
       "unsupported": 0
     },
     "codex-sessions": {
-      "adapted": 120,
-      "converged": 120,
-      "discovered": 2032,
+      "adapted": 16,
+      "converged": 16,
+      "discovered": 2288,
       "errors": 0,
       "excluded": 0,
-      "pending": 1912,
+      "pending": 2272,
       "unsupported": 0
     },
     "gemini-tmp": {
       "adapted": 0,
-      "converged": 120,
-      "discovered": 402,
+      "converged": 16,
+      "discovered": 403,
       "errors": 0,
       "excluded": 0,
-      "pending": 282,
+      "pending": 387,
       "unsupported": 0
     },
     "gemini-tmp-agy": {
@@ -163,12 +163,12 @@
       "unsupported": 0
     },
     "opencode-db": {
-      "adapted": 7,
-      "converged": 120,
-      "discovered": 1764,
+      "adapted": 1,
+      "converged": 16,
+      "discovered": 1767,
       "errors": 0,
       "excluded": 0,
-      "pending": 1644,
+      "pending": 1751,
       "unsupported": 0
     }
   },
@@ -177,14 +177,14 @@
     "labels_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
   },
   "totals": {
-    "adapted": 290,
-    "adapter_gaps": 0,
-    "converged": 590,
-    "errors": 0,
-    "excluded": 10,
-    "pending": 19511,
-    "source_units": 20111,
-    "unresolved": 19511,
+    "adapted": 30,
+    "adapter_gaps": 3,
+    "converged": 80,
+    "errors": 3,
+    "excluded": 16,
+    "pending": 21652,
+    "source_units": 21732,
+    "unresolved": 21698,
     "unsupported": 0,
     "validation_errors": 2220
   },
