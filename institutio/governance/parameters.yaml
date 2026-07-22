@@ -4129,11 +4129,11 @@ parameters:
     owner: tabularius
     note: "Gate for the relationship-review-delta beat sensor (weekly review-due detector for the relationship-pipeline slugs). ON by default: it is read-only (a bounded, immutable sqlite count of chat.db) and fails open, so it cannot red the beat or leak. Its only public output is a PII-clean count; per-person detail lands only in the sealed _people-private estate."
   LIMEN_BEAT_RELATIONSHIP_REVIEW:
-    default: 168
+    default: 24
     env: LIMEN_BEAT_RELATIONSHIP_REVIEW
     self_update: none
     owner: tabularius
-    note: "Cadence (every N beats) of the relationship-review-delta sensor. 168 ≈ weekly at the 60s beat floor. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only); heartbeat-loop.sh carries no sensor-specific cadence constant."
+    note: "Cadence (every N beats) of the relationship-review-delta sensor. 24 ≈ daily-active — at the slowest quiet tempo (~30min/beat) 24 beats ≈ 12h, so the warm-network re-engagement signal surfaces at least twice a day (was 168 ≈ weekly, effectively dormant). Safe to fire often: the sensor is a read-only, side-effect-free detector (surfaces a PII-clean review-due COUNT — no send, no draft, no outreach). Half as frequent as the time-critical opportunity sensors (cadence 12). Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only); heartbeat-loop.sh carries no sensor-specific cadence constant."
   LIMEN_RELATIONSHIP_REVIEW_TIMEOUT:
     default: 300
     env: LIMEN_RELATIONSHIP_REVIEW_TIMEOUT

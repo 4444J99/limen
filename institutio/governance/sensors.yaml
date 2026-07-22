@@ -985,7 +985,13 @@ sensors:
     owner: tabularius
     cadence:
       env: LIMEN_BEAT_RELATIONSHIP_REVIEW
-      default: 168
+      # daily-active (was 168 ≈ weekly, effectively dormant): this is a read-only,
+      # side-effect-free detector (surfaces a PII-clean review-due COUNT — no send, no
+      # draft, no outreach), so it can fire often at zero account-safety cost. At the
+      # slowest quiet tempo (~30min/beat) 24 beats ≈ 12h → the warm-network re-engagement
+      # signal surfaces at least twice a day instead of ~weekly. Half as frequent as the
+      # time-critical opportunity sensors (cadence 12), which is the right priority tier.
+      default: 24
     timeout:
       env: LIMEN_RELATIONSHIP_REVIEW_TIMEOUT
       default: 300
