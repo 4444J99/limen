@@ -82,6 +82,13 @@ people:
         stage: mvp
         public_face_state: readme
         dossier: null
+      - name: sales-client-engine
+        repo: null
+        keywords: [sales engine, client management, crm, sales pipeline, book of business, client tracker, sales os]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-named lane (2026-07-22); brainstorms live in the chat-app corpus — dossier first, build on evidence
 
   - slug: charles
     tier: T2

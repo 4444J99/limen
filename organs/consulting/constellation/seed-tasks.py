@@ -274,6 +274,19 @@ TASKS: list[dict] = [
         value="the game lane's scattered ideas become a buildable backlog",
     ),
     dict(
+        id="CONST-SCE-DOSSIER",
+        slug="rob",
+        title="Sales & client-management engine brainstorm dossier from the conversation corpus",
+        repo="organvm/limen",
+        type="content",
+        priority="medium",
+        cost=10,
+        deps=["CONST-CORPUS-REFRESH"],
+        predicate=f"{CHECK} dossier rob sales-client-engine",
+        receipt="git:organvm/limen:organs/consulting/constellation/registry.yaml",
+        value="Rob's fourth lane recovered from scattered chat brainstorms into a buildable decision base",
+    ),
+    dict(
         id="CONST-TATO-FACE",
         slug="rob",
         title="Micro Tato public face refresh",
@@ -505,6 +518,8 @@ def _receipt_for(row: dict) -> str:
     slugs by construction), dossiers in the project repo's docs/, funnels at
     the instance file, and stage/decision moves at the register row itself.
     """
+    if row.get("receipt"):
+        return row["receipt"]
     predicate = row["predicate"]
     if " proto " in predicate:
         return f"git:organvm/relationship-pipeline:out/{row['slug']}"
