@@ -2792,6 +2792,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Path to the GITVS estate registry (the desired-state resource graph). Overridable so scripts/tests/gitvs.test.sh can point the parity predicate at drift fixtures; production reads the committed institutio/github/estate.yaml."
+  LIMEN_PROGRESS_SOURCE_REGISTRY_DIRS:
+    default: ""
+    env: LIMEN_PROGRESS_SOURCE_REGISTRY_DIRS
+    self_update: none
+    owner: progress-universe
+    note: "Path-separated additional runtime registration roots for the work-universe source registry. The tracked config/progress-sources root is always discovered; missing or unreadable additional roots remain explicit coverage debt."
   LIMEN_MOAT_GUARD:
     default: "moat-guard.json"
     env: LIMEN_MOAT_GUARD

@@ -21,6 +21,7 @@ from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
 from limen.progress import build_progress_snapshot, render_progress
+from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
 
 
@@ -348,6 +349,56 @@ def progress(view, scope, level, limit, show_all, ascii_only, json_output, repor
         ),
         nl=False,
     )
+
+
+@main.command("progress-sources")
+@click.option(
+    "--registry-dir",
+    "registry_dirs",
+    multiple=True,
+    type=click.Path(path_type=Path),
+    help="Use an explicit registration root; repeat to combine roots.",
+)
+@click.option("--json-output", is_flag=True, help="Print the normalized source registry as JSON.")
+@click.option(
+    "--report-file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write the normalized registry to an explicit receipt path.",
+)
+def progress_sources(registry_dirs, json_output, report_file):
+    """Discover and validate work-universe source owner reports."""
+
+    root = resolve_root()
+    registry = build_source_registry(
+        root,
+        registration_dirs=[Path(path).expanduser() for path in registry_dirs] or None,
+    )
+    if report_file:
+        output = Path(report_file).expanduser()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8")
+    if json_output:
+        click.echo(json.dumps(registry, indent=2))
+        return
+    summary = registry["summary"]
+    discovery = registry["discovery"]
+    click.echo(
+        "WORK-UNIVERSE SOURCES "
+        f"status={registry['semantic_status']} "
+        f"sources={summary['source_count']} "
+        f"ready={summary['ready_required_source_count']}/{summary['required_source_count']} "
+        f"coverage_debt={summary['coverage_debt']} "
+        f"unknown_counts={summary['unknown_leaf_count_sources']} "
+        f"discovery_exhaustive={str(discovery['exhaustive']).lower()}"
+    )
+    for source in registry["sources"]:
+        count = source["normalized_leaf_count"]
+        click.echo(
+            f"{source['source_id']}\t{source['semantic_status']}\t"
+            f"owner={source['owner']['id']}:{source['owner']['surface']}\t"
+            f"exhaustive={str(source['exhaustive']).lower()}\tleaves={count if count is not None else 'unknown'}"
+        )
 
 
 def _open_prs_via_gh(limit: int = 200):
