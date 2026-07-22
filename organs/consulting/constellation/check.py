@@ -98,25 +98,38 @@ def check_registry() -> int:
     return _ok("registry valid") if proc.returncode == 0 else _fail("registry invalid")
 
 
+def _live_root() -> Path:
+    """The live checkout's root — worktrees share its untracked estate (CCE checkout, source-drop)."""
+    common = subprocess.run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        check=True,
+    ).stdout.strip()
+    return Path(common).parent
+
+
 def check_corpus_refresh() -> int:
-    cce_src = REPO_ROOT / "conversation-corpus-check" / "src"
-    sys.path.insert(0, str(cce_src))
+    """Populated ⟺ at least one per-corpus dir (drop_root.parent/<corpus_id>) is non-empty."""
+    root = REPO_ROOT if (REPO_ROOT / "conversation-corpus-check" / "src").is_dir() else _live_root()
+    sys.path.insert(0, str(root / "conversation-corpus-check" / "src"))
     try:
-        from conversation_corpus_engine.provider_catalog import (  # type: ignore
-            PROVIDER_CONFIG,
-            conventional_corpus_root,
-        )
+        from conversation_corpus_engine.provider_catalog import PROVIDER_CONFIG  # type: ignore
     except Exception as exc:  # noqa: BLE001 — any import failure is the same finding
         return _fail(f"conversation-corpus-engine not importable: {exc}")
-    root = Path(conventional_corpus_root())
+    env = os.environ.get("CCE_SOURCE_DROP_ROOT")
+    drop = Path(env).expanduser() if env else root / "source-drop"
+    home = drop.parent
     populated = []
-    for provider in PROVIDER_CONFIG:
-        corpus_dir = root / str(provider)
-        if corpus_dir.exists() and any(corpus_dir.iterdir()):
-            populated.append(str(provider))
+    for cfg in PROVIDER_CONFIG.values():
+        for key in ("default_corpus_id", "fallback_corpus_id"):
+            cid = cfg.get(key) if isinstance(cfg, dict) else None
+            if cid and (home / cid).is_dir() and any((home / cid).iterdir()):
+                populated.append(cid)
     if populated:
-        return _ok(f"corpus populated for: {', '.join(sorted(populated))}")
-    return _fail(f"no provider corpus found under {root}")
+        return _ok(f"corpus populated: {', '.join(sorted(set(populated)))}")
+    return _fail(f"no populated corpus under {home}")
 
 
 def check_proto(slug: str) -> int:

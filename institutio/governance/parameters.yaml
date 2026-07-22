@@ -4178,6 +4178,19 @@ parameters:
     owner: mail
     note: "Safety-valve arg for the opportunity-pipeline effector (--notify). When 1, review-due detections append COUNT-ONLY events to the sealed private log ~/Workspace/_people-private/opportunities/review-due.jsonl (ARCA-sealed, never public) and push a count-only line through the existing notify cascade. ON by default because both write targets are private/count-only; set 0 to run detection without recording."
 
+  # --- consulting: constellation register -------------------------------------
+  LIMEN_CONSTELLATION_OVERLAY:
+    default: "~/Workspace/_people-private/constellation/registry-private.yaml"
+    env: LIMEN_CONSTELLATION_OVERLAY
+    self_update: none
+    owner: consulting
+    note: "Path to the constellation register's ARCA-sealed private overlay (pipeline slugs, protocol state, channel state, boundaries). The public half lives at organs/consulting/constellation/registry.yaml; validate-constellation.py Rule #6 checks parity only when this file is reachable, so CI (store absent) degrades cleanly."
+  LIMEN_PEOPLE_STORE:
+    default: "~/Workspace/_people-private/people"
+    env: LIMEN_PEOPLE_STORE
+    self_update: none
+    owner: consulting
+    note: "Root of the private per-person store (open-asks.yaml, protocol artifacts, project dossiers) that constellation check.py predicates and the dossier engine read/write. ARCA-sealed via the _*-private glob; never in any public tree."
   LIMEN_OPPORTUNITY_BRIEF:
     default: "1"
     env: LIMEN_OPPORTUNITY_BRIEF
