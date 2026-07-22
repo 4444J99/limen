@@ -2996,6 +2996,48 @@ parameters:
     self_update: none
     owner: observatory
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the OBSERVATORY loop. The runner kills the command group on overrun and the beat continues fail-open. 480 covers the full-field pass (~50 light snapshots + 17 estate surfaces on top of the deep winners; the 3-winner loop measured 106s)."
+  LIMEN_DEPENDABOT_GUARD:
+    default: "1"               # ON — detect drift in the Tier-2 deferral owner (Dependabot security-updates)
+    env: LIMEN_DEPENDABOT_GUARD
+    self_update: none
+    owner: gitvs
+    note: "Beat gate for the dependabot-security-guard sensor (scripts/dependabot-security-guard.py). estate-audit-heal defers framework-major (Tier-2) audit advisories to Dependabot; this guards that the deferral's owner stays enabled — the org's npm/pnpm audit-CI repos must keep Dependabot security-updates + alerts ON. On drift (a posture OFF) the sensor exits non-zero. Read-only (API reads). Set 0 to silence."
+  LIMEN_DEPENDABOT_GUARD_APPLY:
+    default: "0"               # OFF (DARK) — detection-only until armed; then re-enables drifted repos
+    env: LIMEN_DEPENDABOT_GUARD_APPLY
+    self_update: none
+    owner: gitvs
+    note: "Effector arm for dependabot-security-guard (observable-before-autonomous, the LIMEN_MAIN_GREEN_APPLY pattern, read internally). When 0 (default) drift is only detected + printed. When 1, the guard re-ENABLES (ON only, never disables — a benign reversible safety setting) each drifted repo's Dependabot security-updates (`gh repo edit --enable-automated-security-fixes`) + vulnerability-alerts (PUT), capped by LIMEN_DEPENDABOT_GUARD_MAX. Arm after watching the detection log prove out."
+  LIMEN_BEAT_DEPENDABOT_GUARD:
+    default: 24
+    env: LIMEN_BEAT_DEPENDABOT_GUARD
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N heartbeat beats) of the dependabot-security-guard sensor. Security-update posture is low-churn (rarely toggles), so a daily-class cadence is honest; the check is a handful of read-only API calls."
+  LIMEN_DEPENDABOT_GUARD_TIMEOUT:
+    default: 300
+    env: LIMEN_DEPENDABOT_GUARD_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Per-run timeout (seconds) for the dependabot-security-guard sensor; a handful of gh API reads/enables. The runner kills the group on overrun and the beat continues fail-open."
+  LIMEN_DEPENDABOT_GUARD_MAX:
+    default: 10
+    env: LIMEN_DEPENDABOT_GUARD_MAX
+    self_update: none
+    owner: gitvs
+    note: "Per-run cap on how many drifted repos the guard re-enables in one armed pass — a first arming can't fan out uncontrolled. The audit-CI scope is small (~8), so 10 covers it; remaining drift heals next beat."
+  LIMEN_DEPENDABOT_GUARD_OWNER:
+    default: "organvm"
+    env: LIMEN_DEPENDABOT_GUARD_OWNER
+    self_update: none
+    owner: gitvs
+    note: "GitHub owner/org whose audit-CI repos the guard enumerates via `gh search code`. Default organvm."
+  LIMEN_DEPENDABOT_GUARD_REPOS:
+    default: ""
+    env: LIMEN_DEPENDABOT_GUARD_REPOS
+    self_update: none
+    owner: gitvs
+    note: "Test/override hook for dependabot-security-guard: colon-separated full repo names (owner/repo) instead of the derived `gh search code` discovery. Empty (default) → discover. Used by the hermetic test and bounded armed rehearsals; never set in production."
   OBSERVATORY_FIELD_LIMIT:
     default: 50
     env: OBSERVATORY_FIELD_LIMIT

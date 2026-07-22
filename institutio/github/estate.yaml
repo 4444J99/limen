@@ -215,11 +215,12 @@ resource_types:
   dependabot:
     identity: derived
     desired: ["security_updates_on"]
-    observe: ""
-    effector: []
-    status: envisioned
+    observe: "python3 scripts/dependabot-security-guard.py --check (per audit-CI repo: automated_security_fixes + vulnerability-alerts)"
+    effector:
+      - {kind: delegate, argv: [python3, scripts/dependabot-security-guard.py, --apply]}
+    status: active
     owner: gitvs
-    note: "Dependabot/Renovate posture — owed; now the native instance of the `integrations` registry below (its config .github/dependabot.yml is already present)."
+    note: "Dependabot security-update posture — the Tier-2 owner for estate-audit-heal's deferred (framework-major) advisories. Wired 2026-07-22: dependabot-security-guard.py observes + (armed) re-enables security-updates/alerts across the org's audit-CI repos, so the deferral can't silently break. Scoped to audit-CI repos (limen uses Renovate). Config .github/dependabot.yml is a separate concern (version-updates, pushed by sync-marketplace-config.py)."
   marketplace_app:
     identity: derived
     desired: ["installed_on_scope_classes", "config_present"]
