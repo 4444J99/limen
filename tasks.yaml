@@ -153015,17 +153015,21 @@ tasks:
   - private-pilot
   - human-send-only
   - deadline-2026-08-05
+  - cockpit-pr-open
+  - encrypted-backup-blocked
   urls:
   - https://github.com/organvm/hospes/issues/9
-  context: Private HOSPES Pilot 1 activation. Public release remains gated; correspondence
-    is human-sent; guest data stays outside Git. Owner issue contains the product
-    and operational receipt checklist.
+  - https://github.com/organvm/hospes/pull/11
+  context: 'Private HOSPES Pilot 1 activation. PR #11 owns the reusable cockpit software;
+    issue #9 owns the locally gated encrypted backup and real pilot receipts. Public
+    release remains gated, correspondence is human-sent, and guest data stays outside
+    Git.'
   predicate: test "$(gh issue view 9 --repo organvm/hospes --json state --jq .state)"
     = CLOSED
   receipt_target: https://github.com/organvm/hospes/issues/9
   depends_on: []
   created: '2026-07-22'
-  updated: '2026-07-22T21:29:46.453516Z'
+  updated: '2026-07-22T23:39:30.477392Z'
   dispatch_log:
   - timestamp: '2026-07-22T21:29:46.453516Z'
     agent: codex
@@ -153037,6 +153041,16 @@ tasks:
     session_id: direct:hospes-ari-pilot-launch
     status: in_progress
     output: 'Execution started in work/ari-pilot-launch; owner issue #9.'
+  - timestamp: '2026-07-22T23:39:30.477392Z'
+    agent: codex
+    session_id: direct:hospes-partnership-cockpit
+    status: in_progress
+    output: 'PR #10 merged with privacy/lifecycle repairs. PR #11 is open and merge-ready
+      at 9402358e93884e3f035939b36e729f4b3f88add7 with local done.sh, push/PR hospes-done,
+      CodeQL, browser acceptance, and zero unresolved threads green. Canonical DB
+      custody is 0700/0600 with 22 items, 23 audit events, zero guest records, and
+      matching source checksum. Issue #9 remains open: AES-256 Archive4T backup needs
+      local passphrase entry; all real Pilot 1 receipts remain unchecked.'
 - id: CONST-CORPUS-REFRESH
   title: Populate the conversation corpus (live pulls + staged bundle imports)
   repo: organvm/limen
@@ -153905,5 +153919,365 @@ tasks:
   horizon: present
   value_case: the finance-gaming idea space is read from the record and closed or
     parked
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-SCE-DOSSIER
+  title: Sales & client-management engine brainstorm dossier from the conversation
+    corpus
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier rob sales-client-engine
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.083947Z'
+  dispatch_log: []
+  horizon: present
+  value_case: Rob's fourth lane recovered from scattered chat brainstorms into a buildable
+    decision base
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-JOHNF-PROTO
+  title: John F. interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto john-f
+  receipt_target: git:organvm/relationship-pipeline:out/john-f
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.085529Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the finance-niche record is read before any shared idea is entertained
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-JOHNF-DEMAND-REVIEW
+  title: John F. demand-evidence memo from the protocol review
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet john-f demand-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-JOHNF-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.086083Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the john-f finance-gaming idea space is promoted or parked on evidence
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MIKES-PROTO
+  title: Mike S. interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto mike-s
+  receipt_target: git:organvm/relationship-pipeline:out/mike-s
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.086553Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the security-firm lane is scoped from the recorded relationship, not
+    recollection
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-SECURITY-DOSSIER
+  title: Security-firm brainstorm dossier from the conversation corpus
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier mike-s security-firm
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.086992Z'
+  dispatch_log: []
+  horizon: present
+  value_case: scattered security-firm ideas become one buildable decision base
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MIKES-DEMAND-REVIEW
+  title: Mike S. demand-evidence memo from the protocol review
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet mike-s demand-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-MIKES-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.087462Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the security-firm venture is promoted or parked on evidence
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-AARON-PROTO
+  title: Aaron interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto aaron
+  receipt_target: git:organvm/relationship-pipeline:out/aaron
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.087925Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the education/writing cluster is grounded in the actual record
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-AARON-EDU-DOSSIER
+  title: Education-suite brainstorm dossier (aaron) from the conversation corpus
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier aaron education-suite
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.088337Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the education-domain brainstorms with aaron land in one decision base
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-AARON-DEMAND-REVIEW
+  title: Aaron demand-evidence memo from the protocol review
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet aaron demand-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-AARON-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.088763Z'
+  dispatch_log: []
+  horizon: present
+  value_case: education-suite scope is promoted or parked on evidence; further cluster
+    names surface here
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CHRIS-PROTO
+  title: Chris interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto chris
+  receipt_target: git:organvm/relationship-pipeline:out/chris
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.089192Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the education/writing cluster is grounded in the actual record
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CHRIS-EDU-DOSSIER
+  title: Education-suite brainstorm dossier (chris) from the conversation corpus
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier chris education-suite
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.089936Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the education-domain brainstorms with chris land in one decision base
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CHRIS-DEMAND-REVIEW
+  title: Chris demand-evidence memo from the protocol review
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet chris demand-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-CHRIS-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.090432Z'
+  dispatch_log: []
+  horizon: present
+  value_case: education-suite scope is promoted or parked on evidence; further cluster
+    names surface here
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-SHARI-PROTO
+  title: Shari interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto shari
+  receipt_target: git:organvm/relationship-pipeline:out/shari
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.090902Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the party-game lane is scoped from the recorded relationship, not recollection
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-PARTY-DOSSIER
+  title: Party-game-suite brainstorm dossier from the conversation corpus
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier shari party-game-suite
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.091357Z'
+  dispatch_log: []
+  horizon: present
+  value_case: scattered party-game ideas become one buildable decision base
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-SHARI-DEMAND-REVIEW
+  title: Shari demand-evidence memo from the protocol review
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet shari demand-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-SHARI-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T23:09:04.091833Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the party-game-suite venture is promoted or parked on evidence
   external_deadline: false
   source_origin: human_prompt
