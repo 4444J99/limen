@@ -23,6 +23,7 @@ Usage:
   python3 scripts/opportunity-brief.py --dry-run  # print the brief, send nothing
   python3 scripts/opportunity-brief.py --force     # send even if one already went out today
 """
+
 from __future__ import annotations
 
 import argparse
@@ -80,6 +81,7 @@ def compose() -> tuple[str, str]:
     opp = _load("logs/opportunity-status.json", {})
     disp = _load("logs/correspondence-dispositions.json", {})
     ledger = _load("obligations-ledger.json", {})
+    funnel = _load("logs/profile-conversion-funnel-latest.json", {})
 
     total_inbound = int(opp.get("total_inbound", 0) or 0)
     red_count = int(opp.get("red_count", 0) or 0)
@@ -97,12 +99,19 @@ def compose() -> tuple[str, str]:
     opp_age = _age_hours(opp.get("generated_at"))
     ledger_age = _age_hours(ledger.get("generated_at"))
 
+    bottleneck = funnel.get("bottleneck", {}) or {}
+    bstage = bottleneck.get("stage")
+    bwhy = bottleneck.get("why") or ""
+    broute = bottleneck.get("route") or ""
+    funnel_age = _age_hours(funnel.get("generated"))
+
     today = _dt.datetime.now(_dt.timezone.utc).strftime("%a %b %-d")
     owed = red_count + stale_count + linkedin_no_path + portal_forms + reply_owed
 
     subject = (
         f"Opportunity brief — {owed} owed, {total_inbound} inbound, "
-        f"LinkedIn {'OFF' if mirror_silence else 'on'} · {today}"
+        f"LinkedIn {'OFF' if mirror_silence else 'on'}"
+        f"{f' · bottleneck: {bstage}' if bstage else ''} · {today}"
     )
 
     L: list[str] = []
@@ -114,6 +123,16 @@ def compose() -> tuple[str, str]:
     else:
         L.append(f"You owe a move on {owed} item(s). Details below.")
     L.append("")
+
+    # The single bottleneck routes Aug-1 effort: don't build past the constraint. Named by
+    # scripts/conversion-funnel.py (seen -> inbound -> revenue), refreshed on the beat (O2).
+    if bstage:
+        L.append(f"🎯 BOTTLENECK: {bstage} — the one constraint to push on.")
+        if bwhy:
+            L.append(f"    {bwhy}")
+        if broute:
+            L.append(f"    → {broute}")
+        L.append("")
 
     L.append(f"INBOUND LEADS (in-flight): {total_inbound}")
     for cls, n in by_class.items():
@@ -159,6 +178,9 @@ def compose() -> tuple[str, str]:
     if ledger_age is not None:
         flag = " ⚠ STALE" if ledger_age > 6 else ""
         fresh.append(f"mail ledger {ledger_age}h ago{flag}")
+    if funnel_age is not None:
+        flag = " ⚠ STALE" if funnel_age > 30 else ""
+        fresh.append(f"funnel {funnel_age}h ago{flag}")
     L.append("engine: " + ("; ".join(fresh) if fresh else "state files missing ⚠"))
     L.append("")
     L.append("(auto-sent daily by scripts/opportunity-brief.py — the engine's voice)")
@@ -174,11 +196,16 @@ def _already_sent_today() -> bool:
 def _stamp_sent(subject: str) -> None:
     try:
         STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        STATE_PATH.write_text(json.dumps({
-            "last_sent_date": _dt.date.today().isoformat(),
-            "last_sent_at": _dt.datetime.now(_dt.timezone.utc).isoformat().replace("+00:00", "Z"),
-            "subject": subject,
-        }, indent=2))
+        STATE_PATH.write_text(
+            json.dumps(
+                {
+                    "last_sent_date": _dt.date.today().isoformat(),
+                    "last_sent_at": _dt.datetime.now(_dt.timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "subject": subject,
+                },
+                indent=2,
+            )
+        )
     except Exception:
         pass
 
@@ -190,9 +217,18 @@ def _send(subject: str, body: str) -> int:
         body_path = f.name
     try:
         proc = subprocess.run(
-            [str(ROOT / "scripts" / "mail-send"),
-             "--to", OPERATOR_EMAIL, "--subject", subject, "--body-file", body_path],
-            capture_output=True, text=True, timeout=180,
+            [
+                str(ROOT / "scripts" / "mail-send"),
+                "--to",
+                OPERATOR_EMAIL,
+                "--subject",
+                subject,
+                "--body-file",
+                body_path,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
         )
         if proc.returncode != 0:
             sys.stderr.write(f"opportunity-brief: send failed rc={proc.returncode}: {proc.stderr.strip()[:200]}\n")

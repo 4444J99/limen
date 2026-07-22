@@ -1030,6 +1030,33 @@ sensors:
         severity: silent
         escalation: "opportunity sync skipped or exceeded its bound (reads obligations-ledger.json; fails open)"
 
+  conversion-funnel:
+    section: heartbeat
+    title: "name the single public-face bottleneck (DISCOVERY|FACE|CLOSE) — the constraint that routes Aug-1 ($10k/wk) effort, kept live on the beat instead of dark/manual"
+    gate: LIMEN_CONVERSION_FUNNEL
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_CONVERSION_FUNNEL
+      default: 48
+    timeout:
+      env: LIMEN_CONVERSION_FUNNEL_TIMEOUT
+      default: 300
+    # Two ORDERED steps: traffic-collect (gh /traffic per value-repo -> traffic.jsonl, the "seen"
+    # signal) must refresh BEFORE conversion-funnel fuses seen->inbound->revenue and writes the
+    # bottleneck to logs/profile-conversion-funnel-latest.json (which the daily brief then surfaces).
+    # Both read-only + fail-open (a 403 on a repo without push access is recorded, never fatal); both
+    # silent so a network hiccup can't red the beat. Dark until this rung — the bottleneck (currently
+    # DISCOVERY: repos provable but unseen) only refreshed when a human ran it by hand.
+    steps:
+      - command: "python3 scripts/traffic-collect.py"
+        severity: silent
+        escalation: "traffic-collect skipped/failed — the 'seen' signal may be stale (gh /traffic; 403 without push access is recorded, non-fatal)"
+      - command: "python3 scripts/conversion-funnel.py"
+        severity: silent
+        escalation: "conversion-funnel skipped/failed — the public-face bottleneck (DISCOVERY|FACE|CLOSE) may be stale in logs/profile-conversion-funnel-latest.json (reads traffic.jsonl + opportunity-status.json; fails open)"
+
   opportunity-brief:
     section: heartbeat
     title: "the engine's daily VOICE — once per day compose a plain-text opportunity brief (inbound leads, what you owe, LinkedIn mirror status, correspondence, engine freshness) and EMAIL it to the operator's own inbox so the continuous engine is felt, not buried in a log"

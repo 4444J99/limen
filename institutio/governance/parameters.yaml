@@ -4209,6 +4209,24 @@ parameters:
     self_update: none
     owner: mail
     note: "Cadence (every N beats) of the opportunity-brief sensor. 12 beats means it ATTEMPTS several times a day; the script's own once/day stamp dedups so exactly one brief lands. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only); heartbeat-loop.sh carries no sensor-specific cadence constant."
+  LIMEN_CONVERSION_FUNNEL:
+    default: "1"
+    env: LIMEN_CONVERSION_FUNNEL
+    self_update: none
+    owner: mail
+    note: "Gate for the conversion-funnel beat sensor (institutio/governance/sensors.yaml section heartbeat): two ordered steps — scripts/traffic-collect.py (gh /traffic per value-repo -> logs/observatory/traffic.jsonl) then scripts/conversion-funnel.py (fuses seen->inbound->revenue -> logs/profile-conversion-funnel-latest.json, naming the single bottleneck DISCOVERY|FACE|CLOSE). Read-only; both steps fail-open (a 403 on a repo without push access is recorded, never fatal). The bottleneck is what routes Aug-1 ($10k/wk) effort, and it was dark (manual-only) until this rung; the daily brief surfaces it. 0 disables the pass."
+  LIMEN_BEAT_CONVERSION_FUNNEL:
+    default: 48
+    env: LIMEN_BEAT_CONVERSION_FUNNEL
+    self_update: none
+    owner: mail
+    note: "Cadence (every N beats) of the conversion-funnel sensor. 48 ≈ once-daily at the slowest quiet tempo (~30min/beat -> 24h); leans infrequent because each run makes ~16 repos x 4 gh /traffic calls (network) and the traffic API is a 14-day rolling window that barely moves intra-day. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only); heartbeat-loop.sh carries no sensor-specific cadence constant."
+  LIMEN_CONVERSION_FUNNEL_TIMEOUT:
+    default: 300
+    env: LIMEN_CONVERSION_FUNNEL_TIMEOUT
+    self_update: none
+    owner: mail
+    note: "Wall-clock bound (seconds) for the conversion-funnel sensor's two steps (traffic-collect + conversion-funnel). 300s covers ~16 repos x 4 gh /traffic calls plus the fuse; exceeding it is silent/non-fatal (the runner records the overrun and the beat continues)."
   LIMEN_OPPORTUNITY_BRIEF_TIMEOUT:
     default: 180
     env: LIMEN_OPPORTUNITY_BRIEF_TIMEOUT
