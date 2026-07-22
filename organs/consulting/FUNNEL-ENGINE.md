@@ -52,6 +52,18 @@ into the BODi funnel). The engine generalizes that design to every niche.
 | John F. | finance | unscoped — that is the DISCOVERY work | `engagements/john-f.yaml` | DISCOVERY |
 | Anthony | ORGANVM public face + Instagram | the product estate | media organ micro (`organs/media/`) — the principal is not a consulting client | via media organ |
 
+## The constellation register
+
+The instance table above generalizes past consulting clients: the whole
+friend-collaborator orbit — every person, their project lanes, build stages,
+and public-face states — is declared once in
+[`constellation/registry.yaml`](constellation/registry.yaml) (public-safe half;
+the ARCA-sealed private overlay carries protocol refs, channel state, and
+boundaries). `constellation/validate-constellation.py` holds it to Rules #1-6,
+`constellation/seed-tasks.py` emits the `CONST-` board DAG through TABVLARIVS,
+`constellation/check.py` is the per-task predicate set, and
+`constellation/constellation-done.sh` is the program's done-predicate.
+
 ## Reuse map (nothing built twice)
 
 - **Distribution rail:** `organvm/social-automation` — POSSE backend already built
