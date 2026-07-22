@@ -1048,6 +1048,24 @@ sensors:
         severity: silent
         escalation: "daily brief skipped or send failed (reads status/ledger, emails self via mail-send; idempotent once/day; fails open)"
 
+  opportunity-status-stale:
+    section: "0o2"
+    title: "opportunity engine is alive — the inbound-lead monitor's status file is still being refreshed, not silently frozen"
+    gate: LIMEN_OPPORTUNITY_STALE
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    # The 2026-07-21 sibling of host-pressure-stale: the beat ticked but opportunity-review-delta
+    # stopped rewriting logs/opportunity-status.json for ~18h, so the daily brief + every downstream
+    # reader reported all-clear while the engine was blind. This rung watches the WRITER, not the
+    # leads: opportunity-pipeline fires every 12 beats (~6h worst-case tempo), so 13h = ~2 windows
+    # is stale without false-positiving a slow beat. Reuses the generic scripts/state-freshness.py
+    # (fails toward stale: absent/unparseable/old file all exit 1). Read-only; advisory; onset-deduped.
+    steps:
+      - command: 'python3 scripts/state-freshness.py --file logs/opportunity-status.json --field generated_at --max-age-seconds 46800 --key opportunity-status-stale --label "opportunity engine"'
+        severity: advisory
+        escalation: "opportunity-status.json has stopped refreshing — the inbound-lead monitor (opportunity-review-delta) is frozen and the daily brief is reporting stale state; check `python3 scripts/opportunity-review-delta.py` and the heartbeat (2026-07-21 18h-blind incident, WS0)"
+
   closeout-reconcile:
     section: "0z"
     title: "closeout reconciliation — every claimed-done outcome carries a verified receipt"

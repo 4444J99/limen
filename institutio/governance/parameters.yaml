@@ -291,6 +291,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when the VITALS record hasn't been written within VITALS_STALE_BEATS worst-case beats while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+  LIMEN_OPPORTUNITY_STALE:
+    default: "1"
+    env: LIMEN_OPPORTUNITY_STALE
+    self_update: none
+    owner: mail
+    note: "Gate for the opportunity-status-stale beat sensor (institutio/governance/sensors.yaml section 0o2): scripts/state-freshness.py fails (advisory) when logs/opportunity-status.json hasn't been refreshed within ~13h (~2 windows of the 12-beat opportunity-pipeline). Sibling of host-pressure-stale — watches the inbound-lead monitor's WRITER so the 2026-07-21 18h-blind freeze (WS0) can't recur unseen; a frozen writer also fires one onset-deduped notification (scripts/_notify.py). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
   VITALS_RSS_CEILING_MB:
     default: 1024
     env: LIMEN_VITALS_RSS_CEILING_MB
