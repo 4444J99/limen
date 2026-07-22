@@ -1024,6 +1024,24 @@ sensors:
         severity: silent
         escalation: "opportunity sync skipped or exceeded its bound (reads obligations-ledger.json; fails open)"
 
+  opportunity-brief:
+    section: heartbeat
+    title: "the engine's daily VOICE — once per day compose a plain-text opportunity brief (inbound leads, what you owe, LinkedIn mirror status, correspondence, engine freshness) and EMAIL it to the operator's own inbox so the continuous engine is felt, not buried in a log"
+    gate: LIMEN_OPPORTUNITY_BRIEF
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_OPPORTUNITY_BRIEF
+      default: 12
+    timeout:
+      env: LIMEN_OPPORTUNITY_BRIEF_TIMEOUT
+      default: 180
+    steps:
+      - command: "python3 scripts/opportunity-brief.py"
+        severity: silent
+        escalation: "daily brief skipped or send failed (reads status/ledger, emails self via mail-send; idempotent once/day; fails open)"
+
   closeout-reconcile:
     section: "0z"
     title: "closeout reconciliation — every claimed-done outcome carries a verified receipt"

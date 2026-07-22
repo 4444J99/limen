@@ -4177,3 +4177,28 @@ parameters:
     self_update: none
     owner: mail
     note: "Safety-valve arg for the opportunity-pipeline effector (--notify). When 1, review-due detections append COUNT-ONLY events to the sealed private log ~/Workspace/_people-private/opportunities/review-due.jsonl (ARCA-sealed, never public) and push a count-only line through the existing notify cascade. ON by default because both write targets are private/count-only; set 0 to run detection without recording."
+
+  LIMEN_OPPORTUNITY_BRIEF:
+    default: "1"
+    env: LIMEN_OPPORTUNITY_BRIEF
+    self_update: none
+    owner: mail
+    note: "Gate for the opportunity-brief beat sensor (the engine's daily VOICE). When 1, once per calendar day it composes a plain-text brief from logs/opportunity-status.json + correspondence-dispositions.json + obligations-ledger.json and emails it to the operator's OWN inbox via the headless scripts/mail-send lane. Recipient is hardcoded to self (never a third party); idempotent via a once/day stamp; fails open (a bad send never reds the beat). Set 0 to silence the daily brief."
+  LIMEN_BEAT_OPPORTUNITY_BRIEF:
+    default: 12
+    env: LIMEN_BEAT_OPPORTUNITY_BRIEF
+    self_update: none
+    owner: mail
+    note: "Cadence (every N beats) of the opportunity-brief sensor. 12 beats means it ATTEMPTS several times a day; the script's own once/day stamp dedups so exactly one brief lands. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only); heartbeat-loop.sh carries no sensor-specific cadence constant."
+  LIMEN_OPPORTUNITY_BRIEF_TIMEOUT:
+    default: 180
+    env: LIMEN_OPPORTUNITY_BRIEF_TIMEOUT
+    self_update: none
+    owner: mail
+    note: "Per-run timeout (seconds) for the opportunity-brief sensor. The work is three JSON reads plus (once/day) one bounded scripts/mail-send subprocess; 180s covers the IMAP Sent-verification the send performs."
+  LIMEN_OPERATOR_EMAIL:
+    default: "<owner-email>"
+    env: LIMEN_OPERATOR_EMAIL
+    self_update: none
+    owner: mail
+    note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Hardcoded default so a zero-env beat still reaches him; override only to redirect the brief to a different self address. Never a third party."
