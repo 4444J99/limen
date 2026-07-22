@@ -61,6 +61,9 @@ surfaces:
   scripts/reap_acceptance.py:
     disposition: receipt-string-only
     expected: {git_push: 1}
+  scripts/npm-audit-autofix.py:
+    disposition: generated-topic-branch-pr
+    expected: {git_push: 1}
   scripts/ship-docs.sh:
     disposition: generated-topic-branch-pr
     expected: {git_push: 1}

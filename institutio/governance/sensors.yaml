@@ -433,6 +433,21 @@ sensors:
         severity: advisory
         escalation: "main trunk RED above — a heal PR is needed (arm LIMEN_MAIN_GREEN_APPLY=1 to auto-emit one canonical HEAL-mainred task); see scripts/check-main-green.py"
 
+  npm-audit-autofix:
+    section: "0g3b"
+    title: "npm-audit autofix — a new high/critical transitive advisory auto-produces an overrides fix PR, never a queue jam"
+    gate: LIMEN_NPM_AUDIT_AUTOFIX
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # No cadence — like its sibling trunk-green (§0g3), this runs every metabolize beat. A
+    # [metabolize]-source sensor WITH a cadence fires in neither beat path (the launch-agent-liveness
+    # incident); every-beat is also the right latency for keeping the queue unjammed.
+    steps:
+      - command: "python3 scripts/npm-audit-autofix.py"
+        severity: advisory
+        escalation: "a new high/critical npm advisory is red on ci.yml (web/app or web/worker) — the effector pins the patched transitive via overrides and opens a fix PR once LIMEN_NPM_AUDIT_AUTOFIX_APPLY=1 arms it (env lever, read internally like LIMEN_MAIN_GREEN_APPLY; merge-policy gates web/app until CI green); until armed it is detection-only. See scripts/npm-audit-autofix.py"
+
   launch-agent-liveness:
     section: "0g4"
     title: "launch-agent liveness — critical organs (mint, tunnel, creds, ianva) must stay alive"
