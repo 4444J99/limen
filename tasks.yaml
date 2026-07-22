@@ -153002,3 +153002,38 @@ tasks:
   created: '2026-07-22'
   updated: '2026-07-22T19:28:29.695237Z'
   dispatch_log: []
+- id: GH-organvm-hospes-9
+  title: HOSPES private Pilot 1 activation by 2026-08-05
+  repo: organvm/hospes
+  type: code
+  target_agent: codex
+  workstream: hospes-pilot-launch
+  priority: critical
+  budget_cost: 1
+  status: in_progress
+  labels:
+  - private-pilot
+  - human-send-only
+  - deadline-2026-08-05
+  urls:
+  - https://github.com/organvm/hospes/issues/9
+  context: Private HOSPES Pilot 1 activation. Public release remains gated; correspondence
+    is human-sent; guest data stays outside Git. Owner issue contains the product
+    and operational receipt checklist.
+  predicate: test "$(gh issue view 9 --repo organvm/hospes --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/hospes/issues/9
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T21:29:46.453516Z'
+  dispatch_log:
+  - timestamp: '2026-07-22T21:29:46.453516Z'
+    agent: codex
+    session_id: direct:hospes-ari-pilot-launch
+    status: dispatched
+    output: Direct human-requested workstream registered through TABVLARIVS.
+  - timestamp: '2026-07-22T21:29:46.453516Z'
+    agent: codex
+    session_id: direct:hospes-ari-pilot-launch
+    status: in_progress
+    output: 'Execution started in work/ari-pilot-launch; owner issue #9.'
