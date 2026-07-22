@@ -93,6 +93,7 @@ from limen.worktree_debt import (
     take_admission_snapshot,
 )
 from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
+from limen.work_loan import task_work_loan_readiness
 from limen.workstream_contract import (
     ContractError as WorkstreamContractError,
     WORKSTREAM_SUCCESSOR_REQUIRED_LABEL,
@@ -895,7 +896,7 @@ def _dispatchable(task: Task) -> bool:
         return False
     if "needs-human" in (task.labels or []):
         return False
-    return task_execution_ready(task)
+    return task_work_loan_readiness(task).ready and task_execution_ready(task)
 
 
 def _entry_text(entry: DispatchLogEntry) -> str:

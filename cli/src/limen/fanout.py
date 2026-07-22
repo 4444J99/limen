@@ -25,7 +25,7 @@ from limen.conduct.models import (
     canonical_hash,
 )
 from limen.conduct.resources import parse_resource
-from limen.work_loan import WorkLoanV1
+from limen.work_loan import WorkLoanV1, packet_work_loan_missing, work_loan_denial
 
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -249,6 +249,30 @@ class FanoutManifestV1(ProtocolModel):
 
 class FanoutError(RuntimeError):
     """A fail-closed manifest, route, or receipt error."""
+
+
+def _require_manifest_work_loans(manifest: FanoutManifestV1) -> None:
+    subjects = [
+        {
+            "work_loan": manifest.work_loan,
+            "predicate": manifest.predicate,
+            "receipt_target": manifest.receipt_target,
+            "spend": {"limit": sum(leaf.spend.limit for leaf in manifest.leaves)},
+        },
+        *(
+            {
+                "work_loan": leaf.work_loan,
+                "predicate": leaf.predicate,
+                "receipt_target": leaf.receipt_target,
+                "spend": leaf.spend,
+            }
+            for leaf in manifest.leaves
+        ),
+    ]
+    for subject in subjects:
+        missing = packet_work_loan_missing(subject)
+        if missing:
+            raise FanoutError(work_loan_denial(missing))
 
 
 def load_manifest(path: Path) -> FanoutManifestV1:
@@ -517,6 +541,7 @@ def compile_packets(
     routing: dict[str, Any],
 ) -> tuple[WorkPacketV1, ...]:
     canonical = serialize_resource_conflicts(manifest)
+    _require_manifest_work_loans(canonical)
     route_by_work = {row["work_id"]: row for row in routing["routes"]}
     repositories = frozenset(leaf.owner_repository for leaf in canonical.leaves)
     all_paths = frozenset(path for leaf in canonical.leaves for path in leaf.allowed_paths)
@@ -634,6 +659,7 @@ def start_manifest(
     if isinstance(keeper, LocalConductClient) and not allow_development_keeper:
         raise FanoutError("production fanout start requires the authenticated remote keeper")
     canonical = serialize_resource_conflicts(manifest)
+    _require_manifest_work_loans(canonical)
     repositories = frozenset(leaf.owner_repository for leaf in canonical.leaves)
     executors = execution_adapters if execution_adapters is not None else discover_execution_adapters(repositories)
     if not executors:

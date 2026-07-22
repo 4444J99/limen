@@ -20,6 +20,11 @@ def _task(**over: object) -> Task:
         "repo": "organvm/limen",
         "target_agent": "codex",
         "created": date(2026, 7, 13),
+        "origin": "human_prompt",
+        "horizon": "present",
+        "value_case": "Verify runtime execution requirements gate behaves correctly",
+        "predicate": "python3 scripts/verify-runtime-requirements.py",
+        "receipt_target": "github:organvm/limen:pull-request:RUNTIME-ONE",
     }
     values.update(over)
     return Task.model_validate(values)

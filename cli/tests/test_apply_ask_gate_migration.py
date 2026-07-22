@@ -412,6 +412,9 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
             "predicate": row["predicate"],
             "receipt_target": row["receipt_target"],
             "status": "dispatched",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Concurrent claim underwritten for the ask-gate migration test.",
         },
         log={"status": "dispatched", "output": "concurrent claim"},
     )
@@ -454,6 +457,9 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
                 "predicate": row["predicate"],
                 "receipt_target": row["receipt_target"],
                 "status": "dispatched",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Prior dispatched claim underwritten for the ask-gate migration test.",
             },
             log={"status": "dispatched", "output": "prior valid claim"},
         )
@@ -473,6 +479,9 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
             "predicate": row["predicate"],
             "receipt_target": row["receipt_target"],
             "status": claim_status,
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Later same-batch claim underwritten for the ask-gate migration test.",
         },
         log={"status": claim_status, "output": "later same-batch claim"},
     )

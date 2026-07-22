@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import urllib.error
@@ -415,12 +416,38 @@ def main() -> None:
         )
 
     if args.verify_task_id:
+        verification_task = get_task(args.api_url, args.owner_token, args.verify_task_id)
+        receipt_target = verification_task.get("receipt_target")
+        predicate = verification_task.get("predicate")
+        if not isinstance(receipt_target, str) or not receipt_target:
+            fail("owner verify mutation task lacks a durable receipt target")
+        if not isinstance(predicate, str) or not predicate:
+            fail("owner verify mutation task lacks an executable predicate")
+        verification_context_digest = hashlib.sha256(
+            json.dumps(
+                {
+                    "predicate": predicate,
+                    "receipt_target": receipt_target,
+                    "task_id": args.verify_task_id,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
         response = request(
             args.api_url,
             f"/api/tasks/{args.verify_task_id}/verify",
             token=args.owner_token,  # allow-secret
             method="POST",
-            body={"status": "done", "note": "Runtime probe verification", "session_id": "runtime-probe"},
+            body={
+                "status": "done",
+                "note": "Runtime probe verification",
+                "session_id": "runtime-probe",
+                "predicate_exit_code": 0,
+                "receipt_target": receipt_target,
+                "receipt_verified": True,
+                "verification_context_digest": verification_context_digest,
+            },
         )
         if args.expect_mutations_unavailable:
             assert_broker_unavailable(response, "owner verify mutation without broker")
@@ -431,6 +458,15 @@ def main() -> None:
             task = get_task(args.api_url, args.owner_token, args.verify_task_id)
             if task.get("status") != "done":
                 fail("owner verify mutation did not move task to done")
+            if task.get("receipt_verified") is not True:
+                fail("owner verify mutation did not persist verified receipt credit")
+            log = (task.get("dispatch_log") or [{}])[-1]
+            if (
+                log.get("predicate_exit_code") != 0
+                or log.get("remote_receipt") != receipt_target
+                or log.get("verification_context_digest") != verification_context_digest
+            ):
+                fail("owner verify mutation did not persist predicate and receipt evidence")
 
     if args.assign_task_id:
         assignment_task = get_task(args.api_url, args.owner_token, args.assign_task_id)

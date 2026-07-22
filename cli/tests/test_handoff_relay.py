@@ -84,6 +84,12 @@ def _task(task_id, *, priority="medium", agent="codex", **extra):
         "target_agent": agent,
         "priority": priority,
         "budget_cost": 1,
+        "origin": "human_prompt",
+        "horizon": "present",
+        "value_case": f"Deliver the bounded handoff task {task_id}",
+        "owner_surface": "organvm/limen",
+        "predicate": "pytest -q cli/tests/test_handoff_relay.py",
+        "receipt_target": f"github:organvm/limen:pull-request:{task_id}",
         "status": "open",
         "labels": [],
         "depends_on": [],
@@ -102,7 +108,9 @@ def test_build_splits_ostensible_from_dispatchable_and_preserves_aliases(monkeyp
 
     assert payload["ostensible_next"]["id"] == "BLOCKED"
     assert payload["dispatchable_next"]["id"] == "READY"
-    assert payload["next_action"] == payload["ostensible_next"]
+    assert payload["next_action"] == payload["dispatchable_next"]
+    assert payload["dispatch_admission"]["admissible"] == 1
+    assert payload["dispatch_admission"]["reason_counts"] == {"provider_health": 1}
     assert payload["board_budget"] == {
         "daily": 10,
         "unit": "runs",
@@ -162,6 +170,21 @@ def test_dispatchable_next_skips_successor_required_open_row():
     providers = {"generated": "now", "vendors": {"codex": {"remaining": 2}}}
 
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
+
+
+def test_dispatchable_next_reports_stable_work_loan_denial() -> None:
+    mod = _load()
+    legacy = _task("LEGACY", priority="critical")
+    for field in ("origin", "horizon", "value_case"):
+        legacy.pop(field)
+    tasks = [legacy, _task("READY", priority="medium")]
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 2}}}
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+
+    assert admission["dispatchable_next"]["id"] == "READY"
+    assert admission["reason_counts"] == {"task-not-underwritten:source_origin,horizon,value_case": 1}
 
 
 def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity():

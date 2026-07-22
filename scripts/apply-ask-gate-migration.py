@@ -273,6 +273,28 @@ def _ticket(
     )
 
 
+def _stamp_child_underwriting(fields: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
+    """Synthesize system-reconciliation underwriting for a migration child.
+
+    PR #1329's fail-closed WorkLoan admission rejects any board task missing underwriting.
+    The frozen migration children already carry budget_cost/predicate/receipt_target/repo but
+    predate the origin/horizon/value_case intent fields.  Stamp those on the DERIVED canonical
+    child (never on the frozen receipt) so the keeper drain admits the historical replay; the
+    verifier applies the identical stamp so the admitted task still matches the frozen packet.
+    ``setdefault`` preserves any value the receipt already declares.
+    """
+
+    fields.setdefault("origin", "system_debt")
+    fields.setdefault("horizon", "present")
+    fields.setdefault(
+        "value_case",
+        str(source.get("description") or source.get("title") or f"ask-gate migration child {source.get('id')}").strip()[
+            :8192
+        ],
+    )
+    return fields
+
+
 def compile_child_tickets(
     payload: dict[str, Any],
     *,
@@ -296,7 +318,7 @@ def compile_child_tickets(
             raise MigrationError("manifest contains a non-object child")
         child = Task.model_validate(row)
         validate_intake_contract(child, is_new=True)
-        patch = child.model_dump(mode="json", exclude_none=True)
+        patch = _stamp_child_underwriting(child.model_dump(mode="json", exclude_none=True), row)
         tickets.append(
             _ticket(
                 payload,
@@ -514,7 +536,7 @@ def _submit_compiled_tickets_locked(board_path: Path, tickets: list[Ticket]) -> 
 
 def _child_manifest_fields(child: dict[str, Any]) -> dict[str, Any]:
     validated = Task.model_validate(child)
-    return validated.model_dump(mode="json", exclude_none=True)
+    return _stamp_child_underwriting(validated.model_dump(mode="json", exclude_none=True), child)
 
 
 def preflight_child_submission(payload: dict[str, Any], board_path: Path, tickets: Iterable[Ticket]) -> None:

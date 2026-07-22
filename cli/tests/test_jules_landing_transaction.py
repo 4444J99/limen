@@ -40,6 +40,10 @@ def test_named_older_session_pr_after_new_dispatch_does_not_claim_new_session() 
         target_agent="jules",
         status="failed",
         created=date(2026, 7, 17),
+        source_origin="human_prompt",
+        horizon="present",
+        value_case="exercise jules landing transaction logic",
+        budget_cost=1,
         dispatch_log=[
             DispatchLogEntry(
                 timestamp=now,
@@ -85,6 +89,12 @@ def test_transaction_preserves_unrelated_concurrent_board_write(
                     target_agent="jules",
                     status="dispatched",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-LAND",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,
@@ -101,6 +111,12 @@ def test_transaction_preserves_unrelated_concurrent_board_write(
                     target_agent="codex",
                     status="open",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/other:pull-request:T-OTHER",
                 ),
             ]
         ),
@@ -163,6 +179,12 @@ def test_transaction_fences_same_id_changed_owner_and_session(
                     target_agent="jules",
                     status="dispatched",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-CHANGED",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,
@@ -240,6 +262,12 @@ def test_process_session_lands_current_jules_claim_targeted_at_any(
                     target_agent="any",
                     status="dispatched",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-ANY",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,
@@ -296,6 +324,12 @@ def test_process_session_serializes_concurrent_landings(
                     target_agent="jules",
                     status="dispatched",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-CONCURRENT",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,
@@ -380,6 +414,12 @@ def test_post_pr_receipt_failure_retries_by_adopting_existing_pr(
                     target_agent="jules",
                     status="dispatched",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-ADOPT",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,
@@ -544,6 +584,12 @@ def test_landing_intent_preserves_lifecycle_status(
                     target_agent="jules",
                     status=status,
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-HOLD",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,
@@ -606,6 +652,12 @@ def test_terminal_non_pr_outcome_is_a_rerun_fixed_point(
                     target_agent="jules",
                     status="dispatched",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-FIXED",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,
@@ -675,6 +727,12 @@ def test_transient_failures_reach_finite_terminal_receipt(
                     target_agent="jules",
                     status="dispatched",
                     created=date(2026, 7, 17),
+                    source_origin="human_prompt",
+                    horizon="present",
+                    value_case="exercise jules landing transaction logic",
+                    budget_cost=1,
+                    predicate="python3 -m pytest -q",
+                    receipt_target="github:organvm/example:pull-request:T-RETRY",
                     dispatch_log=[
                         DispatchLogEntry(
                             timestamp=now,

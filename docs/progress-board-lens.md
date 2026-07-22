@@ -72,10 +72,10 @@ is a board credit claim; only explicit receipt-verification evidence reduces
 `verified_receipt_debt`.
 
 `WorkLoanV1` provides one shared readiness contract across Python, API, JSON Schema, and Worker
-surfaces. During this compatibility/adoption stage, historical rows and packets remain readable and
-no admission path rejects them solely for missing underwriting. Sanctioned producers populate the
-new source, horizon, value, owner, and budget fields before fail-closed enforcement is activated in
-a separate change.
+surfaces. Historical rows and stored packets remain readable, but new rows, active task transitions,
+dispatch, packet reservation, and lease claim now fail closed when underwriting is absent. The stable
+denial is `task-not-underwritten:<comma-separated-fields>` in canonical field order. Intake never
+invents a value case from title prose.
 
 One exact compatibility packet is not a work loan: the broker-authenticated TABVLARIVS projection
 shape with an exclusive task claim and a zero-run spend envelope. It mutates only the task-board
@@ -83,11 +83,21 @@ projection and therefore consumes no executor capacity. Any positive spend, diff
 different authority, or non-task intent loses that exemption and requires a positive `WorkLoanV1`.
 The projected task row itself still requires underwriting before later claim or dispatch.
 
-The lens already reports missing collateral with the future stable denial
-`task-not-underwritten:<comma-separated-fields>`. This is visibility, not lifecycle enforcement:
-`--view source_lineage` and each group's `underwriting_denial_counts` expose cohort-sized repair
-work without rewriting `tasks.yaml` or inventing values from title prose. An absent lineage remains
-`unknown` and must not be rendered as zero debt.
+The owner QA endpoint may set `receipt_verified: true` only on a `done` transition carrying a zero
+predicate exit code, the task's exact declared receipt target, a positive receipt-verification
+attestation, and a 64-hex verification-context digest. Merely changing lifecycle status to `done`
+does not create verified progress credit.
+
+Raw discoveries remain in their source-owned feed or staging ledger until a producer can pass the
+ask gate and WorkLoan predicate. The board projection rejects a new ununderwritten row without
+mutating the input projection. For legacy repair, `--view source_lineage` and each group's
+`underwriting_denial_counts` expose cohort-sized gaps without rewriting `tasks.yaml`. An absent
+lineage remains `unknown` and must not be rendered as zero debt.
+
+In `logs/handoff.json`, `ostensible_next` is the raw highest-priority open row.
+`dispatchable_next`—and the compatibility alias `next_action`—is the highest-priority row that also
+clears underwriting, dependencies, budget, provider health, human gates, and execution requirements.
+`dispatch_admission.reason_counts` explains every gated open row.
 
 ## Content-addressed inputs
 

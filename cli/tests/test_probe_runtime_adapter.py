@@ -259,7 +259,19 @@ class FakeRuntime:
         self.mutations_unavailable = False
         self.tasks = {
             "TASK-DENIED": {"id": "TASK-DENIED", "status": "in_progress"},
-            "TASK-VERIFY": {"id": "TASK-VERIFY", "status": "in_progress"},
+            "TASK-VERIFY": {
+                "id": "TASK-VERIFY",
+                "repo": "organvm/limen",
+                "status": "in_progress",
+                "budget_cost": 1,
+                "origin": "system_debt",
+                "horizon": "present",
+                "value_case": "Verify one bounded runtime adapter mutation",
+                "owner_surface": "organvm/limen",
+                "predicate": "python3 scripts/probe-runtime-adapter.py --help",
+                "receipt_target": "git:organvm/limen:tasks.yaml#TASK-VERIFY",
+                "dispatch_log": [],
+            },
             "TASK-ASSIGN": {
                 "id": "TASK-ASSIGN",
                 "repo": "organvm/limen",
@@ -346,6 +358,15 @@ class FakeRuntime:
             )
         if action == "verify":
             task["status"] = body.get("status", "done")
+            task["receipt_verified"] = body.get("receipt_verified")
+            task.setdefault("dispatch_log", []).append(
+                {
+                    "status": task["status"],
+                    "predicate_exit_code": body.get("predicate_exit_code"),
+                    "remote_receipt": body.get("receipt_target"),
+                    "verification_context_digest": body.get("verification_context_digest"),
+                }
+            )
             return self.response(200, {"status": "verified", "verified_status": task["status"], "task": task})
         if action == "assign":
             task.update(
@@ -431,6 +452,12 @@ def test_main_verifies_optional_owner_mutations(
 
     assert "Runtime adapter probe passed" in capsys.readouterr().out
     assert fake.tasks["TASK-VERIFY"]["status"] == "done"
+    assert fake.tasks["TASK-VERIFY"]["receipt_verified"] is True
+    verify_call = next(call for call in fake.calls if call["path"] == "/api/tasks/TASK-VERIFY/verify")
+    assert verify_call["body"]["predicate_exit_code"] == 0
+    assert verify_call["body"]["receipt_target"] == "git:organvm/limen:tasks.yaml#TASK-VERIFY"
+    assert verify_call["body"]["receipt_verified"] is True
+    assert len(verify_call["body"]["verification_context_digest"]) == 64
     assert fake.tasks["TASK-ASSIGN"]["target_agent"] == "jules"
     assert fake.tasks["TASK-ASSIGN"]["status"] == "open"
     assert fake.tasks["TASK-ASSIGN"]["predicate"].startswith('test "$(gh pr list')

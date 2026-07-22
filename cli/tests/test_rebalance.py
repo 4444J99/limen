@@ -23,7 +23,20 @@ def test_rebalance_skips_down_lanes(tmp_path, monkeypatch):
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))),
         tasks=[
-            Task(id=f"T{i}", title="t", repo="x/y", target_agent="codex", status="open", created=today)
+            Task(
+                id=f"T{i}",
+                title="t",
+                repo="x/y",
+                target_agent="codex",
+                status="open",
+                origin="human_prompt",
+                horizon="present",
+                value_case="rebalance lane coverage",
+                budget_cost=1,
+                predicate="python3 scripts/check.py",
+                receipt_target=f"github:x/y:pull-request:T{i}",
+                created=today,
+            )
             for i in range(6)
         ],
     )
@@ -59,7 +72,13 @@ def test_rebalance_skips_unsafe_agy_registry_discovery(tmp_path, monkeypatch):
                 repo="organvm/example",
                 target_agent="opencode",
                 status="open",
+                origin="human_prompt",
+                horizon="present",
+                value_case="discover and promote repo value",
                 context="Update value-repos.json and DISCOVERY.md if this repo is promoted.",
+                budget_cost=1,
+                predicate="python3 scripts/check.py",
+                receipt_target="github:organvm/example:pull-request:DISCOVER-organvm-example",
                 created=today,
             ),
             Task(
@@ -68,6 +87,12 @@ def test_rebalance_skips_unsafe_agy_registry_discovery(tmp_path, monkeypatch):
                 repo="organvm/example",
                 target_agent="opencode",
                 status="open",
+                origin="human_prompt",
+                horizon="present",
+                value_case="fix CI for organvm/example",
+                budget_cost=1,
+                predicate="python3 scripts/check.py",
+                receipt_target="github:organvm/example:pull-request:HEAL-cifix-organvm-example-1",
                 created=today,
             ),
         ],
@@ -103,7 +128,13 @@ def test_rebalance_does_not_steal_timeout_to_jules_task(tmp_path, monkeypatch):
                 repo="organvm/mirror-mirror",
                 target_agent="codex",
                 status="open",
+                origin="human_prompt",
+                horizon="present",
+                value_case="fix slow timed-out CI",
                 labels=["slow", "cifix"],
+                budget_cost=1,
+                predicate="python3 scripts/check.py",
+                receipt_target="github:organvm/mirror-mirror:pull-request:SLOW",
                 created=today,
                 dispatch_log=[
                     DispatchLogEntry(
@@ -120,6 +151,12 @@ def test_rebalance_does_not_steal_timeout_to_jules_task(tmp_path, monkeypatch):
                 repo="organvm/mirror-mirror",
                 target_agent="codex",
                 status="open",
+                origin="human_prompt",
+                horizon="present",
+                value_case="normal local work item",
+                budget_cost=1,
+                predicate="python3 scripts/check.py",
+                receipt_target="github:organvm/mirror-mirror:pull-request:NORMAL",
                 created=today,
             ),
         ],

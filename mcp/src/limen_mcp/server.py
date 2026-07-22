@@ -20,7 +20,7 @@ from limen.conduct.models import (
     WorkPacketV1,
     canonical_hash,
 )
-from limen.work_loan import WorkLoanV1
+from limen.work_loan import WorkLoanV1, task_work_loan_readiness
 from limen_mcp import runtime_requirements
 from limen_mcp.intake import normalize_selected_legacy_task, validate_intake_contract
 
@@ -728,6 +728,10 @@ def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
                 return f"Task {task_id} requires a separately admitted successor - cannot claim expired row"
             if t.target_agent not in (agent_name, "any"):
                 return f"Task {task_id} targets {t.target_agent}, not {agent_name} - cannot claim"
+
+            underwriting = task_work_loan_readiness(t)
+            if not underwriting.ready:
+                return f"{underwriting.reason_code} - cannot claim"
 
             readiness = runtime_requirements.evaluate_execution_requirements(t)
             if not readiness.ready:

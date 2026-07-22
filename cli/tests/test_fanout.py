@@ -117,6 +117,11 @@ def test_legacy_manifest_remains_readable_during_work_loan_adoption() -> None:
 
     assert manifest.work_loan is None
     assert manifest.leaves[0].work_loan is None
+    with pytest.raises(
+        FanoutError,
+        match="^task-not-underwritten:source_origin,horizon,value_case,budget_cost,owner_surface$",
+    ):
+        compile_packets(manifest, {"routes": []})
 
 
 def session(

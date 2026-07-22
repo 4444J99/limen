@@ -40,6 +40,12 @@ def board(budget_cost=2):
                 "target_agent": "any",
                 "status": "open",
                 "budget_cost": budget_cost,
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Reserve one bounded claim through the authenticated broker",
+                "owner_surface": "organvm/limen",
+                "predicate": "pytest -q cli/tests/test_claim_task.py",
+                "receipt_target": "github:organvm/limen:pull-request:TASK-1",
                 "created": "2026-07-18",
                 "dispatch_log": [],
             }
@@ -122,6 +128,22 @@ def test_claim_task_rejects_malformed_budget_without_mutating() -> None:
     assert data == before
 
 
+def test_claim_task_rejects_missing_underwriting_in_stable_order_without_mutating() -> None:
+    claim = load_claim_module()
+    data = board()
+    for field in ("origin", "horizon", "value_case"):
+        data["tasks"][0].pop(field)
+    before = copy.deepcopy(data)
+
+    with pytest.raises(
+        SystemExit,
+        match="^task-not-underwritten:source_origin,horizon,value_case$",
+    ):
+        claim.claim_task(data, "TASK-1", "codex", "session-1")
+
+    assert data == before
+
+
 def test_claim_task_rejects_boolean_budget_without_mutating() -> None:
     claim = load_claim_module()
     data = board(budget_cost=False)
@@ -166,9 +188,10 @@ def test_claim_task_fails_closed_when_legacy_owner_cannot_be_derived() -> None:
     claim = load_claim_module()
     data = board()
     data["tasks"][0].pop("repo")
+    data["tasks"][0].pop("owner_surface")
     before = copy.deepcopy(data)
 
-    with pytest.raises(SystemExit, match="typed intake blocked"):
+    with pytest.raises(SystemExit, match="task-not-underwritten:owner_surface"):
         claim.claim_task(data, "TASK-1", "codex", "session-1")
 
     assert data == before

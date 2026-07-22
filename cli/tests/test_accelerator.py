@@ -152,6 +152,12 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
             labels=["revenue"],
             status="open",
             created="2026-06-22",
+            origin="human_prompt",
+            horizon="present",
+            value_case="revenue-optimized dispatch task",
+            budget_cost=1,
+            predicate="python3 -m pytest -q",
+            receipt_target=f"github:x/y:pull-request:REV{i}",
         )
         for i in range(10)
     ] + [
@@ -164,6 +170,12 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
             labels=["coverage"],
             status="open",
             created="2026-06-22",
+            origin="human_prompt",
+            horizon="present",
+            value_case="coverage dispatch task",
+            budget_cost=1,
+            predicate="python3 -m pytest -q",
+            receipt_target=f"github:x/y:pull-request:COV{i}",
         )
         for i in range(10)
     ]

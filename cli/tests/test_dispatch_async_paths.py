@@ -69,6 +69,12 @@ def _task(task_id: str, agent: str) -> Task:
         repo="organvm/example",
         target_agent=agent,
         created=datetime.date(2026, 7, 9),
+        origin="human_prompt",
+        horizon="present",
+        value_case="Verify async reservation arithmetic under the enforced underwriting regime.",
+        budget_cost=1,
+        predicate="python3 scripts/check.py",
+        receipt_target="github:organvm/example:pull-request:ASYNC-RESERVE",
     )
 
 

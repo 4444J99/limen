@@ -1,4 +1,5 @@
 import YAML from "yaml";
+import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
 
 const GITHUB_API = "https://api.github.com";
 const inlineBoards = new WeakMap();
@@ -33,6 +34,7 @@ const PATCHABLE_TASK_FIELDS = new Set([
   "owner_surface",
   "external_deadline",
   "due_at",
+  "receipt_verified",
   "execution_requirements",
   "workstream_contract",
   "claude_tier",
@@ -54,6 +56,7 @@ const STRUCTURED_LOG_FIELDS = new Set([
   "workflow_id",
   "workflow_path",
   "workflow_event",
+  "predicate_exit_code",
   "verification_context_digest",
   "remote_state",
   "remote_request_id",
@@ -278,6 +281,27 @@ function conductLog(event, log, fallbackStatus, fallbackOutput) {
     conduct_lease_id: event.lease_id,
     conduct_generation: event.generation,
   };
+}
+
+function requireReceiptCredit(taskId, prior, patch, log = {}) {
+  if (patch.receipt_verified !== true) return;
+  if ((patch.status ?? prior.status) !== "done") {
+    throw new ConductProjectionError(`task ${taskId} completion-not-verified:status`, 409);
+  }
+  if (log.predicate_exit_code !== 0) {
+    throw new ConductProjectionError(`task ${taskId} completion-not-verified:predicate`, 409);
+  }
+  const receiptTarget = String(patch.receipt_target ?? prior.receipt_target ?? "");
+  if (!receiptTarget || log.remote_receipt !== receiptTarget) {
+    throw new ConductProjectionError(`task ${taskId} completion-not-verified:receipt_target`, 409);
+  }
+  if (typeof log.verification_context_digest !== "string"
+      || !/^[0-9a-f]{64}$/.test(log.verification_context_digest)) {
+    throw new ConductProjectionError(
+      `task ${taskId} completion-not-verified:verification_context_digest`,
+      409,
+    );
+  }
 }
 
 function validateTaskShape(task, taskId) {
@@ -544,6 +568,12 @@ export function applyTaskPacketProjectionEvent(input, event) {
     }
     const supplied = clone(intent.task || {});
     validateTaskShape(supplied, taskId);
+    if (supplied.receipt_verified === true) {
+      throw new ConductProjectionError(
+        `task ${taskId} receipt credit requires an evidence-bound status transition`,
+        422,
+      );
+    }
     const task = existing || {
       ...supplied,
       dispatch_log: [],
@@ -564,6 +594,10 @@ export function applyTaskPacketProjectionEvent(input, event) {
       Object.assign(task, patch);
       task.dispatch_log = history;
       if (created !== undefined) task.created = created;
+    }
+    if (!existing) {
+      const missing = taskWorkLoanMissingFields(task);
+      if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 422);
     }
     board.tasks ||= [];
     if (!existing) board.tasks.push(task);
@@ -600,6 +634,11 @@ export function applyTaskPacketProjectionEvent(input, event) {
     throw new ConductProjectionError(`task ${taskId} status intent requires a status patch`, 422);
   }
   const nextStatus = patch.status ?? existing.status;
+  requireReceiptCredit(taskId, existing, patch, intent.log);
+  if (["dispatched", "in_progress"].includes(nextStatus)) {
+    const missing = taskWorkLoanMissingFields({ ...existing, ...patch });
+    if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
+  }
   if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log)
       && !(kind === "task.status"
         && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch))) {
@@ -657,6 +696,10 @@ export function applyTaskCompatibilityEvent(input, event) {
   }
   const task = (board.tasks || []).find((candidate) => candidate.id === event.task_id);
   if (!task) throw new ConductProjectionError(`task ${event.task_id} not found in canonical board`, 409);
+  if (["dispatched", "in_progress"].includes(event.status)) {
+    const missing = taskWorkLoanMissingFields(task);
+    if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
+  }
   if (!event.from_statuses.includes(task.status)) {
     throw new ConductProjectionError(
       `task ${event.task_id} is ${task.status}; conduct event ${event.kind} requires ${event.from_statuses.join(" or ")}`,

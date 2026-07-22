@@ -32,6 +32,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
+from limen.work_loan import task_work_loan_readiness  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 HANDOFF = ROOT / "logs" / "handoff.json"
@@ -245,15 +246,8 @@ def _task_summary(task: dict[str, Any]) -> dict[str, Any]:
 
 
 def _ostensible_next(tasks: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """Highest-priority open task after only the legacy dependency/status view."""
-    done = {task.get("id") for task in tasks if task.get("status") in {"done", "archived"}}
-    candidates = []
-    for task in tasks:
-        if task.get("status") != "open":
-            continue
-        if any(dep not in done for dep in task.get("depends_on") or []):
-            continue
-        candidates.append(task)
+    """Highest-priority open row with no admission interpretation."""
+    candidates = [task for task in tasks if task.get("status") == "open"]
     if not candidates:
         return None
     top = sorted(
@@ -305,50 +299,79 @@ def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
     }
 
 
-def _dispatchable_next(
+def _dispatch_admission(
     tasks: list[dict[str, Any]],
     board_budget: dict[str, Any],
     provider_headroom: dict[str, Any],
-) -> dict[str, Any] | None:
-    """Highest-priority task that clears the handoff's read-only reservation gates.
+) -> dict[str, Any]:
+    """Explain the same stable gates that make an open task broker-admissible.
 
     Admission itself reads this handoff, so the relay cannot recursively launch the admission
-    subprocess.  These are the stable per-task gates: open machine work only, no terminal history,
-    merged dependencies, available budget, and no measured-down provider.
+    subprocess. Each open row receives one primary reason in deterministic gate order.
     """
     by_id = {str(task.get("id")): task for task in tasks if task.get("id")}
     global_remaining = _as_int(board_budget.get("remaining"))
     per_agent = board_budget.get("per_agent") if isinstance(board_budget.get("per_agent"), dict) else {}
     candidates: list[dict[str, Any]] = []
+    reasons: Counter[str] = Counter()
     for task in tasks:
-        if task.get("status") != "open" or _has_terminal_transition(task):
+        if task.get("status") != "open":
             continue
+        reason: str | None = None
+        if _has_terminal_transition(task):
+            reason = "terminal_history"
         labels = {str(label) for label in task.get("labels") or []}
-        if "needs-human" in labels or WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in labels:
-            continue
+        if reason is None and "needs-human" in labels:
+            reason = "human_gate"
+        if reason is None and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in labels:
+            reason = "successor_required"
         deps = [str(value) for value in task.get("depends_on") or []]
-        if any(not _dependency_merged(by_id.get(dep)) for dep in deps):
-            continue
+        if reason is None and any(not _dependency_merged(by_id.get(dep)) for dep in deps):
+            reason = "dependencies"
+        underwriting = task_work_loan_readiness(task)
+        if reason is None and not underwriting.ready:
+            reason = str(underwriting.reason_code)
         cost = _as_int(task.get("budget_cost")) or 1
-        if global_remaining is not None and cost > global_remaining:
-            continue
+        if reason is None and global_remaining is not None and cost > global_remaining:
+            reason = "budget_global"
         agent = str(task.get("target_agent") or "")
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
-        if agent_remaining is not None and cost > agent_remaining:
-            continue
-        if not _provider_available(agent, provider_headroom):
-            continue
-        if not task_execution_ready(task):
+        if reason is None and agent_remaining is not None and cost > agent_remaining:
+            reason = "budget_agent"
+        if reason is None and not _provider_available(agent, provider_headroom):
+            reason = "provider_health"
+        if reason is None and not task_execution_ready(task):
+            reason = "execution_requirements"
+        if reason is not None:
+            reasons[reason] += 1
             continue
         candidates.append(task)
-    if not candidates:
-        return None
-    top = sorted(
-        candidates,
-        key=lambda task: (_PRIORITY.get(str(task.get("priority")), 9), str(task.get("id"))),
-    )[0]
-    return _task_summary(top)
+    top = (
+        sorted(
+            candidates,
+            key=lambda task: (_PRIORITY.get(str(task.get("priority")), 9), str(task.get("id"))),
+        )[0]
+        if candidates
+        else None
+    )
+    open_count = sum(task.get("status") == "open" for task in tasks)
+    return {
+        "schema_version": "limen.dispatch_admission.v1",
+        "open_considered": open_count,
+        "admissible": len(candidates),
+        "gated": open_count - len(candidates),
+        "reason_counts": dict(sorted(reasons.items())),
+        "dispatchable_next": _task_summary(top) if top else None,
+    }
+
+
+def _dispatchable_next(
+    tasks: list[dict[str, Any]],
+    board_budget: dict[str, Any],
+    provider_headroom: dict[str, Any],
+) -> dict[str, Any] | None:
+    return _dispatch_admission(tasks, board_budget, provider_headroom)["dispatchable_next"]
 
 
 def build() -> dict[str, Any]:
@@ -358,7 +381,8 @@ def build() -> dict[str, Any]:
     provider_headroom = _provider_headroom()
     board_budget = _board_budget(board)
     ostensible_next = _ostensible_next(tasks)
-    dispatchable_next = _dispatchable_next(tasks, board_budget, provider_headroom)
+    dispatch_admission = _dispatch_admission(tasks, board_budget, provider_headroom)
+    dispatchable_next = dispatch_admission["dispatchable_next"]
     return {
         "generated": now.isoformat(timespec="seconds"),
         "open_lanes": _open_lanes(tasks),
@@ -368,9 +392,10 @@ def build() -> dict[str, Any]:
         "provider_headroom": provider_headroom,
         "ostensible_next": ostensible_next,
         "dispatchable_next": dispatchable_next,
+        "dispatch_admission": dispatch_admission,
         # Compatibility aliases for consumers deployed before the truthful split.
         "budget_remaining": _legacy_budget(provider_headroom),
-        "next_action": ostensible_next,
+        "next_action": dispatchable_next,
     }
 
 
@@ -412,6 +437,7 @@ def check() -> int:
         "provider_headroom",
         "ostensible_next",
         "dispatchable_next",
+        "dispatch_admission",
     ):
         if field not in data:
             print(f"handoff-relay --check: FAIL — missing '{field}'")
@@ -456,6 +482,9 @@ def render(data: dict[str, Any]) -> str:
         parts.append(f"  next → `{na.get('id')}` [{na.get('priority')}] {na.get('title', '')}")
     elif ostensible:
         parts.append(f"  ostensible (currently gated) → `{ostensible.get('id')}` {ostensible.get('title', '')}")
+        reasons = (data.get("dispatch_admission") or {}).get("reason_counts") or {}
+        if reasons:
+            parts.append("  gates: " + ", ".join(f"{key}={value}" for key, value in sorted(reasons.items())))
     if blk.get("heal_pressure"):
         parts.append(f"  heal: {blk['heal_pressure']}")
     return "\n".join(parts)

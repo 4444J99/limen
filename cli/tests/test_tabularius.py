@@ -53,6 +53,10 @@ def _task(tid: str, **over: Any) -> dict[str, Any]:
         "created": "2026-07-01",
         "predicate": f"pytest -q -k {tid}",
         "receipt_target": f"github:organvm/limen:pull-request:{tid}",
+        "origin": "human_prompt",
+        "horizon": "present",
+        "value_case": f"Apply the bounded TABVLARIVS task {tid}",
+        "owner_surface": "organvm/limen",
     }
     base.update(over)
     return base
@@ -167,6 +171,16 @@ def test_submit_helpers_validate_before_emitting(tmp_path):
         )
     with pytest.raises(Exception):
         submit_task_upsert(board, {"title": "missing id"}, agent="codex")
+    ununderwritten = _task("T-NEW", status="open")
+    ununderwritten.pop("value_case")
+    with pytest.raises(ValueError, match="task-not-underwritten:value_case"):
+        submit_task_upsert(board, ununderwritten, agent="codex")
+    with pytest.raises(ValueError, match="receipt credit requires an evidence-bound status transition"):
+        submit_task_upsert(
+            board,
+            _task("T-CREDIT", status="done", receipt_verified=True),
+            agent="codex",
+        )
     assert pending_count(board) == 0
 
 
@@ -190,6 +204,43 @@ def test_pure_reducer_merges_fields_and_appends_status_receipt():
     assert tasks["T-1"]["priority"] == "high"
     assert tasks["T-1"]["status"] == "dispatched"
     assert tasks["T-1"]["dispatch_log"][-1]["output"] == "claimed"
+
+
+def test_pure_reducer_requires_and_preserves_completion_evidence():
+    tasks: OrderedDict[str, dict[str, Any]] = OrderedDict([("T-CREDIT", _task("T-CREDIT", status="in_progress"))])
+    meta: dict[str, Any] = {"version": "1.0", "portal": None}
+    before = tasks.copy()
+    missing = _ticket(
+        INTENT_STATUS,
+        task_id="T-CREDIT",
+        patch={"status": "done", "receipt_verified": True},
+        log={"status": "done"},
+    )
+
+    with pytest.raises(ValueError, match="completion-not-verified:predicate"):
+        _apply(missing, tasks, meta)
+    assert tasks == before
+
+    digest = "a" * 64
+    receipt_target = tasks["T-CREDIT"]["receipt_target"]
+    completion = _ticket(
+        INTENT_STATUS,
+        task_id="T-CREDIT",
+        patch={"status": "done", "receipt_verified": True},
+        log={
+            "status": "done",
+            "predicate_exit_code": 0,
+            "remote_receipt": receipt_target,
+            "verification_context_digest": digest,
+        },
+    )
+
+    _apply(completion, tasks, meta)
+
+    assert tasks["T-CREDIT"]["receipt_verified"] is True
+    assert tasks["T-CREDIT"]["dispatch_log"][-1]["predicate_exit_code"] == 0
+    assert tasks["T-CREDIT"]["dispatch_log"][-1]["remote_receipt"] == receipt_target
+    assert tasks["T-CREDIT"]["dispatch_log"][-1]["verification_context_digest"] == digest
 
 
 def test_batch_admission_rejects_stale_exact_state_ticket():

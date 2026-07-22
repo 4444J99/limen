@@ -7,6 +7,7 @@ import {
 import { internalConductPrincipal } from "./conduct/auth.js";
 import { readInlineProjection } from "./conduct/projection.js";
 import { canonicalHash } from "./conduct/schemas.js";
+import { taskWorkLoanMissingFields, workLoanDenial } from "./conduct/work-loan.js";
 
 const GITHUB_API = "https://api.github.com";
 const VERIFY_STATUSES = new Set(["done", "needs_human", "failed", "failed_blocked"]);
@@ -770,7 +771,7 @@ async function compatibilityPacket(env, intent, task) {
         key: `task/${canonicalIntent.task_id}`,
         mode: "exclusive",
       }],
-      predicate: `test -n "${canonicalIntent.task_id}"`,
+      predicate: "python3 scripts/validate-task-board.py --tasks tasks.yaml",
       receipt_target: `git:${repository}:tasks.yaml#${canonicalIntent.task_id}`,
       authority: {
         schema_version: "limen.authority_envelope.v1",
@@ -926,8 +927,13 @@ async function route(request, env) {
     const intakeBlocked = [];
     for (const task of dispatchCandidates(doc.data, agent.value, taskId.value)) {
       if (candidates.length >= limit.value) break;
+      const missing = taskWorkLoanMissingFields(task);
+      if (missing.length) {
+        intakeBlocked.push({ id: String(task.id || "unknown"), reason: workLoanDenial(missing) });
+        continue;
+      }
       try {
-        normalizeSelectedLegacyTask(task);
+        validateIntakeContract(task);
         candidates.push(task);
       } catch (err) {
         intakeBlocked.push({ id: String(task.id || "unknown"), reason: err instanceof Error ? err.message : String(err) });
@@ -948,7 +954,10 @@ async function route(request, env) {
     if (request.method !== "POST") return error("method not allowed", 405, env);
     let rawBody;
     try { rawBody = await request.json(); } catch { return error("invalid JSON body", 422, env); }
-    const body = safeParseBody(rawBody, ["status", "note", "session_id", "target_agent", "priority", "budget_cost", "predicate", "receipt_target"]);
+    const body = safeParseBody(rawBody, [
+      "status", "note", "session_id", "target_agent", "priority", "budget_cost", "predicate", "receipt_target",
+      "predicate_exit_code", "receipt_verified", "verification_context_digest",
+    ]);
     const doc = await loadBoard(env);
     const task = findTask(doc.data, taskId.value);
     if (action === "verify") {
@@ -959,17 +968,35 @@ async function route(request, env) {
       const note = validateText(body.note, "note", env, { defaultValue: "", max: 2000 });
       if (note.response) return note.response;
       if (!["dispatched", "in_progress", "needs_human", "failed", "failed_blocked", "done"].includes(task.status)) return error("only active, attention, or done tasks can be verified", 409, env);
+      const patch = { status: status.value };
+      const log = {
+        agent: "qa",
+        session_id: sessionId.value,
+        status: status.value,
+        output: note.value || `QA verified task as ${status.value}`,
+      };
+      if (status.value === "done") {
+        const missing = taskWorkLoanMissingFields(task);
+        if (missing.length) return error(workLoanDenial(missing), 409, env);
+        if (body.predicate_exit_code !== 0) return error("completion-not-verified:predicate", 409, env);
+        if (body.receipt_verified !== true || body.receipt_target !== task.receipt_target) {
+          return error("completion-not-verified:receipt_target", 409, env);
+        }
+        if (typeof body.verification_context_digest !== "string"
+            || !/^[0-9a-f]{64}$/.test(body.verification_context_digest)) {
+          return error("completion-not-verified:verification_context_digest", 409, env);
+        }
+        patch.receipt_verified = true;
+        log.predicate_exit_code = 0;
+        log.verification_context_digest = body.verification_context_digest;
+        log.remote_receipt = body.receipt_target;
+      }
       const mutation = await submitTaskMutation(env, {
         kind: "task.status",
         task_id: task.id,
         expected_status: task.status,
-        patch: { status: status.value },
-        log: {
-          agent: "qa",
-          session_id: sessionId.value,
-          status: status.value,
-          output: note.value || `QA verified task as ${status.value}`,
-        },
+        patch,
+        log,
       }, task);
       return json({
         status: "verified",
@@ -1027,6 +1054,10 @@ async function route(request, env) {
       } catch (err) {
         if (err instanceof IntakeContractError) return error(`typed intake contract rejected: ${err.message}`, 422, env);
         throw err;
+      }
+      if (["dispatched", "in_progress"].includes(prospective.status)) {
+        const missing = taskWorkLoanMissingFields(prospective);
+        if (missing.length) return error(workLoanDenial(missing), 409, env);
       }
       const after = {
         target_agent: prospective.target_agent,

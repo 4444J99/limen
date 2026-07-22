@@ -168,6 +168,12 @@ def test_dispatch_dry_run_does_not_mutate_board(client: TestClient, tmp_path: Pa
                 "budget_cost": 1,
                 "status": "open",
                 "created": "2026-06-03",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Dispatch the bounded Jules task",
+                "owner_surface": "4444J99/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "github:4444J99/limen:pull-request:LIMEN-001",
                 "dispatch_log": [],
             }
         ],
@@ -281,6 +287,12 @@ def test_live_dispatch_mutates_after_command_success(
                 "budget_cost": 2,
                 "status": "open",
                 "created": "2026-06-03",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Dispatch the bounded Codex task",
+                "owner_surface": "4444J99/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "github:4444J99/limen:pull-request:LIMEN-003",
                 "dispatch_log": [],
             }
         ],
@@ -333,6 +345,10 @@ def test_live_dispatch_does_not_normalize_over_budget_unselected_sibling(
                 "status": "open",
                 "predicate": "pytest -q web/api/tests/test_main.py",
                 "receipt_target": "github:4444J99/limen:pull-request:AFFORDABLE",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Dispatch the affordable bounded task",
+                "owner_surface": "4444J99/limen",
                 "created": "2026-06-03",
             },
         ],
@@ -419,6 +435,11 @@ def test_github_storage_create_task_reads_projection_without_direct_put(monkeypa
             "target_agent": "codex",
             "predicate": "pytest -q web/api/tests/test_main.py",
             "receipt_target": "github:organvm/limen:pull-request:LIMEN-CONDUCT-COMPAT",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Create the task through the authenticated conduct keeper",
+            "owner_surface": "organvm/limen",
+            "budget_cost": 1,
         },
     )
 
@@ -457,6 +478,10 @@ def test_github_live_dispatch_does_not_launch_when_broker_claim_is_rejected(
                     "status": "open",
                     "predicate": "pytest -q web/api/tests/test_main.py",
                     "receipt_target": "github:organvm/limen:pull-request:LIMEN-SERIALIZED-DISPATCH",
+                    "origin": "human_prompt",
+                    "horizon": "present",
+                    "value_case": "Claim the bounded task before native launch",
+                    "owner_surface": "organvm/limen",
                     "created": "2026-07-18T00:00:00Z",
                     "dispatch_log": [],
                 }
@@ -601,6 +626,11 @@ def test_mutation_fails_closed_without_conduct_broker_and_leaves_projection_unch
             "target_agent": "codex",
             "predicate": "pytest -q web/api/tests/test_main.py",
             "receipt_target": "github:organvm/limen:pull-request:LIMEN-NO-BROKER",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Prove task creation fails closed without its broker",
+            "owner_surface": "organvm/limen",
+            "budget_cost": 1,
         },
     )
 
@@ -1053,6 +1083,12 @@ def test_verify_task_moves_active_work_to_closure_gate(client: TestClient, tmp_p
                 "status": "in_progress",
                 "created": "2026-06-03",
                 "urls": ["https://github.com/4444J99/limen/pull/14"],
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Verify the bounded task with predicate and receipt evidence",
+                "owner_surface": "4444J99/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "https://github.com/4444J99/limen/pull/14",
                 "dispatch_log": [],
             }
         ],
@@ -1060,7 +1096,15 @@ def test_verify_task_moves_active_work_to_closure_gate(client: TestClient, tmp_p
 
     response = client.post(
         "/api/tasks/LIMEN-014V/verify",
-        json={"status": "done", "note": "Evidence passed", "session_id": "qa-verify"},
+        json={
+            "status": "done",
+            "note": "Evidence passed",
+            "session_id": "qa-verify",
+            "predicate_exit_code": 0,
+            "receipt_target": "https://github.com/4444J99/limen/pull/14",
+            "receipt_verified": True,
+            "verification_context_digest": "a" * 64,
+        },
     )
 
     assert response.status_code == 200
@@ -1459,6 +1503,11 @@ def test_create_and_open_update_enforce_typed_intake_contract(client: TestClient
             "target_agent": "codex",
             "predicate": "pytest -q web/api/tests/test_main.py",
             "receipt_target": "github:organvm/limen:pull-request:LIMEN-CONTRACT-OK",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Create one fully underwritten API task",
+            "owner_surface": "organvm/limen",
+            "budget_cost": 1,
         },
     )
     assert created.status_code == 200
@@ -1513,6 +1562,61 @@ def test_task_api_exposes_work_loan_fields_without_breaking_legacy_create_payloa
     assert limen_work_loan.work_loan_denial(("value_case", "source_origin")) == (
         "task-not-underwritten:source_origin,value_case"
     )
+
+
+def test_task_create_rejects_missing_work_loan_with_exact_stable_reason(
+    client: TestClient,
+    tmp_path: Path,
+) -> None:
+    write_board(tmp_path / "tasks.yaml", [])
+
+    response = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-WORK-LOAN-DENIED",
+            "title": "Readable request without underwriting",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "predicate": "pytest -q web/api/tests/test_main.py",
+            "receipt_target": "github:organvm/limen:pull-request:LIMEN-WORK-LOAN-DENIED",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == ("task-not-underwritten:source_origin,horizon,value_case,budget_cost")
+
+
+def test_done_credit_requires_predicate_and_durable_receipt_evidence(
+    client: TestClient,
+    tmp_path: Path,
+) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-CREDIT-EVIDENCE",
+                "title": "Do not credit intent alone",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "budget_cost": 1,
+                "status": "in_progress",
+                "created": "2026-07-21",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Book credit only after predicate and receipt evidence",
+                "owner_surface": "organvm/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "github:organvm/limen:pull-request:LIMEN-CREDIT-EVIDENCE",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    response = client.post("/api/tasks/LIMEN-CREDIT-EVIDENCE/verify", json={"status": "done"})
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "completion-not-verified:predicate"
+    assert read_board(tmp_path)["tasks"][0]["status"] == "in_progress"
 
 
 def test_work_loan_shared_fixtures_match_api_runtime() -> None:

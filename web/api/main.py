@@ -21,7 +21,8 @@ from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
-from limen_intake import IntakeContractError, normalize_selected_legacy_task, validate_intake_contract
+from limen_intake import IntakeContractError, validate_intake_contract
+from limen_work_loan import task_work_loan_missing_fields, work_loan_denial
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
@@ -153,7 +154,7 @@ class TaskCreate(BaseModel):
     type: str = Field(default="code", max_length=64, pattern=LABEL_PATTERN)
     target_agent: str = Field(default="jules", pattern=r"^[a-z][a-z_]*$")
     priority: str = "medium"
-    budget_cost: int = Field(default=1, ge=1, le=100)
+    budget_cost: int | None = Field(default=None, ge=1, le=100)
     status: str = "open"
     labels: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
     urls: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
@@ -362,11 +363,22 @@ class VerifyRequest(BaseModel):
     status: str = Field(default="done", pattern="^(done|needs_human|failed|failed_blocked)$")
     note: str = Field(default="", max_length=2000)
     session_id: str = Field(default="qa-verify", max_length=128)
+    predicate_exit_code: int | None = None
+    receipt_target: str | None = Field(default=None, max_length=2048)
+    receipt_verified: bool = False
+    verification_context_digest: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
-    @field_validator("note", "session_id")
+    @field_validator("note", "session_id", "receipt_target")
     @classmethod
-    def validate_text(cls, v: str) -> str:
+    def validate_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         return reject_control_chars(v, "text")
+
+    @field_validator("predicate_exit_code", mode="before")
+    @classmethod
+    def validate_exit_code(cls, value: Any) -> Any:
+        return reject_bool_integer(value, "predicate_exit_code") if value is not None else None
 
 
 class DispatchRequest(BaseModel):
@@ -1497,6 +1509,9 @@ def create_task(req: TaskCreate, authorization: str | None = Header(None)) -> di
         validate_intake_contract(task, is_new=True)
     except IntakeContractError as exc:
         raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
+    missing = task_work_loan_missing_fields(task)
+    if missing:
+        raise HTTPException(status_code=422, detail=work_loan_denial(missing))
     intent = {
         "kind": "task.upsert",
         "task_id": req.id,
@@ -1531,6 +1546,10 @@ def update_task(task_id: str, req: TaskUpdate, authorization: str | None = Heade
         validate_intake_contract(prospective)
     except IntakeContractError as exc:
         raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
+    if prospective.get("status") in {"dispatched", "in_progress"}:
+        missing = task_work_loan_missing_fields(prospective)
+        if missing:
+            raise HTTPException(status_code=409, detail=work_loan_denial(missing))
     patch = {key: value for key, value in prospective.items() if task.get(key) != value and key != "id"}
     intent = {
         "kind": "task.status" if status else "task.mutate",
@@ -1594,6 +1613,10 @@ def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None 
         validate_intake_contract(prospective)
     except IntakeContractError as exc:
         raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
+    if prospective.get("status") in {"dispatched", "in_progress"}:
+        missing = task_work_loan_missing_fields(prospective)
+        if missing:
+            raise HTTPException(status_code=409, detail=work_loan_denial(missing))
     after = {
         "target_agent": prospective.get("target_agent"),
         "priority": prospective.get("priority"),
@@ -1666,18 +1689,34 @@ def verify_task(task_id: str, req: VerifyRequest, authorization: str | None = He
     task = find_task(load_board(), task_id)
     if task.get("status") not in ("dispatched", "in_progress", "needs_human", "failed", "failed_blocked", "done"):
         raise HTTPException(status_code=409, detail="only active, attention, or done tasks can be verified")
+    patch: dict[str, Any] = {"status": req.status}
+    log: dict[str, Any] = {
+        "status": req.status,
+        "agent": "qa",
+        "session_id": req.session_id,
+        "output": req.note or f"QA verified task as {req.status}",
+    }
+    if req.status == "done":
+        missing = task_work_loan_missing_fields(task)
+        if missing:
+            raise HTTPException(status_code=409, detail=work_loan_denial(missing))
+        if req.predicate_exit_code != 0:
+            raise HTTPException(status_code=409, detail="completion-not-verified:predicate")
+        if req.receipt_verified is not True or req.receipt_target != task.get("receipt_target"):
+            raise HTTPException(status_code=409, detail="completion-not-verified:receipt_target")
+        if req.verification_context_digest is None:
+            raise HTTPException(status_code=409, detail="completion-not-verified:verification_context_digest")
+        patch["receipt_verified"] = True
+        log["predicate_exit_code"] = 0
+        log["verification_context_digest"] = req.verification_context_digest
+        log["remote_receipt"] = req.receipt_target
     intent = {
         "kind": "task.status",
         "task_id": task_id,
         "expected_status": task.get("status"),
         "expected_revision": task_revision(task),
-        "patch": {"status": req.status},
-        "log": {
-            "status": req.status,
-            "agent": "qa",
-            "session_id": req.session_id,
-            "output": req.note or f"QA verified task as {req.status}",
-        },
+        "patch": patch,
+        "log": log,
     }
     mutation = submit_task_mutation(intent, work_discriminator={"prior": task, "intent": intent})
     return {
@@ -1702,8 +1741,12 @@ def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> 
         if cost > remaining:
             continue
         candidate = copy.deepcopy(task)
+        missing = task_work_loan_missing_fields(candidate)
+        if missing:
+            intake_blocked.append({"id": str(task.get("id") or "unknown"), "reason": work_loan_denial(missing)})
+            continue
         try:
-            normalize_selected_legacy_task(candidate)
+            validate_intake_contract(candidate)
         except IntakeContractError as exc:
             intake_blocked.append({"id": str(task.get("id") or "unknown"), "reason": str(exc)})
             continue

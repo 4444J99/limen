@@ -11,6 +11,7 @@ from limen.conduct import (
     SQLiteStateStore,
     WorkPacketV1,
 )
+from limen.work_loan import WorkLoanV1
 
 
 def test_broker_restart_reconstructs_graph_and_active_lease(tmp_path) -> None:
@@ -38,6 +39,13 @@ def test_broker_restart_reconstructs_graph_and_active_lease(tmp_path) -> None:
         resource_claims=(ResourceClaimV1(key="task/restart"),),
         predicate="pytest -q",
         receipt_target="github:organvm/limen:pull-request:restart-work",
+        work_loan=WorkLoanV1(
+            source_origin="system_debt",
+            horizon="present",
+            value_case="Prove conduct state restarts without losing the active lease",
+            budget_cost=1,
+            owner_surface="organvm/limen",
+        ),
         authority=AuthorityEnvelopeV1(
             actions=frozenset({"code"}),
             repositories=frozenset({"organvm/limen"}),

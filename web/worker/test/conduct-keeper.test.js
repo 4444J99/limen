@@ -81,6 +81,7 @@ async function packet({
   spendReserve = 0,
   maxAttempts = 2,
   transientOnly = true,
+  underwritten = true,
   deadline = new Date(NOW.getTime() + 60 * 60 * 1000),
 } = {}) {
   return validateWorkPacket({
@@ -97,6 +98,16 @@ async function packet({
     resource_claims: claims || [{ key: resource, mode: "exclusive" }],
     predicate: "pytest -q",
     receipt_target: `github:organvm/limen:pull-request:${workId}`,
+    work_loan: underwritten ? {
+      schema_version: "limen.work_loan.v1",
+      source_origin: "human_prompt",
+      horizon: "present",
+      value_case: `Deliver the bounded Worker packet ${workId}`,
+      budget_cost: spendLimit,
+      owner_surface: "organvm/limen",
+      external_deadline: false,
+      due_at: null,
+    } : null,
     authority: authority || {
       actions: ["code", "review"],
       repositories: ["organvm/limen"],
@@ -135,7 +146,7 @@ async function taskPacket({
     preferred_agent: "tabularius",
     required_capabilities: ["board-write"],
     resource_claims: [{ key: `task/${taskId}`, mode: "exclusive" }],
-    predicate: `test -n "${taskId}"`,
+    predicate: "python3 scripts/validate-task-board.py --tasks tasks.yaml",
     receipt_target: `git:organvm/limen:tasks.yaml#${taskId}`,
     authority: {
       actions: [intent.kind],
@@ -840,6 +851,39 @@ test("work ids and deterministic work keys share one idempotency index", async (
   );
 });
 
+test("work-loan admission is deterministic at reserve and claim", async () => {
+  const codex = session("codex");
+  const { service, store } = await serviceWith([codex]);
+  const underwritten = await packet({ workId: "underwritten", conductor: codex.identity });
+  const missing = await validateWorkPacket({ ...underwritten, work_loan: null });
+  await assert.rejects(
+    service.call("submit", { packet: missing }),
+    /task-not-underwritten:source_origin,horizon,value_case,budget_cost,owner_surface/,
+  );
+  const mismatched = await validateWorkPacket({
+    ...underwritten,
+    work_id: "mismatched-budget",
+    work_key: "mismatched-budget",
+    work_loan: { ...underwritten.work_loan, budget_cost: underwritten.spend.limit + 1 },
+  });
+  await assert.rejects(
+    service.call("submit", { packet: mismatched }),
+    /task-not-underwritten:budget_cost/,
+  );
+
+  const reserved = await service.call("submit", { packet: underwritten });
+  const stale = store.snapshot();
+  stale.runs[reserved.run_id].packet.work_loan = null;
+  await store.save(stale);
+  await assert.rejects(
+    service.call("claim", {
+      lease_id: reserved.lease.lease_id,
+      generation: reserved.lease.generation,
+    }),
+    /task-not-underwritten:source_origin,horizon,value_case,budget_cost,owner_surface/,
+  );
+});
+
 test("fifty conductor submissions serialize to one task lease and deterministic busy receipts", async () => {
   const sessions = Array.from({ length: 50 }, (_, index) =>
     session(`lane${index}`, { sessionId: `session${index}`, concurrency: 100 }));
@@ -1000,7 +1044,7 @@ test("authority attenuation and ancestry cycle checks gate child work", async ()
         depth: 1,
         maxChildren: 2,
         maxDepth: 2,
-        spendLimit: 0,
+        spendLimit: 1,
       }),
     }),
     /cycle/,
@@ -1596,8 +1640,16 @@ test("task compatibility events are idempotent and update budget exactly once", 
     },
     tasks: [{
       id: "TASK-1",
+      title: "Idempotent compatibility task",
+      repo: "organvm/limen",
       status: "open",
       budget_cost: 2,
+      origin: "system_debt",
+      horizon: "present",
+      value_case: "Apply one idempotent compatibility transition",
+      owner_surface: "organvm/limen",
+      predicate: "npm test",
+      receipt_target: "git:organvm/limen:tasks.yaml#TASK-1",
       dispatch_log: [],
     }],
   };
@@ -1726,6 +1778,13 @@ test("task claims derive canonical debit and identity while canonical transition
       priority: "high",
       budget_cost: 2,
       status: "open",
+      repo: "organvm/limen",
+      origin: "system_debt",
+      horizon: "present",
+      value_case: "Prove canonical task claim and budget enforcement",
+      owner_surface: "organvm/limen",
+      predicate: "npm test",
+      receipt_target: "git:organvm/limen:tasks.yaml#TASK-CLAIM",
       created: "2026-07-01",
       dispatch_log: [],
     }],
@@ -1969,6 +2028,124 @@ test("exceptional task transitions require exact structured evidence", () => {
   }
 });
 
+test("task projection rejects ununderwritten discoveries and legacy claims without mutation", () => {
+  const event = {
+    schema_version: "limen.task_packet_projection_event.v1",
+    event_id: "conduct:underwriting:1:compatibility",
+    timestamp: NOW.toISOString(),
+    task_id: "RAW-TASK",
+    run_id: "run-underwriting",
+    lease_id: "lease-underwriting",
+    generation: 1,
+    agent: "codex",
+    session_id: "codex-session",
+    intent: {
+      kind: "task.upsert",
+      task_id: "RAW-TASK",
+      expected_absent: true,
+      task: {
+        id: "RAW-TASK",
+        title: "Raw discovery",
+        repo: "organvm/limen",
+        target_agent: "codex",
+        priority: "high",
+        budget_cost: 1,
+        status: "open",
+        created: "2026-07-18",
+        dispatch_log: [],
+      },
+    },
+  };
+  const empty = { tasks: [] };
+  assert.throws(
+    () => applyTaskPacketProjectionEvent(empty, event),
+    /task-not-underwritten:source_origin,horizon,value_case,predicate,receipt_target/,
+  );
+  assert.deepEqual(empty, { tasks: [] });
+
+  const board = { tasks: [structuredClone(event.intent.task)] };
+  const before = structuredClone(board);
+  const claim = {
+    ...event,
+    event_id: "conduct:underwriting:2:compatibility",
+    intent: {
+      kind: "task.claim",
+      task_id: "RAW-TASK",
+      expected_status: "open",
+      patch: { status: "dispatched", target_agent: "codex" },
+    },
+  };
+  assert.throws(
+    () => applyTaskPacketProjectionEvent(board, claim),
+    /task-not-underwritten:source_origin,horizon,value_case,predicate,receipt_target/,
+  );
+  assert.deepEqual(board, before);
+});
+
+test("task projection grants completion credit only with durable predicate evidence", () => {
+  const board = {
+    tasks: [{
+      id: "CREDIT-TASK",
+      title: "Credit only durable work",
+      repo: "organvm/limen",
+      target_agent: "codex",
+      priority: "high",
+      budget_cost: 1,
+      status: "in_progress",
+      created: "2026-07-18",
+      predicate: "npm test",
+      receipt_target: "git:organvm/limen:tasks.yaml#CREDIT-TASK",
+      origin: "human_prompt",
+      horizon: "present",
+      value_case: "Book credit only after the declared predicate and receipt exist",
+      owner_surface: "organvm/limen",
+      dispatch_log: [],
+    }],
+  };
+  const event = {
+    schema_version: "limen.task_packet_projection_event.v1",
+    event_id: "conduct:credit:1:compatibility",
+    timestamp: NOW.toISOString(),
+    task_id: "CREDIT-TASK",
+    run_id: "run-credit",
+    lease_id: "lease-credit",
+    generation: 1,
+    agent: "codex",
+    session_id: "codex-session",
+    intent: {
+      kind: "task.status",
+      task_id: "CREDIT-TASK",
+      expected_status: "in_progress",
+      patch: { status: "done", receipt_verified: true },
+      log: { status: "done" },
+    },
+  };
+  const before = structuredClone(board);
+
+  assert.throws(
+    () => applyTaskPacketProjectionEvent(board, event),
+    /completion-not-verified:predicate/,
+  );
+  assert.deepEqual(board, before);
+
+  event.event_id = "conduct:credit:2:compatibility";
+  event.intent.log = {
+    status: "done",
+    predicate_exit_code: 0,
+    remote_receipt: "git:organvm/limen:tasks.yaml#CREDIT-TASK",
+    verification_context_digest: "a".repeat(64),
+  };
+  const projected = applyTaskPacketProjectionEvent(board, event);
+
+  assert.equal(projected.task.receipt_verified, true);
+  assert.equal(projected.task.dispatch_log.at(-1).predicate_exit_code, 0);
+  assert.equal(
+    projected.task.dispatch_log.at(-1).remote_receipt,
+    "git:organvm/limen:tasks.yaml#CREDIT-TASK",
+  );
+  assert.equal(projected.task.dispatch_log.at(-1).verification_context_digest, "a".repeat(64));
+});
+
 test("MCP-compatible task packets execute in the keeper without a board-write lane", async () => {
   const env = {
     LIMEN_INLINE_TASKS_YAML: `
@@ -2005,6 +2182,12 @@ tasks: []
       priority: "high",
       budget_cost: 2,
       status: "open",
+      origin: "human_prompt",
+      horizon: "present",
+      value_case: "Deliver the explicitly submitted MCP task",
+      owner_surface: "organvm/limen",
+      predicate: "pytest -q",
+      receipt_target: "github:organvm/limen:pull-request:TASK-MCP",
       created: "2026-07-18",
       dispatch_log: [],
     },
@@ -2031,7 +2214,20 @@ tasks: []
 test("GitHub projection retries SHA conflicts and always writes the observed SHA", async () => {
   let board = {
     portal: { budget: { daily: 10, per_agent: { codex: 10 }, track: { spent: 0, per_agent: {} } } },
-    tasks: [{ id: "TASK-2", status: "open", budget_cost: 1, dispatch_log: [] }],
+    tasks: [{
+      id: "TASK-2",
+      title: "GitHub compatibility projection",
+      repo: "organvm/limen",
+      status: "open",
+      budget_cost: 1,
+      origin: "system_debt",
+      horizon: "present",
+      value_case: "Retry one bounded GitHub projection conflict",
+      owner_surface: "organvm/limen",
+      predicate: "npm test",
+      receipt_target: "git:organvm/limen:tasks.yaml#TASK-2",
+      dispatch_log: [],
+    }],
   };
   let sha = "sha-1";
   let puts = 0;

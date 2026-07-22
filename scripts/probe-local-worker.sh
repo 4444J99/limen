@@ -106,6 +106,12 @@ tasks:
     priority: medium
     budget_cost: 1
     status: in_progress
+    origin: system_debt
+    horizon: present
+    value_case: Verify the bounded local Worker owner-mutation contract
+    owner_surface: 4444J99/limen
+    predicate: scripts/probe-local-worker.sh
+    receipt_target: git:4444J99/limen:tasks.yaml#PROBE-VERIFY
     created: '2026-06-03'
     urls:
       - https://github.com/4444J99/limen/pull/2

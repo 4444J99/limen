@@ -4,6 +4,11 @@ import {
   stableStringify,
   validateLease,
 } from "./schemas.js";
+import {
+  packetIsNonCapacityProjection,
+  packetWorkLoanMissingFields,
+  workLoanDenial,
+} from "./work-loan.js";
 
 const ACTIVE_LEASE_STATES = new Set(["reserved", "active"]);
 const ACTIVE_RUN_STATES = new Set(["reserved", "running", "stop_requested"]);
@@ -46,10 +51,12 @@ function identitiesEqual(left, right) {
 }
 
 function isTaskCompatibilityPacket(packet) {
-  return Boolean(packet.execution?.adapter === "tabularius"
-    && ["task.upsert", "task.status", "task.claim", "task.mutate"].includes(packet.intent?.kind)
-    && packet.task_id
-    && packet.intent?.task_id === packet.task_id);
+  return packetIsNonCapacityProjection(packet);
+}
+
+function requireWorkLoan(packet) {
+  const missing = packetWorkLoanMissingFields(packet);
+  if (missing.length) throw new ConductError(workLoanDenial(missing));
 }
 
 function coveredAtoms(child, parent) {
@@ -323,6 +330,7 @@ export class ConductKernel {
   async submit(packet, requestedPrincipal = null) {
     const { principal, enforced } = this.principalForIdentity(packet.conductor, requestedPrincipal);
     this.requireRole(principal, "conductor", "compatibility");
+    requireWorkLoan(packet);
     if (asDate(packet.deadline) <= this.now) {
       throw new ConductError("work packet deadline has already passed", 422);
     }
@@ -370,7 +378,8 @@ export class ConductKernel {
         && stableStringify(stored.authority) === stableStringify(packet.authority)
         && stableStringify(stored.resource_claims) === stableStringify(packet.resource_claims)
         && stored.predicate === packet.predicate
-        && stored.receipt_target === packet.receipt_target;
+        && stored.receipt_target === packet.receipt_target
+        && stableStringify(stored.work_loan) === stableStringify(packet.work_loan);
       if (!samePayload) {
         throw new ConductError("work id/key was reused with different immutable hashes or contract");
       }
@@ -529,6 +538,7 @@ export class ConductKernel {
     if (packets.some((packet) => isTaskCompatibilityPacket(packet) || packet.task_id)) {
       throw new ConductError("task-board packets are not accepted in graph submissions");
     }
+    for (const packet of packets) requireWorkLoan(packet);
     const { principal } = this.principalForIdentity(packets[0].conductor, requestedPrincipal);
     this.requireRole(principal, "conductor");
     if (packets.some((packet) => packet.conductor.session_id !== packets[0].conductor.session_id)) {
@@ -582,6 +592,7 @@ export class ConductKernel {
   }
 
   async deferDependencyPacket(packet, principal) {
+    requireWorkLoan(packet);
     if (asDate(packet.deadline) <= this.now) {
       throw new ConductError("work packet deadline has already passed", 422);
     }
@@ -713,6 +724,9 @@ export class ConductKernel {
     if (!ACTIVE_LEASE_STATES.has(lease.state)) {
       throw new ConductError(`lease is not active: ${lease.state}`);
     }
+    const run = this.state.runs[lease.run_id];
+    if (!run) throw new ConductError(`lease points to missing run: ${lease.run_id}`, 500);
+    requireWorkLoan(run.packet);
     const principalId = lease.executor_principal_id || principal.principal_id;
     const token = await capabilityToken(
       this.capabilitySecret,
