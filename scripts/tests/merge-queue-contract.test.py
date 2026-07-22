@@ -159,6 +159,9 @@ def test_automation_writers_use_board_pr_publication() -> None:
             "cancel-in-progress": False,
         }
     auto_steps = docs[0]["jobs"]["auto-scale"]["steps"]
+    auto_source = AUTO_SCALE.read_text(encoding="utf-8")
+    assert 'python -m pip install -e "cli[test]"' in auto_source
+    assert "python -m pip install pyyaml requests pydantic" not in auto_source
     assert next(i for i, step in enumerate(auto_steps) if step.get("id") == "board-preflight") < next(
         i for i, step in enumerate(auto_steps) if step.get("name") == "Run Auto-Scaler"
     )

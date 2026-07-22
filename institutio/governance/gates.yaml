@@ -39,6 +39,7 @@ deploy_triggers:
     workflow: .github/workflows/deploy.yml
     paths:
       - "web/app/**"
+      - "scripts/assemble-dashboard-data.py"
       - "firebase.json"
       - "tasks.yaml"
       - ".github/workflows/deploy.yml"
@@ -410,8 +411,8 @@ gates:
 
   # ── node/web estate (the host-exhausting gates; serialized machine-wide) ────
   web-build:
-    command: "bash -c 'cd web/app && npm run generate:data && npm run build' && node scripts/validate-contract-schemas.mjs"
-    paths: ["web/app/**", "spec/**"]
+    command: "bash -c 'cd web/app && npm run generate:data && npm run build' && python3 scripts/assemble-dashboard-data.py --app web/app && node web/app/scripts/validate-exported-pages.mjs && node scripts/validate-contract-schemas.mjs"
+    paths: ["web/app/**", "spec/**", "scripts/assemble-dashboard-data.py", "scripts/tests/test_assemble_dashboard_data.py"]
     tier: heavy
     serialize: true
     ci_job: "ci.yml:web"

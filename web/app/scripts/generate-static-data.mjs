@@ -7,6 +7,9 @@ import YAML from "yaml";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(__dirname, "..");
 const repoRoot = join(appRoot, "..", "..");
+const dashboardExportPolicy = JSON.parse(
+  readFileSync(join(appRoot, "dashboard-export-policy.json"), "utf8"),
+);
 const limenRoot = process.env.LIMEN_ROOT || repoRoot;
 const sourcePath = join(repoRoot, "tasks.yaml");
 const privateDir = join(appRoot, ".generated", "surfaces");
@@ -669,10 +672,10 @@ const data = YAML.parse(readFileSync(sourcePath, "utf8"));
 const summary = deriveSummary(data);
 
 // Slim dashboard.json: exclude done/archived tasks (dead weight ~70%), truncate dispatch_log
-// to last 3 entries per task (dispatch_log alone was 51% of the 4.45MB payload). Write
+// to the checked-in bounded policy. Write
 // excluded tasks to done-tasks.json for lazy-fetch when the user opens the Done view.
-const DONE_STATUSES = new Set(["done", "archived"]);
-const MAX_DISPATCH_LOG = 3;
+const DONE_STATUSES = new Set(dashboardExportPolicy.done_statuses);
+const MAX_DISPATCH_LOG = dashboardExportPolicy.max_dispatch_log_entries;
 
 function slimTask(task) {
   if (!task.dispatch_log || task.dispatch_log.length <= MAX_DISPATCH_LOG) return task;

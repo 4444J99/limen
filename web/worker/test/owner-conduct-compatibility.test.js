@@ -33,6 +33,7 @@ function ownerEnvironment() {
       }],
     }),
     LIMEN_CONDUCT_CAPABILITY_SECRET: "compatibility-capability-secret-24-plus",
+    LIMEN_CONDUCT_KEEPER_NAME: "tabularius-conduct-v2",
     LIMEN_INLINE_TASKS_YAML: `
 portal:
   budget:
@@ -63,8 +64,12 @@ tasks:
 `,
   };
   const keeper = new ConductKeeperDurableObject({ storage: new FakeStorage() }, env);
+  env.selectedKeeperNames = [];
   env.CONDUCT_KEEPER = {
-    idFromName: (name) => name,
+    idFromName: (name) => {
+      env.selectedKeeperNames.push(name);
+      return name;
+    },
     get: () => ({ fetch: (request) => keeper.fetch(request) }),
   };
   return env;
@@ -97,6 +102,8 @@ test("owner task mutations traverse the authenticated keeper and return projecti
   assert.equal(payload.task.dispatch_log.at(-1).session_id, "worker-owner-compatibility");
   assert.equal(payload.broker_receipt.status, "committed");
   assert.match(payload.broker_receipt.run_id, /^run-/);
+  assert.ok(env.selectedKeeperNames.length >= 2);
+  assert.ok(env.selectedKeeperNames.every((name) => name === "tabularius-conduct-v2"));
   assert.equal(readInlineProjectionForTest(env).tasks[0].status, "done");
 });
 

@@ -15,6 +15,7 @@ import {
   applyTaskPacketProjectionEvent,
   commitTaskCompatibilityEvent,
   readInlineProjectionForTest,
+  renderTaskBoardProjection,
 } from "../src/conduct/projection.js";
 import {
   canonicalHash,
@@ -2283,7 +2284,7 @@ tasks: []
   assert.equal(readInlineProjectionForTest(env).tasks[0].dispatch_log.length, 1);
 });
 
-test("GitHub projection retries SHA conflicts and always writes the observed SHA", async () => {
+test("GitHub projection reads large boards, retries SHA conflicts, and writes the observed SHA", async () => {
   let board = {
     portal: { budget: { daily: 10, per_agent: { codex: 10 }, track: { spent: 0, per_agent: {} } } },
     tasks: [{
@@ -2303,16 +2304,34 @@ test("GitHub projection retries SHA conflicts and always writes the observed SHA
   };
   let sha = "sha-1";
   let puts = 0;
-  const fetchImpl = async (_url, init) => {
+  let rawReads = 0;
+  let reconciles = 0;
+  const fetchImpl = async (url, init) => {
+    if (init.method === "POST") {
+      reconciles += 1;
+      assert.match(String(url), /\/repos\/organvm\/limen\/merges$/);
+      assert.deepEqual(JSON.parse(init.body), {
+        base: "tabularius/board-projection",
+        head: "main",
+        commit_message: "tabularius: reconcile projection branch with current main",
+      });
+      return new Response(null, { status: 204 });
+    }
     if (init.method === "GET") {
+      assert.match(String(url), /ref=tabularius%2Fboard-projection/);
+      if (init.headers.accept === "application/vnd.github.raw+json") {
+        rawReads += 1;
+        return new Response((await import("yaml")).default.stringify(board), { status: 200 });
+      }
       return new Response(JSON.stringify({
         sha,
-        content: btoa(unescape(encodeURIComponent((await import("yaml")).default.stringify(board)))),
+        content: "",
       }), { status: 200 });
     }
     puts += 1;
     const payload = JSON.parse(init.body);
     assert.equal(payload.sha, sha);
+    assert.equal(payload.branch, "tabularius/board-projection");
     if (puts === 1) {
       sha = "sha-2";
       return new Response(JSON.stringify({ message: "sha does not match" }), { status: 409 });
@@ -2342,7 +2361,42 @@ test("GitHub projection retries SHA conflicts and always writes the observed SHA
   }, event, { fetchImpl });
   assert.equal(result.status, "committed");
   assert.equal(puts, 2);
+  assert.equal(rawReads, 2);
+  assert.equal(reconciles, 2);
   assert.equal(board.tasks[0].status, "dispatched");
+});
+
+test("GitHub task projection preserves unrelated board bytes", async () => {
+  const source = [
+    "version: '1.0'",
+    "portal:",
+    "  name: \"Preserve this spelling\"",
+    "tasks:",
+    "- id: OTHER",
+    "  title: 'Leave this task byte-for-byte alone'",
+    "  status: open",
+    "  dispatch_log: []",
+    "",
+  ].join("\n");
+  const before = (await import("yaml")).default.parse(source);
+  const after = structuredClone(before);
+  after.tasks.push({
+    id: "TASK-NEW",
+    title: "Append one bounded task",
+    status: "open",
+    dispatch_log: [],
+  });
+
+  const rendered = renderTaskBoardProjection(source, before, after, "TASK-NEW");
+  assert.equal(rendered.slice(0, source.length), source);
+  assert.deepEqual((await import("yaml")).default.parse(rendered), after);
+
+  const changed = structuredClone(after);
+  changed.tasks[1].status = "dispatched";
+  changed.tasks[1].dispatch_log.push({ status: "dispatched" });
+  const changedText = renderTaskBoardProjection(rendered, after, changed, "TASK-NEW");
+  assert.equal(changedText.slice(0, source.length), source);
+  assert.deepEqual((await import("yaml")).default.parse(changedText), changed);
 });
 
 test("Durable Object HTTP routes match the authenticated client surface and survive recreation", async () => {

@@ -2938,8 +2938,8 @@ def test_dispatch_parallel_records_blocked_without_counting_failure(tmp_path: Pa
     assert "0 failed" in output
 
     class RejectTerminalReceipt:
-        def register(self, _session):
-            return {"status": "registered"}
+        def register(self, session):
+            return session
 
         def submit(self, packet):
             assert packet.intent["expected_status"] == "dispatched"

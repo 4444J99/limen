@@ -988,7 +988,7 @@ def _submit_compatibility_ticket(
     board_path: Path | None = None,
     local_board: LimenFile | None = None,
 ) -> dict[str, Any]:
-    identity = AgentIdentityV1(
+    requested_identity = AgentIdentityV1(
         agent=_safe_identifier(ticket.agent, "tabularius-relay"),
         surface="tabularius-relay",
         session_id=_safe_identifier(
@@ -999,8 +999,8 @@ def _submit_compatibility_ticket(
     )
     registration_now = datetime.now(timezone.utc)
     session = ConductorSessionV1(
-        session_id=identity.session_id,
-        identity=identity,
+        session_id=requested_identity.session_id,
+        identity=requested_identity,
         origin="relay",
         capabilities=frozenset({"task-submit"}),
         transport="ianva",
@@ -1008,6 +1008,13 @@ def _submit_compatibility_ticket(
         registered_at=registration_now,
         heartbeat_at=registration_now,
     )
+    registration = remote.register(session)
+    registered_payload = registration.get("session", registration) if isinstance(registration, dict) else registration
+    try:
+        registered_session = ConductorSessionV1.model_validate(registered_payload)
+    except Exception as exc:
+        raise RuntimeError("conduct broker registration returned no canonical session identity") from exc
+    identity = registered_session.identity
     owner = os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "organvm/limen"
     execution = {"adapter": "tabularius", "projection": "tasks.yaml", "observed_heads": {}}
     work_key = f"task-compat-{canonical_hash({'intent': intent, 'execution': execution})}"
@@ -1036,7 +1043,6 @@ def _submit_compatibility_ticket(
         effect="write",
         task_id=ticket.task_id,
     )
-    remote.register(session)
 
     if isinstance(remote, LocalConductClient):
         if board_path is None or local_board is None:

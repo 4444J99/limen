@@ -95,10 +95,14 @@ class FakeConductClient:
         *,
         fail_after: int | None = None,
         unavailable_on_register: bool = False,
+        bound_agent: str | None = None,
+        bound_surface: str | None = None,
     ):
         self.tasks = {str(task["id"]): dict(task) for task in tasks}
         self.fail_after = fail_after
         self.unavailable_on_register = unavailable_on_register
+        self.bound_agent = bound_agent
+        self.bound_surface = bound_surface
         self.registered: list[Any] = []
         self.packets: list[Any] = []
 
@@ -106,7 +110,12 @@ class FakeConductClient:
         if self.unavailable_on_register:
             raise BrokerUnavailable("test broker unavailable")
         self.registered.append(session)
-        return {"session": session.model_dump(mode="json")}
+        registered = session.model_dump(mode="json")
+        if self.bound_agent is not None:
+            registered["identity"]["agent"] = self.bound_agent
+        if self.bound_surface is not None:
+            registered["identity"]["surface"] = self.bound_surface
+        return {"session": registered}
 
     def submit(self, packet):
         if self.fail_after is not None and len(self.packets) >= self.fail_after:
@@ -404,6 +413,26 @@ def test_equivalent_tickets_share_a_deterministic_remote_work_key(tmp_path, monk
 
     assert fake.packets[0].work_id != fake.packets[1].work_id
     assert fake.packets[0].work_key == fake.packets[1].work_key
+
+
+def test_remote_registration_identity_is_bound_into_compatibility_packet():
+    fake = FakeConductClient(
+        [],
+        bound_agent="codex",
+        bound_surface="credential-principal",
+    )
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-BOUND",
+        patch=_task("T-BOUND", status="open"),
+        ticket_id="principal-bound",
+    )
+
+    tabularius._relay_ticket(ticket, None, client=fake)
+
+    assert fake.packets[0].conductor.agent == "codex"
+    assert fake.packets[0].conductor.surface == "credential-principal"
+    assert fake.packets[0].initiator == fake.packets[0].conductor
 
 
 def test_drain_defers_all_tickets_when_broker_is_unavailable(tmp_path, monkeypatch):

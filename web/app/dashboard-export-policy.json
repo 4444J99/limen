@@ -1,0 +1,6 @@
+{
+  "schema_version": "limen.dashboard-export-policy.v1",
+  "max_dispatch_log_entries": 1,
+  "max_dashboard_bytes": 1536000,
+  "done_statuses": ["done", "archived"]
+}

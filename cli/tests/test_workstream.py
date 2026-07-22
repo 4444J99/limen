@@ -112,8 +112,8 @@ def test_workstream_survives_tabularius_single_writer(tmp_path, monkeypatch):
     acknowledged = []
 
     class Owner:
-        def register(self, _session):
-            return {"status": "registered"}
+        def register(self, session):
+            return session
 
         def submit(self, packet):
             task = dict(packet.intent["task"])

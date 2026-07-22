@@ -282,7 +282,9 @@ export async function forwardConductRequest(request, env) {
   if (!env.CONDUCT_KEEPER) {
     return errorResponse("conduct keeper binding is not configured", 503, env);
   }
-  const id = env.CONDUCT_KEEPER.idFromName("tabularius-conduct-v1");
+  const id = env.CONDUCT_KEEPER.idFromName(
+    String(env.LIMEN_CONDUCT_KEEPER_NAME || "tabularius-conduct-v1"),
+  );
   return env.CONDUCT_KEEPER.get(id).fetch(request);
 }
 
@@ -299,7 +301,9 @@ async function internalConductRequest(env, path, payload) {
       503,
     );
   }
-  const id = env.CONDUCT_KEEPER.idFromName("tabularius-conduct-v1");
+  const id = env.CONDUCT_KEEPER.idFromName(
+    String(env.LIMEN_CONDUCT_KEEPER_NAME || "tabularius-conduct-v1"),
+  );
   const response = await env.CONDUCT_KEEPER.get(id).fetch(new Request(
     `https://limen.internal${path}`,
     {

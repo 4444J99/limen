@@ -219,6 +219,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Assemble bounded dashboard projection
+        run: python3 scripts/assemble-dashboard-data.py --app web/app
+
       - name: Check exported surface routes and contracts
         run: |
           test -f web/app/out/index.html

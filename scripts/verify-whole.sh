@@ -229,6 +229,10 @@ step "Build static dashboard and validate exported surfaces"
   cd "$ROOT/web/app"
   npm run build
 )
+python3 "$ROOT/scripts/assemble-dashboard-data.py" \
+  --app "$ROOT/web/app" \
+  --repo-root "$ROOT"
+node "$ROOT/web/app/scripts/validate-exported-pages.mjs"
 
 if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]; then
   step "Verify live Firebase static surfaces"

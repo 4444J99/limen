@@ -61,7 +61,7 @@ class FakeClaimBroker:
 
     def register(self, session):
         self.sessions.append(session)
-        return {"status": "registered"}
+        return session
 
     def submit(self, packet):
         self.packets.append(packet)

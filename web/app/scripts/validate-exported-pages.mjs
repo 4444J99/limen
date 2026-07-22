@@ -6,6 +6,9 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const appDir = join(__dirname, "..", "app");
 const outDir = join(__dirname, "..", "out");
+const dashboardExportPolicy = JSON.parse(
+  readFileSync(join(__dirname, "..", "dashboard-export-policy.json"), "utf8"),
+);
 
 function fail(message) {
   console.error(`exported page validation failed: ${message}`);
@@ -194,17 +197,18 @@ for (const needle of ['"body_preview"', '"body_object"', '"private_source_path"'
 console.log("Exported page persona/runtime checks verified");
 assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
 
-// Payload-size ratchet: dashboard.json must stay under 700KB raw to prevent the
-// 4.45MB defect from silently regressing. done-tasks.json is exempt (lazy-fetched).
+// Payload-size ratchet: the shared export policy bounds the static-first projection.
 import { statSync as _statSync, existsSync as _existsSync } from "fs";
 const dashboardJsonPath = join(outDir, "dashboard.json");
 if (_existsSync(dashboardJsonPath)) {
   const dashboardBytes = _statSync(dashboardJsonPath).size;
-  const LIMIT_BYTES = 1500 * 1024;
+  const LIMIT_BYTES = dashboardExportPolicy.max_dashboard_bytes;
+  const limitKb = Math.floor(LIMIT_BYTES / 1024);
+  const maxLogs = dashboardExportPolicy.max_dispatch_log_entries;
   if (dashboardBytes > LIMIT_BYTES) {
-    fail(`dashboard.json exceeds 1500KB ratchet: ${Math.round(dashboardBytes / 1024)}KB > 1500KB. Slim the payload (active tasks only, dispatch_log<=3) before merging.`);
+    fail(`dashboard.json exceeds ${limitKb}KB ratchet: ${Math.round(dashboardBytes / 1024)}KB > ${limitKb}KB. Slim the payload (active tasks only, dispatch_log<=${maxLogs}) before merging.`);
   }
-  console.log(`dashboard.json size: ${Math.round(dashboardBytes / 1024)}KB (limit 1500KB)`);
+  console.log(`dashboard.json size: ${Math.round(dashboardBytes / 1024)}KB (limit ${limitKb}KB)`);
 }
 // Assert every exported page has a non-empty, unique <title> tag.
 // This catches regressions where a route loses its per-route metadata.

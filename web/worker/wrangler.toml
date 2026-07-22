@@ -4,10 +4,11 @@ compatibility_date = "2026-06-03"
 
 [vars]
 LIMEN_GITHUB_REPO = "organvm/limen"
-LIMEN_GITHUB_BRANCH = "main"
+LIMEN_GITHUB_BRANCH = "tabularius/board-projection"
 LIMEN_GITHUB_PATH = "tasks.yaml"
 LIMEN_CORS_ORIGINS = "https://device-streaming-067d747a.web.app,http://localhost:3000"
 LIMEN_CONDUCT_LEASE_TTL_SECONDS = "21600"
+LIMEN_CONDUCT_KEEPER_NAME = "tabularius-conduct-v2"
 
 [[durable_objects.bindings]]
 name = "CONDUCT_KEEPER"

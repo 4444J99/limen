@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import worker from "../src/index.js";
@@ -8,6 +9,13 @@ import {
   normalizeSelectedLegacyTask,
   validateIntakeContract,
 } from "../src/index.js";
+
+test("production projection targets the protected board publication branch", () => {
+  const config = readFileSync(new URL("../wrangler.toml", import.meta.url), "utf8");
+  assert.match(config, /LIMEN_GITHUB_BRANCH = "tabularius\/board-projection"/);
+  assert.match(config, /LIMEN_CONDUCT_KEEPER_NAME = "tabularius-conduct-v2"/);
+  assert.doesNotMatch(config, /LIMEN_GITHUB_BRANCH = "main"/);
+});
 
 function typedTask(overrides = {}) {
   return {
