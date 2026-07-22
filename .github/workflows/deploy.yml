@@ -52,9 +52,12 @@ jobs:
                   summary["integrity"] = {"counts": dv.get("counts", {}), "chronic": dv.get("chronic", [])}
               except Exception:
                   pass
-              # Slim: exclude done/archived (lazy-fetched on demand), truncate dispatch_log to last 3
+              # Slim: exclude done/archived (lazy-fetched on demand), truncate dispatch_log to last 1.
+              # 3 breached the 1500KB ratchet as the board grew (1219 active tasks -> 1521KB); 1 -> 1297KB,
+              # ~203KB headroom, so the ratchet stays meaningful instead of being bumped. The dashboard row
+              # summary uses only the latest dispatch event; full history is lazy-fetched via the runtime API.
               DONE_STATUSES = {"done", "archived"}
-              MAX_LOG = 3
+              MAX_LOG = 1
               def slim_task(t):
                   dl = t.get("dispatch_log") or []
                   if len(dl) > MAX_LOG:
