@@ -153037,58 +153037,873 @@ tasks:
     session_id: direct:hospes-ari-pilot-launch
     status: in_progress
     output: 'Execution started in work/ari-pilot-launch; owner issue #9.'
-- id: VIC-CONTROL-CI-001
-  title: Client-One control-integrity CI repair
-  description: Repair Client-One CI classification and live control-gate evidence so governance, finance, contracts, and integration packets fail closed before canary dispatch.
-  repo: organvm/victoroff-os
+- id: CONST-CORPUS-REFRESH
+  title: Populate the conversation corpus (live pulls + staged bundle imports)
+  repo: organvm/limen
   type: code
-  target_agent: codex
-  workstream: governance
-  priority: critical
-  budget_cost: 1
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 10
   status: open
   labels:
-  - client-one
-  - control-integrity
-  - public-synthetic
-  - owner:client-one-control-integrator
-  urls:
-  - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
-  - https://github.com/organvm/victoroff-os/actions/runs/29950685515
-  context: |-
-    Do not dispatch to Jules. Complete only this bounded control-integrator packet.
-
-    Task: VIC-CONTROL-CI-001 — repair the Client-One control-integrity rail before canary launch.
-    Repository: organvm/victoroff-os
-    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
-    Owner: client-one-control-integrator
-    Allowed paths: .github/workflows/verify.yml, package.json, program/registry.v1.json, scripts/control/**, tests/control/**
-    Forbidden paths: tasks.yaml, apps/**, docs/governance/**, docs/finance/**, packages/domain/**, production or authority surfaces
-    Required behavior: add a governance/finance docs-test shard with tracked test discovery; fail closed for nonempty unclassified diffs; make the contracts canary run tests plus typechecking; bind control-main-green to exact-main verify and CodeQL receipts; allow historical integration packets while enforcing at most one active integration packet; add classifier, empty-shard, gate, and predicate regressions.
-    Authority boundary: public/synthetic only; do not ratify, deploy, transfer, spend, use real BBNC data, or represent client authority.
-    Predicate: pnpm verify:control
-    Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTROL-CI-001
-
-    Return the exact-head PR and predicate receipts. Stop if path ownership, live base, or control evidence changes.
-  predicate: pnpm verify:control
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTROL-CI-001
-  origin: human_prompt
-  horizon: present
-  value_case: Close the CI bypass and exact-head evidence gaps that currently make the three authorized Client-One canaries unsafe to launch.
-  owner_surface: organvm/victoroff-os
-  external_deadline: false
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py corpus-refresh
+  receipt_target: git:organvm/conversation-corpus-engine:README.md
   depends_on: []
-  created: 2026-07-22
-  dispatch_log:
-  - timestamp: 2026-07-22T22:22:52.178Z
-    agent: codex
-    session_id: codex-vic-control-ci-retry7-20260722
-    logical_agent: codex
-    logical_session_id: vic-control-ci-retry7-20260722
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-7bcb5af11517f5c64235b6b2c30e0cd4:2:compatibility
-    conduct_run_id: run-7bcb5af11517f5c64235b6b2c30e0cd4
-    conduct_lease_id: lease-2-7bcb5af11517f5c6
-    conduct_generation: 2
-  updated: 2026-07-22T22:22:52.178Z
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.958674Z'
+  dispatch_log: []
+  horizon: present
+  value_case: every project dossier draws on the full brainstorm corpus instead of
+    memory
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-JESSICA-PROTO
+  title: Jessica interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto jessica
+  receipt_target: git:organvm/relationship-pipeline:out/jessica
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.959781Z'
+  dispatch_log: []
+  horizon: present
+  value_case: live co-founder negotiation steered by the proven conversation record
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-ROB-PROTO
+  title: Rob interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto rob
+  receipt_target: git:organvm/relationship-pipeline:out/rob
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.960183Z'
+  dispatch_log: []
+  horizon: present
+  value_case: three active lanes (chess, fitness, game) share one grounded interaction
+    policy
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MADDIE-PROTO-REFRESH
+  title: Re-verify the maddie protocol baseline and advance the review cursor
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto maddie
+  receipt_target: git:organvm/relationship-pipeline:out/maddie
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.960547Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the template protocol stays PROVEN while the funnel lane runs
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CHARLES-PROTO
+  title: Charles interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto charles
+  receipt_target: git:organvm/relationship-pipeline:out/charles
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.960951Z'
+  dispatch_log: []
+  horizon: present
+  value_case: relationship-first lane encoded so every agent honors the standing boundaries
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-SCOTT-PROTO
+  title: Scott interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto scott
+  receipt_target: git:organvm/relationship-pipeline:out/scott
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.961404Z'
+  dispatch_log: []
+  horizon: present
+  value_case: partnership terms for the cannibalizer grounded in the actual record
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-ARI-PROTO
+  title: Ari interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto ari
+  receipt_target: git:organvm/relationship-pipeline:out/ari
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.961834Z'
+  dispatch_log: []
+  horizon: present
+  value_case: host interface stays inside its weekly budget with a grounded policy
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-DUSTIN-PROTO
+  title: Dustin interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto dustin
+  receipt_target: git:organvm/relationship-pipeline:out/dustin
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.962216Z'
+  dispatch_log: []
+  horizon: present
+  value_case: demand evidence for two idea-stage ventures before any build spend
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-DAVID-PROTO
+  title: David interaction protocol (entity profile + dialogue persona)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto david
+  receipt_target: git:organvm/relationship-pipeline:out/david
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.962711Z'
+  dispatch_log: []
+  horizon: present
+  value_case: creative-collaborator lane grounded before auditor/OS work is scoped
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MONFORTE-PROTO
+  title: John M. interaction protocol from the archived record (no contact)
+  repo: organvm/relationship-pipeline
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 20
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py proto john-m
+  receipt_target: git:organvm/relationship-pipeline:out/john-m
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.963065Z'
+  dispatch_log: []
+  horizon: present
+  value_case: dormant channel read before any finance-gaming idea is entertained
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-STYX-DOSSIER
+  title: Styx brainstorm dossier from the conversation corpus
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier jessica styx
+  receipt_target: git:organvm/peer-audited--behavioral-blockchain:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.963460Z'
+  dispatch_log: []
+  horizon: present
+  value_case: every scattered Styx idea lands in one public-safe dossier the build
+    consumes
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-STYX-MVP
+  title: Drive ask-styx to a demoable MVP
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 60
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py stage jessica styx mvp
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-STYX-DOSSIER
+  - CONST-JESSICA-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.963805Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the co-founder deal gets a demoable product while terms are negotiated
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-STYX-FACE
+  title: Styx-branded public face on the product repo
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py face-brand organvm/peer-audited--behavioral-blockchain
+    styx
+  receipt_target: git:organvm/peer-audited--behavioral-blockchain:README.md
+  depends_on:
+  - CONST-STYX-MVP
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.964166Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the product is discoverable under its own name for the 18k audience
+    pivot
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-STYX-FUNNEL
+  title: Styx funnel instance wired through the Niche-Funnel Engine
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 20
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py funnel organs/consulting/funnel/instances/jessica-styx.yaml
+  receipt_target: git:organvm/limen:organs/consulting/funnel/instances/jessica-styx.yaml
+  depends_on:
+  - CONST-STYX-FACE
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.964596Z'
+  dispatch_log: []
+  horizon: present
+  value_case: discovery-to-offer path exists the day the deal closes
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-HOKAGE-DOSSIER
+  title: Hokage Chess brainstorm dossier from the conversation corpus
+  repo: organvm/hokage-chess
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier rob hokage-chess
+  receipt_target: git:organvm/hokage-chess:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.965019Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the 144 recovered strategy docs and chat brainstorms converge in one
+    dossier
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-HOKAGE-FACE
+  title: Hokage Chess public face refresh
+  repo: organvm/hokage-chess
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py face-brand organvm/hokage-chess
+    hokage
+  receipt_target: git:organvm/hokage-chess:README.md
+  depends_on:
+  - CONST-ROB-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.965434Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the chess lane presents as a product, not a code dump
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-ROB-FUNNEL
+  title: Extend the rob-fitness funnel instance with the Hokage offer ladder
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 20
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py funnel organs/consulting/funnel/instances/rob-fitness.yaml
+  receipt_target: git:organvm/limen:organs/consulting/funnel/instances/rob-fitness.yaml
+  depends_on:
+  - CONST-ROB-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.965985Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the proven BODi shape carries both of Rob's earning lanes
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-TATO-DOSSIER
+  title: Micro Tato brainstorm dossier from the conversation corpus
+  repo: organvm/micro-tato
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier rob micro-tato
+  receipt_target: git:organvm/micro-tato:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.966610Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the game lane's scattered ideas become a buildable backlog
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-TATO-FACE
+  title: Micro Tato public face refresh
+  repo: organvm/micro-tato
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py face-brand organvm/micro-tato
+    brotato
+  receipt_target: git:organvm/micro-tato:README.md
+  depends_on:
+  - CONST-ROB-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.967018Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the beta reads as a playable game with a clear next step
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-SPIRAL-DOSSIER
+  title: Spiral brainstorm dossier from the conversation corpus
+  repo: organvm/sovereign-systems--elevate-align
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier maddie spiral
+  receipt_target: git:organvm/sovereign-systems--elevate-align:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.967449Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the spiral archive and chat brainstorms are consolidated without new
+    build spend
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-SPIRAL-FUNNEL
+  title: Spiral funnel instance wired through the Niche-Funnel Engine
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py funnel organs/consulting/funnel/instances/maddie-spiral.yaml
+  receipt_target: git:organvm/limen:organs/consulting/funnel/instances/maddie-spiral.yaml
+  depends_on:
+  - CONST-MADDIE-PROTO-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.967902Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the live site converts; the lane earns without further unpaid build
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-YFT-FACE
+  title: 'Your-Fit-Tailored face fix: purge stale org links, showcase Epoch 0'
+  repo: organvm/your-fit-tailored
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py face-clean organvm/your-fit-tailored
+    organvm-iii-ergon
+  receipt_target: git:organvm/your-fit-tailored:README.md
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.968269Z'
+  dispatch_log: []
+  horizon: present
+  value_case: a pilot-ready venture stops pointing visitors at empty orgs
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-YFT-DOSSIER
+  title: Your-Fit-Tailored brainstorm dossier (co-creation provenance stays private)
+  repo: organvm/your-fit-tailored
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier charles your-fit-tailored
+  receipt_target: git:organvm/your-fit-tailored:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.968672Z'
+  dispatch_log: []
+  horizon: present
+  value_case: Epoch-1 build starts from the complete idea record
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-YFT-EPOCH1
+  title: Execute the YFT Epoch-1 foundation build (Airtable+Retool kit, software half
+    only)
+  repo: organvm/your-fit-tailored
+  type: code
+  target_agent: claude
+  workstream: consulting
+  priority: high
+  budget_cost: 80
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py stage charles your-fit-tailored
+    mvp
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-YFT-DOSSIER
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.969021Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the closest revenue-validation event in the constellation becomes executable
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MM-DOSSIER
+  title: Mirror Mirror brainstorm dossier from the conversation corpus
+  repo: organvm/mirror-mirror
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier charles mirror-mirror
+  receipt_target: git:organvm/mirror-mirror:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.969366Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the try-on platform's scattered concept record is consolidated
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MM-VISIBILITY
+  title: Mirror Mirror visibility-drift decision packet (live PUBLIC vs registry private)
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet charles mirror-mirror-visibility
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.969790Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the estate registry and the live repo stop disagreeing about exposure
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MM-FACE
+  title: Mirror Mirror public face refresh
+  repo: organvm/mirror-mirror
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py face-brand organvm/mirror-mirror
+    try-on
+  receipt_target: git:organvm/mirror-mirror:README.md
+  depends_on:
+  - CONST-MM-VISIBILITY
+  - CONST-CHARLES-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.970288Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the beauty-tech lane presents to its named buyer class
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CANNIBAL-DOSSIER
+  title: Content Cannibalizer brainstorm dossier from the conversation corpus
+  repo: organvm/content-engine--asset-amplifier
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier scott content-cannibalizer
+  receipt_target: git:organvm/content-engine--asset-amplifier:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.970727Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the partnership build starts from the recorded intent, not recollection
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CANNIBAL-FACE
+  title: Content Cannibalizer public face (post publish-wave clearance)
+  repo: organvm/content-engine--asset-amplifier
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 15
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py face-state scott content-cannibalizer
+    readme
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-SCOTT-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.971151Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the yield engine becomes showable to its co-creator's clients
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CANNIBAL-FUNNEL
+  title: Content Cannibalizer funnel instance
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 20
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py funnel organs/consulting/funnel/instances/scott-cannibalizer.yaml
+  receipt_target: git:organvm/limen:organs/consulting/funnel/instances/scott-cannibalizer.yaml
+  depends_on:
+  - CONST-CANNIBAL-FACE
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.971625Z'
+  dispatch_log: []
+  horizon: present
+  value_case: design-side demand routes into a working offer ladder
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-HOSPES-DOSSIER
+  title: Podcast-suite brainstorm dossier from the conversation corpus
+  repo: organvm/hospes
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py dossier ari podcast-suite
+  receipt_target: git:organvm/hospes:docs/brainstorm-dossier.md
+  depends_on:
+  - CONST-CORPUS-REFRESH
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.971999Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the guest-ops OS roadmap draws on the recorded show conversations
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-HOSPES-FACE-SPLIT
+  title: hospes public face split (vault transcripts stay private)
+  repo: organvm/hospes
+  type: code
+  target_agent: claude
+  workstream: consulting
+  priority: medium
+  budget_cost: 30
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py face-state ari podcast-suite
+    readme
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-ARI-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.972393Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the suite becomes rentable form while the operation stays the moat
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-DUSTIN-DEMAND-REVIEW
+  title: Dustin demand-evidence memo from the protocol review
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet dustin demand-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-DUSTIN-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.972835Z'
+  dispatch_log: []
+  horizon: present
+  value_case: DSP and consulting ventures are promoted or parked on evidence
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-DAVID-DEMAND-REVIEW
+  title: David demand-evidence memo from the protocol review
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet david demand-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-DAVID-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.973324Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the auditor idea is scoped from the recorded interest, or parked
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-CLIENT_ONE-FACE
+  title: Client-One-OS review-class + public-face decision packet
+  repo: organvm/victoroff-os
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: low
+  budget_cost: 10
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet david client-one-visibility
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-DAVID-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.973684Z'
+  dispatch_log: []
+  horizon: present
+  value_case: an unreviewed private repo gets an owned exposure decision
+  external_deadline: false
+  source_origin: human_prompt
+- id: CONST-MONFORTE-REVIEW
+  title: Dormant-channel memo from the John M. protocol (read-only; no build)
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  workstream: consulting
+  priority: backlog
+  budget_cost: 5
+  status: open
+  labels:
+  - constellation
+  - generated
+  urls: []
+  predicate: organs/consulting/constellation/check.py decision-packet john-m dormant-review
+  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  depends_on:
+  - CONST-MONFORTE-PROTO
+  created: '2026-07-22'
+  updated: '2026-07-22T22:27:59.974476Z'
+  dispatch_log: []
+  horizon: present
+  value_case: the finance-gaming idea space is read from the record and closed or
+    parked
+  external_deadline: false
+  source_origin: human_prompt
