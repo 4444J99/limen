@@ -14,24 +14,24 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-07-19'
-      spent: 13
+      date: '2026-07-21'
+      spent: 4
       per_agent:
-        jules: 3
-        gemini: 2
+        jules: 0
+        gemini: 0
         codex: 0
-        opencode: 2
-        agy: 2
+        opencode: 0
+        agy: 0
         claude: 0
         github_actions: 1
         ollama: 3
       per_agent_reset:
-        jules: '2026-07-19T00:50:53.580748+00:00'
-        gemini: '2026-07-19T00:50:53.580748+00:00'
-        codex: '2026-07-19T19:13:28.100868+00:00'
-        opencode: '2026-07-19T00:50:53.580748+00:00'
-        agy: '2026-07-19T00:50:53.580748+00:00'
-        claude: '2026-07-19T19:13:28.100868+00:00'
+        jules: '2026-07-21T01:53:14.706904+00:00'
+        gemini: '2026-07-21T01:53:14.706904+00:00'
+        codex: '2026-07-21T19:50:50.757267+00:00'
+        opencode: '2026-07-21T01:53:14.706904+00:00'
+        agy: '2026-07-21T01:53:14.706904+00:00'
+        claude: '2026-07-21T19:50:50.757267+00:00'
   agents:
     opencode:
       status: idle
@@ -36428,7 +36428,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-vi-koinonia.github.io
   repo: organvm/organvm-vi-koinonia.github.io
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -87679,7 +87679,7 @@ tasks:
   repo: organvm/hokage-chess
   type: code
   target_agent: codex
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -87703,7 +87703,7 @@ tasks:
   repo: organvm/hokage-chess
   type: code
   target_agent: opencode
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -88001,7 +88001,7 @@ tasks:
   repo: organvm/hokage-chess
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -100199,7 +100199,7 @@ tasks:
   type: code
   target_agent: agy
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: done
   labels:
@@ -101171,7 +101171,7 @@ tasks:
   repo: organvm/limen
   type: code
   target_agent: jules
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -101213,7 +101213,7 @@ tasks:
   repo: organvm/limen
   type: code
   target_agent: jules
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -101261,7 +101261,7 @@ tasks:
   repo: organvm/limen
   type: code
   target_agent: jules
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -101303,7 +101303,7 @@ tasks:
   repo: organvm/limen
   type: code
   target_agent: jules
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -101695,7 +101695,7 @@ tasks:
   repo: organvm/limen
   type: code
   target_agent: jules
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -102563,7 +102563,7 @@ tasks:
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: failed_blocked
   labels:
@@ -102811,7 +102811,7 @@ tasks:
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -103029,7 +103029,7 @@ tasks:
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -103094,7 +103094,7 @@ tasks:
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: done
   labels:
@@ -106789,7 +106789,7 @@ tasks:
   type: code
   target_agent: codex
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -106979,7 +106979,7 @@ tasks:
   type: code
   target_agent: agy
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: done
   labels:
@@ -107253,7 +107253,7 @@ tasks:
   type: code
   target_agent: agy
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: failed_blocked
   labels:
@@ -114832,7 +114832,7 @@ tasks:
   type: code
   target_agent: agy
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: failed_blocked
   labels:
@@ -115041,7 +115041,7 @@ tasks:
   type: code
   target_agent: agy
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -115107,7 +115107,7 @@ tasks:
   type: code
   target_agent: claude
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -116521,7 +116521,7 @@ tasks:
   repo: organvm/session-meta
   type: code
   target_agent: gemini
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -116584,7 +116584,7 @@ tasks:
   repo: organvm/session-meta
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: done
   labels:
@@ -120982,7 +120982,7 @@ tasks:
   repo: organvm/tab-bookmark-manager
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -121007,7 +121007,7 @@ tasks:
   repo: organvm/the-invisible-ledger
   type: code
   target_agent: claude
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -122642,7 +122642,7 @@ tasks:
   repo: organvm/the-invisible-ledger
   type: code
   target_agent: gemini
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -124099,7 +124099,7 @@ tasks:
   repo: organvm/mirror-mirror
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: failed_blocked
   labels:
@@ -124222,7 +124222,7 @@ tasks:
   repo: organvm/mirror-mirror
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: done
   labels:
@@ -124768,7 +124768,7 @@ tasks:
   repo: organvm/hokage-chess--4444j99
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -130501,7 +130501,7 @@ tasks:
   repo: organvm/the-invisible-ledger
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -132972,7 +132972,7 @@ tasks:
   type: code
   target_agent: agy
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: failed_blocked
   labels:
@@ -133057,7 +133057,7 @@ tasks:
   type: code
   target_agent: claude
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -133123,7 +133123,7 @@ tasks:
   type: code
   target_agent: gemini
   workstream: correspondence
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -139717,7 +139717,7 @@ tasks:
   repo: organvm/limen
   type: code
   target_agent: agy
-  priority: normal
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -142569,7 +142569,7 @@ tasks:
     only when ranked.
   repo: organvm/micro-tato
   type: research
-  target_agent: codex
+  target_agent: jules
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -142710,7 +142710,7 @@ tasks:
     only when ranked.
   repo: organvm/content-engine--asset-amplifier--a-organvm-legacy
   type: research
-  target_agent: opencode
+  target_agent: jules
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -143126,7 +143126,7 @@ tasks:
   title: fix failing CI on organvm/mirror-mirror#125
   repo: organvm/mirror-mirror
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -143682,7 +143682,7 @@ tasks:
   title: fix failing CI on organvm/growth-auditor#25
   repo: organvm/growth-auditor
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -145072,7 +145072,7 @@ tasks:
   title: fix failing CI on organvm/hospes#8
   repo: organvm/hospes
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -145624,7 +145624,7 @@ tasks:
     \ not bound on the list path"
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -145660,7 +145660,7 @@ tasks:
     has no FL dataset'
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -145697,7 +145697,7 @@ tasks:
     api_keys table 004 already created'
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -145857,7 +145857,7 @@ tasks:
     session; #1203 closed as superseded.'
   repo: organvm/_agent
   type: code
-  target_agent: claude
+  target_agent: opencode
   workstream: governance
   priority: high
   budget_cost: 1
@@ -146032,7 +146032,7 @@ tasks:
     tables'
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -146057,7 +146057,7 @@ tasks:
     \ classify precedent, not inbound-lead"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: codex
+  target_agent: claude
   workstream: correspondence
   priority: medium
   budget_cost: 1
@@ -146226,7 +146226,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#311
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -146717,7 +146717,7 @@ tasks:
   title: fix failing CI on organvm/manumissio#45
   repo: organvm/manumissio
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -146757,8 +146757,8 @@ tasks:
   title: address review feedback on organvm/a-i--skills#34
   repo: organvm/a-i--skills
   type: code
-  target_agent: claude
-  priority: normal
+  target_agent: opencode
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -146787,7 +146787,7 @@ tasks:
   title: fix failing CI on organvm/a-i--skills#35
   repo: organvm/a-i--skills
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -146815,8 +146815,8 @@ tasks:
   title: address review feedback on organvm/a-mavs-olevm#102
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: codex
-  priority: normal
+  target_agent: claude
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -146845,8 +146845,8 @@ tasks:
   title: address review feedback on organvm/a-mavs-olevm#103
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: opencode
-  priority: normal
+  target_agent: gemini
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -146875,8 +146875,8 @@ tasks:
   title: address review feedback on organvm/a-mavs-olevm#104
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: agy
-  priority: normal
+  target_agent: codex
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -146905,8 +146905,8 @@ tasks:
   title: address review feedback on organvm/call-function--ontological#13
   repo: organvm/call-function--ontological
   type: code
-  target_agent: claude
-  priority: normal
+  target_agent: opencode
+  priority: medium
   budget_cost: 1
   status: open
   labels:
@@ -146936,7 +146936,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#313
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -146964,7 +146964,7 @@ tasks:
   title: Blocked Handoff Burn-down - 2026-07-13
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -146982,7 +146982,7 @@ tasks:
   title: Blocked Handoff Burn-down - 2026-07-06
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -147000,10 +147000,10 @@ tasks:
   title: Blocked Handoff Burn-down - 2026-06-29
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: done
+  status: open
   labels:
   - documentation
   - devops
@@ -147013,17 +147013,12 @@ tasks:
   context: Ingested via script
   depends_on: []
   created: '2026-07-19'
-  dispatch_log:
-  - timestamp: '2026-07-19T12:00:00.000000Z'
-    agent: gemini
-    session_id: cli
-    status: done
-    output: 'superseded:https://github.com/organvm/peer-audited--behavioral-blockchain/issues/785'
+  dispatch_log: []
 - id: LIMEN-104
   title: Blocked Handoff Burn-down - 2026-06-22
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -147041,7 +147036,7 @@ tasks:
   title: Blocked Handoff Burn-down - 2026-06-15
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -147059,7 +147054,7 @@ tasks:
   title: Blocked Handoff Burn-down - 2026-06-08
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -147077,7 +147072,7 @@ tasks:
   title: Implement integration test suite for real database interactions
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -147092,7 +147087,7 @@ tasks:
   title: Replace A/B/C plan branch labels with descriptive names
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -147107,7 +147102,7 @@ tasks:
   title: 'premortem: extract sellable artifact + get paid in 30 days'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -147124,7 +147119,7 @@ tasks:
   title: "expansive inquiry: Styx revenue gap \u2014 why no money"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: agy
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -147142,7 +147137,7 @@ tasks:
   title: 'Priority tomorrow: full project-board review + cleanup'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -147161,7 +147156,7 @@ tasks:
   title: Create legal artifact appendices (FBO diagram, ToS markup, checklists)
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: gemini
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -147180,7 +147175,7 @@ tasks:
   title: Map Styx mechanics against DFS regulatory frameworks by state
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -147199,7 +147194,7 @@ tasks:
   title: Resolve BIPA biometric data classification for wearable data
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: codex
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -147218,7 +147213,7 @@ tasks:
   title: Deepen FinCEN / money transmitter analysis for FBO structure
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: opencode
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -147237,7 +147232,7 @@ tasks:
   title: Produce 50-state skill-contest statutory survey
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -147256,7 +147251,7 @@ tasks:
   title: Add adverse authority analysis section to whitepaper
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: agy
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -147276,7 +147271,7 @@ tasks:
   title: Expand case law coverage to 15-25 cases in whitepaper and supporting docs
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -148408,7 +148403,7 @@ tasks:
   title: "TKT-P1-013: API \u2014 video upload + processing pipeline"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148423,7 +148418,7 @@ tasks:
   title: "TKT-P1-007: Tests \u2014 data sync accuracy + privacy compliance"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -148438,7 +148433,7 @@ tasks:
   title: "TKT-P1-007: UI \u2014 health data display + consent management"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   workstream: health
   priority: medium
   budget_cost: 1
@@ -148454,7 +148449,7 @@ tasks:
   title: "TKT-P1-007: Native \u2014 HealthKit/Google Health Connect integration"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: agy
   workstream: health
   priority: medium
   budget_cost: 1
@@ -148471,7 +148466,7 @@ tasks:
   title: "TKT-P1-009: Tests \u2014 exclusion enforcement + re-entry validation"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -148486,7 +148481,7 @@ tasks:
   title: "TKT-P1-009: UI \u2014 self-exclusion flow + responsible-use settings"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148501,7 +148496,7 @@ tasks:
   title: "TKT-P1-009: Schema + API \u2014 exclusion registry + cooling-off periods"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -148516,7 +148511,7 @@ tasks:
   title: "TKT-P1-019: Release gate \u2014 automated check before contest features"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -148531,7 +148526,7 @@ tasks:
   title: "TKT-P1-019: Legal review \u2014 counsel sign-off on classification"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: opencode
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -148548,7 +148543,7 @@ tasks:
   title: "TKT-P1-019: Whitepaper draft \u2014 skill-vs-chance legal argument"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: agy
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -148565,7 +148560,7 @@ tasks:
   title: "TKT-P1-006: Tests \u2014 delivery confirmation + fallback scenarios"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148580,7 +148575,7 @@ tasks:
   title: "TKT-P1-006: Native \u2014 APNs (iOS) + FCM (Android) integration"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -148596,7 +148591,7 @@ tasks:
   title: "TKT-P1-006: API \u2014 push notification dispatch + device registration"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -148611,7 +148606,7 @@ tasks:
   title: "TKT-P1-018: Tests \u2014 gradient math + leaderboard ranking"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -148626,7 +148621,7 @@ tasks:
   title: "TKT-P1-018: UI \u2014 dashboard visualization + real-time leaderboard"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -148641,7 +148636,7 @@ tasks:
   title: "TKT-P1-018: Schema + API \u2014 gradient calculation + leaderboard data"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148656,7 +148651,7 @@ tasks:
   title: "TKT-P1-016: Tests \u2014 onboarding flow + oath persistence"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -148671,7 +148666,7 @@ tasks:
   title: "TKT-P1-016: UI \u2014 oath creation flow + identity confirmation"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148716,7 +148711,7 @@ tasks:
   title: "TKT-P1-010: UI \u2014 progress visualization + downscale flow"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148731,7 +148726,7 @@ tasks:
   title: "TKT-P1-010: Schema + API \u2014 progress tracking + downscale logic"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -148746,7 +148741,7 @@ tasks:
   title: "TKT-P1-017: Tests \u2014 protocol flow + notification delivery"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -148761,7 +148756,7 @@ tasks:
   title: "TKT-P1-017: UI \u2014 partner invitation + status dashboard"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -148776,7 +148771,7 @@ tasks:
   title: "TKT-P1-017: Schema + API \u2014 partner linking + notification triggers"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -148791,7 +148786,7 @@ tasks:
   title: "TKT-P1-012: Tests \u2014 multiplier calculation + edge cases"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148806,7 +148801,7 @@ tasks:
   title: "TKT-P1-012: UI \u2014 multiplier indicator + schedule display"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -148821,7 +148816,7 @@ tasks:
   title: "TKT-P1-012: Schema + API \u2014 risk multiplier rules + schedule config"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -148836,7 +148831,7 @@ tasks:
   title: "TKT-P1-005: Tests \u2014 lockdown triggers + timelock expiry"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148851,7 +148846,7 @@ tasks:
   title: "TKT-P1-005: UI \u2014 danger zone indicator + timelock countdown"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -148866,7 +148861,7 @@ tasks:
   title: "TKT-P1-005: Schema + API \u2014 lockdown rules + timelock enforcement"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -148881,7 +148876,7 @@ tasks:
   title: 'Governance: Promotion dashboard + audit trail'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   workstream: governance
   priority: medium
   budget_cost: 1
@@ -148898,7 +148893,7 @@ tasks:
   title: 'Governance: Tier promotion criteria + gate checks'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: claude
   workstream: governance
   priority: medium
   budget_cost: 1
@@ -148915,7 +148910,7 @@ tasks:
   title: 'Governance: Registry validation automation'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: gemini
   workstream: governance
   priority: medium
   budget_cost: 1
@@ -148932,7 +148927,7 @@ tasks:
   title: 'Audit: Executive summary + priority action list'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -148948,7 +148943,7 @@ tasks:
   title: 'Audit: Cross-reference gaps across tools + sessions'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149028,7 +149023,7 @@ tasks:
   title: 'Audit: Generate remediation tickets for critical stubs'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149044,7 +149039,7 @@ tasks:
   title: 'Audit: Prioritize stubs by blast radius + phase relevance'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -149060,7 +149055,7 @@ tasks:
   title: 'Audit: Scan codebase for TODO/FIXME/stub placeholders'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -149076,7 +149071,7 @@ tasks:
   title: "Agents: Integration tests \u2014 multi-agent routing"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149092,7 +149087,7 @@ tasks:
   title: 'Agents: Ops domain context + prompt engineering'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: jules
   workstream: prompt-parity
   priority: medium
   budget_cost: 1
@@ -149109,7 +149104,7 @@ tasks:
   title: 'Agents: Product domain context + prompt engineering'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   workstream: prompt-parity
   priority: medium
   budget_cost: 1
@@ -149126,7 +149121,7 @@ tasks:
   title: 'Agents: Finance domain context + prompt engineering'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -149143,7 +149138,7 @@ tasks:
   title: 'Agents: Legal domain context + prompt engineering'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -149192,7 +149187,7 @@ tasks:
   title: 'Gap analysis: Business model & metrics audit'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149208,7 +149203,7 @@ tasks:
   title: 'Gap analysis: Infrastructure & ops audit'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -149224,7 +149219,7 @@ tasks:
   title: "Ask Styx: Integration tests \u2014 E2E question\u2192answer flow"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -149240,7 +149235,7 @@ tasks:
   title: 'Thesis: Production pipeline (PDF build, citation check)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -149257,7 +149252,7 @@ tasks:
   title: 'Thesis: Notation and symbol guide'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -149273,7 +149268,7 @@ tasks:
   title: 'Thesis: BibTeX bibliography from 200+ citations'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149289,7 +149284,7 @@ tasks:
   title: 'Thesis: Directory structure + chapter scaffolding'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -149305,7 +149300,7 @@ tasks:
   title: "Guardrails: Tests \u2014 detection accuracy + false positive rate"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -149321,7 +149316,7 @@ tasks:
   title: "Guardrails: API \u2014 crisis event logging + escalation trigger"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -149337,7 +149332,7 @@ tasks:
   title: "Guardrails: Intervention flow \u2014 pause + resource display UI"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149353,7 +149348,7 @@ tasks:
   title: "Guardrails: Crisis detection \u2014 keyword + pattern matching engine"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149369,7 +149364,7 @@ tasks:
   title: "Forfeit: Legal \u2014 counsel sign-off on jurisdiction mode mapping"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: agy
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -149387,7 +149382,7 @@ tasks:
   title: "Forfeit: Tests \u2014 payout matrix all configured states"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -149403,7 +149398,7 @@ tasks:
   title: "Forfeit: Admin UI \u2014 kill switch toggle + state mode display"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -149419,7 +149414,7 @@ tasks:
   title: "Forfeit: Kill switch \u2014 refund-only emergency override"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -149435,7 +149430,7 @@ tasks:
   title: "Forfeit: Policy engine \u2014 jurisdiction-aware disposition rules"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149515,7 +149510,7 @@ tasks:
   title: "Geofence: Policy registry \u2014 state availability matrix CRUD"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149531,7 +149526,7 @@ tasks:
   title: "Settlement: Legal \u2014 FBO custody model counsel review"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: codex
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -149550,7 +149545,7 @@ tasks:
     \ flow"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -149566,7 +149561,7 @@ tasks:
   title: "Settlement: Reconciliation \u2014 automated Stripe vs internal check"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -149582,7 +149577,7 @@ tasks:
   title: "Settlement: Schema \u2014 transactions + ledger tables"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -149598,7 +149593,7 @@ tasks:
   title: "Settlement: API \u2014 deposit/withdrawal/settlement endpoints"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149614,7 +149609,7 @@ tasks:
   title: 'Settlement: Stripe Connect FBO account configuration'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -149630,7 +149625,7 @@ tasks:
   title: "Camera: Tests \u2014 capture flow + nonce challenge verification"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -149646,7 +149641,7 @@ tasks:
   title: "Camera: Schema \u2014 proof_submissions table + metadata"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149662,7 +149657,7 @@ tasks:
   title: "Camera: API \u2014 proof submission endpoint + nonce validation"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -149678,7 +149673,7 @@ tasks:
   title: "Camera: Native Swift module \u2014 photo/video capture with nonce"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149695,7 +149690,7 @@ tasks:
   title: "KYC: Legal \u2014 counsel sign-off on verification requirements"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: agy
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -149713,7 +149708,7 @@ tasks:
   title: "KYC: Tests \u2014 unit + integration for tier transitions"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -149729,7 +149724,7 @@ tasks:
   title: "KYC: UI \u2014 identity upload flow + stake tier display"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -149745,7 +149740,7 @@ tasks:
   title: "KYC: API \u2014 verification endpoint + progressive tier logic"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -149761,7 +149756,7 @@ tasks:
   title: "KYC: Schema \u2014 identity_verifications table + API types"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149842,7 +149837,7 @@ tasks:
   title: "Kotlin contractor \u2014 Android health data bridge"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   workstream: health
   priority: medium
   budget_cost: 1
@@ -149859,7 +149854,7 @@ tasks:
   title: "Legal Counsel \u2014 retainer engagement"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: codex
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -149876,7 +149871,7 @@ tasks:
   title: "Mobile Native Engineer (Swift) \u2014 contract sourcing"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -149892,7 +149887,7 @@ tasks:
   title: "App Store launch (public) \u2014 general availability"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -149908,7 +149903,7 @@ tasks:
   title: App Store submission
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: claude
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -149926,7 +149921,7 @@ tasks:
   title: "Open beta expansion \u2014 500+ users"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149942,7 +149937,7 @@ tasks:
   title: "Real-money pilot \u2014 10-25 users"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: gemini
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -149960,7 +149955,7 @@ tasks:
   title: Beta feedback synthesis + iteration cycle
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -149976,7 +149971,7 @@ tasks:
   title: "Seed user recruitment \u2014 creator outreach + first cohort admissions"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -149995,7 +149990,7 @@ tasks:
   title: "TestFlight external beta \u2014 50-100 users"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -150012,7 +150007,7 @@ tasks:
   title: "Support channel setup \u2014 email + Discord"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   workstream: correspondence
   priority: medium
   budget_cost: 1
@@ -150029,7 +150024,7 @@ tasks:
   title: "Monitoring + alerting setup \u2014 Sentry + uptime"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -150045,7 +150040,7 @@ tasks:
   title: "Internal dogfood beta \u2014 founders + 5-10 trusted people"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -150061,7 +150056,7 @@ tasks:
   title: Seed deep agents for LEG, FIN, PRD, OPS departments
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -150077,7 +150072,7 @@ tasks:
   title: Engage legal counsel (retainer)
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: codex
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150095,7 +150090,7 @@ tasks:
   title: Hire/contract mobile native engineer (Swift)
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -150163,7 +150158,7 @@ tasks:
   title: "Security questionnaire template \u2014 pre-filled answers"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -150181,7 +150176,7 @@ tasks:
   title: "Enterprise demo environment \u2014 sandboxed Render instance"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -150198,7 +150193,7 @@ tasks:
   title: "Outreach sequence \u2014 5-email cold outreach + LinkedIn"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: gemini
   workstream: correspondence
   priority: medium
   budget_cost: 1
@@ -150217,7 +150212,7 @@ tasks:
   title: "Identify 50 target therapists/coaches \u2014 ICP definition"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -150234,7 +150229,7 @@ tasks:
   title: In-app help / chatbot integration
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -150250,7 +150245,7 @@ tasks:
   title: "Churn signal detection \u2014 predictive patterns"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -150266,7 +150261,7 @@ tasks:
   title: "Onboarding email sequence \u2014 7-day drip campaign"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   workstream: correspondence
   priority: medium
   budget_cost: 1
@@ -150283,7 +150278,7 @@ tasks:
   title: "FAQ / Help Center v1 \u2014 10 help articles"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -150299,7 +150294,7 @@ tasks:
   title: "Support channel setup \u2014 email + Discord for beta"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: gemini
   workstream: correspondence
   priority: medium
   budget_cost: 1
@@ -150316,7 +150311,7 @@ tasks:
   title: "Revenue reporting \u2014 MRR, churn, ARPU monthly report"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -150333,7 +150328,7 @@ tasks:
   title: "B2B pricing model \u2014 $49/$149/$349/$999+ tiers"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: jules
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -150350,7 +150345,7 @@ tasks:
   title: CAC/LTV tracking dashboard
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -150437,7 +150432,7 @@ tasks:
   title: "PR strategy for App Store launch \u2014 press kit + target list + narrative"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -150454,7 +150449,7 @@ tasks:
   title: "Referral loop \u2014 waitlist and cohort invite mechanic"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -150471,7 +150466,7 @@ tasks:
   title: "SEO demand capture \u2014 no-contact keywords + first 4 intent articles"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -150490,7 +150485,7 @@ tasks:
     \ cadence"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: jules
   workstream: social
   priority: medium
   budget_cost: 1
@@ -150509,7 +150504,7 @@ tasks:
   title: "Landing page + beta explainer funnel \u2014 no-contact conversion flow"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -150527,7 +150522,7 @@ tasks:
   title: "Audience map \u2014 early-user channels + first target lists"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -150545,7 +150540,7 @@ tasks:
   title: Auto-scaling + cost alerting configuration
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -150562,7 +150557,7 @@ tasks:
   title: "Load testing \u2014 5,000 concurrent users at scale"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -150578,7 +150573,7 @@ tasks:
   title: "APNs/FCM credential management \u2014 secure push notification keys"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -150595,7 +150590,7 @@ tasks:
   title: CDN/WAF production config verification
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -150611,7 +150606,7 @@ tasks:
   title: "Load testing \u2014 500 concurrent users simulation"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -150627,7 +150622,7 @@ tasks:
   title: "Incident response runbook v1 \u2014 severity, escalation, rollback"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -150643,7 +150638,7 @@ tasks:
   title: Database backup policy + tested restore procedure
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -150660,7 +150655,7 @@ tasks:
   title: "Render starter \u2192 production plan upgrade evaluation"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -150677,7 +150672,7 @@ tasks:
   title: "Uptime monitoring setup \u2014 UptimeRobot/BetterUptime"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -150693,7 +150688,7 @@ tasks:
   title: "Enterprise UX audit \u2014 HR + coach dashboard usability"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   workstream: hr
   priority: medium
   budget_cost: 1
@@ -150774,7 +150769,7 @@ tasks:
   title: Prize indemnity insurance evaluation
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150793,7 +150788,7 @@ tasks:
   title: "Enterprise DPA template \u2014 Data Processing Agreement"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: codex
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150811,7 +150806,7 @@ tasks:
   title: SOC 2 Type I audit initiation
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150829,7 +150824,7 @@ tasks:
   title: Partner authority disclosure review
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: opencode
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150847,7 +150842,7 @@ tasks:
   title: Reviewer sanctions + appeal rights policy
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: agy
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150865,7 +150860,7 @@ tasks:
   title: "Cross-jurisdictional consent matrix \u2014 data consent by state"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150883,7 +150878,7 @@ tasks:
   title: App Store UGC moderation policy document
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: claude
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150901,7 +150896,7 @@ tasks:
   title: Skill-contest whitepaper draft + legal review
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: gemini
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150919,7 +150914,7 @@ tasks:
   title: "State jurisdiction matrix sign-off \u2014 confirm legal US states"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: codex
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150938,7 +150933,7 @@ tasks:
   title: "Custody model sign-off \u2014 lawyer reviews FBO escrow structure"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: opencode
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150957,7 +150952,7 @@ tasks:
   title: "Retain outside legal counsel \u2014 find and sign retainer"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -150976,7 +150971,7 @@ tasks:
   title: "feat: B2B orchestration panel \u2014 billing & scope management (F-DESKTOP-05)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -150994,7 +150989,7 @@ tasks:
   title: 'feat: Hash collider desktop tool wiring (F-DESKTOP-04)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -151011,7 +151006,7 @@ tasks:
   title: "feat: HR dashboard \u2014 role-based access & org authorization (F-WEB-03)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: gemini
   workstream: hr
   priority: medium
   budget_cost: 1
@@ -151029,7 +151024,7 @@ tasks:
   title: 'feat: State-by-state compliance toggle UI (F-LEGAL-03)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: jules
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -151047,7 +151042,7 @@ tasks:
   title: "feat: Finish line spike \u2014 double-stake incentive (F-CORE-09)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151063,7 +151058,7 @@ tasks:
   title: 'feat: Ostrich effect detection (F-AEGIS-09)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -151079,7 +151074,7 @@ tasks:
   title: 'feat: RAIN mindfulness notifications (F-AEGIS-08)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -151095,7 +151090,7 @@ tasks:
   title: 'feat: Recovery protocol guardrails (F-AEGIS-04)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -151112,7 +151107,7 @@ tasks:
   title: 'docs: SLA template & enterprise security posture'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -151129,7 +151124,7 @@ tasks:
   title: 'docs: Marketing strategy, content calendar & PR plan'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151146,7 +151141,7 @@ tasks:
   title: 'docs: A/B testing framework & user research protocol'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -151163,7 +151158,7 @@ tasks:
   title: 'docs: Incident response runbook & monitoring playbook'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -151180,7 +151175,7 @@ tasks:
   title: 'docs: KPI framework, MRR targets & unit economics dashboard'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: opencode
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -151198,7 +151193,7 @@ tasks:
   title: 'docs: GTM strategy & user acquisition plan'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -151215,7 +151210,7 @@ tasks:
   title: 'hiring: Team building timeline (3 scenarios)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151232,7 +151227,7 @@ tasks:
   title: 'checklist: Enterprise sales readiness gate'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -151250,7 +151245,7 @@ tasks:
   title: 'checklist: App Store launch readiness gate'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: gemini
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -151269,7 +151264,7 @@ tasks:
   title: 'checklist: Real-money pilot readiness gate'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: jules
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -151288,7 +151283,7 @@ tasks:
   title: 'checklist: TestFlight Beta readiness gate'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -151305,7 +151300,7 @@ tasks:
   title: 'milestone: Launch operations timeline (Mar-Dec 2026)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151356,7 +151351,7 @@ tasks:
   title: "Customer Success Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151373,7 +151368,7 @@ tasks:
   title: "Finance & Revenue Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: claude
   workstream: financial
   priority: medium
   budget_cost: 1
@@ -151391,7 +151386,7 @@ tasks:
   title: 'feat: Collusion slashing & honey-trap enforcement (TKT-P1-015)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151407,7 +151402,7 @@ tasks:
   title: "Growth & Marketing Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -151424,7 +151419,7 @@ tasks:
   title: "feat: Anti-collusion routing \u2014 admin cluster screen (TKT-P1-008)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -151440,7 +151435,7 @@ tasks:
   title: "Operations & Infrastructure Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -151457,7 +151452,7 @@ tasks:
   title: "Product & Design Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -151474,7 +151469,7 @@ tasks:
   title: "feat: Fury audit masks \u2014 workbench masked display (TKT-P1-014)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151490,7 +151485,7 @@ tasks:
   title: "Legal & Compliance Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: claude
   workstream: legal
   priority: medium
   budget_cost: 1
@@ -151508,7 +151503,7 @@ tasks:
   title: "feat: Video proof pipeline \u2014 processing state UI (TKT-P1-013)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -151524,7 +151519,7 @@ tasks:
   title: "feat: Health data bridge \u2014 native UI completion (TKT-P1-007)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   workstream: health
   priority: medium
   budget_cost: 1
@@ -151542,7 +151537,7 @@ tasks:
   title: 'feat: Self-exclusion & responsible-use runtime controls (TKT-P1-009)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -151559,7 +151554,7 @@ tasks:
   title: 'feat: Forfeit disposition policy engine & refund-only kill switch (TKT-P0-011)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151576,7 +151571,7 @@ tasks:
   title: 'feat: Geofence fail-closed hardening & policy registry (TKT-P0-004)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -151593,7 +151588,7 @@ tasks:
   title: "docs: draft FAQ v1 \u2014 10 help articles with linguistic cloaker vocabulary"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -151610,7 +151605,7 @@ tasks:
   title: "audit: UX flow audit \u2014 5 critical flows (friction, safety, a11y, copy)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -151627,7 +151622,7 @@ tasks:
   title: 'devops: draft incident response runbook (severity, escalation, rollback)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -151644,7 +151639,7 @@ tasks:
   title: 'docs: draft App Store UGC moderation policy checklist'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151678,7 +151673,7 @@ tasks:
   title: 'business: build unit economics model ($39 consumer contract)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151695,7 +151690,7 @@ tasks:
   title: 'business: define enterprise ICP (firmographics, psychographics, buying triggers)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -151712,7 +151707,7 @@ tasks:
   title: "feat: activate domain-expert agent contexts \u2014 epic tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -151730,7 +151725,7 @@ tasks:
     dirs)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151747,7 +151742,7 @@ tasks:
   title: 'docs: create canonical E2G status matrix (suggestion -> status -> file ref)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -151764,7 +151759,7 @@ tasks:
   title: 'docs: inventory all 7 E2G documents with overlap analysis'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -151781,7 +151776,7 @@ tasks:
   title: 'docs: compile risk matrix + resource plan'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -151799,7 +151794,7 @@ tasks:
   title: 'docs: write executive summary PDF (2-3 pages)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -151817,7 +151812,7 @@ tasks:
   title: 'docs: create investor slide deck (10-15 slides)'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -151835,7 +151830,7 @@ tasks:
   title: 'docs: cross-reference gaps with doc-ingest-register'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -151852,7 +151847,7 @@ tasks:
   title: 'feat: generate implementation-ready ticket templates with API signatures'
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -151869,7 +151864,7 @@ tasks:
   title: 'feat: parse 10 competitor deep-dive files for feature gaps'
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -151910,4 +151905,1100 @@ tasks:
   receipt_target: https://github.com/organvm/system-dashboard/pull/9
   depends_on: []
   created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-i--skills-30
+  title: rebase/resolve conflicts on organvm/a-i--skills#30
+  repo: organvm/a-i--skills
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-i--skills/pull/30
+  context: 'PR organvm/a-i--skills#30 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/a-i--skills/pull/30
+    [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 30 --repo organvm/a-i--skills --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/a-i--skills/pull/30
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-i--skills-31
+  title: rebase/resolve conflicts on organvm/a-i--skills#31
+  repo: organvm/a-i--skills
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-i--skills/pull/31
+  context: 'PR organvm/a-i--skills#31 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/a-i--skills/pull/31
+    [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 31 --repo organvm/a-i--skills --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/a-i--skills/pull/31
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-mavs-olevm-100
+  title: rebase/resolve conflicts on organvm/a-mavs-olevm#100
+  repo: organvm/a-mavs-olevm
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-mavs-olevm/pull/100
+  context: 'PR organvm/a-mavs-olevm#100 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/a-mavs-olevm/pull/100
+    [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 100 --repo organvm/a-mavs-olevm --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/a-mavs-olevm/pull/100
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-mavs-olevm-103
+  title: rebase/resolve conflicts on organvm/a-mavs-olevm#103
+  repo: organvm/a-mavs-olevm
+  type: code
+  target_agent: gemini
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-mavs-olevm/pull/103
+  context: 'PR organvm/a-mavs-olevm#103 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/a-mavs-olevm/pull/103
+    [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 103 --repo organvm/a-mavs-olevm --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/a-mavs-olevm/pull/103
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-mavs-olevm-104
+  title: rebase/resolve conflicts on organvm/a-mavs-olevm#104
+  repo: organvm/a-mavs-olevm
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-mavs-olevm/pull/104
+  context: 'PR organvm/a-mavs-olevm#104 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/a-mavs-olevm/pull/104
+    [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 104 --repo organvm/a-mavs-olevm --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/a-mavs-olevm/pull/104
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-content-engine--asset-amplifier-46
+  title: fix failing CI on organvm/content-engine--asset-amplifier#46
+  repo: organvm/content-engine--asset-amplifier
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/content-engine--asset-amplifier/pull/46
+  context: "PR organvm/content-engine--asset-amplifier#46 has FAILING CI checks and\
+    \ merge-drain correctly refuses to merge it. Check out the PR branch, find the\
+    \ root cause of the red checks (lint / types / failing test / config), fix it,\
+    \ push to the SAME PR branch, and confirm every check goes green. If the branch\
+    \ ALSO rolls back base content its title/body never declared (a poisoned/stale\
+    \ generated tree), restore base's side of those paths rather than repairing on\
+    \ top of a rollback. Do not open a new PR \u2014 repair the existing one so merge-drain\
+    \ lands it. PR: https://github.com/organvm/content-engine--asset-amplifier/pull/46\
+    \ [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 46 --repo organvm/content-engine--asset-amplifier
+    --json state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/content-engine--asset-amplifier/pull/46
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: GH-organvm-domus-genoma-314
+  title: Restore owner identity data and deployed SSH signing surfaces
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/domus-genoma/issues/314
+  context: 'GitHub issue organvm/domus-genoma#314. ## Defect The live Domus/Chezmoi
+    data surface currently renders a placeholder test Git identity and an empty SSH
+    signing-key reference. The managed `allowed_signers`, public-key, Git config,
+    and signer-wrapper targets were therefore absent even though the owner key remains
+    available through the configured 1Password agent. This was discovered while executing
+    the signed Backblaze cutover in #306. No'
+  predicate: test "$(gh issue view 314 --repo organvm/domus-genoma --json state --jq
+    .state)" = CLOSED
+  receipt_target: https://github.com/organvm/domus-genoma/issues/314
+  depends_on: []
+  created: '2026-07-19'
+  updated: '2026-07-20T02:38:59.750061Z'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-413
+  title: rebase/resolve conflicts on organvm/limen#413
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/413
+  context: 'PR organvm/limen#413 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/413
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 413 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/413
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-415
+  title: rebase/resolve conflicts on organvm/limen#415
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/415
+  context: 'PR organvm/limen#415 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/415
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 415 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/415
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-416
+  title: rebase/resolve conflicts on organvm/limen#416
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/416
+  context: 'PR organvm/limen#416 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/416
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 416 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/416
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-417
+  title: rebase/resolve conflicts on organvm/limen#417
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/417
+  context: 'PR organvm/limen#417 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/417
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 417 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/417
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-418
+  title: rebase/resolve conflicts on organvm/limen#418
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/418
+  context: 'PR organvm/limen#418 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/418
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 418 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/418
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-843
+  title: rebase/resolve conflicts on organvm/limen#843
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/843
+  context: 'PR organvm/limen#843 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/843
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 843 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/843
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-1164
+  title: rebase/resolve conflicts on organvm/limen#1164
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/1164
+  context: 'PR organvm/limen#1164 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/1164
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 1164 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1164
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1316
+  title: fix failing CI on organvm/limen#1316
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1316
+  context: "PR organvm/limen#1316 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1316\
+    \ [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1316 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1316
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-review-organvm-limen-1321
+  title: address review feedback on organvm/limen#1321
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/limen/pull/1321
+  context: "PR organvm/limen#1321 is green and mergeable BUT carries unresolved review\
+    \ threads (or a standing CHANGES_REQUESTED review) from the multi-agent review\
+    \ engine \u2014 the ping-pong is waiting on our half. Check out the PR branch\
+    \ and read EVERY unresolved thread. For each one: fix the code and push to the\
+    \ SAME branch, or reply with a short factual reason why not. Then reply on each\
+    \ thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request review\
+    \ (post '@claude' / '/gemini review' to re-summon those agents). Never resolve\
+    \ a thread without either a fix or a reply, and do NOT open a new PR \u2014 once\
+    \ threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/limen/pull/1321\
+    \ [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1321 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1321
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-767
+  title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#767
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/767
+  context: 'PR organvm/peer-audited--behavioral-blockchain#767 is CONFLICTING with
+    its base branch and merge-drain correctly refuses to merge it. FIRST check the
+    PR''s ORIGINAL diff (merge-base..head) against its declared title/body intent:
+    a branch generated from a broken tree can carry mass deletions it never declared,
+    and branch-side deletions the declaration does not name are POISON to restore
+    from base, never intent to preserve (session-meta#148 ate ingest/ + 3 test suites
+    this way). Then check out the PR branch, rebase it onto the current base (or merge
+    base in), resolve every conflict preserving the PR''s declared intent, push to
+    the SAME PR branch, and confirm it reports MERGEABLE with green CI. After resolving,
+    verify diff-vs-base matches the declared intent; if nothing genuine survives (all
+    absorbed or superseded on base), close the PR as superseded instead of pushing.
+    Do not open a new PR. PR: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/767
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 767 --repo organvm/peer-audited--behavioral-blockchain
+    --json state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/767
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-778
+  title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#778
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/778
+  context: 'PR organvm/peer-audited--behavioral-blockchain#778 is CONFLICTING with
+    its base branch and merge-drain correctly refuses to merge it. FIRST check the
+    PR''s ORIGINAL diff (merge-base..head) against its declared title/body intent:
+    a branch generated from a broken tree can carry mass deletions it never declared,
+    and branch-side deletions the declaration does not name are POISON to restore
+    from base, never intent to preserve (session-meta#148 ate ingest/ + 3 test suites
+    this way). Then check out the PR branch, rebase it onto the current base (or merge
+    base in), resolve every conflict preserving the PR''s declared intent, push to
+    the SAME PR branch, and confirm it reports MERGEABLE with green CI. After resolving,
+    verify diff-vs-base matches the declared intent; if nothing genuine survives (all
+    absorbed or superseded on base), close the PR as superseded instead of pushing.
+    Do not open a new PR. PR: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/778
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 778 --repo organvm/peer-audited--behavioral-blockchain
+    --json state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/778
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-793
+  title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#793
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: gemini
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/793
+  context: 'PR organvm/peer-audited--behavioral-blockchain#793 is CONFLICTING with
+    its base branch and merge-drain correctly refuses to merge it. FIRST check the
+    PR''s ORIGINAL diff (merge-base..head) against its declared title/body intent:
+    a branch generated from a broken tree can carry mass deletions it never declared,
+    and branch-side deletions the declaration does not name are POISON to restore
+    from base, never intent to preserve (session-meta#148 ate ingest/ + 3 test suites
+    this way). Then check out the PR branch, rebase it onto the current base (or merge
+    base in), resolve every conflict preserving the PR''s declared intent, push to
+    the SAME PR branch, and confirm it reports MERGEABLE with green CI. After resolving,
+    verify diff-vs-base matches the declared intent; if nothing genuine survives (all
+    absorbed or superseded on base), close the PR as superseded instead of pushing.
+    Do not open a new PR. PR: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/793
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 793 --repo organvm/peer-audited--behavioral-blockchain
+    --json state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/793
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-794
+  title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#794
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/794
+  context: 'PR organvm/peer-audited--behavioral-blockchain#794 is CONFLICTING with
+    its base branch and merge-drain correctly refuses to merge it. FIRST check the
+    PR''s ORIGINAL diff (merge-base..head) against its declared title/body intent:
+    a branch generated from a broken tree can carry mass deletions it never declared,
+    and branch-side deletions the declaration does not name are POISON to restore
+    from base, never intent to preserve (session-meta#148 ate ingest/ + 3 test suites
+    this way). Then check out the PR branch, rebase it onto the current base (or merge
+    base in), resolve every conflict preserving the PR''s declared intent, push to
+    the SAME PR branch, and confirm it reports MERGEABLE with green CI. After resolving,
+    verify diff-vs-base matches the declared intent; if nothing genuine survives (all
+    absorbed or superseded on base), close the PR as superseded instead of pushing.
+    Do not open a new PR. PR: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/794
+    [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 794 --repo organvm/peer-audited--behavioral-blockchain
+    --json state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/794
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-811
+  title: fix failing CI on organvm/peer-audited--behavioral-blockchain#811
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/811
+  context: "PR organvm/peer-audited--behavioral-blockchain#811 has FAILING CI checks\
+    \ and merge-drain correctly refuses to merge it. Check out the PR branch, find\
+    \ the root cause of the red checks (lint / types / failing test / config), fix\
+    \ it, push to the SAME PR branch, and confirm every check goes green. If the branch\
+    \ ALSO rolls back base content its title/body never declared (a poisoned/stale\
+    \ generated tree), restore base's side of those paths rather than repairing on\
+    \ top of a rollback. Do not open a new PR \u2014 repair the existing one so merge-drain\
+    \ lands it. PR: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/811\
+    \ [auto-emitted 2026-07-20 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 811 --repo organvm/peer-audited--behavioral-blockchain
+    --json state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/811
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-review-organvm-peer-audited--behavioral-blockchain-814
+  title: address review feedback on organvm/peer-audited--behavioral-blockchain#814
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/814
+  context: "PR organvm/peer-audited--behavioral-blockchain#814 is green and mergeable\
+    \ BUT carries unresolved review threads (or a standing CHANGES_REQUESTED review)\
+    \ from the multi-agent review engine \u2014 the ping-pong is waiting on our half.\
+    \ Check out the PR branch and read EVERY unresolved thread. For each one: fix\
+    \ the code and push to the SAME branch, or reply with a short factual reason why\
+    \ not. Then reply on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED,\
+    \ re-request review (post '@claude' / '/gemini review' to re-summon those agents).\
+    \ Never resolve a thread without either a fix or a reply, and do NOT open a new\
+    \ PR \u2014 once threads are resolved and CI is green, merge-drain lands it. PR:\
+    \ https://github.com/organvm/peer-audited--behavioral-blockchain/pull/814 [auto-emitted\
+    \ 2026-07-20 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 814 --repo organvm/peer-audited--behavioral-blockchain
+    --json state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/814
+  depends_on: []
+  created: '2026-07-20'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-133
+  title: rebase/resolve conflicts on organvm/domus-genoma#133
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/133
+  context: 'PR organvm/domus-genoma#133 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/domus-genoma/pull/133
+    [auto-emitted 2026-07-21 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 133 --repo organvm/domus-genoma --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/domus-genoma/pull/133
+  depends_on: []
+  created: '2026-07-21'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-231
+  title: rebase/resolve conflicts on organvm/domus-genoma#231
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: gemini
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/231
+  context: 'PR organvm/domus-genoma#231 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/domus-genoma/pull/231
+    [auto-emitted 2026-07-21 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 231 --repo organvm/domus-genoma --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/domus-genoma/pull/231
+  depends_on: []
+  created: '2026-07-21'
+  dispatch_log: []
+- id: HEAL-review-organvm-domus-genoma-317
+  title: address review feedback on organvm/domus-genoma#317
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/317
+  context: "PR organvm/domus-genoma#317 is green and mergeable BUT carries unresolved\
+    \ review threads (or a standing CHANGES_REQUESTED review) from the multi-agent\
+    \ review engine \u2014 the ping-pong is waiting on our half. Check out the PR\
+    \ branch and read EVERY unresolved thread. For each one: fix the code and push\
+    \ to the SAME branch, or reply with a short factual reason why not. Then reply\
+    \ on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request\
+    \ review (post '@claude' / '/gemini review' to re-summon those agents). Never\
+    \ resolve a thread without either a fix or a reply, and do NOT open a new PR \u2014\
+    \ once threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/317\
+    \ [auto-emitted 2026-07-21 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 317 --repo organvm/domus-genoma --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/domus-genoma/pull/317
+  depends_on: []
+  created: '2026-07-21'
+  dispatch_log: []
+- id: GH-organvm-domus-genoma-318
+  title: '[host activation] Apply merged Claude SessionEnd wrapper after Limen repair
+    gates'
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/domus-genoma/issues/318
+  context: 'GitHub issue organvm/domus-genoma#318. Owner: Domus host-factory cartridge.
+    Do not patch ~/.claude directly from Limen. Preconditions: - organvm/limen#1325
+    is merged. - organvm/limen#1326 is merged with all substantive review threads
+    resolved and exact-head required checks green. - Domus PR #317 remains the rendered-source
+    authority. Activation predicate: - Render/apply through Domus, not a manual home-directory
+    edit. - Installed ~/.cl'
+  predicate: test "$(gh issue view 318 --repo organvm/domus-genoma --json state --jq
+    .state)" = CLOSED
+  receipt_target: https://github.com/organvm/domus-genoma/issues/318
+  depends_on: []
+  created: '2026-07-21'
+  updated: '2026-07-21T17:59:02.920577Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-victoroff-os
+  title: Discover the latent value of organvm/victoroff-os
+  repo: organvm/victoroff-os
+  type: research
+  target_agent: codex
+  workstream: conductor
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/victoroff-os. This repo currently\
+    \ has NO ranked value \u2014 your job is to find it (value is discovered, never\
+    \ assumed absent). Steps: (1) Read the repo \u2014 what it is, its real entrypoints/exports,\
+    \ what it already does. (2) Identify its highest latent value: a concrete product,\
+    \ revenue path, reusable asset, or capability the rest of the estate could use\
+    \ \u2014 be specific and honest. (3) DECIDE: if there is real value, write a one-paragraph\
+    \ value thesis to DISCOVERY.md AND open a PR that ALSO appends \"organvm/victoroff-os\"\
+    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
+    \ AND name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-07-21; no repo\
+    \ stays dark]"
+  predicate: test "$(gh pr list --repo organvm/victoroff-os --state merged --search
+    'DISCOVER-organvm-victoroff-os in:body' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/victoroff-os:pull-request:DISCOVER-organvm-victoroff-os
+  depends_on: []
+  created: '2026-07-21'
+  updated: '2026-07-21T22:45:56.112644Z'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1325
+  title: fix failing CI on organvm/limen#1325
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1325
+  context: "PR organvm/limen#1325 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1325\
+    \ [auto-emitted 2026-07-21 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1325 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1325
+  depends_on: []
+  created: '2026-07-21'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1328
+  title: fix failing CI on organvm/limen#1328
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1328
+  context: "PR organvm/limen#1328 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1328\
+    \ [auto-emitted 2026-07-21 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1328 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1328
+  depends_on: []
+  created: '2026-07-21'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1329
+  title: fix failing CI on organvm/limen#1329
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1329
+  context: "PR organvm/limen#1329 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1329\
+    \ [auto-emitted 2026-07-21 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1329 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1329
+  depends_on: []
+  created: '2026-07-21'
+  dispatch_log: []
+- id: HEAL-review-organvm-limen-1332
+  title: address review feedback on organvm/limen#1332
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/limen/pull/1332
+  context: "PR organvm/limen#1332 is green and mergeable BUT carries unresolved review\
+    \ threads (or a standing CHANGES_REQUESTED review) from the multi-agent review\
+    \ engine \u2014 the ping-pong is waiting on our half. Check out the PR branch\
+    \ and read EVERY unresolved thread. For each one: fix the code and push to the\
+    \ SAME branch, or reply with a short factual reason why not. Then reply on each\
+    \ thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request review\
+    \ (post '@claude' / '/gemini review' to re-summon those agents). Never resolve\
+    \ a thread without either a fix or a reply, and do NOT open a new PR \u2014 once\
+    \ threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/limen/pull/1332\
+    \ [auto-emitted 2026-07-21 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1332 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1332
+  depends_on: []
+  created: '2026-07-21'
+  dispatch_log: []
+- id: GH-organvm-domus-genoma-319
+  title: Repair namespaced Codex lease migration blocking machine-wide host admission
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/domus-genoma/issues/319
+  context: 'GitHub issue organvm/domus-genoma#319. ## Ground truth On 2026-07-21,
+    Limen host admission fails closed before pressure evaluation: ```text host admission
+    lease record is invalid; preserved for inspection reason: state-or-input-invalid
+    ``` The preserved state contains a dead Codex lease with `kind` equal to `execution:<family-hash>`.
+    The current `limen.host_admission.AdmissionController._valid_lease` accepts only
+    canonical `execution`'
+  predicate: test "$(gh issue view 319 --repo organvm/domus-genoma --json state --jq
+    .state)" = CLOSED
+  receipt_target: https://github.com/organvm/domus-genoma/issues/319
+  depends_on: []
+  created: '2026-07-21'
+  updated: '2026-07-21T23:05:35.690487Z'
+  dispatch_log: []
+- id: VIC-GOV-001
+  title: Client-One governance source manifest
+  description: Create the classified governance-source manifest with provenance, checksums,
+    and explicit missing-source failures.
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - canary
+  - public-synthetic
+  - owner:client-one-governance
+  urls:
+  - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
+  - https://github.com/organvm/victoroff-os/actions/runs/29950685515
+  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
+    \nTask: VIC-GOV-001 \u2014 Create the classified governance-source manifest with\
+    \ provenance, checksums, and explicit missing-source failures.\nRepository: organvm/victoroff-os\n\
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\nPhase/module: Phase 0 /\
+    \ governance sources\nOwner: client-one-governance\nAllowed paths: docs/governance/**\n\
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml\n\
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77;\
+    \ receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\nRequired\
+    \ behavior: Add a public-safe, synthetic governance-source manifest whose validation\
+    \ rejects absent sources, missing provenance, and checksum drift.\nAuthority boundary:\
+    \ public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend,\
+    \ use real BBNC data, or represent client authority.\nPredicate: node --test docs/governance/*.test.mjs\n\
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-001\n\nReturn a bounded\
+    \ patch, tests, documentation, and the exact predicate result. Stop with a precise\
+    \ blocker if required authority or source is missing."
+  predicate: node --test docs/governance/*.test.mjs
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-GOV-001
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T19:28:29.693732Z'
+  dispatch_log: []
+- id: VIC-CONTRACT-001
+  title: Client-One governance and intent contracts
+  description: Add schemas and validation tests for GovernanceDocument, ActionIntent,
+    GovernanceResolution, and delivery checkpoints.
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - canary
+  - public-synthetic
+  - owner:client-one-contracts
+  urls:
+  - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
+  - https://github.com/organvm/victoroff-os/actions/runs/29950685515
+  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
+    \nTask: VIC-CONTRACT-001 \u2014 Add schemas and validation tests for GovernanceDocument,\
+    \ ActionIntent, GovernanceResolution, and delivery checkpoints.\nRepository: organvm/victoroff-os\n\
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\nPhase/module: Phase 2 /\
+    \ contracts\nOwner: client-one-contracts\nAllowed paths: packages/contracts/**\n\
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml\n\
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77;\
+    \ receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\nRequired\
+    \ behavior: Implement versioned schemas plus validation tests for the four named\
+    \ contracts without editing shared configuration or lockfiles.\nAuthority boundary:\
+    \ public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend,\
+    \ use real BBNC data, or represent client authority.\nPredicate: pnpm --filter\
+    \ @client-one/contracts typecheck\nReceipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001\n\
+    \nReturn a bounded patch, tests, documentation, and the exact predicate result.\
+    \ Stop with a precise blocker if required authority or source is missing."
+  predicate: pnpm --filter @client-one/contracts typecheck
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T19:28:29.694840Z'
+  dispatch_log: []
+- id: VIC-DOMAIN-001
+  title: Client-One deterministic seven-intent resolver
+  description: Implement deterministic seven-intent resolver fixtures, authority precedence,
+    ambiguity and conflict handling, and tests.
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - canary
+  - public-synthetic
+  - owner:client-one-domain
+  urls:
+  - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
+  - https://github.com/organvm/victoroff-os/actions/runs/29950685515
+  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
+    \nTask: VIC-DOMAIN-001 \u2014 Implement deterministic seven-intent resolver fixtures,\
+    \ authority precedence, ambiguity and conflict handling, and tests.\nRepository:\
+    \ organvm/victoroff-os\nExact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\n\
+    Phase/module: Phase 2 / domain resolver\nOwner: client-one-domain\nAllowed paths:\
+    \ packages/domain/**\nForbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json,\
+    \ pnpm-lock.yaml\nDependencies: control-main-green passed on exact remote main\
+    \ 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\n\
+    Required behavior: Resolve the seven registered ActionIntent values deterministically,\
+    \ preserve citations and conflicts, and return exactly one valid next action.\n\
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy,\
+    \ transfer, spend, use real BBNC data, or represent client authority.\nPredicate:\
+    \ pnpm --filter @client-one/domain test\nReceipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001\n\
+    \nReturn a bounded patch, tests, documentation, and the exact predicate result.\
+    \ Stop with a precise blocker if required authority or source is missing."
+  predicate: pnpm --filter @client-one/domain test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001
+  depends_on: []
+  created: '2026-07-22'
+  updated: '2026-07-22T19:28:29.695237Z'
   dispatch_log: []
