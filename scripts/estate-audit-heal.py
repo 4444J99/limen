@@ -39,6 +39,7 @@ APPLY_ENV = "LIMEN_ESTATE_AUDIT_HEAL_APPLY"
 DEFAULT_CAP = int(os.environ.get("LIMEN_ESTATE_AUDIT_MAX", "5") or "5")
 OWNER = os.environ.get("LIMEN_ESTATE_AUDIT_OWNER", "organvm")
 SELF_REPO = "organvm/limen"  # limen heals itself via the local npm-audit-autofix sensor
+STAMP = ROOT / "logs" / "estate-audit-heal.json"  # durable verdict so the posture rollup reads it cheaply
 
 
 def _now() -> datetime:
@@ -413,6 +414,25 @@ def heal_repo(repo: str, *, apply: bool) -> dict:
 # CLI
 # ---------------------------------------------------------------------------
 
+def _write_stamp(reports: list[dict]) -> None:
+    """Persist a compact verdict so `estate-audit-posture.py` reads estate state cheaply, without
+    re-cloning 8 repos. Best-effort (never raises)."""
+    payload = {
+        "generated": _now().isoformat(),
+        "repos": [
+            {"repo": r.get("repo"), "tier1": len(r.get("tier1") or {}),
+             "tier2": len(r.get("tier2") or []), "human": len(r.get("human") or []),
+             "error": r.get("error"), "pr": r.get("pr")}
+            for r in reports
+        ],
+    }
+    try:
+        STAMP.parent.mkdir(parents=True, exist_ok=True)
+        STAMP.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    except OSError:
+        pass
+
+
 def run(*, apply: bool, as_json: bool) -> int:
     estate = core_load_estate()
     skip = _skip_repos(estate)
@@ -424,6 +444,7 @@ def run(*, apply: bool, as_json: bool) -> int:
     armed = apply and os.environ.get(APPLY_ENV, "0").strip() == "1"
     repos = repos[:DEFAULT_CAP]
     reports = [heal_repo(r, apply=armed) for r in repos]
+    _write_stamp(reports)
 
     if as_json:
         print(json.dumps({"armed": armed, "repos": reports}, indent=2, default=str))

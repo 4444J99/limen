@@ -3647,6 +3647,24 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Test/override hook for estate-audit-heal: colon-separated full repo names (owner/repo) to process instead of the derived `gh search code` discovery. Empty (default) → discover. Used by the hermetic test and bounded armed rehearsals (e.g. cap=1 against one repo); never set in production."
+  LIMEN_ESTATE_AUDIT_POSTURE:
+    default: "1"               # ON — the single rollup: one line for the whole estate dependency-audit posture
+    env: LIMEN_ESTATE_AUDIT_POSTURE
+    self_update: none
+    owner: gitvs
+    note: "Beat gate for the estate-audit-posture rollup (scripts/estate-audit-posture.py). Composes the three ownership organs into ONE view + ONE exit code: RED iff a Tier-2 owner (Dependabot security-updates) is OFF somewhere — the only way an advisory rots UNOWNED. The Tier-1 organs' latest verdicts fold in as telemetry (read from their stamps, never re-run here). Read-only; no arm. Set 0 to silence."
+  LIMEN_BEAT_ESTATE_AUDIT_POSTURE:
+    default: 12
+    env: LIMEN_BEAT_ESTATE_AUDIT_POSTURE
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N heartbeat beats) of the estate-audit-posture rollup. Light — one API-only Tier-2 check plus two stamp reads (it never re-runs the heavy estate-audit-heal clone pass) — so twice-daily is honest without redundant fan-out."
+  LIMEN_ESTATE_AUDIT_POSTURE_TIMEOUT:
+    default: 480
+    env: LIMEN_ESTATE_AUDIT_POSTURE_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Per-run timeout (seconds) for the estate-audit-posture rollup; margin over the inner dependabot-security-guard live check. The runner kills the group on overrun and the beat continues fail-open."
 
   LIMEN_MAIN_GREEN_THROTTLE:
     default: "1800"            # seconds between live gh queries; cached verdict surfaces every beat

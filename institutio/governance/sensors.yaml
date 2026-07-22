@@ -259,6 +259,24 @@ sensors:
         severity: advisory
         escalation: "an org repo's npm/pnpm audit CI is red on a verify-fixable transitive advisory — the estate healer opens a verify-gated overrides fix PR (no auto-merge) once LIMEN_ESTATE_AUDIT_HEAL_APPLY=1 arms it (env lever, read internally; framework-major residue is deferred to Dependabot); until armed it is detection-only. Heavy (clones+installs); slow cadence + repo cap (LIMEN_ESTATE_AUDIT_MAX). See scripts/estate-audit-heal.py"
 
+  estate-audit-posture:
+    section: "heartbeat"
+    title: "estate audit posture — the single rollup: whole-estate dependency-audit health in one line + one exit code"
+    gate: LIMEN_ESTATE_AUDIT_POSTURE
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_ESTATE_AUDIT_POSTURE
+      default: 12
+    timeout:
+      env: LIMEN_ESTATE_AUDIT_POSTURE_TIMEOUT
+      default: 480
+    steps:
+      - command: "python3 scripts/estate-audit-posture.py --check"
+        severity: advisory
+        escalation: "the estate dependency-audit posture is UNHEALTHY — a Tier-2 owner (Dependabot security-updates) is OFF on an audit-CI repo, so an advisory can rot unowned. dependabot-security-guard heals it once armed. Composes the three ownership organs (npm-audit-autofix + estate-audit-heal Tier-1 leaves as telemetry, dependabot-security-guard Tier-2 as the hard predicate); read-only, no arm. See scripts/estate-audit-posture.py"
+
   observatory-run:
     section: "heartbeat"
     title: "run the OBSERVATORY legibility-and-traction loop (ships dark; armed by L-OBSERVATORY-ACTIVATE)"
