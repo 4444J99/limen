@@ -3563,6 +3563,49 @@ parameters:
     owner: tabularius
     note: "Test/override hook for npm-audit-autofix.py: colon-separated npm project dirs (relative-to-root or absolute) to audit instead of the derived web/* subdirs holding a package-lock.json. Empty (default) → derive. Used only by the hermetic test and ad-hoc fixture runs; never set in production."
 
+  LIMEN_ESTATE_AUDIT_HEAL:
+    default: "1"               # ON — detect other-repo audit-CI reds on the slow heartbeat cadence
+    env: LIMEN_ESTATE_AUDIT_HEAL
+    self_update: none
+    owner: gitvs
+    note: "Beat gate for the estate-audit-heal sensor (scripts/estate-audit-heal.py). The estate-wide v2 of npm-audit-autofix: heals the OTHER organvm repos whose CI runs npm/pnpm audit (npm-audit-autofix covers limen itself). Verify-gated: applies overrides, re-audits, keeps only pins whose advisory measurably cleared (Tier-1); framework-major-held residue is deferred to Dependabot (Tier-2). Detection-only until armed. Set 0 to silence."
+  LIMEN_ESTATE_AUDIT_HEAL_APPLY:
+    default: "0"               # OFF (DARK) — detection-only until armed; then opens cross-repo fix PRs (NO merge)
+    env: LIMEN_ESTATE_AUDIT_HEAL_APPLY
+    self_update: none
+    owner: gitvs
+    note: "Effector arm for estate-audit-heal (observable-before-autonomous, the LIMEN_MAIN_GREEN_APPLY pattern, read internally). When 0 (default) other-repo advisories are only detected + printed. When 1, the healer clones each repo (capped by LIMEN_ESTATE_AUDIT_MAX), applies verify-gated Tier-1 overrides, and opens a fix PR in that repo — never auto-merged (mass cross-repo merges are a human-gated lever; the repo's own CI + owner adjudicate). Arm after watching the detection log prove out."
+  LIMEN_BEAT_ESTATE_AUDIT:
+    default: 24
+    env: LIMEN_BEAT_ESTATE_AUDIT
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N heartbeat beats) of the estate-audit-heal sensor. Deliberately SLOW — the pass clones + installs multiple repos, so it is a rotating daily-class job, not an every-beat check (contrast the local npm-audit-autofix sensor, which is fast + every-beat for limen itself)."
+  LIMEN_ESTATE_AUDIT_TIMEOUT:
+    default: 1200
+    env: LIMEN_ESTATE_AUDIT_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Per-run timeout (seconds) for the estate-audit-heal sensor; generous because it clones + runs full npm/pnpm installs across up to LIMEN_ESTATE_AUDIT_MAX repos. The runner kills the group on overrun and the beat continues fail-open."
+  LIMEN_ESTATE_AUDIT_MAX:
+    default: 5
+    env: LIMEN_ESTATE_AUDIT_MAX
+    self_update: none
+    owner: gitvs
+    note: "Per-run repo cap for estate-audit-heal — a first arming can't fan out uncontrolled across the estate. Repos rotate across runs; blocking-audit repos are healed first. Raise once the detection log + first PRs prove out."
+  LIMEN_ESTATE_AUDIT_OWNER:
+    default: "organvm"
+    env: LIMEN_ESTATE_AUDIT_OWNER
+    self_update: none
+    owner: gitvs
+    note: "GitHub owner/org whose audit-CI repos estate-audit-heal enumerates via `gh search code`. Default organvm (the canonical org). Override for a different owner scope."
+  LIMEN_ESTATE_AUDIT_REPOS:
+    default: ""
+    env: LIMEN_ESTATE_AUDIT_REPOS
+    self_update: none
+    owner: gitvs
+    note: "Test/override hook for estate-audit-heal: colon-separated full repo names (owner/repo) to process instead of the derived `gh search code` discovery. Empty (default) → discover. Used by the hermetic test and bounded armed rehearsals (e.g. cap=1 against one repo); never set in production."
+
   LIMEN_MAIN_GREEN_THROTTLE:
     default: "1800"            # seconds between live gh queries; cached verdict surfaces every beat
     env: LIMEN_MAIN_GREEN_THROTTLE

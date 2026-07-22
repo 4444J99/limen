@@ -241,6 +241,24 @@ sensors:
         tier: live
         command: "python3 scripts/seo-audit.py --check"
 
+  estate-audit-heal:
+    section: "heartbeat"
+    title: "estate audit-heal — the OTHER org repos' npm/pnpm audit CI must not sit red (verify-gated overrides fix PRs; dark until armed)"
+    gate: LIMEN_ESTATE_AUDIT_HEAL
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_ESTATE_AUDIT
+      default: 24
+    timeout:
+      env: LIMEN_ESTATE_AUDIT_TIMEOUT
+      default: 1200
+    steps:
+      - command: "python3 scripts/estate-audit-heal.py"
+        severity: advisory
+        escalation: "an org repo's npm/pnpm audit CI is red on a verify-fixable transitive advisory — the estate healer opens a verify-gated overrides fix PR (no auto-merge) once LIMEN_ESTATE_AUDIT_HEAL_APPLY=1 arms it (env lever, read internally; framework-major residue is deferred to Dependabot); until armed it is detection-only. Heavy (clones+installs); slow cadence + repo cap (LIMEN_ESTATE_AUDIT_MAX). See scripts/estate-audit-heal.py"
+
   observatory-run:
     section: "heartbeat"
     title: "run the OBSERVATORY legibility-and-traction loop (ships dark; armed by L-OBSERVATORY-ACTIVATE)"
