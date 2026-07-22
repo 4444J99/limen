@@ -153037,3 +153037,58 @@ tasks:
     session_id: direct:hospes-ari-pilot-launch
     status: in_progress
     output: 'Execution started in work/ari-pilot-launch; owner issue #9.'
+- id: VIC-CONTROL-CI-001
+  title: Client-One control-integrity CI repair
+  description: Repair Client-One CI classification and live control-gate evidence so governance, finance, contracts, and integration packets fail closed before canary dispatch.
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: codex
+  workstream: governance
+  priority: critical
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - control-integrity
+  - public-synthetic
+  - owner:client-one-control-integrator
+  urls:
+  - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
+  - https://github.com/organvm/victoroff-os/actions/runs/29950685515
+  context: |-
+    Do not dispatch to Jules. Complete only this bounded control-integrator packet.
+
+    Task: VIC-CONTROL-CI-001 — repair the Client-One control-integrity rail before canary launch.
+    Repository: organvm/victoroff-os
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
+    Owner: client-one-control-integrator
+    Allowed paths: .github/workflows/verify.yml, package.json, program/registry.v1.json, scripts/control/**, tests/control/**
+    Forbidden paths: tasks.yaml, apps/**, docs/governance/**, docs/finance/**, packages/domain/**, production or authority surfaces
+    Required behavior: add a governance/finance docs-test shard with tracked test discovery; fail closed for nonempty unclassified diffs; make the contracts canary run tests plus typechecking; bind control-main-green to exact-main verify and CodeQL receipts; allow historical integration packets while enforcing at most one active integration packet; add classifier, empty-shard, gate, and predicate regressions.
+    Authority boundary: public/synthetic only; do not ratify, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm verify:control
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTROL-CI-001
+
+    Return the exact-head PR and predicate receipts. Stop if path ownership, live base, or control evidence changes.
+  predicate: pnpm verify:control
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTROL-CI-001
+  origin: human_prompt
+  horizon: present
+  value_case: Close the CI bypass and exact-head evidence gaps that currently make the three authorized Client-One canaries unsafe to launch.
+  owner_surface: organvm/victoroff-os
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-22
+  dispatch_log:
+  - timestamp: 2026-07-22T22:22:52.178Z
+    agent: codex
+    session_id: codex-vic-control-ci-retry7-20260722
+    logical_agent: codex
+    logical_session_id: vic-control-ci-retry7-20260722
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-7bcb5af11517f5c64235b6b2c30e0cd4:2:compatibility
+    conduct_run_id: run-7bcb5af11517f5c64235b6b2c30e0cd4
+    conduct_lease_id: lease-2-7bcb5af11517f5c6
+    conduct_generation: 2
+  updated: 2026-07-22T22:22:52.178Z
