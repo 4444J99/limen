@@ -23,6 +23,22 @@ class ToolAdmission:
     reason: str = ""
 
 
+def _state_error_reason(exc: AdmissionStateError) -> str:
+    """Render one redacted protocol diagnostic for every action-admission consumer."""
+
+    diagnostic = exc.diagnostic()
+    pid = diagnostic.get("lease_pid") or "unknown"
+    identity = diagnostic.get("lease_process_identity") or "unknown"
+    return (
+        "Limen host admission failed closed: "
+        f"invalid_field={diagnostic['invalid_field']} "
+        f"reader_protocol={diagnostic['reader_protocol']} "
+        f"writer_protocol={diagnostic['writer_protocol']} "
+        f"pid_identity={pid}/{identity}. "
+        f"Safe next command: {diagnostic['safe_next_command']}"
+    )
+
+
 def admit_pre_tool_action(
     payload: dict[str, Any],
     *,
@@ -96,7 +112,9 @@ def admit_pre_tool_action(
             pid=pid,
             ttl_seconds=ttl_seconds,
         )
-    except (AdmissionStateError, ValueError) as exc:
+    except AdmissionStateError as exc:
+        return ToolAdmission(False, _state_error_reason(exc))
+    except ValueError as exc:
         return ToolAdmission(False, str(exc))
     if not decision["allowed"]:
         return ToolAdmission(

@@ -206,7 +206,7 @@ parameters:
     env: LIMEN_CODEX_PRETOOL_DENIAL_SUPPORTED
     self_update: none
     owner: vitals
-    note: "Startup compatibility escape hatch for Codex action admission. Auto probes the installed client's stable-hooks capability; true enables action-level PreToolUse denial and false retains the legacy one-root lock."
+    note: "Compatibility probe override for Codex action admission. Auto observes the installed client's stable-hooks capability; true enables structured PreToolUse denial, while false never serializes conversation roots or creates a global session-start lease."
   LIMEN_HOST_ADMISSION_PROBE_TIMEOUT:
     default: 5
     env: LIMEN_HOST_ADMISSION_PROBE_TIMEOUT
