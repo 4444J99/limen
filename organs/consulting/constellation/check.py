@@ -19,6 +19,7 @@ Usage:
   organs/consulting/constellation/check.py face-clean <owner/repo> <substring>
   organs/consulting/constellation/check.py funnel <instance-yaml>
   organs/consulting/constellation/check.py decision-packet <slug> <name>
+  organs/consulting/constellation/check.py casestudy <slug> <project>
 """
 
 from __future__ import annotations
@@ -216,6 +217,28 @@ def check_funnel(instance: str) -> int:
     return _ok(f"{instance} passes Engine Rules") if proc.returncode == 0 else _fail(f"{instance} violations")
 
 
+def check_casestudy(slug: str, project: str) -> int:
+    """The register row owns the case-study pointer; the artifact must be live where it points."""
+    row = _registry_project(slug, project)
+    if row is None:
+        return _fail(f"{slug}/{project} not in registry")
+    pointer = str(row.get("case_study") or "")
+    if not pointer:
+        return _fail(f"{slug}/{project}: registry case_study field is null")
+    parts = pointer.split(":", 2)
+    if len(parts) != 3 or parts[0] != "git" or parts[1].count("/") != 1 or not parts[2]:
+        return _fail(f"{slug}/{project}: case_study must be git:<owner>/<repo>:<path>, got {pointer!r}")
+    repo, path = parts[1], parts[2]
+    proc = subprocess.run(
+        ["gh", "api", f"repos/{repo}/contents/{path}"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return _fail(f"{slug}/{project}: case_study target {pointer} unreadable via gh api")
+    return _ok(f"{slug}/{project}: case study live at {pointer}")
+
+
 def check_decision_packet(slug: str, name: str) -> int:
     pipeline = _pipeline_slug(slug)
     if not pipeline:
@@ -252,6 +275,8 @@ def main(argv: list[str]) -> int:
             return check_funnel(args[0])
         if cmd == "decision-packet" and len(args) == 2:
             return check_decision_packet(*args)
+        if cmd == "casestudy" and len(args) == 2:
+            return check_casestudy(*args)
     except (OSError, yaml.YAMLError) as exc:
         return _fail(f"{cmd}: {exc}")
     print(__doc__)

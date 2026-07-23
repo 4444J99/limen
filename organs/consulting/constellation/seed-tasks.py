@@ -681,6 +681,105 @@ TASKS: list[dict] = [
         predicate=f"{CHECK} decision-packet shari demand-review",
         value="the party-game-suite venture is promoted or parked on evidence",
     ),
+    # Monument stage — one portfolio case study per project, gated behind its
+    # public face. The register row carries the case_study pointer; the
+    # portfolio repo owns the artifact's layout.
+    dict(
+        id="CONST-STYX-CASESTUDY",
+        slug="jessica",
+        title="Styx case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-STYX-FACE"],
+        predicate=f"{CHECK} casestudy jessica styx",
+        value="the styx build becomes a written portfolio monument once its face lands",
+    ),
+    dict(
+        id="CONST-HOKAGE-CASESTUDY",
+        slug="rob",
+        title="Hokage Chess case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-HOKAGE-FACE"],
+        predicate=f"{CHECK} casestudy rob hokage-chess",
+        value="the recovered strategy-doc build story rides the portfolio surface",
+    ),
+    dict(
+        id="CONST-TATO-CASESTUDY",
+        slug="rob",
+        title="Micro Tato case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-TATO-FACE"],
+        predicate=f"{CHECK} casestudy rob micro-tato",
+        value="the game build joins the portfolio as a shipped-with-a-partner proof",
+    ),
+    dict(
+        id="CONST-MM-CASESTUDY",
+        slug="charles",
+        title="Mirror Mirror case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-MM-FACE"],
+        predicate=f"{CHECK} casestudy charles mirror-mirror",
+        value="the mirror-mirror build story becomes a portfolio monument",
+    ),
+    dict(
+        id="CONST-YFT-CASESTUDY",
+        slug="charles",
+        title="Your Fit Tailored case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-YFT-FACE"],
+        predicate=f"{CHECK} casestudy charles your-fit-tailored",
+        value="the your-fit-tailored build story becomes a portfolio monument",
+    ),
+    dict(
+        id="CONST-CANNIBAL-CASESTUDY",
+        slug="scott",
+        title="Content Cannibalizer case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-CANNIBAL-FACE"],
+        predicate=f"{CHECK} casestudy scott content-cannibalizer",
+        value="the cannibalizer build joins the portfolio once its face is split out",
+    ),
+    dict(
+        id="CONST-HOSPES-CASESTUDY",
+        slug="ari",
+        title="Podcast suite case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-HOSPES-FACE-SPLIT"],
+        predicate=f"{CHECK} casestudy ari podcast-suite",
+        value="the podcast-suite build gets its public monument after the face split",
+    ),
+    dict(
+        id="CONST-CLIENT_ONE-CASESTUDY",
+        slug="david",
+        title="Client-One OS case study for the portfolio",
+        repo="organvm/portfolio",
+        type="content",
+        priority="low",
+        cost=8,
+        deps=["CONST-CLIENT_ONE-FACE"],
+        predicate=f"{CHECK} casestudy david victoroff-os",
+        value="the victoroff-os build story becomes a portfolio monument if its face lands",
+    ),
 ]
 
 
@@ -702,7 +801,7 @@ def _receipt_for(row: dict) -> str:
         return f"git:organvm/limen:{predicate.split()[-1]}"
     if " corpus-refresh" in predicate:
         return "git:organvm/conversation-corpus-engine:README.md"
-    if any(k in predicate for k in (" stage ", " face-state ", " decision-packet ")):
+    if any(k in predicate for k in (" stage ", " face-state ", " decision-packet ", " casestudy ")):
         return "git:organvm/limen:organs/consulting/constellation/registry.yaml"
     return f"git:{row['repo']}:README.md"
 
