@@ -57,7 +57,11 @@ process_start_identity() {
     | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 process_command_identity() {
-  ps -p "${1:?process_command_identity needs a pid}" -o command= 2>/dev/null \
+  # -ww: unlimited width on both procps and BSD ps. Without it, procps falls
+  # back to 80 columns when it cannot determine a terminal size (e.g. under a
+  # pytest-xdist worker), truncating the argv before the owner token and making
+  # every ownership proof read as foreign-process.
+  ps -ww -p "${1:?process_command_identity needs a pid}" -o command= 2>/dev/null \
     | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 write_cell_receipt() {
