@@ -42,6 +42,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MOAT_GUARD = Path(os.environ.get("LIMEN_MOAT_GUARD", ROOT / "moat-guard.json"))
 VALUE_REPOS = Path(os.environ.get("LIMEN_VALUE_REPOS", ROOT / "value-repos.json"))
+# One knob per fact: the same ACCESS registry gitvs parity/class-N and Rule #7 read.
+ACCESS = Path(os.environ.get("LIMEN_GITVS_ACCESS", ROOT / "institutio" / "github" / "access.yaml"))
 POSITIONING_SEEDS = Path(os.environ.get("LIMEN_POSITIONING_SEEDS", ROOT / "positioning-seeds.json"))
 POSITIONING_DIR = Path(os.environ.get("LIMEN_POSITIONING_DIR", ROOT / "docs" / "positioning"))
 
@@ -59,6 +61,35 @@ def _load(path: Path) -> dict:
 def _slug(repo: str) -> str:
     """owner/name -> name (the positioning-page slug convention)."""
     return repo.split("/", 1)[-1]
+
+
+def _granted_repos() -> set[str]:
+    """Repos carrying partner grant rows in the ACCESS registry. A partner's eyes make the
+    tree exposed, so these are audited regardless of visibility. Absent/unreadable → empty
+    (the gitvs parity gate owns registry integrity, not this audit)."""
+    try:
+        import yaml
+        grants = (yaml.safe_load(ACCESS.read_text(encoding="utf-8")) or {}).get("grants") or {}
+        return {str(r) for r in grants}
+    except Exception:
+        return set()
+
+
+def repo_secret_posture(repo: str) -> str | None:
+    """Zero-policy probe: does the repo carry ANY Actions secrets. On a partner-granted repo
+    any push collaborator can exfiltrate a repo secret via a workflow edit, so the policy is
+    ZERO — re-home to org secrets with selected-repo scoping. Returns a posture literal only
+    ('clean' / 'exposed'); no secret value, name, or count ever leaves this function."""
+    res = subprocess.run(
+        ["gh", "api", f"repos/{repo}/actions/secrets", "--jq", ".total_count"],
+        capture_output=True, text=True,
+    )
+    if res.returncode != 0:
+        return None
+    try:
+        return "clean" if int(res.stdout.strip()) == 0 else "exposed"
+    except ValueError:
+        return None
 
 
 def repo_visibility(repo: str) -> str:
@@ -159,7 +190,9 @@ def main() -> int:
     ap.add_argument("--repo", help="audit a single owner/name repo")
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     ap.add_argument("--strict", action="store_true", help="also fail on lure gaps")
-    ap.add_argument("--no-visibility", action="store_true", help="skip gh api visibility probe")
+    ap.add_argument("--no-visibility", action="store_true", help="skip gh api probes (visibility + secrets)")
+    ap.add_argument("--require-guard", action="store_true",
+                    help="fail if an audited repo has no moat-guard entry (the evict-then-guard done-predicate)")
     args = ap.parse_args()
 
     # Fail LOUD if the boundary registry is absent — a moat audit that silently
@@ -176,23 +209,29 @@ def main() -> int:
     clone_root = Path(os.path.expanduser(guard_reg.get("clone_root", "~/Workspace")))
     guard_repos = guard_reg.get("repos", {})
 
+    granted = _granted_repos()
     if args.repo:
         repos = [args.repo]
     else:
-        # Union of value-tier repos and any repo with a guard entry.
-        repos = list(dict.fromkeys(value_reg.get("repos", []) + list(guard_repos.keys())))
+        # Union of value-tier repos, any repo with a guard entry, and any partner-granted repo.
+        repos = list(dict.fromkeys(value_reg.get("repos", []) + list(guard_repos.keys()) + sorted(granted)))
 
     results = []
     for repo in repos:
         visibility = "unknown" if args.no_visibility else repo_visibility(repo)
         guard = guard_repos.get(repo, {})
         seed = seeds.get(repo, {})
-        leaks = scan_leaks(repo, guard, clone_root) if visibility != "private" else {"status": "private_skip", "hits": []}
+        # A partner's eyes make a private tree exposed — granted repos are always scanned.
+        exposed = visibility != "private" or repo in granted
+        leaks = scan_leaks(repo, guard, clone_root) if exposed else {"status": "private_skip", "hits": []}
         verdict, detail = lure_readiness(
             repo, visibility, seeded=bool(seed), awaiting=bool(seed.get("awaiting_publish")),
         )
         results.append({
             "repo": repo, "visibility": visibility,
+            "granted": repo in granted,
+            "guard_owed": repo in granted and not guard,
+            "repo_secrets": (repo_secret_posture(repo) if repo in granted and not args.no_visibility else None),
             "leak_status": leaks["status"], "leaks": leaks["hits"],
             "leak_ref": leaks.get("ref"),
             "lure": verdict, "lure_detail": detail,
@@ -200,32 +239,55 @@ def main() -> int:
 
     leaking = [r for r in results if r["leaks"]]
     lure_gaps = [r for r in results if r["lure"] in ("gap", "dark")]
+    guard_owed = [r for r in results if r["guard_owed"]]
+    secrets_exposed = [r for r in results if r["repo_secrets"] == "exposed"]
+    guard_missing = [r for r in results if args.require_guard and not guard_repos.get(r["repo"])]
 
     if args.json:
         print(json.dumps({
             "results": results,
             "moat_leaks": len(leaking),
             "lure_gaps": len(lure_gaps),
+            "guard_owed": [r["repo"] for r in guard_owed],
+            "secrets_exposed": [r["repo"] for r in secrets_exposed],
         }, indent=2))
     else:
         print("MOAT + LURE AUDIT")
         print("=" * 68)
         for r in results:
             leak_mark = f"LEAK x{len(r['leaks'])}" if r["leaks"] else "clean"
+            granted_mark = "  granted=partner" if r["granted"] else ""
             print(f"  {r['repo']}")
-            print(f"      visibility={r['visibility']}  moat={leak_mark}  lure={r['lure']}")
+            print(f"      visibility={r['visibility']}  moat={leak_mark}  lure={r['lure']}{granted_mark}")
             if r["leaks"]:
                 for h in r["leaks"]:
                     print(f"        ! {h['name']}: {h['files']}")
                     print(f"          {h['why']}")
             elif r["lure"] in ("gap", "dark"):
                 print(f"        · {r['lure_detail']}")
+            if r["guard_owed"]:
+                print("        · granted repo without a moat-guard entry — evict-then-guard owed (CONST-*-MOAT)")
+            if r["repo_secrets"] == "exposed":
+                print("        ! Actions secrets present on a partner-granted repo — a push "
+                      "collaborator can exfiltrate via a workflow edit; re-home to org secrets with "
+                      "selected-repo scoping (L-PARTNER-GRANTS)")
         print("-" * 68)
-        print(f"moat leaks: {len(leaking)}   lure gaps: {len(lure_gaps)}")
+        print(f"moat leaks: {len(leaking)}   lure gaps: {len(lure_gaps)}   "
+              f"guard owed: {len(guard_owed)}   secrets exposed: {len(secrets_exposed)}")
 
     if leaking:
         if not args.json:
-            print(f"\nFAIL — {len(leaking)} public repo(s) leak declared private values.", file=sys.stderr)
+            print(f"\nFAIL — {len(leaking)} exposed repo(s) leak declared private values.", file=sys.stderr)
+        return 1
+    if secrets_exposed:
+        if not args.json:
+            print(f"\nFAIL — {len(secrets_exposed)} partner-granted repo(s) carry Actions secrets "
+                  f"(zero-policy; re-home is L-PARTNER-GRANTS work).", file=sys.stderr)
+        return 1
+    if guard_missing:
+        if not args.json:
+            print(f"\nFAIL (--require-guard) — {len(guard_missing)} repo(s) without a moat-guard entry.",
+                  file=sys.stderr)
         return 1
     if args.strict and lure_gaps:
         if not args.json:

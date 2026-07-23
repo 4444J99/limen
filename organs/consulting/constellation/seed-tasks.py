@@ -780,6 +780,35 @@ TASKS: list[dict] = [
         predicate=f"{CHECK} casestudy david victoroff-os",
         value="the victoroff-os build story becomes a portfolio monument if its face lands",
     ),
+    # Moat stage — evict-then-guard on the partner-shared products: externalize the tuned
+    # values from the partner-visible tree FIRST, then land the moat-guard entry that asserts
+    # their absence (a guard entry for a value still in-tree reddens the audit instantly).
+    dict(
+        id="CONST-STYX-MOAT",
+        slug="jessica",
+        title="Styx moat: externalize the tuned values from the public tree, then guard them",
+        repo="organvm/peer-audited--behavioral-blockchain",
+        type="code",
+        priority="medium",
+        cost=20,
+        deps=[],
+        predicate="python3 scripts/moat-audit.py --repo organvm/peer-audited--behavioral-blockchain --require-guard",
+        value="the venture calibration stops being world-readable while the public form keeps luring",
+        receipt="git:organvm/limen:moat-guard.json",
+    ),
+    dict(
+        id="CONST-CANNIBAL-MOAT",
+        slug="scott",
+        title="Content Cannibalizer moat: externalize the tuned values from the shared tree, then guard them",
+        repo="organvm/content-engine--asset-amplifier",
+        type="code",
+        priority="medium",
+        cost=15,
+        deps=[],
+        predicate="python3 scripts/moat-audit.py --repo organvm/content-engine--asset-amplifier --require-guard",
+        value="the engine calibration is partitioned out of the partner-visible lane",
+        receipt="git:organvm/limen:moat-guard.json",
+    ),
 ]
 
 

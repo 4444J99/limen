@@ -425,6 +425,7 @@ repo_overrides:
   organvm/collaboratory: {class: operation_private, why: "collaboratory constellation — private operation"}
   organvm/commerce--meta: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/composition-1-2: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/content-engine--asset-amplifier: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant; was falling to protection-exempt private_unreviewed)"}
   organvm/content-engine--asset-amplifier--a-organvm-legacy: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/contrib: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
   organvm/contrib--anthropic-skills: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
@@ -497,6 +498,7 @@ repo_overrides:
   organvm/sign-signal--voice-synth: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/sovereign--ground: {class: vault_private, why: "ground corpus — internal strategy"}
   organvm/sovereign--ground--4444j99: {class: vault_private, why: "ground corpus — internal strategy"}
+  organvm/sovereign-systems--elevate-align: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant; was falling to protection-exempt private_unreviewed)"}
   organvm/speculum-opencode: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/speech-score-engine: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/studium-generale: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
