@@ -88,7 +88,6 @@ PY
 #    (Enumerate all branch refs and grep-filter: a for-each-ref glob does NOT
 #     cross the '/' in 'heal/...', so it would silently match nothing.)
 # ---------------------------------------------------------------------------
-reg_text="$(cat "$REGISTRY")"
 staged_refs="$(git for-each-ref --format='%(refname:short)' refs/heads/ | grep -- '-staged-' || true)"
 if [ -z "$staged_refs" ]; then
   ok "no '*-staged-*' preserve refs present (nothing to strand)"
@@ -98,7 +97,10 @@ else
     sha="$(git rev-parse "$name")"; short="$(git rev-parse --short "$name")"
     if git merge-base --is-ancestor "$sha" origin/main 2>/dev/null; then
       ok "preserve ref $name merged into origin/main"
-    elif printf '%s' "$reg_text" | grep -qiE -- "$name|${short}|${sha:0:7}"; then
+    # grep the file directly — a `printf | grep -q` pipeline under pipefail false-fails
+    # via SIGPIPE (exit 141) once the registry outgrows the pipe buffer: grep -q exits
+    # at first match and the still-writing printf poisons the pipeline's status.
+    elif grep -qiE -- "$name|${short}|${sha:0:7}" "$REGISTRY"; then
       ok "preserve ref $name cited by a registry lever (durable pointer)"
     else
       bad "preserve ref $name ($short) is STRANDED — not on origin/main and not cited by any lever. Merge it, cite it in a lever's source_task, or delete it."
