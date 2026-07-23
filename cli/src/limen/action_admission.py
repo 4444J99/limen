@@ -94,6 +94,7 @@ _SANCTIONED_SCRIPTS = frozenset(
         "dispatch-async.py",
         "host-work-admission.py",
         "start-worktree-session.sh",
+        "worktree-abandonment.py",
     }
 )
 

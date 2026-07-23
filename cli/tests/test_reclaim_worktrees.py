@@ -238,14 +238,22 @@ def test_reclaim_generated_payloads_cleans_inactive_ignored_dirs(tmp_path: Path,
     )
     (repo / "node_modules").mkdir()
     (repo / "node_modules" / "dep.txt").write_text("generated\n", encoding="utf-8")
+    quarantine = tmp_path / "quarantine"
 
     monkeypatch.setattr(reclaim, "active_async_task_prefixes", lambda: set())
+    monkeypatch.setattr(reclaim, "ABANDONMENT_QUARANTINE", str(quarantine))
+    monkeypatch.setattr(reclaim, "ABANDONMENT_RECEIPTS", tmp_path / "receipts")
     target = type("Target", (), {"path": repo, "min_age_h": 0})()
     result = reclaim.reclaim_generated_payloads([target])
 
     assert len(result["cleaned"]) == 1
     assert (repo / "README.md").exists()
     assert not (repo / "node_modules").exists()
+    preserved = list(quarantine.glob("generated-repo-node_modules-*"))
+    assert len(preserved) == 1
+    assert (preserved[0] / "dep.txt").read_text(encoding="utf-8") == "generated\n"
+    receipt = next((tmp_path / "receipts").glob("*.json"))
+    assert json.loads(receipt.read_text(encoding="utf-8"))["state"] == "completed"
 
 
 def test_reclaim_generated_payloads_skips_non_idle_roots(tmp_path: Path, monkeypatch) -> None:
@@ -269,6 +277,84 @@ def test_reclaim_generated_payloads_skips_non_idle_roots(tmp_path: Path, monkeyp
 
     assert result["cleaned"] == []
     assert (repo / "node_modules").exists()
+
+
+def test_reclaim_generated_payloads_preserves_tracked_generated_name(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+    (repo / "dist").mkdir()
+    (repo / "dist" / "bundle.js").write_text("tracked\n", encoding="utf-8")
+    subprocess.run(["git", "add", "dist/bundle.js"], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", "base"],
+        cwd=repo,
+        check=True,
+    )
+
+    monkeypatch.setattr(reclaim, "active_async_task_prefixes", lambda: set())
+    monkeypatch.setattr(reclaim, "ABANDONMENT_QUARANTINE", str(tmp_path / "quarantine"))
+    target = type("Target", (), {"path": repo, "min_age_h": 0})()
+    result = reclaim.reclaim_generated_payloads([target])
+
+    assert result["cleaned"] == [{"root": "repo", "detail": "quarantined:0"}]
+    assert (repo / "dist" / "bundle.js").read_text(encoding="utf-8") == "tracked\n"
+    assert not (tmp_path / "quarantine").exists()
+
+
+def test_reclaim_blocks_root_detach_after_generated_quarantine_failure(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    limen_root = tmp_path / "limen"
+    (limen_root / "logs").mkdir(parents=True)
+    target = type("Target", (), {"path": repo, "min_age_h": 0, "source": "test"})()
+
+    monkeypatch.setattr(reclaim, "LIMEN_ROOT", limen_root)
+    monkeypatch.setattr(reclaim, "MARKER", tmp_path / "last-run")
+    monkeypatch.setattr(reclaim, "LOG", tmp_path / "reclaim.jsonl")
+    monkeypatch.setattr(reclaim, "APPLY", True)
+    monkeypatch.setattr(reclaim, "FORCE", True)
+    monkeypatch.setattr(reclaim, "JSON_OUT", True)
+    monkeypatch.setattr(reclaim, "CHECK", False)
+    monkeypatch.setattr(reclaim, "GENERATED_ONLY", False)
+    monkeypatch.setattr(reclaim, "iter_worktree_targets", lambda _root: [target])
+    monkeypatch.setattr(reclaim, "active_process_cwds", lambda: {})
+    monkeypatch.setattr(
+        reclaim,
+        "reclaim_generated_payloads",
+        lambda _targets: {
+            "enabled": True,
+            "cleaned": [],
+            "failed": [{"root": "repo", "detail": "generated-quarantine-failed"}],
+        },
+    )
+    monkeypatch.setattr(reclaim, "load_preservation_receipts", lambda: {})
+    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", lambda: [])
+    monkeypatch.setattr(
+        reclaim,
+        "classify",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not classify failed root")),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "detach_registered_worktree",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not detach failed root")),
+    )
+
+    assert reclaim.main() == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["reclaimed"] == []
+    assert payload["failed"] == [{"root": "repo", "reason": "generated-quarantine-failed"}]
+    assert repo.exists()
 
 
 def test_reclaim_generated_log_shell_dry_run_requires_acceptance(tmp_path: Path, monkeypatch, capsys) -> None:

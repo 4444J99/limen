@@ -921,7 +921,19 @@ parameters:
     env: LIMEN_ORPHAN_QUARANTINE
     self_update: none
     owner: continuity
-    note: "Off-worktree MOVE target for orphans preserved by the LIMEN_RECLAIM_ORPHANS sweep — a quarantine, not a delete. Empty (default) → a `_limen-orphan-quarantine` sibling of the worktree root on the SAME volume (an instant rename that clears the debt without freeing the volume; data preserved). Set to a path on a backup volume (e.g. /Volumes/Archive4T/limen-orphan-quarantine) to also free the working volume — a cross-volume copy that still never deletes until the move is complete. Must never point under a worktree root (that would re-create the debt)."
+    note: "Off-worktree MOVE target for orphans preserved by the LIMEN_RECLAIM_ORPHANS sweep — a quarantine, not a delete. Empty (default) derives a `_limen-orphan-quarantine` sibling of the worktree root. The target must be outside every worktree scan root and on the SAME filesystem so abandonment is one atomic rename; cross-volume copy fallback is denied."
+  LIMEN_ABANDONMENT_QUARANTINE:
+    default: ""
+    env: LIMEN_ABANDONMENT_QUARANTINE
+    self_update: none
+    owner: continuity
+    note: "Optional same-filesystem off-scan quarantine root used by limen.worktree_abandonment.v1 for standalone clones, residue, and ignored generated payloads. Empty derives an owner-root-aware sibling. Cross-device targets, nested destinations, symlinks, and collisions fail closed."
+  LIMEN_WORKTREE_ABANDONMENT_RECEIPTS:
+    default: "$LIMEN_ROOT/logs/worktree-abandonment"
+    env: LIMEN_WORKTREE_ABANDONMENT_RECEIPTS
+    self_update: none
+    owner: continuity
+    note: "Private typed receipt root for planned, verified, applying, completed, and crashed limen.worktree_abandonment.v1 actions. Receipts record recoverability and exact failure phase; they do not authorize an action by themselves."
   LIMEN_CLONE_REAP_STANDING_ACCEPTANCE:
     default: "1"
     env: LIMEN_CLONE_REAP_STANDING_ACCEPTANCE

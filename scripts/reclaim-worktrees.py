@@ -26,10 +26,11 @@ It scans every known creation site (the historical blind spot — see worktree-l
   • registered git worktrees from LIMEN_RECLAIM_MAIN_REPOS (default: Limen and Portvs).
 Set LIMEN_RECLAIM_CLAUDE_WT=0 to disable the interactive sweep.
 
-It is LOSS-FREE by construction (those three gates) and FAILS OPEN: any error on one dir is
+It is LOSS-FREE by construction (those three gates) and FAILS CLOSED per target: any error on one dir is
 logged and skipped, never aborting the rest ("never a silent no"). It NEVER reaps the live
-checkout (LIMEN_ROOT) nor the worktree it is itself running from. It removes registered
-worktrees via `git worktree remove` (never rm) and standalone clones via rmtree. Bounded per
+checkout (LIMEN_ROOT) nor the worktree it is itself running from. It detaches clean registered
+worktrees through Git's non-forced native operation and atomically quarantines standalone roots
+on the same filesystem. It never resets, cleans, or recursively deletes a root. Bounded per
 run (LIMEN_RECLAIM_MAX); if it hits the cap it LOGS the remainder rather than silently dropping.
 
 Dry-run by default; pass --apply to execute. Use --check --json for a structured non-mutating
@@ -44,7 +45,9 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
      LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
      LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
      LIMEN_RECLAIM_ORPHANS (0 — observable-first arm for the dead-gitdir orphan sweep),
-     LIMEN_ORPHAN_QUARANTINE (off-worktree MOVE target for preserved orphans).
+     LIMEN_ORPHAN_QUARANTINE (same-volume off-worktree target for preserved orphans),
+     LIMEN_ABANDONMENT_QUARANTINE (same-volume target for clones/residue/generated payloads),
+     LIMEN_WORKTREE_ABANDONMENT_RECEIPTS (private typed receipt root).
 
 Dead-gitdir orphan sweep (LIMEN_RECLAIM_ORPHANS=1): a checkout under a THROWAWAY root whose `.git`
 pointer targets a superproject gitdir that no longer exists (prune-race debris — `git worktree prune`
@@ -55,10 +58,10 @@ while losing nothing. Deleting a quarantined orphan is a SEPARATE proof-gated st
 """
 
 from __future__ import annotations
+
 import json
 import math
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -74,6 +77,11 @@ sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 from reap_acceptance import (  # noqa: E402
     REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
     has_required_acceptance_proof,
+)
+from limen.worktree_abandonment import (  # noqa: E402
+    WorktreeAbandonmentError,
+    detach_registered_worktree,
+    quarantine_path,
 )
 from limen.worktree_debt import is_generated_log_shell  # noqa: E402
 from limen.worktree_roots import iter_worktree_targets  # noqa: E402
@@ -99,9 +107,7 @@ MAX_REMOVE = _int_env("LIMEN_RECLAIM_MAX", 50)
 EVERY_MIN = _float_env("LIMEN_RECLAIM_EVERY_MIN", 30)
 GENERATED_RECLAIM_MAX = _int_env("LIMEN_RECLAIM_GENERATED_MAX", 80)
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
-AGY_SCRATCH_ROOT = Path(
-    os.environ.get("LIMEN_AGY_SCRATCH_ROOT", f"{HOME}/.gemini/antigravity-cli/scratch")
-)
+AGY_SCRATCH_ROOT = Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", f"{HOME}/.gemini/antigravity-cli/scratch"))
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 RECLAIM_ACCEPTANCE = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
@@ -234,6 +240,18 @@ def has_generated_payload(d: Path) -> bool:
     return any((d / path).exists() for path in GENERATED_CLEAN_PATHS)
 
 
+def abandonment_quarantine_root(source_root: Path) -> Path:
+    """Choose an off-scan, same-volume default unless the host injects one."""
+    if ABANDONMENT_QUARANTINE:
+        return Path(ABANDONMENT_QUARANTINE).expanduser()
+    creation_root = source_root.parent
+    if creation_root.name == ".worktrees":
+        return creation_root.parent.parent / "_limen-worktree-abandonment"
+    if creation_root.name == "worktrees" and creation_root.parent.name == ".claude":
+        return creation_root.parent.parent.parent / "_limen-worktree-abandonment"
+    return creation_root.parent / "_limen-worktree-abandonment"
+
+
 def idle_enough(target, now: float) -> bool:
     min_age_h = getattr(target, "min_age_h", 0)
     try:
@@ -243,18 +261,39 @@ def idle_enough(target, now: float) -> bool:
 
 
 def purge_generated_payloads(d: Path) -> tuple[bool, str]:
-    r = git(["clean", "-Xdf", "--", *GENERATED_CLEAN_PATHS], d, timeout=180)
-    if r.returncode != 0:
-        return False, (r.stderr or r.stdout or "git clean failed").strip()[:160]
-    removed = sum(1 for line in (r.stdout or "").splitlines() if line.strip().startswith("Removing "))
-    return True, f"removed:{removed}"
+    moved = 0
+    qroot = abandonment_quarantine_root(d)
+    for relative in GENERATED_CLEAN_PATHS:
+        source = d / relative
+        if not source.exists() and not source.is_symlink():
+            continue
+        ignored = git(["check-ignore", "-q", "--", relative], d)
+        if ignored.returncode == 1:
+            continue
+        if ignored.returncode != 0:
+            return False, f"generated-ignore-status-unavailable-after-{moved}:{relative}"
+        destination_name = f"generated-{d.name}-{relative.replace('/', '_')}-{time.time_ns()}-{source.lstat().st_ino}"
+        try:
+            quarantine_path(
+                source,
+                qroot,
+                reason="ignored-generated-payload",
+                receipt_root=ABANDONMENT_RECEIPTS,
+                destination_name=destination_name,
+                owner_probe=lambda _path: active_process_owner(d),
+            )
+        except (OSError, WorktreeAbandonmentError) as exc:
+            return False, f"generated-quarantine-failed-after-{moved}:{str(exc)[:120]}"
+        moved += 1
+    return True, f"quarantined:{moved}"
 
 
 def reclaim_generated_payloads(targets) -> dict[str, object]:
     """Bounded, source-safe cleanup for retained worktrees.
 
-    This removes only ignored generated payload paths from inactive git roots. It does not remove
-    source files, untracked non-ignored files, worktree roots, branches, or private artifacts.
+    This atomically quarantines only ignored generated payload paths from inactive git roots.
+    It does not remove source files, untracked non-ignored files, worktree roots, branches, or
+    private artifacts.
     """
     if os.environ.get("LIMEN_RECLAIM_GENERATED", "1") != "1":
         return {"enabled": False, "cleaned": [], "failed": []}
@@ -392,10 +431,17 @@ STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean
 ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "1") != "0"
 ORPHAN_REASON = "orphan-dead-gitdir+throwaway+idle"
 # Off-worktree quarantine root (a MOVE target, not a delete). Default: a sibling of the worktree
-# root on the same volume (an instant rename, off the worktree-scan path). Override to a backup
-# volume (e.g. /Volumes/Archive4T/...) to also free the working volume. NEVER under a worktree root.
+# root on the same volume (an instant rename, off the worktree-scan path). An override must stay on
+# that same volume; cross-device copy fallback is denied. NEVER place it under a worktree root.
 ORPHAN_QUARANTINE = os.environ.get("LIMEN_ORPHAN_QUARANTINE", "")
 ORPHAN_QUARANTINE_LOG = LIMEN_ROOT / "logs" / "orphan-quarantine.jsonl"
+ABANDONMENT_RECEIPTS = Path(
+    os.environ.get(
+        "LIMEN_WORKTREE_ABANDONMENT_RECEIPTS",
+        str(LIMEN_ROOT / "logs" / "worktree-abandonment"),
+    )
+)
+ABANDONMENT_QUARANTINE = os.environ.get("LIMEN_ABANDONMENT_QUARANTINE", "")
 if ORPHAN_SWEEP:
     STANDING_ACCEPTANCE_REASONS = STANDING_ACCEPTANCE_REASONS | {ORPHAN_REASON}
 # Only THROWAWAY creation roots are eligible for orphan reap — never interactive/registered cells
@@ -461,16 +507,24 @@ def quarantine_orphan(d: Path, stamp: str) -> tuple[bool, str]:
     try:
         if d.resolve() in _SELF_GUARD:  # never move the live checkout
             return False, "self/live-checkout"
-        qroot.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         return False, f"quarantine-unwritable:{str(e)[:80]}"
-    dest = qroot / f"{stamp}-{d.name}"
-    if dest.exists():
-        dest = qroot / f"{stamp}-{d.name}-{d.stat().st_ino}"
+    destination_name = f"{stamp}-{d.name}"
+    if (qroot / destination_name).exists():
+        destination_name = f"{destination_name}-{d.stat().st_ino}"
     try:
         branch_on_origin = orphan_branch_on_origin(orphan_gitdir_name(d) or d.name)
-        shutil.move(str(d), str(dest))
-    except Exception as e:  # fail open — a move error leaves the orphan in place, never half-gone
+        result = quarantine_path(
+            d,
+            qroot,
+            reason=ORPHAN_REASON,
+            receipt_root=ABANDONMENT_RECEIPTS,
+            destination_name=destination_name,
+            owner_probe=lambda _path: active_process_owner(d),
+        )
+        dest = Path(str((result.get("result") or {})["destination"]))
+    except (OSError, WorktreeAbandonmentError, KeyError) as e:
+        # Fail closed: a denied atomic move leaves the orphan in place.
         return False, f"quarantine-move-failed:{str(e)[:80]}"
     try:
         ORPHAN_QUARANTINE_LOG.parent.mkdir(parents=True, exist_ok=True)
@@ -694,7 +748,15 @@ def main():
     dirs = [(target.path, target.min_age_h, target.source) for target in targets]
     removed, skipped, failed, deferred = [], [], [], []
     would_reclaim = []
+    generated_failures = {
+        str(row.get("root")): str(row.get("detail", "generated-quarantine-failed"))
+        for row in generated_reclaim.get("failed", [])
+        if isinstance(row, dict) and row.get("root")
+    }
     for d, min_age_h, source in dirs:
+        if d.name in generated_failures:
+            failed.append((d.name, generated_failures[d.name]))
+            continue
         action, reason = classify(d, now, min_age_h, preservation_receipts, source=source)
         if action == "skip":
             skipped.append((d.name, reason))
@@ -717,20 +779,39 @@ def main():
         try:
             if action == "remove-worktree":
                 sp = superproject(d)
-                base = sp if sp and Path(sp).resolve() != d.resolve() else d
-                r = git(["worktree", "remove", "--force", str(d)], base)
-                if r.returncode != 0:
-                    failed.append((d.name, r.stderr.strip()[:120]))
+                if not sp or Path(sp).resolve() == d.resolve():
+                    failed.append((d.name, "registered-superproject-unavailable"))
                     continue
+                receipt = detach_registered_worktree(
+                    Path(sp),
+                    d,
+                    reason=reason,
+                    receipt_root=ABANDONMENT_RECEIPTS,
+                    owner_probe=lambda _path: active_process_owner(d),
+                )
             elif action == "quarantine-orphan":
                 ok, dest = quarantine_orphan(d, stamp)  # PRESERVE by MOVE — never a delete
                 if not ok:
                     failed.append((d.name, dest))
                     continue
+                receipt = {"receipt_path": "orphan-quarantine-wrapper", "result": {"destination": dest}}
             else:
-                shutil.rmtree(d)
-            removed.append((d.name, f"{action}:{reason}"))
-        except Exception as e:  # fail open
+                destination_name = f"{stamp}-{d.name}-{d.lstat().st_ino}"
+                receipt = quarantine_path(
+                    d,
+                    abandonment_quarantine_root(d),
+                    reason=reason,
+                    receipt_root=ABANDONMENT_RECEIPTS,
+                    destination_name=destination_name,
+                    owner_probe=lambda _path: active_process_owner(d),
+                )
+            removed.append(
+                (
+                    d.name,
+                    f"{action}:{reason}:abandonment={Path(str(receipt['receipt_path'])).name}",
+                )
+            )
+        except (OSError, WorktreeAbandonmentError) as e:
             failed.append((d.name, str(e)[:120]))
 
     if APPLY:

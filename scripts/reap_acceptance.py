@@ -35,7 +35,10 @@ REMOVAL_ACCEPTANCE_SURFACES = (
         "script": "scripts/reclaim-worktrees.py",
         "doc": "docs/worktree-reclaim-acceptance.md",
         "ledger": "docs/worktree-reclaim-acceptance.jsonl",
-        "destructive_action": "git worktree remove / local root removal",
+        "destructive_action": (
+            "non-forced git worktree detach or same-filesystem recoverable quarantine "
+            "through limen.worktree_abandonment.v1"
+        ),
     },
     {
         "name": "antigravity_scratch",
