@@ -139,6 +139,25 @@ DEFAULT_MAP: list[dict] = [
         "enabled": False,
     },
     {
+        # Faculty-application portal login (NEOGOV / GovernmentJobs.com, e.g. tenant cfkedu =
+        # College of the Florida Keys). Read by application-pipeline's neogov_submit.py --assist to
+        # log in and fill the multi-page form to the brink (the operator clicks Submit — the engine
+        # never auto-submits a counterparty form). A VENDOR LOGIN the organ cannot mint: it stays
+        # enabled=False until the operator authenticates once and lands the account in op://; the
+        # organ then hydrates NEOGOV_USERNAME/PASSWORD every beat, value never printed. Username +
+        # password are distinct values -> two entries. [[credential-durability-organ]]
+        "lane": "neogov/governmentjobs (faculty apply) — username",
+        "ref": "op://Personal/GovernmentJobs cfkedu/username",
+        "env": ["NEOGOV_USERNAME", "GOVERNMENTJOBS_USERNAME"],
+        "enabled": False,
+    },
+    {
+        "lane": "neogov/governmentjobs (faculty apply) — password",
+        "ref": "op://Personal/GovernmentJobs cfkedu/password",
+        "env": ["NEOGOV_PASSWORD", "GOVERNMENTJOBS_PASSWORD"],
+        "enabled": False,
+    },
+    {
         "lane": "gh/copilot/jules",
         "ref": "op://GitHub-Tokens/master-org-token-011726/password",
         "env": ["GH_TOKEN", "GITHUB_TOKEN"],
