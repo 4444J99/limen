@@ -15,10 +15,12 @@ on:
       - "institutio/governance/**"
       - ".github/workflows/**"
   pull_request:
+    # tasks.yaml is push-only here (the board fast lane): a board-projection PR
+    # implicates no code, so the matrix runs post-merge for check-main-green's
+    # exact-head evidence, not pre-merge on the PR's critical path.
     paths:
       - "cli/**"
       - "web/**"
-      - "tasks.yaml"
       - "firebase.json"
       - "scripts/**"
       - "spec/**"

@@ -32,8 +32,10 @@ ratchets:
 
 # 1:1 mirror of deploy*.yml `on.push.paths` — check-gates.py enforces exact set equality.
 # A merge to main touching one of these IS a live deploy. Deploy sensitivity is a property
-# of PATHS, not gates: a docs PR touching tasks.yaml is website-sensitive even though it
-# implicates only cheap gates.
+# of PATHS, not gates: a docs PR touching firebase.json is website-sensitive even though it
+# implicates only cheap gates. tasks.yaml is deliberately NOT a trigger (the board fast
+# lane): the Worker serves the board live at runtime, and deploy.yml's hourly cron rebakes
+# the static dashboard.json when inputs changed — a board publish is data, not a deploy.
 deploy_triggers:
   dashboard:
     workflow: .github/workflows/deploy.yml
@@ -41,7 +43,6 @@ deploy_triggers:
       - "web/app/**"
       - "scripts/assemble-dashboard-data.py"
       - "firebase.json"
-      - "tasks.yaml"
       - ".github/workflows/deploy.yml"
   api:
     workflow: .github/workflows/deploy-api.yml

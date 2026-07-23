@@ -7,14 +7,55 @@ on:
       - "web/app/**"
       - "scripts/assemble-dashboard-data.py"
       - "firebase.json"
-      - "tasks.yaml"
       - ".github/workflows/deploy.yml"
+  # The cron is the board's freshness rail: tasks.yaml merges no longer trigger a
+  # per-merge deploy (the board fast lane) — the hourly rebake picks them up, and
+  # the Worker serves the live board at runtime in the meantime.
   schedule:
     - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
+  precheck:
+    # Cron thrift: an unchanged hour must not pay a cold build+deploy. The
+    # fingerprint covers both build inputs (web/app tree, tasks.yaml blob) plus
+    # the UTC date, so API-derived surface data (pr-status) still refreshes at
+    # most once per idle day. Fail-open by construction: a cache miss or lookup
+    # error deploys exactly as before; only a proven already-deployed
+    # fingerprint skips.
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.decide.outputs.should_deploy }}
+      fingerprint: ${{ steps.fp.outputs.hash }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compute deploy input fingerprint
+        id: fp
+        run: echo "hash=$(git rev-parse HEAD:web/app)-$(git rev-parse HEAD:tasks.yaml)-$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Look up last-deployed fingerprint
+        if: github.event_name == 'schedule'
+        id: seen
+        uses: actions/cache/restore@v4
+        with:
+          path: .deploy-fingerprint
+          key: pages-deploy-${{ steps.fp.outputs.hash }}
+          lookup-only: true
+
+      - name: Decide whether this state is already live
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ steps.seen.outputs.cache-hit }}" = "true" ]; then
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::hourly cron: deploy inputs unchanged since the last deploy today — skipping build+deploy"
+          else
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy:
+    needs: precheck
+    if: needs.precheck.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
     env:
       GCP_SA_KEY_SET: ${{ secrets.GCP_SA_KEY != '' }}
@@ -25,6 +66,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/app/package-lock.json
 
       - run: npm ci
         working-directory: web/app
@@ -149,3 +192,11 @@ jobs:
             --owner-token "$LIMEN_API_TOKEN" \
             --client-token "$LIMEN_CLIENT_TOKEN" \
             --task-id "${LIMEN_VERIFY_TASK_ID:-LIMEN-015}"
+
+      - name: Record deployed fingerprint (cron thrift marker)
+        run: echo "${{ needs.precheck.outputs.fingerprint }}" > .deploy-fingerprint
+
+      - uses: actions/cache/save@v4
+        with:
+          path: .deploy-fingerprint
+          key: pages-deploy-${{ needs.precheck.outputs.fingerprint }}
