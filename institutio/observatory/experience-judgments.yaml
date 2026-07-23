@@ -43,6 +43,18 @@ judgments:
     - headings fall back to browser-default serif; no brand type scale, spacing, or color system visible
     - console 404s indicate the stylesheet/JS bundle failed to load, so the styled design never appears
     suggested_fix: fix the 404 on the CSS/JS bundle (correct base path / asset publish) so the styled build renders instead of raw HTML
+  - judged_at: '2026-07-23T19:19:56Z'
+    captured_at: '2026-07-23T19:03:18Z'
+    screenshot_sha256: abc59c59dccc3fbea2d54a41e71d7ebbfd3f534719b494a711713a95ef3e6f10
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 5
+      typography: 5
+      coherence: 5
+      trust: 5
+    defects: []
+    suggested_fix: none — the service-worker asset 404 that caused unstyled HTML is fixed (base path /portfolio/, PR #203); the styled build now renders (branded hero, stat badges, project cards, view/depth panel)
   public-process:
   - judged_at: '2026-07-18T17:00:00Z'
     captured_at: '2026-07-18T16:40:05Z'
@@ -60,6 +72,18 @@ judgments:
     - no shared estate branding, palette, or type system is visible - reads as a broken page, not a finished site
     - console 404 indicates the site stylesheet failed to load
     suggested_fix: resolve the missing-stylesheet 404 (asset base path) so the intended styled essay index renders
+  - judged_at: '2026-07-23T19:19:56Z'
+    captured_at: '2026-07-23T19:03:20Z'
+    screenshot_sha256: 21268d4b833277199f25f64b179a3829503df2bafd24dbcb70b95042abe175ae
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 5
+      typography: 4
+      coherence: 4
+      trust: 5
+    defects: []
+    suggested_fix: none — the stylesheet 404 (Jekyll baseurl) is fixed (root netlify.toml/Pages redirect, PR #42); the styled dark-theme essay index now renders with full nav and formatted content
   public-record-data-scrapper:
   - judged_at: '2026-07-18T17:00:00Z'
     captured_at: '2026-07-18T16:40:07Z'
