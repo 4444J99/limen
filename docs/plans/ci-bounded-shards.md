@@ -76,3 +76,42 @@ workflows) must never consult it.
 3. A GITVS doctor class auditing member-repo CI for duplicate suites, unscoped runs, and
    missing caches → board tasks into the heal-cifix lane.
 4. `estate.yaml` `classes[].ci_posture` declaring the desired CI form per repo class.
+
+## Measured outcomes — the de-dup series landed (2026-07-23)
+
+All series PRs merged: #1382 (kill the PR-lane whole-matrix escalation), #1384 (one owner
+per proof in ci.yml), #1385 (board fast lane), #1390 (pytest-xdist + moneta npm cache),
+#1391 (path-aware main-green + tasks.yaml off ci.yml push paths), with records #1386/#1388
+and side-fixes #1403 (cells `ps -ww`), #1424 (main-green queue proof), #1432
+(no-tasks-on-me SIGPIPE). Before → after, measured on live runs:
+
+| Lane | Before | After |
+|---|---|---|
+| Board-class PR | 39.5 min, suite ×4 (#1372) | non-deploy under merge-policy (#1334 print); queue validation 27–61 s |
+| Workflow-class merge groups | serial suite each | 27–61 s (#1384 32s, #1403 32s, #1409 27s, #1420 39s, #1421 61s) |
+| cli-touching pr-gate | ~17–20 min serial | 10m02s green under `-n auto` (3,772 tests); merge-group 7m12s |
+| Last serial group | — | #1391 at 19m53s — the final serial validation |
+| main push post-merge | full CI re-run | Fleet Gate ~1 min; head already proven exact in its merge group |
+| main-green sensor | red on cancelled/docs heads | GREEN queue-proven both modes (#1424) |
+| Actions minutes | ~494 min/day (day-18 snapshot: limen 42,414 org-min) | next usage snapshot owns the number; expected band 150–220 |
+
+xdist canary: two consecutive green Linux suite runs; one load-shaped budget fix
+(host-admission shell-helper subprocess timeout 10s→60s — interpreter-spawn latency on a
+saturated runner, not an ordering flake; `xdist_group` would not have helped).
+
+**Meta-defect ledger update (2026-07-23):**
+
+- merge-policy pending-count lets advisory checks veto the merge lane — **still open**. New
+  specimen: its BLOCKED prose reads "a required check never ran" while its own counter
+  prints `failing=1` — a failed check misdiagnosed as a missing one (#1390 at 10:18Z).
+- **Closed by #1424:** check-main-green anchored on the newest ci.yml push run even when it
+  was a superseded cancellation — under a busy queue 3 of 4 push runs cancel within
+  seconds, so the sensor sat red on a proven trunk. The queue rail is the proof rail: a
+  `pr-gate merge_group success` at the exact head now proves it in both modes. Same
+  jurisdiction shape — a push-lane proof-form was demanded where the queue lane owns the
+  proof.
+- **Closed by #1432:** the closeout predicate's stranded-ref check false-failed via
+  SIGPIPE+pipefail once `his-hand-levers.json` outgrew the 64KB pipe buffer.
+- Recorded follow-on (D-1): build the attach-grace into `await-pr.sh` — arming before check
+  suites attach reads as false-BLOCKED; the bounded attach-guard was hand-run 4× on
+  2026-07-23 — plus printed-verdict/exit coherence.
