@@ -95,6 +95,10 @@ def compose() -> tuple[str, str]:
     reply_owed = int(disp.get("reply_owed", 0) or 0)
     awaiting_them = int((disp.get("by_disposition", {}) or {}).get("awaiting-them", 0) or 0)
     held = int((disp.get("by_disposition", {}) or {}).get("held", 0) or 0)
+    # Warm leads we replied to that went cold past the 14d stale flip (correspondence-walk.py) —
+    # the "follow up or drop" decisions the operator owes. Count only; identity stays in the
+    # sealed 0700 sidecar, never the emailed body.
+    stale_awaiting = int(disp.get("stale_awaiting", 0) or 0)
 
     opp_age = _age_hours(opp.get("generated_at"))
     ledger_age = _age_hours(ledger.get("generated_at"))
@@ -106,7 +110,7 @@ def compose() -> tuple[str, str]:
     funnel_age = _age_hours(funnel.get("generated"))
 
     today = _dt.datetime.now(_dt.timezone.utc).strftime("%a %b %-d")
-    owed = red_count + stale_count + linkedin_no_path + portal_forms + reply_owed
+    owed = red_count + stale_count + linkedin_no_path + portal_forms + reply_owed + stale_awaiting
 
     subject = (
         f"Opportunity brief — {owed} owed, {total_inbound} inbound, "
@@ -166,6 +170,9 @@ def compose() -> tuple[str, str]:
 
     L.append("CORRESPONDENCE:")
     L.append(f"    reply-owed: {reply_owed}   awaiting-them: {awaiting_them}   held (your sig): {held}")
+    if stale_awaiting:
+        L.append(f"    🕰 STALE WARM LEADS (we replied, went cold >14d): {stale_awaiting} — follow up or drop")
+        L.append("       who/thread in your sealed sidecar: _people-private/correspondence/dispositions-detail.jsonl")
     L.append("")
 
     # Engine-health footer — freshness proves the beat is actually alive (catches the

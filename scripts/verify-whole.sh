@@ -127,6 +127,9 @@ python3 scripts/tests/correspondence-drain-trend-append.test.py
 step "Verify the stale-awaiting-them nudge (INTERNALDATE parse + a reply older than the threshold flips awaiting-them → needs-human)"
 python3 scripts/tests/correspondence-await-stale.test.py
 
+step "Verify the daily brief SURFACES stale warm leads (stale_awaiting cue renders + counted + PII-clean; silent at 0)"
+python3 scripts/tests/opportunity-brief.test.py
+
 step "Verify the worktree-commit-guard hook (live-main commit deny matrix, hermetic fixture)"
 bash scripts/tests/worktree-commit-guard.test.sh
 
