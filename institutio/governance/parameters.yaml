@@ -2828,6 +2828,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Path to the GITVS estate registry (the desired-state resource graph). Overridable so scripts/tests/gitvs.test.sh can point the parity predicate at drift fixtures; production reads the committed institutio/github/estate.yaml."
+  LIMEN_GITVS_ACCESS:
+    default: "institutio/github/access.yaml"
+    env: LIMEN_GITVS_ACCESS
+    self_update: none
+    owner: gitvs
+    note: "Path to the ACCESS registry (per-repo partner collaborator grants — the partner-partition truth). Parity validates grant shape/ceiling/never-grant offline; the repo_collaborators resource diffs live collaborators against it; validate-constellation.py Rule #7 reads the same knob for its person↔repo cross-check (one knob per fact). Overridable so gitvs.test.sh can fixture it; absent file = skip (sparse by design)."
   LIMEN_PROGRESS_SOURCE_REGISTRY_DIRS:
     default: ""
     env: LIMEN_PROGRESS_SOURCE_REGISTRY_DIRS

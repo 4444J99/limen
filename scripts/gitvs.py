@@ -44,7 +44,7 @@ import shlex
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -84,6 +84,12 @@ VALID_SEO_KEYS = {"description", "topics_min", "homepage", "readme"}
 VALID_SEO_REQ = {"required", "optional"}
 # The ONE sanctioned per-repo block: each row is a durable human judgment (class + why required).
 VALID_OVERRIDE_KEYS = {"class", "why", "publish_candidate", "split", "oversize"}
+# ACCESS — the partner-partition registry (institutio/github/access.yaml): per-repo collaborator
+# grants. Role rank is total-ordered so the policy ceiling composes; `admin` is deliberately
+# absent — an admin partner is structurally impossible to declare, not merely drift.
+ACCESS = Path(os.environ.get("LIMEN_GITVS_ACCESS") or (ROOT / "institutio" / "github" / "access.yaml"))
+GRANT_ROLE_RANK = {"pull": 0, "triage": 1, "push": 2, "maintain": 3}
+REQUIRED_GRANT_FIELDS = ("login", "person", "role", "granted", "why")
 REQUIRED_INTEGRATION_FIELDS = (
     "category",
     "app_slug",
@@ -182,6 +188,18 @@ def load_estate() -> dict:
         except Exception:
             pass  # a broken overlay never breaks policy evaluation of the public registry
     return estate
+
+
+def load_access() -> dict | None:
+    """The partner-partition registry (ACCESS). None ⟺ absent — a skip, never a failure: the
+    registry is sparse by design (only repos with grants), and fixture estates without an access
+    file must evaluate exactly as before it existed."""
+    if not ACCESS.exists():
+        return None
+    try:
+        return yaml.safe_load(ACCESS.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}  # unparseable ≠ absent: parity reports it as a defect
 
 
 def owners(estate: dict) -> list[str]:
@@ -1029,6 +1047,93 @@ def _effector_defects(rt_name: str, effectors: object, *, require_reachable: boo
     return defects
 
 
+def _access_parity(estate: dict) -> list[str]:
+    """The ACCESS registry's offline rung (partner partitioning): every grant row is a complete,
+    ceiling-bounded human judgment, and no grant lands on an ungrantable repo/class. Absent file =
+    skip (sparse-by-design); unparseable/malformed = defects. Mirrors the repo_overrides shape."""
+    access = load_access()
+    if access is None:
+        return []
+    fails: list[str] = []
+    if not isinstance(access, dict) or not access:
+        return [f"access registry {ACCESS.name}: missing or unparseable"]
+    if "schema_version" not in access:
+        fails.append("access: missing schema_version")
+    for field in ("owner", "note"):
+        if field not in access:
+            fails.append(f"access: missing '{field}'")
+
+    policy = access.get("policy")
+    ceiling = "push"
+    never_repos: set[str] = set()
+    never_classes: set[str] = set()
+    if not isinstance(policy, dict):
+        fails.append("access: policy must be a mapping")
+    else:
+        for field in ("role_ceiling", "never_grant_classes", "never_grant_repos", "owner", "note"):
+            if field not in policy:
+                fails.append(f"access policy: missing '{field}'")
+        ceiling = str(policy.get("role_ceiling") or "push")
+        if ceiling not in GRANT_ROLE_RANK:
+            fails.append(f"access policy: role_ceiling '{ceiling}' not in {sorted(GRANT_ROLE_RANK)}")
+            ceiling = "push"
+        declared_classes = estate.get("classes") or {}
+        for cls_name in policy.get("never_grant_classes") or []:
+            if cls_name not in declared_classes:
+                fails.append(f"access policy: never_grant_class '{cls_name}' names no declared class")
+            never_classes.add(str(cls_name))
+        for repo in policy.get("never_grant_repos") or []:
+            if not (isinstance(repo, str) and repo.count("/") == 1):
+                fails.append(f"access policy: never_grant_repo '{repo}' is not an owner/repo name")
+            never_repos.add(str(repo))
+
+    grants = access.get("grants")
+    if grants is None:
+        grants = {}
+    if not isinstance(grants, dict):
+        fails.append("access: grants must be a mapping of repo → grant rows")
+        grants = {}
+    for repo, rows in grants.items():
+        where = f"grant '{repo}'"
+        if not (isinstance(repo, str) and repo.count("/") == 1):
+            fails.append(f"{where}: not an owner/repo name")
+            continue
+        if repo in never_repos:
+            fails.append(f"{where}: repo is in never_grant_repos — an engine repo never carries a grant")
+        cls_name = classify_repo(repo, estate)
+        if cls_name in never_classes:
+            fails.append(f"{where}: class '{cls_name}' is in never_grant_classes — structurally ungrantable")
+        if not isinstance(rows, list) or not rows:
+            fails.append(f"{where}: must be a non-empty list of grant rows")
+            continue
+        for row in rows:
+            if not isinstance(row, dict):
+                fails.append(f"{where}: grant row is not a mapping")
+                continue
+            login = str(row.get("login") or "")
+            rwhere = f"{where} login '{login or '<missing>'}'"
+            for field in REQUIRED_GRANT_FIELDS:
+                if not str(row.get(field) or "").strip():
+                    fails.append(f"{rwhere}: missing '{field}' (a grant without it is not a durable judgment)")
+            unknown = set(row) - set(REQUIRED_GRANT_FIELDS)
+            if unknown:
+                fails.append(f"{rwhere}: unknown key(s) {sorted(unknown)}")
+            role = str(row.get("role") or "")
+            if role not in GRANT_ROLE_RANK:
+                fails.append(f"{rwhere}: role '{role}' not in {sorted(GRANT_ROLE_RANK)} (admin is undeclarable)")
+            elif GRANT_ROLE_RANK[role] > GRANT_ROLE_RANK[ceiling]:
+                fails.append(f"{rwhere}: role '{role}' exceeds the policy ceiling '{ceiling}'")
+            granted = row.get("granted")
+            if isinstance(granted, datetime):
+                granted = granted.date()
+            if not isinstance(granted, date):
+                try:
+                    datetime.strptime(str(granted), "%Y-%m-%d")
+                except (TypeError, ValueError):
+                    fails.append(f"{rwhere}: granted '{granted}' is not an ISO date (YYYY-MM-DD)")
+    return fails
+
+
 def parity(estate: dict) -> list[str]:
     """Class H — the deterministic, offline-safe rung (the PR gate). Schema + wiring-integrity + parity."""
     fails: list[str] = []
@@ -1210,6 +1315,10 @@ def parity(estate: dict) -> list[str]:
         pok = org_row.get("plan_ok")
         if pok is not None and (not isinstance(pok, list) or not pok or not all(isinstance(p, str) and p for p in pok)):
             fails.append(f"org-class '{oname}': plan_ok must be a non-empty string list")
+
+    # ACCESS (the partner-partition registry) — validated in the same offline rung so a malformed
+    # grant, a ceiling breach, or a grant on an ungrantable repo/class reddens the PR gate.
+    fails.extend(_access_parity(estate))
     return fails
 
 

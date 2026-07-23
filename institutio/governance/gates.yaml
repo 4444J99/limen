@@ -122,6 +122,11 @@ gates:
     scoped: false
     owner: consulting
     note: "Sovereign Systems engagement records stay schema-clean."
+  constellation-registry:
+    command: "python3 organs/consulting/constellation/validate-constellation.py --quiet"
+    paths: ["organs/consulting/constellation/**", "institutio/github/access.yaml"]
+    owner: consulting
+    note: "The constellation register's Rules #1-7 (completeness, name discipline, PII lint, cross-refs, single-org, overlay parity, access cross-check) run per-diff — previously reachable only via constellation-done.sh. access.yaml implicates it because Rule #7 cross-checks every grant against the granted person's registered project rows."
   artist-records:
     command: "python3 organs/artist/validate-artist.py --fleet --quiet"
     paths: ["organs/artist/**"]
@@ -357,12 +362,12 @@ gates:
   # ── GitHub estate (GITVS — the GitHub custodian) ────────────────────────────
   gitvs-parity:
     command: "python3 scripts/gitvs.py doctor --offline --parity-only"
-    paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "scripts/setup-rulesets.py", "scripts/reap-branches.py", "scripts/sync-marketplace-config.py"]
+    paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "scripts/setup-rulesets.py", "scripts/reap-branches.py", "scripts/sync-marketplace-config.py"]
     owner: gitvs
     note: "The GitHub-estate registry's own drift predicate (deterministic class-H rung): schema, wiring-integrity (every status:active resource type + active integration is wired + its delegate/reap effector scripts exist — the sensor-without-effector law), required_checks name real .github/workflows jobs. Cheap + deterministic, so scoped: runs whenever its inputs change; the live A–G posture rungs run in the beat, never as a PR gate."
   gitvs-test:
     command: "bash scripts/tests/gitvs.test.sh"
-    paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "scripts/tests/gitvs.test.sh"]
+    paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "scripts/tests/gitvs.test.sh"]
     owner: gitvs
     note: "Parity + drift fixtures for the GITVS predicate: an unwired active resource type, a bad required_check, and a missing effector script must each red the doctor; a clean estate must pass."
   sync-marketplace-config-test:

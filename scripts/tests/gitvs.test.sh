@@ -64,8 +64,13 @@ YAML
 }
 
 # ── Case 0: the REAL committed estate passes (drift == ∅ at the parity level) ──
+#    (runs with the REAL access.yaml too — the committed registries must be green together)
 FIX="$ROOT/institutio/github/estate.yaml"
 expect 0 "drift == ∅" "case0 real estate passes"
+
+# Fixture estates don't declare the real access.yaml's never_grant classes — point ACCESS at an
+# absent file for the estate fixtures so they evaluate exactly as before the registry existed.
+export LIMEN_GITVS_ACCESS="$work/absent-access.yaml"
 
 # ── Case 1: a minimal valid fixture passes ──
 FIX="$work/valid.yaml"; valid_estate "$FIX"
@@ -341,6 +346,77 @@ d["orgs"] = {"reserved": {"match": ["organvm-*"], "plan_ok": "free", "repos": 0,
 open(sys.argv[1], "w").write(yaml.safe_dump(d))
 PY
 expect 1 "plan_ok must be a non-empty string list" "case20 malformed orgs row reddens"
+
+# ── ACCESS (the partner-partition registry) — parity must bite on every violation class ──
+FIX="$work/access-estate.yaml"; valid_estate "$FIX"
+valid_access() {  # a complete, ceiling-respecting access fixture against the fixture estate
+  cat > "$1" <<'YAML'
+schema_version: 0.1
+owner: gitvs
+note: "fixture"
+policy:
+  role_ceiling: push
+  never_grant_classes: []
+  never_grant_repos: [organvm/engine]
+  owner: gitvs
+  note: "fixture"
+grants:
+  organvm/example:
+    - {login: friend, person: pal, role: push, granted: 2026-07-23, why: "their one project repo"}
+YAML
+}
+
+# ── Case 21: a valid access registry passes ──
+export LIMEN_GITVS_ACCESS="$work/access-ok.yaml"; valid_access "$LIMEN_GITVS_ACCESS"
+expect 0 "drift == ∅" "case21 valid access registry passes"
+
+# ── Case 22: a grant on a never_grant repo → red (engine repos never carry grants) ──
+export LIMEN_GITVS_ACCESS="$work/access-engine.yaml"; valid_access "$LIMEN_GITVS_ACCESS"
+python3 - "$LIMEN_GITVS_ACCESS" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["grants"]["organvm/engine"] = [
+    {"login": "friend", "person": "pal", "role": "pull", "granted": "2026-07-23", "why": "x"}
+]
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "never carries a grant" "case22 grant on never_grant repo reddens"
+
+# ── Case 23: a role above the policy ceiling → red, and admin is undeclarable outright ──
+export LIMEN_GITVS_ACCESS="$work/access-ceiling.yaml"; valid_access "$LIMEN_GITVS_ACCESS"
+python3 - "$LIMEN_GITVS_ACCESS" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["grants"]["organvm/example"][0]["role"] = "maintain"
+d["grants"]["organvm/other"] = [
+    {"login": "boss", "person": "pal", "role": "admin", "granted": "2026-07-23", "why": "x"}
+]
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "exceeds the policy ceiling" "case23 ceiling breach reddens"
+out="$(LIMEN_GITVS_ESTATE="$FIX" python3 "$GITVS" doctor --parity-only 2>&1)" || true
+echo "$out" | grep -q "admin is undeclarable" \
+  && pass=$((pass+1)) || { echo "  MISMATCH (case23b admin undeclarable)"; fail=$((fail+1)); }
+
+# ── Case 24: a grant without a why → red (a judgment without a rationale is not durable) ──
+export LIMEN_GITVS_ACCESS="$work/access-nowhy.yaml"; valid_access "$LIMEN_GITVS_ACCESS"
+python3 - "$LIMEN_GITVS_ACCESS" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+del d["grants"]["organvm/example"][0]["why"]
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "missing 'why'" "case24 grant missing why reddens"
+
+# ── Case 25: a grant whose repo classifies into a never_grant class → red (structural) ──
+export LIMEN_GITVS_ACCESS="$work/access-nevercls.yaml"; valid_access "$LIMEN_GITVS_ACCESS"
+python3 - "$LIMEN_GITVS_ACCESS" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["policy"]["never_grant_classes"] = ["governed_public"]  # the fixture estate's only class
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "structurally ungrantable" "case25 never_grant class reddens"
 
 echo
 if [ "$fail" -eq 0 ]; then
