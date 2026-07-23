@@ -496,7 +496,7 @@ def _canonical_revision(fields: dict[str, Any]) -> str:
     if isinstance(value, datetime):
         if value.tzinfo is None:
             value = value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        return _revision_iso(value)
     if isinstance(value, date):
         return value.isoformat()
     rendered = str(value)
@@ -505,10 +505,17 @@ def _canonical_revision(fields: dict[str, Any]) -> str:
             parsed = datetime.fromisoformat(rendered.replace("Z", "+00:00"))
             if parsed.tzinfo is None:
                 parsed = parsed.replace(tzinfo=timezone.utc)
-            return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+            return _revision_iso(parsed)
         except ValueError:
             pass
     return rendered
+
+
+def _revision_iso(value: datetime) -> str:
+    # The keeper's canonicalRevision (projection.js) renders through JS
+    # Date.toISOString(), which always truncates to millisecond precision —
+    # a Python-side microsecond render can never CAS-match it.
+    return value.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def _compatibility_intent(ticket: Ticket, base: dict[str, Any] | None) -> dict[str, Any]:

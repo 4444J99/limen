@@ -625,3 +625,24 @@ def test_reducer_preserves_successor_terminal_hold():
 
     assert tasks["T-held"]["status"] == "done"
     assert tasks["T-held"]["labels"] == ["workstream:successor-required"]
+
+
+def test_canonical_revision_matches_worker_millisecond_canon() -> None:
+    """Python renders revisions in the keeper's JS toISOString canon (#1408 family).
+
+    canonicalRevision in projection.js always emits millisecond precision, so a
+    microsecond render from a Python producer can never CAS-match the keeper —
+    every status transition on a Python-stamped task 409s with
+    "exact revision moved". Vectors below are `new Date(v).toISOString()` output.
+    """
+    canon = tabularius._canonical_revision
+    assert canon({"updated": "2026-07-22T19:28:29.695237Z"}) == "2026-07-22T19:28:29.695Z"
+    assert canon({"updated": "2026-07-22T19:28:29Z"}) == "2026-07-22T19:28:29.000Z"
+    assert canon({"updated": "2026-07-22T19:28:29.695Z"}) == "2026-07-22T19:28:29.695Z"
+    assert canon({"dispatch_log": [{"timestamp": "2026-07-23T10:30:04.446Z"}]}) == "2026-07-23T10:30:04.446Z"
+    assert (
+        canon({"updated": datetime(2026, 7, 22, 19, 28, 29, 695237, tzinfo=timezone.utc)}) == "2026-07-22T19:28:29.695Z"
+    )
+    # Non-datetime revisions pass through untouched, exactly like the worker.
+    assert canon({"created": "2026-07-23"}) == "2026-07-23"
+    assert canon({"status": "open"}) == "open"
