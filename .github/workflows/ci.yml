@@ -3,10 +3,13 @@ name: CI
 on:
   push:
     branches: [main]
+    # tasks.yaml is deliberately absent (the board fast lane): board merges are data,
+    # validated pre-merge by pr-gate's task-board/tasks-parse gates + validate.yaml;
+    # check-main-green's exact-head predicate is path-aware, so a board-only head
+    # inherits the newest green run instead of demanding a matrix run of its own.
     paths:
       - "cli/**"
       - "web/**"
-      - "tasks.yaml"
       - "firebase.json"
       - "scripts/**"
       - "spec/**"

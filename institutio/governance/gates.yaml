@@ -247,7 +247,7 @@ gates:
     command: "python3 -m pytest cli/tests/test_check_main_green.py -q"
     paths: ["scripts/check-main-green.py", "cli/tests/test_check_main_green.py", "scripts/omega.sh"]
     owner: omega
-    note: "Workflow-filtered completed CI must match the full current origin/main head; a prior or pending run is never green proof."
+    note: "Workflow-filtered completed CI must match the full current origin/main head — or, path-aware, the newest green run when every commit past it implicates none of ci.yml's push paths (docs/board-only merges never trigger the workflow). A pending run or a red newest run is never green proof."
   orphan-watchers-test:
     command: "python3 -m pytest cli/tests/test_orphan_watchers.py -q"
     paths: ["scripts/orphan-watchers.py", "scripts/hooks/session-closeout.sh", "cli/tests/test_orphan_watchers.py"]

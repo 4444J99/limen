@@ -173,6 +173,108 @@ def _gh_latest_main_run() -> dict | None:
     return select_completed_push_run(runs) if runs is not None else None
 
 
+def _glob_to_regex(glob: str) -> re.Pattern[str]:
+    """GitHub Actions path-filter glob → regex (`**` crosses slashes, `*` does not).
+
+    Mirrors scripts/verify.py::glob_to_regex — kept local so this beat script stays
+    light; parity is asserted in cli/tests/test_check_main_green.py, so a drift is a
+    red test, not a silent divergence.
+    """
+    out, i = [], 0
+    while i < len(glob):
+        if glob.startswith("**", i):
+            out.append(".*")
+            i += 2
+        elif glob[i] == "*":
+            out.append("[^/]*")
+            i += 1
+        else:
+            out.append(re.escape(glob[i]))
+            i += 1
+    return re.compile("^" + "".join(out) + "$")
+
+
+def _ci_push_globs() -> list[str]:
+    """The workflow's ``on.push.paths`` — the paths that make a main commit CI-relevant.
+
+    Read from the workflow file itself so this predicate can never drift from the real
+    trigger. YAML 1.1 parses a bare ``on:`` key as boolean True, so accept both keys.
+    Any read/parse problem → [] (the caller then fails toward requiring an exact run).
+    """
+    try:
+        import yaml
+
+        wf = yaml.safe_load((ROOT / ".github" / "workflows" / WORKFLOW).read_text())
+    except Exception:
+        return []
+    on = wf.get("on", wf.get(True)) if isinstance(wf, dict) else None
+    push = (on or {}).get("push") if isinstance(on, dict) else None
+    paths = (push or {}).get("paths") if isinstance(push, dict) else None
+    return [str(p) for p in paths] if isinstance(paths, list) else []
+
+
+def _compare_files(base_sha: str, head_sha: str) -> list[str] | None:
+    """Changed files base..head via the compare API (no local fetch, like _remote_main_head).
+
+    None ⟺ unusable: API error, base is not a strict ancestor (compare status != "ahead"),
+    or GitHub's 300-file response cap was reached (the list would be silently incomplete).
+    """
+    data = _gh_json(["api", f"repos/{REPO}/compare/{base_sha}...{head_sha}"], None)
+    if not isinstance(data, dict) or data.get("status") != "ahead":
+        return None
+    files = data.get("files")
+    if not isinstance(files, list) or len(files) >= 300:
+        return None
+    names = [str(f.get("filename") or "") for f in files if isinstance(f, dict)]
+    return [n for n in names if n]
+
+
+def path_aware_gap_verdict(files: list[str] | None, globs: list[str]) -> tuple[bool, str]:
+    """Pure: is the run-less gap between the newest green run and head CI-irrelevant?
+
+    files=None → the gap could not be fully enumerated: fail toward requiring an exact
+    run. Empty globs → the workflow has no push path filter, so every commit is
+    CI-relevant. Any file matching a push glob → CI-relevant (a genuine missing run).
+    """
+    if files is None:
+        return False, "gap files unavailable"
+    if not globs:
+        return False, "no push path filter — every commit is CI-relevant"
+    regexes = [_glob_to_regex(g) for g in globs]
+    hits = sorted({f for f in files if any(r.match(f) for r in regexes)})
+    if hits:
+        return False, f"CI-relevant paths lack a run: {', '.join(hits[:5])}"
+    return True, f"{len(files)} changed path(s), none implicate {WORKFLOW}"
+
+
+def _path_aware_head_check(head: str, runs: list[dict]) -> int:
+    """Head has no run of its own: green ⟺ newest completed push run is green AND every
+    commit past it is outside the workflow's push paths.
+
+    Docs- and board-only merges never trigger ci.yml (path-filtered), so demanding an
+    exact-head run held Omega's main-green rung red on them forever. A red newest run is
+    never walked past — an older green cannot launder a red trunk.
+    """
+    newest = select_completed_push_run(runs)
+    if newest is None:
+        print(f"check-main-green: EXACT-HEAD FAIL — no completed {WORKFLOW} push run for {head}")
+        return 1
+    conclusion = str(newest.get("conclusion") or "unknown")
+    url = str(newest.get("url") or "")
+    base = str(newest.get("headSha") or "")
+    if conclusion != "success":
+        print(f"check-main-green: EXACT-HEAD RED — newest {WORKFLOW} {conclusion} @ {base}; head {head} has no run ({url})")
+        return 1
+    ok, why = path_aware_gap_verdict(_compare_files(base, head), _ci_push_globs())
+    if ok:
+        print(
+            f"check-main-green: EXACT-HEAD GREEN (path-aware) — {WORKFLOW} success @ {base}; head {head}: {why} ({url})"
+        )
+        return 0
+    print(f"check-main-green: EXACT-HEAD FAIL — no completed {WORKFLOW} push run for {head} ({why})")
+    return 1
+
+
 def _remote_main_head() -> str | None:
     """Return the remote owner's full ``main`` identity without mutating local refs.
 
@@ -197,7 +299,9 @@ def _remote_main_head() -> str | None:
 
 
 def exact_head_check() -> int:
-    """Fail closed unless current remote ``main`` has a successful completed CI push run.
+    """Fail closed unless remote ``main`` is proven green: a successful completed CI push
+    run at the exact head, or — when the head's commits past the newest green run
+    implicate none of the workflow's push paths — that newest green run (path-aware).
 
     This is Omega's live main-green predicate.  It deliberately bypasses the throttle cache and
     wedge/task-emission logic: a cached prior head cannot prove the current head, and a predicate
@@ -213,8 +317,7 @@ def exact_head_check() -> int:
         return 1
     run = select_completed_push_run(runs, head_sha=head)
     if run is None:
-        print(f"check-main-green: EXACT-HEAD FAIL — no completed {WORKFLOW} push run for {head}")
-        return 1
+        return _path_aware_head_check(head, runs)
     conclusion = str(run.get("conclusion") or "unknown")
     url = str(run.get("url") or "")
     if conclusion != "success":
@@ -641,7 +744,9 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--exact-head-check",
         action="store_true",
-        help="fail closed unless current origin/main has a completed successful CI workflow push run",
+        help="fail closed unless current origin/main has a completed successful CI workflow push run "
+        "(path-aware: a head whose commits past the newest green run implicate none of the "
+        "workflow's push paths inherits that green — docs/board-only merges never trigger ci.yml)",
     )
     ap.add_argument("--throttle", type=int, default=int(os.environ.get("LIMEN_MAIN_GREEN_THROTTLE", "1800")))
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))

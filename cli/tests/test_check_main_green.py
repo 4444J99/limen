@@ -334,6 +334,88 @@ def test_exact_head_check_fails_closed_without_matching_completed_run(monkeypatc
     assert "no completed" in capsys.readouterr().out
 
 
+# ── path-aware exact-head: docs/board-only merges never trigger ci.yml ─────────
+
+
+def test_glob_translation_parity_with_verify_resolver():
+    m = _load()
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("verify_mod", ROOT / "scripts" / "verify.py")
+    verify_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verify_mod)
+    for glob in ("web/app/**", "cli/**", "tasks.yaml", "scripts/*.py", "**"):
+        assert m._glob_to_regex(glob).pattern == verify_mod.glob_to_regex(glob).pattern
+
+
+def test_ci_push_globs_reads_the_real_workflow():
+    m = _load()
+    # The script's ROOT defaults to the operator's checkout path, which does not
+    # exist on a CI runner — pin it to the tree this test file actually lives in.
+    m.ROOT = ROOT
+    globs = m._ci_push_globs()
+    assert isinstance(globs, list) and "cli/**" in globs
+
+
+def test_path_aware_gap_verdict_matrix():
+    m = _load()
+    globs = ["cli/**", "tasks.yaml"]
+    ok, why = m.path_aware_gap_verdict(["docs/x.md", "logs/y.md"], globs)
+    assert ok and "none implicate" in why
+    ok, why = m.path_aware_gap_verdict(["docs/x.md", "cli/src/limen/io.py"], globs)
+    assert not ok and "cli/src/limen/io.py" in why
+    assert m.path_aware_gap_verdict(None, globs) == (False, "gap files unavailable")
+    ok, why = m.path_aware_gap_verdict(["docs/x.md"], [])
+    assert not ok and "no push path filter" in why
+
+
+def test_exact_head_path_aware_green_for_non_implicating_gap(monkeypatch, capsys):
+    m = _load()
+    head, green = "a" * 40, "b" * 40
+    monkeypatch.setattr(m, "_remote_main_head", lambda: head)
+    monkeypatch.setattr(m, "_gh_main_runs", lambda: [_run_row(green)])
+    monkeypatch.setattr(m, "_compare_files", lambda base, h: ["docs/plans/x.md"])
+    monkeypatch.setattr(m, "_ci_push_globs", lambda: ["cli/**"])
+    assert m.exact_head_check() == 0
+    assert "GREEN (path-aware)" in capsys.readouterr().out
+
+
+def test_exact_head_path_aware_fails_when_gap_implicates(monkeypatch, capsys):
+    m = _load()
+    head, green = "a" * 40, "b" * 40
+    monkeypatch.setattr(m, "_remote_main_head", lambda: head)
+    monkeypatch.setattr(m, "_gh_main_runs", lambda: [_run_row(green)])
+    monkeypatch.setattr(m, "_compare_files", lambda base, h: ["cli/src/limen/io.py"])
+    monkeypatch.setattr(m, "_ci_push_globs", lambda: ["cli/**"])
+    assert m.exact_head_check() == 1
+    assert "EXACT-HEAD FAIL" in capsys.readouterr().out
+
+
+def test_exact_head_path_aware_never_walks_past_red(monkeypatch, capsys):
+    m = _load()
+    head, red = "a" * 40, "b" * 40
+    monkeypatch.setattr(m, "_remote_main_head", lambda: head)
+    monkeypatch.setattr(m, "_gh_main_runs", lambda: [_run_row(red, conclusion="failure")])
+
+    def _boom(base, h):
+        raise AssertionError("must not compare past a red trunk")
+
+    monkeypatch.setattr(m, "_compare_files", _boom)
+    assert m.exact_head_check() == 1
+    assert "EXACT-HEAD RED" in capsys.readouterr().out
+
+
+def test_exact_head_path_aware_fails_closed_when_compare_unavailable(monkeypatch, capsys):
+    m = _load()
+    head, green = "a" * 40, "b" * 40
+    monkeypatch.setattr(m, "_remote_main_head", lambda: head)
+    monkeypatch.setattr(m, "_gh_main_runs", lambda: [_run_row(green)])
+    monkeypatch.setattr(m, "_compare_files", lambda base, h: None)
+    monkeypatch.setattr(m, "_ci_push_globs", lambda: ["cli/**"])
+    assert m.exact_head_check() == 1
+    assert "gap files unavailable" in capsys.readouterr().out
+
+
 def test_remote_main_head_reads_owner_ref_not_cached_tracking_ref(monkeypatch):
     m = _load()
     current = "c" * 40
