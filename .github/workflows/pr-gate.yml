@@ -62,7 +62,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ruff pyyaml -r web/api/requirements.txt -e "cli[test]"
+          python -m pip install "ruff==0.15.8" pyyaml -r web/api/requirements.txt -e "cli[test]"
 
       - name: Verify implicated PR gates (scoped, CI mirrors deferred)
         if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'pull_request'
