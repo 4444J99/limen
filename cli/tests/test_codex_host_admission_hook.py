@@ -498,6 +498,29 @@ def test_symlink_aliases_resolve_to_the_same_writer_scope(tmp_path: Path) -> Non
     assert escaped["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-outside-worktree"
 
 
+def test_nested_repository_growth_blocks_subsequent_write_without_deleting_state(tmp_path: Path) -> None:
+    hook = load_hook()
+    _main, first, _second = linked_worktrees(tmp_path)
+    nested = first / "nested"
+    subprocess.run(["git", "init", "-q", str(nested)], check=True)
+    service = controller(tmp_path / "admission")
+
+    output = hook.handle(
+        payload(
+            "PreToolUse",
+            cwd=str(first),
+            tool_name="Edit",
+            tool_input={"file_path": str(first / "tracked.txt")},
+        ),
+        controller=service,
+        owner_pid=101,
+    )
+
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "nested-repository"
+    assert service.status(probe=False)["leases"] == []
+    assert (nested / ".git").exists()
+
+
 def test_ambiguous_or_mutation_capable_bash_is_treated_as_a_write(tmp_path: Path) -> None:
     hook = load_hook()
     main, first, _second = linked_worktrees(tmp_path)

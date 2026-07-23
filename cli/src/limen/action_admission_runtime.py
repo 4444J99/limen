@@ -13,6 +13,7 @@ from limen.action_admission import (
     resolve_effective_cwd,
     target_paths,
 )
+from limen.growth_admission import GrowthScanError, inspect_growth
 from limen.host_admission import AdmissionController, AdmissionStateError, is_descendant, worktree_scope
 
 
@@ -70,6 +71,18 @@ def admit_pre_tool_action(
         return ToolAdmission(False, "shared-checkout-write")
     if any(not path_within(path, scope.top_level) for path in targets):
         return ToolAdmission(False, "write-target-outside-worktree")
+    raw_tool_input = payload.get("tool_input")
+    tool_input = raw_tool_input if isinstance(raw_tool_input, dict) else None
+    try:
+        growth = inspect_growth(
+            scope.top_level,
+            target_paths=targets,
+            tool_input=tool_input,
+        )
+    except (GrowthScanError, OSError, ValueError) as exc:
+        return ToolAdmission(False, str(exc) or "growth-scan-unavailable")
+    if not growth.allowed:
+        return ToolAdmission(False, growth.reason)
     try:
         decision = controller.acquire(
             scope.lease_kind,
