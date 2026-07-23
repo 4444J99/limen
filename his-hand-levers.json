@@ -505,6 +505,14 @@
       "issue": 257
     },
     {
+      "id": "L-PARTNER-GRANTS",
+      "label": "Fire staged partner-access commands when the repo_collaborators resource cites them: adding a grant row to institutio/github/access.yaml stages an invite (outbound — collab-sync.py --plan prints the exact `gh api -X PUT` command; the machine never sends it), and any role downgrade or relationship-sensitive removal of a DECLARED partner is your call the same way. Removal of UNDECLARED access is machine-runnable (collab-sync.py --apply, double-dark LIMEN_COLLAB_APPLY=1) but still rides this lever via the estate.yaml approval gate. GITVS doctor class N detects the drift; this lever fires the human half.",
+      "owner": "yours",
+      "cost": "~1 min per staged command; REVERSIBLE (a grant can be removed, an invite cancelled)",
+      "unlocks": "declared partner grants go live (invite fired) or stay clean (undeclared access removed); the GITVS repo_collaborators resource (class N) goes green",
+      "source_task": "GITVS estate (institutio/github/estate.yaml repo_collaborators) + institutio/github/access.yaml"
+    },
+    {
       "id": "L-OPENCODE-AUTH",
       "label": "Optionally run `opencode auth login` on this host, then verify `opencode models --verbose`. Authentication may expand the currently reachable catalog; Limen discovers capabilities and pricing from that live output and promises no tier, model name, or routing outcome.",
       "owner": "yours",

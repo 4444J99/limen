@@ -2966,6 +2966,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Star floor for the classify rule R7: a public repo with at least this many stars is proposed into the portal_public SEO lure tier even when it is not value-tier/seeded (traction is a discovered signal, never assumed)."
+  LIMEN_COLLAB_APPLY:
+    default: 0
+    env: LIMEN_COLLAB_APPLY
+    self_update: none
+    owner: gitvs
+    note: "Double-dark gate on collab-sync.py --apply, which removes UNDECLARED collaborator access only (the exposure-reducing direction of the repo_collaborators resource). Invites and role PUTs are never machine-run regardless of this flag — outbound is his hand on L-PARTNER-GRANTS; gitvs reconcile additionally skips the delegate via its approval lever."
   LIMEN_VISIBILITY_APPLY:
     default: 0
     env: LIMEN_VISIBILITY_APPLY

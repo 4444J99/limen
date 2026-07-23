@@ -90,6 +90,8 @@ VALID_OVERRIDE_KEYS = {"class", "why", "publish_candidate", "split", "oversize"}
 ACCESS = Path(os.environ.get("LIMEN_GITVS_ACCESS") or (ROOT / "institutio" / "github" / "access.yaml"))
 GRANT_ROLE_RANK = {"pull": 0, "triage": 1, "push": 2, "maintain": 3}
 REQUIRED_GRANT_FIELDS = ("login", "person", "role", "granted", "why")
+# GitHub's live role_name/permissions vocabulary → the registry's grant-role vocabulary.
+ROLE_NAME_TO_GRANT = {"read": "pull", "write": "push"}
 REQUIRED_INTEGRATION_FIELDS = (
     "category",
     "app_slug",
@@ -830,6 +832,69 @@ def _write_census_facts(rows: list[dict]) -> None:
         print(f"[gitvs] note: census-facts write skipped ({str(e)[:80]})")
 
 
+def _collaborator_census(estate: dict, access: dict | None, token: str | None, online: bool) -> dict:
+    """Class N's Lens: outside collaborators + pending invites over the bounded probe set
+    (granted repos ∪ never-grant repos), plus each owner org's outside-collaborator roll.
+    Logins + roles only — the same public facts the ACCESS registry already carries."""
+    out: dict = {"complete": False, "by_repo": {}, "org_outside": {}}
+    if not online or not isinstance(access, dict) or not access:
+        return out
+    grants = access.get("grants") or {}
+    policy = access.get("policy") or {}
+    probe = sorted({str(r) for r in grants} | {str(r) for r in (policy.get("never_grant_repos") or [])})
+    ok = True
+    for repo in probe:
+        row: dict = {"outside": None, "invitations": None}
+        r = _gh(
+            [
+                "api",
+                f"/repos/{repo}/collaborators?affiliation=outside&per_page=100",
+                "--jq",
+                "[.[] | {login: .login, role: .role_name}] | sort_by(.login)",
+            ],
+            token,
+            timeout=30,
+        )
+        if r.returncode == 0:
+            try:
+                row["outside"] = json.loads(r.stdout or "[]")
+            except ValueError:
+                ok = False
+        else:
+            ok = False
+        r = _gh(
+            [
+                "api",
+                f"/repos/{repo}/invitations?per_page=100",
+                "--jq",
+                "[.[] | {id: .id, login: .invitee.login, role: .permissions}] | sort_by(.login)",
+            ],
+            token,
+            timeout=30,
+        )
+        if r.returncode == 0:
+            try:
+                row["invitations"] = json.loads(r.stdout or "[]")
+            except ValueError:
+                ok = False
+        else:
+            ok = False
+        out["by_repo"][repo] = row
+    for org in owners(estate):
+        r = _gh(
+            ["api", f"/orgs/{org}/outside_collaborators?per_page=100", "--jq", "[.[].login] | sort"],
+            token,
+            timeout=30,
+        )
+        try:
+            # personal accounts 404 here — degrade to None; class N skips that roll, never guesses
+            out["org_outside"][org] = json.loads(r.stdout or "[]") if r.returncode == 0 else None
+        except ValueError:
+            out["org_outside"][org] = None
+    out["complete"] = ok
+    return out
+
+
 def observe(estate: dict) -> dict:
     """Build the actual-state ledger. Every block is fail-open: a gh/parse failure degrades to null,
     never raises; `online` records whether the live rungs ran. Counts + names only (the _scrub firewall —
@@ -942,6 +1007,9 @@ def observe(estate: dict) -> dict:
 
     # Org posture — the ACCOUNT layer (billing plan + repo custody per org; class L's input).
     led["orgs"] = _org_posture(estate, online)
+
+    # Collaborator census — the partner-partition layer (class N's input; ACCESS is desired-state).
+    led["collaborators"] = _collaborator_census(estate, load_access(), token, online)
     return led
 
 
@@ -1450,6 +1518,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
             "K seo-floor",
             "L org-posture",
             "M org-namespace",
+            "N collaborator-drift",
         ):
             skips.append(f"[{tag}] live rung — offline")
         return _verdict(fails, cites, skips, "offline")
@@ -1570,6 +1639,66 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
                     f"[L org-posture] {len(drifts)} org(s) off account policy ({'; '.join(drifts[:4])}{more}) → {atom}"
                 )
                 (cites if atom in homed else fails).append(line + (" (owned, open)" if atom in homed else " (UNHOMED)"))
+
+    # N — collaborator drift (the partner-partition rung): live outside collaborators vs the
+    # ACCESS registry. Undeclared access or an over-ceiling role is RED (removal is the machine-
+    # runnable direction, via collab-sync --apply); a declared-but-absent grant is a STAGED INVITE —
+    # outbound is his hand, so it is cited on the lever, never auto-sent.
+    access = load_access()
+    coll = led.get("collaborators") or {}
+    n_atom = "L-PARTNER-GRANTS"
+    if access is None:
+        skips.append("[N collaborator-drift] no ACCESS registry (institutio/github/access.yaml absent)")
+    elif not access:
+        pass  # unparseable registry is already a class-H parity defect this run
+    elif not coll.get("complete"):
+        skips.append("[N collaborator-drift] census incomplete (gh errors)")
+    else:
+        grants = access.get("grants") or {}
+        declared_logins = {
+            str(g.get("login", "")).lower()
+            for rows_ in grants.values()
+            if isinstance(rows_, list)
+            for g in rows_
+            if isinstance(g, dict)
+        }
+        for org, roll in sorted((coll.get("org_outside") or {}).items()):
+            if roll is None:
+                skips.append(f"[N collaborator-drift] {org}: outside-collaborator roll unreadable")
+                continue
+            undeclared = sorted(login for login in roll if str(login).lower() not in declared_logins)
+            if undeclared:
+                fails.append(
+                    f"[N collaborator-drift] {org}: undeclared outside collaborator(s): {', '.join(undeclared)}"
+                )
+        for repo, obs in sorted((coll.get("by_repo") or {}).items()):
+            declared = {str(g.get("login", "")).lower(): g for g in (grants.get(repo) or []) if isinstance(g, dict)}
+            outside = obs.get("outside")
+            if outside is None:
+                skips.append(f"[N collaborator-drift] {repo}: collaborator list unreadable")
+                continue
+            for c in outside:
+                login = str(c.get("login") or "")
+                role = ROLE_NAME_TO_GRANT.get(str(c.get("role")), str(c.get("role")))
+                g = declared.get(login.lower())
+                if g is None:
+                    fails.append(f"[N collaborator-drift] {repo}: {login} ({role}) has no grant row")
+                elif GRANT_ROLE_RANK.get(role, 99) > GRANT_ROLE_RANK.get(str(g.get("role")), -1):
+                    fails.append(
+                        f"[N collaborator-drift] {repo}: {login} live role {role} exceeds declared {g.get('role')}"
+                    )
+            live = {str(c.get("login") or "").lower() for c in outside}
+            pending = {str(i.get("login") or "").lower() for i in (obs.get("invitations") or [])}
+            for login_l, g in sorted(declared.items()):
+                if login_l in live:
+                    continue
+                if login_l in pending:
+                    cites.append(f"[N collaborator-drift] {repo}: invite pending for {g.get('login')} → {n_atom}")
+                else:
+                    (cites if n_atom in homed else fails).append(
+                        f"[N collaborator-drift] {repo}: {g.get('login')} declared but absent — staged invite → "
+                        + (f"{n_atom} (owned, open)" if n_atom in homed else f"{n_atom} (UNHOMED)")
+                    )
 
     # A/D are per-repo posture rungs — the census surfaces the inputs; the full per-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.

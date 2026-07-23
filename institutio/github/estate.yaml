@@ -176,6 +176,18 @@ resource_types:
     status: active
     owner: gitvs
     note: "The ACCOUNT layer above the repo graph: each org's billing plan + repo custody vs the `orgs:` block below (doctor class L). Plan/subscription changes are account-level human acts — the doctor cites the lever, never touches billing. (Enterprise emptied by machine 2026-07-17, #1185; the surviving atom is the Team upgrade.)"
+  repo_collaborators:
+    identity: derived
+    desired: ["every outside collaborator matches a grant row in institutio/github/access.yaml (login, role <= ceiling); nothing undeclared, nothing on a never-grant repo"]
+    observe: "gh api /repos/{repo}/collaborators?affiliation=outside + /repos/{repo}/invitations + /orgs/{org}/outside_collaborators"
+    effector:
+      - kind: delegate
+        argv: [python3, scripts/collab-sync.py, --apply]
+        approval: {lever: L-PARTNER-GRANTS}
+      - {kind: file-atom, target: L-PARTNER-GRANTS}
+    status: active
+    owner: gitvs
+    note: "Partner partitioning (grants, not transfers): the ACCESS registry is desired-state, the census is class N. Sending an invite is OUTBOUND = his hand (the plan prints the exact commands on the lever); --apply removes UNDECLARED access only (the exposure-reducing direction), double-dark behind LIMEN_COLLAB_APPLY=1 and the approval lever above — gitvs reconcile never auto-runs it."
 
   # ── envisioned — declared (owed), surfaced in the ledger, not yet gating ──────────────────────
   # These are the surfaces the ask ("everything GitHub") names but GITVS does not yet enact. They are

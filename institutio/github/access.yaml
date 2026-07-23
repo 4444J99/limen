@@ -37,4 +37,4 @@ grants:
   organvm/content-engine--asset-amplifier:
     - {login: LeflerDesign, person: scott, role: push, granted: 2026-07-23, why: "content-cannibalizer build lane (pre-existing grant, documented at audit)"}
   organvm/sovereign-systems--elevate-align:
-    - {login: eauco-mads, person: maddie, role: push, granted: 2026-07-23, why: "spiral funnel/content lane (pre-existing org-level outside collaborator — exact repo confirmed at the PR 2 audit)"}
+    - {login: eauco-mads, person: maddie, role: push, granted: 2026-07-23, why: "spiral funnel/content lane (pre-existing grant, confirmed at audit: this is the one repo the login holds)"}

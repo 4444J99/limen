@@ -418,6 +418,27 @@ open(sys.argv[1], "w").write(yaml.safe_dump(d))
 PY
 expect 1 "structurally ungrantable" "case25 never_grant class reddens"
 
+# ── Case 26: the offline doctor names the N rung as a skipped live rung (never a faked pass) ──
+export LIMEN_GITVS_ACCESS="$work/access-n.yaml"; valid_access "$LIMEN_GITVS_ACCESS"
+out="$(LIMEN_GITVS_ESTATE="$FIX" python3 "$GITVS" doctor --offline 2>&1)" || true
+echo "$out" | grep -q "N collaborator-drift" \
+  && pass=$((pass+1)) || { echo "  MISMATCH (case26 offline lists class N)"; fail=$((fail+1)); }
+
+# ── Case 27: collab-sync --apply without the double-dark env refuses outright ──
+out="$(LIMEN_GITVS_ESTATE="$FIX" LIMEN_COLLAB_APPLY= python3 "$ROOT/scripts/collab-sync.py" --apply 2>&1)"; rc=$?
+[ "$rc" = "3" ] && echo "$out" | grep -q "REFUSED" \
+  && pass=$((pass+1)) || { echo "  MISMATCH (case27 unarmed apply refused): rc=$rc"; fail=$((fail+1)); }
+
+# ── Case 28: collab-sync offline degrades to a loud SKIP, never a clean verdict ──
+out="$(LIMEN_GITVS_ESTATE="$FIX" python3 "$ROOT/scripts/collab-sync.py" 2>&1)"; rc=$?
+[ "$rc" = "2" ] && echo "$out" | grep -q "census unavailable" \
+  && pass=$((pass+1)) || { echo "  MISMATCH (case28 offline plan skips): rc=$rc"; fail=$((fail+1)); }
+
+# ── Case 29: collab-sync with no ACCESS registry skips (sparse by design) ──
+out="$(LIMEN_GITVS_ACCESS="$work/absent-access.yaml" LIMEN_GITVS_ESTATE="$FIX" python3 "$ROOT/scripts/collab-sync.py" 2>&1)"; rc=$?
+[ "$rc" = "2" ] && echo "$out" | grep -q "no ACCESS registry" \
+  && pass=$((pass+1)) || { echo "  MISMATCH (case29 absent access skips): rc=$rc"; fail=$((fail+1)); }
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "gitvs.test.sh: PASS ($pass checks)"
