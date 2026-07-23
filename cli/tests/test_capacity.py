@@ -8,8 +8,8 @@ Functions covered:
 
 from __future__ import annotations
 
-import sys
 import json
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -31,7 +31,6 @@ from limen.capacity import (
     task_value,
 )
 from limen.models import Task
-
 
 # ---------------------------------------------------------------------------
 # canonical_agent

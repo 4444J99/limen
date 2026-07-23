@@ -13,11 +13,10 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
-import limen.host_admission as host_admission
+from limen import host_admission
 from limen.host_admission import (
-    AdmissionDenied,
     AdmissionController,
+    AdmissionDenied,
     AdmissionStateError,
     hold_lease,
     parse_iostat_mib_samples,
@@ -450,15 +449,17 @@ def test_symlink_or_open_permissions_state_root_is_rejected(tmp_path: Path) -> N
 
 def test_hold_lease_releases_on_exception(tmp_path: Path) -> None:
     service = controller(tmp_path / "state")
-    with pytest.raises(RuntimeError, match="boom"):
-        with hold_lease(
+    with (
+        pytest.raises(RuntimeError, match="boom"),
+        hold_lease(
             "execution",
             owner="codex",
             surface="turn",
             pid=101,
             controller=service,
-        ):
-            raise RuntimeError("boom")
+        ),
+    ):
+        raise RuntimeError("boom")
     assert service.status(probe=False)["leases"] == []
 
 

@@ -15,7 +15,6 @@ from urllib.parse import urlsplit
 
 from limen.intake import is_durable_receipt_target, is_executable_predicate
 
-
 ACTIVE_OWNER_STATUSES = frozenset({"open", "dispatched", "in_progress", "needs_human", "failed_blocked"})
 _GITHUB_PR_URL_PATH_RE = re.compile(r"^/(?P<repo>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/pull/(?P<number>[1-9][0-9]*)/?$")
 _GITHUB_PR_DECLARED_RE = re.compile(

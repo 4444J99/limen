@@ -10,7 +10,6 @@ import glob
 import json
 
 import pytest
-
 from limen.models import Task
 from limen.observatory import config, lever
 

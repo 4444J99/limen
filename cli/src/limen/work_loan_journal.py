@@ -9,15 +9,15 @@ import math
 import os
 import re
 from collections import defaultdict
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Literal, Mapping, Sequence
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from limen.work_loan import task_work_loan_readiness
-
 
 JOURNAL_SCHEMA: Literal["limen.work_loan_journal_event.v1"] = "limen.work_loan_journal_event.v1"
 SNAPSHOT_SCHEMA = "limen.work_loan_journal.v1"
@@ -149,7 +149,7 @@ class WorkLoanJournalEventV1(BaseModel):
         return value.astimezone(UTC)
 
     @model_validator(mode="after")
-    def phase_contract(self) -> "WorkLoanJournalEventV1":
+    def phase_contract(self) -> WorkLoanJournalEventV1:
         if self.phase == "requested":
             required = (
                 self.source_origin,
@@ -189,7 +189,7 @@ class WorkLoanJournalEventV1(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def event_id_matches_content(self) -> "WorkLoanJournalEventV1":
+    def event_id_matches_content(self) -> WorkLoanJournalEventV1:
         material = self.model_dump(mode="json", exclude={"event_id"}, exclude_none=False)
         if self.event_id != canonical_sha256(material):
             raise ValueError("event_id does not match canonical event content")

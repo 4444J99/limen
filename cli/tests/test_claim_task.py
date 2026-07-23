@@ -4,11 +4,10 @@ import copy
 import importlib.util
 from pathlib import Path
 
-import limen.tabularius as tabularius
 import pytest
 import yaml
+from limen import tabularius
 from limen.conduct.client import BrokerUnavailable
-
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "claim-task.py"
 

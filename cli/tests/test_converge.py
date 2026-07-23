@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 
 import pytest
-
 from limen.converge import (
     LADDER_TIERS,
     AnthropicSynthesizer,

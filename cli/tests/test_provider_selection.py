@@ -5,7 +5,6 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-
 from limen.models import DispatchLogEntry, Task
 from limen.provider_selection import (
     ExecutionProfile,

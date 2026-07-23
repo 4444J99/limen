@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ianva" / "src"))
 
-from ianva.upstreams import load_upstreams  # noqa: E402
+from ianva.upstreams import load_upstreams
 
 
 def test_load_upstreams_defensively_normalizes_registry_shapes(tmp_path):

@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import subprocess
 from contextlib import contextmanager
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
-import pytest
-
-import limen.jules_remote as jr
 import limen.dispatch as dispatch_module
+import limen.jules_remote as jr
+import pytest
 from limen.dispatch import release_stale_tasks
 from limen.io import load_limen_file, save_limen_file
 from limen.jules_remote import (
@@ -28,12 +27,11 @@ from limen.models import (
     Task,
 )
 
-
 SID = "12345678901234567890"
 
 
 def _write_stale_board(path: Path, *, target_agent: str = "jules") -> None:
-    stale = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    stale = datetime(2026, 1, 1, tzinfo=UTC)
     save_limen_file(
         path,
         LimenFile(

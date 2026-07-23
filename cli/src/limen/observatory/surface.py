@@ -275,7 +275,7 @@ def _default_site_fetch(url: str, timeout: int) -> tuple[str | None, int | None,
     """Fail-open urllib fetch — never raises. Returns (html, status, error)."""
     try:
         req = urllib.request.Request(url, headers={"User-Agent": _SITE_UA})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (scheme guarded by caller)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             html = resp.read(600_000).decode("utf-8", "replace")
             return html, getattr(resp, "status", 200), None
     except urllib.error.HTTPError as exc:

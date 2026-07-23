@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import re
 import webbrowser
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Mapping, Sequence
+from typing import Any
 from urllib.parse import urlparse
 
 from .catalog import blocker_code, select_profile

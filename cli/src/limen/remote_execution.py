@@ -7,6 +7,7 @@ exact observed SHA, terminal predicate, and exact receipt identity.
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -14,28 +15,28 @@ import re
 import shutil
 import subprocess
 import tempfile
-import fcntl
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Callable, Iterable, Iterator, Mapping, Protocol, Sequence
+from typing import Protocol
 from urllib.parse import quote
 
 from limen import census
 from limen.models import dispatch_agent, dispatch_session_id
 from limen.remote_predicate import (
     DIGEST_RE,
+    PROVIDER_RE,
     REPO_RE,
     SAFE_ID_RE,
-    SCHEMA_VERSION,
-    SHA_RE,
     SANDBOX_IMAGE,
     SANDBOX_PROFILE_DIGEST,
+    SCHEMA_VERSION,
+    SHA_RE,
     WORKFLOW_PATH_RE,
     PredicateContractError,
-    PROVIDER_RE,
     ReceiptTarget,
     assert_public_text,
     canonical_json,
@@ -47,7 +48,6 @@ from limen.remote_predicate import (
     validate_control_ref,
     validate_execution_profile,
 )
-
 
 VERIFICATION_CONTEXT_VERSION = "limen.verification-context.v1"
 VERIFICATION_ONLY_LABEL = "mode:verification-only"
@@ -1942,4 +1942,4 @@ def _safe_component(value: str) -> str:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()

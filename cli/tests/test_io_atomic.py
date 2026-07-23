@@ -15,7 +15,6 @@ from unittest import mock
 
 import pytest
 import yaml
-
 from limen.io import (
     _board_guard_config,
     _queue_lock_stale_seconds,
@@ -69,9 +68,8 @@ def test_atomic_write_never_truncates_on_failure(tmp_path: Path) -> None:
     def boom(src, dst):  # explode after the temp file exists, before the swap
         raise OSError("simulated crash mid-write")
 
-    with mock.patch("limen.io.os.replace", boom):
-        with pytest.raises(OSError):
-            atomic_write_text(target, "this should never land")
+    with mock.patch("limen.io.os.replace", boom), pytest.raises(OSError):
+        atomic_write_text(target, "this should never land")
 
     # original survives intact, and the temp file was cleaned up
     assert target.read_text() == "good queue with 691 tasks"

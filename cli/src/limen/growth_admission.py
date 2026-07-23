@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import os
 import subprocess
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Any, Mapping, Sequence
-
+from typing import Any
 
 GROWTH_ADMISSION_SCHEMA = "limen.growth_admission.v1"
 MAX_NEW_TEXT_FILE_BYTES = 8 * 1024**2

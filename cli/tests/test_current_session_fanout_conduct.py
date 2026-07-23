@@ -6,10 +6,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from limen.conduct import AgentIdentityV1, ConductorSessionV1
 from limen.conduct.client import LocalConductClient
-
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "current-session-fanout.py"

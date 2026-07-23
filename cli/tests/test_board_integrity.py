@@ -17,7 +17,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from limen.io import BoardCollapseError, load_limen_file, save_limen_file
 from limen.models import LimenFile
 

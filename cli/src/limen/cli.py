@@ -7,6 +7,8 @@ from pathlib import Path
 
 import click
 
+from limen.conduct.cli import conduct_group
+from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import (
     print_qa_report,
     print_readiness,
@@ -14,8 +16,6 @@ from limen.doctor import (
     readiness_report,
     write_report,
 )
-from limen.conduct.cli import conduct_group
-from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope

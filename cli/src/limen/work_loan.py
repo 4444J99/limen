@@ -9,14 +9,14 @@ denial used when the separately reviewed enforcement layer is activated.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Iterable, Literal, Mapping
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from limen.intake import is_durable_receipt_target, is_executable_predicate
-
 
 WORK_LOAN_SCHEMA: Literal["limen.work_loan.v1"] = "limen.work_loan.v1"
 WORK_LOAN_MISSING_ORDER = (
@@ -130,7 +130,7 @@ class WorkLoanV1(BaseModel):
         raise ValueError("due_at must be a valid ISO date or timezone-aware datetime")
 
     @model_validator(mode="after")
-    def external_deadline_has_due_at(self) -> "WorkLoanV1":
+    def external_deadline_has_due_at(self) -> WorkLoanV1:
         if self.external_deadline and self.due_at is None:
             raise ValueError("due_at is required when external_deadline is true")
         return self

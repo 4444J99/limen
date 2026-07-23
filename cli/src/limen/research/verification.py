@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Sequence
 from urllib.parse import urlparse
 
 from .contracts import (
@@ -15,7 +15,6 @@ from .contracts import (
     mapping,
     stable_hash,
 )
-
 
 _CLAIM_ID = re.compile(r"^CLM-[A-Z0-9-]+$")
 _SOURCE_ID = re.compile(r"^SRC-[A-Z0-9-]+$")

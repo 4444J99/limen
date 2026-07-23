@@ -8,11 +8,11 @@ import os
 import secrets
 import stat
 import subprocess
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Literal, NoReturn
-
+from typing import Any, Literal, NoReturn
 
 WORKTREE_ABANDONMENT_SCHEMA = "limen.worktree_abandonment.v1"
 AbandonmentAction = Literal["detach-worktree", "quarantine", "remove-stable-lock"]
@@ -39,7 +39,7 @@ class WorktreeAbandonmentError(RuntimeError):
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _run_git(repo: Path, *args: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -496,8 +496,8 @@ def remove_stable_zero_byte_lock(
 
 
 __all__ = [
-    "LockIdentity",
     "WORKTREE_ABANDONMENT_SCHEMA",
+    "LockIdentity",
     "WorktreeAbandonmentError",
     "capture_lock_identity",
     "detach_registered_worktree",

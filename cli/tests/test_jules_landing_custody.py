@@ -11,7 +11,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-import limen.jules_landing_custody as custody  # noqa: E402
+import limen.jules_landing_custody as custody
 
 
 def load_jules_land():

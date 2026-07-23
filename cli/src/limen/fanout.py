@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.metadata
 import re
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal, Protocol
 
@@ -26,7 +26,6 @@ from limen.conduct.models import (
 )
 from limen.conduct.resources import parse_resource
 from limen.work_loan import WorkLoanV1, packet_work_loan_missing, work_loan_denial
-
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
@@ -157,10 +156,10 @@ class FanoutLeafV1(ProtocolModel):
         return value
 
     @model_validator(mode="after")
-    def validate_contract(self) -> "FanoutLeafV1":
+    def validate_contract(self) -> FanoutLeafV1:
         if self.work_id in self.dependencies:
             raise ValueError("a leaf cannot depend on itself")
-        if self.deadline <= datetime.now(timezone.utc):
+        if self.deadline <= datetime.now(UTC):
             raise ValueError("leaf deadline must be in the future")
         if self.effect == "write" and not self.topic_branch:
             raise ValueError("write leaves require a topic branch")
@@ -219,8 +218,8 @@ class FanoutManifestV1(ProtocolModel):
         return value
 
     @model_validator(mode="after")
-    def validate_graph(self) -> "FanoutManifestV1":
-        if self.deadline <= datetime.now(timezone.utc):
+    def validate_graph(self) -> FanoutManifestV1:
+        if self.deadline <= datetime.now(UTC):
             raise ValueError("manifest deadline must be in the future")
         if not self.leaves:
             raise ValueError("fanout manifest needs at least one leaf")

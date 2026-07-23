@@ -8,7 +8,7 @@ import shlex
 import subprocess
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -25,7 +25,6 @@ from limen.conduct.models import (
     canonical_hash,
 )
 from limen.work_loan import WorkLoanV1
-
 
 REPOSITORIES_QUERY = """
 query($owner:String!, $cursor:String) {
@@ -76,7 +75,7 @@ query($owner:String!, $name:String!, $cursor:String) {
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class CampaignModel(BaseModel):

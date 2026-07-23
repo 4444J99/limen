@@ -5,7 +5,6 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-
 from limen.progress_history import (
     ProgressHistoryError,
     build_progress_snapshot,
@@ -18,7 +17,6 @@ from limen.progress_history import (
     snapshot_at_or_before,
 )
 from limen.progress_selection import rank_next_work
-
 
 NOW = datetime(2026, 7, 21, 12, 0, tzinfo=UTC)
 

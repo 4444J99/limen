@@ -3,9 +3,8 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 GUARD = ROOT / "scripts" / "claude-workflow-guard.py"
@@ -26,7 +25,7 @@ def run_guard(*args, input_text=None, env=None):
 
 
 def write_fable_receipt(tmp_path: Path) -> Path:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     monday = (now - timedelta(days=now.weekday())).date().isoformat()
     receipt = tmp_path / "fable-acceptance.json"
     receipt.write_text(

@@ -5,12 +5,12 @@ from __future__ import annotations
 import curses
 import json
 import time
+from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
-from limen.progress_history import ProgressHistoryError, SNAPSHOT_SCHEMA, canonical_sha256
-
+from limen.progress_history import SNAPSHOT_SCHEMA, ProgressHistoryError, canonical_sha256
 
 VIEW_SCHEMA = "limen.progress-tui-view.v1"
 ZOOMS = ("macro", "sources", "leaves", "selection", "detail")

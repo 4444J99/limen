@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
-from typing import Any, Callable
+from typing import Any
 
 from limen.progress_source_registry import REPORT_SCHEMA
-
 
 SCHEMA = "limen.github-estate-census.v1"
 SOURCE_ID = "github-estate"

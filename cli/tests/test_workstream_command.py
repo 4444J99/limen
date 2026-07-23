@@ -15,7 +15,7 @@ from click.testing import CliRunner
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.cli import main  # noqa: E402
+from limen.cli import main
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:

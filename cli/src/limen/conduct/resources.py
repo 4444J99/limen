@@ -10,7 +10,6 @@ from typing import Literal
 
 from limen.conduct.models import ResourceClaimV1
 
-
 _PR_RE = re.compile(
     r"^pr/(?P<owner>[^/]+)/(?P<repo>[^/]+)/(?P<number>[0-9]+)"
     r"/(?P<kind>write|review/(?P<provider>[^@/]+))@(?P<head>[A-Za-z0-9._+-]+)$"

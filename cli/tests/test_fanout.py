@@ -3,13 +3,11 @@ from __future__ import annotations
 import json
 import subprocess
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from pydantic import ValidationError
-
 from limen.cli import main
 from limen.conduct.client import LocalConductClient
 from limen.conduct.models import (
@@ -38,9 +36,9 @@ from limen.fanout_executor import (
     _working_tree_changed_paths,
     register_execution_sessions,
 )
+from pydantic import ValidationError
 
-
-FUTURE = datetime(2099, 1, 1, tzinfo=timezone.utc).isoformat()
+FUTURE = datetime(2099, 1, 1, tzinfo=UTC).isoformat()
 BASE = "a" * 40
 HEAD = "b" * 40
 DIGEST = "c" * 64
@@ -406,7 +404,6 @@ class FakeExecutionAdapter:
 
     def recover(self, packet, attempt_id):
         del packet, attempt_id
-        return None
 
 
 def test_conductor_never_registers_executor_sessions(monkeypatch) -> None:

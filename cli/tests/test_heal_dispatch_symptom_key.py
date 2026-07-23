@@ -8,7 +8,7 @@ Tests work against a temp tasks.yaml, never the live board (dispatch is paused i
 """
 
 import importlib.util
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -19,7 +19,7 @@ _spec.loader.exec_module(_hd)
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _make_lf(*tasks):
@@ -29,7 +29,7 @@ def _make_lf(*tasks):
 
 def _task(tid, status="open", repo="organvm/limen"):
     """Minimal Task object for testing (uses real Task model via heal_dispatch imports)."""
-    from limen.models import Task  # noqa: PLC0415
+    from limen.models import Task
 
     return Task(
         id=tid,

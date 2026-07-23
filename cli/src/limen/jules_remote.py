@@ -7,12 +7,11 @@ import selectors
 import signal
 import subprocess
 import time
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import dataclass, field, replace
-from typing import Callable, Iterable, Mapping, Sequence
 
 from limen.models import dispatch_session_id
-
 
 JULES_RECOVERY_STATES = frozenset(
     {

@@ -11,9 +11,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen import worktree_debt as wd  # noqa: E402
-from limen import worktree_roots as wr  # noqa: E402
-from limen.worktree_debt import worktree_debt_report  # noqa: E402
+from limen import worktree_debt as wd
+from limen import worktree_roots as wr
+from limen.worktree_debt import worktree_debt_report
 
 
 def test_reachable_from_remote_uses_single_contains_query(tmp_path: Path, monkeypatch):
@@ -483,7 +483,7 @@ def test_registered_sibling_worktrees_are_scanned_when_enabled(tmp_path: Path, m
 # no count is a policy authority.
 
 
-def _live_snapshot(**over) -> "wd.WorktreeAdmissionSnapshot":
+def _live_snapshot(**over) -> wd.WorktreeAdmissionSnapshot:
     base = dict(
         active=True,
         block_new_local=False,
@@ -1135,7 +1135,7 @@ def test_trend_rising_detected(tmp_path: Path) -> None:
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
 
     trend_path = tmp_path / "debt-trend.jsonl"
-    stamps = ["2026-07-15T0{}:00:00Z".format(i) for i in range(1, 6)]
+    stamps = [f"2026-07-15T0{i}:00:00Z" for i in range(1, 6)]
     for i, s in enumerate(stamps):
         mod._append_trend(100 + i * 10, s, trend_path)
     ledger = [json.loads(ln) for ln in trend_path.read_text().splitlines() if ln.strip()]

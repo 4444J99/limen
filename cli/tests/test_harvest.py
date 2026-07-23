@@ -6,10 +6,9 @@ diff was an empty placeholder (``index 0000000..e69de29``) or off-task. 'done'
 must mean a hand actually moved.
 """
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
-
 from limen.harvest import _diff_is_real, check_jules_harvest
 from limen.models import DispatchLogEntry, LimenFile, Task
 
@@ -40,7 +39,7 @@ def _task(tid: str, session_id: str) -> Task:
         created=date(2026, 6, 25),
         dispatch_log=[
             DispatchLogEntry(
-                timestamp=datetime(2026, 6, 25, tzinfo=timezone.utc),
+                timestamp=datetime(2026, 6, 25, tzinfo=UTC),
                 agent="jules",
                 session_id=session_id,
                 status="dispatched",

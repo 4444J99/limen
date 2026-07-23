@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import stat
 import sys
-import os
 from pathlib import Path
 
 import pytest
@@ -13,10 +13,9 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import main
 import limen_intake
 import limen_work_loan
-
+import main
 
 REAL_SUBMIT_TASK_MUTATION = main.submit_task_mutation
 

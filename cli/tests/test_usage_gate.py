@@ -7,8 +7,6 @@ static hand-maintained file. The fix derives the down-set from logs/usage.json (
 import json
 
 import pytest
-
-
 from limen.dispatch import _down_lanes, _usage_dead_lanes
 
 

@@ -283,21 +283,33 @@ def _semantic_source_status(payload: Any) -> str:
     def visit(mapping: dict[str, Any], depth: int = 0) -> None:
         for raw_key, value in mapping.items():
             key = _slug(raw_key) or ""
-            if key in {"available", "is_available", "reachable"} and value is False:
+            if (
+                key in {"available", "is_available", "reachable"}
+                and value is False
+                or key == "unavailable"
+                and value is True
+            ):
                 markers.add("unavailable")
-            elif key == "unavailable" and value is True:
-                markers.add("unavailable")
-            elif key in {"failed", "has_failed"} and value is True:
+            elif (
+                key in {"failed", "has_failed"}
+                and value is True
+                or key in {"success", "successful", "ok"}
+                and value is False
+            ):
                 markers.add("failed")
-            elif key in {"success", "successful", "ok"} and value is False:
-                markers.add("failed")
-            elif key in {"capped", "is_capped", "truncated", "has_more"} and value is True:
+            elif (
+                key in {"capped", "is_capped", "truncated", "has_more"}
+                and value is True
+                or key in {"exhaustive", "is_exhaustive"}
+                and value is False
+            ):
                 markers.add("capped")
-            elif key in {"exhaustive", "is_exhaustive"} and value is False:
-                markers.add("capped")
-            elif key in {"complete", "is_complete", "fully_complete"} and value is False:
-                markers.add("incomplete")
-            elif key == "completeness" and value is False:
+            elif (
+                key in {"complete", "is_complete", "fully_complete"}
+                and value is False
+                or key == "completeness"
+                and value is False
+            ):
                 markers.add("incomplete")
             elif key in {"coverage", "scope"} and value is False:
                 markers.add("partial")

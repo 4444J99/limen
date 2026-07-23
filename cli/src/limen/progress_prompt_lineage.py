@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from hashlib import sha256
-from typing import Any, Sequence
+from typing import Any
 
 from limen.progress_source_registry import REPORT_SCHEMA
-
 
 SCHEMA = "limen.progress-prompt-lineage.v1"
 SOURCE_ID = "prompt-lineage"

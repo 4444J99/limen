@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "dispatch-continuity-check.py"
@@ -60,7 +59,7 @@ def _usage(lanes: list[str], health: str = "ok", consumed: int = 10, possible: i
     return {"vendors": {lane: {"health": health, "consumed": consumed, "possible": possible} for lane in lanes}}
 
 
-NOW = datetime(2026, 7, 8, 15, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 7, 8, 15, 0, 0, tzinfo=UTC)
 RECENT_TS = "2026-07-08T14:00:00Z"  # 1h ago — within 24h window
 STALE_TS = "2026-07-05T10:00:00Z"  # 77h ago — outside 24h window
 
@@ -253,7 +252,7 @@ def test_verdict_unknown_when_usage_missing(tmp_path, monkeypatch):
     )
 
     monkeypatch.setattr(mod, "_load_tasks_doc", lambda: doc)
-    monkeypatch.setattr(mod, "_load_usage", lambda: {})  # no vendor data
+    monkeypatch.setattr(mod, "_load_usage", dict)  # no vendor data
 
     result = mod.verdicts(NOW, window_h=24)
     assert result["jules"]["verdict"] == "unknown"
@@ -277,7 +276,7 @@ def test_single_starved_reading_no_atom(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "VOICE_STAMP", voice / "continuity")
     monkeypatch.setattr(mod, "ARTIFACT", logs / "dispatch-continuity.json")
     # No previous artifact → prev lanes empty → first reading → no atom
-    monkeypatch.setattr(mod, "_load_prev_artifact", lambda: {})
+    monkeypatch.setattr(mod, "_load_prev_artifact", dict)
 
     doc = _tasks_doc(
         lanes=["jules"],
@@ -389,7 +388,7 @@ def test_artifact_and_voice_stamp_written(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(mod, "LOGS", logs)
     monkeypatch.setattr(mod, "ARTIFACT", artifact_path)
     monkeypatch.setattr(mod, "VOICE_STAMP", voice_stamp)
-    monkeypatch.setattr(mod, "_load_prev_artifact", lambda: {})
+    monkeypatch.setattr(mod, "_load_prev_artifact", dict)
     monkeypatch.setattr(mod, "_upsert_starved_atom", lambda lane, info: None)
 
     doc = _tasks_doc(lanes=["jules"], dispatch_logs={"jules": RECENT_TS})

@@ -9,7 +9,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -35,14 +35,14 @@ def write_status(tmp_path: Path, ts: datetime) -> None:
 
 
 def test_fresh_record_is_ok(tmp_path):
-    write_status(tmp_path, datetime.now(timezone.utc))
+    write_status(tmp_path, datetime.now(UTC))
     proc = run_stale(tmp_path)
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "ok" in proc.stdout
 
 
 def test_stale_record_fails(tmp_path):
-    write_status(tmp_path, datetime.now(timezone.utc) - timedelta(hours=6))
+    write_status(tmp_path, datetime.now(UTC) - timedelta(hours=6))
     proc = run_stale(tmp_path)  # budget: 3 x 1800s = 90 min
     assert proc.returncode == 1
     assert "flying blind" in proc.stdout
@@ -68,7 +68,7 @@ def test_unreadable_ts_fails(tmp_path):
 
 
 def test_budget_derives_from_env(tmp_path):
-    write_status(tmp_path, datetime.now(timezone.utc) - timedelta(minutes=10))
+    write_status(tmp_path, datetime.now(UTC) - timedelta(minutes=10))
     # 2 beats x 120s = 4 min budget -> a 10-min-old record is stale
     proc = run_stale(tmp_path, env={"LIMEN_VITALS_STALE_BEATS": "2", "LIMEN_LOOP_MAX": "120"})
     assert proc.returncode == 1

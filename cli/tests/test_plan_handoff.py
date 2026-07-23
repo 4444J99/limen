@@ -3,12 +3,11 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
-import pytest
-
 import limen.dispatch as D
+import pytest
 from limen import census
 from limen.models import BudgetTrack, Task
 from limen.plan_handoff import (
@@ -80,7 +79,7 @@ def test_plan_receipt_is_digest_bound_and_contains_no_model_selection() -> None:
         task,
         "1. Inspect the parser.\n2. Add a focused regression.",
         planner_agent="claude",
-        created_at=datetime(2026, 7, 23, 12, tzinfo=timezone.utc),
+        created_at=datetime(2026, 7, 23, 12, tzinfo=UTC),
     )
 
     assert receipt["schema"] == PLAN_RECEIPT_SCHEMA
@@ -201,7 +200,7 @@ def test_apply_plan_result_reopens_to_builder_and_claim_reruns_live_selection(mo
         task,
         "claude",
         PlanHandoffResult(receipt),
-        datetime(2026, 7, 23, 12, tzinfo=timezone.utc),
+        datetime(2026, 7, 23, 12, tzinfo=UTC),
         track,
     )
 

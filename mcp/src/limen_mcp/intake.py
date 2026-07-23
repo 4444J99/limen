@@ -24,10 +24,10 @@ from __future__ import annotations
 
 import re
 import shlex
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, Mapping, MutableMapping
+from typing import Any
 from urllib.parse import urlparse
-
 
 EXECUTABLES = frozenset(
     {
@@ -319,8 +319,8 @@ def normalize_selected_legacy_task(task: MutableMapping[str, Any] | object) -> I
         task["predicate"] = predicate
         task["receipt_target"] = receipt_target
     else:
-        setattr(task, "predicate", predicate)
-        setattr(task, "receipt_target", receipt_target)
+        task.predicate = predicate
+        task.receipt_target = receipt_target
     contract = validate_intake_contract(task)
     if contract is None:  # pragma: no cover - defensive, required open tasks return a contract
         raise IntakeContractError("selected task lacks a typed intake contract")

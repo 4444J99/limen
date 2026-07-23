@@ -6,7 +6,7 @@ that was added to complete the cadence engine. All existing tiers remain unchang
 
 import importlib.util
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "censor.py"
@@ -27,7 +27,7 @@ def _ts(dt):
 
 
 def test_due_tiers_monthly_after_30d():
-    now = datetime(2026, 7, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
     state = {
         "last_run": {
             "hourly": _ts(now - timedelta(hours=1)),
@@ -41,7 +41,7 @@ def test_due_tiers_monthly_after_30d():
 
 
 def test_due_tiers_monthly_not_before_30d():
-    now = datetime(2026, 7, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
     state = {
         "last_run": {
             "hourly": _ts(now - timedelta(minutes=30)),
@@ -55,12 +55,12 @@ def test_due_tiers_monthly_not_before_30d():
 
 
 def test_due_tiers_first_run_includes_monthly():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     assert set(censor.due_tiers({"last_run": {}}, now)) == {"hourly", "daily", "weekly", "monthly"}
 
 
 def test_due_tiers_existing_tiers_unchanged():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     state = {
         "last_run": {
             "hourly": _ts(now - timedelta(minutes=30)),
@@ -77,14 +77,14 @@ def test_due_tiers_existing_tiers_unchanged():
 
 
 def test_force_monthly_via_override():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     fresh = {"last_run": {"monthly": _ts(now)}}
     assert censor.due_tiers(fresh, now, force="monthly") == ["monthly"]
 
 
 def test_state_persistence_round_trip(tmp_path):
     state_path = tmp_path / "censor-state.json"
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     state = {
         "last_run": {
             "monthly": _ts(now - timedelta(days=31)),

@@ -14,12 +14,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from limen.plan_handoff import PlanReceiptError, validate_plan_receipt
 from limen.workstream_contract import ContractError as WorkstreamContractError
 from limen.workstream_contract import validate_packet_contract
-
 
 EXECUTION_CONTRACT_SCHEMA_VERSION = "limen-execution-contract.v4"
 

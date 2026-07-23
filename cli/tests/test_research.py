@@ -6,11 +6,10 @@ import subprocess
 from copy import deepcopy
 from pathlib import Path
 
+import limen.research as research_runtime
 import pytest
 import yaml
 from click.testing import CliRunner
-
-import limen.research as research_runtime
 from limen.cli import main
 from limen.research import (
     BlockedReceipt,
@@ -29,7 +28,6 @@ from limen.research import (
     verify_raw_export_custody,
 )
 from limen.research.handoff import build_receipt
-
 
 REQUEST_ID = "SGO-REQ-2026-TEST-001"
 CAPABILITIES = [

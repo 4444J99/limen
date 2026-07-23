@@ -17,6 +17,6 @@ Every threshold is a declared parameter in ``institutio/governance/parameters.ya
 indexed in ``institutio/registry/organs.yaml``, not merged into a pile.
 """
 
-from limen.vigilia import params, vitals, continuity, integrity, executive
+from limen.vigilia import continuity, executive, integrity, params, vitals
 
-__all__ = ["params", "vitals", "continuity", "integrity", "executive"]
+__all__ = ["continuity", "executive", "integrity", "params", "vitals"]

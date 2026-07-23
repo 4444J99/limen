@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping
 from datetime import date, datetime
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from limen_intake import is_durable_receipt_target, is_executable_predicate
-
 
 FIELD_ORDER = (
     "source_origin",

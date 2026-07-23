@@ -6,10 +6,9 @@ import json
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "vltima-result-digest.py"
-NOW = dt.datetime(2026, 7, 6, tzinfo=dt.timezone.utc)
+NOW = dt.datetime(2026, 7, 6, tzinfo=dt.UTC)
 
 
 def _load(name: str = "vltima_result_digest_test"):

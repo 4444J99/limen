@@ -49,7 +49,7 @@ def _census(*agents: str) -> list[capacity.CapacityRow]:
 
 
 def test_claude_daily_floor_is_a_capacity_fill_blocker(monkeypatch):
-    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.UTC)
     monkeypatch.setattr(capacity, "capacity_census", lambda board: _census("claude"))
     board = _board(
         {"claude": 100},
@@ -72,7 +72,7 @@ def test_claude_daily_floor_is_a_capacity_fill_blocker(monkeypatch):
 
 
 def test_failed_attempts_do_not_satisfy_productive_fill(monkeypatch):
-    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.UTC)
     monkeypatch.setattr(capacity, "capacity_census", lambda board: _census("gemini"))
     tasks = []
     for idx in range(7):
@@ -117,7 +117,7 @@ def test_failed_attempts_do_not_satisfy_productive_fill(monkeypatch):
 
 
 def test_depleted_usage_lane_is_not_reported_as_underfilled(monkeypatch):
-    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.UTC)
     monkeypatch.setattr(capacity, "capacity_census", lambda board: _census("codex"))
     board = _board(
         {"codex": 100},
@@ -147,7 +147,7 @@ def test_depleted_usage_lane_is_not_reported_as_underfilled(monkeypatch):
 
 
 def test_no_scheduled_work_for_underfilled_lane_blocks(monkeypatch):
-    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 6, 29, 22, 0, tzinfo=dt.UTC)
     monkeypatch.setattr(capacity, "capacity_census", lambda board: _census("opencode"))
     board = _board(
         {"opencode": 100},
@@ -253,7 +253,7 @@ def test_codex_fill_snapshot_uses_derived_floor(monkeypatch):
     as its fill state, making the board look like only 5% utilization when 25/day
     would be a sensible target and 5 is a real underfill — not a misleading one.
     """
-    now = dt.datetime(2026, 7, 5, 22, 0, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 7, 5, 22, 0, tzinfo=dt.UTC)
     monkeypatch.setattr(capacity, "capacity_census", lambda board: _census("codex"))
     monkeypatch.delenv("LIMEN_CODEX_DAILY_TASKS", raising=False)
     monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)

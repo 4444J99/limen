@@ -7,7 +7,6 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-
 from limen.intake import (
     IntakeContractError,
     boundedness_finding,
@@ -21,7 +20,6 @@ from limen.intake import (
     validate_intake_contract,
 )
 from limen.models import LimenFile, Task
-
 
 ROOT = Path(__file__).resolve().parents[2]
 

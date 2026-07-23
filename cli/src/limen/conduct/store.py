@@ -6,9 +6,10 @@ import copy
 import json
 import sqlite3
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator, Protocol
+from typing import Any, Protocol
 
 
 def empty_state() -> dict[str, Any]:

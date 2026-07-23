@@ -23,7 +23,8 @@ from pathlib import Path
 from . import __version__, creds, paths
 from .config import load_config
 from .gen import Endpoint, build_entries, write_golden
-from .mcphub import materialize_settings, start, status as backend_status, stop
+from .mcphub import materialize_settings, start, stop
+from .mcphub import status as backend_status
 from .preflight import unreachable
 from .upstreams import load_upstreams
 

@@ -9,7 +9,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "handoff-relay.py"
 
@@ -52,7 +51,7 @@ def _configure(mod, monkeypatch, tmp_path, board):
     monkeypatch.setattr(mod, "USAGE", usage)
     monkeypatch.setattr(mod, "OVERNIGHT", overnight)
     monkeypatch.setattr(mod, "SELF_HEAL", logs / "self-heal.log")
-    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 12, 12, 5, tzinfo=dt.timezone.utc))
+    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 12, 12, 5, tzinfo=dt.UTC))
     return logs
 
 

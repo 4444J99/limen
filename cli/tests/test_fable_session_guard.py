@@ -9,7 +9,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,7 +17,7 @@ GUARD = ROOT / "scripts" / "fable-session-guard.py"
 
 
 def _this_monday() -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return (now - timedelta(days=now.weekday())).date().isoformat()
 
 

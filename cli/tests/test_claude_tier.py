@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import limen.dispatch as D
@@ -42,7 +42,7 @@ def _write_tiers(root: Path, mapping: dict):
 
 
 def _write_fable_acceptance(root: Path) -> Path:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     monday = (now - timedelta(days=now.weekday())).date().isoformat()
     path = root / "fable-acceptance.json"
     path.write_text(
@@ -83,7 +83,7 @@ def _clear(monkeypatch):
 
 
 def _this_monday() -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return (now - timedelta(days=now.weekday())).date().isoformat()
 
 

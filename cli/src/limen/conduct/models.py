@@ -4,21 +4,20 @@ from __future__ import annotations
 
 import hashlib
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 import rfc8785
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from limen.work_loan import WorkLoanV1
-
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@*+-]{0,1023}$")
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def canonical_hash(value: Any) -> str:
@@ -66,7 +65,7 @@ class ConductPrincipalV1(ProtocolModel):
         return _identifier(value, info.field_name)
 
     @model_validator(mode="after")
-    def has_roles(self) -> "ConductPrincipalV1":
+    def has_roles(self) -> ConductPrincipalV1:
         if not self.roles:
             raise ValueError("conduct principal must have at least one role")
         return self
@@ -107,7 +106,7 @@ class ConductorSessionV1(ProtocolModel):
         return value
 
     @model_validator(mode="after")
-    def identity_matches_session(self) -> "ConductorSessionV1":
+    def identity_matches_session(self) -> ConductorSessionV1:
         if self.identity.session_id != self.session_id:
             raise ValueError("identity.session_id must equal session_id")
         return self
@@ -162,7 +161,7 @@ class SpendEnvelopeV1(ProtocolModel):
         return _identifier(value, "unit")
 
     @model_validator(mode="after")
-    def reserve_fits(self) -> "SpendEnvelopeV1":
+    def reserve_fits(self) -> SpendEnvelopeV1:
         if self.reserve > self.limit:
             raise ValueError("spend reserve cannot exceed limit")
         return self
@@ -234,7 +233,7 @@ class WorkPacketV1(ProtocolModel):
         return value
 
     @model_validator(mode="after")
-    def validate_hashes_and_shape(self) -> "WorkPacketV1":
+    def validate_hashes_and_shape(self) -> WorkPacketV1:
         expected_intent = canonical_hash(self.intent)
         expected_execution = canonical_hash(self.execution)
         if self.intent_hash and self.intent_hash != expected_intent:

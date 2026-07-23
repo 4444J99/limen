@@ -11,9 +11,9 @@ IANVA_SRC = ROOT / "ianva" / "src"
 if str(IANVA_SRC) not in sys.path:
     sys.path.insert(0, str(IANVA_SRC))
 
-from ianva.agents import AGENTS, SERVER_NAME, by_key  # noqa: E402
-from ianva.gen import BEARER_ENV, Endpoint, build_entries, write_golden  # noqa: E402
-from limen import census  # noqa: E402
+from ianva.agents import AGENTS, SERVER_NAME, by_key
+from ianva.gen import BEARER_ENV, Endpoint, build_entries, write_golden
+from limen import census
 
 PRIMARY = frozenset({"codex", "claude", "copilot", "agy", "opencode"})
 

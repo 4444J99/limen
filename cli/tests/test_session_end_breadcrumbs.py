@@ -8,7 +8,6 @@ import sys
 import time
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 PRODUCER = ROOT / "scripts" / "session-end-breadcrumb.py"
 CONSUMER = ROOT / "scripts" / "consume-session-end-breadcrumbs.py"

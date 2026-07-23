@@ -11,7 +11,6 @@ from typing import Any, TypedDict
 
 from limen.worktree_roots import effective_worktree_root, iter_worktree_targets
 
-
 DEBT_REASONS = {
     "dirty",
     "not-a-git-dir",

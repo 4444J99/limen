@@ -9,11 +9,9 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from limen.io import load_limen_file, save_limen_file
 from limen.models import LimenFile, dispatch_agent, dispatch_session_id
 from limen.tabularius import drain_once, tickets_root
-
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "apply-ask-gate-migration.py"

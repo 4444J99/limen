@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from . import config, ledger
 
@@ -25,7 +25,7 @@ _REJECT_PRIORITY = 0.5  # recurs this often but stays below → not transferable
 
 def _now() -> datetime:
     """A seam — tests monkeypatch this to pin the ISO week."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _iso_week(dt: datetime) -> str:

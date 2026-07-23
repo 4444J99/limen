@@ -68,9 +68,9 @@ def test_falls_back_when_only_one_lane_healthy():
 
 
 def test_repo_routing_actively_fills_jules_opencode_and_agy(tmp_path, monkeypatch):
-    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_learned_weights", dict)
     monkeypatch.setattr(route, "_ledger_bias", lambda task: {"jules": 0.2})
-    monkeypatch.setattr(route, "_vendor_cliff_urgency", lambda: {})
+    monkeypatch.setattr(route, "_vendor_cliff_urgency", dict)
     monkeypatch.setenv("LIMEN_JULES_BATCH_FILL", "1")
     monkeypatch.delenv("LIMEN_REMOTE_BATCH_BIAS", raising=False)
     health = {
@@ -101,7 +101,7 @@ def test_repo_routing_actively_fills_jules_opencode_and_agy(tmp_path, monkeypatc
 
 
 def test_routing_snapshot_projects_stale_budget_resets(tmp_path, monkeypatch):
-    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.timezone.utc)
+    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.UTC)
     stale = (now - datetime.timedelta(days=2)).isoformat()
     tasks_path = tmp_path / "tasks.yaml"
     lf = LimenFile(
@@ -151,9 +151,9 @@ def test_under_floor_lane_beats_above_floor_lane_at_same_budget(monkeypatch):
     monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)
     monkeypatch.delenv("LIMEN_CODEX_DAILY_TASKS", raising=False)
     monkeypatch.delenv("LIMEN_CLAUDE_DAILY_TASKS", raising=False)
-    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_learned_weights", dict)
     monkeypatch.setattr(route, "_ledger_bias", lambda task: {})
-    monkeypatch.setattr(route, "_vendor_cliff_urgency", lambda: {})
+    monkeypatch.setattr(route, "_vendor_cliff_urgency", dict)
 
     health = {"codex": True, "claude": True, "agy": False, "opencode": False}
     budget = {"codex": 100, "claude": 100}
@@ -168,9 +168,9 @@ def test_under_floor_boost_disabled_by_env(monkeypatch):
     """LIMEN_LANE_FLOORS=0 restores pure raw budget-ratio ordering without the floor boost."""
     monkeypatch.setenv("LIMEN_LANE_FLOORS", "0")
     monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)
-    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_learned_weights", dict)
     monkeypatch.setattr(route, "_ledger_bias", lambda task: {})
-    monkeypatch.setattr(route, "_vendor_cliff_urgency", lambda: {})
+    monkeypatch.setattr(route, "_vendor_cliff_urgency", dict)
 
     health = {"codex": True, "claude": True, "agy": False, "opencode": False}
     budget = {"codex": 100, "claude": 100}
@@ -186,9 +186,9 @@ def test_floor_boost_starvation_case_runs_cleanly(monkeypatch):
     monkeypatch.setenv("LIMEN_LANE_FLOORS", "1")
     monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)
     monkeypatch.delenv("LIMEN_CODEX_DAILY_TASKS", raising=False)
-    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_learned_weights", dict)
     monkeypatch.setattr(route, "_ledger_bias", lambda task: {})
-    monkeypatch.setattr(route, "_vendor_cliff_urgency", lambda: {})
+    monkeypatch.setattr(route, "_vendor_cliff_urgency", dict)
 
     health = {"codex": True, "claude": False, "agy": False, "opencode": False}
     budget = {"codex": 100}

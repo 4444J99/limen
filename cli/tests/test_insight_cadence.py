@@ -1,7 +1,7 @@
 """Tests for the insight-cadence producer."""
 
 import importlib.util
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 _spec = importlib.util.spec_from_file_location(
@@ -19,12 +19,12 @@ def _ts(dt):
 
 
 def test_due_tiers_first_run_all_due():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     assert set(insight_cadence.due_tiers({"last_run": {}}, now)) == {"hourly", "daily", "weekly", "monthly"}
 
 
 def test_due_tiers_respects_elapsed():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     state = {
         "last_run": {
             "hourly": _ts(now - timedelta(minutes=30)),  # not yet (needs 60m)
@@ -38,7 +38,7 @@ def test_due_tiers_respects_elapsed():
 
 
 def test_due_tiers_respects_elapsed_monthly():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     state = {
         "last_run": {
             "monthly": _ts(now - timedelta(days=31)),  # due (needs 30d)
@@ -49,7 +49,7 @@ def test_due_tiers_respects_elapsed_monthly():
 
 
 def test_force_tier_overrides_cadence():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     fresh = {"last_run": {"hourly": _ts(now)}}
     assert insight_cadence.due_tiers(fresh, now, force="hourly") == ["hourly"]
 
@@ -96,7 +96,7 @@ def test_schema_valid_report():
 
 
 def test_idempotence_skips_when_window_not_elapsed():
-    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=UTC)
     state = {
         "last_run": {
             "hourly": _ts(now - timedelta(minutes=10))  # ran 10m ago, not 60m yet

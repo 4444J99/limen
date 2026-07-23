@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import importlib.util
 import datetime as dt
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -274,7 +274,7 @@ def test_census_uses_dispatch_down_gate_for_reachability(monkeypatch):
 
 def test_load_tasks_board_projects_stale_budget_reset(tmp_path, monkeypatch):
     module = _load_capacity_fill_module()
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     stale = (now - dt.timedelta(days=2)).isoformat()
     tasks_path = tmp_path / "tasks.yaml"
     save_limen_file(

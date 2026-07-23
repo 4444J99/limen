@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from limen.model_selection import model_for_argv
 
 REPO = Path(__file__).resolve().parents[2]

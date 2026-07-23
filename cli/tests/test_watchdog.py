@@ -10,7 +10,6 @@ import json
 import sys
 from pathlib import Path
 
-
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "watchdog.py"
 
 
@@ -27,7 +26,7 @@ def _fresh_module(tmp_path, monkeypatch, **env):
 
 
 def _now_iso(delta_sec=0):
-    return (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=delta_sec)).isoformat()
+    return (datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=delta_sec)).isoformat()
 
 
 def _write_logs(m, *, pid=4242, tick_age=10, pr_beats=(6, 6, 6)):

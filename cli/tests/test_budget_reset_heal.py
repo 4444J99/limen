@@ -14,7 +14,7 @@ every stale lane as a side effect (the reset loops all per_agent), so the deadlo
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from limen import dispatch as D
 from limen.models import Budget, BudgetTrack, LimenFile, Portal
@@ -28,7 +28,7 @@ def _lf(caps: dict, spent: dict, resets: dict) -> LimenFile:
 
 
 def test_stale_capped_lane_is_cleared_and_reset_is_reported():
-    now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 3, 12, 0, tzinfo=UTC)
     stale = (now - timedelta(days=4)).isoformat()  # >> any vendor window (5h / 24h)
     lf = _lf(
         caps={"jules": 100, "codex": 100},
@@ -44,7 +44,7 @@ def test_stale_capped_lane_is_cleared_and_reset_is_reported():
 
 
 def test_fresh_counter_within_window_is_untouched_and_not_reported():
-    now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 3, 12, 0, tzinfo=UTC)
     fresh = (now - timedelta(minutes=5)).isoformat()  # << every window
     lf = _lf(caps={"jules": 100}, spent={"jules": 40}, resets={"jules": fresh})
     changed = D._reset_budget_if_needed(lf, now)
@@ -55,7 +55,7 @@ def test_fresh_counter_within_window_is_untouched_and_not_reported():
 def test_already_zero_stale_lane_advances_stamp_without_forcing_save():
     # A stale lane already at 0 advances its stamp but reports no change: there is no deadlock to
     # break, so no reason to force an extra tasks.yaml write every beat.
-    now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 3, 12, 0, tzinfo=UTC)
     stale = (now - timedelta(days=4)).isoformat()
     lf = _lf(caps={"opencode": 100}, spent={"opencode": 0}, resets={"opencode": stale})
     changed = D._reset_budget_if_needed(lf, now)

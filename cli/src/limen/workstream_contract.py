@@ -20,9 +20,10 @@ import sys
 import tempfile
 import threading
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator, cast
+from typing import Any, cast
 
 SCHEMA = "limen.workstream.contract.v1"
 RECEIPT_SCHEMA = "limen.workstream.receipt.v1"
@@ -400,7 +401,7 @@ def configure_contract(path: Path, requested: str | None = None) -> tuple[dict[s
 
 
 def _iso(epoch: int) -> str:
-    return dt.datetime.fromtimestamp(epoch, tz=dt.timezone.utc).isoformat(timespec="seconds")
+    return dt.datetime.fromtimestamp(epoch, tz=dt.UTC).isoformat(timespec="seconds")
 
 
 def admit_contract(path: Path, *, now_epoch: int | None = None) -> tuple[dict[str, Any], int]:

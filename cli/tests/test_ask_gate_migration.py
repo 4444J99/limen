@@ -7,7 +7,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "check-ask-gate-migration.py"
 RECEIPT = ROOT / "docs" / "ask-gate-migration-2026-07-12.json"

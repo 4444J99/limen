@@ -7,8 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "rebalance.py"
 
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
+from limen.io import load_limen_file, save_limen_file
+from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
 
 
 def test_rebalance_skips_down_lanes(tmp_path, monkeypatch):
@@ -115,7 +115,7 @@ def test_rebalance_does_not_steal_timeout_to_jules_task(tmp_path, monkeypatch):
 
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     today = now.date()
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))),

@@ -14,7 +14,7 @@ convener picks them up with no change here.
 from __future__ import annotations
 
 import importlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from . import ledger
 
@@ -51,7 +51,7 @@ def run_beat(*, apply: bool = False) -> dict:
     stages = [_safe(label, mod, entry, apply) for (label, mod, entry) in _PIPELINE]
     status = {
         "institution": "OBSERVATORY",
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "apply": bool(apply),
         "stages": stages,
     }

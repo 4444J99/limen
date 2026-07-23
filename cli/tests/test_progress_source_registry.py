@@ -6,14 +6,12 @@ from hashlib import sha256
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from limen.cli import main
 from limen.progress_source_registry import (
     REGISTRATION_SCHEMA,
     REPORT_SCHEMA,
     build_source_registry,
 )
-
 
 NOW = datetime(2026, 7, 21, 12, tzinfo=UTC)
 

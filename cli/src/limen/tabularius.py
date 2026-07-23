@@ -28,7 +28,7 @@ import tempfile
 import uuid
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -206,7 +206,7 @@ def new_ticket_id(session_id: str = "unknown", now: datetime | None = None) -> s
     """A sortable, collision-free ticket id: `<utc-timestamp>-<session>-<rand>`. The timestamp
     prefix makes a plain filename sort chronological (the keeper's drain order), and the random
     tail guarantees two tickets from the same session in the same microsecond never collide."""
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     safe_session = "".join(c if c.isalnum() or c in "._-" else "_" for c in session_id)[:40]
     return f"{now.strftime('%Y%m%dT%H%M%S_%f')}Z-{safe_session}-{uuid.uuid4().hex[:8]}"
 
@@ -258,7 +258,7 @@ def submit_ticket(board_path: Path, ticket: Ticket) -> Path:
 
 def submit_task_upsert(
     board_path: Path,
-    task: "Task | dict[str, Any]",
+    task: Task | dict[str, Any],
     *,
     agent: str,
     session_id: str = "unknown",
@@ -287,7 +287,7 @@ def submit_task_upsert(
     tid = fields.get("id")
     if not tid:
         raise ValueError("task upsert requires an 'id'")
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     ticket = Ticket(
         ticket_id=new_ticket_id(session_id, now),
         timestamp=now,
@@ -326,7 +326,7 @@ def submit_task_status(
     if "status" in fields and fields["status"] != status:
         raise ValueError("status patch conflicts with status argument")
     fields["status"] = status
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     ticket = Ticket(
         ticket_id=new_ticket_id(session_id, now),
         timestamp=now,
@@ -495,7 +495,7 @@ def _canonical_revision(fields: dict[str, Any]) -> str:
         value = fields.get("created") or fields.get("status")
     if isinstance(value, datetime):
         if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
+            value = value.replace(tzinfo=UTC)
         return _revision_iso(value)
     if isinstance(value, date):
         return value.isoformat()
@@ -504,7 +504,7 @@ def _canonical_revision(fields: dict[str, Any]) -> str:
         try:
             parsed = datetime.fromisoformat(rendered.replace("Z", "+00:00"))
             if parsed.tzinfo is None:
-                parsed = parsed.replace(tzinfo=timezone.utc)
+                parsed = parsed.replace(tzinfo=UTC)
             return _revision_iso(parsed)
         except ValueError:
             pass
@@ -515,7 +515,7 @@ def _revision_iso(value: datetime) -> str:
     # The keeper's canonicalRevision (projection.js) renders through JS
     # Date.toISOString(), which always truncates to millisecond precision —
     # a Python-side microsecond render can never CAS-match it.
-    return value.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    return value.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def _compatibility_intent(ticket: Ticket, base: dict[str, Any] | None) -> dict[str, Any]:
@@ -1004,7 +1004,7 @@ def _submit_compatibility_ticket(
         ),
         provider_identity="limen-cli",
     )
-    registration_now = datetime.now(timezone.utc)
+    registration_now = datetime.now(UTC)
     session = ConductorSessionV1(
         session_id=requested_identity.session_id,
         identity=requested_identity,
@@ -1043,7 +1043,7 @@ def _submit_compatibility_ticket(
             path_prefixes=frozenset({"tasks.yaml"}),
             may_delegate=False,
         ),
-        deadline=datetime.now(timezone.utc) + timedelta(minutes=5),
+        deadline=datetime.now(UTC) + timedelta(minutes=5),
         spend=SpendEnvelopeV1(limit=0),
         retry=RetryPolicyV1(max_attempts=1, transient_only=True),
         fanout=FanoutBoundsV1(max_children=0, max_depth=0),
@@ -1154,7 +1154,7 @@ def apply_limen_file_sync(
     if not events:
         return DrainResult(note="no board change")
 
-    timestamp = now or datetime.now(timezone.utc)
+    timestamp = now or datetime.now(UTC)
     previous_data = (
         previous.model_dump(mode="json", exclude_none=True)
         if previous is not None

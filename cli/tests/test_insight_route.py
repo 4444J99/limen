@@ -7,12 +7,12 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "cli" / "src"))
-from limen.io import load_limen_file  # noqa: E402
+from limen.io import load_limen_file
 
 # Add scripts dir to path to import the script for testing
 sys.path.insert(0, str(ROOT / "scripts"))
 
-import importlib.util  # noqa: E402
+import importlib.util
 
 spec = importlib.util.spec_from_file_location("insight_route", str(ROOT / "scripts" / "insight-route.py"))
 insight_route = importlib.util.module_from_spec(spec)

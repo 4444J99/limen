@@ -1,5 +1,6 @@
-import json
+import fcntl
 import hashlib
+import json
 import math
 import os
 import re
@@ -10,14 +11,13 @@ import subprocess
 import sys
 import threading
 import time
-from contextlib import ExitStack, contextmanager
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone, timedelta
+from contextlib import ExitStack, contextmanager
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Iterator, TypedDict
+from typing import Any, TypedDict
 from urllib.parse import quote, urlsplit
-
-import fcntl
 
 from limen import census
 from limen.capacity import (
@@ -32,57 +32,18 @@ from limen.capacity import (
     select_lanes,
 )
 from limen.dispatch_ownership import ACTIVE_OWNER_STATUSES
+from limen.doctor import stale_tasks
 from limen.execution_contract import execution_contract_hash
-from limen.io import load_limen_file, queue_lock as _queue_lock
-from limen.intake import IntakeContractError, normalize_selected_legacy_task, validate_intake_contract
 from limen.host_admission import AdmissionDenied, hold_lease
+from limen.intake import IntakeContractError, normalize_selected_legacy_task, validate_intake_contract
+from limen.io import load_limen_file
+from limen.io import queue_lock as _queue_lock
 from limen.jules_remote import (
     JulesRemoteSnapshot,
     classify_jules_claim,
-    probe_jules_remote_sessions,
     probe_jules_remote_session_absences,
+    probe_jules_remote_sessions,
     task_jules_session_id,
-)
-from limen.models import (
-    BudgetTrack,
-    DispatchLogEntry,
-    LimenFile,
-    Task,
-    dispatch_agent,
-    dispatch_session_id,
-    has_jules_landing_hold,
-)
-from limen.tabularius import apply_limen_file_sync
-from limen.runtime_requirements import task_execution_ready
-from limen.doctor import stale_tasks
-from limen.provider_selection import (
-    catalog_hash,
-    discover_opencode_models,
-    discover_warp_override,
-    effective_profile,
-    execution_profile_for,
-    paid_service_block_reason,
-    select_opencode_model,
-)
-from limen.plan_handoff import (
-    PlanHandoffResult,
-    PlanReceiptError,
-    build_plan_receipt,
-    builder_task_from_receipt,
-    is_build_from_plan,
-    is_plan_only,
-    select_live_builder,
-    validate_receipt_for_task,
-)
-from limen.remote_execution import (
-    GitHubWorkflowAdapter,
-    ReceiptStore,
-    RemoteExecutionError,
-    RemoteLifecycle,
-    discover_adapters,
-    remote_request_from_task,
-    resolve_pushed_sha,
-    verification_context_for_task,
 )
 from limen.model_selection import (  # the shared model vocabulary — also used by the non-bypassable `claude` shim
     _CLAUDE_TIER_ORDER,
@@ -95,6 +56,61 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _guard_fable_model_pin,
     _resolve_claude_model,
 )
+from limen.models import (
+    BudgetTrack,
+    DispatchLogEntry,
+    LimenFile,
+    Task,
+    dispatch_agent,
+    dispatch_session_id,
+    has_jules_landing_hold,
+)
+from limen.plan_handoff import (
+    PlanHandoffResult,
+    PlanReceiptError,
+    build_plan_receipt,
+    builder_task_from_receipt,
+    is_build_from_plan,
+    is_plan_only,
+    select_live_builder,
+    validate_receipt_for_task,
+)
+from limen.provider_selection import (
+    catalog_hash,
+    discover_opencode_models,
+    discover_warp_override,
+    effective_profile,
+    execution_profile_for,
+    paid_service_block_reason,
+    select_opencode_model,
+)
+from limen.remote_execution import (
+    GitHubWorkflowAdapter,
+    ReceiptStore,
+    RemoteExecutionError,
+    RemoteLifecycle,
+    discover_adapters,
+    remote_request_from_task,
+    resolve_pushed_sha,
+    verification_context_for_task,
+)
+from limen.runtime_requirements import task_execution_ready
+from limen.tabularius import apply_limen_file_sync
+from limen.work_loan import task_work_loan_readiness
+from limen.work_loan_journal import (
+    WorkLoanJournalError,
+    work_loan_selection_key,
+)
+from limen.work_loan_journal import (
+    default_store as default_work_loan_journal_store,
+)
+from limen.workstream_contract import (
+    WORKSTREAM_SUCCESSOR_REQUIRED_LABEL,
+    validate_packet_contract,
+)
+from limen.workstream_contract import (
+    ContractError as WorkstreamContractError,
+)
 from limen.worktree_debt import (
     IMPACT_DEBT_CREATING,
     IMPACT_REMOTE,
@@ -104,17 +120,6 @@ from limen.worktree_debt import (
 )
 from limen.worktree_initialization import WorktreeInitializationError, initialize_worktree
 from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
-from limen.work_loan import task_work_loan_readiness
-from limen.workstream_contract import (
-    ContractError as WorkstreamContractError,
-    WORKSTREAM_SUCCESSOR_REQUIRED_LABEL,
-    validate_packet_contract,
-)
-from limen.work_loan_journal import (
-    WorkLoanJournalError,
-    default_store as default_work_loan_journal_store,
-    work_loan_selection_key,
-)
 
 
 def _int_or_default(raw: object, default: int) -> int:
@@ -177,8 +182,7 @@ def _load_limen_env() -> int:
             line = raw.strip()
             if not line or line.startswith("#"):
                 continue
-            if line.startswith("export "):
-                line = line[len("export ") :]
+            line = line.removeprefix("export ")
             if "=" not in line:
                 continue
             key, val = line.split("=", 1)
@@ -443,8 +447,8 @@ def _parse_iso_timestamp(raw: object) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _parse_json_stdout(stdout: str) -> dict[str, Any]:
@@ -541,7 +545,7 @@ def _handoff_next_action_source(root: Path) -> bool:
     if generated is None:
         return False
     max_age_min = _env_int("LIMEN_HANDOFF_MAX_AGE_MIN", 90)
-    if (datetime.now(timezone.utc) - generated).total_seconds() > max(1, max_age_min) * 60:
+    if (datetime.now(UTC) - generated).total_seconds() > max(1, max_age_min) * 60:
         return False
     return isinstance(handoff.get("next_action"), dict)
 
@@ -1116,8 +1120,7 @@ def _normalize_repo_slug(repo: object) -> str:
         if value.startswith(prefix):
             value = value.removeprefix(prefix)
             break
-    if value.endswith(".git"):
-        value = value[:-4]
+    value = value.removesuffix(".git")
     return value.strip("/").lower()
 
 
@@ -1432,7 +1435,7 @@ def _write_machine_admission_lease(task: Task, agent: str, reserved_gib: float) 
         "agent": canonical_agent(agent),
         "reserved_gib": reserved_gib,
         "phase": "selected",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
     tmp = path.with_suffix(f".{os.getpid()}.tmp")
     tmp.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
@@ -1450,7 +1453,7 @@ def _mark_machine_admission_born(task_id: str) -> None:
         if payload is not None:
             payload["reserved_gib"] = 0.0
             payload["phase"] = "worktree-born"
-            payload["born_at"] = datetime.now(timezone.utc).isoformat()
+            payload["born_at"] = datetime.now(UTC).isoformat()
             tmp = path.with_suffix(f".{os.getpid()}.tmp")
             tmp.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
             os.replace(tmp, path)
@@ -1490,7 +1493,7 @@ def _transfer_machine_admission_owner(task_id: str, pid: int, phase: str) -> Non
             return
         payload["pid"] = pid
         payload["phase"] = phase
-        payload["transferred_at"] = datetime.now(timezone.utc).isoformat()
+        payload["transferred_at"] = datetime.now(UTC).isoformat()
         transferred = _admission_lease_path(task_id, pid=pid)
         tmp = transferred.with_suffix(f".{os.getpid()}.tmp")
         tmp.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
@@ -2406,8 +2409,7 @@ def _is_blanket_claude_authority(rule: str) -> bool:
     bash = re.fullmatch(r"Bash\((.*)\)", rule)
     if bash:
         specifier = bash.group(1).strip()
-        if specifier.startswith(":"):
-            specifier = specifier[1:]
+        specifier = specifier.removeprefix(":")
         if specifier and set(specifier) == {"*"}:
             return True
     web_fetch = re.fullmatch(r"WebFetch\(domain:(.*)\)", rule)
@@ -4339,7 +4341,7 @@ def _record_worktree_birth(
         gitdir_path = wt / gitdir_path
     payload = {
         "schema": "limen.worktree_birth.v1",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "task_id": task.id,
         "repo": task.repo,
         "root": str(wt),
@@ -4415,7 +4417,7 @@ def _record_worktree_lifecycle(
             fh.write(
                 json.dumps(
                     {
-                        "ts": datetime.now(timezone.utc).isoformat(),
+                        "ts": datetime.now(UTC).isoformat(),
                         "task_id": getattr(task, "id", None),
                         "repo": getattr(task, "repo", None),
                         "root": str(wt),
@@ -4786,7 +4788,7 @@ def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> bool:
             try:
                 last = datetime.fromisoformat(last_iso)
                 if last.tzinfo is None:
-                    last = last.replace(tzinfo=timezone.utc)
+                    last = last.replace(tzinfo=UTC)
             except Exception:
                 last = None
         if last is None or (now - last) >= timedelta(hours=_window_hours(agent)):
@@ -4920,7 +4922,7 @@ def dispatch_tasks(
     task_id: str | None = None,
     limit: int | None = None,
 ) -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     budget = budget or limen.portal.budget.daily
 
     admission = dispatch_admission_check(tasks_path, task_id=task_id)
@@ -5358,7 +5360,7 @@ def _accel_window(limen: LimenFile, agent: str, now: datetime) -> tuple[float, f
         if last_iso:
             last = datetime.fromisoformat(last_iso)
             if last.tzinfo is None:
-                last = last.replace(tzinfo=timezone.utc)
+                last = last.replace(tzinfo=UTC)
             elapsed_h = max(0.0, (now - last).total_seconds() / 3600.0)
         time_left_frac = max(0.0, min(1.0, (wh - elapsed_h) / wh))
         return remaining_frac, time_left_frac
@@ -5691,7 +5693,7 @@ def dispatch_parallel(
     within a lane) without racing tasks.yaml: the two file writes happen under this single
     process (serial), the slow agent runs happen concurrently in a thread pool, and a
     lane that hits its real rate-limit is cooled (its remaining reserved tasks re-queued)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     reservation_materialized_local = False
     admission = dispatch_admission_check(tasks_path)
     if not admission.get("allow", False):
@@ -5956,7 +5958,7 @@ def release_stale_tasks(
     *,
     jules_snapshot: JulesRemoteSnapshot | None = None,
 ) -> ReleaseStaleReport:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     candidates = stale_tasks(limen, hours=hours, agent=agent)
 
     mode = "DRY-RUN" if dry_run else "APPLY"

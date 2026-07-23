@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
-
+from typing import Any
 
 ADAPTER_SCHEMA = "limen.progress-history-adapter.v1"
 SNAPSHOT_SCHEMA = "limen.progress-history-snapshot.v1"

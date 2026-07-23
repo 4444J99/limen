@@ -1,9 +1,8 @@
 import json
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "fable-allotment.py"
@@ -45,7 +44,7 @@ def with_slug(args: list[str], slug: str) -> list[str]:
 
 
 def receipt_data(category: str, percent: float) -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     monday = (now - timedelta(days=now.weekday())).date().isoformat()
     return {
         "schema": "limen.fable_acceptance.v1",
@@ -127,7 +126,7 @@ def test_audit_fails_when_deliberate_cap_is_exceeded(tmp_path):
 
 
 def _this_monday() -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return (now - timedelta(days=now.weekday())).date().isoformat()
 
 

@@ -5,7 +5,6 @@ import os
 from collections.abc import Mapping
 from pathlib import Path
 
-
 RUNTIME_URL_ENV_ORDER = (
     "LIMEN_WORKER_URL",
     "NEXT_PUBLIC_API_URL",

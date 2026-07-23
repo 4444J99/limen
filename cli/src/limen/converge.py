@@ -54,11 +54,10 @@ CLI (dependency-free in ``--dry-run``)::
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass, field
 import functools
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol, runtime_checkable
-
 
 # ─── Data model ──────────────────────────────────────────────────────
 

@@ -16,9 +16,8 @@ import os
 import sys
 from pathlib import Path
 
-import pytest
-
 import limen.dispatch as D
+import pytest
 from limen.io import load_limen_file, save_limen_file
 from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task, dispatch_session_id
 
@@ -49,7 +48,7 @@ def _iso(now: datetime.datetime, hours_ago: float) -> str:
 # ── accelerator window + scaling ──────────────────────────────────────────────────────────────
 def test_accel_window_detects_under_spend(monkeypatch):
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = _lf({"jules": 100}, {"jules": 10}, {"jules": _iso(now, 22)})  # 22h into a 24h window, 90% left
     rem, tleft = D._accel_window(lf, "jules", now)
     assert rem > 0.85 and tleft < 0.12  # lots of budget, almost no time → will under-spend
@@ -58,7 +57,7 @@ def test_accel_window_detects_under_spend(monkeypatch):
 def test_accel_scales_async_lane_toward_cliff(monkeypatch):
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
     monkeypatch.delenv("LIMEN_ACCEL", raising=False)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = _lf({"jules": 100}, {"jules": 10}, {"jules": _iso(now, 22)})
     eff = D._accel_limit(lf, "jules", base_limit=3, now=now)
     assert eff > 3, "an under-spending async lane near its cliff must accelerate above base"
@@ -71,7 +70,7 @@ def test_accel_local_sync_lane_ceilinged_below_async(monkeypatch):
     monkeypatch.setattr(D, "_window_hours", lambda a: 5.0)
     monkeypatch.delenv("LIMEN_ACCEL", raising=False)
     monkeypatch.delenv("LIMEN_DISPATCH_ASYNC", raising=False)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = _lf({"codex": 100}, {"codex": 5}, {"codex": _iso(now, 4.7)})  # near the 5h cliff, barely spent
     eff = D._accel_limit(lf, "codex", base_limit=3, now=now)
     assert 3 < eff <= 8, "local sync lane accelerates but is pool-bounded, not burst-bounded"
@@ -81,7 +80,7 @@ def test_accel_local_bursts_when_async_mode_on(monkeypatch):
     # when dispatch is async (non-blocking), even local lanes may burst — logic follows the PATH.
     monkeypatch.setattr(D, "_window_hours", lambda a: 5.0)
     monkeypatch.setenv("LIMEN_DISPATCH_ASYNC", "1")
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = _lf({"codex": 100}, {"codex": 5}, {"codex": _iso(now, 4.7)})
     eff = D._accel_limit(lf, "codex", base_limit=3, now=now)
     assert eff > 8, "async path lifts the local ceiling to the burst ceiling"
@@ -89,7 +88,7 @@ def test_accel_local_bursts_when_async_mode_on(monkeypatch):
 
 def test_accel_no_acceleration_when_paced_evenly(monkeypatch):
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = _lf({"jules": 100}, {"jules": 50}, {"jules": _iso(now, 12)})  # half spent, half the window gone
     assert D._accel_limit(lf, "jules", 3, now) == 3, "even pacing ⇒ no acceleration (base)"
 
@@ -97,7 +96,7 @@ def test_accel_no_acceleration_when_paced_evenly(monkeypatch):
 def test_accel_off_when_disabled(monkeypatch):
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
     monkeypatch.setenv("LIMEN_ACCEL", "0")
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = _lf({"jules": 100}, {"jules": 1}, {"jules": _iso(now, 23)})
     assert D._accel_limit(lf, "jules", 3, now) == 3
 
@@ -106,7 +105,7 @@ def test_accel_never_decelerates_below_base(monkeypatch):
     # an OVER-spending lane (more time left than budget) must floor at base, never below — the budget
     # gate, not the accelerator, is what stops over-spend.
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = _lf({"jules": 100}, {"jules": 90}, {"jules": _iso(now, 2)})  # 10% left, 92% of window remains
     assert D._accel_limit(lf, "jules", 3, now) == 3
 
@@ -140,7 +139,7 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
         json.dumps({"lanes": {"jules": {"waste_classes": ["coverage"], "win_classes": ["revenue"]}}})
     )
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     reset = {"jules": _iso(now, 23)}
     tasks = [
         Task(

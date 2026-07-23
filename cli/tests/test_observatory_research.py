@@ -7,7 +7,6 @@ curated mechanism seeds are written into that tree so scoring is exercised by lo
 from __future__ import annotations
 
 import pytest
-
 from limen.observatory import cohort, collect, config, estate, mechanism, surface
 
 WINNER_README = """# OfficeCLI

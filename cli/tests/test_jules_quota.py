@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "jules-quota.py"
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.io import save_limen_file  # noqa: E402
-from limen.jules_remote import JulesRemoteSession, JulesRemoteSnapshot  # noqa: E402
-from limen.models import DispatchLogEntry, LimenFile, Task  # noqa: E402
+from limen.io import save_limen_file
+from limen.jules_remote import JulesRemoteSession, JulesRemoteSnapshot
+from limen.models import DispatchLogEntry, LimenFile, Task
 
 
 def load_jules_quota():
@@ -46,7 +46,7 @@ def _board_with_dispatches(now: datetime) -> LimenFile:
 
 def test_used_today_counts_only_jules_dispatch_receipts_today() -> None:
     module = load_jules_quota()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     board = _board_with_dispatches(now)
     assert module.used_today(board, now.date()) == 1
     assert module.used_today(board, date(2000, 1, 1)) == 0
@@ -55,7 +55,7 @@ def test_used_today_counts_only_jules_dispatch_receipts_today() -> None:
 def test_main_alarms_on_orphans_and_prints_gauge(monkeypatch, tmp_path: Path, capsys) -> None:
     """An unmapped completed session turns the sensor advisory-red and shows in the gauge."""
     module = load_jules_quota()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     tasks_path = tmp_path / "tasks.yaml"
     save_limen_file(tasks_path, _board_with_dispatches(now))
     snapshot = JulesRemoteSnapshot(
@@ -76,7 +76,7 @@ def test_main_alarms_on_orphans_and_prints_gauge(monkeypatch, tmp_path: Path, ca
 def test_main_healthy_when_adopted_and_no_recovery(monkeypatch, tmp_path: Path, capsys) -> None:
     """Adopted sessions and a pre-alarm clock leave the sensor green."""
     module = load_jules_quota()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     tasks_path = tmp_path / "tasks.yaml"
     save_limen_file(tasks_path, _board_with_dispatches(now))
     adoptions = tmp_path / "adoptions.jsonl"
@@ -100,7 +100,7 @@ def test_main_healthy_when_adopted_and_no_recovery(monkeypatch, tmp_path: Path, 
 def test_main_recovery_states_alarm(monkeypatch, tmp_path: Path, capsys) -> None:
     """Failed / awaiting-feedback sessions turn the sensor advisory-red."""
     module = load_jules_quota()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     tasks_path = tmp_path / "tasks.yaml"
     save_limen_file(tasks_path, _board_with_dispatches(now))
     snapshot = JulesRemoteSnapshot(

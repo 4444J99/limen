@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import TypedDict, cast
 
@@ -103,7 +103,7 @@ def _runtime_api_url() -> str:
 
 def _ensure_aware(dt: datetime) -> datetime:
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=UTC)
     return dt
 
 
@@ -113,7 +113,7 @@ def stale_tasks(
     agent: str | None = None,
     now: datetime | None = None,
 ) -> list[Task]:
-    reference = _ensure_aware(now) if now else datetime.now(timezone.utc)
+    reference = _ensure_aware(now) if now else datetime.now(UTC)
     cutoff = reference - timedelta(hours=hours)
     candidates: list[Task] = []
     for task in limen.tasks:
@@ -187,7 +187,7 @@ def readiness_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -
     return {
         "status": status,
         "agent": agent,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "tasks_path": str(tasks_path),
         "counts": {
             "total": len(limen.tasks),
@@ -264,7 +264,7 @@ def qa_report(
     agent: str = "jules",
     now: datetime | None = None,
 ) -> QaReport:
-    reference = _ensure_aware(now) if now else datetime.now(timezone.utc)
+    reference = _ensure_aware(now) if now else datetime.now(UTC)
     stale_ids = {task.id for task in stale_tasks(limen, now=reference)}
     items = [_task_lifecycle(task, stale_ids) for task in limen.tasks]
     phase_order = {"recover": 0, "verify": 1, "assign": 2, "archive": 3, "archived": 4}

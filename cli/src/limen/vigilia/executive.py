@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from . import continuity, integrity, params, vitals
@@ -36,7 +36,7 @@ def _safe(fn, organ: str) -> dict:
 def run_beat() -> dict:
     status = {
         "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         # vitals recorded read-only here (shed=False); the gate path does the shedding.
         "vitals": _safe(lambda: vitals.beat_gate(shed=False), "vitals"),
         "continuity": _safe(continuity.beat, "continuity"),

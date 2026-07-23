@@ -14,7 +14,7 @@ Everything is fail-open: offline, ``collect`` returns an empty, honest result.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from . import cohort, config, gh, ledger, surface
 
@@ -40,7 +40,7 @@ def _age_days(created_at: str | None, now: datetime | None = None) -> int | None
         created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
     except Exception:
         return None
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     return max(0, (now - created).days)
 
 
@@ -141,7 +141,7 @@ def _trending_items(tok, *, window_days: int, per_page: int) -> list[dict]:
     OBSERVATORY_TRENDING_QUERY. Fail-open []."""
     query = str(config.get("OBSERVATORY_TRENDING_QUERY", "") or "").strip()
     if not query:
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=window_days)).date().isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(days=window_days)).date().isoformat()
         query = f"stars:>50 created:>={cutoff}"  # GitHub search needs an absolute ISO date, not now-Nd
     return gh.search_repos(query, tok, sort="stars", per_page=per_page)
 

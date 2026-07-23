@@ -11,8 +11,8 @@ from __future__ import annotations
 import json
 
 import pytest
-
-from limen.observatory import brief, collect, config, estate, gh as ghmod, ledger, mechanism
+from limen.observatory import brief, collect, config, estate, ledger, mechanism
+from limen.observatory import gh as ghmod
 
 WINNER_README = """# OfficeCLI
 

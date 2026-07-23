@@ -4,8 +4,8 @@ orchestration: concurrency cap, in-flight marker accounting, harvest-applies-res
 dead-worker reaper. Agent spawning (subprocess.Popen) is monkeypatched so no real agents run.
 """
 
-import datetime
 import contextlib
+import datetime
 import hashlib
 import importlib.util
 import json
@@ -18,15 +18,15 @@ from pathlib import Path
 
 import pytest
 
-
 CLI_SRC = Path(__file__).resolve().parents[1] / "src"
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "dispatch-async.py"
 WORKER_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "async-run-one.py"
 sys.path.insert(0, str(CLI_SRC))
 
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.execution_contract import execution_contract_hash  # noqa: E402
-from limen.models import (  # noqa: E402
+import limen.dispatch as dispatch_module
+from limen.execution_contract import execution_contract_hash
+from limen.io import load_limen_file, save_limen_file
+from limen.models import (
     Budget,
     BudgetTrack,
     DispatchLogEntry,
@@ -36,16 +36,17 @@ from limen.models import (  # noqa: E402
     dispatch_agent,
     dispatch_session_id,
 )
-from limen.provider_selection import execution_profile_for  # noqa: E402
-from limen.remote_execution import verification_context_for_task  # noqa: E402
-from limen.remote_predicate import (  # noqa: E402
+from limen.provider_selection import execution_profile_for
+from limen.remote_execution import verification_context_for_task
+from limen.remote_predicate import (
     SCHEMA_VERSION,
     canonical_json,
     digest_bytes,
     digest_text,
+)
+from limen.remote_predicate import (
     packet_digest as compute_packet_digest,
 )
-import limen.dispatch as dispatch_module  # noqa: E402
 
 
 def _load(tmp_path, n_open=6, agent="codex"):
@@ -111,7 +112,7 @@ def _remote_harvest_fixture(tmp_path):
     contract_hash = execution_contract_hash(task)
     task.dispatch_log.append(
         DispatchLogEntry(
-            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            timestamp=datetime.datetime.now(datetime.UTC),
             agent="github_actions",
             session_id=reservation_id,
             status="dispatched",
@@ -130,7 +131,7 @@ def _remote_harvest_fixture(tmp_path):
             created=datetime.date.today(),
             dispatch_log=[
                 DispatchLogEntry(
-                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    timestamp=datetime.datetime.now(datetime.UTC),
                     agent="codex",
                     session_id="https://github.com/x/y/pull/9",
                     status="done",
@@ -224,7 +225,7 @@ def _remote_harvest_fixture(tmp_path):
         "verification_context_digest": metadata["verification_context_digest"],
         "state": metadata["remote_state"],
         "request_id": request_id,
-        "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "observed_at": datetime.datetime.now(datetime.UTC).isoformat(),
         "detail": "submission observed; not completion",
     }
     receipt: dict[str, object] = {
@@ -235,7 +236,7 @@ def _remote_harvest_fixture(tmp_path):
         "predicate": None,
         "outputs": [],
         "observed_sha": None,
-        "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "observed_at": datetime.datetime.now(datetime.UTC).isoformat(),
         "detail": "submission observed; not completion",
         "done": False,
     }
@@ -250,7 +251,7 @@ def _remote_harvest_fixture(tmp_path):
         "agent": "github_actions",
         "reservation_id": reservation_id,
         "result": "42",
-        "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "ts": datetime.datetime.now(datetime.UTC).isoformat(),
         "err": None,
         "execution_contract_hash": execution_contract_hash(task),
         "actual_execution_contract_hash": execution_contract_hash(task),
@@ -279,7 +280,7 @@ def _assert_remote_harvest_blocked(tmp_path, da, result, *, marker_cleared: bool
     da._write_running_marker(
         str(result["task_id"]),
         "github_actions",
-        datetime.datetime.now(datetime.timezone.utc),
+        datetime.datetime.now(datetime.UTC),
         os.getpid(),
         0.0,
         str(result["reservation_id"]),
@@ -457,7 +458,7 @@ def test_targeted_zero_launch_blocker_names_missing_and_terminal_tasks(tmp_path)
 def test_inflight_markers_consume_slots(tmp_path):
     da = _load(tmp_path, n_open=6)
     for i in range(4):
-        (da.RUNS / f"R{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+        (da.RUNS / f"R{i}__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
     picked = da.reserve_and_launch(["codex"], per_agent=8, cap=4, dry=True)
     assert picked == []  # 4 already running, cap 4 → 0 new
 
@@ -505,7 +506,7 @@ def test_inflight_markers_consume_per_lane_limit(tmp_path):
     ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
     for i in range(2):
-        (da.RUNS / f"RC{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+        (da.RUNS / f"RC{i}__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
 
     picked = da.reserve_and_launch(["codex", "agy"], per_agent=2, cap=6, dry=True)
 
@@ -531,7 +532,7 @@ def test_running_marker_blocks_duplicate_task_reservation_across_agents(tmp_path
         )
     ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
-    (da.RUNS / "DUP__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+    (da.RUNS / "DUP__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
 
     picked = da.reserve_and_launch(["claude"], per_agent=4, cap=4, dry=True)
 
@@ -569,7 +570,7 @@ def test_pending_result_blocks_duplicate_task_reservation_across_agents(tmp_path
 def test_agy_weak_proxy_can_reserve_against_daily_runway(tmp_path):
     da = _load(tmp_path, n_open=0)
     today = datetime.date.today()
-    reset_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    reset_at = datetime.datetime.now(datetime.UTC).isoformat()
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.portal.budget.daily = 5
     lf.portal.budget.per_agent = {"agy": 1}
@@ -620,7 +621,7 @@ def test_agy_weak_proxy_can_reserve_against_daily_runway(tmp_path):
 def test_agy_recent_rate_limit_does_not_bypass_proxy_budget(tmp_path):
     da = _load(tmp_path, n_open=0)
     today = datetime.date.today()
-    reset_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    reset_at = datetime.datetime.now(datetime.UTC).isoformat()
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.portal.budget.daily = 5
     lf.portal.budget.per_agent = {"agy": 1}
@@ -767,7 +768,7 @@ def test_async_remote_lane_not_gated_by_local_concurrency_cap(tmp_path):
     save_limen_file(tmp_path / "tasks.yaml", lf)
     # local in-flight runs fully saturate the cap (4 local markers, cap 4)
     for i in range(4):
-        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
 
     picked = da.reserve_and_launch(["codex", "jules"], per_agent=8, cap=4, dry=True)
 
@@ -806,7 +807,7 @@ def test_async_remote_lane_is_bounded_by_live_usage_remaining(tmp_path):
         encoding="utf-8",
     )
     for i in range(4):
-        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
 
     picked = da.reserve_and_launch(["jules"], per_agent=100, cap=4, dry=True)
 
@@ -881,9 +882,9 @@ def test_local_lane_still_bounded_by_cap_after_async_carveout(tmp_path):
     local lane is still hard-capped by the concurrency budget (no over-dispatch of the host)."""
     da = _load(tmp_path, n_open=6, agent="codex")
     # one jules run in flight (off-box) + 4 local runs in flight; cap is 4 → local slots already spent
-    (da.RUNS / "JX__jules.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+    (da.RUNS / "JX__jules.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
     for i in range(4):
-        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
 
     picked = da.reserve_and_launch(["codex"], per_agent=8, cap=4, dry=True)
 
@@ -997,7 +998,7 @@ def test_harvest_applies_pr_result_and_cleans(tmp_path):
     lf.tasks[0].status = "dispatched"
     lf.tasks[0].dispatch_log.append(
         DispatchLogEntry(
-            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            timestamp=datetime.datetime.now(datetime.UTC),
             agent="codex",
             session_id="async-reserve",
             status="dispatched",
@@ -1006,7 +1007,7 @@ def test_harvest_applies_pr_result_and_cleans(tmp_path):
     )
     save_limen_file(tmp_path / "tasks.yaml", lf)
     contract_hash = execution_contract_hash(lf.tasks[0])
-    (da.RUNS / "T0__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+    (da.RUNS / "T0__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
     (da.RUNS / "T0.result.json").write_text(
         json.dumps(
             {
@@ -1285,7 +1286,7 @@ def test_remote_harvest_rejects_stale_result_after_newer_authoritative_reroute(t
     task.target_agent = "codex"
     task.dispatch_log.append(
         DispatchLogEntry(
-            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            timestamp=datetime.datetime.now(datetime.UTC),
             agent="codex",
             session_id="manual-reroute",
             status="open",
@@ -1305,7 +1306,7 @@ def test_remote_harvest_rejects_old_same_agent_result_after_new_reservation(tmp_
     task.predicate = "python3 scripts/check-other.py"
     task.dispatch_log.append(
         DispatchLogEntry(
-            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            timestamp=datetime.datetime.now(datetime.UTC),
             agent="github_actions",
             session_id=f"async-reserve:{'b' * 32}",
             status="dispatched",
@@ -1336,7 +1337,7 @@ def test_superseded_worker_never_calls_provider_or_overwrites_new_attempt(tmp_pa
     task.status = "dispatched"
     task.dispatch_log.append(
         DispatchLogEntry(
-            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            timestamp=datetime.datetime.now(datetime.UTC),
             agent="github_actions",
             session_id=current_reservation,
             status="dispatched",
@@ -1568,7 +1569,7 @@ def test_async_normalizes_only_selected_legacy_task(tmp_path):
         per_agent=1,
         cap=1,
         dry=True,
-        now=datetime.datetime.now(datetime.timezone.utc),
+        now=datetime.datetime.now(datetime.UTC),
         usage_remaining={},
         weak_proxy_agents=set(),
     )
@@ -1615,7 +1616,7 @@ def test_async_skips_unowned_legacy_candidate_and_continues(tmp_path, capsys):
         per_agent=1,
         cap=1,
         dry=True,
-        now=datetime.datetime.now(datetime.timezone.utc),
+        now=datetime.datetime.now(datetime.UTC),
         usage_remaining={},
         weak_proxy_agents=set(),
     )
@@ -1825,7 +1826,7 @@ def test_async_reserve_skips_lane_that_already_timed_out_task(tmp_path, monkeypa
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
     da = _load(tmp_path, n_open=0, agent="codex")
     today = datetime.date.today()
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.portal.budget.per_agent = {"codex": 50}
     lf.tasks = [
@@ -1860,7 +1861,7 @@ def test_async_reserve_suppresses_chronic_noop_task(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
     da = _load(tmp_path, n_open=0, agent="codex")
     today = datetime.date.today()
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.portal.budget.per_agent = {"codex": 50}
     lf.tasks = [
@@ -2212,7 +2213,7 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
     # two dispatched tasks, one with a stale marker (dead), one fresh (live)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     today = datetime.date.today()
-    reserved_at = datetime.datetime.now(datetime.timezone.utc)
+    reserved_at = datetime.datetime.now(datetime.UTC)
     lf.tasks += [
         Task(
             id="DEAD",
@@ -2234,7 +2235,7 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
         Task(id="LIVE", title="t", repo="x/y", target_agent="codex", status="dispatched", created=today),
     ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     (da.RUNS / "DEAD__codex.running").write_text((now - datetime.timedelta(seconds=3000)).isoformat())
     (da.RUNS / "LIVE__codex.running").write_text(now.isoformat())
     reaped = da.reap_stale(1200)
@@ -2250,7 +2251,7 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
 def test_nonce_scoped_result_prevents_matching_dead_marker_reap(tmp_path):
     da = _load(tmp_path, n_open=0)
     reservation_id = f"async-reserve:{'a' * 32}"
-    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    reserved_at = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=3000)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.tasks.append(
         Task(
@@ -2292,8 +2293,8 @@ def test_old_dead_marker_cannot_reopen_newer_same_agent_reservation(tmp_path):
     da = _load(tmp_path, n_open=0)
     old_reservation = f"async-reserve:{'a' * 32}"
     current_reservation = f"async-reserve:{'b' * 32}"
-    old_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
-    current_at = datetime.datetime.now(datetime.timezone.utc)
+    old_at = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=3000)
+    current_at = datetime.datetime.now(datetime.UTC)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.tasks.append(
         Task(
@@ -2352,7 +2353,7 @@ def test_reaper_restores_prior_done_instead_of_reopening(tmp_path):
     da = _load(tmp_path, n_open=0)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     today = datetime.date.today()
-    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    reserved_at = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=3000)
     lf.tasks.append(
         Task(
             id="DONE-DEAD",
@@ -2395,7 +2396,7 @@ def test_reaper_restores_prior_pr_open_instead_of_reopening(tmp_path):
     da = _load(tmp_path, n_open=0)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     today = datetime.date.today()
-    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    reserved_at = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=3000)
     lf.tasks.append(
         Task(
             id="PR-DEAD",
@@ -2444,7 +2445,7 @@ def test_reaper_reopens_markerless_async_reservation(tmp_path):
     da = _load(tmp_path, n_open=0)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     today = datetime.date.today()
-    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    reserved_at = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=3000)
     lf.tasks.append(
         Task(
             id="MARKERLESS",
@@ -2481,7 +2482,7 @@ def test_reaper_restores_markerless_prior_pr_open_instead_of_reopening(tmp_path)
     da = _load(tmp_path, n_open=0)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     today = datetime.date.today()
-    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    reserved_at = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=3000)
     lf.tasks.append(
         Task(
             id="PR-MARKERLESS",
@@ -2539,7 +2540,7 @@ def test_async_reserve_counts_inflight_against_launch_room(tmp_path):
     save_limen_file(tmp_path / "tasks.yaml", lf)
     # 2 codex runs already in-flight (markers) → at cap
     for i in range(2):
-        (da.RUNS / f"INF{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+        (da.RUNS / f"INF{i}__codex.running").write_text(datetime.datetime.now(datetime.UTC).isoformat())
     picked = da.reserve_and_launch(["codex"], per_agent=2, cap=20, dry=True)
     assert picked == [], f"over-dispatched past in-flight launch room: {picked}"
 
@@ -2679,7 +2680,7 @@ def test_async_reserve_round_robins_local_slots_across_lanes(tmp_path):
 
 
 def test_async_reserve_projects_stale_budget_reset_before_selection(tmp_path, monkeypatch):
-    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.timezone.utc)
+    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.UTC)
     stale = (now - datetime.timedelta(days=2)).isoformat()
     da = _load(tmp_path, n_open=0)
     monkeypatch.setattr(da, "_now", lambda: now)
@@ -2717,7 +2718,7 @@ def test_async_reserve_projects_stale_budget_reset_before_selection(tmp_path, mo
 
 
 def test_async_reserve_leaves_budget_window_to_keeper_without_launches(tmp_path, monkeypatch):
-    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.timezone.utc)
+    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.UTC)
     stale = (now - datetime.timedelta(days=2)).isoformat()
     da = _load(tmp_path, n_open=0)
     monkeypatch.setattr(da, "_now", lambda: now)
@@ -2754,7 +2755,7 @@ def test_async_reserve_skips_open_task_with_prior_done(tmp_path):
             created=today,
             dispatch_log=[
                 DispatchLogEntry(
-                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    timestamp=datetime.datetime.now(datetime.UTC),
                     agent="codex",
                     session_id="prior",
                     status="done",
@@ -2807,7 +2808,7 @@ def test_async_dry_run_does_not_reap_harvest_or_reserve_mutations(tmp_path, monk
         )
     )
     save_limen_file(tmp_path / "tasks.yaml", lf)
-    stale = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    stale = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=3000)
     marker = da.RUNS / "STALE__codex.running"
     result = da.RUNS / "STALE.result.json"
     marker.write_text(stale.isoformat())
@@ -3078,7 +3079,7 @@ pathlib.Path("logs/handoff.json").write_text("MUTATED BY FORBIDDEN REFRESH")
     (logs / "handoff.json").write_text(
         json.dumps(
             {
-                "generated": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "generated": datetime.datetime.now(datetime.UTC).isoformat(),
                 "next_action": {"task_id": task.id},
             },
             sort_keys=True,
@@ -3205,7 +3206,7 @@ def test_targeted_only_retains_dispatch_admission_gate(tmp_path, monkeypatch, ca
 def _mark_async_dispatched(tmp_path, *, age_seconds=0, reservation_id="async-reserve"):
     board = load_limen_file(tmp_path / "tasks.yaml")
     task = board.tasks[0]
-    stamp = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=age_seconds)
+    stamp = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=age_seconds)
     task.status = "dispatched"
     task.updated = stamp
     task.dispatch_log.append(
@@ -3291,7 +3292,7 @@ def test_exact_recovery_revalidates_dead_pid_immediately_before_mutation(tmp_pat
     da._write_running_marker(task.id, "codex", stamp, 999999, 0.0)
     probes = iter([False, True])
     monkeypatch.setattr(da, "_pid_alive", lambda _pid: next(probes))
-    monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
+    monkeypatch.setattr(da, "_active_admission_leases", list)
     monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
 
     result = da.recover_exact_task(task.id, contract_hash, dry_run=False)
@@ -3328,7 +3329,7 @@ def test_exact_recovery_rechecks_result_immediately_before_mutation(tmp_path, mo
 
     monkeypatch.setattr(da, "_result_exists", result_exists)
     monkeypatch.setattr(da, "_pid_alive", lambda _pid: False)
-    monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
+    monkeypatch.setattr(da, "_active_admission_leases", list)
     monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
 
     result = da.recover_exact_task(task.id, contract_hash, dry_run=False)
@@ -3541,7 +3542,7 @@ def test_exact_orphan_recovery_command_reopens_once_and_is_idempotent(tmp_path, 
     da = _load(tmp_path, n_open=2)
     board = load_limen_file(tmp_path / "tasks.yaml")
     task = board.tasks[0]
-    old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=2)
+    old = datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=2)
     task.status = "dispatched"
     task.updated = old
     task.dispatch_log.append(
@@ -3649,7 +3650,7 @@ def test_exact_recovery_ignores_malformed_marker_from_stale_nonce(tmp_path, monk
     marker_a = da._running_marker_path(task.id, "codex", reservation_a)
     marker_a.write_text("{malformed-stale-a", encoding="utf-8")
     monkeypatch.setattr(da, "_pid_alive", lambda _pid: False)
-    monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
+    monkeypatch.setattr(da, "_active_admission_leases", list)
     monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
 
     result = da.recover_exact_task(
@@ -3675,7 +3676,7 @@ def test_exact_open_task_launches_new_nonce_despite_stale_nonce_artifacts(tmp_pa
     da._write_running_marker(
         task_id,
         agent,
-        datetime.datetime.now(datetime.timezone.utc),
+        datetime.datetime.now(datetime.UTC),
         11111,
         0.0,
         reservation_a,
@@ -3732,7 +3733,7 @@ def test_exact_open_task_keeps_unfenced_same_task_marker_fail_closed(tmp_path, m
         da._write_running_marker(
             task_id,
             agent,
-            datetime.datetime.now(datetime.timezone.utc),
+            datetime.datetime.now(datetime.UTC),
             11111,
             0.0,
         )
@@ -3747,7 +3748,7 @@ def test_exact_open_task_keeps_unfenced_same_task_marker_fail_closed(tmp_path, m
                     "reservation_id": "async-reserve:" + "a" * 32,
                     "reserved_gib": 0.0,
                     "pid": 11111,
-                    "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "started_at": datetime.datetime.now(datetime.UTC).isoformat(),
                 }
             ),
             encoding="utf-8",
@@ -3786,7 +3787,7 @@ def test_exact_nonce_exclusion_recomputes_room_from_unclamped_base(tmp_path, mon
     da._write_running_marker(
         task_id,
         agent,
-        datetime.datetime.now(datetime.timezone.utc),
+        datetime.datetime.now(datetime.UTC),
         11111,
         5.0,
         reservation_a,
@@ -3837,7 +3838,7 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
         return type("P", (), {"pid": next(pids)})()
 
     monkeypatch.setattr(da.subprocess, "Popen", fake_popen)
-    monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
+    monkeypatch.setattr(da, "_active_admission_leases", list)
     monkeypatch.setattr(da, "_kill_worker_group", lambda pid: killed.append(pid))
     monkeypatch.setattr(da, "_worker_has_defunct_child", lambda _pid: False)
     monkeypatch.setattr(da, "_pid_alive", lambda pid: pid == 22222)
@@ -3850,9 +3851,7 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
     assert re.fullmatch(r"async-reserve:[0-9a-f]{32}", reservation_a)
     marker_a = da._running_marker_path(task_id, agent, reservation_a)
     marker_a_payload = json.loads(marker_a.read_text(encoding="utf-8"))
-    marker_a_payload["started_at"] = (
-        datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=2)
-    ).isoformat()
+    marker_a_payload["started_at"] = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=2)).isoformat()
     marker_a.write_text(json.dumps(marker_a_payload), encoding="utf-8")
 
     recovered = da.recover_exact_task(
@@ -3932,7 +3931,7 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
     assert marker_b.read_bytes() == marker_b_bytes
     assert (tmp_path / "tasks.yaml").read_bytes() == board_b_bytes
 
-    old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=2)
+    old = datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=2)
     da._write_running_marker(task_id, agent, old, 11111, 0.0, reservation_a)
     da.reap_stale(max_age_s=1)
     assert killed == []

@@ -6,13 +6,12 @@ import os
 import shutil
 import subprocess
 import sys
+from collections.abc import Callable, Sequence
 from dataclasses import replace
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Callable, Sequence
 
 import pytest
-
 from limen.census import Budget, ExecutionProfile, Status, Vendor
 from limen.harvest import check_remote_harvest
 from limen.io import save_limen_file
@@ -57,7 +56,6 @@ from limen.remote_predicate import (
     validate_control_ref,
 )
 from limen.workstream_contract import packet_contract
-
 
 SHA = "a" * 40
 CONTROL_SHA = "c" * 40
@@ -1437,7 +1435,7 @@ def test_remote_harvest_never_searches_back_to_superseded_attempt(
     task.status = "in_progress"
     task.dispatch_log.append(
         DispatchLogEntry(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             agent="codex",
             session_id="newer-local-attempt",
             status="in_progress",
@@ -1460,7 +1458,7 @@ def test_remote_harvest_confirms_old_unmaterialized_attempt_absent(
         RemoteState.SUBMITTED,
         run_id=f"pending:{req.request_id}",
         detail="pending",
-        observed_at=(datetime.now(timezone.utc) - timedelta(minutes=20)).isoformat(),
+        observed_at=(datetime.now(UTC) - timedelta(minutes=20)).isoformat(),
     )
     store = ReceiptStore(tmp_path / "logs" / "remote-execution")
     path = store.write(
@@ -1665,7 +1663,7 @@ def test_dispatch_result_persists_remote_attempt_identity() -> None:
             task,
             "github_actions",
             observed.provider_run_id,
-            datetime.now(timezone.utc),
+            datetime.now(UTC),
             BudgetTrack(date="2026-07-13"),
         )
     finally:

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from datetime import date
 
-import pytest
-
 import limen.dispatch as D
+import pytest
 from limen.models import Task
 
 

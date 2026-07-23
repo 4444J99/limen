@@ -5,11 +5,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from limen.cli import main
 from limen.models import LimenFile
 from limen.progress import build_progress_snapshot, progress_bar, render_progress
-
 
 SOURCE_PATHS = {
     "omega": "logs/omega.json",

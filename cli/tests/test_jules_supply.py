@@ -14,15 +14,15 @@ SCRIPT = ROOT / "scripts" / "jules-supply.py"
 REGISTRY_PATH = ROOT / "docs" / "jules-supply-templates.yaml"
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.io import save_limen_file  # noqa: E402
-from limen.jules_supply import (  # noqa: E402
+from limen.io import save_limen_file
+from limen.jules_supply import (
     dispatchable_supply,
     expand_supply,
     load_supply_registry,
     next_indices,
 )
-from limen.models import LimenFile, Task  # noqa: E402
-from limen.work_loan import task_work_loan_readiness  # noqa: E402
+from limen.models import LimenFile, Task
+from limen.work_loan import task_work_loan_readiness
 
 
 def load_script():

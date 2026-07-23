@@ -6,16 +6,15 @@ import json
 import os
 import subprocess
 import sys
-from types import SimpleNamespace
 from pathlib import Path
-
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "codex-token-accounting.py"
 
 
 def _iso(ts: dt.datetime) -> str:
-    return ts.astimezone(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return ts.astimezone(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def write_fixture(
@@ -26,7 +25,7 @@ def write_fixture(
     parent_thread_id: str | None = None,
     root_session_id: str | None = None,
 ) -> None:
-    start = base_time or (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=2))
+    start = base_time or (dt.datetime.now(dt.UTC) - dt.timedelta(minutes=2))
     session_meta = {"id": sid}
     if parent_thread_id is not None:
         session_meta["parent_thread_id"] = parent_thread_id
@@ -163,7 +162,7 @@ def test_codex_token_accounting_fails_budget_gate(tmp_path: Path) -> None:
 def test_codex_token_accounting_active_gate_ignores_stale_failures(tmp_path: Path) -> None:
     fixture = tmp_path / "session.jsonl"
     report = tmp_path / "report.json"
-    write_fixture(fixture, base_time=dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1))
+    write_fixture(fixture, base_time=dt.datetime.now(dt.UTC) - dt.timedelta(hours=1))
 
     result = subprocess.run(
         [
@@ -329,7 +328,7 @@ def test_codex_token_accounting_active_gate_mixed_sessions(tmp_path: Path) -> No
     stale = tmp_path / "stale.jsonl"
     report = tmp_path / "report.json"
     write_fixture(fresh, sid="fresh-session")
-    write_fixture(stale, sid="stale-session", base_time=dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1))
+    write_fixture(stale, sid="stale-session", base_time=dt.datetime.now(dt.UTC) - dt.timedelta(hours=1))
 
     result = subprocess.run(
         [
@@ -365,7 +364,7 @@ def test_codex_token_accounting_active_gate_mixed_sessions(tmp_path: Path) -> No
 def test_codex_token_accounting_active_seconds_zero_treats_all_active(tmp_path: Path) -> None:
     """--active-session-seconds 0 collapses back to strict --fail-on-budget semantics."""
     fixture = tmp_path / "session.jsonl"
-    write_fixture(fixture, base_time=dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1))
+    write_fixture(fixture, base_time=dt.datetime.now(dt.UTC) - dt.timedelta(days=1))
 
     result = subprocess.run(
         [
@@ -401,7 +400,7 @@ def _load_accounting_module():
 def test_active_helpers_fail_open_and_window() -> None:
     """Pin active liveness: token timestamp first, mtime fallback, zero-collapse."""
     mod = _load_accounting_module()
-    now = dt.datetime(2026, 7, 1, 12, 0, 0, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 7, 1, 12, 0, 0, tzinfo=dt.UTC)
 
     # Unknown liveness -> fail-open: NOT active, routed to historical.
     assert mod.session_age_seconds({}, now) is None

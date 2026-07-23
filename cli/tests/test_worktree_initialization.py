@@ -5,7 +5,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from limen.worktree_initialization import (
     WORKTREE_INITIALIZATION_SCHEMA,
     WorktreeInitializationError,

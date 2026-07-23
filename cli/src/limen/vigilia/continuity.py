@@ -16,7 +16,6 @@ import glob as _glob
 import json
 import os
 from pathlib import Path
-from typing import Optional
 
 from . import params
 
@@ -41,7 +40,7 @@ def parse_rows(path: str | Path) -> list[dict]:
     return rows
 
 
-def _row_text(row: dict) -> Optional[tuple[str, str]]:
+def _row_text(row: dict) -> tuple[str, str] | None:
     """Extract (role, text) from a transcript row, or None if it carries no text."""
     msg = row.get("message")
     role = None
@@ -72,7 +71,7 @@ def _row_text(row: dict) -> Optional[tuple[str, str]]:
     return (str(role), text) if text else None
 
 
-def _summary_text(row: dict) -> Optional[str]:
+def _summary_text(row: dict) -> str | None:
     if row.get("isCompactSummary") or row.get("type") == "summary":
         rt = _row_text(row)
         if rt:
@@ -82,7 +81,7 @@ def _summary_text(row: dict) -> Optional[str]:
     return None
 
 
-def last_compact_summary(rows: list[dict]) -> Optional[str]:
+def last_compact_summary(rows: list[dict]) -> str | None:
     """The most recent compact/handoff summary text in the transcript."""
     for row in reversed(rows):
         s = _summary_text(row)
@@ -91,7 +90,7 @@ def last_compact_summary(rows: list[dict]) -> Optional[str]:
     return None
 
 
-def is_degenerate(summary: Optional[str], min_chars: int) -> bool:
+def is_degenerate(summary: str | None, min_chars: int) -> bool:
     """A handoff summary shorter than ``min_chars`` is degenerate (this session got 200)."""
     return summary is not None and len(summary.strip()) < min_chars
 
@@ -99,7 +98,7 @@ def is_degenerate(summary: Optional[str], min_chars: int) -> bool:
 def reconstruct(rows: list[dict], min_chars: int, max_chars: int = 60000) -> str:
     """Rebuild the thread: the last *good* (non-degenerate) summary as the base,
     then every intact turn that followed it."""
-    base_idx: Optional[int] = None
+    base_idx: int | None = None
     base_text = ""
     for i, row in enumerate(rows):
         s = _summary_text(row)

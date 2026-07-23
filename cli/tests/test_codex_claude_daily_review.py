@@ -5,7 +5,6 @@ import importlib.util
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "codex-claude-daily-review.py"
 
@@ -42,7 +41,7 @@ def _session(path: Path, sid: str, first: str, last: str | None, budget: int, *,
 def test_local_day_window_filters_codex_sessions_at_edt_boundaries(tmp_path: Path) -> None:
     review = _load()
     tz = ZoneInfo("America/New_York")
-    now = dt.datetime(2026, 7, 9, 12, 0, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 7, 9, 12, 0, tzinfo=dt.UTC)
     since, until = review.local_day_window("2026-07-08", local_tz=tz, now=now)
 
     assert review.iso_z(since) == "2026-07-08T04:00:00Z"
@@ -67,7 +66,7 @@ def test_local_day_window_filters_codex_sessions_at_edt_boundaries(tmp_path: Pat
         raw,
         since,
         until,
-        generated_at=dt.datetime(2026, 7, 9, 5, 0, tzinfo=dt.timezone.utc),
+        generated_at=dt.datetime(2026, 7, 9, 5, 0, tzinfo=dt.UTC),
     )
 
     assert [session["session_id"] for session in codex["sessions"]] == ["start", "late"]
@@ -79,7 +78,7 @@ def test_local_day_window_filters_codex_sessions_at_edt_boundaries(tmp_path: Pat
 def test_current_local_day_window_ends_at_now() -> None:
     review = _load()
     tz = ZoneInfo("America/New_York")
-    now = dt.datetime(2026, 7, 8, 15, 30, tzinfo=dt.timezone.utc)
+    now = dt.datetime(2026, 7, 8, 15, 30, tzinfo=dt.UTC)
 
     since, until = review.local_day_window("2026-07-08", local_tz=tz, now=now)
 

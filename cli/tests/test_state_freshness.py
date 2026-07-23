@@ -10,7 +10,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,14 +34,14 @@ def write_status(tmp_path: Path, ts: datetime, name: str = "status.json") -> Pat
 
 
 def test_fresh_is_ok(tmp_path):
-    write_status(tmp_path, datetime.now(timezone.utc))
+    write_status(tmp_path, datetime.now(UTC))
     proc = run(tmp_path, "--file", "logs/status.json", "--max-age-seconds", MAX_AGE)
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "ok" in proc.stdout
 
 
 def test_old_is_stale(tmp_path):
-    write_status(tmp_path, datetime.now(timezone.utc) - timedelta(hours=20))
+    write_status(tmp_path, datetime.now(UTC) - timedelta(hours=20))
     proc = run(tmp_path, "--file", "logs/status.json", "--max-age-seconds", MAX_AGE)
     assert proc.returncode == 1
     assert "STALE" in proc.stdout
@@ -73,6 +73,6 @@ def test_unparseable_timestamp_is_stale(tmp_path):
 
 def test_absolute_path_and_custom_field(tmp_path):
     p = tmp_path / "custom.json"
-    p.write_text(json.dumps({"ts": datetime.now(timezone.utc).isoformat()}))
+    p.write_text(json.dumps({"ts": datetime.now(UTC).isoformat()}))
     proc = run(tmp_path, "--file", str(p), "--field", "ts", "--max-age-seconds", MAX_AGE)
     assert proc.returncode == 0, proc.stdout + proc.stderr

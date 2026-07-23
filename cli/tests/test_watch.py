@@ -2,7 +2,6 @@ from collections import Counter
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from limen.cli import main
 
 SAMPLE_BOARD = """\

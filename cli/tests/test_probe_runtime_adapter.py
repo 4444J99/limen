@@ -10,7 +10,6 @@ from typing import Any
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 OWNER_TOKEN = "owner-token"
 CLIENT_TOKEN = "client-token"
@@ -513,7 +512,7 @@ def test_request_encodes_json_and_decodes_success(monkeypatch: pytest.MonkeyPatc
     class FakeHTTPResponse:
         status = 202
 
-        def __enter__(self) -> "FakeHTTPResponse":
+        def __enter__(self) -> FakeHTTPResponse:
             return self
 
         def __exit__(self, *_args: object) -> None:

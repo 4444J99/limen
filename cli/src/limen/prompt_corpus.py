@@ -24,9 +24,10 @@ import tempfile
 import threading
 import unicodedata
 from collections import Counter, defaultdict
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Any
 from urllib.parse import urlsplit
 
 DISPOSITIONS = {
@@ -152,7 +153,7 @@ class LedgerPaths:
         public_snapshot: Path | None = None,
         public_seal: Path | None = None,
         policy: Path | None = None,
-    ) -> "LedgerPaths":
+    ) -> LedgerPaths:
         configured_private_root = os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS")
         private_base = private_root
         if private_base is None and configured_private_root:
@@ -539,7 +540,7 @@ def _parse_time(value: Any) -> dt.datetime | None:
         if number > 10_000_000_000:
             number /= 1000.0
         try:
-            return dt.datetime.fromtimestamp(number, tz=dt.timezone.utc)
+            return dt.datetime.fromtimestamp(number, tz=dt.UTC)
         except (OSError, OverflowError, ValueError):
             return None
     try:
@@ -547,8 +548,8 @@ def _parse_time(value: Any) -> dt.datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=dt.timezone.utc)
-    return parsed.astimezone(dt.timezone.utc)
+        parsed = parsed.replace(tzinfo=dt.UTC)
+    return parsed.astimezone(dt.UTC)
 
 
 def _event_position(event: dict[str, Any], field: str) -> int:
@@ -2376,7 +2377,7 @@ def merge_cursor(current: dict[str, Any], proposed: dict[str, Any] | None) -> di
             _uk
             for _uk in _gap
             if isinstance(_uk, str)
-            and len((_uparts := _uk.split(":", 2))) == 3
+            and len(_uparts := _uk.split(":", 2)) == 3
             and _uparts[0] != _current_prefix
             and (_uparts[1], _uparts[2]) in _proposed_by_source_path
         }
@@ -2483,7 +2484,7 @@ def build_snapshot(
         for parsed in (_parse_time(occurrence.get("timestamp")) for occurrence in occurrences)
         if parsed is not None
     ]
-    reference = max(parsed_times, default=dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc))
+    reference = max(parsed_times, default=dt.datetime(1970, 1, 1, tzinfo=dt.UTC))
     max_recurrence = max(recurrence.values(), default=1)
     max_dependents = max(dependents.values(), default=1)
     weights = policy["weights"]
@@ -3896,7 +3897,7 @@ def _event_ingest_order(item: tuple[int, dict[str, Any]]) -> tuple[Any, ...]:
         str(event.get("source") or "unknown"),
         str(event.get("session_ref") or event.get("existing_occurrence_id") or "unknown"),
         parsed is None,
-        parsed or dt.datetime.max.replace(tzinfo=dt.timezone.utc),
+        parsed or dt.datetime.max.replace(tzinfo=dt.UTC),
         position_invalid,
         event_index,
         text_index,

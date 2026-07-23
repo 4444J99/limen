@@ -8,7 +8,6 @@ import sys
 import time
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 PRESSURE_SCRIPT = ROOT / "scripts" / "session-lifecycle-pressure.py"
 PRESSURE_HOOK = ROOT / "scripts" / "hooks" / "session-lifecycle-pressure.sh"

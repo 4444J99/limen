@@ -9,7 +9,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 VALIDATOR = ROOT / "organs" / "representation" / "validate-representation.py"
 MODULE = ROOT / "organs" / "representation" / "representation_substrate.py"

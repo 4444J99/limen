@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import ipaddress
 import re
+from collections.abc import Mapping, Sequence
 from datetime import date, datetime
-from typing import Mapping, Sequence, TypedDict, cast
+from typing import TypedDict, cast
 from urllib.parse import urlparse
 
 from .catalog import select_profile
@@ -26,7 +27,6 @@ from .sanitization import (
     assert_tracked_output_machine_safe,
 )
 from .verification import SourceVerifierAttestation
-
 
 _MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 _CITATION = re.compile(r"\[(S\d+|\d+)\](?!\()", re.IGNORECASE)

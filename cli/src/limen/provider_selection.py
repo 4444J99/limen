@@ -11,10 +11,10 @@ import json
 import math
 import re
 import subprocess
+from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import date
-from typing import Any, Iterable, Sequence, get_type_hints
-
+from typing import Any, get_type_hints
 
 _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 

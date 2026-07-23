@@ -20,13 +20,14 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from limen.vigilia import params
 
 
-def get(key: str, default: Any, cast: Optional[Callable[[Any], Any]] = None) -> Any:
+def get(key: str, default: Any, cast: Callable[[Any], Any] | None = None) -> Any:
     """Resolve an ``OBSERVATORY_*`` parameter (passthrough to the shared panel)."""
     return params.get(key, default, cast)
 

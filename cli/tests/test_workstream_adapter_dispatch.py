@@ -6,9 +6,8 @@ import json
 import subprocess
 from datetime import date
 
-import pytest
-
 import limen.dispatch as D
+import pytest
 from limen.models import Task
 from limen.workstream_contract import packet_contract
 

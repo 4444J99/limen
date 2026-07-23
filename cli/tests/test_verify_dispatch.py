@@ -179,7 +179,7 @@ def test_chronic_tasks_still_flags_failed_attempt_with_untyped_successor(tmp_pat
 
 def test_classification_includes_async_running_marker(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     old = (now - datetime.timedelta(hours=2)).isoformat()
     board = {
         "tasks": [

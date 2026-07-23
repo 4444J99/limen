@@ -4,11 +4,10 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ianva" / "src"))
 
-from ianva import mcphub  # noqa: E402
+from ianva import mcphub
 
 
 def _config() -> SimpleNamespace:

@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 
 from limen.github_estate_census import build_github_estate_census, github_connection_query, paginate_exact
 
-
 NOW = datetime(2026, 7, 21, 12, tzinfo=UTC)
 
 

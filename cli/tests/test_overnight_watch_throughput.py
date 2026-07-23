@@ -42,11 +42,11 @@ def _fresh_module(tmp_path, monkeypatch, **env):
 def _seed_ticks(module, completed_series, *, open_count, spent=10, cap=600):
     """Write one tick per distinct 1-minute bucket; completed = done + archived."""
     window_sec = 60
-    now_bucket = int(dt.datetime.now(dt.timezone.utc).timestamp() // window_sec)
+    now_bucket = int(dt.datetime.now(dt.UTC).timestamp() // window_sec)
     base = now_bucket - len(completed_series)
     lines = []
     for i, completed in enumerate(completed_series):
-        ts = dt.datetime.fromtimestamp((base + i) * window_sec + 1, dt.timezone.utc)
+        ts = dt.datetime.fromtimestamp((base + i) * window_sec + 1, dt.UTC)
         lines.append(
             json.dumps(
                 {

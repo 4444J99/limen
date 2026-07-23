@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from limen.conduct.campaign import (
     PULL_REQUESTS_QUERY,
@@ -11,8 +11,7 @@ from limen.conduct.campaign import (
 )
 from limen.conduct.models import AgentIdentityV1
 
-
-NOW = datetime(2026, 7, 18, 15, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 7, 18, 15, 0, tzinfo=UTC)
 
 
 class FakeGraphQL:

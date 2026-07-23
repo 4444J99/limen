@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CHECK = ROOT / "scripts" / "check-main-green.py"
 
 sys.path.insert(0, str(ROOT / "cli" / "src"))
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import (  # noqa: E402
+from limen.io import load_limen_file, save_limen_file
+from limen.models import (
     JULES_LANDING_HOLD_LABEL,
     Budget,
     BudgetTrack,
@@ -23,7 +23,7 @@ from limen.models import (  # noqa: E402
     LimenFile,
     Portal,
 )
-from limen.tabularius import apply_limen_file_sync  # noqa: E402
+from limen.tabularius import apply_limen_file_sync
 
 
 def _seed(tmp: Path, conclusion: str) -> None:
@@ -32,7 +32,7 @@ def _seed(tmp: Path, conclusion: str) -> None:
     (logs / "main-green.json").write_text(
         json.dumps(
             {
-                "checked_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                "checked_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
                 "conclusion": conclusion,
                 "head_sha": "deadbeef" * 5,
                 "url": "https://github.com/organvm/limen/actions/runs/1",
@@ -166,7 +166,7 @@ def test_recurrence_reopens_healed_task(tmp_path):
         task.status = status
         if status == "dispatched":
             task.target_agent = "codex"
-        task.updated = dt.datetime.now(dt.timezone.utc)
+        task.updated = dt.datetime.now(dt.UTC)
         task.dispatch_log.append(
             DispatchLogEntry(
                 timestamp=task.updated,
@@ -228,7 +228,7 @@ def test_fail_open_when_status_unavailable(tmp_path):
 
 # --- blast-radius / queue-wedge (integrated from PR #882) ---
 
-import importlib.util  # noqa: E402
+import importlib.util
 
 
 def _load():
@@ -371,7 +371,7 @@ def test_default_mode_cancelled_rescued_by_queue_proof(tmp_path, monkeypatch, ca
     head = "a" * 40
     monkeypatch.setattr(m, "_remote_main_head", lambda: head)
     monkeypatch.setattr(m, "_queue_proof_url", lambda h: "https://queue.test/run" if h == head else None)
-    monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
+    monkeypatch.setattr(m, "_fetch_open_prs", list)
     assert m.main([]) == 0
     out = capsys.readouterr().out
     assert "GREEN" in out and "queue-proven" in out
@@ -599,7 +599,7 @@ def test_jam_red_path_notifies_reruns_and_skips_heal_task(tmp_path, monkeypatch,
 
     monkeypatch.setattr(m, "classify_red_run", lambda rid: ("ci-jam", "runner never started (Actions quota)"))
     monkeypatch.setattr(m, "_visibility_drift", lambda repo: True)  # the real 2026-07-17 cause
-    monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
+    monkeypatch.setattr(m, "_fetch_open_prs", list)
     seen = {}
     monkeypatch.setattr(m, "attempt_reruns", lambda ids, now=None: seen.setdefault("ids", ids) and [])
     monkeypatch.setattr(
@@ -627,7 +627,7 @@ def test_green_clears_jam_state_and_notification(tmp_path, monkeypatch, capsys):
     jam.mkdir(parents=True, exist_ok=True)
     (jam / "ci-jam-state.json").write_text('{"111": {"attempts": 3, "last": 1.0}}')
     (jam / "relief-state.json").write_text('{"ci-jam": {"first_seen": 1.0}}')
-    monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
+    monkeypatch.setattr(m, "_fetch_open_prs", list)
 
     assert m.main([]) == 0
     assert "GREEN" in capsys.readouterr().out

@@ -8,7 +8,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-
 from limen.progress_history import ProgressHistoryError, build_progress_snapshot, canonical_sha256
 from limen.progress_tui import (
     TuiState,
@@ -19,7 +18,6 @@ from limen.progress_tui import (
     transition,
     validate_snapshot,
 )
-
 
 NOW = datetime(2026, 7, 21, 12, 0, tzinfo=UTC)
 ROOT = Path(__file__).resolve().parents[2]

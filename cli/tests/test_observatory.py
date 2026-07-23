@@ -9,9 +9,8 @@ from __future__ import annotations
 import json
 
 import pytest
-
-from limen.observatory import config, doctor, executive, gh, ledger
 from limen.observatory import __main__ as obs_main
+from limen.observatory import config, doctor, executive, gh, ledger
 
 
 @pytest.fixture

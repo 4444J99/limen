@@ -11,9 +11,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-import pytest
-
 import limen.workstream_contract as W
+import pytest
 from limen.workstream_contract import (
     AUTHORIZATION,
     IDENTITY_MODULES,

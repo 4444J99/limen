@@ -15,7 +15,6 @@ import sys
 from pathlib import Path
 
 import yaml
-
 from limen.tabularius import drain_once
 
 ROOT = Path(__file__).resolve().parents[2]

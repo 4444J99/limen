@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from limen.conduct import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
-    ConductorSessionV1,
     ConductBroker,
+    ConductorSessionV1,
     ResourceClaimV1,
     SQLiteStateStore,
     WorkPacketV1,
@@ -15,7 +15,7 @@ from limen.work_loan import WorkLoanV1
 
 
 def test_broker_restart_reconstructs_graph_and_active_lease(tmp_path) -> None:
-    now = datetime(2026, 7, 18, 15, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 18, 15, 0, tzinfo=UTC)
     path = tmp_path / "conduct.sqlite3"
     identity = AgentIdentityV1(agent="opencode", surface="cli", session_id="open-session")
     first = ConductBroker(SQLiteStateStore(path))

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Mapping, Sequence
+from datetime import UTC, datetime
+from typing import Any
 
 from limen import census
-from limen.capacity import CapacityRow, capacity_census, canonical_agent
+from limen.capacity import CapacityRow, canonical_agent, capacity_census
 from limen.models import Task
-
 
 PLAN_RECEIPT_SCHEMA = "limen.plan_receipt.v1"
 PLAN_ONLY_LABEL = "mode:plan-only"
@@ -157,12 +157,12 @@ def build_plan_receipt(
         raise PlanReceiptError("plan output is empty")
     if len(normalized_plan) > MAX_PLAN_CHARS:
         raise PlanReceiptError(f"plan output exceeds {MAX_PLAN_CHARS} characters")
-    timestamp = created_at or datetime.now(timezone.utc)
+    timestamp = created_at or datetime.now(UTC)
     if timestamp.tzinfo is None:
         raise PlanReceiptError("created_at must be timezone-aware")
     receipt: dict[str, Any] = {
         "schema": PLAN_RECEIPT_SCHEMA,
-        "created_at": timestamp.astimezone(timezone.utc).isoformat(),
+        "created_at": timestamp.astimezone(UTC).isoformat(),
         "task_id": task.id,
         "repo": task.repo,
         "task_contract_digest": task_contract_digest(task),

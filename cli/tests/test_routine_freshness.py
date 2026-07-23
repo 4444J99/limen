@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import importlib.util
 import json
+from datetime import UTC
 from pathlib import Path
 
 from limen.io import load_limen_file
@@ -27,7 +28,7 @@ def _load(monkeypatch=None, *, root=None):
 
 
 def _utc(*args) -> datetime.datetime:
-    return datetime.datetime(*args, tzinfo=datetime.timezone.utc)
+    return datetime.datetime(*args, tzinfo=datetime.UTC)
 
 
 def _row(name="test-routine", cls="delta-gated", max_days=7, issue=42, repo="owner/repo", may_be_silent=False):
@@ -283,7 +284,7 @@ def test_retire_ignores_non_organ_task(tmp_path, monkeypatch):
     import sys as _sys
 
     _sys.path.insert(0, str(ROOT / "cli" / "src"))
-    from datetime import date, datetime, timezone
+    from datetime import date, datetime
 
     from limen.io import load_limen_file, save_limen_file
     from limen.models import Task
@@ -300,7 +301,7 @@ def test_retire_ignores_non_organ_task(tmp_path, monkeypatch):
             labels=["user-ask"],  # NOT routine-freshness
             context="mine",
             created=date.today(),
-            updated=datetime.now(timezone.utc),
+            updated=datetime.now(UTC),
         )
     )
     save_limen_file(tasks, lf)

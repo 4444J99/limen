@@ -11,7 +11,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from limen.vigilia import continuity, executive, integrity, params, vitals
 
 
@@ -64,7 +63,7 @@ def test_vitals_read_pressure_fail_open(monkeypatch):
 
 
 def test_vitals_beat_gate_sheds_only_at_critical(monkeypatch):
-    monkeypatch.setattr(params, "_load_panel", lambda: {})  # use code defaults (warn 2, crit 4)
+    monkeypatch.setattr(params, "_load_panel", dict)  # use code defaults (warn 2, crit 4)
     shed_calls = []
     monkeypatch.setattr(vitals, "shed_ollama", lambda: shed_calls.append(True) or ["llama3"])
     monkeypatch.setattr(vitals, "read_load", lambda: 0.0)  # pin the load axis — memory only here
@@ -96,7 +95,7 @@ def test_vitals_beat_gate_sheds_only_at_critical(monkeypatch):
     ],
 )
 def test_vitals_assess_load(per_core, expected, monkeypatch):
-    monkeypatch.setattr(params, "_load_panel", lambda: {})  # code defaults: warn 1.5, crit 3.0
+    monkeypatch.setattr(params, "_load_panel", dict)  # code defaults: warn 1.5, crit 3.0
     assert vitals.assess_load(per_core) == expected
 
 
@@ -109,7 +108,7 @@ def test_vitals_read_load_fail_open(monkeypatch):
 
 
 def test_vitals_beat_gate_combines_axes_by_max_severity(monkeypatch):
-    monkeypatch.setattr(params, "_load_panel", lambda: {})
+    monkeypatch.setattr(params, "_load_panel", dict)
     monkeypatch.setattr(vitals, "shed_ollama", lambda: ["llama3"])
     monkeypatch.setattr(vitals, "read_swap", lambda: None)  # pin the swap axis
     monkeypatch.setattr(vitals, "_update_warn_streak", lambda action, update: 0)
@@ -163,7 +162,7 @@ def _swap(used_gib: float, total_gib: float, ram_gib: float = 16) -> dict:
     ],
 )
 def test_vitals_assess_swap(swap, expected, monkeypatch):
-    monkeypatch.setattr(params, "_load_panel", lambda: {})  # code defaults: warn 0.75, crit 1.0
+    monkeypatch.setattr(params, "_load_panel", dict)  # code defaults: warn 0.75, crit 1.0
     assert vitals.assess_swap(swap) == expected
 
 
@@ -192,7 +191,7 @@ def test_vitals_read_swap_fail_open(monkeypatch):
 
 
 def test_vitals_warn_streak_counts_resets_and_escalates(tmp_path, monkeypatch):
-    monkeypatch.setattr(params, "_load_panel", lambda: {})
+    monkeypatch.setattr(params, "_load_panel", dict)
     monkeypatch.setattr(vitals, "_streak_path", lambda: tmp_path / "vitals-streak.json")
     clock = {"now": 1_000_000.0}
     monkeypatch.setattr(vitals.time, "time", lambda: clock["now"])
@@ -212,7 +211,7 @@ def test_vitals_warn_streak_counts_resets_and_escalates(tmp_path, monkeypatch):
     monkeypatch.setattr(vitals, "read_pressure", lambda: 2)  # warn
     monkeypatch.setattr(vitals, "read_load", lambda: 0.0)
     monkeypatch.setattr(vitals, "read_swap", lambda: None)
-    monkeypatch.setattr(vitals, "shed_ollama", lambda: [])
+    monkeypatch.setattr(vitals, "shed_ollama", list)
     monkeypatch.setattr(vitals, "_update_warn_streak", lambda action, update: 3)
     g = vitals.beat_gate(shed=True)
     assert g["action"] == "shed" and g["sustained_warn"] is True and g["warn_streak"] == 3

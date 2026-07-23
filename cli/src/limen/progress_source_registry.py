@@ -11,11 +11,11 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 REGISTRATION_SCHEMA = "limen.progress-source-registration.v1"
 REPORT_SCHEMA = "limen.progress-source-report.v1"

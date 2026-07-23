@@ -10,8 +10,9 @@ in-code default (the organ degrades, it never crashes the beat).
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional, TypeVar, overload, Union, Any
+from typing import Any, TypeVar, overload
 
 import yaml
 
@@ -20,7 +21,7 @@ _PANEL_REL = ("institutio", "governance", "parameters.yaml")
 T = TypeVar("T")
 
 
-def _repo_root() -> Optional[Path]:
+def _repo_root() -> Path | None:
     """Find the repo root that contains the parameter panel.
 
     Prefer ``$LIMEN_ROOT`` (the daemon sets it); otherwise walk up from this file.
@@ -39,7 +40,7 @@ def _repo_root() -> Optional[Path]:
     return None
 
 
-def panel_path() -> Optional[Path]:
+def panel_path() -> Path | None:
     root = _repo_root()
     return root.joinpath(*_PANEL_REL) if root else None
 
@@ -59,7 +60,7 @@ def _load_panel() -> dict[str, object]:
 
 
 @overload
-def get(key: str, default: T, cast: None = None) -> Union[T, str]: ...
+def get(key: str, default: T, cast: None = None) -> T | str: ...
 
 
 @overload
@@ -67,10 +68,10 @@ def get(key: str, default: T, cast: Callable[[Any], T]) -> T: ...
 
 
 @overload
-def get(key: str, default: None = None, cast: None = None) -> Optional[object]: ...
+def get(key: str, default: None = None, cast: None = None) -> object | None: ...
 
 
-def get(key: str, default: object = None, cast: Optional[Callable[[Any], object]] = None) -> object:
+def get(key: str, default: object = None, cast: Callable[[Any], object] | None = None) -> object:
     """Resolve a parameter.
 
     Precedence: env override (the param's declared ``env``, falling back to the

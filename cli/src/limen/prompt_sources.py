@@ -10,7 +10,6 @@ import stat
 from pathlib import Path, PurePath
 from typing import Any
 
-
 SOURCE_ADAPTER_CONTRACT_VERSION = 1
 PROMPT_SOURCE_SCANNER_VERSION = 4
 SOURCE_FILE_SIGNATURE_FIELDS = ("ctime_ns", "device", "inode", "mtime_ns", "size")

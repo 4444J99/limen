@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from limen import dispatch as D  # noqa: E402
+from limen import dispatch as D
 
 
 @pytest.fixture(autouse=True)
@@ -163,6 +163,7 @@ def test_deps_met_gates_on_merged_predecessor():
     """depends_on is satisfied only when the predecessor's PR is MERGED (reconcile marker),
     not merely built (PR open). No deps → always met."""
     import datetime
+
     from limen.models import DispatchLogEntry, Task
 
     today = datetime.date.today()
@@ -179,7 +180,7 @@ def test_deps_met_gates_on_merged_predecessor():
         created=today,
         dispatch_log=[
             DispatchLogEntry(
-                timestamp=datetime.datetime.now(datetime.timezone.utc),
+                timestamp=datetime.datetime.now(datetime.UTC),
                 agent="limen",
                 session_id="heal",
                 status="done",
@@ -214,10 +215,11 @@ def test_reset_budget_only_resets_stale_windows(tmp_path, monkeypatch):
     """Cadence-aware reset: a lane whose window has elapsed resets to 0; a lane still inside its
     window keeps its spend. (No logs/usage-limits.json in the temp root → default 24h window.)"""
     import datetime
+
     from limen.models import Budget, BudgetTrack, LimenFile, Portal
 
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))  # no usage-limits.json → _window_hours = 24h
-    now = datetime.datetime(2026, 6, 19, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    now = datetime.datetime(2026, 6, 19, 12, 0, 0, tzinfo=datetime.UTC)
     track = BudgetTrack(
         date="2026-06-18",
         spent=50,
@@ -242,6 +244,7 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
     import os
     import subprocess
     import sys
+
     from limen.io import load_limen_file, save_limen_file
     from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task
 
@@ -295,6 +298,7 @@ def test_reload_fresh_commit_preserves_concurrent_write(tmp_path):
     seeds a task during that window; the commit (reload-fresh under the lock + apply by id) must
     NOT clobber the seed. Guards against regressing to a stale-copy save."""
     import datetime
+
     from limen.io import load_limen_file, save_limen_file
     from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task
 
@@ -309,7 +313,7 @@ def test_reload_fresh_commit_preserves_concurrent_write(tmp_path):
     sup = load_limen_file(tp)  # supervisor seeds B mid-run
     sup.tasks.append(Task(id="B-SEED", title="s", repo="x/y", target_agent="codex", status="open", created=today))
     save_limen_file(tp, sup)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     with D._queue_lock(tp):  # the real commit path: reload-fresh + apply by id
         fresh = load_limen_file(tp)
         fid = {t.id: t for t in fresh.tasks}
@@ -324,10 +328,11 @@ def test_deps_not_met_on_awaiting_merge_marker():
     """Regression: a dependency whose only heal marker is 'PR open (awaiting merge) → done' must
     NOT be considered merged (the bare-stem 'merg' bug unlocked dependents on PR-open prematurely)."""
     import datetime
+
     from limen.models import DispatchLogEntry, Task
 
     today = datetime.date.today()
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     awaiting = Task(
         id="AW",
         title="d",

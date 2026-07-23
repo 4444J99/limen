@@ -8,14 +8,14 @@ import json
 import re
 import socket
 import urllib.request
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from pathlib import Path, PurePosixPath
-from typing import Any, Mapping, Sequence, cast
+from typing import Any, cast
 from urllib.parse import urlparse
 
 import yaml
-
 
 DEFAULT_CATALOG_URL = (
     "https://raw.githubusercontent.com/organvm/praxis-perpetua/main/governance/research-backend-profiles.yaml"
@@ -212,7 +212,7 @@ def load_document(source: str | Path | Mapping[str, Any]) -> dict[str, Any]:
     if parsed.scheme:
         remote_url = _public_https_url(raw_source)
         request = urllib.request.Request(remote_url, headers={"User-Agent": "limen-research/1"})
-        with urllib.request.urlopen(request, timeout=15) as response:  # noqa: S310 - explicit catalog input
+        with urllib.request.urlopen(request, timeout=15) as response:
             text = response.read().decode("utf-8")
     else:
         text = Path(raw_source).expanduser().read_text(encoding="utf-8")

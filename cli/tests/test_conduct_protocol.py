@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import json
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-
 from limen.conduct import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
-    ConductorSessionV1,
     ConductBroker,
     ConductConflict,
+    ConductorSessionV1,
     ConductPrincipalV1,
     ExecutorAttemptV1,
     FanoutBoundsV1,
@@ -23,13 +22,11 @@ from limen.conduct import (
     SpendEnvelopeV1,
     WorkPacketV1,
 )
-from limen.conduct.models import PredicateEvidenceV1
-from limen.conduct.models import canonical_hash
+from limen.conduct.models import PredicateEvidenceV1, canonical_hash
 from limen.conduct.resources import resources_overlap
 from limen.work_loan import WorkLoanV1
 
-
-NOW = datetime(2026, 7, 18, 15, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 7, 18, 15, 0, tzinfo=UTC)
 
 
 def identity(agent: str, session_id: str | None = None) -> AgentIdentityV1:

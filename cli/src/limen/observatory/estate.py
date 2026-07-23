@@ -86,9 +86,13 @@ def facing_repos(field_snapshot: dict, estate_profiles: dict[str, dict]) -> list
     lang = field_snapshot.get("language") or "unknown"
     out = []
     for repo, prof in estate_profiles.items():
-        if cat and cat != "unknown" and prof.get("category") == cat:
-            out.append(repo)
-        elif lang != "unknown" and prof.get("language") == lang:
+        if (
+            cat
+            and cat != "unknown"
+            and prof.get("category") == cat
+            or lang != "unknown"
+            and prof.get("language") == lang
+        ):
             out.append(repo)
     return sorted(out)
 

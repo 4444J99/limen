@@ -4,7 +4,6 @@ import importlib.util
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "financial-organ.py"
 CONSOLIDATE = ROOT / "organs" / "financial" / "consolidate.py"

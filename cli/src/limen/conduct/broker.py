@@ -2,22 +2,23 @@
 
 from __future__ import annotations
 
-import copy
 import base64
+import copy
 import hashlib
 import hmac
 import secrets
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import PurePath
-from typing import Any, Callable
+from typing import Any
 
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
     ConductorSessionV1,
     ConductPrincipalV1,
-    LeaseV1,
     ExecutorAttemptV1,
+    LeaseV1,
     ResourceClaimV1,
     RunReceiptV1,
     WorkPacketV1,

@@ -2,11 +2,10 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[2]
 USAGE = ROOT / "scripts" / "usage-telemetry.py"
@@ -108,7 +107,7 @@ def test_claude_5h_usage_filters_rows_by_timestamp(tmp_path):
             }
         )
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     rows = [
         {
             "timestamp": (now - timedelta(hours=6)).isoformat().replace("+00:00", "Z"),
@@ -161,7 +160,7 @@ def test_codex_vendor_rate_limits_override_transcript_estimate(tmp_path):
             }
         )
     )
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     (session_dir / "rollout-live.jsonl").write_text(
         json.dumps(
             {
@@ -225,7 +224,7 @@ def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
     (limen_root / "logs").mkdir(parents=True)
     (home / ".claude" / "projects").mkdir(parents=True)
     (home / ".codex" / "sessions").mkdir(parents=True)
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     jules_log = [
         {"timestamp": f"{today}T12:00:00+00:00", "agent": "jules", "session_id": "sim", "status": "dispatched"}
         for _ in range(jules_consumed)

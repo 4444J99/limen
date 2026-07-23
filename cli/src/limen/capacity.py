@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import os
 import json
+import os
 import re
 import shlex
 import shutil
 import subprocess
-from pathlib import Path
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import TypedDict, TypeVar
 
 from limen import census
@@ -552,14 +552,14 @@ def _weak_proxy_exhaustion(agent: str, info: dict[str, object]) -> bool:
 
 def _parse_dt(value: object) -> datetime | None:
     if isinstance(value, datetime):
-        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return value if value.tzinfo else value.replace(tzinfo=UTC)
     if not value:
         return None
     try:
         parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     except ValueError:
         return None
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
 def _window_hours_from_usage(agent: str, usage: dict[str, object]) -> float:
@@ -744,9 +744,9 @@ def capacity_fill_snapshot(
     The key distinction is productive board spend vs. attempted dispatches. Failed/rerouted
     attempts prove the lane was touched, but they do not satisfy the daily fill contract.
     """
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     if now.tzinfo is None:
-        now = now.replace(tzinfo=timezone.utc)
+        now = now.replace(tzinfo=UTC)
     usage = usage if usage is not None else _load_usage()
     down_lanes = down_lanes or set()
     budget = _budget_from_board(board)

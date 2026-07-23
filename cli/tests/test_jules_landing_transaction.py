@@ -5,7 +5,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -13,17 +13,17 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-import limen.jules_landing_custody as custody  # noqa: E402
-import limen.jules_landing_transaction as transaction  # noqa: E402
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import (  # noqa: E402
+import limen.jules_landing_custody as custody
+import limen.jules_landing_transaction as transaction
+from limen.io import load_limen_file, save_limen_file
+from limen.models import (
     DispatchLogEntry,
     LimenFile,
     Task,
     dispatch_agent,
     dispatch_session_id,
 )
-from limen.tabularius import apply_limen_file_sync  # noqa: E402
+from limen.tabularius import apply_limen_file_sync
 
 
 def load_jules_land():
@@ -32,7 +32,7 @@ def load_jules_land():
 
 def test_named_older_session_pr_after_new_dispatch_does_not_claim_new_session() -> None:
     module = load_jules_land()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     task = Task(
         id="T-ORDERED-SESSIONS",
         title="two completed sessions",
@@ -77,7 +77,7 @@ def test_transaction_preserves_unrelated_concurrent_board_write(
 ) -> None:
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -167,7 +167,7 @@ def test_transaction_fences_same_id_changed_owner_and_session(
 ) -> None:
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -207,7 +207,7 @@ def test_transaction_fences_same_id_changed_owner_and_session(
             changed.target_agent = "codex"
             changed.dispatch_log.append(
                 DispatchLogEntry(
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                     agent="codex",
                     session_id="456",
                     status="dispatched",
@@ -250,7 +250,7 @@ def test_process_session_lands_current_jules_claim_targeted_at_any(
 ) -> None:
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -312,7 +312,7 @@ def test_process_session_serializes_concurrent_landings(
 ) -> None:
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -402,7 +402,7 @@ def test_post_pr_receipt_failure_retries_by_adopting_existing_pr(
     repo = tmp_path / "repo"
     repo.mkdir()
     custody.WT_ROOT = tmp_path / "worktrees"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -572,7 +572,7 @@ def test_landing_intent_preserves_lifecycle_status(
 ) -> None:
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -617,7 +617,7 @@ def test_landing_intent_preserves_lifecycle_status(
     assert held.status == status
     assert module.JULES_LANDING_HOLD_LABEL in held.labels
     assert held.dispatch_log[-1].status == status
-    assert getattr(held.dispatch_log[-1], "landing_event") == "intent"
+    assert held.dispatch_log[-1].landing_event == "intent"
 
 
 @pytest.mark.parametrize(
@@ -640,7 +640,7 @@ def test_terminal_non_pr_outcome_is_a_rerun_fixed_point(
 ) -> None:
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -704,8 +704,8 @@ def test_terminal_non_pr_outcome_is_a_rerun_fixed_point(
     task = load_limen_file(tasks_path).tasks[0]
     assert task.status == expected_status
     assert module.JULES_LANDING_HOLD_LABEL not in task.labels
-    assert getattr(task.dispatch_log[-1], "landing_terminal") is True
-    assert getattr(task.dispatch_log[-1], "landing_outcome") == outcome
+    assert task.dispatch_log[-1].landing_terminal is True
+    assert task.dispatch_log[-1].landing_outcome == outcome
 
 
 def test_transient_failures_reach_finite_terminal_receipt(
@@ -715,7 +715,7 @@ def test_transient_failures_reach_finite_terminal_receipt(
     module = load_jules_land()
     monkeypatch.setattr(module, "LANDING_RETRY_LIMIT", 2)
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -771,6 +771,6 @@ def test_transient_failures_reach_finite_terminal_receipt(
     assert task.status == "failed"
     assert module.JULES_LANDING_HOLD_LABEL not in task.labels
     attempts = [entry for entry in task.dispatch_log if getattr(entry, "landing_event", None) == "attempt"]
-    assert [getattr(entry, "landing_attempt") for entry in attempts] == [1, 2]
-    assert getattr(task.dispatch_log[-1], "landing_outcome") == "failed"
-    assert getattr(task.dispatch_log[-1], "landing_attempt_count") == 2
+    assert [entry.landing_attempt for entry in attempts] == [1, 2]
+    assert task.dispatch_log[-1].landing_outcome == "failed"
+    assert task.dispatch_log[-1].landing_attempt_count == 2

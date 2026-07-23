@@ -29,7 +29,7 @@ sys.modules["reap_branches"] = reap  # dataclasses need the module discoverable 
 _spec.loader.exec_module(reap)
 
 
-def F(**kw) -> "reap.Facts":
+def F(**kw) -> reap.Facts:
     """Build a Facts with everything False except the overrides."""
     base = dict(
         is_ancestor=False,

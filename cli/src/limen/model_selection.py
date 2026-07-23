@@ -77,7 +77,7 @@ def _claude_fable_acceptance_present() -> bool:
         path = os.path.expanduser(raw)
         with open(path) as fh:
             receipt = json.load(fh)
-        now = dt.datetime.now(dt.timezone.utc)
+        now = dt.datetime.now(dt.UTC)
         monday = (now - dt.timedelta(days=now.weekday())).date().isoformat()
         return receipt.get("schema") == "limen.fable_acceptance.v1" and receipt.get("week") == monday
     except Exception:
@@ -103,7 +103,7 @@ def _fable_balance() -> dict | None:
         return None
     if not isinstance(data, dict):
         return None
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     monday = (now - dt.timedelta(days=now.weekday())).date().isoformat()
     if str(data.get("week")) != monday:
         return None  # stale week — do not trust a prior week's balance
@@ -157,7 +157,7 @@ def _fable_reserve_receipt_present() -> bool:
     try:
         with open(os.path.expanduser(raw)) as fh:
             receipt = json.load(fh)
-        now = dt.datetime.now(dt.timezone.utc)
+        now = dt.datetime.now(dt.UTC)
         monday = (now - dt.timedelta(days=now.weekday())).date().isoformat()
         return (
             receipt.get("schema") == "limen.fable_acceptance.v1"

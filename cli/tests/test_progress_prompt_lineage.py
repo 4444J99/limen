@@ -9,7 +9,6 @@ from pathlib import Path
 
 from limen.progress_prompt_lineage import build_prompt_lineage_source
 
-
 NOW = datetime(2026, 7, 21, 12, tzinfo=UTC)
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "progress-prompt-lineage.py"

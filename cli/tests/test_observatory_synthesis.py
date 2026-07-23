@@ -7,10 +7,9 @@ Hermetic: temp obs root, seeded mechanisms.jsonl, pinned clock (``_now``). Asser
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-
 from limen.observatory import config, ledger, synthesis
 
 
@@ -32,7 +31,7 @@ def _seed_mechanisms():
 
 
 def _pin_week(monkeypatch, iso="2026-06-15"):
-    monkeypatch.setattr(synthesis, "_now", lambda: datetime.fromisoformat(iso).replace(tzinfo=timezone.utc))
+    monkeypatch.setattr(synthesis, "_now", lambda: datetime.fromisoformat(iso).replace(tzinfo=UTC))
 
 
 def _arm(monkeypatch, on=True):

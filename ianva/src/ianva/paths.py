@@ -57,8 +57,7 @@ def load_limen_env(path: Path | None = None) -> dict[str, str]:
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        if line.startswith("export "):
-            line = line[len("export ") :]
+        line = line.removeprefix("export ")
         if "=" not in line:
             continue
         k, _, v = line.partition("=")

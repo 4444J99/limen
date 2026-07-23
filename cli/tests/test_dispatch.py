@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 import threading
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -17,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import limen.dispatch as D
 import limen.tabularius as T
 from limen.capacity import PAID_AGENT_ORDER, agent_status, capacity_census, format_capacity_census, select_lanes
-from limen.conduct.client import BrokerUnavailable
 from limen.conduct.broker import ConductError
+from limen.conduct.client import BrokerUnavailable
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.execution_contract import execution_contract_hash
@@ -233,7 +233,7 @@ def test_parallel_dispatch_admission_blocks_before_reservation(tmp_path: Path, m
 
 def test_parallel_selection_suppresses_chronic_push_rejection(tmp_path: Path, monkeypatch, capsys) -> None:
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     write_board(
         tasks_path,
         [
@@ -527,7 +527,7 @@ def test_self_improve_weight_nudge_steers_local_split(monkeypatch) -> None:
     assigned = {"codex": 1, "claude": 1}  # load: codex 0.05 < claude 0.10
 
     # No learned weights -> lightest-load lane: codex (unchanged behavior).
-    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_learned_weights", dict)
     assert route._pick_local(task, health, assigned, budget) == "codex"
 
     # codex down-weighted (0.25) -> effective load 0.05/0.25=0.20 > claude 0.10 -> claude wins.
@@ -774,7 +774,7 @@ def test_parallel_selection_normalizes_only_selected_legacy_task(monkeypatch) ->
         board,
         ["codex"],
         1,
-        datetime.now(timezone.utc),
+        datetime.now(UTC),
         dry_run=False,
         admission_snapshot=None,
     )
@@ -816,7 +816,7 @@ def test_parallel_selection_fails_closed_when_legacy_owner_cannot_be_derived(mon
         board,
         ["codex"],
         1,
-        datetime.now(timezone.utc),
+        datetime.now(UTC),
         dry_run=False,
         admission_snapshot=None,
     )
@@ -826,7 +826,7 @@ def test_parallel_selection_fails_closed_when_legacy_owner_cannot_be_derived(mon
     assert "INTAKE BLOCKED NO-OWNER" in capsys.readouterr().out
 
 
-def _blocked_local_snapshot() -> "D.WorktreeAdmissionSnapshot":
+def _blocked_local_snapshot() -> D.WorktreeAdmissionSnapshot:
     return D.WorktreeAdmissionSnapshot(
         active=True,
         block_new_local=True,
@@ -1479,7 +1479,7 @@ def test_dispatch_numeric_env_knobs_fail_open_when_malformed(tmp_path: Path, mon
     limen = load_limen_file(tasks_path)
     monkeypatch.setenv("LIMEN_ACCEL_TLEFT_FLOOR", "not-a-float")
     monkeypatch.setenv("LIMEN_ACCEL_ASYNC_CEIL", "not-an-int")
-    assert D._accel_limit(limen, "jules", 2, datetime.datetime.now(datetime.timezone.utc)) >= 2
+    assert D._accel_limit(limen, "jules", 2, datetime.datetime.now(datetime.UTC)) >= 2
 
 
 def test_same_repo_pr_head_for_task_resolves_open_pr(monkeypatch) -> None:
@@ -1801,7 +1801,7 @@ def test_noop_result_stays_recoverable_not_cancelled() -> None:
         created=date(2026, 6, 27),
         labels=[],
     )
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     D._apply_result(task, "codex", D._NOOP, now, BudgetTrack(date="2026-06-27"))
 
@@ -1814,7 +1814,7 @@ def test_noop_result_stays_recoverable_not_cancelled() -> None:
 def test_rate_limit_and_timeout_events_are_canonical_routes(monkeypatch) -> None:
     import datetime
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     monkeypatch.setattr(D, "_cascade_or_requeue", lambda _agent: "opencode")
     rate_limited = Task(
         id="RATE",
@@ -2021,7 +2021,7 @@ def test_dispatch_event_records_dynamic_selection_receipt() -> None:
         task,
         "opencode",
         True,
-        datetime.datetime.now(datetime.timezone.utc),
+        datetime.datetime.now(datetime.UTC),
         BudgetTrack(date="2026-07-10"),
     )
 
@@ -2035,7 +2035,7 @@ def test_dispatch_event_records_dynamic_selection_receipt() -> None:
 def test_pr_open_receipt_blocks_duplicate_dispatch_and_noop_demotion() -> None:
     import datetime
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     task = Task(
         id="PR-OPEN",
         title="already has a PR",
@@ -2091,7 +2091,7 @@ def test_dispatchable_requires_explicit_work_loan_underwriting() -> None:
 def test_pr_open_receipt_wins_over_concurrent_successor_result() -> None:
     import datetime
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     task = Task(
         id="PR-OPEN-SUCCESSOR-RACE",
         title="PR landed while selected packet expired",
@@ -2136,7 +2136,7 @@ def test_blocked_result_is_terminal_failed_blocked() -> None:
         labels=[],
     )
     track = BudgetTrack(date="2026-06-27")
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     D._apply_result(task, "codex", D._blocked_result("repo unavailable: organvm/missing"), now, track)
 
@@ -2161,7 +2161,7 @@ def test_workstream_boundary_is_failed_with_durable_successor_owner_route() -> N
         labels=[],
     )
     track = BudgetTrack(date="2026-07-17")
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     D._apply_result(
         task,
@@ -2222,7 +2222,7 @@ def test_successor_required_label_is_a_global_dispatch_hold() -> None:
             held,
             "codex",
             stale_result,
-            datetime.now(timezone.utc),
+            datetime.now(UTC),
             BudgetTrack(date="2026-07-17"),
         )
         assert held.status == "open"
@@ -2252,7 +2252,7 @@ def test_serial_result_commit_fences_concurrent_pr_open_lifecycle(tmp_path: Path
     selected = load_limen_file(tasks_path)
     selected_hash = execution_contract_hash(selected.tasks[0])
     selected_owner = D._lifecycle_ownership_token(selected.tasks[0])
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     fresh = read_board(tasks_path)
     fresh["tasks"][0]["status"] = "dispatched"
     fresh["tasks"][0]["dispatch_log"] = [
@@ -2290,7 +2290,7 @@ def test_serial_result_commit_fences_concurrent_pr_open_lifecycle(tmp_path: Path
 
 def test_serial_result_commit_fences_changed_workstream_contract(tmp_path: Path, capsys) -> None:
     tasks_path = tmp_path / "tasks.yaml"
-    now_epoch = int(datetime.now(timezone.utc).timestamp())
+    now_epoch = int(datetime.now(UTC).timestamp())
     contract_a = packet_contract("2d", now_epoch=now_epoch)
     contract_b = packet_contract("2d", now_epoch=now_epoch + 1)
     write_board(
@@ -2330,7 +2330,7 @@ def test_serial_result_commit_fences_changed_workstream_contract(tmp_path: Path,
                 selected_owner,
             )
         ],
-        datetime.now(timezone.utc),
+        datetime.now(UTC),
     )
 
     current = read_board(tasks_path)["tasks"][0]
@@ -2375,7 +2375,7 @@ def test_serial_fence_does_not_persist_stale_legacy_contract_backfill(
         tasks_path,
         selected,
         [("codex", "LEGACY-BACKFILL-FENCE", False, selected_hash, selected_owner)],
-        datetime.now(timezone.utc),
+        datetime.now(UTC),
     )
 
     current = read_board(tasks_path)["tasks"][0]
@@ -2452,7 +2452,7 @@ def test_serial_result_commit_fences_fresh_lifecycle_owner_and_cleans_receipts(
         tasks_path,
         selected,
         [("codex", task_id, stale_result, selected_hash, selected_owner)],
-        datetime.now(timezone.utc),
+        datetime.now(UTC),
     )
 
     current = read_board(tasks_path)["tasks"][0]
@@ -2515,7 +2515,7 @@ def test_serial_result_commit_lock_busy_cleans_owned_receipts(
                 D._lifecycle_ownership_token(selected_task),
             )
         ],
-        datetime.now(timezone.utc),
+        datetime.now(UTC),
     )
 
     current = read_board(tasks_path)["tasks"][0]
@@ -2532,7 +2532,7 @@ def test_parallel_result_commit_fences_changed_workstream_contract(
     capsys,
 ) -> None:
     tasks_path = tmp_path / "tasks.yaml"
-    now_epoch = int(datetime.now(timezone.utc).timestamp())
+    now_epoch = int(datetime.now(UTC).timestamp())
     contract_a = packet_contract("2d", now_epoch=now_epoch)
     contract_b = packet_contract("2d", now_epoch=now_epoch + 1)
     write_board(
@@ -3013,7 +3013,7 @@ def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkey
         created=date(2026, 6, 27),
         labels=[],
     )
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     D._apply_result(task, "claude", False, now, BudgetTrack(date="2026-06-27"))
 
@@ -3041,7 +3041,7 @@ def test_remote_service_failure_skips_unarmed_ollama_floor(monkeypatch) -> None:
         created=date(2026, 7, 9),
         labels=[],
     )
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     D._apply_result(task, "jules", False, now, BudgetTrack(date="2026-07-09"))
 
@@ -3072,7 +3072,7 @@ def test_remote_service_failure_can_use_armed_matching_ollama_floor(monkeypatch)
         created=date(2026, 7, 9),
         labels=[],
     )
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     D._apply_result(task, "jules", False, now, BudgetTrack(date="2026-07-09"))
 
@@ -3153,7 +3153,7 @@ def test_default_cascade_uses_reachable_auto_lanes(monkeypatch) -> None:
         created=date(2026, 6, 27),
         labels=[],
     )
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     D._apply_result(task, "claude", False, now, BudgetTrack(date="2026-06-27"))
 
@@ -3166,7 +3166,7 @@ def test_default_cascade_uses_reachable_auto_lanes(monkeypatch) -> None:
 def test_agent_can_not_rerun_task_after_timeout_to_jules() -> None:
     import datetime
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     task = Task(
         id="SLOW-CODEX",
         title="slow local task",
@@ -3192,7 +3192,7 @@ def test_agent_can_not_rerun_task_after_timeout_to_jules() -> None:
 def test_late_result_does_not_reopen_already_done_task() -> None:
     import datetime
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     task = Task(
         id="DONE-LATE",
         title="already done",
@@ -4065,7 +4065,7 @@ def test_parallel_multi_lane_reserves_shared_checkout_room_only_when_selected(mo
         board,
         ["codex", "claude"],
         1,
-        datetime.now(timezone.utc),
+        datetime.now(UTC),
         dry_run=False,
         admission_snapshot=snapshot,
     )
@@ -4686,7 +4686,7 @@ def test_isolation_creation_root_follows_live_env_after_module_import(tmp_path: 
 # ── Explicit --task does NOT bypass worktree admission (item 7) ─────────────
 
 
-def _resource_blocked_snapshot() -> "D.WorktreeAdmissionSnapshot":
+def _resource_blocked_snapshot() -> D.WorktreeAdmissionSnapshot:
     return D.WorktreeAdmissionSnapshot(
         active=True,
         block_new_local=True,

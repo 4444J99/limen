@@ -5,9 +5,8 @@ import json
 import os
 import sqlite3
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 ALWAYS_WORKING = ROOT / "scripts" / "always-working.py"
@@ -62,7 +61,7 @@ def _mail_index(path: Path) -> None:
         );
         """
     )
-    ts = int(datetime(2026, 7, 7, 12, tzinfo=timezone.utc).timestamp())
+    ts = int(datetime(2026, 7, 7, 12, tzinfo=UTC).timestamp())
     conn.executemany(
         "INSERT INTO messages (ROWID, date_received, flagged, deleted) VALUES (?, ?, ?, ?)",
         [(1, ts, 1, 0), (2, ts, 1, 0), (3, ts, 0, 0)],
@@ -895,7 +894,7 @@ def test_repo_surface_done_when_fresh_duplicates_are_recorded(monkeypatch, tmp_p
     index.write_text(
         json.dumps(
             {
-                "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
                 "repo_count": 300,
                 "duplicate_remotes": [{"remote_hash": "abc", "repos": ["r1", "r2"]}],
             }
@@ -952,7 +951,7 @@ def test_value_repos_done_when_fresh_product_ledger_has_owner_receipts(monkeypat
     product_index.write_text(
         json.dumps(
             {
-                "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
                 "next_unblocked": [{"id": "p1"}],
                 "products": products,
             }

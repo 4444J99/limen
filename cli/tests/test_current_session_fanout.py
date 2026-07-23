@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "current-session-fanout.py"
 
@@ -267,7 +266,7 @@ def test_current_session_fanout_emits_plan_02_executor_criteria_and_safe_markdow
             },
         ],
     )
-    monkeypatch.setattr(mod, "digest_blockers", lambda: [])
+    monkeypatch.setattr(mod, "digest_blockers", list)
 
     snap = mod.build_snapshot(_args(session, min_planners=2, source_agent="claude"))
     plan_02 = next(packet for packet in snap["planner_packets"] if packet["theme"] == "full-fleet-overnight")
@@ -348,7 +347,7 @@ def test_current_session_fanout_uses_registry_lanes_and_rejects_unbounded_runway
     assert mod.lane_selection("auto", []) == []
 
     monkeypatch.setattr(mod, "lane_rows", lambda: rows)
-    monkeypatch.setattr(mod, "digest_blockers", lambda: [])
+    monkeypatch.setattr(mod, "digest_blockers", list)
     args = _args(session, min_planners=1)
     args.runway = "forever"
     with pytest.raises(mod.ContractError):

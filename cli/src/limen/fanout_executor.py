@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import importlib.metadata
 import json
@@ -13,13 +14,13 @@ import subprocess
 import sys
 import tempfile
 import time
-import fcntl
 import urllib.parse
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast
 
+from limen.conduct.client import HttpConductClient, client_from_env
 from limen.conduct.models import (
     CheckEvidenceV1,
     ConductorSessionV1,
@@ -28,9 +29,7 @@ from limen.conduct.models import (
     RunReceiptV1,
     canonical_hash,
 )
-from limen.conduct.client import HttpConductClient, client_from_env
 from limen.jules_remote import probe_jules_remote_sessions
-
 
 CODE_RECEIPT_CAPABILITIES = frozenset(
     {
@@ -197,7 +196,7 @@ def _attempt_from(
         provider_run_url=provider_run_url,
         status=status,
         submitted_at=when,
-        updated_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(UTC),
         detail=detail[:4096],
     )
 
@@ -263,7 +262,7 @@ def _assert_topic_branch(repository: str, branch: str) -> str:
 
 def _predicate_timeout(packet: dict[str, Any]) -> int:
     remaining = int(
-        (datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) - datetime.now(timezone.utc)).total_seconds()
+        (datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) - datetime.now(UTC)).total_seconds()
     )
     return max(1, min(1800, remaining))
 
@@ -727,7 +726,7 @@ class JulesExecutionAdapter(PatchLandingMixin):
         self.repositories = repositories
 
     @classmethod
-    def discover(cls, repositories: frozenset[str]) -> "JulesExecutionAdapter | None":
+    def discover(cls, repositories: frozenset[str]) -> JulesExecutionAdapter | None:
         binary = os.environ.get("LIMEN_JULES_BIN", "jules")
         if shutil.which(binary) is None:
             return None
@@ -829,7 +828,7 @@ class CodexCloudExecutionAdapter(PatchLandingMixin):
         self.binary = binary
 
     @classmethod
-    def discover(cls, repositories: frozenset[str]) -> "CodexCloudExecutionAdapter | None":
+    def discover(cls, repositories: frozenset[str]) -> CodexCloudExecutionAdapter | None:
         binary = os.environ.get("LIMEN_CODEX_BIN", "codex")
         if shutil.which(binary) is None:
             return None
@@ -1154,7 +1153,7 @@ def launch_ready_nodes(
                         claim["capability_token"],
                         generation=node["lease"]["generation"],
                         observed_heads=packet["execution"]["observed_heads"],
-                        attempt=current.model_copy(update={"updated_at": datetime.now(timezone.utc)}),
+                        attempt=current.model_copy(update={"updated_at": datetime.now(UTC)}),
                     )
                     launched.append(
                         {
@@ -1170,7 +1169,7 @@ def launch_ready_nodes(
                         "provider_run_id": recovered.provider_run_id,
                         "provider_run_url": recovered.provider_run_url,
                         "status": "submitted",
-                        "updated_at": datetime.now(timezone.utc),
+                        "updated_at": datetime.now(UTC),
                     }
                 )
                 executor_client.heartbeat(
@@ -1239,7 +1238,7 @@ def launch_ready_nodes(
         except AmbiguousProviderLaunchError as exc:
             pending = launching.model_copy(
                 update={
-                    "updated_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(UTC),
                     "detail": str(exc)[:4096],
                 }
             )
@@ -1263,7 +1262,7 @@ def launch_ready_nodes(
                 update={
                     "status": "failed",
                     "failure_class": ("transient" if isinstance(exc, TransientFanoutExecutionError) else "permanent"),
-                    "updated_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(UTC),
                     "detail": str(exc)[:4096],
                 }
             )
@@ -1281,7 +1280,7 @@ def launch_ready_nodes(
                 "provider_run_id": provider.provider_run_id,
                 "provider_run_url": provider.provider_run_url,
                 "status": "submitted",
-                "updated_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(UTC),
             }
         )
         executor_client.heartbeat(
@@ -1322,7 +1321,7 @@ def refresh_provider_attempts(
                 "status": state.status,
                 "failure_class": state.failure_class,
                 "detail": state.detail[:4096],
-                "updated_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(UTC),
             }
         )
         claim = client.claim(attempt.lease_id, attempt.lease_generation)
@@ -1347,7 +1346,7 @@ def settle_exhausted_attempts(
 
     graph = client.graph(root_run_id)
     settled: list[dict[str, Any]] = []
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for node in graph.get("nodes", []):
         packet = node.get("packet") or {}
         lane = execution_lanes.get(str(node.get("executor_session_id") or ""))
@@ -1456,7 +1455,7 @@ def land_succeeded_attempts(
                     update={
                         "status": "blocked",
                         "failure_class": "permanent",
-                        "updated_at": datetime.now(timezone.utc),
+                        "updated_at": datetime.now(UTC),
                         "detail": str(exc)[:4096],
                     }
                 )
@@ -1486,7 +1485,7 @@ def land_succeeded_attempts(
                 update={
                     "status": "failed",
                     "failure_class": "transient" if transient else "permanent",
-                    "updated_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(UTC),
                     "detail": str(exc)[:4096],
                 }
             )
@@ -1609,12 +1608,12 @@ def run_executor_worker(root_run_id: str, session_id: str, primary_adapter: str)
         try:
             worker_deadline = datetime.fromisoformat(raw_deadline.replace("Z", "+00:00"))
         except ValueError:
-            worker_deadline = datetime.now(timezone.utc) + timedelta(hours=6)
+            worker_deadline = datetime.now(UTC) + timedelta(hours=6)
         client = None
         primary = None
         lanes: dict[str, ExecutionLane] = {}
         while True:
-            if datetime.now(timezone.utc) >= worker_deadline:
+            if datetime.now(UTC) >= worker_deadline:
                 return 1
             try:
                 client = client or client_from_env()

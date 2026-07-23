@@ -4,13 +4,12 @@ import json
 import sys
 from contextlib import contextmanager
 from dataclasses import replace
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
-
-import pytest
 
 import limen.dispatch as dispatch_module
 import limen.jules_remote as jr
+import pytest
 from limen.dispatch import release_stale_tasks
 from limen.io import load_limen_file, save_limen_file
 from limen.jules_remote import (
@@ -22,7 +21,6 @@ from limen.jules_remote import (
     probe_jules_remote_session_absences,
 )
 from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
-
 
 SID = "12345678901234567890"
 OTHER_SID = "98765432109876543210"
@@ -53,7 +51,7 @@ def _runner_with(output: bytes, *, returncode: int = 0):
 
 
 def _write_stale_board(path: Path) -> None:
-    stale = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    stale = datetime(2026, 1, 1, tzinfo=UTC)
     save_limen_file(
         path,
         LimenFile(

@@ -7,11 +7,11 @@ import json
 import os
 import secrets
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Literal
-
+from typing import Any, Literal
 
 WORKTREE_INITIALIZATION_SCHEMA = "limen.worktree_initialization.v1"
 InitializationState = Literal["staging", "validated", "moving", "published", "crashed"]
@@ -88,7 +88,7 @@ def _atomic_text(path: Path, value: str) -> None:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _write_state(

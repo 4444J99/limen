@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 
 import yaml
-
 from limen.tabularius import drain_once
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "converge-organ.py"

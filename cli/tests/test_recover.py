@@ -7,9 +7,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.jules_remote import JulesRemoteSession, JulesRemoteSnapshot  # noqa: E402
-from limen.models import (  # noqa: E402
+from limen.io import load_limen_file, save_limen_file
+from limen.jules_remote import JulesRemoteSession, JulesRemoteSnapshot
+from limen.models import (
     JULES_LANDING_HOLD_LABEL,
     Budget,
     BudgetTrack,
@@ -18,7 +18,7 @@ from limen.models import (  # noqa: E402
     Portal,
     Task,
 )
-from limen.workstream_contract import packet_contract  # noqa: E402
+from limen.workstream_contract import packet_contract
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "recover.py"
 SID = "12345678901234567890"
@@ -32,7 +32,7 @@ def _load_recover(name: str):
 
 
 def _write_dispatched_claim(tasks_path: Path, *, target_agent: str = "jules") -> None:
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     save_limen_file(
         tasks_path,
         LimenFile(
@@ -152,7 +152,7 @@ def test_recover_holds_when_jules_cli_is_unavailable(tmp_path, monkeypatch):
 
 def test_recover_preserves_failed_and_dispatched_jules_landing_holds(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     tasks = [
         Task(
             id=f"LANDING-{status.upper()}",
@@ -203,7 +203,7 @@ def test_recover_does_not_apply_remote_logic_to_non_jules_claim(tmp_path, monkey
 
 def test_recover_reopens_failed_jules_remote_session(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
         tasks=[
@@ -246,7 +246,7 @@ def test_recover_reopens_failed_jules_remote_session(tmp_path, monkeypatch):
 
 def test_recover_reopens_jules_session_awaiting_feedback(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
         tasks=[
@@ -289,7 +289,7 @@ def test_recover_reopens_jules_session_awaiting_feedback(tmp_path, monkeypatch):
 
 def test_recover_reopens_jules_session_awaiting_plan_approval(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
         tasks=[
@@ -332,7 +332,7 @@ def test_recover_reopens_jules_session_awaiting_plan_approval(tmp_path, monkeypa
 
 def test_recover_task_id_limits_remote_reopen(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
         tasks=[
@@ -398,7 +398,7 @@ def test_recover_task_id_limits_remote_reopen(tmp_path, monkeypatch):
 
 
 def test_recover_defaults_to_local_tasks_yaml(tmp_path, monkeypatch):
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
         tasks=[
@@ -429,7 +429,7 @@ def test_recover_defaults_to_local_tasks_yaml(tmp_path, monkeypatch):
 
 def test_recover_holds_successor_required_task_at_fixed_point(tmp_path, monkeypatch, capsys):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     contract = packet_contract("15m", now_epoch=1_000)
     save_limen_file(
         tasks_path,
@@ -508,7 +508,7 @@ def test_recover_holds_successor_required_task_at_fixed_point(tmp_path, monkeypa
 
 def test_recover_reopens_first_noop_failure(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
         tasks=[
@@ -549,7 +549,7 @@ def test_recover_reopens_first_noop_failure(tmp_path, monkeypatch):
 
 def test_recover_escalates_repeated_noop_failures(tmp_path, monkeypatch):
     tasks_path = tmp_path / "tasks.yaml"
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
         tasks=[

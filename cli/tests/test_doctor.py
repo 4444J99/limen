@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timezone, date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -12,14 +12,14 @@ from limen.doctor import (
     _iso,
     _task_lifecycle,
     next_actions,
-    stale_tasks,
-    readiness_report,
-    qa_report,
-    print_readiness,
     print_qa_report,
+    print_readiness,
+    qa_report,
+    readiness_report,
+    stale_tasks,
     write_report,
 )
-from limen.models import LimenFile, Task, DispatchLogEntry, Portal, Budget, BudgetTrack
+from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
 
 
 def _task(**overrides) -> Task:
@@ -61,7 +61,7 @@ def test_iso_none() -> None:
 
 
 def test_iso_datetime() -> None:
-    dt = datetime(2026, 6, 20, 12, 30, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 6, 20, 12, 30, 0, tzinfo=UTC)
     assert _iso(dt) == "2026-06-20T12:30:00+00:00"
 
 
@@ -159,13 +159,13 @@ def test_lifecycle_latest_event_from_dispatch_log() -> None:
     task = _task(
         dispatch_log=[
             DispatchLogEntry(
-                timestamp=datetime(2026, 6, 20, 12, 0, 0, tzinfo=timezone.utc),
+                timestamp=datetime(2026, 6, 20, 12, 0, 0, tzinfo=UTC),
                 agent="jules",
                 session_id="s1",
                 status="dispatched",
             ),
             DispatchLogEntry(
-                timestamp=datetime(2026, 6, 20, 14, 0, 0, tzinfo=timezone.utc),
+                timestamp=datetime(2026, 6, 20, 14, 0, 0, tzinfo=UTC),
                 agent="jules",
                 session_id="s1",
                 status="done",
@@ -211,7 +211,7 @@ def test_stale_tasks_recent_log_not_stale() -> None:
         status="dispatched",
         dispatch_log=[
             DispatchLogEntry(
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 agent="jules",
                 session_id="s1",
                 status="dispatched",
@@ -227,7 +227,7 @@ def test_stale_tasks_old_log_is_stale() -> None:
         status="dispatched",
         dispatch_log=[
             DispatchLogEntry(
-                timestamp=datetime(2020, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2020, 1, 1, tzinfo=UTC),
                 agent="jules",
                 session_id="s1",
                 status="dispatched",
@@ -394,7 +394,7 @@ def test_qa_report_with_archived_task(tmp_path: Path) -> None:
 def test_qa_report_all_phases(tmp_path: Path) -> None:
     p = tmp_path / "tasks.yaml"
     p.write_text("")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     limen = _limen(
         tasks=[
             _task(id="A", status="open", priority="high"),
@@ -425,7 +425,7 @@ def test_qa_report_all_phases(tmp_path: Path) -> None:
 def test_qa_report_uses_supplied_now_for_stale_boundary(tmp_path: Path) -> None:
     p = tmp_path / "tasks.yaml"
     p.write_text("")
-    dispatched_at = datetime(2026, 6, 27, 4, 3, 34, 586517, tzinfo=timezone.utc)
+    dispatched_at = datetime(2026, 6, 27, 4, 3, 34, 586517, tzinfo=UTC)
     task = _task(
         id="BOUNDARY",
         status="dispatched",
@@ -438,8 +438,8 @@ def test_qa_report_uses_supplied_now_for_stale_boundary(tmp_path: Path) -> None:
             )
         ],
     )
-    before_cutoff = datetime(2026, 6, 28, 4, 3, 33, 908000, tzinfo=timezone.utc)
-    after_cutoff = datetime(2026, 6, 28, 4, 3, 35, 0, tzinfo=timezone.utc)
+    before_cutoff = datetime(2026, 6, 28, 4, 3, 33, 908000, tzinfo=UTC)
+    after_cutoff = datetime(2026, 6, 28, 4, 3, 35, 0, tzinfo=UTC)
 
     static_time_report = qa_report(_limen(tasks=[task]), p, agent="jules", now=before_cutoff)
     later_report = qa_report(_limen(tasks=[task]), p, agent="jules", now=after_cutoff)

@@ -6,7 +6,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from limen import worktree_abandonment as abandonment
 from limen.action_admission import classify_bash
 

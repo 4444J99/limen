@@ -7,7 +7,6 @@ import sys
 import time
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "reclaim-worktrees.py"
 
@@ -327,7 +326,7 @@ def test_reclaim_blocks_root_detach_after_generated_quarantine_failure(
     monkeypatch.setattr(reclaim, "CHECK", False)
     monkeypatch.setattr(reclaim, "GENERATED_ONLY", False)
     monkeypatch.setattr(reclaim, "iter_worktree_targets", lambda _root: [target])
-    monkeypatch.setattr(reclaim, "active_process_cwds", lambda: {})
+    monkeypatch.setattr(reclaim, "active_process_cwds", dict)
     monkeypatch.setattr(
         reclaim,
         "reclaim_generated_payloads",
@@ -337,8 +336,8 @@ def test_reclaim_blocks_root_detach_after_generated_quarantine_failure(
             "failed": [{"root": "repo", "detail": "generated-quarantine-failed"}],
         },
     )
-    monkeypatch.setattr(reclaim, "load_preservation_receipts", lambda: {})
-    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", lambda: [])
+    monkeypatch.setattr(reclaim, "load_preservation_receipts", dict)
+    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", list)
     monkeypatch.setattr(
         reclaim,
         "classify",

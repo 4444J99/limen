@@ -9,12 +9,12 @@ task projection. Broker outages leave unacknowledged tickets pending.
 from __future__ import annotations
 
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import limen.tabularius as tabularius
 import pytest
+from limen import tabularius
 from limen.conduct.client import BrokerUnavailable
 from limen.io import load_limen_file, queue_lock, save_limen_file
 from limen.models import DispatchLogEntry, LimenFile
@@ -41,7 +41,7 @@ from limen.tabularius import (
     task_state_sha256,
 )
 
-_NOW = datetime(2026, 7, 2, 12, 0, 0, tzinfo=timezone.utc)
+_NOW = datetime(2026, 7, 2, 12, 0, 0, tzinfo=UTC)
 
 
 def _task(tid: str, **over: Any) -> dict[str, Any]:
@@ -640,9 +640,7 @@ def test_canonical_revision_matches_worker_millisecond_canon() -> None:
     assert canon({"updated": "2026-07-22T19:28:29Z"}) == "2026-07-22T19:28:29.000Z"
     assert canon({"updated": "2026-07-22T19:28:29.695Z"}) == "2026-07-22T19:28:29.695Z"
     assert canon({"dispatch_log": [{"timestamp": "2026-07-23T10:30:04.446Z"}]}) == "2026-07-23T10:30:04.446Z"
-    assert (
-        canon({"updated": datetime(2026, 7, 22, 19, 28, 29, 695237, tzinfo=timezone.utc)}) == "2026-07-22T19:28:29.695Z"
-    )
+    assert canon({"updated": datetime(2026, 7, 22, 19, 28, 29, 695237, tzinfo=UTC)}) == "2026-07-22T19:28:29.695Z"
     # Non-datetime revisions pass through untouched, exactly like the worker.
     assert canon({"created": "2026-07-23"}) == "2026-07-23"
     assert canon({"status": "open"}) == "open"

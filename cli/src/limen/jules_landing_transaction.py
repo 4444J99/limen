@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from limen.io import load_limen_file, queue_lock
-from limen.jules_landing_custody import landed_pr_url, landing_branch, land_one
+from limen.jules_landing_custody import land_one, landed_pr_url, landing_branch
 from limen.models import (
     JULES_LANDING_HOLD_LABEL,
     DispatchLogEntry,
@@ -102,7 +102,7 @@ def _advance_landing_execution(
     if task.status != "dispatched":
         return task
     desired = task.model_copy(deep=True)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     desired.status = "in_progress"
     desired.updated = now
     desired.dispatch_log.append(
@@ -395,7 +395,7 @@ def prepare_landing_intent(
 
         before_task = task.model_copy(deep=True)
         before = before_task.model_dump(mode="json")
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         task.labels = list(task.labels or []) + [JULES_LANDING_HOLD_LABEL]
         task.updated = now
         task.dispatch_log.append(
@@ -483,7 +483,7 @@ def commit_landing_receipt(
             return False
         task = _advance_landing_execution(tasks_path, task, selection)
         desired = task.model_copy(deep=True)
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         _append_terminal_outcome(
             desired,
             selection,
@@ -525,7 +525,7 @@ def commit_terminal_landing_outcome(
             return False
         task = _advance_landing_execution(tasks_path, task, selection)
         desired = task.model_copy(deep=True)
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         _append_terminal_outcome(
             desired,
             selection,
@@ -564,7 +564,7 @@ def commit_landing_failure(
             print(f"  FENCE {selection.task_id}: owner changed while recording failed attempt")
             return "fenced"
         task = current.model_copy(deep=True)
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         attempt = selection.attempt_count + 1
         task.updated = now
         task.dispatch_log.append(

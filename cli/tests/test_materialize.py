@@ -9,7 +9,6 @@ The thesis under test: the board is a materialized view — board = fold(events)
 from __future__ import annotations
 
 import yaml
-
 from limen.materialize import diff_boards, fold, seed_events_from_board
 from limen.models import LimenFile
 

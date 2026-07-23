@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "overnight-watch.py"
 
 
@@ -91,7 +90,7 @@ def _write_prompt_authority(
     unresolved: int = 0,
     future_seconds: int = 0,
 ):
-    at = at.astimezone(dt.timezone.utc).replace(microsecond=0)
+    at = at.astimezone(dt.UTC).replace(microsecond=0)
     source = module.PROMPT_ATOM_SNAPSHOT
     source.parent.mkdir(parents=True, exist_ok=True)
     events = source.parent / "prompt-events.jsonl"
@@ -280,7 +279,7 @@ def _run_trial(
 
 
 def test_trial_passes_rebuilds_and_is_byte_idempotent(tmp_path, monkeypatch, capsys):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     active, result = _run_trial(module, clock, start)
@@ -314,7 +313,7 @@ def test_trial_passes_rebuilds_and_is_byte_idempotent(tmp_path, monkeypatch, cap
 
 
 def test_extra_mid_window_alert_watch_row_cannot_be_skipped(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
 
@@ -328,7 +327,7 @@ def test_extra_mid_window_alert_watch_row_cannot_be_skipped(tmp_path, monkeypatc
 
 
 def test_unbound_terminal_window_alert_row_invalidates_receipt(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -343,7 +342,7 @@ def test_unbound_terminal_window_alert_row_invalidates_receipt(tmp_path, monkeyp
 
 
 def test_preseeded_future_events_and_samples_cannot_count(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     for index, minute in enumerate((60, 150, 240, 330, 420), start=1):
@@ -373,7 +372,7 @@ def test_preseeded_future_events_and_samples_cannot_count(tmp_path, monkeypatch)
 
 @pytest.mark.parametrize("offset_seconds", [-(62 * 60), 2 * 60])
 def test_pre_window_or_future_task_timestamp_cannot_earn_credit(tmp_path, monkeypatch, offset_seconds):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
 
@@ -389,7 +388,7 @@ def test_pre_window_or_future_task_timestamp_cannot_earn_credit(tmp_path, monkey
 
 
 def test_finalize_refuses_before_due_time(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     marker = _start(module, start)
     clock.value = start + dt.timedelta(hours=1)
@@ -399,7 +398,7 @@ def test_finalize_refuses_before_due_time(tmp_path, monkeypatch):
 
 
 def test_wall_clock_jump_cannot_backfill_eight_hours(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     marker = _start(module, start)
     clock.value = start + dt.timedelta(hours=8)
@@ -416,7 +415,7 @@ def test_wall_clock_jump_cannot_backfill_eight_hours(tmp_path, monkeypatch):
 def test_start_fails_closed_without_fresh_exact_prompt_authority(
     tmp_path, monkeypatch, scope, stale, unsupported, unresolved
 ):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     _write_prompt_authority(
         module,
@@ -432,7 +431,7 @@ def test_start_fails_closed_without_fresh_exact_prompt_authority(
 
 
 def test_stored_prompt_freshness_lie_is_rejected(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     _write_prompt_authority(module, start)
     snapshot = module.prompt_authority_snapshot(start)
@@ -445,7 +444,7 @@ def test_stored_prompt_freshness_lie_is_rejected(tmp_path, monkeypatch):
 
 
 def test_prompt_scan_ten_minutes_in_future_is_rejected(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     _write_prompt_authority(module, start, future_seconds=10 * 60)
 
@@ -458,7 +457,7 @@ def test_prompt_scan_ten_minutes_in_future_is_rejected(tmp_path, monkeypatch):
 
 
 def test_arbitrary_session_string_does_not_count_as_seam(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _, result = _run_trial(
@@ -474,7 +473,7 @@ def test_arbitrary_session_string_does_not_count_as_seam(tmp_path, monkeypatch):
 
 
 def test_failed_predicate_or_missing_receipt_does_not_count(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     monkeypatch.setattr(module, "_receipt_target_proof", lambda _target: None)
     monkeypatch.setattr(
@@ -493,7 +492,7 @@ def test_failed_predicate_or_missing_receipt_does_not_count(tmp_path, monkeypatc
 
 
 def test_real_predicate_and_receipt_proof_are_both_required(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     entry = {
         "event_id": "a" * 64,
@@ -524,7 +523,7 @@ def test_real_predicate_and_receipt_proof_are_both_required(tmp_path, monkeypatc
     ],
 )
 def test_mutating_predicates_are_never_executed(tmp_path, monkeypatch, predicate):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
 
     assert module._predicate_is_observation_only(predicate) is False
@@ -541,7 +540,7 @@ def test_mutating_predicates_are_never_executed(tmp_path, monkeypatch, predicate
     ],
 )
 def test_safe_predicate_classification_never_executes(tmp_path, monkeypatch, predicate):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     monkeypatch.setattr(
         module,
@@ -585,7 +584,7 @@ def test_safe_predicate_classification_never_executes(tmp_path, monkeypatch, pre
     ],
 )
 def test_gh_mutation_or_external_view_flags_are_rejected_without_execution(tmp_path, monkeypatch, predicate):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     calls = []
     monkeypatch.setattr(module, "_run_predicate_argv", lambda argv: calls.append(argv))
@@ -596,7 +595,7 @@ def test_gh_mutation_or_external_view_flags_are_rejected_without_execution(tmp_p
 
 
 def test_non_git_predicate_families_do_not_execute_inherited_path_or_startup_hooks(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     fake_bin = tmp_path / "fake-bin"
     fake_bin.mkdir()
@@ -668,7 +667,7 @@ def test_non_git_predicate_families_do_not_execute_inherited_path_or_startup_hoo
 
 
 def test_receipt_and_jules_proofs_do_not_execute_inherited_path_tools(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     fake_bin = tmp_path / "fake-bin"
     fake_bin.mkdir()
@@ -717,7 +716,7 @@ def test_receipt_and_jules_proofs_do_not_execute_inherited_path_tools(tmp_path, 
     ],
 )
 def test_blob_and_tree_urls_cannot_prove_only_ref_existence(tmp_path, monkeypatch, target):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     monkeypatch.setattr(
         module,
@@ -729,7 +728,7 @@ def test_blob_and_tree_urls_cannot_prove_only_ref_existence(tmp_path, monkeypatc
 
 
 def test_declared_github_receipt_requires_exact_terminal_task_key(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     objects = [
         {
@@ -767,7 +766,7 @@ def test_declared_github_receipt_requires_exact_terminal_task_key(tmp_path, monk
 
 
 def test_git_receipt_anchor_must_exist_exactly(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
 
     def content(task_id):
@@ -784,7 +783,7 @@ def test_git_receipt_anchor_must_exist_exactly(tmp_path, monkeypatch):
 
 
 def test_terminal_url_receipt_requires_claimed_terminal_state(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     payload = {"number": 957, "state": "open", "closed_at": None}
     monkeypatch.setattr(module, "_github_api_object", lambda _endpoint: payload)
@@ -810,7 +809,7 @@ def test_terminal_url_receipt_requires_claimed_terminal_state(tmp_path, monkeypa
 
 
 def test_github_actions_seam_requires_current_in_window_run(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     observed_at = start + dt.timedelta(minutes=30)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     run_id = "123456789012"
@@ -858,7 +857,7 @@ def test_github_actions_seam_requires_current_in_window_run(tmp_path, monkeypatc
 
 
 def test_jules_seam_requires_active_recent_exact_session(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     observed_at = start + dt.timedelta(minutes=30)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     session_id = "123456789012"
@@ -941,7 +940,7 @@ def test_jules_seam_requires_active_recent_exact_session(tmp_path, monkeypatch):
     ],
 )
 def test_git_write_or_exec_flags_are_rejected_without_execution(tmp_path, monkeypatch, predicate):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     calls = []
     monkeypatch.setattr(module, "_run_predicate_argv", lambda argv: calls.append(argv))
@@ -952,7 +951,7 @@ def test_git_write_or_exec_flags_are_rejected_without_execution(tmp_path, monkey
 
 
 def test_safe_git_classifier_is_nonexecuting(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     monkeypatch.setattr(
         module,
@@ -964,7 +963,7 @@ def test_safe_git_classifier_is_nonexecuting(tmp_path, monkeypatch):
 
 
 def test_safe_git_executor_scrubs_ambient_exec_hooks(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     poisoned = {
         "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/tmp/untrusted-objects",
@@ -1060,7 +1059,7 @@ def test_safe_git_executor_scrubs_ambient_exec_hooks(tmp_path, monkeypatch):
 
 
 def test_safe_git_executor_does_not_resolve_git_from_inherited_path(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     trusted_git = module._trusted_git_executable()
     assert trusted_git is not None
@@ -1080,7 +1079,7 @@ def test_safe_git_executor_does_not_resolve_git_from_inherited_path(tmp_path, mo
 
 
 def test_safe_git_executor_neutralizes_repo_signature_helpers(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     trusted_git = module._trusted_git_executable()
     ssh_keygen = shutil.which("ssh-keygen", path=module.os.defpath)
@@ -1161,7 +1160,7 @@ def test_safe_git_executor_neutralizes_repo_signature_helpers(tmp_path, monkeypa
 
 
 def test_safe_git_executor_denies_alternate_and_promisor_transport(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
 
     def git(*args, env=None):
@@ -1237,7 +1236,7 @@ def test_safe_git_executor_denies_alternate_and_promisor_transport(tmp_path, mon
 
 
 def test_rolling_value_gap_over_ninety_minutes_fails(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _, result = _run_trial(module, clock, start, value_minutes=(5, 175, 180, 355, 360, 480))
@@ -1249,7 +1248,7 @@ def test_rolling_value_gap_over_ninety_minutes_fails(tmp_path, monkeypatch):
 
 
 def test_sample_gap_over_ten_minutes_fails(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _, result = _run_trial(module, clock, start, omit_samples={100, 105})
@@ -1260,7 +1259,7 @@ def test_sample_gap_over_ten_minutes_fails(tmp_path, monkeypatch):
 
 
 def test_operator_journal_delta_fails_trial(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _, result = _run_trial(module, clock, start, operator_at=240)
@@ -1274,7 +1273,7 @@ def test_operator_journal_delta_fails_trial(tmp_path, monkeypatch):
     ["watch", "observation", "tasks", "prompt"],
 )
 def test_source_rewrite_or_truncation_breaks_checker(tmp_path, monkeypatch, source):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     if source == "prompt":
@@ -1310,7 +1309,7 @@ def test_source_rewrite_or_truncation_breaks_checker(tmp_path, monkeypatch, sour
 
 
 def test_post_window_self_consistent_chain_rebuild_lacks_prospective_custody(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1346,7 +1345,7 @@ def test_post_window_self_consistent_chain_rebuild_lacks_prospective_custody(tmp
 
 
 def test_terminal_proofs_are_reexecuted_during_receipt_check(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1374,7 +1373,7 @@ def test_terminal_proofs_are_reexecuted_during_receipt_check(tmp_path, monkeypat
     ],
 )
 def test_byte_identical_source_symlink_redirect_fails_closed(tmp_path, monkeypatch, source):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1406,7 +1405,7 @@ def test_byte_identical_source_symlink_redirect_fails_closed(tmp_path, monkeypat
 
 @pytest.mark.parametrize("redirect", ["ledger", "lock", "ancestor"])
 def test_watch_writer_rejects_symlink_redirect_before_trial_append(tmp_path, monkeypatch, redirect):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     module.write_jsonl({"baseline": True})
     _start(module, start)
@@ -1441,7 +1440,7 @@ def test_watch_writer_rejects_symlink_redirect_before_trial_append(tmp_path, mon
 
 @pytest.mark.parametrize("redirect", ["ledger", "lock", "ancestor"])
 def test_trial_start_rejects_watch_redirect_before_any_trial_write(tmp_path, monkeypatch, redirect):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     _write_prompt_authority(module, start)
     watch_path = module.RECEIPT_JSONL
@@ -1475,7 +1474,7 @@ def test_trial_start_rejects_watch_redirect_before_any_trial_write(tmp_path, mon
 
 
 def test_evaluator_hash_binds_every_local_semantic_dependency(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     dependency_root = tmp_path / "evaluator-dependencies"
@@ -1517,7 +1516,7 @@ def test_evaluator_hash_binds_every_local_semantic_dependency(tmp_path, monkeypa
 
 
 def test_trial_start_rejects_unavailable_evaluator_dependency_set(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     _write_prompt_authority(module, start)
     monkeypatch.setattr(module, "evaluator_hash", lambda: "unavailable")
@@ -1527,7 +1526,7 @@ def test_trial_start_rejects_unavailable_evaluator_dependency_set(tmp_path, monk
 
 
 def test_live_terminal_projections_may_advance_after_immutable_custody(tmp_path, monkeypatch, capsys):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _, result = _run_trial(module, clock, start)
@@ -1555,7 +1554,7 @@ def test_live_terminal_projections_may_advance_after_immutable_custody(tmp_path,
 @pytest.mark.parametrize("name", ["handoff", "prompt_cursor", "prompt_snapshot"])
 @pytest.mark.parametrize("mutation", ["remove", "rewrite"])
 def test_terminal_custody_sidecar_removal_or_rewrite_fails(tmp_path, monkeypatch, name, mutation):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1577,7 +1576,7 @@ def test_terminal_custody_sidecar_removal_or_rewrite_fails(tmp_path, monkeypatch
 
 
 def test_terminal_custody_fifo_fails_without_blocking_checker(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1602,7 +1601,7 @@ def test_terminal_custody_fifo_fails_without_blocking_checker(tmp_path, monkeypa
 
 @pytest.mark.parametrize("source", ["marker", "watch", "prompt_events"])
 def test_authoritative_fifo_source_fails_without_blocking_checker(tmp_path, monkeypatch, source):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1629,7 +1628,7 @@ def test_authoritative_fifo_source_fails_without_blocking_checker(tmp_path, monk
 
 
 def test_terminal_custody_final_symlink_fails_before_read(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1647,7 +1646,7 @@ def test_terminal_custody_final_symlink_fails_before_read(tmp_path, monkeypatch)
 
 
 def test_terminal_custody_device_is_rejected_before_read(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     monkeypatch.setattr(module, "ROOT", Path("/dev"))
 
@@ -1662,7 +1661,7 @@ def test_terminal_custody_device_is_rejected_before_read(tmp_path, monkeypatch):
 
 
 def test_terminal_custody_descriptor_cannot_be_substituted(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1720,7 +1719,7 @@ def test_terminal_custody_descriptor_cannot_be_substituted(tmp_path, monkeypatch
 
 
 def test_terminal_custody_ancestor_symlink_fails_closed(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1740,7 +1739,7 @@ def test_terminal_custody_ancestor_symlink_fails_closed(tmp_path, monkeypatch):
 
 
 def test_configured_terminal_root_replacement_symlink_fails_closed(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, clock = _fresh_module(tmp_path, monkeypatch, start)
     _install_proof_stubs(module, monkeypatch)
     _run_trial(module, clock, start)
@@ -1758,7 +1757,7 @@ def test_configured_terminal_root_replacement_symlink_fails_closed(tmp_path, mon
 
 
 def test_active_trial_cannot_be_replaced_or_backfilled(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     _start(module, start)
 
@@ -1769,7 +1768,7 @@ def test_active_trial_cannot_be_replaced_or_backfilled(tmp_path, monkeypatch):
 
 
 def test_missing_or_backdated_prospective_anchor_fails_closed(tmp_path, monkeypatch):
-    start = dt.datetime(2026, 7, 1, tzinfo=dt.timezone.utc)
+    start = dt.datetime(2026, 7, 1, tzinfo=dt.UTC)
     module, _ = _fresh_module(tmp_path, monkeypatch, start)
     marker = _start(module, start)
     module._trial_anchor_path(marker).unlink()

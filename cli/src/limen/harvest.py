@@ -1,7 +1,7 @@
-import subprocess
-import re
 import os
-from datetime import datetime, timezone
+import re
+import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 
 from limen.models import DispatchLogEntry, LimenFile, Task, dispatch_agent, dispatch_session_id
@@ -107,7 +107,7 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
         if session_id:
             diff_file = harvest_dir / f"{session_id}.diff"
             if diff_file.exists():
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 result = diff_file.read_text().strip()
                 if not _diff_is_real(result):
                     # jules finished but produced nothing usable (empty/garbage
@@ -144,7 +144,7 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
 
         task_dir = harvest_dir / task.id
         if task_dir.exists() and (task_dir / "result.txt").exists():
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             result = (task_dir / "result.txt").read_text().strip()
             if not result:
                 # empty result file is not completion — don't false-done it.
@@ -195,7 +195,7 @@ def _remote_attempt_age(task: Task, request_id: str) -> float:
     ]
     if not timestamps:
         return 0.0
-    return max(0.0, (datetime.now(timezone.utc) - min(timestamps)).total_seconds())
+    return max(0.0, (datetime.now(UTC) - min(timestamps)).total_seconds())
 
 
 def _with_remote_state(run: RemoteRun, state: RemoteState, detail: str) -> RemoteRun:
@@ -214,7 +214,7 @@ def _with_remote_state(run: RemoteRun, state: RemoteState, detail: str) -> Remot
         verification_context_digest=run.verification_context_digest,
         state=state,
         request_id=run.request_id,
-        observed_at=datetime.now(timezone.utc).isoformat(),
+        observed_at=datetime.now(UTC).isoformat(),
         detail=detail,
     )
 
@@ -336,7 +336,7 @@ def _record_remote_observation(
         and latest.output == output
     ):
         return False
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     task.status = status
     task.updated = now
     task.dispatch_log.append(
@@ -392,7 +392,7 @@ def check_remote_harvest(
             try:
                 entry = _adopt_orphan_remote_entry(task, tasks_path, store, tasks_by_id)
             except RemoteExecutionError as exc:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 task.status = "failed_blocked"
                 task.updated = now
                 task.dispatch_log.append(
@@ -584,9 +584,7 @@ def check_remote_harvest(
             status = "done"
         elif receipt.state in {RemoteState.FAILED, RemoteState.ABSENT}:
             status = "failed"
-        elif receipt.state is RemoteState.BLOCKED:
-            status = "failed_blocked"
-        elif receipt.state is RemoteState.SUCCEEDED:
+        elif receipt.state is RemoteState.BLOCKED or receipt.state is RemoteState.SUCCEEDED:
             status = "failed_blocked"
         else:
             status = "in_progress"

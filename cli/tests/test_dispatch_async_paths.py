@@ -7,7 +7,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "cli" / "src"))
 
-from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task  # noqa: E402
+from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task
 
 
 def _load_script(name: str, relpath: str):
@@ -41,7 +41,7 @@ def test_async_run_paths_preserve_slash_task_ids(monkeypatch, tmp_path):
     marker.write_text(
         json.dumps(
             {
-                "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "started_at": datetime.datetime.now(datetime.UTC).isoformat(),
                 "agent": agent,
                 "task_id": task_id,
                 "pid": 999999,
@@ -110,7 +110,7 @@ def test_async_reservation_uses_live_usage_not_stale_board_caps(monkeypatch, tmp
         per_agent=3,
         cap=4,
         dry=True,
-        now=datetime.datetime(2026, 7, 9, tzinfo=datetime.timezone.utc),
+        now=datetime.datetime(2026, 7, 9, tzinfo=datetime.UTC),
         usage_remaining={"jules": 2, "opencode": 999},
         weak_proxy_agents={"agy"},
     )

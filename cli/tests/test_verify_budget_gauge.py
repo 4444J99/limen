@@ -4,7 +4,6 @@ import importlib.util
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("verify_budget_gauge", ROOT / "scripts" / "verify-budget-gauge.py")
 vbg = importlib.util.module_from_spec(spec)
@@ -13,8 +12,8 @@ spec.loader.exec_module(vbg)
 
 
 def test_codex_live_rate_limits_malformed_payload_fails_open(monkeypatch) -> None:
-    monkeypatch.setattr(vbg, "_load_default_limits", lambda: {})
-    monkeypatch.setattr(vbg, "_load_override", lambda: {})
+    monkeypatch.setattr(vbg, "_load_default_limits", dict)
+    monkeypatch.setattr(vbg, "_load_override", dict)
     monkeypatch.setattr(
         vbg,
         "codex_live_rate_limits",

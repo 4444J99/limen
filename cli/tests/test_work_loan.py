@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from limen.intake import is_durable_receipt_target, is_executable_predicate
 from limen.work_loan import (
     WorkLoanV1,
@@ -14,7 +13,6 @@ from limen.work_loan import (
     task_source_lineage,
     task_work_loan_readiness,
 )
-
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = json.loads((ROOT / "spec/contracts/work-loan-v1-fixtures.json").read_text())

@@ -4,7 +4,6 @@ from copy import deepcopy
 from datetime import date
 
 import pytest
-
 from limen.execution_contract import (
     EXECUTION_CONTRACT_SCHEMA_VERSION,
     ExecutionContractError,

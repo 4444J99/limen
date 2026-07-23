@@ -5,7 +5,6 @@ from pathlib import Path
 
 import yaml
 
-
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "harvest-pull-completed.py"
 
 

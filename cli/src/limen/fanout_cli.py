@@ -8,8 +8,8 @@ from pathlib import Path
 
 import click
 
-from limen.conduct.client import client_from_env
 from limen.conduct.broker import ConductError
+from limen.conduct.client import client_from_env
 from limen.fanout import (
     FanoutError,
     harvest_root,

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Sequence
 
 from .contracts import (
     ATTESTATION_NAME_MAX_LENGTH,
@@ -14,7 +14,6 @@ from .contracts import (
     mapping,
     stable_hash,
 )
-
 
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
 _SECRET = re.compile(

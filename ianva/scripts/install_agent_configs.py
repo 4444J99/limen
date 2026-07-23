@@ -26,9 +26,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from ianva.config import load_config  # noqa: E402
-from ianva.gen import Endpoint, build_entries  # noqa: E402
-from ianva import creds  # noqa: E402
+from ianva.config import load_config
+from ianva.gen import Endpoint, build_entries
+
+from ianva import creds
 
 
 def _redact(text: str) -> str:

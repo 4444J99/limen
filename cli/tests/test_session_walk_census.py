@@ -4,7 +4,6 @@ import importlib.util
 import time
 from pathlib import Path
 
-
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "session-walk-census.py"
 
 

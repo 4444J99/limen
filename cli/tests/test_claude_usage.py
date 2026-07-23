@@ -5,7 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "claude-usage.py"
 
@@ -129,7 +128,7 @@ def _synth_transcript(dir_: Path, output_tokens: int) -> None:
     import datetime
 
     dir_.mkdir(parents=True, exist_ok=True)
-    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    now_iso = datetime.datetime.now(datetime.UTC).isoformat()
     rec = {
         "timestamp": now_iso,
         "message": {

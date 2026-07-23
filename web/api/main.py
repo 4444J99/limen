@@ -1,28 +1,27 @@
-import os
 import base64
 import copy
 import hashlib
 import json
+import os
 import re
+import shutil
 import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from math import ceil
 from pathlib import Path
-import shutil
 from typing import Any
 
-import yaml
 import rfc8785
+import yaml
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, field_validator
-
 from limen_intake import IntakeContractError, validate_intake_contract
 from limen_work_loan import task_work_loan_missing_fields, work_loan_denial
+from pydantic import BaseModel, Field, field_validator
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
@@ -420,7 +419,7 @@ class ConductMutation:
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def parse_date(value: Any) -> date | None:
@@ -581,14 +580,14 @@ def task_revision(task: dict[str, Any]) -> str:
         or task.get("status")
     )
     if isinstance(value, datetime):
-        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
     if isinstance(value, date):
         return value.isoformat()
     rendered = str(value)
     if re.match(r"^\d{4}-\d{2}-\d{2}T", rendered):
         try:
             parsed = datetime.fromisoformat(rendered.replace("Z", "+00:00"))
-            return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+            return parsed.astimezone(UTC).isoformat().replace("+00:00", "Z")
         except ValueError:
             pass
     return rendered
@@ -712,7 +711,7 @@ def task_work_packet(
             "external_effects": [],
             "may_delegate": False,
         },
-        "deadline": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+        "deadline": (datetime.now(UTC) + timedelta(minutes=5)).isoformat(),
         "spend": {
             "schema_version": "limen.spend_envelope.v1",
             "unit": "runs",
@@ -834,7 +833,7 @@ def budget(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def maybe_reset_budget(data: dict[str, Any]) -> None:
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     track = budget(data)["track"]
     if track.get("date") != today:
         track["date"] = today
@@ -880,7 +879,7 @@ def summary(data: dict[str, Any]) -> dict[str, Any]:
 
 def throughput(data: dict[str, Any]) -> dict[str, Any]:
     tasks = data.get("tasks", [])
-    current_date = datetime.now(timezone.utc).date()
+    current_date = datetime.now(UTC).date()
     created_dates = [created for task in tasks if (created := parse_date(task.get("created")))]
     first_created = min(created_dates) if created_dates else current_date
     age_days = max(1, (current_date - first_created).days + 1)
@@ -1382,7 +1381,7 @@ def dispatch_candidates(data: dict[str, Any], req: DispatchRequest) -> list[dict
 
 
 def release_stale_candidates(data: dict[str, Any], hours: int) -> list[dict[str, Any]]:
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
     candidates: list[dict[str, Any]] = []
     for task in data.get("tasks", []):
         if task.get("status") not in ("dispatched", "in_progress"):

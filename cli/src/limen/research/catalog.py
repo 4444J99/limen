@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence, cast
+from typing import Any, cast
 
 from .contracts import (
     ResearchContractError,
@@ -15,7 +16,6 @@ from .contracts import (
     strings,
     verification_score,
 )
-
 
 _PROFILE_ID = re.compile(r"^[a-z][a-z0-9_]*$")
 _KIND_MAP = {

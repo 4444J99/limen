@@ -10,7 +10,7 @@ for harvest.
 import importlib.util
 import json
 import sys
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -19,9 +19,9 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.execution_contract import execution_contract_hash  # noqa: E402
-from limen.models import DispatchLogEntry, LimenFile, Task, dispatch_agent  # noqa: E402
+from limen.execution_contract import execution_contract_hash
+from limen.io import load_limen_file, save_limen_file
+from limen.models import DispatchLogEntry, LimenFile, Task, dispatch_agent
 
 _spec = importlib.util.spec_from_file_location("dispatch_async", str(ROOT / "scripts" / "dispatch-async.py"))
 dispatch_async = importlib.util.module_from_spec(_spec)
@@ -45,7 +45,7 @@ def board(tmp_path, monkeypatch):
     )
     task.dispatch_log.append(
         DispatchLogEntry(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             agent="jules",
             session_id="async-reserve",
             status="dispatched",

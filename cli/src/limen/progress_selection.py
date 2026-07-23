@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from hashlib import sha256
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from limen.capacity import canonical_agent
 from limen.work_loan import task_work_loan_readiness
-
 
 SELECTION_SCHEMA = "limen.progress-selection.v1"
 DEFAULT_WEIGHTS = {

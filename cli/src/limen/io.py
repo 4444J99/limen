@@ -6,7 +6,7 @@ import sys
 import tempfile
 import time
 from collections.abc import Iterator
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import yaml
@@ -102,7 +102,7 @@ def _read_lock_pid(lockd: Path) -> int | None:
 def _write_lock_metadata(lockd: Path) -> None:
     try:
         (lockd / "pid").write_text(f"{os.getpid()}\n")
-        (lockd / "created_at").write_text(datetime.now(timezone.utc).isoformat() + "\n")
+        (lockd / "created_at").write_text(datetime.now(UTC).isoformat() + "\n")
     except OSError:
         pass
 
@@ -355,7 +355,7 @@ def save_limen_file(path: Path, limen: LimenFile, *, allow_shrink: bool = False)
         new_count = len(limen.tasks)
         threshold = max(floor, int(prior * fraction))
         if prior > floor and new_count < threshold:
-            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
             sidecar = path.with_name(f"{path.name}.rejected-{stamp}")
             with contextlib.suppress(OSError):
                 atomic_write_text(sidecar, text)

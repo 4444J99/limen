@@ -5,8 +5,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
-
-import limen.dispatch as dispatch
+from limen import dispatch
 from limen.models import Task
 from limen.work_loan_journal import (
     WorkLoanJournalError,
@@ -15,7 +14,6 @@ from limen.work_loan_journal import (
     journal_snapshots,
     reconcile_terminal_tasks,
 )
-
 
 NOW = datetime(2026, 7, 21, 12, 0, tzinfo=UTC)
 DIGEST = "a" * 64

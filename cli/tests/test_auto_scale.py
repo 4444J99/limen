@@ -7,9 +7,7 @@ from types import ModuleType
 
 import pytest
 import yaml
-
 from limen.tabularius import drain_once
-
 
 ROOT = Path(__file__).resolve().parents[2]
 

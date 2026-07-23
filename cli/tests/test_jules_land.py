@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "jules-land.py"
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import DispatchLogEntry, LimenFile, Task  # noqa: E402
+from limen.io import load_limen_file, save_limen_file
+from limen.models import DispatchLogEntry, LimenFile, Task
 
 
 def load_jules_land():
@@ -42,13 +42,13 @@ def test_main_does_not_change_failed_row_with_existing_session_pr(
                     created=date(2026, 7, 17),
                     dispatch_log=[
                         DispatchLogEntry(
-                            timestamp=datetime.now(timezone.utc),
+                            timestamp=datetime.now(UTC),
                             agent="jules",
                             session_id="123",
                             status="dispatched",
                         ),
                         DispatchLogEntry(
-                            timestamp=datetime.now(timezone.utc),
+                            timestamp=datetime.now(UTC),
                             agent="jules",
                             session_id=("https://github.com/organvm/example/pull/42"),
                             status="done",
@@ -77,7 +77,7 @@ def test_main_routes_newer_session_after_older_pr_receipt(
 ) -> None:
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     save_limen_file(
         tasks_path,
         LimenFile(

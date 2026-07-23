@@ -19,11 +19,10 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Callable, Mapping, Sequence
 from urllib.parse import urlparse
-
 
 SCHEMA_VERSION = "limen.remote-execution.v3"
 SHA_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
@@ -155,7 +154,7 @@ class ReceiptTarget:
     path: str = ""
 
     @classmethod
-    def parse(cls, value: str) -> "ReceiptTarget":
+    def parse(cls, value: str) -> ReceiptTarget:
         parts = value.split(":", 4)
         if len(parts) < 4:
             raise PredicateContractError("receipt_target is not a supported exact target")

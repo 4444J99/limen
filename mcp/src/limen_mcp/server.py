@@ -1,14 +1,11 @@
+import json
 import os
 import re
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-import json
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 import yaml
-from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 from limen.conduct.client import client_from_env
 from limen.conduct.models import (
     AgentIdentityV1,
@@ -23,6 +20,8 @@ from limen.conduct.models import (
 from limen.work_loan import WorkLoanV1, task_work_loan_readiness
 from limen_mcp import runtime_requirements
 from limen_mcp.intake import normalize_selected_legacy_task, validate_intake_contract
+from mcp.server.fastmcp import FastMCP
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
@@ -64,7 +63,7 @@ def _validate_text(value: str, field_name: str, max_len: int) -> str:
     return _reject_control_chars(value, field_name)
 
 
-def _validate_optional_enum(value: Optional[str], allowed: set[str], field_name: str) -> Optional[str]:
+def _validate_optional_enum(value: str | None, allowed: set[str], field_name: str) -> str | None:
     if value is not None and value not in allowed:
         raise ValueError(f"{field_name} must be one of {', '.join(sorted(allowed))}")
     return value
@@ -80,12 +79,12 @@ class DispatchLogEntry(BaseModel):
     agent: str
     session_id: str
     status: str
-    route_to: Optional[str] = None
-    execution_profile: Optional[Dict[str, Any]] = None
-    selected_model: Optional[str] = None
-    selection_source: Optional[str] = None
-    catalog_hash: Optional[str] = None
-    output: Optional[str] = None
+    route_to: str | None = None
+    execution_profile: dict[str, Any] | None = None
+    selected_model: str | None = None
+    selection_source: str | None = None
+    catalog_hash: str | None = None
+    output: str | None = None
 
     @field_validator("status")
     @classmethod
@@ -116,31 +115,31 @@ class Task(BaseModel):
 
     id: str
     title: str
-    description: Optional[str] = None
-    repo: Optional[str] = None
+    description: str | None = None
+    repo: str | None = None
     type: str = "code"
     target_agent: str
     priority: str = "medium"
     budget_cost: int = Field(default=1, ge=1)
     status: str = "open"
-    labels: List[str] = Field(default_factory=list)
-    urls: List[str] = Field(default_factory=list)
-    context: Optional[str] = None
-    predicate: Optional[str] = None
-    receipt_target: Optional[str] = None
-    origin: Optional[str] = None
-    horizon: Optional[str] = None
-    value_case: Optional[str] = None
-    owner_surface: Optional[str] = None
+    labels: list[str] = Field(default_factory=list)
+    urls: list[str] = Field(default_factory=list)
+    context: str | None = None
+    predicate: str | None = None
+    receipt_target: str | None = None
+    origin: str | None = None
+    horizon: str | None = None
+    value_case: str | None = None
+    owner_surface: str | None = None
     external_deadline: bool = False
-    due_at: Optional[str] = None
-    receipt_verified: Optional[bool] = None
-    execution_requirements: Optional[List[ExecutionRequirement]] = None
-    claude_tier: Optional[str] = None
-    depends_on: List[str] = Field(default_factory=list)
+    due_at: str | None = None
+    receipt_verified: bool | None = None
+    execution_requirements: list[ExecutionRequirement] | None = None
+    claude_tier: str | None = None
+    depends_on: list[str] = Field(default_factory=list)
     created: date
-    updated: Optional[datetime] = None
-    dispatch_log: List[DispatchLogEntry] = Field(default_factory=list)
+    updated: datetime | None = None
+    dispatch_log: list[DispatchLogEntry] = Field(default_factory=list)
 
     @field_validator("priority")
     @classmethod
@@ -169,8 +168,8 @@ class BudgetTrack(BaseModel):
 
     date: str
     spent: int = 0
-    per_agent: Dict[str, int] = Field(default_factory=dict)
-    per_agent_reset: Dict[str, str] = Field(default_factory=dict)
+    per_agent: dict[str, int] = Field(default_factory=dict)
+    per_agent_reset: dict[str, str] = Field(default_factory=dict)
 
 
 class Budget(BaseModel):
@@ -178,7 +177,7 @@ class Budget(BaseModel):
 
     daily: int = 100
     unit: str = "runs"
-    per_agent: Dict[str, int] = Field(default_factory=dict)
+    per_agent: dict[str, int] = Field(default_factory=dict)
     track: BudgetTrack = Field(default_factory=lambda: BudgetTrack(date=""))
 
 
@@ -188,7 +187,7 @@ class Portal(BaseModel):
     name: str = "Universal Task Intake"
     description: str = ""
     budget: Budget = Field(default_factory=Budget)
-    agents: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    agents: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class LimenFile(BaseModel):
@@ -196,7 +195,7 @@ class LimenFile(BaseModel):
 
     version: str = "1.0"
     portal: Portal = Field(default_factory=Portal)
-    tasks: List[Task] = Field(default_factory=list)
+    tasks: list[Task] = Field(default_factory=list)
 
 
 # -- Server State -----------------------------------------------------------
@@ -204,7 +203,7 @@ class LimenFile(BaseModel):
 mcp = FastMCP("Limen")
 
 CIRCUIT_BREAKER_TRIPPED = False
-TASK_LOOP_TRACKER: Dict[str, int] = {}
+TASK_LOOP_TRACKER: dict[str, int] = {}
 STATE_FILE = Path.home() / "Workspace" / "limen" / ".mcp_state.json"
 
 
@@ -285,7 +284,7 @@ def _register_submitter(client, identity: AgentIdentityV1) -> None:
             worktree=os.environ.get("LIMEN_WORKTREE"),
             capabilities=frozenset({"task-submit"}),
             transport="mcp",
-            heartbeat_at=datetime.now(timezone.utc),
+            heartbeat_at=datetime.now(UTC),
         )
     )
 
@@ -328,7 +327,7 @@ def _task_packet(
             path_prefixes=frozenset({"tasks.yaml"}),
             may_delegate=False,
         ),
-        deadline=datetime.now(timezone.utc) + timedelta(minutes=5),
+        deadline=datetime.now(UTC) + timedelta(minutes=5),
         spend=SpendEnvelopeV1(limit=0),
         effect="write",
         task_id=task_id,
@@ -342,7 +341,7 @@ def _task_revision(task: Task) -> str:
     if value is None:
         value = task.created or task.status
     if isinstance(value, datetime):
-        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
     return value.isoformat() if isinstance(value, date) else str(value)
 
 
@@ -388,7 +387,7 @@ def conduct_capabilities() -> dict:
 
 
 @mcp.tool()
-def conduct_register(session: Dict[str, Any]) -> dict:
+def conduct_register(session: dict[str, Any]) -> dict:
     """Register a direct, dispatched, or relay conductor session."""
 
     _check_circuit_breaker()
@@ -396,7 +395,7 @@ def conduct_register(session: Dict[str, Any]) -> dict:
 
 
 @mcp.tool()
-def conduct_submit(packet: Dict[str, Any]) -> dict:
+def conduct_submit(packet: dict[str, Any]) -> dict:
     """Submit one bounded root work packet to the shared keeper."""
 
     _check_circuit_breaker()
@@ -404,7 +403,7 @@ def conduct_submit(packet: Dict[str, Any]) -> dict:
 
 
 @mcp.tool()
-def conduct_split(parent_run: str, packet: Dict[str, Any]) -> dict:
+def conduct_split(parent_run: str, packet: dict[str, Any]) -> dict:
     """Submit one authority-attenuated child packet under an existing run."""
 
     _check_circuit_breaker()
@@ -424,7 +423,7 @@ def conduct_heartbeat(
     lease: str,
     generation: int,
     capability_token: str,
-    observed_heads: Optional[Dict[str, str]] = None,
+    observed_heads: dict[str, str] | None = None,
 ) -> dict:
     """Renew a lease while fencing any moved exact Git heads."""
 
@@ -442,7 +441,7 @@ def conduct_report(
     lease: str,
     generation: int,
     capability_token: str,
-    receipt: Dict[str, Any],
+    receipt: dict[str, Any],
 ) -> dict:
     """Submit a schema-validated terminal receipt; late results remain evidence-only."""
 
@@ -488,7 +487,7 @@ def conduct_request_stop(run: str, session_id: str) -> dict:
 
 
 @mcp.tool()
-def list_tasks(status: Optional[str] = None, agent: Optional[str] = None) -> List[dict]:
+def list_tasks(status: str | None = None, agent: str | None = None) -> list[dict]:
     """List tasks in the pipeline, optionally filtered by status or agent."""
     status = _validate_optional_enum(status, VALID_STATUSES, "status")
     agent = _validate_optional_enum(agent, VALID_AGENTS, "agent")
@@ -572,8 +571,7 @@ def add_task(
         if t.id.startswith("LIMEN-"):
             try:
                 num = int(t.id.split("-")[1])
-                if num > last_num:
-                    last_num = num
+                last_num = max(last_num, num)
             except ValueError:
                 pass
     new_id = f"LIMEN-{last_num + 1:03d}"
@@ -614,9 +612,9 @@ def add_task(
 def update_task_status(
     task_id: str,
     status: str,
-    context: Optional[str] = None,
-    predicate: Optional[str] = None,
-    receipt_target: Optional[str] = None,
+    context: str | None = None,
+    predicate: str | None = None,
+    receipt_target: str | None = None,
 ) -> str:
     """Update the status and context of a task. Allows 'failed_blocked' to evict dependencies."""
     task_id = _validate_task_id(task_id)
@@ -686,7 +684,7 @@ def _agents_dir() -> Path:
 
 
 @mcp.tool()
-def agent_available(agent: Optional[str] = None) -> List[dict]:
+def agent_available(agent: str | None = None) -> list[dict]:
     """Query agent presence beacons. Returns status of all agents or a specific agent.
     Each beacon contains: status (idle|working|throttled), accepting_tasks,
     available_tokens, token_usage_pct, clock_health, heartbeat."""

@@ -83,7 +83,7 @@ def _render_codex(ep: Endpoint) -> Entry:
     return Entry(
         key="codex",
         label="Codex (OpenAI)",
-        path=str((Path.home() / ".codex" / "config.toml")),
+        path=str(Path.home() / ".codex" / "config.toml"),
         fmt="toml_codex",
         transport="http",
         rendered=body,
@@ -141,7 +141,7 @@ def _render_claude(ep: Endpoint) -> Entry:
     return Entry(
         key="claude",
         label="Claude Code",
-        path=str((Path.home() / ".claude.json")),
+        path=str(Path.home() / ".claude.json"),
         fmt="claude_cli",
         transport="http",
         rendered=cmd,
