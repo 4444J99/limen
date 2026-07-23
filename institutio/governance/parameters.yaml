@@ -2341,6 +2341,30 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Override path for the Jules orphan-adoption ledger (default docs/jules-orphan-adoptions.jsonl at LIMEN_ROOT): sessions landed out-of-band that the drain/quota sensor must not re-alarm as orphans."
+  LIMEN_JULES_SUPPLY:
+    default: "1"
+    env: LIMEN_JULES_SUPPLY
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the jules-supply sensor (sensors.yaml jules-supply): dispatchable-supply-vs-floor gauge; the armed valve LIMEN_JULES_SUPPLY_APPLY owns minting."
+  LIMEN_JULES_SUPPLY_APPLY:
+    default: "1"
+    env: LIMEN_JULES_SUPPLY_APPLY
+    self_update: none
+    owner: arms-agents
+    note: "Armed valve for jules-supply minting (armed by default per the 2026-07-23 operator mandate: the daily Jules quota is consumed autonomously): 1 = mint deficit packets from docs/jules-supply-templates.yaml as TABVLARIVS upsert tickets; 0 = dry-run gauge only."
+  LIMEN_JULES_SUPPLY_FLOOR:
+    default: ""
+    env: LIMEN_JULES_SUPPLY_FLOOR
+    self_update: none
+    owner: arms-agents
+    note: "Dispatchable Jules supply floor. Unset derives from the jules capacity target (derived_daily_floor) so supply tracks the 100/day vendor quota without a second pinned number."
+  LIMEN_JULES_SUPPLY_TEMPLATES:
+    default: ""
+    env: LIMEN_JULES_SUPPLY_TEMPLATES
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the Jules supply template registry (default docs/jules-supply-templates.yaml at LIMEN_ROOT): renewable loan-complete packet series the supply organ mints from."
   LIMEN_ASYNC_DEFUNCT_GRACE:
     default: 120
     env: LIMEN_ASYNC_DEFUNCT_GRACE

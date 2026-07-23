@@ -1161,6 +1161,33 @@ sensors:
         severity: advisory
         escalation: "Jules quota under target late-day, or orphan/recovery sessions pending — drain (jules-land) + dispatch (metabolize 4b) own the effectors; orphan list via `python3 scripts/jules-land.py`"
 
+  jules-supply:
+    section: "0z2"
+    title: "Jules packet supply — dispatchable-supply-vs-floor gauge with armed template minting"
+    gate: LIMEN_JULES_SUPPLY
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The quota sensor (jules-quota) measures used-vs-target; hitting 100/day also needs
+    # ~100 loan-complete open packets to dispatch. This organ measures supply-vs-floor and,
+    # when the LIMEN_JULES_SUPPLY_APPLY valve is armed, mints the deficit from the declared
+    # renewable series in docs/jules-supply-templates.yaml as TABVLARIVS upsert tickets —
+    # adding supply = adding one registry entry, never a hand-minting session. Floor derives
+    # from the jules capacity target — never pinned here. Dry-run (gauge-only) by default.
+    steps:
+      - command: "python3 scripts/jules-supply.py"
+        args_when:
+          # Armed by default (operator mandate 2026-07-23: the 100/day quota is consumed
+          # autonomously — "we shouldn't even have to think about it"). Disarm with
+          # LIMEN_JULES_SUPPLY_APPLY=0 for a gauge-only dry run.
+          - env: LIMEN_JULES_SUPPLY_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "Dispatchable Jules supply is below floor and minting is unarmed — arm LIMEN_JULES_SUPPLY_APPLY=1 or extend docs/jules-supply-templates.yaml"
+
   decorum:
     section: "heartbeat"
     title: "professionalization keeper — no public surface is currently egg-faced"
