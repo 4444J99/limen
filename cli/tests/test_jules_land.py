@@ -160,3 +160,59 @@ def test_main_limit_bounds_attempted_sessions(
 
     assert module.main() == 0
     assert attempted == [("T1", "101"), ("T2", "102")]
+
+
+def test_main_surfaces_unmapped_completed_sessions_as_orphans(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    """A completed session with no receipt mapping prints loudly instead of vanishing."""
+    module = load_jules_land()
+    tasks_path = tmp_path / "tasks.yaml"
+    save_limen_file(tasks_path, LimenFile(tasks=[]))
+    adoptions = tmp_path / "adoptions.jsonl"
+    adoptions.write_text('{"session": "222000000000", "adopted_by": "out-of-band PR"}\n')
+    monkeypatch.setattr(module, "TASKS", tasks_path)
+    monkeypatch.setattr(module, "ADOPTIONS", adoptions)
+    monkeypatch.setattr(
+        module,
+        "completed_sessions",
+        lambda _sid_map: [("111000000000", ""), ("222000000000", "")],
+    )
+    monkeypatch.setattr(sys, "argv", ["jules-land.py"])
+
+    assert module.main() == 0
+    out = capsys.readouterr().out
+    assert "ORPHAN jules session 111000000000" in out
+    assert "ORPHAN jules session 222000000000" not in out
+    assert "1 orphan completed jules session(s)" in out
+
+
+def test_main_orphans_do_not_consume_landing_limit(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    """Orphans are surfaced without eating --limit slots owned by mapped sessions."""
+    module = load_jules_land()
+    tasks_path = tmp_path / "tasks.yaml"
+    save_limen_file(tasks_path, LimenFile(tasks=[]))
+    attempted: list[tuple[str, str]] = []
+    monkeypatch.setattr(module, "TASKS", tasks_path)
+    monkeypatch.setattr(module, "ADOPTIONS", tmp_path / "absent.jsonl")
+    monkeypatch.setattr(
+        module,
+        "completed_sessions",
+        lambda _sid_map: [("111000000000", ""), ("333000000000", "T-MAPPED")],
+    )
+    monkeypatch.setattr(
+        module,
+        "process_session",
+        lambda _path, task_id, sid, **_kwargs: attempted.append((task_id, sid)) or False,
+    )
+    monkeypatch.setattr(sys, "argv", ["jules-land.py", "--limit", "1"])
+
+    assert module.main() == 0
+    assert attempted == [("T-MAPPED", "333000000000")]
+    assert "ORPHAN jules session 111000000000" in capsys.readouterr().out

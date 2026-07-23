@@ -2317,6 +2317,30 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "When 1, historical route ledger bias may down-weight remote batch-fill lanes. Default 0 preserves explicit daily utilization targets for lanes such as Jules."
+  LIMEN_JULES_QUOTA:
+    default: "1"
+    env: LIMEN_JULES_QUOTA
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the jules-quota sensor (sensors.yaml jules-quota): daily used-vs-target gauge plus orphaned-completion and recovery-state session counts."
+  LIMEN_JULES_QUOTA_ALARM_HOUR:
+    default: 18
+    env: LIMEN_JULES_QUOTA_ALARM_HOUR
+    self_update: none
+    owner: arms-agents
+    note: "UTC hour after which under-target Jules usage turns the jules-quota sensor advisory-red (the day is running out; the vendor quota expires unused at reset)."
+  LIMEN_JULES_DAILY_TASKS:
+    default: ""
+    env: LIMEN_JULES_DAILY_TASKS
+    self_update: none
+    owner: arms-agents
+    note: "Daily Jules task target override. Unset derives from capacity.DEFAULT_DAILY_TASK_TARGETS (vendor quota 100/day; operator mandate is full daily consumption)."
+  LIMEN_JULES_ADOPTIONS:
+    default: ""
+    env: LIMEN_JULES_ADOPTIONS
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the Jules orphan-adoption ledger (default docs/jules-orphan-adoptions.jsonl at LIMEN_ROOT): sessions landed out-of-band that the drain/quota sensor must not re-alarm as orphans."
   LIMEN_ASYNC_DEFUNCT_GRACE:
     default: 120
     env: LIMEN_ASYNC_DEFUNCT_GRACE

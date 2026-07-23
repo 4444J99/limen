@@ -201,9 +201,15 @@ def test_derived_floor_budget_frac_env_override(monkeypatch):
 
 
 def test_derived_floor_agent_absent_returns_zero(monkeypatch):
-    """Agent not in budget map → floor = 0."""
+    """Agent not in budget map (and not in defaults) → floor = 0."""
+    monkeypatch.delenv("LIMEN_GEMINI_DAILY_TASKS", raising=False)
+    assert derived_floor_from_budget("gemini", {}) == 0
+
+
+def test_derived_floor_jules_vendor_quota_default(monkeypatch):
+    """Jules targets its full 100/day vendor quota even with no budget entry."""
     monkeypatch.delenv("LIMEN_JULES_DAILY_TASKS", raising=False)
-    assert derived_floor_from_budget("jules", {}) == 0
+    assert derived_floor_from_budget("jules", {}) == 100
 
 
 def test_derived_floor_minimum_one_when_budget_exists(monkeypatch):
@@ -222,11 +228,13 @@ def test_derived_floor_bad_frac_falls_back_to_default(monkeypatch):
 
 
 def test_derived_daily_floor_reads_board(monkeypatch):
-    """derived_daily_floor extracts per_agent from a board object."""
-    monkeypatch.delenv("LIMEN_JULES_DAILY_TASKS", raising=False)
+    """derived_daily_floor extracts per_agent from a board object (budget×frac path)."""
+    monkeypatch.delenv("LIMEN_GEMINI_DAILY_TASKS", raising=False)
     monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)
-    board = _board({"jules": 100}, {}, {}, [])
-    assert derived_daily_floor("jules", board) == 25
+    # gemini has no DEFAULT_DAILY_TASK_TARGETS entry, so the budget×frac path is exercised
+    # (jules now short-circuits at its 100/day vendor-quota default).
+    board = _board({"gemini": 100}, {}, {}, [])
+    assert derived_daily_floor("gemini", board) == 25
 
 
 def test_daily_task_target_now_returns_derived_floor(monkeypatch):

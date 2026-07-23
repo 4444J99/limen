@@ -1113,6 +1113,25 @@ sensors:
         tier: det
         command: "python3 scripts/reconcile-closeouts.py --doctor"
 
+  jules-quota:
+    section: "0z1"
+    title: "Jules daily quota — used-vs-target gauge, orphaned completions, recovery states"
+    gate: LIMEN_JULES_QUOTA
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The 183-day silent lane (2026-01-21 -> 2026-07-23: zero landed Jules output while the
+    # 100/day vendor quota expired unused) had no gauge: drain landed only receipt-mapped
+    # sessions and dropped orphans silently, and nothing measured used-vs-target. This sensor
+    # is the missing gauge; the EFFECTORS stay the existing rungs (drain.sh -> jules-land for
+    # landing, metabolize 4b dispatch for filling). Target derives from
+    # capacity.DEFAULT_DAILY_TASK_TARGETS / LIMEN_JULES_DAILY_TASKS — never pinned here.
+    # Read-only; advisory; fail-open when the jules CLI is unavailable (probe_unavailable noted).
+    steps:
+      - command: "python3 scripts/jules-quota.py"
+        severity: advisory
+        escalation: "Jules quota under target late-day, or orphan/recovery sessions pending — drain (jules-land) + dispatch (metabolize 4b) own the effectors; orphan list via `python3 scripts/jules-land.py`"
+
   decorum:
     section: "heartbeat"
     title: "professionalization keeper — no public surface is currently egg-faced"

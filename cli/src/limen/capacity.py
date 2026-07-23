@@ -68,6 +68,10 @@ DEFAULT_FILL_AGENTS: tuple[str, ...] = census.default_fill_agents()
 DEFAULT_DAILY_TASK_TARGETS: dict[str, int] = {
     # Human contract: Claude should get a deliberately programmed/check-up batch daily.
     "claude": 15,
+    # Vendor quota: jules.google.com grants 100 tasks/day that expire unused at reset.
+    # Operator mandate (2026-07-23): consume the full daily quota autonomously — underuse
+    # is a defect the jules-quota sensor surfaces, never a chore to remember.
+    "jules": 100,
 }
 DEFAULT_GITHUB_ACTIONS_WORKFLOW = "limen-agent.yml"
 BAD_USAGE_HEALTH = {"exhausted", "rate-limited", "low"}

@@ -60,6 +60,33 @@ def purge_generated_payloads(wt: Path) -> str:
     return f"removed:{removed}"
 
 
+def load_orphan_adoptions(path: Path) -> frozenset[str]:
+    """Session IDs whose completed-but-unmapped state was landed out-of-band.
+
+    The ledger is git-tracked JSONL (``{"session": ..., "adopted_by": ..., "date": ...}``);
+    a listed session is DONE, not an orphan. Malformed lines are skipped fail-open so a
+    hand-edit can never break the beat.
+    """
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError:
+        return frozenset()
+    adopted: set[str] = set()
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict):
+            session = str(row.get("session") or "")
+            if session.isdigit():
+                adopted.add(session)
+    return frozenset(adopted)
+
+
 def completed_sessions(
     sid_map: dict[str, str] | None = None,
     snapshot: JulesRemoteSnapshot | None = None,
