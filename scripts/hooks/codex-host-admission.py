@@ -14,6 +14,14 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
+from limen.host_admission_capabilities import (  # noqa: E402
+    host_admission_capabilities,
+)
+
+if sys.argv[1:] == ["--capabilities"]:
+    print(json.dumps(host_admission_capabilities(), separators=(",", ":")))
+    raise SystemExit(0)
+
 from limen.action_admission import action_denial_supported  # noqa: E402
 from limen.action_admission_runtime import admit_pre_tool_action  # noqa: E402
 from limen.host_admission import (  # noqa: E402

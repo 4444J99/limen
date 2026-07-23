@@ -3,10 +3,12 @@ from __future__ import annotations
 import importlib.util
 import json
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
 from limen.host_admission import AdmissionController
+from limen.host_admission_capabilities import host_admission_capabilities
 
 ROOT = Path(__file__).resolve().parents[2]
 HOOK_PATH = ROOT / "scripts" / "hooks" / "codex-host-admission.py"
@@ -65,6 +67,32 @@ def payload(event: str, session: str = "session-a", **extra):
         "tool_name": "Bash",
         **extra,
     }
+
+
+def test_capability_probe_is_exact_fast_and_side_effect_free(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [sys.executable, str(HOOK_PATH), "--capabilities"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=1,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert json.loads(result.stdout) == host_admission_capabilities()
+    assert set(json.loads(result.stdout)) == {
+        "schema",
+        "reader_protocol",
+        "policy_revision",
+        "state_schemas",
+        "lease_kinds",
+        "stable_action_denial",
+        "single_rejection_channel",
+        "migration",
+    }
+    assert list(tmp_path.iterdir()) == []
 
 
 def linked_worktrees(tmp_path: Path) -> tuple[Path, Path, Path]:
