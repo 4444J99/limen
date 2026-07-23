@@ -154289,3 +154289,661 @@ tasks:
   value_case: the party-game-suite venture is promoted or parked on evidence
   external_deadline: false
   source_origin: human_prompt
+- id: VIC-CONTRACT-002
+  title: Wire a real test script into @client-one/contracts
+  description: 'packages/contracts has validation.test.ts but NO test script, so its predicate is a silent no-op. Add "test": "vitest run --root ../.. packages/contracts" to packages/contracts/package.json (mirror packages/domain), make the existing validation tests pass, and extend coverage for every exported vali'
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-CONTRACT-002 — Wire a real test script into @client-one/contracts.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/contracts/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: packages/contracts has validation.test.ts but NO test script, so its predicate is a silent no-op. Add "test": "vitest run --root ../.. packages/contracts" to packages/contracts/package.json (mirror packages/domain), make the existing validation tests pass, and extend coverage for every exported validator.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/contracts test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-002
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/contracts test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-002
+  horizon: present
+  value_case: Closes the no-op-predicate trap in contracts so CI actually runs its validation tests.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:30:04.446Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-c845d5446e8e12f2477acdcc1bdcff87:3:compatibility
+    conduct_run_id: run-c845d5446e8e12f2477acdcc1bdcff87
+    conduct_lease_id: lease-3-c845d5446e8e12f2
+    conduct_generation: 3
+  source_origin: human_prompt
+  updated: 2026-07-23T10:30:04.446Z
+- id: HEAL-ENV-SYNC-GLOBS-REAP
+  title: Reap TEMP LIMEN_SYNC_RECEIPT_GLOBS override from ~/.limen.env once limen#1381 is merged
+  repo: organvm/limen
+  type: ops
+  target_agent: claude
+  workstream: substrate
+  priority: low
+  budget_cost: 2
+  status: open
+  labels:
+  - heal
+  - generated
+  urls: []
+  predicate: gh pr view 1381 --repo organvm/limen --json state --jq .state | grep -q MERGED && ! grep -q '^LIMEN_SYNC_RECEIPT_GLOBS=' ~/.limen.env
+  receipt_target: https://github.com/organvm/limen/issues/1402
+  horizon: present
+  value_case: "config-shadow hazard removed: the 2026-07-22 live-root heal override (byte-identical to #1381's merged default) cannot silently pin a future default change; remove the whole TEMP comment block, then comment the reap on issue #1402"
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:30:44.323Z
+    agent: codex
+    session_id: claude-constellation-closeout
+    logical_agent: claude
+    logical_session_id: constellation-closeout
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-4b390bca8a9a192939f781566de771c1:4:compatibility
+    conduct_run_id: run-4b390bca8a9a192939f781566de771c1
+    conduct_lease_id: lease-4-4b390bca8a9a1929
+    conduct_generation: 4
+  source_origin: human_prompt
+  updated: 2026-07-23T10:30:44.323Z
+- id: VIC-FIXTURES-001
+  title: Synthetic seven-intent scenario fixtures
+  description: Add public-safe synthetic fixtures for the seven registered ActionIntent values (happy path, ambiguity, conflict per intent) exported for use by domain tests, plus a test script ("vitest run --root ../.. packages/fixtures") and invariant tests (exactly seven intents, no duplicates, citations present
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-FIXTURES-001 — Synthetic seven-intent scenario fixtures.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/fixtures/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Add public-safe synthetic fixtures for the seven registered ActionIntent values (happy path, ambiguity, conflict per intent) exported for use by domain tests, plus a test script ("vitest run --root ../.. packages/fixtures") and invariant tests (exactly seven intents, no duplicates, citations present).
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/fixtures test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/fixtures test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-001
+  horizon: present
+  value_case: Gives every downstream package one synthetic scenario source instead of ad-hoc inline data.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:30:57.715Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-c4b9d388606ffc58c8ceb7916db49914:5:compatibility
+    conduct_run_id: run-c4b9d388606ffc58c8ceb7916db49914
+    conduct_lease_id: lease-5-c4b9d388606ffc58
+    conduct_generation: 5
+  source_origin: human_prompt
+  updated: 2026-07-23T10:30:57.715Z
+- id: VIC-PUB-001
+  title: Publication boundary checks with tests
+  description: 'Implement public-safe publication boundary checks: noindex disclosure present, no real BBNC identity strings, synthetic-only marker required. Add a test script ("vitest run --root ../.. packages/publication") and tests proving each violation is rejected.'
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-PUB-001 — Publication boundary checks with tests.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/publication/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Implement public-safe publication boundary checks: noindex disclosure present, no real BBNC identity strings, synthetic-only marker required. Add a test script ("vitest run --root ../.. packages/publication") and tests proving each violation is rejected.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/publication test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-PUB-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/publication test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-PUB-001
+  horizon: present
+  value_case: Makes the zero-telemetry/synthetic-only boundary executable instead of prose.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:01.144Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-ea4609d20d5487851624f24c64d16832:6:compatibility
+    conduct_run_id: run-ea4609d20d5487851624f24c64d16832
+    conduct_lease_id: lease-6-ea4609d20d548785
+    conduct_generation: 6
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:01.144Z
+- id: VIC-UI-001
+  title: UI package test wiring and contract tests
+  description: 'Add a test script ("vitest run --root ../.. packages/ui") and tests for the existing UI components: black-and-white visual contract tokens only, accessible names present, no color literals outside the contract.'
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-UI-001 — UI package test wiring and contract tests.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/ui/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Add a test script ("vitest run --root ../.. packages/ui") and tests for the existing UI components: black-and-white visual contract tokens only, accessible names present, no color literals outside the contract.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/ui test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-UI-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/ui test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-UI-001
+  horizon: present
+  value_case: Closes the no-op-predicate trap in ui and encodes the visual contract as tests.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:04.778Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-2f76918e0257f5f2af95e9a76b5452f2:7:compatibility
+    conduct_run_id: run-2f76918e0257f5f2af95e9a76b5452f2
+    conduct_lease_id: lease-7-2f76918e0257f5f2
+    conduct_generation: 7
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:04.778Z
+- id: VIC-DOMAIN-002
+  title: Resolver citation and conflict deepening
+  description: "Extend the seven-intent resolver tests: citation preservation through conflict resolution, deterministic tie-breaks, and exactly-one-next-action invariants across adversarial orderings. Keep the existing test script."
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-DOMAIN-002 — Resolver citation and conflict deepening.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/domain/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Extend the seven-intent resolver tests: citation preservation through conflict resolution, deterministic tie-breaks, and exactly-one-next-action invariants across adversarial orderings. Keep the existing test script.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/domain test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-002
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/domain test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-002
+  horizon: present
+  value_case: Hardens the landed resolver against ordering and conflict edge cases.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:08.007Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-6aeed61714da4cf4d739b2cc54645bbe:8:compatibility
+    conduct_run_id: run-6aeed61714da4cf4d739b2cc54645bbe
+    conduct_lease_id: lease-8-6aeed61714da4cf4
+    conduct_generation: 8
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:08.007Z
+- id: VIC-GOV-002
+  title: Multi-source governance manifests
+  description: "Extend docs/governance manifest validation to multi-source manifests: ordered sources, per-source checksum drift isolation (name WHICH source drifted), and duplicate-source rejection, with node:test coverage."
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-GOV-002 — Multi-source governance manifests.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: docs/governance/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Extend docs/governance manifest validation to multi-source manifests: ordered sources, per-source checksum drift isolation (name WHICH source drifted), and duplicate-source rejection, with node:test coverage.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: node --test docs/governance/*.test.mjs
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-002
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: node --test docs/governance/*.test.mjs
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-GOV-002
+  horizon: present
+  value_case: Grows the landed Phase 0 manifest from one source to the real multi-source shape.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:11.750Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-cb12d92641352652a6a2e7dd2ead7ea1:9:compatibility
+    conduct_run_id: run-cb12d92641352652a6a2e7dd2ead7ea1
+    conduct_lease_id: lease-9-cb12d92641352652
+    conduct_generation: 9
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:11.750Z
+- id: VIC-CONTRACT-003
+  title: Delivery-checkpoint aggregation invariants
+  description: "Add validation for checkpoint aggregation: a phase set whose per-phase verified counts do not sum to the whole-system total is rejected; totals never exceed declared checkpoint counts. Tests included."
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-CONTRACT-003 — Delivery-checkpoint aggregation invariants.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/contracts/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Add validation for checkpoint aggregation: a phase set whose per-phase verified counts do not sum to the whole-system total is rejected; totals never exceed declared checkpoint counts. Tests included.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/contracts typecheck
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-003
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/contracts typecheck
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-003
+  horizon: present
+  value_case: Encodes the pitch-surface progress-sum invariant at the contract layer.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:15.972Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-6434fb535620841ba91bf82daf281b5d:10:compatibility
+    conduct_run_id: run-6434fb535620841ba91bf82daf281b5d
+    conduct_lease_id: lease-10-6434fb535620841b
+    conduct_generation: 10
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:15.972Z
+- id: VIC-SITE-TEST-001
+  title: Site phase-progress unit coverage
+  description: "Add unit tests for the pitch site's phase-progress aggregation: aggregate equals the sum of phase checkpoints, no hand-set totals, progress never exceeds 100%."
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-SITE-TEST-001 — Site phase-progress unit coverage.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: apps/site/**, tests/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Add unit tests for the pitch site's phase-progress aggregation: aggregate equals the sum of phase checkpoints, no hand-set totals, progress never exceeds 100%.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-SITE-TEST-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-SITE-TEST-001
+  horizon: present
+  value_case: Backs the delivery-status surface with mechanical binding tests.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:19.746Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-2dc1a12527fd7dc8d4e7c45f24f10353:11:compatibility
+    conduct_run_id: run-2dc1a12527fd7dc8d4e7c45f24f10353
+    conduct_lease_id: lease-11-2dc1a12527fd7dc8
+    conduct_generation: 11
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:19.746Z
+- id: VIC-DOMAIN-003
+  title: Authority holds as domain rules
+  description: "Encode the registry authority holds (custody + production, from program/registry.v1.json) as domain rules: any resolved next action that touches a blocked capability is rejected with the hold id cited. Tests included."
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-DOMAIN-003 — Authority holds as domain rules.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/domain/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Encode the registry authority holds (custody + production, from program/registry.v1.json) as domain rules: any resolved next action that touches a blocked capability is rejected with the hold id cited. Tests included.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/domain test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-003
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/domain test
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-003
+  horizon: present
+  value_case: Turns the registry's authority section into executable refusals.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:23.280Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-d0b1d255bdb5ddaa23b090596626b928:12:compatibility
+    conduct_run_id: run-d0b1d255bdb5ddaa23b090596626b928
+    conduct_lease_id: lease-12-d0b1d255bdb5ddaa
+    conduct_generation: 12
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:23.280Z
+- id: VIC-PUB-002
+  title: Registry-derived disclosure generator
+  description: Generate the public disclosure block from registry authority data (synthetic-only mode, holds list) instead of hand-written text; tests prove the generated block names every active hold.
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-PUB-002 — Registry-derived disclosure generator.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/publication/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Generate the public disclosure block from registry authority data (synthetic-only mode, holds list) instead of hand-written text; tests prove the generated block names every active hold.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/publication typecheck
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-PUB-002
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/publication typecheck
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-PUB-002
+  horizon: present
+  value_case: Derive-never-pin for the public disclosure surface.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:27.305Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-8905dfa59b999b56718f729f290c546d:13:compatibility
+    conduct_run_id: run-8905dfa59b999b56718f729f290c546d
+    conduct_lease_id: lease-13-8905dfa59b999b56
+    conduct_generation: 13
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:27.305Z
+- id: VIC-FIXTURES-002
+  title: Synthetic checkpoint dataset
+  description: "Add a synthetic 55-checkpoint dataset (Concept + Phases 0-9) with invariant tests: counts per phase sum to the total, every checkpoint carries phase, title, and verified flag, and verified never exceeds total."
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-FIXTURES-002 — Synthetic checkpoint dataset.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/fixtures/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Add a synthetic 55-checkpoint dataset (Concept + Phases 0-9) with invariant tests: counts per phase sum to the total, every checkpoint carries phase, title, and verified flag, and verified never exceeds total.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/fixtures typecheck
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-002
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/fixtures typecheck
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-002
+  horizon: present
+  value_case: One synthetic dataset for site, contracts, and ui to consume instead of three copies.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:30.598Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-500b01110aa839bd30ac2e005c372140:14:compatibility
+    conduct_run_id: run-500b01110aa839bd30ac2e005c372140
+    conduct_lease_id: lease-14-500b01110aa839bd
+    conduct_generation: 14
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:30.598Z
+- id: VIC-UI-002
+  title: Checkpoint-bound progress components
+  description: Bind progress-bar components to checkpoint data mechanically (props in, no internal hand-set numbers), with tests proving the rendered fraction equals the data.
+  repo: organvm/victoroff-os
+  type: code
+  target_agent: jules
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - client-one
+  - public-synthetic
+  - owner:client-one-governance
+  urls: []
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-UI-002 — Checkpoint-bound progress components.
+    Repository: organvm/victoroff-os
+    Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+    Owner: client-one-governance
+    Allowed paths: packages/ui/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Required behavior: Bind progress-bar components to checkpoint data mechanically (props in, no internal hand-set numbers), with tests proving the rendered fraction equals the data.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @client-one/ui typecheck
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-UI-002
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
+  predicate: pnpm --filter @client-one/ui typecheck
+  receipt_target: github:organvm/victoroff-os:pull-request:VIC-UI-002
+  horizon: present
+  value_case: Removes hand-maintained progress numbers from the UI layer.
+  owner_surface: client-one-governance
+  external_deadline: false
+  depends_on: []
+  created: 2026-07-23
+  dispatch_log:
+  - timestamp: 2026-07-23T10:31:34.371Z
+    agent: codex
+    session_id: claude-jules-daily-engine-20260723
+    logical_agent: claude
+    logical_session_id: jules-daily-engine-20260723
+    status: open
+    output: Created by codex through the conduct keeper
+    conduct_event_id: conduct:run-7b94bb8a451a6abd31531224c7e2af85:15:compatibility
+    conduct_run_id: run-7b94bb8a451a6abd31531224c7e2af85
+    conduct_lease_id: lease-15-7b94bb8a451a6abd
+    conduct_generation: 15
+  source_origin: human_prompt
+  updated: 2026-07-23T10:31:34.371Z
