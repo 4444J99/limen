@@ -14,9 +14,9 @@ Not demos. Live platforms — tested, deployed, and running. Each repo below is 
 
 ## The systems
 
-### [ChatGPT Conversation Exporter](https://github.com/organvm/a-i-chat--exporter)
+### [AI Chat Exporter](https://github.com/organvm/a-i-chat--exporter)
 
-A browser userscript that exports your ChatGPT conversations into five portable formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it authenticates through your existing ChatGPT session and runs on chatgpt.com, chat.openai.com, and new.oaifree.com.
+A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.
 
 `170 tests across 16 suites` · `~5,900 lines of TypeScript` · `distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages` · `5 export formats` · `9-language UI` · `MIT-licensed · 549 commits, actively maintained`
 
@@ -73,6 +73,19 @@ A public portfolio site showcasing 16 completed production systems — each with
 **Solves:** A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.
 
 → **Explore the case studies** · see [the ways to work together](docs/positioning/portfolio.md)
+
+---
+
+## Built with partners
+
+Systems the same engine produced with collaborators — each a working venture where the partner drives the domain and the engine builds the machine.
+
+- **[mirror-mirror](https://github.com/organvm/mirror-mirror)** — with charles
+- **[your-fit-tailored](https://github.com/organvm/your-fit-tailored)** — with charles
+- **[styx](https://github.com/organvm/peer-audited--behavioral-blockchain)** — with jessica
+- **[spiral](https://github.com/organvm/sovereign-systems--elevate-align)** — with maddie
+- **[hokage-chess](https://github.com/organvm/hokage-chess)** — with rob
+- **[micro-tato](https://github.com/organvm/micro-tato)** — with rob
 
 ---
 

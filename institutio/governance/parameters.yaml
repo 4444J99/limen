@@ -4233,6 +4233,12 @@ parameters:
     self_update: none
     owner: consulting
     note: "Path to the constellation register's ARCA-sealed private overlay (pipeline slugs, protocol state, channel state, boundaries). The public half lives at organs/consulting/constellation/registry.yaml; validate-constellation.py Rule #6 checks parity only when this file is reachable, so CI (store absent) degrades cleanly."
+  LIMEN_CONSTELLATION_REGISTRY:
+    default: "organs/consulting/constellation/registry.yaml"
+    env: LIMEN_CONSTELLATION_REGISTRY
+    self_update: none
+    owner: consulting
+    note: "Path to the constellation register's public half. generate-positioning.py derives the front door's 'Built with partners' showcase from it at render time (public_face_state >= readme AND a repo to link — never a hand-kept list). Overridable for tests; absent file = section suppressed."
   LIMEN_PEOPLE_STORE:
     default: "~/Workspace/_people-private/people"
     env: LIMEN_PEOPLE_STORE

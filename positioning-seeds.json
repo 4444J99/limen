@@ -17,7 +17,12 @@
    "label": "Hiring someone who ships at this level? — Work with the builder",
    "blurb": "Everything here is the portfolio. If you need a senior builder who owns systems end-to-end — data, infra, AI, deploy — this is the evidence."
   },
-  "closing": "If any of this fits, reach out. This conversation starts at serious."
+  "closing": "If any of this fits, reach out. This conversation starts at serious.",
+  "_showcase_note": "The monument layer. Entries are DERIVED at render time from organs/consulting/constellation/registry.yaml (public_face_state >= readme AND a repo to link) — never hand-listed here. First-name slugs only; a project joins the front door the moment its face lands. Empty heading/blurb = defaults; remove the block to suppress the section.",
+  "showcase": {
+   "heading": "Built with partners",
+   "blurb": "Systems the same engine produced with collaborators — each a working venture where the partner drives the domain and the engine builds the machine."
+  }
  },
  "repos": {
   "organvm/public-record-data-scrapper": {

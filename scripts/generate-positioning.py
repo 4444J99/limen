@@ -97,6 +97,53 @@ def _awaiting_publish(seed: dict) -> bool:
     return bool(seed.get("awaiting_publish"))
 
 
+# --- constellation showcase -----------------------------------------------------------------
+# "Built with partners" — the monument layer. Entries are DERIVED from the constellation
+# register (organs/consulting/constellation/registry.yaml), never hand-listed: a project joins
+# the front door the moment its face lands (public_face_state ≥ readme — the register's own
+# declared "a public face exists" truth; `pending-split`/`none` exactly cover the private/unbuilt
+# cases, so the derivation is fail-closed offline with no live visibility probe). First-name
+# slugs only — the register's Rule #2 already bans surnames from its public half.
+
+def _constellation_registry_path() -> Path:
+    return Path(
+        os.environ.get(
+            "LIMEN_CONSTELLATION_REGISTRY",
+            LIMEN_ROOT / "organs" / "consulting" / "constellation" / "registry.yaml",
+        )
+    )
+
+
+_SHOWCASE_FACES = {"readme", "portal", "funnelized"}
+
+
+def _constellation_showcase_entries() -> list[dict]:
+    """{name, repo, slug} per showcasable project — face landed AND a repo to link. Degrades to
+    [] when the register (or PyYAML) is absent so the front door renders without the section."""
+    path = _constellation_registry_path()
+    if not path.exists():
+        return []
+    try:
+        import yaml
+
+        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return []
+    entries: list[dict] = []
+    for person in doc.get("people") or []:
+        if not isinstance(person, dict):
+            continue
+        for project in person.get("projects") or []:
+            if not isinstance(project, dict):
+                continue
+            repo = project.get("repo")
+            if project.get("public_face_state") in _SHOWCASE_FACES and isinstance(repo, str) and repo:
+                entries.append(
+                    {"name": str(project.get("name") or _slug(repo)), "repo": repo, "slug": str(person.get("slug") or "")}
+                )
+    return sorted(entries, key=lambda e: (e["slug"], e["name"]))
+
+
 # --- capture funnel -------------------------------------------------------------------------
 # The cheapest capture that actually works today: the CTA is a `mailto:` whose subject is
 # pre-tagged with the repo and the door (deploy = client, hire = recruiter). A click lands in
@@ -274,6 +321,21 @@ def render_frontdoor(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> st
         cta = seed.get("cta_client", "Deploy this for your shop")
         lines.append(f"→ **{cta}** · see [the ways to work together](docs/positioning/{_slug(repo)}.md)")
         lines.append("")
+    showcase = fd.get("showcase") or {}
+    if showcase:
+        entries = _constellation_showcase_entries()
+        if entries:
+            lines.append("---")
+            lines.append("")
+            lines.append(f"## {showcase.get('heading', 'Built with partners')}")
+            lines.append("")
+            if showcase.get("blurb"):
+                lines.append(showcase["blurb"])
+                lines.append("")
+            for e in entries:
+                suffix = f" — with {e['slug']}" if e["slug"] else ""
+                lines.append(f"- **[{e['name']}](https://github.com/{e['repo']})**{suffix}")
+            lines.append("")
     if fd.get("closing"):
         lines.append("---")
         lines.append("")
