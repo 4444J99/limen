@@ -450,6 +450,52 @@ def test_codex_and_claude_adapters_share_action_policy(tmp_path: Path) -> None:
         )
 
 
+def test_codex_and_claude_admit_all_structured_write_targets(tmp_path: Path) -> None:
+    codex = load_hook()
+    claude = load_hook(CLAUDE_HOOK_PATH)
+    _main, first, _second = linked_worktrees(tmp_path)
+    cases = [
+        ("Edit", "file_path", first / "tracked.txt"),
+        ("MultiEdit", "file_path", first / "tracked.txt"),
+        ("NotebookEdit", "notebook_path", first / "notes.ipynb"),
+        ("Write", "file_path", first / "new.txt"),
+    ]
+
+    for adapter_index, adapter in enumerate((codex, claude)):
+        for case_index, (tool_name, path_key, target) in enumerate(cases):
+            service = controller(tmp_path / f"structured-{adapter_index}-{case_index}")
+            request = payload(
+                "PreToolUse",
+                cwd=str(first),
+                tool_name=tool_name,
+                tool_input={path_key: str(target)},
+            )
+            assert adapter.handle(request, controller=service, owner_pid=101 + adapter_index) is None
+
+            escaped_service = controller(tmp_path / f"structured-escape-{adapter_index}-{case_index}")
+            escaped = adapter.handle(
+                request | {"tool_input": {path_key: str(tmp_path / "outside")}},
+                controller=escaped_service,
+                owner_pid=201 + adapter_index,
+            )
+            assert escaped["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-outside-worktree"
+
+        conflicting_aliases = adapter.handle(
+            payload(
+                "PreToolUse",
+                cwd=str(first),
+                tool_name="NotebookEdit",
+                tool_input={
+                    "file_path": str(first / "decoy.txt"),
+                    "notebook_path": str(tmp_path / "outside.ipynb"),
+                },
+            ),
+            controller=controller(tmp_path / f"structured-aliases-{adapter_index}"),
+            owner_pid=301 + adapter_index,
+        )
+        assert conflicting_aliases["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-outside-worktree"
+
+
 def test_symlink_aliases_resolve_to_the_same_writer_scope(tmp_path: Path) -> None:
     hook = load_hook()
     _main, first, _second = linked_worktrees(tmp_path)
