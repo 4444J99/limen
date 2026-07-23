@@ -1,0 +1,26 @@
+# decorum-judgments — the VOICE-JUDGMENT register for the DECORVM professionalization keeper.
+#
+# scripts/decorum-keeper.py measures the DETERMINISTIC rungs of professionalization (federated
+# department verdicts + spellcheck + staleness). It cannot judge whether the public PROSE READS
+# professionally — tone, brand-voice, "does this sound like a founder or a first draft". That
+# judgment is on-demand and model-in-the-loop (the sibling of the experience-judge skill): the beat
+# detects when a prose surface's content changed and no current judgment covers it, and queues a
+# review; the judge reads the surface and appends a row HERE citing the content's sha256 (so a
+# judgment is pinned to the exact bytes it judged — a later edit invalidates it and re-queues review).
+#
+# Row shape (one or more rows per surface path, newest last):
+#   judgments:
+#     <prose-path>:
+#       - judged_at: "2026-07-22T00:00:00Z"     # when the judgment was made
+#         content_sha256: "<hex>"               # the exact bytes judged (pins the judgment)
+#         model: "claude-haiku-4-5"             # the judge (Haiku-first per model policy; or a human handle)
+#         verdict: pass                         # pass | fail
+#         scores: {tone: 4, brand_voice: 4, clarity: 5, credibility: 4}   # each 0-5
+#         defects: ["opening line buries the value prop under jargon"]    # public, PII-clean notes
+#         suggested_fix: "lead with the one-sentence outcome, move the stack list below the fold"
+#
+# This file PUBLISHES — keep every note public-safe (no PII, no private URLs, no secrets).
+
+schema_version: 1
+
+judgments: {}

@@ -1112,3 +1112,36 @@ sensors:
       - label: "closeout classifier self-test (verdicts correct)"
         tier: det
         command: "python3 scripts/reconcile-closeouts.py --doctor"
+
+  decorum:
+    section: "heartbeat"
+    title: "professionalization keeper — no public surface is currently egg-faced"
+    gate: LIMEN_DECORUM
+    default: "1"
+    source: [heartbeat]
+    owner: decorum
+    cadence:
+      env: LIMEN_BEAT_DECORUM
+      default: 6
+    timeout:
+      env: LIMEN_DECORUM_TIMEOUT
+      default: 120
+    # DECORVM federates the estate's six quality organs (experience/visual/seo/countenance/links/moat)
+    # into ONE verdict at logs/decorum.json + logs/decorum.html. Departments + the severity floor are
+    # declared data in institutio/governance/decorum-surfaces.yaml (derive-never-pin); an unmeasured
+    # department is skipped fail-open, never failed. Ships default-on but READ-ONLY — the effector that
+    # files tasks/issues from findings is a separate gate (LIMEN_DECORUM_APPLY), dry-run until armed.
+    steps:
+      - command: "python3 scripts/decorum-keeper.py --sweep"
+        args_when:
+          - env: LIMEN_DECORUM_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "DECORVM found a public egg-face — see logs/decorum.json (blocking finding at/above floor 'high')"
+    omega_eligible:
+      - label: "keeper wiring self-test (registry + schema valid)"
+        tier: det
+        command: "python3 scripts/decorum-keeper.py --doctor"
