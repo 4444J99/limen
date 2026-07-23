@@ -400,13 +400,13 @@ gates:
     owner: verify
     note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048)."
   pytest-cli:
-    command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest cli/tests -q"
+    command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest cli/tests -q -n auto"
     paths: ["cli/**"]
     tier: heavy
     serialize: true
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Env-scrubbed: ambient persona tokens must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing)."
+    note: "Env-scrubbed: ambient persona tokens must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores."
   pytest-api:
     command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest web/api/tests -q"
     paths: ["web/api/**", "cli/**"]

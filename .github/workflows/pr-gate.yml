@@ -139,4 +139,4 @@ jobs:
           python scripts/check-sensors.py
           python scripts/check-mail-tiers.py
           python scripts/check-decorum.py
-          python -m pytest web/api/tests cli/tests -q
+          python -m pytest web/api/tests cli/tests -q -n auto

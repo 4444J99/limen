@@ -205,7 +205,7 @@ node scripts/validate-contract-schemas.mjs
 
 step "Run API and CLI tests"
 env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN \
-  PYTHONPATH="$PYTHONPATH_VALUE" python3 -m pytest web/api/tests cli/tests -q
+  PYTHONPATH="$PYTHONPATH_VALUE" python3 -m pytest web/api/tests cli/tests -q -n auto
 
 step "Verify MONETA sovereign-mint licence tests (vitest + tsc)"
 if command -v npm >/dev/null; then

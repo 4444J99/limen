@@ -677,7 +677,10 @@ host_admission_release
         ["bash", "-c", shell],
         capture_output=True,
         text=True,
-        timeout=10,
+        # The helper spawns several python3 interpreters; on a CI host saturated
+        # by xdist siblings each spawn can take seconds, so the budget covers a
+        # loaded host while still bounding a hung refresh child.
+        timeout=60,
         check=False,
     )
     assert result.returncode == 0, result.stderr
