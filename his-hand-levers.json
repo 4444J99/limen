@@ -692,7 +692,8 @@
       "status": "open",
       "gate": "vendor-portal logins the organ cannot perform (interactive export flows)",
       "unlocks": "widens AI-chat dossier coverage to all 8 vendors — adds Gemini, Grok, Perplexity, Copilot, DeepSeek, Mistral alongside the already-imported ChatGPT + Claude corpus. The constellation program is green without it; this deepens source breadth for the cross-vendor insights engine.",
-      "source_task": "constellation closeout filings (limen PR #1373); CCE provider-import lane in conversation-corpus-check picks up archives dropped under the source-drop inbox."
+      "source_task": "constellation closeout filings (limen PR #1373); CCE provider-import lane in conversation-corpus-check picks up archives dropped under the source-drop inbox.",
+      "issue": 1394
     }
   ]
 }
