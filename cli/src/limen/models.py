@@ -206,6 +206,9 @@ class Task(BaseModel):
     # Immutable provider-neutral workstream policy carried from a generated packet into
     # the actual adapter launch seam. Historical tasks omit it.
     workstream_contract: dict[str, Any] | None = None
+    # A provider-neutral, digest-bound plan that must select its builder again
+    # from live capability and capacity evidence. Historical tasks omit it.
+    plan_receipt: dict[str, Any] | None = None
     # Optional per-task Claude tier pin ("haiku"|"sonnet"|"opus"|"fable") — an escape hatch that
     # overrides the earned-tier ladder's class-based derivation for THIS task (the env
     # LIMEN_CLAUDE_MODEL still wins above it). Fable still requires LIMEN_FABLE_ACCEPTANCE.
@@ -241,6 +244,15 @@ class Task(BaseModel):
         from limen.workstream_contract import validate_packet_contract
 
         return validate_packet_contract(value)
+
+    @field_validator("plan_receipt")
+    @classmethod
+    def validate_plan_receipt(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        from limen.plan_handoff import validate_plan_receipt
+
+        return validate_plan_receipt(value)
 
     @field_validator("workstream")
     @classmethod

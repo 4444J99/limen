@@ -64,6 +64,16 @@ from limen.provider_selection import (
     paid_service_block_reason,
     select_opencode_model,
 )
+from limen.plan_handoff import (
+    PlanHandoffResult,
+    PlanReceiptError,
+    build_plan_receipt,
+    builder_task_from_receipt,
+    is_build_from_plan,
+    is_plan_only,
+    select_live_builder,
+    validate_receipt_for_task,
+)
 from limen.remote_execution import (
     GitHubWorkflowAdapter,
     ReceiptStore,
@@ -913,6 +923,12 @@ def _effective_target_agent(task: Task) -> str:
     rewrite the task itself.
     """
 
+    if task.status == "open" and is_build_from_plan(task) and task.plan_receipt is not None:
+        try:
+            validate_receipt_for_task(task, task.plan_receipt)
+            return select_live_builder(task.plan_receipt) or "__plan_builder_unavailable__"
+        except PlanReceiptError:
+            return "__plan_builder_invalid__"
     if task.status == "open" and task.dispatch_log:
         latest = task.dispatch_log[-1]
         if latest.status == "open" and latest.route_to:
@@ -1561,7 +1577,7 @@ def session_id() -> str:
     return os.environ.get("CLAUDE_SESSION_ID", os.environ.get("GEMINI_SESSION_ID", "cli"))
 
 
-def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
+def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:
     agent = canonical_agent(agent)
     try:
         workstream_packet = _workstream_packet_for(task)
@@ -1619,7 +1635,7 @@ def _journaled_agent_dispatch(
     dry_run: bool,
     reservation_id: str,
     journal_root: Path | None = None,
-) -> bool | str:
+) -> bool | str | PlanHandoffResult:
     """Run one provider only after its work-capacity reservation is durable."""
 
     if dry_run:
@@ -1924,6 +1940,14 @@ def _build_prompt(task: Task, task_first: bool = False) -> str:
             "For PR-fix/rebase tasks, inspect that PR before editing; when available, dispatch "
             "bases this isolated branch on the PR head and targets the repair PR back to that head."
         )
+    if is_plan_only(task):
+        parts.append(
+            "\n\n--- PLAN-ONLY AUTHORITY ---\n"
+            "Do not edit, create, delete, move, or format files; do not commit, push, open a PR, "
+            "or mutate external state. Inspect the isolated checkout and return a concrete, "
+            "ordered implementation plan as stdout. The dispatcher will reject the handoff if "
+            "the worktree changes. Do not select or recommend a named model."
+        )
     body = f"{''.join(parts)}\n\n{_value_gate_discipline(task)}\n\n{_verification_discipline()}"
     flame = _flame_preamble()
     if not flame:
@@ -2159,7 +2183,7 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
     dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "organvm/limen")
     intent = (
         "Planning only: return a build packet and do not implement."
-        if requested_profile.planning_only and plan_accepted
+        if requested_profile.planning_only
         else "Execute the task and verify the narrow acceptance predicate."
     )
     prompt = (
@@ -3457,11 +3481,11 @@ def _blocked_result(reason: str) -> str:
     return _FAILED_BLOCKED_PREFIX + " ".join((reason or "blocked").split())[:500]
 
 
-def _is_blocked_result(result: bool | str) -> bool:
+def _is_blocked_result(result: object) -> bool:
     return isinstance(result, str) and result.startswith(_FAILED_BLOCKED_PREFIX)
 
 
-def _blocked_reason(result: bool | str) -> str:
+def _blocked_reason(result: object) -> str:
     if not _is_blocked_result(result):
         return ""
     return str(result)[len(_FAILED_BLOCKED_PREFIX) :]
@@ -3471,11 +3495,11 @@ def _workstream_successor_result(reason: str) -> str:
     return _WORKSTREAM_SUCCESSOR_PREFIX + " ".join((reason or "workstream boundary reached").split())[:500]
 
 
-def _is_workstream_successor_result(result: bool | str) -> bool:
+def _is_workstream_successor_result(result: object) -> bool:
     return isinstance(result, str) and result.startswith(_WORKSTREAM_SUCCESSOR_PREFIX)
 
 
-def _workstream_successor_reason(result: bool | str) -> str:
+def _workstream_successor_reason(result: object) -> str:
     if not _is_workstream_successor_result(result):
         return ""
     return str(result)[len(_WORKSTREAM_SUCCESSOR_PREFIX) :]
@@ -4191,7 +4215,7 @@ def _run_isolated_agent(
     wt: Path,
     agent_cmd: list[str],
     lane_timeout: int,
-) -> bool | str:
+) -> bool | str | PlanHandoffResult:
     try:
         run_env = _lane_run_env(agent, wt, task)
         if agent == "opencode":
@@ -4224,6 +4248,17 @@ def _run_isolated_agent(
         _show_opencode_clock_after_run(task)
     if run.returncode != 0:
         return _failed_agent_result(agent, task, run)
+    if is_plan_only(task):
+        status = _git(["status", "--porcelain", "-z"], wt)
+        if status.returncode != 0:
+            return _blocked_result("plan-only worktree status is unreadable")
+        if status.stdout:
+            return _blocked_result("plan-only worker mutated the isolated worktree")
+        try:
+            receipt = build_plan_receipt(task, run.stdout or "", planner_agent=agent)
+        except PlanReceiptError as exc:
+            return _blocked_result(f"invalid plan-only result: {exc}")
+        return PlanHandoffResult(receipt=receipt)
     if agent in ("agy", "antigravity"):
         _bridge_agy_scratch(task, wt)
     if agent == "ollama":
@@ -4517,7 +4552,7 @@ def _isolated_local_run(
     task: Task,
     dry_run: bool,
     base_agent_args: list[str] | None = None,
-) -> bool | str:
+) -> bool | str | PlanHandoffResult:
     binary = _resolve_agent_binary(agent)
     repo_dir = _resolve_repo_dir(task)
     if repo_dir is None and not dry_run:
@@ -4616,6 +4651,8 @@ def _isolated_local_run(
         start_head_result = _git(["rev-parse", "HEAD"], wt)
         start_head = start_head_result.stdout.strip() if start_head_result.returncode == 0 else ""
         run_result = _run_isolated_agent(agent, task, wt, agent_cmd, lane_timeout)
+        if isinstance(run_result, PlanHandoffResult):
+            return run_result
         if run_result is not True:
             return run_result
 
@@ -4651,7 +4688,7 @@ def _isolated_local_run(
             _cleanup_isolated_worktree(repo_dir, wt, branch, checkout_ref, pushed=pushed, task=task)
 
 
-def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
+def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:
     if not agent_can_run_task(agent, task):
         print(f"  SKIP {task.id}: {agent} is gated for Limen registry discovery tasks")
         return False
@@ -4756,7 +4793,7 @@ def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
     return max(0, budget - track.spent)
 
 
-DispatchResult = tuple[str, str, bool | str, str, str]
+DispatchResult = tuple[str, str, bool | str | PlanHandoffResult, str, str]
 
 
 def _clear_result_receipts(task_id: str) -> None:
@@ -5025,7 +5062,7 @@ def dispatch_tasks(
 def _apply_result(
     task: Task,
     agent: str,
-    result: bool | str,
+    result: bool | str | PlanHandoffResult,
     now: datetime,
     track: BudgetTrack,
     *,
@@ -5054,10 +5091,13 @@ def _apply_result(
     # same failure would violate the fixed-point contract.
     if successor_held:
         return
-    successful_result = bool(result) and result not in {_NOOP, _RATELIMIT, _TIMEOUT}
-    successful_result = (
-        successful_result and not _is_blocked_result(result) and not _is_workstream_successor_result(result)
-    )
+    if isinstance(result, PlanHandoffResult):
+        successful_result = True
+    else:
+        successful_result = bool(result) and result not in {_NOOP, _RATELIMIT, _TIMEOUT}
+        successful_result = (
+            successful_result and not _is_blocked_result(result) and not _is_workstream_successor_result(result)
+        )
     if (
         not successor_held
         and not successful_result
@@ -5071,7 +5111,38 @@ def _apply_result(
         return
 
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
-    if result == _NOOP:
+    if isinstance(result, PlanHandoffResult):
+        try:
+            builder = select_live_builder(result.receipt)
+            builder_view = builder_task_from_receipt(
+                task,
+                result.receipt,
+                builder=builder or "__plan_builder_unavailable__",
+            )
+        except PlanReceiptError as exc:
+            entry.status = "failed_blocked"
+            entry.output = f"plan receipt rejected: {exc}"
+            task.status = "failed_blocked"
+            if "blocked:plan-receipt" not in task.labels:
+                task.labels.append("blocked:plan-receipt")
+        else:
+            task.target_agent = builder_view.target_agent
+            task.labels = builder_view.labels
+            task.context = builder_view.context
+            task.claude_tier = None
+            task.plan_receipt = result.receipt
+            task.status = "open"
+            entry.status = "open"
+            entry.route_to = builder
+            entry.output = (
+                "validated plan receipt recorded; builder will be selected again from live capabilities at claim time"
+            )
+            if builder is None:
+                entry.output += "; no capable builder is currently reachable"
+            if charge_budget:
+                track.spent += task.budget_cost
+                track.per_agent[agent] = track.per_agent.get(agent, 0) + task.budget_cost
+    elif result == _NOOP:
         entry.status = "failed"
         entry.output = "No-op result; failed for recovery instead of archived."
         task.status = "failed"

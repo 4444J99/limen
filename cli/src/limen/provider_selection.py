@@ -11,7 +11,7 @@ import json
 import math
 import re
 import subprocess
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any, Iterable, Sequence, get_type_hints
 
@@ -159,16 +159,14 @@ def execution_profile_for(task: object | None) -> ExecutionProfile:
 
 
 def effective_profile(profile: ExecutionProfile, *, plan_accepted: bool) -> ExecutionProfile:
-    """Without current plan acceptance, request maximally verified executable work."""
+    """Preserve the requested authority boundary.
 
-    if profile.planning_only and not plan_accepted:
-        return replace(
-            profile,
-            reasoning_depth=1.0,
-            planning_only=False,
-            build_allowed=True,
-            verification_strength=1.0,
-        )
+    ``plan_accepted`` remains a compatibility parameter for callers that also
+    use the Fable accounting gate. It may affect model selection, never whether
+    a planning request is allowed to mutate.
+    """
+
+    del plan_accepted
     return profile
 
 
