@@ -108,7 +108,7 @@ def build_view():
         {"key": "rail", "label": "A rail has received a real dollar",
          "ok": total_cents > 0,
          "detail": f"${total_cents/100:,.0f} received to date" if total_cents else "$0 — no rail has collected yet",
-         "act": "Turn on ONE rail you control (Ko-fi or PayPal.me — ~20 min, no LLC) so a 'yes' can pay you today."},
+         "act": "Rails are LIVE (Ko-fi 4444j99 · MONETA BTC mint since 2026-07-12 · PromptScope USDC) — the gap is a payer, not a rail. Put a paid ask in front of one human today; Lemon Squeezy KYC (L-REVENUE-ACCT) only if card checkout is the blocker."},
         {"key": "signed", "label": "≥1 signed engagement, deposit cleared",
          "ok": len(signed) > 0,
          "detail": f"{len(signed)} signed+cleared" if signed else "0 signed — no client closed yet",
