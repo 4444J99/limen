@@ -207,3 +207,33 @@ def test_tracked_receipts_render_when_atom_ledger_is_not_bootstrapped(tmp_path: 
     assert "Prompt packet ledger" in rendered
     assert "Prompt packet resolution receipts" in rendered
     assert "Capability substrate ledger" in rendered
+
+
+def test_substrate_snapshot_counts_atoms_through_streaming_adapter(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    ledger = _load("session_corpus_ledger_atoms_v2")
+    session_meta = tmp_path / "session-meta"
+    (session_meta / "ingest").mkdir(parents=True)
+    (session_meta / "ingest" / "manifest.jsonl").write_text("{}\n", encoding="utf-8")
+    ledger.ORGANS = []
+    monkeypatch.setattr(ledger, "session_meta_root", lambda: session_meta)
+    monkeypatch.setattr(
+        ledger,
+        "atoms_summary",
+        lambda: {
+            "present": True,
+            "format": "session-meta.atoms-store.v2",
+            "path": str(session_meta / "ingest" / "atoms-store"),
+            "lines": 17,
+            "mtime": 1_750_000_000.0,
+            "generation": "sha256-" + "a" * 64,
+        },
+    )
+
+    snapshot = ledger.substrate_snapshot()
+
+    assert snapshot["session_meta"]["atoms"]["lines"] == 17
+    assert snapshot["session_meta"]["atoms"]["format"] == "session-meta.atoms-store.v2"
+    assert "T" in snapshot["session_meta"]["atoms"]["mtime"]
