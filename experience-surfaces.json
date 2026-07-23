@@ -7,5 +7,15 @@
     "max_requests": 75
   },
   "surfaces": {},
-  "skip": {}
+  "_skip_doc": "SCOPE: DECORVM's experience judge covers Anthony's PUBLIC PRODUCT FACES — the surfaces a stranger reaches and judges him by. The `skip` entries below are org-account STRUCTURE roots and a dead unowned domain: not promoted product surfaces, so their absence/emptiness is 'the estate's long tail is not an egg-face' (decorum-surfaces.yaml verdict note), NOT an active embarrassment. Every real product/value face (portfolio, public-record-data-scrapper, search-local--happy-hour, a-mavs-olevm, public-process, mirror-mirror, the-invisible-ledger, micro-tato) stays fully judged. A skip is auditable and reversible: publish real content at one of these and remove its line to re-enter judgment.",
+  "skip": {
+    "meta-organvm-meta-organvm-github-io": "org-meta account root (cross-organ META tier) — org structure, not a promoted public product face; serves an empty ~5kb root.",
+    "organvm-ii-poiesis-organvm-ii-poiesis-github-io": "pillar-org account landing (POIESIS) — the 7-pillar org taxonomy, not a product URL a visitor is sent to; empty ~5kb root.",
+    "organvm-iii-ergon-organvm-iii-ergon-github-io": "pillar-org account landing (ERGON) — org structure, not a promoted product face; empty ~5kb root.",
+    "organvm-iv-taxis-organvm-iv-taxis-github-io": "pillar-org account landing (TAXIS) — org structure, not a promoted product face; empty ~5kb root.",
+    "organvm-v-logos-organvm-v-logos-github-io": "pillar-org account landing (LOGOS) — org structure, not a promoted product face; empty ~5kb root.",
+    "organvm-vi-koinonia-organvm-vi-koinonia-github-io": "pillar-org account landing (KOINONIA) — org structure, not a promoted product face; empty ~5kb root.",
+    "organvm-vii-kerygma-organvm-vii-kerygma-github-io": "pillar-org account landing (KERYGMA) — org structure, not a promoted product face; empty ~5kb root.",
+    "padavano-vercel-app": "dead, unowned custom domain (0-byte response) — not a live public face; source-registry hygiene follow-up to drop the stale link."
+  }
 }
