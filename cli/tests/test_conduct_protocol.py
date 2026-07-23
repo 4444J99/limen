@@ -332,6 +332,36 @@ def test_principals_bind_sessions_and_executor_claims_without_leaking_tokens() -
         )
 
 
+def test_declared_conductor_identity_matches_after_principal_binding() -> None:
+    """A client may submit the identity it declared, not the register echo (#1408).
+
+    register() rebinds agent/surface to the token principal; submit must apply
+    the same binding before comparing or the tabularius relay can never match.
+    """
+    broker = ConductBroker(MemoryStateStore(), capability_secret="test-capability-secret")
+    relay_principal = principal("principal-relay", "codex", "observer", "conductor")
+    requested = session("claude", session_id="relay-session")
+    broker.register(requested, principal=relay_principal, now=NOW)
+    reserved = broker.submit(
+        packet(work_id="relay-declared-identity", conductor=requested.identity),
+        principal=relay_principal,
+        now=NOW,
+    )
+    assert reserved["run_id"]
+    with pytest.raises(ConductConflict, match="not bound to the authenticated principal"):
+        broker.submit(
+            packet(work_id="relay-imposter", conductor=requested.identity),
+            principal=principal("principal-imposter", "codex", "observer", "conductor"),
+            now=NOW,
+        )
+    with pytest.raises(ConductConflict, match="does not match its registered session"):
+        broker.submit(
+            packet(work_id="relay-foreign", conductor=requested.identity),
+            principal=principal("principal-foreign", "opencode", "observer", "conductor"),
+            now=NOW,
+        )
+
+
 def test_executor_attempts_are_capability_bound_idempotent_and_publicly_token_free() -> None:
     codex = session("codex")
     broker = broker_with(codex)

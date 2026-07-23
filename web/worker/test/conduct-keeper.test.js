@@ -290,6 +290,34 @@ test("principal-bound executor claims are recoverable and secret from conductors
   assert.equal(first.capability_token, second.capability_token);
 });
 
+test("declared conductor identity matches its principal-bound session (#1408)", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, {
+    clock: () => NOW,
+    capabilitySecret: "worker-relay-identity-secret",
+  });
+  const relayPrincipal = principalMeta("principal-relay", "codex", ["observer", "conductor"]);
+  const declared = session("claude", { sessionId: "relay-session" });
+  await service.call("register", { session: declared, principal: relayPrincipal });
+  // The relay submits the identity it declared (agent "claude", surface "cli"),
+  // not the token-bound register echo — pre-fix this 409'd and froze board writes.
+  const reserved = await service.call("submit", {
+    packet: await packet({ workId: "relay-declared-identity", conductor: declared.identity }),
+    principal: relayPrincipal,
+  });
+  assert.equal(typeof reserved.run_id, "string");
+  const imposter = principalMeta("principal-imposter", "codex", ["observer", "conductor"]);
+  await assert.rejects(service.call("submit", {
+    packet: await packet({ workId: "relay-imposter", conductor: declared.identity }),
+    principal: imposter,
+  }), /not bound to the authenticated principal/);
+  const foreign = principalMeta("principal-foreign", "opencode", ["observer", "conductor"]);
+  await assert.rejects(service.call("submit", {
+    packet: await packet({ workId: "relay-foreign", conductor: declared.identity }),
+    principal: foreign,
+  }), /does not match its registered session/);
+});
+
 test("executor attempts are capability-bound, durable, idempotent, and token-free", async () => {
   const codex = session("codex");
   const { service } = await serviceWith([codex], {

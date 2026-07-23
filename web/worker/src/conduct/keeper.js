@@ -226,6 +226,17 @@ export class ConductKernel {
     };
   }
 
+  bindConductorIdentity(identity, principal) {
+    // register() stores token-bound agent/surface; comparisons against the
+    // stored session must apply the same binding or a client that declares
+    // its own surface can never match (the #1408 relay freeze).
+    return {
+      ...clone(identity),
+      agent: principal.agent,
+      surface: principal.surface,
+    };
+  }
+
   taskEvent(run, lease, {
     kind,
     status,
@@ -339,7 +350,7 @@ export class ConductKernel {
     if (!conductor) {
       throw new ConductError("packet conductor must be a registered session");
     }
-    if (!identitiesEqual(conductor.identity, packet.conductor)) {
+    if (!identitiesEqual(conductor.identity, this.bindConductorIdentity(packet.conductor, principal))) {
       throw new ConductError("packet conductor identity does not match its registered session");
     }
     if (this.now - asDate(conductor.heartbeat_at) > this.sessionTtlMs) {
@@ -599,7 +610,7 @@ export class ConductKernel {
     const dependencies = packet.execution?.dependencies || [];
     if (!dependencies.length) throw new ConductError("dependency deferral requires dependencies", 422);
     const conductor = this.state.sessions[packet.conductor.session_id];
-    if (!conductor || !identitiesEqual(conductor.identity, packet.conductor)) {
+    if (!conductor || !identitiesEqual(conductor.identity, this.bindConductorIdentity(packet.conductor, principal))) {
       throw new ConductError("packet conductor must be its registered session");
     }
     if (this.state.session_principals[conductor.session_id] !== principal.principal_id) {

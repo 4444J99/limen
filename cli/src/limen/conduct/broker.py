@@ -207,7 +207,7 @@ class ConductBroker:
             if not conductor_raw:
                 raise ConductConflict("packet conductor must be a registered session")
             conductor = ConductorSessionV1.model_validate(conductor_raw)
-            if conductor.identity != packet.conductor:
+            if conductor.identity != self._bind_conductor_identity(packet.conductor, principal):
                 raise ConductConflict("packet conductor identity does not match its registered session")
             if now - conductor.heartbeat_at > self.session_ttl:
                 raise ConductConflict("packet conductor session is not healthy")
@@ -491,7 +491,7 @@ class ConductBroker:
             if not conductor_raw:
                 raise ConductConflict("packet conductor must be a registered session")
             conductor = ConductorSessionV1.model_validate(conductor_raw)
-            if conductor.identity != packet.conductor:
+            if conductor.identity != self._bind_conductor_identity(packet.conductor, principal):
                 raise ConductConflict("packet conductor identity does not match its registered session")
             if state["session_principals"].get(conductor.session_id) != principal.principal_id:
                 raise ConductConflict("packet conductor is not bound to the authenticated principal")
@@ -1586,3 +1586,13 @@ class ConductBroker:
             }
         )
         return session.model_copy(update={"identity": identity})
+
+    @staticmethod
+    def _bind_conductor_identity(
+        identity: AgentIdentityV1,
+        principal: ConductPrincipalV1,
+    ) -> AgentIdentityV1:
+        # register() stores token-bound agent/surface; comparisons against the
+        # stored session must apply the same binding or a client that declares
+        # its own surface can never match (the #1408 relay freeze).
+        return identity.model_copy(update={"agent": principal.agent, "surface": principal.surface})
