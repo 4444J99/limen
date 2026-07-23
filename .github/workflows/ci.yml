@@ -53,8 +53,9 @@ jobs:
       - name: Lint Python with ruff
         run: python -m ruff check cli/src cli/tests web/api mcp ianva
 
+      # --diff stays fail-closed while printing the exact formatter patch.
       - name: Format check Python with ruff
-        run: python -m ruff format --check cli/src cli/tests web/api mcp ianva
+        run: python -m ruff format --diff cli/src cli/tests web/api mcp ianva
 
       - name: Type-check Python with mypy
         run: python -m mypy src/limen/
