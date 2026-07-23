@@ -4,8 +4,8 @@
   "repos": {
     "organvm/public-record-data-scrapper": {
       "note": "UCC/MCA lead-intelligence platform. Crown jewels: the discovery source-map (which public datasets yield MCA signal) and the curated funder/secured-party dictionaries, then the scoring/underwriting calibration. Interfaces + architecture stay public.",
-      "scan_paths": ["server/services", "scripts/scrapers"],
-      "_pattern_note": "POSIX ERE, single-line (git grep -E is line-oriented; no \\b, no \\s\\S). Each targets a VALUE/data line, not a type/interface, so after the calibration moves to a private module the public tree goes clean while the public interfaces survive.",
+      "scan_paths": ["server/services", "scripts/scrapers", ":(exclude)server/services/calibration"],
+      "_pattern_note": "POSIX ERE, single-line (git grep -E is line-oriented; no \\b, no \\s\\S). Each targets a VALUE/data line, not a type/interface, so after the calibration moves to a private module the public tree goes clean while the public interfaces survive. NOTE: server/services/calibration IS the sanctioned public home for the calibration SEAM — public type + ILLUSTRATIVE (fake) defaults + loader; the real values live in gitignored *.private.json. It is git-pathspec-excluded so the structural patterns (minAdbByTier:{, INDUSTRY_RISK_MODIFIERS:...={) don't false-positive on the deliberately-fake illustrative defaults.",
       "leak_patterns": [
         {
           "name": "sba-ckan-source-id",
