@@ -18,10 +18,13 @@ name: PR Gate
 # merge-group base, while preserving already-green child receipts instead of
 # restarting the whole PR matrix whenever main moves.
 #
-# Fail-closed: pull_request runs require a resolvable base. `--integration`
-# implies the same requirement for merge_group runs and suppresses deploy-path
-# escalation: the queue commit is already composed from exact-head green PR
-# children, so this final pass pays only the genuine cross-branch seams. Gates
+# Fail-closed: pull_request runs require a resolvable base. Neither lane repeats
+# the whole matrix: the PR lane sets LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1 (scoped
+# gates only — merge-policy.sh already refuses a website-sensitive merge until
+# full CI is green, so pre-running the matrix per PR commit was duplication), and
+# `--integration` suppresses deploy-path escalation for merge_group runs: the
+# queue commit is already composed from exact-head green PR children, so that
+# final pass pays only the genuine cross-branch seams. Gates
 # whose ci_job mirror lives in another workflow (web-build → ci.yml:web,
 # worker-check → ci.yml:worker, moneta-tests → moneta.yml) defer only on the PR
 # path. scripts/check-gates.py (selected whenever this file changes) holds the
@@ -66,6 +69,7 @@ jobs:
         env:
           LIMEN_VERIFY_NO_LOCK: "1"
           LIMEN_VERIFY_REQUIRE_BASE: "1"
+          LIMEN_VERIFY_NO_DEPLOY_ESCALATION: "1"
         run: |
           python scripts/verify.py --changed \
             --base "origin/${GITHUB_BASE_REF:-main}" \

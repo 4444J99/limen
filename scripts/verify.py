@@ -17,7 +17,12 @@ being two scripts and become two selections over the same data:
                                      unresolvable merge-base or an empty changed set is a
                                      hard error, never the silent local fallback, and a
                                      deploy-trigger diff escalates to the whole matrix
-                                     (LIMEN_VERIFY_WHOLE_CMD, default verify-whole.sh).
+                                     (LIMEN_VERIFY_WHOLE_CMD, default verify-whole.sh)
+                                     unless LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1, which keeps
+                                     the run scoped — CI's pull_request lane sets it because
+                                     merge-policy.sh already refuses a website-sensitive
+                                     merge until the full CI matrix is green, so pre-running
+                                     the matrix per PR commit was pure duplication.
                                      --skip-ci-covered CI_JOB defers gates whose ci_job
                                      mirror lives in a different workflow job (they run
                                      there on the same PR; merge-policy holds on any red).
@@ -290,10 +295,18 @@ def cmd_changed(
         print(f"  {p}")
 
     if require_base and not integration and deploy_hits(registry, changed):
-        whole = os.environ.get("LIMEN_VERIFY_WHOLE_CMD") or str(ROOT / "scripts" / "verify-whole.sh")
-        print(f"deploy-trigger paths in the diff — escalating to the whole matrix: {whole}")
-        sys.stdout.flush()
-        os.execv("/bin/bash", ["bash", whole])
+        if os.environ.get("LIMEN_VERIFY_NO_DEPLOY_ESCALATION") == "1":
+            print(
+                "deploy-trigger paths in the diff — whole-matrix escalation suppressed "
+                "(LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1): running scoped gates only; "
+                "merge-policy.sh still requires the full green matrix before a "
+                "website-sensitive merge."
+            )
+        else:
+            whole = os.environ.get("LIMEN_VERIFY_WHOLE_CMD") or str(ROOT / "scripts" / "verify-whole.sh")
+            print(f"deploy-trigger paths in the diff — escalating to the whole matrix: {whole}")
+            sys.stdout.flush()
+            os.execv("/bin/bash", ["bash", whole])
 
     gates = registry.get("gates") or {}
     selected, skipped = select(registry, changed)
@@ -385,7 +398,8 @@ def main() -> int:
         "--require-base",
         action="store_true",
         help="fail closed: merge-base must resolve and the changed set must be non-empty "
-        "(also via LIMEN_VERIFY_REQUIRE_BASE=1); deploy-trigger diffs escalate to the whole matrix",
+        "(also via LIMEN_VERIFY_REQUIRE_BASE=1); deploy-trigger diffs escalate to the whole matrix "
+        "unless LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1",
     )
     parser.add_argument(
         "--skip-ci-covered",

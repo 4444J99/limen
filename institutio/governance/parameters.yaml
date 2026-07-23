@@ -796,6 +796,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Machine-wide lock file serializing verify-whole.sh runs so parallel sessions queue instead of stampeding the host with concurrent npm installs, workerd boots, and production builds."
+  LIMEN_VERIFY_NO_DEPLOY_ESCALATION:
+    default: "0"
+    env: LIMEN_VERIFY_NO_DEPLOY_ESCALATION
+    self_update: none
+    owner: continuity
+    note: "Suppresses verify.py --changed's deploy-trigger whole-matrix escalation while keeping the run scoped (pr-gate's pull_request lane sets 1): merge-policy.sh already refuses a website-sensitive merge until the full CI matrix is green, so pre-running the matrix on every PR commit was pure duplication. Default 0 preserves escalation for local and push --require-base runs."
   LIMEN_VERIFY_NO_LOCK:
     default: "0"
     env: LIMEN_VERIFY_NO_LOCK
@@ -807,7 +813,7 @@ parameters:
     env: LIMEN_VERIFY_REQUIRE_BASE
     self_update: none
     owner: continuity
-    note: "CI fail-closed switch for verify.py --changed (issue #1048): when 1, an unresolvable merge-base or an empty changed set is a hard error instead of the silent local-modifications fallback — a required check must never green by verifying nothing — and a deploy-trigger diff escalates to the whole matrix."
+    note: "CI fail-closed switch for verify.py --changed (issue #1048): when 1, an unresolvable merge-base or an empty changed set is a hard error instead of the silent local-modifications fallback — a required check must never green by verifying nothing — and a deploy-trigger diff escalates to the whole matrix unless LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1."
   LIMEN_VERIFY_WHOLE_CMD:
     default: "scripts/verify-whole.sh"
     env: LIMEN_VERIFY_WHOLE_CMD
