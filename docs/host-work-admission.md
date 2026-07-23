@@ -65,12 +65,22 @@ probe checks that the installed client reports stable hooks. When it does, `User
 admits concurrent roots and `PreToolUse` makes the action decision. When it does not, the legacy
 machine-wide root lock remains fail-closed.
 
-`PreToolUse` covers `Bash`, `apply_patch`, `Edit`, and `Write`:
+The Codex and Claude `PreToolUse` adapters consume the same lane-neutral action policy for
+`Bash`, `apply_patch`, `Edit`, and `Write`:
 
 - known read-only actions acquire no lease;
 - sanctioned Limen status, workstream, conduct, fanout, and remote-dispatch controls rely on their
   internal locking;
 - writes require a linked worktree and its scoped writer lease;
+- structured tool `workdir` / `cwd` takes precedence over the session startup cwd; conflicting or
+  unavailable structured state fails closed for mutation;
+- supported `cd`, `git -C`, redirection, structured edit/write, and apply-patch targets are
+  canonicalized before containment checks; opaque mutation-capable compounds, background commands,
+  command substitutions, and symlink escapes are denied;
+- structured write tools whose client payload omits the target fail closed as
+  `write-target-unavailable`;
+- plan-mode and explicit `planning_only=true` / `build_allowed=false` execution profiles cannot
+  acquire a writer lease;
 - guarded heavy commands must pass the live global-heavy/pressure check;
 - raw unguarded heavy commands are denied with the sanctioned equivalent.
 

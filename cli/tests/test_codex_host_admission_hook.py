@@ -10,10 +10,11 @@ from limen.host_admission import AdmissionController
 
 ROOT = Path(__file__).resolve().parents[2]
 HOOK_PATH = ROOT / "scripts" / "hooks" / "codex-host-admission.py"
+CLAUDE_HOOK_PATH = ROOT / "scripts" / "hooks" / "claude-host-admission.py"
 
 
-def load_hook():
-    spec = importlib.util.spec_from_file_location("codex_host_admission_hook", HOOK_PATH)
+def load_hook(path: Path = HOOK_PATH):
+    spec = importlib.util.spec_from_file_location(f"{path.stem.replace('-', '_')}_test_module", path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -233,7 +234,220 @@ def test_primary_checkout_write_and_out_of_scope_target_are_denied(tmp_path: Pat
         owner_pid=101,
     )
     assert escaped["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-outside-worktree"
+
+    freeform = hook.handle(
+        payload(
+            "PreToolUse",
+            cwd=str(first),
+            tool_name="apply_patch",
+            tool_input="*** Add File: ../outside.txt\n+unsafe\n",
+        ),
+        controller=service,
+        owner_pid=101,
+    )
+    assert freeform["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-outside-worktree"
     assert service.status(probe=False)["leases"] == []
+
+
+def test_structured_tool_workdir_overrides_session_startup_cwd(tmp_path: Path) -> None:
+    hook = load_hook()
+    main, first, _second = linked_worktrees(tmp_path)
+    service = controller(tmp_path / "admission")
+    request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        tool_name="Edit",
+        tool_input={
+            "workdir": str(first),
+            "file_path": str(first / "tracked.txt"),
+        },
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+    lease = service.status(probe=False)["leases"][0]
+    assert lease["kind"].startswith("execution:")
+
+    patch_service = controller(tmp_path / "patch-admission")
+    patch_request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        tool_name="apply_patch",
+        tool_input={
+            "workdir": str(first),
+            "patch": "*** Add File: nested/new.txt\n+safe\n",
+        },
+    )
+    assert hook.handle(patch_request, controller=patch_service, owner_pid=202) is None
+
+
+def test_conflicting_or_missing_effective_cwd_fails_closed(tmp_path: Path) -> None:
+    hook = load_hook()
+    _main, first, second = linked_worktrees(tmp_path)
+    service = controller(tmp_path / "admission")
+    conflicting = payload(
+        "PreToolUse",
+        cwd="",
+        tool_name="Edit",
+        tool_input={
+            "workdir": str(first),
+            "cwd": str(second),
+            "file_path": str(first / "tracked.txt"),
+        },
+    )
+    output = hook.handle(conflicting, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "conflicting-tool-cwd"
+
+    missing = payload(
+        "PreToolUse",
+        cwd="",
+        tool_name="Edit",
+        tool_input={"file_path": str(first / "tracked.txt")},
+    )
+    output = hook.handle(missing, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "effective-cwd-unavailable"
+
+    missing_target = payload(
+        "PreToolUse",
+        cwd=str(first),
+        tool_name="apply_patch",
+        tool_input={},
+    )
+    output = hook.handle(missing_target, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-unavailable"
+    assert service.status(probe=False)["leases"] == []
+
+
+def test_git_c_and_cd_redirection_resolve_the_actual_write_scope(tmp_path: Path) -> None:
+    hook = load_hook()
+    main, first, second = linked_worktrees(tmp_path)
+
+    git_service = controller(tmp_path / "git-admission")
+    git_request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        tool_input={"command": f"git -C {first} checkout -b topic"},
+    )
+    assert hook.handle(git_request, controller=git_service, owner_pid=101) is None
+
+    redirection_service = controller(tmp_path / "redirection-admission")
+    redirected = payload(
+        "PreToolUse",
+        cwd=str(main),
+        tool_input={"command": f"cd {second} && printf ok > receipt.txt"},
+    )
+    assert hook.handle(redirected, controller=redirection_service, owner_pid=202) is None
+
+    outside_service = controller(tmp_path / "outside-admission")
+    escaped = payload(
+        "PreToolUse",
+        cwd=str(main),
+        tool_input={"command": f"cd {first} && printf unsafe > ../outside.txt"},
+    )
+    output = hook.handle(escaped, controller=outside_service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-outside-worktree"
+    assert outside_service.status(probe=False)["leases"] == []
+
+
+def test_git_admin_targets_cannot_escape_the_leased_worktree(tmp_path: Path) -> None:
+    hook = load_hook()
+    _main, first, _second = linked_worktrees(tmp_path)
+    outside = tmp_path / "outside"
+    commands = [
+        f"git --git-dir={outside / '.git'} checkout -b topic",
+        f"git --work-tree={outside} checkout -b topic",
+        f"GIT_DIR={outside / '.git'} git checkout -b topic",
+        f"GIT_WORK_TREE={outside} git checkout -b topic",
+    ]
+
+    for index, command in enumerate(commands):
+        service = controller(tmp_path / f"git-admin-admission-{index}")
+        output = hook.handle(
+            payload(
+                "PreToolUse",
+                cwd=str(first),
+                tool_input={"command": command},
+            ),
+            controller=service,
+            owner_pid=101,
+        )
+        assert output["hookSpecificOutput"]["permissionDecisionReason"] == "unsupported-git-admin-target"
+        assert service.status(probe=False)["leases"] == []
+
+
+def test_background_substitution_and_plan_only_mutations_are_denied(tmp_path: Path) -> None:
+    hook = load_hook()
+    _main, first, _second = linked_worktrees(tmp_path)
+    cases = [
+        (
+            payload(
+                "PreToolUse",
+                cwd=str(first),
+                tool_input={"command": "printf unsafe > out.txt &"},
+            ),
+            "background-command",
+        ),
+        (
+            payload(
+                "PreToolUse",
+                cwd=str(first),
+                tool_input={"command": "printf $(date) > out.txt"},
+            ),
+            "command-substitution-or-multiline",
+        ),
+        (
+            payload(
+                "PreToolUse",
+                cwd=str(first),
+                tool_name="Edit",
+                execution_profile={"planning_only": True, "build_allowed": False},
+                tool_input={"file_path": str(first / "tracked.txt")},
+            ),
+            "plan-only-mutation",
+        ),
+    ]
+    for index, (request, reason) in enumerate(cases):
+        service = controller(tmp_path / f"admission-{index}")
+        output = hook.handle(request, controller=service, owner_pid=101)
+        assert output["hookSpecificOutput"]["permissionDecisionReason"] == reason
+        assert service.status(probe=False)["leases"] == []
+
+
+def test_codex_and_claude_adapters_share_action_policy(tmp_path: Path) -> None:
+    codex = load_hook()
+    claude = load_hook(CLAUDE_HOOK_PATH)
+    main, first, _second = linked_worktrees(tmp_path)
+    requests = [
+        payload(
+            "PreToolUse",
+            cwd=str(main),
+            tool_input={"command": f"cd {first} && printf unsafe > ../outside.txt"},
+        ),
+        payload(
+            "PreToolUse",
+            cwd=str(first),
+            tool_input={"command": "printf unsafe > out.txt &"},
+        ),
+        payload(
+            "PreToolUse",
+            cwd="",
+            tool_name="Write",
+            tool_input={"file_path": str(first / "new.txt")},
+        ),
+    ]
+    for index, request in enumerate(requests):
+        codex_output = codex.handle(
+            request,
+            controller=controller(tmp_path / f"codex-{index}"),
+            owner_pid=101,
+        )
+        claude_output = claude.handle(
+            request,
+            controller=controller(tmp_path / f"claude-{index}"),
+            owner_pid=202,
+        )
+        assert (
+            codex_output["hookSpecificOutput"]["permissionDecisionReason"]
+            == claude_output["hookSpecificOutput"]["permissionDecisionReason"]
+        )
 
 
 def test_symlink_aliases_resolve_to_the_same_writer_scope(tmp_path: Path) -> None:
@@ -268,6 +482,21 @@ def test_symlink_aliases_resolve_to_the_same_writer_scope(tmp_path: Path) -> Non
     )
     assert denied["hookSpecificOutput"]["permissionDecisionReason"] == "workspace-writer-lease-held"
 
+    escape = first / "escape"
+    escape.symlink_to(tmp_path, target_is_directory=True)
+    escape_service = controller(tmp_path / "escape-admission")
+    escaped = hook.handle(
+        payload(
+            "PreToolUse",
+            cwd=str(first),
+            tool_name="Write",
+            tool_input={"file_path": str(escape / "outside.txt")},
+        ),
+        controller=escape_service,
+        owner_pid=303,
+    )
+    assert escaped["hookSpecificOutput"]["permissionDecisionReason"] == "write-target-outside-worktree"
+
 
 def test_ambiguous_or_mutation_capable_bash_is_treated_as_a_write(tmp_path: Path) -> None:
     hook = load_hook()
@@ -282,7 +511,7 @@ def test_ambiguous_or_mutation_capable_bash_is_treated_as_a_write(tmp_path: Path
         controller=service,
         owner_pid=101,
     )
-    assert denied["hookSpecificOutput"]["permissionDecisionReason"] == "shared-checkout-write"
+    assert denied["hookSpecificOutput"]["permissionDecisionReason"] == "unparseable-mutation-capable-compound"
     assert (
         hook.handle(
             payload(
@@ -366,6 +595,7 @@ def test_hook_config_wires_required_events_and_dynamic_worktree_root() -> None:
     commands = [handler["command"] for groups in hooks.values() for group in groups for handler in group["hooks"]]
     assert all("git rev-parse --show-toplevel" in command for command in commands)
     assert not any("/Users/" in command for command in commands)
+    assert CLAUDE_HOOK_PATH.is_file()
 
 
 def test_project_config_caps_threads_and_depth() -> None:
