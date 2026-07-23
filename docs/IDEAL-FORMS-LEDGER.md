@@ -197,3 +197,21 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 - **Status:** PARTIAL — keeper + mentor live and green-wired; the estate it watches is red until its
   findings are worked (that redness is the point, not a defect).
 - **Owner:** Claude + the `decorum` organ (beat) + `his-hand-levers.json` for any off-platform capture.
+
+### IF-LEARNING-ENGINE — one learning engine, many subjects (never build the 7th)
+- **Ideal form:** The operator's **Adaptive Personal Syllabus (`aps`)** is the sole curriculum +
+  personalization engine; **daily-engine** is the cadence spine; **application-pipeline/interview_prep.py**
+  owns interview content; **agon**'s spaced-repetition is the one plugin; **gamified-coach-interface** is
+  the reward surface; **my-knowledge-base** is the content-atom source. Every new study/prep need is a
+  *subject* authored as `aps` `PersonalizedLesson` records + a `LearnerProfile` — never a new engine.
+  Pedagogy primitives (Wings, personalization-first, ChainBlockARK provenance, quality gates, wave cycles,
+  5-persona critique, evaluation→growth, Studio-Quest ladder) are load-bearing and preserved.
+- **Distance:** Decision recorded + owners named (`docs/convergence/learning-engine.md`, 2026-07-23).
+  First subject — **ASI FSE interview prep** — authored in the `aps` schema and driven by `agon`
+  (ChainBlockARK ledger verifies intact). BLOCKER surfaced: `aps` can't run in-checkout (`koinonia-db`
+  absent + organ-coded `generate`); the subject conforms to the schema rather than being invoked via
+  `aps plan generate`. Phase 2 = lift daily-engine's core into a shared substrate, decouple `aps` from the
+  organ taxonomy, wire gamified surface + KB feed, implement the critique-synthesis fixes.
+- **Status:** PARTIAL — convergence decided + first subject converged (agon = thin tenant, greenfield
+  `curriculum.yaml` retired); full `aps`-invocation + the Phase-2 lift are pending.
+- **Owner:** Claude + the Adaptive Personal Syllabus (`aps`); ASI subject tracked in matter `job-asi-algora`.
