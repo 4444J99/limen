@@ -153012,45 +153012,53 @@ tasks:
   budget_cost: 1
   status: in_progress
   labels:
-  - private-pilot
-  - human-send-only
+  - ari-pilot
+  - private-runtime
   - deadline-2026-08-05
-  - cockpit-pr-open
-  - encrypted-backup-blocked
+  - software-merged
+  - custody-verified
+  - real-receipts-pending
   urls:
   - https://github.com/organvm/hospes/issues/9
   - https://github.com/organvm/hospes/pull/11
-  context: 'Private HOSPES Pilot 1 activation. PR #11 owns the reusable cockpit software;
-    issue #9 owns the locally gated encrypted backup and real pilot receipts. Public
-    release remains gated, correspondence is human-sent, and guest data stays outside
-    Git.'
-  predicate: test "$(gh issue view 9 --repo organvm/hospes --json state --jq .state)"
-    = CLOSED
+  - https://github.com/organvm/hospes/pull/12
+  - https://github.com/organvm/hospes/issues/9#issuecomment-5053533571
+  context: "Cockpit PR #11 and universal Pilot kernel PR #12 are merged. The canonical private database is schema v6 with independently verified encrypted custody. Candidate and operational receipt counts remain zero; Issue #9 stays open pending Ari review, a real three-person slate, human-authorized correspondence, and real production receipts."
+  predicate: test "$(gh issue view 9 --repo organvm/hospes --json state --jq .state)" = CLOSED
   receipt_target: https://github.com/organvm/hospes/issues/9
   depends_on: []
-  created: '2026-07-22'
-  updated: '2026-07-22T23:39:30.477392Z'
+  created: 2026-07-22
+  updated: 2026-07-23T02:18:38.936Z
   dispatch_log:
-  - timestamp: '2026-07-22T21:29:46.453516Z'
+  - timestamp: 2026-07-22T21:29:46.453516Z
     agent: codex
     session_id: direct:hospes-ari-pilot-launch
     status: dispatched
     output: Direct human-requested workstream registered through TABVLARIVS.
-  - timestamp: '2026-07-22T21:29:46.453516Z'
+  - timestamp: 2026-07-22T21:29:46.453516Z
     agent: codex
     session_id: direct:hospes-ari-pilot-launch
     status: in_progress
-    output: 'Execution started in work/ari-pilot-launch; owner issue #9.'
-  - timestamp: '2026-07-22T23:39:30.477392Z'
+    output: "Execution started in work/ari-pilot-launch; owner issue #9."
+  - timestamp: 2026-07-22T23:39:30.477392Z
     agent: codex
     session_id: direct:hospes-partnership-cockpit
     status: in_progress
-    output: 'PR #10 merged with privacy/lifecycle repairs. PR #11 is open and merge-ready
-      at 9402358e93884e3f035939b36e729f4b3f88add7 with local done.sh, push/PR hospes-done,
-      CodeQL, browser acceptance, and zero unresolved threads green. Canonical DB
-      custody is 0700/0600 with 22 items, 23 audit events, zero guest records, and
-      matching source checksum. Issue #9 remains open: AES-256 Archive4T backup needs
-      local passphrase entry; all real Pilot 1 receipts remain unchecked.'
+    output: "PR #10 merged with privacy/lifecycle repairs. PR #11 is open and merge-ready at 9402358e93884e3f035939b36e729f4b3f88add7 with local done.sh, push/PR hospes-done, CodeQL, browser acceptance, and zero unresolved threads green. Canonical DB custody is 0700/0600 with 22 items, 23 audit events, zero guest records, and matching source checksum. Issue #9 remains open: AES-256 Archive4T backup needs local passphrase entry; all real Pilot 1 receipts remain unchecked."
+  - timestamp: 2026-07-23T02:18:38.936Z
+    agent: codex
+    session_id: codex-direct:hospes-partnership-cockpit
+    logical_agent: codex
+    logical_session_id: direct:hospes-partnership-cockpit
+    status: in_progress
+    output: "HOSPES software and custody lane complete: PRs #11 and #12 merged; canonical schema v6 migrated and encrypted restore-verified. Issue #9 remains open because real candidate, human-send, guest/media, and scorecard receipts do not yet exist."
+    conduct_event_id: conduct:run-be94589a77cedf70d3b5d7730196c335:2:compatibility
+    conduct_run_id: run-be94589a77cedf70d3b5d7730196c335
+    conduct_lease_id: lease-2-be94589a77cedf70
+    conduct_generation: 2
+  origin: human_prompt
+  horizon: present
+  value_case: "Keeps HOSPES software and custody completion, plus the remaining real Pilot 1 external receipts, truthfully projected through Issue #9."
 - id: CONST-CORPUS-REFRESH
   title: Populate the conversation corpus (live pulls + staged bundle imports)
   repo: organvm/limen
