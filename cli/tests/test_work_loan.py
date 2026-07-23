@@ -192,6 +192,7 @@ def test_sanctioned_producers_adopt_explicit_work_loan_collateral() -> None:
         "scripts/converge-organ.py",
         "scripts/corpus-converge.py",
         "scripts/current-session-fanout.py",
+        "scripts/decorum-keeper.py",
         "scripts/discover-value.py",
         "scripts/dispatch-continuity-check.py",
         "scripts/generate-backlog.py",
