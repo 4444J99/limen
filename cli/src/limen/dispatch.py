@@ -102,6 +102,7 @@ from limen.worktree_debt import (
     admission_blocks,
     take_admission_snapshot,
 )
+from limen.worktree_initialization import WorktreeInitializationError, initialize_worktree
 from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
 from limen.work_loan import task_work_loan_readiness
 from limen.workstream_contract import (
@@ -4615,7 +4616,8 @@ def _isolated_local_run(
     # 1) fresh base from origin — never the user's possibly-dirty working tree.
     # Hold the git-plumbing lock only for these fast parent-repo ops so concurrent
     # same-repo dispatches don't collide on index.lock (the slow run is unlocked).
-    add = subprocess.CompletedProcess([], 1, "", "worktree add was not attempted")
+    initialization_error = "worktree initialization was not attempted"
+    initialized = False
     for attempt in range(6):
         if attempt:
             suffix = secrets.token_hex(4)
@@ -4631,15 +4633,30 @@ def _isolated_local_run(
                 if wt.exists():
                     print(f"  retrying worktree add {task.id}: preserved existing worktree at {wt}")
                     continue
-            add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), checkout_ref], repo_dir, timeout=120)
-        if add.returncode == 0:
+            try:
+                initialize_worktree(
+                    repo_dir,
+                    wt,
+                    branch=branch,
+                    checkout_ref=checkout_ref,
+                    task_id=task.id,
+                )
+            except WorktreeInitializationError as exc:
+                initialization_error = str(exc)
+            else:
+                initialized = True
+        if initialized:
             break
-        if re.search(r"branch .* already exists|is already checked out", add.stderr or "", re.IGNORECASE):
+        if re.search(
+            r"branch .* already exists|is already checked out",
+            initialization_error,
+            re.IGNORECASE,
+        ):
             print(f"  retrying worktree add {task.id}: stale branch collision on {branch}")
             continue
         break
-    if add.returncode != 0:
-        print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
+    if not initialized:
+        print(f"  FAILED transactional worktree initialization {task.id}: {initialization_error[:300]}")
         return False
     _record_worktree_birth(task, wt, branch, checkout_ref, pr_base, existing_pr=bool(pr_head))
     _mark_machine_admission_born(task.id)
