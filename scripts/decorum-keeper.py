@@ -513,13 +513,26 @@ def apply_effector(reg: dict, verdict: dict, armed: bool) -> dict:
         # SEO findings name a real "owner/name" repo; everything else is homed in the keeper's repo.
         repo = surface if (lane == "seo" and "/" in surface) else receipt_repo
         details = " · ".join(f["detail"] for f in fs)
-        plan["planned"].append({"id": tid, "repo": repo, "priority": prio_map.get(top["severity"], "medium"), "lane": lane, "surface": surface})
+        # A voice-judge finding is not a "go fix the surface" chore — it is a bounded JUDGMENT the
+        # fleet runs with the decorum-voice-judge skill. Tier it haiku (per model policy; the skill
+        # scores tone/brand-voice and writes a SHA-pinned row to decorum-judgments.yaml, clearing it).
+        is_voice = any(f.get("source") == "voice-judge" for f in fs)
+        if is_voice:
+            title = f"Voice-judge changed prose on {surface}"
+            context = (f"DECORVM queued a voice review: {details}. Run the `decorum-voice-judge` skill on {surface} "
+                       f"(Haiku-tiered), append a content_sha256-pinned verdict row to "
+                       f"institutio/observatory/decorum-judgments.yaml; done ⟺ this finding clears. [decorum {stamp}]")
+        else:
+            title = f"Fix public egg-face on {surface} ({lane})"
+            context = (f"DECORVM found: {details}. Fix at the surface's source and re-run scripts/decorum-keeper.py "
+                       f"--sweep; done ⟺ this finding no longer appears in logs/decorum.json. [decorum {stamp}]")
+        plan["planned"].append({"id": tid, "repo": repo, "priority": prio_map.get(top["severity"], "medium"), "lane": lane, "surface": surface, "tier": "haiku" if is_voice else None})
         if not armed:
             continue
         try:
             task = Task(
                 id=tid,
-                title=f"Fix public egg-face on {surface} ({lane})",
+                title=title,
                 repo=repo,
                 type="code",
                 target_agent="any",
@@ -531,7 +544,8 @@ def apply_effector(reg: dict, verdict: dict, armed: bool) -> dict:
                 value_case=f"Remove a professionalization defect a visitor can see on {surface}",
                 labels=["decorum", "professionalization", lane, "generated"],
                 urls=[],
-                context=f"DECORVM found: {details}. Fix at the surface's source and re-run scripts/decorum-keeper.py --sweep; done ⟺ this finding no longer appears in logs/decorum.json. [decorum {stamp}]",
+                context=context,
+                claude_tier=("haiku" if is_voice else None),
                 **contract_fields(github_pr_contract(repo, tid)),
                 depends_on=[],
                 created=stamp,
@@ -541,6 +555,186 @@ def apply_effector(reg: dict, verdict: dict, armed: bool) -> dict:
             plan["filed"].append(tid)
         except Exception as e:
             plan.setdefault("errors", []).append(f"{tid}: {e}")
+    return plan
+
+
+def _gh(args: list[str], timeout: int = 45):
+    """Shell to gh, returning stdout (str) or None on any failure — fail-open, never raises."""
+    try:
+        p = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+        return p.stdout if p.returncode == 0 else None
+    except Exception:
+        return None
+
+
+_ISSUE_MARKER = "decorum"  # body carries <!-- decorum:<finding-id> --> ; identity is the marker, not the title
+
+
+def mirror_issues(reg: dict, verdict: dict, armed: bool) -> dict:
+    """The self-closing sink (github-native process organ): mirror each open finding at/above the
+    issue-floor to a `decorum`-labelled GitHub issue, and AUTO-CLOSE any decorum issue whose finding
+    has cleared. A human who closes an issue while the finding still stands is a VETO — never reopened.
+    This is what makes arming safe: tracking closes itself, so no dangling item accrues. Dry-run by
+    default; mutates GitHub only when LIMEN_DECORUM_ISSUES_APPLY=1 arms it. Never sends, never deletes."""
+    import re
+    eff = reg.get("effector") or {}
+    plan = {"armed": armed, "repo": None, "created": [], "closed": [], "kept": 0, "vetoed": [], "note": None}
+    repo = eff.get("receipt_repo", "organvm/limen")
+    plan["repo"] = repo
+    order = ((reg.get("verdict") or {}).get("severity_order")) or ["low", "medium", "high", "critical"]
+    floor = eff.get("issue_floor", "medium")
+    floor_i = _sev_index(order, floor)
+    findings = [f for f in (verdict.get("egg_face_findings") or []) if _sev_index(order, f["severity"]) >= floor_i]
+    live = {f["id"]: f for f in findings}
+
+    # read existing decorum issues via REST (search index lags; REST is idempotent right after create)
+    raw = _gh(["api", "--paginate", f"repos/{repo}/issues?labels={_ISSUE_MARKER}&state=all&per_page=100"])
+    if raw is None:
+        plan["note"] = "gh unavailable or repo unreadable; issue mirror skipped (fail-open)"
+        return plan
+    try:
+        rows = json.loads(raw) if raw.strip().startswith("[") else [json.loads(x) for x in raw.splitlines() if x.strip()]
+        # --paginate concatenates arrays; normalise
+        if raw.count("[") > 1:
+            rows = []
+            for chunk in re.findall(r"\[.*?\]", raw, re.S):
+                try:
+                    rows.extend(json.loads(chunk))
+                except Exception:
+                    pass
+    except Exception as e:
+        plan["note"] = f"could not parse existing issues ({e}); mirror skipped"
+        return plan
+    mrx = re.compile(rf"<!--\s*{_ISSUE_MARKER}:([^\s>]+)\s*-->")
+    existing: dict[str, dict] = {}
+    for it in rows:
+        if "pull_request" in it:  # issues API returns PRs too
+            continue
+        m = mrx.search(it.get("body") or "")
+        if m:
+            existing[m.group(1)] = {"number": it["number"], "state": it["state"].upper()}
+
+    cap = int(os.environ.get("LIMEN_DECORUM_MAX", "8"))
+    # CREATE — a live finding with no issue
+    for fid, f in sorted(live.items(), key=lambda kv: -_sev_index(order, kv[1]["severity"])):
+        if fid in existing:
+            plan["kept"] += 1
+            continue
+        if len(plan["created"]) >= cap:
+            break
+        plan["created"].append(fid)
+        if not armed:
+            continue
+        body = (f"**DECORVM — professionalization keeper**\n\n"
+                f"- **surface:** `{f['surface']}`\n- **lane:** {f['lane']}\n- **severity:** {f['severity']}\n\n"
+                f"{f['detail']}\n\n"
+                f"Fix at the surface's source, then re-run `scripts/decorum-keeper.py --sweep`. "
+                f"This issue **auto-closes** when the finding clears from `logs/decorum.json`. "
+                f"Closing it by hand while the finding still stands is a veto (it will not reopen).\n\n"
+                f"<!-- {_ISSUE_MARKER}:{fid} -->")
+        _mk_body = ROOT / ".limen-private" / "decorum" / f"issue-{re.sub(r'[^A-Za-z0-9]+','-',fid)}.md"
+        try:
+            _mk_body.parent.mkdir(parents=True, exist_ok=True)
+            _mk_body.write_text(body)
+            _gh(["issue", "create", "--repo", repo, "--label", _ISSUE_MARKER,
+                 "--title", f"decorum: {f['lane']} egg-face on {f['surface']}", "--body-file", str(_mk_body)])
+        except Exception as e:
+            plan.setdefault("errors", []).append(f"create {fid}: {e}")
+
+    # CLOSE-ON-CLEAR — an OPEN decorum issue whose finding is gone; VETO — CLOSED while finding stands
+    for fid, meta in existing.items():
+        if fid in live:
+            if meta["state"] == "CLOSED":
+                plan["vetoed"].append(fid)  # human closed it though it still stands — respect, never reopen
+            continue
+        if meta["state"] == "OPEN":
+            plan["closed"].append(fid)
+            if armed:
+                _gh(["issue", "close", str(meta["number"]), "--repo", repo, "--comment",
+                     f"Finding `{fid}` has cleared from `logs/decorum.json` — the surface no longer carries this "
+                     "egg-face. Auto-closed by scripts/decorum-keeper.py."])
+    return plan
+
+
+def recurrence_precedents(reg: dict, verdict: dict, armed: bool) -> dict:
+    """The literal 'ever' ratchet: a finding CLASS that recurs after being cleared (fixed, then broke
+    again) — or persists across many sweeps — is not a one-off. It earns a `recurring_friction`
+    precedent in censor/precedents.jsonl so the correction escalates from 'fix it again' to 'prevent
+    the class structurally' (a generator fix, a gate). State lives in .limen-private (per-machine);
+    the precedent is the durable, committed record. Writes only when armed."""
+    eff = reg.get("effector") or {}
+    thresh = int(eff.get("recurrence_sweeps", 4))
+    plan = {"armed": armed, "escalated": [], "note": None}
+    state_path = ROOT / ".limen-private" / "decorum" / "recurrence.json"
+    state = _load_json(state_path) or {}
+    prec_path = ROOT / "censor" / "precedents.jsonl"
+    existing_prec = set()
+    try:
+        for line in prec_path.read_text().splitlines():
+            line = line.strip()
+            if line:
+                try:
+                    existing_prec.add(json.loads(line).get("id"))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    live_ids = {f["id"] for f in (verdict.get("egg_face_findings") or [])}
+    detail_by_id = {f["id"]: f for f in (verdict.get("egg_face_findings") or [])}
+    stamp = datetime.now(timezone.utc).date().isoformat()
+    new_state = dict(state)
+    to_escalate = []
+
+    # every id ever seen: update sweeps/cleared bookkeeping
+    for fid in set(state) | live_ids:
+        rec = dict(new_state.get(fid) or {"first_seen": stamp, "sweeps": 0, "cleared": 0, "recurred": False})
+        if fid in live_ids:
+            if rec.get("was_clear"):          # present now, was clear last sweep → recurrence
+                rec["recurred"] = True
+                rec["cleared"] = rec.get("cleared", 0) + 1
+            rec["sweeps"] = rec.get("sweeps", 0) + 1
+            rec["was_clear"] = False
+        else:
+            rec["was_clear"] = True
+        new_state[fid] = rec
+        # escalation predicate: recurred-after-clear OR persisted past the sweep threshold
+        if (rec.get("recurred") or rec.get("sweeps", 0) >= thresh):
+            pid = f"PREC-{stamp}-decorum-{fid}".replace(":", "-").replace("/", "-").lower()
+            if pid not in existing_prec:
+                to_escalate.append((pid, fid, rec))
+
+    for pid, fid, rec in to_escalate:
+        f = detail_by_id.get(fid, {})
+        plan["escalated"].append(pid)
+        if not armed:
+            continue
+        prec = {
+            "id": pid,
+            "ts": stamp,
+            "type": "recurring_friction",
+            "subject": f"recurring public egg-face: {fid}",
+            "outcome": "open",
+            "reversible": "reversible",
+            "action": (f"DECORVM finding {fid} recurred/persisted (sweeps={rec.get('sweeps')}, "
+                       f"recurred={rec.get('recurred')}): {f.get('detail','')}. Escalate from one-off fix to STRUCTURAL "
+                       f"prevention — a generator fix or a check-decorum gate rung so the class cannot return."),
+            "authorised_by": "scripts/decorum-keeper.py recurrence ratchet (decorum-surfaces.yaml effector.recurrence_sweeps)",
+            "review": "empirical close = the finding ages out of logs/decorum.json AND a structural guard exists (gate/generator).",
+        }
+        try:
+            prec_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(prec_path, "a") as fh:
+                fh.write(json.dumps(prec) + "\n")
+        except Exception as e:
+            plan.setdefault("errors", []).append(f"{pid}: {e}")
+
+    if armed:
+        try:
+            state_path.parent.mkdir(parents=True, exist_ok=True)
+            state_path.write_text(json.dumps(new_state, indent=2))
+        except Exception:
+            pass
     return plan
 
 
@@ -598,7 +792,20 @@ def _print_summary(verdict: dict) -> None:
         else:
             print(f"  effector: DRY-RUN — would file {len(plan['planned'])} ticket(s) ({plan['skipped_existing']} already on board); arm with LIMEN_DECORUM_APPLY=1 --apply")
         for p in plan["planned"][:8]:
-            print(f"      → {p['id']} [{p['priority']}] {p['repo']}")
+            tier = f" ({p['tier']})" if p.get("tier") else ""
+            print(f"      → {p['id']} [{p['priority']}] {p['repo']}{tier}")
+    iss = verdict.get("issues") or {}
+    if iss.get("note"):
+        print(f"  issues: {iss['note']}")
+    elif iss.get("created") or iss.get("closed"):
+        verb = "mirrored" if iss.get("armed") else "DRY-RUN would mirror"
+        print(f"  issues: {verb} → {len(iss.get('created', []))} new, {len(iss.get('closed', []))} auto-closed, "
+              f"{iss.get('kept', 0)} kept, {len(iss.get('vetoed', []))} vetoed (repo {iss.get('repo')}); "
+              f"arm with LIMEN_DECORUM_ISSUES_APPLY=1")
+    rec = verdict.get("recurrence") or {}
+    if rec.get("escalated"):
+        verb = "filed" if rec.get("armed") else "DRY-RUN would file"
+        print(f"  recurrence: {verb} {len(rec['escalated'])} recurring_friction precedent(s) — a class recurred/persisted (the 'ever' ratchet)")
 
 
 def main() -> int:
@@ -620,9 +827,14 @@ def main() -> int:
     verdict = sweep(reg, offline=False)
 
     # the effector (mentor) — dry-run plan by default; mutates only when the valve is armed.
+    # THREE sinks, each its own valve: board tasks (dispatchable work), GitHub issues (self-closing
+    # tracked-to-closure findings — the primary durable sink), and recurrence precedents (the 'ever' ratchet).
     armed = args.apply and os.environ.get("LIMEN_DECORUM_APPLY") == "1"
     plan = apply_effector(reg, verdict, armed)
     verdict["effector"] = plan
+    issues_armed = args.apply and os.environ.get("LIMEN_DECORUM_ISSUES_APPLY") == "1"
+    verdict["issues"] = mirror_issues(reg, verdict, issues_armed)
+    verdict["recurrence"] = recurrence_precedents(reg, verdict, armed)
     try:
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(verdict, indent=2) + "\n")

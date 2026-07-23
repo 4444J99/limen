@@ -695,6 +695,45 @@
       "unlocks": "widens AI-chat dossier coverage to all 8 vendors — adds Gemini, Grok, Perplexity, Copilot, DeepSeek, Mistral alongside the already-imported ChatGPT + Claude corpus. The constellation program is green without it; this deepens source breadth for the cross-vendor insights engine.",
       "source_task": "constellation closeout filings (limen PR #1373); CCE provider-import lane in conversation-corpus-check picks up archives dropped under the source-drop inbox.",
       "issue": 1394
-    }
+    },
+        {
+      "id": "L-DECORUM-LINKEDIN-HEADLINE",
+      "label": "Paste the CURRENT LinkedIn headline + About text into this lever (or a private capture file it names) so DECORVM can voice-judge it like any other public prose surface. LinkedIn has no write API without OAuth partner status, so the text can only be captured by you; once captured, the professionalization keeper checks it for stale title/claims and brand-voice on every change.",
+      "owner": "yours",
+      "cost": "~2 min once per headline change",
+      "status": "open",
+      "gate": "no LinkedIn write API without partner OAuth — the current headline/About text can only be captured by the account holder",
+      "unlocks": "DECORVM (the professionalization keeper) covers the LinkedIn headline/About as an off-platform surface — voice-judged for stale claims and brand-voice, closing an egg-face gap no organ can reach headlessly",
+      "source_task": "DECORVM off_platform slot linkedin_headline (institutio/governance/decorum-surfaces.yaml)"
+    },
+    {
+      "id": "L-DECORUM-X-BIO",
+      "label": "Paste the CURRENT X/Twitter bio (160 chars) into this lever so DECORVM can voice-judge it. No write path without the paid X API; the text is captured by you, then checked for stale positioning + voice on every change.",
+      "owner": "yours",
+      "cost": "~1 min once per bio change",
+      "status": "open",
+      "gate": "no free X write API — the current bio can only be captured by the account holder",
+      "unlocks": "DECORVM covers the X bio as an off-platform surface (voice + staleness), closing another human-facing egg-face gap",
+      "source_task": "DECORVM off_platform slot x_bio (institutio/governance/decorum-surfaces.yaml)"
+    },
+    {
+      "id": "L-DECORUM-EMAIL-SIGNATURE",
+      "label": "Paste the CURRENT outbound email signature block into this lever so DECORVM can check it for a stale title, dead links, and brand-voice. Signatures live in mail-client config the organ cannot read; capture it once and on any change.",
+      "owner": "yours",
+      "cost": "~1 min once per signature change",
+      "status": "open",
+      "gate": "mail-client signature config is not organ-readable — the current block can only be captured by you",
+      "unlocks": "DECORVM covers the email signature as an off-platform surface (stale title/links + voice)",
+      "source_task": "DECORVM off_platform slot email_signature (institutio/governance/decorum-surfaces.yaml)"
+    },
+    {
+      "id": "L-DECORUM-RESUME-PDF",
+      "label": "Drop the CURRENT public resume PDF (or its text) into the private capture this lever names so DECORVM can check it for stale dates and a narrative that matches the actual contribution mix (the same VVLTVS NVMERVS check it runs on the profile). A resume that claims a role the contribution graph doesn't support is a quiet egg-face.",
+      "owner": "yours",
+      "cost": "~2 min once per resume revision",
+      "status": "open",
+      "gate": "the canonical resume PDF lives off-repo — the current file/text can only be provided by you",
+      "unlocks": "DECORVM covers the public resume as an off-platform surface (stale dates + narrative-accuracy against the contribution mix)",
+      "source_task": "DECORVM off_platform slot resume_pdf (institutio/governance/decorum-surfaces.yaml)"    }
   ]
 }

@@ -103,6 +103,36 @@ polish:
     on: change
     severity: medium
 
-# ── Off-platform surfaces (Phase 5 slots — empty until enacted) ───────────────
-# Each becomes a lever in his-hand-levers.json if it needs a human capture (no API), never a chat ask.
-off_platform: {}
+# ── The effector (the mentor) — three sinks, each its own arming valve ─────────
+# DECORVM senses always and mutates only when armed. The sinks: board TASKS (dispatchable fleet work,
+# LIMEN_DECORUM_APPLY), GitHub ISSUES (the self-closing tracked-to-closure sink — the primary durable
+# home, LIMEN_DECORUM_ISSUES_APPLY), and recurrence PRECEDENTS (the 'ever' ratchet, shares the task valve).
+effector:
+  receipt_repo: organvm/limen     # where non-repo-scoped tickets/issues are homed (SEO findings name their own repo)
+  issue_floor: medium             # mirror findings at/above this severity to issues (low lure-gaps stay backlog-only)
+  recurrence_sweeps: 4            # a finding class persisting this many sweeps — or recurring after a clear — earns a precedent
+
+# ── Off-platform surfaces (Phase 5 slots) ─────────────────────────────────────
+# Text-available surfaces are LLM-judged; a surface that needs a human capture (no API) declares
+# `capture: human` + a `lever:` homed in his-hand-levers.json — never a chat ask (check-decorum enforces).
+off_platform:
+  linkedin_headline:
+    kind: bio
+    capture: human
+    lever: L-DECORUM-LINKEDIN-HEADLINE
+    note: "The LinkedIn headline/about — no write API without OAuth partner status; the current text is captured by the operator into the lever, then voice-judged like any prose surface."
+  x_bio:
+    kind: bio
+    capture: human
+    lever: L-DECORUM-X-BIO
+    note: "The X/Twitter bio (160 chars) — captured by the operator into the lever, then voice-judged."
+  email_signature:
+    kind: signature
+    capture: human
+    lever: L-DECORUM-EMAIL-SIGNATURE
+    note: "The outbound email signature block — captured into the lever; checked for stale title/links + voice."
+  resume_pdf:
+    kind: document
+    capture: human
+    lever: L-DECORUM-RESUME-PDF
+    note: "The public resume PDF — the current file/text captured into the lever; checked for stale dates + narrative match to the contribution mix."

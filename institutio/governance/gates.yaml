@@ -341,6 +341,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-decorum:
+    command: "python3 scripts/check-decorum.py"
+    paths: ["institutio/governance/decorum-surfaces.yaml", "scripts/check-decorum.py", "scripts/decorum-keeper.py", "institutio/observatory/decorum-judgments.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: decorum
+    note: "DECORVM registry+wiring drift AND the offline egg-face gate: the professionalization keeper's sources are declared data (decorum-surfaces.yaml). Asserts registry schema + department addressability, that the keeper's own --doctor passes, the `decorum` sensor is beat-wired, the voice-judgment register pins every verdict to a content_sha256, and — the prevention — that no vendored misspelling exists in the tracked public prose (a typo cannot merge onto the front door; the network-dependent visual/experience classes stay in the continuous beat, not this gate)."
   check-mail-tiers:
     command: "python3 scripts/check-mail-tiers.py"
     paths: ["institutio/governance/mail-tiers.yaml", "scripts/check-mail-tiers.py"]

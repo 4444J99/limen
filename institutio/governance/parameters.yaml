@@ -2918,6 +2918,12 @@ parameters:
     self_update: none
     owner: decorum
     note: "Cap on the number of NEW professionalization tickets the DECORVM effector files per run (idempotent by id, so already-filed findings never re-file). Bounds the board churn while the estate's findings drain over successive beats."
+  LIMEN_DECORUM_ISSUES_APPLY:
+    default: 0
+    env: LIMEN_DECORUM_ISSUES_APPLY
+    self_update: none
+    owner: decorum
+    note: "Arms the DECORVM issue mirror (the SELF-CLOSING sink, github-native process organ): 0 (default) plans the mirror and touches nothing; 1 opens one `decorum`-labelled GitHub issue per open finding at/above effector.issue_floor (identity by a <!-- decorum:<id> --> body marker, capped by LIMEN_DECORUM_MAX) and AUTO-CLOSES any decorum issue whose finding has cleared. A human close while the finding still stands is a veto — never reopened. Never sends, never deletes. Separate from LIMEN_DECORUM_APPLY because opening public issues is a bigger step than filing a board task; ships DARK, observe the DRY plan first."
   LIMEN_DECORUM_SURFACES:
     default: "$LIMEN_ROOT/institutio/governance/decorum-surfaces.yaml"
     env: LIMEN_DECORUM_SURFACES
