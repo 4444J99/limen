@@ -748,6 +748,17 @@
       "unlocks": "DECORVM covers the public resume as an off-platform surface (stale dates + narrative-accuracy against the contribution mix)",
       "source_task": "DECORVM off_platform slot resume_pdf (institutio/governance/decorum-surfaces.yaml)",
       "issue": 1429
+    },
+    {
+      "id": "L-APPLY-FIRE",
+      "label": "THE SUBMIT ARM for the outbound job funnel. The application-funnel beat sensor already SOURCES roles, SCORES them (>=9.0), BUILDS tailored materials, and STAGES complete application packages autonomously — reversibly, submitting nothing. Arming this lets the daily cycle also run the `apply` phase: submit staged applications to ATS portals, capped by the pipeline's own precision limits (<=2/week, 1 per org). Mirrors the mail send-arm exactly (stage always / fire when armed).",
+      "owner": "yours",
+      "cost": "one-time paste, durable — OR leave off and review staged packages first; the funnel never blocks on it",
+      "status": "optional — the funnel stages fully autonomously without it; this opens only the final third-party submit step",
+      "gate": "set LIMEN_APPLY_FIRE=1 in ~/.limen.env (writing a persistence-arming LIMEN_*=1 is classifier-gated to the agent, so this line is yours to paste) AND the pipeline's .submit-config.yaml (personal info for ATS autofill) present",
+      "unlocks": "end-to-end autonomous applying — the beat sources, scores, builds, stages, and submits qualified applications on its own, capped by precision limits; until armed it stops at staged and you glance before submit",
+      "source_task": "outbound funnel wiring — application-funnel sensor + scripts/application-funnel.py (limen); mirrors LIMEN_MAIL_SEND for outbound mail",
+      "issue": 1441
     }
   ]
 }

@@ -1030,6 +1030,35 @@ sensors:
         severity: silent
         escalation: "opportunity sync skipped or exceeded its bound (reads obligations-ledger.json; fails open)"
 
+  application-funnel:
+    section: heartbeat
+    title: "the OUTBOUND funnel — mount the dormant application-pipeline on the beat: TRIGGER (detached, single-instance) its orchestrator to source roles from ATS/public boards, score >=9.0, build tailored materials, and STAGE complete application packages autonomously. Reversible by construction: nothing is submitted (the `apply`/ATS-submit phase stays behind the LIMEN_APPLY_FIRE arm, lever L-APPLY-FIRE) and nothing is sent (outreach only prepares follow-up dates). The inbound sibling of opportunity-pipeline"
+    gate: LIMEN_APPLICATION_SOURCE
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_APPLICATION_SOURCE
+      default: 48
+    timeout:
+      env: LIMEN_APPLICATION_SOURCE_TIMEOUT
+      default: 120
+    # The full cycle (match re-scores the whole pipeline) is a multi-minute job, so the driver
+    # TRIGGERS it detached under a single-instance lock and returns in <1s — the beat is never
+    # blocked, and the next trigger reports the last completed cycle's PII-clean counts. Dark
+    # until this rung: the mature funnel existed but nothing scheduled it (no working launchd
+    # agent, no beat sensor), so the outbound top-of-funnel never ran on its own.
+    steps:
+      - command: "python3 scripts/application-funnel.py"
+        args_when:
+          - env: LIMEN_APPLICATION_NOTIFY
+            default: "1"
+            equals: "1"
+            args: ["--notify"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "outbound funnel trigger skipped, or the pipeline runtime is missing — needs application-pipeline/.venv (the driver prints the exact bootstrap); fails open and never submits unless LIMEN_APPLY_FIRE=1"
+
   conversion-funnel:
     section: heartbeat
     title: "name the single public-face bottleneck (DISCOVERY|FACE|CLOSE) — the constraint that routes Aug-1 ($10k/wk) effort, kept live on the beat instead of dark/manual"

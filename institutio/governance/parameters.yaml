@@ -4268,6 +4268,55 @@ parameters:
     owner: mail
     note: "Safety-valve arg for the opportunity-pipeline effector (--notify). When 1, review-due detections append COUNT-ONLY events to the sealed private log ~/Workspace/_people-private/opportunities/review-due.jsonl (ARCA-sealed, never public) and push a count-only line through the existing notify cascade. ON by default because both write targets are private/count-only; set 0 to run detection without recording."
 
+  LIMEN_APPLICATION_SOURCE:
+    default: "1"
+    env: LIMEN_APPLICATION_SOURCE
+    self_update: none
+    owner: mail
+    note: "Gate for the application-funnel beat sensor (the OUTBOUND job funnel: scripts/application-funnel.py TRIGGERS the dormant application-pipeline orchestrator — scan->match->build->stage — detached). ON by default: the reversible cycle only SOURCES/SCORES/BUILDS/STAGES application packages; it NEVER submits (apply is gated behind LIMEN_APPLY_FIRE) and NEVER sends (outreach only prepares dates). Fails open; if the pipeline .venv is missing it reports the bootstrap loudly rather than silently no-op."
+  LIMEN_BEAT_APPLICATION_SOURCE:
+    default: 48
+    env: LIMEN_BEAT_APPLICATION_SOURCE
+    self_update: none
+    owner: mail
+    note: "Cadence (every N beats) of the application-funnel sensor. 48 beats ~ once daily — sourcing/scoring the whole pipeline is a multi-minute job, so it runs detached at a daily tempo, not every beat. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only)."
+  LIMEN_APPLICATION_SOURCE_TIMEOUT:
+    default: 120
+    env: LIMEN_APPLICATION_SOURCE_TIMEOUT
+    self_update: none
+    owner: mail
+    note: "Per-run timeout (seconds) for the application-funnel sensor. The driver only TRIGGERS a detached cycle and returns in <1s (the multi-minute cycle runs in the background under its own lock), so 120s is generous headroom for the trigger itself."
+  LIMEN_APPLICATION_NOTIFY:
+    default: "1"
+    env: LIMEN_APPLICATION_NOTIFY
+    self_update: none
+    owner: mail
+    note: "Safety-valve arg for the application-funnel effector (--notify). When 1, the trigger emits a COUNT-ONLY line (cycle launched/held; last cycle's sourced/qualified/staged/submitted counts) through the notify cascade. PII-clean by construction (counts only; per-role detail stays in the pipeline's private estate)."
+  LIMEN_APPLY_FIRE:
+    default: "0"
+    env: LIMEN_APPLY_FIRE
+    self_update: none
+    owner: mail
+    note: "THE SUBMIT ARM (lever L-APPLY-FIRE). OFF by default: the funnel stages complete application packages but submits NOTHING. When 1, the application-funnel cycle also runs the `apply` phase — submitting staged applications to ATS portals, capped by the pipeline's own precision limits (<=2/week, 1 per org). Mirrors LIMEN_MAIL_SEND for outbound mail: staging is always reversible, submission fires only when armed. Writing this to ~/.limen.env is the operator's one-time paste (persistence-arming is classifier-gated); also requires the pipeline's .submit-config.yaml (PII for ATS autofill) to be present."
+  LIMEN_APPLICATION_CYCLE_MAX_SECONDS:
+    default: 1800
+    env: LIMEN_APPLICATION_CYCLE_MAX_SECONDS
+    self_update: none
+    owner: mail
+    note: "Lock-staleness bound (seconds) for a detached funnel cycle. If a lock is older than this (or its pid is dead) the next trigger steals it, so a crashed cycle can never wedge the funnel shut. 1800s (30 min) is well above a normal full cycle."
+  LIMEN_APPLICATION_PIPELINE_PYTHON:
+    default: ""
+    env: LIMEN_APPLICATION_PIPELINE_PYTHON
+    self_update: none
+    owner: mail
+    note: "Optional override for the interpreter that runs the application-pipeline orchestrator. Empty by default: the driver auto-detects application-pipeline/.venv/bin/python (the pipeline carries its own deps: ruamel, anthropic, ...). Set only to point at a different environment."
+  LIMEN_APPLICATION_STATE_DIR:
+    default: ""
+    env: LIMEN_APPLICATION_STATE_DIR
+    self_update: none
+    owner: mail
+    note: "Optional override for where the funnel writes its lock / cycle log / last-result JSON. Empty by default: ~/System/Logs. Set to relocate the detached cycle's runtime state."
+
   # --- consulting: constellation register -------------------------------------
   LIMEN_CONSTELLATION_OVERLAY:
     default: "~/Workspace/_people-private/constellation/registry-private.yaml"
