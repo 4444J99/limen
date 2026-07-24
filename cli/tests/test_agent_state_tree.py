@@ -10,6 +10,7 @@ from limen.agent_state.crypto import EncryptedAtomPacker, verify_atom_packs
 from limen.agent_state.models import MetabolismReceipt, RestoreProof
 from limen.agent_state.tree import (
     atomize_file_tree,
+    brctl_evict,
     evict_cloud_materializations,
     plan_cloud_materializations,
     plan_retention,
@@ -181,6 +182,11 @@ def test_cloud_plan_never_selects_placeholder(tmp_path: Path) -> None:
     assert plan.cold_paths == ("materialized.mov",)
     assert plan.cold_bytes == materialized.stat().st_size
     assert plan.hot_paths == ("placeholder.pdf",)
+
+
+def test_default_cloud_eviction_adapter_fails_closed(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="hidden brctl eviction was non-atomic"):
+        brctl_evict(tmp_path / "payload.json")
 
 
 def test_cloud_eviction_uses_file_provider_after_restore_gate(tmp_path: Path) -> None:
