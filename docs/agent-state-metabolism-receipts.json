@@ -1,0 +1,58 @@
+{
+  "schema": "limen.agent_state_metabolism_receipts.v1",
+  "generated_at": "2026-07-24T15:03:00Z",
+  "privacy": {
+    "tracked_surface": "counts-and-remote-receipts-only",
+    "full_hash_owner": "private organvm/arca receipt",
+    "raw_paths_redacted": true
+  },
+  "operations": [
+    {
+      "source": "opencode-sqlite",
+      "run_id": "20260724T145100Z",
+      "source_bytes": 24388005888,
+      "atom_count": 598309,
+      "duplicate_event_payloads": 11367,
+      "encrypted_git": {
+        "repository": "organvm/arca",
+        "data_commit": "a542e8310bb9bcd5d7f1fd82f92aae2da5a21ac6",
+        "receipt_commit": "4a919a558f23fd85f81858eae12c0fe908c8dc98",
+        "pack_count": 252,
+        "ciphertext_bytes": 985773056,
+        "maximum_chunk_bytes": 94371840,
+        "remote_exact_head_verified": true
+      },
+      "encrypted_external": {
+        "custody": "Archive4T",
+        "ciphertext_only": true,
+        "chunk_count": 259,
+        "ciphertext_bytes": 24388005920,
+        "plaintext_personal_artifacts": 0
+      },
+      "restoration": {
+        "git_sample": {
+          "passed": true,
+          "atoms_verified": 21041
+        },
+        "git_full_manifest": {
+          "passed": true,
+          "atoms_verified": 598309
+        },
+        "external_full_source_hash": {
+          "passed": true
+        }
+      },
+      "retirement": {
+        "active_vendor_process": false,
+        "source_mutated_during_capture": false,
+        "source_retired": true,
+        "deleted_source_hash_proof_private": true,
+        "clean_database_integrity": "ok",
+        "clean_database_session_rows": 0,
+        "clean_database_event_rows": 0,
+        "vendor_root_bytes_after": 1279549440
+      },
+      "internal_free_kib_after": 43508728
+    }
+  ]
+}
