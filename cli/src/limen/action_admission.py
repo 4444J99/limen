@@ -623,12 +623,47 @@ def path_within(path: Path, root: Path) -> bool:
     return True
 
 
+def _harness_session_dirs() -> tuple[Path, ...]:
+    """Claude-harness session-metadata roots, resolved live so tests can retarget HOME."""
+
+    home = Path.home()
+    return (
+        (home / ".claude" / "plans").resolve(strict=False),
+        (home / ".claude" / "jobs").resolve(strict=False),
+        # per-project harness memory + session TLDRs (~/.claude/projects/<scope>/…) — the
+        # system prompt itself directs these writes ("write to it directly with the Write
+        # tool"); blocking them silently drops session memory.
+        (home / ".claude" / "projects").resolve(strict=False),
+    )
+
+
+def harness_session_write(targets: list[Path]) -> bool:
+    """True when EVERY write target is Claude-harness session metadata.
+
+    Plan-mode's own plan file (~/.claude/plans/<slug>.md) and background-job scratch
+    (~/.claude/jobs/<id>/tmp) are harness state, not workspace mutations — the harness
+    *instructs* the model to write them. Before this carve-out they were denied three
+    ways (plan-only-mutation in plan mode, shared-checkout-write outside a worktree,
+    write-target-outside-worktree inside one), which broke every plan-mode session on
+    the host ("No plan found" after ExitPlanMode) and pushed job scratch into repo
+    worktrees. Targets arrive canonicalized (target_paths resolves), so a symlink
+    planted under a session dir resolves outside it and falls through to the normal
+    workspace machinery.
+    """
+
+    if not targets:
+        return False
+    roots = _harness_session_dirs()
+    return all(any(path_within(path, root) for root in roots) for path in targets)
+
+
 __all__ = [
     "Action",
     "AdmissionInputError",
     "action_denial_supported",
     "classify_action",
     "classify_bash",
+    "harness_session_write",
     "mutation_build_allowed",
     "path_within",
     "resolve_effective_cwd",

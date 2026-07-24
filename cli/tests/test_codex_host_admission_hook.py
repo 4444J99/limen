@@ -483,6 +483,73 @@ def test_background_substitution_and_plan_only_mutations_are_denied(tmp_path: Pa
         assert service.status(probe=False)["leases"] == []
 
 
+def test_harness_session_writes_are_admitted_everywhere(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # The plan-mode plan file (~/.claude/plans) and background-job scratch (~/.claude/jobs)
+    # are harness-directed session metadata, not workspace mutations. Before the carve-out
+    # they were denied three ways — plan-only-mutation in plan mode, shared-checkout-write
+    # from the main checkout, write-target-outside-worktree from a linked worktree — which
+    # broke every plan-mode session on the host ("No plan found" after ExitPlanMode).
+    hook = load_hook(CLAUDE_HOOK_PATH)
+    home = tmp_path / "home"
+    plans = home / ".claude" / "plans"
+    jobs_tmp = home / ".claude" / "jobs" / "abc123" / "tmp"
+    plans.mkdir(parents=True)
+    jobs_tmp.mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    main, first, _second = linked_worktrees(tmp_path)
+
+    # 1. Plan mode, main-checkout cwd, plan-file Write → admitted (None = no deny emitted).
+    service = controller(tmp_path / "admission-plan")
+    request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(plans / "implement-all-of-it.md")},
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+    assert service.status(probe=False)["leases"] == []  # no writer lease for harness metadata
+
+    # 2. Plan mode, workspace Write → still denied: the carve-out is the plan file, not plan mode.
+    service = controller(tmp_path / "admission-workspace")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(first / "tracked.txt")},
+    )
+    output = hook.handle(request, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "plan-only-mutation"
+
+    # 3. Default mode, linked-worktree cwd, jobs-scratch Write → admitted (previously
+    #    write-target-outside-worktree, which pushed job scratch INTO repo worktrees).
+    service = controller(tmp_path / "admission-jobs")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        tool_name="Write",
+        tool_input={"file_path": str(jobs_tmp / "helper.py")},
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+
+    # 4. A symlink planted under the session dir resolves outside it → falls through to
+    #    the workspace machinery and is denied in plan mode (no laundering).
+    outside = tmp_path / "outside-target.txt"
+    outside.write_text("x")
+    (plans / "sneaky.md").symlink_to(outside)
+    service = controller(tmp_path / "admission-symlink")
+    request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(plans / "sneaky.md")},
+    )
+    output = hook.handle(request, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "plan-only-mutation"
+
+
 def test_codex_and_claude_adapters_share_action_policy(tmp_path: Path) -> None:
     codex = load_hook()
     claude = load_hook(CLAUDE_HOOK_PATH)
