@@ -21,7 +21,7 @@ Done from receipt: `5`
 - Status: `assigned_from_existing_work`
 - Verdict: substrate lifecycle predicate is failing
 - Lane fit: `codex-local`
-- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap`
+- Predicate: run `python3 scripts/reclaim-tool-caches.py --check --json`, review its exact candidate manifest, then run `python3 scripts/reclaim-tool-caches.py --apply --expected-plan-sha <plan_sha256>`; continue the other proof-gated substrate reclaimers and require `python3 scripts/cvstos-organ.py --check` plus `python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap`
 - Receipt target: `git:organvm/limen:docs/estate-custody-implementation-receipts.json`
 
 ## Workstreams
@@ -47,7 +47,7 @@ Done from receipt: `5`
 - Lane fit: `codex-local`
 - Repo/root: `organvm/limen`
 - Task: Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.
-- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap`
+- Predicate: run `python3 scripts/reclaim-tool-caches.py --check --json`, review its exact candidate manifest, then run `python3 scripts/reclaim-tool-caches.py --apply --expected-plan-sha <plan_sha256>`; continue the other proof-gated substrate reclaimers and require `python3 scripts/cvstos-organ.py --check` plus `python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap`
 - Receipt target: `git:organvm/limen:docs/estate-custody-implementation-receipts.json`
 - Stop condition: free disk is at target, temp writes are usable, worktree debt is exactly zero, and reapable roots are zero
 - Existing receipts:
@@ -140,4 +140,3 @@ Done from receipt: `5`
   - `~/Workspace/limen/value-repos.json`
   - `~/Workspace/limen/docs/product-ledger.md`
   - `~/Workspace/limen/docs/positioning/_frontdoor.md`
-
