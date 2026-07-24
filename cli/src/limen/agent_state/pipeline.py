@@ -16,14 +16,13 @@ from limen.host_admission import hold_lease
 
 from .atomize import atomize_opencode, sha256_file, stat_identity
 from .crypto import (
-    CryptoError,
     EncryptedAtomPacker,
     encrypt_file,
     keychain_key,
     verify_atom_packs,
     verify_encrypted_file,
 )
-from .models import MetabolismReceipt, ReceiptError
+from .models import MetabolismReceipt
 
 
 class PipelineError(RuntimeError):
