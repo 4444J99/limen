@@ -10,7 +10,12 @@ from pathlib import Path
 
 from limen.agent_state.pipeline import run_opencode_campaign
 from limen.agent_state.tree import plan_cloud_materializations, plan_retention
-from limen.agent_state.tree_pipeline import run_cloudkit_materialization_campaign, run_cold_tree_campaign
+from limen.agent_state.tree_pipeline import (
+    run_cloudkit_materialization_campaign,
+    run_cold_tree_campaign,
+    run_resume_cloudkit_materialization_campaign,
+    run_resume_cold_tree_campaign,
+)
 
 HOME = Path.home()
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
@@ -63,6 +68,7 @@ def parser() -> argparse.ArgumentParser:
     tree.add_argument("--hot-days", type=int, default=7)
     tree.add_argument("--maximum-hot-gib", type=float, default=2.0)
     tree.add_argument("--run-id")
+    tree.add_argument("--resume", action="store_true")
     tree.add_argument("--retire", action="store_true")
     cloudkit = subcommands.add_parser(
         "cloudkit-materialized",
@@ -82,12 +88,16 @@ def parser() -> argparse.ArgumentParser:
     )
     cloudkit.add_argument("--private-receipt", type=Path, required=True)
     cloudkit.add_argument("--run-id")
+    cloudkit.add_argument("--resume", action="store_true")
     cloudkit.add_argument("--evict", action="store_true")
     return command
 
 
 def main() -> int:
-    args = parser().parse_args()
+    argument_parser = parser()
+    args = argument_parser.parse_args()
+    if getattr(args, "resume", False) and not args.run_id:
+        argument_parser.error("--resume requires --run-id")
     if args.command == "opencode":
         receipt = run_opencode_campaign(
             args.source,
@@ -103,26 +113,48 @@ def main() -> int:
             hot_days=args.hot_days,
             maximum_hot_bytes=int(args.maximum_hot_gib * 1024 * 1024 * 1024),
         )
-        receipt = run_cold_tree_campaign(
-            args.name,
-            plan,
-            args.vault_root,
-            args.external_root,
-            args.private_receipt,
-            retire=args.retire,
-            run_id=args.run_id,
-        )
+        if args.resume:
+            receipt = run_resume_cold_tree_campaign(
+                args.name,
+                plan,
+                args.vault_root,
+                args.external_root,
+                args.private_receipt,
+                retire=args.retire,
+                run_id=args.run_id,
+            )
+        else:
+            receipt = run_cold_tree_campaign(
+                args.name,
+                plan,
+                args.vault_root,
+                args.external_root,
+                args.private_receipt,
+                retire=args.retire,
+                run_id=args.run_id,
+            )
     elif args.command == "cloudkit-materialized":
         plan = plan_cloud_materializations(args.root)
-        receipt = run_cloudkit_materialization_campaign(
-            args.name,
-            plan,
-            args.vault_root,
-            args.external_root,
-            args.private_receipt,
-            evict=args.evict,
-            run_id=args.run_id,
-        )
+        if args.resume:
+            receipt = run_resume_cloudkit_materialization_campaign(
+                args.name,
+                plan,
+                args.vault_root,
+                args.external_root,
+                args.private_receipt,
+                evict=args.evict,
+                run_id=args.run_id,
+            )
+        else:
+            receipt = run_cloudkit_materialization_campaign(
+                args.name,
+                plan,
+                args.vault_root,
+                args.external_root,
+                args.private_receipt,
+                evict=args.evict,
+                run_id=args.run_id,
+            )
     else:
         raise AssertionError(args.command)
     print(

@@ -126,6 +126,19 @@ def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
     return receipt
 
 
+def _require_private_retirement_receipt(
+    receipt: MetabolismReceipt,
+    private_receipt: Path,
+) -> None:
+    receipt.require_retirement_gate()
+    try:
+        durable = json.loads(private_receipt.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise PipelineError("private retirement receipt is missing or invalid") from exc
+    if durable != receipt.as_dict():
+        raise PipelineError("private retirement receipt does not match verified custody")
+
+
 def capture_cold_tree(
     name: str,
     plan: RetentionPlan,
@@ -244,7 +257,7 @@ def resume_cold_tree_capture(
     external_base = require_mounted_external(external_root) if require_external_mount else external_root.resolve()
     external_base.mkdir(parents=True, exist_ok=True)
     vault = GitVault(vault_root, repository=repository)
-    vault.verify()
+    vault.verify_identity()
     relative = Path("agent-state") / name / run_id
     payload_root = vault.root / relative
     if not payload_root.is_dir():
@@ -289,7 +302,13 @@ def resume_cold_tree_capture(
     receipt.external_chunks = [chunk for pack in external_packs for chunk in pack.chunks]
     receipt.restorations = [sample, full, external]
     receipt.git_remote = repository
-    receipt.git_commit = vault.require_exact_remote_head()
+    expected_paths = [relative / chunk.path for pack in receipt.packs for chunk in pack.chunks]
+    expected_paths.append(relative / "manifest.json")
+    receipt.git_commit = vault.resume_and_push_payload(
+        relative,
+        expected_paths,
+        f"agent-state: seal {name} {run_id}",
+    )
     receipt.write(payload_root / "receipt.json")
     receipt.git_receipt_commit = vault.commit_and_push(
         relative,
@@ -321,6 +340,7 @@ def run_cold_tree_campaign(
             run_id=run_id,
         )
         if retire:
+            _require_private_retirement_receipt(receipt, private_receipt)
             deleted = retire_cold_files(receipt, plan)
             receipt.source_retired = True
             receipt.retirement_proof = (
@@ -351,6 +371,7 @@ def run_resume_cold_tree_campaign(
             run_id=run_id,
         )
         if retire:
+            _require_private_retirement_receipt(receipt, private_receipt)
             deleted = retire_cold_files(receipt, plan)
             receipt.source_retired = True
             receipt.retirement_proof = (
@@ -383,6 +404,45 @@ def run_cloudkit_materialization_campaign(
             run_id=run_id,
         )
         if evict:
+            _require_private_retirement_receipt(receipt, private_receipt)
+            result = evict_cloud_materializations(receipt, plan)
+            receipt.source_retired = True
+            receipt.retirement_proof = (
+                "file-provider-evicted:"
+                f"selected-files={result.selected_files};"
+                f"evicted-files={result.evicted_files};"
+                f"already-reclaimed-files={result.already_reclaimed_files};"
+                f"allocated-before={result.allocated_before};"
+                f"allocated-after={result.allocated_after}"
+            )
+            receipt.write(private_receipt)
+        return receipt
+
+
+def run_resume_cloudkit_materialization_campaign(
+    name: str,
+    plan: RetentionPlan,
+    vault_root: Path,
+    external_root: Path,
+    private_receipt: Path,
+    *,
+    run_id: str,
+    evict: bool = False,
+) -> MetabolismReceipt:
+    """Resume preserved iCloud ciphertext, then optionally reclaim materializations."""
+
+    owner = f"agent-state-metabolism-{os.getpid()}"
+    with hold_lease("heavy", owner=owner, surface=f"{name}-cloudkit-custody-resume"):
+        receipt = resume_cold_tree_capture(
+            name,
+            plan,
+            vault_root,
+            external_root,
+            private_receipt,
+            run_id=run_id,
+        )
+        if evict:
+            _require_private_retirement_receipt(receipt, private_receipt)
             result = evict_cloud_materializations(receipt, plan)
             receipt.source_retired = True
             receipt.retirement_proof = (
