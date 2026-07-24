@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 
 from limen.agent_state.pipeline import run_opencode_campaign
+from limen.agent_state.tree import plan_retention
+from limen.agent_state.tree_pipeline import run_cold_tree_campaign
 
 HOME = Path.home()
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
@@ -44,21 +46,55 @@ def parser() -> argparse.ArgumentParser:
         action="store_true",
         help="replace the source only after every custody and restoration gate passes",
     )
+    tree = subcommands.add_parser("cold-tree", help="capture a bounded cold file set")
+    tree.add_argument("name")
+    tree.add_argument("--root", type=Path, required=True)
+    tree.add_argument(
+        "--vault-root",
+        type=Path,
+        default=Path("/Volumes/Archive4T/limen-private/arca-vault"),
+    )
+    tree.add_argument(
+        "--external-root",
+        type=Path,
+        default=Path("/Volumes/Archive4T/limen-private/agent-state-exact"),
+    )
+    tree.add_argument("--private-receipt", type=Path, required=True)
+    tree.add_argument("--hot-days", type=int, default=7)
+    tree.add_argument("--maximum-hot-gib", type=float, default=2.0)
+    tree.add_argument("--run-id")
+    tree.add_argument("--retire", action="store_true")
     return command
 
 
 def main() -> int:
     args = parser().parse_args()
-    if args.command != "opencode":
+    if args.command == "opencode":
+        receipt = run_opencode_campaign(
+            args.source,
+            args.vault_root,
+            args.external_root,
+            args.private_receipt,
+            retire=args.retire,
+            run_id=args.run_id,
+        )
+    elif args.command == "cold-tree":
+        plan = plan_retention(
+            args.root,
+            hot_days=args.hot_days,
+            maximum_hot_bytes=int(args.maximum_hot_gib * 1024 * 1024 * 1024),
+        )
+        receipt = run_cold_tree_campaign(
+            args.name,
+            plan,
+            args.vault_root,
+            args.external_root,
+            args.private_receipt,
+            retire=args.retire,
+            run_id=args.run_id,
+        )
+    else:
         raise AssertionError(args.command)
-    receipt = run_opencode_campaign(
-        args.source,
-        args.vault_root,
-        args.external_root,
-        args.private_receipt,
-        retire=args.retire,
-        run_id=args.run_id,
-    )
     print(
         json.dumps(
             {
