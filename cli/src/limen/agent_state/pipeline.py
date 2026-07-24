@@ -79,9 +79,7 @@ class GitVault:
         origin = _run(["git", "remote", "get-url", "origin"], cwd=self.root).removesuffix(".git")
         if origin not in {f"https://github.com/{self.repository}", f"git@github.com:{self.repository}"}:
             raise PipelineError("ARCA vault origin does not match the declared private repository")
-        visibility = _run(
-            ["gh", "repo", "view", self.repository, "--json", "visibility", "-q", ".visibility"]
-        )
+        visibility = _run(["gh", "repo", "view", self.repository, "--json", "visibility", "-q", ".visibility"])
         if visibility != "PRIVATE":
             raise PipelineError("ARCA remote is not private")
 
@@ -137,9 +135,7 @@ def capture_opencode(
     wal = Path(str(source) + "-wal")
     if wal.exists() and wal.stat().st_size:
         raise PipelineError("OpenCode WAL is non-empty; quiesce and checkpoint before capture")
-    external_base = (
-        require_mounted_external(external_root) if require_external_mount else external_root.resolve()
-    )
+    external_base = require_mounted_external(external_root) if require_external_mount else external_root.resolve()
     external_base.mkdir(parents=True, exist_ok=True)
     run_id = run_id or run_id_now()
     vault = GitVault(vault_root, repository=repository)
@@ -163,15 +159,11 @@ def capture_opencode(
         packs = list(packer.close())
         if not result.source.stable:
             raise PipelineError("OpenCode database mutated during capture")
-        sample = verify_atom_packs(
-            packs, payload_root, key, logical_sha256=result.logical_sha256, sample=True
-        )
+        sample = verify_atom_packs(packs, payload_root, key, logical_sha256=result.logical_sha256, sample=True)
         full = verify_atom_packs(packs, payload_root, key, logical_sha256=result.logical_sha256)
         if not sample.passed or not full.passed:
             raise PipelineError("encrypted Git atom restoration failed")
-        external_chunks = list(
-            encrypt_file(source, exact_root, "opencode.db", key, chunk_limit=chunk_limit)
-        )
+        external_chunks = list(encrypt_file(source, exact_root, "opencode.db", key, chunk_limit=chunk_limit))
         external = verify_encrypted_file(
             external_chunks,
             exact_root,
@@ -203,9 +195,7 @@ def capture_opencode(
         (payload_root / "receipt.json").write_text(
             json.dumps(receipt.as_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        receipt.git_receipt_commit = vault.commit_and_push(
-            relative, f"agent-state: receipt OpenCode {run_id}"
-        )
+        receipt.git_receipt_commit = vault.commit_and_push(relative, f"agent-state: receipt OpenCode {run_id}")
         receipt.write(private_receipt)
         receipt.require_retirement_gate()
         return receipt
@@ -276,9 +266,7 @@ def retire_opencode(
         sidecar.unlink(missing_ok=True)
     retiring.unlink()
     receipt.source_retired = True
-    receipt.retirement_proof = (
-        f"deleted-source-sha256:{receipt.source.sha256};clean-db-sha256:{sha256_file(source)}"
-    )
+    receipt.retirement_proof = f"deleted-source-sha256:{receipt.source.sha256};clean-db-sha256:{sha256_file(source)}"
     return receipt
 
 

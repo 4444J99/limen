@@ -61,8 +61,7 @@ def quote_identifier(name: str) -> str:
 
 def _tables(connection: sqlite3.Connection) -> list[tuple[str, str]]:
     rows = connection.execute(
-        "SELECT name, sql FROM sqlite_schema "
-        "WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+        "SELECT name, sql FROM sqlite_schema WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
     )
     return [(str(name), str(sql or "")) for name, sql in rows]
 

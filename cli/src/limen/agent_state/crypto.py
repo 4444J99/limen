@@ -107,9 +107,7 @@ class _ChunkOutput:
         self._handle.flush()
         os.fsync(self._handle.fileno())
         self._handle.close()
-        self._receipts.append(
-            CipherChunk(path=self._path.name, bytes=self._size, sha256=self._digest.hexdigest())
-        )
+        self._receipts.append(CipherChunk(path=self._path.name, bytes=self._size, sha256=self._digest.hexdigest()))
         self._handle = None
         self._path = None
 
@@ -345,9 +343,9 @@ def _verify_pack(
         with gzip.GzipFile(fileobj=stream, mode="rb") as payload:
             for line in payload:
                 envelope = json.loads(line)
-                body = json.dumps(
-                    envelope["record"], ensure_ascii=False, separators=(",", ":"), sort_keys=True
-                ).encode("utf-8")
+                body = json.dumps(envelope["record"], ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode(
+                    "utf-8"
+                )
                 if hashlib.sha256(body).hexdigest() != envelope["atom_sha256"]:
                     raise CryptoError("atom content hash mismatch")
                 digest.update(line)
@@ -406,9 +404,7 @@ def encrypt_file(source: Path, root: Path, stem: str, key: str, *, chunk_limit: 
         raise
 
 
-def verify_encrypted_file(
-    chunks: Iterable[CipherChunk], root: Path, key: str, *, source_sha256: str
-) -> RestoreProof:
+def verify_encrypted_file(chunks: Iterable[CipherChunk], root: Path, key: str, *, source_sha256: str) -> RestoreProof:
     chunk_receipts = tuple(chunks)
     try:
         paths = []

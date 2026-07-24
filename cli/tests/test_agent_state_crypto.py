@@ -19,9 +19,7 @@ def _line(value: str) -> tuple[dict[str, object], bytes]:
 
 
 def test_atom_packs_round_trip_and_stay_bounded(tmp_path: Path) -> None:
-    packer = crypto.EncryptedAtomPacker(
-        tmp_path, KEY, pack_plaintext_limit=140, chunk_limit=64
-    )
+    packer = crypto.EncryptedAtomPacker(tmp_path, KEY, pack_plaintext_limit=140, chunk_limit=64)
     logical = hashlib.sha256()
     for value in ("alpha" * 20, "beta" * 20, "gamma" * 20):
         envelope, line = _line(value)
@@ -31,12 +29,8 @@ def test_atom_packs_round_trip_and_stay_bounded(tmp_path: Path) -> None:
 
     assert len(packs) == 3
     assert all(chunk.bytes <= 64 for pack in packs for chunk in pack.chunks)
-    assert crypto.verify_atom_packs(
-        packs, tmp_path, KEY, logical_sha256=logical.hexdigest(), sample=True
-    ).passed
-    full = crypto.verify_atom_packs(
-        packs, tmp_path, KEY, logical_sha256=logical.hexdigest()
-    )
+    assert crypto.verify_atom_packs(packs, tmp_path, KEY, logical_sha256=logical.hexdigest(), sample=True).passed
+    full = crypto.verify_atom_packs(packs, tmp_path, KEY, logical_sha256=logical.hexdigest())
     assert full.passed
     assert full.atoms_verified == 3
 
@@ -51,9 +45,7 @@ def test_corrupt_ciphertext_fails_restore(tmp_path: Path) -> None:
     data[-1] ^= 1
     path.write_bytes(data)
 
-    proof = crypto.verify_atom_packs(
-        packs, tmp_path, KEY, logical_sha256=hashlib.sha256(line).hexdigest()
-    )
+    proof = crypto.verify_atom_packs(packs, tmp_path, KEY, logical_sha256=hashlib.sha256(line).hexdigest())
     assert not proof.passed
     assert "hash verification" in proof.detail
 

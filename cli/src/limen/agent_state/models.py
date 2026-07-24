@@ -42,8 +42,7 @@ class SourceProof:
     @property
     def stable(self) -> bool:
         inventory_stable = (
-            self.inventory_before_sha256 is None
-            or self.inventory_before_sha256 == self.inventory_after_sha256
+            self.inventory_before_sha256 is None or self.inventory_before_sha256 == self.inventory_after_sha256
         )
         return self.stat_before == self.stat_after and inventory_stable
 

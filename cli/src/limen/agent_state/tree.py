@@ -131,9 +131,7 @@ def atomize_file_tree(
                 for value in iter(lambda: handle.read(chunk_size), b""):
                     file_digest.update(value)
                     chunk_hash = hashlib.sha256(b"file-chunk:v1\0" + value).hexdigest()
-                    inserted = seen.execute(
-                        "INSERT OR IGNORE INTO chunk (sha256) VALUES (?)", (chunk_hash,)
-                    ).rowcount
+                    inserted = seen.execute("INSERT OR IGNORE INTO chunk (sha256) VALUES (?)", (chunk_hash,)).rowcount
                     if inserted:
                         emitter.emit(
                             {
@@ -187,9 +185,7 @@ def open_files_under(root: Path) -> set[Path]:
 
     import subprocess
 
-    result = subprocess.run(
-        ["lsof", "-Fn", "+D", str(root)], check=False, capture_output=True, text=True
-    )
+    result = subprocess.run(["lsof", "-Fn", "+D", str(root)], check=False, capture_output=True, text=True)
     if result.returncode not in {0, 1}:
         raise RuntimeError("cannot inspect open files under retention root")
     return {

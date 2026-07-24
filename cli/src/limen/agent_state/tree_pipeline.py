@@ -48,9 +48,7 @@ def capture_cold_tree(
         raise ValueError("tree custody name must be lowercase alphanumeric with hyphens")
     if not plan.cold_paths:
         raise PipelineError(f"no cold files selected for {name}")
-    external_base = (
-        require_mounted_external(external_root) if require_external_mount else external_root.resolve()
-    )
+    external_base = require_mounted_external(external_root) if require_external_mount else external_root.resolve()
     external_base.mkdir(parents=True, exist_ok=True)
     run_id = run_id or run_id_now()
     vault = GitVault(vault_root, repository=repository)
@@ -74,9 +72,7 @@ def capture_cold_tree(
         packs = list(packer.close())
         if not result.source.stable:
             raise PipelineError(f"{name} file tree mutated during capture")
-        sample = verify_atom_packs(
-            packs, payload_root, key, logical_sha256=result.logical_sha256, sample=True
-        )
+        sample = verify_atom_packs(packs, payload_root, key, logical_sha256=result.logical_sha256, sample=True)
         full = verify_atom_packs(packs, payload_root, key, logical_sha256=result.logical_sha256)
         if not sample.passed or not full.passed:
             raise PipelineError(f"{name} encrypted Git restoration failed")
@@ -120,16 +116,12 @@ def capture_cold_tree(
         (payload_root / "manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        receipt.git_commit = vault.commit_and_push(
-            relative, f"agent-state: seal {name} {run_id}"
-        )
+        receipt.git_commit = vault.commit_and_push(relative, f"agent-state: seal {name} {run_id}")
         receipt.git_remote = repository
         (payload_root / "receipt.json").write_text(
             json.dumps(receipt.as_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        receipt.git_receipt_commit = vault.commit_and_push(
-            relative, f"agent-state: receipt {name} {run_id}"
-        )
+        receipt.git_receipt_commit = vault.commit_and_push(relative, f"agent-state: receipt {name} {run_id}")
         receipt.write(private_receipt)
         receipt.require_retirement_gate()
         return receipt
@@ -164,8 +156,7 @@ def run_cold_tree_campaign(
             deleted = retire_cold_files(receipt, plan)
             receipt.source_retired = True
             receipt.retirement_proof = (
-                f"deleted-files:{deleted};deleted-bytes:{plan.cold_bytes};"
-                f"retained-hot-bytes:{plan.hot_bytes}"
+                f"deleted-files:{deleted};deleted-bytes:{plan.cold_bytes};retained-hot-bytes:{plan.hot_bytes}"
             )
             receipt.write(private_receipt)
         return receipt

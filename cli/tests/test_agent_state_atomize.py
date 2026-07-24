@@ -34,9 +34,7 @@ def test_opencode_atomization_deduplicates_event_payloads(tmp_path: Path) -> Non
 
     records = [envelope["record"] for envelope in envelopes]
     payloads = [record for record in records if record["kind"] == "event_payload"]
-    event_rows = [
-        record for record in records if record["kind"] == "sqlite_row" and record["table"] == "event"
-    ]
+    event_rows = [record for record in records if record["kind"] == "sqlite_row" and record["table"] == "event"]
     assert len(payloads) == 2
     assert len(event_rows) == 3
     assert result.duplicate_payloads == 1

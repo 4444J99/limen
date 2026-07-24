@@ -70,9 +70,7 @@ def test_file_tree_atoms_restore_and_deduplicate_chunks(tmp_path: Path) -> None:
     assert result.file_count == 2
     assert result.duplicate_chunks == 1
     assert result.source.stable
-    proof = verify_atom_packs(
-        packs, encrypted, KEY, logical_sha256=result.logical_sha256
-    )
+    proof = verify_atom_packs(packs, encrypted, KEY, logical_sha256=result.logical_sha256)
     assert proof.passed
 
 
