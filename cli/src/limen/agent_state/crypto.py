@@ -332,8 +332,14 @@ def _chunk_paths(pack: AtomPack, root: Path) -> tuple[Path, ...]:
     return tuple(paths)
 
 
-def _verify_pack(pack: AtomPack, root: Path, key: str) -> tuple[int, bytes]:
-    def consume(stream: BinaryIO) -> tuple[int, bytes]:
+def _verify_pack(
+    pack: AtomPack,
+    root: Path,
+    key: str,
+    *,
+    logical_digest: hashlib._Hash | None = None,
+) -> int:
+    def consume(stream: BinaryIO) -> int:
         count = 0
         digest = hashlib.sha256()
         with gzip.GzipFile(fileobj=stream, mode="rb") as payload:
@@ -345,10 +351,12 @@ def _verify_pack(pack: AtomPack, root: Path, key: str) -> tuple[int, bytes]:
                 if hashlib.sha256(body).hexdigest() != envelope["atom_sha256"]:
                     raise CryptoError("atom content hash mismatch")
                 digest.update(line)
+                if logical_digest is not None:
+                    logical_digest.update(line)
                 count += 1
         if count != pack.atom_count or digest.hexdigest() != pack.plaintext_sha256:
             raise CryptoError("atom pack manifest mismatch")
-        return count, digest.digest()
+        return count
 
     return _decrypt(_chunk_paths(pack, root), key, consume)
 
@@ -363,14 +371,12 @@ def verify_atom_packs(
     logical = hashlib.sha256()
     try:
         for pack in selected:
-            count, _digest = _verify_pack(pack, root, key)
-            atoms += count
-            if not sample:
-                def consume_lines(stream: BinaryIO) -> None:
-                    with gzip.GzipFile(fileobj=stream, mode="rb") as payload:
-                        for line in payload:
-                            logical.update(line)
-                _decrypt(_chunk_paths(pack, root), key, consume_lines)
+            atoms += _verify_pack(
+                pack,
+                root,
+                key,
+                logical_digest=None if sample else logical,
+            )
         if not sample and logical.hexdigest() != logical_sha256:
             raise CryptoError("full logical manifest digest mismatch")
     except (CryptoError, OSError, EOFError, gzip.BadGzipFile, json.JSONDecodeError) as exc:
