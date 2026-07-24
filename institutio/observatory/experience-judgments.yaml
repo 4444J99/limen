@@ -100,6 +100,18 @@ judgments:
     - empty state 'No prospects match your current filters' and 'Showing 0 of 0 prospects' - the product looks non-functional
     - a first-time visitor sees a broken data pipeline rather than a working intelligence platform
     suggested_fix: fix the failing data fetch (the console ApiError) or ship a seeded demo dataset so the platform shows real content on first load
+  - judged_at: '2026-07-23T19:20:00Z'
+    captured_at: '2026-07-23T19:03:21Z'
+    screenshot_sha256: 61a3ef33ca981b3ff286583335fef58d27641cc8408131375f0b9e449b6bcefe
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 5
+      typography: 4
+      coherence: 5
+      trust: 4
+    defects: []
+    suggested_fix: none — the red 'Failed to load live data' error banner is replaced by a graceful demo-data mode (PR #368/#369); the page now renders a professional intelligence-platform dashboard (stat cards, full nav, product-status) with an honest 'Demo data — connect a live source' note instead of a broken pipeline
   search-local-happy-hour:
   - judged_at: '2026-07-18T17:00:00Z'
     captured_at: '2026-07-18T16:40:09Z'
