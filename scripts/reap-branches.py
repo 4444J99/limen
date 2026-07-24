@@ -50,7 +50,8 @@ merging fleet makes the closeout gate unsatisfiable at every instant. Bounded (-
 per-branch, self-throttles to once per LIMEN_BRANCH_REAP_EVERY_MIN minutes, logs
 logs/reap-branches.jsonl + stamps logs/reap-branches-state.json.
 
-Env: LIMEN_ROOT, LIMEN_BRANCH_REAP_MAX (100), LIMEN_BRANCH_REAP_EVERY_MIN (30),
+Env: LIMEN_ROOT, LIMEN_BRANCH_REAP_REPO_ROOT (optional target repository; receipts remain
+     under LIMEN_ROOT), LIMEN_BRANCH_REAP_MAX (100), LIMEN_BRANCH_REAP_EVERY_MIN (30),
      LIMEN_BRANCH_REAP_GRACE_MIN (60; --check only: a landed branch younger than this many minutes
      is digesting, not lingering — --apply eligibility is unaffected),
      LIMEN_BRANCH_REAP_PROTECT (extra protected branch names, space-separated), LIMEN_OFFLINE.
@@ -138,11 +139,17 @@ def _float_env(name: str, default: float, *, minimum: float | None = None) -> fl
     return value
 
 
+def repository_root() -> Path:
+    """Return the target repository while keeping receipts in Limen."""
+
+    return Path(os.environ.get("LIMEN_BRANCH_REAP_REPO_ROOT", str(LIMEN_ROOT))).resolve()
+
+
 def _git(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a git command against the repo. Fails OPEN (returncode!=0) — never raises."""
     try:
         return subprocess.run(
-            ["git", "-C", str(LIMEN_ROOT), *args],
+            ["git", "-C", str(repository_root()), *args],
             capture_output=True,
             text=True,
             timeout=timeout,

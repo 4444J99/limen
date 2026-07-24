@@ -1,0 +1,152 @@
+{
+  "schema": "limen.agent_state_metabolism_receipts.v1",
+  "generated_at": "2026-07-24T16:05:00Z",
+  "privacy": {
+    "tracked_surface": "counts-and-remote-receipts-only",
+    "full_hash_owner": "private organvm/arca receipt",
+    "raw_paths_redacted": true
+  },
+  "operations": [
+    {
+      "source": "opencode-sqlite",
+      "run_id": "20260724T145100Z",
+      "source_bytes": 24388005888,
+      "atom_count": 598309,
+      "duplicate_event_payloads": 11367,
+      "encrypted_git": {
+        "repository": "organvm/arca",
+        "data_commit": "a542e8310bb9bcd5d7f1fd82f92aae2da5a21ac6",
+        "receipt_commit": "4a919a558f23fd85f81858eae12c0fe908c8dc98",
+        "pack_count": 252,
+        "ciphertext_bytes": 985773056,
+        "maximum_chunk_bytes": 94371840,
+        "remote_exact_head_verified": true
+      },
+      "encrypted_external": {
+        "custody": "Archive4T",
+        "ciphertext_only": true,
+        "chunk_count": 259,
+        "ciphertext_bytes": 24388005920,
+        "plaintext_personal_artifacts": 0
+      },
+      "restoration": {
+        "git_sample": {
+          "passed": true,
+          "atoms_verified": 21041
+        },
+        "git_full_manifest": {
+          "passed": true,
+          "atoms_verified": 598309
+        },
+        "external_full_source_hash": {
+          "passed": true
+        }
+      },
+      "retirement": {
+        "active_vendor_process": false,
+        "source_mutated_during_capture": false,
+        "source_retired": true,
+        "deleted_source_hash_proof_private": true,
+        "clean_database_integrity": "ok",
+        "clean_database_session_rows": 0,
+        "clean_database_event_rows": 0,
+        "vendor_root_bytes_after": 1279549440
+      },
+      "internal_free_kib_after": 43508728
+    },
+    {
+      "source": "codex-cold-sessions",
+      "run_id": "20260724T151647Z",
+      "source_file_count": 2246,
+      "source_bytes": 8157585892,
+      "atom_count": 16983,
+      "duplicate_file_chunks": 2041,
+      "encrypted_git": {
+        "repository": "organvm/arca",
+        "data_commit": "c10a3a1831bf92d846461c4c05f53b51d035528a",
+        "receipt_commit": "1992f8df2bb704ca8ba93b3ac10704218db904ce",
+        "pack_count": 286,
+        "ciphertext_bytes": 4655009376,
+        "maximum_chunk_bytes": 21201264,
+        "remote_exact_head_verified": true
+      },
+      "encrypted_external": {
+        "custody": "Archive4T",
+        "ciphertext_only": true,
+        "chunk_count": 286,
+        "ciphertext_bytes": 4655009376,
+        "plaintext_personal_artifacts": 0
+      },
+      "restoration": {
+        "git_sample": {
+          "passed": true,
+          "atoms_verified": 105
+        },
+        "git_full_manifest": {
+          "passed": true,
+          "atoms_verified": 16983
+        },
+        "external_full_manifest": {
+          "passed": true,
+          "atoms_verified": 16983
+        }
+      },
+      "retirement": {
+        "source_mutated_during_capture": false,
+        "source_retired": true,
+        "deleted_file_count": 2246,
+        "deleted_bytes": 8157585892,
+        "retained_hot_bytes": 1330746752,
+        "deleted_source_hash_proof_private": true
+      },
+      "internal_free_kib_after": 51935728
+    },
+    {
+      "source": "limen-private-session-corpus",
+      "run_id": "20260724T161400Z",
+      "source_file_count": 432937,
+      "source_bytes": 9964383192,
+      "atom_count": 877290,
+      "duplicate_file_chunks": 3419,
+      "encrypted_git": {
+        "repository": "organvm/arca",
+        "data_commit": "46cb59a5e1dbc56d29eaa3f915cba6fc6483f6dc",
+        "receipt_commit": "c7fbbeaa6943ae7b8b9124c92290609b0e516b07",
+        "pack_count": 346,
+        "ciphertext_bytes": 3373187744,
+        "maximum_chunk_bytes": 23445984,
+        "remote_exact_head_verified": true
+      },
+      "encrypted_external": {
+        "custody": "Archive4T",
+        "ciphertext_only": true,
+        "chunk_count": 346,
+        "ciphertext_bytes": 3373187744,
+        "plaintext_personal_artifacts": 0
+      },
+      "restoration": {
+        "git_sample": {
+          "passed": true,
+          "atoms_verified": 21975
+        },
+        "git_full_manifest": {
+          "passed": true,
+          "atoms_verified": 877290
+        },
+        "external_full_manifest": {
+          "passed": true,
+          "atoms_verified": 877290
+        }
+      },
+      "retirement": {
+        "source_mutated_during_capture": false,
+        "source_retired": true,
+        "deleted_file_count": 432937,
+        "deleted_bytes": 9964383192,
+        "retained_hot_bytes": 1245215376,
+        "deleted_source_hash_proof_private": true
+      },
+      "internal_free_kib_after": 62833572
+    }
+  ]
+}

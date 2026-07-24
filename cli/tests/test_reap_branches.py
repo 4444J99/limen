@@ -95,6 +95,22 @@ def test_numeric_env_knobs_fall_back(monkeypatch):
     assert reap._float_env("LIMEN_BRANCH_REAP_EVERY_MIN", 30.0, minimum=0.0) == 30.0
 
 
+def test_git_can_target_external_repo_without_moving_control_root(tmp_path, monkeypatch):
+    target = tmp_path / "owner-repo"
+    target.mkdir()
+    _git(target, "init", "-q", "-b", "main")
+    control = tmp_path / "control"
+    control.mkdir()
+    monkeypatch.setattr(reap, "LIMEN_ROOT", control)
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_REPO_ROOT", str(target))
+
+    result = reap._git(["rev-parse", "--show-toplevel"])
+
+    assert result.returncode == 0
+    assert Path(result.stdout.strip()) == target.resolve()
+    assert reap.repository_root() != reap.LIMEN_ROOT
+
+
 def test_ancestor_reported_before_pr_merged():
     v = reap.classify(F(is_ancestor=True, pr_merged_safe=True))
     assert v.reason == "landed-ancestor"
