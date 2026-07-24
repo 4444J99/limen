@@ -2371,6 +2371,25 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "When 1, historical route ledger bias may down-weight remote batch-fill lanes. Default 0 preserves explicit daily utilization targets for lanes such as Jules."
+  LIMEN_CROSS_VENDOR_INGEST:
+    default: "1"
+    env: LIMEN_CROSS_VENDOR_INGEST
+    self_update: none
+    owner: censor
+    note: "Beat gate for the insight-cross-vendor sensor (sensors.yaml 0z0): refreshes the 7 per-vendor friction packets (logs/insight-cross-vendor/) that insight-cadence's cross-vendor source reads. Arms the estate-wide-friction-beat-sensor proposal (censor/whole-estate-insights-proposals.json); before this the ingest ran only by hand and packets went stale. Read-only over vendor stores; counts/patterns only. Set 0 to silence."
+  LIMEN_BEAT_CROSS_VENDOR:
+    default: 24
+    env: LIMEN_BEAT_CROSS_VENDOR
+    self_update: none
+    owner: censor
+    note: "Cadence (every N beats) of the insight-cross-vendor sensor — a daily-ish refresh matches the insights-report tempo the packets feed; the scan walks large vendor session stores (codex logs sqlite is GiB-scale), so it stays off the hot path."
+  LIMEN_CROSS_VENDOR_TIMEOUT:
+    default: 600
+    env: LIMEN_CROSS_VENDOR_TIMEOUT
+    self_update: none
+    owner: censor
+    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: seven adapters over multi-GiB sqlite/jsonl stores with a 30-day window; 600 covers the observed manual-run envelope with headroom. The runner kills the command group on overrun and the beat continues fail-open."
+
   LIMEN_JULES_QUOTA:
     default: "1"
     env: LIMEN_JULES_QUOTA
