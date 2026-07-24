@@ -625,6 +625,27 @@ def superproject(cwd) -> str | None:
     return None
 
 
+def worktree_lock_reason(path: Path) -> str | None:
+    """Return the explicit Git worktree lock reason for this exact path."""
+
+    result = git(["worktree", "list", "--porcelain"], path)
+    if result.returncode != 0:
+        return None
+    target = path.resolve()
+    current: Path | None = None
+    for line in result.stdout.splitlines():
+        if line.startswith("worktree "):
+            try:
+                current = Path(line.split(" ", 1)[1]).resolve()
+            except OSError:
+                current = None
+        elif line == "locked" and current == target:
+            return "unspecified"
+        elif line.startswith("locked ") and current == target:
+            return line.split(" ", 1)[1].strip() or "unspecified"
+    return None
+
+
 def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, source: str = ""):
     """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue,
     quarantine-orphan, skip}. quarantine-orphan MOVES (never deletes) a dead-gitdir orphan."""
@@ -655,6 +676,9 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, 
                 return "quarantine-orphan", ORPHAN_REASON
             return "skip", f"orphan-active(<{min_age_h:g}h)"
         return "skip", "not-a-git-dir"
+    lock_reason = worktree_lock_reason(d)
+    if lock_reason is not None:
+        return "skip", f"locked:{lock_reason}"
     age_h = (now - d.stat().st_mtime) / 3600.0
     if age_h < min_age_h:
         return "skip", f"active(<{min_age_h:g}h, age={age_h:.1f}h)"

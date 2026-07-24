@@ -528,6 +528,23 @@ def test_reclaim_keeps_root_owned_by_live_process(tmp_path: Path, monkeypatch) -
     assert reason == "active-process-cwd:4242"
 
 
+def test_reclaim_classifies_git_locked_worktree_before_candidate_selection(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    main = _committed_repo(tmp_path, "main")
+    worktree = tmp_path / "locked-worktree"
+    subprocess.run(["git", "worktree", "add", "-qb", "locked", str(worktree)], cwd=main, check=True)
+    subprocess.run(
+        ["git", "worktree", "lock", "--reason", "active prompt-corpus", str(worktree)],
+        cwd=main,
+        check=True,
+    )
+
+    action, reason = reclaim.classify(worktree, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "locked:active prompt-corpus"
+
+
 def test_reclaim_keeps_pushed_unmerged_when_pushed_ok_off(tmp_path: Path, monkeypatch) -> None:
     # With the push-first rule off, the conservative merged-only gate is restored: a pushed-but-
     # unmerged root is kept, exactly as before. The reversibility guardrail for the standing grant.

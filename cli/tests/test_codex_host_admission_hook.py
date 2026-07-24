@@ -190,6 +190,24 @@ def test_pre_tool_use_read_only_command_never_acquires_writer(tmp_path: Path) ->
     assert service.status(probe=False)["leases"] == []
 
 
+def test_generated_cache_reclaimer_is_a_self_gated_sanctioned_control(tmp_path: Path) -> None:
+    hook = load_hook()
+    service = controller(tmp_path)
+    for command in (
+        "python3 scripts/reclaim-generated-caches.py --check --json",
+        ("python3 scripts/reclaim-generated-caches.py --apply --expected-plan-sha deadbeef --json"),
+    ):
+        assert (
+            hook.handle(
+                payload("PreToolUse", tool_input={"command": command}),
+                controller=service,
+                owner_pid=101,
+            )
+            is None
+        )
+    assert service.status(probe=False)["leases"] == []
+
+
 def test_read_only_pipeline_and_dev_null_redirection_never_acquire_writer(tmp_path: Path) -> None:
     hook = load_hook()
     for command in (
