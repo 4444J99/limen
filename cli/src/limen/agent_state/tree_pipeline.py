@@ -303,6 +303,22 @@ def resume_cold_tree_capture(
     receipt.external_chunks = [chunk for pack in external_packs for chunk in pack.chunks]
     receipt.restorations = [sample, full, external]
     receipt.git_remote = repository
+    receipt_message = f"agent-state: receipt {name} {run_id}"
+    completed = vault.completed_receipt_commits(relative, receipt_message)
+    if completed is not None:
+        payload_commit, receipt_commit = completed
+        receipt.git_commit = payload_commit
+        receipt_path = payload_root / "receipt.json"
+        try:
+            durable = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise PipelineError("completed ARCA receipt is missing or invalid") from exc
+        expected = json.loads(json.dumps(receipt.as_dict(), sort_keys=True))
+        if durable != expected:
+            raise PipelineError("completed ARCA receipt does not match verified custody")
+        receipt.git_receipt_commit = receipt_commit
+        _require_private_retirement_receipt(receipt, private_receipt)
+        return receipt
     expected_paths = [relative / chunk.path for pack in receipt.packs for chunk in pack.chunks]
     expected_paths.append(relative / "manifest.json")
     receipt.git_commit = vault.resume_and_push_payload(
@@ -313,7 +329,7 @@ def resume_cold_tree_capture(
     receipt.write(payload_root / "receipt.json")
     receipt.git_receipt_commit = vault.commit_and_push(
         relative,
-        f"agent-state: receipt {name} {run_id}",
+        receipt_message,
     )
     receipt.write(private_receipt)
     receipt.require_retirement_gate()
