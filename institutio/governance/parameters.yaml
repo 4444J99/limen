@@ -201,6 +201,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Optional stable caller label for the public host-admission CLI. Blank derives a private label from the parent process-start identity; the persisted label never contains a checkout path."
+  LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT:
+    default: "$HOME/.local/share/limen/current/source/scripts/hooks/codex-host-admission.py"
+    env: LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT
+    self_update: none
+    owner: vitals
+    note: "Installed immutable host-admission policy entrypoint. The project runner delegates to this path so a checkout cannot replace the policy that judges it; an explicit override exists for bounded compatibility tests and clean runtime activation probes."
   LIMEN_CODEX_PRETOOL_DENIAL_SUPPORTED:
     default: "auto"
     env: LIMEN_CODEX_PRETOOL_DENIAL_SUPPORTED

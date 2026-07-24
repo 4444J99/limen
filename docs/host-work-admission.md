@@ -76,22 +76,12 @@ execution lease. When the installed client exposes stable structured denial, `Pr
 action decision. When it does not, session startup still proceeds and no legacy one-root fallback is
 created. Guarded heavy entrypoints remain fail-closed through their internal lease acquisition.
 
-The Codex and Claude `PreToolUse` adapters consume the same lane-neutral action policy for
-`Bash`, `apply_patch`, `Edit`, and `Write`:
+`PreToolUse` covers `Bash`, `apply_patch`, `Edit`, and `Write`:
 
 - known read-only actions acquire no lease;
 - sanctioned Limen status, workstream, conduct, fanout, and remote-dispatch controls rely on their
   internal locking;
 - writes require a linked worktree and its scoped writer lease;
-- structured tool `workdir` / `cwd` takes precedence over the session startup cwd; conflicting or
-  unavailable structured state fails closed for mutation;
-- supported `cd`, `git -C`, redirection, structured edit/write, and apply-patch targets are
-  canonicalized before containment checks; opaque mutation-capable compounds, background commands,
-  command substitutions, and symlink escapes are denied;
-- structured write tools whose client payload omits the target fail closed as
-  `write-target-unavailable`;
-- plan-mode and explicit `planning_only=true` / `build_allowed=false` execution profiles cannot
-  acquire a writer lease;
 - guarded heavy commands must pass the live global-heavy/pressure check;
 - raw unguarded heavy commands are denied with the sanctioned equivalent.
 
@@ -130,8 +120,11 @@ The project hook also stages an immutable delegation entrypoint:
 complete capability document within one second, then invokes only that target using its installed
 runtime interpreter. Missing, slow, malformed, or incompatible policy never blocks
 `UserPromptSubmit`; it allows observation and denies mutation through one event-appropriate channel
-with a safe `domus-limen-runtime status` diagnostic. The project hook runner does not invoke this
-entrypoint yet; changing the runner is the later immutable-cutover lane after live runtime proof.
+with a safe `domus-limen-runtime status` diagnostic. The project hook runner invokes this boundary
+with the installed runtime at
+`~/.local/share/limen/current/source/scripts/hooks/codex-host-admission.py`. The
+`LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT` override is reserved for focused compatibility testing; host
+activation still installs and proves an exact runtime SHA before this cutover may merge.
 
 ## Lock order and recovery
 
@@ -143,7 +136,9 @@ Do not delete the store to seize admission. Inspect it with `status`. A live lea
 and expiry; a stale/dead/PID-reused lease is reaped on the next operation. A corrupt store is an
 owner-routed blocker because silently replacing it would make concurrent work look absent.
 
-Claude `SessionEnd` is a separate constant-time breadcrumb seam. It does not refresh handoff,
-inspect watchers or transcripts, audit models, or evaluate lifecycle pressure synchronously; those
-consumers are heartbeat-owned and idempotent. See
-[`docs/session-end-breadcrumbs.md`](session-end-breadcrumbs.md).
+The SessionEnd lifecycle refresh separately preserves the useful low-priority closeout ideas from
+draft PR #744 against current `main`: one dead-PID/stale-safe singleton, a process-group timeout,
+`nice -n 10`, a narrower worktree-debt timeout, and a declared maximum number of roots per size
+scan with explicit partial receipts. Combined with host admission and the existing bounded
+`closeout-fast` queue/test timeouts, this supersedes #744; its old conflicting branch is not merge
+or cherry-pick authority.

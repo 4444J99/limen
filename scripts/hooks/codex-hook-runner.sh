@@ -45,6 +45,7 @@ case "$hook_name" in
     ;;
   host-admission)
     target="$root/scripts/hooks/codex-host-admission.py"
+    immutable_target="${LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT:-$HOME/.local/share/limen/current/source/scripts/hooks/codex-host-admission.py}"
     ;;
   *)
     log "unknown hook target; skipping"
@@ -61,6 +62,9 @@ export CLAUDE_PROJECT_DIR="$root"
 export CODEX_PROJECT_DIR="${CODEX_PROJECT_DIR:-$root}"
 
 if [[ "$target" == *.py ]]; then
+  if [[ "$hook_name" == "host-admission" ]]; then
+    exec python3 "$target" --delegate-immutable "$immutable_target" "$@"
+  fi
   exec python3 "$target" "$@"
 fi
 

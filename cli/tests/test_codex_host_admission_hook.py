@@ -883,4 +883,61 @@ def test_malformed_store_emits_exactly_one_redacted_rejection_channel(
 def test_hook_runner_prefers_codex_project_root() -> None:
     runner = (ROOT / "scripts" / "hooks" / "codex-hook-runner.sh").read_text(encoding="utf-8")
     assert runner.index('"${CODEX_PROJECT_DIR:-}"') < runner.index('"${CLAUDE_PROJECT_DIR:-}"')
-    assert "--delegate-immutable" not in runner
+    assert '--delegate-immutable "$immutable_target"' in runner
+
+
+def test_hook_runner_delegates_host_admission_to_compatible_immutable_runtime(tmp_path: Path) -> None:
+    hook = load_hook()
+    target = tmp_path / "immutable" / "scripts" / "hooks" / "codex-host-admission.py"
+    target.parent.mkdir(parents=True)
+    capabilities = json.dumps(hook.host_admission_capabilities(), sort_keys=True)
+    target.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json,sys\n"
+        f"CAPABILITIES = {capabilities!r}\n"
+        "if sys.argv[1:] == ['--capabilities']:\n"
+        "    print(CAPABILITIES)\n"
+        "else:\n"
+        "    payload = json.load(sys.stdin)\n"
+        "    print(json.dumps({'systemMessage': 'immutable:' + payload['hook_event_name']}))\n",
+        encoding="utf-8",
+    )
+    runner = ROOT / "scripts" / "hooks" / "codex-hook-runner.sh"
+    environment = os.environ | {
+        "CODEX_PROJECT_DIR": str(ROOT),
+        "LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT": str(target),
+    }
+
+    result = subprocess.run(
+        ["bash", str(runner), "host-admission"],
+        input=json.dumps(fixture("user-prompt-submit-default.json")),
+        capture_output=True,
+        text=True,
+        timeout=4,
+        check=True,
+        env=environment,
+    )
+
+    assert json.loads(result.stdout) == {"systemMessage": "immutable:UserPromptSubmit"}
+    assert result.stderr == ""
+
+
+def test_hook_runner_does_not_block_session_start_when_immutable_runtime_is_missing(tmp_path: Path) -> None:
+    runner = ROOT / "scripts" / "hooks" / "codex-hook-runner.sh"
+    environment = os.environ | {
+        "CODEX_PROJECT_DIR": str(ROOT),
+        "LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT": str(tmp_path / "missing.py"),
+    }
+
+    result = subprocess.run(
+        ["bash", str(runner), "host-admission"],
+        input=json.dumps(fixture("user-prompt-submit-default.json")),
+        capture_output=True,
+        text=True,
+        timeout=4,
+        check=True,
+        env=environment,
+    )
+
+    assert result.stdout == ""
+    assert result.stderr == ""
