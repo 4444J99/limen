@@ -630,6 +630,10 @@ def _harness_session_dirs() -> tuple[Path, ...]:
     return (
         (home / ".claude" / "plans").resolve(strict=False),
         (home / ".claude" / "jobs").resolve(strict=False),
+        # per-project harness memory + session TLDRs (~/.claude/projects/<scope>/…) — the
+        # system prompt itself directs these writes ("write to it directly with the Write
+        # tool"); blocking them silently drops session memory.
+        (home / ".claude" / "projects").resolve(strict=False),
     )
 
 
