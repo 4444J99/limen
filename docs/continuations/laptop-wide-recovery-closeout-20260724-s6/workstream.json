@@ -4,7 +4,13 @@
     "authorization": {
       "approval_mode": "never",
       "mode": "full_non_destructive",
-      "retained_gates": ["destructive", "credential", "paid_spend", "public_send", "runtime_or_host_mutation"],
+      "retained_gates": [
+        "destructive",
+        "credential",
+        "paid_spend",
+        "public_send",
+        "runtime_or_host_mutation"
+      ],
       "reversible_in_scope": "proceed_without_confirmation",
       "sandbox": "workspace-write"
     },
@@ -15,12 +21,29 @@
       "mode": "route_bounded_packets",
       "provider_and_model": "provider_neutral"
     },
-    "runway": {"deadline_at": null, "deadline_epoch": null, "duration_seconds": 28800, "requested": "8h", "started_at": null, "started_epoch": null},
+    "runway": {
+      "deadline_at": "2026-07-24T21:19:36+00:00",
+      "deadline_epoch": 1784927976,
+      "duration_seconds": 28800,
+      "requested": "8h",
+      "started_at": "2026-07-24T13:19:36+00:00",
+      "started_epoch": 1784899176
+    },
     "schema": "limen.workstream.contract.v1"
   },
   "private_capsule": {
     "content": "redacted",
-    "modules": ["README.md", "manifest.md", "workstream.json", "workstream-contract.py", "intent.md", "runtime.md", "closeout.md", "kickstart.sh", "capsule.identity"]
+    "modules": [
+      "README.md",
+      "manifest.md",
+      "workstream.json",
+      "workstream-contract.py",
+      "intent.md",
+      "runtime.md",
+      "closeout.md",
+      "kickstart.sh",
+      "capsule.identity"
+    ]
   },
   "schema": "limen.workstream.receipt.v1",
   "slug": "laptop-wide-recovery-closeout-20260724-s6",
