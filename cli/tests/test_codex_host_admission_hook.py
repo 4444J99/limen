@@ -190,6 +190,40 @@ def test_pre_tool_use_read_only_command_never_acquires_writer(tmp_path: Path) ->
     assert service.status(probe=False)["leases"] == []
 
 
+def test_read_only_pipeline_and_dev_null_redirection_never_acquire_writer(tmp_path: Path) -> None:
+    hook = load_hook()
+    for command in (
+        "nl -ba tracked.txt | sed -n '1,2p'",
+        "rg needle missing.txt 2>/dev/null",
+    ):
+        service = controller(tmp_path / command.split()[0])
+        output = hook.handle(
+            payload("PreToolUse", tool_input={"command": command}),
+            controller=service,
+            owner_pid=101,
+        )
+        assert output is None
+        assert service.status(probe=False)["leases"] == []
+
+
+def test_namespaced_apply_patch_command_payload_resolves_target(tmp_path: Path) -> None:
+    hook = load_hook()
+    _main, first, _second = linked_worktrees(tmp_path)
+    service = controller(tmp_path / "admission")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        tool_name="functions.apply_patch",
+        tool_input={
+            "command": "*** Update File: tracked.txt\n@@\n-old\n+new\n",
+        },
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+    leases = service.status(probe=False)["leases"]
+    assert len(leases) == 1
+    assert leases[0]["kind"].startswith("execution:")
+
+
 def test_same_worktree_has_one_writer_but_disjoint_worktrees_run_concurrently(tmp_path: Path) -> None:
     hook = load_hook()
     main, first, second = linked_worktrees(tmp_path)

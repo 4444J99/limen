@@ -578,6 +578,42 @@ def test_interrupted_migration_write_converges_on_scoped_record(tmp_path: Path) 
     assert service.status(probe=False)["leases"] == leases
 
 
+def test_interrupted_scoped_refresh_keeps_newest_identical_lease(tmp_path: Path) -> None:
+    """A crash between scoped and legacy refresh writes converges by exact identity."""
+
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    service = controller(tmp_path / "state")
+    scope = worktree_scope(first)
+    acquired = service.acquire(scope.lease_kind, owner="codex", surface="write", pid=101)
+    lease_id = acquired["lease"]["lease_id"]
+
+    scoped = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    newer = dict(scoped["leases"][0])
+    newer["refreshed_epoch"] = float(newer["refreshed_epoch"]) + 10
+    newer["refreshed_at"] = "newer-refresh"
+    newer["expires_epoch"] = float(newer["expires_epoch"]) + 10
+    newer["expires_at"] = "newer-expiry"
+    service.state_path.write_text(
+        json.dumps(
+            {
+                "schema": "limen.host_admission_state.v1",
+                "leases": [newer],
+                "pressure": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = service.status(probe=False)
+
+    assert [lease["lease_id"] for lease in result["leases"]] == [lease_id]
+    assert result["leases"][0]["refreshed_epoch"] == newer["refreshed_epoch"]
+    legacy_after = json.loads(service.state_path.read_text(encoding="utf-8"))
+    scoped_after = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    assert [lease["kind"] for lease in legacy_after["leases"]] == ["execution"]
+    assert [lease["kind"] for lease in scoped_after["leases"]] == [scope.lease_kind]
+
+
 def test_interrupted_migration_unrelated_duplicate_still_raises(tmp_path: Path) -> None:
     """_load() still raises AdmissionStateError on a genuine (non-migration) duplicate."""
     root = tmp_path / "state"

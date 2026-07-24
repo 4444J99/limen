@@ -37,6 +37,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "head",
         "jq",
         "ls",
+        "nl",
         "pgrep",
         "ps",
         "pwd",
@@ -326,7 +327,7 @@ def _strip_redirections(tokens: list[str]) -> tuple[list[str], list[str], bool]:
                 continue
             if target in _SHELL_OPERATORS or target in _OUTPUT_REDIRECTS | _INPUT_REDIRECTS:
                 raise AdmissionInputError("unsupported-shell-redirection")
-            if token in _OUTPUT_REDIRECTS:
+            if token in _OUTPUT_REDIRECTS and target != "/dev/null":
                 outputs.append(target)
                 saw_output = True
             index += 2
@@ -540,7 +541,13 @@ def target_paths(payload: dict[str, Any], cwd: Path) -> list[Path]:
         raw_path = tool_input.get(field)
         if raw_path:
             values.append(str(raw_path))
-    patch = str(tool_input.get("patch") or tool_input.get("input") or "")
+    tool_name = _tool_name(payload).lower()
+    patch = str(
+        tool_input.get("patch")
+        or tool_input.get("input")
+        or (tool_input.get("command") if "apply" in tool_name and "patch" in tool_name else "")
+        or ""
+    )
     values.extend(
         value.strip()
         for match in re.finditer(
