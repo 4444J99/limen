@@ -135,7 +135,8 @@ def _require_private_retirement_receipt(
         durable = json.loads(private_receipt.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise PipelineError("private retirement receipt is missing or invalid") from exc
-    if durable != receipt.as_dict():
+    expected = json.loads(json.dumps(receipt.as_dict(), sort_keys=True))
+    if durable != expected:
         raise PipelineError("private retirement receipt does not match verified custody")
 
 
