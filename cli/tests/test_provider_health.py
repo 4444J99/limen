@@ -117,7 +117,7 @@ def test_secret_shaped_receipt_is_rejected() -> None:
             started_at=NOW,
             finished_at=NOW,
             retry_count=0,
-            receipt_reference="token=do-not-store",
+            receipt_reference="token=do-not-store",  # allow-secret
         )
 
 

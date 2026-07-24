@@ -1,0 +1,136 @@
+{
+  "backblaze": {
+    "applied": false,
+    "authorization_receipt_found": false,
+    "owner": "https://github.com/organvm/domus-genoma/issues/322",
+    "owner_branch": "work/backblaze-exclusions-20260724",
+    "owner_head": "cfa31041bd1d620cce940c556c5e866065602add",
+    "owner_worktree": "/Users/4jp/Workspace/domus-genoma/.worktrees/backblaze-exclusions-20260724",
+    "plan_sha256": "14413486d64fcf71f6158a8bacc461aa94ff01aed7a687065ca8fffe24de435b",
+    "restarted": false,
+    "result_sha256": "79424b055fe906caf15b07a93a72a661655b93f2dea7342c00da06060c72fb0d",
+    "source_sha256": "f2db9e4a967395cfaf6273629d3c4c8736b1318786ce25c4ef6e7888708d6c2a",
+    "status": "drift",
+    "would_write": false
+  },
+  "branch_acceptance": {
+    "deletion_performed_by_s4": false,
+    "ledger": "docs/branch-reap-acceptance.jsonl",
+    "rows_added": [
+      {
+        "branch": "codex/vic-control-ci-ticket-20260722",
+        "tip": "5c7aaaa77d0e30bd923888ee5610f2bf923136cc"
+      },
+      {
+        "branch": "worktree-charles-advice-enactment",
+        "tip": "c0e9d64ab406804573d281ccc80939049b53ffdc"
+      }
+    ],
+    "verified_against_main": "63e6cf6bb37e47e73b4d0306cc928538139b5c19"
+  },
+  "capsule": {
+    "s4_deadline_at": "2026-07-24T18:39:43Z",
+    "s4_head_at_start": "d0cf7bba1285f274b43ae5e18f4100696e26cddf",
+    "s4_remote_head_at_start": "d0cf7bba1285f274b43ae5e18f4100696e26cddf",
+    "s4_validated": true
+  },
+  "credentials_and_conduct": {
+    "broker_capabilities": "unavailable: LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN not configured",
+    "credential_owner": "https://github.com/organvm/limen/issues/320",
+    "github_auth": "invalid default token",
+    "owner_seed_attempt": "blocked without owner op session; zero writes",
+    "promptless_hydration": {
+      "hydrated": 0,
+      "skipped": 11,
+      "values_exposed": false
+    }
+  },
+  "disk_and_worktrees": {
+    "destructive_cleanup_performed": false,
+    "internal_data_volume": {
+      "available_gib": 40,
+      "capacity_percent": 91,
+      "observed_at": "2026-07-24T11:21:04Z"
+    },
+    "issue_685_predicate": {
+      "free_space_at_least_gib": 200,
+      "free_space_pass": false,
+      "zero_safely_reapable": false
+    },
+    "mounted_custody": [
+      "/Volumes/Scratch",
+      "/Volumes/Ingress",
+      "/Volumes/Archive4T",
+      "/Volumes/TM-Mac",
+      "/Volumes/T7Recovery"
+    ],
+    "owner": "https://github.com/organvm/limen/issues/685",
+    "reclaim_observations": [
+      {
+        "candidate_count": 6,
+        "plan_sha256": "7dfa9500e9a96b3c117202360532c17a006cccc2669c1df75cd17d69ee4def7a",
+        "scanned": 317
+      },
+      {
+        "candidate_count": 7,
+        "plan_sha256": "eb9bcae12fef5eb3e617495d7cc57a09db8ba982f86ed5ef5b46ecfddc7b1a12",
+        "scanned": 314
+      }
+    ],
+    "retained_reason_classes": [
+      "active(<24h)",
+      "active-process-cwd",
+      "antigravity-scratch-uses-bridge-acceptance",
+      "dirty",
+      "locked",
+      "missing-reclaim-acceptance",
+      "self/live-checkout",
+      "unpushed-commits"
+    ],
+    "seven_candidate_paths": [
+      "/Users/4jp/Workspace/.limen-worktrees/estate-audit-enterprise-plugin-20260724001522",
+      "/Users/4jp/Workspace/.limen-worktrees/estate-audit-enterprise-plugin-20260724012921",
+      "/Users/4jp/Workspace/application-pipeline/.worktrees/asi-brief",
+      "/Users/4jp/Workspace/limen/.worktrees/eliminate-million-change-monoliths-20260723",
+      "/Users/4jp/Workspace/victoroff-os/.worktrees/jules-vic-gov-001",
+      "/Users/4jp/limen/.claude/worktrees/broker-identity-fix",
+      "/Users/4jp/limen/.claude/worktrees/jules-daily-engine"
+    ]
+  },
+  "generated_at": "2026-07-24T11:21:04Z",
+  "gitvs": {
+    "authenticated": false,
+    "broker_transition_submitted": false,
+    "existing_tracked_ledger": {
+      "exhaustive": true,
+      "generated_at": "2026-07-24T04:54:23.183074Z",
+      "open_pr_count": 1115,
+      "requested_owner_count": 2,
+      "untyped_count": 0
+    },
+    "exact_11_owner_probe": {
+      "exhaustive": false,
+      "failure_count": 11,
+      "requested_owner_count": 11,
+      "untyped_count": 0
+    },
+    "task_id": "GITVS-UNCAPPED-PR-DEBT-0715",
+    "task_state_left_unchanged": "open"
+  },
+  "preservation": {
+    "active_claude_leases_observed": true,
+    "dirty_live_checkout_touched": false,
+    "pr_1493": {
+      "cached_disposition": "lifecycle:active-human",
+      "cached_head": "16a483ea8299e3fa4b693e05a1d0532b4e42dfce",
+      "cached_observed_at": "2026-07-24T04:54:23.183074Z",
+      "live_api_refresh": "unavailable",
+      "mutated": false
+    }
+  },
+  "predicates": {
+    "no_tasks_on_me": "pass",
+    "strict_omega": "not run: prerequisite owner gates are red"
+  },
+  "schema": "limen.laptop_wide_recovery_closeout.v1"
+}

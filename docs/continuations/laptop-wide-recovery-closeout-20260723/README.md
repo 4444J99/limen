@@ -1,5 +1,12 @@
 # Laptop-Wide Recovery and Closeout Continuation
 
+## Closeout status
+
+This capsule is retained as provenance only. Its recovery lane was consumed by the active
+containment campaign owned by Limen PR #1517 and Domus PR #326; do not relaunch this capsule and
+do not create an S7 successor. The current campaign must reach its restore, reclamation, merge,
+and reap predicates through those existing owners.
+
 ## Objective
 
 Reach the fixed point defined by the 2026-07-23 recovery plan: restore Claude through the Domus cartridge only after its remote activation gates pass; preserve all unowned work before touching shared roots; reclaim enough receipt-gated storage for `/System/Volumes/Data` to report below 80%; restore authenticated broker/governor dispatch; and land at least one valuable bounded Jules receipt. Do not substitute motion or partial scans for these predicates.
@@ -60,8 +67,7 @@ Reach the fixed point defined by the 2026-07-23 recovery plan: restore Claude th
 
 Stop before the eight-hour deadline, on any credential/paid/public/destructive gate, when host admission denies a required new heavy start, or if owner truth conflicts. File the exact gate once on its existing owner and emit a successor capsule before expiry. Never wait out a future gate while independent remote/read-only work exists.
 
-## Launch
+## Archived launch
 
-```bash
-git -C /Users/4jp/Workspace/limen fetch origin work/laptop-wide-recovery-closeout-20260723 && limen workstream /Users/4jp/Workspace/limen laptop-wide-recovery-closeout-20260723 --from origin/work/laptop-wide-recovery-closeout-20260723 --workstream recovery-closeout --runway 8h --agent auto --autonomous --conduct --prompt 'Read and execute docs/continuations/laptop-wide-recovery-closeout-20260723/README.md and workstream.json. Re-derive all live state before mutation; preserve owners; stop before contract expiry.'
-```
+There is no launch command for this consumed capsule. Continue only through the already-open
+campaign owner at <https://github.com/organvm/limen/pull/1517>.
