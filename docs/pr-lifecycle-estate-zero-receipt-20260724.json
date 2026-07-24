@@ -1,0 +1,19 @@
+{
+  "apply_receipt": null,
+  "disposition": "lifecycle:blocked",
+  "effect": "add-label:lifecycle:blocked",
+  "item_count": 0,
+  "plan_sha256": "2bc54422240a1c8bdee1a3e4ae83a906b775e7c0d44649a0ac2ebc20b799652a",
+  "private_item_count": 0,
+  "private_pr_keys": [],
+  "private_repository_count": 0,
+  "private_repository_hashes": [],
+  "public_item_count": 0,
+  "repository_count": 0,
+  "review_basis": "Post-apply exhaustive fixed-point check; zero untyped PRs remain.",
+  "schema": "limen.pr_lifecycle_estate_receipt.v1",
+  "source_ledger_content_sha256": null,
+  "source_lifecycle_untyped_count": 0,
+  "source_open_pr_count": 1115,
+  "status": "planned"
+}

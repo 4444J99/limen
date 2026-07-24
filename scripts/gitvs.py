@@ -362,7 +362,7 @@ def _owner_repo_inventory(owner: str, token: str | None) -> dict | None:
             query = (
                 "query($login:String!,$cursor:String){"
                 f"{root_kind}(login:$login){{repositories(first:100,after:$cursor{affiliation}){{"
-                "totalCount nodes{nameWithOwner isPrivate pullRequests(states:OPEN){totalCount}}"
+                "totalCount nodes{nameWithOwner isPrivate isArchived pullRequests(states:OPEN){totalCount}}"
                 "pageInfo{hasNextPage endCursor}}}}"
             )
             args = ["api", "graphql", "-f", f"query={query}", "-F", f"login={owner}"]
@@ -391,6 +391,7 @@ def _owner_repo_inventory(owner: str, token: str | None) -> dict | None:
                     repositories[name] = {
                         "name_with_owner": name,
                         "private": bool(node.get("isPrivate")),
+                        "archived": bool(node.get("isArchived")),
                         "open_pr_total": int((node.get("pullRequests") or {})["totalCount"]),
                     }
                 page_count += 1
@@ -688,6 +689,21 @@ def _redact_pr_row(row: dict) -> dict:
     }
 
 
+def _apply_repository_state(row: dict, repository: dict) -> dict:
+    result = {
+        **row,
+        "private": bool(repository["private"]),
+        "repository_archived": bool(repository.get("archived")),
+    }
+    if result["repository_archived"] and result.get("lifecycle_disposition_source") == "missing-label":
+        result["lifecycle_disposition"] = "lifecycle:blocked"
+        result["lifecycle_disposition_source"] = "repository-archived-immutable"
+        result["lifecycle_label_matches"] = []
+        result["lifecycle_debt_reasons"] = _pr_lifecycle_debt_reasons(result)
+        result["lifecycle_complete"] = not result["lifecycle_debt_reasons"]
+    return result
+
+
 def pr_debt_census(estate: dict, *, now: datetime | None = None) -> tuple[dict, dict]:
     """Return the full private runtime receipt and its tracked redacted projection."""
 
@@ -732,8 +748,10 @@ def pr_debt_census(estate: dict, *, now: datetime | None = None) -> tuple[dict, 
         if not page["exhaustive"]:
             failures.append(f"pull-request-cursor-failed:{repo_name}:{page['error']}")
         for pr in page["rows"]:
-            row = _classify_open_pr(repo_name, pr, policy, observed)
-            row["private"] = bool(repository["private"])
+            row = _apply_repository_state(
+                _classify_open_pr(repo_name, pr, policy, observed),
+                repository,
+            )
             classified.append(row)
 
     if len(classified) != expected_pr_total:

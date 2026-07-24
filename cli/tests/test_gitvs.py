@@ -92,6 +92,7 @@ def test_owner_repo_inventory_paginates_private_repositories_and_reconciles_tota
                             {
                                 "nameWithOwner": "renamed/private-repo",
                                 "isPrivate": True,
+                                "isArchived": True,
                                 "pullRequests": {"totalCount": 1001},
                             }
                         ],
@@ -109,6 +110,7 @@ def test_owner_repo_inventory_paginates_private_repositories_and_reconciles_tota
                             {
                                 "nameWithOwner": "renamed/public-repo",
                                 "isPrivate": False,
+                                "isArchived": False,
                                 "pullRequests": {"totalCount": 0},
                             }
                         ],
@@ -126,7 +128,9 @@ def test_owner_repo_inventory_paginates_private_repositories_and_reconciles_tota
     assert inventory["repository_total"] == 2
     assert inventory["page_count"] == 2
     assert inventory["repositories"][0]["private"] is True
+    assert inventory["repositories"][0]["archived"] is True
     assert inventory["repositories"][0]["open_pr_total"] == 1001
+    assert "isArchived" in calls[0][3]
     assert "cursor=repos-2" in calls[1]
 
 
@@ -434,6 +438,29 @@ def test_pr_debt_census_deduplicates_renamed_owner_aliases(monkeypatch) -> None:
     assert full["untyped_count"] == 1
     assert full["lifecycle_disposition_counts"] == {"untyped": 1}
     assert tracked["cursor_reconciliation"]["failure_count"] == 0
+
+
+def test_archived_repository_owns_missing_disposition_as_blocked() -> None:
+    module = _load()
+    row = {
+        "private": False,
+        "lifecycle_disposition": None,
+        "lifecycle_disposition_source": "missing-label",
+        "lifecycle_label_matches": [],
+        "exact_head_owner": {"owner": "owner", "head_oid": "a" * 40},
+        "lifecycle_debt_reasons": ["missing-or-conflicting-lifecycle-disposition"],
+        "lifecycle_complete": False,
+    }
+
+    result = module._apply_repository_state(
+        row,
+        {"private": False, "archived": True},
+    )
+
+    assert result["lifecycle_disposition"] == "lifecycle:blocked"
+    assert result["lifecycle_disposition_source"] == "repository-archived-immutable"
+    assert result["lifecycle_debt_reasons"] == []
+    assert result["lifecycle_complete"] is True
 
 
 def test_tracked_failed_census_exposes_count_without_private_failure_names(monkeypatch) -> None:
