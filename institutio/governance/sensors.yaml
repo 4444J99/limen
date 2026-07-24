@@ -693,6 +693,29 @@ sensors:
         tier: live
         command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
 
+  foreign-litter:
+    section: "0g9"
+    title: "foreign-agent litter — no other vendor's session state squats untracked in the live checkout"
+    gate: LIMEN_FOREIGN_LITTER
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The 2026-07-24 mess audit: Antigravity's teamwork-preview run planted ~35 untracked .agents/
+    # orchestration dirs + a stray root-level SQLite (`1`) in the live checkout and died mid-flight;
+    # nothing watched either class. Detection every beat; the reap valve (SAFE-OFF, orphan-watcher
+    # precedent: detection earns trust first) quarantines by MOVE, never delete — excavation of
+    # handoffs owed to another repo happens before arming, not after losing them.
+    steps:
+      - command: "python3 scripts/check-foreign-litter.py"
+        args_when:
+          - env: LIMEN_FOREIGN_LITTER_REAP
+            default: "0"
+            equals: "1"
+            args: ["--reap"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "foreign-agent session litter in the live checkout above — excavate any handoffs owed to another repo, then reap (arm LIMEN_FOREIGN_LITTER_REAP=1 or run scripts/check-foreign-litter.py --reap once)"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"
