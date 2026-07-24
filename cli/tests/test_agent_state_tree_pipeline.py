@@ -110,6 +110,19 @@ def test_resume_verifies_then_pushes_existing_ciphertext(
     receipt.require_retirement_gate()
 
 
+def test_private_receipt_matches_json_normalized_custody(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    receipt = _resume(monkeypatch, tmp_path, plan, vault)
+
+    tree_pipeline._require_private_retirement_receipt(
+        receipt,
+        tmp_path / "private-receipt.json",
+    )
+
+
 def test_resume_rejects_corrupt_ciphertext_before_remote_push(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
