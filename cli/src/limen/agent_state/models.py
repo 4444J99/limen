@@ -36,10 +36,16 @@ class SourceProof:
     sha256: str
     stat_before: tuple[int, int, int]
     stat_after: tuple[int, int, int]
+    inventory_before_sha256: str | None = None
+    inventory_after_sha256: str | None = None
 
     @property
     def stable(self) -> bool:
-        return self.stat_before == self.stat_after
+        inventory_stable = (
+            self.inventory_before_sha256 is None
+            or self.inventory_before_sha256 == self.inventory_after_sha256
+        )
+        return self.stat_before == self.stat_after and inventory_stable
 
 
 @dataclass(frozen=True)
