@@ -156,7 +156,7 @@ def test_secret_shaped_failure_output_is_not_persisted(tmp_path, monkeypatch) ->
     item = model("provider-s/runtime-secret")
 
     def runner(argv, **kwargs):
-        return subprocess.CompletedProcess(argv, 1, "", "api_key=do-not-persist")
+        return subprocess.CompletedProcess(argv, 1, "", "api_key=do-not-persist")  # allow-secret
 
     monkeypatch.setattr(opencode_smoke, "hold_lease", admitted)
     monkeypatch.setattr(opencode_smoke, "provider_health_policy", lambda: POLICY)

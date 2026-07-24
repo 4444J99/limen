@@ -23,7 +23,7 @@ MODEL_TERMINALS = frozenset({"stream_failure", "transport_failure", "timeout", "
 TRANSIENT_TERMINALS = frozenset({"stream_failure", "transport_failure", "timeout", "no_output"})
 SUCCESS_TERMINALS = frozenset({"success", "smoke_success"})
 TERMINAL_CLASSES = PROVIDER_TERMINALS | MODEL_TERMINALS | SUCCESS_TERMINALS
-_SECRETISH = re.compile(r"(?i)(?:bearer\s+|api[_-]?key|token=|sk-[a-z0-9])")
+_SECRETISH = re.compile(r"(?i)(?:bearer\s+|api[_-]?key|token=|sk-[a-z0-9])")  # allow-secret
 
 
 def _utc(value: datetime) -> datetime:

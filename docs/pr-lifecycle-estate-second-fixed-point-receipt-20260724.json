@@ -1,0 +1,29 @@
+{
+  "apply_receipt": {
+    "applied_at": "2026-07-24T05:26:20.806441Z",
+    "close_effects": 0,
+    "effect_count": 2,
+    "immutable_archived_item_count": 0,
+    "immutable_archived_repository_count": 0,
+    "immutable_archived_repository_hashes": [],
+    "merge_effects": 0,
+    "repository_count": 2,
+    "verified_count": 2
+  },
+  "disposition": "lifecycle:blocked",
+  "effect": "add-label:lifecycle:blocked",
+  "item_count": 2,
+  "plan_sha256": "3b956c983e69921a51f315fdfb974716b8d7aea00e32e7d8929eb1f808b7f482",
+  "private_item_count": 0,
+  "private_pr_keys": [],
+  "private_repository_count": 0,
+  "private_repository_hashes": [],
+  "public_item_count": 2,
+  "repository_count": 2,
+  "review_basis": "Second fixed-point delta: two PRs opened after the prior zero-item census. Fail closed as blocked pending repository-specific review; label-only effect with zero merge or close.",
+  "schema": "limen.pr_lifecycle_estate_receipt.v1",
+  "source_ledger_content_sha256": null,
+  "source_lifecycle_untyped_count": 2,
+  "source_open_pr_count": 1118,
+  "status": "applied_verified"
+}
