@@ -213,6 +213,9 @@ def test_read_only_pipeline_and_dev_null_redirection_never_acquire_writer(tmp_pa
     for command in (
         "nl -ba tracked.txt | sed -n '1,2p'",
         "rg needle missing.txt 2>/dev/null",
+        "grep -l needle missing.txt 2>/dev/null",
+        "git worktree list | grep needle",
+        "echo needle | grep needle",
     ):
         service = controller(tmp_path / command.split()[0])
         output = hook.handle(
