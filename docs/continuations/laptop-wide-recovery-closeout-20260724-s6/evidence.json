@@ -1,0 +1,37 @@
+{
+  "backblaze": {"applied": false, "installed_exclusion_drift": true, "owner": "https://github.com/organvm/domus-genoma/issues/322", "restarted": false, "signed_apply_authorization_found": false},
+  "beat_runtime": {"healthy": false, "installed_dependency_missing": "rfc8785==0.1.4", "observed_error": "ModuleNotFoundError: No module named 'rfc8785'", "owner": "organvm/domus-genoma", "owner_mutation_performed": false},
+  "branch_lifecycle": {"landed_branches_requiring_acceptance": 8, "no_tasks_on_me": "fail", "owner_ledger": "docs/branch-reap-acceptance.jsonl"},
+  "capsule": {"s5_admitted_deadline_at": "2026-07-24T19:49:03+00:00", "s5_admitted_head": "ff9603fce428f5da960f9c2ad8afe0efc62606c5"},
+  "credentials_and_conduct": {"broker_capabilities": "available after one documented promptless hydration", "github_auth": "healthy", "human_protected_session_registered": true, "values_exposed": false},
+  "disk_and_worktrees": {
+    "apply_plan_sha256": "ddf1d6d0be15e5d36af05cbafaf2144bb006adf81c24d63139b4b35443c13c8e",
+    "apply_reclaimed_count": 16,
+    "internal_available_gib_approx": 15,
+    "issue_685_free_space_target_gib": 200,
+    "post_apply_plan_sha256": "dcb067780af7cb851d539d6c8e85b574f869b7b1e54a66960657bafea9b19b96",
+    "post_apply_reapable_count": 0,
+    "strict_worktree_debt": 157,
+    "strict_worktree_debt_pass": false
+  },
+  "generated_at": "2026-07-24T12:10:00Z",
+  "gitvs": {
+    "broker_transition_submitted": false,
+    "doctor_live_drift_count": 41,
+    "doctor_offline_parity_pass": true,
+    "exact_11_owner": {"content_sha256": "e4ba39e5483e43584897c676f2c0e7be8aa1ed79ccc5443d20f2ccaa3285c1cd", "exhaustive": true, "open_pr_count": 1123, "repository_count": 310, "untyped_count": 12},
+    "task_id": "GITVS-UNCAPPED-PR-DEBT-0715",
+    "task_state_left_unchanged": "open"
+  },
+  "preservation": {"dirty_shared_checkout_touched": false, "peer_sessions_mutated": false, "pr_1493_live_state": "merged; retained lifecycle:active-human orientation only"},
+  "product_and_terminal_gates": {
+    "ask_gate": "fail: 297 of 412 intake-window tasks need a predicate-shaped split",
+    "experience_owner_issues": [1453, 1454, 1455, 1456, 1457, 1458, 1459, 1460],
+    "heal_convergence": "fail: 1 chronic group, 2 billing exemptions",
+    "overnight_trial": "not started: prerequisites red",
+    "seo_below_floor_repositories": 12,
+    "strict_omega": "not run: prerequisites red"
+  },
+  "remote_main": {"exact_head": "63e6cf6bb37e47e73b4d0306cc928538139b5c19", "exact_head_green": true, "receipt": "https://github.com/organvm/limen/actions/runs/30088559410"},
+  "schema": "limen.laptop_wide_recovery_closeout.v1"
+}
