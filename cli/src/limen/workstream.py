@@ -87,6 +87,15 @@ _META_CHANNELS: tuple[Channel, ...] = (
         "reach. Same shape as no-tasks-on-me.sh / the every-ask ledger.",
         ("prompts", "prompt", "parity"),
     ),
+    Channel(
+        "substrate",
+        "Substrate",
+        "meta",
+        "The machine lane — host admission, session lifecycle, worktree/beat tooling, the fleet "
+        "itself. Cross-cutting process, not an institutional organ; legitimizes the handle tasks "
+        "already carry.",
+        ("system", "tooling", "machine", "infra", "fleet"),
+    ),
 )
 
 # Aliases that are TOO generic for FREE-TEXT inference (a PR title / commit subject): in PR-land the
