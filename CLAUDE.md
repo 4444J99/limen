@@ -268,7 +268,7 @@ For a **website-sensitive** PR, merging *is* the deploy — so it requires **gre
   `MERGE-MODE: queue|direct` and an exact `MERGE-HEAD`; the waiter binds the effect to both. When
   the queue is active it enqueues once and reports success only after GitHub reports `MERGED`.
   Branch cleanup is receipt-backed and separate from the merge.
-- exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or non-deploy checks still running. Wait for green, then merge.
+- exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or **required** checks still running/failing. Non-deploy verdicts count only the checks branch protection actually requires (derived live via `gh pr checks --required`; fail-toward-caution falls back to all-checks when underivable) — an advisory check never holds a non-deploy merge (2026-07-24 insights lineage: deliverables held hostage behind non-required checks). Website-sensitive PRs still demand the FULL rollup green: merging is the deploy. Wait for green, then merge.
 - exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), a stale base without a
   proven queue rail, or an unsatisfied protection gate. Repair a real conflict or missing check.
   Do not turn `BEHIND` into a repeated branch-rewrite/full-CI loop; queue-capable stale heads are

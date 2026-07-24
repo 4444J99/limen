@@ -33,6 +33,10 @@ case "\$*" in
   *"pr view"*"--json headRefOid"*"-q .headRefOid"*)
     if [ -n "\${GH_RECHECK_HEAD:-}" ]; then printf '%s\n' "\$GH_RECHECK_HEAD"; else jq -r .headRefOid "$fixture"; fi ;;
   *"pr view"*"--json"*) cat "$fixture" ;;
+  *"pr checks"*"--required"*)
+    # required-set derivation: emit the canned required checks, or fail like an older
+    # gh / API hiccup so the predicate falls back to all-checks counting.
+    if [ -n "\${GH_REQUIRED_CHECKS:-}" ]; then printf '%s\n' "\$GH_REQUIRED_CHECKS"; else exit 1; fi ;;
   *) exit 1 ;;
 esac
 STUB
@@ -114,6 +118,28 @@ mkjson OPEN false UNSTABLE "$WEB_FILES" "$PENDING"; check "website-sensitive + p
 mkjson OPEN false CLEAN    "$WEB_FILES" "$NONE";    check "website-sensitive + 0 checks" 2
 mkjson OPEN false UNSTABLE "$DOC_FILES" "$PENDING"; check "non-deploy + pending"        2
 mkjson OPEN false WEIRDNEW "$DOC_FILES" "$GREEN";   check "unrecognized state (fail-safe)" 2
+
+# Required-vs-advisory discrimination (2026-07-24 insights lineage): with a derivable
+# required set, NON-DEPLOY verdicts count required checks only — advisory checks are
+# reported, never blocking. Website-sensitive PRs still demand the FULL rollup green
+# (merging IS the deploy). No GH_REQUIRED_CHECKS in the env ⇒ the stub fails the call
+# and every case above already exercises the all-checks fallback.
+export GH_REQUIRED_CHECKS='[{"name":"pr-gate","state":"SUCCESS","bucket":"pass"}]'
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$PENDING"
+check_output "non-deploy: advisory pending, req green" 0 "MERGE-MODE: direct"
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$DUP_LATEST_FAIL"
+check "non-deploy: advisory failing, req green" 0
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$PENDING"
+check "website-sensitive: advisory pending holds" 2
+export GH_REQUIRED_CHECKS='[{"name":"pr-gate","state":"IN_PROGRESS","bucket":"pending"}]'
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$GREEN"
+check "non-deploy: required pending holds" 2
+mkjson OPEN false BLOCKED "$DOC_FILES" "$GREEN"
+check "BLOCKED: required pending waits (HOLD)" 2
+export GH_REQUIRED_CHECKS='[{"name":"pr-gate","state":"FAILURE","bucket":"fail"}]'
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$GREEN"
+check "non-deploy: required failing holds" 2
+unset GH_REQUIRED_CHECKS
 
 # Queue routing is enabled only by a positive live GraphQL capability. BEHIND stays blocked when
 # the queue is absent or unverifiable; active queues accept exact-head-green BEHIND/CLEAN PRs only
