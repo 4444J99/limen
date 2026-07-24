@@ -6,7 +6,7 @@ from typing import Any
 
 CAPABILITY_SCHEMA = "limen.codex_host_admission_capabilities.v1"
 READER_PROTOCOL = "limen.host_admission_reader.v2"
-POLICY_REVISION = "2026-07-23.shared-action-admission.v1"
+POLICY_REVISION = "2026-07-24.shared-action-admission.v2"
 LEGACY_STATE_SCHEMA = "limen.host_admission_state.v1"
 SCOPED_STATE_SCHEMA = "limen.host_admission_scoped_state.v1"
 
