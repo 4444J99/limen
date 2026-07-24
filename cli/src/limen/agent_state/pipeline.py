@@ -102,7 +102,7 @@ class GitVault:
         return f"https://github.com/{self.repository}.git"
 
     def verify(self) -> None:
-        if not (self.root / ".git").is_dir():
+        if not (self.root / ".git").exists():
             raise PipelineError("ARCA vault is not a Git clone")
         if _run(["git", "status", "--porcelain=v1"], cwd=self.root):
             raise PipelineError("ARCA vault is dirty")
@@ -112,6 +112,15 @@ class GitVault:
         visibility = _run(["gh", "repo", "view", self.repository, "--json", "visibility", "-q", ".visibility"])
         if visibility != "PRIVATE":
             raise PipelineError("ARCA remote is not private")
+
+    def require_exact_remote_head(self) -> str:
+        """Return HEAD only when the private remote has accepted that exact commit."""
+
+        head = _run(["git", "rev-parse", "HEAD"], cwd=self.root)
+        remote = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()[0]
+        if remote != head:
+            raise PipelineError("ARCA remote head does not match local custody head")
+        return head
 
     def commit_and_push(self, relative: Path, message: str) -> str:
         changed = _run(
@@ -154,9 +163,8 @@ class GitVault:
             )
             head = _run(["git", "rev-parse", "HEAD"], cwd=self.root)
             _run(["git", "push", "origin", "HEAD:main"], cwd=self.root)
-            remote = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()[0]
-            if remote != head:
-                raise PipelineError("ARCA remote did not accept the exact custody commit")
+            if self.require_exact_remote_head() != head:
+                raise AssertionError("remote head changed during exact-head verification")
             heads.append(head)
         return heads[-1]
 

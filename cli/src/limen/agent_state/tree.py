@@ -101,6 +101,19 @@ def _inventory(root: Path, relatives: tuple[str, ...]) -> tuple[str, int]:
     return digest.hexdigest(), total
 
 
+def require_plan_matches_source(plan: RetentionPlan, source: SourceProof) -> None:
+    """Fail closed unless the selected cold inventory still matches capture."""
+
+    digest, total = _inventory(plan.root, plan.cold_paths)
+    if (
+        source.kind != "file-tree"
+        or Path(source.path).resolve() != plan.root
+        or total != source.bytes
+        or digest != source.inventory_after_sha256
+    ):
+        raise RuntimeError("cold retention plan does not match captured source")
+
+
 def atomize_file_tree(
     plan: RetentionPlan,
     sink: AtomEmitter,
@@ -206,9 +219,7 @@ def retire_cold_files(
     require_gate = getattr(receipt, "require_retirement_gate")
     require_gate()
     source = getattr(receipt, "source")
-    before_digest, before_bytes = _inventory(plan.root, plan.cold_paths)
-    if before_digest != source.inventory_after_sha256 or before_bytes != source.bytes:
-        raise RuntimeError("cold file set changed after custody")
+    require_plan_matches_source(plan, source)
     opened = open_probe(plan.root)
     selected = {(plan.root / relative).resolve() for relative in plan.cold_paths}
     conflicts = selected & opened
