@@ -127,6 +127,7 @@ _SANCTIONED_LIMEN = frozenset(
 )
 _SANCTIONED_SCRIPTS = frozenset(
     {
+        "agent-state-metabolism.py",
         "dispatch-async.py",
         "host-work-admission.py",
         "reclaim-generated-caches.py",
@@ -234,9 +235,7 @@ def _git_read_only(tokens: list[str]) -> bool:
         return False
     if subcommand == "remote" and rest and rest[0] not in {"-v", "get-url", "show"}:
         return False
-    if subcommand == "worktree" and (not rest or rest[0] != "list"):
-        return False
-    return True
+    return not (subcommand == "worktree" and (not rest or rest[0] != "list"))
 
 
 def _gh_read_only(tokens: list[str]) -> bool:
@@ -319,9 +318,13 @@ def _background_operator(tokens: list[str]) -> bool:
     for index, token in enumerate(tokens):
         if token != "&":
             continue
-        if index > 0 and tokens[index - 1] in _OUTPUT_REDIRECTS and index + 1 < len(tokens):
-            if tokens[index + 1].isdigit():
-                continue
+        if (
+            index > 0
+            and tokens[index - 1] in _OUTPUT_REDIRECTS
+            and index + 1 < len(tokens)
+            and tokens[index + 1].isdigit()
+        ):
+            continue
         return True
     return False
 
