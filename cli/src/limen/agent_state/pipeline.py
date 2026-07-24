@@ -8,9 +8,9 @@ import shutil
 import sqlite3
 import subprocess
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import asdict
 from pathlib import Path
-from typing import Callable, Iterable
 
 from limen.host_admission import hold_lease
 
@@ -90,6 +90,10 @@ def partition_git_paths(
     return batches
 
 
+def _batch_message(message: str, index: int, total: int) -> str:
+    return message if total == 1 else f"{message} ({index}/{total})"
+
+
 class GitVault:
     """Surgical writer for the existing private ARCA ciphertext repository."""
 
@@ -101,17 +105,20 @@ class GitVault:
     def remote_url(self) -> str:
         return f"https://github.com/{self.repository}.git"
 
-    def verify(self) -> None:
+    def verify_identity(self) -> None:
         if not (self.root / ".git").exists():
             raise PipelineError("ARCA vault is not a Git clone")
-        if _run(["git", "status", "--porcelain=v1"], cwd=self.root):
-            raise PipelineError("ARCA vault is dirty")
         origin = _run(["git", "remote", "get-url", "origin"], cwd=self.root).removesuffix(".git")
         if origin not in {f"https://github.com/{self.repository}", f"git@github.com:{self.repository}"}:
             raise PipelineError("ARCA vault origin does not match the declared private repository")
         visibility = _run(["gh", "repo", "view", self.repository, "--json", "visibility", "-q", ".visibility"])
         if visibility != "PRIVATE":
             raise PipelineError("ARCA remote is not private")
+
+    def verify(self) -> None:
+        self.verify_identity()
+        if _run(["git", "status", "--porcelain=v1"], cwd=self.root):
+            raise PipelineError("ARCA vault is dirty")
 
     def require_exact_remote_head(self) -> str:
         """Return HEAD only when the private remote has accepted that exact commit."""
@@ -143,9 +150,6 @@ class GitVault:
         for index, batch in enumerate(batches, start=1):
             relative_batch = [str(path.relative_to(self.root)) for path in batch]
             _run(["git", "add", "--", *relative_batch], cwd=self.root)
-            batch_message = message
-            if len(batches) > 1:
-                batch_message = f"{message} ({index}/{len(batches)})"
             _run(
                 [
                     "git",
@@ -155,7 +159,7 @@ class GitVault:
                     "maintenance.auto=false",
                     "commit",
                     "-m",
-                    batch_message,
+                    _batch_message(message, index, len(batches)),
                     "--",
                     *relative_batch,
                 ],
@@ -167,6 +171,111 @@ class GitVault:
                 raise AssertionError("remote head changed during exact-head verification")
             heads.append(head)
         return heads[-1]
+
+    def resume_and_push_payload(
+        self,
+        relative: Path,
+        expected_paths: Iterable[Path],
+        message: str,
+        *,
+        byte_limit: int = DEFAULT_GIT_BATCH_LIMIT_BYTES,
+    ) -> str:
+        """Resume an interrupted deterministic payload push without re-encryption."""
+
+        self.verify_identity()
+        relative = Path(relative)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise PipelineError("ARCA resume path is unsafe")
+        normalized = sorted({Path(path) for path in expected_paths}, key=Path.as_posix)
+        if not normalized:
+            raise PipelineError("ARCA interrupted payload has no expected files")
+        if any(path.is_absolute() or ".." in path.parts for path in normalized):
+            raise PipelineError("ARCA interrupted payload contains an unsafe path")
+        absolute = [self.root / path for path in normalized]
+        if any(not path.is_file() for path in absolute):
+            raise PipelineError("ARCA interrupted payload is missing an expected file")
+        batches = partition_git_paths(absolute, byte_limit=byte_limit)
+        expected_batches = [{path.relative_to(self.root).as_posix() for path in batch} for batch in batches]
+        total = len(expected_batches)
+        head = _run(["git", "rev-parse", "HEAD"], cwd=self.root)
+        subject = _run(["git", "show", "-s", "--format=%s", head], cwd=self.root)
+        matching = [index for index in range(1, total + 1) if subject == _batch_message(message, index, total)]
+        if not matching:
+            raise PipelineError("ARCA local HEAD is not an interrupted payload batch")
+        committed_count = matching[0]
+        history = _run(
+            [
+                "git",
+                "rev-list",
+                "--first-parent",
+                f"--max-count={committed_count + 1}",
+                "HEAD",
+            ],
+            cwd=self.root,
+        ).splitlines()
+        if len(history) != committed_count + 1:
+            raise PipelineError("ARCA interrupted payload history is incomplete")
+        committed = list(reversed(history[:committed_count]))
+        base = history[committed_count]
+        for index, commit in enumerate(committed, start=1):
+            if _run(["git", "show", "-s", "--format=%s", commit], cwd=self.root) != _batch_message(
+                message, index, total
+            ):
+                raise PipelineError("ARCA interrupted payload messages are not a valid prefix")
+            changed = set(
+                _run(["git", "diff-tree", "--no-commit-id", "--name-only", "-r", commit], cwd=self.root).splitlines()
+            )
+            if changed != expected_batches[index - 1]:
+                raise PipelineError("ARCA interrupted payload commits are not a valid prefix")
+
+        status = _run(
+            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            cwd=self.root,
+        )
+        dirty: set[str] = set()
+        for entry in status.split("\0"):
+            if not entry:
+                continue
+            code, path = entry[:2], entry[3:]
+            if code != "??":
+                raise PipelineError("ARCA interrupted payload has modified tracked state")
+            dirty.add(path)
+        remaining = set().union(*expected_batches[committed_count:]) if committed_count < total else set()
+        if dirty != remaining:
+            raise PipelineError("ARCA interrupted payload has unrelated or missing dirty state")
+
+        remote = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()[0]
+        valid_remote_heads = {base, *committed}
+        if remote not in valid_remote_heads:
+            raise PipelineError("ARCA remote is not aligned with the interrupted payload prefix")
+        if remote != head:
+            _run(["git", "push", "origin", "HEAD:main"], cwd=self.root)
+            if self.require_exact_remote_head() != head:
+                raise AssertionError("remote head changed during interrupted payload recovery")
+
+        for index, batch in enumerate(batches[committed_count:], start=committed_count + 1):
+            relative_batch = [str(path.relative_to(self.root)) for path in batch]
+            _run(["git", "add", "--", *relative_batch], cwd=self.root)
+            _run(
+                [
+                    "git",
+                    "-c",
+                    "gc.auto=0",
+                    "-c",
+                    "maintenance.auto=false",
+                    "commit",
+                    "-m",
+                    _batch_message(message, index, total),
+                    "--",
+                    *relative_batch,
+                ],
+                cwd=self.root,
+            )
+            head = _run(["git", "rev-parse", "HEAD"], cwd=self.root)
+            _run(["git", "push", "origin", "HEAD:main"], cwd=self.root)
+            if self.require_exact_remote_head() != head:
+                raise AssertionError("remote head changed during resumed exact-head verification")
+        return self.require_exact_remote_head()
 
 
 def _capture_manifest(receipt: MetabolismReceipt, table_counts: dict[str, int]) -> dict[str, object]:

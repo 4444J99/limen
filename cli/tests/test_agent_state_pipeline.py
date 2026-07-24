@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import sqlite3
+import subprocess
 from pathlib import Path
 
 import pytest
-
+from limen.agent_state import pipeline
 from limen.agent_state.atomize import sha256_file, stat_identity
 from limen.agent_state.models import MetabolismReceipt, ReceiptError, RestoreProof, SourceProof
 from limen.agent_state.pipeline import (
+    GitVault,
     PipelineError,
     capture_opencode,
     partition_git_paths,
@@ -22,6 +24,64 @@ def _database(path: Path) -> None:
         connection.execute("CREATE TABLE session (id TEXT PRIMARY KEY, title TEXT NOT NULL)")
         connection.execute("CREATE INDEX session_title ON session(title)")
         connection.execute("INSERT INTO session VALUES ('s1', 'private title')")
+
+
+def _git(root: Path, *arguments: str) -> str:
+    return subprocess.run(
+        ["git", *arguments],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _interrupted_vault(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    remote_has_local_head: bool,
+) -> tuple[GitVault, Path, list[Path]]:
+    remote = tmp_path / "remote.git"
+    subprocess.run(
+        ["git", "init", "--bare", "--initial-branch=main", str(remote)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    root = tmp_path / "vault"
+    root.mkdir()
+    _git(root, "init", "--initial-branch=main")
+    _git(root, "config", "user.name", "Limen Test")
+    _git(root, "config", "user.email", "limen@example.test")
+    _git(root, "remote", "add", "origin", str(remote))
+    (root / "README.md").write_text("private ciphertext vault\n", encoding="utf-8")
+    _git(root, "add", "README.md")
+    _git(root, "commit", "-m", "initialize vault")
+    _git(root, "push", "-u", "origin", "main")
+
+    relative = Path("agent-state") / "icloud-drive" / "run"
+    payload = root / relative
+    payload.mkdir(parents=True)
+    expected = [relative / "atoms-00000.bin", relative / "atoms-00001.bin", relative / "manifest.json"]
+    for path, content in zip(expected, (b"aaaa", b"bbbb", b"ccc"), strict=True):
+        (root / path).write_bytes(content)
+    _git(root, "add", str(expected[0]))
+    _git(root, "commit", "-m", "agent-state: seal icloud-drive run (1/3)")
+    if remote_has_local_head:
+        _git(root, "push", "origin", "HEAD:main")
+
+    real_run = pipeline._run
+
+    def declared_private(arguments: list[str], *, cwd: Path | None = None) -> str:
+        if arguments[:3] == ["git", "remote", "get-url"]:
+            return "https://github.com/organvm/arca.git"
+        if arguments[:3] == ["gh", "repo", "view"]:
+            return "PRIVATE"
+        return real_run(arguments, cwd=cwd)
+
+    monkeypatch.setattr(pipeline, "_run", declared_private)
+    return GitVault(root), relative, expected
 
 
 def _receipt(source: Path, *, external_passed: bool = True) -> MetabolismReceipt:
@@ -72,6 +132,75 @@ def test_git_custody_batches_stay_below_push_limit(tmp_path: Path) -> None:
     assert all(sum(path.stat().st_size for path in batch) <= 10 for batch in batches)
     with pytest.raises(PipelineError, match="single Git custody file"):
         partition_git_paths(paths, byte_limit=6)
+
+
+@pytest.mark.parametrize("remote_has_local_head", [False, True])
+def test_interrupted_git_custody_resumes_from_valid_prefix(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    remote_has_local_head: bool,
+) -> None:
+    vault, relative, expected = _interrupted_vault(
+        tmp_path,
+        monkeypatch,
+        remote_has_local_head=remote_has_local_head,
+    )
+
+    head = vault.resume_and_push_payload(
+        relative,
+        expected,
+        "agent-state: seal icloud-drive run",
+        byte_limit=6,
+    )
+
+    assert head == _git(vault.root, "rev-parse", "HEAD")
+    assert _git(vault.root, "status", "--porcelain=v1") == ""
+    assert _git(vault.root, "ls-remote", "origin", "refs/heads/main").split()[0] == head
+    assert _git(vault.root, "log", "-3", "--format=%s").splitlines() == [
+        "agent-state: seal icloud-drive run (3/3)",
+        "agent-state: seal icloud-drive run (2/3)",
+        "agent-state: seal icloud-drive run (1/3)",
+    ]
+
+
+def test_interrupted_git_custody_rejects_unrelated_dirty_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vault, relative, expected = _interrupted_vault(
+        tmp_path,
+        monkeypatch,
+        remote_has_local_head=False,
+    )
+    (vault.root / "unrelated.txt").write_text("not part of the run\n", encoding="utf-8")
+
+    with pytest.raises(PipelineError, match="unrelated or missing dirty state"):
+        vault.resume_and_push_payload(
+            relative,
+            expected,
+            "agent-state: seal icloud-drive run",
+            byte_limit=6,
+        )
+
+
+def test_interrupted_git_custody_rejects_missing_ciphertext(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vault, relative, expected = _interrupted_vault(
+        tmp_path,
+        monkeypatch,
+        remote_has_local_head=False,
+    )
+    (vault.root / expected[-1]).unlink()
+
+    with pytest.raises(PipelineError, match="missing an expected file"):
+        vault.resume_and_push_payload(
+            relative,
+            expected,
+            "agent-state: seal icloud-drive run",
+            byte_limit=6,
+        )
 
 
 def test_active_vendor_denies_capture_before_writes(tmp_path: Path) -> None:
