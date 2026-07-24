@@ -3589,6 +3589,20 @@ parameters:
     owner: tabularius
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the liveness pass. Sized to the founding incident: the 2026-07-09 quiesce restore walked 4 down agents in ≈264 s with --apply armed — gitvs's 120 would kill a multi-agent restore mid-flight. The runner kills the whole command group on overrun and the beat continues fail-open."
 
+  # --- foreign-litter sensor (0g9): other vendors' session state in the live checkout ---
+  LIMEN_FOREIGN_LITTER:
+    default: "1"               # ON — detection is read-only; only the reap valve mutates
+    env: LIMEN_FOREIGN_LITTER
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the foreign-litter sensor (scripts/check-foreign-litter.py, sensors.yaml 0g9): the 2026-07-24 mess audit — Antigravity's teamwork-preview run planted ~35 untracked .agents/ orchestration dirs plus a stray root-level SQLite ('1') in the live checkout and abandoned them mid-milestone; nothing watched either litter class. Detects untracked foreign session state under .agents/ and repo-root droppings (bare-numeral names, stray *.sqlite/*.db, SQLite magic) every beat. Set 0 to silence."
+  LIMEN_FOREIGN_LITTER_REAP:
+    default: "0"               # OFF (SAFE-OFF) — the reap effector; off is the design until trust is earned
+    env: LIMEN_FOREIGN_LITTER_REAP
+    self_update: none
+    owner: tabularius
+    note: "The armed effector for the foreign-litter sensor: when 1, findings are QUARANTINED by move (never delete) into logs/foreign-litter-quarantine/<stamp>/ and stamped to logs/foreign-litter.json. OFF by default — detection earns trust first (orphan-watcher precedent), and excavation of handoffs owed to another repo happens BEFORE arming, not after losing them."
+
   # --- orphan-watcher sensor (0g7): dead sessions' PR poll shells --------------
   LIMEN_ORPHAN_WATCHER_CHECK:
     default: "1"               # ON — detection is read-only; only the reap valve mutates
