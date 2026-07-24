@@ -4,6 +4,12 @@
   "branch_lifecycle": {"landed_branches_requiring_acceptance": 8, "no_tasks_on_me": "fail", "owner_ledger": "docs/branch-reap-acceptance.jsonl"},
   "capsule": {"s5_admitted_deadline_at": "2026-07-24T19:49:03+00:00", "s5_admitted_head": "ff9603fce428f5da960f9c2ad8afe0efc62606c5"},
   "credentials_and_conduct": {"broker_capabilities": "available after one documented promptless hydration", "github_auth": "healthy", "human_protected_session_registered": true, "values_exposed": false},
+  "conduct_reservation_closeout": {
+    "cancel_attempt": "rejected: protected human session cannot be cancelled or signalled through autonomous conduct",
+    "hard_deadline": "2026-07-24T17:59:20Z",
+    "owner": "TABVLARIVS conduct broker",
+    "reserved_runs": ["run-e91a272d6fbf084bbca26de36c9beba7", "run-bd4c65d776a6bd2d892ac9983fbccb8c", "run-f37f47e619419a3d0cfa03ff39fb9ad9"]
+  },
   "disk_and_worktrees": {
     "apply_plan_sha256": "ddf1d6d0be15e5d36af05cbafaf2144bb006adf81c24d63139b4b35443c13c8e",
     "apply_reclaimed_count": 16,
