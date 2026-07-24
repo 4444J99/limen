@@ -5,13 +5,20 @@ from __future__ import annotations
 import base64
 import hashlib
 import sqlite3
+import subprocess
 import tempfile
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 from .atomize import AtomEmitter, LogicalEmitter, canonical_bytes
 from .models import SourceProof
+
+# Darwin's UF_DATALESS is intentionally absent from Python's stat module.
+# File Provider placeholders retain their logical size but set this flag and
+# consume no local data blocks.
+UF_DATALESS = 0x40000000
 
 
 @dataclass(frozen=True)
@@ -32,6 +39,15 @@ class FileTreeResult:
     logical_sha256: str
     duplicate_chunks: int
     file_count: int
+
+
+@dataclass(frozen=True)
+class EvictionResult:
+    selected_files: int
+    evicted_files: int
+    already_reclaimed_files: int
+    allocated_before: int
+    allocated_after: int
 
 
 def plan_retention(
@@ -74,6 +90,53 @@ def plan_retention(
         hot_bytes=hot_bytes,
         cutoff_epoch=cutoff,
         maximum_hot_bytes=maximum_hot_bytes,
+    )
+
+
+def is_materialized_cloud_path(path: Path) -> bool:
+    """Return whether a File Provider path still consumes local data blocks."""
+
+    value = path.stat()
+    return not bool(getattr(value, "st_flags", 0) & UF_DATALESS) and value.st_blocks > 0
+
+
+def plan_cloud_materializations(
+    root: Path,
+    *,
+    materialized_probe: Callable[[Path], bool] = is_materialized_cloud_path,
+) -> RetentionPlan:
+    """Select only locally materialized File Provider files.
+
+    Cloud-only placeholders are never opened, so planning cannot accidentally
+    hydrate a corpus merely to preserve the already-remote logical namespace.
+    hot_bytes records the allocated bytes retained outside the selected
+    materializations; for normal placeholders this is zero.
+    """
+
+    root = root.expanduser().resolve()
+    materialized: list[str] = []
+    placeholders: list[str] = []
+    materialized_bytes = 0
+    retained_allocated_bytes = 0
+    for path in root.rglob("*"):
+        if path.is_symlink() or not path.is_file():
+            continue
+        value = path.stat()
+        relative = path.relative_to(root).as_posix()
+        if materialized_probe(path):
+            materialized.append(relative)
+            materialized_bytes += value.st_size
+        else:
+            placeholders.append(relative)
+            retained_allocated_bytes += value.st_blocks * 512
+    return RetentionPlan(
+        root=root,
+        cold_paths=tuple(sorted(materialized)),
+        cold_bytes=materialized_bytes,
+        hot_paths=tuple(sorted(placeholders)),
+        hot_bytes=retained_allocated_bytes,
+        cutoff_epoch=0.0,
+        maximum_hot_bytes=0,
     )
 
 
@@ -196,8 +259,6 @@ def atomize_file_tree(
 def open_files_under(root: Path) -> set[Path]:
     """Return exact paths with open descriptors; failure is fail-closed."""
 
-    import subprocess
-
     result = subprocess.run(["lsof", "-Fn", "+D", str(root)], check=False, capture_output=True, text=True)
     if result.returncode not in {0, 1}:
         raise RuntimeError("cannot inspect open files under retention root")
@@ -240,3 +301,72 @@ def retire_cold_files(
         except OSError:
             pass
     return deleted
+
+
+def brctl_evict(path: Path) -> None:
+    """Ask File Provider to remove one local materialization."""
+
+    result = subprocess.run(
+        ["brctl", "evict", str(path)],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"File Provider eviction failed for {path.name}: {detail[:200]}")
+
+
+def evict_cloud_materializations(
+    receipt: object,
+    plan: RetentionPlan,
+    *,
+    open_probe: Callable[[Path], set[Path]] = open_files_under,
+    evict_command: Callable[[Path], None] = brctl_evict,
+    materialized_probe: Callable[[Path], bool] = is_materialized_cloud_path,
+    wait: Callable[[float], None] = time.sleep,
+    per_file_timeout: float = 30.0,
+) -> EvictionResult:
+    """Evict captured files through File Provider after dual restoration.
+
+    Paths remain in iCloud Drive as placeholders. A partial command failure is
+    safe and resumable: previously evicted files remain remotely addressable,
+    while every selected file is already covered by the same restoration gate.
+    """
+
+    if per_file_timeout <= 0:
+        raise ValueError("per-file eviction timeout must be positive")
+    require_gate = getattr(receipt, "require_retirement_gate")
+    require_gate()
+    source = getattr(receipt, "source")
+    require_plan_matches_source(plan, source)
+    opened = open_probe(plan.root)
+    selected = tuple((plan.root / relative).resolve() for relative in plan.cold_paths)
+    conflicts = set(selected) & opened
+    if conflicts:
+        raise RuntimeError(f"captured CloudKit file is active: {len(conflicts)} open path(s)")
+    allocated_before = sum(path.stat().st_blocks * 512 for path in selected)
+    evicted = 0
+    already_reclaimed = 0
+    for path in selected:
+        if not materialized_probe(path):
+            already_reclaimed += 1
+            continue
+        evict_command(path)
+        deadline = time.monotonic() + per_file_timeout
+        while materialized_probe(path):
+            if time.monotonic() >= deadline:
+                raise RuntimeError(f"File Provider did not evict captured path: {path.name}")
+            wait(0.1)
+        evicted += 1
+    remaining = [path for path in selected if materialized_probe(path)]
+    if remaining:
+        raise RuntimeError(f"File Provider left {len(remaining)} captured path(s) materialized")
+    return EvictionResult(
+        selected_files=len(selected),
+        evicted_files=evicted,
+        already_reclaimed_files=already_reclaimed,
+        allocated_before=allocated_before,
+        allocated_after=0,
+    )

@@ -13,7 +13,13 @@ from limen.host_admission import hold_lease
 from .crypto import EncryptedAtomPacker, keychain_key, verify_atom_packs
 from .models import AtomPack, CipherChunk, MetabolismReceipt, RestoreProof, SourceProof
 from .pipeline import GitVault, PipelineError, require_mounted_external, run_id_now
-from .tree import RetentionPlan, atomize_file_tree, require_plan_matches_source, retire_cold_files
+from .tree import (
+    RetentionPlan,
+    atomize_file_tree,
+    evict_cloud_materializations,
+    require_plan_matches_source,
+    retire_cold_files,
+)
 
 
 def _copy_packs(packs: list[AtomPack], source: Path, destination: Path) -> list[AtomPack]:
@@ -349,6 +355,43 @@ def run_resume_cold_tree_campaign(
             receipt.source_retired = True
             receipt.retirement_proof = (
                 f"deleted-files:{deleted};deleted-bytes:{plan.cold_bytes};retained-hot-bytes:{plan.hot_bytes}"
+            )
+            receipt.write(private_receipt)
+        return receipt
+
+
+def run_cloudkit_materialization_campaign(
+    name: str,
+    plan: RetentionPlan,
+    vault_root: Path,
+    external_root: Path,
+    private_receipt: Path,
+    *,
+    evict: bool = False,
+    run_id: str | None = None,
+) -> MetabolismReceipt:
+    """Preserve materialized iCloud files, then reclaim via File Provider."""
+
+    owner = f"agent-state-metabolism-{os.getpid()}"
+    with hold_lease("heavy", owner=owner, surface=f"{name}-cloudkit-custody"):
+        receipt = capture_cold_tree(
+            name,
+            plan,
+            vault_root,
+            external_root,
+            private_receipt,
+            run_id=run_id,
+        )
+        if evict:
+            result = evict_cloud_materializations(receipt, plan)
+            receipt.source_retired = True
+            receipt.retirement_proof = (
+                "file-provider-evicted:"
+                f"selected-files={result.selected_files};"
+                f"evicted-files={result.evicted_files};"
+                f"already-reclaimed-files={result.already_reclaimed_files};"
+                f"allocated-before={result.allocated_before};"
+                f"allocated-after={result.allocated_after}"
             )
             receipt.write(private_receipt)
         return receipt

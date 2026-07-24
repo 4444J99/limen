@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 
 from limen.agent_state.pipeline import run_opencode_campaign
-from limen.agent_state.tree import plan_retention
-from limen.agent_state.tree_pipeline import run_cold_tree_campaign
+from limen.agent_state.tree import plan_cloud_materializations, plan_retention
+from limen.agent_state.tree_pipeline import run_cloudkit_materialization_campaign, run_cold_tree_campaign
 
 HOME = Path.home()
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
@@ -64,6 +64,25 @@ def parser() -> argparse.ArgumentParser:
     tree.add_argument("--maximum-hot-gib", type=float, default=2.0)
     tree.add_argument("--run-id")
     tree.add_argument("--retire", action="store_true")
+    cloudkit = subcommands.add_parser(
+        "cloudkit-materialized",
+        help="capture only materialized iCloud files and optionally evict them through File Provider",
+    )
+    cloudkit.add_argument("name")
+    cloudkit.add_argument("--root", type=Path, required=True)
+    cloudkit.add_argument(
+        "--vault-root",
+        type=Path,
+        default=Path("/Volumes/Archive4T/limen-private/arca-vault"),
+    )
+    cloudkit.add_argument(
+        "--external-root",
+        type=Path,
+        default=Path("/Volumes/Archive4T/limen-private/agent-state-exact"),
+    )
+    cloudkit.add_argument("--private-receipt", type=Path, required=True)
+    cloudkit.add_argument("--run-id")
+    cloudkit.add_argument("--evict", action="store_true")
     return command
 
 
@@ -91,6 +110,17 @@ def main() -> int:
             args.external_root,
             args.private_receipt,
             retire=args.retire,
+            run_id=args.run_id,
+        )
+    elif args.command == "cloudkit-materialized":
+        plan = plan_cloud_materializations(args.root)
+        receipt = run_cloudkit_materialization_campaign(
+            args.name,
+            plan,
+            args.vault_root,
+            args.external_root,
+            args.private_receipt,
+            evict=args.evict,
             run_id=args.run_id,
         )
     else:
