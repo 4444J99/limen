@@ -36,7 +36,8 @@ LIMEN_REMOTE_REAP_EVERY_MIN minutes, logs logs/reap-remote-branches.jsonl.
   python3 scripts/reap-remote-branches.py --apply    # DELETE landed remote branches (needs LIMEN_REMOTE_REAP_APPLY=1)
   python3 scripts/reap-remote-branches.py --check     # exit 1 iff a landed remote branch lingers past grace
 
-Env: LIMEN_ROOT, LIMEN_REMOTE_REAP_APPLY (0), LIMEN_REMOTE_REAP_MAX (100),
+Env: LIMEN_ROOT, LIMEN_REMOTE_REAP_REPO_ROOT (optional target repository; receipts remain
+     under LIMEN_ROOT), LIMEN_REMOTE_REAP_APPLY (0), LIMEN_REMOTE_REAP_MAX (100),
      LIMEN_REMOTE_REAP_EVERY_MIN (30), LIMEN_REMOTE_REAP_GRACE_MIN (1440),
      LIMEN_REMOTE_REAP_PROTECT (extra protected branch names), LIMEN_OFFLINE.
 """
@@ -120,11 +121,17 @@ def _bool_env(name: str, default: bool = False) -> bool:
     return os.environ.get(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def repository_root() -> Path:
+    """Return the target repository while keeping receipts in Limen."""
+
+    return Path(os.environ.get("LIMEN_REMOTE_REAP_REPO_ROOT", str(LIMEN_ROOT))).resolve()
+
+
 def _git(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a git command against the repo. Fails OPEN (returncode!=0) — never raises."""
     try:
         return subprocess.run(
-            ["git", "-C", str(LIMEN_ROOT), *args],
+            ["git", "-C", str(repository_root()), *args],
             capture_output=True,
             text=True,
             timeout=timeout,
