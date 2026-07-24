@@ -47,6 +47,20 @@ parameters:
     owner: vigilia
     note: "Low-frequency sleep cadence while the autonomy governor is paused. The singleton stays alive and writes one byte-stable paused receipt instead of exiting into a launchd KeepAlive respawn loop."
 
+  # --- treaty leads: battle spawn bounds (scripts/lead-spawn.py) ---------------
+  LIMEN_LEAD_BATTLE_RUNWAY:
+    default: "8h"
+    env: LIMEN_LEAD_BATTLE_RUNWAY
+    self_update: none
+    owner: vigilia
+    note: "Default runway a domain lead grants a spawned battle worktree when the spawn does not request one. Always clamped to the lead's remaining runway (authority attenuates downward; contract law: recheck_remaining_runway_before_each_packet)."
+  LIMEN_LEAD_MAX_BATTLES:
+    default: 3
+    env: LIMEN_LEAD_MAX_BATTLES
+    self_update: none
+    owner: vigilia
+    note: "Max live battle worktrees per domain lead on one workstream handle. The proliferation bound that keeps a lead from re-creating the 2026-07 FleetView sprawl; a spawn past the cap is refused with the exact live-battle list."
+
   # --- the institution names ITSELF as the first parameter ---------------------
   INSTITVTIO_NOMEN:
     default: "VIGILIA"          # provisional codename — NOT ratified
