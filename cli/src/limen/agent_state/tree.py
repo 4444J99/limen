@@ -307,18 +307,12 @@ def retire_cold_files(
 
 
 def brctl_evict(path: Path) -> None:
-    """Ask File Provider to remove one local materialization."""
+    """Fail closed until a supported host File Provider adapter is installed."""
 
-    result = subprocess.run(
-        ["brctl", "evict", str(path)],
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=120,
+    raise RuntimeError(
+        f"automatic File Provider eviction is disabled for {path.name}: "
+        "the host CLI exposes no supported eviction command, and hidden brctl eviction was non-atomic"
     )
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
-        raise RuntimeError(f"File Provider eviction failed for {path.name}: {detail[:200]}")
 
 
 def evict_cloud_materializations(
