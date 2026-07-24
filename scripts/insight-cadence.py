@@ -267,6 +267,12 @@ def _gather_insights():
                 "source": "insights-drift.json",
                 "suggested_action": "None — confirm the correction that resolved it stays standing",
                 "healable": True,
+                # The warning twin this resolution clears. _gen_id hashes source+subject
+                # together, so the twin id is NOT derivable at the sink — the pairing must
+                # be stamped here at the source (PREC-2026-07-10: feed derived state at the
+                # source). insight-route uses it to remove the warning residual, which lets
+                # sync-censor-issues auto-close the mirrored issue (the empirical close).
+                "resolves": _gen_id("insights-lineage", label),
             }
         )
 
