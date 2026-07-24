@@ -10,6 +10,7 @@ from limen.agent_state.crypto import EncryptedAtomPacker, verify_atom_packs
 from limen.agent_state.models import MetabolismReceipt, RestoreProof
 from limen.agent_state.tree import (
     atomize_file_tree,
+    brctl_evict,
     evict_cloud_materializations,
     plan_cloud_materializations,
     plan_retention,
@@ -183,6 +184,11 @@ def test_cloud_plan_never_selects_placeholder(tmp_path: Path) -> None:
     assert plan.hot_paths == ("placeholder.pdf",)
 
 
+def test_default_cloud_eviction_adapter_fails_closed(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="hidden brctl eviction was non-atomic"):
+        brctl_evict(tmp_path / "payload.json")
+
+
 def test_cloud_eviction_uses_file_provider_after_restore_gate(tmp_path: Path) -> None:
     materialized = tmp_path / "materialized.mov"
     materialized.write_bytes(b"local")
@@ -221,6 +227,50 @@ def test_cloud_eviction_uses_file_provider_after_restore_gate(tmp_path: Path) ->
     assert eviction.evicted_files == 1
     assert eviction.allocated_after == 0
     assert materialized.exists()
+
+
+def test_cloud_eviction_retains_non_evictable_finder_metadata(tmp_path: Path) -> None:
+    metadata = tmp_path / ".DS_Store"
+    metadata.write_bytes(b"finder metadata")
+    materialized = tmp_path / "materialized.mov"
+    materialized.write_bytes(b"local")
+    plan = plan_cloud_materializations(tmp_path, materialized_probe=lambda _path: True)
+    packer = EncryptedAtomPacker(tmp_path / "encrypted", KEY)
+    result = atomize_file_tree(plan, packer)
+    packs = list(packer.close())
+    receipt = MetabolismReceipt(
+        schema="limen.agent_state_metabolism.v1",
+        run_id="run",
+        source=result.source,
+        atom_count=result.atom_count,
+        logical_sha256=result.logical_sha256,
+        packs=packs,
+        git_remote="organvm/arca",
+        git_commit="a" * 40,
+        git_receipt_commit="b" * 40,
+        external_chunks=[packs[0].chunks[0]],
+        restorations=[
+            RestoreProof(scope="git-sample", passed=True),
+            RestoreProof(scope="git-full-manifest", passed=True),
+            RestoreProof(scope="external-full", passed=True),
+        ],
+    )
+    remaining = {metadata.resolve(), materialized.resolve()}
+
+    eviction = evict_cloud_materializations(
+        receipt,
+        plan,
+        open_probe=lambda _root: set(),
+        evict_command=lambda path: remaining.remove(path),
+        materialized_probe=lambda path: path in remaining,
+        wait=lambda _seconds: None,
+    )
+
+    assert eviction.selected_files == 1
+    assert eviction.evicted_files == 1
+    assert eviction.retained_non_evictable_files == 1
+    assert eviction.retained_non_evictable_bytes > 0
+    assert remaining == {metadata.resolve()}
 
 
 def test_cloud_eviction_denies_open_file(tmp_path: Path) -> None:

@@ -172,6 +172,39 @@ class GitVault:
             heads.append(head)
         return heads[-1]
 
+    def completed_receipt_commits(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str] | None:
+        """Return the payload and receipt commits for an exact completed run."""
+
+        self.verify_identity()
+        relative = Path(relative)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise PipelineError("ARCA completed receipt path is unsafe")
+        head = _run(["git", "rev-parse", "HEAD"], cwd=self.root)
+        subject = _run(["git", "show", "-s", "--format=%s", head], cwd=self.root)
+        if subject != message:
+            return None
+        if _run(["git", "status", "--porcelain=v1"], cwd=self.root):
+            raise PipelineError("ARCA completed receipt has dirty state")
+        changed = set(
+            _run(
+                ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", head],
+                cwd=self.root,
+            ).splitlines()
+        )
+        if changed != {(relative / "receipt.json").as_posix()}:
+            raise PipelineError("ARCA completed receipt commit has unexpected files")
+        history = _run(["git", "rev-list", "--parents", "-n", "1", head], cwd=self.root).split()
+        if len(history) != 2:
+            raise PipelineError("ARCA completed receipt commit has invalid history")
+        remote = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()[0]
+        if remote != head:
+            raise PipelineError("ARCA completed receipt is not exact on the remote")
+        return history[1], head
+
     def resume_and_push_payload(
         self,
         relative: Path,

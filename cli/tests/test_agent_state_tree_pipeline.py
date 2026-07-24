@@ -43,6 +43,32 @@ class _Vault:
         assert message == "agent-state: receipt icloud-drive run"
         return "b" * 40
 
+    def completed_receipt_commits(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str] | None:
+        assert relative == Path("agent-state/icloud-drive/run")
+        assert message == "agent-state: receipt icloud-drive run"
+        return None
+
+
+class _CompletedVault(_Vault):
+    def completed_receipt_commits(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str] | None:
+        assert relative == Path("agent-state/icloud-drive/run")
+        assert message == "agent-state: receipt icloud-drive run"
+        return "a" * 40, "b" * 40
+
+    def resume_and_push_payload(self, *_args, **_kwargs) -> str:
+        raise AssertionError("completed custody must not push payload batches")
+
+    def commit_and_push(self, *_args, **_kwargs) -> str:
+        raise AssertionError("completed custody must not create another receipt")
+
 
 def _interrupted_tree(tmp_path: Path) -> tuple[Path, Path, Path, RetentionPlan]:
     source = tmp_path / "source"
@@ -108,6 +134,41 @@ def test_resume_verifies_then_pushes_existing_ciphertext(
     assert receipt.git_receipt_commit == "b" * 40
     assert (tmp_path / "private-receipt.json").is_file()
     receipt.require_retirement_gate()
+
+
+def test_private_receipt_matches_json_normalized_custody(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    receipt = _resume(monkeypatch, tmp_path, plan, vault)
+
+    tree_pipeline._require_private_retirement_receipt(
+        receipt,
+        tmp_path / "private-receipt.json",
+    )
+
+
+def test_resume_accepts_completed_exact_receipt_without_another_push(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+
+    resumed = tree_pipeline.resume_cold_tree_capture(
+        "icloud-drive",
+        plan,
+        vault,
+        tmp_path / "external",
+        tmp_path / "private-receipt.json",
+        run_id="run",
+        require_external_mount=False,
+    )
+
+    assert resumed.as_dict() == first.as_dict()
 
 
 def test_resume_rejects_corrupt_ciphertext_before_remote_push(
