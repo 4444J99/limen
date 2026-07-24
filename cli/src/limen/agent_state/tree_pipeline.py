@@ -429,6 +429,8 @@ def run_cloudkit_materialization_campaign(
                 f"selected-files={result.selected_files};"
                 f"evicted-files={result.evicted_files};"
                 f"already-reclaimed-files={result.already_reclaimed_files};"
+                f"retained-non-evictable-files={result.retained_non_evictable_files};"
+                f"retained-non-evictable-bytes={result.retained_non_evictable_bytes};"
                 f"allocated-before={result.allocated_before};"
                 f"allocated-after={result.allocated_after}"
             )
@@ -467,6 +469,8 @@ def run_resume_cloudkit_materialization_campaign(
                 f"selected-files={result.selected_files};"
                 f"evicted-files={result.evicted_files};"
                 f"already-reclaimed-files={result.already_reclaimed_files};"
+                f"retained-non-evictable-files={result.retained_non_evictable_files};"
+                f"retained-non-evictable-bytes={result.retained_non_evictable_bytes};"
                 f"allocated-before={result.allocated_before};"
                 f"allocated-after={result.allocated_after}"
             )
