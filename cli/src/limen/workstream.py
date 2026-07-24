@@ -100,6 +100,7 @@ _GENERIC_TEXT_TOKENS: frozenset[str] = frozenset({"pr", "prs"})
 # pillar handle (his word works at the surface; the code converges underneath).
 _ORGAN_ALIASES: dict[str, tuple[str, ...]] = {
     "financial": ("revenue", "money", "cash", "finance"),
+    "representation": ("job", "career", "job-getting", "applications", "presence"),
 }
 
 UNASSIGNED = "(unassigned)"
