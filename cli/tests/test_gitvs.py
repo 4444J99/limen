@@ -247,7 +247,16 @@ def test_pr_classification_preserves_owner_and_actionable_route_contracts() -> N
     }
 
     active = module._classify_open_pr("example/repo", {**base, "updatedAt": "2026-07-21T11:00:00Z"}, policy, now)
-    routed = module._classify_open_pr("example/repo", {**base, "updatedAt": "2026-07-01T00:00:00Z"}, policy, now)
+    routed = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "updatedAt": "2026-07-01T00:00:00Z",
+            "labels": {"nodes": [{"name": "lifecycle:delivery"}]},
+        },
+        policy,
+        now,
+    )
     preserved = module._classify_open_pr(
         "example/repo",
         {
@@ -261,10 +270,74 @@ def test_pr_classification_preserves_owner_and_actionable_route_contracts() -> N
 
     assert active["classification"] == "active_custody"
     assert active["owner"] == "claude-owner"
+    assert active["lifecycle_complete"] is False
+    assert active["lifecycle_disposition"] is None
     assert routed["classification"] == "owner_route"
+    assert routed["lifecycle_disposition"] == "lifecycle:delivery"
+    assert routed["lifecycle_complete"] is True
+    assert routed["exact_head_owner"]["head_oid"] == "a" * 40
     assert routed["predicate"].endswith("@" + "a" * 40)
     assert "merge-queue" in routed["merge_condition"]
     assert preserved["classification"] == "preservation"
+    assert preserved["lifecycle_disposition"] == "lifecycle:preservation"
+    assert preserved["lifecycle_disposition_source"] == "legacy-preservation-marker"
+
+
+def test_pr_lifecycle_conflicts_and_unowned_supersession_fail_closed() -> None:
+    module = _load()
+    now = datetime(2026, 7, 21, 12, tzinfo=UTC)
+    base = {
+        "number": 8,
+        "url": "https://example.invalid/pull/8",
+        "title": "work",
+        "isDraft": False,
+        "updatedAt": "2026-07-21T11:00:00Z",
+        "headRefName": "topic",
+        "headRefOid": "b" * 40,
+        "body": "",
+        "author": {"login": "owner"},
+        "assignees": {"nodes": []},
+    }
+    conflicting = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "labels": {
+                "nodes": [
+                    {"name": "lifecycle:delivery"},
+                    {"name": "lifecycle:blocked"},
+                ]
+            },
+        },
+        {},
+        now,
+    )
+    superseded = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "labels": {"nodes": [{"name": "lifecycle:superseded"}]},
+        },
+        {},
+        now,
+    )
+    held = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "body": "Superseded by: example/repo#9",
+            "labels": {"nodes": [{"name": "lifecycle:superseded"}]},
+        },
+        {},
+        now,
+    )
+
+    assert conflicting["lifecycle_disposition"] is None
+    assert conflicting["lifecycle_disposition_source"] == "conflicting-labels"
+    assert conflicting["lifecycle_complete"] is False
+    assert superseded["lifecycle_debt_reasons"] == ["missing-supersession-target"]
+    assert held["supersession_target"] == "example/repo#9"
+    assert held["lifecycle_complete"] is True
 
 
 def test_private_pr_rows_are_redacted_in_tracked_projection() -> None:
@@ -287,8 +360,13 @@ def test_private_pr_rows_are_redacted_in_tracked_projection() -> None:
     assert redacted["number"] is None
     assert redacted["url"] is None
     assert redacted["owner"] is None
+    assert redacted["head_oid"] is None
+    assert redacted["exact_head_owner"] is None
     assert redacted["predicate"] is None
+    assert redacted["receipt_target"] is None
     assert redacted["merge_condition"] is None
+    assert redacted["dependencies"] is None
+    assert redacted["supersession_target"] is None
     assert len(redacted["pr_key"]) == 64
 
 
@@ -351,6 +429,10 @@ def test_pr_debt_census_deduplicates_renamed_owner_aliases(monkeypatch) -> None:
     assert full["canonical_owner_count"] == 1
     assert full["open_pr_count"] == 1
     assert full["exhaustive"] is True
+    assert full["classification_untyped_count"] == 0
+    assert full["lifecycle_untyped_count"] == 1
+    assert full["untyped_count"] == 1
+    assert full["lifecycle_disposition_counts"] == {"untyped": 1}
     assert tracked["cursor_reconciliation"]["failure_count"] == 0
 
 
