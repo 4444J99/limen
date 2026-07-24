@@ -111,6 +111,20 @@ def test_reclaim_skips_antigravity_scratch_root_removal(tmp_path: Path) -> None:
     assert reason == "antigravity-scratch-uses-bridge-acceptance"
 
 
+def test_reclaim_skips_antigravity_system_generated_worktree(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    agy_root = tmp_path / "antigravity-cli"
+    root = agy_root / "brain" / "session" / ".system_generated" / "worktrees" / "child"
+    root.mkdir(parents=True)
+    reclaim.AGY_ROOT = agy_root
+    reclaim.AGY_SCRATCH_ROOT = agy_root / "scratch"
+
+    action, reason = reclaim.classify(root, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "antigravity-scratch-uses-bridge-acceptance"
+
+
 def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, monkeypatch) -> None:
     reclaim = load_reclaim_worktrees()
     calls: list[list[str]] = []
@@ -157,6 +171,83 @@ def test_reclaim_help_does_not_discover_targets(monkeypatch, capsys) -> None:
 
     assert reclaim.main() == 0
     assert "usage: reclaim-worktrees.py" in capsys.readouterr().out
+
+
+def test_candidate_manifest_digest_is_order_independent_and_bounded(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    first = tmp_path / "a"
+    second = tmp_path / "b"
+    first.mkdir()
+    second.mkdir()
+    monkeypatch.setattr(reclaim, "MAX_REMOVE", 1)
+    monkeypatch.setattr(
+        reclaim,
+        "classify",
+        lambda path, *_args, **_kwargs: ("remove-clone", f"clean+merged+idle-{path.name}"),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "reclaim_accepted",
+        lambda *_args, **_kwargs: (True, "accepted"),
+    )
+
+    left = reclaim.build_candidate_manifest(
+        [(second, 0, "test"), (first, 0, "test")],
+        100.0,
+        {},
+        [],
+    )
+    right = reclaim.build_candidate_manifest(
+        [(first, 0, "test"), (second, 0, "test")],
+        100.0,
+        {},
+        [],
+    )
+
+    assert left == right
+    manifest, digest, skipped, deferred = left
+    assert len(digest) == 64
+    assert [row["root"] for row in manifest["candidates"]] == ["a"]
+    assert skipped == []
+    assert deferred == ["b"]
+
+
+def test_apply_requires_matching_plan_digest_before_abandonment(tmp_path: Path, monkeypatch, capsys) -> None:
+    reclaim = load_reclaim_worktrees()
+    candidate = tmp_path / "candidate"
+    candidate.mkdir()
+    target = type(
+        "Target",
+        (),
+        {"path": candidate, "min_age_h": 0, "source": "test"},
+    )()
+    monkeypatch.setattr(reclaim, "APPLY", True)
+    monkeypatch.setattr(reclaim, "CHECK", False)
+    monkeypatch.setattr(reclaim, "JSON_OUT", True)
+    monkeypatch.setattr(reclaim, "FORCE", True)
+    monkeypatch.setattr(reclaim, "GENERATED_ONLY", False)
+    monkeypatch.setattr(reclaim, "EXPECTED_PLAN_SHA", "")
+    monkeypatch.setattr(reclaim, "iter_worktree_targets", lambda _root: [target])
+    monkeypatch.setattr(reclaim, "active_process_cwds", lambda: {})
+    monkeypatch.setattr(reclaim, "load_preservation_receipts", lambda: {})
+    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", lambda: [])
+    monkeypatch.setattr(
+        reclaim,
+        "classify",
+        lambda *_args, **_kwargs: ("remove-clone", "clean+merged+idle"),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "quarantine_path",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("digest denial must precede abandonment")),
+    )
+
+    assert reclaim.main() == 2
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["mode"] == "APPLY-BLOCKED"
+    assert payload["failed"] == [{"reason": "expected-plan-sha-required", "root": "plan"}]
+    assert len(payload["plan_sha256"]) == 64
+    assert candidate.exists()
 
 
 def test_persist_apply_receipt_records_finite_completion_in_log_and_marker(tmp_path: Path, monkeypatch) -> None:
@@ -306,7 +397,7 @@ def test_reclaim_generated_payloads_preserves_tracked_generated_name(
     assert not (tmp_path / "quarantine").exists()
 
 
-def test_reclaim_blocks_root_detach_after_generated_quarantine_failure(
+def test_reclaim_root_apply_does_not_run_generated_cleanup(
     tmp_path: Path,
     monkeypatch,
     capsys,
@@ -331,29 +422,20 @@ def test_reclaim_blocks_root_detach_after_generated_quarantine_failure(
     monkeypatch.setattr(
         reclaim,
         "reclaim_generated_payloads",
-        lambda _targets: {
-            "enabled": True,
-            "cleaned": [],
-            "failed": [{"root": "repo", "detail": "generated-quarantine-failed"}],
-        },
+        lambda _targets: (_ for _ in ()).throw(AssertionError("root apply must not clean generated payloads")),
     )
     monkeypatch.setattr(reclaim, "load_preservation_receipts", lambda: {})
     monkeypatch.setattr(reclaim, "load_reclaim_acceptance", lambda: [])
-    monkeypatch.setattr(
-        reclaim,
-        "classify",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not classify failed root")),
-    )
-    monkeypatch.setattr(
-        reclaim,
-        "detach_registered_worktree",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not detach failed root")),
-    )
+    monkeypatch.setattr(reclaim, "classify", lambda *_args, **_kwargs: ("skip", "dirty"))
+    plan_sha = reclaim.build_candidate_manifest([(repo, 0, "test")], 0.0, {}, [])[1]
+    monkeypatch.setattr(reclaim, "EXPECTED_PLAN_SHA", plan_sha)
 
     assert reclaim.main() == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["reclaimed"] == []
-    assert payload["failed"] == [{"root": "repo", "reason": "generated-quarantine-failed"}]
+    assert payload["failed"] == []
+    assert payload["generated_reclaim"] == {"enabled": False, "cleaned": [], "failed": []}
+    assert payload["kept_safe"] == [{"root": "repo", "reason": "dirty"}]
     assert repo.exists()
 
 

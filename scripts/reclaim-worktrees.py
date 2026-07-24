@@ -59,6 +59,7 @@ while losing nothing. Deleting a quarantined orphan is a SEPARATE proof-gated st
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -108,6 +109,7 @@ EVERY_MIN = _float_env("LIMEN_RECLAIM_EVERY_MIN", 30)
 GENERATED_RECLAIM_MAX = _int_env("LIMEN_RECLAIM_GENERATED_MAX", 80)
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
 AGY_SCRATCH_ROOT = Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", f"{HOME}/.gemini/antigravity-cli/scratch"))
+AGY_ROOT = AGY_SCRATCH_ROOT.expanduser().parent
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 RECLAIM_ACCEPTANCE = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
@@ -118,6 +120,19 @@ APPLY = "--apply" in sys.argv and not CHECK
 FORCE = "--force" in sys.argv  # ignore the throttle
 GENERATED_ONLY = "--generated-only" in sys.argv
 HELP = "--help" in sys.argv or "-h" in sys.argv
+
+
+def _option_value(name: str) -> str:
+    prefix = f"{name}="
+    for index, value in enumerate(sys.argv):
+        if value.startswith(prefix):
+            return value[len(prefix) :]
+        if value == name and index + 1 < len(sys.argv):
+            return sys.argv[index + 1]
+    return ""
+
+
+EXPECTED_PLAN_SHA = _option_value("--expected-plan-sha")
 REMOTE_MERGED_LANES = {"remote-merged"}
 REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
 ACCEPTED_ARCHIVE_STATUSES = {
@@ -362,11 +377,19 @@ def patch_equivalent_to_default(cwd) -> bool:
 
 
 def inside_agy_scratch_root(path: Path) -> bool:
+    """Treat every Antigravity-owned cache as bridge-gated, not fleet-reapable."""
+
     try:
-        path.resolve().relative_to(AGY_SCRATCH_ROOT.expanduser().resolve())
-        return True
-    except (OSError, ValueError):
+        resolved = path.resolve()
+        for owned_root in (AGY_ROOT, AGY_SCRATCH_ROOT):
+            try:
+                resolved.relative_to(owned_root.expanduser().resolve())
+                return True
+            except ValueError:
+                continue
+    except OSError:
         return False
+    return False
 
 
 def load_preservation_receipts():
@@ -698,33 +721,126 @@ def persist_apply_receipt(
     return completed_ts
 
 
+def build_candidate_manifest(
+    dirs: list[tuple[Path, float, str]],
+    now: float,
+    preservation_receipts: dict,
+    reclaim_acceptance: list[dict],
+) -> tuple[dict, str, list[tuple[str, str]], list[str]]:
+    """Return the canonical, bounded, accepted candidate set and its digest."""
+
+    candidates: list[dict[str, str]] = []
+    skipped: list[tuple[str, str]] = []
+    for directory, min_age_h, source in dirs:
+        action, reason = classify(
+            directory,
+            now,
+            min_age_h,
+            preservation_receipts,
+            source=source,
+        )
+        if action == "skip":
+            skipped.append((directory.name, reason))
+            continue
+        accepted, accept_reason = reclaim_accepted(
+            directory,
+            action,
+            reason,
+            reclaim_acceptance,
+        )
+        if not accepted:
+            skipped.append((directory.name, accept_reason))
+            continue
+        candidates.append(
+            {
+                "action": action,
+                "path": str(directory),
+                "reason": reason,
+                "root": directory.name,
+                "source": source,
+            }
+        )
+
+    candidates.sort(key=lambda row: (row["path"], row["action"], row["reason"]))
+    selected = candidates[:MAX_REMOVE]
+    deferred = [row["root"] for row in candidates[MAX_REMOVE:]]
+    manifest = {
+        "schema": "limen.worktree_reclaim_plan.v1",
+        "max_reclaim": MAX_REMOVE,
+        "candidates": selected,
+    }
+    canonical = json.dumps(
+        manifest,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return manifest, hashlib.sha256(canonical).hexdigest(), skipped, deferred
+
+
+def _print_json_result(
+    *,
+    mode: str,
+    apply: bool,
+    dirs: list[tuple[Path, float, str]],
+    manifest: dict,
+    plan_sha256: str,
+    removed: list[tuple[str, str]],
+    skipped: list[tuple[str, str]],
+    failed: list[tuple[str, str]],
+    deferred: list[str],
+    generated_reclaim: dict,
+) -> None:
+    print(
+        json.dumps(
+            {
+                "mode": mode,
+                "apply": apply,
+                "scanned": len(dirs),
+                "candidate_manifest": manifest,
+                "plan_sha256": plan_sha256,
+                "reclaimed": ([{"root": root, "detail": detail} for root, detail in removed] if apply else []),
+                "would_reclaim": manifest["candidates"] if not apply else [],
+                "kept_safe": [{"root": root, "reason": reason} for root, reason in skipped],
+                "failed": [{"root": root, "reason": reason} for root, reason in failed],
+                "deferred_over_cap": deferred,
+                "generated_reclaim": generated_reclaim,
+                "reapable_count": len(manifest["candidates"]) if not apply else 0,
+                "reclaimed_count": len(removed) if apply else 0,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+
+
 def main():
     global _ACTIVE_PROCESS_CWDS
     if HELP:
         print(
-            "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] [--generated-only]\n\n"
-            "Dry-run by default. Use --check --json for structured inspection and --apply to remove "
-            "accepted clean, idle, remote-preserved worktrees."
+            "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] "
+            "[--generated-only] [--expected-plan-sha SHA256]\n\n"
+            "Dry-run by default. Use --check --json for a canonical candidate manifest, "
+            "then --apply --expected-plan-sha SHA256 to re-probe and remove only that plan."
         )
         return 0
-    # Every known creation site, each with its own idle gate. Missing roots simply disappear
-    # from the target list; discovery must never block the heartbeat.
+
     targets = iter_worktree_targets(LIMEN_ROOT)
     if not targets:
         print("reclaim: no worktree roots present — nothing to do")
         return 0
     _ACTIVE_PROCESS_CWDS = active_process_cwds()
-    # self-throttle (skip silently if run recently, unless --force or dry-run inspection)
     if APPLY and not FORCE and MARKER.exists():
         if (time.time() - MARKER.stat().st_mtime) / 60.0 < EVERY_MIN:
             print(f"reclaim: ran < {EVERY_MIN}min ago — skip (set --force to override)")
             return 0
+
     now = time.time()
-    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))  # quarantine dest prefix
-    generated_reclaim = (
-        reclaim_generated_payloads(targets) if APPLY else {"enabled": False, "cleaned": [], "failed": []}
-    )
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))
     if GENERATED_ONLY:
+        generated_reclaim = (
+            reclaim_generated_payloads(targets) if APPLY else {"enabled": False, "cleaned": [], "failed": []}
+        )
         cleaned = generated_reclaim.get("cleaned") or []
         gen_failed = generated_reclaim.get("failed") or []
         if JSON_OUT:
@@ -743,78 +859,109 @@ def main():
         for row in cleaned[:20]:
             print(f"  generated-clean {row['detail']:14} {row['root']}")
         return 0
+
     preservation_receipts = load_preservation_receipts()
     reclaim_acceptance = load_reclaim_acceptance()
     dirs = [(target.path, target.min_age_h, target.source) for target in targets]
-    removed, skipped, failed, deferred = [], [], [], []
-    would_reclaim = []
-    generated_failures = {
-        str(row.get("root")): str(row.get("detail", "generated-quarantine-failed"))
-        for row in generated_reclaim.get("failed", [])
-        if isinstance(row, dict) and row.get("root")
-    }
-    for d, min_age_h, source in dirs:
-        if d.name in generated_failures:
-            failed.append((d.name, generated_failures[d.name]))
-            continue
-        action, reason = classify(d, now, min_age_h, preservation_receipts, source=source)
-        if action == "skip":
-            skipped.append((d.name, reason))
-            continue
-        if len(removed) >= MAX_REMOVE:
-            deferred.append(d.name)
-            continue  # bounded — but NOT silent (logged below)
-        if not APPLY:
-            accepted, accept_reason = reclaim_accepted(d, action, reason, reclaim_acceptance)
-            if not accepted:
-                skipped.append((d.name, accept_reason))
-                continue
-            removed.append((d.name, f"would-{action}:{reason}"))
-            would_reclaim.append({"root": d.name, "path": str(d), "action": action, "reason": reason})
-            continue
-        accepted, accept_reason = reclaim_accepted(d, action, reason, reclaim_acceptance)
-        if not accepted:
-            skipped.append((d.name, accept_reason))
-            continue
-        try:
-            if action == "remove-worktree":
-                sp = superproject(d)
-                if not sp or Path(sp).resolve() == d.resolve():
-                    failed.append((d.name, "registered-superproject-unavailable"))
-                    continue
-                receipt = detach_registered_worktree(
-                    Path(sp),
-                    d,
-                    reason=reason,
-                    receipt_root=ABANDONMENT_RECEIPTS,
-                    owner_probe=lambda _path: active_process_owner(d),
-                )
-            elif action == "quarantine-orphan":
-                ok, dest = quarantine_orphan(d, stamp)  # PRESERVE by MOVE — never a delete
-                if not ok:
-                    failed.append((d.name, dest))
-                    continue
-                receipt = {"receipt_path": "orphan-quarantine-wrapper", "result": {"destination": dest}}
-            else:
-                destination_name = f"{stamp}-{d.name}-{d.lstat().st_ino}"
-                receipt = quarantine_path(
-                    d,
-                    abandonment_quarantine_root(d),
-                    reason=reason,
-                    receipt_root=ABANDONMENT_RECEIPTS,
-                    destination_name=destination_name,
-                    owner_probe=lambda _path: active_process_owner(d),
-                )
-            removed.append(
-                (
-                    d.name,
-                    f"{action}:{reason}:abandonment={Path(str(receipt['receipt_path'])).name}",
-                )
-            )
-        except (OSError, WorktreeAbandonmentError) as e:
-            failed.append((d.name, str(e)[:120]))
+    manifest, plan_sha256, skipped, deferred = build_candidate_manifest(
+        dirs,
+        now,
+        preservation_receipts,
+        reclaim_acceptance,
+    )
+    generated_reclaim = {"enabled": False, "cleaned": [], "failed": []}
+    removed: list[tuple[str, str]] = []
+    failed: list[tuple[str, str]] = []
 
     if APPLY:
+        if not EXPECTED_PLAN_SHA:
+            failed.append(("plan", "expected-plan-sha-required"))
+        elif EXPECTED_PLAN_SHA != plan_sha256:
+            failed.append(
+                (
+                    "plan",
+                    f"plan-sha-mismatch:expected={EXPECTED_PLAN_SHA}:actual={plan_sha256}",
+                )
+            )
+        if failed:
+            if JSON_OUT:
+                _print_json_result(
+                    mode="APPLY-BLOCKED",
+                    apply=True,
+                    dirs=dirs,
+                    manifest=manifest,
+                    plan_sha256=plan_sha256,
+                    removed=removed,
+                    skipped=skipped,
+                    failed=failed,
+                    deferred=deferred,
+                    generated_reclaim=generated_reclaim,
+                )
+            else:
+                print(f"reclaim [APPLY-BLOCKED]: {failed[0][1]}")
+            return 2
+
+        for planned in manifest["candidates"]:
+            directory = Path(planned["path"])
+            _ACTIVE_PROCESS_CWDS = active_process_cwds()
+            action, reason = classify(
+                directory,
+                time.time(),
+                next(min_age_h for path, min_age_h, _source in dirs if path == directory),
+                preservation_receipts,
+                source=planned["source"],
+            )
+            accepted, accept_reason = reclaim_accepted(
+                directory,
+                action,
+                reason,
+                reclaim_acceptance,
+            )
+            if not accepted or action != planned["action"] or reason != planned["reason"]:
+                detail = accept_reason if not accepted else f"candidate-drift:{action}:{reason}"
+                failed.append((directory.name, detail))
+                continue
+            try:
+                if action == "remove-worktree":
+                    super_root = superproject(directory)
+                    if not super_root or Path(super_root).resolve() == directory.resolve():
+                        failed.append((directory.name, "registered-superproject-unavailable"))
+                        continue
+                    receipt = detach_registered_worktree(
+                        Path(super_root),
+                        directory,
+                        reason=reason,
+                        receipt_root=ABANDONMENT_RECEIPTS,
+                        owner_probe=lambda _path, root=directory: active_process_owner(root),
+                    )
+                elif action == "quarantine-orphan":
+                    ok, destination = quarantine_orphan(directory, stamp)
+                    if not ok:
+                        failed.append((directory.name, destination))
+                        continue
+                    receipt = {
+                        "receipt_path": "orphan-quarantine-wrapper",
+                        "result": {"destination": destination},
+                    }
+                else:
+                    destination_name = f"{stamp}-{directory.name}-{directory.lstat().st_ino}"
+                    receipt = quarantine_path(
+                        directory,
+                        abandonment_quarantine_root(directory),
+                        reason=reason,
+                        receipt_root=ABANDONMENT_RECEIPTS,
+                        destination_name=destination_name,
+                        owner_probe=lambda _path, root=directory: active_process_owner(root),
+                    )
+                removed.append(
+                    (
+                        directory.name,
+                        f"{action}:{reason}:abandonment={Path(str(receipt['receipt_path'])).name}",
+                    )
+                )
+            except (OSError, WorktreeAbandonmentError) as exc:
+                failed.append((directory.name, str(exc)[:120]))
+
         try:
             persist_apply_receipt(
                 started_ts=now,
@@ -826,53 +973,42 @@ def main():
                 generated_reclaim=generated_reclaim,
             )
         except Exception:
-            pass  # logging must never break the beat
+            pass
 
     mode = "APPLY" if APPLY else "check" if CHECK else "dry-run"
     if JSON_OUT:
-        print(
-            json.dumps(
-                {
-                    "mode": mode,
-                    "apply": APPLY,
-                    "scanned": len(dirs),
-                    "reclaimed": [{"root": root, "detail": detail} for root, detail in removed] if APPLY else [],
-                    "would_reclaim": would_reclaim,
-                    "kept_safe": [{"root": root, "reason": reason} for root, reason in skipped],
-                    "failed": [{"root": root, "reason": reason} for root, reason in failed],
-                    "deferred_over_cap": deferred,
-                    "generated_reclaim": generated_reclaim,
-                    "reapable_count": len(removed) if not APPLY else 0,
-                    "reclaimed_count": len(removed) if APPLY else 0,
-                },
-                indent=2,
-                sort_keys=True,
-            )
+        _print_json_result(
+            mode=mode,
+            apply=APPLY,
+            dirs=dirs,
+            manifest=manifest,
+            plan_sha256=plan_sha256,
+            removed=removed,
+            skipped=skipped,
+            failed=failed,
+            deferred=deferred,
+            generated_reclaim=generated_reclaim,
         )
-        return 0
+        return 1 if failed else 0
+
     print(
         f"reclaim [{mode}]: {len(removed)} reclaimed, {len(skipped)} kept-safe, "
-        f"{len(failed)} failed, {len(deferred)} deferred-over-cap (of {len(dirs)})"
+        f"{len(failed)} failed, {len(deferred)} deferred-over-cap (of {len(dirs)}); "
+        f"plan_sha256={plan_sha256}"
     )
-    if generated_reclaim.get("enabled"):
-        cleaned = generated_reclaim.get("cleaned") or []
-        gen_failed = generated_reclaim.get("failed") or []
-        print(f"  generated-payloads: {len(cleaned)} cleaned, {len(gen_failed)} failed")
-        for row in cleaned[:10]:
-            print(f"    generated-clean {row['detail']:14} {row['root']}")
-    for n, why in skipped:
-        print(f"  keep {why:24} {n}")
-    for n, why in removed:
-        print(f"  {'reclaimed' if APPLY else 'would'}: {n} ({why})")
+    for root, reason in skipped:
+        print(f"  keep {reason:24} {root}")
+    for row in manifest["candidates"]:
+        print(f"  {'reclaimed' if APPLY else 'would'}: {row['root']} ({row['action']}:{row['reason']})")
     if deferred:
         print(
             f"  NOTE: {len(deferred)} dirs over the {MAX_REMOVE}-cap this run, next run takes them: "
             + ", ".join(deferred[:5])
             + ("…" if len(deferred) > 5 else "")
         )
-    for n, why in failed:
-        print(f"  FAIL {n}: {why}")
-    return 0
+    for root, reason in failed:
+        print(f"  FAIL {root}: {reason}")
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
