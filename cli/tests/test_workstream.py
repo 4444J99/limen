@@ -67,7 +67,7 @@ def test_roster_derives_meta_plus_organs(tmp_path):
 
 def test_roster_without_ladder_is_meta_only(tmp_path):
     handles = [c.handle for c in ws.derived_channels(tmp_path)]  # no organ-ladder.json here
-    assert handles == ["conductor", "contributions", "correspondence", "prompt-parity"]
+    assert handles == ["conductor", "contributions", "correspondence", "prompt-parity", "substrate"]
 
 
 def test_alias_resolves_revenue_to_financial(tmp_path):

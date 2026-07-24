@@ -207,6 +207,63 @@ def test_dry_run(test_env):
         assert not residual_file.exists()
 
 
+def test_resolution_clears_organ_residual(test_env):
+    # A resolution insight (severity=info, `resolves` naming its warning twin —
+    # stamped at the source by insight-cadence, since _gen_id hashes source+subject
+    # and the twin id is not derivable at the sink) must REMOVE the warning from
+    # the organ's residual inbox instead of appending an info marker. That removal
+    # is what lets sync-censor-issues auto-close the mirrored issue.
+    warning = {
+        "id": "insights-lineage-aaaa1111",
+        "severity": "warning",
+        "title": "Recurring friction: status stalls",
+        "detail": "Detail",
+        "owner": "censor",
+        "source": "insights-drift.json",
+        "suggested_action": "Promote to a standing correction",
+    }
+    resolution = {
+        "id": "insights-lineage-resolved-bbbb2222",
+        "severity": "info",
+        "title": "Friction resolved: status stalls",
+        "detail": "Absent from the latest report.",
+        "owner": "censor",
+        "source": "insights-drift.json",
+        "suggested_action": "None",
+        "resolves": "insights-lineage-aaaa1111",
+    }
+
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        # Round 1: the warning lands in the inbox.
+        report_file = test_env["cadence"] / "weekly-r1.json"
+        report_file.write_text(json.dumps({"insights": [warning]}))
+        insight_route.process_report(report_file, apply=True)
+
+        residual_file = test_env["logs"] / "censor-residual.json"
+        data = json.loads(residual_file.read_text())
+        assert [item["id"] for item in data] == ["insights-lineage-aaaa1111"]
+
+        # Dry-run of the resolution touches nothing.
+        report_file.write_text(json.dumps({"insights": [resolution]}))
+        insight_route.process_report(report_file, apply=False)
+        data = json.loads(residual_file.read_text())
+        assert len(data) == 1
+
+        # Applied resolution clears the warning and appends no info marker.
+        insight_route.process_report(report_file, apply=True)
+        data = json.loads(residual_file.read_text())
+        assert data == []
+
+        # Idempotent: re-applying the resolution is a no-op.
+        insight_route.process_report(report_file, apply=True)
+        data = json.loads(residual_file.read_text())
+        assert data == []
+
+
 def _repo_insight(iid, source="test"):
     return {
         "id": iid,

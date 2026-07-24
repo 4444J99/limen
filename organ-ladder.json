@@ -279,6 +279,22 @@
       "micro": "Anthony's estate — 6 frontends + the 4444J99 profile + the value-repo READMEs — federated into one logs/decorum.json verdict every beat; on first run it surfaced a moat leak + the portfolio rendering as unstyled HTML, and files a DECORUM-<lane>-<surface> ticket per finding through the tabularius broker",
       "first_artifact": "scripts/decorum-keeper.py --sweep green at a fixed point (federates experience/visual/seo/countenance/links/moat + the polish lane), beat-wired as the `decorum` sensor (cadence 6, read-only default), the effector proven idempotent against an isolated board, the doctor an omega det rung; name blessed DECORVM by nomenclator",
       "note": "2026-07-22: the 'professionalization audit + keeper/mentor — no egg-face ever' ask realized as a FEDERATOR, not a parallel stack (improve-don't-rewrite): it reads the six existing quality organs' artifacts and adds the polish/voice lane none covered. Fail-open is law — an unmeasured department is skipped, never failed. Phase-3 prose voice-judge is model-in-the-loop (a decorum-judgments.yaml store + on-change queue, sibling of experience-judge); off-platform surfaces (LinkedIn/social) are designed-in registry slots. Working handle DECORVM (the Roman decorum — the fitting/becoming)."
+    },
+    {
+      "rank": 18,
+      "pillar": "representation",
+      "organ": "Representation Substrate",
+      "repo": "organvm/limen",
+      "home": "organs/representation/",
+      "maturity": 25,
+      "stage": "scaffold",
+      "whose_hand": "mine (evidence, dossiers, packets, previews are the organ's); his for every send — a submission, an application, a public export, an outbound message — per the charter's no-send-without-approval gates",
+      "rival": "a creator agency + studio CRM + publication desk + publicist + portfolio studio (the charter's own census)",
+      "domain_map": "Member=represented subject (creator/professional); Mandate=a representation record (dossier/packet/presence); Standing=packet lifecycle (evidence -> staged -> approved -> sent); Standard=the charter's role gates (Privacy Sentinel blocks by default, Authority Clerk reports blockers not achieved status); Governance=approval-gated output modes",
+      "macro": "institutional representation any creator or professional can hold — evidence librarian, provenance, opportunity analysis, submission/market-fit packets, public-presence drafts — without taking over their voice",
+      "micro": "the shipped proofs (Christopher Notarnicola writer_submission record, ET4L artist-organ bridge) + Anthony's own professional representation: the job campaign (LinkedIn/work comms, application packets via organvm/application-pipeline, interview-prep dossiers, the ASI north-star campaign)",
+      "first_artifact": "organs/representation/ substrate already authored (CHARTER.md, KERNEL.md, representation_substrate.py, validate-representation.py, records/packets/opportunities/approvals) — this ladder entry is the organ's census admission, which derives its workstream channel",
+      "note": "The organ predates its ladder entry (authored under the studio/authority program; first proofs Christopher + ET4L). Admitted to the ladder 2026-07-24 so the `representation` workstream channel derives (the job-getting/professional-presence lane) — channels derive from pillars, so an organ absent from the ladder has no lane. Working name pending an INDEX-NOMINVM pass."
     }
   ],
   "power_snapshot": {
