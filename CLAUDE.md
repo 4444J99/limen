@@ -128,6 +128,25 @@ Do **not** declare work "done" or "fully done" until verified end-to-end:
 - **Reconcile divergent branches against authoritative data** — GitHub redirect/PR state via `gh`, or `scripts/verify-dispatch.py` — never against heuristics or guesses.
 - Report status terse and factual: if tests fail, say so with the output; if a step was skipped, say so; call something done only when the predicate proves it.
 
+## Data Grounding
+
+Before drawing ANY conclusion from a dataset — a message export, a mail archive, a review window,
+a log trawl — establish the ground truth of the *input* first (2026-07-24 insights lineage: two
+confidently-wrong message analyses from a received-only export and a too-narrow window; the
+domain instances are `docs/student-email-reply-grounding.md` and the outreach sent-state memory —
+this section is their generalization):
+
+- **State the scope up front, in the output**: the exact date/window boundaries, the direction of
+  the records (sent AND received? one side only?), any export filters, and the **total record
+  count** — before the first conclusion, so a scope error surfaces immediately.
+- **Window = the last human review point, never the last automated run.** An automation's
+  timestamp is not evidence a human saw anything.
+- **Suspicious-count self-check**: if a count looks too low or too high against the requester's
+  stated expectation or the surrounding evidence, treat that as a data-scope bug in YOUR input
+  until proven otherwise — re-derive it by a second independent method before presenting.
+- **When a file could be a queue or a record, assume RECORD** — verify live sent-state/channel
+  state before acting on a file's title or presence.
+
 ## Edits Policy
 
 - **Prefer minimal in-place edits**, especially during closeouts and cleanups. **Do not create new files unless asked** or genuinely required by the task.
