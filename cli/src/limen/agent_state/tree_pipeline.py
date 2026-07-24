@@ -127,8 +127,6 @@ def capture_cold_tree(
         return receipt
     except BaseException:
         packer.abort()
-        shutil.rmtree(payload_root, ignore_errors=True)
-        shutil.rmtree(exact_root, ignore_errors=True)
         raise
 
 

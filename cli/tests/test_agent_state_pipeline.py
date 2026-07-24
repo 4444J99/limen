@@ -10,6 +10,7 @@ from limen.agent_state.models import MetabolismReceipt, ReceiptError, RestorePro
 from limen.agent_state.pipeline import (
     PipelineError,
     capture_opencode,
+    partition_git_paths,
     require_mounted_external,
     retire_opencode,
 )
@@ -53,6 +54,24 @@ def _receipt(source: Path, *, external_passed: bool = True) -> MetabolismReceipt
 def test_unmounted_external_custody_fails_closed(tmp_path: Path) -> None:
     with pytest.raises(PipelineError, match="mounted /Volumes"):
         require_mounted_external(tmp_path / "not-external")
+
+
+def test_git_custody_batches_stay_below_push_limit(tmp_path: Path) -> None:
+    paths = []
+    for name, size in (("alpha", 4), ("beta", 5), ("gamma", 7)):
+        path = tmp_path / name
+        path.write_bytes(b"x" * size)
+        paths.append(path)
+
+    batches = partition_git_paths(paths, byte_limit=10)
+
+    assert [[path.name for path in batch] for batch in batches] == [
+        ["alpha", "beta"],
+        ["gamma"],
+    ]
+    assert all(sum(path.stat().st_size for path in batch) <= 10 for batch in batches)
+    with pytest.raises(PipelineError, match="single Git custody file"):
+        partition_git_paths(paths, byte_limit=6)
 
 
 def test_active_vendor_denies_capture_before_writes(tmp_path: Path) -> None:

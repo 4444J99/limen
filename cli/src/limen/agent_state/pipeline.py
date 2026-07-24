@@ -10,7 +10,7 @@ import subprocess
 import time
 from dataclasses import asdict
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterable
 
 from limen.host_admission import hold_lease
 
@@ -27,6 +27,10 @@ from .models import MetabolismReceipt
 
 class PipelineError(RuntimeError):
     """The custody pipeline failed before its destructive gate."""
+
+
+GITHUB_PUSH_LIMIT_BYTES = 2 * 1024 * 1024 * 1024
+DEFAULT_GIT_BATCH_LIMIT_BYTES = 1024 * 1024 * 1024
 
 
 def run_id_now() -> str:
@@ -60,6 +64,32 @@ def _run(arguments: list[str], *, cwd: Path | None = None) -> str:
     return result.stdout.strip()
 
 
+def partition_git_paths(
+    paths: Iterable[Path],
+    *,
+    byte_limit: int = DEFAULT_GIT_BATCH_LIMIT_BYTES,
+) -> list[list[Path]]:
+    """Partition ciphertext files into deterministic, sub-2 GiB push batches."""
+    if byte_limit <= 0 or byte_limit >= GITHUB_PUSH_LIMIT_BYTES:
+        raise PipelineError("Git custody batch limit must be positive and below 2 GiB")
+    batches: list[list[Path]] = []
+    batch: list[Path] = []
+    batch_bytes = 0
+    for path in sorted(paths, key=lambda candidate: candidate.as_posix()):
+        size = path.stat().st_size
+        if size > byte_limit:
+            raise PipelineError(f"single Git custody file exceeds bounded push batch: {path.name}")
+        if batch and batch_bytes + size > byte_limit:
+            batches.append(batch)
+            batch = []
+            batch_bytes = 0
+        batch.append(path)
+        batch_bytes += size
+    if batch:
+        batches.append(batch)
+    return batches
+
+
 class GitVault:
     """Surgical writer for the existing private ARCA ciphertext repository."""
 
@@ -84,16 +114,51 @@ class GitVault:
             raise PipelineError("ARCA remote is not private")
 
     def commit_and_push(self, relative: Path, message: str) -> str:
-        _run(["git", "add", "-A", "--", str(relative)], cwd=self.root)
-        if not _run(["git", "status", "--porcelain=v1", "--", str(relative)], cwd=self.root):
+        changed = _run(
+            [
+                "git",
+                "ls-files",
+                "--others",
+                "--modified",
+                "--exclude-standard",
+                "--",
+                str(relative),
+            ],
+            cwd=self.root,
+        )
+        paths = [self.root / value for value in changed.splitlines() if value]
+        batches = partition_git_paths(paths)
+        if not batches:
             raise PipelineError("ARCA payload produced no Git change")
-        _run(["git", "commit", "-m", message, "--", str(relative)], cwd=self.root)
-        head = _run(["git", "rev-parse", "HEAD"], cwd=self.root)
-        _run(["git", "push", "origin", "HEAD:main"], cwd=self.root)
-        remote = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()[0]
-        if remote != head:
-            raise PipelineError("ARCA remote did not accept the exact custody commit")
-        return head
+        heads: list[str] = []
+        for index, batch in enumerate(batches, start=1):
+            relative_batch = [str(path.relative_to(self.root)) for path in batch]
+            _run(["git", "add", "--", *relative_batch], cwd=self.root)
+            batch_message = message
+            if len(batches) > 1:
+                batch_message = f"{message} ({index}/{len(batches)})"
+            _run(
+                [
+                    "git",
+                    "-c",
+                    "gc.auto=0",
+                    "-c",
+                    "maintenance.auto=false",
+                    "commit",
+                    "-m",
+                    batch_message,
+                    "--",
+                    *relative_batch,
+                ],
+                cwd=self.root,
+            )
+            head = _run(["git", "rev-parse", "HEAD"], cwd=self.root)
+            _run(["git", "push", "origin", "HEAD:main"], cwd=self.root)
+            remote = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()[0]
+            if remote != head:
+                raise PipelineError("ARCA remote did not accept the exact custody commit")
+            heads.append(head)
+        return heads[-1]
 
 
 def _capture_manifest(receipt: MetabolismReceipt, table_counts: dict[str, int]) -> dict[str, object]:
