@@ -47,6 +47,20 @@ parameters:
     owner: vigilia
     note: "Low-frequency sleep cadence while the autonomy governor is paused. The singleton stays alive and writes one byte-stable paused receipt instead of exiting into a launchd KeepAlive respawn loop."
 
+  # --- treaty leads: battle spawn bounds (scripts/lead-spawn.py) ---------------
+  LIMEN_LEAD_BATTLE_RUNWAY:
+    default: "8h"
+    env: LIMEN_LEAD_BATTLE_RUNWAY
+    self_update: none
+    owner: vigilia
+    note: "Default runway a domain lead grants a spawned battle worktree when the spawn does not request one. Always clamped to the lead's remaining runway (authority attenuates downward; contract law: recheck_remaining_runway_before_each_packet)."
+  LIMEN_LEAD_MAX_BATTLES:
+    default: 3
+    env: LIMEN_LEAD_MAX_BATTLES
+    self_update: none
+    owner: vigilia
+    note: "Max live battle worktrees per domain lead on one workstream handle. The proliferation bound that keeps a lead from re-creating the 2026-07 FleetView sprawl; a spawn past the cap is refused with the exact live-battle list."
+
   # --- the institution names ITSELF as the first parameter ---------------------
   INSTITVTIO_NOMEN:
     default: "VIGILIA"          # provisional codename — NOT ratified
@@ -2371,6 +2385,25 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "When 1, historical route ledger bias may down-weight remote batch-fill lanes. Default 0 preserves explicit daily utilization targets for lanes such as Jules."
+  LIMEN_CROSS_VENDOR_INGEST:
+    default: "1"
+    env: LIMEN_CROSS_VENDOR_INGEST
+    self_update: none
+    owner: censor
+    note: "Beat gate for the insight-cross-vendor sensor (sensors.yaml 0z0): refreshes the 7 per-vendor friction packets (logs/insight-cross-vendor/) that insight-cadence's cross-vendor source reads. Arms the estate-wide-friction-beat-sensor proposal (censor/whole-estate-insights-proposals.json); before this the ingest ran only by hand and packets went stale. Read-only over vendor stores; counts/patterns only. Set 0 to silence."
+  LIMEN_BEAT_CROSS_VENDOR:
+    default: 24
+    env: LIMEN_BEAT_CROSS_VENDOR
+    self_update: none
+    owner: censor
+    note: "Cadence (every N beats) of the insight-cross-vendor sensor — a daily-ish refresh matches the insights-report tempo the packets feed; the scan walks large vendor session stores (codex logs sqlite is GiB-scale), so it stays off the hot path."
+  LIMEN_CROSS_VENDOR_TIMEOUT:
+    default: 600
+    env: LIMEN_CROSS_VENDOR_TIMEOUT
+    self_update: none
+    owner: censor
+    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: seven adapters over multi-GiB sqlite/jsonl stores with a 30-day window; 600 covers the observed manual-run envelope with headroom. The runner kills the command group on overrun and the beat continues fail-open."
+
   LIMEN_JULES_QUOTA:
     default: "1"
     env: LIMEN_JULES_QUOTA
@@ -3600,6 +3633,20 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the liveness pass. Sized to the founding incident: the 2026-07-09 quiesce restore walked 4 down agents in ≈264 s with --apply armed — gitvs's 120 would kill a multi-agent restore mid-flight. The runner kills the whole command group on overrun and the beat continues fail-open."
+
+  # --- foreign-litter sensor (0g9): other vendors' session state in the live checkout ---
+  LIMEN_FOREIGN_LITTER:
+    default: "1"               # ON — detection is read-only; only the reap valve mutates
+    env: LIMEN_FOREIGN_LITTER
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the foreign-litter sensor (scripts/check-foreign-litter.py, sensors.yaml 0g9): the 2026-07-24 mess audit — Antigravity's teamwork-preview run planted ~35 untracked .agents/ orchestration dirs plus a stray root-level SQLite ('1') in the live checkout and abandoned them mid-milestone; nothing watched either litter class. Detects untracked foreign session state under .agents/ and repo-root droppings (bare-numeral names, stray *.sqlite/*.db, SQLite magic) every beat. Set 0 to silence."
+  LIMEN_FOREIGN_LITTER_REAP:
+    default: "0"               # OFF (SAFE-OFF) — the reap effector; off is the design until trust is earned
+    env: LIMEN_FOREIGN_LITTER_REAP
+    self_update: none
+    owner: tabularius
+    note: "The armed effector for the foreign-litter sensor: when 1, findings are QUARANTINED by move (never delete) into logs/foreign-litter-quarantine/<stamp>/ and stamped to logs/foreign-litter.json. OFF by default — detection earns trust first (orphan-watcher precedent), and excavation of handoffs owed to another repo happens BEFORE arming, not after losing them."
 
   # --- orphan-watcher sensor (0g7): dead sessions' PR poll shells --------------
   LIMEN_ORPHAN_WATCHER_CHECK:

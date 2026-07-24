@@ -146,8 +146,9 @@ def body_for(residual: dict, precedent: dict | None) -> str:
         "**Owner:** the censor (limen's insights→actions institution). This issue is the",
         "public, individually-closeable home of a live censor residual — auto-opened by",
         "`scripts/sync-censor-issues.py`, auto-closed the moment the residual clears from",
-        "`logs/censor-residual.json` (the beat regenerates that file from the insights",
-        "lineage). Closing it by hand is a veto: respected forever, never reopened.",
+        "`logs/censor-residual.json` (insight-route.py appends warnings there from the",
+        "insights lineage and removes them when the lineage marks the friction",
+        "resolved). Closing it by hand is a veto: respected forever, never reopened.",
         "",
         str(residual.get("detail", "")).strip(),
     ]

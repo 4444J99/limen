@@ -693,6 +693,29 @@ sensors:
         tier: live
         command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
 
+  foreign-litter:
+    section: "0g9"
+    title: "foreign-agent litter — no other vendor's session state squats untracked in the live checkout"
+    gate: LIMEN_FOREIGN_LITTER
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The 2026-07-24 mess audit: Antigravity's teamwork-preview run planted ~35 untracked .agents/
+    # orchestration dirs + a stray root-level SQLite (`1`) in the live checkout and died mid-flight;
+    # nothing watched either class. Detection every beat; the reap valve (SAFE-OFF, orphan-watcher
+    # precedent: detection earns trust first) quarantines by MOVE, never delete — excavation of
+    # handoffs owed to another repo happens before arming, not after losing them.
+    steps:
+      - command: "python3 scripts/check-foreign-litter.py"
+        args_when:
+          - env: LIMEN_FOREIGN_LITTER_REAP
+            default: "0"
+            equals: "1"
+            args: ["--reap"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "foreign-agent session litter in the live checkout above — excavate any handoffs owed to another repo, then reap (arm LIMEN_FOREIGN_LITTER_REAP=1 or run scripts/check-foreign-litter.py --reap once)"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"
@@ -1141,6 +1164,30 @@ sensors:
       - label: "closeout classifier self-test (verdicts correct)"
         tier: det
         command: "python3 scripts/reconcile-closeouts.py --doctor"
+
+  insight-cross-vendor:
+    section: "0z0"
+    title: "cross-vendor friction ingest — per-vendor /insights-class packets (claude/codex/opencode/antigravity/cline/copilot/jules) refresh on the beat and feed the censor cascade"
+    gate: LIMEN_CROSS_VENDOR_INGEST
+    default: "1"
+    source: [metabolize]
+    owner: censor
+    # Arms the estate-wide-friction-beat-sensor proposal (censor/whole-estate-insights-proposals.json,
+    # whole-estate-2026-07-16; enacted on the operator's 2026-07-24 "implement all of it"): the
+    # 7-adapter engine (scripts/insight-cross-vendor-ingest.py, PR #1124 + the copilot adapter #1343)
+    # ran only by hand, so per-vendor packets went stale (last manual run 2026-07-22) and
+    # insight-cadence's cross-vendor source read cold data. Read-only over vendor stores; packets
+    # carry counts/patterns only (PII firewall upstream in the ingest itself).
+    cadence:
+      env: LIMEN_BEAT_CROSS_VENDOR
+      default: 24
+    timeout:
+      env: LIMEN_CROSS_VENDOR_TIMEOUT
+      default: 600
+    steps:
+      - command: "python3 scripts/insight-cross-vendor-ingest.py --window-days 30"
+        severity: advisory
+        escalation: "cross-vendor friction ingest failed — per-vendor packets in logs/insight-cross-vendor/ go stale and insight-cadence reads cold data until it lands"
 
   jules-quota:
     section: "0z1"

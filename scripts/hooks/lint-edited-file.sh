@@ -32,5 +32,8 @@ esac
 
 # An explicitly-passed path is linted even if it lives under an excluded dir
 # (e.g. a worktree), which is exactly what we want for the just-edited file.
+# Format first (fixes the recurring `ruff format` CI-gate failures at the edit,
+# not at the PR — 2026-07-24 insights lineage), then lint what remains.
+python3 -m ruff format --quiet "$file" 2>&1 || true
 python3 -m ruff check --quiet "$file" 2>&1 || true
 exit 0

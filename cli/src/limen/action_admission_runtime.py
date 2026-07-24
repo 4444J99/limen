@@ -8,6 +8,7 @@ from typing import Any
 from limen.action_admission import (
     AdmissionInputError,
     classify_action,
+    harness_session_write,
     mutation_build_allowed,
     path_within,
     resolve_effective_cwd,
@@ -68,15 +69,6 @@ def admit_pre_tool_action(
 
     if owner is None:
         return ToolAdmission(False, "writer-session-identity-unavailable")
-    allowed, reason = mutation_build_allowed(payload)
-    if not allowed:
-        return ToolAdmission(False, reason)
-    try:
-        cwd = resolve_effective_cwd(payload)
-        scope = worktree_scope(cwd)
-        targets = target_paths(payload, cwd)
-    except (AdmissionInputError, ValueError) as exc:
-        return ToolAdmission(False, str(exc))
     tool_name = str(payload.get("tool_name") or payload.get("tool") or "").strip().lower()
     structured_write = tool_name in {
         "edit",
@@ -86,6 +78,26 @@ def admit_pre_tool_action(
         "apply_patch",
         "applypatch",
     } or ("apply" in tool_name and "patch" in tool_name)
+    if structured_write:
+        # Harness session metadata (the plan-mode plan file, background-job scratch) is
+        # NOT a workspace mutation: the harness itself directs these writes, they live
+        # outside every worktree, and they need no writer lease. Checked before the
+        # plan-only gate — plan mode exists to produce exactly this file.
+        try:
+            harness_targets = target_paths(payload, resolve_effective_cwd(payload))
+        except (AdmissionInputError, ValueError):
+            harness_targets = []
+        if harness_session_write(harness_targets):
+            return ToolAdmission(True)
+    allowed, reason = mutation_build_allowed(payload)
+    if not allowed:
+        return ToolAdmission(False, reason)
+    try:
+        cwd = resolve_effective_cwd(payload)
+        scope = worktree_scope(cwd)
+        targets = target_paths(payload, cwd)
+    except (AdmissionInputError, ValueError) as exc:
+        return ToolAdmission(False, str(exc))
     if structured_write and not targets:
         return ToolAdmission(False, "write-target-unavailable")
     if not scope.linked:
