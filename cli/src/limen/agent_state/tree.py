@@ -19,6 +19,7 @@ from .models import SourceProof
 # File Provider placeholders retain their logical size but set this flag and
 # consume no local data blocks.
 UF_DATALESS = 0x40000000
+NON_EVICTABLE_CLOUD_NAMES = frozenset({".DS_Store"})
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,8 @@ class EvictionResult:
     already_reclaimed_files: int
     allocated_before: int
     allocated_after: int
+    retained_non_evictable_files: int = 0
+    retained_non_evictable_bytes: int = 0
 
 
 def plan_retention(
@@ -342,7 +345,9 @@ def evict_cloud_materializations(
     source = getattr(receipt, "source")
     require_plan_matches_source(plan, source)
     opened = open_probe(plan.root)
-    selected = tuple((plan.root / relative).resolve() for relative in plan.cold_paths)
+    planned = tuple((plan.root / relative).resolve() for relative in plan.cold_paths)
+    retained = tuple(path for path in planned if path.name in NON_EVICTABLE_CLOUD_NAMES)
+    selected = tuple(path for path in planned if path.name not in NON_EVICTABLE_CLOUD_NAMES)
     conflicts = set(selected) & opened
     if conflicts:
         raise RuntimeError(f"captured CloudKit file is active: {len(conflicts)} open path(s)")
@@ -369,4 +374,6 @@ def evict_cloud_materializations(
         already_reclaimed_files=already_reclaimed,
         allocated_before=allocated_before,
         allocated_after=0,
+        retained_non_evictable_files=len(retained),
+        retained_non_evictable_bytes=sum(path.stat().st_blocks * 512 for path in retained),
     )
