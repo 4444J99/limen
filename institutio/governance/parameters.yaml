@@ -2804,6 +2804,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "ON — clone-maintenance reaps provably-landed LOCAL branch refs for real (the ref sibling of clone/worktree reaping). Loss-free by construction (tip is an ancestor of main, or the PR is MERGED with an un-advanced tip; reflog-recoverable), so reversible and ungated. Set 0 for dry-run (report reapable branches without deleting)."
+  LIMEN_BRANCH_REAP_REPO_ROOT:
+    default: "$LIMEN_ROOT"
+    env: LIMEN_BRANCH_REAP_REPO_ROOT
+    self_update: none
+    owner: limen-daemon
+    note: "Repository whose local branch refs reap-branches.py classifies and reaps. Defaults to Limen; cross-owner closeout may target another exact local checkout while acceptance and receipts remain rooted in LIMEN_ROOT."
   LIMEN_BRANCH_REAP_MAX:
     default: 100
     env: LIMEN_BRANCH_REAP_MAX
@@ -2834,6 +2840,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "DOUBLE-DARK arming for scripts/reap-remote-branches.py: even with --apply, a remote branch is deleted only when this is 1. Defaults 0 (unlike the local reaper's LIMEN_BRANCH_REAP_APPLY=1) because a remote delete is NOT reflog-recoverable — arm it deliberately."
+  LIMEN_REMOTE_REAP_REPO_ROOT:
+    default: "$LIMEN_ROOT"
+    env: LIMEN_REMOTE_REAP_REPO_ROOT
+    self_update: none
+    owner: gitvs
+    note: "Repository whose origin refs reap-remote-branches.py classifies and reaps. Defaults to Limen; cross-owner closeout may target another exact local checkout while acceptance and receipts remain rooted in LIMEN_ROOT."
   LIMEN_REMOTE_REAP_MAX:
     default: 100
     env: LIMEN_REMOTE_REAP_MAX
