@@ -40,6 +40,7 @@ import fnmatch
 import hashlib
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -107,7 +108,7 @@ EFFECTOR_KINDS = {"delegate", "file-atom", "reap"}
 EFFECTOR_KINDS_WITH_COMMAND = {"delegate", "reap"}
 
 LEDGER_SCHEMA = "limen.github_estate.v1"
-PR_DEBT_SCHEMA = "limen.github_pr_debt.v1"
+PR_DEBT_SCHEMA = "limen.github_pr_debt.v2"
 
 
 # ── auth (reuse the cascade; never touch App creds directly) ───────────────────────────────────
@@ -361,7 +362,7 @@ def _owner_repo_inventory(owner: str, token: str | None) -> dict | None:
             query = (
                 "query($login:String!,$cursor:String){"
                 f"{root_kind}(login:$login){{repositories(first:100,after:$cursor{affiliation}){{"
-                "totalCount nodes{nameWithOwner isPrivate pullRequests(states:OPEN){totalCount}}"
+                "totalCount nodes{nameWithOwner isPrivate isArchived pullRequests(states:OPEN){totalCount}}"
                 "pageInfo{hasNextPage endCursor}}}}"
             )
             args = ["api", "graphql", "-f", f"query={query}", "-F", f"login={owner}"]
@@ -390,6 +391,7 @@ def _owner_repo_inventory(owner: str, token: str | None) -> dict | None:
                     repositories[name] = {
                         "name_with_owner": name,
                         "private": bool(node.get("isPrivate")),
+                        "archived": bool(node.get("isArchived")),
                         "open_pr_total": int((node.get("pullRequests") or {})["totalCount"]),
                     }
                 page_count += 1
@@ -519,6 +521,56 @@ def _pr_owner(row: dict, owner_label_prefix: str) -> tuple[str | None, str | Non
     return None, None
 
 
+def _pr_lifecycle(
+    labels: set[str],
+    body: str,
+    policy: dict,
+) -> tuple[str | None, str, list[str]]:
+    allowed = {
+        str(value)
+        for value in (
+            policy.get("lifecycle_labels")
+            or (
+                "lifecycle:delivery",
+                "lifecycle:preservation",
+                "lifecycle:active-human",
+                "lifecycle:blocked",
+                "lifecycle:superseded",
+            )
+        )
+    }
+    matches = sorted(labels & allowed)
+    if len(matches) == 1:
+        return matches[0], "label", matches
+    if len(matches) > 1:
+        return None, "conflicting-labels", matches
+
+    preservation_labels = {str(value) for value in (policy.get("preservation_labels") or ())}
+    preservation_markers = [str(value) for value in (policy.get("preservation_markers") or ()) if str(value)]
+    if labels.intersection(preservation_labels) or any(marker in body for marker in preservation_markers):
+        return "lifecycle:preservation", "legacy-preservation-marker", []
+    return None, "missing-label", []
+
+
+def _body_receipt_references(body: str, marker: str) -> list[str]:
+    pattern = re.compile(
+        rf"(?im)^\s*{re.escape(marker)}\s*:\s*(https://github\.com/[^\s]+|[\w.-]+/[\w.-]+#\d+|#\d+)\s*$"
+    )
+    return sorted(set(pattern.findall(body)))
+
+
+def _pr_lifecycle_debt_reasons(row: dict) -> list[str]:
+    reasons: list[str] = []
+    if not row.get("lifecycle_disposition"):
+        reasons.append("missing-or-conflicting-lifecycle-disposition")
+    exact_owner = row.get("exact_head_owner")
+    if not isinstance(exact_owner, dict) or not exact_owner.get("owner") or not exact_owner.get("head_oid"):
+        reasons.append("missing-exact-head-owner")
+    if row.get("lifecycle_disposition") == "lifecycle:superseded" and not row.get("supersession_target"):
+        reasons.append("missing-supersession-target")
+    return reasons
+
+
 def _classify_open_pr(repo: str, row: dict, policy: dict, now: datetime) -> dict:
     number = int(row["number"])
     owner_label_prefix = str(policy.get("owner_label_prefix") or "owner:")
@@ -528,6 +580,10 @@ def _classify_open_pr(repo: str, row: dict, policy: dict, now: datetime) -> dict
         str(node.get("name") or "") for node in ((row.get("labels") or {}).get("nodes") or []) if isinstance(node, dict)
     }
     body = str(row.get("body") or "")
+    lifecycle, lifecycle_source, lifecycle_matches = _pr_lifecycle(labels, body, policy)
+    dependencies = _body_receipt_references(body, "Depends on")
+    supersession_targets = _body_receipt_references(body, "Superseded by")
+    supersession_target = supersession_targets[0] if len(supersession_targets) == 1 else None
     markers = [str(marker) for marker in (policy.get("preservation_markers") or []) if str(marker)]
     preservation = bool(labels.intersection(policy.get("preservation_labels") or [])) or any(
         marker in body for marker in markers
@@ -541,13 +597,34 @@ def _classify_open_pr(repo: str, row: dict, policy: dict, now: datetime) -> dict
         "private": False,
         "owner": owner,
         "owner_source": owner_source,
+        "exact_head_owner": {
+            "owner": owner,
+            "owner_source": owner_source,
+            "head_oid": head_oid or None,
+        },
         "predicate": predicate,
+        "receipt_target": row.get("url"),
         "merge_condition": merge_condition,
         "head_oid": head_oid or None,
+        "title": row.get("title"),
+        "draft": bool(row.get("isDraft")),
+        "dependencies": dependencies,
+        "supersession_target": supersession_target,
+        "lifecycle_disposition": lifecycle,
+        "lifecycle_disposition_source": lifecycle_source,
+        "lifecycle_label_matches": lifecycle_matches,
+        "disposition_observed_at": now.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
         "updated_at": row.get("updatedAt"),
     }
     if preservation and owner and head_oid:
-        return {**base, "classification": "preservation", "classification_reason": "remote-preservation-marker"}
+        result = {
+            **base,
+            "classification": "preservation",
+            "classification_reason": "remote-preservation-marker",
+        }
+        result["lifecycle_debt_reasons"] = _pr_lifecycle_debt_reasons(result)
+        result["lifecycle_complete"] = not result["lifecycle_debt_reasons"]
+        return result
 
     try:
         updated = datetime.fromisoformat(str(row.get("updatedAt") or "").replace("Z", "+00:00"))
@@ -558,25 +635,34 @@ def _classify_open_pr(repo: str, row: dict, policy: dict, now: datetime) -> dict
         age_hours = float("inf")
     max_age = int(policy.get("active_owner_max_age_hours") or 168)
     if owner and head_oid and age_hours <= max_age:
-        return {
+        result = {
             **base,
             "classification": "active_custody",
             "classification_reason": "fresh-remote-owner-and-head",
             "age_hours": round(age_hours, 2),
         }
+        result["lifecycle_debt_reasons"] = _pr_lifecycle_debt_reasons(result)
+        result["lifecycle_complete"] = not result["lifecycle_debt_reasons"]
+        return result
     if owner and predicate and merge_condition:
-        return {
+        result = {
             **base,
             "classification": "owner_route",
             "classification_reason": "stale-or-inactive-routed-to-live-owner",
             "age_hours": None if age_hours == float("inf") else round(age_hours, 2),
         }
-    return {
+        result["lifecycle_debt_reasons"] = _pr_lifecycle_debt_reasons(result)
+        result["lifecycle_complete"] = not result["lifecycle_debt_reasons"]
+        return result
+    result = {
         **base,
         "classification": "untyped",
         "classification_reason": "missing-owner-or-remote-head",
         "age_hours": None if age_hours == float("inf") else round(age_hours, 2),
     }
+    result["lifecycle_debt_reasons"] = _pr_lifecycle_debt_reasons(result)
+    result["lifecycle_complete"] = not result["lifecycle_debt_reasons"]
+    return result
 
 
 def _redact_pr_row(row: dict) -> dict:
@@ -592,11 +678,30 @@ def _redact_pr_row(row: dict) -> dict:
         "url": None,
         "owner": None,
         "head_oid": None,
+        "exact_head_owner": None,
         "predicate": None,
+        "receipt_target": None,
         "merge_condition": None,
+        "dependencies": None,
+        "supersession_target": None,
         "pr_key": hashlib.sha256(f"{repo}#{number}".encode()).hexdigest(),
         "owner_key": hashlib.sha256(owner.encode()).hexdigest() if owner else None,
     }
+
+
+def _apply_repository_state(row: dict, repository: dict) -> dict:
+    result = {
+        **row,
+        "private": bool(repository["private"]),
+        "repository_archived": bool(repository.get("archived")),
+    }
+    if result["repository_archived"] and result.get("lifecycle_disposition_source") == "missing-label":
+        result["lifecycle_disposition"] = "lifecycle:blocked"
+        result["lifecycle_disposition_source"] = "repository-archived-immutable"
+        result["lifecycle_label_matches"] = []
+        result["lifecycle_debt_reasons"] = _pr_lifecycle_debt_reasons(result)
+        result["lifecycle_complete"] = not result["lifecycle_debt_reasons"]
+    return result
 
 
 def pr_debt_census(estate: dict, *, now: datetime | None = None) -> tuple[dict, dict]:
@@ -643,16 +748,23 @@ def pr_debt_census(estate: dict, *, now: datetime | None = None) -> tuple[dict, 
         if not page["exhaustive"]:
             failures.append(f"pull-request-cursor-failed:{repo_name}:{page['error']}")
         for pr in page["rows"]:
-            row = _classify_open_pr(repo_name, pr, policy, observed)
-            row["private"] = bool(repository["private"])
+            row = _apply_repository_state(
+                _classify_open_pr(repo_name, pr, policy, observed),
+                repository,
+            )
             classified.append(row)
 
     if len(classified) != expected_pr_total:
         failures.append(f"open-pr-total-not-reconciled:{len(classified)}/{expected_pr_total}")
     counts: dict[str, int] = {}
+    lifecycle_counts: dict[str, int] = {}
     for row in classified:
         category = str(row["classification"])
         counts[category] = counts.get(category, 0) + 1
+        disposition = str(row.get("lifecycle_disposition") or "untyped")
+        lifecycle_counts[disposition] = lifecycle_counts.get(disposition, 0) + 1
+    classification_untyped = counts.get("untyped", 0)
+    lifecycle_untyped = sum(not bool(row.get("lifecycle_complete")) for row in classified)
     exhaustive = not failures
     full = {
         "schema": PR_DEBT_SCHEMA,
@@ -666,7 +778,12 @@ def pr_debt_census(estate: dict, *, now: datetime | None = None) -> tuple[dict, 
         "open_pr_count": len(classified),
         "expected_open_pr_count": expected_pr_total,
         "classification_counts": dict(sorted(counts.items())),
-        "untyped_count": counts.get("untyped", 0),
+        "lifecycle_disposition_counts": dict(sorted(lifecycle_counts.items())),
+        "classification_untyped_count": classification_untyped,
+        "lifecycle_untyped_count": lifecycle_untyped,
+        "untyped_count": sum(
+            row.get("classification") == "untyped" or not row.get("lifecycle_complete") for row in classified
+        ),
         "cursor_reconciliation": {
             "repository_pages": repository_pages,
             "pull_request_pages": pr_pages,

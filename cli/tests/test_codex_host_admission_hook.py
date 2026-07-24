@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
+import os
 import subprocess
 import sys
 import tomllib
 from pathlib import Path
+
+import pytest
 
 from limen.host_admission import AdmissionController
 from limen.host_admission_capabilities import host_admission_capabilities
 
 ROOT = Path(__file__).resolve().parents[2]
 HOOK_PATH = ROOT / "scripts" / "hooks" / "codex-host-admission.py"
+FIXTURE_ROOT = ROOT / "cli" / "tests" / "fixtures" / "codex-hooks" / "0.144.6"
 CLAUDE_HOOK_PATH = ROOT / "scripts" / "hooks" / "claude-host-admission.py"
 
 
@@ -69,6 +74,10 @@ def payload(event: str, session: str = "session-a", **extra):
     }
 
 
+def fixture(name: str) -> dict:
+    return json.loads((FIXTURE_ROOT / name).read_text(encoding="utf-8"))
+
+
 def test_capability_probe_is_exact_fast_and_side_effect_free(tmp_path: Path) -> None:
     result = subprocess.run(
         [sys.executable, str(HOOK_PATH), "--capabilities"],
@@ -115,60 +124,40 @@ def linked_worktrees(tmp_path: Path) -> tuple[Path, Path, Path]:
     return main, first, second
 
 
-def test_user_prompt_submit_allows_concurrent_roots_when_action_denial_is_supported(tmp_path: Path) -> None:
+def test_user_prompt_submit_never_acquires_global_execution_lease(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     hook = load_hook()
     service = controller(tmp_path)
-    assert (
-        hook.handle(
-            payload("UserPromptSubmit"),
-            controller=service,
-            owner_pid=101,
-            feature_probe=lambda: True,
-        )
-        is None
+    monkeypatch.setattr(
+        hook,
+        "codex_owner_pid",
+        lambda: (_ for _ in ()).throw(AssertionError("session start must not resolve a lease owner")),
     )
-    assert (
-        hook.handle(
-            payload("UserPromptSubmit", session="session-b"),
-            controller=service,
-            owner_pid=202,
-            feature_probe=lambda: True,
-        )
-        is None
-    )
+    requests = [
+        payload("UserPromptSubmit"),
+        payload("UserPromptSubmit", session="session-b"),
+        payload("UserPromptSubmit", permission_mode="plan"),
+        {"hook_event_name": "UserPromptSubmit", "permission_mode": "default"},
+    ]
+    assert all(hook.handle(request, controller=service) is None for request in requests)
     assert service.status(probe=False)["leases"] == []
 
 
-def test_feature_probe_fallback_retains_legacy_root_lock(tmp_path: Path) -> None:
+def test_installed_client_fixtures_all_admit_session_start(tmp_path: Path) -> None:
     hook = load_hook()
     service = controller(tmp_path)
-    assert (
-        hook.handle(
-            payload("UserPromptSubmit"),
-            controller=service,
-            owner_pid=101,
-            feature_probe=lambda: False,
-        )
-        is None
-    )
+    requests = [
+        fixture("user-prompt-submit-plan.json"),
+        fixture("user-prompt-submit-default.json"),
+        fixture("user-prompt-submit-bypass-boundary.json"),
+    ]
+    missing_mode = fixture("user-prompt-submit-default.json")
+    missing_mode.pop("permission_mode")
+    requests.append(missing_mode)
 
-    denied = hook.handle(
-        payload("UserPromptSubmit", session="session-b"),
-        controller=service,
-        owner_pid=202,
-        feature_probe=lambda: False,
-    )
-    assert denied["continue"] is False
-    assert "execution-lease-held" in denied["stopReason"]
-    assert "systemMessage" not in denied
-    assert len(service.status(probe=False)["leases"]) == 1
-
-
-def test_plan_mode_never_acquires_execution_lease(tmp_path: Path) -> None:
-    hook = load_hook()
-    service = controller(tmp_path)
-    request = payload("UserPromptSubmit", permission_mode="plan")
-    assert hook.handle(request, controller=service, owner_pid=101, feature_probe=lambda: False) is None
+    assert all(hook.handle(request, controller=service, owner_pid=101) is None for request in requests)
     assert service.status(probe=False)["leases"] == []
 
 
@@ -199,6 +188,61 @@ def test_pre_tool_use_read_only_command_never_acquires_writer(tmp_path: Path) ->
     )
     assert output is None
     assert service.status(probe=False)["leases"] == []
+
+
+def test_generated_cache_reclaimer_is_a_self_gated_sanctioned_control(tmp_path: Path) -> None:
+    hook = load_hook()
+    service = controller(tmp_path)
+    for command in (
+        "python3 scripts/reclaim-generated-caches.py --check --json",
+        ("python3 scripts/reclaim-generated-caches.py --apply --expected-plan-sha deadbeef --json"),
+    ):
+        assert (
+            hook.handle(
+                payload("PreToolUse", tool_input={"command": command}),
+                controller=service,
+                owner_pid=101,
+            )
+            is None
+        )
+    assert service.status(probe=False)["leases"] == []
+
+
+def test_read_only_pipeline_and_dev_null_redirection_never_acquire_writer(tmp_path: Path) -> None:
+    hook = load_hook()
+    for command in (
+        "nl -ba tracked.txt | sed -n '1,2p'",
+        "rg needle missing.txt 2>/dev/null",
+        "grep -l needle missing.txt 2>/dev/null",
+        "git worktree list | grep needle",
+        "echo needle | grep needle",
+    ):
+        service = controller(tmp_path / command.split()[0])
+        output = hook.handle(
+            payload("PreToolUse", tool_input={"command": command}),
+            controller=service,
+            owner_pid=101,
+        )
+        assert output is None
+        assert service.status(probe=False)["leases"] == []
+
+
+def test_namespaced_apply_patch_command_payload_resolves_target(tmp_path: Path) -> None:
+    hook = load_hook()
+    _main, first, _second = linked_worktrees(tmp_path)
+    service = controller(tmp_path / "admission")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        tool_name="functions.apply_patch",
+        tool_input={
+            "command": "*** Update File: tracked.txt\n@@\n-old\n+new\n",
+        },
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+    leases = service.status(probe=False)["leases"]
+    assert len(leases) == 1
+    assert leases[0]["kind"].startswith("execution:")
 
 
 def test_same_worktree_has_one_writer_but_disjoint_worktrees_run_concurrently(tmp_path: Path) -> None:
@@ -437,6 +481,73 @@ def test_background_substitution_and_plan_only_mutations_are_denied(tmp_path: Pa
         output = hook.handle(request, controller=service, owner_pid=101)
         assert output["hookSpecificOutput"]["permissionDecisionReason"] == reason
         assert service.status(probe=False)["leases"] == []
+
+
+def test_harness_session_writes_are_admitted_everywhere(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # The plan-mode plan file (~/.claude/plans) and background-job scratch (~/.claude/jobs)
+    # are harness-directed session metadata, not workspace mutations. Before the carve-out
+    # they were denied three ways — plan-only-mutation in plan mode, shared-checkout-write
+    # from the main checkout, write-target-outside-worktree from a linked worktree — which
+    # broke every plan-mode session on the host ("No plan found" after ExitPlanMode).
+    hook = load_hook(CLAUDE_HOOK_PATH)
+    home = tmp_path / "home"
+    plans = home / ".claude" / "plans"
+    jobs_tmp = home / ".claude" / "jobs" / "abc123" / "tmp"
+    plans.mkdir(parents=True)
+    jobs_tmp.mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    main, first, _second = linked_worktrees(tmp_path)
+
+    # 1. Plan mode, main-checkout cwd, plan-file Write → admitted (None = no deny emitted).
+    service = controller(tmp_path / "admission-plan")
+    request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(plans / "implement-all-of-it.md")},
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+    assert service.status(probe=False)["leases"] == []  # no writer lease for harness metadata
+
+    # 2. Plan mode, workspace Write → still denied: the carve-out is the plan file, not plan mode.
+    service = controller(tmp_path / "admission-workspace")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(first / "tracked.txt")},
+    )
+    output = hook.handle(request, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "plan-only-mutation"
+
+    # 3. Default mode, linked-worktree cwd, jobs-scratch Write → admitted (previously
+    #    write-target-outside-worktree, which pushed job scratch INTO repo worktrees).
+    service = controller(tmp_path / "admission-jobs")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        tool_name="Write",
+        tool_input={"file_path": str(jobs_tmp / "helper.py")},
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+
+    # 4. A symlink planted under the session dir resolves outside it → falls through to
+    #    the workspace machinery and is denied in plan mode (no laundering).
+    outside = tmp_path / "outside-target.txt"
+    outside.write_text("x")
+    (plans / "sneaky.md").symlink_to(outside)
+    service = controller(tmp_path / "admission-symlink")
+    request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(plans / "sneaky.md")},
+    )
+    output = hook.handle(request, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "plan-only-mutation"
 
 
 def test_codex_and_claude_adapters_share_action_policy(tmp_path: Path) -> None:
@@ -700,6 +811,221 @@ def test_project_config_caps_threads_and_depth() -> None:
     assert config["agents"] == {"max_threads": 3, "max_depth": 1}
 
 
+def test_capabilities_cli_is_fast_versioned_json_without_hook_input() -> None:
+    result = subprocess.run(
+        [sys.executable, str(HOOK_PATH), "--capabilities"],
+        capture_output=True,
+        text=True,
+        timeout=2,
+        check=True,
+    )
+    capabilities = json.loads(result.stdout)
+    assert set(capabilities) == {
+        "schema",
+        "reader_protocol",
+        "policy_revision",
+        "state_schemas",
+        "lease_kinds",
+        "stable_action_denial",
+        "single_rejection_channel",
+        "migration",
+    }
+    assert capabilities["schema"] == "limen.codex_host_admission_capabilities.v1"
+    assert capabilities["state_schemas"]["scoped"] == "limen.host_admission_scoped_state.v1"
+    assert capabilities["stable_action_denial"] is True
+
+
+def test_project_delegate_requires_compatible_immutable_runtime(tmp_path: Path) -> None:
+    hook = load_hook()
+    incompatible = tmp_path / "incompatible.py"
+    incompatible.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json,sys\n"
+        "if sys.argv[1:] == ['--capabilities']:\n"
+        "    print(json.dumps({'schema': 'old'}))\n"
+        "else:\n"
+        "    print(json.dumps({'systemMessage': 'must not run'}))\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(hook.ImmutableRuntimeError, match="runtime-capabilities-incompatible"):
+        hook.delegate_immutable(incompatible, json.dumps(fixture("user-prompt-submit-default.json")))
+
+
+def test_project_delegate_uses_compatible_immutable_runtime(tmp_path: Path) -> None:
+    hook = load_hook()
+    target = tmp_path / "immutable.py"
+    capabilities = json.dumps(hook.host_admission_capabilities(), sort_keys=True)
+    target.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json,sys\n"
+        f"CAPABILITIES = {capabilities!r}\n"
+        "if sys.argv[1:] == ['--capabilities']:\n"
+        "    print(CAPABILITIES)\n"
+        "else:\n"
+        "    payload = json.load(sys.stdin)\n"
+        "    print(json.dumps({'systemMessage': 'immutable:' + payload['hook_event_name']}))\n",
+        encoding="utf-8",
+    )
+
+    output = hook.delegate_immutable(
+        target,
+        json.dumps(fixture("user-prompt-submit-default.json")),
+    )
+
+    assert output == {"systemMessage": "immutable:UserPromptSubmit"}
+
+
+def test_incompatible_runtime_never_blocks_session_start_and_denies_mutation_once() -> None:
+    hook = load_hook()
+    error = hook.ImmutableRuntimeError("runtime-capabilities-timeout")
+
+    prompt = hook._runtime_unavailable(fixture("user-prompt-submit-default.json"), error)
+    tool = hook._runtime_unavailable(
+        payload("PreToolUse", tool_input={"command": "git checkout -b topic"}),
+        error,
+    )
+    observe = hook._runtime_unavailable(
+        payload("PreToolUse", tool_input={"command": "git status --short"}),
+        error,
+    )
+    sanctioned = hook._runtime_unavailable(
+        payload("PreToolUse", tool_input={"command": "limen dispatch"}),
+        error,
+    )
+
+    assert prompt is None
+    assert set(tool) == {"hookSpecificOutput"}
+    assert set(sanctioned) == {"hookSpecificOutput"}
+    assert observe is None
+    assert "domus-limen-runtime status" in tool["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+def test_runtime_interpreter_uses_installed_runtime_venv(tmp_path: Path) -> None:
+    hook = load_hook()
+    runtime = tmp_path / "runtime"
+    target = runtime / "scripts" / "hooks" / "codex-host-admission.py"
+    interpreter = runtime / "venv" / "bin" / "python"
+    target.parent.mkdir(parents=True)
+    interpreter.parent.mkdir(parents=True)
+    target.write_text("# hook\n", encoding="utf-8")
+    interpreter.write_text("# interpreter\n", encoding="utf-8")
+
+    assert hook._runtime_interpreter(target) == str(interpreter)
+
+
+def test_unavailable_runtime_still_releases_exact_owned_stop_lease(tmp_path: Path) -> None:
+    hook = load_hook()
+    _main, worktree, _second = linked_worktrees(tmp_path)
+    service = controller(tmp_path / "admission")
+    request = payload("Stop", cwd=str(worktree))
+    owner = hook._turn_owner(request)
+    assert owner is not None
+    scope = hook.worktree_scope(worktree)
+    service.acquire(scope.lease_kind, owner=owner, surface="test", pid=101)
+
+    output = hook._runtime_unavailable(
+        request,
+        hook.ImmutableRuntimeError("runtime-capabilities-timeout"),
+        controller=service,
+        owner_pid=101,
+    )
+
+    assert output is None
+    assert service.status(probe=False)["leases"] == []
+
+
+def test_malformed_store_emits_exactly_one_redacted_rejection_channel(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    _main, worktree, _second = linked_worktrees(tmp_path)
+    root = tmp_path / "state"
+    root.mkdir(mode=0o700)
+    (root / "state.json").write_text(
+        json.dumps({"schema": "limen.host_admission_state.v0", "leases": [], "pressure": None}),
+        encoding="utf-8",
+    )
+    request = payload(
+        "PreToolUse",
+        cwd=str(worktree),
+        tool_input={"command": "git checkout -b topic"},
+    )
+    hook = load_hook()
+    monkeypatch.setenv("LIMEN_HOST_ADMISSION_ROOT", str(root))
+    monkeypatch.setattr(hook, "codex_owner_pid", lambda: os.getpid())
+    monkeypatch.setattr(hook.sys, "stdin", io.StringIO(json.dumps(request)))
+    assert hook.main() == 0
+    output = json.loads(capsys.readouterr().out)
+    assert set(output) == {"hookSpecificOutput"}
+    reason = output["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "invalid_field=schema" in reason
+    assert "reader_protocol=limen.host_admission_reader.v2" in reason
+    assert "writer_protocol=limen.host_admission_state.v0" in reason
+    assert "pid_identity=" in reason
+    assert "host-work-admission.py diagnose" in reason
+    assert "systemMessage" not in output and "stopReason" not in output
+
+
 def test_hook_runner_prefers_codex_project_root() -> None:
     runner = (ROOT / "scripts" / "hooks" / "codex-hook-runner.sh").read_text(encoding="utf-8")
     assert runner.index('"${CODEX_PROJECT_DIR:-}"') < runner.index('"${CLAUDE_PROJECT_DIR:-}"')
+    assert '--delegate-immutable "$immutable_target"' in runner
+
+
+def test_hook_runner_delegates_host_admission_to_compatible_immutable_runtime(tmp_path: Path) -> None:
+    hook = load_hook()
+    target = tmp_path / "immutable" / "scripts" / "hooks" / "codex-host-admission.py"
+    target.parent.mkdir(parents=True)
+    capabilities = json.dumps(hook.host_admission_capabilities(), sort_keys=True)
+    target.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json,sys\n"
+        f"CAPABILITIES = {capabilities!r}\n"
+        "if sys.argv[1:] == ['--capabilities']:\n"
+        "    print(CAPABILITIES)\n"
+        "else:\n"
+        "    payload = json.load(sys.stdin)\n"
+        "    print(json.dumps({'systemMessage': 'immutable:' + payload['hook_event_name']}))\n",
+        encoding="utf-8",
+    )
+    runner = ROOT / "scripts" / "hooks" / "codex-hook-runner.sh"
+    environment = os.environ | {
+        "CODEX_PROJECT_DIR": str(ROOT),
+        "LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT": str(target),
+    }
+
+    result = subprocess.run(
+        ["bash", str(runner), "host-admission"],
+        input=json.dumps(fixture("user-prompt-submit-default.json")),
+        capture_output=True,
+        text=True,
+        timeout=4,
+        check=True,
+        env=environment,
+    )
+
+    assert json.loads(result.stdout) == {"systemMessage": "immutable:UserPromptSubmit"}
+    assert result.stderr == ""
+
+
+def test_hook_runner_does_not_block_session_start_when_immutable_runtime_is_missing(tmp_path: Path) -> None:
+    runner = ROOT / "scripts" / "hooks" / "codex-hook-runner.sh"
+    environment = os.environ | {
+        "CODEX_PROJECT_DIR": str(ROOT),
+        "LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT": str(tmp_path / "missing.py"),
+    }
+
+    result = subprocess.run(
+        ["bash", str(runner), "host-admission"],
+        input=json.dumps(fixture("user-prompt-submit-default.json")),
+        capture_output=True,
+        text=True,
+        timeout=4,
+        check=True,
+        env=environment,
+    )
+
+    assert result.stdout == ""
+    assert result.stderr == ""

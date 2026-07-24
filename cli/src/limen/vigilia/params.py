@@ -13,7 +13,10 @@ import os
 from pathlib import Path
 from typing import Callable, Optional, TypeVar, overload, Union, Any
 
-import yaml
+try:
+    import yaml
+except ModuleNotFoundError:  # standalone/launchd Python may not carry PyYAML
+    yaml = None
 
 _PANEL_REL = ("institutio", "governance", "parameters.yaml")
 
@@ -46,7 +49,7 @@ def panel_path() -> Optional[Path]:
 
 def _load_panel() -> dict[str, object]:
     path = panel_path()
-    if not path or not path.exists():
+    if yaml is None or not path or not path.exists():
         return {}
     try:
         data = yaml.safe_load(path.read_text())

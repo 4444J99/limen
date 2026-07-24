@@ -12,8 +12,10 @@ import math
 import re
 import subprocess
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any, Iterable, Sequence, get_type_hints
+
+from limen.provider_health import ProviderHealthSnapshot
 
 
 _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
@@ -298,9 +300,31 @@ def _model_score(model: ModelCapability, profile: ExecutionProfile) -> tuple[flo
     return score, model.model_id
 
 
-def select_opencode_model(models: Iterable[ModelCapability], profile: ExecutionProfile) -> ModelCapability | None:
-    eligible = [model for model in models if model.satisfies(profile)]
-    return max(eligible, key=lambda model: _model_score(model, profile)) if eligible else None
+def select_opencode_model(
+    models: Iterable[ModelCapability],
+    profile: ExecutionProfile,
+    health: ProviderHealthSnapshot | None = None,
+    *,
+    now: datetime | None = None,
+) -> ModelCapability | None:
+    current = now or datetime.now(timezone.utc)
+    eligible = [
+        model
+        for model in models
+        if model.satisfies(profile) and (health is None or health.allows(model.model_id, now=current))
+    ]
+    if not eligible:
+        return None
+    # A model with a recent successful outcome outranks zero-cost novelty. The
+    # capability/cost score remains the deterministic tie-break within equal
+    # health evidence.
+    return max(
+        eligible,
+        key=lambda model: (
+            health.fitness(model.model_id) if health else 0.0,
+            *_model_score(model, profile),
+        ),
+    )
 
 
 def catalog_hash(models: Iterable[ModelCapability]) -> str:
