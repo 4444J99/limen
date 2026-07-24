@@ -10,7 +10,7 @@ import subprocess
 import threading
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import BinaryIO, TypeVar
+from typing import BinaryIO, TypeVar, cast
 
 from .models import AtomPack, CipherChunk, RestoreProof
 
@@ -151,15 +151,15 @@ class _EncryptPipe:
 
     def _drain_stdout(self) -> None:
         try:
-            assert self.process.stdout is not None
-            for block in iter(lambda: self.process.stdout.read(1024 * 1024), b""):
+            stdout = cast(BinaryIO, self.process.stdout)
+            for block in iter(lambda: stdout.read(1024 * 1024), b""):
                 self.output.write(block)
         except BaseException as exc:  # pragma: no cover - hardware/filesystem failures
             self._error = exc
 
     def _drain_stderr(self) -> None:
-        assert self.process.stderr is not None
-        for block in iter(lambda: self.process.stderr.read(4096), b""):
+        stderr = cast(BinaryIO, self.process.stderr)
+        for block in iter(lambda: stderr.read(4096), b""):
             if len(self._stderr) < 65536:
                 self._stderr.extend(block[: 65536 - len(self._stderr)])
 
@@ -284,8 +284,8 @@ def _decrypt(chunks: Iterable[Path], key: str, consumer: Callable[[BinaryIO], T]
         stderr=subprocess.PIPE,
         env=environment,
     )
-    assert process.stdin is not None
-    assert process.stdout is not None
+    stdin = cast(BinaryIO, process.stdin)
+    stdout = cast(BinaryIO, process.stdout)
     feeder_error: list[BaseException] = []
 
     def feed() -> None:
@@ -293,22 +293,22 @@ def _decrypt(chunks: Iterable[Path], key: str, consumer: Callable[[BinaryIO], T]
             for path in paths:
                 with path.open("rb") as handle:
                     for block in iter(lambda: handle.read(1024 * 1024), b""):
-                        process.stdin.write(block)
-            process.stdin.close()
+                        stdin.write(block)
+            stdin.close()
         except BaseException as exc:  # pragma: no cover - hardware/filesystem failures
             feeder_error.append(exc)
-            process.stdin.close()
+            stdin.close()
 
     feeder = threading.Thread(target=feed, daemon=True)
     feeder.start()
     try:
-        result = consumer(process.stdout)
+        result = consumer(stdout)
     except BaseException:
         process.kill()
         feeder.join()
         process.wait()
         raise
-    process.stdout.close()
+    stdout.close()
     feeder.join()
     stderr = process.stderr.read(65536) if process.stderr is not None else b""
     return_code = process.wait()

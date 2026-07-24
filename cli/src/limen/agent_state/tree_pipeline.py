@@ -36,9 +36,15 @@ def _manifest_chunk(value: dict[str, object]) -> CipherChunk:
         raise PipelineError("tree manifest contains an unsafe ciphertext path")
     return CipherChunk(
         path=relative.name,
-        bytes=int(value["bytes"]),
+        bytes=int(str(value["bytes"])),
         sha256=str(value["sha256"]),
     )
+
+
+def _manifest_stat(value: object) -> tuple[int, int, int]:
+    if not isinstance(value, list) or len(value) != 3:
+        raise PipelineError("tree manifest contains an invalid source identity")
+    return (int(value[0]), int(value[1]), int(value[2]))
 
 
 def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
@@ -52,8 +58,8 @@ def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
             kind=str(source_value["kind"]),
             bytes=int(source_value["bytes"]),
             sha256=str(source_value["sha256"]),
-            stat_before=tuple(int(value) for value in source_value["stat_before"]),
-            stat_after=tuple(int(value) for value in source_value["stat_after"]),
+            stat_before=_manifest_stat(source_value["stat_before"]),
+            stat_after=_manifest_stat(source_value["stat_after"]),
             inventory_before_sha256=source_value.get("inventory_before_sha256"),
             inventory_after_sha256=source_value.get("inventory_after_sha256"),
         )
