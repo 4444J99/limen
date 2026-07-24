@@ -10,7 +10,6 @@ import tomllib
 from pathlib import Path
 
 import pytest
-
 from limen.host_admission import AdmissionController
 from limen.host_admission_capabilities import host_admission_capabilities
 
@@ -205,6 +204,29 @@ def test_generated_cache_reclaimer_is_a_self_gated_sanctioned_control(tmp_path: 
             )
             is None
         )
+    assert service.status(probe=False)["leases"] == []
+
+
+def test_agent_state_metabolism_is_a_self_gated_sanctioned_control(tmp_path: Path) -> None:
+    hook = load_hook()
+    service = controller(tmp_path)
+    command = (
+        "python3 scripts/agent-state-metabolism.py cloudkit-materialized icloud-drive "
+        "--root '/Users/test/Library/Mobile Documents/com~apple~CloudDocs' "
+        "--vault-root /Volumes/Archive4T/private/arca "
+        "--external-root /Volumes/Archive4T/private/exact "
+        "--private-receipt /Users/test/private/icloud-drive.json "
+        "--run-id 20260724T165600Z --resume --evict"
+    )
+
+    assert (
+        hook.handle(
+            payload("PreToolUse", tool_input={"command": command}),
+            controller=service,
+            owner_pid=101,
+        )
+        is None
+    )
     assert service.status(probe=False)["leases"] == []
 
 
