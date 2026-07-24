@@ -48,6 +48,11 @@ class DispatchLogEntry(BaseModel):
     selected_model: str | None = None
     selection_source: str | None = None
     catalog_hash: str | None = None
+    health_snapshot_hash: str | None = None
+    provider_terminal_class: str | None = None
+    provider_retry_count: int | None = None
+    provider_cooldown_until: datetime | None = None
+    provider_health_evidence: dict[str, Any] | None = None
     # Provider-neutral remote lifecycle.  Submission is only ``dispatched``; these fields make the
     # exact off-box run recoverable without interpreting a provider-shaped session string.
     provider_run_id: str | None = None

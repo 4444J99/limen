@@ -110,6 +110,42 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Async dispatch is the enacted fleet mode (overnight-watch expects 1). Generator default was 0 until 2026-07-09, when a regen under a bare session env silently rendered async OFF — the default now matches the enacted state."
+  LIMEN_PROVIDER_FAILURE_WINDOW_SECONDS:
+    default: 86400
+    env: LIMEN_PROVIDER_FAILURE_WINDOW_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Sliding evidence window for runtime provider/model terminal outcomes. The append-only ledger stores metadata and receipt references only."
+  LIMEN_PROVIDER_COOLDOWN_SECONDS:
+    default: 3600
+    env: LIMEN_PROVIDER_COOLDOWN_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Cooldown after the configured terminal-attempt threshold. A cooled model returns only after this interval and a successful tool-using smoke."
+  LIMEN_PROVIDER_TERMINAL_ATTEMPTS:
+    default: 2
+    env: LIMEN_PROVIDER_TERMINAL_ATTEMPTS
+    self_update: none
+    owner: dispatch
+    note: "Terminal outcomes inside the failure window required to cool an exact runtime model, or the provider for auth/rate-limit classes."
+  LIMEN_PROVIDER_SAME_MODEL_RETRIES:
+    default: 1
+    env: LIMEN_PROVIDER_SAME_MODEL_RETRIES
+    self_update: none
+    owner: dispatch
+    note: "Maximum bounded same-model retries for stream, transport, timeout, and no-output outcomes."
+  LIMEN_PROVIDER_SMOKE_TIMEOUT_SECONDS:
+    default: 120
+    env: LIMEN_PROVIDER_SMOKE_TIMEOUT_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Maximum runtime for the repository-read plus harmless-tool-call smoke required after cooldown."
+  LIMEN_PROVIDER_OUTCOME_LEDGER:
+    default: "$LIMEN_ROOT/logs/provider-outcomes.jsonl"
+    env: LIMEN_PROVIDER_OUTCOME_LEDGER
+    self_update: none
+    owner: dispatch
+    note: "Append-only local projection of provider/model outcome metadata. Prompts, responses, and credentials are forbidden."
 
   LIMEN_PROBE_ATTEMPTS:
     default: "40 for the API runtime; 80 for the Worker runtime"

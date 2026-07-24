@@ -10,12 +10,13 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "usage-telemetry.py"
 
 
-def _run(tmp_path, heartbeat_lines, opencode_clock=None, extra_env=None):
+def _run(tmp_path, heartbeat_lines, opencode_clock=None, extra_env=None, provider_outcomes=None):
     """Run usage-telemetry.py against an isolated root + empty HOME (so claude/codex read 0 tokens)."""
     root = tmp_path / "root"
     home = tmp_path / "home"
@@ -31,6 +32,10 @@ def _run(tmp_path, heartbeat_lines, opencode_clock=None, extra_env=None):
     )
     (root / "logs" / "heartbeat.out.log").write_text("\n".join(heartbeat_lines))
     (root / "tasks.yaml").write_text("tasks: []\nportal: {}\n")
+    if provider_outcomes is not None:
+        (root / "logs" / "provider-outcomes.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in provider_outcomes)
+        )
     if opencode_clock is not None:
         clock_path = home / ".local" / "share" / "opencode" / "clock.json"
         clock_path.parent.mkdir(parents=True)
@@ -120,6 +125,34 @@ def test_opencode_clock_malformed_numerics_do_not_crash(tmp_path):
     assert vendors["opencode"]["consumed"] == 30
     assert vendors["opencode"]["possible"] == 0
     assert vendors["opencode"]["clock_used_pct"] == 0
+
+
+def test_opencode_usage_includes_provider_outcome_health(tmp_path):
+    now = datetime.now(timezone.utc)
+    rows = []
+    for index, terminal in enumerate(("stream_failure", "timeout")):
+        finished = now - timedelta(seconds=5 - index)
+        rows.append(
+            {
+                "schema": "limen.provider_outcome.v1",
+                "provider": "provider-z",
+                "runtime_model": "provider-z/arbitrary-runtime",
+                "catalog_hash": "a" * 64,
+                "execution_profile_hash": "b" * 64,
+                "terminal_class": terminal,
+                "started_at": (finished - timedelta(seconds=1)).isoformat(),
+                "finished_at": finished.isoformat(),
+                "retry_count": index,
+                "receipt_reference": "task:fixture",
+            }
+        )
+
+    vendors = _run(tmp_path, ["beat ok"], provider_outcomes=rows)
+
+    assert vendors["opencode"]["provider_outcome_health"] == "degraded"
+    assert vendors["opencode"]["provider_cooldown_count"] >= 1
+    assert vendors["opencode"]["provider_last_terminal_failure"]
+    assert len(vendors["opencode"]["provider_health_snapshot_hash"]) == 64
 
 
 def test_malformed_cooldown_env_does_not_crash(tmp_path):
