@@ -63,6 +63,7 @@ class MetabolismReceipt:
     duplicate_payloads: int = 0
     git_remote: str | None = None
     git_commit: str | None = None
+    git_receipt_commit: str | None = None
     external_chunks: list[CipherChunk] = field(default_factory=list)
     restorations: list[RestoreProof] = field(default_factory=list)
     retained_hot_bytes: int | None = None
@@ -83,7 +84,7 @@ class MetabolismReceipt:
 
     def require_retirement_gate(self) -> None:
         self.require_capture_stable()
-        if not self.git_remote or not self.git_commit:
+        if not self.git_remote or not self.git_commit or not self.git_receipt_commit:
             raise ReceiptError("encrypted Git custody is not remote-reachable")
         scopes = {proof.scope for proof in self.restorations if proof.passed}
         required = {"git-sample", "git-full-manifest", "external-full"}
