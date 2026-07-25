@@ -147197,8 +147197,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/568
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:19.493Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/568"
+    conduct_event_id: conduct:run-42452460d401ec341cdcf014432d048c:71:compatibility
+    conduct_run_id: run-42452460d401ec341cdcf014432d048c
+    conduct_lease_id: lease-71-42452460d401ec34
+    conduct_generation: 71
+  predicate: test "$(gh issue view 568 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/568
+  updated: 2026-07-25T17:47:19.493Z
 - id: LIMEN-113
   title: Map Styx mechanics against DFS regulatory frameworks by state
   repo: organvm/peer-audited--behavioral-blockchain
