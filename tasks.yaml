@@ -150854,7 +150854,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/382
   updated: 2026-07-25T17:50:35.545Z
 - id: LIMEN-281
-  title: "Kotlin contractor \u2014 Android health data bridge"
+  title: Kotlin contractor — Android health data bridge
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150868,8 +150868,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/381
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:29.453Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/381"
+    conduct_event_id: conduct:run-ee489362887b68f270ff9f0946eafd96:146:compatibility
+    conduct_run_id: run-ee489362887b68f270ff9f0946eafd96
+    conduct_lease_id: lease-146-ee489362887b68f2
+    conduct_generation: 146
+  predicate: test "$(gh issue view 381 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/381
+  updated: 2026-07-25T17:51:29.453Z
 - id: LIMEN-282
   title: "Legal Counsel \u2014 retainer engagement"
   repo: organvm/peer-audited--behavioral-blockchain
