@@ -150719,7 +150719,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/404
   updated: 2026-07-25T17:48:22.588Z
 - id: LIMEN-259
-  title: "Geofence: Admin UI — state matrix management screen"
+  title: "Geofence: Admin UI \u2014 state matrix management screen"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -150732,22 +150732,8 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/403
   context: Ingested via script
   depends_on: []
-  created: 2026-07-19
-  dispatch_log:
-  - timestamp: 2026-07-25T17:54:22.537Z
-    agent: codex
-    session_id: codex-omega-s4-019f996d-20260725
-    logical_agent: codex
-    logical_session_id: omega-s4-019f996d-20260725
-    status: open
-    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/403"
-    conduct_event_id: conduct:run-7e8a2037672de36c3cd8d75254de1409:198:compatibility
-    conduct_run_id: run-7e8a2037672de36c3cd8d75254de1409
-    conduct_lease_id: lease-198-7e8a2037672de36c
-    conduct_generation: 198
-  predicate: test "$(gh issue view 403 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
-  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/403
-  updated: 2026-07-25T17:54:22.537Z
+  created: '2026-07-19'
+  dispatch_log: []
 - id: LIMEN-260
   title: "Geofence: Middleware \u2014 fail-closed location enforcement"
   repo: organvm/peer-audited--behavioral-blockchain
@@ -152936,7 +152922,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/312
   updated: 2026-07-25T17:46:19.033Z
 - id: LIMEN-350
-  title: 'feat: State-by-state compliance toggle UI (F-LEGAL-03)'
+  title: "feat: State-by-state compliance toggle UI (F-LEGAL-03)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -152951,8 +152937,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/310
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:25.829Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/310"
+    conduct_event_id: conduct:run-2a9ec1bb23641c7d65a5860f2285c398:199:compatibility
+    conduct_run_id: run-2a9ec1bb23641c7d65a5860f2285c398
+    conduct_lease_id: lease-199-2a9ec1bb23641c7d
+    conduct_generation: 199
+  predicate: test "$(gh issue view 310 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/310
+  updated: 2026-07-25T17:54:25.829Z
 - id: LIMEN-351
   title: "feat: Finish line spike — double-stake incentive (F-CORE-09)"
   repo: organvm/peer-audited--behavioral-blockchain
