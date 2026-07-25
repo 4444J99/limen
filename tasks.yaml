@@ -149160,7 +149160,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-231
-  title: 'Audit: Generate remediation tickets for critical stubs'
+  title: "Audit: Generate remediation tickets for critical stubs"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -149173,8 +149173,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/438
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:22.354Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/438"
+    conduct_event_id: conduct:run-5e269f2808a92b817f0104f6bff0a295:54:compatibility
+    conduct_run_id: run-5e269f2808a92b817f0104f6bff0a295
+    conduct_lease_id: lease-54-5e269f2808a92b81
+    conduct_generation: 54
+  predicate: test "$(gh issue view 438 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/438
+  updated: 2026-07-25T17:46:22.354Z
 - id: LIMEN-232
   title: 'Audit: Prioritize stubs by blast radius + phase relevance'
   repo: organvm/peer-audited--behavioral-blockchain
