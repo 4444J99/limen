@@ -152279,8 +152279,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/321
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:05.091Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/321"
+    conduct_event_id: conduct:run-5fcc180157da99ff2071f081b342e85f:157:compatibility
+    conduct_run_id: run-5fcc180157da99ff2071f081b342e85f
+    conduct_lease_id: lease-157-5fcc180157da99ff
+    conduct_generation: 157
+  predicate: test "$(gh issue view 321 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/321
+  updated: 2026-07-25T17:52:05.091Z
 - id: LIMEN-341
   title: "Cross-jurisdictional consent matrix \u2014 data consent by state"
   repo: organvm/peer-audited--behavioral-blockchain
