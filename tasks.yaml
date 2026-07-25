@@ -150399,7 +150399,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/447
   updated: 2026-07-25T17:46:02.046Z
 - id: LIMEN-223
-  title: 'Governance: Tier promotion criteria + gate checks'
+  title: "Governance: Tier promotion criteria + gate checks"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -150413,8 +150413,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/446
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:58.854Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/446"
+    conduct_event_id: conduct:run-ad003af9f6dde3c9f54f38af8ed596db:298:compatibility
+    conduct_run_id: run-ad003af9f6dde3c9f54f38af8ed596db
+    conduct_lease_id: lease-298-ad003af9f6dde3c9
+    conduct_generation: 298
+  predicate: test "$(gh issue view 446 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/446
+  updated: 2026-07-25T17:59:58.854Z
 - id: LIMEN-224
   title: "Governance: Registry validation automation"
   repo: organvm/peer-audited--behavioral-blockchain
