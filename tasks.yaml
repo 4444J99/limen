@@ -148057,8 +148057,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/524
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:23.671Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/524"
+    conduct_event_id: conduct:run-587fd29f80ffb288b634202cc1d3e897:180:compatibility
+    conduct_run_id: run-587fd29f80ffb288b634202cc1d3e897
+    conduct_lease_id: lease-180-587fd29f80ffb288
+    conduct_generation: 180
+  predicate: test "$(gh issue view 524 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/524
+  updated: 2026-07-25T17:53:23.671Z
 - id: LIMEN-146
   title: "Infrastructure \u2014 k6/artillery setup + test scenarios"
   repo: organvm/peer-audited--behavioral-blockchain
