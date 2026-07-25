@@ -150152,7 +150152,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/454
   updated: 2026-07-25T17:55:05.877Z
 - id: LIMEN-216
-  title: "TKT-P1-012: Tests \u2014 multiplier calculation + edge cases"
+  title: "TKT-P1-012: Tests — multiplier calculation + edge cases"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150164,8 +150164,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/453
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:22.342Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/453"
+    conduct_event_id: conduct:run-f78024f8116efb400a3c7ea79d3729a2:287:compatibility
+    conduct_run_id: run-f78024f8116efb400a3c7ea79d3729a2
+    conduct_lease_id: lease-287-f78024f8116efb40
+    conduct_generation: 287
+  predicate: test "$(gh issue view 453 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/453
+  updated: 2026-07-25T17:59:22.342Z
 - id: LIMEN-217
   title: "TKT-P1-012: UI — multiplier indicator + schedule display"
   repo: organvm/peer-audited--behavioral-blockchain
