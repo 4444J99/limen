@@ -149308,7 +149308,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/460
   updated: 2026-07-25T17:46:46.178Z
 - id: LIMEN-210
-  title: "TKT-P1-010: Tests \u2014 progress calculation + UX state transitions"
+  title: "TKT-P1-010: Tests — progress calculation + UX state transitions"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -149320,8 +149320,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/459
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:15.859Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/459"
+    conduct_event_id: conduct:run-9e2dae431f16c29a2b5c192ab97ac486:142:compatibility
+    conduct_run_id: run-9e2dae431f16c29a2b5c192ab97ac486
+    conduct_lease_id: lease-142-9e2dae431f16c29a
+    conduct_generation: 142
+  predicate: test "$(gh issue view 459 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/459
+  updated: 2026-07-25T17:51:15.859Z
 - id: LIMEN-211
   title: "TKT-P1-010: UI \u2014 progress visualization + downscale flow"
   repo: organvm/peer-audited--behavioral-blockchain
