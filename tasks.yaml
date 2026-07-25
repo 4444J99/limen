@@ -149013,7 +149013,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/492
   updated: 2026-07-25T17:56:52.472Z
 - id: LIMEN-178
-  title: "CI integration \u2014 pre-deploy gate + status reporting"
+  title: CI integration — pre-deploy gate + status reporting
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -149026,8 +149026,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/491
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:47.255Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/491"
+    conduct_event_id: conduct:run-864499d6ebf003ee0248762581fc9129:258:compatibility
+    conduct_run_id: run-864499d6ebf003ee0248762581fc9129
+    conduct_lease_id: lease-258-864499d6ebf003ee
+    conduct_generation: 258
+  predicate: test "$(gh issue view 491 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/491
+  updated: 2026-07-25T17:57:47.255Z
 - id: LIMEN-179
   title: Service scaffolding — NestJS module + 19 contract checks
   repo: organvm/peer-audited--behavioral-blockchain
