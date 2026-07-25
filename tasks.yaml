@@ -154637,7 +154637,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/269
   updated: 2026-07-25T17:49:25.103Z
 - id: LIMEN-389
-  title: 'business: define enterprise ICP (firmographics, psychographics, buying triggers)'
+  title: "business: define enterprise ICP (firmographics, psychographics, buying triggers)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -154651,8 +154651,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/268
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:28.289Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/268"
+    conduct_event_id: conduct:run-6e0d182c6bdc31d505d0d9c22a67c8b5:252:compatibility
+    conduct_run_id: run-6e0d182c6bdc31d505d0d9c22a67c8b5
+    conduct_lease_id: lease-252-6e0d182c6bdc31d5
+    conduct_generation: 252
+  predicate: test "$(gh issue view 268 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/268
+  updated: 2026-07-25T17:57:28.289Z
 - id: LIMEN-390
   title: "feat: activate domain-expert agent contexts \u2014 epic tracker"
   repo: organvm/peer-audited--behavioral-blockchain
