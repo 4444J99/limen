@@ -149703,7 +149703,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-215
-  title: "TKT-P1-017: Schema + API \u2014 partner linking + notification triggers"
+  title: "TKT-P1-017: Schema + API — partner linking + notification triggers"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -149715,8 +149715,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/454
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:05.877Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/454"
+    conduct_event_id: conduct:run-ef0bff5348e75ddac48afd4220eb49fd:211:compatibility
+    conduct_run_id: run-ef0bff5348e75ddac48afd4220eb49fd
+    conduct_lease_id: lease-211-ef0bff5348e75dda
+    conduct_generation: 211
+  predicate: test "$(gh issue view 454 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/454
+  updated: 2026-07-25T17:55:05.877Z
 - id: LIMEN-216
   title: "TKT-P1-012: Tests \u2014 multiplier calculation + edge cases"
   repo: organvm/peer-audited--behavioral-blockchain
