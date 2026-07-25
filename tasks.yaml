@@ -151340,7 +151340,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-330
-  title: "Uptime monitoring setup \u2014 UptimeRobot/BetterUptime"
+  title: Uptime monitoring setup — UptimeRobot/BetterUptime
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -151353,8 +151353,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/332
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:47.295Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/332"
+    conduct_event_id: conduct:run-9f8ea14b71a6e75db1c061cca6c55d45:97:compatibility
+    conduct_run_id: run-9f8ea14b71a6e75db1c061cca6c55d45
+    conduct_lease_id: lease-97-9f8ea14b71a6e75d
+    conduct_generation: 97
+  predicate: test "$(gh issue view 332 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/332
+  updated: 2026-07-25T17:48:47.295Z
 - id: LIMEN-331
   title: "Enterprise UX audit \u2014 HR + coach dashboard usability"
   repo: organvm/peer-audited--behavioral-blockchain
