@@ -149190,7 +149190,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-186
-  title: "TKT-P1-014: Tests \u2014 masking rules + display fidelity"
+  title: "TKT-P1-014: Tests — masking rules + display fidelity"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -149202,8 +149202,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/483
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:02.619Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/483"
+    conduct_event_id: conduct:run-4a18b3188b270f697589fa06d007dbaf:245:compatibility
+    conduct_run_id: run-4a18b3188b270f697589fa06d007dbaf
+    conduct_lease_id: lease-245-4a18b3188b270f69
+    conduct_generation: 245
+  predicate: test "$(gh issue view 483 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/483
+  updated: 2026-07-25T17:57:02.619Z
 - id: LIMEN-187
   title: "TKT-P1-014: UI — masked display toggle + audit workbench"
   repo: organvm/peer-audited--behavioral-blockchain
