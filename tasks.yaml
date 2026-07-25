@@ -147202,8 +147202,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/567
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:45:55.405Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/567"
+    conduct_event_id: conduct:run-2fbb80a6b9c12b8baea9524fec3182cc:46:compatibility
+    conduct_run_id: run-2fbb80a6b9c12b8baea9524fec3182cc
+    conduct_lease_id: lease-46-2fbb80a6b9c12b8b
+    conduct_generation: 46
+  predicate: test "$(gh issue view 567 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/567
+  updated: 2026-07-25T17:45:55.405Z
 - id: LIMEN-114
   title: Resolve BIPA biometric data classification for wearable data
   repo: organvm/peer-audited--behavioral-blockchain
