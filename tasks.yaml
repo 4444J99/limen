@@ -148571,7 +148571,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-180
-  title: "TKT-P1-015: Tests \u2014 slashing calculation + false positive safeguards"
+  title: "TKT-P1-015: Tests — slashing calculation + false positive safeguards"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -148583,8 +148583,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/489
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:31.366Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/489"
+    conduct_event_id: conduct:run-54fa7a988be14f13453ddcbe0708ed1a:111:compatibility
+    conduct_run_id: run-54fa7a988be14f13453ddcbe0708ed1a
+    conduct_lease_id: lease-111-54fa7a988be14f13
+    conduct_generation: 111
+  predicate: test "$(gh issue view 489 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/489
+  updated: 2026-07-25T17:49:31.366Z
 - id: LIMEN-181
   title: "TKT-P1-015: Admin UI \u2014 enforcement dashboard + evidence review"
   repo: organvm/peer-audited--behavioral-blockchain
