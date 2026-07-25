@@ -148269,7 +148269,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/524
   updated: 2026-07-25T17:53:23.671Z
 - id: LIMEN-146
-  title: "Infrastructure \u2014 k6/artillery setup + test scenarios"
+  title: Infrastructure — k6/artillery setup + test scenarios
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -148282,8 +148282,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/523
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:48.302Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/523"
+    conduct_event_id: conduct:run-bcc659759caa1da87ace8479e2cc829c:295:compatibility
+    conduct_run_id: run-bcc659759caa1da87ace8479e2cc829c
+    conduct_lease_id: lease-295-bcc659759caa1da8
+    conduct_generation: 295
+  predicate: test "$(gh issue view 523 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/523
+  updated: 2026-07-25T17:59:48.302Z
 - id: LIMEN-147
   title: Tests — state transitions + timer accuracy
   repo: organvm/peer-audited--behavioral-blockchain
