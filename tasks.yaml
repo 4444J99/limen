@@ -148959,7 +148959,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-179
-  title: "Service scaffolding \u2014 NestJS module + 19 contract checks"
+  title: Service scaffolding — NestJS module + 19 contract checks
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -148971,8 +148971,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/490
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:03.149Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/490"
+    conduct_event_id: conduct:run-b8c28361fd5495613d383e3f69d8dd3d:227:compatibility
+    conduct_run_id: run-b8c28361fd5495613d383e3f69d8dd3d
+    conduct_lease_id: lease-227-b8c28361fd549561
+    conduct_generation: 227
+  predicate: test "$(gh issue view 490 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/490
+  updated: 2026-07-25T17:56:03.149Z
 - id: LIMEN-180
   title: "TKT-P1-015: Tests — slashing calculation + false positive safeguards"
   repo: organvm/peer-audited--behavioral-blockchain
