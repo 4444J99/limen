@@ -151812,7 +151812,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/370
   updated: 2026-07-25T17:51:54.980Z
 - id: LIMEN-293
-  title: "Internal dogfood beta \u2014 founders + 5-10 trusted people"
+  title: Internal dogfood beta — founders + 5-10 trusted people
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -151825,8 +151825,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/369
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:39.433Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/369"
+    conduct_event_id: conduct:run-f39f3a7e6a505d5d9f6239bb7aa2cc1b:238:compatibility
+    conduct_run_id: run-f39f3a7e6a505d5d9f6239bb7aa2cc1b
+    conduct_lease_id: lease-238-f39f3a7e6a505d5d
+    conduct_generation: 238
+  predicate: test "$(gh issue view 369 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/369
+  updated: 2026-07-25T17:56:39.433Z
 - id: LIMEN-294
   title: Seed deep agents for LEG, FIN, PRD, OPS departments
   repo: organvm/peer-audited--behavioral-blockchain
