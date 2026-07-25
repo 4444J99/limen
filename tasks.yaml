@@ -148328,7 +148328,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/522
   updated: 2026-07-25T17:51:19.273Z
 - id: LIMEN-148
-  title: "UI \u2014 countdown display + pause/resume controls"
+  title: UI — countdown display + pause/resume controls
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -148340,8 +148340,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/521
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:55.360Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/521"
+    conduct_event_id: conduct:run-11b4ed9d86d71277a69094cbe06d095d:297:compatibility
+    conduct_run_id: run-11b4ed9d86d71277a69094cbe06d095d
+    conduct_lease_id: lease-297-11b4ed9d86d71277
+    conduct_generation: 297
+  predicate: test "$(gh issue view 521 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/521
+  updated: 2026-07-25T17:59:55.360Z
 - id: LIMEN-149
   title: Schema + API — circuit breaker state machine + pause logic
   repo: organvm/peer-audited--behavioral-blockchain
