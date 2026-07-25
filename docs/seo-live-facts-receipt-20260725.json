@@ -63,8 +63,6 @@
   },
   "schema": "limen.seo_live_facts_receipt.v1",
   "sources": {
-    "github_estate_ledger": "docs/github-estate-ledger.json",
-    "github_estate_ledger_sha256": "21211e3aa986d79dc44873c36b04884135f1b2ecce08b44723d8223e8671b9f9",
     "private_census_facts_sha256": "207568b8854d79796c3f479e6673237df01d7e7998637c9d38a858fdfadcd892",
     "seo_audit_sha256": "7a4ff27b43cc6454e312706503f8a56c4ad5c4cb35008e39b6c72b74e8bc5fe7"
   }
