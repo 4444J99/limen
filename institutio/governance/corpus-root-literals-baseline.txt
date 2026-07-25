@@ -1,0 +1,32 @@
+# Corpus-root string literals awaiting conversion to scripts/corpus_resolve.py.
+# Format: <path>::<literal>  — keyed on the literal, never a line number, so an
+# unrelated edit above cannot masquerade as a new violation.
+# Ratchet: new literals fail check-corpora D; this list only shrinks.
+# Convert a consumer, then delete its lines here.
+scripts/codex-quicken.py::route through session-meta, knowledge-corpus, and corpus-converge receipts
+scripts/corpus-converge.py::session-meta
+scripts/corpus-converge.py::session-meta:
+scripts/corpus-feed.py::session-meta
+scripts/harvest-pull-completed.py::session-meta
+scripts/ingest-coverage.py::session-meta
+scripts/reap-clones.py::limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation
+scripts/resolve-codex-family-batch.py::4444J99/session-meta
+scripts/resolve-codex-family-batch.py::organvm/session-meta
+scripts/resolve-codex-family-batch.py::session-meta
+scripts/resolve-codex-family-batch.py::session-meta issue/PR review predicate after branch rehydration
+scripts/self-heal.py::PR {repo}#{num} is CONFLICTING with its base branch and merge-drain correctly refuses to merge it. FIRST check the PR's ORIGINAL diff (merge-base..head) against its declared title/body intent: a branch generated from a broken tree can carry mass deletions it never declared, and branch-side deletions the declaration does not name are POISON to restore from base, never intent to preserve (session-meta#148 ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it onto the current base (or merge base in), resolve every conflict preserving the PR's declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE with green CI. After resolving, verify diff-vs-base matches the declared intent; if nothing genuine survives (all absorbed or superseded on base), close the PR as superseded instead of pushing. Do not open a new PR. PR: {url}
+scripts/session-attack-paths.py::Promote durable atoms through session-meta and knowledge-corpus.
+scripts/session-corpus-ledger.py::- Rebuild session-meta atoms after preserving its dirty work: `cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`
+scripts/session-corpus-ledger.py::- The app screenshots are coverage hints, not canonical input. Canonical input is the local Claude/Codex/session-meta filesystem state.
+scripts/session-corpus-ledger.py::- `session-meta/ingest/atoms-store/CURRENT` (`
+scripts/session-corpus-ledger.py::- `session-meta/ingest/manifest.jsonl`: 
+scripts/session-corpus-ledger.py::- `session-meta` remains the producer for redacted, deduped, multi-provider atoms.
+scripts/session-corpus-ledger.py::claude-usage-session-meta
+scripts/session-corpus-ledger.py::session-meta
+scripts/session-corpus-ledger.py::session-meta atoms-store/CURRENT is missing, so corpus-converge has no atom substrate.
+scripts/session-corpus-ledger.py::session-meta is not clean/in-sync; do not mutate it from Limen until its existing dirty and divergent work is preserved or merged.
+scripts/session-corpus-ledger.py::session-meta manifest is stale by more than two days.
+scripts/substrate-storage-pressure.py::organvm/session-meta
+scripts/substrate-storage-pressure.py::session-meta
+scripts/substrate-storage-pressure.py::~/Workspace/session-meta
+scripts/vltima-result-digest.py::- Claude has extra lifecycle phases in this workspace: projects, tasks, plans, file history, usage facets, usage session-meta, and quicken states.

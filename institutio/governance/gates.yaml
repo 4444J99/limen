@@ -346,6 +346,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-corpora:
+    command: "python3 scripts/check-corpora.py"
+    paths: ["institutio/governance/corpora.yaml", "institutio/governance/corpus-root-literals-baseline.txt", "scripts/check-corpora.py", "scripts/corpus_resolve.py", "scripts/constellation-dossier.py", "organs/consulting/constellation/check.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "CORPORA registry drift: where the conversation corpora live is declared data (corpora.yaml), the fourth axis beside GATES + PARAMETERS + SENSORS. Asserts schema, that every store root exists, that every corpus directory on disk has a row (the check that catches an undeclared corpus every declared-ids-only consumer silently drops), that nothing outside scripts/corpus_resolve.py hardcodes a corpus root (ratcheted via a literal-keyed baseline), and re-derives freshness from the store's own federation summary. Two consumers each carried their own wrong copy of these paths and the dossier tool reported an empty corpus while 371 MB sat on disk — nothing was checking."
   check-decorum:
     command: "python3 scripts/check-decorum.py"
     paths: ["institutio/governance/decorum-surfaces.yaml", "scripts/check-decorum.py", "scripts/decorum-keeper.py", "institutio/observatory/decorum-judgments.yaml"]
