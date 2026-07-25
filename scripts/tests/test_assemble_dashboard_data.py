@@ -53,6 +53,7 @@ def test_high_cardinality_dashboard_stays_below_ratchet_with_latest_log(tmp_path
     result = MODULE.assemble(app, repo_root=tmp_path, write_public=True)
 
     assert result["max_dispatch_log_entries"] == 1
+    assert result["max_task_context_chars"] == 320
     assert result["dashboard_bytes"] < result["max_dashboard_bytes"]
     prior_dashboard, _ = MODULE.payloads(
         internal={"summary": {}},
@@ -63,6 +64,9 @@ def test_high_cardinality_dashboard_stays_below_ratchet_with_latest_log(tmp_path
     dashboard = json.loads((app / "out" / "dashboard.json").read_text(encoding="utf-8"))
     assert len(dashboard["tasks"]) == 1_250
     assert [entry["session_id"] for entry in dashboard["tasks"][0]["dispatch_log"]] == ["session-3"]
+    assert len(dashboard["tasks"][0]["context"]) <= policy["max_task_context_chars"]
+    assert dashboard["tasks"][0]["context"].endswith("…")
+    assert dashboard["tasks"][0]["context_truncated"] is True
     done = json.loads((app / "public" / "done-tasks.json").read_text(encoding="utf-8"))
     assert done["total_done"] == 1
     assert done["tasks"][0]["id"] == "DASH-9999"
@@ -79,6 +83,18 @@ def test_invalid_policy_fails_closed(tmp_path: Path) -> None:
         assert "max_dispatch_log_entries" in str(error)
     else:
         raise AssertionError("invalid dashboard export policy was accepted")
+
+
+def test_invalid_context_bound_fails_closed(tmp_path: Path) -> None:
+    policy = json.loads((ROOT / "web" / "app" / "dashboard-export-policy.json").read_text(encoding="utf-8"))
+    policy["max_task_context_chars"] = 0
+    (tmp_path / "dashboard-export-policy.json").write_text(json.dumps(policy), encoding="utf-8")
+    try:
+        MODULE.load_policy(tmp_path)
+    except ValueError as error:
+        assert "max_task_context_chars" in str(error)
+    else:
+        raise AssertionError("invalid dashboard task-context bound was accepted")
 
 
 def test_dashboard_consumers_share_the_checked_in_policy() -> None:

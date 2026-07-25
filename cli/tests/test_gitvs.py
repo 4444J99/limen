@@ -80,6 +80,42 @@ def test_owner_open_pr_counts_blocks_on_incomplete_remote_evidence(monkeypatch) 
     assert module._owner_open_pr_counts("example", "opaque") is None
 
 
+def test_owner_repos_preserves_successful_empty_owner(monkeypatch) -> None:
+    module = _load()
+    calls: list[list[str]] = []
+
+    def fake_gh(args, _token, timeout=60):
+        calls.append(args)
+        return subprocess.CompletedProcess([], 0, "", "")
+
+    monkeypatch.setattr(module, "_gh", fake_gh)
+
+    assert module._owner_repos("empty-owner", "opaque") == []
+    assert len(calls) == 1
+
+
+def test_owner_repos_keeps_failures_distinct_from_empty_success(monkeypatch) -> None:
+    module = _load()
+    monkeypatch.setattr(
+        module,
+        "_gh",
+        lambda _args, _token, timeout=60: subprocess.CompletedProcess([], 1, "", "unavailable"),
+    )
+
+    assert module._owner_repos("unavailable-owner", "opaque") is None
+
+
+def test_owner_repos_fails_closed_on_malformed_success(monkeypatch) -> None:
+    module = _load()
+    monkeypatch.setattr(
+        module,
+        "_gh",
+        lambda _args, _token, timeout=60: subprocess.CompletedProcess([], 0, "not-json\n", ""),
+    )
+
+    assert module._owner_repos("malformed-owner", "opaque") is None
+
+
 def test_owner_repo_inventory_paginates_private_repositories_and_reconciles_total(monkeypatch) -> None:
     module = _load()
     pages = [
