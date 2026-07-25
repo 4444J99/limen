@@ -87,3 +87,6 @@ issue_audit_data.json
 issue_comment_plan.json
 build_peer_audited_comments.py
 generate_peer_audit_comments.py
+
+# constellation atlas — generated HTML register (regenerable via constellation-atlas.py)
+logs/constellation/
