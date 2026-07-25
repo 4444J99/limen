@@ -150934,7 +150934,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/401
   updated: 2026-07-25T17:52:47.706Z
 - id: LIMEN-262
-  title: "Settlement: Legal \u2014 FBO custody model counsel review"
+  title: "Settlement: Legal — FBO custody model counsel review"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: codex
@@ -150949,8 +150949,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/400
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:53.396Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/400"
+    conduct_event_id: conduct:run-55243b920d9c54b0e2651fe88e3b3680:224:compatibility
+    conduct_run_id: run-55243b920d9c54b0e2651fe88e3b3680
+    conduct_lease_id: lease-224-55243b920d9c54b0
+    conduct_generation: 224
+  predicate: test "$(gh issue view 400 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/400
+  updated: 2026-07-25T17:55:53.396Z
 - id: LIMEN-263
   title: "Settlement: Tests \u2014 full deposit\u2192stake\u2192settle\u2192withdraw\
     \ flow"
