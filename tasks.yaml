@@ -149313,7 +149313,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-224
-  title: 'Governance: Registry validation automation'
+  title: "Governance: Registry validation automation"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -149327,8 +149327,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/445
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:44.032Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/445"
+    conduct_event_id: conduct:run-399623831f43826f5f112a289f3d76fd:96:compatibility
+    conduct_run_id: run-399623831f43826f5f112a289f3d76fd
+    conduct_lease_id: lease-96-399623831f43826f
+    conduct_generation: 96
+  predicate: test "$(gh issue view 445 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/445
+  updated: 2026-07-25T17:48:44.032Z
 - id: LIMEN-225
   title: 'Audit: Executive summary + priority action list'
   repo: organvm/peer-audited--behavioral-blockchain
