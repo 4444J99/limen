@@ -151709,7 +151709,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/376
   updated: 2026-07-25T17:55:02.751Z
 - id: LIMEN-287
-  title: "Real-money pilot \u2014 10-25 users"
+  title: Real-money pilot — 10-25 users
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: gemini
@@ -151724,8 +151724,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/375
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:59.051Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/375"
+    conduct_event_id: conduct:run-9486ff2f338dc0094c3cb85ac8c742fc:244:compatibility
+    conduct_run_id: run-9486ff2f338dc0094c3cb85ac8c742fc
+    conduct_lease_id: lease-244-9486ff2f338dc009
+    conduct_generation: 244
+  predicate: test "$(gh issue view 375 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/375
+  updated: 2026-07-25T17:56:59.051Z
 - id: LIMEN-288
   title: Beta feedback synthesis + iteration cycle
   repo: organvm/peer-audited--behavioral-blockchain
