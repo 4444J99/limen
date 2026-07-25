@@ -151248,7 +151248,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-347
-  title: "feat: B2B orchestration panel \u2014 billing & scope management (F-DESKTOP-05)"
+  title: "feat: B2B orchestration panel — billing & scope management (F-DESKTOP-05)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -151263,8 +151263,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/314
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:39.756Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/314"
+    conduct_event_id: conduct:run-7a2d99c629275f6d685a20e10e530295:59:compatibility
+    conduct_run_id: run-7a2d99c629275f6d685a20e10e530295
+    conduct_lease_id: lease-59-7a2d99c629275f6d
+    conduct_generation: 59
+  predicate: test "$(gh issue view 314 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/314
+  updated: 2026-07-25T17:46:39.756Z
 - id: LIMEN-348
   title: 'feat: Hash collider desktop tool wiring (F-DESKTOP-04)'
   repo: organvm/peer-audited--behavioral-blockchain
