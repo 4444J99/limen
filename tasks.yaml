@@ -152888,7 +152888,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/361
   updated: 2026-07-25T17:54:55.781Z
 - id: LIMEN-302
-  title: "Outreach sequence \u2014 5-email cold outreach + LinkedIn"
+  title: Outreach sequence — 5-email cold outreach + LinkedIn
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -152904,8 +152904,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/360
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:26.425Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/360"
+    conduct_event_id: conduct:run-e8f3ba4be1bf7049a40a95d9baa10b06:323:compatibility
+    conduct_run_id: run-e8f3ba4be1bf7049a40a95d9baa10b06
+    conduct_lease_id: lease-323-e8f3ba4be1bf7049
+    conduct_generation: 323
+  predicate: test "$(gh issue view 360 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/360
+  updated: 2026-07-25T18:01:26.425Z
 - id: LIMEN-303
   title: Identify 50 target therapists/coaches — ICP definition
   repo: organvm/peer-audited--behavioral-blockchain
