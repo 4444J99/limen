@@ -148416,7 +148416,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-167
-  title: "Schema + API \u2014 referral tracking + reward distribution"
+  title: Schema + API — referral tracking + reward distribution
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -148428,8 +148428,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/502
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:55.246Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/502"
+    conduct_event_id: conduct:run-2716c9fe9a33d90159062cb7e9a8df6b:136:compatibility
+    conduct_run_id: run-2716c9fe9a33d90159062cb7e9a8df6b
+    conduct_lease_id: lease-136-2716c9fe9a33d901
+    conduct_generation: 136
+  predicate: test "$(gh issue view 502 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/502
+  updated: 2026-07-25T17:50:55.246Z
 - id: LIMEN-168
   title: Tests — queue ordering + cohort fill triggers
   repo: organvm/peer-audited--behavioral-blockchain
