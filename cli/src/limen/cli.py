@@ -573,6 +573,24 @@ def harvest(agent):
     help="Register the launched direct session with the conduct broker as human-protected.",
 )
 @click.option(
+    "--model",
+    "launch_model",
+    default=None,
+    help="Exact human-selected Codex model; requires reasoning effort and sandbox.",
+)
+@click.option(
+    "--reasoning-effort",
+    "launch_reasoning_effort",
+    default=None,
+    help="Exact reasoning effort supported by the selected live Codex model.",
+)
+@click.option(
+    "--sandbox",
+    "launch_sandbox",
+    default=None,
+    help="Codex sandbox for the explicit primary launch profile.",
+)
+@click.option(
     "--shell",
     "launch_shell",
     is_flag=True,
@@ -613,6 +631,9 @@ def workstream(
     autonomous,
     agent_name,
     conduct,
+    launch_model,
+    launch_reasoning_effort,
+    launch_sandbox,
     launch_shell,
     from_ref,
     prompt_text,
@@ -633,6 +654,12 @@ def workstream(
         args.extend(["--agent", agent_name])
     if conduct:
         args.append("--conduct")
+    if launch_model:
+        args.extend(["--model", launch_model])
+    if launch_reasoning_effort:
+        args.extend(["--reasoning-effort", launch_reasoning_effort])
+    if launch_sandbox:
+        args.extend(["--sandbox", launch_sandbox])
     if launch_shell:
         args.append("--shell")
     if from_ref:

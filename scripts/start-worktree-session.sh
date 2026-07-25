@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/start-worktree-session.sh [--autonomous] [--agent auto|<canonical-lane>] [--conduct] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
+  scripts/start-worktree-session.sh [--autonomous] [--agent auto|<canonical-lane>] [--model <id>] [--reasoning-effort <level>] [--sandbox <mode>] [--conduct] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
 
 Examples:
   scripts/start-worktree-session.sh portvs triptych-story
@@ -12,10 +12,16 @@ Examples:
   scripts/start-worktree-session.sh --autonomous --agent auto --conduct --runway 8h --prompt-file /tmp/next-session.md limen next-epoch
   scripts/start-worktree-session.sh --shell --prompt-file /tmp/prompt.md domus package-map
   scripts/start-worktree-session.sh --workstream contributions --prompt 'drain the code lane' limen contrib-run
+  scripts/start-worktree-session.sh --model gpt-example --reasoning-effort high --sandbox danger-full-access limen explicit-codex
 
 --agent selects and launches a native agent CLI. "auto" derives an available installed CLI from the
 canonical Limen census. Omitting --agent creates the capsule without launching; its kickstart uses
 the same live-derived Auto selection with a login-shell fallback.
+
+--model, --reasoning-effort, and --sandbox form one explicit Codex launch profile. All three are
+required together. The exact model and effort must exist in the live local Codex catalog at render
+and launch time; no substitution is permitted. Omitting --agent records the Codex profile without
+launching immediately, while --agent codex launches the validated capsule.
 
 --conduct registers the launched direct session with the shared broker as human-protected. Broker
 credentials are read from the environment, never written into the capsule or command line, and
@@ -62,6 +68,9 @@ prompt_file=""
 runway=""
 runway_explicit=0
 workstream=""
+launch_model=""
+launch_reasoning_effort=""
+launch_sandbox=""
 write_readme=1
 
 while [[ $# -gt 0 ]]; do
@@ -83,6 +92,33 @@ while [[ $# -gt 0 ]]; do
     --conduct)
       conduct=1
       shift
+      ;;
+    --model)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --model" >&2
+        usage >&2
+        exit 2
+      fi
+      launch_model="$2"
+      shift 2
+      ;;
+    --reasoning-effort)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --reasoning-effort" >&2
+        usage >&2
+        exit 2
+      fi
+      launch_reasoning_effort="$2"
+      shift 2
+      ;;
+    --sandbox)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --sandbox" >&2
+        usage >&2
+        exit 2
+      fi
+      launch_sandbox="$2"
+      shift 2
       ;;
     --shell)
       launch_shell=1
@@ -177,6 +213,26 @@ fi
 if [[ "$autonomous" -eq 1 && -z "$prompt_text" && -z "$prompt_file" ]]; then
   echo "--autonomous requires --prompt or --prompt-file" >&2
   exit 2
+fi
+launch_profile_values=0
+[[ -n "$launch_model" ]] && launch_profile_values=$((launch_profile_values + 1))
+[[ -n "$launch_reasoning_effort" ]] && launch_profile_values=$((launch_profile_values + 1))
+[[ -n "$launch_sandbox" ]] && launch_profile_values=$((launch_profile_values + 1))
+if [[ "$launch_profile_values" -ne 0 && "$launch_profile_values" -ne 3 ]]; then
+  echo "--model, --reasoning-effort, and --sandbox must be supplied together" >&2
+  exit 2
+fi
+if [[ "$launch_profile_values" -eq 3 && "$write_readme" -ne 1 ]]; then
+  echo "explicit model launch profiles cannot be combined with --no-readme" >&2
+  exit 2
+fi
+if [[ "$launch_profile_values" -eq 3 && -n "$requested_agent" \
+  && "$requested_agent" != "auto" && "$requested_agent" != "codex" ]]; then
+  echo "explicit model launch profiles require --agent codex or no --agent" >&2
+  exit 2
+fi
+if [[ "$launch_profile_values" -eq 3 && -z "$requested_agent" ]]; then
+  requested_agent="codex"
 fi
 if [[ -n "$prompt_file" && ! -f "$prompt_file" ]]; then
   echo "prompt file not found: $prompt_file" >&2
@@ -274,6 +330,23 @@ agent_capabilities="$(printf '%s\n' "$agent_resolution" | sed -n '3p')"
 if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry_binary" >/dev/null; then
   echo "native CLI not found for canonical lane $agent" >&2
   exit 127
+fi
+if [[ "$launch_profile_values" -eq 3 ]]; then
+  if [[ "$agent" != "codex" ]]; then
+    echo "explicit model launch profiles require the Codex native lane" >&2
+    exit 2
+  fi
+  if ! codex_binary="$(workstream_native_binary "$agent" "$registry_binary")"; then
+    echo "native CLI not found for canonical lane codex" >&2
+    exit 127
+  fi
+  if ! python3 "$contract_helper" validate-codex-launch \
+    --binary "$codex_binary" \
+    --model "$launch_model" \
+    --reasoning-effort "$launch_reasoning_effort" \
+    --sandbox "$launch_sandbox" >/dev/null; then
+    exit 2
+  fi
 fi
 
 repo_arg="$1"
@@ -398,7 +471,8 @@ if [[ "$write_readme" -eq 1 ]]; then
   render_workstream_capsule \
     "$wt" "$repo" "$slug" "$branch" "$workstream" "$from_ref" "$autonomous" \
     "$prompt_payload" "$script_dir/../spec/continuation-capsule" "$runway" "$contract_helper" \
-    "$agent" "$registry_binary" "$conduct" "$allow_shell_fallback" "$agent_capabilities"
+    "$agent" "$registry_binary" "$conduct" "$allow_shell_fallback" "$agent_capabilities" \
+    "$launch_model" "$launch_reasoning_effort" "$launch_sandbox"
 fi
 
 if [[ "$launch_agent" -eq 1 ]]; then
