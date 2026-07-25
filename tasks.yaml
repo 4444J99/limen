@@ -150625,7 +150625,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-261
-  title: "Geofence: Policy registry \u2014 state availability matrix CRUD"
+  title: "Geofence: Policy registry — state availability matrix CRUD"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150638,8 +150638,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/401
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:47.706Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/401"
+    conduct_event_id: conduct:run-cf20dabab733b346e3c7b0b484ca37df:169:compatibility
+    conduct_run_id: run-cf20dabab733b346e3c7b0b484ca37df
+    conduct_lease_id: lease-169-cf20dabab733b346
+    conduct_generation: 169
+  predicate: test "$(gh issue view 401 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/401
+  updated: 2026-07-25T17:52:47.706Z
 - id: LIMEN-262
   title: "Settlement: Legal \u2014 FBO custody model counsel review"
   repo: organvm/peer-audited--behavioral-blockchain
