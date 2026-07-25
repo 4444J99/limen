@@ -148322,7 +148322,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-183
-  title: "TKT-P1-008: Tests \u2014 routing fairness + collusion detection accuracy"
+  title: "TKT-P1-008: Tests — routing fairness + collusion detection accuracy"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -148334,8 +148334,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/486
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:45:48.325Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/486"
+    conduct_event_id: conduct:run-8c34c9befddc5401cf68bdaedaf75f73:44:compatibility
+    conduct_run_id: run-8c34c9befddc5401cf68bdaedaf75f73
+    conduct_lease_id: lease-44-8c34c9befddc5401
+    conduct_generation: 44
+  predicate: test "$(gh issue view 486 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/486
+  updated: 2026-07-25T17:45:48.325Z
 - id: LIMEN-184
   title: "TKT-P1-008: Admin UI \u2014 cluster visualization + override controls"
   repo: organvm/peer-audited--behavioral-blockchain
