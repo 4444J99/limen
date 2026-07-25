@@ -150435,7 +150435,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/437
   updated: 2026-07-25T17:57:34.924Z
 - id: LIMEN-233
-  title: 'Audit: Scan codebase for TODO/FIXME/stub placeholders'
+  title: "Audit: Scan codebase for TODO/FIXME/stub placeholders"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: opencode
@@ -150448,8 +150448,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/436
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:56.301Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/436"
+    conduct_event_id: conduct:run-cc7edbf61decc9ec632859f3ee6f8788:261:compatibility
+    conduct_run_id: run-cc7edbf61decc9ec632859f3ee6f8788
+    conduct_lease_id: lease-261-cc7edbf61decc9ec
+    conduct_generation: 261
+  predicate: test "$(gh issue view 436 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/436
+  updated: 2026-07-25T17:57:56.301Z
 - id: LIMEN-234
   title: "Agents: Integration tests — multi-agent routing"
   repo: organvm/peer-audited--behavioral-blockchain
