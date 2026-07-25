@@ -155203,7 +155203,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/279
   updated: 2026-07-25T17:56:12.745Z
 - id: LIMEN-382
-  title: 'feat: Geofence fail-closed hardening & policy registry (TKT-P0-004)'
+  title: "feat: Geofence fail-closed hardening & policy registry (TKT-P0-004)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -155217,8 +155217,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/278
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:48.652Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/278"
+    conduct_event_id: conduct:run-eeffc3bebc4b3a041c162c7400cf5de3:312:compatibility
+    conduct_run_id: run-eeffc3bebc4b3a041c162c7400cf5de3
+    conduct_lease_id: lease-312-eeffc3bebc4b3a04
+    conduct_generation: 312
+  predicate: test "$(gh issue view 278 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/278
+  updated: 2026-07-25T18:00:48.652Z
 - id: LIMEN-383
   title: "docs: draft FAQ v1 — 10 help articles with linguistic cloaker vocabulary"
   repo: organvm/peer-audited--behavioral-blockchain
