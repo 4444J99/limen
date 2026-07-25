@@ -148445,7 +148445,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/507
   updated: 2026-07-25T17:45:26.508Z
 - id: LIMEN-163
-  title: "API \u2014 waitlist signup + confirmation email + source tagging"
+  title: API — waitlist signup + confirmation email + source tagging
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -148462,8 +148462,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/506
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:10.866Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/506"
+    conduct_event_id: conduct:run-1b994f6d9cb13c753a5bd6fa37b62dde:176:compatibility
+    conduct_run_id: run-1b994f6d9cb13c753a5bd6fa37b62dde
+    conduct_lease_id: lease-176-1b994f6d9cb13c75
+    conduct_generation: 176
+  predicate: test "$(gh issue view 506 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/506
+  updated: 2026-07-25T17:53:10.866Z
 - id: LIMEN-164
   title: Landing page — no-contact hero copy + waitlist CTA
   repo: organvm/peer-audited--behavioral-blockchain
