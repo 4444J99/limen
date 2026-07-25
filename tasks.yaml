@@ -150513,7 +150513,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/440
   updated: 2026-07-25T17:51:45.802Z
 - id: LIMEN-230
-  title: "Audit: Map all modules \u2192 feature coverage matrix"
+  title: "Audit: Map all modules → feature coverage matrix"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: gemini
@@ -150526,8 +150526,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/439
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:25.570Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/439"
+    conduct_event_id: conduct:run-9026dd5a91becce0337418f192f8e4a6:288:compatibility
+    conduct_run_id: run-9026dd5a91becce0337418f192f8e4a6
+    conduct_lease_id: lease-288-9026dd5a91becce0
+    conduct_generation: 288
+  predicate: test "$(gh issue view 439 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/439
+  updated: 2026-07-25T17:59:25.570Z
 - id: LIMEN-231
   title: "Audit: Generate remediation tickets for critical stubs"
   repo: organvm/peer-audited--behavioral-blockchain
