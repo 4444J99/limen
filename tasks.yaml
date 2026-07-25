@@ -148167,7 +148167,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/516
   updated: 2026-07-25T17:45:18.118Z
 - id: LIMEN-154
-  title: "UI \u2014 verification requirement display per tier"
+  title: UI — verification requirement display per tier
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -148179,8 +148179,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/515
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:48.773Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/515"
+    conduct_event_id: conduct:run-74a05903a8bbb23f36e746bf667addba:152:compatibility
+    conduct_run_id: run-74a05903a8bbb23f36e746bf667addba
+    conduct_lease_id: lease-152-74a05903a8bbb23f
+    conduct_generation: 152
+  predicate: test "$(gh issue view 515 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/515
+  updated: 2026-07-25T17:51:48.773Z
 - id: LIMEN-155
   title: Schema + API — tier definitions + escalation rules
   repo: organvm/peer-audited--behavioral-blockchain
