@@ -150159,7 +150159,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/442
   updated: 2026-07-25T17:51:01.534Z
 - id: LIMEN-228
-  title: 'Audit: Completeness scoring + gap remediation plan'
+  title: "Audit: Completeness scoring + gap remediation plan"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: agy
@@ -150172,8 +150172,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/441
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:33.420Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/441"
+    conduct_event_id: conduct:run-702b70b1466025b137d0deb17f27b0b0:236:compatibility
+    conduct_run_id: run-702b70b1466025b137d0deb17f27b0b0
+    conduct_lease_id: lease-236-702b70b1466025b1
+    conduct_generation: 236
+  predicate: test "$(gh issue view 441 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/441
+  updated: 2026-07-25T17:56:33.420Z
 - id: LIMEN-229
   title: "Audit: Identify architectural gaps + missing integrations"
   repo: organvm/peer-audited--behavioral-blockchain
