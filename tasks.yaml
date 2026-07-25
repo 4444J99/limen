@@ -150304,7 +150304,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/374
   updated: 2026-07-25T17:47:22.703Z
 - id: LIMEN-289
-  title: "Seed user recruitment \u2014 creator outreach + first cohort admissions"
+  title: Seed user recruitment — creator outreach + first cohort admissions
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -150320,8 +150320,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/373
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:26.432Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/373"
+    conduct_event_id: conduct:run-d8323a6bc475a5b3cd498ab9a0ea76d9:73:compatibility
+    conduct_run_id: run-d8323a6bc475a5b3cd498ab9a0ea76d9
+    conduct_lease_id: lease-73-d8323a6bc475a5b3
+    conduct_generation: 73
+  predicate: test "$(gh issue view 373 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/373
+  updated: 2026-07-25T17:47:26.432Z
 - id: LIMEN-290
   title: "TestFlight external beta \u2014 50-100 users"
   repo: organvm/peer-audited--behavioral-blockchain
