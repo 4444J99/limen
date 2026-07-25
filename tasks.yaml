@@ -152005,7 +152005,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-357
-  title: 'docs: A/B testing framework & user research protocol'
+  title: "docs: A/B testing framework & user research protocol"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -152019,8 +152019,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/303
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:09.742Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/303"
+    conduct_event_id: conduct:run-cd91533ff5ed0f002eecb2b4667e8dbf:104:compatibility
+    conduct_run_id: run-cd91533ff5ed0f002eecb2b4667e8dbf
+    conduct_lease_id: lease-104-cd91533ff5ed0f00
+    conduct_generation: 104
+  predicate: test "$(gh issue view 303 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/303
+  updated: 2026-07-25T17:49:09.742Z
 - id: LIMEN-358
   title: "docs: Incident response runbook & monitoring playbook"
   repo: organvm/peer-audited--behavioral-blockchain
