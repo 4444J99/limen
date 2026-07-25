@@ -151487,7 +151487,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/392
   updated: 2026-07-25T17:54:32.408Z
 - id: LIMEN-271
-  title: "Camera: Native Swift module \u2014 photo/video capture with nonce"
+  title: "Camera: Native Swift module — photo/video capture with nonce"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -151501,8 +151501,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/391
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:22.014Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/391"
+    conduct_event_id: conduct:run-7cc7628ae3307151b969200030f9060f:269:compatibility
+    conduct_run_id: run-7cc7628ae3307151b969200030f9060f
+    conduct_lease_id: lease-269-7cc7628ae3307151
+    conduct_generation: 269
+  predicate: test "$(gh issue view 391 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/391
+  updated: 2026-07-25T17:58:22.014Z
 - id: LIMEN-272
   title: "KYC: Legal — counsel sign-off on verification requirements"
   repo: organvm/peer-audited--behavioral-blockchain
