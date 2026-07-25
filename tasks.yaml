@@ -153250,8 +153250,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/323
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:44.272Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/323"
+    conduct_event_id: conduct:run-6dc6a001dbe2082e0db189c090bd62c5:257:compatibility
+    conduct_run_id: run-6dc6a001dbe2082e0db189c090bd62c5
+    conduct_lease_id: lease-257-6dc6a001dbe2082e
+    conduct_generation: 257
+  predicate: test "$(gh issue view 323 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/323
+  updated: 2026-07-25T17:57:44.272Z
 - id: LIMEN-339
   title: Partner authority disclosure review
   repo: organvm/peer-audited--behavioral-blockchain
