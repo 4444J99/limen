@@ -372,6 +372,91 @@ def test_restore_selector_mismatch_stops_before_chunk_extraction(
     assert not target.exists()
 
 
+def test_restore_receipt_preflight_can_stop_before_target_mutation(tmp_path: Path) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+
+    def reject(_result: file_provider.RestoredFileResult) -> None:
+        raise PipelineError("restore receipt conflicts")
+
+    with pytest.raises(PipelineError, match="receipt conflicts"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash=file_provider.captured_path_selector_hash(relative),
+            before_mutation=reject,
+        )
+
+    assert not target.exists()
+
+
+def test_restore_parent_replacement_cannot_redirect_placement(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    displaced = root / "displaced"
+    verification_calls = 0
+    real_verify = file_provider.verify_atom_packs
+
+    def verify(*args, **kwargs):
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 2:
+            target.parent.rename(displaced)
+            target.parent.symlink_to(outside, target_is_directory=True)
+        return real_verify(*args, **kwargs)
+
+    monkeypatch.setattr(file_provider, "verify_atom_packs", verify)
+
+    with pytest.raises(PipelineError, match="parent changed during reconstruction"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash=file_provider.captured_path_selector_hash(relative),
+        )
+
+    assert not (outside / target.name).exists()
+    assert not (displaced / target.name).exists()
+
+
+def test_restore_operational_failure_is_path_free_pipeline_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+
+    def deny_link(*_args, **_kwargs):
+        raise PermissionError(1, "denied", str(target))
+
+    monkeypatch.setattr(file_provider.os, "link", deny_link)
+    with pytest.raises(PipelineError, match="restore placement failed") as raised:
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash=file_provider.captured_path_selector_hash(relative),
+        )
+
+    assert str(target) not in str(raised.value)
+    assert not target.exists()
+
+
 def test_restore_rejects_existing_conflicting_content(tmp_path: Path) -> None:
     receipt, root, payload = _encrypted_capture(tmp_path, ("captured.json",))
     target = root / "captured.json"

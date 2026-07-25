@@ -7,6 +7,7 @@ import os
 import shutil
 import sqlite3
 import subprocess
+import tempfile
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import asdict
@@ -210,7 +211,7 @@ class GitVault:
         relative: Path,
         message: str,
     ) -> tuple[str, str, str]:
-        """Read one completed receipt from the exact remote ref without using the checkout."""
+        """Read one completed receipt from remote-reachable history without mutating the checkout."""
 
         self.verify_identity()
         relative = Path(relative)
@@ -220,23 +221,69 @@ class GitVault:
         if len(remote_output) != 2 or remote_output[1] != "refs/heads/main":
             raise PipelineError("ARCA remote main ref is unavailable")
         head = remote_output[0]
-        subject = _run(["git", "show", "-s", "--format=%s", head], cwd=self.root)
-        if subject != message:
-            raise PipelineError("ARCA remote head is not the requested completed receipt")
         receipt_path = relative / "receipt.json"
-        changed = set(
+        origin = _run(["git", "config", "--get", "remote.origin.url"], cwd=self.root)
+        common_dir = Path(_run(["git", "rev-parse", "--git-common-dir"], cwd=self.root))
+        if not common_dir.is_absolute():
+            common_dir = (self.root / common_dir).resolve()
+
+        # Borrow the checkout's already-present objects through an alternate, but fetch the
+        # advertised remote ref into an isolated bare repository. This makes a newer remote head
+        # available to git-show/rev-list without touching a dirty shared checkout or relying on
+        # servers accepting an unadvertised fetch-by-SHA request.
+        with tempfile.TemporaryDirectory(prefix="limen-arca-remote-") as temporary:
+            snapshot = Path(temporary) / "snapshot.git"
+            _run(["git", "init", "--bare", "--quiet", str(snapshot)], cwd=self.root)
+            alternates = snapshot / "objects" / "info" / "alternates"
+            alternates.parent.mkdir(parents=True, exist_ok=True)
+            alternates.write_text(f"{(common_dir / 'objects').resolve()}\n", encoding="utf-8")
+            remote_ref = "refs/limen/remote-main"
             _run(
-                ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", head],
-                cwd=self.root,
+                [
+                    "git",
+                    "fetch",
+                    "--quiet",
+                    "--no-tags",
+                    "--no-write-fetch-head",
+                    origin,
+                    f"+refs/heads/main:{remote_ref}",
+                ],
+                cwd=snapshot,
+            )
+            if _run(["git", "rev-parse", remote_ref], cwd=snapshot) != head:
+                raise PipelineError("ARCA remote main changed during completed-receipt verification")
+
+            candidates = _run(
+                ["git", "rev-list", remote_ref, "--", receipt_path.as_posix()],
+                cwd=snapshot,
             ).splitlines()
-        )
-        if changed != {receipt_path.as_posix()}:
-            raise PipelineError("ARCA remote receipt commit has unexpected files")
-        history = _run(["git", "rev-list", "--parents", "-n", "1", head], cwd=self.root).split()
-        if len(history) != 2:
-            raise PipelineError("ARCA remote receipt commit has invalid history")
-        receipt = _run(["git", "show", f"{head}:{receipt_path.as_posix()}"], cwd=self.root)
-        return history[1], head, receipt
+            matches = [
+                commit
+                for commit in candidates
+                if _run(["git", "show", "-s", "--format=%s", commit], cwd=snapshot) == message
+            ]
+            if len(matches) != 1:
+                raise PipelineError("ARCA remote history does not contain one exact completed receipt")
+            receipt_commit = matches[0]
+            changed = set(
+                _run(
+                    ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", receipt_commit],
+                    cwd=snapshot,
+                ).splitlines()
+            )
+            if changed != {receipt_path.as_posix()}:
+                raise PipelineError("ARCA remote receipt commit has unexpected files")
+            history = _run(
+                ["git", "rev-list", "--parents", "-n", "1", receipt_commit],
+                cwd=snapshot,
+            ).split()
+            if len(history) != 2:
+                raise PipelineError("ARCA remote receipt commit has invalid history")
+            receipt = _run(
+                ["git", "show", f"{receipt_commit}:{receipt_path.as_posix()}"],
+                cwd=snapshot,
+            )
+            return history[1], receipt_commit, receipt
 
     def resume_and_push_payload(
         self,

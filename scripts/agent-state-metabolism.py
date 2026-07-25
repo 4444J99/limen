@@ -122,12 +122,17 @@ def parser() -> argparse.ArgumentParser:
         help="restore one uniquely named captured item by its domain-separated basename hash",
     )
     cloudkit.add_argument("--restore-receipt", type=Path)
+    cloudkit.add_argument(
+        "--apply",
+        action="store_true",
+        help="explicitly apply the requested one-item restoration after all custody gates pass",
+    )
     return command
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     argument_parser = parser()
-    args = argument_parser.parse_args()
+    args = argument_parser.parse_args(argv)
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
     if (
@@ -151,6 +156,10 @@ def main() -> int:
             argument_parser.error("one item restoration selector and --restore-receipt are required together")
         if restore_selectors and not args.resume:
             argument_parser.error("item restoration requires --resume")
+        if restore_selectors and not args.apply:
+            argument_parser.error("item restoration requires explicit --apply")
+        if args.apply and not restore_selectors:
+            argument_parser.error("--apply is only valid with one item restoration selector")
         if restore_selectors and (
             args.evict
             or args.prepare_eviction_authorization

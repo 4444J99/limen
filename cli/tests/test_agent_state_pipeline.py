@@ -222,6 +222,19 @@ def test_completed_remote_receipt_ignores_dirty_checkout(
     receipt_commit = _git(vault.root, "rev-parse", "HEAD")
     _git(vault.root, "push", "origin", "HEAD:main")
     (vault.root / "README.md").unlink()
+    advance = tmp_path / "advance"
+    subprocess.run(
+        ["git", "clone", str(tmp_path / "remote.git"), str(advance)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    _git(advance, "config", "user.name", "Limen Test")
+    _git(advance, "config", "user.email", "limen@example.test")
+    (advance / "unrelated.txt").write_text("later remote state\n", encoding="utf-8")
+    _git(advance, "add", "unrelated.txt")
+    _git(advance, "commit", "-m", "unrelated later custody")
+    _git(advance, "push", "origin", "main")
 
     observed_payload, observed_receipt, receipt = vault.completed_receipt_at_remote(
         relative,

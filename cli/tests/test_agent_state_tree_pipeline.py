@@ -183,6 +183,16 @@ def test_metabolism_receipt_round_trips_only_canonical_json(
     path.write_text(json.dumps(malformed))
     with pytest.raises(ReceiptError, match="invalid source identity"):
         MetabolismReceipt.read(path)
+    malformed = json.loads(json.dumps(canonical))
+    malformed["packs"][0]["atom_count"] = "1"
+    path.write_text(json.dumps(malformed))
+    with pytest.raises(ReceiptError, match="consistency checks"):
+        MetabolismReceipt.read(path)
+    malformed = json.loads(json.dumps(canonical))
+    malformed["restorations"][0]["passed"] = "false"
+    path.write_text(json.dumps(malformed))
+    with pytest.raises(ReceiptError, match="consistency checks"):
+        MetabolismReceipt.read(path)
 
 
 def test_private_custody_match_ignores_only_mutable_retirement_progress(
@@ -265,6 +275,19 @@ def test_single_item_restore_writes_path_free_private_receipt(
     assert result["selector_kind"] == "captured_name_hash"
     assert result["selector_hash"] == "c" * 64
     assert str(source) not in restore_receipt.read_text()
+    original = restore_receipt.read_bytes()
+    repeated = tree_pipeline.run_restore_cloudkit_item_campaign(
+        "icloud-drive",
+        source,
+        vault,
+        tmp_path / "external",
+        tmp_path / "private-receipt.json",
+        restore_receipt,
+        run_id="run",
+        captured_name_hash="c" * 64,
+    )
+    assert repeated == result
+    assert restore_receipt.read_bytes() == original
 
 
 def test_cloud_resume_reconstructs_original_set_from_verified_atoms(

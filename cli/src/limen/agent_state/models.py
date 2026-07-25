@@ -179,15 +179,23 @@ class MetabolismReceipt:
             or not isinstance(receipt.source.kind, str)
             or not receipt.source.stable
             or not receipt.packs
+            or any(isinstance(number, bool) or not isinstance(number, int) or number < 0 for number in numbers)
             or [pack.ordinal for pack in receipt.packs] != list(range(len(receipt.packs)))
             or sum(pack.atom_count for pack in receipt.packs) != receipt.atom_count
-            or any(isinstance(number, bool) or not isinstance(number, int) or number < 0 for number in numbers)
             or any(not _is_lower_hex(digest, 64) for digest in hashes)
             or any(
-                Path(chunk.path).is_absolute()
+                not isinstance(chunk.path, str)
+                or Path(chunk.path).is_absolute()
                 or len(Path(chunk.path).parts) != 1
                 or Path(chunk.path).name != chunk.path
                 for chunk in chunks
+            )
+            or any(
+                not isinstance(proof.scope, str)
+                or not proof.scope
+                or not isinstance(proof.passed, bool)
+                or not isinstance(proof.detail, str)
+                for proof in receipt.restorations
             )
             or any(commit is not None and not _is_lower_hex(commit, 40) for commit in commits)
             or (receipt.git_remote is not None and not isinstance(receipt.git_remote, str))
