@@ -151371,7 +151371,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-286
-  title: "Open beta expansion \u2014 500+ users"
+  title: Open beta expansion — 500+ users
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -151384,8 +151384,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/376
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:02.751Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/376"
+    conduct_event_id: conduct:run-6c4f0a0697aa6a34b94eed3df72a709e:210:compatibility
+    conduct_run_id: run-6c4f0a0697aa6a34b94eed3df72a709e
+    conduct_lease_id: lease-210-6c4f0a0697aa6a34
+    conduct_generation: 210
+  predicate: test "$(gh issue view 376 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/376
+  updated: 2026-07-25T17:55:02.751Z
 - id: LIMEN-287
   title: "Real-money pilot \u2014 10-25 users"
   repo: organvm/peer-audited--behavioral-blockchain
