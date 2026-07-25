@@ -147535,7 +147535,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-130
-  title: "Tests \u2014 calculation accuracy + edge cases"
+  title: Tests — calculation accuracy + edge cases
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -147547,8 +147547,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/539
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:05.439Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/539"
+    conduct_event_id: conduct:run-bcd7aeed3850b02b36dba460dcac810a:67:compatibility
+    conduct_run_id: run-bcd7aeed3850b02b36dba460dcac810a
+    conduct_lease_id: lease-67-bcd7aeed3850b02b
+    conduct_generation: 67
+  predicate: test "$(gh issue view 539 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/539
+  updated: 2026-07-25T17:47:05.439Z
 - id: LIMEN-131
   title: "UI \u2014 spike indicator + incentive display"
   repo: organvm/peer-audited--behavioral-blockchain
