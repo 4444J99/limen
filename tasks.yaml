@@ -154312,7 +154312,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/282
   updated: 2026-07-25T17:52:54.383Z
 - id: LIMEN-379
-  title: "feat: Health data bridge \u2014 native UI completion (TKT-P1-007)"
+  title: "feat: Health data bridge — native UI completion (TKT-P1-007)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -154327,8 +154327,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/281
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:16.657Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/281"
+    conduct_event_id: conduct:run-76b209c4bec608fb8a54379185aaeb48:249:compatibility
+    conduct_run_id: run-76b209c4bec608fb8a54379185aaeb48
+    conduct_lease_id: lease-249-76b209c4bec608fb
+    conduct_generation: 249
+  predicate: test "$(gh issue view 281 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/281
+  updated: 2026-07-25T17:57:16.657Z
 - id: LIMEN-380
   title: "feat: Self-exclusion & responsible-use runtime controls (TKT-P1-009)"
   repo: organvm/peer-audited--behavioral-blockchain
