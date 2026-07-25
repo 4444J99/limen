@@ -151619,7 +151619,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/343
   updated: 2026-07-25T17:47:29.565Z
 - id: LIMEN-320
-  title: "Landing page + beta explainer funnel \u2014 no-contact conversion flow"
+  title: Landing page + beta explainer funnel — no-contact conversion flow
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -151634,8 +151634,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/342
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:09.138Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/342"
+    conduct_event_id: conduct:run-992db397ff8ec5bfe521bd4f3d02eb65:140:compatibility
+    conduct_run_id: run-992db397ff8ec5bfe521bd4f3d02eb65
+    conduct_lease_id: lease-140-992db397ff8ec5bf
+    conduct_generation: 140
+  predicate: test "$(gh issue view 342 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/342
+  updated: 2026-07-25T17:51:09.138Z
 - id: LIMEN-321
   title: Audience map — early-user channels + first target lists
   repo: organvm/peer-audited--behavioral-blockchain
