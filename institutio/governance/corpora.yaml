@@ -108,6 +108,22 @@ corpora:
       renaming the directory or teaching the catalog; until then `corpus_resolve` sweeps
       undeclared corpus dirs too, and check-corpora asserts this row explains the mismatch.
 
+  brainstorm-extracts:
+    store: conversations-private
+    provider: multi
+    kind: brainstorm-extract
+    cce_declared: false
+    harvestable: false
+    redacted: false
+    owner: consulting
+    note: >
+      OUTPUT of scripts/brainstorm-harvest.py, never an input — one verbatim extract per
+      thread across every harvestable corpus, stream-clustered, each carrying a
+      semantic_atoms state (pending → done as the eight-kind atom pass drains the queue).
+      The generalization of the brainstorm-20260423 shape to the whole estate. Rebuildable
+      at any time from the session-memory corpora; lives in the remote-less store because
+      extracts quote raw conversation text.
+
   session-transcripts:
     store: session-meta
     provider: multi
