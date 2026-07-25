@@ -102,13 +102,15 @@ def plan_exact_retention(root: Path, *, retain_paths: tuple[str, ...]) -> Retent
     root = root.expanduser().resolve()
     retained: set[str] = set()
     for raw in retain_paths:
-        relative = Path(raw)
-        if relative.is_absolute() or not relative.parts or any(part in {".", ".."} for part in relative.parts):
+        relative_path = Path(raw)
+        if relative_path.is_absolute() or not relative_path.parts or any(
+            part in {".", ".."} for part in relative_path.parts
+        ):
             raise ValueError(f"retained path must be a normalized relative file: {raw}")
-        normalized = relative.as_posix()
+        normalized = relative_path.as_posix()
         if normalized in retained:
             raise ValueError(f"retained path is duplicated: {normalized}")
-        candidate = root / relative
+        candidate = root / relative_path
         try:
             resolved = candidate.resolve(strict=True)
         except FileNotFoundError as exc:
@@ -116,7 +118,10 @@ def plan_exact_retention(root: Path, *, retain_paths: tuple[str, ...]) -> Retent
         if (
             not resolved.is_relative_to(root)
             or candidate.is_symlink()
-            or any((root.joinpath(*relative.parts[:index])).is_symlink() for index in range(1, len(relative.parts)))
+            or any(
+                (root.joinpath(*relative_path.parts[:index])).is_symlink()
+                for index in range(1, len(relative_path.parts))
+            )
             or not candidate.is_file()
         ):
             raise ValueError(f"retained path must identify a regular file within the root: {normalized}")
@@ -126,8 +131,8 @@ def plan_exact_retention(root: Path, *, retain_paths: tuple[str, ...]) -> Retent
     for path in root.rglob("*"):
         if path.is_symlink() or not path.is_file():
             continue
-        relative = path.relative_to(root).as_posix()
-        files[relative] = path.stat().st_size
+        relative_name = path.relative_to(root).as_posix()
+        files[relative_name] = path.stat().st_size
     missing = retained.difference(files)
     if missing:
         raise FileNotFoundError(f"retained file disappeared during planning: {min(missing)}")
