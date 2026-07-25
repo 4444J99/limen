@@ -147545,7 +147545,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/561
   updated: 2026-07-25T17:59:12.246Z
 - id: LIMEN-120
-  title: "\U0001F3DB Phase Omega \u2014 Enterprise expansion (Delta\u2192Omega gate)"
+  title: 🏛 Phase Omega — Enterprise expansion (Delta→Omega gate)
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -147558,8 +147558,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/558
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:35.125Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/558"
+    conduct_event_id: conduct:run-9ae85fce32930e0ef0cc67edc10db366:291:compatibility
+    conduct_run_id: run-9ae85fce32930e0ef0cc67edc10db366
+    conduct_lease_id: lease-291-9ae85fce32930e0e
+    conduct_generation: 291
+  predicate: test "$(gh issue view 558 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/558
+  updated: 2026-07-25T17:59:35.125Z
 - id: LIMEN-121
   title: 🏛 Phase Delta — Retention + network effects (Gamma→Delta gate)
   repo: organvm/peer-audited--behavioral-blockchain
