@@ -103,8 +103,10 @@ def plan_exact_retention(root: Path, *, retain_paths: tuple[str, ...]) -> Retent
     retained: set[str] = set()
     for raw in retain_paths:
         relative_path = Path(raw)
-        if relative_path.is_absolute() or not relative_path.parts or any(
-            part in {".", ".."} for part in relative_path.parts
+        if (
+            relative_path.is_absolute()
+            or not relative_path.parts
+            or any(part in {".", ".."} for part in relative_path.parts)
         ):
             raise ValueError(f"retained path must be a normalized relative file: {raw}")
         normalized = relative_path.as_posix()
