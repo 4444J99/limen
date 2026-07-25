@@ -148204,7 +148204,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/520
   updated: 2026-07-25T17:45:51.476Z
 - id: LIMEN-150
-  title: "Tests \u2014 filter accuracy + moderation latency"
+  title: Tests — filter accuracy + moderation latency
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -148216,8 +148216,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/519
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:59.072Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/519"
+    conduct_event_id: conduct:run-b8847871e81b2ad2e6d0e96953e17043:209:compatibility
+    conduct_run_id: run-b8847871e81b2ad2e6d0e96953e17043
+    conduct_lease_id: lease-209-b8847871e81b2ad2
+    conduct_generation: 209
+  predicate: test "$(gh issue view 519 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/519
+  updated: 2026-07-25T17:54:59.072Z
 - id: LIMEN-151
   title: "Admin UI \u2014 moderation dashboard + appeal flow"
   repo: organvm/peer-audited--behavioral-blockchain
