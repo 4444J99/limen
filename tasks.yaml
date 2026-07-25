@@ -147625,7 +147625,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/545
   updated: 2026-07-25T17:46:08.360Z
 - id: LIMEN-125
-  title: "API \u2014 validation + jurisdictional bounds lookup"
+  title: API — validation + jurisdictional bounds lookup
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -147637,8 +147637,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/544
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:25.650Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/544"
+    conduct_event_id: conduct:run-d21342832f1d72010229476528b359c7:216:compatibility
+    conduct_run_id: run-d21342832f1d72010229476528b359c7
+    conduct_lease_id: lease-216-d21342832f1d7201
+    conduct_generation: 216
+  predicate: test "$(gh issue view 544 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/544
+  updated: 2026-07-25T17:55:25.650Z
 - id: LIMEN-126
   title: UI — stake amount selector + bounds enforcement
   repo: organvm/peer-audited--behavioral-blockchain
