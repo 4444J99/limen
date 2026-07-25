@@ -151302,8 +151302,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/400
   updated: 2026-07-25T17:55:53.396Z
 - id: LIMEN-263
-  title: "Settlement: Tests \u2014 full deposit\u2192stake\u2192settle\u2192withdraw\
-    \ flow"
+  title: "Settlement: Tests — full deposit→stake→settle→withdraw flow"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -151316,8 +151315,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/399
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:54.753Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/399"
+    conduct_event_id: conduct:run-d214f6cb484bb2f0512c6079ba5971c6:279:compatibility
+    conduct_run_id: run-d214f6cb484bb2f0512c6079ba5971c6
+    conduct_lease_id: lease-279-d214f6cb484bb2f0
+    conduct_generation: 279
+  predicate: test "$(gh issue view 399 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/399
+  updated: 2026-07-25T17:58:54.753Z
 - id: LIMEN-264
   title: "Settlement: Reconciliation — automated Stripe vs internal check"
   repo: organvm/peer-audited--behavioral-blockchain
