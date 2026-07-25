@@ -153548,7 +153548,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-385
-  title: 'devops: draft incident response runbook (severity, escalation, rollback)'
+  title: "devops: draft incident response runbook (severity, escalation, rollback)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -153562,8 +153562,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/272
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:20.344Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/272"
+    conduct_event_id: conduct:run-63685eba0cb5a59c78c1c975db407229:179:compatibility
+    conduct_run_id: run-63685eba0cb5a59c78c1c975db407229
+    conduct_lease_id: lease-179-63685eba0cb5a59c
+    conduct_generation: 179
+  predicate: test "$(gh issue view 272 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/272
+  updated: 2026-07-25T17:53:20.344Z
 - id: LIMEN-386
   title: "docs: draft App Store UGC moderation policy checklist"
   repo: organvm/peer-audited--behavioral-blockchain
