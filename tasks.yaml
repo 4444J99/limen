@@ -153895,7 +153895,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-397
-  title: 'docs: cross-reference gaps with doc-ingest-register'
+  title: "docs: cross-reference gaps with doc-ingest-register"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: claude
@@ -153909,8 +153909,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/252
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:36.772Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/252"
+    conduct_event_id: conduct:run-011e0efff1c6cf13ce58ecc623579d51:184:compatibility
+    conduct_run_id: run-011e0efff1c6cf13ce58ecc623579d51
+    conduct_lease_id: lease-184-011e0efff1c6cf13
+    conduct_generation: 184
+  predicate: test "$(gh issue view 252 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/252
+  updated: 2026-07-25T17:53:36.772Z
 - id: LIMEN-398
   title: 'feat: generate implementation-ready ticket templates with API signatures'
   repo: organvm/peer-audited--behavioral-blockchain
