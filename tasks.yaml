@@ -148484,7 +148484,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/504
   updated: 2026-07-25T17:50:41.882Z
 - id: LIMEN-166
-  title: "UI \u2014 referral link generation + reward status"
+  title: UI — referral link generation + reward status
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -148496,8 +148496,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/503
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:23.282Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/503"
+    conduct_event_id: conduct:run-be82fc0c26e314cc18d1182e605d6d08:162:compatibility
+    conduct_run_id: run-be82fc0c26e314cc18d1182e605d6d08
+    conduct_lease_id: lease-162-be82fc0c26e314cc
+    conduct_generation: 162
+  predicate: test "$(gh issue view 503 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/503
+  updated: 2026-07-25T17:52:23.282Z
 - id: LIMEN-167
   title: Schema + API — referral tracking + reward distribution
   repo: organvm/peer-audited--behavioral-blockchain
