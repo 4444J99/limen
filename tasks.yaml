@@ -152977,7 +152977,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-355
-  title: 'docs: SLA template & enterprise security posture'
+  title: "docs: SLA template & enterprise security posture"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -152991,8 +152991,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/305
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:02.492Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/305"
+    conduct_event_id: conduct:run-910dc08d9433ca9234f3324f28bceb06:192:compatibility
+    conduct_run_id: run-910dc08d9433ca9234f3324f28bceb06
+    conduct_lease_id: lease-192-910dc08d9433ca92
+    conduct_generation: 192
+  predicate: test "$(gh issue view 305 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/305
+  updated: 2026-07-25T17:54:02.492Z
 - id: LIMEN-356
   title: 'docs: Marketing strategy, content calendar & PR plan'
   repo: organvm/peer-audited--behavioral-blockchain
