@@ -43,10 +43,20 @@ def _census_repos() -> set[str]:
 
 
 def _owner_reachable(owner: str, repos: set[str]) -> str:
-    """'ok', 'missing', or 'prose' (unverifiable by construction)."""
+    """'ok', 'missing', 'unverifiable-here', or 'prose'.
+
+    Host-aware by the same rule as check-corpora: 'missing' is only claimable
+    where the evidence to prove existence is actually present. The estate
+    census is a gitignored local artifact and `~/Workspace` clones live on the
+    operator host — a CI runner has neither, and their absence there is a host
+    fact, not registry drift. In-repo paths bind everywhere.
+    """
     candidate = owner.split("::")[0].strip()
     if candidate.startswith("~"):
-        return "ok" if Path(candidate).expanduser().exists() else "missing"
+        if Path(candidate).expanduser().exists():
+            return "ok"
+        # only the operator host (which has a Workspace at all) can prove absence
+        return "missing" if (Path.home() / "Workspace").is_dir() else "unverifiable-here"
     if (ROOT / candidate).exists():
         return "ok"
     parts = candidate.split()
@@ -57,7 +67,8 @@ def _owner_reachable(owner: str, repos: set[str]) -> str:
         if (ROOT / head).exists():
             return "ok"
         if head.count("/") == 1 and not head.endswith((".py", ".md", ".yaml")):
-            return "missing"
+            # without the census there is nothing to check org/repo against
+            return "missing" if repos else "unverifiable-here"
     return "prose"
 
 
@@ -90,6 +101,8 @@ def main() -> int:
             state = _owner_reachable(str(owner), repos)
             if state == "missing":
                 failures.append(f"B: {cid}: owner not found — {owner}")
+            elif state == "unverifiable-here":
+                advisories.append(f"B: {cid}: owner unverifiable on this host ({owner}) — binds on the operator host")
             elif state == "prose":
                 advisories.append(f"B: {cid}: owner is prose, unverifiable ({owner})")
         for dup in row.get("duplicates") or []:
