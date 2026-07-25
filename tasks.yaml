@@ -155647,7 +155647,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/268
   updated: 2026-07-25T17:57:28.289Z
 - id: LIMEN-390
-  title: "feat: activate domain-expert agent contexts \u2014 epic tracker"
+  title: "feat: activate domain-expert agent contexts — epic tracker"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -155661,8 +155661,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/267
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:41.233Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/267"
+    conduct_event_id: conduct:run-a64f5ab16564a04987caa0a87c514963:327:compatibility
+    conduct_run_id: run-a64f5ab16564a04987caa0a87c514963
+    conduct_lease_id: lease-327-a64f5ab16564a049
+    conduct_generation: 327
+  predicate: test "$(gh issue view 267 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/267
+  updated: 2026-07-25T18:01:41.233Z
 - id: LIMEN-391
   title: "chore: audit + clean ephemeral tool result cache (27+ files across 3 project dirs)"
   repo: organvm/peer-audited--behavioral-blockchain
