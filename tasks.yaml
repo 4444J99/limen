@@ -149782,7 +149782,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-264
-  title: "Settlement: Reconciliation \u2014 automated Stripe vs internal check"
+  title: "Settlement: Reconciliation — automated Stripe vs internal check"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -149795,8 +149795,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/398
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:49.121Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/398"
+    conduct_event_id: conduct:run-5095625a41e9081309f08850120bb49a:62:compatibility
+    conduct_run_id: run-5095625a41e9081309f08850120bb49a
+    conduct_lease_id: lease-62-5095625a41e90813
+    conduct_generation: 62
+  predicate: test "$(gh issue view 398 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/398
+  updated: 2026-07-25T17:46:49.121Z
 - id: LIMEN-265
   title: "Settlement: Schema \u2014 transactions + ledger tables"
   repo: organvm/peer-audited--behavioral-blockchain
