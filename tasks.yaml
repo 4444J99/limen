@@ -147772,7 +147772,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-149
-  title: "Schema + API \u2014 circuit breaker state machine + pause logic"
+  title: Schema + API — circuit breaker state machine + pause logic
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -147784,8 +147784,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/520
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:45:51.476Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/520"
+    conduct_event_id: conduct:run-ce66f938d7a9d36aa5c5e21639320041:45:compatibility
+    conduct_run_id: run-ce66f938d7a9d36aa5c5e21639320041
+    conduct_lease_id: lease-45-ce66f938d7a9d36a
+    conduct_generation: 45
+  predicate: test "$(gh issue view 520 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/520
+  updated: 2026-07-25T17:45:51.476Z
 - id: LIMEN-150
   title: "Tests \u2014 filter accuracy + moderation latency"
   repo: organvm/peer-audited--behavioral-blockchain
