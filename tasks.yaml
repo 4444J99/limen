@@ -155660,7 +155660,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/252
   updated: 2026-07-25T17:53:36.772Z
 - id: LIMEN-398
-  title: 'feat: generate implementation-ready ticket templates with API signatures'
+  title: "feat: generate implementation-ready ticket templates with API signatures"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -155674,8 +155674,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/251
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:45.249Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/251"
+    conduct_event_id: conduct:run-6d0c7e46bf76f424a9ad2badf4aea9d9:311:compatibility
+    conduct_run_id: run-6d0c7e46bf76f424a9ad2badf4aea9d9
+    conduct_lease_id: lease-311-6d0c7e46bf76f424
+    conduct_generation: 311
+  predicate: test "$(gh issue view 251 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/251
+  updated: 2026-07-25T18:00:45.249Z
 - id: LIMEN-399
   title: "feat: parse 10 competitor deep-dive files for feature gaps"
   repo: organvm/peer-audited--behavioral-blockchain
