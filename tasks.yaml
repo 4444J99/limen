@@ -148963,7 +148963,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/500
   updated: 2026-07-25T17:55:39.965Z
 - id: LIMEN-170
-  title: "Schema + API \u2014 queue management + cohort threshold logic"
+  title: Schema + API — queue management + cohort threshold logic
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -148975,8 +148975,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/499
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:02.759Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/499"
+    conduct_event_id: conduct:run-bd0da46414294d07a4e6fcdec9b63248:299:compatibility
+    conduct_run_id: run-bd0da46414294d07a4e6fcdec9b63248
+    conduct_lease_id: lease-299-bd0da46414294d07
+    conduct_generation: 299
+  predicate: test "$(gh issue view 499 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/499
+  updated: 2026-07-25T18:00:02.759Z
 - id: LIMEN-171
   title: Tests — attestation flow + data integrity
   repo: organvm/peer-audited--behavioral-blockchain
