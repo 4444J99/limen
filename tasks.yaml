@@ -149160,7 +149160,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-237
-  title: 'Agents: Finance domain context + prompt engineering'
+  title: "Agents: Finance domain context + prompt engineering"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -149174,8 +149174,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/432
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:45:43.758Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/432"
+    conduct_event_id: conduct:run-ef9e38eb1d89b4b6421a8d8f0427d615:43:compatibility
+    conduct_run_id: run-ef9e38eb1d89b4b6421a8d8f0427d615
+    conduct_lease_id: lease-43-ef9e38eb1d89b4b6
+    conduct_generation: 43
+  predicate: test "$(gh issue view 432 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/432
+  updated: 2026-07-25T17:45:43.758Z
 - id: LIMEN-238
   title: 'Agents: Legal domain context + prompt engineering'
   repo: organvm/peer-audited--behavioral-blockchain
