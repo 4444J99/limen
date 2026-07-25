@@ -130,9 +130,9 @@ def _authorization_for_sandbox(sandbox: str) -> dict[str, Any]:
 
 def _primary_launch(
     *,
-    agent: str,
-    model: str,
-    reasoning_effort: str,
+    agent: object,
+    model: object,
+    reasoning_effort: object,
 ) -> dict[str, str]:
     primary_launch = {
         "agent": str(agent or "").strip(),
