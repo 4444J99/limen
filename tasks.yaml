@@ -146994,8 +146994,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/774
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:16.346Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/774"
+    conduct_event_id: conduct:run-7a78e5b8a23bf68a19ffc9da7054ab12:88:compatibility
+    conduct_run_id: run-7a78e5b8a23bf68a19ffc9da7054ab12
+    conduct_lease_id: lease-88-7a78e5b8a23bf68a
+    conduct_generation: 88
+  predicate: test "$(gh issue view 774 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/774
+  updated: 2026-07-25T17:48:16.346Z
 - id: LIMEN-103
   title: Blocked Handoff Burn-down - 2026-06-29
   repo: organvm/peer-audited--behavioral-blockchain
