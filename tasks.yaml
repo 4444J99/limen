@@ -155230,7 +155230,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-399
-  title: 'feat: parse 10 competitor deep-dive files for feature gaps'
+  title: "feat: parse 10 competitor deep-dive files for feature gaps"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: codex
@@ -155245,8 +155245,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/250
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:51.484Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/250"
+    conduct_event_id: conduct:run-a2e84504fcbb1a27798ffad60dafeadb:278:compatibility
+    conduct_run_id: run-a2e84504fcbb1a27798ffad60dafeadb
+    conduct_lease_id: lease-278-a2e84504fcbb1a27
+    conduct_generation: 278
+  predicate: test "$(gh issue view 250 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/250
+  updated: 2026-07-25T17:58:51.484Z
 - id: HEAL-cifix-organvm-system-dashboard-9
   title: fix failing CI on organvm/system-dashboard#9
   repo: organvm/system-dashboard
