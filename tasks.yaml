@@ -148299,7 +148299,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-164
-  title: "Landing page \u2014 no-contact hero copy + waitlist CTA"
+  title: Landing page — no-contact hero copy + waitlist CTA
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -148314,8 +148314,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/505
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:49.434Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/505"
+    conduct_event_id: conduct:run-3a316577eb0e55927b2e81f188cb593b:117:compatibility
+    conduct_run_id: run-3a316577eb0e55927b2e81f188cb593b
+    conduct_lease_id: lease-117-3a316577eb0e5592
+    conduct_generation: 117
+  predicate: test "$(gh issue view 505 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/505
+  updated: 2026-07-25T17:49:49.434Z
 - id: LIMEN-165
   title: "Tests \u2014 referral attribution + double-spend prevention"
   repo: organvm/peer-audited--behavioral-blockchain
