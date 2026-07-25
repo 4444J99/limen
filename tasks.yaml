@@ -151922,8 +151922,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/351
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:19.392Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/351"
+    conduct_event_id: conduct:run-f2461cd6f5d3ae11491c06623f78ba5a:197:compatibility
+    conduct_run_id: run-f2461cd6f5d3ae11491c06623f78ba5a
+    conduct_lease_id: lease-197-f2461cd6f5d3ae11
+    conduct_generation: 197
+  predicate: test "$(gh issue view 351 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/351
+  updated: 2026-07-25T17:54:19.392Z
 - id: LIMEN-312
   title: "Financial reconciliation process \u2014 Stripe vs internal records"
   repo: organvm/peer-audited--behavioral-blockchain
