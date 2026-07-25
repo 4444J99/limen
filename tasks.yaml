@@ -151070,7 +151070,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-283
-  title: "Mobile Native Engineer (Swift) \u2014 contract sourcing"
+  title: Mobile Native Engineer (Swift) — contract sourcing
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -151083,8 +151083,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/379
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:57.792Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/379"
+    conduct_event_id: conduct:run-90c81e15850ec2a324306931654fc99f:172:compatibility
+    conduct_run_id: run-90c81e15850ec2a324306931654fc99f
+    conduct_lease_id: lease-172-90c81e15850ec2a3
+    conduct_generation: 172
+  predicate: test "$(gh issue view 379 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/379
+  updated: 2026-07-25T17:52:57.792Z
 - id: LIMEN-284
   title: "App Store launch (public) \u2014 general availability"
   repo: organvm/peer-audited--behavioral-blockchain
