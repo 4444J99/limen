@@ -1,0 +1,71 @@
+{
+  "backlog": {
+    "audited_repository_count": 166,
+    "generated_task_count": 0,
+    "open_seo_task_count": 14,
+    "queue_floor": 6,
+    "result": "healthy-or-every-repository-lever-already-active"
+  },
+  "metadata_drift": {
+    "apply_attempted": false,
+    "count": 1,
+    "items": [
+      {
+        "changes": [
+          "topics:0->2"
+        ],
+        "repository": "organvm/victoroff-os",
+        "source": "derived"
+      }
+    ]
+  },
+  "observed_at": "2026-07-25T19:08:13Z",
+  "owner_gate": {
+    "issue": "https://github.com/organvm/limen/issues/1191",
+    "lever_id": "L-SEO-METADATA",
+    "next_probe": "python3 scripts/repo-metadata-sync.py --check",
+    "status": "needs_human"
+  },
+  "readme_audit": {
+    "eligible_public_repository_count": 166,
+    "failed_rung_counts": {
+      "S1": 75,
+      "S10": 44,
+      "S2": 122,
+      "S3": 85,
+      "S4": 94,
+      "S5": 125,
+      "S6": 64,
+      "S7": 156,
+      "S8": 12,
+      "S9": 1
+    },
+    "failing_repository_count": 152,
+    "passing_repository_count": 14,
+    "standard_counts": {
+      "minimal": 154,
+      "portal": 12
+    }
+  },
+  "repository_census": {
+    "archived_repository_count": 11,
+    "complete": true,
+    "online": true,
+    "private_repository_count": 70,
+    "public_repository_count": 240,
+    "requested_owner_count": 11,
+    "total_repository_count": 310
+  },
+  "runtime_valves": {
+    "LIMEN_GITVS_APPLY": "dark",
+    "LIMEN_REPO_METADATA_APPLY": "dark",
+    "LIMEN_SEO_BACKLOG_APPLY": "dark"
+  },
+  "schema": "limen.seo_live_facts_receipt.v1",
+  "sources": {
+    "github_estate_ledger": "docs/github-estate-ledger.json",
+    "github_estate_ledger_sha256": "21211e3aa986d79dc44873c36b04884135f1b2ecce08b44723d8223e8671b9f9",
+    "private_census_facts_sha256": "207568b8854d79796c3f479e6673237df01d7e7998637c9d38a858fdfadcd892",
+    "seo_audit_sha256": "7a4ff27b43cc6454e312706503f8a56c4ad5c4cb35008e39b6c72b74e8bc5fe7"
+  }
+}
