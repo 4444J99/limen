@@ -150859,8 +150859,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-319
-  title: "Social operating system \u2014 Jessica/Styx channel architecture + 30-day\
-    \ cadence"
+  title: Social operating system — Jessica/Styx channel architecture + 30-day cadence
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150876,8 +150875,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/343
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:29.565Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/343"
+    conduct_event_id: conduct:run-bcb68f31dca4410ed7c27703d8de75d7:74:compatibility
+    conduct_run_id: run-bcb68f31dca4410ed7c27703d8de75d7
+    conduct_lease_id: lease-74-bcb68f31dca4410e
+    conduct_generation: 74
+  predicate: test "$(gh issue view 343 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/343
+  updated: 2026-07-25T17:47:29.565Z
 - id: LIMEN-320
   title: "Landing page + beta explainer funnel \u2014 no-contact conversion flow"
   repo: organvm/peer-audited--behavioral-blockchain
