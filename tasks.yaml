@@ -148940,7 +148940,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-175
-  title: "UI \u2014 survey presentation + completion tracking"
+  title: UI — survey presentation + completion tracking
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -148952,8 +148952,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/494
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:53.385Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/494"
+    conduct_event_id: conduct:run-e8e06e9e58f4fbb8dc59ea0743d2ff60:260:compatibility
+    conduct_run_id: run-e8e06e9e58f4fbb8dc59ea0743d2ff60
+    conduct_lease_id: lease-260-e8e06e9e58f4fbb8
+    conduct_generation: 260
+  predicate: test "$(gh issue view 494 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/494
+  updated: 2026-07-25T17:57:53.385Z
 - id: LIMEN-176
   title: Schema + API — survey definitions + response storage
   repo: organvm/peer-audited--behavioral-blockchain
