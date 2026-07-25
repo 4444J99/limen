@@ -507,6 +507,137 @@ def test_shell_launcher_hands_off_to_generated_kickstart_without_a_tty(tmp_path:
     assert "# Continuation capsule: agent-launch" in prompt_capture.read_text(encoding="utf-8")
 
 
+def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "debug" && "${2:-}" == "models" ]]; then\n'
+            '  printf "catalog\\n" >> "$CATALOG_CAPTURE"\n'
+            "  printf '%s\\n' "
+            '\'{"models":[{"slug":"fixture-sol","supported_reasoning_levels":'
+            '[{"effort":"high"},{"effort":"ultra-fixture"}]}]}\'\n'
+            "  exit 0\n"
+            "fi\n"
+            'printf "%s\\n" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" '
+            '> "$SESSION_ARGS_CAPTURE"\n'
+            'last="${!#}"\n'
+            'printf "%s" "$last" > "$SESSION_PROMPT_CAPTURE"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    args_capture = tmp_path / "args.txt"
+    prompt_capture = tmp_path / "prompt.txt"
+    catalog_capture = tmp_path / "catalog.txt"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "SESSION_ARGS_CAPTURE": str(args_capture),
+        "SESSION_PROMPT_CAPTURE": str(prompt_capture),
+        "CATALOG_CAPTURE": str(catalog_capture),
+    }
+    launched = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--autonomous",
+            "--agent",
+            "codex",
+            "--model",
+            "fixture-sol",
+            "--reasoning-effort",
+            "ultra-fixture",
+            "--sandbox",
+            "danger-full-access",
+            "--prompt",
+            "Continue through the explicit primary profile.",
+            str(repo),
+            "Explicit Agent Launch",
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stdout + launched.stderr
+    assert catalog_capture.read_text(encoding="utf-8").splitlines() == ["catalog", "catalog"]
+    assert args_capture.read_text(encoding="utf-8").splitlines() == [
+        "--model",
+        "fixture-sol",
+        "--config",
+        'model_reasoning_effort="ultra-fixture"',
+        "--ask-for-approval",
+        "never",
+        "--sandbox",
+        "danger-full-access",
+        "exec",
+    ]
+    assert "# Continuation capsule: explicit-agent-launch" in prompt_capture.read_text(encoding="utf-8")
+    contract = json.loads(
+        (
+            repo
+            / ".worktrees"
+            / "explicit-agent-launch"
+            / ".limen-workstream"
+            / "workstream.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert contract["schema"] == "limen.workstream.contract.v2"
+    assert contract["primary_launch"] == {
+        "agent": "codex",
+        "model": "fixture-sol",
+        "reasoning_effort": "ultra-fixture",
+        "selection": "human_explicit",
+    }
+    assert contract["authorization"]["sandbox"] == "danger-full-access"
+    assert contract["authorization"]["approval_mode"] == "never"
+
+    invalid_profiles = [
+        ("Missing Model", "fixture-missing", "ultra-fixture", "danger-full-access", "not present"),
+        ("Missing Effort", "fixture-sol", "missing-effort", "danger-full-access", "does not support"),
+        ("Invalid Sandbox", "fixture-sol", "ultra-fixture", "host-everything", "sandbox"),
+    ]
+    for slug, model, effort, sandbox, message in invalid_profiles:
+        rejected = subprocess.run(
+            [
+                "bash",
+                str(ROOT / "scripts" / "start-worktree-session.sh"),
+                "--model",
+                model,
+                "--reasoning-effort",
+                effort,
+                "--sandbox",
+                sandbox,
+                "--prompt",
+                "This invalid profile must fail before render.",
+                str(repo),
+                slug,
+            ],
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=15,
+            check=False,
+        )
+        assert rejected.returncode == 2
+        assert message in rejected.stderr
+        assert not (repo / ".worktrees" / slug.lower().replace(" ", "-")).exists()
+
+
 def test_autonomous_workstream_requires_prompt_and_launches_with_dynamic_readme(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "demo repo"
     repo.mkdir()
