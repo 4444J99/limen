@@ -147730,7 +147730,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-139
-  title: "Gate enforcement \u2014 CI integration + blocking status"
+  title: Gate enforcement — CI integration + blocking status
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -147743,8 +147743,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/530
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:13.187Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/530"
+    conduct_event_id: conduct:run-98246db1bb1b77dc935378dc77aa21f5:87:compatibility
+    conduct_run_id: run-98246db1bb1b77dc935378dc77aa21f5
+    conduct_lease_id: lease-87-98246db1bb1b77dc
+    conduct_generation: 87
+  predicate: test "$(gh issue view 530 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/530
+  updated: 2026-07-25T17:48:13.187Z
 - id: LIMEN-140
   title: "Checklist automation \u2014 readiness criteria check script"
   repo: organvm/peer-audited--behavioral-blockchain
