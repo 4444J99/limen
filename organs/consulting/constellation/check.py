@@ -99,37 +99,36 @@ def check_registry() -> int:
     return _ok("registry valid") if proc.returncode == 0 else _fail("registry invalid")
 
 
-def _live_root() -> Path:
-    """The live checkout's root — worktrees share its untracked estate (CCE checkout, source-drop)."""
-    common = subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=True,
-    ).stdout.strip()
-    return Path(common).parent
-
-
 def check_corpus_refresh() -> int:
-    """Populated ⟺ at least one per-corpus dir (drop_root.parent/<corpus_id>) is non-empty."""
-    root = REPO_ROOT if (REPO_ROOT / "conversation-corpus-check" / "src").is_dir() else _live_root()
-    sys.path.insert(0, str(root / "conversation-corpus-check" / "src"))
+    """Populated ⟺ at least one corpus dir under the resolved corpus home is non-empty.
+
+    Path resolution is delegated to scripts/corpus_resolve.py — this check and
+    scripts/constellation-dossier.py each used to carry their own copy, and both
+    copies were wrong in the same two ways (repo-root instead of the sibling
+    store; a nested CCE path that does not exist).
+    """
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
     try:
-        from conversation_corpus_engine.provider_catalog import PROVIDER_CONFIG  # type: ignore
-    except Exception as exc:  # noqa: BLE001 — any import failure is the same finding
-        return _fail(f"conversation-corpus-engine not importable: {exc}")
-    env = os.environ.get("CCE_SOURCE_DROP_ROOT")
-    drop = Path(env).expanduser() if env else root / "source-drop"
-    home = drop.parent
-    populated = []
-    for cfg in PROVIDER_CONFIG.values():
-        for key in ("default_corpus_id", "fallback_corpus_id"):
-            cid = cfg.get(key) if isinstance(cfg, dict) else None
-            if cid and (home / cid).is_dir() and any((home / cid).iterdir()):
-                populated.append(cid)
-    if populated:
-        return _ok(f"corpus populated: {', '.join(sorted(set(populated)))}")
+        import corpus_resolve
+    except ImportError as exc:
+        return _fail(f"scripts/corpus_resolve.py not importable: {exc}")
+
+    home = corpus_resolve.corpus_home()
+    if corpus_resolve.import_provider_config() is None:
+        return _fail(
+            "conversation-corpus-engine not importable — checked "
+            + ", ".join(str(p) for p in corpus_resolve.cce_src_roots())
+        )
+
+    populated = [p.name for p in corpus_resolve.populated_corpora(home)]
+    undeclared = [p.name for p in corpus_resolve.undeclared_corpora(home)]
+    if populated or undeclared:
+        msg = f"corpus populated: {', '.join(sorted(populated))}"
+        if undeclared:
+            # Present but unnamed by CCE — swept anyway, reported so the drift
+            # gets fixed rather than silently tolerated.
+            msg += f" (undeclared on disk: {', '.join(sorted(undeclared))})"
+        return _ok(msg)
     return _fail(f"no populated corpus under {home}")
 
 

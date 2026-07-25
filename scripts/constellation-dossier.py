@@ -39,6 +39,9 @@ except ImportError:
     print("ERROR: PyYAML required.  pip install pyyaml", file=sys.stderr)
     sys.exit(2)
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import corpus_resolve  # noqa: E402 — sibling module, path set above
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = REPO_ROOT / "organs" / "consulting" / "constellation" / "registry.yaml"
 OVERLAY = Path(
@@ -58,48 +61,19 @@ EXCERPT_RADIUS = 240
 MAX_HITS_PER_KEYWORD = 40
 
 
-def _live_root() -> Path:
-    common = subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=True,
-    ).stdout.strip()
-    return Path(common).parent
-
-
 def _corpus_home() -> Path:
-    """Parent dir under which per-corpus dirs live (drop_root.parent by CCE convention)."""
-    env = os.environ.get("CCE_SOURCE_DROP_ROOT")
-    drop = Path(env).expanduser() if env else _live_root() / "source-drop"
-    return drop.parent
-
-
-def _corpus_ids() -> list[str]:
-    sys.path.insert(0, str(_live_root() / "conversation-corpus-check" / "src"))
-    try:
-        from conversation_corpus_engine.provider_catalog import PROVIDER_CONFIG  # type: ignore
-    except Exception as exc:  # noqa: BLE001 — any import failure is the same finding
-        print(f"ERROR: conversation-corpus-engine not importable: {exc}", file=sys.stderr)
-        return []
-    ids: list[str] = []
-    for cfg in PROVIDER_CONFIG.values():
-        for key in ("default_corpus_id", "fallback_corpus_id"):
-            value = cfg.get(key) if isinstance(cfg, dict) else None
-            if value and value not in ids:
-                ids.append(value)
-    return ids
+    return corpus_resolve.corpus_home()
 
 
 def _populated_corpora() -> list[Path]:
-    home = _corpus_home()
-    dirs = []
-    for cid in _corpus_ids():
-        candidate = home / cid
-        if candidate.is_dir() and any(candidate.iterdir()):
-            dirs.append(candidate)
-    return dirs
+    """Declared corpora that exist, plus any sibling corpus dir CCE has not declared.
+
+    A corpus directory whose name CCE does not declare would otherwise be
+    invisible here — which is real: the Perplexity store on disk is
+    `perplexity-local-session-memory` while CCE declares
+    `perplexity-history-memory`. Sweeping only declared ids silently drops it.
+    """
+    return corpus_resolve.populated_corpora_including_undeclared()
 
 
 def _pipeline_slug(slug: str) -> str | None:

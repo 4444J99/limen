@@ -594,6 +594,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Gate for live GitHub profile verification in always-working. 1 checks remote source of truth; 0 disables only for offline predicates."
+  LIMEN_CORPORA_HOST:
+    default: "0"
+    env: LIMEN_CORPORA_HOST
+    self_update: none
+    owner: governance
+    note: "Forces check-corpora's disk checks (B/C/E) to bind strictly even when no declared corpus store is visible. The stores are local-only by design, so a CI runner's missing-store state is a host fact, not drift — auto-detection (any store present ⇒ strict) covers the operator host; this knob covers a host that SHOULD have the stores but has lost them."
   LIMEN_CORPVS_ROOT:
     default: "$LIMEN_WORKSPACE_ROOT/organvm-corpvs-testamentvm"
     env: LIMEN_CORPVS_ROOT

@@ -15,6 +15,9 @@
 # Validator: organs/consulting/constellation/validate-constellation.py
 # Seeder:    organs/consulting/constellation/seed-tasks.py  (CONST- board DAG)
 # Done:      organs/consulting/constellation/constellation-done.sh
+# Atlas:     organs/consulting/constellation/constellation-atlas.py  (one-page HTML
+#            register of people x project lanes; --private merges the overlay and
+#            refuses to write into any repo that has a remote)
 
 version: constellation.v1
 owner: consulting

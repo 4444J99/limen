@@ -1,0 +1,166 @@
+# CONVERGENCE registry — one owner per capability, as declared data.
+#
+# The fifth axis beside GATES, PARAMETERS, SENSORS and CORPORA. Same parameter-panel
+# pattern: docs/convergence/*.md carries the prose rationale (the learning-engine doc is
+# the founding instance); THIS file is the machine form every consumer derives from, and
+# scripts/check-convergence.py is the drift predicate that makes the ledger's rule —
+# "never build the 7th; a new engine is a regression" (IF-LEARNING-ENGINE, now
+# IF-SHARED-SUBSTRATE) — executable instead of remembered.
+#
+# Measured baseline this registry exists to shrink: ZERO cross-repo code dependencies
+# across the ~310-repo estate (no internal packages, no submodules, no template repo);
+# six Cloudflare Workers each hand-rolling Stripe/auth/rate-limiting; rubric logic
+# encoded four ways; data_export.py copy-pasted near-identically across three repos.
+#
+# Row contract:
+#   status: converged   — the owner exists and tenants consume it (nothing else may
+#                          implement the capability; a second implementation is drift)
+#           lifting     — owner chosen, extraction/lift in progress; duplicates carry
+#                          dispositions and shrink
+#           unresolved  — a real capability with NO chosen owner yet. Counted loudly
+#                          (Rule #1: a vacuum is never a resting state), owner: null.
+#   duplicates[]: every known second implementation, each with a disposition:
+#           retire — delete/archive once the owner covers it
+#           tenant — keep as a consumer of the owner (a subject/cartridge, never a fork)
+#           lift   — its code is the material being lifted INTO the owner
+
+schema_version: 0.1
+
+capabilities:
+
+  # ── founded by docs/convergence/learning-engine.md (2026-07-23) ─────────────────────
+  curriculum-personalization:
+    status: converged
+    owner: organvm/adaptive-personal-syllabus
+    doc: docs/convergence/learning-engine.md
+    tenants: [organvm/community-hub, organvm/edu-organism]
+    duplicates:
+      - {impl: "edu-organism/skins/homeschool/adaptive-personal-syllabus", disposition: tenant, note: "read-only mirror by design — NOT the canonical; the convergence doc pointed at this mirror as the owner path, corrected here"}
+      - {impl: "agon greenfield curriculum.yaml", disposition: retire, note: "already retired per the doc; curriculum is aps PersonalizedLesson records"}
+    owner_of_record: consulting
+    note: "The aps engine owns curriculum + personalization. Subjects are records in its schema, never new engines."
+
+  daily-cadence:
+    status: converged
+    owner: "~/Workspace/daily-engine"
+    doc: docs/convergence/learning-engine.md
+    tenants: [fitness, asi-interview, studium-canon]
+    duplicates: []
+    owner_of_record: consulting
+    note: "The cadence spine (compose→check→render→log→gate). Phase-2 lift of its domain-generic core out of the private store is the named next step — lift, never fork."
+
+  spaced-repetition:
+    status: converged
+    owner: "agon (plugin only)"
+    doc: docs/convergence/learning-engine.md
+    tenants: [organvm/adaptive-personal-syllabus]
+    duplicates: []
+    owner_of_record: consulting
+    note: "The one capability nothing else had; everything else in agon was retired to a thin tenant."
+
+  # ── converged in this workstream (the pattern, proven small) ────────────────────────
+  corpus-resolution:
+    status: converged
+    owner: scripts/corpus_resolve.py
+    doc: institutio/governance/corpora.yaml
+    tenants: [scripts/constellation-dossier.py, organs/consulting/constellation/check.py]
+    duplicates:
+      - {impl: "27 grandfathered root literals (corpus-root-literals-baseline.txt)", disposition: lift, note: "ratcheted — new literals fail check-corpora D, the set only shrinks"}
+    owner_of_record: governance
+    note: "Two consumers each carried their own wrong copy of 'where the corpora live'; both were wrong the same way and the dossier pipeline silently moved nothing. The founding case for this registry."
+
+  brainstorm-extraction:
+    status: converged
+    owner: scripts/brainstorm-harvest.py
+    doc: docs/plans/2026-07-25-iceberg-corpus-harvest-shared-substrate.md
+    tenants: [brainstorm-extracts corpus]
+    duplicates:
+      - {impl: "organvm/brainstorm-20260423 tools/synthesize.py", disposition: tenant, note: "the precedent's per-export local tool; stays as the 20260423 corpus's own machinery"}
+    owner_of_record: consulting
+    note: "One harvester over every CCE corpus; 524 threads extracted, semantic drain queued."
+
+  repo-echo-clustering:
+    status: converged
+    owner: "organs/consulting/constellation/constellation-streams.py::find_echoes"
+    doc: docs/plans/2026-07-25-iceberg-corpus-harvest-shared-substrate.md
+    tenants: [streams page]
+    duplicates: []
+    owner_of_record: consulting
+    note: "IDF + 2-core over repo name+description. Measured NOT transferable to conversation threads (dense vocabulary fuses to one blob at every floor) — thread streams are a semantic judgment, per brainstorm-harvest."
+
+  # ── lifting: owner chosen, extraction is the work ───────────────────────────────────
+  worker-toolkit:
+    status: lifting
+    owner: organvm/writelens
+    doc: null
+    tenants: []
+    duplicates:
+      - {impl: organvm/promptscope, disposition: tenant, note: "hand-rolled Stripe/auth/rate-limit inline"}
+      - {impl: organvm/trendpulse, disposition: tenant, note: "same"}
+      - {impl: organvm/edgarflash, disposition: tenant, note: "same, different payment shape"}
+      - {impl: organvm/vulnpulse, disposition: tenant, note: "same"}
+      - {impl: organvm/bountyscope, disposition: tenant, note: "same"}
+    owner_of_record: commerce
+    note: "Six single-file Workers, zero shared deps, each reimplementing auth/billing/rate-limiting. writelens is the most production-hardened (live, billed, KV-rate-limited) so its code is the extraction base; convert one Worker as proof, ratchet the rest."
+
+  text-quality-scoring:
+    status: lifting
+    owner: organvm/writelens
+    doc: docs/convergence/learning-engine.md
+    tenants: []
+    duplicates:
+      - {impl: "edu-organism/kernel/standards/*.json", disposition: tenant, note: "ENC1101 rubric JSONs become scoring configs the owner consumes"}
+      - {impl: "editorial-standards/schemas", disposition: tenant, note: "spec-only rubric repo; schema feeds the owner"}
+      - {impl: "essay-pipeline/validator.py", disposition: lift, note: "validation logic folds into the owner's scoring dimensions"}
+    owner_of_record: education
+    note: "Four independent encodings of 'grade/score writing'. The live billed API is the owner; rubric definitions become its inputs, not rival engines."
+
+  data-export:
+    status: lifting
+    owner: "organvm/adaptive-personal-syllabus data_export.py"
+    doc: null
+    tenants: []
+    duplicates:
+      - {impl: "community-hub/data_export.py", disposition: lift, note: "near-identical copy"}
+      - {impl: "reading-group-curriculum/data_export.py", disposition: lift, note: "near-identical copy"}
+    owner_of_record: education
+    note: "Three near-identical exporters. aps's copy chosen as base (most tested repo); the lift extracts one shared module the other two import."
+
+  voice-infrastructure:
+    status: lifting
+    owner: organvm/vox
+    doc: null
+    tenants: []
+    duplicates:
+      - {impl: organvm/sign-signal--voice-synth, disposition: tenant, note: "the working speech-score build — points its synth/transcription at vox, keeps its product layer"}
+      - {impl: organvm/speech-score-engine, disposition: retire, note: "self-described fresh scaffold of the same product sign-signal already implements; keep its docs/product design corpus, retire the scaffold"}
+    owner_of_record: media
+    note: "vox already exists as shared voice infrastructure (clone/synthesize/transcribe, FastAPI) and neither speech-score build calls it. Two builds of one product, neither referencing the other."
+
+  # ── unresolved: real capabilities, no owner chosen — counted vacuums ────────────────
+  rubric-schema:
+    status: unresolved
+    owner: null
+    doc: docs/convergence/learning-engine.md
+    tenants: []
+    duplicates:
+      - {impl: "edu-organism/kernel/schemas/standard.schema.json", disposition: lift, note: "the most formal candidate"}
+      - {impl: "editorial-standards/schemas", disposition: lift, note: ""}
+      - {impl: "composition-1-2 rubric HTML docs", disposition: tenant, note: "FERPA-adjacent course docs; render FROM the schema, never ingested"}
+    owner_of_record: education
+    note: "One canonical rubric schema, currently encoded three ways. Owner decision pending: promote edu-organism's kernel schema or mint a standalone registry."
+
+  auditor-verdicts:
+    status: unresolved
+    owner: null
+    doc: null
+    tenants: []
+    duplicates:
+      - {impl: organvm/growth-auditor, disposition: lift, note: ""}
+      - {impl: organvm/organvm-scrutator, disposition: lift, note: ""}
+      - {impl: organvm/laurea, disposition: tenant, note: "developer-metrics tool mis-clustered as education; belongs here"}
+      - {impl: organvm/vulnpulse, disposition: tenant, note: "also a worker-toolkit tenant; the verdict shape is what recurs"}
+      - {impl: organvm/cve-watch, disposition: tenant, note: ""}
+      - {impl: organvm/bountyscope, disposition: tenant, note: ""}
+    owner_of_record: governance
+    note: "Six repos implement 'score a thing against criteria, emit a verdict'. The shared shape is real; whether it becomes a library or a convention is undecided."

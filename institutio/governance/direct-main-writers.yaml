@@ -58,6 +58,13 @@ surfaces:
   scripts/link-health.py:
     disposition: generated-topic-branch-pr
     expected: {contents_put: 1}
+  scripts/repo-genesis.py:
+    # Four-gate genesis tool: the push is the FOUNDING commit of a brand-new private
+    # repo it just created — never organvm/limen, never any existing ref. Minting is
+    # refused unless evidence + nomenclator + estate-class + seed gates all pass, and
+    # the estate override row still lands by PR through the normal branch flow.
+    disposition: gated-genesis-founding-push-new-private-repo-only
+    expected: {git_push: 1, push_literal: 1}
   scripts/reap-remote-branches.py:
     disposition: nondefault-branch-deletion-only
     expected: {git_push: 3, push_literal: 1}

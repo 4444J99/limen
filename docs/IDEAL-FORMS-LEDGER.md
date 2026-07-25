@@ -215,3 +215,17 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 - **Status:** PARTIAL — convergence decided + first subject converged (agon = thin tenant, greenfield
   `curriculum.yaml` retired); full `aps`-invocation + the Phase-2 lift are pending.
 - **Owner:** Claude + the Adaptive Personal Syllabus (`aps`); ASI subject tracked in matter `job-asi-algora`.
+
+### IF-SHARED-SUBSTRATE — a capability has exactly one implementation, imported not copied
+- **Ideal form:** every capability in the estate has one owner; everything else is a tenant
+  (a subject/cartridge in the owner's schema) or retired. The convergence registry
+  (`institutio/governance/convergence.yaml`) is the machine form; `check-convergence.py` makes
+  "never build the 7th" a red check instead of a memory.
+- **Distance (measured 2026-07-25):** ZERO cross-repo code dependencies across ~310 repos — no
+  internal packages, no submodules, no template repo; six Cloudflare Workers each hand-rolling
+  Stripe/auth/rate-limiting; rubric logic encoded four ways; `data_export.py` copy-pasted across
+  three repos; two full builds of the speech-score product, neither referencing the other or the
+  existing `vox` voice infrastructure.
+- **Status:** PARTIAL — registry live with 12 capabilities (6 converged, 4 lifting, 2 counted
+  vacuums); the worker-toolkit and daily-engine-core lifts are the named next extractions.
+- **Owner:** Claude (registry + predicate) + the per-row `owner_of_record`.
