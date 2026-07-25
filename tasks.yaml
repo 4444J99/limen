@@ -152298,7 +152298,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-361
-  title: 'hiring: Team building timeline (3 scenarios)'
+  title: "hiring: Team building timeline (3 scenarios)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -152312,8 +152312,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/299
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:02.953Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/299"
+    conduct_event_id: conduct:run-518448672e764247847d64c78726e7c8:121:compatibility
+    conduct_run_id: run-518448672e764247847d64c78726e7c8
+    conduct_lease_id: lease-121-518448672e764247
+    conduct_generation: 121
+  predicate: test "$(gh issue view 299 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/299
+  updated: 2026-07-25T17:50:02.953Z
 - id: LIMEN-362
   title: 'checklist: Enterprise sales readiness gate'
   repo: organvm/peer-audited--behavioral-blockchain
