@@ -153112,7 +153112,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/328
   updated: 2026-07-25T17:56:19.189Z
 - id: LIMEN-335
-  title: "Define beta success metrics \u2014 concrete targets"
+  title: Define beta success metrics — concrete targets
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -153125,8 +153125,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/326
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:24.928Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/326"
+    conduct_event_id: conduct:run-819fe2db8f51c7f2738d6323ccb496de:251:compatibility
+    conduct_run_id: run-819fe2db8f51c7f2738d6323ccb496de
+    conduct_lease_id: lease-251-819fe2db8f51c7f2
+    conduct_generation: 251
+  predicate: test "$(gh issue view 326 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/326
+  updated: 2026-07-25T17:57:24.928Z
 - id: LIMEN-336
   title: Prize indemnity insurance evaluation
   repo: organvm/peer-audited--behavioral-blockchain
