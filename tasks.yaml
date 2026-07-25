@@ -151062,8 +151062,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/318
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:05.165Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/318"
+    conduct_event_id: conduct:run-ebe9568debc3e08d7dc08d6130cdfdb0:49:compatibility
+    conduct_run_id: run-ebe9568debc3e08d7dc08d6130cdfdb0
+    conduct_lease_id: lease-49-ebe9568debc3e08d
+    conduct_generation: 49
+  predicate: test "$(gh issue view 318 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/318
+  updated: 2026-07-25T17:46:05.165Z
 - id: LIMEN-344
   title: "State jurisdiction matrix sign-off \u2014 confirm legal US states"
   repo: organvm/peer-audited--behavioral-blockchain
