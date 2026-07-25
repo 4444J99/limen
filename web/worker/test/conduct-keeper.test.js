@@ -2312,8 +2312,9 @@ tasks: []
   assert.equal(readInlineProjectionForTest(env).tasks[0].dispatch_log.length, 1);
 });
 
-test("GitHub projection reads large boards, retries SHA conflicts, and writes the observed SHA", async () => {
-  let board = {
+test("GitHub projection retries branch-head conflicts without losing a competing task mutation", async () => {
+  const yaml = (await import("yaml")).default;
+  const initialBoard = {
     portal: { budget: { daily: 10, per_agent: { codex: 10 }, track: { spent: 0, per_agent: {} } } },
     tasks: [{
       id: "TASK-2",
@@ -2328,16 +2329,34 @@ test("GitHub projection reads large boards, retries SHA conflicts, and writes th
       predicate: "npm test",
       receipt_target: "git:organvm/limen:tasks.yaml#TASK-2",
       dispatch_log: [],
+    }, {
+      id: "TASK-OTHER",
+      title: "Unrelated task before the competing writer",
+      repo: "organvm/limen",
+      status: "open",
+      budget_cost: 0,
+      origin: "system_debt",
+      horizon: "present",
+      value_case: "Prove a competing projection mutation remains present",
+      owner_surface: "organvm/limen",
+      predicate: "npm test",
+      receipt_target: "git:organvm/limen:tasks.yaml#TASK-OTHER",
+      dispatch_log: [],
     }],
   };
-  let sha = "sha-1";
-  let puts = 0;
+  const blobs = new Map();
+  const treeBoards = new Map([["tree-1", structuredClone(initialBoard)]]);
+  const commits = new Map([["commit-1", { tree: "tree-1", parents: [] }]]);
+  let headSha = "commit-1";
+  let objectCounter = 1;
+  let refUpdates = 0;
   let rawReads = 0;
   let reconciles = 0;
   const fetchImpl = async (url, init) => {
-    if (init.method === "POST") {
+    const location = String(url);
+    if (init.method === "POST" && location.endsWith("/merges")) {
       reconciles += 1;
-      assert.match(String(url), /\/repos\/organvm\/limen\/merges$/);
+      assert.match(location, /\/repos\/organvm\/limen\/merges$/);
       assert.deepEqual(JSON.parse(init.body), {
         base: "tabularius/board-projection",
         head: "main",
@@ -2345,27 +2364,76 @@ test("GitHub projection reads large boards, retries SHA conflicts, and writes th
       });
       return new Response(null, { status: 204 });
     }
+    if (init.method === "GET" && location.includes("/git/refs/heads/")) {
+      assert.match(location, /\/git\/refs\/heads\/tabularius\/board-projection$/);
+      return new Response(JSON.stringify({ object: { sha: headSha } }), { status: 200 });
+    }
+    if (init.method === "GET" && location.includes("/git/commits/")) {
+      const commitSha = location.split("/").at(-1);
+      const commit = commits.get(commitSha);
+      assert.ok(commit);
+      return new Response(JSON.stringify({ tree: { sha: commit.tree } }), { status: 200 });
+    }
     if (init.method === "GET") {
-      assert.match(String(url), /ref=tabularius%2Fboard-projection/);
+      const ref = new URL(location).searchParams.get("ref");
+      assert.ok(commits.has(ref));
+      const current = treeBoards.get(commits.get(ref).tree);
       if (init.headers.accept === "application/vnd.github.raw+json") {
         rawReads += 1;
-        return new Response((await import("yaml")).default.stringify(board), { status: 200 });
+        return new Response(yaml.stringify(current), { status: 200 });
       }
       return new Response(JSON.stringify({
-        sha,
+        sha: `blob-for-${ref}`,
         content: "",
       }), { status: 200 });
     }
-    puts += 1;
-    const payload = JSON.parse(init.body);
-    assert.equal(payload.sha, sha);
-    assert.equal(payload.branch, "tabularius/board-projection");
-    if (puts === 1) {
-      sha = "sha-2";
-      return new Response(JSON.stringify({ message: "sha does not match" }), { status: 409 });
+    if (init.method === "POST" && location.endsWith("/git/blobs")) {
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.encoding, "utf-8");
+      const blobSha = `blob-${objectCounter++}`;
+      blobs.set(blobSha, payload.content);
+      return new Response(JSON.stringify({ sha: blobSha }), { status: 201 });
     }
-    board = (await import("yaml")).default.parse(decodeURIComponent(escape(atob(payload.content))));
-    return new Response(JSON.stringify({ content: { sha: "sha-3" } }), { status: 200 });
+    if (init.method === "POST" && location.endsWith("/git/trees")) {
+      const payload = JSON.parse(init.body);
+      assert.ok([...commits.values()].some((commit) => commit.tree === payload.base_tree));
+      assert.equal(payload.tree.length, 1);
+      assert.equal(payload.tree[0].path, "tasks.yaml");
+      const treeSha = `tree-${objectCounter++}`;
+      treeBoards.set(treeSha, yaml.parse(blobs.get(payload.tree[0].sha)));
+      return new Response(JSON.stringify({ sha: treeSha }), { status: 201 });
+    }
+    if (init.method === "POST" && location.endsWith("/git/commits")) {
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.parents.length, 1);
+      const commitSha = `commit-${objectCounter++}`;
+      commits.set(commitSha, { tree: payload.tree, parents: payload.parents });
+      return new Response(JSON.stringify({ sha: commitSha }), { status: 201 });
+    }
+    if (init.method === "PATCH" && location.includes("/git/refs/heads/")) {
+      refUpdates += 1;
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.force, false);
+      const proposed = commits.get(payload.sha);
+      assert.ok(proposed);
+      if (refUpdates === 1) {
+        const competing = structuredClone(treeBoards.get(commits.get(headSha).tree));
+        competing.tasks.find((task) => task.id === "TASK-OTHER").title =
+          "Competing task mutation survived";
+        treeBoards.set("tree-competing", competing);
+        commits.set("commit-competing", { tree: "tree-competing", parents: [headSha] });
+        headSha = "commit-competing";
+      }
+      if (proposed.parents[0] !== headSha) {
+        return new Response(
+          JSON.stringify({ message: "Update is not a fast forward" }),
+          { status: 422 },
+        );
+      }
+      headSha = payload.sha;
+      return new Response(JSON.stringify({ object: { sha: headSha } }), { status: 200 });
+    }
+    assert.fail(`unexpected GitHub request: ${init.method} ${location}`);
   };
   const event = {
     event_id: "conduct:run-2:1:reserved",
@@ -2388,10 +2456,16 @@ test("GitHub projection reads large boards, retries SHA conflicts, and writes th
     LIMEN_GITHUB_BRANCH: "main",
   }, event, { fetchImpl });
   assert.equal(result.status, "committed");
-  assert.equal(puts, 2);
+  assert.equal(result.sha, headSha);
+  assert.equal(refUpdates, 2);
   assert.equal(rawReads, 2);
   assert.equal(reconciles, 2);
-  assert.equal(board.tasks[0].status, "dispatched");
+  const board = treeBoards.get(commits.get(headSha).tree);
+  assert.equal(board.tasks.find((task) => task.id === "TASK-2").status, "dispatched");
+  assert.equal(
+    board.tasks.find((task) => task.id === "TASK-OTHER").title,
+    "Competing task mutation survived",
+  );
 });
 
 test("GitHub task projection preserves unrelated board bytes", async () => {
