@@ -151555,7 +151555,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/353
   updated: 2026-07-25T17:48:36.512Z
 - id: LIMEN-310
-  title: "B2B pricing model \u2014 $49/$149/$349/$999+ tiers"
+  title: B2B pricing model — $49/$149/$349/$999+ tiers
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -151569,8 +151569,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/352
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:51.920Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/352"
+    conduct_event_id: conduct:run-4b85a7c182ae04a68e5f27167f4e1a8b:153:compatibility
+    conduct_run_id: run-4b85a7c182ae04a68e5f27167f4e1a8b
+    conduct_lease_id: lease-153-4b85a7c182ae04a6
+    conduct_generation: 153
+  predicate: test "$(gh issue view 352 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/352
+  updated: 2026-07-25T17:51:51.920Z
 - id: LIMEN-311
   title: CAC/LTV tracking dashboard
   repo: organvm/peer-audited--behavioral-blockchain
