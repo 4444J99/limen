@@ -150931,7 +150931,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-272
-  title: "KYC: Legal \u2014 counsel sign-off on verification requirements"
+  title: "KYC: Legal — counsel sign-off on verification requirements"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: agy
@@ -150946,8 +150946,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/390
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:39.863Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/390"
+    conduct_event_id: conduct:run-aa38b7773743b83bfbbf815007b22a5b:185:compatibility
+    conduct_run_id: run-aa38b7773743b83bfbbf815007b22a5b
+    conduct_lease_id: lease-185-aa38b7773743b83b
+    conduct_generation: 185
+  predicate: test "$(gh issue view 390 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/390
+  updated: 2026-07-25T17:53:39.863Z
 - id: LIMEN-273
   title: "KYC: Tests \u2014 unit + integration for tier transitions"
   repo: organvm/peer-audited--behavioral-blockchain
