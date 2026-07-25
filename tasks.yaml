@@ -151598,7 +151598,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/348
   updated: 2026-07-25T17:48:50.542Z
 - id: LIMEN-315
-  title: "Practitioner outreach \u2014 one-pager + first 15 outreach + demo loop"
+  title: Practitioner outreach — one-pager + first 15 outreach + demo loop
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -151614,8 +151614,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/347
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:33.027Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/347"
+    conduct_event_id: conduct:run-dafe3f64b33028986513b213eddcdd00:147:compatibility
+    conduct_run_id: run-dafe3f64b33028986513b213eddcdd00
+    conduct_lease_id: lease-147-dafe3f64b3302898
+    conduct_generation: 147
+  predicate: test "$(gh issue view 347 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/347
+  updated: 2026-07-25T17:51:33.027Z
 - id: LIMEN-316
   title: "PR strategy for App Store launch \u2014 press kit + target list + narrative"
   repo: organvm/peer-audited--behavioral-blockchain
