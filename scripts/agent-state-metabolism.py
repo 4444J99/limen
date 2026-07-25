@@ -117,6 +117,10 @@ def parser() -> argparse.ArgumentParser:
         "--restore-captured-path-hash",
         help="restore exactly one missing item by its domain-separated captured-path hash",
     )
+    cloudkit.add_argument(
+        "--restore-captured-name-hash",
+        help="restore one uniquely named captured item by its domain-separated basename hash",
+    )
     cloudkit.add_argument("--restore-receipt", type=Path)
     return command
 
@@ -126,12 +130,21 @@ def main() -> int:
     args = argument_parser.parse_args()
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
-    if args.command == "cold-tree" and args.retain_relative and (
-        args.hot_days is not None or args.maximum_hot_gib is not None
+    if (
+        args.command == "cold-tree"
+        and args.retain_relative
+        and (args.hot_days is not None or args.maximum_hot_gib is not None)
     ):
         argument_parser.error("--retain-relative cannot be combined with --hot-days or --maximum-hot-gib")
     if args.command == "cloudkit-materialized":
-        restore_selectors = sum(bool(value) for value in (args.restore_item_hash, args.restore_captured_path_hash))
+        restore_selectors = sum(
+            bool(value)
+            for value in (
+                args.restore_item_hash,
+                args.restore_captured_path_hash,
+                args.restore_captured_name_hash,
+            )
+        )
         if restore_selectors > 1:
             argument_parser.error("choose exactly one item restoration selector")
         if bool(restore_selectors) != bool(args.restore_receipt):
@@ -171,10 +184,7 @@ def main() -> int:
                 args.root,
                 hot_days=args.hot_days if args.hot_days is not None else 7,
                 maximum_hot_bytes=int(
-                    (args.maximum_hot_gib if args.maximum_hot_gib is not None else 2.0)
-                    * 1024
-                    * 1024
-                    * 1024
+                    (args.maximum_hot_gib if args.maximum_hot_gib is not None else 2.0) * 1024 * 1024 * 1024
                 ),
             )
         if args.resume:
@@ -198,7 +208,7 @@ def main() -> int:
                 run_id=args.run_id,
             )
     elif args.command == "cloudkit-materialized":
-        if args.restore_item_hash or args.restore_captured_path_hash:
+        if args.restore_item_hash or args.restore_captured_path_hash or args.restore_captured_name_hash:
             restore = run_restore_cloudkit_item_campaign(
                 args.name,
                 args.root,
@@ -209,6 +219,7 @@ def main() -> int:
                 run_id=args.run_id,
                 item_hash=args.restore_item_hash,
                 captured_path_hash=args.restore_captured_path_hash,
+                captured_name_hash=args.restore_captured_name_hash,
             )
             print(json.dumps(restore, sort_keys=True))
             return 0

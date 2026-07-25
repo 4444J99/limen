@@ -155,6 +155,8 @@ def test_cloud_restore_requires_exactly_one_path_free_selector(tmp_path: Path) -
             "a" * 64,
             "--restore-captured-path-hash",
             "b" * 64,
+            "--restore-captured-name-hash",
+            "c" * 64,
             "--restore-receipt",
             str(tmp_path / "restore.json"),
         ],

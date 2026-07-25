@@ -495,6 +495,7 @@ def run_restore_cloudkit_item_campaign(
     run_id: str,
     item_hash: str | None = None,
     captured_path_hash: str | None = None,
+    captured_name_hash: str | None = None,
     repository: str = "organvm/arca",
     key_service: str = "limen-arca-vault",
 ) -> dict[str, object]:
@@ -530,6 +531,7 @@ def run_restore_cloudkit_item_campaign(
             keychain_key(key_service),
             item_hash,
             captured_path_hash=captured_path_hash,
+            captured_name_hash=captured_name_hash,
         )
         assert tracked.git_receipt_commit is not None
         return _write_restore_receipt(

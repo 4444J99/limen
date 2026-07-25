@@ -103,6 +103,13 @@ def captured_path_selector_hash(relative: str) -> str:
     return hashlib.sha256(b"captured-path:v1\0" + relative.encode("utf-8")).hexdigest()
 
 
+def captured_name_selector_hash(relative: str) -> str:
+    """Hash a captured basename; restoration still requires one unique match."""
+
+    name = PurePosixPath(relative).name
+    return hashlib.sha256(b"captured-name:v1\0" + name.encode("utf-8")).hexdigest()
+
+
 def collect_file_entry(records: list[dict[str, Any]], record: dict[str, Any]) -> None:
     if record.get("kind") == "file_entry":
         records.append(record)
@@ -241,6 +248,7 @@ def restore_captured_file(
     item_hash: str | None = None,
     *,
     captured_path_hash: str | None = None,
+    captured_name_hash: str | None = None,
     materialized_probe=is_materialized_cloud_path,
 ) -> RestoredFileResult:
     """Restore one captured item without exposing or overwriting its path."""
@@ -250,6 +258,7 @@ def restore_captured_file(
         for kind, value in (
             ("file_provider_item_hash", item_hash),
             ("captured_path_hash", captured_path_hash),
+            ("captured_name_hash", captured_name_hash),
         )
         if value is not None
     )
@@ -273,8 +282,10 @@ def restore_captured_file(
     captured = reconstruct_captured_files(receipt, root, records)
     if selector_kind == "file_provider_item_hash":
         matches = [entry for entry in captured if file_provider_item_hash(root, entry.relative) == selector_hash]
-    else:
+    elif selector_kind == "captured_path_hash":
         matches = [entry for entry in captured if captured_path_selector_hash(entry.relative) == selector_hash]
+    else:
+        matches = [entry for entry in captured if captured_name_selector_hash(entry.relative) == selector_hash]
     if len(matches) != 1:
         raise PipelineError("restore selector does not identify exactly one captured file")
     entry = matches[0]
