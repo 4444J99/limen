@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 from limen.agent_state.pipeline import run_opencode_campaign
-from limen.agent_state.tree import plan_cloud_materializations, plan_retention
+from limen.agent_state.tree import plan_cloud_materializations, plan_exact_retention, plan_retention
 from limen.agent_state.tree_pipeline import (
     run_cloudkit_materialization_campaign,
     run_cold_tree_campaign,
@@ -65,8 +65,17 @@ def parser() -> argparse.ArgumentParser:
         default=Path("/Volumes/Archive4T/limen-private/agent-state-exact"),
     )
     tree.add_argument("--private-receipt", type=Path, required=True)
-    tree.add_argument("--hot-days", type=int, default=7)
-    tree.add_argument("--maximum-hot-gib", type=float, default=2.0)
+    tree.add_argument("--hot-days", type=int)
+    tree.add_argument("--maximum-hot-gib", type=float)
+    tree.add_argument(
+        "--retain-relative",
+        action="append",
+        default=[],
+        help=(
+            "retain this exact regular file and capture every other file; repeat as needed; "
+            "cannot be combined with age or size retention"
+        ),
+    )
     tree.add_argument("--run-id")
     tree.add_argument("--resume", action="store_true")
     tree.add_argument("--retire", action="store_true")
@@ -107,6 +116,10 @@ def main() -> int:
     args = argument_parser.parse_args()
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
+    if args.command == "cold-tree" and args.retain_relative and (
+        args.hot_days is not None or args.maximum_hot_gib is not None
+    ):
+        argument_parser.error("--retain-relative cannot be combined with --hot-days or --maximum-hot-gib")
     if args.command == "cloudkit-materialized":
         if args.prepare_eviction_authorization and args.evict:
             argument_parser.error("authorization planning and --evict are separate operations")
@@ -126,11 +139,19 @@ def main() -> int:
             run_id=args.run_id,
         )
     elif args.command == "cold-tree":
-        plan = plan_retention(
-            args.root,
-            hot_days=args.hot_days,
-            maximum_hot_bytes=int(args.maximum_hot_gib * 1024 * 1024 * 1024),
-        )
+        if args.retain_relative:
+            plan = plan_exact_retention(args.root, retain_paths=tuple(args.retain_relative))
+        else:
+            plan = plan_retention(
+                args.root,
+                hot_days=args.hot_days if args.hot_days is not None else 7,
+                maximum_hot_bytes=int(
+                    (args.maximum_hot_gib if args.maximum_hot_gib is not None else 2.0)
+                    * 1024
+                    * 1024
+                    * 1024
+                ),
+            )
         if args.resume:
             receipt = run_resume_cold_tree_campaign(
                 args.name,

@@ -5,7 +5,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from limen.agent_state.crypto import EncryptedAtomPacker, verify_atom_packs
 from limen.agent_state.models import MetabolismReceipt, RestoreProof
 from limen.agent_state.tree import (
@@ -13,6 +12,7 @@ from limen.agent_state.tree import (
     brctl_evict,
     evict_cloud_materializations,
     plan_cloud_materializations,
+    plan_exact_retention,
     plan_retention,
     retire_cold_files,
 )
@@ -56,6 +56,38 @@ def test_hot_byte_ceiling_moves_older_recent_files_to_cold(tmp_path: Path) -> No
     assert plan.hot_paths == ("newest",)
     assert plan.cold_paths == ("older",)
     assert plan.hot_bytes <= 1000
+
+
+def test_exact_retention_captures_every_file_except_explicit_retains(tmp_path: Path) -> None:
+    retained = tmp_path / "opencode.db"
+    retained.write_bytes(b"empty schema")
+    (tmp_path / "tool-output").mkdir()
+    output = tmp_path / "tool-output" / "payload"
+    output.write_bytes(b"user-bearing output")
+    log = tmp_path / "log"
+    log.write_bytes(b"session log")
+
+    plan = plan_exact_retention(tmp_path, retain_paths=("opencode.db",))
+
+    assert plan.hot_paths == ("opencode.db",)
+    assert plan.hot_bytes == retained.stat().st_size
+    assert plan.cold_paths == ("log", "tool-output/payload")
+    assert plan.cold_bytes == log.stat().st_size + output.stat().st_size
+
+
+@pytest.mark.parametrize("relative", ("../outside", "/absolute", ".", "missing"))
+def test_exact_retention_rejects_unsafe_or_missing_path(tmp_path: Path, relative: str) -> None:
+    with pytest.raises((FileNotFoundError, ValueError)):
+        plan_exact_retention(tmp_path, retain_paths=(relative,))
+
+
+def test_exact_retention_rejects_symlink_escape(tmp_path: Path) -> None:
+    outside = tmp_path.parent / "outside"
+    outside.write_bytes(b"outside")
+    (tmp_path / "link").symlink_to(outside)
+
+    with pytest.raises(ValueError, match="regular file within the root"):
+        plan_exact_retention(tmp_path, retain_paths=("link",))
 
 
 def test_file_tree_atoms_restore_and_deduplicate_chunks(tmp_path: Path) -> None:
