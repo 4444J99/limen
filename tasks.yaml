@@ -148770,7 +148770,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-203
-  title: "TKT-P1-006: API \u2014 push notification dispatch + device registration"
+  title: "TKT-P1-006: API — push notification dispatch + device registration"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -148782,8 +148782,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/466
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:33.184Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/466"
+    conduct_event_id: conduct:run-3c74129895eb7e01a8b6cb2f31b0667e:75:compatibility
+    conduct_run_id: run-3c74129895eb7e01a8b6cb2f31b0667e
+    conduct_lease_id: lease-75-3c74129895eb7e01
+    conduct_generation: 75
+  predicate: test "$(gh issue view 466 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/466
+  updated: 2026-07-25T17:47:33.184Z
 - id: LIMEN-204
   title: "TKT-P1-018: Tests \u2014 gradient math + leaderboard ranking"
   repo: organvm/peer-audited--behavioral-blockchain
