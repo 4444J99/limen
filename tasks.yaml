@@ -147158,7 +147158,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/598
   updated: 2026-07-25T17:45:33.382Z
 - id: LIMEN-110
-  title: "expansive inquiry: Styx revenue gap \u2014 why no money"
+  title: "expansive inquiry: Styx revenue gap — why no money"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: agy
@@ -147173,8 +147173,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/597
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:56.486Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/597"
+    conduct_event_id: conduct:run-c02636087daa52e04a9c049574ed0cec:100:compatibility
+    conduct_run_id: run-c02636087daa52e04a9c049574ed0cec
+    conduct_lease_id: lease-100-c02636087daa52e0
+    conduct_generation: 100
+  predicate: test "$(gh issue view 597 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/597
+  updated: 2026-07-25T17:48:56.486Z
 - id: LIMEN-111
   title: "Priority tomorrow: full project-board review + cleanup"
   repo: organvm/peer-audited--behavioral-blockchain
