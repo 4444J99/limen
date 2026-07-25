@@ -1,0 +1,35 @@
+{
+  "apply_receipt": {
+    "applied_at": "2026-07-25T18:55:28.872235Z",
+    "close_effects": 0,
+    "effect_count": 63,
+    "immutable_archived_item_count": 0,
+    "immutable_archived_repository_count": 0,
+    "immutable_archived_repository_hashes": [],
+    "merge_effects": 0,
+    "repository_count": 50,
+    "verified_count": 63
+  },
+  "disposition": "lifecycle:blocked",
+  "effect": "add-label:lifecycle:blocked",
+  "item_count": 63,
+  "plan_sha256": "5021d9d38c19eeb8013ca288a5648050435c9bfbcb2f84ded228ea1ae2a8609f",
+  "private_item_count": 2,
+  "private_pr_keys": [
+    "f8b08ee2703defa7aa4827681a5812628de791c794e981f91c6958b17de69b82",
+    "fbc67a8542fb7110aa2298a5f1282289da0315bdb060ee893732153e319a08bb"
+  ],
+  "private_repository_count": 2,
+  "private_repository_hashes": [
+    "039344433aa5473c50f71d0588c8b43f2e06fc9e4b751c0e6c443e8cf3adc4a0",
+    "91e14cab3a51ba215dbe3c5c85ed1168af94fa320067441511911810b9fd4e17"
+  ],
+  "public_item_count": 61,
+  "repository_count": 50,
+  "review_basis": "Exhaustive exact-11-owner remote census found no lifecycle disposition on these exact open heads. Preserve every existing owner and fail closed as blocked pending repository-specific review; label-only effect with zero merge or close.",
+  "schema": "limen.pr_lifecycle_estate_receipt.v1",
+  "source_ledger_content_sha256": null,
+  "source_lifecycle_untyped_count": 63,
+  "source_open_pr_count": 1164,
+  "status": "applied_verified"
+}
