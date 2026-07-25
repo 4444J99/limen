@@ -150308,7 +150308,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/452
   updated: 2026-07-25T17:48:59.701Z
 - id: LIMEN-218
-  title: "TKT-P1-012: Schema + API \u2014 risk multiplier rules + schedule config"
+  title: "TKT-P1-012: Schema + API — risk multiplier rules + schedule config"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -150320,8 +150320,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/451
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:17.014Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/451"
+    conduct_event_id: conduct:run-57b093c6b9583070a69c1da2cd455579:303:compatibility
+    conduct_run_id: run-57b093c6b9583070a69c1da2cd455579
+    conduct_lease_id: lease-303-57b093c6b9583070
+    conduct_generation: 303
+  predicate: test "$(gh issue view 451 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/451
+  updated: 2026-07-25T18:00:17.014Z
 - id: LIMEN-219
   title: "TKT-P1-005: Tests — lockdown triggers + timelock expiry"
   repo: organvm/peer-audited--behavioral-blockchain
