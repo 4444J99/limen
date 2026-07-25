@@ -152,6 +152,8 @@ def load_upstreams(
     """Merge registry + extra (extra overrides by name), normalize, return enabled upstreams."""
     merged: dict[str, dict] = {}
     merged.update(_read(registry or paths.DEFAULT_REGISTRY))
-    merged.update(_read(extra or paths.UPSTREAMS_JSON))
+    extra_path = extra if extra is not None else (paths.UPSTREAMS_JSON if registry is None else None)
+    if extra_path is not None:
+        merged.update(_read(extra_path))
     ups = [_coerce(n, d) for n, d in sorted(merged.items())]
     return ups if include_disabled else [u for u in ups if u.enabled]
