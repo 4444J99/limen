@@ -147839,7 +147839,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/541
   updated: 2026-07-25T17:59:08.687Z
 - id: LIMEN-129
-  title: "Schema \u2014 per-state compliance flags + feature toggles"
+  title: Schema — per-state compliance flags + feature toggles
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -147851,8 +147851,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/540
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:37.800Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/540"
+    conduct_event_id: conduct:run-0ac974930ad8a39e67a5a26d9800fbed:326:compatibility
+    conduct_run_id: run-0ac974930ad8a39e67a5a26d9800fbed
+    conduct_lease_id: lease-326-0ac974930ad8a39e
+    conduct_generation: 326
+  predicate: test "$(gh issue view 540 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/540
+  updated: 2026-07-25T18:01:37.800Z
 - id: LIMEN-130
   title: Tests — calculation accuracy + edge cases
   repo: organvm/peer-audited--behavioral-blockchain
