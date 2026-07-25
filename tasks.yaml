@@ -153482,7 +153482,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/337
   updated: 2026-07-25T17:45:58.640Z
 - id: LIMEN-326
-  title: "Load testing \u2014 500 concurrent users simulation"
+  title: Load testing — 500 concurrent users simulation
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -153495,8 +153495,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/336
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:41.498Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/336"
+    conduct_event_id: conduct:run-15c89ce959da6b2b9d7c4fbd28fabece:310:compatibility
+    conduct_run_id: run-15c89ce959da6b2b9d7c4fbd28fabece
+    conduct_lease_id: lease-310-15c89ce959da6b2b
+    conduct_generation: 310
+  predicate: test "$(gh issue view 336 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/336
+  updated: 2026-07-25T18:00:41.498Z
 - id: LIMEN-327
   title: Incident response runbook v1 — severity, escalation, rollback
   repo: organvm/peer-audited--behavioral-blockchain
