@@ -150852,7 +150852,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-256
-  title: "Forfeit: Policy engine \u2014 jurisdiction-aware disposition rules"
+  title: "Forfeit: Policy engine — jurisdiction-aware disposition rules"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150865,8 +150865,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/406
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:23.846Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/406"
+    conduct_event_id: conduct:run-61a2bbd2ac9f79638321127d9581c6bf:233:compatibility
+    conduct_run_id: run-61a2bbd2ac9f79638321127d9581c6bf
+    conduct_lease_id: lease-233-61a2bbd2ac9f7963
+    conduct_generation: 233
+  predicate: test "$(gh issue view 406 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/406
+  updated: 2026-07-25T17:56:23.846Z
 - id: LIMEN-257
   title: "Geofence: Tests \u2014 all protected routes + regression suite"
   repo: organvm/peer-audited--behavioral-blockchain
