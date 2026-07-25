@@ -34,6 +34,7 @@ def test_conflict_wins_over_stale_failing_checks(monkeypatch):
                     {
                         "state": "OPEN",
                         "isDraft": False,
+                        "labels": [{"name": "lifecycle:delivery"}],
                         "mergeable": "CONFLICTING",
                         "statusCheckRollup": [{"conclusion": "FAILURE"}],
                     }
@@ -54,12 +55,35 @@ def _stale_view():
     return {
         "state": "OPEN",
         "isDraft": False,
+        "labels": [{"name": "lifecycle:delivery"}],
         "mergeable": "MERGEABLE",
         "statusCheckRollup": [{"conclusion": "SUCCESS"}],
         "files": [{"path": "cli/src/limen/dispatch.py"}],
         "baseRefName": "main",
         "headRefOid": "deadbeefcafe",
     }
+
+
+def test_green_preservation_and_unknown_prs_never_reach_merge_assessment(monkeypatch):
+    for labels, expected in (
+        ([{"name": "lifecycle:preservation"}], "PRESERVATION"),
+        ([{"name": "lifecycle:active-human"}], "ACTIVE-HUMAN"),
+        ([], "LIFECYCLE-UNKNOWN"),
+        (
+            [{"name": "lifecycle:delivery"}, {"name": "lifecycle:preservation"}],
+            "LIFECYCLE-UNKNOWN",
+        ),
+    ):
+        mod = _load()
+
+        def fake_gh(args, timeout=60, selected=labels):
+            if args[:2] == ["pr", "view"]:
+                return _R(json.dumps(_stale_view() | {"labels": selected}))
+            raise AssertionError(f"non-delivery PR reached another GitHub probe: {args!r}")
+
+        monkeypatch.setattr(mod, "gh", fake_gh)
+
+        assert mod.assess(("organvm/limen", 99)) == ("organvm/limen", 99, expected)
 
 
 def test_stale_pr_is_ready_only_with_positive_active_queue(monkeypatch):

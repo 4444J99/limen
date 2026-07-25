@@ -35,9 +35,12 @@ proves the value exists in the current `oz model list --output-format json` resu
 
 Credentials, secrets, personal data, irreversible deletion, paid overages, public-identity claims,
 and `needs-human` work are rejected before a prompt reaches Warp/Oz. A planning-only profile uses the
-explicit `mode:plan-only` task label and requires the existing current Fable acceptance/cap receipt;
-without it, the request becomes maximally verified executable work. An accepted planning run returns
-a build packet and may not build.
+explicit `mode:plan-only` task label and always remains non-building; model-allotment acceptance can
+change model eligibility but never grants mutation authority. A successful local planning run must
+leave its isolated worktree unchanged and emits a digest-bound `limen.plan_receipt.v1`. The receipt
+carries capability requirements and the plan, but no model, tier, catalog hash, or selected builder.
+At builder claim time Limen probes live capacity again, matches the receipt against the current
+provider-neutral capability register, and only then selects the build lane and its current model.
 
 ## Regression predicate
 

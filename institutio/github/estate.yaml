@@ -35,6 +35,12 @@ schema_version: 0.1
 pr_debt_policy:
   active_owner_max_age_hours: 168
   owner_label_prefix: "owner:"
+  lifecycle_labels:
+    - "lifecycle:delivery"
+    - "lifecycle:preservation"
+    - "lifecycle:active-human"
+    - "lifecycle:blocked"
+    - "lifecycle:superseded"
   preservation_labels: ["custody:preservation"]
   preservation_markers:
     - "Lifecycle preservation PR opened by `scripts/worktree-pr-receipts.py`."

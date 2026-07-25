@@ -33,8 +33,10 @@ acquire_pressure_lock() {
   fi
   created_at="$(cat "$LOCK_DIR/created_at" 2>/dev/null || true)"
   now="$(date +%s)"
-  if [[ "$owner_pid" =~ ^[0-9]+$ ]] || \
-     { [[ "$created_at" =~ ^[0-9]+$ ]] && ((now - created_at > HOOK_TIMEOUT * 2)); }; then
+  # macOS Bash 3.2 has no BASHPID, and $$ retains the parent identity in a
+  # background subshell. A freshly dead-looking PID is therefore not proof of
+  # stale ownership; require the finite age floor before reclamation.
+  if [[ "$created_at" =~ ^[0-9]+$ ]] && ((now - created_at > HOOK_TIMEOUT * 2)); then
     rm -f "$LOCK_DIR/pid" "$LOCK_DIR/created_at" 2>/dev/null || true
     rmdir "$LOCK_DIR" 2>/dev/null || return 1
     mkdir "$LOCK_DIR" 2>/dev/null || return 1

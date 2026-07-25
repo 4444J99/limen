@@ -24,10 +24,16 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser().resolve()
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "cli" / "src"))
+
+from limen.session_atoms import atoms_summary, session_meta_root  # noqa: E402
+
 HOME = Path.home()
 WORKSPACE = ROOT.parent
 DOC_PATH = ROOT / "docs" / "session-corpus-ledger.md"
@@ -486,15 +492,18 @@ def count_jsonl(path: Path, *, source_counts: bool = False) -> dict[str, Any]:
 
 
 def substrate_snapshot() -> dict[str, Any]:
-    sm = WORKSPACE / "session-meta"
+    sm = session_meta_root()
     kc = WORKSPACE / "knowledge-corpus"
     one = kc / "00-THE-ONE.md"
     reduced = kc / "reduced"
+    atom_store = atoms_summary()
+    if atom_store.get("mtime") is not None:
+        atom_store["mtime"] = iso_from_ts(float(atom_store["mtime"]))
     return {
         "organs": [{**organ, "path": str(organ["path"]), "git": git_status(organ["path"])} for organ in ORGANS],
         "session_meta": {
             "manifest": count_jsonl(sm / "ingest" / "manifest.jsonl", source_counts=True),
-            "atoms": count_jsonl(sm / "ingest" / "atoms.jsonl", source_counts=False),
+            "atoms": atom_store,
         },
         "knowledge_corpus": {
             "the_one_present": one.is_file(),
@@ -637,7 +646,7 @@ def infer_roadblocks(snapshot: dict[str, Any], rows: list[dict[str, Any]]) -> li
         )
     atoms = snapshot["session_meta"]["atoms"]
     if not atoms.get("present"):
-        roadblocks.append("session-meta atoms.jsonl is missing, so corpus-converge has no atom substrate.")
+        roadblocks.append("session-meta atoms-store/CURRENT is missing, so corpus-converge has no atom substrate.")
     manifest = snapshot["session_meta"]["manifest"]
     if manifest.get("present"):
         try:
@@ -762,7 +771,8 @@ def render_markdown(
         "",
         f"- `session-meta/ingest/manifest.jsonl`: "
         f"{manifest.get('lines', 0):,} records, mtime `{manifest.get('mtime', 'missing')}`.",
-        f"- `session-meta/ingest/atoms.jsonl`: "
+        f"- `session-meta/ingest/atoms-store/CURRENT` "
+        f"(`{atoms.get('format') or 'missing'}`): "
         f"{atoms.get('lines', 0):,} atoms, mtime `{atoms.get('mtime', 'missing')}`.",
         f"- `knowledge-corpus`: `{kc['reduced_faces']}` reduced faces; "
         f"`00-THE-ONE.md` present: `{kc['the_one_present']}`.",

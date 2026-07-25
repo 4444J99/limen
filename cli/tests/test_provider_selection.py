@@ -131,12 +131,12 @@ def test_execution_profile_rejects_unbounded_runway() -> None:
         profile(runway_seconds="86400")
 
 
-def test_unaccepted_plan_becomes_maximally_verified_executable_profile() -> None:
+def test_model_acceptance_never_turns_a_plan_into_executable_authority() -> None:
     requested = profile(planning_only=True, build_allowed=False, reasoning_depth=0.6)
     result = effective_profile(requested, plan_accepted=False)
-    assert result.planning_only is False
-    assert result.build_allowed is True
-    assert result.reasoning_depth == 1.0
+    assert result == requested
+    assert result.planning_only is True
+    assert result.build_allowed is False
 
 
 def test_catalog_parser_uses_metadata_not_reported_name_tokens() -> None:

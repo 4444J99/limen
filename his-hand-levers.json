@@ -759,6 +759,17 @@
       "unlocks": "end-to-end autonomous applying — the beat sources, scores, builds, stages, and submits qualified applications on its own, capped by precision limits; until armed it stops at staged and you glance before submit",
       "source_task": "outbound funnel wiring — application-funnel sensor + scripts/application-funnel.py (limen); mirrors LIMEN_MAIL_SEND for outbound mail",
       "issue": 1441
+    },
+    {
+      "id": "L-VIC-SHARE-PITCH",
+      "label": "Send the pitch to admin@victoroffgroup.com. This is an external/sending action and must be executed by the human to comply with the DO NOT SEND/LEAK constraints.",
+      "owner": "yours",
+      "cost": "~1 min to draft and send the email with the link to https://vic-pub-001-ui-001.victoroff-os.pages.dev",
+      "status": "open",
+      "unlocks": "the pitch is sent to David",
+      "source_task": "victoroff-os pitch deploy",
+      "gate": "Sending emails is irreversible external communication. The human must send it.",
+      "issue": 1450
     }
   ]
 }

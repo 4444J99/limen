@@ -288,10 +288,21 @@ def _run_reclaim(wtroot: Path, limen_root: Path, apply=True, extra_env=None, ext
     if extra_env:
         env.update(extra_env)
     args = ["python3", str(RECLAIM)]
-    if apply:
-        args += ["--apply", "--force"]
     if extra_args:
         args += list(extra_args)
+    if not apply:
+        return subprocess.run(args, capture_output=True, text=True, env=env)
+
+    check = subprocess.run(
+        ["python3", str(RECLAIM), "--check", "--json"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    if check.returncode != 0:
+        return check
+    plan_sha = json.loads(check.stdout)["plan_sha256"]
+    args += ["--apply", "--force", "--expected-plan-sha", plan_sha]
     return subprocess.run(args, capture_output=True, text=True, env=env)
 
 

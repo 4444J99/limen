@@ -11,9 +11,11 @@ import json
 import math
 import re
 import subprocess
-from dataclasses import asdict, dataclass, replace
-from datetime import date
+from dataclasses import asdict, dataclass
+from datetime import date, datetime, timezone
 from typing import Any, Iterable, Sequence, get_type_hints
+
+from limen.provider_health import ProviderHealthSnapshot
 
 
 _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
@@ -159,16 +161,14 @@ def execution_profile_for(task: object | None) -> ExecutionProfile:
 
 
 def effective_profile(profile: ExecutionProfile, *, plan_accepted: bool) -> ExecutionProfile:
-    """Without current plan acceptance, request maximally verified executable work."""
+    """Preserve the requested authority boundary.
 
-    if profile.planning_only and not plan_accepted:
-        return replace(
-            profile,
-            reasoning_depth=1.0,
-            planning_only=False,
-            build_allowed=True,
-            verification_strength=1.0,
-        )
+    ``plan_accepted`` remains a compatibility parameter for callers that also
+    use the Fable accounting gate. It may affect model selection, never whether
+    a planning request is allowed to mutate.
+    """
+
+    del plan_accepted
     return profile
 
 
@@ -300,9 +300,31 @@ def _model_score(model: ModelCapability, profile: ExecutionProfile) -> tuple[flo
     return score, model.model_id
 
 
-def select_opencode_model(models: Iterable[ModelCapability], profile: ExecutionProfile) -> ModelCapability | None:
-    eligible = [model for model in models if model.satisfies(profile)]
-    return max(eligible, key=lambda model: _model_score(model, profile)) if eligible else None
+def select_opencode_model(
+    models: Iterable[ModelCapability],
+    profile: ExecutionProfile,
+    health: ProviderHealthSnapshot | None = None,
+    *,
+    now: datetime | None = None,
+) -> ModelCapability | None:
+    current = now or datetime.now(timezone.utc)
+    eligible = [
+        model
+        for model in models
+        if model.satisfies(profile) and (health is None or health.allows(model.model_id, now=current))
+    ]
+    if not eligible:
+        return None
+    # A model with a recent successful outcome outranks zero-cost novelty. The
+    # capability/cost score remains the deterministic tie-break within equal
+    # health evidence.
+    return max(
+        eligible,
+        key=lambda model: (
+            health.fitness(model.model_id) if health else 0.0,
+            *_model_score(model, profile),
+        ),
+    )
 
 
 def catalog_hash(models: Iterable[ModelCapability]) -> str:

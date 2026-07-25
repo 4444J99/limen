@@ -1,0 +1,65 @@
+{
+  "schema": "limen.tool_cache_reclaim_receipt.v1",
+  "generated_at": "2026-07-24T03:30:22Z",
+  "source": {
+    "pull_request": "https://github.com/organvm/limen/pull/1502",
+    "exact_head": "ca84699cb7f195955d3de04e9a5f5d89169d8e76",
+    "merge_group_head": "fac14acd429b095adc7fd3812b5805924fea58ab",
+    "merge_group_predicate": "success"
+  },
+  "check": {
+    "plan_sha256": "28910f25066aa4b81c23cbc73f4a640c2342c14ce70d251b35ad3448394dd63e",
+    "identical_pre_apply_checks": 2,
+    "candidate_count": 4,
+    "candidate_labels": [
+      "~/.cache/puppeteer",
+      "~/.pytest_cache",
+      "~/Library/Caches/pip",
+      "~/Library/Caches/pip-audit"
+    ],
+    "candidate_kib": 351352
+  },
+  "apply": {
+    "expected_plan_sha256": "28910f25066aa4b81c23cbc73f4a640c2342c14ce70d251b35ad3448394dd63e",
+    "applied_plan_sha256": "28910f25066aa4b81c23cbc73f4a640c2342c14ce70d251b35ad3448394dd63e",
+    "removed_count": 4,
+    "reclaimed_kib": 351352,
+    "reclaimed_size": "343.1 MiB"
+  },
+  "fixed_point": {
+    "residual_plan_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "identical_post_apply_checks": 2,
+    "candidate_count": 0
+  },
+  "withheld": {
+    "classification": "active-process",
+    "reclaimable_kib": 3089056,
+    "labels": [
+      "~/.cache/npm",
+      "~/.cache/pnpm",
+      "~/.cache/uv",
+      "~/.local/share/pnpm/store",
+      "~/Library/Caches/ms-playwright",
+      "~/Library/Caches/ms-playwright-go",
+      "~/Library/Caches/node-gyp",
+      "~/Library/Caches/pnpm"
+    ]
+  },
+  "host": {
+    "backblaze_process_count": 0,
+    "data_volume_capacity_percent_after": 87,
+    "disk_target_percent": 80,
+    "disk_target_satisfied": false
+  },
+  "excluded_classes": [
+    "agent-state",
+    "agy-scratch",
+    "gemini-brain",
+    "ollama-models",
+    "opencode-snapshots",
+    "private-corpus",
+    "mail-messages-photos",
+    "worktrees",
+    "personal-raw-data"
+  ]
+}

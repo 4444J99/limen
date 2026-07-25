@@ -27,11 +27,13 @@ THE LOOP (DIVERGE → CONVERGE → ONE):
 Gated OFF by default (LIMEN_CORPUS_CONVERGE=1). Bounded (LIMEN_CORPUS_CONVERGE_LIMIT faces/beat,
 default 2). Fail-open — never crashes the heartbeat.
 """
+
 from __future__ import annotations
 
 import argparse
 import datetime
 import hashlib
+import heapq
 import json
 import os
 import re
@@ -41,10 +43,13 @@ from pathlib import Path
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
+from limen.session_atoms import iter_atoms  # noqa: E402
+
 H1_RE = re.compile(r"^#\s+(.+)$", re.MULTILINE)
 
 
 # ─── locations (derive at runtime, never pin — [[derive-never-pin-hardcodes]]) ───
+
 
 def _corpus_root() -> Path:
     return Path(os.environ.get("LIMEN_CORPUS_ROOT", Path.home() / "Workspace" / "knowledge-corpus"))
@@ -60,14 +65,8 @@ def _session_meta_root() -> Path:
     return Path(os.environ.get("LIMEN_SESSION_META", Path.home() / "Workspace" / "session-meta"))
 
 
-def _atoms_path() -> Path:
-    # The unified, redacted, multi-provider atom corpus produced by session-meta's
-    # ingest/refresh-atoms.sh (Claude, codex, opencode, …). Derived, never pinned.
-    return Path(os.environ.get("LIMEN_EXPORT_ATOMS", _session_meta_root() / "ingest" / "atoms.jsonl"))
-
-
 def _export_source_gate() -> set[str] | None:
-    """THE EXPORT GATE (his policy: ALL providers flow INTO atoms.jsonl unfiltered; the gate is at
+    """THE EXPORT GATE (his policy: ALL providers flow into the atom store unfiltered; the gate is at
     EXPORT, not ingest). LIMEN_EXPORT_SOURCES is a comma-separated allowlist of atom `source`s
     eligible to distill into THE ONE. Empty/unset = ALL sources eligible — the default he chose.
     Returns None for 'all', else the allowed-source set. Destination is LOCAL only (knowledge-corpus,
@@ -79,32 +78,26 @@ def _export_source_gate() -> set[str] | None:
 
 
 def _collect_atoms(limit: int, absorbed: set[str]) -> list[dict]:
-    """Newest substantive shots from the UNIFIED multi-provider atom corpus (atoms.jsonl), filtered
+    """Newest substantive shots from the unified multi-provider atom store, filtered
     by the export source-gate. Bounded + fail-open. This is the bridge that lets his words across
     EVERY agent — not just Claude dialogue — distill into THE ONE ([[pillars-platform-convergence]]).
     A trivial one-liner carries no idea, so a minimum length keeps faces substantive."""
-    path = _atoms_path()
-    if not path.is_file():
-        return []                       # never-NO: no atom store yet just means no atom shots
     gate = _export_source_gate()
-    rows: list[dict] = []
-    try:
-        with path.open(errors="replace") as f:
-            for line in f:
-                try:
-                    a = json.loads(line)
-                except Exception:
-                    continue
-                if gate is not None and a.get("source", "") not in gate:
-                    continue
-                if len((a.get("text") or "").strip()) < 80:
-                    continue
-                rows.append(a)
-    except OSError:
-        return []
-    rows.sort(key=lambda a: a.get("ts") or "", reverse=True)   # newest-first; ts-less sink
+    candidate_limit = max(limit * 8, 40)
+    newest: list[tuple[str, int, dict[str, object]]] = []
+    for sequence, atom in enumerate(iter_atoms()):
+        if gate is not None and atom.get("source", "") not in gate:
+            continue
+        if len((atom.get("text") or "").strip()) < 80:
+            continue
+        entry = (str(atom.get("ts") or ""), sequence, atom)
+        if len(newest) < candidate_limit:
+            heapq.heappush(newest, entry)
+        elif entry[:2] > newest[0][:2]:
+            heapq.heapreplace(newest, entry)
+    rows = [entry[2] for entry in sorted(newest, key=lambda entry: entry[:2], reverse=True)]
     out: list[dict] = []
-    for a in rows[: max(limit * 8, 40)]:
+    for a in rows:
         iid = a.get("content_sha") or a.get("atom_id") or _hash(a.get("text", ""))
         if iid in absorbed:
             continue
@@ -133,6 +126,7 @@ def _hash(*parts: str) -> str:
 
 # ─── clusters = faces ────────────────────────────────────────────────
 
+
 def load_faces(corpus_root: Path | None = None) -> list[dict]:
     """Each reduced/*.md face is one idea-cluster. Returns [{name, path, title, text}]."""
     corpus_root = corpus_root or _corpus_root()
@@ -152,6 +146,7 @@ def load_faces(corpus_root: Path | None = None) -> list[dict]:
 
 
 # ─── ingest: the new divergent shots not yet absorbed ────────────────
+
 
 def _read_text(p: Path, cap: int = 20000) -> str:
     try:
@@ -221,7 +216,7 @@ def gather_new_material(limit: int, *, with_graph: bool = False, absorbed: set[s
                 continue
             items.append({"id": iid, "text": text[:20000], "source": a.get("source") or f"media:{p.name}"})
 
-    # the UNIFIED multi-provider atom corpus (atoms.jsonl) — his words across EVERY agent
+    # the UNIFIED multi-provider atom store — his words across EVERY agent
     # (Claude, codex, opencode, …), gated at EXPORT by LIMEN_EXPORT_SOURCES. Realizes
     # "all providers in, gate on export": ingest is unfiltered, this converge step is where the
     # source-gate decides what distills into THE ONE. Bounded + fail-open like the others.
@@ -237,14 +232,16 @@ def gather_new_material(limit: int, *, with_graph: bool = False, absorbed: set[s
 def _gather_graph_shots(limit: int, absorbed: set[str]) -> list[dict]:
     """Bounded, fail-open pull of recent issues/PRs across the owner as divergent shots."""
     import subprocess
+
     out: list[dict] = []
     owner = os.environ.get("LIMEN_GH_OWNER", "organvm")
     n = str(int(os.environ.get("LIMEN_CORPUS_GRAPH_N", "20")))
     try:
         proc = subprocess.run(
-            ["gh", "search", "issues", "--owner", owner, "--limit", n,
-             "--json", "title,body,url", "--sort", "updated"],
-            capture_output=True, text=True, timeout=30,
+            ["gh", "search", "issues", "--owner", owner, "--limit", n, "--json", "title,body,url", "--sort", "updated"],
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         rows = json.loads(proc.stdout or "[]")
     except Exception:
@@ -256,7 +253,7 @@ def _gather_graph_shots(limit: int, absorbed: set[str]) -> list[dict]:
         iid = _hash(r.get("url", ""), r.get("title", ""))
         if iid in absorbed:
             continue
-        out.append({"id": iid, "text": body, "source": f"graph:{r.get('url','')}"})
+        out.append({"id": iid, "text": body, "source": f"graph:{r.get('url', '')}"})
     return out
 
 
@@ -264,6 +261,7 @@ def assign_to_faces(faces: list[dict], items: list[dict]) -> dict[str, list[dict
     """Assign each new item to its nearest face by lexical overlap. Items matching nothing are
     dropped (they belong to no existing face — a future face-spawn concern, not this beat)."""
     from limen.converge import _tokens
+
     face_toks = {f["name"]: _tokens(f["title"] + " " + f["text"]) for f in faces}
     buckets: dict[str, list[dict]] = {f["name"]: [] for f in faces}
     for it in items:
@@ -280,15 +278,25 @@ def assign_to_faces(faces: list[dict], items: list[dict]) -> dict[str, list[dict
 
 # ─── distill + write-back ────────────────────────────────────────────
 
+
 def _kit(live: bool, threshold: float | None = None):
     from limen.converge import _build_dry_run_kit
+
     if not live:
         return _build_dry_run_kit()
     try:
-        from limen.converge import (AnthropicSynthesizer, ClaudeCliSynthesizer,
-                                     DeterministicScorer, LadderSynthesizer,
-                                     LexicalGapFinder, LexicalRanker, NoopPromoter,
-                                     _api_tier_factory, _cli_tier_factory)
+        from limen.converge import (
+            AnthropicSynthesizer,
+            ClaudeCliSynthesizer,
+            DeterministicScorer,
+            LadderSynthesizer,
+            LexicalGapFinder,
+            LexicalRanker,
+            NoopPromoter,
+            _api_tier_factory,
+            _cli_tier_factory,
+        )
+
         # Synthesizer cascade ([[cascade-fallback-principle]] / never a silent no), now an
         # EARNED-TIER LADDER nested inside each reachable rung (haiku-first-with-cheap-verify,
         # escalate only on a failed check; LIMEN_CONVERGE_LADDER=0 reverts to single-tier):
@@ -310,16 +318,26 @@ def _kit(live: bool, threshold: float | None = None):
         synth = None
         if os.environ.get("ANTHROPIC_API_KEY"):
             try:
-                synth = (LadderSynthesizer(tier_factory=_api_tier_factory(), scorer=scorer, threshold=threshold)
-                         if ladder_on else AnthropicSynthesizer())
+                synth = (
+                    LadderSynthesizer(tier_factory=_api_tier_factory(), scorer=scorer, threshold=threshold)
+                    if ladder_on
+                    else AnthropicSynthesizer()
+                )
             except Exception as exc:
                 print(f"[corpus-converge] API synth unavailable ({exc}); trying claude CLI")
         if synth is None:
-            synth = (LadderSynthesizer(tier_factory=_cli_tier_factory(), scorer=scorer, threshold=threshold)
-                     if ladder_on else ClaudeCliSynthesizer())  # raises (→ outer except → offline) if no CLI
-        return {"ranker": LexicalRanker(), "synthesizer": synth,
-                "scorer": scorer, "promoter": NoopPromoter(),
-                "gap_finder": LexicalGapFinder()}
+            synth = (
+                LadderSynthesizer(tier_factory=_cli_tier_factory(), scorer=scorer, threshold=threshold)
+                if ladder_on
+                else ClaudeCliSynthesizer()
+            )  # raises (→ outer except → offline) if no CLI
+        return {
+            "ranker": LexicalRanker(),
+            "synthesizer": synth,
+            "scorer": scorer,
+            "promoter": NoopPromoter(),
+            "gap_finder": LexicalGapFinder(),
+        }
     except Exception as exc:
         print(f"[corpus-converge] live kit unavailable ({exc}); using offline kit")
         return _build_dry_run_kit()
@@ -328,17 +346,24 @@ def _kit(live: bool, threshold: float | None = None):
 def _managed_text(title: str, better_version: str, *, absorbed_n: int, losers_n: int, kind: str) -> str:
     """Canonical written form: preserved H1 + a managed provenance line + the distillate body
     (any leading H1 the synthesizer emitted is stripped so the title never doubles)."""
-    body = H1_RE.sub("", better_version, count=1).lstrip() if better_version.lstrip().startswith("#") else better_version.strip()
+    body = (
+        H1_RE.sub("", better_version, count=1).lstrip()
+        if better_version.lstrip().startswith("#")
+        else better_version.strip()
+    )
     stamp = _now().date().isoformat()
-    prov = (f"> _Converged {stamp} by the corpus-converge organ — absorbed {absorbed_n} new "
-            f"{kind}; {losers_n} cited as provenance. Prior version in git history. "
-            f"([[distillation-not-reduction]])_")
+    prov = (
+        f"> _Converged {stamp} by the corpus-converge organ — absorbed {absorbed_n} new "
+        f"{kind}; {losers_n} cited as provenance. Prior version in git history. "
+        f"([[distillation-not-reduction]])_"
+    )
     return f"# {title}\n\n{prov}\n\n{body}\n"
 
 
 def converge_face(face: dict, items: list[dict], kit: dict, threshold: float):
     """Run one convergence cycle over [the face itself + its new shots]."""
     from limen.converge import Shot, converge
+
     shots = [Shot(id=f"{face['name']}:self", text=face["text"], source=str(face["path"]))]
     shots += [Shot(id=it["id"], text=it["text"], source=it["source"]) for it in items]
     return converge(face["title"], shots, threshold=threshold, **kit)
@@ -346,29 +371,37 @@ def converge_face(face: dict, items: list[dict], kit: dict, threshold: float):
 
 def write_face(face: dict, result, absorbed_n: int) -> None:
     from limen.io import atomic_write_text
-    atomic_write_text(face["path"],
-                      _managed_text(face["title"], result.better_version,
-                                    absorbed_n=absorbed_n, losers_n=len(result.cited_losers),
-                                    kind="shots"))
+
+    atomic_write_text(
+        face["path"],
+        _managed_text(
+            face["title"], result.better_version, absorbed_n=absorbed_n, losers_n=len(result.cited_losers), kind="shots"
+        ),
+    )
 
 
 def reconverge_the_one(corpus_root: Path, faces: list[dict], kit: dict, threshold: float):
     """Recursive distillation: THE ONE is converge() over the (updated) faces as shots — exactly
     'reduction performed on the reductions themselves'. Never a mechanical clobber."""
     from limen.converge import Shot, converge
+
     shots = [Shot(id=f["name"], text=f["text"], source=str(f["path"])) for f in faces]
     idea = "THE ONE — the single coherent corpus in which all faces are one substance"
     r = converge(idea, shots, threshold=threshold, **kit)
     if r.promoted and r.better_version.strip():
         from limen.io import atomic_write_text
-        atomic_write_text(corpus_root / "00-THE-ONE.md",
-                          _managed_text("THE ONE", r.better_version,
-                                        absorbed_n=len(faces), losers_n=len(r.cited_losers),
-                                        kind="faces"))
+
+        atomic_write_text(
+            corpus_root / "00-THE-ONE.md",
+            _managed_text(
+                "THE ONE", r.better_version, absorbed_n=len(faces), losers_n=len(r.cited_losers), kind="faces"
+            ),
+        )
     return r
 
 
 # ─── gaps become work + state ────────────────────────────────────────
+
 
 def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
     """Gap-finder next_shots → bounded NEW collection tasks via Tabularius tickets.
@@ -381,6 +414,7 @@ def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
     from limen.io import load_limen_file
     from limen.intake import contract_fields, github_pr_contract
     from limen.tabularius import pending_task_ids, submit_task_upsert
+
     tasks_path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
     try:
         lf = load_limen_file(tasks_path)
@@ -425,20 +459,34 @@ def _load_state() -> dict:
 
 def _save_state(state: dict) -> None:
     from limen.io import atomic_write_text
+
     atomic_write_text(_state_path(), json.dumps(state, indent=2))
 
 
 # ─── main ────────────────────────────────────────────────────────────
 
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="corpus-converge — distill his WORDS toward ONE")
     ap.add_argument("--apply", action="store_true", help="write faces/gaps/state/log (else preview)")
-    ap.add_argument("--live", action="store_true", default=os.environ.get("LIMEN_CORPUS_CONVERGE_LIVE") == "1",
-                    help="real AnthropicSynthesizer + face write-back (else offline preview)")
-    ap.add_argument("--graph", action="store_true", default=os.environ.get("LIMEN_CORPUS_GRAPH") == "1",
-                    help="also pull a bounded GitHub issues/PRs slice as divergent shots")
-    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_CORPUS_CONVERGE_LIMIT", "2")),
-                    help="max faces converged per run (bounded)")
+    ap.add_argument(
+        "--live",
+        action="store_true",
+        default=os.environ.get("LIMEN_CORPUS_CONVERGE_LIVE") == "1",
+        help="real AnthropicSynthesizer + face write-back (else offline preview)",
+    )
+    ap.add_argument(
+        "--graph",
+        action="store_true",
+        default=os.environ.get("LIMEN_CORPUS_GRAPH") == "1",
+        help="also pull a bounded GitHub issues/PRs slice as divergent shots",
+    )
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=int(os.environ.get("LIMEN_CORPUS_CONVERGE_LIMIT", "2")),
+        help="max faces converged per run (bounded)",
+    )
     ap.add_argument("--threshold", type=float, default=float(os.environ.get("LIMEN_CORPUS_THRESHOLD", "0.7")))
     args = ap.parse_args(argv)
 
@@ -454,8 +502,9 @@ def main(argv: list[str] | None = None) -> int:
     buckets = assign_to_faces(faces, items)
 
     # faces with the most new material first; bounded.
-    live_faces = sorted(((f, buckets[f["name"]]) for f in faces if buckets[f["name"]]),
-                        key=lambda fb: len(fb[1]), reverse=True)[: args.limit]
+    live_faces = sorted(
+        ((f, buckets[f["name"]]) for f in faces if buckets[f["name"]]), key=lambda fb: len(fb[1]), reverse=True
+    )[: args.limit]
     if not live_faces:
         print(f"[corpus-converge] {len(items)} new shots, none assigned to a face — nothing to distill")
         return 0
@@ -477,18 +526,27 @@ def main(argv: list[str] | None = None) -> int:
         if can_write and r.promoted and r.better_version.strip():
             write_face(face, r, len(its))
             face["text"] = face["path"].read_text()  # refresh for THE ONE re-converge
-            absorbed.update(it["id"] for it in its)   # only absorb what we actually folded
+            absorbed.update(it["id"] for it in its)  # only absorb what we actually folded
             wrote = changed_any = True
         gaps = emit_gaps(r.next_shots, face["name"], args.apply) if args.apply else len(r.next_shots)
         total_gaps += gaps
-        rec = {"ts": _now().isoformat(), "face": face["name"], "new_shots": len(its),
-               "score": round(r.score, 3), "promoted": r.promoted, "wrote": wrote,
-               "losers": len(r.cited_losers), "gaps": gaps}
+        rec = {
+            "ts": _now().isoformat(),
+            "face": face["name"],
+            "new_shots": len(its),
+            "score": round(r.score, 3),
+            "promoted": r.promoted,
+            "wrote": wrote,
+            "losers": len(r.cited_losers),
+            "gaps": gaps,
+        }
         if args.apply:
             with log_path.open("a") as fh:
                 fh.write(json.dumps(rec) + "\n")
-        print(f"[corpus-converge] {face['name']}: +{len(its)} shots → score {r.score:.2f} "
-              f"promoted={r.promoted} wrote={wrote} gaps={gaps}")
+        print(
+            f"[corpus-converge] {face['name']}: +{len(its)} shots → score {r.score:.2f} "
+            f"promoted={r.promoted} wrote={wrote} gaps={gaps}"
+        )
 
     # recursive distillation of THE ONE from the updated faces (live + apply only).
     if changed_any and can_write:
@@ -504,8 +562,10 @@ def main(argv: list[str] | None = None) -> int:
 
     mode = "live" if args.live else "offline-preview"
     note = "" if can_write else "  (no face write-back: needs --live --apply)"
-    print(f"[corpus-converge] {len(live_faces)} faces, {total_gaps} gaps "
-          f"{'emitted' if args.apply else '(dry-run)'} [{mode}]{note}")
+    print(
+        f"[corpus-converge] {len(live_faces)} faces, {total_gaps} gaps "
+        f"{'emitted' if args.apply else '(dry-run)'} [{mode}]{note}"
+    )
     return 0
 
 

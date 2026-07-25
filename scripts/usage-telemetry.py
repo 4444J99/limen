@@ -12,13 +12,20 @@ available real signal and writes logs/usage.json for board.py + the portal:
 
 READ-ONLY w.r.t. tasks.yaml (writes ONLY logs/usage.json) → never races the daemon.
 """
+
 import argparse
 import datetime
 import json
 import math
 import os
 import re
+import sys
 from pathlib import Path
+
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
+CLI_SRC = ROOT / "cli" / "src"
+if CLI_SRC.is_dir() and str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
 
 try:
     import yaml
@@ -30,7 +37,19 @@ try:  # the metered vendor rows DERIVE from the census register (the single vend
 except Exception:  # pragma: no cover - import-fallback exercised only off the installed fleet
     _census = None
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
+try:
+    from limen.provider_health import (
+        load_provider_outcomes as _load_provider_outcomes,
+        project_provider_health as _project_provider_health,
+        provider_health_policy as _provider_health_policy,
+        provider_outcome_ledger_path as _provider_outcome_ledger_path,
+    )
+except Exception:  # pragma: no cover - installed fleet may briefly precede this module
+    _load_provider_outcomes = None
+    _project_provider_health = None
+    _provider_health_policy = None
+    _provider_outcome_ledger_path = None
+
 HOME = Path.home()
 NOW = datetime.datetime.now(datetime.timezone.utc)
 W5H = NOW - datetime.timedelta(hours=5)
@@ -78,6 +97,7 @@ def _parse_ts(value) -> "datetime.datetime | None":
     except (ValueError, TypeError):
         return None
 
+
 # tunable per-vendor LIMITS (the "amount possible"). The metered-lane rows DERIVE from the census
 # register (cli/src/limen/census.py — the single vendor umbrella) rather than being re-typed here:
 # each vendor's Budget is the "means" half of the census. The filter is principled — a lane with a
@@ -123,20 +143,66 @@ def _census_vendor_limits():
 # test_census::test_usage_telemetry_limits_derive_from_census, so it can never silently diverge
 # from the umbrella (the same pattern that guards dispatch._LANE_CASCADE).
 _FALLBACK_VENDOR_LIMITS = {
-    "codex":    {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE - tune to plan (/status)", "trust": "estimate", "pool": "openai-plan"},
-    "claude":   {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE - tune to plan (/status)", "trust": "estimate", "pool": "claude-plan"},
-    "opencode": {"limit": 100,        "unit": "runs",   "window": "today",      "source": "operator board cap until live vendor meter", "trust": "calibrated"},
-    "agy":      {"limit": 100,        "unit": "runs",   "window": "today",      "source": "operator board cap until live vendor meter", "trust": "calibrated"},
-    "gemini":   {"limit": 10,         "unit": "runs",   "window": "24h",        "source": "operator board cap until live vendor meter", "trust": "calibrated"},
-    "jules":    {"limit": 100,        "unit": "runs",   "window": "24h",        "source": "known hard cap",                 "trust": "measured"},
+    "codex": {
+        "limit": 100_000_000,
+        "unit": "tokens",
+        "window": "5h rolling",
+        "source": "ESTIMATE - tune to plan (/status)",
+        "trust": "estimate",
+        "pool": "openai-plan",
+    },
+    "claude": {
+        "limit": 100_000_000,
+        "unit": "tokens",
+        "window": "5h rolling",
+        "source": "ESTIMATE - tune to plan (/status)",
+        "trust": "estimate",
+        "pool": "claude-plan",
+    },
+    "opencode": {
+        "limit": 100,
+        "unit": "runs",
+        "window": "today",
+        "source": "operator board cap until live vendor meter",
+        "trust": "calibrated",
+    },
+    "agy": {
+        "limit": 100,
+        "unit": "runs",
+        "window": "today",
+        "source": "operator board cap until live vendor meter",
+        "trust": "calibrated",
+    },
+    "gemini": {
+        "limit": 10,
+        "unit": "runs",
+        "window": "24h",
+        "source": "operator board cap until live vendor meter",
+        "trust": "calibrated",
+    },
+    "jules": {"limit": 100, "unit": "runs", "window": "24h", "source": "known hard cap", "trust": "measured"},
 }
 
 # App-plane allotments share the same paid subscriptions as the CLI pools, but they are not
 # dispatchable lanes (no Vendor record). Model the plane explicitly so budget audits do not
 # pretend it is absent.
 _APP_PLANE_LIMITS = {
-    "chatgpt-app": {"plane": "app", "unit": "app-runs", "window": "168h", "source": "modeled app-plane; cap unavailable locally", "trust": "modeled", "pool": "openai-plan"},
-    "claude-app":  {"plane": "app", "unit": "app-runs", "window": "168h", "source": "modeled app-plane; cap unavailable locally", "trust": "modeled", "pool": "claude-plan"},
+    "chatgpt-app": {
+        "plane": "app",
+        "unit": "app-runs",
+        "window": "168h",
+        "source": "modeled app-plane; cap unavailable locally",
+        "trust": "modeled",
+        "pool": "openai-plan",
+    },
+    "claude-app": {
+        "plane": "app",
+        "unit": "app-runs",
+        "window": "168h",
+        "source": "modeled app-plane; cap unavailable locally",
+        "trust": "modeled",
+        "pool": "claude-plan",
+    },
 }
 
 _DEFAULT_LIMITS = {**(_census_vendor_limits() or _FALLBACK_VENDOR_LIMITS), **_APP_PLANE_LIMITS}
@@ -271,19 +337,19 @@ def codex_5h():
     gated = False
     try:
         if base.exists():
-            with os.scandir(base):   # explicit probe — TCC/permission denial raises HERE
-                pass                  # (rglob silently skips unreadable dirs, so it can't detect it)
+            with os.scandir(base):  # explicit probe — TCC/permission denial raises HERE
+                pass  # (rglob silently skips unreadable dirs, so it can't detect it)
             for f in base.rglob("*.jsonl"):
                 if not _recent(f):
                     continue
                 sessions += 1
                 try:
                     txt = f.read_text(errors="ignore")
-                    mi = max([int(x) for x in _IN.findall(txt)] or [0])   # cumulative → max ≈ session total
+                    mi = max([int(x) for x in _IN.findall(txt)] or [0])  # cumulative → max ≈ session total
                     mo = max([int(x) for x in _OUT.findall(txt)] or [0])
                     total += mi + mo  # billable (input+output), excludes cached
                 except (PermissionError, OSError):
-                    gated = True       # macOS TCC denied this app-data file — skip, don't crash
+                    gated = True  # macOS TCC denied this app-data file — skip, don't crash
                 except Exception:
                     pass
     except (PermissionError, OSError):
@@ -291,12 +357,25 @@ def codex_5h():
         # UNKNOWN, not zero — and unknown ⇒ HEALTHY (real headroom), never bench. ([[meter-lie-and-dead-daemon-incident]])
         gated = True
     if gated:
-        return {"signal": "tokens", "window": "5h rolling", "consumed": total,
-                "unit": "tokens", "sessions": sessions, "health": "ok", "tcc_gated": True,
-                "note": "codex usage source TCC-gated — assuming healthy; grant FDA to read ~/.codex"}
-    return {"signal": "tokens", "window": "5h rolling", "consumed": total,
-            "unit": "tokens", "sessions": sessions,
-            "health": "ok", "note": "billable codex tokens (input+output, 5h)"}
+        return {
+            "signal": "tokens",
+            "window": "5h rolling",
+            "consumed": total,
+            "unit": "tokens",
+            "sessions": sessions,
+            "health": "ok",
+            "tcc_gated": True,
+            "note": "codex usage source TCC-gated — assuming healthy; grant FDA to read ~/.codex",
+        }
+    return {
+        "signal": "tokens",
+        "window": "5h rolling",
+        "consumed": total,
+        "unit": "tokens",
+        "sessions": sessions,
+        "health": "ok",
+        "note": "billable codex tokens (input+output, 5h)",
+    }
 
 
 def codex_live_rate_limits() -> dict:
@@ -366,13 +445,13 @@ def claude_5h():
     gated = False
     try:
         if base.exists():
-            with os.scandir(base):   # explicit probe — TCC/permission denial raises HERE
-                pass                  # (rglob silently skips unreadable dirs, so it can't detect it)
+            with os.scandir(base):  # explicit probe — TCC/permission denial raises HERE
+                pass  # (rglob silently skips unreadable dirs, so it can't detect it)
             _it = base.rglob("*.jsonl")
         else:
             _it = []
     except (PermissionError, OSError):
-        _it, gated = [], True   # TCC denied the ~/.claude scan — unknown ⇒ healthy, never bench
+        _it, gated = [], True  # TCC denied the ~/.claude scan — unknown ⇒ healthy, never bench
     if not gated:
         for f in _it:
             if not _recent(f):
@@ -387,8 +466,8 @@ def claude_5h():
                     # mentions "rate limit"/"429" (a transcript discussing limits is not a 429).
                     ts = _parse_ts(row.get("timestamp"))
                     if row.get("error") == "rate_limit" or (
-                            isinstance(row.get("error"), dict)
-                            and row["error"].get("type") == "rate_limit_error"):
+                        isinstance(row.get("error"), dict) and row["error"].get("type") == "rate_limit_error"
+                    ):
                         rate_limit_events += 1
                         if ts is None or ts >= RL_COOLDOWN:  # recent (or undated → treat as recent)
                             recent_rl = True
@@ -397,23 +476,38 @@ def claude_5h():
                         continue
                     if ts is not None and ts < W5H:
                         continue
-                    total += (u.get("input_tokens", 0) + u.get("output_tokens", 0)
-                              + u.get("cache_creation_input_tokens", 0))  # billable; exclude cheap cache_read
+                    total += (
+                        u.get("input_tokens", 0) + u.get("output_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+                    )  # billable; exclude cheap cache_read
                     msgs += 1
             except (PermissionError, OSError):
-                gated = True       # macOS TCC denied this app-data file — skip, don't crash
+                gated = True  # macOS TCC denied this app-data file — skip, don't crash
             except Exception:
                 pass
     if gated:
-        return {"signal": "tokens", "window": "5h rolling", "consumed": total,
-                "unit": "tokens", "messages": msgs, "health": "ok", "tcc_gated": True,
-                "rate_limit_events": rate_limit_events, "recent_rate_limit": recent_rl,
-                "note": "claude usage source TCC-gated — assuming healthy; grant FDA to read ~/.claude"}
-    return {"signal": "tokens", "window": "5h rolling", "consumed": total,
-            "unit": "tokens", "messages": msgs,
-            "health": "rate-limited" if recent_rl else "ok",
-            "rate_limit_events": rate_limit_events, "recent_rate_limit": recent_rl,
-            "note": "billable claude tokens (in+out+cache-create, excl cache-read, 5h)"}
+        return {
+            "signal": "tokens",
+            "window": "5h rolling",
+            "consumed": total,
+            "unit": "tokens",
+            "messages": msgs,
+            "health": "ok",
+            "tcc_gated": True,
+            "rate_limit_events": rate_limit_events,
+            "recent_rate_limit": recent_rl,
+            "note": "claude usage source TCC-gated — assuming healthy; grant FDA to read ~/.claude",
+        }
+    return {
+        "signal": "tokens",
+        "window": "5h rolling",
+        "consumed": total,
+        "unit": "tokens",
+        "messages": msgs,
+        "health": "rate-limited" if recent_rl else "ok",
+        "rate_limit_events": rate_limit_events,
+        "recent_rate_limit": recent_rl,
+        "note": "billable claude tokens (in+out+cache-create, excl cache-read, 5h)",
+    }
 
 
 def dispatch_counts(tasks):
@@ -459,10 +553,44 @@ def _read_opencode_clock() -> dict | None:
     return None
 
 
-def _parse_args(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Emit real per-vendor usage telemetry to logs/usage.json."
+def _provider_outcome_projection() -> dict:
+    if not all(
+        (
+            _load_provider_outcomes,
+            _project_provider_health,
+            _provider_health_policy,
+            _provider_outcome_ledger_path,
+        )
+    ):
+        return {}
+    try:
+        snapshot = _project_provider_health(
+            _load_provider_outcomes(_provider_outcome_ledger_path()),
+            _provider_health_policy(),
+            now=NOW,
+        )
+    except Exception:
+        return {}
+    entries = [*snapshot.providers.values(), *snapshot.models.values()]
+    last_success = max((entry.last_success for entry in entries if entry.last_success), default=None)
+    last_failure = max(
+        (entry.last_terminal_failure for entry in entries if entry.last_terminal_failure),
+        default=None,
     )
+    cooldown_expiry = max((entry.cooldown_until for entry in entries if entry.cooldown_until), default=None)
+    blocked = [entry for entry in entries if entry.blocked(NOW)]
+    return {
+        "provider_outcome_health": "degraded" if blocked else "ok",
+        "provider_cooldown_count": len(blocked),
+        "provider_last_success": last_success.isoformat() if last_success else None,
+        "provider_last_terminal_failure": last_failure.isoformat() if last_failure else None,
+        "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
+        "provider_health_snapshot_hash": snapshot.snapshot_hash(),
+    }
+
+
+def _parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Emit real per-vendor usage telemetry to logs/usage.json.")
     return parser.parse_args(argv)
 
 
@@ -484,16 +612,25 @@ def main(argv=None):
         # consumed from the LIVE dispatch-log count (today), like gemini/agy — never the persisted
         # per_agent accumulator, whose stale value deadlocked the lane (a full counter + a reset that
         # only persists on a beat that dispatches → jules gated to remaining=0 forever). [[no-never-happens-again]]
-        "jules": {"signal": "dispatch-count", "window": "rolling 24h", "consumed": dc.get("jules", 0),
-                  "unit": "runs", "note": "live dispatch count today vs cap — no stale accumulator"},
+        "jules": {
+            "signal": "dispatch-count",
+            "window": "rolling 24h",
+            "consumed": dc.get("jules", 0),
+            "unit": "runs",
+            "note": "live dispatch count today vs cap — no stale accumulator",
+        },
     }
     codex_vendor = codex_vendor_gauge()
     if codex_vendor is not None:
         vendors["codex"].update(codex_vendor)
     for v in ("gemini", "agy"):
-        vendors[v] = {"signal": "dispatch-count", "window": "today",
-                      "consumed": dc.get(v, 0), "unit": "runs",
-                      "note": "no readable meter — dispatch count + rate-limit watch"}
+        vendors[v] = {
+            "signal": "dispatch-count",
+            "window": "today",
+            "consumed": dc.get(v, 0),
+            "unit": "runs",
+            "note": "no readable meter — dispatch count + rate-limit watch",
+        }
 
     # opencode: prefer its internal DB meter (clock.json) over dispatch counting.
     # The SQLite DB tracks real token consumption per session, giving us a live
@@ -506,15 +643,24 @@ def main(argv=None):
         cap = _number_or_default(oc_clock.get("cap_tokens"), 0)
         note = "real token usage from opencode internal clock (SQLite DB)"
         vendors["opencode"] = {
-            "signal": "db-meter", "window": "today", "consumed": consumed,
-            "unit": "tokens", "possible": cap, "note": note,
+            "signal": "db-meter",
+            "window": "today",
+            "consumed": consumed,
+            "unit": "tokens",
+            "possible": cap,
+            "note": note,
             "health": oc_clock.get("health", "ok"),
             "clock_used_pct": _number_or_default(oc_clock.get("used_pct"), 0),
         }
     else:
-        vendors["opencode"] = {"signal": "dispatch-count", "window": "today",
-                               "consumed": dc.get("opencode", 0), "unit": "runs",
-                               "note": "no readable meter — dispatch count + rate-limit watch"}
+        vendors["opencode"] = {
+            "signal": "dispatch-count",
+            "window": "today",
+            "consumed": dc.get("opencode", 0),
+            "unit": "runs",
+            "note": "no readable meter — dispatch count + rate-limit watch",
+        }
+    vendors["opencode"].update(_provider_outcome_projection())
 
     # attach the "amount POSSIBLE" → headroom + the refresh-window PACING math for every vendor.
     # The split decision: never run a live lane to 0. Burning faster than safe_rate_per_h
@@ -544,8 +690,8 @@ def main(argv=None):
                 else lim.get("window") or v.get("window", "")
             )
             wh = _window_hours(window_label)
-            burn = round(v["consumed"] / wh) if wh else 0       # consumed-per-hour, in-window
-            safe = round(possible / wh) if wh else 0            # cap-per-hour = steady-state ceiling
+            burn = round(v["consumed"] / wh) if wh else 0  # consumed-per-hour, in-window
+            safe = round(possible / wh) if wh else 0  # cap-per-hour = steady-state ceiling
             v["window_hours"] = round(wh, 2)
             # the EFFECTIVE reserve decays toward the floor as this lane nears its reset, so headroom
             # that would just expire is spent instead — while a task in flight is never cut off at 0.
@@ -573,18 +719,18 @@ def main(argv=None):
             if recent_rl:
                 v["health"] = "rate-limited"
             elif healthy_headroom:
-                v["health"] = "ok"          # INVARIANT: cannot bench a lane that has real headroom
+                v["health"] = "ok"  # INVARIANT: cannot bench a lane that has real headroom
             elif v.get("signal") == "tokens":
                 # token "consumed" is LOCAL transcript spend (incl. the interactive session), NOT the
                 # vendor's true remaining budget — it can never PROVE a lane is down. Pace-down hint
                 # only; hard-down needs a real 429. So a bad/low cap can't falsely exhaust the lane.
                 v["health"] = "throttle" if (v["headroom_pct"] <= 0 or burn > safe) else "ok"
             elif remaining <= 0:
-                v["health"] = "exhausted"   # count lanes: real dispatch count hit the real cap
+                v["health"] = "exhausted"  # count lanes: real dispatch count hit the real cap
             elif v["headroom_pct"] <= eff_reserve:
-                v["health"] = "low"         # at/below the (decaying) reserve → stop, fuel still in tank
+                v["health"] = "low"  # at/below the (decaying) reserve → stop, fuel still in tank
             else:
-                v["health"] = "throttle"    # in (reserve, 2*reserve] or burn>safe → pace down, still up
+                v["health"] = "throttle"  # in (reserve, 2*reserve] or burn>safe → pace down, still up
         else:
             recent_rl = bool(rl.get(name)) or v.get("recent_rate_limit")
             v.setdefault("health", "rate-limited" if recent_rl else "ok")
@@ -594,22 +740,29 @@ def main(argv=None):
     logs.mkdir(exist_ok=True)
     (logs / "usage.json").write_text(json.dumps(out, indent=2))
     codex_suffix = "%" if vendors["codex"].get("unit") == "percent" else "tok"
-    print(f"usage-telemetry: codex {vendors['codex']['consumed']}{codex_suffix}/5h · "
-          f"claude {vendors['claude']['consumed']}tok/5h · jules {vendors['jules']['consumed']}/100 · "
-          f"gemini {vendors['gemini']['consumed']} · opencode {vendors['opencode']['consumed']} · agy {vendors['agy']['consumed']}")
+    print(
+        f"usage-telemetry: codex {vendors['codex']['consumed']}{codex_suffix}/5h · "
+        f"claude {vendors['claude']['consumed']}tok/5h · jules {vendors['jules']['consumed']}/100 · "
+        f"gemini {vendors['gemini']['consumed']} · opencode {vendors['opencode']['consumed']} · agy {vendors['agy']['consumed']}"
+    )
     gated = [n for n, v in vendors.items() if v.get("tcc_gated")]
     if gated:
-        print(f"  usage: {','.join(gated)} source TCC-gated (assuming healthy) — "
-              f"grant Full Disk Access to the daemon python to silence the macOS prompt")
+        print(
+            f"  usage: {','.join(gated)} source TCC-gated (assuming healthy) — "
+            f"grant Full Disk Access to the daemon python to silence the macOS prompt"
+        )
     # front-load visibility: which lanes will lose budget at their reset if pacing stays even, so the
     # accelerator's job is visible on screen (and on omni.html) instead of inferred.
     accel_on = os.environ.get("LIMEN_ACCEL", "1") == "1"
-    expiring = sorted(((n, v) for n, v in vendors.items() if v.get("will_expire")),
-                      key=lambda kv: -kv[1]["will_expire"])
+    expiring = sorted(
+        ((n, v) for n, v in vendors.items() if v.get("will_expire")), key=lambda kv: -kv[1]["will_expire"]
+    )
     if expiring:
-        parts = [f"{n} ~{v['will_expire']}{('tok' if v.get('unit') == 'tokens' else '')}"
-                 f"@{round((v.get('time_left_frac') or 0) * (v.get('window_hours') or 0), 1)}h"
-                 for n, v in expiring[:6]]
+        parts = [
+            f"{n} ~{v['will_expire']}{('tok' if v.get('unit') == 'tokens' else '')}"
+            f"@{round((v.get('time_left_frac') or 0) * (v.get('window_hours') or 0), 1)}h"
+            for n, v in expiring[:6]
+        ]
         print(f"  front-load [{'ON' if accel_on else 'OFF'}]: would-expire {' · '.join(parts)}")
 
 

@@ -64,6 +64,28 @@ from limen.provider_selection import (
     paid_service_block_reason,
     select_opencode_model,
 )
+from limen.provider_health import (
+    ProviderOutcome,
+    TRANSIENT_TERMINALS,
+    append_provider_outcome,
+    classify_provider_terminal,
+    execution_profile_hash,
+    load_provider_outcomes,
+    project_provider_health,
+    provider_for_model,
+    provider_health_policy,
+    provider_outcome_ledger_path,
+)
+from limen.plan_handoff import (
+    PlanHandoffResult,
+    PlanReceiptError,
+    build_plan_receipt,
+    builder_task_from_receipt,
+    is_build_from_plan,
+    is_plan_only,
+    select_live_builder,
+    validate_receipt_for_task,
+)
 from limen.remote_execution import (
     GitHubWorkflowAdapter,
     ReceiptStore,
@@ -92,6 +114,7 @@ from limen.worktree_debt import (
     admission_blocks,
     take_admission_snapshot,
 )
+from limen.worktree_initialization import WorktreeInitializationError, initialize_worktree
 from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
 from limen.work_loan import task_work_loan_readiness
 from limen.workstream_contract import (
@@ -279,23 +302,44 @@ def _oauth_unreachable_lanes() -> set[str]:
     return down
 
 
+def _provider_health_dead_lanes() -> set[str]:
+    """Bench OpenCode only when every observed provider is in auth/rate cooldown.
+
+    Exact-model health is task-profile dependent and remains enforced by
+    ``_opencode_model`` after live capability filtering.
+    """
+
+    try:
+        now = datetime.now(timezone.utc)
+        snapshot = project_provider_health(
+            load_provider_outcomes(provider_outcome_ledger_path()),
+            provider_health_policy(),
+            now=now,
+        )
+    except (OSError, TypeError, ValueError):
+        return set()
+    providers = list(snapshot.providers.values())
+    return {"opencode"} if providers and all(entry.blocked(now) for entry in providers) else set()
+
+
 def _down_lanes() -> set[str]:
-    """Lanes currently DOWN/unproductive. Three sources, unioned:
+    """Lanes currently DOWN/unproductive. Four sources, unioned:
       1. logs/lanes-down.txt — a manual override file (one lane per line, '#' comments ok) for
          lanes a human knows are dead (e.g. agy bin missing); NOT pinned in code.
       2. the LIVE usage meter (_usage_dead_lanes) — lanes token-exhausted or rate-limited RIGHT NOW.
       3. browser-OAuth lanes whose silent-auth endpoint is unreachable this beat (_oauth_unreachable_lanes)
          — so agy/antigravity can't spawn a Google sign-in tab while the Mac is asleep/offline.
+      4. append-only provider outcome health (_provider_health_dead_lanes), which benches OpenCode
+         when every observed provider is in auth/rate cooldown.
     Rebalance + dispatch + route skip these so tasks aren't wasted on a lane that can't produce.
-    Sources 2 & 3 self-heal (a lane rejoins when its window refills / the network returns); remove a line
-    from source 1 when that lane is healthy again (e.g. a paid GEMINI_API_KEY)."""
+    Sources 2–4 self-heal; remove a line from source 1 when that lane is healthy again."""
     f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "lanes-down.txt"
     manual: set[str] = set()
     try:
         manual = {ln.split("#")[0].strip() for ln in f.read_text().splitlines() if ln.split("#")[0].strip()}
     except OSError:
         pass
-    return manual | _usage_dead_lanes() | _oauth_unreachable_lanes()
+    return manual | _usage_dead_lanes() | _oauth_unreachable_lanes() | _provider_health_dead_lanes()
 
 
 def _run_capture(
@@ -913,6 +957,12 @@ def _effective_target_agent(task: Task) -> str:
     rewrite the task itself.
     """
 
+    if task.status == "open" and is_build_from_plan(task) and task.plan_receipt is not None:
+        try:
+            validate_receipt_for_task(task, task.plan_receipt)
+            return select_live_builder(task.plan_receipt) or "__plan_builder_unavailable__"
+        except PlanReceiptError:
+            return "__plan_builder_invalid__"
     if task.status == "open" and task.dispatch_log:
         latest = task.dispatch_log[-1]
         if latest.status == "open" and latest.route_to:
@@ -1542,6 +1592,8 @@ def _record_model_selection(
     selected_model: str | None,
     source: str,
     fingerprint: str | None = None,
+    health_snapshot_hash: str | None = None,
+    health_evidence: dict[str, object] | None = None,
 ) -> None:
     if task is None:
         return
@@ -1550,6 +1602,8 @@ def _record_model_selection(
         "selected_model": selected_model,
         "selection_source": source,
         "catalog_hash": fingerprint,
+        "health_snapshot_hash": health_snapshot_hash,
+        "provider_health_evidence": health_evidence,
     }
 
 
@@ -1561,7 +1615,7 @@ def session_id() -> str:
     return os.environ.get("CLAUDE_SESSION_ID", os.environ.get("GEMINI_SESSION_ID", "cli"))
 
 
-def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
+def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:
     agent = canonical_agent(agent)
     try:
         workstream_packet = _workstream_packet_for(task)
@@ -1619,7 +1673,7 @@ def _journaled_agent_dispatch(
     dry_run: bool,
     reservation_id: str,
     journal_root: Path | None = None,
-) -> bool | str:
+) -> bool | str | PlanHandoffResult:
     """Run one provider only after its work-capacity reservation is durable."""
 
     if dry_run:
@@ -1924,6 +1978,14 @@ def _build_prompt(task: Task, task_first: bool = False) -> str:
             "For PR-fix/rebase tasks, inspect that PR before editing; when available, dispatch "
             "bases this isolated branch on the PR head and targets the repair PR back to that head."
         )
+    if is_plan_only(task):
+        parts.append(
+            "\n\n--- PLAN-ONLY AUTHORITY ---\n"
+            "Do not edit, create, delete, move, or format files; do not commit, push, open a PR, "
+            "or mutate external state. Inspect the isolated checkout and return a concrete, "
+            "ordered implementation plan as stdout. The dispatcher will reject the handoff if "
+            "the worktree changes. Do not select or recommend a named model."
+        )
     body = f"{''.join(parts)}\n\n{_value_gate_discipline(task)}\n\n{_verification_discipline()}"
     flame = _flame_preamble()
     if not flame:
@@ -2159,7 +2221,7 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
     dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "organvm/limen")
     intent = (
         "Planning only: return a build packet and do not implement."
-        if requested_profile.planning_only and plan_accepted
+        if requested_profile.planning_only
         else "Execute the task and verify the narrow acceptance predicate."
     )
     prompt = (
@@ -2226,26 +2288,120 @@ def _opencode_model(task: Task | None = None) -> str | None:
     )
     requested = execution_profile_for(task)
     profile = effective_profile(requested, plan_accepted=_claude_fable_acceptance_present())
+    policy = provider_health_policy()
+    health = project_provider_health(
+        load_provider_outcomes(provider_outcome_ledger_path()),
+        policy,
+    )
+    health_hash = health.snapshot_hash()
     override = os.environ.get("LIMEN_OPENCODE_MODEL")
     if override:
-        selected = next((model for model in models if model.model_id == override and model.satisfies(profile)), None)
+        selected = next(
+            (
+                model
+                for model in models
+                if model.model_id == override
+                and model.satisfies(profile)
+                and health.allows(model.model_id, now=datetime.now(timezone.utc))
+            ),
+            None,
+        )
         _record_model_selection(
             task,
             profile=profile.as_dict(),
             selected_model=selected.model_id if selected else None,
-            source="opencode_override" if selected else "opencode_override_missing",
+            source="opencode_override" if selected else "opencode_override_missing_or_unhealthy",
             fingerprint=catalog_hash(models),
+            health_snapshot_hash=health_hash,
+            health_evidence=health.evidence_for(override),
         )
         return selected.model_id if selected else None
-    selected = select_opencode_model(models, profile)
+    selected = select_opencode_model(models, profile, health)
     _record_model_selection(
         task,
         profile=profile.as_dict(),
         selected_model=selected.model_id if selected else None,
-        source="opencode_live_catalog" if selected else "opencode_no_capable_model",
+        source="opencode_live_catalog_health" if selected else "opencode_no_healthy_capable_model",
         fingerprint=catalog_hash(models),
+        health_snapshot_hash=health_hash,
+        health_evidence=health.evidence_for(selected.model_id) if selected else None,
     )
     return selected.model_id if selected else None
+
+
+def _record_opencode_outcome(
+    task: Task,
+    *,
+    terminal_class: str,
+    started_at: datetime,
+    retry_count: int,
+    receipt_reference: str | None = None,
+) -> None:
+    """Append one redacted runtime outcome and enrich the task's selection receipt."""
+
+    selection = _MODEL_SELECTION_RECEIPTS.get(task.id)
+    if not selection:
+        return
+    model_id = str(selection.get("selected_model") or "")
+    fingerprint = str(selection.get("catalog_hash") or "")
+    profile = selection.get("execution_profile")
+    if not model_id or not re.fullmatch(r"[0-9a-f]{64}", fingerprint) or not isinstance(profile, dict):
+        return
+    finished_at = datetime.now(timezone.utc)
+    outcome = ProviderOutcome(
+        provider=provider_for_model(model_id),
+        runtime_model=model_id,
+        catalog_hash=fingerprint,
+        execution_profile_hash=execution_profile_hash(profile),
+        terminal_class=terminal_class,
+        started_at=started_at,
+        finished_at=finished_at,
+        retry_count=retry_count,
+        receipt_reference=receipt_reference or f"task:{task.id}",
+    )
+    path = provider_outcome_ledger_path()
+    try:
+        append_provider_outcome(path, outcome)
+        health = project_provider_health(
+            load_provider_outcomes(path),
+            provider_health_policy(),
+            now=finished_at,
+        )
+    except (OSError, TypeError, ValueError):
+        return
+    entry = health.models.get(model_id) or health.providers.get(provider_for_model(model_id))
+    selection.update(
+        {
+            "provider_terminal_class": terminal_class,
+            "provider_retry_count": retry_count,
+            "provider_cooldown_until": (entry.cooldown_until.isoformat() if entry and entry.cooldown_until else None),
+            "health_snapshot_hash": health.snapshot_hash(),
+            "provider_health_evidence": health.evidence_for(model_id),
+        }
+    )
+
+
+def _opencode_run_metadata(task: Task) -> tuple[datetime, int]:
+    selection = _MODEL_SELECTION_RECEIPTS.get(task.id) or {}
+    raw_started = str(selection.get("_provider_run_started_at") or "")
+    try:
+        started_at = datetime.fromisoformat(raw_started)
+    except ValueError:
+        started_at = datetime.now(timezone.utc)
+    if started_at.tzinfo is None:
+        started_at = started_at.replace(tzinfo=timezone.utc)
+    return started_at, int(selection.get("_provider_retry_count") or 0)
+
+
+def _record_opencode_success(task: Task, receipt_reference: str) -> None:
+    started_at, retry_count = _opencode_run_metadata(task)
+    _record_opencode_outcome(
+        task,
+        terminal_class="success",
+        started_at=started_at,
+        retry_count=retry_count,
+        receipt_reference=receipt_reference,
+    )
 
 
 _LOCAL_AGENTS: dict[str, list[str]] = {
@@ -3457,11 +3613,11 @@ def _blocked_result(reason: str) -> str:
     return _FAILED_BLOCKED_PREFIX + " ".join((reason or "blocked").split())[:500]
 
 
-def _is_blocked_result(result: bool | str) -> bool:
+def _is_blocked_result(result: object) -> bool:
     return isinstance(result, str) and result.startswith(_FAILED_BLOCKED_PREFIX)
 
 
-def _blocked_reason(result: bool | str) -> str:
+def _blocked_reason(result: object) -> str:
     if not _is_blocked_result(result):
         return ""
     return str(result)[len(_FAILED_BLOCKED_PREFIX) :]
@@ -3471,11 +3627,11 @@ def _workstream_successor_result(reason: str) -> str:
     return _WORKSTREAM_SUCCESSOR_PREFIX + " ".join((reason or "workstream boundary reached").split())[:500]
 
 
-def _is_workstream_successor_result(result: bool | str) -> bool:
+def _is_workstream_successor_result(result: object) -> bool:
     return isinstance(result, str) and result.startswith(_WORKSTREAM_SUCCESSOR_PREFIX)
 
 
-def _workstream_successor_reason(result: bool | str) -> str:
+def _workstream_successor_reason(result: object) -> str:
     if not _is_workstream_successor_result(result):
         return ""
     return str(result)[len(_WORKSTREAM_SUCCESSOR_PREFIX) :]
@@ -4191,7 +4347,9 @@ def _run_isolated_agent(
     wt: Path,
     agent_cmd: list[str],
     lane_timeout: int,
-) -> bool | str:
+    *,
+    retry_count: int = 0,
+) -> bool | str | PlanHandoffResult:
     try:
         run_env = _lane_run_env(agent, wt, task)
         if agent == "opencode":
@@ -4202,28 +4360,77 @@ def _run_isolated_agent(
         reason = str(exc)
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
         return _workstream_successor_result(reason)
-    try:
-        run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
-        # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
-        # a fresh process re-reads the now-rotated token. ONE retry only.
-        if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
-            print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
-            try:
-                run_env = _lane_run_env(agent, wt, task)
-                _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
-            except WorkstreamLaunchContractError as exc:
-                reason = str(exc)
-                print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
-                return _workstream_successor_result(reason)
+    started_at = datetime.now(timezone.utc)
+    max_retries = provider_health_policy().same_model_retries if agent == "opencode" else retry_count
+    while True:
+        try:
             run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
-    except subprocess.TimeoutExpired:
-        print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
-        return _TIMEOUT
+            # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
+            # a fresh process re-reads the now-rotated token. ONE retry only.
+            if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
+                print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
+                try:
+                    run_env = _lane_run_env(agent, wt, task)
+                    _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
+                except WorkstreamLaunchContractError as exc:
+                    reason = str(exc)
+                    print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
+                    return _workstream_successor_result(reason)
+                run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
+        except subprocess.TimeoutExpired:
+            if agent == "opencode":
+                _record_opencode_outcome(
+                    task,
+                    terminal_class="timeout",
+                    started_at=started_at,
+                    retry_count=retry_count,
+                )
+                if retry_count < max_retries:
+                    retry_count += 1
+                    print(f"  RETRY {task.id}: OpenCode timeout; same runtime model attempt {retry_count + 1}")
+                    continue
+            print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
+            return _TIMEOUT
+        if agent == "opencode" and run.returncode != 0:
+            terminal = classify_provider_terminal(
+                returncode=run.returncode,
+                output=(run.stderr or "") + (run.stdout or ""),
+            )
+            _record_opencode_outcome(
+                task,
+                terminal_class=terminal,
+                started_at=started_at,
+                retry_count=retry_count,
+            )
+            if terminal in TRANSIENT_TERMINALS and retry_count < max_retries:
+                retry_count += 1
+                print(f"  RETRY {task.id}: OpenCode {terminal}; same runtime model attempt {retry_count + 1}")
+                continue
+        break
 
     if agent == "opencode":
         _show_opencode_clock_after_run(task)
     if run.returncode != 0:
         return _failed_agent_result(agent, task, run)
+    if is_plan_only(task):
+        status = _git(["status", "--porcelain", "-z"], wt)
+        if status.returncode != 0:
+            return _blocked_result("plan-only worktree status is unreadable")
+        if status.stdout:
+            return _blocked_result("plan-only worker mutated the isolated worktree")
+        try:
+            receipt = build_plan_receipt(task, run.stdout or "", planner_agent=agent)
+        except PlanReceiptError as exc:
+            return _blocked_result(f"invalid plan-only result: {exc}")
+        if agent == "opencode":
+            _record_opencode_outcome(
+                task,
+                terminal_class="success",
+                started_at=started_at,
+                retry_count=retry_count,
+                receipt_reference=f"plan:{receipt['receipt_digest']}",
+            )
+        return PlanHandoffResult(receipt=receipt)
     if agent in ("agy", "antigravity"):
         _bridge_agy_scratch(task, wt)
     if agent == "ollama":
@@ -4235,6 +4442,9 @@ def _run_isolated_agent(
             reports = wt / "reports"
             reports.mkdir(exist_ok=True)
             (reports / f"{task.id}.md").write_text(out + "\n")
+    if agent == "opencode" and (selection := _MODEL_SELECTION_RECEIPTS.get(task.id)) is not None:
+        selection["_provider_run_started_at"] = started_at.isoformat()
+        selection["_provider_retry_count"] = retry_count
     return True
 
 
@@ -4517,7 +4727,7 @@ def _isolated_local_run(
     task: Task,
     dry_run: bool,
     base_agent_args: list[str] | None = None,
-) -> bool | str:
+) -> bool | str | PlanHandoffResult:
     binary = _resolve_agent_binary(agent)
     repo_dir = _resolve_repo_dir(task)
     if repo_dir is None and not dry_run:
@@ -4580,7 +4790,8 @@ def _isolated_local_run(
     # 1) fresh base from origin — never the user's possibly-dirty working tree.
     # Hold the git-plumbing lock only for these fast parent-repo ops so concurrent
     # same-repo dispatches don't collide on index.lock (the slow run is unlocked).
-    add = subprocess.CompletedProcess([], 1, "", "worktree add was not attempted")
+    initialization_error = "worktree initialization was not attempted"
+    initialized = False
     for attempt in range(6):
         if attempt:
             suffix = secrets.token_hex(4)
@@ -4596,15 +4807,30 @@ def _isolated_local_run(
                 if wt.exists():
                     print(f"  retrying worktree add {task.id}: preserved existing worktree at {wt}")
                     continue
-            add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), checkout_ref], repo_dir, timeout=120)
-        if add.returncode == 0:
+            try:
+                initialize_worktree(
+                    repo_dir,
+                    wt,
+                    branch=branch,
+                    checkout_ref=checkout_ref,
+                    task_id=task.id,
+                )
+            except WorktreeInitializationError as exc:
+                initialization_error = str(exc)
+            else:
+                initialized = True
+        if initialized:
             break
-        if re.search(r"branch .* already exists|is already checked out", add.stderr or "", re.IGNORECASE):
+        if re.search(
+            r"branch .* already exists|is already checked out",
+            initialization_error,
+            re.IGNORECASE,
+        ):
             print(f"  retrying worktree add {task.id}: stale branch collision on {branch}")
             continue
         break
-    if add.returncode != 0:
-        print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
+    if not initialized:
+        print(f"  FAILED transactional worktree initialization {task.id}: {initialization_error[:300]}")
         return False
     _record_worktree_birth(task, wt, branch, checkout_ref, pr_base, existing_pr=bool(pr_head))
     _mark_machine_admission_born(task.id)
@@ -4615,15 +4841,45 @@ def _isolated_local_run(
         agent_cmd = [binary, *agent_args, prompt]
         start_head_result = _git(["rev-parse", "HEAD"], wt)
         start_head = start_head_result.stdout.strip() if start_head_result.returncode == 0 else ""
-        run_result = _run_isolated_agent(agent, task, wt, agent_cmd, lane_timeout)
-        if run_result is not True:
-            return run_result
+        retry_count = 0
+        while True:
+            if agent == "opencode":
+                run_result = _run_isolated_agent(
+                    agent,
+                    task,
+                    wt,
+                    agent_cmd,
+                    lane_timeout,
+                    retry_count=retry_count,
+                )
+            else:
+                run_result = _run_isolated_agent(agent, task, wt, agent_cmd, lane_timeout)
+            if isinstance(run_result, PlanHandoffResult):
+                return run_result
+            if run_result is not True:
+                return run_result
 
-        commit_result = _commit_isolated_changes(task, wt)
-        if pr_head:
+            commit_result = _commit_isolated_changes(task, wt)
+            current_retry = _opencode_run_metadata(task)[1] if agent == "opencode" else retry_count
             current_head_result = _git(["rev-parse", "HEAD"], wt)
             current_head = current_head_result.stdout.strip() if current_head_result.returncode == 0 else ""
             agent_committed = bool(start_head and current_head and current_head != start_head)
+            no_output = commit_result == _NOOP and not agent_committed
+            if agent == "opencode" and no_output:
+                started_at, _ = _opencode_run_metadata(task)
+                _record_opencode_outcome(
+                    task,
+                    terminal_class="no_output",
+                    started_at=started_at,
+                    retry_count=current_retry,
+                )
+                if current_retry < provider_health_policy().same_model_retries:
+                    retry_count = current_retry + 1
+                    print(f"  RETRY {task.id}: OpenCode no_output; same runtime model attempt {retry_count + 1}")
+                    continue
+            break
+
+        if pr_head:
             if commit_result == _NOOP and not agent_committed:
                 return commit_result
             if commit_result is not True and not (commit_result == _NOOP and agent_committed):
@@ -4634,6 +4890,8 @@ def _isolated_local_run(
             url = _existing_pr_url(pr_head)
             print(f"  dispatched: {task.id} → existing PR {url}")
             _arm_auto_merge(task, wt, url)
+            if agent == "opencode":
+                _record_opencode_success(task, url)
             return url
 
         if commit_result is not True:
@@ -4642,7 +4900,10 @@ def _isolated_local_run(
         if not _push_isolated_branch(task, wt, branch):
             return False
         pushed = True
-        return _create_isolated_pr(task, wt, pr_base, branch)
+        result = _create_isolated_pr(task, wt, pr_base, branch)
+        if agent == "opencode" and isinstance(result, str):
+            _record_opencode_success(task, result)
+        return result
     finally:
         # leave the user's checkout pristine: drop the worktree, and the local
         # branch too once its commits are safely on the remote, or when the attempt
@@ -4651,7 +4912,7 @@ def _isolated_local_run(
             _cleanup_isolated_worktree(repo_dir, wt, branch, checkout_ref, pushed=pushed, task=task)
 
 
-def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
+def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:
     if not agent_can_run_task(agent, task):
         print(f"  SKIP {task.id}: {agent} is gated for Limen registry discovery tasks")
         return False
@@ -4669,7 +4930,7 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
         print(f"  BLOCKED {task.id}: {exc}; refusing provider launch so the lane can cascade")
         return False
     if agent == "opencode" and "-m" not in agent_args:
-        reason = "no code-capable model is exposed by the live OpenCode catalog"
+        reason = "no healthy code-capable model is exposed by the live OpenCode catalog"
         if dry_run:
             print(f"  would BLOCK {task.id}: {reason}")
             return True
@@ -4756,7 +5017,7 @@ def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
     return max(0, budget - track.spent)
 
 
-DispatchResult = tuple[str, str, bool | str, str, str]
+DispatchResult = tuple[str, str, bool | str | PlanHandoffResult, str, str]
 
 
 def _clear_result_receipts(task_id: str) -> None:
@@ -5025,7 +5286,7 @@ def dispatch_tasks(
 def _apply_result(
     task: Task,
     agent: str,
-    result: bool | str,
+    result: bool | str | PlanHandoffResult,
     now: datetime,
     track: BudgetTrack,
     *,
@@ -5054,10 +5315,13 @@ def _apply_result(
     # same failure would violate the fixed-point contract.
     if successor_held:
         return
-    successful_result = bool(result) and result not in {_NOOP, _RATELIMIT, _TIMEOUT}
-    successful_result = (
-        successful_result and not _is_blocked_result(result) and not _is_workstream_successor_result(result)
-    )
+    if isinstance(result, PlanHandoffResult):
+        successful_result = True
+    else:
+        successful_result = bool(result) and result not in {_NOOP, _RATELIMIT, _TIMEOUT}
+        successful_result = (
+            successful_result and not _is_blocked_result(result) and not _is_workstream_successor_result(result)
+        )
     if (
         not successor_held
         and not successful_result
@@ -5071,7 +5335,38 @@ def _apply_result(
         return
 
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
-    if result == _NOOP:
+    if isinstance(result, PlanHandoffResult):
+        try:
+            builder = select_live_builder(result.receipt)
+            builder_view = builder_task_from_receipt(
+                task,
+                result.receipt,
+                builder=builder or "__plan_builder_unavailable__",
+            )
+        except PlanReceiptError as exc:
+            entry.status = "failed_blocked"
+            entry.output = f"plan receipt rejected: {exc}"
+            task.status = "failed_blocked"
+            if "blocked:plan-receipt" not in task.labels:
+                task.labels.append("blocked:plan-receipt")
+        else:
+            task.target_agent = builder_view.target_agent
+            task.labels = builder_view.labels
+            task.context = builder_view.context
+            task.claude_tier = None
+            task.plan_receipt = result.receipt
+            task.status = "open"
+            entry.status = "open"
+            entry.route_to = builder
+            entry.output = (
+                "validated plan receipt recorded; builder will be selected again from live capabilities at claim time"
+            )
+            if builder is None:
+                entry.output += "; no capable builder is currently reachable"
+            if charge_budget:
+                track.spent += task.budget_cost
+                track.per_agent[agent] = track.per_agent.get(agent, 0) + task.budget_cost
+    elif result == _NOOP:
         entry.status = "failed"
         entry.output = "No-op result; failed for recovery instead of archived."
         task.status = "failed"
@@ -5166,6 +5461,11 @@ def _apply_result(
         entry.selected_model = selection.get("selected_model")
         entry.selection_source = selection.get("selection_source")
         entry.catalog_hash = selection.get("catalog_hash")
+        entry.health_snapshot_hash = selection.get("health_snapshot_hash")
+        entry.provider_terminal_class = selection.get("provider_terminal_class")
+        entry.provider_retry_count = selection.get("provider_retry_count")
+        entry.provider_cooldown_until = selection.get("provider_cooldown_until")
+        entry.provider_health_evidence = selection.get("provider_health_evidence")
     if consume_receipts and (remote := _REMOTE_SUBMISSION_RECEIPTS.get(task.id)):
         entry.provider_run_id = remote.get("provider_run_id")
         entry.provider_url = remote.get("provider_url")

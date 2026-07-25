@@ -92,6 +92,7 @@ def test_owner_repo_inventory_paginates_private_repositories_and_reconciles_tota
                             {
                                 "nameWithOwner": "renamed/private-repo",
                                 "isPrivate": True,
+                                "isArchived": True,
                                 "pullRequests": {"totalCount": 1001},
                             }
                         ],
@@ -109,6 +110,7 @@ def test_owner_repo_inventory_paginates_private_repositories_and_reconciles_tota
                             {
                                 "nameWithOwner": "renamed/public-repo",
                                 "isPrivate": False,
+                                "isArchived": False,
                                 "pullRequests": {"totalCount": 0},
                             }
                         ],
@@ -126,7 +128,9 @@ def test_owner_repo_inventory_paginates_private_repositories_and_reconciles_tota
     assert inventory["repository_total"] == 2
     assert inventory["page_count"] == 2
     assert inventory["repositories"][0]["private"] is True
+    assert inventory["repositories"][0]["archived"] is True
     assert inventory["repositories"][0]["open_pr_total"] == 1001
+    assert "isArchived" in calls[0][3]
     assert "cursor=repos-2" in calls[1]
 
 
@@ -247,7 +251,16 @@ def test_pr_classification_preserves_owner_and_actionable_route_contracts() -> N
     }
 
     active = module._classify_open_pr("example/repo", {**base, "updatedAt": "2026-07-21T11:00:00Z"}, policy, now)
-    routed = module._classify_open_pr("example/repo", {**base, "updatedAt": "2026-07-01T00:00:00Z"}, policy, now)
+    routed = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "updatedAt": "2026-07-01T00:00:00Z",
+            "labels": {"nodes": [{"name": "lifecycle:delivery"}]},
+        },
+        policy,
+        now,
+    )
     preserved = module._classify_open_pr(
         "example/repo",
         {
@@ -261,10 +274,74 @@ def test_pr_classification_preserves_owner_and_actionable_route_contracts() -> N
 
     assert active["classification"] == "active_custody"
     assert active["owner"] == "claude-owner"
+    assert active["lifecycle_complete"] is False
+    assert active["lifecycle_disposition"] is None
     assert routed["classification"] == "owner_route"
+    assert routed["lifecycle_disposition"] == "lifecycle:delivery"
+    assert routed["lifecycle_complete"] is True
+    assert routed["exact_head_owner"]["head_oid"] == "a" * 40
     assert routed["predicate"].endswith("@" + "a" * 40)
     assert "merge-queue" in routed["merge_condition"]
     assert preserved["classification"] == "preservation"
+    assert preserved["lifecycle_disposition"] == "lifecycle:preservation"
+    assert preserved["lifecycle_disposition_source"] == "legacy-preservation-marker"
+
+
+def test_pr_lifecycle_conflicts_and_unowned_supersession_fail_closed() -> None:
+    module = _load()
+    now = datetime(2026, 7, 21, 12, tzinfo=UTC)
+    base = {
+        "number": 8,
+        "url": "https://example.invalid/pull/8",
+        "title": "work",
+        "isDraft": False,
+        "updatedAt": "2026-07-21T11:00:00Z",
+        "headRefName": "topic",
+        "headRefOid": "b" * 40,
+        "body": "",
+        "author": {"login": "owner"},
+        "assignees": {"nodes": []},
+    }
+    conflicting = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "labels": {
+                "nodes": [
+                    {"name": "lifecycle:delivery"},
+                    {"name": "lifecycle:blocked"},
+                ]
+            },
+        },
+        {},
+        now,
+    )
+    superseded = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "labels": {"nodes": [{"name": "lifecycle:superseded"}]},
+        },
+        {},
+        now,
+    )
+    held = module._classify_open_pr(
+        "example/repo",
+        {
+            **base,
+            "body": "Superseded by: example/repo#9",
+            "labels": {"nodes": [{"name": "lifecycle:superseded"}]},
+        },
+        {},
+        now,
+    )
+
+    assert conflicting["lifecycle_disposition"] is None
+    assert conflicting["lifecycle_disposition_source"] == "conflicting-labels"
+    assert conflicting["lifecycle_complete"] is False
+    assert superseded["lifecycle_debt_reasons"] == ["missing-supersession-target"]
+    assert held["supersession_target"] == "example/repo#9"
+    assert held["lifecycle_complete"] is True
 
 
 def test_private_pr_rows_are_redacted_in_tracked_projection() -> None:
@@ -287,8 +364,13 @@ def test_private_pr_rows_are_redacted_in_tracked_projection() -> None:
     assert redacted["number"] is None
     assert redacted["url"] is None
     assert redacted["owner"] is None
+    assert redacted["head_oid"] is None
+    assert redacted["exact_head_owner"] is None
     assert redacted["predicate"] is None
+    assert redacted["receipt_target"] is None
     assert redacted["merge_condition"] is None
+    assert redacted["dependencies"] is None
+    assert redacted["supersession_target"] is None
     assert len(redacted["pr_key"]) == 64
 
 
@@ -351,7 +433,34 @@ def test_pr_debt_census_deduplicates_renamed_owner_aliases(monkeypatch) -> None:
     assert full["canonical_owner_count"] == 1
     assert full["open_pr_count"] == 1
     assert full["exhaustive"] is True
+    assert full["classification_untyped_count"] == 0
+    assert full["lifecycle_untyped_count"] == 1
+    assert full["untyped_count"] == 1
+    assert full["lifecycle_disposition_counts"] == {"untyped": 1}
     assert tracked["cursor_reconciliation"]["failure_count"] == 0
+
+
+def test_archived_repository_owns_missing_disposition_as_blocked() -> None:
+    module = _load()
+    row = {
+        "private": False,
+        "lifecycle_disposition": None,
+        "lifecycle_disposition_source": "missing-label",
+        "lifecycle_label_matches": [],
+        "exact_head_owner": {"owner": "owner", "head_oid": "a" * 40},
+        "lifecycle_debt_reasons": ["missing-or-conflicting-lifecycle-disposition"],
+        "lifecycle_complete": False,
+    }
+
+    result = module._apply_repository_state(
+        row,
+        {"private": False, "archived": True},
+    )
+
+    assert result["lifecycle_disposition"] == "lifecycle:blocked"
+    assert result["lifecycle_disposition_source"] == "repository-archived-immutable"
+    assert result["lifecycle_debt_reasons"] == []
+    assert result["lifecycle_complete"] is True
 
 
 def test_tracked_failed_census_exposes_count_without_private_failure_names(monkeypatch) -> None:

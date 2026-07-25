@@ -31,7 +31,10 @@ from typing import Any, Callable, Iterator
 from limen.vigilia import params
 
 STATE_SCHEMA = "limen.host_admission_state.v1"
+SCOPED_STATE_SCHEMA = "limen.host_admission_scoped_state.v1"
 DECISION_SCHEMA = "limen.host_admission_decision.v1"
+READER_PROTOCOL = "limen.host_admission_reader.v2"
+POLICY_REVISION = "2026-07-20.dual-state.v1"
 LEASE_KINDS = frozenset({"execution", "heavy"})
 SCOPED_EXECUTION_RE = re.compile(r"^execution:[0-9a-f]{64}$")
 DENIED_EXIT = 3
@@ -78,7 +81,42 @@ class _ProcBsdInfo(ctypes.Structure):
 
 
 class AdmissionStateError(RuntimeError):
-    """The lease store cannot be trusted without operator repair."""
+    """The lease store cannot be trusted without operator repair.
+
+    The structured fields intentionally describe the protocol seam, never the
+    contents of a hook prompt or transcript.  Callers can therefore give an
+    operator a useful fail-closed diagnostic without dumping the state file.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        invalid_field: str = "unknown",
+        writer_protocol: str = "unknown",
+        state_path: Path | None = None,
+        lease_pid: int | None = None,
+        lease_process_identity: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.invalid_field = invalid_field
+        self.reader_protocol = READER_PROTOCOL
+        self.writer_protocol = writer_protocol
+        self.state_path = state_path
+        self.lease_pid = lease_pid
+        self.lease_process_identity = lease_process_identity
+
+    def diagnostic(self) -> dict[str, Any]:
+        return {
+            "error": str(self),
+            "invalid_field": self.invalid_field,
+            "reader_protocol": self.reader_protocol,
+            "writer_protocol": self.writer_protocol,
+            "state_file": self.state_path.name if self.state_path is not None else None,
+            "lease_pid": self.lease_pid,
+            "lease_process_identity": self.lease_process_identity,
+            "safe_next_command": "python3 scripts/host-work-admission.py diagnose",
+        }
 
 
 class AdmissionDenied(RuntimeError):
@@ -110,6 +148,40 @@ def _valid_lease_kind(kind: object) -> bool:
 
 def _is_execution_kind(kind: object) -> bool:
     return isinstance(kind, str) and (kind == "execution" or bool(SCOPED_EXECUTION_RE.fullmatch(kind)))
+
+
+def _is_interrupted_migration(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    """Return True when two records with the same lease_id are a plausible crash-interrupted migration pair.
+
+    A write crash between the two ``_write_file()`` calls in ``_write()`` can
+    leave the same lease_id in both stores with only the ``kind`` field
+    differing: the legacy store retains the old ``"execution"`` kind and the
+    scoped store already holds the promoted ``"execution:<sha256>"`` kind.  All
+    other fields are identical in that case, so ``_load()`` can converge
+    automatically instead of permanently wedging the admission surface.
+    """
+    kinds = {str(a.get("kind", "")), str(b.get("kind", ""))}
+    if "execution" not in kinds:
+        return False
+    if not any(SCOPED_EXECUTION_RE.fullmatch(k) for k in kinds):
+        return False
+    # Every field except 'kind' must be identical for a plausible migration.
+    rest_a = {k: v for k, v in a.items() if k != "kind"}
+    rest_b = {k: v for k, v in b.items() if k != "kind"}
+    return rest_a == rest_b
+
+
+def _is_interrupted_scoped_refresh(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    """Accept only one torn refresh of the same scoped lease identity."""
+
+    kind_a = str(a.get("kind", ""))
+    kind_b = str(b.get("kind", ""))
+    if kind_a != kind_b or not SCOPED_EXECUTION_RE.fullmatch(kind_a):
+        return False
+    volatile = {"refreshed_at", "refreshed_epoch", "expires_at", "expires_epoch"}
+    identity_a = {key: value for key, value in a.items() if key not in volatile}
+    identity_b = {key: value for key, value in b.items() if key not in volatile}
+    return identity_a == identity_b
 
 
 def worktree_scope(cwd: str | os.PathLike[str]) -> WorktreeScope:
@@ -574,31 +646,182 @@ class AdmissionController:
 
     @property
     def state_path(self) -> Path:
+        """Legacy store consumed by readers that only understand global leases."""
+
         return self.root / "state.json"
+
+    @property
+    def scoped_state_path(self) -> Path:
+        """Sibling store for worktree-scoped execution leases."""
+
+        return self.root / "scoped-state.json"
 
     def _empty_state(self) -> dict[str, Any]:
         return {"schema": STATE_SCHEMA, "leases": [], "pressure": None}
 
-    def _load(self) -> dict[str, Any]:
-        if not self.state_path.exists():
-            return self._empty_state()
+    def _empty_scoped_state(self) -> dict[str, Any]:
+        return {"schema": SCOPED_STATE_SCHEMA, "leases": []}
+
+    @staticmethod
+    def _lease_invalid_field(lease: object, *, scoped_only: bool) -> str | None:
+        if not isinstance(lease, dict):
+            return "record"
+        required = (
+            "lease_id",
+            "kind",
+            "owner",
+            "surface",
+            "pid",
+            "process_identity",
+            "expires_epoch",
+        )
+        for field in required:
+            value = lease.get(field)
+            if value is None or value == "":
+                return field
+        kind = lease.get("kind")
+        if scoped_only:
+            if not isinstance(kind, str) or SCOPED_EXECUTION_RE.fullmatch(kind) is None:
+                return "kind"
+        elif not _valid_lease_kind(kind):
+            # The legacy reader accepts scoped records only long enough for the
+            # current writer to migrate them under the shared lock.
+            return "kind"
         try:
-            if stat.S_ISLNK(self.state_path.lstat().st_mode):
-                raise AdmissionStateError("host admission state must not be a symlink")
+            if int(lease["pid"]) <= 0:
+                return "pid"
+            if float(lease["expires_epoch"]) <= 0:
+                return "expires_epoch"
+        except (TypeError, ValueError):
+            return "pid_or_expires_epoch"
+        return None
+
+    def _read_state_file(
+        self,
+        path: Path,
+        *,
+        schema: str,
+        scoped_only: bool,
+        missing: dict[str, Any],
+    ) -> dict[str, Any]:
+        if not path.exists():
+            return missing
+        try:
+            if stat.S_ISLNK(path.lstat().st_mode):
+                raise AdmissionStateError(
+                    "host admission state must not be a symlink",
+                    invalid_field="path.symlink",
+                    state_path=path,
+                )
         except OSError as exc:
-            raise AdmissionStateError("host admission state is unavailable") from exc
+            raise AdmissionStateError(
+                "host admission state is unavailable",
+                invalid_field="path",
+                state_path=path,
+            ) from exc
         try:
-            raw = json.loads(self.state_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            raise AdmissionStateError("host admission state is corrupt; preserved for inspection") from exc
-        if not isinstance(raw, dict) or raw.get("schema") != STATE_SCHEMA:
-            raise AdmissionStateError("host admission state schema is invalid; preserved for inspection")
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except OSError as exc:
+            raise AdmissionStateError(
+                "host admission state is unavailable; preserved for inspection",
+                invalid_field="file.read",
+                state_path=path,
+            ) from exc
+        except json.JSONDecodeError as exc:
+            raise AdmissionStateError(
+                "host admission state is corrupt; preserved for inspection",
+                invalid_field=f"json:{exc.lineno}:{exc.colno}",
+                state_path=path,
+            ) from exc
+        writer_protocol = str(raw.get("schema") or "missing") if isinstance(raw, dict) else type(raw).__name__
+        if not isinstance(raw, dict) or raw.get("schema") != schema:
+            raise AdmissionStateError(
+                "host admission state schema is invalid; preserved for inspection",
+                invalid_field="schema",
+                writer_protocol=writer_protocol,
+                state_path=path,
+            )
         leases = raw.get("leases")
-        if not isinstance(leases, list) or any(not self._valid_lease(lease) for lease in leases):
-            raise AdmissionStateError("host admission lease record is invalid; preserved for inspection")
-        if raw.get("pressure") is not None and not isinstance(raw.get("pressure"), dict):
-            raise AdmissionStateError("host admission pressure record is invalid; preserved for inspection")
+        if not isinstance(leases, list):
+            raise AdmissionStateError(
+                "host admission lease record is invalid; preserved for inspection",
+                invalid_field="leases",
+                writer_protocol=writer_protocol,
+                state_path=path,
+            )
+        for index, lease in enumerate(leases):
+            invalid = self._lease_invalid_field(lease, scoped_only=scoped_only)
+            if invalid is not None:
+                lease_map = lease if isinstance(lease, dict) else {}
+                pid = lease_map.get("pid")
+                raise AdmissionStateError(
+                    "host admission lease record is invalid; preserved for inspection",
+                    invalid_field=f"leases[{index}].{invalid}",
+                    writer_protocol=writer_protocol,
+                    state_path=path,
+                    lease_pid=int(pid) if isinstance(pid, int) and not isinstance(pid, bool) else None,
+                    lease_process_identity=(
+                        str(lease_map.get("process_identity"))
+                        if lease_map.get("process_identity") not in {None, ""}
+                        else None
+                    ),
+                )
+        if not scoped_only and raw.get("pressure") is not None and not isinstance(raw.get("pressure"), dict):
+            raise AdmissionStateError(
+                "host admission pressure record is invalid; preserved for inspection",
+                invalid_field="pressure",
+                writer_protocol=writer_protocol,
+                state_path=path,
+            )
         return raw
+
+    def _load(self) -> dict[str, Any]:
+        legacy = self._read_state_file(
+            self.state_path,
+            schema=STATE_SCHEMA,
+            scoped_only=False,
+            missing=self._empty_state(),
+        )
+        scoped = self._read_state_file(
+            self.scoped_state_path,
+            schema=SCOPED_STATE_SCHEMA,
+            scoped_only=True,
+            missing=self._empty_scoped_state(),
+        )
+        union: list[dict[str, Any]] = []
+        by_id: dict[str, dict[str, Any]] = {}
+        for lease in [*legacy["leases"], *scoped["leases"]]:
+            lease_id = str(lease["lease_id"])
+            prior = by_id.get(lease_id)
+            if prior is not None:
+                if prior != lease:
+                    if _is_interrupted_migration(prior, lease):
+                        # Write crash: the legacy store kept the old "execution" kind
+                        # while the scoped store already received the promoted kind.
+                        # Prefer the scoped record; prior is shared by both by_id and union.
+                        prior["kind"] = next(
+                            k
+                            for k in (str(prior.get("kind", "")), str(lease.get("kind", "")))
+                            if SCOPED_EXECUTION_RE.fullmatch(k)
+                        )
+                    elif _is_interrupted_scoped_refresh(prior, lease):
+                        # A refresh can tear between the two atomic store writes. Keep
+                        # the newest copy only when the durable lease identity matches.
+                        if float(lease["refreshed_epoch"]) > float(prior["refreshed_epoch"]):
+                            prior.clear()
+                            prior.update(lease)
+                    else:
+                        raise AdmissionStateError(
+                            "host admission lease identity is duplicated with different records; preserved for inspection",
+                            invalid_field=f"leases[{lease_id}].duplicate",
+                            writer_protocol=f"{STATE_SCHEMA}+{SCOPED_STATE_SCHEMA}",
+                            state_path=self.scoped_state_path,
+                        )
+                continue
+            copied = dict(lease)
+            by_id[lease_id] = copied
+            union.append(copied)
+        return {"schema": STATE_SCHEMA, "leases": union, "pressure": legacy.get("pressure")}
 
     @staticmethod
     def _valid_lease(lease: object) -> bool:
@@ -621,9 +844,9 @@ class AdmissionController:
         except (TypeError, ValueError):
             return False
 
-    def _write(self, state: dict[str, Any]) -> None:
+    def _write_file(self, path: Path, state: dict[str, Any]) -> None:
         payload = (json.dumps(state, indent=2, sort_keys=True) + "\n").encode()
-        tmp = self.root / f".state.{os.getpid()}.{uuid.uuid4().hex}.tmp"
+        tmp = self.root / f".{path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
         flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
         if hasattr(os, "O_NOFOLLOW"):
             flags |= os.O_NOFOLLOW
@@ -633,12 +856,33 @@ class AdmissionController:
                 handle.write(payload)
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.replace(tmp, self.state_path)
+            os.replace(tmp, path)
         except BaseException:
             tmp.unlink(missing_ok=True)
             raise
         finally:
             os.close(fd)
+
+    def _write(self, state: dict[str, Any]) -> None:
+        legacy = {
+            "schema": STATE_SCHEMA,
+            "leases": [
+                ({**dict(lease), "kind": "execution"} if SCOPED_EXECUTION_RE.fullmatch(lease["kind"]) else dict(lease))
+                for lease in state["leases"]
+                if lease["kind"] in LEASE_KINDS or SCOPED_EXECUTION_RE.fullmatch(lease["kind"])
+            ],
+            "pressure": state.get("pressure"),
+        }
+        scoped = {
+            "schema": SCOPED_STATE_SCHEMA,
+            "leases": [dict(lease) for lease in state["leases"] if SCOPED_EXECUTION_RE.fullmatch(lease["kind"])],
+        }
+        # Both stores share the same advisory lock. Publish the scoped file first,
+        # then project each scoped lease into legacy as a global execution lease.
+        # Older readers remain conservatively serialized during the rolling update,
+        # while current readers pair the projection with its exact scoped record.
+        self._write_file(self.scoped_state_path, scoped)
+        self._write_file(self.state_path, legacy)
         directory = os.open(self.root, os.O_RDONLY)
         try:
             os.fsync(directory)
@@ -1043,6 +1287,49 @@ class AdmissionController:
                 state=state,
                 reaped=reaped,
             )
+
+    def diagnose(self) -> dict[str, Any]:
+        """Inspect protocol compatibility without mutating or cleaning either store."""
+
+        try:
+            with self._locked():
+                state = self._load()
+        except AdmissionStateError as exc:
+            return {
+                "schema": "limen.host_admission_diagnostic.v1",
+                "valid": False,
+                **exc.diagnostic(),
+            }
+        return {
+            "schema": "limen.host_admission_diagnostic.v1",
+            "valid": True,
+            "reader_protocol": READER_PROTOCOL,
+            "legacy_schema": STATE_SCHEMA,
+            "scoped_schema": SCOPED_STATE_SCHEMA,
+            "legacy_state_file": self.state_path.name,
+            "scoped_state_file": self.scoped_state_path.name,
+            "legacy_lease_count": sum(lease["kind"] in LEASE_KINDS for lease in state["leases"]),
+            "scoped_lease_count": sum(bool(SCOPED_EXECUTION_RE.fullmatch(lease["kind"])) for lease in state["leases"]),
+            "safe_next_command": "python3 scripts/host-work-admission.py status --no-probe",
+        }
+
+
+def host_admission_capabilities() -> dict[str, Any]:
+    """Versioned protocol response consumed by immutable host wrappers."""
+
+    return {
+        "schema": "limen.codex_host_admission_capabilities.v1",
+        "reader_protocol": READER_PROTOCOL,
+        "policy_revision": POLICY_REVISION,
+        "state_schemas": {
+            "legacy": STATE_SCHEMA,
+            "scoped": SCOPED_STATE_SCHEMA,
+        },
+        "lease_kinds": ["execution", "heavy", "execution:<sha256>"],
+        "stable_action_denial": True,
+        "single_rejection_channel": True,
+        "migration": "scoped-leases-move-out-of-legacy-under-shared-lock",
+    }
 
 
 @contextmanager

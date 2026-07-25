@@ -85,6 +85,11 @@ class DispatchLogEntry(BaseModel):
     selected_model: Optional[str] = None
     selection_source: Optional[str] = None
     catalog_hash: Optional[str] = None
+    health_snapshot_hash: Optional[str] = None
+    provider_terminal_class: Optional[str] = None
+    provider_retry_count: Optional[int] = None
+    provider_cooldown_until: Optional[datetime] = None
+    provider_health_evidence: Optional[Dict[str, Any]] = None
     output: Optional[str] = None
 
     @field_validator("status")

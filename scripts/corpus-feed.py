@@ -20,6 +20,11 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser().resolve()
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "cli" / "src"))
+
+from limen.session_atoms import AtomStreamError, atoms_store_root, atoms_summary  # noqa: E402
+
 HOME = Path.home()
 LOGS = ROOT / "logs"
 STATE = LOGS / "corpus-feed-state.json"
@@ -88,7 +93,7 @@ def _run_refresh() -> dict[str, Any]:
         return {"status": "missing_session_meta", "session_meta_present": False}
     refresh = SESSION_META / "ingest" / "refresh-atoms.sh"
     if refresh.exists():
-        return _run_command(["bash", str(refresh)], cwd=SESSION_META)
+        return _with_store_summary(_run_command(["bash", str(refresh)], cwd=SESSION_META))
 
     manifest = SESSION_META / "ingest" / "manifest.py"
     atomize = SESSION_META / "ingest" / "atomize.py"
@@ -116,12 +121,24 @@ def _run_refresh() -> dict[str, Any]:
             str(atomize),
             "--manifest",
             "ingest/manifest.jsonl",
-            "--out",
-            "ingest/atoms.jsonl",
+            "--store-root",
+            str(atoms_store_root()),
         ],
         cwd=SESSION_META,
     )
-    return {"status": atomize_run["status"], "manifest": manifest_run, "atomize": atomize_run}
+    return _with_store_summary({"status": atomize_run["status"], "manifest": manifest_run, "atomize": atomize_run})
+
+
+def _with_store_summary(result: dict[str, Any]) -> dict[str, Any]:
+    if result.get("status") != "pass":
+        return result
+    try:
+        summary = atoms_summary()
+    except AtomStreamError as exc:
+        return {**result, "status": "store_invalid", "atoms_store_error": str(exc)}
+    if not summary["present"]:
+        return {**result, "status": "store_missing", "atoms_store": summary}
+    return {**result, "atoms_store": summary}
 
 
 def _run_command(cmd: list[str], *, cwd: Path) -> dict[str, Any]:

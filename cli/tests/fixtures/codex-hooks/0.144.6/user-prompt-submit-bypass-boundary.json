@@ -1,0 +1,8 @@
+{
+  "hook_event_name": "UserPromptSubmit",
+  "permission_mode": "bypassPermissions",
+  "session_id": "redacted-session-bypass",
+  "source": "compatibility-boundary",
+  "transcript_path": "<redacted>",
+  "turn_id": "redacted-turn-bypass"
+}

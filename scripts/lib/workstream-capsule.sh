@@ -379,10 +379,15 @@ workstream_launch_native_agent() {
   local autonomous="$3"
   local readme="$4"
   local allow_shell_fallback="$5"
+  local launch_model="${6:-}"
+  local launch_reasoning_effort="${7:-}"
+  local launch_sandbox="${8:-}"
+  local launch_contract_helper="${9:-}"
   local binary capsule_prompt="" jules_repo="" intent_path=""
   local contract_helper="" timeout_seconds=""
   local jules_output="" jules_rc=0 jules_session_id="" jules_session_url="" jules_receipt=""
   local jules_reserved_this_launch=0
+  local -a codex_args=()
 
   # A broker credential belongs to the registration client, never to the model process.
   unset LIMEN_CONDUCT_TOKEN
@@ -395,15 +400,38 @@ workstream_launch_native_agent() {
     return 127
   fi
 
+  if [[ -n "$launch_model" || -n "$launch_reasoning_effort" || -n "$launch_sandbox" ]]; then
+    if [[ "$agent" != "codex" || -z "$launch_model" || -z "$launch_reasoning_effort" \
+      || -z "$launch_sandbox" || ! -f "$launch_contract_helper" ]]; then
+      printf 'invalid explicit native launch profile\n' >&2
+      return 2
+    fi
+    if ! python3 "$launch_contract_helper" validate-codex-launch \
+      --binary "$binary" \
+      --model "$launch_model" \
+      --reasoning-effort "$launch_reasoning_effort" \
+      --sandbox "$launch_sandbox" >/dev/null; then
+      return 2
+    fi
+    codex_args=(
+      --model "$launch_model"
+      --config "model_reasoning_effort=\"$launch_reasoning_effort\""
+      --ask-for-approval never
+      --sandbox "$launch_sandbox"
+    )
+  else
+    codex_args=(--ask-for-approval never --sandbox workspace-write)
+  fi
+
   if [[ "$autonomous" -eq 1 ]]; then
     IFS= read -r -d '' capsule_prompt < "$readme" || true
     case "$agent" in
       codex)
         if [[ -t 0 && -t 1 ]]; then
-          exec "$binary" --ask-for-approval never --sandbox workspace-write "$capsule_prompt"
+          exec "$binary" "${codex_args[@]}" "$capsule_prompt"
         fi
         # Shell runners do not provide a terminal; use Codex's noninteractive transport.
-        exec "$binary" --ask-for-approval never --sandbox workspace-write exec "$capsule_prompt"
+        exec "$binary" "${codex_args[@]}" exec "$capsule_prompt"
         ;;
       opencode)
         exec "$binary" --prompt "$capsule_prompt"
@@ -496,7 +524,7 @@ workstream_launch_native_agent() {
 
   case "$agent" in
     codex)
-      exec "$binary" --ask-for-approval never --sandbox workspace-write
+      exec "$binary" "${codex_args[@]}"
       ;;
     agy)
       # Agy has no argument-free interactive session.
@@ -598,6 +626,9 @@ render_workstream_capsule() {
   local conduct="${14}"
   local allow_shell_fallback="${15}"
   local agent_capabilities="${16}"
+  local launch_model="${17:-}"
+  local launch_reasoning_effort="${18:-}"
+  local launch_sandbox="${19:-}"
   local capsule_dir="$wt/.limen-workstream"
   local readme="$capsule_dir/README.md"
   local manifest="$capsule_dir/manifest.md"
@@ -619,6 +650,7 @@ render_workstream_capsule() {
   local q_wt q_capsule_dir q_capsule_lock q_receipt q_identity q_readme q_manifest q_contract q_contract_helper
   local q_intent q_runtime q_closeout q_kickstart q_slug q_branch q_workstream q_input_digest
   local q_agent q_registry_binary q_conduct q_allow_shell_fallback q_agent_capabilities
+  local q_launch_model q_launch_reasoning_effort q_launch_sandbox
   local capsule_preexisting=0
   local capsule_changed=0
 
@@ -724,6 +756,8 @@ PY
       "$autonomous" "$effective_runway" "$prompt_payload" \
       "agent=$agent" "registry-binary=$registry_binary" "conduct=$conduct" \
       "allow-shell-fallback=$allow_shell_fallback" "agent-capabilities=$agent_capabilities" \
+      "launch-model=$launch_model" "launch-reasoning-effort=$launch_reasoning_effort" \
+      "launch-sandbox=$launch_sandbox" \
       "runtime-source-sha256=$runtime_source_digest" \
       "closeout-source-sha256=$closeout_source_digest" \
       "contract-source-sha256=$contract_source_digest"
@@ -834,6 +868,9 @@ PY
 - Autonomous: \`$([[ "$autonomous" -eq 1 ]] && printf yes || printf no)\`
 - Agent: \`$agent\`
 - Agent capabilities: \`$agent_capabilities\`
+- Primary model: \`${launch_model:-provider-auto}\`
+- Primary reasoning effort: \`${launch_reasoning_effort:-provider-auto}\`
+- Primary sandbox: \`${launch_sandbox:-workspace-write}\`
 - Conduct: \`$([[ "$conduct" -eq 1 ]] && printf yes || printf no)\`
 
 This is a historical snapshot. The runtime module requires fresh probes before action.
@@ -844,11 +881,25 @@ EOF
     chmod +x "$contract_helper"
     capsule_changed=1
   fi
+  local -a contract_launch_args=()
+  if [[ -n "$launch_model" ]]; then
+    contract_launch_args=(
+      --agent "$agent"
+      --model "$launch_model"
+      --reasoning-effort "$launch_reasoning_effort"
+      --sandbox "$launch_sandbox"
+    )
+  fi
   if [[ -n "$runway_requested" ]]; then
-    contract_action="$(python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" 9>&-)" \
-      || exit 1
+    contract_action="$(
+      python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" \
+        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
+    )" || exit 1
   else
-    contract_action="$(python3 "$contract_helper" configure --path "$contract" 9>&-)" || exit 1
+    contract_action="$(
+      python3 "$contract_helper" configure --path "$contract" \
+        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
+    )" || exit 1
   fi
   if [[ "$contract_action" == "changed" || "$contract_action" == "unchanged" ]]; then
     [[ "$contract_action" == "changed" ]] && capsule_changed=1
@@ -912,6 +963,9 @@ EOF
   printf -v q_conduct '%q' "$conduct"
   printf -v q_allow_shell_fallback '%q' "$allow_shell_fallback"
   printf -v q_agent_capabilities '%q' "$agent_capabilities"
+  printf -v q_launch_model '%q' "$launch_model"
+  printf -v q_launch_reasoning_effort '%q' "$launch_reasoning_effort"
+  printf -v q_launch_sandbox '%q' "$launch_sandbox"
   _capsule_write_module "$kickstart" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
@@ -939,6 +993,9 @@ registry_binary=$q_registry_binary
 conduct=$q_conduct
 allow_shell_fallback=$q_allow_shell_fallback
 agent_capabilities=$q_agent_capabilities
+launch_model=$q_launch_model
+launch_reasoning_effort=$q_launch_reasoning_effort
+launch_sandbox=$q_launch_sandbox
 if [[ -L "\$capsule_dir" || ! -d "\$capsule_dir" \
   || "\$(cd "\$capsule_dir" && pwd -P)" != "\$capsule_dir" ]]; then
   printf 'invalid capsule: private root is not the expected real directory\n' >&2
@@ -1148,7 +1205,8 @@ if [[ "\$agent" != "jules" ]]; then
   exec 9>&-
 fi
 workstream_launch_native_agent \
-  "\$agent" "\$registry_binary" "$autonomous" "\$readme" "\$allow_shell_fallback"
+  "\$agent" "\$registry_binary" "$autonomous" "\$readme" "\$allow_shell_fallback" \
+  "\$launch_model" "\$launch_reasoning_effort" "\$launch_sandbox" "\$contract_helper"
 EOF
   if [[ ! -x "$kickstart" ]]; then
     chmod +x "$kickstart"

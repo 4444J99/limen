@@ -7,6 +7,8 @@ from pathlib import Path
 
 import click
 
+from limen.conduct.cli import conduct_group
+from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import (
     print_qa_report,
     print_readiness,
@@ -14,12 +16,11 @@ from limen.doctor import (
     readiness_report,
     write_report,
 )
-from limen.conduct.cli import conduct_group
-from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
+from limen.opencode_smoke import run_opencode_smoke
 from limen.progress import build_progress_snapshot, render_progress
 from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
@@ -162,6 +163,23 @@ def host_admission_release(kind: str, cwd: Path | None, json_output: bool) -> No
 
 
 main.add_command(host_admission_group)
+
+
+@main.command("opencode-smoke")
+@click.option(
+    "--require-reentry",
+    is_flag=True,
+    help="Refuse a healthy model; smoke only a post-cooldown model awaiting re-entry proof.",
+)
+def opencode_smoke(require_reentry: bool) -> None:
+    """Run one bounded read-only OpenCode tool smoke and append its health outcome."""
+
+    result = run_opencode_smoke(allow_healthy=not require_reentry)
+    click.echo(json.dumps(result.as_dict(), indent=2, sort_keys=True))
+    if result.status == "blocked":
+        raise click.exceptions.Exit(3)
+    if not result.succeeded:
+        raise click.exceptions.Exit(1)
 
 
 @main.command()
@@ -555,6 +573,24 @@ def harvest(agent):
     help="Register the launched direct session with the conduct broker as human-protected.",
 )
 @click.option(
+    "--model",
+    "launch_model",
+    default=None,
+    help="Exact human-selected Codex model; requires reasoning effort and sandbox.",
+)
+@click.option(
+    "--reasoning-effort",
+    "launch_reasoning_effort",
+    default=None,
+    help="Exact reasoning effort supported by the selected live Codex model.",
+)
+@click.option(
+    "--sandbox",
+    "launch_sandbox",
+    default=None,
+    help="Codex sandbox for the explicit primary launch profile.",
+)
+@click.option(
     "--shell",
     "launch_shell",
     is_flag=True,
@@ -595,6 +631,9 @@ def workstream(
     autonomous,
     agent_name,
     conduct,
+    launch_model,
+    launch_reasoning_effort,
+    launch_sandbox,
     launch_shell,
     from_ref,
     prompt_text,
@@ -615,6 +654,12 @@ def workstream(
         args.extend(["--agent", agent_name])
     if conduct:
         args.append("--conduct")
+    if launch_model:
+        args.extend(["--model", launch_model])
+    if launch_reasoning_effort:
+        args.extend(["--reasoning-effort", launch_reasoning_effort])
+    if launch_sandbox:
+        args.extend(["--sandbox", launch_sandbox])
     if launch_shell:
         args.append("--shell")
     if from_ref:

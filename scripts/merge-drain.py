@@ -44,6 +44,15 @@ OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").s
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 LOG = ROOT / "logs" / "merge-drain.log"
 POLICY = ROOT / "scripts" / "merge-policy.sh"
+LIFECYCLE_LABELS = frozenset(
+    {
+        "lifecycle:delivery",
+        "lifecycle:preservation",
+        "lifecycle:active-human",
+        "lifecycle:blocked",
+        "lifecycle:superseded",
+    }
+)
 
 
 def gh(args, timeout=60):
@@ -87,6 +96,15 @@ def _is_trivial(repo, num):
     return sorted(x for x in added if x) == sorted(x for x in removed if x)
 
 
+def lifecycle_disposition(labels) -> str | None:
+    names = {
+        str(label.get("name") if isinstance(label, dict) else label).strip().lower()
+        for label in (labels or [])
+    }
+    matches = names & LIFECYCLE_LABELS
+    return next(iter(matches)) if len(matches) == 1 else None
+
+
 def assess(rn):
     repo, num = rn
     try:
@@ -98,7 +116,10 @@ def assess(rn):
                 "-R",
                 repo,
                 "--json",
-                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,baseRefName,headRefOid",
+                (
+                    "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,"
+                    "baseRefName,headRefOid,labels"
+                ),
             ],
             timeout=40,
         )
@@ -107,6 +128,11 @@ def assess(rn):
         d = json.loads(r.stdout)
         if d.get("state") != "OPEN" or d.get("isDraft"):
             return (repo, num, "SKIP")
+        disposition = lifecycle_disposition(d.get("labels"))
+        if disposition is None:
+            return (repo, num, "LIFECYCLE-UNKNOWN")
+        if disposition != "lifecycle:delivery":
+            return (repo, num, disposition.removeprefix("lifecycle:").upper())
         if d.get("mergeable") == "CONFLICTING":
             return (repo, num, "CONFLICT")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]

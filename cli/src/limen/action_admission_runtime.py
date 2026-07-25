@@ -8,11 +8,13 @@ from typing import Any
 from limen.action_admission import (
     AdmissionInputError,
     classify_action,
+    harness_session_write,
     mutation_build_allowed,
     path_within,
     resolve_effective_cwd,
     target_paths,
 )
+from limen.growth_admission import GrowthScanError, inspect_growth
 from limen.host_admission import AdmissionController, AdmissionStateError, is_descendant, worktree_scope
 
 
@@ -20,6 +22,22 @@ from limen.host_admission import AdmissionController, AdmissionStateError, is_de
 class ToolAdmission:
     allowed: bool
     reason: str = ""
+
+
+def _state_error_reason(exc: AdmissionStateError) -> str:
+    """Render one redacted protocol diagnostic for every action-admission consumer."""
+
+    diagnostic = exc.diagnostic()
+    pid = diagnostic.get("lease_pid") or "unknown"
+    identity = diagnostic.get("lease_process_identity") or "unknown"
+    return (
+        "Limen host admission failed closed: "
+        f"invalid_field={diagnostic['invalid_field']} "
+        f"reader_protocol={diagnostic['reader_protocol']} "
+        f"writer_protocol={diagnostic['writer_protocol']} "
+        f"pid_identity={pid}/{identity}. "
+        f"Safe next command: {diagnostic['safe_next_command']}"
+    )
 
 
 def admit_pre_tool_action(
@@ -51,6 +69,26 @@ def admit_pre_tool_action(
 
     if owner is None:
         return ToolAdmission(False, "writer-session-identity-unavailable")
+    tool_name = str(payload.get("tool_name") or payload.get("tool") or "").strip().lower()
+    structured_write = tool_name in {
+        "edit",
+        "multiedit",
+        "notebookedit",
+        "write",
+        "apply_patch",
+        "applypatch",
+    } or ("apply" in tool_name and "patch" in tool_name)
+    if structured_write:
+        # Harness session metadata (the plan-mode plan file, background-job scratch) is
+        # NOT a workspace mutation: the harness itself directs these writes, they live
+        # outside every worktree, and they need no writer lease. Checked before the
+        # plan-only gate — plan mode exists to produce exactly this file.
+        try:
+            harness_targets = target_paths(payload, resolve_effective_cwd(payload))
+        except (AdmissionInputError, ValueError):
+            harness_targets = []
+        if harness_session_write(harness_targets):
+            return ToolAdmission(True)
     allowed, reason = mutation_build_allowed(payload)
     if not allowed:
         return ToolAdmission(False, reason)
@@ -60,16 +98,24 @@ def admit_pre_tool_action(
         targets = target_paths(payload, cwd)
     except (AdmissionInputError, ValueError) as exc:
         return ToolAdmission(False, str(exc))
-    tool_name = str(payload.get("tool_name") or payload.get("tool") or "").strip().lower()
-    structured_write = tool_name in {"edit", "write", "apply_patch", "applypatch"} or (
-        "apply" in tool_name and "patch" in tool_name
-    )
     if structured_write and not targets:
         return ToolAdmission(False, "write-target-unavailable")
     if not scope.linked:
         return ToolAdmission(False, "shared-checkout-write")
     if any(not path_within(path, scope.top_level) for path in targets):
         return ToolAdmission(False, "write-target-outside-worktree")
+    raw_tool_input = payload.get("tool_input")
+    tool_input = raw_tool_input if isinstance(raw_tool_input, dict) else None
+    try:
+        growth = inspect_growth(
+            scope.top_level,
+            target_paths=targets,
+            tool_input=tool_input,
+        )
+    except (GrowthScanError, OSError, ValueError) as exc:
+        return ToolAdmission(False, str(exc) or "growth-scan-unavailable")
+    if not growth.allowed:
+        return ToolAdmission(False, growth.reason)
     try:
         decision = controller.acquire(
             scope.lease_kind,
@@ -78,7 +124,9 @@ def admit_pre_tool_action(
             pid=pid,
             ttl_seconds=ttl_seconds,
         )
-    except (AdmissionStateError, ValueError) as exc:
+    except AdmissionStateError as exc:
+        return ToolAdmission(False, _state_error_reason(exc))
+    except ValueError as exc:
         return ToolAdmission(False, str(exc))
     if not decision["allowed"]:
         return ToolAdmission(

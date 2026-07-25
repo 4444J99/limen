@@ -29,6 +29,7 @@ from limen.workstream_contract import (
     run_bounded,
     sync_identity,
     sync_receipt,
+    validate_codex_launch,
     validate_packet_contract,
 )
 
@@ -107,6 +108,105 @@ def test_contract_instances_cannot_poison_the_validation_baseline() -> None:
 
     assert "fixture" not in second["authorization"]["retained_gates"]
     assert "fixture" not in AUTHORIZATION["retained_gates"]
+
+
+def test_explicit_codex_launch_contract_is_v2_and_retains_high_risk_gates(tmp_path: Path) -> None:
+    path = tmp_path / "workstream.json"
+    contract, changed = configure_contract(
+        path,
+        "8h",
+        agent="codex",
+        model="fixture-model-renamed-at-runtime",
+        reasoning_effort="extreme-fixture",
+        sandbox="danger-full-access",
+    )
+
+    assert changed is True
+    assert contract["schema"] == "limen.workstream.contract.v2"
+    assert contract["primary_launch"] == {
+        "agent": "codex",
+        "model": "fixture-model-renamed-at-runtime",
+        "reasoning_effort": "extreme-fixture",
+        "selection": "human_explicit",
+    }
+    assert contract["authorization"]["approval_mode"] == "never"
+    assert contract["authorization"]["sandbox"] == "danger-full-access"
+    assert contract["authorization"]["retained_gates"] == AUTHORIZATION["retained_gates"]
+    assert read_contract(path) == contract
+
+    unchanged, unchanged_flag = configure_contract(
+        path,
+        "8h",
+        agent="codex",
+        model="fixture-model-renamed-at-runtime",
+        reasoning_effort="extreme-fixture",
+        sandbox="danger-full-access",
+    )
+    assert unchanged_flag is False
+    assert unchanged == contract
+
+    with pytest.raises(ContractError, match="emit a successor"):
+        configure_contract(
+            path,
+            "8h",
+            agent="codex",
+            model="different-live-model",
+            reasoning_effort="extreme-fixture",
+            sandbox="danger-full-access",
+        )
+
+
+def test_default_contract_remains_byte_compatible_v1(tmp_path: Path) -> None:
+    path = tmp_path / "workstream.json"
+    contract, _changed = configure_contract(path, "8h")
+
+    assert contract == new_contract("8h")
+    assert contract["schema"] == "limen.workstream.contract.v1"
+    assert set(contract) == {"schema", "runway", "authorization", "conductor"}
+    assert contract["authorization"]["sandbox"] == "workspace-write"
+
+
+def test_live_codex_catalog_validation_uses_exact_dynamic_ids(tmp_path: Path) -> None:
+    fake_codex = tmp_path / "codex"
+    fake_codex.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            "printf '%s\\n' "
+            '\'{"models":[{"slug":"fixture-zeta","supported_reasoning_levels":'
+            '[{"effort":"low"},{"effort":"ultra-fixture"}]}]}\'\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+
+    selected = validate_codex_launch(
+        str(fake_codex),
+        model="fixture-zeta",
+        reasoning_effort="ultra-fixture",
+    )
+    assert selected["slug"] == "fixture-zeta"
+
+    with pytest.raises(ContractError, match="not present"):
+        validate_codex_launch(
+            str(fake_codex),
+            model="fixture-removed",
+            reasoning_effort="ultra-fixture",
+        )
+    with pytest.raises(ContractError, match="does not support"):
+        validate_codex_launch(
+            str(fake_codex),
+            model="fixture-zeta",
+            reasoning_effort="renamed-effort",
+        )
+    with pytest.raises(ContractError, match="sandbox"):
+        configure_contract(
+            tmp_path / "invalid-sandbox.json",
+            "8h",
+            agent="codex",
+            model="fixture-zeta",
+            reasoning_effort="ultra-fixture",
+            sandbox="host-everything",
+        )
 
 
 def test_admission_waits_on_the_stable_parent_lock_and_preserves_first_start(

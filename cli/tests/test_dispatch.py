@@ -1540,6 +1540,7 @@ def test_pr_repair_prompt_forbids_assumed_limen_workflow() -> None:
 
 def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatch) -> None:
     git_calls: list[list[str]] = []
+    initialized: list[tuple[Path, str, str, str]] = []
     pushed_pr_heads: list[tuple[str, Path]] = []
     auto_merge_urls: list[str] = []
     cleanups: list[tuple[str, bool]] = []
@@ -1567,6 +1568,14 @@ def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatc
         },
     )
     monkeypatch.setattr(D, "_git_plumbing", fake_git_plumbing)
+    monkeypatch.setattr(
+        D,
+        "initialize_worktree",
+        lambda repo, wt, *, branch, checkout_ref, task_id: (
+            wt.mkdir(parents=True),
+            initialized.append((wt, branch, checkout_ref, task_id)),
+        ),
+    )
     monkeypatch.setattr(D, "_git", fake_git)
     monkeypatch.setattr(D, "_run_isolated_agent", lambda *args: True)
     monkeypatch.setattr(D, "_commit_isolated_changes", lambda *args: True)
@@ -1603,13 +1612,20 @@ def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatc
         "origin",
         "+refs/heads/limen/fix-ci-175:refs/remotes/origin/limen/fix-ci-175",
     ]
-    assert git_calls[1] == [
-        "worktree",
-        "add",
-        "-b",
-        "limen/heal-cifix-organvm-domus-genoma-175-abcd",
-        str(tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd"),
-        "origin/limen/fix-ci-175",
+    assert initialized == [
+        (
+            tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd",
+            "limen/heal-cifix-organvm-domus-genoma-175-abcd",
+            "origin/limen/fix-ci-175",
+            "HEAL-cifix-organvm-domus-genoma-175",
+        )
+    ]
+    assert git_calls == [
+        [
+            "fetch",
+            "origin",
+            "+refs/heads/limen/fix-ci-175:refs/remotes/origin/limen/fix-ci-175",
+        ]
     ]
     assert pushed_pr_heads == [
         ("limen/fix-ci-175", tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd")
@@ -1641,6 +1657,11 @@ def test_isolated_local_run_treats_agent_committed_pr_head_as_work(tmp_path: Pat
         },
     )
     monkeypatch.setattr(D, "_git_plumbing", lambda *args, **kwargs: subprocess.CompletedProcess(args, 0, "", ""))
+    monkeypatch.setattr(
+        D,
+        "initialize_worktree",
+        lambda _repo, wt, **_kwargs: wt.mkdir(parents=True),
+    )
     monkeypatch.setattr(D, "_git", fake_git)
     monkeypatch.setattr(D, "_run_isolated_agent", lambda *args: True)
     monkeypatch.setattr(D, "_commit_isolated_changes", lambda *args: D._NOOP)
@@ -3851,6 +3872,7 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
     task = _wtask(repo="not-present/example")
     clone_calls: list[list[str]] = []
     plumbing_calls: list[list[str]] = []
+    initialized: list[Path] = []
     born: list[Path] = []
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "limen"))
     monkeypatch.setenv("LIMEN_WORKDIR", str(workdir))
@@ -3878,6 +3900,11 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
 
     monkeypatch.setattr(D, "_run_capture", fake_capture)
     monkeypatch.setattr(D, "_git_plumbing", fake_plumbing)
+    monkeypatch.setattr(
+        D,
+        "initialize_worktree",
+        lambda _repo, wt, **_kwargs: (wt.mkdir(parents=True), initialized.append(wt)),
+    )
     monkeypatch.setattr(D, "_record_worktree_birth", lambda _task, wt, *_a, **_k: born.append(wt))
     monkeypatch.setattr(
         D,
@@ -3912,7 +3939,8 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
         assert D._isolated_local_run("codex", task, dry_run=False) == D._NOOP
         expected_clone = clone_cache / D._clone_cache_key(task.repo)
         assert clone_calls == [["gh", "repo", "clone", "not-present/example", str(expected_clone)]]
-        assert any(call[:2] == ["worktree", "add"] for call in plumbing_calls)
+        assert not any(call[:2] == ["worktree", "add"] for call in plumbing_calls)
+        assert initialized == [isolation_root / "wt-classify-abcd1234"]
         assert born == [isolation_root / "wt-classify-abcd1234"]
         payload = json.loads(D._admission_lease_path(task.id).read_text())
         assert payload["phase"] == "worktree-born"

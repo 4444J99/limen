@@ -15,6 +15,7 @@ import pytest
 from click.testing import CliRunner
 
 import limen.host_admission as host_admission
+from limen.host_admission_capabilities import host_admission_capabilities as shared_capabilities
 from limen.host_admission import (
     AdmissionDenied,
     AdmissionController,
@@ -477,7 +478,7 @@ def _concurrent_acquire(root: str, owner: str, ready, start, results) -> None:
     results.put((owner, decision["allowed"]))
 
 
-def test_concurrent_roots_admit_only_one_execution_owner(tmp_path: Path) -> None:
+def test_legacy_unscoped_execution_kind_admits_only_one_owner(tmp_path: Path) -> None:
     context = multiprocessing.get_context("fork")
     ready = context.Queue()
     results = context.Queue()
@@ -504,6 +505,202 @@ def test_state_file_is_private_and_versioned(tmp_path: Path) -> None:
     payload = json.loads(service.state_path.read_text(encoding="utf-8"))
     assert payload["schema"] == "limen.host_admission_state.v1"
     assert stat.S_IMODE(service.state_path.stat().st_mode) == 0o600
+
+
+def test_scoped_leases_project_conservatively_for_legacy_readers(tmp_path: Path) -> None:
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    service = controller(tmp_path / "state")
+    scope = worktree_scope(first)
+
+    service.acquire(scope.lease_kind, owner="codex", surface="write", pid=101)
+
+    legacy = json.loads(service.state_path.read_text(encoding="utf-8"))
+    scoped = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    assert legacy["schema"] == "limen.host_admission_state.v1"
+    assert [lease["kind"] for lease in legacy["leases"]] == ["execution"]
+    assert scoped["schema"] == "limen.host_admission_scoped_state.v1"
+    assert [lease["kind"] for lease in scoped["leases"]] == [scope.lease_kind]
+    assert [lease["kind"] for lease in service.status(probe=False)["leases"]] == [scope.lease_kind]
+
+
+def test_current_reader_migrates_valid_scoped_records_out_of_legacy_store(tmp_path: Path) -> None:
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    service = controller(tmp_path / "state")
+    scope = worktree_scope(first)
+    service.acquire(scope.lease_kind, owner="codex", surface="write", pid=101)
+    scoped = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    service.state_path.write_text(
+        json.dumps({"schema": "limen.host_admission_state.v1", "leases": scoped["leases"], "pressure": None}),
+        encoding="utf-8",
+    )
+    service.scoped_state_path.unlink()
+
+    service.status(probe=False)
+
+    legacy_after = json.loads(service.state_path.read_text(encoding="utf-8"))
+    scoped_after = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    assert [lease["kind"] for lease in legacy_after["leases"]] == ["execution"]
+    assert [lease["kind"] for lease in scoped_after["leases"]] == [scope.lease_kind]
+
+
+def test_interrupted_migration_write_converges_on_scoped_record(tmp_path: Path) -> None:
+    """_load() heals a crash between scoped and legacy writes during migration."""
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    service = controller(tmp_path / "state")
+    scope = worktree_scope(first)
+
+    # Acquire a legacy execution lease (state.json has kind="execution").
+    acquired = service.acquire("execution", owner="codex", surface="turn", pid=101)
+    lease_id = acquired["lease"]["lease_id"]
+
+    # Simulate the crash window: scoped write completed (kind upgraded) but the
+    # subsequent legacy write that would have emptied state.json did not.
+    scoped_lease = dict(acquired["lease"])
+    scoped_lease["kind"] = scope.lease_kind
+    service.scoped_state_path.write_text(
+        json.dumps({"schema": "limen.host_admission_scoped_state.v1", "leases": [scoped_lease]}),
+        encoding="utf-8",
+    )
+    # state.json still holds the old "execution" kind — the crash window.
+
+    # _load() must converge automatically without raising AdmissionStateError.
+    result = service.status(probe=False)
+
+    leases = result["leases"]
+    assert len(leases) == 1
+    assert leases[0]["lease_id"] == lease_id
+    assert leases[0]["kind"] == scope.lease_kind
+
+    legacy = json.loads(service.state_path.read_text(encoding="utf-8"))
+    scoped = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    assert [lease["kind"] for lease in legacy["leases"]] == ["execution"]
+    assert scoped["leases"] == leases
+    assert service.status(probe=False)["leases"] == leases
+
+
+def test_interrupted_scoped_refresh_keeps_newest_identical_lease(tmp_path: Path) -> None:
+    """A crash between scoped and legacy refresh writes converges by exact identity."""
+
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    service = controller(tmp_path / "state")
+    scope = worktree_scope(first)
+    acquired = service.acquire(scope.lease_kind, owner="codex", surface="write", pid=101)
+    lease_id = acquired["lease"]["lease_id"]
+
+    scoped = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    newer = dict(scoped["leases"][0])
+    newer["refreshed_epoch"] = float(newer["refreshed_epoch"]) + 10
+    newer["refreshed_at"] = "newer-refresh"
+    newer["expires_epoch"] = float(newer["expires_epoch"]) + 10
+    newer["expires_at"] = "newer-expiry"
+    service.state_path.write_text(
+        json.dumps(
+            {
+                "schema": "limen.host_admission_state.v1",
+                "leases": [newer],
+                "pressure": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = service.status(probe=False)
+
+    assert [lease["lease_id"] for lease in result["leases"]] == [lease_id]
+    assert result["leases"][0]["refreshed_epoch"] == newer["refreshed_epoch"]
+    legacy_after = json.loads(service.state_path.read_text(encoding="utf-8"))
+    scoped_after = json.loads(service.scoped_state_path.read_text(encoding="utf-8"))
+    assert [lease["kind"] for lease in legacy_after["leases"]] == ["execution"]
+    assert [lease["kind"] for lease in scoped_after["leases"]] == [scope.lease_kind]
+
+
+def test_interrupted_migration_unrelated_duplicate_still_raises(tmp_path: Path) -> None:
+    """_load() still raises AdmissionStateError on a genuine (non-migration) duplicate."""
+    root = tmp_path / "state"
+    root.mkdir(mode=0o700)
+    shared_id = "deadbeef" * 4  # 32-char lease_id
+    scope_hash = "a" * 64  # valid scoped kind hash
+    base = {
+        "lease_id": shared_id,
+        "owner": "codex-a",
+        "surface": "turn",
+        "pid": 101,
+        "process_identity": "start-101",
+        "expires_epoch": 9999.0,
+    }
+    # Legacy store: execution kind, owner=codex-a.
+    (root / "state.json").write_text(
+        json.dumps(
+            {
+                "schema": "limen.host_admission_state.v1",
+                "leases": [{**base, "kind": "execution"}],
+                "pressure": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+    # Scoped store: scoped kind but different owner — not a plausible migration pair.
+    (root / "scoped-state.json").write_text(
+        json.dumps(
+            {
+                "schema": "limen.host_admission_scoped_state.v1",
+                "leases": [{**base, "kind": f"execution:{scope_hash}", "owner": "codex-b"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    svc = controller(root)
+    with pytest.raises(AdmissionStateError, match="duplicated"):
+        svc.status(probe=False)
+
+
+def test_malformed_scoped_store_is_preserved_with_protocol_diagnostic(tmp_path: Path) -> None:
+    root = tmp_path / "state"
+    root.mkdir(mode=0o700)
+    malformed = root / "scoped-state.json"
+    malformed.write_text(
+        json.dumps(
+            {
+                "schema": "limen.host_admission_scoped_state.v1",
+                "leases": [{"lease_id": "broken", "kind": "execution:not-a-sha"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    service = controller(root)
+
+    with pytest.raises(AdmissionStateError) as caught:
+        service.status(probe=False)
+
+    assert caught.value.invalid_field == "leases[0].owner"
+    assert caught.value.writer_protocol == "limen.host_admission_scoped_state.v1"
+    assert malformed.exists()
+    diagnostic = service.diagnose()
+    assert diagnostic["valid"] is False
+    assert diagnostic["safe_next_command"].endswith("host-work-admission.py diagnose")
+
+
+def test_host_admission_capabilities_are_versioned_and_protocol_complete() -> None:
+    payload = host_admission.host_admission_capabilities()
+    assert payload["schema"] == "limen.codex_host_admission_capabilities.v1"
+    assert payload["state_schemas"] == {
+        "legacy": "limen.host_admission_state.v1",
+        "scoped": "limen.host_admission_scoped_state.v1",
+    }
+    assert payload["lease_kinds"] == ["execution", "heavy", "execution:<sha256>"]
+    assert payload["stable_action_denial"] is True
+    assert payload["single_rejection_channel"] is True
+
+
+def test_json_cli_capabilities_match_shared_provider() -> None:
+    script = ROOT / "scripts" / "host-work-admission.py"
+    result = subprocess.run(
+        [sys.executable, str(script), "capabilities"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert json.loads(result.stdout) == shared_capabilities()
 
 
 def test_json_cli_status_is_report_only_and_release_is_exact(tmp_path: Path) -> None:

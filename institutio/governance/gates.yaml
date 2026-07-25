@@ -147,7 +147,7 @@ gates:
     owner: merge-policy
     note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3)."
   merge-queue-contract-test:
-    command: "python3 scripts/tests/merge-queue-contract.test.py && python3 -m pytest cli/tests/test_pr_scan.py cli/tests/test_merge_drain.py cli/tests/test_self_heal.py cli/tests/test_tabularius.py -q"
+    command: "env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true VISUAL=true EDITOR=true python3 scripts/tests/merge-queue-contract.test.py && bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_scan.py cli/tests/test_merge_drain.py cli/tests/test_self_heal.py cli/tests/test_tabularius.py -q"
     paths: [".github/workflows/pr-gate.yml", ".github/workflows/auto-scale.yml", ".github/workflows/operate.yml", "cli/src/limen/tabularius.py", "cli/tests/test_pr_scan.py", "cli/tests/test_merge_drain.py", "cli/tests/test_self_heal.py", "cli/tests/test_tabularius.py", "scripts/tabularius-organ.py", "scripts/setup-rulesets.py", "scripts/_pr_scan.py", "scripts/merge-policy.sh", "scripts/await-pr.sh", "scripts/merge-drain.py", "scripts/self-heal.py", "scripts/verify.py", "scripts/tests/merge-queue-contract.test.py"]
     owner: merge-policy
     note: "Concurrent integration stays queue-native and fail-closed: merge_group runs scoped current-base proof, the no-bypass ruleset rejects direct main writes, board automation publishes through its exact-head PR branch, and no queue effect uses admin or a merge-method fallback."
@@ -249,22 +249,22 @@ gates:
     owner: omega
     note: "The fixed-point composer's version/hash/tally/strict contract; SKIP is never a silent PASS."
   main-green-test:
-    command: "python3 -m pytest cli/tests/test_check_main_green.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_check_main_green.py -q"
     paths: ["scripts/check-main-green.py", "cli/tests/test_check_main_green.py", "scripts/omega.sh"]
     owner: omega
     note: "Workflow-filtered completed CI must match the full current origin/main head — or, path-aware, the newest green run when every commit past it implicates none of ci.yml's push paths (docs/board-only merges never trigger the workflow). A pending run or a red newest run is never green proof."
   orphan-watchers-test:
-    command: "python3 -m pytest cli/tests/test_orphan_watchers.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_orphan_watchers.py -q"
     paths: ["scripts/orphan-watchers.py", "scripts/hooks/session-closeout.sh", "cli/tests/test_orphan_watchers.py"]
     owner: tabularius
     note: "Watcher detection stays honest: shell-snapshot poll loops classified, orphan age floor above await-pr's deadline, --check never signals, --reap kills only orphans, --session-end never blocks session end."
   handoff-relay-test:
-    command: "python3 -m pytest cli/tests/test_handoff_relay.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_handoff_relay.py -q"
     paths: ["scripts/handoff-relay.py", "scripts/heartbeat-loop.sh", "scripts/metabolize.sh", "scripts/hooks/session-closeout.sh", "cli/tests/test_handoff_relay.py"]
     owner: continuity
     note: "The warm-resume packet carries authoritative budget/provider/next truth and refreshes across heartbeat, metabolize, and SessionEnd seams."
   autonomy-governor-test:
-    command: "python3 -m pytest cli/tests/test_autonomy_governor.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_autonomy_governor.py -q"
     paths: ["scripts/autonomy-governor.py", "cli/tests/test_autonomy_governor.py"]
     owner: vigilia
     note: "Pause-release completion stays fail-closed: operator markers (merge-prohibiting / owner_surface-only) are never merged or cleared; PR-owned markers complete via merge-policy CLEARED -> head-pinned squash; every ambiguity keeps the estate paused."
@@ -346,6 +346,18 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-corpora:
+    command: "python3 scripts/check-corpora.py"
+    paths: ["institutio/governance/corpora.yaml", "institutio/governance/corpus-root-literals-baseline.txt", "scripts/check-corpora.py", "scripts/corpus_resolve.py", "scripts/constellation-dossier.py", "organs/consulting/constellation/check.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "CORPORA registry drift: where the conversation corpora live is declared data (corpora.yaml), the fourth axis beside GATES + PARAMETERS + SENSORS. Asserts schema, that every store root exists, that every corpus directory on disk has a row (the check that catches an undeclared corpus every declared-ids-only consumer silently drops), that nothing outside scripts/corpus_resolve.py hardcodes a corpus root (ratcheted via a literal-keyed baseline), and re-derives freshness from the store's own federation summary. Two consumers each carried their own wrong copy of these paths and the dossier tool reported an empty corpus while 371 MB sat on disk — nothing was checking."
+  check-convergence:
+    command: "python3 scripts/check-convergence.py"
+    paths: ["institutio/governance/convergence.yaml", "scripts/check-convergence.py", "docs/convergence/**"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "CONVERGENCE registry drift: one owner per capability, as declared data — the machine form of docs/convergence/*.md and the executable form of 'never build the 7th'. Asserts schema, that every owner actually resolves (in-repo path, local path, or estate-census repo), that unresolved rows are explicit counted vacuums (owner: null), and that every known duplicate carries a disposition (retire/tenant/lift). Founded on the measured baseline of ZERO cross-repo code sharing across ~310 repos."
   check-decorum:
     command: "python3 scripts/check-decorum.py"
     paths: ["institutio/governance/decorum-surfaces.yaml", "scripts/check-decorum.py", "scripts/decorum-keeper.py", "institutio/observatory/decorum-judgments.yaml"]
@@ -405,15 +417,15 @@ gates:
     owner: verify
     note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048)."
   pytest-cli:
-    command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest cli/tests -q -n auto"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
     paths: ["cli/**"]
     tier: heavy
     serialize: true
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Env-scrubbed: ambient persona tokens must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores."
+    note: "Env-scrubbed and no-modal: ambient persona tokens and editor configuration must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores."
   pytest-api:
-    command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest web/api/tests -q"
+    command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]
     tier: heavy
     serialize: true

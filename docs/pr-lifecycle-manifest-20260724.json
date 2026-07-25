@@ -1,0 +1,59 @@
+{
+  "schema": "limen.pr_lifecycle_manifest.v1",
+  "generated_at": "2026-07-24T03:35:00Z",
+  "repository": "organvm/limen",
+  "effect": "add-label:lifecycle:preservation",
+  "review_basis": "Each exact open draft head explicitly declares preservation in its title. This manifest types custody only; it neither merges nor closes a PR.",
+  "plan_sha256": "3f47f6df543d7423945bf0b07708056876b06548b65c3e5db42f11a78ba993f9",
+  "status": "applied_verified",
+  "items": [
+    {
+      "number": 931,
+      "head_oid": "bf7f2091f1ebd8c07d40137da585f51e8ccd8281",
+      "title": "[PRESERVATION-ONLY — DO NOT MERGE] opencode tier ladder — superseded by #921"
+    },
+    {
+      "number": 1050,
+      "head_oid": "95b47a639127a2543b979e6e1913e278ea3a1066",
+      "title": "[PRESERVATION-ONLY — DO NOT MERGE] checkout guard local delta"
+    },
+    {
+      "number": 1056,
+      "head_oid": "3ffa1969122c1daba08a5f9aa19f42146d73eeca",
+      "title": "[preserve] limen/aw-public-face-contribution-balance-3112b780"
+    },
+    {
+      "number": 1070,
+      "head_oid": "33b8a141623a24f261ba151bb8717d37de75b789",
+      "title": "[preserve] limen/jules-org-consulting-organ-face-0628-f5ee"
+    },
+    {
+      "number": 1071,
+      "head_oid": "f7f12b18c5e79d2a72bf687b461c7a132ec97465",
+      "title": "[preserve] limen/jules-gen-organvm-limen-typing-0627-3681"
+    },
+    {
+      "number": 1324,
+      "head_oid": "577f799cdfaf0f1216e7dcba4e4199d2a0472f12",
+      "title": "chore: preserve stranded truth-first overlay (do not merge)"
+    },
+    {
+      "number": 1416,
+      "head_oid": "3f115531d3e7bdee5996869e6ef6d29795df869d",
+      "title": "docs: preserve million-change monolith elimination lane"
+    },
+    {
+      "number": 1495,
+      "head_oid": "a8ef480067fb97876783c1aef88c79ce12c35079",
+      "title": "docs: preserve laptop-wide recovery continuation"
+    }
+  ],
+  "apply_receipt": {
+    "applied_at": "2026-07-24T03:37:00Z",
+    "effect_count": 8,
+    "verified_count": 8,
+    "postcondition": "Every manifest PR remains open at the exact planned head with exactly one lifecycle:preservation label.",
+    "merge_effects": 0,
+    "close_effects": 0
+  }
+}

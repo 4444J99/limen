@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import date
 
 import pytest
 
@@ -10,6 +11,8 @@ from limen.execution_contract import (
     execution_contract_hash,
     execution_contract_payload,
 )
+from limen.models import Task
+from limen.plan_handoff import PLAN_ONLY_LABEL, build_plan_receipt
 from limen.workstream_contract import packet_contract
 
 
@@ -31,6 +34,7 @@ def _task() -> dict[str, object]:
         "receipt_target": "git:organvm/limen:logs/check.json",
         "execution_requirements": [{"kind": "mount", "path": "/runtime/volume-a"}],
         "workstream_contract": packet_contract("1h", now_epoch=1_000),
+        "plan_receipt": None,
         "claude_tier": "sonnet",
         "depends_on": ["FOUNDATION-ONE"],
     }
@@ -59,6 +63,7 @@ def test_execution_contract_payload_is_versioned_and_label_order_is_canonical() 
         "receipt_target": "git:organvm/limen:logs/check.json",
         "execution_requirements": [{"kind": "mount", "path": "/runtime/volume-a"}],
         "workstream_contract": packet_contract("1h", now_epoch=1_000),
+        "plan_receipt": None,
         "claude_tier": "sonnet",
         "depends_on": ["FOUNDATION-ONE"],
     }
@@ -67,6 +72,14 @@ def test_execution_contract_payload_is_versioned_and_label_order_is_canonical() 
 
 def test_every_execution_input_changes_the_hash() -> None:
     original = _task()
+    plan_task = Task(
+        id="PLAN",
+        title="plan",
+        repo="organvm/limen",
+        target_agent="claude",
+        labels=[PLAN_ONLY_LABEL],
+        created=date(2026, 7, 23),
+    )
     changes = {
         "id": "AW-TWO",
         "title": "Different title",
@@ -84,6 +97,7 @@ def test_every_execution_input_changes_the_hash() -> None:
         "receipt_target": "git:organvm/limen:logs/other.json",
         "execution_requirements": [{"kind": "mount", "path": "/runtime/volume-b"}],
         "workstream_contract": packet_contract("2h", now_epoch=2_000),
+        "plan_receipt": build_plan_receipt(plan_task, "Implement the accepted plan.", planner_agent="claude"),
         "claude_tier": "haiku",
         "depends_on": ["FOUNDATION-TWO"],
     }
@@ -152,6 +166,7 @@ def test_budget_cost_rejects_lossy_or_out_of_schema_values(budget: object) -> No
         ("execution_requirements", "not-a-list"),
         ("execution_requirements", [{"kind": "mount"}]),
         ("workstream_contract", {}),
+        ("plan_receipt", {}),
     ],
 )
 def test_contract_rejects_unsupported_field_types(field: str, value: object) -> None:

@@ -18,7 +18,9 @@ from limen.host_admission import (  # noqa: E402
     USAGE_EXIT,
     AdmissionController,
     AdmissionStateError,
+    host_admission_capabilities,
 )
+from limen.host_admission_capabilities import host_admission_capabilities  # noqa: E402
 
 
 def _controller(args: argparse.Namespace) -> AdmissionController:
@@ -37,7 +39,7 @@ def main() -> int:
     sub = parser.add_subparsers(dest="operation", required=True)
 
     acquire = sub.add_parser("acquire")
-    acquire.add_argument("--kind", choices=("execution", "heavy"), required=True)
+    acquire.add_argument("--kind", required=True, help="execution, heavy, or execution:<sha256>")
     acquire.add_argument("--owner", required=True)
     acquire.add_argument("--surface", required=True)
     acquire.add_argument("--pid", type=int, default=os.getppid())
@@ -55,6 +57,8 @@ def main() -> int:
 
     status = sub.add_parser("status")
     status.add_argument("--no-probe", action="store_true")
+    sub.add_parser("diagnose")
+    sub.add_parser("capabilities")
 
     args = parser.parse_args()
     controller = _controller(args)
@@ -99,8 +103,15 @@ def main() -> int:
                     pid=args.pid,
                 )
             )
+        if args.operation == "diagnose":
+            print(json.dumps(controller.diagnose(), indent=2, sort_keys=True))
+            return 0
+        if args.operation == "capabilities":
+            print(json.dumps(host_admission_capabilities(), indent=2, sort_keys=True))
+            return 0
         return _emit(controller.status(probe=not args.no_probe), report_only=True)
     except (AdmissionStateError, ValueError) as exc:
+        diagnostic = exc.diagnostic() if isinstance(exc, AdmissionStateError) else {"error": str(exc)}
         print(
             json.dumps(
                 {
@@ -108,7 +119,7 @@ def main() -> int:
                     "operation": args.operation,
                     "allowed": False,
                     "reasons": ["state-or-input-invalid"],
-                    "error": str(exc),
+                    **diagnostic,
                 },
                 indent=2,
                 sort_keys=True,
