@@ -151984,7 +151984,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/346
   updated: 2026-07-25T17:53:33.550Z
 - id: LIMEN-317
-  title: "Referral loop \u2014 waitlist and cohort invite mechanic"
+  title: Referral loop — waitlist and cohort invite mechanic
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -151998,8 +151998,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/345
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:52.539Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/345"
+    conduct_event_id: conduct:run-cc6b000185a47ca062d6da44477cce18:189:compatibility
+    conduct_run_id: run-cc6b000185a47ca062d6da44477cce18
+    conduct_lease_id: lease-189-cc6b000185a47ca0
+    conduct_generation: 189
+  predicate: test "$(gh issue view 345 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/345
+  updated: 2026-07-25T17:53:52.539Z
 - id: LIMEN-318
   title: "SEO demand capture \u2014 no-contact keywords + first 4 intent articles"
   repo: organvm/peer-audited--behavioral-blockchain
