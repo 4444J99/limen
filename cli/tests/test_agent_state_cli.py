@@ -29,3 +29,56 @@ def test_resume_requires_explicit_run_id(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "--resume requires --run-id" in result.stderr
+
+
+def test_cloud_eviction_requires_both_signed_inputs(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--evict",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "--evict requires --eviction-authorization and --eviction-signature" in result.stderr
+
+
+def test_cloud_authorization_plan_requires_principal(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--prepare-eviction-authorization",
+            str(tmp_path / "authorization.json"),
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "requires --eviction-authorizer" in result.stderr

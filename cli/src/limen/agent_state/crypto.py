@@ -10,7 +10,7 @@ import subprocess
 import threading
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import BinaryIO, TypeVar, cast
+from typing import Any, BinaryIO, TypeVar, cast
 
 from .models import AtomPack, CipherChunk, RestoreProof
 
@@ -154,7 +154,7 @@ class _EncryptPipe:
             stdout = cast(BinaryIO, self.process.stdout)
             for block in iter(lambda: stdout.read(1024 * 1024), b""):
                 self.output.write(block)
-        except BaseException as exc:  # pragma: no cover - hardware/filesystem failures
+        except BaseException as exc:  # noqa: BLE001  # pragma: no cover - hardware/filesystem failures
             self._error = exc
 
     def _drain_stderr(self) -> None:
@@ -295,7 +295,7 @@ def _decrypt(chunks: Iterable[Path], key: str, consumer: Callable[[BinaryIO], T]
                     for block in iter(lambda: handle.read(1024 * 1024), b""):
                         stdin.write(block)
             stdin.close()
-        except BaseException as exc:  # pragma: no cover - hardware/filesystem failures
+        except BaseException as exc:  # noqa: BLE001  # pragma: no cover - hardware/filesystem failures
             feeder_error.append(exc)
             stdin.close()
 
@@ -336,6 +336,7 @@ def _verify_pack(
     key: str,
     *,
     logical_digest: hashlib._Hash | None = None,
+    record_consumer: Callable[[dict[str, Any]], None] | None = None,
 ) -> int:
     def consume(stream: BinaryIO) -> int:
         count = 0
@@ -351,6 +352,8 @@ def _verify_pack(
                 digest.update(line)
                 if logical_digest is not None:
                     logical_digest.update(line)
+                if record_consumer is not None:
+                    record_consumer(envelope["record"])
                 count += 1
         if count != pack.atom_count or digest.hexdigest() != pack.plaintext_sha256:
             raise CryptoError("atom pack manifest mismatch")
@@ -360,8 +363,16 @@ def _verify_pack(
 
 
 def verify_atom_packs(
-    packs: Iterable[AtomPack], root: Path, key: str, *, logical_sha256: str, sample: bool = False
+    packs: Iterable[AtomPack],
+    root: Path,
+    key: str,
+    *,
+    logical_sha256: str,
+    sample: bool = False,
+    record_consumer: Callable[[dict[str, Any]], None] | None = None,
 ) -> RestoreProof:
+    if sample and record_consumer is not None:
+        raise ValueError("sample restoration cannot emit an incomplete atom stream")
     selected = tuple(packs)
     if sample and len(selected) > 1:
         selected = (selected[0], selected[-1])
@@ -374,6 +385,7 @@ def verify_atom_packs(
                 root,
                 key,
                 logical_digest=None if sample else logical,
+                record_consumer=record_consumer,
             )
         if not sample and logical.hexdigest() != logical_sha256:
             raise CryptoError("full logical manifest digest mismatch")
