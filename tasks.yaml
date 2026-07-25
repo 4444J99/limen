@@ -151372,7 +151372,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-275
-  title: "KYC: API \u2014 verification endpoint + progressive tier logic"
+  title: "KYC: API — verification endpoint + progressive tier logic"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -151385,8 +151385,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/387
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:49.054Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/387"
+    conduct_event_id: conduct:run-31f13a68647fbeb348c5360ca6530e37:241:compatibility
+    conduct_run_id: run-31f13a68647fbeb348c5360ca6530e37
+    conduct_lease_id: lease-241-31f13a68647fbeb3
+    conduct_generation: 241
+  predicate: test "$(gh issue view 387 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/387
+  updated: 2026-07-25T17:56:49.054Z
 - id: LIMEN-276
   title: "KYC: Schema — identity_verifications table + API types"
   repo: organvm/peer-audited--behavioral-blockchain
