@@ -152812,8 +152812,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-391
-  title: 'chore: audit + clean ephemeral tool result cache (27+ files across 3 project
-    dirs)'
+  title: "chore: audit + clean ephemeral tool result cache (27+ files across 3 project dirs)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -152827,8 +152826,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/265
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:40.330Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/265"
+    conduct_event_id: conduct:run-e52baf09e035dfe5f53d8c8f55ada6c5:114:compatibility
+    conduct_run_id: run-e52baf09e035dfe5f53d8c8f55ada6c5
+    conduct_lease_id: lease-114-e52baf09e035dfe5
+    conduct_generation: 114
+  predicate: test "$(gh issue view 265 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/265
+  updated: 2026-07-25T17:49:40.330Z
 - id: LIMEN-392
   title: 'docs: create canonical E2G status matrix (suggestion -> status -> file ref)'
   repo: organvm/peer-audited--behavioral-blockchain
