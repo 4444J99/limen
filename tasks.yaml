@@ -147447,8 +147447,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/563
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:43.168Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/563"
+    conduct_event_id: conduct:run-987ad26246d9246e07888ec3629abdc2:221:compatibility
+    conduct_run_id: run-987ad26246d9246e07888ec3629abdc2
+    conduct_lease_id: lease-221-987ad26246d9246e
+    conduct_generation: 221
+  predicate: test "$(gh issue view 563 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/563
+  updated: 2026-07-25T17:55:43.168Z
 - id: LIMEN-118
   title: Expand case law coverage to 15-25 cases in whitepaper and supporting docs
   repo: organvm/peer-audited--behavioral-blockchain
