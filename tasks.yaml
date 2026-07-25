@@ -148824,7 +148824,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-171
-  title: "Tests \u2014 attestation flow + data integrity"
+  title: Tests — attestation flow + data integrity
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -148836,8 +148836,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/498
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:20.140Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/498"
+    conduct_event_id: conduct:run-0933ccaa2d593fac29277ffd23d42a44:250:compatibility
+    conduct_run_id: run-0933ccaa2d593fac29277ffd23d42a44
+    conduct_lease_id: lease-250-0933ccaa2d593fac
+    conduct_generation: 250
+  predicate: test "$(gh issue view 498 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/498
+  updated: 2026-07-25T17:57:20.140Z
 - id: LIMEN-172
   title: UI — daily attestation emotional input components
   repo: organvm/peer-audited--behavioral-blockchain
