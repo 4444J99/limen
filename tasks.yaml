@@ -152425,7 +152425,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/317
   updated: 2026-07-25T17:49:15.740Z
 - id: LIMEN-345
-  title: "Custody model sign-off \u2014 lawyer reviews FBO escrow structure"
+  title: Custody model sign-off — lawyer reviews FBO escrow structure
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: opencode
@@ -152441,8 +152441,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/316
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:15.894Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/316"
+    conduct_event_id: conduct:run-2000bef09e522aeccf8879297bef27f2:160:compatibility
+    conduct_run_id: run-2000bef09e522aeccf8879297bef27f2
+    conduct_lease_id: lease-160-2000bef09e522aec
+    conduct_generation: 160
+  predicate: test "$(gh issue view 316 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/316
+  updated: 2026-07-25T17:52:15.894Z
 - id: LIMEN-346
   title: "Retain outside legal counsel \u2014 find and sign retainer"
   repo: organvm/peer-audited--behavioral-blockchain
