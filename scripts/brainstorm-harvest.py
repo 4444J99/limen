@@ -37,10 +37,21 @@ institutio/governance/corpora.yaml as the `brainstorm-extracts` row:
     <store>/brainstorm-extracts/<corpus-id>/atoms/candidate-actions.yaml
     <store>/brainstorm-extracts/<corpus-id>/index.yaml
 
+Re-running the mechanical pass is drain-preserving: an extract whose frontmatter says
+`semantic_atoms: done` is NEVER rewritten or deleted (the semantic pass owns it — even if
+its source thread has vanished from the corpus, preservation beats parity and the index
+marks it `source_present: false`). Only pending extracts are re-rendered, and new threads
+are appended with fresh numbers so existing files keep stable addresses.
+
+The index is a projection of extract frontmatter. The semantic pass rewrites only its own
+extract file; `--sync-index` re-derives every index.yaml row (stream, semantic_atoms) from
+the files, which is what shrinks `--queue`.
+
 Usage:
   scripts/brainstorm-harvest.py --corpus chatgpt-local-session-memory
   scripts/brainstorm-harvest.py --all               # every harvestable session-memory corpus
   scripts/brainstorm-harvest.py --all --queue       # what still awaits the semantic pass
+  scripts/brainstorm-harvest.py --sync-index        # index rows ← extract frontmatter
 """
 
 from __future__ import annotations
@@ -155,6 +166,32 @@ def _render_extract(thread: dict, pairs: list[dict], stream: str, provider: str)
     return "\n".join(lines)
 
 
+def _read_frontmatter(path: Path) -> dict:
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return {}
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        return {}
+    try:
+        return yaml.safe_load(text[4:end]) or {}
+    except yaml.YAMLError:
+        return {}
+
+
+def _existing_extracts(tdir: Path) -> dict[str, tuple[Path, dict]]:
+    """thread_uid → (path, frontmatter) for every extract already on disk."""
+    found: dict[str, tuple[Path, dict]] = {}
+    if not tdir.is_dir():
+        return found
+    for p in sorted(tdir.glob("*.md")):
+        front = _read_frontmatter(p)
+        uid = front.get("thread_uid")
+        if uid:
+            found[uid] = (p, front)
+    return found
+
+
 def harvest_corpus(cid: str, provider: str, out_root: Path) -> dict:
     home = corpus_resolve.corpus_home()
     corpus_dir = home / cid
@@ -164,25 +201,66 @@ def harvest_corpus(cid: str, provider: str, out_root: Path) -> dict:
     threads, by_thread, actions = _load_corpus(corpus_dir)
 
     out = out_root / cid
-    # deterministic rebuild: clear only what this tool owns
-    if out.exists():
-        for p in sorted(out.rglob("*"), reverse=True):
-            p.unlink() if p.is_file() else p.rmdir()
-    out.mkdir(parents=True, exist_ok=True)
-
-    # extracts, numbered flat in stable (title, uid) order — stream is metadata
-    ordered = sorted(threads, key=lambda t: (t.get("title_normalized") or "", t.get("thread_uid") or ""))
     tdir = out / "threads"
     tdir.mkdir(parents=True, exist_ok=True)
+
+    # Drain-preserving merge, never a wipe: extracts the semantic pass has completed
+    # (`semantic_atoms: done`) are accumulators of model-authored work, not derived
+    # artifacts — this tool no longer owns them and must not rewrite or delete them.
+    existing = _existing_extracts(tdir)
+    numbers = [int(m.group(1)) for p in tdir.glob("*.md") if (m := re.match(r"(\d{3,})-", p.name))]
+    next_no = max(numbers, default=0) + 1
+
+    ordered = sorted(threads, key=lambda t: (t.get("title_normalized") or "", t.get("thread_uid") or ""))
+    source_uids = {t.get("thread_uid", "") for t in ordered}
     index_rows = []
-    for i, t in enumerate(ordered, 1):
+    preserved = 0
+    for t in ordered:
         uid = t.get("thread_uid", "")
         title = t.get("title_normalized") or t.get("title_raw") or uid
-        path = tdir / f"{i:03d}-{slugify(title)[:60]}.md"
+        prior = existing.get(uid)
+        if prior and prior[1].get("semantic_atoms") == "done":
+            path, front = prior
+            index_rows.append(
+                {
+                    "thread_uid": uid,
+                    "stream": front.get("stream", "pending"),
+                    "file": str(path.relative_to(out)),
+                    "semantic_atoms": "done",
+                }
+            )
+            preserved += 1
+            continue
+        if prior:
+            path = prior[0]  # pending extract: re-render in place, address stays stable
+        else:
+            path = tdir / f"{next_no:03d}-{slugify(title)[:60]}.md"
+            next_no += 1
         path.write_text(_render_extract(t, by_thread.get(uid, []), "pending", provider), encoding="utf-8")
         index_rows.append(
             {"thread_uid": uid, "stream": "pending", "file": str(path.relative_to(out)), "semantic_atoms": "pending"}
         )
+
+    # Extracts whose source thread vanished: drained ones stay (preservation beats
+    # parity — the corpus dropping a thread must not destroy its harvested atoms);
+    # pending ones are mechanical residue and are dropped with the source.
+    for uid in sorted(existing):
+        if uid in source_uids:
+            continue
+        path, front = existing[uid]
+        if front.get("semantic_atoms") == "done":
+            index_rows.append(
+                {
+                    "thread_uid": uid,
+                    "stream": front.get("stream", "pending"),
+                    "file": str(path.relative_to(out)),
+                    "semantic_atoms": "done",
+                    "source_present": False,
+                }
+            )
+            preserved += 1
+        else:
+            path.unlink()
 
     # the corpus's own coarse actions, preserved as candidate atoms
     atoms_dir = out / "atoms"
@@ -218,7 +296,38 @@ def harvest_corpus(cid: str, provider: str, out_root: Path) -> dict:
         ),
         encoding="utf-8",
     )
-    return {"corpus": cid, "threads": len(threads), "actions": len(candidate)}
+    return {"corpus": cid, "threads": len(threads), "actions": len(candidate), "preserved": preserved}
+
+
+def sync_index(out_root: Path) -> int:
+    """Re-derive every index.yaml row (stream, semantic_atoms) from extract frontmatter.
+
+    The semantic pass rewrites only its own extract file — this projection step is what
+    makes `--queue` shrink. Idempotent: a second run changes nothing and writes nothing.
+    """
+    changed = 0
+    for idx in sorted(out_root.glob("*/index.yaml")):
+        out = idx.parent
+        doc = yaml.safe_load(idx.read_text(encoding="utf-8")) or {}
+        rows = doc.get("extracts") or []
+        touched = False
+        for row in rows:
+            f = out / (row.get("file") or "")
+            if not f.is_file():
+                continue
+            front = _read_frontmatter(f)
+            new_state = front.get("semantic_atoms", row.get("semantic_atoms"))
+            new_stream = front.get("stream", row.get("stream"))
+            if (new_state, new_stream) != (row.get("semantic_atoms"), row.get("stream")):
+                row["semantic_atoms"] = new_state
+                row["stream"] = new_stream
+                changed += 1
+                touched = True
+        if touched:
+            assigned = sorted({r.get("stream") for r in rows if r.get("stream") not in (None, "pending")})
+            doc["streams"] = assigned or "pending — assigned by the semantic pass"
+            idx.write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return changed
 
 
 def semantic_queue(out_root: Path) -> list[str]:
@@ -236,10 +345,17 @@ def main() -> int:
     ap.add_argument("--corpus", help="one corpus id from corpora.yaml")
     ap.add_argument("--all", action="store_true", help="every harvestable session-memory corpus")
     ap.add_argument("--queue", action="store_true", help="list extracts awaiting the semantic pass")
+    ap.add_argument("--sync-index", action="store_true", help="re-derive index.yaml rows from extract frontmatter")
     args = ap.parse_args()
 
     corpora = _harvestable_corpora()
     out_root = corpus_resolve.corpus_home() / EXTRACTS_DIRNAME
+
+    if args.sync_index:
+        changed = sync_index(out_root)
+        pending = len(semantic_queue(out_root))
+        print(f"sync-index: {changed} row(s) updated; {pending} extract(s) still pending")
+        return 0
 
     if args.queue:
         pending = semantic_queue(out_root)
@@ -261,7 +377,7 @@ def main() -> int:
         stats = harvest_corpus(cid, corpora[cid].get("provider", "unknown"), out_root)
         print(
             f"harvested {stats['corpus']}: {stats['threads']} threads "
-            f"(streams pending semantic pass), {stats['actions']} candidate actions"
+            f"({stats['preserved']} drained extract(s) preserved), {stats['actions']} candidate actions"
         )
     print(f"\nextracts under {out_root}  (private store — never the public tree)")
     return 0
