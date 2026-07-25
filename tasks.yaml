@@ -151298,7 +151298,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/414
   updated: 2026-07-25T17:49:28.119Z
 - id: LIMEN-249
-  title: "Guardrails: API \u2014 crisis event logging + escalation trigger"
+  title: "Guardrails: API — crisis event logging + escalation trigger"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -151311,8 +151311,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/413
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:22.854Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/413"
+    conduct_event_id: conduct:run-8145b1cd69cdf49411e693b027e57036:322:compatibility
+    conduct_run_id: run-8145b1cd69cdf49411e693b027e57036
+    conduct_lease_id: lease-322-8145b1cd69cdf494
+    conduct_generation: 322
+  predicate: test "$(gh issue view 413 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/413
+  updated: 2026-07-25T18:01:22.854Z
 - id: LIMEN-250
   title: "Guardrails: Intervention flow — pause + resource display UI"
   repo: organvm/peer-audited--behavioral-blockchain
