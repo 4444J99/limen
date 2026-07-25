@@ -131,7 +131,7 @@ def test_capture_all_rejects_other_selectors(
             sys.executable,
             str(SCRIPT),
             "cold-tree",
-            "gemini-policy",
+            "sample-tree",
             "--root",
             str(tmp_path),
             "--private-receipt",
@@ -185,7 +185,7 @@ def test_capture_all_selects_every_regular_file(
     result = module.main(
         [
             "cold-tree",
-            "gemini-policy",
+            "sample-tree",
             "--root",
             str(source),
             "--private-receipt",
