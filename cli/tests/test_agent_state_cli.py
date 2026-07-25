@@ -82,3 +82,29 @@ def test_cloud_authorization_plan_requires_principal(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "requires --eviction-authorizer" in result.stderr
+
+
+def test_exact_retention_rejects_age_or_size_heuristics(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cold-tree",
+            "opencode-residual",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--retain-relative",
+            "opencode.db",
+            "--hot-days",
+            "0",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "--retain-relative cannot be combined" in result.stderr

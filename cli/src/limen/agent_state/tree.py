@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .atomize import AtomEmitter, LogicalEmitter, canonical_bytes
-from .models import SourceProof
+from .models import MetabolismReceipt, SourceProof
 
 # Darwin's UF_DATALESS is intentionally absent from Python's stat module.
 # File Provider placeholders retain their logical size but set this flag and
@@ -93,6 +93,55 @@ def plan_retention(
         hot_bytes=hot_bytes,
         cutoff_epoch=cutoff,
         maximum_hot_bytes=maximum_hot_bytes,
+    )
+
+
+def plan_exact_retention(root: Path, *, retain_paths: tuple[str, ...]) -> RetentionPlan:
+    """Capture every regular file except an exact, explicitly retained set."""
+
+    root = root.expanduser().resolve()
+    retained: set[str] = set()
+    for raw in retain_paths:
+        relative = Path(raw)
+        if relative.is_absolute() or not relative.parts or any(part in {".", ".."} for part in relative.parts):
+            raise ValueError(f"retained path must be a normalized relative file: {raw}")
+        normalized = relative.as_posix()
+        if normalized in retained:
+            raise ValueError(f"retained path is duplicated: {normalized}")
+        candidate = root / relative
+        try:
+            resolved = candidate.resolve(strict=True)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"retained file is missing: {normalized}") from exc
+        if (
+            not resolved.is_relative_to(root)
+            or candidate.is_symlink()
+            or any((root.joinpath(*relative.parts[:index])).is_symlink() for index in range(1, len(relative.parts)))
+            or not candidate.is_file()
+        ):
+            raise ValueError(f"retained path must identify a regular file within the root: {normalized}")
+        retained.add(normalized)
+
+    files: dict[str, int] = {}
+    for path in root.rglob("*"):
+        if path.is_symlink() or not path.is_file():
+            continue
+        relative = path.relative_to(root).as_posix()
+        files[relative] = path.stat().st_size
+    missing = retained.difference(files)
+    if missing:
+        raise FileNotFoundError(f"retained file disappeared during planning: {min(missing)}")
+
+    hot_paths = tuple(sorted(retained))
+    cold_paths = tuple(sorted(set(files).difference(retained)))
+    return RetentionPlan(
+        root=root,
+        cold_paths=cold_paths,
+        cold_bytes=sum(files[path] for path in cold_paths),
+        hot_paths=hot_paths,
+        hot_bytes=sum(files[path] for path in hot_paths),
+        cutoff_epoch=0.0,
+        maximum_hot_bytes=0,
     )
 
 
@@ -273,17 +322,15 @@ def open_files_under(root: Path) -> set[Path]:
 
 
 def retire_cold_files(
-    receipt: object,
+    receipt: MetabolismReceipt,
     plan: RetentionPlan,
     *,
     open_probe=open_files_under,
 ) -> int:
     """Delete only the captured cold files after the receipt's dual gate passes."""
 
-    require_gate = getattr(receipt, "require_retirement_gate")
-    require_gate()
-    source = getattr(receipt, "source")
-    require_plan_matches_source(plan, source)
+    receipt.require_retirement_gate()
+    require_plan_matches_source(plan, receipt.source)
     opened = open_probe(plan.root)
     selected = {(plan.root / relative).resolve() for relative in plan.cold_paths}
     conflicts = selected & opened
@@ -316,7 +363,7 @@ def brctl_evict(path: Path) -> None:
 
 
 def evict_cloud_materializations(
-    receipt: object,
+    receipt: MetabolismReceipt,
     plan: RetentionPlan,
     *,
     open_probe: Callable[[Path], set[Path]] = open_files_under,
@@ -334,10 +381,8 @@ def evict_cloud_materializations(
 
     if per_file_timeout <= 0:
         raise ValueError("per-file eviction timeout must be positive")
-    require_gate = getattr(receipt, "require_retirement_gate")
-    require_gate()
-    source = getattr(receipt, "source")
-    require_plan_matches_source(plan, source)
+    receipt.require_retirement_gate()
+    require_plan_matches_source(plan, receipt.source)
     opened = open_probe(plan.root)
     planned = tuple((plan.root / relative).resolve() for relative in plan.cold_paths)
     retained = tuple(path for path in planned if path.name in NON_EVICTABLE_CLOUD_NAMES)
