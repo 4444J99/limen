@@ -152949,7 +152949,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-367
-  title: "Enterprise Sales / B2B Department \u2014 Task Tracker"
+  title: Enterprise Sales / B2B Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -152963,8 +152963,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/293
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:19.868Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/293"
+    conduct_event_id: conduct:run-dbfa623215b4f9e188acd24959d41ce7:161:compatibility
+    conduct_run_id: run-dbfa623215b4f9e188acd24959d41ce7
+    conduct_lease_id: lease-161-dbfa623215b4f9e1
+    conduct_generation: 161
+  predicate: test "$(gh issue view 293 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/293
+  updated: 2026-07-25T17:52:19.868Z
 - id: LIMEN-368
   title: 'feat: Skill-contest whitepaper release gate (TKT-P1-019)'
   repo: organvm/peer-audited--behavioral-blockchain
