@@ -147176,7 +147176,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-111
-  title: 'Priority tomorrow: full project-board review + cleanup'
+  title: "Priority tomorrow: full project-board review + cleanup"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -147192,8 +147192,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/569
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:19.497Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/569"
+    conduct_event_id: conduct:run-05dacb61f859fc66fbb27b391e0172e9:89:compatibility
+    conduct_run_id: run-05dacb61f859fc66fbb27b391e0172e9
+    conduct_lease_id: lease-89-05dacb61f859fc66
+    conduct_generation: 89
+  predicate: test "$(gh issue view 569 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/569
+  updated: 2026-07-25T17:48:19.497Z
 - id: LIMEN-112
   title: Create legal artifact appendices (FBO diagram, ToS markup, checklists)
   repo: organvm/peer-audited--behavioral-blockchain
