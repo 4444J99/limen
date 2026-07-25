@@ -152278,7 +152278,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-303
-  title: "Identify 50 target therapists/coaches \u2014 ICP definition"
+  title: Identify 50 target therapists/coaches — ICP definition
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -152292,8 +152292,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/359
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:50.207Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/359"
+    conduct_event_id: conduct:run-d9fe85da2ab046a27927cdd4dc9f6033:259:compatibility
+    conduct_run_id: run-d9fe85da2ab046a27927cdd4dc9f6033
+    conduct_lease_id: lease-259-d9fe85da2ab046a2
+    conduct_generation: 259
+  predicate: test "$(gh issue view 359 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/359
+  updated: 2026-07-25T17:57:50.207Z
 - id: LIMEN-304
   title: In-app help / chatbot integration
   repo: organvm/peer-audited--behavioral-blockchain
