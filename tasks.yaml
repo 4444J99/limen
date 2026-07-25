@@ -152691,7 +152691,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-388
-  title: 'business: build unit economics model ($39 consumer contract)'
+  title: "business: build unit economics model ($39 consumer contract)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -152705,8 +152705,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/269
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:25.103Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/269"
+    conduct_event_id: conduct:run-1d33e580c85915291f054c30cf329d0e:109:compatibility
+    conduct_run_id: run-1d33e580c85915291f054c30cf329d0e
+    conduct_lease_id: lease-109-1d33e580c8591529
+    conduct_generation: 109
+  predicate: test "$(gh issue view 269 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/269
+  updated: 2026-07-25T17:49:25.103Z
 - id: LIMEN-389
   title: 'business: define enterprise ICP (firmographics, psychographics, buying triggers)'
   repo: organvm/peer-audited--behavioral-blockchain
