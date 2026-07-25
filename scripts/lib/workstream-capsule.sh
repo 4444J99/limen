@@ -893,11 +893,12 @@ EOF
   if [[ -n "$runway_requested" ]]; then
     contract_action="$(
       python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" \
-        "${contract_launch_args[@]}" 9>&-
+        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
     )" || exit 1
   else
     contract_action="$(
-      python3 "$contract_helper" configure --path "$contract" "${contract_launch_args[@]}" 9>&-
+      python3 "$contract_helper" configure --path "$contract" \
+        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
     )" || exit 1
   fi
   if [[ "$contract_action" == "changed" || "$contract_action" == "unchanged" ]]; then
