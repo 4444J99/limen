@@ -154898,7 +154898,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/265
   updated: 2026-07-25T17:49:40.330Z
 - id: LIMEN-392
-  title: 'docs: create canonical E2G status matrix (suggestion -> status -> file ref)'
+  title: "docs: create canonical E2G status matrix (suggestion -> status -> file ref)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: gemini
@@ -154912,8 +154912,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/260
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:12.137Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/260"
+    conduct_event_id: conduct:run-fcc41db03ef2e449f6c2fbdf16f12493:266:compatibility
+    conduct_run_id: run-fcc41db03ef2e449f6c2fbdf16f12493
+    conduct_lease_id: lease-266-fcc41db03ef2e449
+    conduct_generation: 266
+  predicate: test "$(gh issue view 260 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/260
+  updated: 2026-07-25T17:58:12.137Z
 - id: LIMEN-393
   title: "docs: inventory all 7 E2G documents with overlap analysis"
   repo: organvm/peer-audited--behavioral-blockchain
