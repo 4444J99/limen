@@ -148005,7 +148005,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-158
-  title: "Schema + API \u2014 exclusion criteria + suspension logic"
+  title: Schema + API — exclusion criteria + suspension logic
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -148017,8 +148017,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/511
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:08.808Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/511"
+    conduct_event_id: conduct:run-d9b9d85dfa1efba9dae3950d38ae845e:68:compatibility
+    conduct_run_id: run-d9b9d85dfa1efba9dae3950d38ae845e
+    conduct_lease_id: lease-68-d9b9d85dfa1efba9
+    conduct_generation: 68
+  predicate: test "$(gh issue view 511 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/511
+  updated: 2026-07-25T17:47:08.808Z
 - id: LIMEN-159
   title: "Tests \u2014 taxonomy completeness + audit logging"
   repo: organvm/peer-audited--behavioral-blockchain
