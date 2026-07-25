@@ -151085,7 +151085,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-266
-  title: "Settlement: API \u2014 deposit/withdrawal/settlement endpoints"
+  title: "Settlement: API — deposit/withdrawal/settlement endpoints"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -151098,8 +151098,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/396
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:26.983Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/396"
+    conduct_event_id: conduct:run-069090f1a23fe2a1624019f39ca1831e:234:compatibility
+    conduct_run_id: run-069090f1a23fe2a1624019f39ca1831e
+    conduct_lease_id: lease-234-069090f1a23fe2a1
+    conduct_generation: 234
+  predicate: test "$(gh issue view 396 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/396
+  updated: 2026-07-25T17:56:26.983Z
 - id: LIMEN-267
   title: "Settlement: Stripe Connect FBO account configuration"
   repo: organvm/peer-audited--behavioral-blockchain
