@@ -153455,7 +153455,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/331
   updated: 2026-07-25T17:59:15.869Z
 - id: LIMEN-332
-  title: "Feature prioritization from analytics \u2014 data-driven backlog"
+  title: Feature prioritization from analytics — data-driven backlog
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -153468,8 +153468,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/330
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:41.673Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/330"
+    conduct_event_id: conduct:run-9b094f342842aaba072dc548049ffccc:293:compatibility
+    conduct_run_id: run-9b094f342842aaba072dc548049ffccc
+    conduct_lease_id: lease-293-9b094f342842aaba
+    conduct_generation: 293
+  predicate: test "$(gh issue view 330 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/330
+  updated: 2026-07-25T17:59:41.673Z
 - id: LIMEN-333
   title: "A/B test plan: onboarding variants"
   repo: organvm/peer-audited--behavioral-blockchain
