@@ -4,6 +4,7 @@ import importlib.util
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -111,6 +112,94 @@ def test_exact_retention_rejects_age_or_size_heuristics(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "--retain-relative cannot be combined" in result.stderr
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [
+        ("--retain-relative", "keep.txt"),
+        ("--hot-days", "0"),
+        ("--maximum-hot-gib", "0"),
+    ],
+)
+def test_capture_all_rejects_other_selectors(
+    tmp_path: Path,
+    selector: tuple[str, str],
+) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cold-tree",
+            "sample-tree",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--capture-all",
+            *selector,
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "--capture-all cannot be combined" in result.stderr
+
+
+def test_capture_all_selects_every_regular_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "legacy"
+    source.mkdir()
+    (source / "alpha.txt").write_bytes(b"a")
+    nested = source / "nested"
+    nested.mkdir()
+    (nested / "beta.txt").write_bytes(b"bc")
+    (source / "alias").symlink_to(source / "alpha.txt")
+
+    spec = importlib.util.spec_from_file_location("agent_state_metabolism_cli_capture_all", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    observed: dict[str, object] = {}
+
+    def capture(*args, **kwargs):
+        observed["args"] = args
+        observed["kwargs"] = kwargs
+        return SimpleNamespace(
+            schema="limen.agent_state_receipt.v1",
+            run_id="run",
+            atom_count=2,
+            duplicate_payloads=0,
+            git_commit="payload",
+            git_receipt_commit="receipt",
+            restorations=(),
+            source_retired=False,
+        )
+
+    monkeypatch.setattr(module, "run_cold_tree_campaign", capture)
+    result = module.main(
+        [
+            "cold-tree",
+            "sample-tree",
+            "--root",
+            str(source),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--capture-all",
+        ]
+    )
+
+    assert result == 0
+    plan = observed["args"][1]
+    assert plan.cold_paths == ("alpha.txt", "nested/beta.txt")
+    assert plan.cold_bytes == 3
+    assert plan.hot_paths == ()
+    assert plan.hot_bytes == 0
 
 
 def test_cloud_restore_requires_path_free_receipt_pair(tmp_path: Path) -> None:
