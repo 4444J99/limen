@@ -148136,7 +148136,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/529
   updated: 2026-07-25T17:48:40.047Z
 - id: LIMEN-141
-  title: "Tests \u2014 copy validation + delivery confirmation"
+  title: Tests — copy validation + delivery confirmation
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -148148,8 +148148,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/528
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:20.569Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/528"
+    conduct_event_id: conduct:run-257fa1fa05223ffb78a37a982be3233f:304:compatibility
+    conduct_run_id: run-257fa1fa05223ffb78a37a982be3233f
+    conduct_lease_id: lease-304-257fa1fa05223ffb
+    conduct_generation: 304
+  predicate: test "$(gh issue view 528 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/528
+  updated: 2026-07-25T18:00:20.569Z
 - id: LIMEN-142
   title: UI — notification display + acknowledgment flow
   repo: organvm/peer-audited--behavioral-blockchain
