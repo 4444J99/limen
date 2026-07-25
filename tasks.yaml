@@ -150834,7 +150834,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-298
-  title: "Enterprise pricing live \u2014 published tiers + billing"
+  title: Enterprise pricing live — published tiers + billing
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -150848,8 +150848,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/364
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:34.291Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/364"
+    conduct_event_id: conduct:run-2cc1d2893f2fbe89d69c1cdda88c4cec:112:compatibility
+    conduct_run_id: run-2cc1d2893f2fbe89d69c1cdda88c4cec
+    conduct_lease_id: lease-112-2cc1d2893f2fbe89
+    conduct_generation: 112
+  predicate: test "$(gh issue view 364 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/364
+  updated: 2026-07-25T17:49:34.291Z
 - id: LIMEN-299
   title: First pilot onboarding — 1-3 practitioners
   repo: organvm/peer-audited--behavioral-blockchain
