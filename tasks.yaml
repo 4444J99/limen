@@ -150910,7 +150910,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-269
-  title: "Camera: Schema \u2014 proof_submissions table + metadata"
+  title: "Camera: Schema — proof_submissions table + metadata"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150923,8 +150923,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/393
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:12.164Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/393"
+    conduct_event_id: conduct:run-5f3d88a9124e395f2f03446a8201cc67:195:compatibility
+    conduct_run_id: run-5f3d88a9124e395f2f03446a8201cc67
+    conduct_lease_id: lease-195-5f3d88a9124e395f
+    conduct_generation: 195
+  predicate: test "$(gh issue view 393 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/393
+  updated: 2026-07-25T17:54:12.164Z
 - id: LIMEN-270
   title: "Camera: API \u2014 proof submission endpoint + nonce validation"
   repo: organvm/peer-audited--behavioral-blockchain
