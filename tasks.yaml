@@ -150547,7 +150547,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-321
-  title: "Audience map \u2014 early-user channels + first target lists"
+  title: Audience map — early-user channels + first target lists
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150562,8 +150562,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/341
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:45:29.994Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/341"
+    conduct_event_id: conduct:run-91beffa081b87aa5e4f1ed57a81f43c3:39:compatibility
+    conduct_run_id: run-91beffa081b87aa5e4f1ed57a81f43c3
+    conduct_lease_id: lease-39-91beffa081b87aa5
+    conduct_generation: 39
+  predicate: test "$(gh issue view 341 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/341
+  updated: 2026-07-25T17:45:29.994Z
 - id: LIMEN-322
   title: Auto-scaling + cost alerting configuration
   repo: organvm/peer-audited--behavioral-blockchain
