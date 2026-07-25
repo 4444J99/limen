@@ -150665,7 +150665,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/425
   updated: 2026-07-25T17:49:43.298Z
 - id: LIMEN-241
-  title: 'Gap analysis: Business model & metrics audit'
+  title: "Gap analysis: Business model & metrics audit"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -150678,8 +150678,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/424
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:59.782Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/424"
+    conduct_event_id: conduct:run-f55846a4d997e7084a6ba4cb39cad07d:262:compatibility
+    conduct_run_id: run-f55846a4d997e7084a6ba4cb39cad07d
+    conduct_lease_id: lease-262-f55846a4d997e708
+    conduct_generation: 262
+  predicate: test "$(gh issue view 424 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/424
+  updated: 2026-07-25T17:57:59.782Z
 - id: LIMEN-242
   title: "Gap analysis: Infrastructure & ops audit"
   repo: organvm/peer-audited--behavioral-blockchain
