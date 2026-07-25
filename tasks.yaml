@@ -147993,7 +147993,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-147
-  title: "Tests \u2014 state transitions + timer accuracy"
+  title: Tests — state transitions + timer accuracy
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -148005,8 +148005,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/522
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:19.273Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/522"
+    conduct_event_id: conduct:run-5cffd550951dfd3dcb6c6b0192e13083:143:compatibility
+    conduct_run_id: run-5cffd550951dfd3dcb6c6b0192e13083
+    conduct_lease_id: lease-143-5cffd550951dfd3d
+    conduct_generation: 143
+  predicate: test "$(gh issue view 522 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/522
+  updated: 2026-07-25T17:51:19.273Z
 - id: LIMEN-148
   title: "UI \u2014 countdown display + pause/resume controls"
   repo: organvm/peer-audited--behavioral-blockchain
