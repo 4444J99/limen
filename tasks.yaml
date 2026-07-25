@@ -151564,7 +151564,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/390
   updated: 2026-07-25T17:53:39.863Z
 - id: LIMEN-273
-  title: "KYC: Tests \u2014 unit + integration for tier transitions"
+  title: "KYC: Tests — unit + integration for tier transitions"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -151577,8 +151577,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/389
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:32.261Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/389"
+    conduct_event_id: conduct:run-6badeaa04c5ca863b1f34eb1a1c883f4:272:compatibility
+    conduct_run_id: run-6badeaa04c5ca863b1f34eb1a1c883f4
+    conduct_lease_id: lease-272-6badeaa04c5ca863
+    conduct_generation: 272
+  predicate: test "$(gh issue view 389 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/389
+  updated: 2026-07-25T17:58:32.261Z
 - id: LIMEN-274
   title: "KYC: UI — identity upload flow + stake tier display"
   repo: organvm/peer-audited--behavioral-blockchain
