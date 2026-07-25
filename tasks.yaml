@@ -153703,7 +153703,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/316
   updated: 2026-07-25T17:52:15.894Z
 - id: LIMEN-346
-  title: "Retain outside legal counsel \u2014 find and sign retainer"
+  title: Retain outside legal counsel — find and sign retainer
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -153719,8 +153719,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/315
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:48.246Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/315"
+    conduct_event_id: conduct:run-a98117c0a9747665b0305db1f23c3cec:277:compatibility
+    conduct_run_id: run-a98117c0a9747665b0305db1f23c3cec
+    conduct_lease_id: lease-277-a98117c0a9747665
+    conduct_generation: 277
+  predicate: test "$(gh issue view 315 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/315
+  updated: 2026-07-25T17:58:48.246Z
 - id: LIMEN-347
   title: "feat: B2B orchestration panel — billing & scope management (F-DESKTOP-05)"
   repo: organvm/peer-audited--behavioral-blockchain
