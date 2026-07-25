@@ -149178,7 +149178,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-206
-  title: "TKT-P1-018: Schema + API \u2014 gradient calculation + leaderboard data"
+  title: "TKT-P1-018: Schema + API — gradient calculation + leaderboard data"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -149190,8 +149190,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/463
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:38.768Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/463"
+    conduct_event_id: conduct:run-dca4dc766208864f3c1036b62eab23a3:131:compatibility
+    conduct_run_id: run-dca4dc766208864f3c1036b62eab23a3
+    conduct_lease_id: lease-131-dca4dc766208864f
+    conduct_generation: 131
+  predicate: test "$(gh issue view 463 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/463
+  updated: 2026-07-25T17:50:38.768Z
 - id: LIMEN-207
   title: "TKT-P1-016: Tests \u2014 onboarding flow + oath persistence"
   repo: organvm/peer-audited--behavioral-blockchain
