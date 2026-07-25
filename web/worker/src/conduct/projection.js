@@ -182,16 +182,6 @@ function decodeBase64(value) {
   return new TextDecoder().decode(bytes);
 }
 
-function encodeBase64(value) {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  const size = 0x8000;
-  for (let index = 0; index < bytes.length; index += size) {
-    binary += String.fromCharCode(...bytes.subarray(index, index + size));
-  }
-  return btoa(binary);
-}
-
 function inlineBoardSource(env) {
   if (env.LIMEN_INLINE_TASKS_YAML) return String(env.LIMEN_INLINE_TASKS_YAML);
   if (env.LIMEN_INLINE_TASKS_YAML_B64) return decodeBase64(env.LIMEN_INLINE_TASKS_YAML_B64);
@@ -754,6 +744,14 @@ function githubHeaders(env, withBody = false, raw = false) {
   };
 }
 
+function githubRefUrl(env) {
+  const branch = githubProjectionBranch(env)
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `${githubRepositoryUrl(env)}/git/refs/heads/${branch}`;
+}
+
 async function reconcileProjectionBranch(env, fetchImpl) {
   const branch = githubProjectionBranch(env);
   const response = await fetchImpl(`${githubRepositoryUrl(env)}/merges`, {
@@ -865,8 +863,40 @@ export function renderTaskBoardProjection(yamlText, before, after, taskId) {
 }
 
 async function githubGet(env, fetchImpl, taskId) {
-  const branch = githubProjectionBranch(env);
-  const url = `${githubContentsUrl(env)}?ref=${encodeURIComponent(branch)}`;
+  const refResponse = await fetchImpl(githubRefUrl(env), {
+    method: "GET",
+    headers: githubHeaders(env),
+  });
+  const refText = await refResponse.text();
+  if (!refResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection ref read failed (${refResponse.status}): ${refText.slice(0, 300)}`,
+    );
+  }
+  const headSha = String((refText ? JSON.parse(refText) : {})?.object?.sha || "");
+  if (!headSha) {
+    throw new ConductProjectionError("GitHub projection ref returned no head SHA");
+  }
+
+  const commitResponse = await fetchImpl(
+    `${githubRepositoryUrl(env)}/git/commits/${encodeURIComponent(headSha)}`,
+    {
+      method: "GET",
+      headers: githubHeaders(env),
+    },
+  );
+  const commitText = await commitResponse.text();
+  if (!commitResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection commit read failed (${commitResponse.status}): ${commitText.slice(0, 300)}`,
+    );
+  }
+  const treeSha = String((commitText ? JSON.parse(commitText) : {})?.tree?.sha || "");
+  if (!treeSha) {
+    throw new ConductProjectionError("GitHub projection commit returned no tree SHA");
+  }
+
+  const url = `${githubContentsUrl(env)}?ref=${encodeURIComponent(headSha)}`;
   const response = await fetchImpl(url, {
     method: "GET",
     headers: githubHeaders(env),
@@ -893,25 +923,85 @@ async function githubGet(env, fetchImpl, taskId) {
   }
   return {
     board: minimalBoardFromSource(yamlText, taskId),
-    sha: raw.sha,
+    headSha,
+    treeSha,
     yamlText,
   };
 }
 
-async function githubPut(env, fetchImpl, yamlText, sha, event) {
-  const branch = githubProjectionBranch(env);
-  const response = await fetchImpl(githubContentsUrl(env), {
-    method: "PUT",
+async function githubPut(env, fetchImpl, yamlText, document, event) {
+  const blobResponse = await fetchImpl(`${githubRepositoryUrl(env)}/git/blobs`, {
+    method: "POST",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      content: yamlText,
+      encoding: "utf-8",
+    }),
+  });
+  const blobText = await blobResponse.text();
+  if (!blobResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection blob write failed (${blobResponse.status}): ${blobText.slice(0, 300)}`,
+    );
+  }
+  const blobSha = String((blobText ? JSON.parse(blobText) : {})?.sha || "");
+  if (!blobSha) throw new ConductProjectionError("GitHub projection blob write returned no SHA");
+
+  const treeResponse = await fetchImpl(`${githubRepositoryUrl(env)}/git/trees`, {
+    method: "POST",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      base_tree: document.treeSha,
+      tree: [{
+        path: String(env.LIMEN_GITHUB_PATH || "tasks.yaml"),
+        mode: "100644",
+        type: "blob",
+        sha: blobSha,
+      }],
+    }),
+  });
+  const treeText = await treeResponse.text();
+  if (!treeResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection tree write failed (${treeResponse.status}): ${treeText.slice(0, 300)}`,
+    );
+  }
+  const treeSha = String((treeText ? JSON.parse(treeText) : {})?.sha || "");
+  if (!treeSha) throw new ConductProjectionError("GitHub projection tree write returned no SHA");
+
+  const commitResponse = await fetchImpl(`${githubRepositoryUrl(env)}/git/commits`, {
+    method: "POST",
     headers: githubHeaders(env, true),
     body: JSON.stringify({
       message: `limen conduct: ${event.kind} ${event.task_id}`,
-      content: encodeBase64(yamlText),
-      branch,
-      sha,
+      tree: treeSha,
+      parents: [document.headSha],
     }),
   });
-  const text = await response.text();
-  return { ok: response.ok, status: response.status, text };
+  const commitText = await commitResponse.text();
+  if (!commitResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection commit write failed (${commitResponse.status}): ${commitText.slice(0, 300)}`,
+    );
+  }
+  const commitSha = String((commitText ? JSON.parse(commitText) : {})?.sha || "");
+  if (!commitSha) throw new ConductProjectionError("GitHub projection commit write returned no SHA");
+
+  const refResponse = await fetchImpl(githubRefUrl(env), {
+    method: "PATCH",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      sha: commitSha,
+      force: false,
+    }),
+  });
+  const text = await refResponse.text();
+  return {
+    ok: refResponse.ok,
+    status: refResponse.status,
+    text,
+    sha: commitSha,
+  };
 }
 
 export async function commitTaskCompatibilityEvent(env, event, { fetchImpl = fetch, maxAttempts = 4 } = {}) {
@@ -943,7 +1033,7 @@ export async function commitTaskCompatibilityEvent(env, event, { fetchImpl = fet
       return {
         status: "duplicate",
         mode: "github",
-        sha: document.sha,
+        sha: document.headSha,
         task: applied.task,
         event_id: event.event_id,
       };
@@ -954,16 +1044,19 @@ export async function commitTaskCompatibilityEvent(env, event, { fetchImpl = fet
       applied.board,
       event.task_id,
     );
-    const written = await githubPut(env, fetchImpl, yamlText, document.sha, event);
+    const written = await githubPut(env, fetchImpl, yamlText, document, event);
     if (written.ok) {
       return {
         status: "committed",
         mode: "github",
+        sha: written.sha,
         task: applied.task,
         event_id: event.event_id,
       };
     }
-    if (written.status === 409 || (written.status === 422 && /sha|does not match|conflict/i.test(written.text))) {
+    if (written.status === 409
+        || (written.status === 422
+          && /fast[- ]forward|sha|does not match|conflict|reference update failed/i.test(written.text))) {
       lastConflict = written.text.slice(0, 300);
       continue;
     }
