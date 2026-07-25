@@ -147565,8 +147565,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/556
   updated: 2026-07-25T17:51:22.616Z
 - id: LIMEN-123
-  title: "\U0001F3DB Phase Beta \u2014 Market-safe money enablement (Alpha\u2192Beta\
-    \ gate)"
+  title: 🏛 Phase Beta — Market-safe money enablement (Alpha→Beta gate)
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -147580,8 +147579,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/555
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:49.464Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/555"
+    conduct_event_id: conduct:run-f4af59158887b5138ecc4cfec0e9152d:206:compatibility
+    conduct_run_id: run-f4af59158887b5138ecc4cfec0e9152d
+    conduct_lease_id: lease-206-f4af59158887b513
+    conduct_generation: 206
+  predicate: test "$(gh issue view 555 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/555
+  updated: 2026-07-25T17:54:49.464Z
 - id: LIMEN-124
   title: Tests — bounds enforcement + UX state management
   repo: organvm/peer-audited--behavioral-blockchain
