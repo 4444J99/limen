@@ -152858,7 +152858,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/309
   updated: 2026-07-25T17:46:42.942Z
 - id: LIMEN-352
-  title: 'feat: Ostrich effect detection (F-AEGIS-09)'
+  title: "feat: Ostrich effect detection (F-AEGIS-09)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -152871,8 +152871,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/308
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:43.178Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/308"
+    conduct_event_id: conduct:run-184346df5ba093a79ab568d8c9af4411:186:compatibility
+    conduct_run_id: run-184346df5ba093a79ab568d8c9af4411
+    conduct_lease_id: lease-186-184346df5ba093a7
+    conduct_generation: 186
+  predicate: test "$(gh issue view 308 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/308
+  updated: 2026-07-25T17:53:43.178Z
 - id: LIMEN-353
   title: "feat: RAIN mindfulness notifications (F-AEGIS-08)"
   repo: organvm/peer-audited--behavioral-blockchain
