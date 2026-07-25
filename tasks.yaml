@@ -149256,7 +149256,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-202
-  title: "TKT-P1-006: Native \u2014 APNs (iOS) + FCM (Android) integration"
+  title: "TKT-P1-006: Native — APNs (iOS) + FCM (Android) integration"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -149269,8 +149269,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/467
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:40.970Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/467"
+    conduct_event_id: conduct:run-0b0e07aa59a5f654eb2e213da2eebf98:167:compatibility
+    conduct_run_id: run-0b0e07aa59a5f654eb2e213da2eebf98
+    conduct_lease_id: lease-167-0b0e07aa59a5f654
+    conduct_generation: 167
+  predicate: test "$(gh issue view 467 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/467
+  updated: 2026-07-25T17:52:40.970Z
 - id: LIMEN-203
   title: "TKT-P1-006: API — push notification dispatch + device registration"
   repo: organvm/peer-audited--behavioral-blockchain
