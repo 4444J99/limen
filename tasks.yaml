@@ -152915,7 +152915,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/314
   updated: 2026-07-25T17:46:39.756Z
 - id: LIMEN-348
-  title: 'feat: Hash collider desktop tool wiring (F-DESKTOP-04)'
+  title: "feat: Hash collider desktop tool wiring (F-DESKTOP-04)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -152929,8 +152929,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/313
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:38.989Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/313"
+    conduct_event_id: conduct:run-ebf6020683cb7f6cdfdb988b5b403a88:203:compatibility
+    conduct_run_id: run-ebf6020683cb7f6cdfdb988b5b403a88
+    conduct_lease_id: lease-203-ebf6020683cb7f6c
+    conduct_generation: 203
+  predicate: test "$(gh issue view 313 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/313
+  updated: 2026-07-25T17:54:38.989Z
 - id: LIMEN-349
   title: "feat: HR dashboard — role-based access & org authorization (F-WEB-03)"
   repo: organvm/peer-audited--behavioral-blockchain
