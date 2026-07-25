@@ -151347,7 +151347,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-351
-  title: "feat: Finish line spike \u2014 double-stake incentive (F-CORE-09)"
+  title: "feat: Finish line spike — double-stake incentive (F-CORE-09)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -151360,8 +151360,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/309
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:42.942Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/309"
+    conduct_event_id: conduct:run-55fb056095709fc026b26353228b0a1e:60:compatibility
+    conduct_run_id: run-55fb056095709fc026b26353228b0a1e
+    conduct_lease_id: lease-60-55fb056095709fc0
+    conduct_generation: 60
+  predicate: test "$(gh issue view 309 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/309
+  updated: 2026-07-25T17:46:42.942Z
 - id: LIMEN-352
   title: 'feat: Ostrich effect detection (F-AEGIS-09)'
   repo: organvm/peer-audited--behavioral-blockchain
