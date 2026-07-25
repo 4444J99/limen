@@ -152315,8 +152315,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/319
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:01.789Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/319"
+    conduct_event_id: conduct:run-c7fd7ff1b1638aa4b096cd21bf1fb704:156:compatibility
+    conduct_run_id: run-c7fd7ff1b1638aa4b096cd21bf1fb704
+    conduct_lease_id: lease-156-c7fd7ff1b1638aa4
+    conduct_generation: 156
+  predicate: test "$(gh issue view 319 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/319
+  updated: 2026-07-25T17:52:01.789Z
 - id: LIMEN-343
   title: Skill-contest whitepaper draft + legal review
   repo: organvm/peer-audited--behavioral-blockchain
