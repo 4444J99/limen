@@ -151476,7 +151476,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/385
   updated: 2026-07-25T17:46:52.111Z
 - id: LIMEN-278
-  title: "Enterprise Sales / BD \u2014 hiring (if fundraise)"
+  title: Enterprise Sales / BD — hiring (if fundraise)
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -151490,8 +151490,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/384
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:55.446Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/384"
+    conduct_event_id: conduct:run-a8e9188150c1fe82d79df616634a0e6f:243:compatibility
+    conduct_run_id: run-a8e9188150c1fe82d79df616634a0e6f
+    conduct_lease_id: lease-243-a8e9188150c1fe82
+    conduct_generation: 243
+  predicate: test "$(gh issue view 384 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/384
+  updated: 2026-07-25T17:56:55.446Z
 - id: LIMEN-279
   title: "Growth / Community Manager \u2014 hiring"
   repo: organvm/peer-audited--behavioral-blockchain
