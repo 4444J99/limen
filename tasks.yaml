@@ -149706,7 +149706,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-243
-  title: "Ask Styx: Integration tests \u2014 E2E question\u2192answer flow"
+  title: "Ask Styx: Integration tests — E2E question→answer flow"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -149719,8 +149719,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/422
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:06.295Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/422"
+    conduct_event_id: conduct:run-e46f3544215f4b4550b265baeedf3bb4:103:compatibility
+    conduct_run_id: run-e46f3544215f4b4550b265baeedf3bb4
+    conduct_lease_id: lease-103-e46f3544215f4b45
+    conduct_generation: 103
+  predicate: test "$(gh issue view 422 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/422
+  updated: 2026-07-25T17:49:06.295Z
 - id: LIMEN-244
   title: 'Thesis: Production pipeline (PDF build, citation check)'
   repo: organvm/peer-audited--behavioral-blockchain
