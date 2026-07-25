@@ -151364,7 +151364,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/410
   updated: 2026-07-25T17:46:29.053Z
 - id: LIMEN-253
-  title: "Forfeit: Tests \u2014 payout matrix all configured states"
+  title: "Forfeit: Tests — payout matrix all configured states"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -151377,8 +151377,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/409
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:56.334Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/409"
+    conduct_event_id: conduct:run-698c1819c534c7e3575d4e7e7397f79c:314:compatibility
+    conduct_run_id: run-698c1819c534c7e3575d4e7e7397f79c
+    conduct_lease_id: lease-314-698c1819c534c7e3
+    conduct_generation: 314
+  predicate: test "$(gh issue view 409 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/409
+  updated: 2026-07-25T18:00:56.334Z
 - id: LIMEN-254
   title: "Forfeit: Admin UI — kill switch toggle + state mode display"
   repo: organvm/peer-audited--behavioral-blockchain
