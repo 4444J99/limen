@@ -147099,7 +147099,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-109
-  title: 'premortem: extract sellable artifact + get paid in 30 days'
+  title: "premortem: extract sellable artifact + get paid in 30 days"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: opencode
@@ -147113,8 +147113,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/598
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:45:33.382Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/598"
+    conduct_event_id: conduct:run-959407e31a714c5afae69d2ad02c49ac:40:compatibility
+    conduct_run_id: run-959407e31a714c5afae69d2ad02c49ac
+    conduct_lease_id: lease-40-959407e31a714c5a
+    conduct_generation: 40
+  predicate: test "$(gh issue view 598 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/598
+  updated: 2026-07-25T17:45:33.382Z
 - id: LIMEN-110
   title: "expansive inquiry: Styx revenue gap \u2014 why no money"
   repo: organvm/peer-audited--behavioral-blockchain
