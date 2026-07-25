@@ -149543,7 +149543,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-252
-  title: "Forfeit: Legal \u2014 counsel sign-off on jurisdiction mode mapping"
+  title: "Forfeit: Legal — counsel sign-off on jurisdiction mode mapping"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: agy
@@ -149558,8 +149558,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/410
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:29.053Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/410"
+    conduct_event_id: conduct:run-582352fd1521e4a4a4f497e74bfdd003:56:compatibility
+    conduct_run_id: run-582352fd1521e4a4a4f497e74bfdd003
+    conduct_lease_id: lease-56-582352fd1521e4a4
+    conduct_generation: 56
+  predicate: test "$(gh issue view 410 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/410
+  updated: 2026-07-25T17:46:29.053Z
 - id: LIMEN-253
   title: "Forfeit: Tests \u2014 payout matrix all configured states"
   repo: organvm/peer-audited--behavioral-blockchain
