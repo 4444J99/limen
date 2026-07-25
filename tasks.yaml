@@ -148956,7 +148956,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/493
   updated: 2026-07-25T17:51:42.817Z
 - id: LIMEN-177
-  title: "Tests \u2014 all 19 readiness criteria pass/fail"
+  title: Tests — all 19 readiness criteria pass/fail
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -148968,8 +148968,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/492
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:52.472Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/492"
+    conduct_event_id: conduct:run-8dccec45bd17af488fd66393a0e8ac38:242:compatibility
+    conduct_run_id: run-8dccec45bd17af488fd66393a0e8ac38
+    conduct_lease_id: lease-242-8dccec45bd17af48
+    conduct_generation: 242
+  predicate: test "$(gh issue view 492 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/492
+  updated: 2026-07-25T17:56:52.472Z
 - id: LIMEN-178
   title: "CI integration \u2014 pre-deploy gate + status reporting"
   repo: organvm/peer-audited--behavioral-blockchain
