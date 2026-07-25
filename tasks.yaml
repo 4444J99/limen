@@ -149538,7 +149538,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/475
   updated: 2026-07-25T17:55:46.528Z
 - id: LIMEN-195
-  title: "TKT-P1-009: Tests \u2014 exclusion enforcement + re-entry validation"
+  title: "TKT-P1-009: Tests — exclusion enforcement + re-entry validation"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -149550,8 +149550,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/474
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:28.562Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/474"
+    conduct_event_id: conduct:run-ab00352352e7e5c4bab9805bda0e6de7:271:compatibility
+    conduct_run_id: run-ab00352352e7e5c4bab9805bda0e6de7
+    conduct_lease_id: lease-271-ab00352352e7e5c4
+    conduct_generation: 271
+  predicate: test "$(gh issue view 474 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/474
+  updated: 2026-07-25T17:58:28.562Z
 - id: LIMEN-196
   title: "TKT-P1-009: UI \u2014 self-exclusion flow + responsible-use settings"
   repo: organvm/peer-audited--behavioral-blockchain
