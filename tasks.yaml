@@ -150377,7 +150377,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/438
   updated: 2026-07-25T17:46:22.354Z
 - id: LIMEN-232
-  title: 'Audit: Prioritize stubs by blast radius + phase relevance'
+  title: "Audit: Prioritize stubs by blast radius + phase relevance"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: codex
@@ -150390,8 +150390,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/437
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:34.924Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/437"
+    conduct_event_id: conduct:run-7810c799fccb0bbb32691e9bd4b90d76:254:compatibility
+    conduct_run_id: run-7810c799fccb0bbb32691e9bd4b90d76
+    conduct_lease_id: lease-254-7810c799fccb0bbb
+    conduct_generation: 254
+  predicate: test "$(gh issue view 437 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/437
+  updated: 2026-07-25T17:57:34.924Z
 - id: LIMEN-233
   title: 'Audit: Scan codebase for TODO/FIXME/stub placeholders'
   repo: organvm/peer-audited--behavioral-blockchain
