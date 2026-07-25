@@ -151213,7 +151213,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-349
-  title: "feat: HR dashboard \u2014 role-based access & org authorization (F-WEB-03)"
+  title: "feat: HR dashboard — role-based access & org authorization (F-WEB-03)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -151228,8 +151228,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/312
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:19.033Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/312"
+    conduct_event_id: conduct:run-b82970537cf5edc4d6c3e497b572809d:53:compatibility
+    conduct_run_id: run-b82970537cf5edc4d6c3e497b572809d
+    conduct_lease_id: lease-53-b82970537cf5edc4
+    conduct_generation: 53
+  predicate: test "$(gh issue view 312 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/312
+  updated: 2026-07-25T17:46:19.033Z
 - id: LIMEN-350
   title: 'feat: State-by-state compliance toggle UI (F-LEGAL-03)'
   repo: organvm/peer-audited--behavioral-blockchain
