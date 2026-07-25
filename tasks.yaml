@@ -151078,7 +151078,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/363
   updated: 2026-07-25T17:48:53.538Z
 - id: LIMEN-300
-  title: "Security questionnaire template \u2014 pre-filled answers"
+  title: Security questionnaire template — pre-filled answers
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -151093,8 +151093,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/362
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:32.145Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/362"
+    conduct_event_id: conduct:run-217aa818da0acfb71ca2949549410e92:129:compatibility
+    conduct_run_id: run-217aa818da0acfb71ca2949549410e92
+    conduct_lease_id: lease-129-217aa818da0acfb7
+    conduct_generation: 129
+  predicate: test "$(gh issue view 362 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/362
+  updated: 2026-07-25T17:50:32.145Z
 - id: LIMEN-301
   title: "Enterprise demo environment \u2014 sandboxed Render instance"
   repo: organvm/peer-audited--behavioral-blockchain
