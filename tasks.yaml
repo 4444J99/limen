@@ -155845,7 +155845,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/255
   updated: 2026-07-25T17:52:50.984Z
 - id: LIMEN-395
-  title: 'docs: write executive summary PDF (2-3 pages)'
+  title: "docs: write executive summary PDF (2-3 pages)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: agy
@@ -155860,8 +155860,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/254
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:54.988Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/254"
+    conduct_event_id: conduct:run-34cf8adc9f473171241c8f379c367ef8:331:compatibility
+    conduct_run_id: run-34cf8adc9f473171241c8f379c367ef8
+    conduct_lease_id: lease-331-34cf8adc9f473171
+    conduct_generation: 331
+  predicate: test "$(gh issue view 254 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/254
+  updated: 2026-07-25T18:01:54.988Z
 - id: LIMEN-396
   title: "docs: create investor slide deck (10-15 slides)"
   repo: organvm/peer-audited--behavioral-blockchain
