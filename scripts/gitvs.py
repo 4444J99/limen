@@ -920,8 +920,10 @@ def _owner_repos(owner: str, token: str | None) -> list[dict] | None:
             token,
             timeout=180,
         )
-        if r.returncode != 0 or not (r.stdout or "").strip():
+        if r.returncode != 0:
             continue
+        if not (r.stdout or "").strip():
+            return []
         rows: list[dict] = []
         for ln in r.stdout.splitlines():
             ln = ln.strip()
@@ -930,11 +932,11 @@ def _owner_repos(owner: str, token: str | None) -> list[dict] | None:
             try:
                 row = json.loads(ln)
             except json.JSONDecodeError:
-                continue
-            if isinstance(row, dict) and row.get("full_name"):
-                rows.append(row)
-        if rows:
-            return rows
+                return None
+            if not isinstance(row, dict) or not row.get("full_name"):
+                return None
+            rows.append(row)
+        return rows
     return None
 
 
