@@ -153951,7 +153951,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/286
   updated: 2026-07-25T17:47:46.790Z
 - id: LIMEN-375
-  title: "Product & Design Department \u2014 Task Tracker"
+  title: Product & Design Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -153965,8 +153965,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/285
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:09.810Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/285"
+    conduct_event_id: conduct:run-c3231d5578b33c5c8835f6ea25d17015:229:compatibility
+    conduct_run_id: run-c3231d5578b33c5c8835f6ea25d17015
+    conduct_lease_id: lease-229-c3231d5578b33c5c
+    conduct_generation: 229
+  predicate: test "$(gh issue view 285 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/285
+  updated: 2026-07-25T17:56:09.810Z
 - id: LIMEN-376
   title: "feat: Fury audit masks — workbench masked display (TKT-P1-014)"
   repo: organvm/peer-audited--behavioral-blockchain
