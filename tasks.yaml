@@ -152005,7 +152005,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-374
-  title: "Operations & Infrastructure Department \u2014 Task Tracker"
+  title: Operations & Infrastructure Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -152019,8 +152019,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/286
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:46.790Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/286"
+    conduct_event_id: conduct:run-692689d305d3d9fb35c3171dbfe32622:79:compatibility
+    conduct_run_id: run-692689d305d3d9fb35c3171dbfe32622
+    conduct_lease_id: lease-79-692689d305d3d9fb
+    conduct_generation: 79
+  predicate: test "$(gh issue view 286 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/286
+  updated: 2026-07-25T17:47:46.790Z
 - id: LIMEN-375
   title: "Product & Design Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
