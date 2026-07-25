@@ -507,15 +507,30 @@ def _remoteless_repos() -> list[str]:
 
 
 def blind_spots(census: dict[str, Any], registered: set[str]) -> dict[str, Any]:
+    """Blind-spot inventories, each row carrying visibility.
+
+    Visibility travels with the name because these lists are the one place a
+    private repository can reach a rendered page WITHOUT going through the
+    matcher — they enumerate what was never matched, and "never matched"
+    includes everything private. The renderer filters them under --public-safe.
+    """
     all_repos = census.get("repos", [])
+
+    def row(r: dict[str, Any]) -> dict[str, str]:
+        return {"name": r["name"], "visibility": r.get("visibility", "PUBLIC")}
+
     undescribed = sorted(
-        r["name"] for r in all_repos if not (r.get("description") or "").strip() and not _excluded(r["name"])
+        (row(r) for r in all_repos if not (r.get("description") or "").strip() and not _excluded(r["name"])),
+        key=lambda r: r["name"],
     )
-    excluded = sorted(r["name"] for r in all_repos if _excluded(r["name"]))
+    excluded = sorted((row(r) for r in all_repos if _excluded(r["name"])), key=lambda r: r["name"])
     return {
         "undescribed": undescribed,
         "excluded": excluded,
         "people_elsewhere": _people_elsewhere(registered),
+        # Local working trees. These carry no GitHub visibility, and their bare
+        # names are self-describing (a litigation store announces itself), so
+        # the renderer publishes only the count.
         "remoteless": _remoteless_repos(),
     }
 
@@ -932,6 +947,22 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
             f'<div class="keys">{shown}{more}</div></div>'
         )
 
+    def visible(rows: list[dict[str, str]]) -> tuple[list[str], int]:
+        """Names safe to print, plus how many were withheld as private."""
+        if public_safe:
+            shown = [r["name"] for r in rows if r["visibility"] != "PRIVATE"]
+            return shown, len(rows) - len(shown)
+        return [r["name"] for r in rows], 0
+
+    def withheld(n: int) -> str:
+        return f" {n} private repositories are counted but not named." if n else ""
+
+    undesc, undesc_priv = visible(blind["undescribed"])
+    excl, excl_priv = visible(blind["excluded"])
+    # Local trees have no GitHub visibility and self-describing names, so under
+    # public-safe they are counted only — never listed.
+    remoteless = [] if public_safe else blind["remoteless"]
+
     blind_html = (
         _blind_card(
             "People documented elsewhere but never registered",
@@ -943,21 +974,28 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
         + _blind_card(
             "Repositories with no description",
             "Matching reads name + description. A repo that never says what it is cannot be "
-            "matched to anyone's lane, however obviously it belongs to one.",
-            blind["undescribed"],
+            "matched to anyone's lane, however obviously it belongs to one."
+            + withheld(undesc_priv),
+            undesc,
             tone="loud",
         )
         + _blind_card(
             "Working trees with no remote",
             "A gh sweep enumerates remotes. Local-only repositories are invisible to it by "
-            "construction — no threshold change reaches them.",
-            blind["remoteless"],
+            "construction — no threshold change reaches them."
+            + (
+                f" {len(blind['remoteless'])} found; names withheld."
+                if public_safe and blind["remoteless"]
+                else ""
+            ),
+            remoteless,
         )
         + _blind_card(
             "Excluded by pattern",
             "Vendor mirrors, contribution trackers, per-org scaffolding, Pages copies and "
-            "superprojects. Deliberate, but a judgment call worth re-reading.",
-            blind["excluded"],
+            "superprojects. Deliberate, but a judgment call worth re-reading."
+            + withheld(excl_priv),
+            excl,
         )
     )
 
