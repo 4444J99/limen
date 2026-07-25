@@ -147482,8 +147482,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/562
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:58.160Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/562"
+    conduct_event_id: conduct:run-cb33f08b3a2500c903636deda37a1e54:280:compatibility
+    conduct_run_id: run-cb33f08b3a2500c903636deda37a1e54
+    conduct_lease_id: lease-280-cb33f08b3a2500c9
+    conduct_generation: 280
+  predicate: test "$(gh issue view 562 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/562
+  updated: 2026-07-25T17:58:58.160Z
 - id: LIMEN-119
   title: "Authority layer \u2014 founder essay + beta safety/trust summary"
   repo: organvm/peer-audited--behavioral-blockchain
