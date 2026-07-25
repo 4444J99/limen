@@ -588,13 +588,9 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
     ]
     assert "# Continuation capsule: explicit-agent-launch" in prompt_capture.read_text(encoding="utf-8")
     contract = json.loads(
-        (
-            repo
-            / ".worktrees"
-            / "explicit-agent-launch"
-            / ".limen-workstream"
-            / "workstream.json"
-        ).read_text(encoding="utf-8")
+        (repo / ".worktrees" / "explicit-agent-launch" / ".limen-workstream" / "workstream.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert contract["schema"] == "limen.workstream.contract.v2"
     assert contract["primary_launch"] == {

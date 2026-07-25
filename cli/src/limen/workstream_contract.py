@@ -285,11 +285,7 @@ def validate_codex_launch(
     if not isinstance(entries, list):
         raise ContractError("live Codex model catalog has an unsupported shape")
     selected = next(
-        (
-            entry
-            for entry in entries
-            if isinstance(entry, dict) and entry.get("slug") == model
-        ),
+        (entry for entry in entries if isinstance(entry, dict) and entry.get("slug") == model),
         None,
     )
     if selected is None:
@@ -298,18 +294,12 @@ def validate_codex_launch(
     if not isinstance(raw_levels, list):
         raise ContractError(f"Codex model {model!r} does not publish reasoning capabilities")
     levels = {
-        level
-        if isinstance(level, str)
-        else level.get("effort")
-        if isinstance(level, dict)
-        else None
+        level if isinstance(level, str) else level.get("effort") if isinstance(level, dict) else None
         for level in raw_levels
     }
     levels.discard(None)
     if reasoning_effort not in levels:
-        raise ContractError(
-            f"Codex model {model!r} does not support reasoning effort {reasoning_effort!r}"
-        )
+        raise ContractError(f"Codex model {model!r} does not support reasoning effort {reasoning_effort!r}")
     return selected
 
 
@@ -541,9 +531,7 @@ def configure_contract(
     launch_values = (agent, model, reasoning_effort, sandbox)
     explicit_launch = any(value is not None for value in launch_values)
     if explicit_launch and not all(value is not None for value in launch_values):
-        raise ContractError(
-            "explicit workstream launch profiles require agent, model, reasoning effort, and sandbox"
-        )
+        raise ContractError("explicit workstream launch profiles require agent, model, reasoning effort, and sandbox")
 
     def configured_contract(runway: str) -> dict[str, Any]:
         if not explicit_launch:
@@ -561,18 +549,14 @@ def configure_contract(
             contract = read_contract(path)
             expected_schema = SCHEMA_V2 if explicit_launch else contract["schema"]
             if contract["schema"] != expected_schema:
-                raise ContractError(
-                    "cannot change an existing launch profile; emit a successor workstream"
-                )
+                raise ContractError("cannot change an existing launch profile; emit a successor workstream")
             if explicit_launch:
                 expected_launch = configured_contract(contract["runway"]["requested"])
                 if (
                     contract["primary_launch"] != expected_launch["primary_launch"]
                     or contract["authorization"] != expected_launch["authorization"]
                 ):
-                    raise ContractError(
-                        "cannot change an existing launch profile; emit a successor workstream"
-                    )
+                    raise ContractError("cannot change an existing launch profile; emit a successor workstream")
             if requested is None:
                 return contract, False
             normalized, seconds = parse_runway(requested)
