@@ -126,10 +126,8 @@ def main() -> int:
     args = argument_parser.parse_args()
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
-    if (
-        args.command == "cold-tree"
-        and args.retain_relative
-        and (args.hot_days is not None or args.maximum_hot_gib is not None)
+    if args.command == "cold-tree" and args.retain_relative and (
+        args.hot_days is not None or args.maximum_hot_gib is not None
     ):
         argument_parser.error("--retain-relative cannot be combined with --hot-days or --maximum-hot-gib")
     if args.command == "cloudkit-materialized":
@@ -173,7 +171,10 @@ def main() -> int:
                 args.root,
                 hot_days=args.hot_days if args.hot_days is not None else 7,
                 maximum_hot_bytes=int(
-                    (args.maximum_hot_gib if args.maximum_hot_gib is not None else 2.0) * 1024 * 1024 * 1024
+                    (args.maximum_hot_gib if args.maximum_hot_gib is not None else 2.0)
+                    * 1024
+                    * 1024
+                    * 1024
                 ),
             )
         if args.resume:
