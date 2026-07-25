@@ -153992,7 +153992,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/274
   updated: 2026-07-25T17:50:06.633Z
 - id: LIMEN-384
-  title: "audit: UX flow audit \u2014 5 critical flows (friction, safety, a11y, copy)"
+  title: "audit: UX flow audit — 5 critical flows (friction, safety, a11y, copy)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -154006,8 +154006,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/273
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:22.318Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/273"
+    conduct_event_id: conduct:run-e1aea0ef30a5e21d34588be1f8e4181c:215:compatibility
+    conduct_run_id: run-e1aea0ef30a5e21d34588be1f8e4181c
+    conduct_lease_id: lease-215-e1aea0ef30a5e21d
+    conduct_generation: 215
+  predicate: test "$(gh issue view 273 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/273
+  updated: 2026-07-25T17:55:22.318Z
 - id: LIMEN-385
   title: "devops: draft incident response runbook (severity, escalation, rollback)"
   repo: organvm/peer-audited--behavioral-blockchain
