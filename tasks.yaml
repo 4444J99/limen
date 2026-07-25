@@ -154462,7 +154462,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/297
   updated: 2026-07-25T17:48:05.348Z
 - id: LIMEN-364
-  title: 'checklist: Real-money pilot readiness gate'
+  title: "checklist: Real-money pilot readiness gate"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -154478,8 +154478,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/296
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:52.036Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/296"
+    conduct_event_id: conduct:run-488102d00e339fb0500908bfbc100d07:296:compatibility
+    conduct_run_id: run-488102d00e339fb0500908bfbc100d07
+    conduct_lease_id: lease-296-488102d00e339fb0
+    conduct_generation: 296
+  predicate: test "$(gh issue view 296 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/296
+  updated: 2026-07-25T17:59:52.036Z
 - id: LIMEN-365
   title: "checklist: TestFlight Beta readiness gate"
   repo: organvm/peer-audited--behavioral-blockchain
