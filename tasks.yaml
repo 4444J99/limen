@@ -152350,7 +152350,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/345
   updated: 2026-07-25T17:53:52.539Z
 - id: LIMEN-318
-  title: "SEO demand capture \u2014 no-contact keywords + first 4 intent articles"
+  title: SEO demand capture — no-contact keywords + first 4 intent articles
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -152365,8 +152365,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/344
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:00.054Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/344"
+    conduct_event_id: conduct:run-1aaa28490b35bff0bb43ac25e761ef30:226:compatibility
+    conduct_run_id: run-1aaa28490b35bff0bb43ac25e761ef30
+    conduct_lease_id: lease-226-1aaa28490b35bff0
+    conduct_generation: 226
+  predicate: test "$(gh issue view 344 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/344
+  updated: 2026-07-25T17:56:00.054Z
 - id: LIMEN-319
   title: Social operating system — Jessica/Styx channel architecture + 30-day cadence
   repo: organvm/peer-audited--behavioral-blockchain
