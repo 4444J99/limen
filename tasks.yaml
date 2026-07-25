@@ -152380,7 +152380,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/321
   updated: 2026-07-25T17:52:05.091Z
 - id: LIMEN-341
-  title: "Cross-jurisdictional consent matrix \u2014 data consent by state"
+  title: Cross-jurisdictional consent matrix — data consent by state
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -152395,8 +152395,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/320
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:44.451Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/320"
+    conduct_event_id: conduct:run-d501a8c83e862f79b854da925a1432a0:168:compatibility
+    conduct_run_id: run-d501a8c83e862f79b854da925a1432a0
+    conduct_lease_id: lease-168-d501a8c83e862f79
+    conduct_generation: 168
+  predicate: test "$(gh issue view 320 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/320
+  updated: 2026-07-25T17:52:44.451Z
 - id: LIMEN-342
   title: App Store UGC moderation policy document
   repo: organvm/peer-audited--behavioral-blockchain
