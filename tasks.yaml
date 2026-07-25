@@ -148301,7 +148301,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-161
-  title: "Schema \u2014 violation code definitions + rejection reasons"
+  title: Schema — violation code definitions + rejection reasons
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -148314,8 +148314,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/508
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:26.083Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/508"
+    conduct_event_id: conduct:run-5ec3669d44adbc25c42b28b8e274d50f:145:compatibility
+    conduct_run_id: run-5ec3669d44adbc25c42b28b8e274d50f
+    conduct_lease_id: lease-145-5ec3669d44adbc25
+    conduct_generation: 145
+  predicate: test "$(gh issue view 508 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/508
+  updated: 2026-07-25T17:51:26.083Z
 - id: LIMEN-162
   title: Tests — conversion tracking + email delivery
   repo: organvm/peer-audited--behavioral-blockchain
