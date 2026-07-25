@@ -154753,7 +154753,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/284
   updated: 2026-07-25T17:53:55.734Z
 - id: LIMEN-377
-  title: "Legal & Compliance Department \u2014 Task Tracker"
+  title: Legal & Compliance Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: claude
@@ -154768,8 +154768,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/283
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:28.820Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/283"
+    conduct_event_id: conduct:run-6940c3e57b1a2cb5b32a0822f98a54d6:289:compatibility
+    conduct_run_id: run-6940c3e57b1a2cb5b32a0822f98a54d6
+    conduct_lease_id: lease-289-6940c3e57b1a2cb5
+    conduct_generation: 289
+  predicate: test "$(gh issue view 283 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/283
+  updated: 2026-07-25T17:59:28.820Z
 - id: LIMEN-378
   title: "feat: Video proof pipeline — processing state UI (TKT-P1-013)"
   repo: organvm/peer-audited--behavioral-blockchain
