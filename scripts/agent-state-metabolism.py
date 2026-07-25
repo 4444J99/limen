@@ -90,6 +90,15 @@ def parser() -> argparse.ArgumentParser:
     cloudkit.add_argument("--run-id")
     cloudkit.add_argument("--resume", action="store_true")
     cloudkit.add_argument("--evict", action="store_true")
+    cloudkit.add_argument("--eviction-progress", type=Path)
+    cloudkit.add_argument(
+        "--prepare-eviction-authorization",
+        type=Path,
+        help="write one path-free Domus authorization request for the next batch",
+    )
+    cloudkit.add_argument("--eviction-authorizer")
+    cloudkit.add_argument("--eviction-authorization", type=Path)
+    cloudkit.add_argument("--eviction-signature", type=Path)
     return command
 
 
@@ -98,6 +107,15 @@ def main() -> int:
     args = argument_parser.parse_args()
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
+    if args.command == "cloudkit-materialized":
+        if args.prepare_eviction_authorization and args.evict:
+            argument_parser.error("authorization planning and --evict are separate operations")
+        if args.prepare_eviction_authorization and not args.eviction_authorizer:
+            argument_parser.error("--prepare-eviction-authorization requires --eviction-authorizer")
+        if args.evict and (not args.eviction_authorization or not args.eviction_signature):
+            argument_parser.error("--evict requires --eviction-authorization and --eviction-signature")
+        if not args.evict and (args.eviction_authorization or args.eviction_signature):
+            argument_parser.error("signed eviction inputs require --evict")
     if args.command == "opencode":
         receipt = run_opencode_campaign(
             args.source,
@@ -134,18 +152,23 @@ def main() -> int:
                 run_id=args.run_id,
             )
     elif args.command == "cloudkit-materialized":
-        plan = plan_cloud_materializations(args.root)
         if args.resume:
             receipt = run_resume_cloudkit_materialization_campaign(
                 args.name,
-                plan,
+                args.root,
                 args.vault_root,
                 args.external_root,
                 args.private_receipt,
                 evict=args.evict,
                 run_id=args.run_id,
+                progress_path=args.eviction_progress,
+                prepare_authorization=args.prepare_eviction_authorization,
+                authorization_principal=args.eviction_authorizer,
+                authorization_receipt=args.eviction_authorization,
+                authorization_signature=args.eviction_signature,
             )
         else:
+            plan = plan_cloud_materializations(args.root)
             receipt = run_cloudkit_materialization_campaign(
                 args.name,
                 plan,
@@ -154,6 +177,11 @@ def main() -> int:
                 args.private_receipt,
                 evict=args.evict,
                 run_id=args.run_id,
+                progress_path=args.eviction_progress,
+                prepare_authorization=args.prepare_eviction_authorization,
+                authorization_principal=args.eviction_authorizer,
+                authorization_receipt=args.eviction_authorization,
+                authorization_signature=args.eviction_signature,
             )
     else:
         raise AssertionError(args.command)
