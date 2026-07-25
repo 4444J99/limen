@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -96,12 +97,27 @@ def check_a_schema(doc: dict) -> None:
 
 
 def check_b_roots(doc: dict) -> dict[str, Path]:
+    """Resolve store roots; absence severity depends on the host.
+
+    The stores are LOCAL-ONLY by design (that is what makes them safe for raw
+    conversation content), so a CI runner never has them — their absence there
+    is a fact about the host, not registry drift. On a host that has ANY
+    declared store (or with LIMEN_CORPORA_HOST=1), a missing root is a real
+    failure; on a host with none, every disk check degrades to an advisory and
+    the schema/resolver checks (A, D) still bind.
+    """
     roots: dict[str, Path] = {}
     for name, store in (doc.get("stores") or {}).items():
-        root = expand(str(store.get("root", "")))
-        roots[name] = root
+        roots[name] = expand(str(store.get("root", "")))
+
+    on_host = os.environ.get("LIMEN_CORPORA_HOST") == "1" or any(r.is_dir() for r in roots.values())
+    for name, root in roots.items():
         if not root.is_dir():
-            fail("B", f"store {name!r} root does not exist: {root}")
+            msg = f"store {name!r} root does not exist: {root}"
+            if on_host:
+                fail("B", msg)
+            else:
+                advise("B", msg + " (local-only store; disk checks bind on the operator host)")
     return roots
 
 
