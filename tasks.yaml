@@ -149051,7 +149051,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/466
   updated: 2026-07-25T17:47:33.184Z
 - id: LIMEN-204
-  title: "TKT-P1-018: Tests \u2014 gradient math + leaderboard ranking"
+  title: "TKT-P1-018: Tests — gradient math + leaderboard ranking"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -149063,8 +149063,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/465
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:52.601Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/465"
+    conduct_event_id: conduct:run-883f566848ec4e6efeecbf5dac57b125:118:compatibility
+    conduct_run_id: run-883f566848ec4e6efeecbf5dac57b125
+    conduct_lease_id: lease-118-883f566848ec4e6e
+    conduct_generation: 118
+  predicate: test "$(gh issue view 465 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/465
+  updated: 2026-07-25T17:49:52.601Z
 - id: LIMEN-205
   title: "TKT-P1-018: UI \u2014 dashboard visualization + real-time leaderboard"
   repo: organvm/peer-audited--behavioral-blockchain
