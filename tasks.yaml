@@ -152894,7 +152894,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-372
-  title: "Growth & Marketing Department \u2014 Task Tracker"
+  title: Growth & Marketing Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -152908,8 +152908,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/288
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:51:39.696Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/288"
+    conduct_event_id: conduct:run-1ef67623509fd5275a9c8281c40e7819:149:compatibility
+    conduct_run_id: run-1ef67623509fd5275a9c8281c40e7819
+    conduct_lease_id: lease-149-1ef67623509fd527
+    conduct_generation: 149
+  predicate: test "$(gh issue view 288 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/288
+  updated: 2026-07-25T17:51:39.696Z
 - id: LIMEN-373
   title: "feat: Anti-collusion routing \u2014 admin cluster screen (TKT-P1-008)"
   repo: organvm/peer-audited--behavioral-blockchain
