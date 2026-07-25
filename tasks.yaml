@@ -147152,8 +147152,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/601
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:46.208Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/601"
+    conduct_event_id: conduct:run-25db17363770d93644906680331e4c79:205:compatibility
+    conduct_run_id: run-25db17363770d93644906680331e4c79
+    conduct_lease_id: lease-205-25db17363770d936
+    conduct_generation: 205
+  predicate: test "$(gh issue view 601 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/601
+  updated: 2026-07-25T17:54:46.208Z
 - id: LIMEN-109
   title: "premortem: extract sellable artifact + get paid in 30 days"
   repo: organvm/peer-audited--behavioral-blockchain
