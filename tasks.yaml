@@ -154232,7 +154232,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/307
   updated: 2026-07-25T17:48:26.271Z
 - id: LIMEN-354
-  title: 'feat: Recovery protocol guardrails (F-AEGIS-04)'
+  title: "feat: Recovery protocol guardrails (F-AEGIS-04)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -154246,8 +154246,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/306
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:13.774Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/306"
+    conduct_event_id: conduct:run-6f87aa338e315238c2ebf62989480263:302:compatibility
+    conduct_run_id: run-6f87aa338e315238c2ebf62989480263
+    conduct_lease_id: lease-302-6f87aa338e315238
+    conduct_generation: 302
+  predicate: test "$(gh issue view 306 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/306
+  updated: 2026-07-25T18:00:13.774Z
 - id: LIMEN-355
   title: "docs: SLA template & enterprise security posture"
   repo: organvm/peer-audited--behavioral-blockchain
