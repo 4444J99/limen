@@ -150547,7 +150547,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/444
   updated: 2026-07-25T17:51:04.827Z
 - id: LIMEN-226
-  title: 'Audit: Cross-reference gaps across tools + sessions'
+  title: "Audit: Cross-reference gaps across tools + sessions"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -150560,8 +150560,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/443
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:24.192Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/443"
+    conduct_event_id: conduct:run-4a4896a31db27e6e1827f20a304be210:305:compatibility
+    conduct_run_id: run-4a4896a31db27e6e1827f20a304be210
+    conduct_lease_id: lease-305-4a4896a31db27e6e
+    conduct_generation: 305
+  predicate: test "$(gh issue view 443 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/443
+  updated: 2026-07-25T18:00:24.192Z
 - id: LIMEN-227
   title: "Audit: Aggregate findings from all audit phases"
   repo: organvm/peer-audited--behavioral-blockchain
