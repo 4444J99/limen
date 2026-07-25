@@ -77,6 +77,41 @@ def sanitize_child_env(env: dict[str, str] | None = None, *, fleet_claude: bool 
     return out
 
 
+_BACKEND_RUNTIME_KEYS = (
+    "HOME",
+    "PATH",
+    "TMPDIR",
+    "USER",
+    "LOGNAME",
+    "SHELL",
+    "PORT",
+    "MCPHUB_SETTING_PATH",
+    "PYTHONPATH",
+)
+
+
+def sanitize_backend_env(env: dict[str, str] | None = None) -> dict[str, str]:
+    """Return an environment safe for the long-lived gateway backend.
+
+    ``~/.limen.env`` is a private cache for owner processes, not a blanket backend
+    environment.  Exporting it before starting MCPHub leaves every cached credential in
+    one long-lived Node process and can expose those values through platform process-list
+    behavior.  Remove every cache-owned name, not merely today's known token names, while
+    retaining the small runtime surface the backend actually needs.
+
+    Upstream-specific credentials belong in that upstream's explicit MCP settings entry;
+    they must never be inherited wholesale from the gateway supervisor.
+    """
+    base = dict(env if env is not None else os.environ)
+    required = {key: base[key] for key in _BACKEND_RUNTIME_KEYS if key in base}
+    out = dict(base)
+    for key in paths.load_limen_env():
+        out.pop(key, None)
+    out.pop("CLAUDE_CODE_OAUTH_TOKEN", None)
+    out.update(required)
+    return out
+
+
 def have(key: str) -> bool:
     """True if a secret is present in ~/.limen.env or the environment (never reveals it)."""
     return bool(paths.load_limen_env().get(key) or os.environ.get(key))
