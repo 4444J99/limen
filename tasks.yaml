@@ -152746,7 +152746,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-383
-  title: "docs: draft FAQ v1 \u2014 10 help articles with linguistic cloaker vocabulary"
+  title: "docs: draft FAQ v1 — 10 help articles with linguistic cloaker vocabulary"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: claude
@@ -152760,8 +152760,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/274
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:06.633Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/274"
+    conduct_event_id: conduct:run-de35d1f0e987f537b0a4bd650cf4cf30:122:compatibility
+    conduct_run_id: run-de35d1f0e987f537b0a4bd650cf4cf30
+    conduct_lease_id: lease-122-de35d1f0e987f537
+    conduct_generation: 122
+  predicate: test "$(gh issue view 274 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/274
+  updated: 2026-07-25T17:50:06.633Z
 - id: LIMEN-384
   title: "audit: UX flow audit \u2014 5 critical flows (friction, safety, a11y, copy)"
   repo: organvm/peer-audited--behavioral-blockchain
