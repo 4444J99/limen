@@ -152200,8 +152200,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/334
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:14.030Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/334"
+    conduct_event_id: conduct:run-d458e095e6ec171f53c71323ae5342b2:177:compatibility
+    conduct_run_id: run-d458e095e6ec171f53c71323ae5342b2
+    conduct_lease_id: lease-177-d458e095e6ec171f
+    conduct_generation: 177
+  predicate: test "$(gh issue view 334 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/334
+  updated: 2026-07-25T17:53:14.030Z
 - id: LIMEN-329
   title: "Render starter \u2192 production plan upgrade evaluation"
   repo: organvm/peer-audited--behavioral-blockchain
