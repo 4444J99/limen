@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 from limen.agent_state import file_provider
 from limen.agent_state.atomize import canonical_bytes
+from limen.agent_state.crypto import EncryptedAtomPacker
 from limen.agent_state.models import CipherChunk, MetabolismReceipt, RestoreProof
 from limen.agent_state.pipeline import PipelineError
 from limen.agent_state.tree import RetentionPlan, atomize_file_tree
@@ -55,6 +56,50 @@ def _captured(tmp_path: Path, names: tuple[str, ...]) -> tuple[MetabolismReceipt
     )
     captured = file_provider.reconstruct_captured_files(receipt, root, records)
     return receipt, captured, root
+
+
+def _encrypted_capture(
+    tmp_path: Path,
+    names: tuple[str, ...],
+) -> tuple[MetabolismReceipt, Path, Path]:
+    root = tmp_path / "encrypted-source"
+    root.mkdir()
+    for index, name in enumerate(names):
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((f"private-{index:04d}-" * 200).encode())
+    relatives = tuple(sorted(names))
+    plan = RetentionPlan(
+        root=root,
+        cold_paths=relatives,
+        cold_bytes=sum((root / name).stat().st_size for name in relatives),
+        hot_paths=(),
+        hot_bytes=0,
+        cutoff_epoch=0.0,
+        maximum_hot_bytes=0,
+    )
+    payload = tmp_path / "encrypted-payload"
+    packer = EncryptedAtomPacker(payload, "restore-test-key", pack_plaintext_limit=1024, chunk_limit=512)
+    result = atomize_file_tree(plan, packer, chunk_size=256)
+    packs = list(packer.close())
+    receipt = MetabolismReceipt(
+        schema="limen.agent_state_metabolism.v1",
+        run_id="restore-run",
+        source=result.source,
+        atom_count=result.atom_count,
+        logical_sha256=result.logical_sha256,
+        packs=packs,
+        git_remote="organvm/arca",
+        git_commit="a" * 40,
+        git_receipt_commit="b" * 40,
+        external_chunks=[CipherChunk(path="external.enc", bytes=1, sha256="c" * 64)],
+        restorations=[
+            RestoreProof(scope="git-sample", passed=True),
+            RestoreProof(scope="git-full-manifest", passed=True),
+            RestoreProof(scope="external-full", passed=True),
+        ],
+    )
+    return receipt, root, payload
 
 
 def _authorization(manifest: dict[str, Any]) -> bytes:
@@ -197,6 +242,254 @@ def test_missing_adapter_fails_closed_before_writing_progress(
 
     assert not progress.exists()
     assert not authorization.exists()
+
+
+def test_restore_missing_item_from_fully_verified_atoms(tmp_path: Path) -> None:
+    receipt, root, payload = _encrypted_capture(tmp_path, ("missing.json", "other.txt"))
+    target = root / "missing.json"
+    expected = target.read_bytes()
+    before = target.stat()
+    item_hash = file_provider.file_provider_item_hash(root, "missing.json")
+    target.unlink()
+
+    restored = file_provider.restore_captured_file(
+        receipt,
+        root,
+        payload,
+        "restore-test-key",
+        item_hash,
+    )
+
+    assert restored.status == "restored"
+    assert target.read_bytes() == expected
+    assert target.stat().st_mtime_ns == before.st_mtime_ns
+    assert target.stat().st_mode & 0o777 == before.st_mode & 0o777
+    repeated = file_provider.restore_captured_file(
+        receipt,
+        root,
+        payload,
+        "restore-test-key",
+        item_hash,
+    )
+    assert repeated.status == "already_restored"
+
+
+def test_restore_missing_item_by_captured_path_hash_is_path_free(tmp_path: Path) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative, "other.txt"))
+    target = root / relative
+    expected = target.read_bytes()
+    selector_hash = file_provider.captured_path_selector_hash(relative)
+    target.unlink()
+
+    restored = file_provider.restore_captured_file(
+        receipt,
+        root,
+        payload,
+        "restore-test-key",
+        captured_path_hash=selector_hash,
+    )
+
+    assert restored.status == "restored"
+    assert restored.selector_kind == "captured_path_hash"
+    assert restored.selector_hash == selector_hash
+    assert restored.item_hash == file_provider.file_provider_item_hash(root, relative)
+    assert target.read_bytes() == expected
+    assert relative not in repr(restored)
+
+
+def test_restore_missing_item_by_unique_captured_name_hash(tmp_path: Path) -> None:
+    relative = "private/nested/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative, "other.txt"))
+    target = root / relative
+    expected = target.read_bytes()
+    selector_hash = file_provider.captured_name_selector_hash(relative)
+    target.unlink()
+
+    restored = file_provider.restore_captured_file(
+        receipt,
+        root,
+        payload,
+        "restore-test-key",
+        captured_name_hash=selector_hash,
+    )
+
+    assert restored.status == "restored"
+    assert restored.selector_kind == "captured_name_hash"
+    assert restored.selector_hash == selector_hash
+    assert target.read_bytes() == expected
+    assert relative not in repr(restored)
+
+
+def test_restore_name_hash_rejects_duplicate_basenames(tmp_path: Path) -> None:
+    first = "one/duplicate.json"
+    second = "two/duplicate.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (first, second))
+    (root / first).unlink()
+    (root / second).unlink()
+
+    with pytest.raises(PipelineError, match="selector does not identify"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_name_hash=file_provider.captured_name_selector_hash(first),
+        )
+
+    assert not (root / first).exists()
+    assert not (root / second).exists()
+
+
+def test_restore_selector_mismatch_stops_before_chunk_extraction(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relative = "missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+    verification_calls = 0
+    real_verify = file_provider.verify_atom_packs
+
+    def verify(*args, **kwargs):
+        nonlocal verification_calls
+        verification_calls += 1
+        return real_verify(*args, **kwargs)
+
+    monkeypatch.setattr(file_provider, "verify_atom_packs", verify)
+
+    with pytest.raises(PipelineError, match="selector does not identify"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash="f" * 64,
+        )
+
+    assert verification_calls == 1
+    assert not target.exists()
+
+
+def test_restore_receipt_preflight_can_stop_before_target_mutation(tmp_path: Path) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+
+    def reject(_result: file_provider.RestoredFileResult) -> None:
+        raise PipelineError("restore receipt conflicts")
+
+    with pytest.raises(PipelineError, match="receipt conflicts"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash=file_provider.captured_path_selector_hash(relative),
+            before_mutation=reject,
+        )
+
+    assert not target.exists()
+
+
+def test_restore_parent_replacement_cannot_redirect_placement(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    displaced = root / "displaced"
+    verification_calls = 0
+    real_verify = file_provider.verify_atom_packs
+
+    def verify(*args, **kwargs):
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 2:
+            target.parent.rename(displaced)
+            target.parent.symlink_to(outside, target_is_directory=True)
+        return real_verify(*args, **kwargs)
+
+    monkeypatch.setattr(file_provider, "verify_atom_packs", verify)
+
+    with pytest.raises(PipelineError, match="parent changed during reconstruction"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash=file_provider.captured_path_selector_hash(relative),
+        )
+
+    assert not (outside / target.name).exists()
+    assert not (displaced / target.name).exists()
+
+
+def test_restore_operational_failure_is_path_free_pipeline_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+
+    def deny_link(*_args, **_kwargs):
+        raise PermissionError(1, "denied", str(target))
+
+    monkeypatch.setattr(file_provider.os, "link", deny_link)
+    with pytest.raises(PipelineError, match="restore placement failed") as raised:
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash=file_provider.captured_path_selector_hash(relative),
+        )
+
+    assert str(target) not in str(raised.value)
+    assert not target.exists()
+
+
+def test_restore_rejects_existing_conflicting_content(tmp_path: Path) -> None:
+    receipt, root, payload = _encrypted_capture(tmp_path, ("captured.json",))
+    target = root / "captured.json"
+    before = target.stat()
+    original = target.read_bytes()
+    target.write_bytes(b"x" * len(original))
+    os.utime(target, ns=(before.st_atime_ns, before.st_mtime_ns))
+
+    with pytest.raises(PipelineError, match="conflicting content"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            file_provider.file_provider_item_hash(root, "captured.json"),
+        )
+
+    assert target.read_bytes() == b"x" * len(original)
+
+
+def test_restore_recognizes_exact_dataless_item_without_opening_content(tmp_path: Path) -> None:
+    receipt, root, payload = _encrypted_capture(tmp_path, ("placeholder.json",))
+
+    restored = file_provider.restore_captured_file(
+        receipt,
+        root,
+        payload,
+        "restore-test-key",
+        file_provider.file_provider_item_hash(root, "placeholder.json"),
+        materialized_probe=lambda _path: False,
+    )
+
+    assert restored.status == "already_dataless"
 
 
 def test_adapter_process_arguments_never_contain_item_urls(monkeypatch: pytest.MonkeyPatch) -> None:

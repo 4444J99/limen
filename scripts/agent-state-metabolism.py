@@ -13,6 +13,7 @@ from limen.agent_state.tree import plan_cloud_materializations, plan_exact_reten
 from limen.agent_state.tree_pipeline import (
     run_cloudkit_materialization_campaign,
     run_cold_tree_campaign,
+    run_restore_cloudkit_item_campaign,
     run_resume_cloudkit_materialization_campaign,
     run_resume_cold_tree_campaign,
 )
@@ -108,19 +109,65 @@ def parser() -> argparse.ArgumentParser:
     cloudkit.add_argument("--eviction-authorizer")
     cloudkit.add_argument("--eviction-authorization", type=Path)
     cloudkit.add_argument("--eviction-signature", type=Path)
+    cloudkit.add_argument(
+        "--restore-item-hash",
+        help="restore exactly one missing captured item by its path-free File Provider hash",
+    )
+    cloudkit.add_argument(
+        "--restore-captured-path-hash",
+        help="restore exactly one missing item by its domain-separated captured-path hash",
+    )
+    cloudkit.add_argument(
+        "--restore-captured-name-hash",
+        help="restore one uniquely named captured item by its domain-separated basename hash",
+    )
+    cloudkit.add_argument("--restore-receipt", type=Path)
+    cloudkit.add_argument(
+        "--apply",
+        action="store_true",
+        help="explicitly apply the requested one-item restoration after all custody gates pass",
+    )
     return command
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     argument_parser = parser()
-    args = argument_parser.parse_args()
+    args = argument_parser.parse_args(argv)
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
-    if args.command == "cold-tree" and args.retain_relative and (
-        args.hot_days is not None or args.maximum_hot_gib is not None
+    if (
+        args.command == "cold-tree"
+        and args.retain_relative
+        and (args.hot_days is not None or args.maximum_hot_gib is not None)
     ):
         argument_parser.error("--retain-relative cannot be combined with --hot-days or --maximum-hot-gib")
     if args.command == "cloudkit-materialized":
+        restore_selectors = sum(
+            bool(value)
+            for value in (
+                args.restore_item_hash,
+                args.restore_captured_path_hash,
+                args.restore_captured_name_hash,
+            )
+        )
+        if restore_selectors > 1:
+            argument_parser.error("choose exactly one item restoration selector")
+        if bool(restore_selectors) != bool(args.restore_receipt):
+            argument_parser.error("one item restoration selector and --restore-receipt are required together")
+        if restore_selectors and not args.resume:
+            argument_parser.error("item restoration requires --resume")
+        if restore_selectors and not args.apply:
+            argument_parser.error("item restoration requires explicit --apply")
+        if args.apply and not restore_selectors:
+            argument_parser.error("--apply is only valid with one item restoration selector")
+        if restore_selectors and (
+            args.evict
+            or args.prepare_eviction_authorization
+            or args.eviction_authorization
+            or args.eviction_signature
+            or args.eviction_progress
+        ):
+            argument_parser.error("item restoration cannot be combined with eviction operations")
         if args.prepare_eviction_authorization and args.evict:
             argument_parser.error("authorization planning and --evict are separate operations")
         if args.prepare_eviction_authorization and not args.eviction_authorizer:
@@ -146,10 +193,7 @@ def main() -> int:
                 args.root,
                 hot_days=args.hot_days if args.hot_days is not None else 7,
                 maximum_hot_bytes=int(
-                    (args.maximum_hot_gib if args.maximum_hot_gib is not None else 2.0)
-                    * 1024
-                    * 1024
-                    * 1024
+                    (args.maximum_hot_gib if args.maximum_hot_gib is not None else 2.0) * 1024 * 1024 * 1024
                 ),
             )
         if args.resume:
@@ -173,6 +217,21 @@ def main() -> int:
                 run_id=args.run_id,
             )
     elif args.command == "cloudkit-materialized":
+        if args.restore_item_hash or args.restore_captured_path_hash or args.restore_captured_name_hash:
+            restore = run_restore_cloudkit_item_campaign(
+                args.name,
+                args.root,
+                args.vault_root,
+                args.external_root,
+                args.private_receipt,
+                args.restore_receipt,
+                run_id=args.run_id,
+                item_hash=args.restore_item_hash,
+                captured_path_hash=args.restore_captured_path_hash,
+                captured_name_hash=args.restore_captured_name_hash,
+            )
+            print(json.dumps(restore, sort_keys=True))
+            return 0
         if args.resume:
             receipt = run_resume_cloudkit_materialization_campaign(
                 args.name,

@@ -203,6 +203,50 @@ def test_interrupted_git_custody_rejects_missing_ciphertext(
         )
 
 
+def test_completed_remote_receipt_ignores_dirty_checkout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vault, relative, expected = _interrupted_vault(
+        tmp_path,
+        monkeypatch,
+        remote_has_local_head=False,
+    )
+    _git(vault.root, "add", *(str(path) for path in expected[1:]))
+    _git(vault.root, "commit", "-m", "agent-state: seal icloud-drive run")
+    payload_commit = _git(vault.root, "rev-parse", "HEAD")
+    receipt_path = vault.root / relative / "receipt.json"
+    receipt_path.write_text('{"schema":"test"}\n', encoding="utf-8")
+    _git(vault.root, "add", str(receipt_path.relative_to(vault.root)))
+    _git(vault.root, "commit", "-m", "agent-state: receipt icloud-drive run")
+    receipt_commit = _git(vault.root, "rev-parse", "HEAD")
+    _git(vault.root, "push", "origin", "HEAD:main")
+    (vault.root / "README.md").unlink()
+    advance = tmp_path / "advance"
+    subprocess.run(
+        ["git", "clone", str(tmp_path / "remote.git"), str(advance)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    _git(advance, "config", "user.name", "Limen Test")
+    _git(advance, "config", "user.email", "limen@example.test")
+    (advance / "unrelated.txt").write_text("later remote state\n", encoding="utf-8")
+    _git(advance, "add", "unrelated.txt")
+    _git(advance, "commit", "-m", "unrelated later custody")
+    _git(advance, "push", "origin", "main")
+
+    observed_payload, observed_receipt, receipt = vault.completed_receipt_at_remote(
+        relative,
+        "agent-state: receipt icloud-drive run",
+    )
+
+    assert observed_payload == payload_commit
+    assert observed_receipt == receipt_commit
+    assert receipt == '{"schema":"test"}'
+    assert _git(vault.root, "status", "--porcelain=v1")
+
+
 def test_active_vendor_denies_capture_before_writes(tmp_path: Path) -> None:
     source = tmp_path / "opencode.db"
     _database(source)

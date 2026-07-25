@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import os
 import shutil
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, replace
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,13 +17,15 @@ from .crypto import EncryptedAtomPacker, keychain_key, verify_atom_packs
 from .file_provider import (
     CapturedFile,
     FileProviderResult,
+    RestoredFileResult,
     collect_file_entry,
     process_file_provider_items,
     progress_path_for,
     reconstruct_captured_files,
+    restore_captured_file,
     retention_plan_from_capture,
 )
-from .models import AtomPack, CipherChunk, MetabolismReceipt, RestoreProof, SourceProof
+from .models import AtomPack, CipherChunk, MetabolismReceipt, ReceiptError, RestoreProof, SourceProof
 from .pipeline import GitVault, PipelineError, require_mounted_external, run_id_now
 from .tree import (
     RetentionPlan,
@@ -430,6 +433,207 @@ def run_resume_cold_tree_campaign(
             )
             receipt.write(private_receipt)
         return receipt
+
+
+def _write_restore_receipt(
+    path: Path,
+    result: RestoredFileResult,
+    *,
+    run_id: str,
+    git_receipt_commit: str,
+) -> dict[str, object]:
+    stable: dict[str, object] = {
+        "schema": "limen.file_provider_restore_receipt.v1",
+        "run_id": run_id,
+        "item_hash": result.item_hash,
+        "selector_kind": result.selector_kind,
+        "selector_hash": result.selector_hash or result.item_hash,
+        "bytes": result.bytes,
+        "sha256": result.sha256,
+        "git_receipt_commit": git_receipt_commit,
+    }
+    existing = _preflight_restore_receipt(path, stable)
+    if existing is not None:
+        return existing
+    payload = {
+        **stable,
+        "status": result.status,
+        "recorded_at": datetime.now(UTC).isoformat(),
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    except OSError:
+        raise PipelineError("cannot prepare private File Provider restore receipt") from None
+    encoded = (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        existing = _preflight_restore_receipt(path, stable)
+        if existing is None:
+            raise PipelineError("private File Provider restore receipt appeared without content")
+        return existing
+    except OSError:
+        raise PipelineError("cannot create private File Provider restore receipt") from None
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except OSError:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+        raise PipelineError("cannot persist private File Provider restore receipt") from None
+    return payload
+
+
+def _valid_restore_receipt(payload: object) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    expected = {
+        "schema",
+        "run_id",
+        "item_hash",
+        "selector_kind",
+        "selector_hash",
+        "bytes",
+        "sha256",
+        "git_receipt_commit",
+        "status",
+        "recorded_at",
+    }
+    hashes = (
+        payload.get("item_hash"),
+        payload.get("selector_hash"),
+        payload.get("sha256"),
+    )
+    return (
+        set(payload) == expected
+        and payload.get("schema") == "limen.file_provider_restore_receipt.v1"
+        and isinstance(payload.get("run_id"), str)
+        and bool(payload.get("run_id"))
+        and payload.get("selector_kind") in {"file_provider_item_hash", "captured_path_hash", "captured_name_hash"}
+        and all(
+            isinstance(digest, str)
+            and len(digest) == 64
+            and all(character in "0123456789abcdef" for character in digest)
+            for digest in hashes
+        )
+        and isinstance(payload.get("bytes"), int)
+        and not isinstance(payload.get("bytes"), bool)
+        and payload["bytes"] >= 0
+        and isinstance(payload.get("git_receipt_commit"), str)
+        and len(payload["git_receipt_commit"]) == 40
+        and all(character in "0123456789abcdef" for character in payload["git_receipt_commit"])
+        and payload.get("status") in {"restored", "already_restored", "already_dataless"}
+        and isinstance(payload.get("recorded_at"), str)
+        and bool(payload.get("recorded_at"))
+    )
+
+
+def _preflight_restore_receipt(path: Path, expected: Mapping[str, object]) -> dict[str, object] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        raise PipelineError("private File Provider restore receipt is invalid") from None
+    if not _valid_restore_receipt(payload) or any(payload.get(key) != value for key, value in expected.items()):
+        raise PipelineError("private File Provider restore receipt conflicts with this restoration")
+    return payload
+
+
+def run_restore_cloudkit_item_campaign(
+    name: str,
+    root: Path,
+    vault_root: Path,
+    external_root: Path,
+    private_receipt: Path,
+    restore_receipt: Path,
+    *,
+    run_id: str,
+    item_hash: str | None = None,
+    captured_path_hash: str | None = None,
+    captured_name_hash: str | None = None,
+    repository: str = "organvm/arca",
+    key_service: str = "limen-arca-vault",
+) -> dict[str, object]:
+    """Restore one conflict-free captured item and write a path-free receipt."""
+
+    owner = f"agent-state-metabolism-{os.getpid()}"
+    with hold_lease("heavy", owner=owner, surface=f"{name}-cloudkit-item-restore"):
+        vault = GitVault(vault_root, repository=repository)
+        vault.verify_identity()
+        relative = Path("agent-state") / name / run_id
+        try:
+            payload_commit, receipt_commit, receipt_text = vault.completed_receipt_at_remote(
+                relative,
+                f"agent-state: receipt {name} {run_id}",
+            )
+            value = json.loads(receipt_text)
+            if not isinstance(value, dict):
+                raise ReceiptError("completed File Provider receipt must be a JSON object")
+            tracked = MetabolismReceipt.from_dict(value)
+        except (ReceiptError, json.JSONDecodeError) as exc:
+            raise PipelineError("completed File Provider custody receipt is invalid") from exc
+        if tracked.git_commit != payload_commit or tracked.git_receipt_commit is not None:
+            raise PipelineError("completed File Provider custody is not exact on its remote")
+        tracked.git_receipt_commit = receipt_commit
+        if tracked.run_id != run_id:
+            raise PipelineError("completed File Provider custody run does not match the restore request")
+        _require_private_retirement_receipt(tracked, private_receipt)
+        if tracked.git_receipt_commit is None:
+            raise PipelineError("completed File Provider receipt commit is unavailable")
+        selectors = [
+            (kind, value)
+            for kind, value in (
+                ("file_provider_item_hash", item_hash),
+                ("captured_path_hash", captured_path_hash),
+                ("captured_name_hash", captured_name_hash),
+            )
+            if value is not None
+        ]
+        if len(selectors) != 1:
+            raise PipelineError("restore requires exactly one path-free selector")
+        selector_kind, selector_hash = selectors[0]
+        request = {
+            "schema": "limen.file_provider_restore_receipt.v1",
+            "run_id": run_id,
+            "selector_kind": selector_kind,
+            "selector_hash": selector_hash,
+            "git_receipt_commit": tracked.git_receipt_commit,
+        }
+        _preflight_restore_receipt(restore_receipt, request)
+        payload_root = require_mounted_external(external_root) / name / run_id
+
+        def preflight(result: RestoredFileResult) -> None:
+            _preflight_restore_receipt(
+                restore_receipt,
+                {
+                    **request,
+                    "item_hash": result.item_hash,
+                    "bytes": result.bytes,
+                    "sha256": result.sha256,
+                },
+            )
+
+        result = restore_captured_file(
+            tracked,
+            root,
+            payload_root,
+            keychain_key(key_service),
+            item_hash,
+            captured_path_hash=captured_path_hash,
+            captured_name_hash=captured_name_hash,
+            before_mutation=preflight,
+        )
+        return _write_restore_receipt(
+            restore_receipt,
+            result,
+            run_id=run_id,
+            git_receipt_commit=tracked.git_receipt_commit,
+        )
 
 
 def _record_file_provider_result(

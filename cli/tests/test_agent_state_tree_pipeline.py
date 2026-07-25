@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from limen.agent_state import tree_pipeline
 from limen.agent_state.crypto import EncryptedAtomPacker
+from limen.agent_state.models import MetabolismReceipt, ReceiptError
 from limen.agent_state.pipeline import PipelineError
 from limen.agent_state.tree import RetentionPlan, atomize_file_tree, plan_retention
 
@@ -54,6 +55,19 @@ class _Vault:
 
 
 class _CompletedVault(_Vault):
+    def completed_receipt_at_remote(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str, str]:
+        assert relative == Path("agent-state/icloud-drive/run")
+        assert message == "agent-state: receipt icloud-drive run"
+        return (
+            "a" * 40,
+            "b" * 40,
+            (self.root / relative / "receipt.json").read_text(encoding="utf-8"),
+        )
+
     def completed_receipt_commits(
         self,
         relative: Path,
@@ -149,6 +163,38 @@ def test_private_receipt_matches_json_normalized_custody(
     )
 
 
+def test_metabolism_receipt_round_trips_only_canonical_json(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    receipt = _resume(monkeypatch, tmp_path, plan, vault)
+    path = tmp_path / "private-receipt.json"
+
+    assert MetabolismReceipt.read(path).as_dict() == receipt.as_dict()
+    canonical = json.loads(path.read_text())
+    malformed = json.loads(json.dumps(canonical))
+    malformed["unexpected"] = True
+    path.write_text(json.dumps(malformed))
+    with pytest.raises(ReceiptError, match="non-canonical"):
+        MetabolismReceipt.read(path)
+    malformed = json.loads(json.dumps(canonical))
+    malformed["source"]["stat_before"] = [1, 2]
+    path.write_text(json.dumps(malformed))
+    with pytest.raises(ReceiptError, match="invalid source identity"):
+        MetabolismReceipt.read(path)
+    malformed = json.loads(json.dumps(canonical))
+    malformed["packs"][0]["atom_count"] = "1"
+    path.write_text(json.dumps(malformed))
+    with pytest.raises(ReceiptError, match="consistency checks"):
+        MetabolismReceipt.read(path)
+    malformed = json.loads(json.dumps(canonical))
+    malformed["restorations"][0]["passed"] = "false"
+    path.write_text(json.dumps(malformed))
+    with pytest.raises(ReceiptError, match="consistency checks"):
+        MetabolismReceipt.read(path)
+
+
 def test_private_custody_match_ignores_only_mutable_retirement_progress(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -187,6 +233,61 @@ def test_resume_accepts_completed_exact_receipt_without_another_push(
     )
 
     assert resumed.as_dict() == first.as_dict()
+
+
+def test_single_item_restore_writes_path_free_private_receipt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    _resume(monkeypatch, tmp_path, plan, vault)
+    monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+    monkeypatch.setattr(tree_pipeline, "hold_lease", lambda *_args, **_kwargs: nullcontext())
+    monkeypatch.setattr(tree_pipeline, "require_mounted_external", lambda path: path.resolve())
+    monkeypatch.setattr(
+        tree_pipeline,
+        "restore_captured_file",
+        lambda *_args, **_kwargs: tree_pipeline.RestoredFileResult(
+            item_hash="d" * 64,
+            status="restored",
+            bytes=42,
+            sha256="e" * 64,
+            selector_kind="captured_name_hash",
+            selector_hash="c" * 64,
+        ),
+    )
+    restore_receipt = tmp_path / "restore.json"
+
+    result = tree_pipeline.run_restore_cloudkit_item_campaign(
+        "icloud-drive",
+        source,
+        vault,
+        tmp_path / "external",
+        tmp_path / "private-receipt.json",
+        restore_receipt,
+        run_id="run",
+        captured_name_hash="c" * 64,
+    )
+
+    assert result["status"] == "restored"
+    assert result["item_hash"] == "d" * 64
+    assert result["selector_kind"] == "captured_name_hash"
+    assert result["selector_hash"] == "c" * 64
+    assert str(source) not in restore_receipt.read_text()
+    original = restore_receipt.read_bytes()
+    repeated = tree_pipeline.run_restore_cloudkit_item_campaign(
+        "icloud-drive",
+        source,
+        vault,
+        tmp_path / "external",
+        tmp_path / "private-receipt.json",
+        restore_receipt,
+        run_id="run",
+        captured_name_hash="c" * 64,
+    )
+    assert repeated == result
+    assert restore_receipt.read_bytes() == original
 
 
 def test_cloud_resume_reconstructs_original_set_from_verified_atoms(

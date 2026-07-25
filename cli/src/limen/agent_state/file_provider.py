@@ -3,20 +3,25 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import json
 import os
 import re
+import secrets
 import shutil
 import stat
 import subprocess
 import tempfile
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .atomize import canonical_bytes, sha256_file
+from .crypto import verify_atom_packs
 from .models import MetabolismReceipt
 from .pipeline import PipelineError
 from .tree import NON_EVICTABLE_CLOUD_NAMES, RetentionPlan, is_materialized_cloud_path
@@ -37,6 +42,7 @@ MAX_SIGNATURE_BYTES = 32 * 1024
 MAX_PROGRESS_BYTES = 64 * 1024 * 1024
 
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
+BASE64_TEXT = re.compile(r"^[A-Za-z0-9+/]*={0,2}$")
 TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,127}$")  # allow-secret: syntax regex, not a credential
 SUCCESS_STATUSES = frozenset({"evicted", "already_dataless"})
 ITEM_STATUSES = frozenset({*SUCCESS_STATUSES, "retained", "failed"})
@@ -76,13 +82,169 @@ class FileProviderResult:
     authorization_prepared: bool = False
 
 
+@dataclass(frozen=True)
+class RestoredFileResult:
+    item_hash: str
+    status: str
+    bytes: int
+    sha256: str
+    selector_kind: str = "file_provider_item_hash"
+    selector_hash: str | None = None
+
+
 def progress_path_for(private_receipt: Path) -> Path:
     return private_receipt.with_name(f"{private_receipt.stem}.file-provider-progress.json")
+
+
+def file_provider_item_hash(root: Path, relative: str) -> str:
+    url = (root.expanduser().resolve() / relative).absolute().as_uri()
+    return hashlib.sha256(url.encode("utf-8")).hexdigest()
+
+
+def captured_path_selector_hash(relative: str) -> str:
+    """Hash one immutable captured relative path without exposing it."""
+
+    return hashlib.sha256(b"captured-path:v1\0" + relative.encode("utf-8")).hexdigest()
+
+
+def captured_name_selector_hash(relative: str) -> str:
+    """Hash a captured basename; restoration still requires one unique match."""
+
+    name = PurePosixPath(relative).name
+    return hashlib.sha256(b"captured-name:v1\0" + name.encode("utf-8")).hexdigest()
 
 
 def collect_file_entry(records: list[dict[str, Any]], record: dict[str, Any]) -> None:
     if record.get("kind") == "file_entry":
         records.append(record)
+
+
+def _collect_restore_metadata(
+    records: list[dict[str, Any]],
+    chunk_lengths: dict[str, int],
+    record: dict[str, Any],
+) -> None:
+    kind = record.get("kind")
+    if kind == "file_entry":
+        records.append(record)
+        return
+    if kind != "file_chunk" or set(record) != {"kind", "chunk_sha256", "value_b64"}:
+        raise PipelineError("captured restore atom has an invalid shape")
+    digest = record.get("chunk_sha256")
+    encoded = record.get("value_b64")
+    if (
+        not isinstance(digest, str)
+        or not HEX64.fullmatch(digest)
+        or not isinstance(encoded, str)
+        or len(encoded) % 4
+        or not BASE64_TEXT.fullmatch(encoded)
+    ):
+        raise PipelineError("captured restore chunk has invalid fields")
+    padding = len(encoded) - len(encoded.rstrip("="))
+    meaningful = len(encoded) - padding
+    if meaningful % 4 != {0: 0, 1: 3, 2: 2}[padding]:
+        raise PipelineError("captured restore chunk has invalid base64")
+    decoded_length = (len(encoded) // 4) * 3 - padding
+    if decoded_length <= 0 or digest in chunk_lengths:
+        raise PipelineError("captured restore chunk is empty or duplicated")
+    chunk_lengths[digest] = decoded_length
+
+
+def _directory_flags() -> int:
+    return os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+
+
+@contextmanager
+def _open_restore_parent(root: Path, relative: PurePosixPath) -> Iterator[tuple[int, int, tuple[str, ...], str]]:
+    """Anchor the root and every parent without following a captured-path symlink."""
+
+    descriptors: list[int] = []
+    try:
+        descriptors.append(os.open(root, _directory_flags()))
+        for component in relative.parts[:-1]:
+            descriptor = os.open(component, _directory_flags(), dir_fd=descriptors[-1])
+            if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
+                os.close(descriptor)
+                raise PipelineError("restore target parent changed type")
+            descriptors.append(descriptor)
+        yield descriptors[0], descriptors[-1], tuple(relative.parts[:-1]), relative.parts[-1]
+    except FileNotFoundError:
+        raise PipelineError("restore target parent is logically missing") from None
+    except OSError:
+        raise PipelineError("restore target parent is unavailable or changed type") from None
+    finally:
+        for descriptor in reversed(descriptors):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+
+def _restore_parent_is_current(
+    root: Path,
+    root_descriptor: int,
+    parent_descriptor: int,
+    components: tuple[str, ...],
+) -> bool:
+    """Re-walk the no-follow namespace before placement and compare anchored identities."""
+
+    descriptors: list[int] = []
+    try:
+        descriptors.append(os.open(root, _directory_flags()))
+        expected_root = os.fstat(root_descriptor)
+        observed_root = os.fstat(descriptors[0])
+        if (observed_root.st_dev, observed_root.st_ino) != (expected_root.st_dev, expected_root.st_ino):
+            return False
+        for component in components:
+            descriptors.append(os.open(component, _directory_flags(), dir_fd=descriptors[-1]))
+        expected_parent = os.fstat(parent_descriptor)
+        observed_parent = os.fstat(descriptors[-1])
+        return (observed_parent.st_dev, observed_parent.st_ino) == (
+            expected_parent.st_dev,
+            expected_parent.st_ino,
+        )
+    except OSError:
+        return False
+    finally:
+        for descriptor in reversed(descriptors):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+
+def _sha256_descriptor(descriptor: int) -> str:
+    digest = hashlib.sha256()
+    offset = 0
+    while True:
+        value = os.pread(descriptor, 1024 * 1024, offset)
+        if not value:
+            return digest.hexdigest()
+        digest.update(value)
+        offset += len(value)
+
+
+def _pwrite_all(descriptor: int, value: bytes, offset: int) -> None:
+    view = memoryview(value)
+    written = 0
+    while written < len(view):
+        count = os.pwrite(descriptor, view[written:], offset + written)
+        if count <= 0:
+            raise OSError("short restore write")
+        written += count
+
+
+def _create_restore_temporary(parent_descriptor: int) -> tuple[int, str]:
+    flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    for _attempt in range(128):
+        name = f".limen-restore-{secrets.token_hex(16)}"
+        try:
+            return os.open(name, flags, 0o600, dir_fd=parent_descriptor), name
+        except FileExistsError:
+            continue
+        except OSError:
+            raise PipelineError("cannot create conflict-safe restore staging file") from None
+    raise PipelineError("cannot allocate a unique restore staging file")
 
 
 def _integer(value: object, *, field: str, minimum: int = 0) -> int:
@@ -208,6 +370,284 @@ def inspect_captured_files(
     if len(set(hashes)) != len(hashes):
         raise PipelineError("captured File Provider item identity collided")
     return tuple(inspected)
+
+
+def restore_captured_file(
+    receipt: MetabolismReceipt,
+    root: Path,
+    payload_root: Path,
+    key: str,
+    item_hash: str | None = None,
+    *,
+    captured_path_hash: str | None = None,
+    captured_name_hash: str | None = None,
+    materialized_probe=is_materialized_cloud_path,
+    before_mutation: Callable[[RestoredFileResult], None] | None = None,
+) -> RestoredFileResult:
+    """Restore one captured item without exposing or overwriting its path."""
+
+    selectors = tuple(
+        (kind, value)
+        for kind, value in (
+            ("file_provider_item_hash", item_hash),
+            ("captured_path_hash", captured_path_hash),
+            ("captured_name_hash", captured_name_hash),
+        )
+        if value is not None
+    )
+    if len(selectors) != 1:
+        raise PipelineError("restore requires exactly one path-free selector")
+    selector_kind, selector_hash = selectors[0]
+    if not HEX64.fullmatch(selector_hash):
+        raise PipelineError("restore selector must be lowercase sha256")
+    receipt.require_retirement_gate()
+    root = root.expanduser().resolve()
+    records: list[dict[str, Any]] = []
+    chunk_lengths: dict[str, int] = {}
+    # Capture order places each file's chunks before its file_entry, so the selector cannot be
+    # resolved until a full verified pass completes. Retain only metadata here; a second verified
+    # pass writes only the selected chunks. A one-pass design would have to spill every captured
+    # file, which is substantially less bounded than decrypting twice.
+    proof = verify_atom_packs(
+        receipt.packs,
+        payload_root,
+        key,
+        logical_sha256=receipt.logical_sha256,
+        record_consumer=lambda record: _collect_restore_metadata(records, chunk_lengths, record),
+    )
+    if not proof.passed:
+        raise PipelineError("captured File Provider atoms failed full restoration")
+    captured = reconstruct_captured_files(receipt, root, records)
+    if selector_kind == "file_provider_item_hash":
+        matches = [entry for entry in captured if file_provider_item_hash(root, entry.relative) == selector_hash]
+    elif selector_kind == "captured_path_hash":
+        matches = [entry for entry in captured if captured_path_selector_hash(entry.relative) == selector_hash]
+    else:
+        matches = [entry for entry in captured if captured_name_selector_hash(entry.relative) == selector_hash]
+    if len(matches) != 1:
+        raise PipelineError("restore selector does not identify exactly one captured file")
+    entry = matches[0]
+    canonical_item_hash = file_provider_item_hash(root, entry.relative)
+    target = root / entry.relative
+    relative = PurePosixPath(entry.relative)
+    chunk_hashes = tuple(entry.record["chunks"])
+    offsets: dict[str, list[int]] = {}
+    offset = 0
+    for digest in chunk_hashes:
+        length = chunk_lengths.get(digest)
+        if length is None:
+            raise PipelineError("captured restore entry references a missing chunk")
+        offsets.setdefault(digest, []).append(offset)
+        offset += length
+    if offset != entry.bytes:
+        raise PipelineError("captured restore chunks do not match the file byte count")
+
+    with _open_restore_parent(root, relative) as (
+        root_descriptor,
+        parent_descriptor,
+        parent_components,
+        target_name,
+    ):
+        try:
+            existing = os.stat(target_name, dir_fd=parent_descriptor, follow_symlinks=False)
+        except FileNotFoundError:
+            existing = None
+        except OSError:
+            raise PipelineError("restore target metadata is unreadable") from None
+        if existing is not None:
+            if (
+                stat.S_ISLNK(existing.st_mode)
+                or not stat.S_ISREG(existing.st_mode)
+                or existing.st_size != entry.bytes
+                or existing.st_mtime_ns != entry.mtime_ns
+                or existing.st_mode & 0o777 != entry.mode
+            ):
+                raise PipelineError("restore target exists with conflicting metadata")
+            try:
+                materialized = bool(materialized_probe(target))
+            except OSError:
+                raise PipelineError("restore target materialization state is unreadable") from None
+            if not _restore_parent_is_current(
+                root,
+                root_descriptor,
+                parent_descriptor,
+                parent_components,
+            ):
+                raise PipelineError("restore target parent changed during inspection")
+            if not materialized:
+                result = RestoredFileResult(
+                    item_hash=canonical_item_hash,
+                    status="already_dataless",
+                    bytes=entry.bytes,
+                    sha256=entry.sha256,
+                    selector_kind=selector_kind,
+                    selector_hash=selector_hash,
+                )
+                if before_mutation is not None:
+                    before_mutation(result)
+                return result
+            try:
+                descriptor = os.open(
+                    target_name,
+                    os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0),
+                    dir_fd=parent_descriptor,
+                )
+                try:
+                    before = os.fstat(descriptor)
+                    digest = _sha256_descriptor(descriptor)
+                    after = os.fstat(descriptor)
+                finally:
+                    os.close(descriptor)
+            except OSError:
+                raise PipelineError("restore target content is unreadable") from None
+            if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
+                after.st_dev,
+                after.st_ino,
+                after.st_size,
+                after.st_mtime_ns,
+            ) or digest != entry.sha256:
+                raise PipelineError("restore target exists with conflicting content")
+            result = RestoredFileResult(
+                item_hash=canonical_item_hash,
+                status="already_restored",
+                bytes=entry.bytes,
+                sha256=entry.sha256,
+                selector_kind=selector_kind,
+                selector_hash=selector_hash,
+            )
+            if before_mutation is not None:
+                before_mutation(result)
+            return result
+
+        result = RestoredFileResult(
+            item_hash=canonical_item_hash,
+            status="restored",
+            bytes=entry.bytes,
+            sha256=entry.sha256,
+            selector_kind=selector_kind,
+            selector_hash=selector_hash,
+        )
+        if before_mutation is not None:
+            before_mutation(result)
+
+        temporary_descriptor, temporary_name = _create_restore_temporary(parent_descriptor)
+        linked = False
+        verified = False
+        temporary_identity: tuple[int, int] | None = None
+        seen: set[str] = set()
+
+        def collect_chunk(record: dict[str, Any]) -> None:
+            if record.get("kind") != "file_chunk" or record.get("chunk_sha256") not in offsets:
+                return
+            if set(record) != {"kind", "chunk_sha256", "value_b64"}:
+                raise PipelineError("captured restore chunk has an invalid shape")
+            digest = record["chunk_sha256"]
+            encoded = record["value_b64"]
+            if not isinstance(digest, str) or not isinstance(encoded, str):
+                raise PipelineError("captured restore chunk has invalid fields")
+            try:
+                value = base64.b64decode(encoded, validate=True)
+            except (binascii.Error, ValueError):
+                raise PipelineError("captured restore chunk has invalid base64") from None
+            if len(value) != chunk_lengths[digest]:
+                raise PipelineError("captured restore chunk has an invalid byte count")
+            if hashlib.sha256(b"file-chunk:v1\0" + value).hexdigest() != digest:
+                raise PipelineError("captured restore chunk failed content verification")
+            if digest in seen:
+                raise PipelineError("captured restore chunk is duplicated")
+            for chunk_offset in offsets[digest]:
+                _pwrite_all(temporary_descriptor, value, chunk_offset)
+            seen.add(digest)
+
+        try:
+            try:
+                os.fchmod(temporary_descriptor, 0o600)
+                chunk_proof = verify_atom_packs(
+                    receipt.packs,
+                    payload_root,
+                    key,
+                    logical_sha256=receipt.logical_sha256,
+                    record_consumer=collect_chunk,
+                )
+                if not chunk_proof.passed or seen != set(offsets):
+                    raise PipelineError("captured restore chunks failed full restoration")
+                os.fsync(temporary_descriptor)
+                staged = os.fstat(temporary_descriptor)
+                if staged.st_size != entry.bytes or _sha256_descriptor(temporary_descriptor) != entry.sha256:
+                    raise PipelineError("reconstructed restore file failed content verification")
+                os.fchmod(temporary_descriptor, entry.mode)
+                os.utime(
+                    temporary_name,
+                    ns=(entry.mtime_ns, entry.mtime_ns),
+                    dir_fd=parent_descriptor,
+                    follow_symlinks=False,
+                )
+                os.fsync(temporary_descriptor)
+                staged = os.fstat(temporary_descriptor)
+                temporary_identity = staged.st_dev, staged.st_ino
+                if not _restore_parent_is_current(
+                    root,
+                    root_descriptor,
+                    parent_descriptor,
+                    parent_components,
+                ):
+                    raise PipelineError("restore target parent changed during reconstruction")
+                os.link(
+                    temporary_name,
+                    target_name,
+                    src_dir_fd=parent_descriptor,
+                    dst_dir_fd=parent_descriptor,
+                    follow_symlinks=False,
+                )
+                linked = True
+                restored_descriptor = os.open(
+                    target_name,
+                    os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0),
+                    dir_fd=parent_descriptor,
+                )
+                try:
+                    restored = os.fstat(restored_descriptor)
+                    restored_digest = _sha256_descriptor(restored_descriptor)
+                finally:
+                    os.close(restored_descriptor)
+                if (
+                    (restored.st_dev, restored.st_ino) != temporary_identity
+                    or not stat.S_ISREG(restored.st_mode)
+                    or restored.st_size != entry.bytes
+                    or restored.st_mtime_ns != entry.mtime_ns
+                    or restored.st_mode & 0o777 != entry.mode
+                    or restored_digest != entry.sha256
+                ):
+                    raise PipelineError("restored File Provider item failed postflight verification")
+                if not _restore_parent_is_current(
+                    root,
+                    root_descriptor,
+                    parent_descriptor,
+                    parent_components,
+                ):
+                    raise PipelineError("restore target parent changed during placement")
+                verified = True
+            except FileExistsError:
+                raise PipelineError("restore target appeared before conflict-safe placement") from None
+            except OSError:
+                raise PipelineError("restore placement failed") from None
+        finally:
+            if linked and not verified and temporary_identity is not None:
+                try:
+                    placed = os.stat(target_name, dir_fd=parent_descriptor, follow_symlinks=False)
+                    if (placed.st_dev, placed.st_ino) == temporary_identity:
+                        os.unlink(target_name, dir_fd=parent_descriptor)
+                except OSError:
+                    pass
+            try:
+                os.unlink(temporary_name, dir_fd=parent_descriptor)
+            except OSError:
+                pass
+            try:
+                os.close(temporary_descriptor)
+            except OSError:
+                pass
+        return result
 
 
 def verify_materialized_content(items: tuple[FileProviderItem, ...]) -> None:

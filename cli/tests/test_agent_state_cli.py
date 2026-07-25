@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "agent-state-metabolism.py"
@@ -108,3 +111,169 @@ def test_exact_retention_rejects_age_or_size_heuristics(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "--retain-relative cannot be combined" in result.stderr
+
+
+def test_cloud_restore_requires_path_free_receipt_pair(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "one item restoration selector and --restore-receipt are required together" in result.stderr
+
+
+def test_cloud_restore_requires_exactly_one_path_free_selector(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+            "--restore-captured-path-hash",
+            "b" * 64,
+            "--restore-captured-name-hash",
+            "c" * 64,
+            "--restore-receipt",
+            str(tmp_path / "restore.json"),
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "choose exactly one item restoration selector" in result.stderr
+
+
+def test_cloud_restore_requires_explicit_apply(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+            "--restore-receipt",
+            str(tmp_path / "restore.json"),
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "item restoration requires explicit --apply" in result.stderr
+
+
+def test_cloud_restore_apply_invokes_the_bounded_campaign(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    spec = importlib.util.spec_from_file_location("agent_state_metabolism_cli", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    observed: dict[str, object] = {}
+
+    def restore(*args, **kwargs):
+        observed["args"] = args
+        observed["kwargs"] = kwargs
+        return {"schema": "limen.file_provider_restore_receipt.v1", "status": "already_restored"}
+
+    monkeypatch.setattr(module, "run_restore_cloudkit_item_campaign", restore)
+    result = module.main(
+        [
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+            "--restore-receipt",
+            str(tmp_path / "restore.json"),
+            "--apply",
+        ]
+    )
+
+    assert result == 0
+    assert observed["kwargs"] == {
+        "run_id": "run",
+        "item_hash": "a" * 64,
+        "captured_path_hash": None,
+        "captured_name_hash": None,
+    }
+    assert '"status": "already_restored"' in capsys.readouterr().out
+
+
+def test_cloud_restore_cannot_be_combined_with_eviction(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+            "--restore-receipt",
+            str(tmp_path / "restore.json"),
+            "--apply",
+            "--evict",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "item restoration cannot be combined with eviction operations" in result.stderr
