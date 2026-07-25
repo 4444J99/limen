@@ -147559,7 +147559,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-126
-  title: "UI \u2014 stake amount selector + bounds enforcement"
+  title: UI — stake amount selector + bounds enforcement
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -147571,8 +147571,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/543
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:13.099Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/543"
+    conduct_event_id: conduct:run-f7894b8406265ec9d86cb90da0e3820a:124:compatibility
+    conduct_run_id: run-f7894b8406265ec9d86cb90da0e3820a
+    conduct_lease_id: lease-124-f7894b8406265ec9
+    conduct_generation: 124
+  predicate: test "$(gh issue view 543 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/543
+  updated: 2026-07-25T17:50:13.099Z
 - id: LIMEN-127
   title: Tests — toggle enforcement + state combinations
   repo: organvm/peer-audited--behavioral-blockchain
