@@ -147399,8 +147399,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/564
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:08.783Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/564"
+    conduct_event_id: conduct:run-a1dd9855ab1990e9ca644a77c9d6b03a:158:compatibility
+    conduct_run_id: run-a1dd9855ab1990e9ca644a77c9d6b03a
+    conduct_lease_id: lease-158-a1dd9855ab1990e9
+    conduct_generation: 158
+  predicate: test "$(gh issue view 564 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/564
+  updated: 2026-07-25T17:52:08.783Z
 - id: LIMEN-117
   title: Add adverse authority analysis section to whitepaper
   repo: organvm/peer-audited--behavioral-blockchain
