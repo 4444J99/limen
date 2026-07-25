@@ -148081,7 +148081,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-142
-  title: "UI \u2014 notification display + acknowledgment flow"
+  title: UI — notification display + acknowledgment flow
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -148093,8 +148093,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/527
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:15.639Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/527"
+    conduct_event_id: conduct:run-f8d225135cc11fe56498b6e6a8d3069d:267:compatibility
+    conduct_run_id: run-f8d225135cc11fe56498b6e6a8d3069d
+    conduct_lease_id: lease-267-f8d225135cc11fe5
+    conduct_generation: 267
+  predicate: test "$(gh issue view 527 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/527
+  updated: 2026-07-25T17:58:15.639Z
 - id: LIMEN-143
   title: Copy — linguistically safe notification templates
   repo: organvm/peer-audited--behavioral-blockchain
