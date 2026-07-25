@@ -152459,7 +152459,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-313
-  title: "Stripe production account setup \u2014 real-money switch"
+  title: Stripe production account setup — real-money switch
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -152473,8 +152473,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/349
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:12.498Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/349"
+    conduct_event_id: conduct:run-cb47773d4b8087ce49a7665ba3568a88:248:compatibility
+    conduct_run_id: run-cb47773d4b8087ce49a7665ba3568a88
+    conduct_lease_id: lease-248-cb47773d4b8087ce
+    conduct_generation: 248
+  predicate: test "$(gh issue view 349 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/349
+  updated: 2026-07-25T17:57:12.498Z
 - id: LIMEN-314
   title: Unit economics model v1 — $39 contract profitability
   repo: organvm/peer-audited--behavioral-blockchain
