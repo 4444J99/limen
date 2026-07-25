@@ -759,10 +759,10 @@ def process_file_provider_items(
         verify_materialized_content(batch)
         attempt_id = _attempt_id(receipt, int(progress["next_attempt"]))
         manifest = _manifest(batch, attempt_id=attempt_id, principal=authorization_principal)
-        returncode, authorization = _run_adapter(executable, manifest, plan=True)
+        returncode, authorization_request = _run_adapter(executable, manifest, plan=True)
         if returncode != 0:
             raise PipelineError("Domus File Provider adapter rejected the authorization plan")
-        _validate_authorization(authorization, manifest)
+        _validate_authorization(authorization_request, manifest)
         progress["pending_batch"] = {
             "attempt_id": attempt_id,
             "authorization_principal": authorization_principal,
@@ -770,7 +770,7 @@ def process_file_provider_items(
             "item_hashes": [item.item_hash for item in batch],
         }
         progress["next_attempt"] = int(progress["next_attempt"]) + 1
-        _atomic_private_write(prepare_authorization, authorization)
+        _atomic_private_write(prepare_authorization, authorization_request)
         _write_progress(progress_path, progress)
         return _result_from_progress(progress, items, authorization_prepared=True)
 
@@ -791,7 +791,7 @@ def process_file_provider_items(
     if _manifest_hash(manifest) != pending["manifest_hash"]:
         raise PipelineError("File Provider pending manifest hash changed")
     assert authorization_receipt is not None and authorization_signature is not None
-    authorization, authorization_sha256 = _authorization_envelope(
+    authorization_envelope, authorization_sha256 = _authorization_envelope(
         authorization_receipt,
         authorization_signature,
         manifest,
@@ -800,7 +800,7 @@ def process_file_provider_items(
         batch,
         attempt_id=pending["attempt_id"],
         principal=pending["authorization_principal"],
-        authorization=authorization,
+        authorization=authorization_envelope,
     )
     returncode, adapter_payload = _run_adapter(executable, apply_manifest, plan=False)
     adapter_receipt, successes = _validate_receipt(
