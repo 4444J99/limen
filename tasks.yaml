@@ -152817,7 +152817,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/299
   updated: 2026-07-25T17:50:02.953Z
 - id: LIMEN-362
-  title: 'checklist: Enterprise sales readiness gate'
+  title: "checklist: Enterprise sales readiness gate"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -152832,8 +152832,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/298
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:12.421Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/298"
+    conduct_event_id: conduct:run-b99e6abc8f26b103e5f28b8d3d5ad25e:159:compatibility
+    conduct_run_id: run-b99e6abc8f26b103e5f28b8d3d5ad25e
+    conduct_lease_id: lease-159-b99e6abc8f26b103
+    conduct_generation: 159
+  predicate: test "$(gh issue view 298 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/298
+  updated: 2026-07-25T17:52:12.421Z
 - id: LIMEN-363
   title: "checklist: App Store launch readiness gate"
   repo: organvm/peer-audited--behavioral-blockchain
