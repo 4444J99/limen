@@ -152989,7 +152989,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/302
   updated: 2026-07-25T17:45:22.842Z
 - id: LIMEN-359
-  title: 'docs: KPI framework, MRR targets & unit economics dashboard'
+  title: "docs: KPI framework, MRR targets & unit economics dashboard"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -153004,8 +153004,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/301
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:30.452Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/301"
+    conduct_event_id: conduct:run-033be7e8f88d5d632e112ac984b64d3e:182:compatibility
+    conduct_run_id: run-033be7e8f88d5d632e112ac984b64d3e
+    conduct_lease_id: lease-182-033be7e8f88d5d63
+    conduct_generation: 182
+  predicate: test "$(gh issue view 301 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/301
+  updated: 2026-07-25T17:53:30.452Z
 - id: LIMEN-360
   title: 'docs: GTM strategy & user acquisition plan'
   repo: organvm/peer-audited--behavioral-blockchain
