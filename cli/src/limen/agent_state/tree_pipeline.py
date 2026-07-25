@@ -446,6 +446,8 @@ def _write_restore_receipt(
         "schema": "limen.file_provider_restore_receipt.v1",
         "run_id": run_id,
         "item_hash": result.item_hash,
+        "selector_kind": result.selector_kind,
+        "selector_hash": result.selector_hash or result.item_hash,
         "bytes": result.bytes,
         "sha256": result.sha256,
         "git_receipt_commit": git_receipt_commit,
@@ -491,7 +493,8 @@ def run_restore_cloudkit_item_campaign(
     restore_receipt: Path,
     *,
     run_id: str,
-    item_hash: str,
+    item_hash: str | None = None,
+    captured_path_hash: str | None = None,
     repository: str = "organvm/arca",
     key_service: str = "limen-arca-vault",
 ) -> dict[str, object]:
@@ -526,6 +529,7 @@ def run_restore_cloudkit_item_campaign(
             payload_root,
             keychain_key(key_service),
             item_hash,
+            captured_path_hash=captured_path_hash,
         )
         assert tracked.git_receipt_commit is not None
         return _write_restore_receipt(

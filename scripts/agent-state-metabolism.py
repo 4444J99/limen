@@ -113,6 +113,10 @@ def parser() -> argparse.ArgumentParser:
         "--restore-item-hash",
         help="restore exactly one missing captured item by its path-free File Provider hash",
     )
+    cloudkit.add_argument(
+        "--restore-captured-path-hash",
+        help="restore exactly one missing item by its domain-separated captured-path hash",
+    )
     cloudkit.add_argument("--restore-receipt", type=Path)
     return command
 
@@ -129,11 +133,14 @@ def main() -> int:
     ):
         argument_parser.error("--retain-relative cannot be combined with --hot-days or --maximum-hot-gib")
     if args.command == "cloudkit-materialized":
-        if bool(args.restore_item_hash) != bool(args.restore_receipt):
-            argument_parser.error("--restore-item-hash and --restore-receipt are required together")
-        if args.restore_item_hash and not args.resume:
-            argument_parser.error("--restore-item-hash requires --resume")
-        if args.restore_item_hash and (
+        restore_selectors = sum(bool(value) for value in (args.restore_item_hash, args.restore_captured_path_hash))
+        if restore_selectors > 1:
+            argument_parser.error("choose exactly one item restoration selector")
+        if bool(restore_selectors) != bool(args.restore_receipt):
+            argument_parser.error("one item restoration selector and --restore-receipt are required together")
+        if restore_selectors and not args.resume:
+            argument_parser.error("item restoration requires --resume")
+        if restore_selectors and (
             args.evict
             or args.prepare_eviction_authorization
             or args.eviction_authorization
@@ -190,7 +197,7 @@ def main() -> int:
                 run_id=args.run_id,
             )
     elif args.command == "cloudkit-materialized":
-        if args.restore_item_hash:
+        if args.restore_item_hash or args.restore_captured_path_hash:
             restore = run_restore_cloudkit_item_campaign(
                 args.name,
                 args.root,
@@ -200,6 +207,7 @@ def main() -> int:
                 args.restore_receipt,
                 run_id=args.run_id,
                 item_hash=args.restore_item_hash,
+                captured_path_hash=args.restore_captured_path_hash,
             )
             print(json.dumps(restore, sort_keys=True))
             return 0

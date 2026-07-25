@@ -27,7 +27,7 @@ surfaces:
     expected: {git_push: 1, push_literal: 1}
   cli/src/limen/agent_state/pipeline.py:
     disposition: bounded-encrypted-private-arca-upstream-exact-head-verified
-    expected: {git_push: 3, push_literal: 3, default_ref_literal: 6}
+    expected: {git_push: 3, push_literal: 3, default_ref_literal: 8}
   cli/src/limen/jules_landing_custody.py:
     disposition: isolated-jules-branch-pr
     expected: {push_literal: 1}

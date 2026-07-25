@@ -243,6 +243,8 @@ def test_single_item_restore_writes_path_free_private_receipt(
             status="restored",
             bytes=42,
             sha256="e" * 64,
+            selector_kind="captured_path_hash",
+            selector_hash="c" * 64,
         ),
     )
     restore_receipt = tmp_path / "restore.json"
@@ -255,11 +257,13 @@ def test_single_item_restore_writes_path_free_private_receipt(
         tmp_path / "private-receipt.json",
         restore_receipt,
         run_id="run",
-        item_hash="d" * 64,
+        captured_path_hash="c" * 64,
     )
 
     assert result["status"] == "restored"
     assert result["item_hash"] == "d" * 64
+    assert result["selector_kind"] == "captured_path_hash"
+    assert result["selector_hash"] == "c" * 64
     assert str(source) not in restore_receipt.read_text()
 
 

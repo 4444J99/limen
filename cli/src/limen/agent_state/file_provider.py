@@ -84,6 +84,8 @@ class RestoredFileResult:
     status: str
     bytes: int
     sha256: str
+    selector_kind: str = "file_provider_item_hash"
+    selector_hash: str | None = None
 
 
 def progress_path_for(private_receipt: Path) -> Path:
@@ -93,6 +95,12 @@ def progress_path_for(private_receipt: Path) -> Path:
 def file_provider_item_hash(root: Path, relative: str) -> str:
     url = (root.expanduser().resolve() / relative).absolute().as_uri()
     return hashlib.sha256(url.encode("utf-8")).hexdigest()
+
+
+def captured_path_selector_hash(relative: str) -> str:
+    """Hash one immutable captured relative path without exposing it."""
+
+    return hashlib.sha256(b"captured-path:v1\0" + relative.encode("utf-8")).hexdigest()
 
 
 def collect_file_entry(records: list[dict[str, Any]], record: dict[str, Any]) -> None:
@@ -230,14 +238,26 @@ def restore_captured_file(
     root: Path,
     payload_root: Path,
     key: str,
-    item_hash: str,
+    item_hash: str | None = None,
     *,
+    captured_path_hash: str | None = None,
     materialized_probe=is_materialized_cloud_path,
 ) -> RestoredFileResult:
     """Restore one captured item without exposing or overwriting its path."""
 
-    if not HEX64.fullmatch(item_hash):
-        raise PipelineError("restore item hash must be lowercase sha256")
+    selectors = tuple(
+        (kind, value)
+        for kind, value in (
+            ("file_provider_item_hash", item_hash),
+            ("captured_path_hash", captured_path_hash),
+        )
+        if value is not None
+    )
+    if len(selectors) != 1:
+        raise PipelineError("restore requires exactly one path-free selector")
+    selector_kind, selector_hash = selectors[0]
+    if not HEX64.fullmatch(selector_hash):
+        raise PipelineError("restore selector must be lowercase sha256")
     receipt.require_retirement_gate()
     root = root.expanduser().resolve()
     records: list[dict[str, Any]] = []
@@ -251,10 +271,14 @@ def restore_captured_file(
     if not proof.passed:
         raise PipelineError("captured File Provider atoms failed full restoration")
     captured = reconstruct_captured_files(receipt, root, records)
-    matches = [entry for entry in captured if file_provider_item_hash(root, entry.relative) == item_hash]
+    if selector_kind == "file_provider_item_hash":
+        matches = [entry for entry in captured if file_provider_item_hash(root, entry.relative) == selector_hash]
+    else:
+        matches = [entry for entry in captured if captured_path_selector_hash(entry.relative) == selector_hash]
     if len(matches) != 1:
-        raise PipelineError("restore item hash does not identify exactly one captured file")
+        raise PipelineError("restore selector does not identify exactly one captured file")
     entry = matches[0]
+    canonical_item_hash = file_provider_item_hash(root, entry.relative)
     target = root / entry.relative
     try:
         existing = target.lstat()
@@ -271,18 +295,22 @@ def restore_captured_file(
             raise PipelineError("restore target exists with conflicting metadata")
         if not materialized_probe(target):
             return RestoredFileResult(
-                item_hash=item_hash,
+                item_hash=canonical_item_hash,
                 status="already_dataless",
                 bytes=entry.bytes,
                 sha256=entry.sha256,
+                selector_kind=selector_kind,
+                selector_hash=selector_hash,
             )
         if sha256_file(target) != entry.sha256:
             raise PipelineError("restore target exists with conflicting content")
         return RestoredFileResult(
-            item_hash=item_hash,
+            item_hash=canonical_item_hash,
             status="already_restored",
             bytes=entry.bytes,
             sha256=entry.sha256,
+            selector_kind=selector_kind,
+            selector_hash=selector_hash,
         )
 
     relative = PurePosixPath(entry.relative)
@@ -357,10 +385,12 @@ def restore_captured_file(
     ):
         raise PipelineError("restored File Provider item failed postflight verification")
     return RestoredFileResult(
-        item_hash=item_hash,
+        item_hash=canonical_item_hash,
         status="restored",
         bytes=entry.bytes,
         sha256=entry.sha256,
+        selector_kind=selector_kind,
+        selector_hash=selector_hash,
     )
 
 

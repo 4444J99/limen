@@ -134,7 +134,38 @@ def test_cloud_restore_requires_path_free_receipt_pair(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 2
-    assert "--restore-item-hash and --restore-receipt are required together" in result.stderr
+    assert "one item restoration selector and --restore-receipt are required together" in result.stderr
+
+
+def test_cloud_restore_requires_exactly_one_path_free_selector(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+            "--restore-captured-path-hash",
+            "b" * 64,
+            "--restore-receipt",
+            str(tmp_path / "restore.json"),
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "choose exactly one item restoration selector" in result.stderr
 
 
 def test_cloud_restore_cannot_be_combined_with_eviction(tmp_path: Path) -> None:

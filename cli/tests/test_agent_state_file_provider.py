@@ -274,6 +274,61 @@ def test_restore_missing_item_from_fully_verified_atoms(tmp_path: Path) -> None:
     assert repeated.status == "already_restored"
 
 
+def test_restore_missing_item_by_captured_path_hash_is_path_free(tmp_path: Path) -> None:
+    relative = "private/missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative, "other.txt"))
+    target = root / relative
+    expected = target.read_bytes()
+    selector_hash = file_provider.captured_path_selector_hash(relative)
+    target.unlink()
+
+    restored = file_provider.restore_captured_file(
+        receipt,
+        root,
+        payload,
+        "restore-test-key",
+        captured_path_hash=selector_hash,
+    )
+
+    assert restored.status == "restored"
+    assert restored.selector_kind == "captured_path_hash"
+    assert restored.selector_hash == selector_hash
+    assert restored.item_hash == file_provider.file_provider_item_hash(root, relative)
+    assert target.read_bytes() == expected
+    assert relative not in repr(restored)
+
+
+def test_restore_selector_mismatch_stops_before_chunk_extraction(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relative = "missing.json"
+    receipt, root, payload = _encrypted_capture(tmp_path, (relative,))
+    target = root / relative
+    target.unlink()
+    verification_calls = 0
+    real_verify = file_provider.verify_atom_packs
+
+    def verify(*args, **kwargs):
+        nonlocal verification_calls
+        verification_calls += 1
+        return real_verify(*args, **kwargs)
+
+    monkeypatch.setattr(file_provider, "verify_atom_packs", verify)
+
+    with pytest.raises(PipelineError, match="selector does not identify"):
+        file_provider.restore_captured_file(
+            receipt,
+            root,
+            payload,
+            "restore-test-key",
+            captured_path_hash="f" * 64,
+        )
+
+    assert verification_calls == 1
+    assert not target.exists()
+
+
 def test_restore_rejects_existing_conflicting_content(tmp_path: Path) -> None:
     receipt, root, payload = _encrypted_capture(tmp_path, ("captured.json",))
     target = root / "captured.json"
