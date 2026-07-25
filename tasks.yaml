@@ -151382,7 +151382,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/408
   updated: 2026-07-25T17:58:09.101Z
 - id: LIMEN-255
-  title: "Forfeit: Kill switch \u2014 refund-only emergency override"
+  title: "Forfeit: Kill switch — refund-only emergency override"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -151395,8 +151395,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/407
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:27.625Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/407"
+    conduct_event_id: conduct:run-2605f08a54a129e5870a59f77b6b020e:306:compatibility
+    conduct_run_id: run-2605f08a54a129e5870a59f77b6b020e
+    conduct_lease_id: lease-306-2605f08a54a129e5
+    conduct_generation: 306
+  predicate: test "$(gh issue view 407 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/407
+  updated: 2026-07-25T18:00:27.625Z
 - id: LIMEN-256
   title: "Forfeit: Policy engine — jurisdiction-aware disposition rules"
   repo: organvm/peer-audited--behavioral-blockchain
