@@ -151081,7 +151081,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-276
-  title: "KYC: Schema \u2014 identity_verifications table + API types"
+  title: "KYC: Schema — identity_verifications table + API types"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -151094,8 +151094,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/386
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:35.694Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/386"
+    conduct_event_id: conduct:run-0ce94dea8e45d22df500f608cd623366:202:compatibility
+    conduct_run_id: run-0ce94dea8e45d22df500f608cd623366
+    conduct_lease_id: lease-202-0ce94dea8e45d22d
+    conduct_generation: 202
+  predicate: test "$(gh issue view 386 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/386
+  updated: 2026-07-25T17:54:35.694Z
 - id: LIMEN-277
   title: DevOps / SRE — part-time (if fundraise)
   repo: organvm/peer-audited--behavioral-blockchain
