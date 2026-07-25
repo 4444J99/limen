@@ -153289,7 +153289,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-378
-  title: "feat: Video proof pipeline \u2014 processing state UI (TKT-P1-013)"
+  title: "feat: Video proof pipeline — processing state UI (TKT-P1-013)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -153302,8 +153302,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/282
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:54.383Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/282"
+    conduct_event_id: conduct:run-d2e996df9e44fe1c040936492228dc2d:171:compatibility
+    conduct_run_id: run-d2e996df9e44fe1c040936492228dc2d
+    conduct_lease_id: lease-171-d2e996df9e44fe1c
+    conduct_generation: 171
+  predicate: test "$(gh issue view 282 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/282
+  updated: 2026-07-25T17:52:54.383Z
 - id: LIMEN-379
   title: "feat: Health data bridge \u2014 native UI completion (TKT-P1-007)"
   repo: organvm/peer-audited--behavioral-blockchain
