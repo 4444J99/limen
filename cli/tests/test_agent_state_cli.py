@@ -108,3 +108,60 @@ def test_exact_retention_rejects_age_or_size_heuristics(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "--retain-relative cannot be combined" in result.stderr
+
+
+def test_cloud_restore_requires_path_free_receipt_pair(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "--restore-item-hash and --restore-receipt are required together" in result.stderr
+
+
+def test_cloud_restore_cannot_be_combined_with_eviction(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--restore-item-hash",
+            "a" * 64,
+            "--restore-receipt",
+            str(tmp_path / "restore.json"),
+            "--evict",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "item restoration cannot be combined with eviction operations" in result.stderr

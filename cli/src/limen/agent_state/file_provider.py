@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import json
 import os
@@ -17,6 +18,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .atomize import canonical_bytes, sha256_file
+from .crypto import verify_atom_packs
 from .models import MetabolismReceipt
 from .pipeline import PipelineError
 from .tree import NON_EVICTABLE_CLOUD_NAMES, RetentionPlan, is_materialized_cloud_path
@@ -76,8 +78,21 @@ class FileProviderResult:
     authorization_prepared: bool = False
 
 
+@dataclass(frozen=True)
+class RestoredFileResult:
+    item_hash: str
+    status: str
+    bytes: int
+    sha256: str
+
+
 def progress_path_for(private_receipt: Path) -> Path:
     return private_receipt.with_name(f"{private_receipt.stem}.file-provider-progress.json")
+
+
+def file_provider_item_hash(root: Path, relative: str) -> str:
+    url = (root.expanduser().resolve() / relative).absolute().as_uri()
+    return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
 
 def collect_file_entry(records: list[dict[str, Any]], record: dict[str, Any]) -> None:
@@ -208,6 +223,145 @@ def inspect_captured_files(
     if len(set(hashes)) != len(hashes):
         raise PipelineError("captured File Provider item identity collided")
     return tuple(inspected)
+
+
+def restore_captured_file(
+    receipt: MetabolismReceipt,
+    root: Path,
+    payload_root: Path,
+    key: str,
+    item_hash: str,
+    *,
+    materialized_probe=is_materialized_cloud_path,
+) -> RestoredFileResult:
+    """Restore one captured item without exposing or overwriting its path."""
+
+    if not HEX64.fullmatch(item_hash):
+        raise PipelineError("restore item hash must be lowercase sha256")
+    receipt.require_retirement_gate()
+    root = root.expanduser().resolve()
+    records: list[dict[str, Any]] = []
+    proof = verify_atom_packs(
+        receipt.packs,
+        payload_root,
+        key,
+        logical_sha256=receipt.logical_sha256,
+        record_consumer=lambda record: collect_file_entry(records, record),
+    )
+    if not proof.passed:
+        raise PipelineError("captured File Provider atoms failed full restoration")
+    captured = reconstruct_captured_files(receipt, root, records)
+    matches = [entry for entry in captured if file_provider_item_hash(root, entry.relative) == item_hash]
+    if len(matches) != 1:
+        raise PipelineError("restore item hash does not identify exactly one captured file")
+    entry = matches[0]
+    target = root / entry.relative
+    try:
+        existing = target.lstat()
+    except FileNotFoundError:
+        existing = None
+    if existing is not None:
+        if (
+            stat.S_ISLNK(existing.st_mode)
+            or not stat.S_ISREG(existing.st_mode)
+            or existing.st_size != entry.bytes
+            or existing.st_mtime_ns != entry.mtime_ns
+            or existing.st_mode & 0o777 != entry.mode
+        ):
+            raise PipelineError("restore target exists with conflicting metadata")
+        if not materialized_probe(target):
+            return RestoredFileResult(
+                item_hash=item_hash,
+                status="already_dataless",
+                bytes=entry.bytes,
+                sha256=entry.sha256,
+            )
+        if sha256_file(target) != entry.sha256:
+            raise PipelineError("restore target exists with conflicting content")
+        return RestoredFileResult(
+            item_hash=item_hash,
+            status="already_restored",
+            bytes=entry.bytes,
+            sha256=entry.sha256,
+        )
+
+    relative = PurePosixPath(entry.relative)
+    for index in range(1, len(relative.parts)):
+        parent = root.joinpath(*relative.parts[:index])
+        try:
+            parent_stat = parent.lstat()
+        except FileNotFoundError as exc:
+            raise PipelineError("restore target parent is logically missing") from exc
+        if stat.S_ISLNK(parent_stat.st_mode) or not stat.S_ISDIR(parent_stat.st_mode):
+            raise PipelineError("restore target parent changed type")
+
+    chunk_hashes = tuple(entry.record["chunks"])
+    needed = set(chunk_hashes)
+    chunks: dict[str, bytes] = {}
+
+    def collect_chunk(record: dict[str, Any]) -> None:
+        if record.get("kind") != "file_chunk" or record.get("chunk_sha256") not in needed:
+            return
+        if set(record) != {"kind", "chunk_sha256", "value_b64"}:
+            raise PipelineError("captured restore chunk has an invalid shape")
+        digest = record["chunk_sha256"]
+        encoded = record["value_b64"]
+        if not isinstance(digest, str) or not isinstance(encoded, str):
+            raise PipelineError("captured restore chunk has invalid fields")
+        try:
+            value = base64.b64decode(encoded, validate=True)
+        except (binascii.Error, ValueError) as exc:
+            raise PipelineError("captured restore chunk has invalid base64") from exc
+        if hashlib.sha256(b"file-chunk:v1\0" + value).hexdigest() != digest:
+            raise PipelineError("captured restore chunk failed content verification")
+        if digest in chunks:
+            raise PipelineError("captured restore chunk is duplicated")
+        chunks[digest] = value
+
+    chunk_proof = verify_atom_packs(
+        receipt.packs,
+        payload_root,
+        key,
+        logical_sha256=receipt.logical_sha256,
+        record_consumer=collect_chunk,
+    )
+    if not chunk_proof.passed or set(chunks) != needed:
+        raise PipelineError("captured restore chunks failed full restoration")
+
+    descriptor, temporary_name = tempfile.mkstemp(prefix=".limen-restore-", dir=target.parent)
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "wb") as handle:
+            for digest in chunk_hashes:
+                handle.write(chunks[digest])
+            handle.flush()
+            os.fsync(handle.fileno())
+        if temporary.stat().st_size != entry.bytes or sha256_file(temporary) != entry.sha256:
+            raise PipelineError("reconstructed restore file failed content verification")
+        os.chmod(temporary, entry.mode, follow_symlinks=False)
+        os.utime(temporary, ns=(entry.mtime_ns, entry.mtime_ns), follow_symlinks=False)
+        try:
+            os.link(temporary, target, follow_symlinks=False)
+        except FileExistsError as exc:
+            raise PipelineError("restore target appeared before conflict-safe placement") from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+    restored = target.lstat()
+    if (
+        not stat.S_ISREG(restored.st_mode)
+        or restored.st_size != entry.bytes
+        or restored.st_mtime_ns != entry.mtime_ns
+        or restored.st_mode & 0o777 != entry.mode
+        or sha256_file(target) != entry.sha256
+    ):
+        raise PipelineError("restored File Provider item failed postflight verification")
+    return RestoredFileResult(
+        item_hash=item_hash,
+        status="restored",
+        bytes=entry.bytes,
+        sha256=entry.sha256,
+    )
 
 
 def verify_materialized_content(items: tuple[FileProviderItem, ...]) -> None:
