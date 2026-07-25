@@ -152523,7 +152523,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/357
   updated: 2026-07-25T17:45:40.386Z
 - id: LIMEN-306
-  title: "Onboarding email sequence \u2014 7-day drip campaign"
+  title: Onboarding email sequence — 7-day drip campaign
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -152537,8 +152537,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/356
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:35.709Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/356"
+    conduct_event_id: conduct:run-930aae3e58a0555cdd4de4c845e7fcf9:273:compatibility
+    conduct_run_id: run-930aae3e58a0555cdd4de4c845e7fcf9
+    conduct_lease_id: lease-273-930aae3e58a0555c
+    conduct_generation: 273
+  predicate: test "$(gh issue view 356 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/356
+  updated: 2026-07-25T17:58:35.709Z
 - id: LIMEN-307
   title: "FAQ / Help Center v1 \u2014 10 help articles"
   repo: organvm/peer-audited--behavioral-blockchain
