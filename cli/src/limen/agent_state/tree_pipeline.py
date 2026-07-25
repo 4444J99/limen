@@ -486,6 +486,7 @@ def run_restore_cloudkit_item_campaign(
     name: str,
     root: Path,
     vault_root: Path,
+    external_root: Path,
     private_receipt: Path,
     restore_receipt: Path,
     *,
@@ -501,18 +502,24 @@ def run_restore_cloudkit_item_campaign(
         vault = GitVault(vault_root, repository=repository)
         vault.verify_identity()
         relative = Path("agent-state") / name / run_id
-        payload_root = vault.root / relative
         try:
-            tracked = MetabolismReceipt.read(payload_root / "receipt.json")
-        except ReceiptError as exc:
+            payload_commit, receipt_commit, receipt_text = vault.completed_receipt_at_remote(
+                relative,
+                f"agent-state: receipt {name} {run_id}",
+            )
+            value = json.loads(receipt_text)
+            if not isinstance(value, dict):
+                raise ReceiptError("completed File Provider receipt must be a JSON object")
+            tracked = MetabolismReceipt.from_dict(value)
+        except (ReceiptError, json.JSONDecodeError) as exc:
             raise PipelineError("completed File Provider custody receipt is invalid") from exc
-        completed = vault.completed_receipt_commits(relative, f"agent-state: receipt {name} {run_id}")
-        if completed is None or tracked.git_commit != completed[0] or tracked.git_receipt_commit is not None:
+        if tracked.git_commit != payload_commit or tracked.git_receipt_commit is not None:
             raise PipelineError("completed File Provider custody is not exact on its remote")
-        tracked.git_receipt_commit = completed[1]
+        tracked.git_receipt_commit = receipt_commit
         if tracked.run_id != run_id:
             raise PipelineError("completed File Provider custody run does not match the restore request")
         _require_private_retirement_receipt(tracked, private_receipt)
+        payload_root = require_mounted_external(external_root) / name / run_id
         result = restore_captured_file(
             tracked,
             root,

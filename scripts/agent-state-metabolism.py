@@ -195,6 +195,7 @@ def main() -> int:
                 args.name,
                 args.root,
                 args.vault_root,
+                args.external_root,
                 args.private_receipt,
                 args.restore_receipt,
                 run_id=args.run_id,

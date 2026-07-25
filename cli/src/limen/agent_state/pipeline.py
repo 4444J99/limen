@@ -205,6 +205,39 @@ class GitVault:
             raise PipelineError("ARCA completed receipt is not exact on the remote")
         return history[1], head
 
+    def completed_receipt_at_remote(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str, str]:
+        """Read one completed receipt from the exact remote ref without using the checkout."""
+
+        self.verify_identity()
+        relative = Path(relative)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise PipelineError("ARCA completed receipt path is unsafe")
+        remote_output = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()
+        if len(remote_output) != 2 or remote_output[1] != "refs/heads/main":
+            raise PipelineError("ARCA remote main ref is unavailable")
+        head = remote_output[0]
+        subject = _run(["git", "show", "-s", "--format=%s", head], cwd=self.root)
+        if subject != message:
+            raise PipelineError("ARCA remote head is not the requested completed receipt")
+        receipt_path = relative / "receipt.json"
+        changed = set(
+            _run(
+                ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", head],
+                cwd=self.root,
+            ).splitlines()
+        )
+        if changed != {receipt_path.as_posix()}:
+            raise PipelineError("ARCA remote receipt commit has unexpected files")
+        history = _run(["git", "rev-list", "--parents", "-n", "1", head], cwd=self.root).split()
+        if len(history) != 2:
+            raise PipelineError("ARCA remote receipt commit has invalid history")
+        receipt = _run(["git", "show", f"{head}:{receipt_path.as_posix()}"], cwd=self.root)
+        return history[1], head, receipt
+
     def resume_and_push_payload(
         self,
         relative: Path,

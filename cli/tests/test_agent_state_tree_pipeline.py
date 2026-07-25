@@ -55,6 +55,19 @@ class _Vault:
 
 
 class _CompletedVault(_Vault):
+    def completed_receipt_at_remote(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str, str]:
+        assert relative == Path("agent-state/icloud-drive/run")
+        assert message == "agent-state: receipt icloud-drive run"
+        return (
+            "a" * 40,
+            "b" * 40,
+            (self.root / relative / "receipt.json").read_text(encoding="utf-8"),
+        )
+
     def completed_receipt_commits(
         self,
         relative: Path,
@@ -221,6 +234,7 @@ def test_single_item_restore_writes_path_free_private_receipt(
     monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
     monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
     monkeypatch.setattr(tree_pipeline, "hold_lease", lambda *_args, **_kwargs: nullcontext())
+    monkeypatch.setattr(tree_pipeline, "require_mounted_external", lambda path: path.resolve())
     monkeypatch.setattr(
         tree_pipeline,
         "restore_captured_file",
@@ -237,6 +251,7 @@ def test_single_item_restore_writes_path_free_private_receipt(
         "icloud-drive",
         source,
         vault,
+        tmp_path / "external",
         tmp_path / "private-receipt.json",
         restore_receipt,
         run_id="run",
