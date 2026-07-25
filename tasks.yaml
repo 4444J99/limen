@@ -148048,7 +148048,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/511
   updated: 2026-07-25T17:47:08.808Z
 - id: LIMEN-159
-  title: "Tests \u2014 taxonomy completeness + audit logging"
+  title: Tests — taxonomy completeness + audit logging
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -148060,8 +148060,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/510
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:36.606Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/510"
+    conduct_event_id: conduct:run-5c11fee6298530505141ce498742c309:76:compatibility
+    conduct_run_id: run-5c11fee6298530505141ce498742c309
+    conduct_lease_id: lease-76-5c11fee629853050
+    conduct_generation: 76
+  predicate: test "$(gh issue view 510 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/510
+  updated: 2026-07-25T17:47:36.606Z
 - id: LIMEN-160
   title: "API \u2014 violation code CRUD + audit trail"
   repo: organvm/peer-audited--behavioral-blockchain
