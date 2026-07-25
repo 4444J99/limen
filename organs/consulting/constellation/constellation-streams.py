@@ -393,6 +393,9 @@ def analyse(registry: dict[str, Any], census: dict[str, Any]) -> dict[str, Any]:
     # ── echoes: different repos circling the same idea ──
     echoes = find_echoes(repos)
 
+    # ── blind spots: what this page structurally cannot see ──
+    blind = blind_spots(census, {p["slug"] for p in people})
+
     # ── twins: names that collapse to the same base ──
     def base(name: str) -> str:
         n = re.sub(r"--(4444j99|a-organvm-legacy|legacy|copy)$", "", name, flags=re.IGNORECASE)
@@ -423,6 +426,97 @@ def analyse(registry: dict[str, Any], census: dict[str, Any]) -> dict[str, Any]:
         "parallels": parallels,
         "echoes": echoes,
         "twins": twins,
+        "blind": blind,
+    }
+
+
+# ── blind spots ─────────────────────────────────────────────────────────────
+#
+# A page that silently omits what it cannot see reads as complete when it is
+# not. Keyword matching is blind to a repo that never describes itself, a `gh`
+# sweep is blind to a repo with no remote, and the whole surface is blind to a
+# person the register never registered — no matter how thoroughly they are
+# documented elsewhere. Each of those is counted here rather than left absent.
+
+
+def _people_elsewhere(registered: set[str]) -> list[dict[str, str]]:
+    """People documented in another registry but absent from the register."""
+    found: dict[str, str] = {}
+
+    for engagements in (
+        REPO_ROOT / "organs" / "social" / "engagements",
+        REPO_ROOT / "organs" / "consulting" / "engagements",
+    ):
+        if not engagements.is_dir():
+            continue
+        for path in sorted(engagements.glob("*.yaml")):
+            slug = path.stem
+            try:
+                doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            except yaml.YAMLError:
+                continue
+            name = str(((doc.get("member") or {}) if isinstance(doc, dict) else {}).get("name", ""))
+            # Template files carry {{PLACEHOLDER}} members — not a real person.
+            if "{{" in name or not name:
+                continue
+            if slug not in registered:
+                found.setdefault(slug, f"{engagements.parent.name} engagement")
+
+    people_index = Path.home() / ".config" / "ai-context" / "people.yaml"
+    if people_index.is_file():
+        try:
+            rows = yaml.safe_load(people_index.read_text(encoding="utf-8")) or []
+        except yaml.YAMLError:
+            rows = []
+        for row in rows if isinstance(rows, list) else []:
+            raw = str(row.get("name", "")).strip()
+            if not raw:
+                continue
+            slug = raw.split()[0].lower()
+            if slug not in registered:
+                found.setdefault(slug, "people index")
+
+    return [{"slug": s, "where": w} for s, w in sorted(found.items())]
+
+
+def _remoteless_repos() -> list[str]:
+    """Sibling working trees with no remote — invisible to any gh sweep."""
+    out: list[str] = []
+    # Resolve the LIVE checkout, not this working tree: run from a worktree,
+    # REPO_ROOT.parent is .claude/worktrees and the real siblings are missed.
+    common = subprocess.run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        check=False,
+    )
+    live = Path(common.stdout.strip()).parent if common.returncode == 0 else REPO_ROOT
+    workspace = live.parent
+    if not workspace.is_dir():
+        return out
+    for child in sorted(workspace.iterdir()):
+        if not (child / ".git").exists():
+            continue
+        remotes = subprocess.run(
+            ["git", "remote"], capture_output=True, text=True, cwd=child, check=False
+        )
+        if remotes.returncode == 0 and not remotes.stdout.strip():
+            out.append(child.name)
+    return out
+
+
+def blind_spots(census: dict[str, Any], registered: set[str]) -> dict[str, Any]:
+    all_repos = census.get("repos", [])
+    undescribed = sorted(
+        r["name"] for r in all_repos if not (r.get("description") or "").strip() and not _excluded(r["name"])
+    )
+    excluded = sorted(r["name"] for r in all_repos if _excluded(r["name"]))
+    return {
+        "undescribed": undescribed,
+        "excluded": excluded,
+        "people_elsewhere": _people_elsewhere(registered),
+        "remoteless": _remoteless_repos(),
     }
 
 
@@ -644,6 +738,18 @@ EXTRA_CSS = """
 .twin ul { list-style: none; display: flex; flex-direction: column; gap: 2px; }
 .twin li { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); word-break: break-all; }
 
+.blinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.blind { background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+  padding: 12px 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px;
+  border-left: 3px solid var(--ink-faint); }
+.blind.loud { border-left-color: var(--dormant); }
+.blind .bt { font-family: var(--body); font-size: 14px; font-weight: 650; line-height: 1.25; }
+.blind .bw { font-size: 12.5px; color: var(--ink-muted); line-height: 1.45; }
+.blind .bn { font-family: var(--display); font-size: 24px; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--dormant); }
+.blind .bn.ok { color: var(--shipped); font-family: var(--mono); font-size: 12px; }
+.blind:not(.loud) .bn { color: var(--ink-faint); }
+
 .caveat { border: 1px solid var(--inbuild); border-radius: 3px; padding: 12px 15px;
   font-size: 13px; color: var(--ink-muted); line-height: 1.55; }
 .caveat strong { color: var(--ink); }
@@ -807,6 +913,54 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
         )
         twin_html += f'<div class="twin"><span class="b">{E(t["base"])}</span><ul>{items}</ul></div>'
 
+    # ── blind spots ──
+    blind = f["blind"]
+
+    def _blind_card(title: str, why: str, items: list[str], *, tone: str = "") -> str:
+        if not items:
+            return (
+                f'<div class="blind"><span class="bt">{E(title)}</span>'
+                f'<span class="bw">{E(why)}</span>'
+                '<span class="bn ok">none</span></div>'
+            )
+        shown = "".join(f'<span class="key">{E(i)}</span>' for i in items[:18])
+        more = f'<span class="key">+{len(items) - 18} more</span>' if len(items) > 18 else ""
+        return (
+            f'<div class="blind {tone}"><span class="bt">{E(title)}</span>'
+            f'<span class="bw">{E(why)}</span>'
+            f'<span class="bn">{len(items)}</span>'
+            f'<div class="keys">{shown}{more}</div></div>'
+        )
+
+    blind_html = (
+        _blind_card(
+            "People documented elsewhere but never registered",
+            "They have an engagement record or a people-index entry, so nothing on either page "
+            "shows them. The register — not the sweep — is the gap.",
+            [f"{p['slug']} ({p['where']})" for p in blind["people_elsewhere"]],
+            tone="loud",
+        )
+        + _blind_card(
+            "Repositories with no description",
+            "Matching reads name + description. A repo that never says what it is cannot be "
+            "matched to anyone's lane, however obviously it belongs to one.",
+            blind["undescribed"],
+            tone="loud",
+        )
+        + _blind_card(
+            "Working trees with no remote",
+            "A gh sweep enumerates remotes. Local-only repositories are invisible to it by "
+            "construction — no threshold change reaches them.",
+            blind["remoteless"],
+        )
+        + _blind_card(
+            "Excluded by pattern",
+            "Vendor mirrors, contribution trackers, per-org scaffolding, Pages copies and "
+            "superprojects. Deliberate, but a judgment call worth re-reading.",
+            blind["excluded"],
+        )
+    )
+
     stamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     swept = f.get("swept_at") or "unknown"
     mode = "public repos only" if public_safe else "full estate incl. private"
@@ -885,6 +1039,14 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
       splits. Estate mess that makes any count of "what exists" wrong.</span>
       <span class="count">{len(f["twins"])} families</span></div>
     <div class="grid2">{twin_html}</div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Blind spots</h2>
+      <span class="gloss">What this page structurally cannot see. Counted, so an absence never
+      reads as an all-clear.</span>
+      <span class="count">{len(blind["people_elsewhere"])} people / {len(blind["undescribed"])} repos unmatched</span></div>
+    <div class="blinds">{blind_html}</div>
   </section>
 
   <p class="colophon">
