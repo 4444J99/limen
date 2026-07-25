@@ -150336,7 +150336,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/422
   updated: 2026-07-25T17:49:06.295Z
 - id: LIMEN-244
-  title: 'Thesis: Production pipeline (PDF build, citation check)'
+  title: "Thesis: Production pipeline (PDF build, citation check)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: agy
@@ -150350,8 +150350,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/418
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:05.489Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/418"
+    conduct_event_id: conduct:run-579fcc90eb709ee6a87ba97afdacb4c3:193:compatibility
+    conduct_run_id: run-579fcc90eb709ee6a87ba97afdacb4c3
+    conduct_lease_id: lease-193-579fcc90eb709ee6
+    conduct_generation: 193
+  predicate: test "$(gh issue view 418 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/418
+  updated: 2026-07-25T17:54:05.489Z
 - id: LIMEN-245
   title: 'Thesis: Notation and symbol guide'
   repo: organvm/peer-audited--behavioral-blockchain
