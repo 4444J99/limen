@@ -150012,7 +150012,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-267
-  title: 'Settlement: Stripe Connect FBO account configuration'
+  title: "Settlement: Stripe Connect FBO account configuration"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -150025,8 +150025,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/395
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:58.800Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/395"
+    conduct_event_id: conduct:run-99146fcd3a2d10328c16639ceeb52271:83:compatibility
+    conduct_run_id: run-99146fcd3a2d10328c16639ceeb52271
+    conduct_lease_id: lease-83-99146fcd3a2d1032
+    conduct_generation: 83
+  predicate: test "$(gh issue view 395 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/395
+  updated: 2026-07-25T17:47:58.800Z
 - id: LIMEN-268
   title: "Camera: Tests \u2014 capture flow + nonce challenge verification"
   repo: organvm/peer-audited--behavioral-blockchain
