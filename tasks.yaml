@@ -148421,7 +148421,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-157
-  title: "UI \u2014 exclusion request flow + suspension status"
+  title: UI — exclusion request flow + suspension status
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -148433,8 +148433,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/512
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:36.380Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/512"
+    conduct_event_id: conduct:run-eaf1ecab37afd5f5585169e404507a8e:237:compatibility
+    conduct_run_id: run-eaf1ecab37afd5f5585169e404507a8e
+    conduct_lease_id: lease-237-eaf1ecab37afd5f5
+    conduct_generation: 237
+  predicate: test "$(gh issue view 512 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/512
+  updated: 2026-07-25T17:56:36.380Z
 - id: LIMEN-158
   title: Schema + API — exclusion criteria + suspension logic
   repo: organvm/peer-audited--behavioral-blockchain
