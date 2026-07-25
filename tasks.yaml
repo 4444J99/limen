@@ -151618,7 +151618,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-324
-  title: "APNs/FCM credential management \u2014 secure push notification keys"
+  title: APNs/FCM credential management — secure push notification keys
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -151632,8 +151632,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/338
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:45.411Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/338"
+    conduct_event_id: conduct:run-a1b029ff59800c97f66bc76b2688849a:133:compatibility
+    conduct_run_id: run-a1b029ff59800c97f66bc76b2688849a
+    conduct_lease_id: lease-133-a1b029ff59800c97
+    conduct_generation: 133
+  predicate: test "$(gh issue view 338 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/338
+  updated: 2026-07-25T17:50:45.411Z
 - id: LIMEN-325
   title: CDN/WAF production config verification
   repo: organvm/peer-audited--behavioral-blockchain
