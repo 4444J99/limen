@@ -5,18 +5,28 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from collections.abc import Callable
 from dataclasses import asdict, replace
 from pathlib import Path
+from typing import Any
 
 from limen.host_admission import hold_lease
 
 from .crypto import EncryptedAtomPacker, keychain_key, verify_atom_packs
+from .file_provider import (
+    CapturedFile,
+    FileProviderResult,
+    collect_file_entry,
+    process_file_provider_items,
+    progress_path_for,
+    reconstruct_captured_files,
+    retention_plan_from_capture,
+)
 from .models import AtomPack, CipherChunk, MetabolismReceipt, RestoreProof, SourceProof
 from .pipeline import GitVault, PipelineError, require_mounted_external, run_id_now
 from .tree import (
     RetentionPlan,
     atomize_file_tree,
-    evict_cloud_materializations,
     require_plan_matches_source,
     retire_cold_files,
 )
@@ -136,6 +146,11 @@ def _require_private_retirement_receipt(
     except (OSError, json.JSONDecodeError) as exc:
         raise PipelineError("private retirement receipt is missing or invalid") from exc
     expected = json.loads(json.dumps(receipt.as_dict(), sort_keys=True))
+    if not isinstance(durable, dict) or set(durable) != set(expected):
+        raise PipelineError("private retirement receipt does not match verified custody")
+    for value in (durable, expected):
+        value["source_retired"] = False
+        value["retirement_proof"] = None
     if durable != expected:
         raise PipelineError("private retirement receipt does not match verified custody")
 
@@ -153,6 +168,7 @@ def capture_cold_tree(
     require_external_mount: bool = True,
     pack_plaintext_limit: int = 32 * 1024 * 1024,
     chunk_limit: int = 90 * 1024 * 1024,
+    record_consumer: Callable[[dict[str, Any]], None] | None = None,
 ) -> MetabolismReceipt:
     if not name or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in name):
         raise ValueError("tree custody name must be lowercase alphanumeric with hyphens")
@@ -183,7 +199,13 @@ def capture_cold_tree(
         if not result.source.stable:
             raise PipelineError(f"{name} file tree mutated during capture")
         sample = verify_atom_packs(packs, payload_root, key, logical_sha256=result.logical_sha256, sample=True)
-        full = verify_atom_packs(packs, payload_root, key, logical_sha256=result.logical_sha256)
+        full = verify_atom_packs(
+            packs,
+            payload_root,
+            key,
+            logical_sha256=result.logical_sha256,
+            record_consumer=record_consumer,
+        )
         if not sample.passed or not full.passed:
             raise PipelineError(f"{name} encrypted Git restoration failed")
         external_packs = _copy_packs(packs, payload_root, exact_root)
@@ -243,7 +265,7 @@ def capture_cold_tree(
 
 def resume_cold_tree_capture(
     name: str,
-    plan: RetentionPlan,
+    plan: RetentionPlan | None,
     vault_root: Path,
     external_root: Path,
     private_receipt: Path,
@@ -252,6 +274,8 @@ def resume_cold_tree_capture(
     repository: str = "organvm/arca",
     key_service: str = "limen-arca-vault",
     require_external_mount: bool = True,
+    reconstruct_root: Path | None = None,
+    captured_files: list[CapturedFile] | None = None,
 ) -> MetabolismReceipt:
     """Resume after encrypted atoms reached Git but final custody did not close."""
 
@@ -266,11 +290,8 @@ def resume_cold_tree_capture(
     receipt = load_tree_manifest(payload_root)
     if receipt.run_id != run_id:
         raise PipelineError("tree capture run identity does not match resume request")
-    if receipt.source.bytes != plan.cold_bytes:
-        raise PipelineError("current cold total does not match interrupted capture")
-    require_plan_matches_source(plan, receipt.source)
-    receipt.retained_hot_bytes = plan.hot_bytes
     key = keychain_key(key_service)
+    records: list[dict[str, Any]] = []
     sample = verify_atom_packs(
         receipt.packs,
         payload_root,
@@ -283,9 +304,22 @@ def resume_cold_tree_capture(
         payload_root,
         key,
         logical_sha256=receipt.logical_sha256,
+        record_consumer=(lambda record: collect_file_entry(records, record)) if reconstruct_root is not None else None,
     )
     if not sample.passed or not full.passed:
         raise PipelineError(f"{name} resumed Git restoration failed")
+    if reconstruct_root is not None:
+        reconstructed = reconstruct_captured_files(receipt, reconstruct_root, records)
+        plan = retention_plan_from_capture(receipt, reconstruct_root, reconstructed)
+        if captured_files is not None:
+            captured_files.extend(reconstructed)
+    elif plan is None:
+        raise PipelineError("resume requires either a retention plan or captured File Provider root")
+    else:
+        if receipt.source.bytes != plan.cold_bytes:
+            raise PipelineError("current cold total does not match interrupted capture")
+        require_plan_matches_source(plan, receipt.source)
+    receipt.retained_hot_bytes = plan.hot_bytes
     exact_root = external_base / name / run_id
     exact_root.mkdir(parents=True, mode=0o700, exist_ok=True)
     external_packs = _copy_packs(receipt.packs, payload_root, exact_root)
@@ -398,6 +432,52 @@ def run_resume_cold_tree_campaign(
         return receipt
 
 
+def _record_file_provider_result(
+    receipt: MetabolismReceipt,
+    private_receipt: Path,
+    result: FileProviderResult,
+) -> None:
+    receipt.source_retired = result.complete
+    receipt.retirement_proof = (
+        "file-provider-progress:"
+        f"selected-files={result.selected_files};"
+        f"evicted-files={result.evicted_files};"
+        f"already-reclaimed-files={result.already_reclaimed_files};"
+        f"retained-non-evictable-files={result.retained_non_evictable_files};"
+        f"retained-non-evictable-bytes={result.retained_non_evictable_bytes};"
+        f"allocated-after={result.allocated_after};"
+        f"remaining-files={result.remaining_files};"
+        f"authorization-prepared={str(result.authorization_prepared).lower()}"
+    )
+    receipt.write(private_receipt)
+
+
+def _run_file_provider_action(
+    receipt: MetabolismReceipt,
+    root: Path,
+    captured: tuple[CapturedFile, ...],
+    private_receipt: Path,
+    *,
+    progress_path: Path | None,
+    prepare_authorization: Path | None,
+    authorization_principal: str | None,
+    authorization_receipt: Path | None,
+    authorization_signature: Path | None,
+) -> None:
+    _require_private_retirement_receipt(receipt, private_receipt)
+    result = process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        progress_path or progress_path_for(private_receipt),
+        prepare_authorization=prepare_authorization,
+        authorization_principal=authorization_principal,
+        authorization_receipt=authorization_receipt,
+        authorization_signature=authorization_signature,
+    )
+    _record_file_provider_result(receipt, private_receipt, result)
+
+
 def run_cloudkit_materialization_campaign(
     name: str,
     plan: RetentionPlan,
@@ -407,11 +487,17 @@ def run_cloudkit_materialization_campaign(
     *,
     evict: bool = False,
     run_id: str | None = None,
+    progress_path: Path | None = None,
+    prepare_authorization: Path | None = None,
+    authorization_principal: str | None = None,
+    authorization_receipt: Path | None = None,
+    authorization_signature: Path | None = None,
 ) -> MetabolismReceipt:
     """Preserve materialized iCloud files, then reclaim via File Provider."""
 
     owner = f"agent-state-metabolism-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-cloudkit-custody"):
+        records: list[dict[str, Any]] = []
         receipt = capture_cold_tree(
             name,
             plan,
@@ -419,60 +505,64 @@ def run_cloudkit_materialization_campaign(
             external_root,
             private_receipt,
             run_id=run_id,
+            record_consumer=lambda record: collect_file_entry(records, record),
         )
-        if evict:
-            _require_private_retirement_receipt(receipt, private_receipt)
-            result = evict_cloud_materializations(receipt, plan)
-            receipt.source_retired = True
-            receipt.retirement_proof = (
-                "file-provider-evicted:"
-                f"selected-files={result.selected_files};"
-                f"evicted-files={result.evicted_files};"
-                f"already-reclaimed-files={result.already_reclaimed_files};"
-                f"retained-non-evictable-files={result.retained_non_evictable_files};"
-                f"retained-non-evictable-bytes={result.retained_non_evictable_bytes};"
-                f"allocated-before={result.allocated_before};"
-                f"allocated-after={result.allocated_after}"
+        captured = reconstruct_captured_files(receipt, plan.root, records)
+        if evict or prepare_authorization is not None:
+            _run_file_provider_action(
+                receipt,
+                plan.root,
+                captured,
+                private_receipt,
+                progress_path=progress_path,
+                prepare_authorization=prepare_authorization,
+                authorization_principal=authorization_principal,
+                authorization_receipt=authorization_receipt,
+                authorization_signature=authorization_signature,
             )
-            receipt.write(private_receipt)
         return receipt
 
 
 def run_resume_cloudkit_materialization_campaign(
     name: str,
-    plan: RetentionPlan,
+    root: Path,
     vault_root: Path,
     external_root: Path,
     private_receipt: Path,
     *,
     run_id: str,
     evict: bool = False,
+    progress_path: Path | None = None,
+    prepare_authorization: Path | None = None,
+    authorization_principal: str | None = None,
+    authorization_receipt: Path | None = None,
+    authorization_signature: Path | None = None,
 ) -> MetabolismReceipt:
     """Resume preserved iCloud ciphertext, then optionally reclaim materializations."""
 
     owner = f"agent-state-metabolism-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-cloudkit-custody-resume"):
+        captured_files: list[CapturedFile] = []
         receipt = resume_cold_tree_capture(
             name,
-            plan,
+            None,
             vault_root,
             external_root,
             private_receipt,
             run_id=run_id,
+            reconstruct_root=root,
+            captured_files=captured_files,
         )
-        if evict:
-            _require_private_retirement_receipt(receipt, private_receipt)
-            result = evict_cloud_materializations(receipt, plan)
-            receipt.source_retired = True
-            receipt.retirement_proof = (
-                "file-provider-evicted:"
-                f"selected-files={result.selected_files};"
-                f"evicted-files={result.evicted_files};"
-                f"already-reclaimed-files={result.already_reclaimed_files};"
-                f"retained-non-evictable-files={result.retained_non_evictable_files};"
-                f"retained-non-evictable-bytes={result.retained_non_evictable_bytes};"
-                f"allocated-before={result.allocated_before};"
-                f"allocated-after={result.allocated_after}"
+        if evict or prepare_authorization is not None:
+            _run_file_provider_action(
+                receipt,
+                root,
+                tuple(captured_files),
+                private_receipt,
+                progress_path=progress_path,
+                prepare_authorization=prepare_authorization,
+                authorization_principal=authorization_principal,
+                authorization_receipt=authorization_receipt,
+                authorization_signature=authorization_signature,
             )
-            receipt.write(private_receipt)
         return receipt

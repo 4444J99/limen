@@ -4,7 +4,6 @@ import hashlib
 from pathlib import Path
 
 import pytest
-
 from limen.agent_state import crypto
 from limen.agent_state.atomize import canonical_bytes
 
@@ -30,9 +29,26 @@ def test_atom_packs_round_trip_and_stay_bounded(tmp_path: Path) -> None:
     assert len(packs) == 3
     assert all(chunk.bytes <= 64 for pack in packs for chunk in pack.chunks)
     assert crypto.verify_atom_packs(packs, tmp_path, KEY, logical_sha256=logical.hexdigest(), sample=True).passed
-    full = crypto.verify_atom_packs(packs, tmp_path, KEY, logical_sha256=logical.hexdigest())
+    records: list[dict[str, object]] = []
+    full = crypto.verify_atom_packs(
+        packs,
+        tmp_path,
+        KEY,
+        logical_sha256=logical.hexdigest(),
+        record_consumer=records.append,
+    )
     assert full.passed
     assert full.atoms_verified == 3
+    assert [record["value"] for record in records] == ["alpha" * 20, "beta" * 20, "gamma" * 20]
+    with pytest.raises(ValueError, match="incomplete atom stream"):
+        crypto.verify_atom_packs(
+            packs,
+            tmp_path,
+            KEY,
+            logical_sha256=logical.hexdigest(),
+            sample=True,
+            record_consumer=records.append,
+        )
 
 
 def test_corrupt_ciphertext_fails_restore(tmp_path: Path) -> None:

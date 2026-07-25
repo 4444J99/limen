@@ -149,6 +149,24 @@ def test_private_receipt_matches_json_normalized_custody(
     )
 
 
+def test_private_custody_match_ignores_only_mutable_retirement_progress(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    receipt = _resume(monkeypatch, tmp_path, plan, vault)
+    receipt.retirement_proof = "file-provider-progress:remaining-files=1"
+    receipt.write(tmp_path / "private-receipt.json")
+    receipt.retirement_proof = None
+
+    tree_pipeline._require_private_retirement_receipt(receipt, tmp_path / "private-receipt.json")
+    durable = json.loads((tmp_path / "private-receipt.json").read_text())
+    durable["git_commit"] = "f" * 40
+    (tmp_path / "private-receipt.json").write_text(json.dumps(durable))
+    with pytest.raises(PipelineError, match="does not match verified custody"):
+        tree_pipeline._require_private_retirement_receipt(receipt, tmp_path / "private-receipt.json")
+
+
 def test_resume_accepts_completed_exact_receipt_without_another_push(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -169,6 +187,50 @@ def test_resume_accepts_completed_exact_receipt_without_another_push(
     )
 
     assert resumed.as_dict() == first.as_dict()
+
+
+def test_cloud_resume_reconstructs_original_set_from_verified_atoms(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    _resume(monkeypatch, tmp_path, plan, vault)
+    monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+    monkeypatch.setattr(tree_pipeline, "require_mounted_external", lambda path: path.resolve())
+    monkeypatch.setattr(tree_pipeline, "hold_lease", lambda *_args, **_kwargs: nullcontext())
+    observed: list[str] = []
+
+    def process(_receipt, root, captured, *_args, **_kwargs):
+        assert root == source
+        observed.extend(entry.relative for entry in captured)
+        return tree_pipeline.FileProviderResult(
+            selected_files=1,
+            evicted_files=0,
+            already_reclaimed_files=0,
+            retained_non_evictable_files=0,
+            retained_non_evictable_bytes=0,
+            allocated_after=plan.cold_bytes,
+            remaining_files=1,
+            complete=False,
+            authorization_prepared=True,
+        )
+
+    monkeypatch.setattr(tree_pipeline, "process_file_provider_items", process)
+    resumed = tree_pipeline.run_resume_cloudkit_materialization_campaign(
+        "icloud-drive",
+        source,
+        vault,
+        tmp_path / "external",
+        tmp_path / "private-receipt.json",
+        run_id="run",
+        prepare_authorization=tmp_path / "authorization.json",
+        authorization_principal="test-authorizer",
+    )
+
+    assert observed == ["materialized.mov"]
+    assert not resumed.source_retired
+    assert "remaining-files=1" in str(resumed.retirement_proof)
 
 
 def test_resume_rejects_corrupt_ciphertext_before_remote_push(
@@ -207,7 +269,7 @@ def test_cloud_eviction_requires_matching_private_receipt(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    source, vault, _payload, plan = _interrupted_tree(tmp_path)
     receipt = _resume(monkeypatch, tmp_path, plan, vault)
     (tmp_path / "private-receipt.json").unlink()
     evicted = False
@@ -219,12 +281,12 @@ def test_cloud_eviction_requires_matching_private_receipt(
 
     monkeypatch.setattr(tree_pipeline, "hold_lease", lambda *_args, **_kwargs: nullcontext())
     monkeypatch.setattr(tree_pipeline, "resume_cold_tree_capture", lambda *_args, **_kwargs: receipt)
-    monkeypatch.setattr(tree_pipeline, "evict_cloud_materializations", unexpected_eviction)
+    monkeypatch.setattr(tree_pipeline, "process_file_provider_items", unexpected_eviction)
 
     with pytest.raises(PipelineError, match="private retirement receipt"):
         tree_pipeline.run_resume_cloudkit_materialization_campaign(
             "icloud-drive",
-            plan,
+            source,
             vault,
             tmp_path / "external",
             tmp_path / "private-receipt.json",

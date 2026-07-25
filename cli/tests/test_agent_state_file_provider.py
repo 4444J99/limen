@@ -1,0 +1,422 @@
+from __future__ import annotations
+
+import base64
+import hashlib
+import os
+from pathlib import Path
+from typing import Any
+
+import pytest
+from limen.agent_state import file_provider
+from limen.agent_state.atomize import canonical_bytes
+from limen.agent_state.models import CipherChunk, MetabolismReceipt, RestoreProof
+from limen.agent_state.pipeline import PipelineError
+from limen.agent_state.tree import RetentionPlan, atomize_file_tree
+
+
+def _captured(tmp_path: Path, names: tuple[str, ...]) -> tuple[MetabolismReceipt, tuple, Path]:
+    root = tmp_path / "source"
+    root.mkdir()
+    for index, name in enumerate(names):
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(f"private-{index:04d}".encode())
+    relatives = tuple(sorted(names))
+    plan = RetentionPlan(
+        root=root,
+        cold_paths=relatives,
+        cold_bytes=sum((root / name).stat().st_size for name in relatives),
+        hot_paths=(),
+        hot_bytes=0,
+        cutoff_epoch=0.0,
+        maximum_hot_bytes=0,
+    )
+    records: list[dict[str, Any]] = []
+
+    def sink(envelope: dict[str, Any], _line: bytes) -> None:
+        file_provider.collect_file_entry(records, envelope["record"])
+
+    result = atomize_file_tree(plan, sink, chunk_size=128)
+    receipt = MetabolismReceipt(
+        schema="limen.agent_state_metabolism.v1",
+        run_id="run-0001",
+        source=result.source,
+        atom_count=result.atom_count,
+        logical_sha256=result.logical_sha256,
+        git_remote="organvm/arca",
+        git_commit="a" * 40,
+        git_receipt_commit="b" * 40,
+        external_chunks=[CipherChunk(path="atoms.enc", bytes=1, sha256="c" * 64)],
+        restorations=[
+            RestoreProof(scope="git-sample", passed=True),
+            RestoreProof(scope="git-full-manifest", passed=True),
+            RestoreProof(scope="external-full", passed=True),
+        ],
+    )
+    captured = file_provider.reconstruct_captured_files(receipt, root, records)
+    return receipt, captured, root
+
+
+def _authorization(manifest: dict[str, Any]) -> bytes:
+    value = {
+        "schema": file_provider.AUTHORIZATION_SCHEMA,
+        "action": file_provider.AUTHORIZATION_ACTION,
+        "attempt_id": manifest["attempt_id"],
+        "authorized_by": manifest["authorization_principal"],
+        "issued_at": "2026-07-25T05:00:00Z",
+        "expires_at": "2026-07-25T05:15:00Z",
+        "manifest_hash": file_provider._manifest_hash(manifest),
+        "item_count": len(manifest["items"]),
+        "item_hashes": [item["item_hash"] for item in manifest["items"]],
+    }
+    return canonical_bytes(value) + b"\n"
+
+
+def _success_receipt(manifest: dict[str, Any], statuses: list[str]) -> bytes:
+    authorization = base64.b64decode(manifest["authorization"]["receipt_b64"])
+    items = [
+        {
+            "item_hash": request["item_hash"],
+            "status": status,
+            "provider_item_hash": "d" * 64,
+            "domain_hash": "e" * 64,
+        }
+        for request, status in zip(manifest["items"], statuses)
+    ]
+    counts = {status: sum(item["status"] == status for item in items) for status in file_provider.ITEM_STATUSES}
+    value = {
+        "schema": file_provider.RECEIPT_SCHEMA,
+        "attempt_id": manifest["attempt_id"],
+        "manifest_hash": file_provider._manifest_hash(manifest),
+        "authorization_sha256": hashlib.sha256(authorization).hexdigest(),
+        "authorized_by": manifest["authorization_principal"],
+        "started_at": "2026-07-25T05:01:00Z",
+        "completed_at": "2026-07-25T05:02:00Z",
+        "status": "succeeded",
+        "item_count": len(items),
+        "result_counts": counts,
+        "items": items,
+    }
+    return canonical_bytes(value) + b"\n"
+
+
+def _plan(
+    monkeypatch: pytest.MonkeyPatch,
+    receipt: MetabolismReceipt,
+    captured: tuple,
+    root: Path,
+    progress: Path,
+    authorization: Path,
+    probe,
+) -> dict[str, Any]:
+    planned: dict[str, Any] = {}
+
+    def run(_executable: Path, manifest: dict[str, Any], *, plan: bool):
+        assert plan
+        planned.update(manifest)
+        return 0, _authorization(manifest)
+
+    monkeypatch.setattr(file_provider, "_discover_adapter", lambda _name: Path("/bin/true"))
+    monkeypatch.setattr(file_provider, "_run_adapter", run)
+    result = file_provider.process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        progress,
+        prepare_authorization=authorization,
+        authorization_principal="test-authorizer",
+        materialized_probe=probe,
+    )
+    assert result.authorization_prepared
+    return planned
+
+
+def test_signed_batch_is_private_resumable_and_accounts_for_metadata(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, (".DS_Store", "one.txt", "two.mov"))
+    progress = tmp_path / "progress.json"
+    authorization = tmp_path / "authorization.json"
+    signature = tmp_path / "authorization.json.sig"
+    dataless: set[str] = set()
+
+    def probe(path: Path) -> bool:
+        return hashlib.sha256(path.absolute().as_uri().encode()).hexdigest() not in dataless
+
+    planned = _plan(monkeypatch, receipt, captured, root, progress, authorization, probe)
+    assert len(planned["items"]) == 2
+    assert all(item["url"].startswith("file://") for item in planned["items"])
+    assert str(root).encode() not in authorization.read_bytes()
+    assert str(root).encode() not in progress.read_bytes()
+    signature.write_bytes(b"fake-openssh-signature")
+    signature.chmod(0o600)
+
+    def apply(_executable: Path, manifest: dict[str, Any], *, plan: bool):
+        assert not plan
+        dataless.update(item["item_hash"] for item in manifest["items"])
+        return 0, _success_receipt(manifest, ["evicted"] * len(manifest["items"]))
+
+    monkeypatch.setattr(file_provider, "_run_adapter", apply)
+    result = file_provider.process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        progress,
+        authorization_receipt=authorization,
+        authorization_signature=signature,
+        materialized_probe=probe,
+    )
+
+    assert result.complete
+    assert result.evicted_files == 2
+    assert result.retained_non_evictable_files == 1
+    assert result.remaining_files == 0
+    assert str(root).encode() not in progress.read_bytes()
+
+
+def test_missing_adapter_fails_closed_before_writing_progress(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("one.txt",))
+    progress = tmp_path / "progress.json"
+    authorization = tmp_path / "authorization.json"
+    monkeypatch.setattr(file_provider.shutil, "which", lambda _name: None)
+
+    with pytest.raises(PipelineError, match="absent from PATH"):
+        file_provider.process_file_provider_items(
+            receipt,
+            root,
+            captured,
+            progress,
+            prepare_authorization=authorization,
+            authorization_principal="test-authorizer",
+            materialized_probe=lambda _path: True,
+        )
+
+    assert not progress.exists()
+    assert not authorization.exists()
+
+
+def test_adapter_process_arguments_never_contain_item_urls(monkeypatch: pytest.MonkeyPatch) -> None:
+    url = "file:///private/disposable-item.txt"
+    manifest = {
+        "schema": file_provider.MANIFEST_SCHEMA,
+        "attempt_id": "attempt-1",
+        "timeout_seconds": file_provider.BATCH_TIMEOUT_SECONDS,
+        "per_item_timeout_seconds": file_provider.ITEM_TIMEOUT_SECONDS,
+        "authorization_principal": "test-authorizer",
+        "items": [{"item_hash": hashlib.sha256(url.encode()).hexdigest(), "url": url}],
+    }
+    observed: dict[str, Any] = {}
+
+    class Result:
+        returncode = 0
+        stdout = b"{}\n"
+
+    def run(arguments, **kwargs):
+        observed["arguments"] = arguments
+        observed["input"] = kwargs["input"]
+        return Result()
+
+    monkeypatch.setattr(file_provider.subprocess, "run", run)
+    file_provider._run_adapter(Path("/bin/true"), manifest, plan=True)
+
+    assert url not in " ".join(observed["arguments"])
+    assert url.encode() in observed["input"]
+
+
+def test_dataless_placeholder_is_verified_by_adapter_as_already_reclaimed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("placeholder.txt",))
+    progress = tmp_path / "progress.json"
+    authorization = tmp_path / "authorization.json"
+    signature = tmp_path / "authorization.json.sig"
+    planned = _plan(
+        monkeypatch,
+        receipt,
+        captured,
+        root,
+        progress,
+        authorization,
+        lambda _path: False,
+    )
+    assert len(planned["items"]) == 1
+    signature.write_bytes(b"fake-openssh-signature")
+    signature.chmod(0o600)
+
+    def apply(_executable: Path, manifest: dict[str, Any], *, plan: bool):
+        assert not plan
+        return 0, _success_receipt(manifest, ["already_dataless"])
+
+    monkeypatch.setattr(file_provider, "_run_adapter", apply)
+    result = file_provider.process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        progress,
+        authorization_receipt=authorization,
+        authorization_signature=signature,
+        materialized_probe=lambda _path: False,
+    )
+
+    assert result.complete
+    assert result.already_reclaimed_files == 1
+
+
+def test_only_retained_metadata_reaches_terminal_state_without_adapter(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, (".DS_Store",))
+    monkeypatch.setattr(
+        file_provider,
+        "_discover_adapter",
+        lambda _name: (_ for _ in ()).throw(AssertionError("adapter must not be discovered")),
+    )
+
+    result = file_provider.process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        tmp_path / "progress.json",
+        materialized_probe=lambda _path: True,
+    )
+
+    assert result.complete
+    assert result.selected_files == 0
+    assert result.retained_non_evictable_files == 1
+
+
+@pytest.mark.parametrize("mutation", ["missing", "content"])
+def test_missing_or_mutated_source_fails_before_adapter(
+    mutation: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("one.txt",))
+    source = root / "one.txt"
+    if mutation == "missing":
+        source.unlink()
+    else:
+        before = source.stat()
+        source.write_bytes(b"changed-0000")
+        os.utime(source, ns=(before.st_atime_ns, before.st_mtime_ns))
+    called = False
+
+    def unexpected(*_args, **_kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("adapter must not run")
+
+    monkeypatch.setattr(file_provider, "_discover_adapter", lambda _name: Path("/bin/true"))
+    monkeypatch.setattr(file_provider, "_run_adapter", unexpected)
+    match = "logically missing" if mutation == "missing" else "content mutated"
+    with pytest.raises(PipelineError, match=match):
+        file_provider.process_file_provider_items(
+            receipt,
+            root,
+            captured,
+            tmp_path / "progress.json",
+            prepare_authorization=tmp_path / "authorization.json",
+            authorization_principal="test-authorizer",
+            materialized_probe=lambda _path: True,
+        )
+    assert not called
+
+
+def test_partial_receipt_persists_success_and_next_plan_skips_it(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("one.txt", "three.txt", "two.txt"))
+    progress = tmp_path / "progress.json"
+    authorization = tmp_path / "authorization.json"
+    signature = tmp_path / "authorization.json.sig"
+    dataless: set[str] = set()
+
+    def probe(path: Path) -> bool:
+        return hashlib.sha256(path.absolute().as_uri().encode()).hexdigest() not in dataless
+
+    first_plan = _plan(monkeypatch, receipt, captured, root, progress, authorization, probe)
+    first_hash = first_plan["items"][0]["item_hash"]
+    signature.write_bytes(b"fake-openssh-signature")
+    signature.chmod(0o600)
+
+    def partial(_executable: Path, manifest: dict[str, Any], *, plan: bool):
+        assert not plan
+        dataless.add(manifest["items"][0]["item_hash"])
+        items = [
+            {
+                "item_hash": manifest["items"][0]["item_hash"],
+                "status": "evicted",
+                "provider_item_hash": "d" * 64,
+                "domain_hash": "e" * 64,
+            },
+            {
+                "item_hash": manifest["items"][1]["item_hash"],
+                "status": "retained",
+                "provider_item_hash": "d" * 64,
+                "domain_hash": "e" * 64,
+                "error": {"category": "nonevictable", "domain": "NSFileProviderErrorDomain", "code": -2008},
+            },
+            {
+                "item_hash": manifest["items"][2]["item_hash"],
+                "status": "failed",
+                "error": {"category": "not_attempted_after_failure", "domain": "domus", "code": 1},
+            },
+        ]
+        authorization_bytes = base64.b64decode(manifest["authorization"]["receipt_b64"])
+        counts = {status: sum(item["status"] == status for item in items) for status in file_provider.ITEM_STATUSES}
+        value = {
+            "schema": file_provider.RECEIPT_SCHEMA,
+            "attempt_id": manifest["attempt_id"],
+            "manifest_hash": file_provider._manifest_hash(manifest),
+            "authorization_sha256": hashlib.sha256(authorization_bytes).hexdigest(),
+            "authorized_by": manifest["authorization_principal"],
+            "started_at": "2026-07-25T05:01:00Z",
+            "completed_at": "2026-07-25T05:02:00Z",
+            "status": "partial_failure",
+            "item_count": 3,
+            "result_counts": counts,
+            "items": items,
+        }
+        return 2, canonical_bytes(value) + b"\n"
+
+    monkeypatch.setattr(file_provider, "_run_adapter", partial)
+    with pytest.raises(PipelineError, match="partial or failed"):
+        file_provider.process_file_provider_items(
+            receipt,
+            root,
+            captured,
+            progress,
+            authorization_receipt=authorization,
+            authorization_signature=signature,
+            materialized_probe=probe,
+        )
+
+    second_authorization = tmp_path / "authorization-2.json"
+    second_plan = _plan(monkeypatch, receipt, captured, root, progress, second_authorization, probe)
+    assert first_hash not in [item["item_hash"] for item in second_plan["items"]]
+
+
+def test_authorization_plan_is_capped_at_one_thousand_items(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    names = tuple(f"item-{index:04d}.txt" for index in range(1_001))
+    receipt, captured, root = _captured(tmp_path, names)
+    planned = _plan(
+        monkeypatch,
+        receipt,
+        captured,
+        root,
+        tmp_path / "progress.json",
+        tmp_path / "authorization.json",
+        lambda _path: True,
+    )
+
+    assert len(planned["items"]) == file_provider.MAX_BATCH_ITEMS
