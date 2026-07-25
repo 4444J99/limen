@@ -154109,7 +154109,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/280
   updated: 2026-07-25T17:45:37.049Z
 - id: LIMEN-381
-  title: 'feat: Forfeit disposition policy engine & refund-only kill switch (TKT-P0-011)'
+  title: "feat: Forfeit disposition policy engine & refund-only kill switch (TKT-P0-011)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -154123,8 +154123,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/279
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:56:12.745Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/279"
+    conduct_event_id: conduct:run-695e3d963b5e00f8b225a8c38a959468:230:compatibility
+    conduct_run_id: run-695e3d963b5e00f8b225a8c38a959468
+    conduct_lease_id: lease-230-695e3d963b5e00f8
+    conduct_generation: 230
+  predicate: test "$(gh issue view 279 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/279
+  updated: 2026-07-25T17:56:12.745Z
 - id: LIMEN-382
   title: 'feat: Geofence fail-closed hardening & policy registry (TKT-P0-004)'
   repo: organvm/peer-audited--behavioral-blockchain
