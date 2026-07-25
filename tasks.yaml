@@ -149297,7 +149297,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/476
   updated: 2026-07-25T17:47:49.690Z
 - id: LIMEN-194
-  title: "TKT-P1-007: Native \u2014 HealthKit/Google Health Connect integration"
+  title: "TKT-P1-007: Native — HealthKit/Google Health Connect integration"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -149311,8 +149311,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/475
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:46.528Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/475"
+    conduct_event_id: conduct:run-c7ea1d1c3ed4e7b4cbe538e0a153d84b:222:compatibility
+    conduct_run_id: run-c7ea1d1c3ed4e7b4cbe538e0a153d84b
+    conduct_lease_id: lease-222-c7ea1d1c3ed4e7b4
+    conduct_generation: 222
+  predicate: test "$(gh issue view 475 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/475
+  updated: 2026-07-25T17:55:46.528Z
 - id: LIMEN-195
   title: "TKT-P1-009: Tests \u2014 exclusion enforcement + re-entry validation"
   repo: organvm/peer-audited--behavioral-blockchain
