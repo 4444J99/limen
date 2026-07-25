@@ -155136,7 +155136,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-396
-  title: 'docs: create investor slide deck (10-15 slides)'
+  title: "docs: create investor slide deck (10-15 slides)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -155151,8 +155151,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/253
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:45.135Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/253"
+    conduct_event_id: conduct:run-c4cb7ee2ef1e4dd2689282eaaa9c249e:276:compatibility
+    conduct_run_id: run-c4cb7ee2ef1e4dd2689282eaaa9c249e
+    conduct_lease_id: lease-276-c4cb7ee2ef1e4dd2
+    conduct_generation: 276
+  predicate: test "$(gh issue view 253 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/253
+  updated: 2026-07-25T17:58:45.135Z
 - id: LIMEN-397
   title: "docs: cross-reference gaps with doc-ingest-register"
   repo: organvm/peer-audited--behavioral-blockchain
