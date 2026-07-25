@@ -153414,7 +153414,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/271
   updated: 2026-07-25T17:46:58.269Z
 - id: LIMEN-387
-  title: 'business: SEO keyword research for No-Contact recovery niche'
+  title: "business: SEO keyword research for No-Contact recovery niche"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -153428,8 +153428,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/270
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:30.151Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/270"
+    conduct_event_id: conduct:run-2548c125652c7228261ff09f2e183c17:164:compatibility
+    conduct_run_id: run-2548c125652c7228261ff09f2e183c17
+    conduct_lease_id: lease-164-2548c125652c7228
+    conduct_generation: 164
+  predicate: test "$(gh issue view 270 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/270
+  updated: 2026-07-25T17:52:30.151Z
 - id: LIMEN-388
   title: "business: build unit economics model ($39 consumer contract)"
   repo: organvm/peer-audited--behavioral-blockchain
