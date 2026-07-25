@@ -151736,7 +151736,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/318
   updated: 2026-07-25T17:46:05.165Z
 - id: LIMEN-344
-  title: "State jurisdiction matrix sign-off \u2014 confirm legal US states"
+  title: State jurisdiction matrix sign-off — confirm legal US states
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: codex
@@ -151752,8 +151752,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/317
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:15.740Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/317"
+    conduct_event_id: conduct:run-1641e70f794f4c06dad98f8d0d71e6f6:106:compatibility
+    conduct_run_id: run-1641e70f794f4c06dad98f8d0d71e6f6
+    conduct_lease_id: lease-106-1641e70f794f4c06
+    conduct_generation: 106
+  predicate: test "$(gh issue view 317 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/317
+  updated: 2026-07-25T17:49:15.740Z
 - id: LIMEN-345
   title: "Custody model sign-off \u2014 lawyer reviews FBO escrow structure"
   repo: organvm/peer-audited--behavioral-blockchain
