@@ -149491,7 +149491,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-247
-  title: 'Thesis: Directory structure + chapter scaffolding'
+  title: "Thesis: Directory structure + chapter scaffolding"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: gemini
@@ -149504,8 +149504,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/415
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:55.083Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/415"
+    conduct_event_id: conduct:run-da86060c3b45cc72e8752f70d2666397:64:compatibility
+    conduct_run_id: run-da86060c3b45cc72e8752f70d2666397
+    conduct_lease_id: lease-64-da86060c3b45cc72
+    conduct_generation: 64
+  predicate: test "$(gh issue view 415 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/415
+  updated: 2026-07-25T17:46:55.083Z
 - id: LIMEN-248
   title: "Guardrails: Tests \u2014 detection accuracy + false positive rate"
   repo: organvm/peer-audited--behavioral-blockchain
