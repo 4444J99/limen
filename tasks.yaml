@@ -150719,7 +150719,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/404
   updated: 2026-07-25T17:48:22.588Z
 - id: LIMEN-259
-  title: "Geofence: Admin UI \u2014 state matrix management screen"
+  title: "Geofence: Admin UI — state matrix management screen"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -150732,8 +150732,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/403
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:22.537Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/403"
+    conduct_event_id: conduct:run-7e8a2037672de36c3cd8d75254de1409:198:compatibility
+    conduct_run_id: run-7e8a2037672de36c3cd8d75254de1409
+    conduct_lease_id: lease-198-7e8a2037672de36c
+    conduct_generation: 198
+  predicate: test "$(gh issue view 403 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/403
+  updated: 2026-07-25T17:54:22.537Z
 - id: LIMEN-260
   title: "Geofence: Middleware \u2014 fail-closed location enforcement"
   repo: organvm/peer-audited--behavioral-blockchain
