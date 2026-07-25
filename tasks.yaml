@@ -152205,8 +152205,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/368
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:42.165Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/368"
+    conduct_event_id: conduct:run-4a1b15ef441cf43166b5a412d78c7078:275:compatibility
+    conduct_run_id: run-4a1b15ef441cf43166b5a412d78c7078
+    conduct_lease_id: lease-275-4a1b15ef441cf431
+    conduct_generation: 275
+  predicate: test "$(gh issue view 368 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/368
+  updated: 2026-07-25T17:58:42.165Z
 - id: LIMEN-295
   title: Engage legal counsel (retainer)
   repo: organvm/peer-audited--behavioral-blockchain
