@@ -151604,7 +151604,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-380
-  title: 'feat: Self-exclusion & responsible-use runtime controls (TKT-P1-009)'
+  title: "feat: Self-exclusion & responsible-use runtime controls (TKT-P1-009)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -151618,8 +151618,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/280
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:45:37.049Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/280"
+    conduct_event_id: conduct:run-e53581a84e6cbbb033d3662ec1bdca45:41:compatibility
+    conduct_run_id: run-e53581a84e6cbbb033d3662ec1bdca45
+    conduct_lease_id: lease-41-e53581a84e6cbbb0
+    conduct_generation: 41
+  predicate: test "$(gh issue view 280 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/280
+  updated: 2026-07-25T17:45:37.049Z
 - id: LIMEN-381
   title: 'feat: Forfeit disposition policy engine & refund-only kill switch (TKT-P0-011)'
   repo: organvm/peer-audited--behavioral-blockchain
