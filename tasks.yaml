@@ -152120,7 +152120,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-370
-  title: "Finance & Revenue Department \u2014 Task Tracker"
+  title: Finance & Revenue Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -152135,8 +152135,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/290
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:33.192Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/290"
+    conduct_event_id: conduct:run-da19dbe40af359076f88b41ae918fdf1:93:compatibility
+    conduct_run_id: run-da19dbe40af359076f88b41ae918fdf1
+    conduct_lease_id: lease-93-da19dbe40af35907
+    conduct_generation: 93
+  predicate: test "$(gh issue view 290 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/290
+  updated: 2026-07-25T17:48:33.192Z
 - id: LIMEN-371
   title: 'feat: Collusion slashing & honey-trap enforcement (TKT-P1-015)'
   repo: organvm/peer-audited--behavioral-blockchain
