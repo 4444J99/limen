@@ -119,6 +119,46 @@ def _load_corpus(corpus_dir: Path) -> tuple[list[dict], dict[str, list[dict]], l
     return threads, by_thread, actions
 
 
+# Render-time redaction: extracts are verbatim transcripts, and past sessions pasted
+# real credentials into chats. The private store's pre-commit secret scan (global hook,
+# ~/.config/git/hooks/pre-commit) blocks token-shaped values — so the renderer masks
+# them at the base instead of anyone hand-editing generated files. Patterns mirror the
+# hook's, and only the credential VALUE is replaced (marked in place, so the semantic
+# pass still sees that a token existed); the raw text remains in the CCE source corpus.
+# Redaction is not reduction: no thinking is dropped, only secret material.
+_REDACT_PATTERNS = [
+    ("aws_access_key_id", re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
+    ("aws_secret_access_key", re.compile(r"(?i)(aws_secret_access_key\s*[:=]\s*['\"]?)[A-Za-z0-9/+=]{40}(['\"]?)")),
+    ("github_token", re.compile(r"\bgh[opusr]_[A-Za-z0-9]{36,}\b")),
+    ("google_api_key", re.compile(r"\bAIza[0-9A-Za-z\-_]{35}\b")),
+    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")),
+    ("private_key", re.compile(r"-----BEGIN (?:RSA|EC|OPENSSH|PGP|PRIVATE) KEY-----")),
+    ("jwt", re.compile(r"\beyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b")),
+]
+_ASSIGNMENT_RE = re.compile(
+    r"(?i)\b((?:api[_-]?key|secret|token|password|passphrase|auth[_-]?token)\b\s*[:=]\s*)([\"']?)([^\"'\s]+)\2"
+)
+_SKIP_VALUE_RE = re.compile(r"(?i)\b(changeme|example|placeholder|your[_-]?(key|token|secret|password)|todo)\b")
+
+
+# The marker deliberately contains the word "placeholder": the hook's SKIP_VALUE_RE
+# whitelists it, so a redacted assignment is never re-flagged as a fresh secret.
+def _redact(text: str) -> str:
+    for name, rx in _REDACT_PATTERNS:
+        if rx.groups:
+            text = rx.sub(rf"\g<1>[REDACTED-placeholder:{name}]\g<2>", text)
+        else:
+            text = rx.sub(f"[REDACTED-placeholder:{name}]", text)
+
+    def _mask_assignment(m: re.Match) -> str:
+        value = m.group(3)
+        if value.startswith(("$", "${", "op://", "[REDACTED")) or _SKIP_VALUE_RE.search(value):
+            return m.group(0)
+        return f"{m.group(1)}{m.group(2)}[REDACTED-placeholder:assignment]{m.group(2)}"
+
+    return _ASSIGNMENT_RE.sub(_mask_assignment, text)
+
+
 # Stream assignment is a SEMANTIC judgment, deliberately absent here. Two mechanical
 # routes were tried and measured before deciding this: the shipped echo-clusterer
 # (IDF + 2-core) fuses 397 densely-vocabularied threads into one blob at every floor,
@@ -163,7 +203,9 @@ def _render_extract(thread: dict, pairs: list[dict], stream: str, provider: str)
         "this section and flips `semantic_atoms` to `done` — nothing above this line changes._"
     )
     lines.append("")
-    return "\n".join(lines)
+    # redact the WHOLE document — frontmatter keywords/themes/entities carry pasted
+    # tokens just as body text does (a bare ghp_ token was found in a keywords list)
+    return _redact("\n".join(lines))
 
 
 def _read_frontmatter(path: Path) -> dict:
@@ -281,13 +323,14 @@ def harvest_corpus(cid: str, provider: str, out_root: Path) -> dict:
         encoding="utf-8",
     )
 
+    assigned = sorted({r.get("stream") for r in index_rows if r.get("stream") not in (None, "pending")})
     (out / "index.yaml").write_text(
         yaml.safe_dump(
             {
                 "corpus": cid,
                 "provider": provider,
                 "threads": len(threads),
-                "streams": "pending — assigned by the semantic pass",
+                "streams": assigned or "pending — assigned by the semantic pass",
                 "candidate_actions": len(candidate),
                 "extracts": index_rows,
             },
