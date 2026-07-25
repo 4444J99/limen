@@ -149821,7 +149821,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/472
   updated: 2026-07-25T18:01:19.561Z
 - id: LIMEN-198
-  title: "TKT-P1-019: Release gate \u2014 automated check before contest features"
+  title: "TKT-P1-019: Release gate — automated check before contest features"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -149833,8 +149833,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/471
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:30.101Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/471"
+    conduct_event_id: conduct:run-4e0b773990da4faa8a13842501e76444:324:compatibility
+    conduct_run_id: run-4e0b773990da4faa8a13842501e76444
+    conduct_lease_id: lease-324-4e0b773990da4faa
+    conduct_generation: 324
+  predicate: test "$(gh issue view 471 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/471
+  updated: 2026-07-25T18:01:30.101Z
 - id: LIMEN-199
   title: "TKT-P1-019: Legal review — counsel sign-off on classification"
   repo: organvm/peer-audited--behavioral-blockchain
