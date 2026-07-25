@@ -153645,7 +153645,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-394
-  title: 'docs: compile risk matrix + resource plan'
+  title: "docs: compile risk matrix + resource plan"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: opencode
@@ -153660,8 +153660,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/255
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:50.984Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/255"
+    conduct_event_id: conduct:run-874bd45b8b609c60dbbad19379ead9c5:170:compatibility
+    conduct_run_id: run-874bd45b8b609c60dbbad19379ead9c5
+    conduct_lease_id: lease-170-874bd45b8b609c60
+    conduct_generation: 170
+  predicate: test "$(gh issue view 255 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/255
+  updated: 2026-07-25T17:52:50.984Z
 - id: LIMEN-395
   title: 'docs: write executive summary PDF (2-3 pages)'
   repo: organvm/peer-audited--behavioral-blockchain
