@@ -154423,7 +154423,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/292
   updated: 2026-07-25T17:55:36.692Z
 - id: LIMEN-369
-  title: "Customer Success Department \u2014 Task Tracker"
+  title: Customer Success Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -154437,8 +154437,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/291
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:02.036Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/291"
+    conduct_event_id: conduct:run-8f2e051c2d229300598a828660b6f6d6:281:compatibility
+    conduct_run_id: run-8f2e051c2d229300598a828660b6f6d6
+    conduct_lease_id: lease-281-8f2e051c2d229300
+    conduct_generation: 281
+  predicate: test "$(gh issue view 291 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/291
+  updated: 2026-07-25T17:59:02.036Z
 - id: LIMEN-370
   title: Finance & Revenue Department — Task Tracker
   repo: organvm/peer-audited--behavioral-blockchain
