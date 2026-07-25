@@ -153003,7 +153003,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/355
   updated: 2026-07-25T18:01:03.027Z
 - id: LIMEN-308
-  title: "Support channel setup \u2014 email + Discord for beta"
+  title: Support channel setup — email + Discord for beta
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -153017,8 +153017,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/354
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:06.150Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/354"
+    conduct_event_id: conduct:run-0bf722a389ef09c383158ec1a9203450:317:compatibility
+    conduct_run_id: run-0bf722a389ef09c383158ec1a9203450
+    conduct_lease_id: lease-317-0bf722a389ef09c3
+    conduct_generation: 317
+  predicate: test "$(gh issue view 354 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/354
+  updated: 2026-07-25T18:01:06.150Z
 - id: LIMEN-309
   title: Revenue reporting — MRR, churn, ARPU monthly report
   repo: organvm/peer-audited--behavioral-blockchain
