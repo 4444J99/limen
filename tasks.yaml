@@ -151456,7 +151456,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/406
   updated: 2026-07-25T17:56:23.846Z
 - id: LIMEN-257
-  title: "Geofence: Tests \u2014 all protected routes + regression suite"
+  title: "Geofence: Tests — all protected routes + regression suite"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -151469,8 +151469,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/405
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:38.065Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/405"
+    conduct_event_id: conduct:run-07fce77ea5986b2f86ea25f7032dfc19:309:compatibility
+    conduct_run_id: run-07fce77ea5986b2f86ea25f7032dfc19
+    conduct_lease_id: lease-309-07fce77ea5986b2f
+    conduct_generation: 309
+  predicate: test "$(gh issue view 405 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/405
+  updated: 2026-07-25T18:00:38.065Z
 - id: LIMEN-258
   title: "Geofence: Compliance logging — decision audit trail"
   repo: organvm/peer-audited--behavioral-blockchain
