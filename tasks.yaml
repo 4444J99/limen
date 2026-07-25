@@ -150170,7 +150170,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/412
   updated: 2026-07-25T17:47:55.536Z
 - id: LIMEN-251
-  title: "Guardrails: Crisis detection \u2014 keyword + pattern matching engine"
+  title: "Guardrails: Crisis detection — keyword + pattern matching engine"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -150183,8 +150183,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/411
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:58.282Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/411"
+    conduct_event_id: conduct:run-b0e20bc10719e23aa03a8bb994071cce:137:compatibility
+    conduct_run_id: run-b0e20bc10719e23aa03a8bb994071cce
+    conduct_lease_id: lease-137-b0e20bc10719e23a
+    conduct_generation: 137
+  predicate: test "$(gh issue view 411 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/411
+  updated: 2026-07-25T17:50:58.282Z
 - id: LIMEN-252
   title: "Forfeit: Legal — counsel sign-off on jurisdiction mode mapping"
   repo: organvm/peer-audited--behavioral-blockchain
