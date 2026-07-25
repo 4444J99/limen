@@ -149176,7 +149176,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-217
-  title: "TKT-P1-012: UI \u2014 multiplier indicator + schedule display"
+  title: "TKT-P1-012: UI — multiplier indicator + schedule display"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -149188,8 +149188,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/452
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:48:59.701Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/452"
+    conduct_event_id: conduct:run-8bac7ec8b306238514029bc250b69180:101:compatibility
+    conduct_run_id: run-8bac7ec8b306238514029bc250b69180
+    conduct_lease_id: lease-101-8bac7ec8b3062385
+    conduct_generation: 101
+  predicate: test "$(gh issue view 452 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/452
+  updated: 2026-07-25T17:48:59.701Z
 - id: LIMEN-218
   title: "TKT-P1-012: Schema + API \u2014 risk multiplier rules + schedule config"
   repo: organvm/peer-audited--behavioral-blockchain
