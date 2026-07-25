@@ -152462,7 +152462,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/325
   updated: 2026-07-25T17:47:16.192Z
 - id: LIMEN-337
-  title: "Enterprise DPA template \u2014 Data Processing Agreement"
+  title: Enterprise DPA template — Data Processing Agreement
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: codex
@@ -152477,8 +152477,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/324
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:49.495Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/324"
+    conduct_event_id: conduct:run-3553659abf38b0dffce0622744638ec0:188:compatibility
+    conduct_run_id: run-3553659abf38b0dffce0622744638ec0
+    conduct_lease_id: lease-188-3553659abf38b0df
+    conduct_generation: 188
+  predicate: test "$(gh issue view 324 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/324
+  updated: 2026-07-25T17:53:49.495Z
 - id: LIMEN-338
   title: SOC 2 Type I audit initiation
   repo: organvm/peer-audited--behavioral-blockchain
