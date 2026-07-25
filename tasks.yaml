@@ -151040,7 +151040,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-333
-  title: 'A/B test plan: onboarding variants'
+  title: "A/B test plan: onboarding variants"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -151053,8 +151053,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/329
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:01.461Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/329"
+    conduct_event_id: conduct:run-a52f04a83af82621b154d08fc59f5733:66:compatibility
+    conduct_run_id: run-a52f04a83af82621b154d08fc59f5733
+    conduct_lease_id: lease-66-a52f04a83af82621
+    conduct_generation: 66
+  predicate: test "$(gh issue view 329 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/329
+  updated: 2026-07-25T17:47:01.461Z
 - id: LIMEN-334
   title: "User interview protocol \u2014 structured guide for 10 beta users"
   repo: organvm/peer-audited--behavioral-blockchain
