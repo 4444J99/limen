@@ -147151,8 +147151,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/663
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:59.811Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/663"
+    conduct_event_id: conduct:run-1553fd25ac84f5dbefaa4751280d4bb8:315:compatibility
+    conduct_run_id: run-1553fd25ac84f5dbefaa4751280d4bb8
+    conduct_lease_id: lease-315-1553fd25ac84f5db
+    conduct_generation: 315
+  predicate: test "$(gh issue view 663 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/663
+  updated: 2026-07-25T18:00:59.811Z
 - id: LIMEN-108
   title: Replace A/B/C plan branch labels with descriptive names
   repo: organvm/peer-audited--behavioral-blockchain
