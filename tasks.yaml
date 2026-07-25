@@ -147985,7 +147985,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-143
-  title: "Copy \u2014 linguistically safe notification templates"
+  title: Copy — linguistically safe notification templates
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -147997,8 +147997,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/526
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:52:33.646Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/526"
+    conduct_event_id: conduct:run-31276dfb4f21c9c99cf9b80341cebc17:165:compatibility
+    conduct_run_id: run-31276dfb4f21c9c99cf9b80341cebc17
+    conduct_lease_id: lease-165-31276dfb4f21c9c9
+    conduct_generation: 165
+  predicate: test "$(gh issue view 526 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/526
+  updated: 2026-07-25T17:52:33.646Z
 - id: LIMEN-144
   title: "Tests \u2014 baseline establishment + regression thresholds"
   repo: organvm/peer-audited--behavioral-blockchain
