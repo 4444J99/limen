@@ -148920,7 +148920,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-213
-  title: "TKT-P1-017: Tests \u2014 protocol flow + notification delivery"
+  title: "TKT-P1-017: Tests — protocol flow + notification delivery"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: opencode
@@ -148932,8 +148932,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/456
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:12.493Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/456"
+    conduct_event_id: conduct:run-9ff665a0f6663a076b10b7eea6e90baa:69:compatibility
+    conduct_run_id: run-9ff665a0f6663a076b10b7eea6e90baa
+    conduct_lease_id: lease-69-9ff665a0f6663a07
+    conduct_generation: 69
+  predicate: test "$(gh issue view 456 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/456
+  updated: 2026-07-25T17:47:12.493Z
 - id: LIMEN-214
   title: "TKT-P1-017: UI \u2014 partner invitation + status dashboard"
   repo: organvm/peer-audited--behavioral-blockchain
