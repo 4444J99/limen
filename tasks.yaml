@@ -152426,7 +152426,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/340
   updated: 2026-07-25T17:54:52.747Z
 - id: LIMEN-323
-  title: "Load testing \u2014 5,000 concurrent users at scale"
+  title: Load testing — 5,000 concurrent users at scale
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -152439,8 +152439,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/339
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:33.131Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/339"
+    conduct_event_id: conduct:run-deca0b34f2251c6428007cc69abb6a7c:218:compatibility
+    conduct_run_id: run-deca0b34f2251c6428007cc69abb6a7c
+    conduct_lease_id: lease-218-deca0b34f2251c64
+    conduct_generation: 218
+  predicate: test "$(gh issue view 339 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/339
+  updated: 2026-07-25T17:55:33.131Z
 - id: LIMEN-324
   title: APNs/FCM credential management — secure push notification keys
   repo: organvm/peer-audited--behavioral-blockchain
