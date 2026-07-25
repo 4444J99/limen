@@ -152042,7 +152042,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-386
-  title: 'docs: draft App Store UGC moderation policy checklist'
+  title: "docs: draft App Store UGC moderation policy checklist"
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: jules
@@ -152056,8 +152056,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/271
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:46:58.269Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/271"
+    conduct_event_id: conduct:run-ee8e471cff56308d99db95fed1ba0f6a:65:compatibility
+    conduct_run_id: run-ee8e471cff56308d99db95fed1ba0f6a
+    conduct_lease_id: lease-65-ee8e471cff56308d
+    conduct_generation: 65
+  predicate: test "$(gh issue view 271 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/271
+  updated: 2026-07-25T17:46:58.269Z
 - id: LIMEN-387
   title: 'business: SEO keyword research for No-Contact recovery niche'
   repo: organvm/peer-audited--behavioral-blockchain
