@@ -148195,7 +148195,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/526
   updated: 2026-07-25T17:52:33.646Z
 - id: LIMEN-144
-  title: "Tests \u2014 baseline establishment + regression thresholds"
+  title: Tests — baseline establishment + regression thresholds
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -148208,8 +148208,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/525
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:59:19.194Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/525"
+    conduct_event_id: conduct:run-f7b34dc1e4341c4e11f8bcfe70d8efcf:286:compatibility
+    conduct_run_id: run-f7b34dc1e4341c4e11f8bcfe70d8efcf
+    conduct_lease_id: lease-286-f7b34dc1e4341c4e
+    conduct_generation: 286
+  predicate: test "$(gh issue view 525 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/525
+  updated: 2026-07-25T17:59:19.194Z
 - id: LIMEN-145
   title: Fury Router queue saturation test suite
   repo: organvm/peer-audited--behavioral-blockchain
