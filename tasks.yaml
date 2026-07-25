@@ -151030,7 +151030,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-254
-  title: "Forfeit: Admin UI \u2014 kill switch toggle + state mode display"
+  title: "Forfeit: Admin UI — kill switch toggle + state mode display"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: gemini
@@ -151043,8 +151043,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/408
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:09.101Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/408"
+    conduct_event_id: conduct:run-6552c38d42e4b014f001f84725999342:265:compatibility
+    conduct_run_id: run-6552c38d42e4b014f001f84725999342
+    conduct_lease_id: lease-265-6552c38d42e4b014
+    conduct_generation: 265
+  predicate: test "$(gh issue view 408 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/408
+  updated: 2026-07-25T17:58:09.101Z
 - id: LIMEN-255
   title: "Forfeit: Kill switch \u2014 refund-only emergency override"
   repo: organvm/peer-audited--behavioral-blockchain
