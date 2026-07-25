@@ -69,6 +69,11 @@ def parser() -> argparse.ArgumentParser:
     tree.add_argument("--hot-days", type=int)
     tree.add_argument("--maximum-hot-gib", type=float)
     tree.add_argument(
+        "--capture-all",
+        action="store_true",
+        help="capture every regular file without an age or size retention heuristic",
+    )
+    tree.add_argument(
         "--retain-relative",
         action="append",
         default=[],
@@ -141,6 +146,18 @@ def main(argv: list[str] | None = None) -> int:
         and (args.hot_days is not None or args.maximum_hot_gib is not None)
     ):
         argument_parser.error("--retain-relative cannot be combined with --hot-days or --maximum-hot-gib")
+    if (
+        args.command == "cold-tree"
+        and args.capture_all
+        and (
+            args.retain_relative
+            or args.hot_days is not None
+            or args.maximum_hot_gib is not None
+        )
+    ):
+        argument_parser.error(
+            "--capture-all cannot be combined with --retain-relative, --hot-days, or --maximum-hot-gib"
+        )
     if args.command == "cloudkit-materialized":
         restore_selectors = sum(
             bool(value)
@@ -186,7 +203,9 @@ def main(argv: list[str] | None = None) -> int:
             run_id=args.run_id,
         )
     elif args.command == "cold-tree":
-        if args.retain_relative:
+        if args.capture_all:
+            plan = plan_exact_retention(args.root, retain_paths=())
+        elif args.retain_relative:
             plan = plan_exact_retention(args.root, retain_paths=tuple(args.retain_relative))
         else:
             plan = plan_retention(
