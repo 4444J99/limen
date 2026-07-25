@@ -151184,7 +151184,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/379
   updated: 2026-07-25T17:52:57.792Z
 - id: LIMEN-284
-  title: "App Store launch (public) \u2014 general availability"
+  title: App Store launch (public) — general availability
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -151197,8 +151197,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/378
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:53:26.971Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/378"
+    conduct_event_id: conduct:run-a31334d5ea553438dca411e76c86084d:181:compatibility
+    conduct_run_id: run-a31334d5ea553438dca411e76c86084d
+    conduct_lease_id: lease-181-a31334d5ea553438
+    conduct_generation: 181
+  predicate: test "$(gh issue view 378 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/378
+  updated: 2026-07-25T17:53:26.971Z
 - id: LIMEN-285
   title: App Store submission
   repo: organvm/peer-audited--behavioral-blockchain
