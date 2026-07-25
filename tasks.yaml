@@ -147282,8 +147282,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/565
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:43.662Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/565"
+    conduct_event_id: conduct:run-cb62740c02e9c85928e6758dfc6e51d7:78:compatibility
+    conduct_run_id: run-cb62740c02e9c85928e6758dfc6e51d7
+    conduct_lease_id: lease-78-cb62740c02e9c859
+    conduct_generation: 78
+  predicate: test "$(gh issue view 565 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/565
+  updated: 2026-07-25T17:47:43.662Z
 - id: LIMEN-116
   title: Produce 50-state skill-contest statutory survey
   repo: organvm/peer-audited--behavioral-blockchain
