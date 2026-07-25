@@ -151218,8 +151218,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/358
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:50:48.556Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/358"
+    conduct_event_id: conduct:run-649b7e3d8ec49c7b47c556cb044396dd:134:compatibility
+    conduct_run_id: run-649b7e3d8ec49c7b47c556cb044396dd
+    conduct_lease_id: lease-134-649b7e3d8ec49c7b
+    conduct_generation: 134
+  predicate: test "$(gh issue view 358 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/358
+  updated: 2026-07-25T17:50:48.556Z
 - id: LIMEN-305
   title: Churn signal detection — predictive patterns
   repo: organvm/peer-audited--behavioral-blockchain
