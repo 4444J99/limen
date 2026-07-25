@@ -10,9 +10,6 @@ set -euo pipefail
 IANVA_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 export PYTHONPATH="$IANVA_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
-# Load fleet secrets the same way the daemon does (upstream creds / fleet auth live here).
-[ -f "$HOME/.limen.env" ] && set -a && . "$HOME/.limen.env" && set +a
-
 PORT="$(python3 - <<'PY'
 from ianva.config import load_config
 print(load_config().port)
@@ -45,6 +42,10 @@ fi
 IANVA_RUNTIME_HOME="${IANVA_HOME:-$HOME/.config/ianva}"
 mkdir -p "$IANVA_RUNTIME_HOME/run"
 printf '%s\n' "$$" > "$IANVA_RUNTIME_HOME/run/backend.pid"
+export MCPHUB_SETTING_PATH="$IANVA_RUNTIME_HOME/mcp_settings.json"
 cd "$IANVA_RUNTIME_HOME"
 echo "ianva-serve: exec ${ARGV[*]} (PORT=$PORT, cwd=$PWD)"
-exec "${ARGV[@]}"
+# The exec boundary removes every key owned by ~/.limen.env.  Do not source that cache in
+# this supervisor: MCPHub is long-lived, and upstream credentials must be scoped to their
+# explicit server entries rather than inherited wholesale by the router.
+exec python3 -m ianva.backend_exec "${ARGV[@]}"
