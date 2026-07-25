@@ -150287,8 +150287,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/374
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:47:22.703Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/374"
+    conduct_event_id: conduct:run-7b0b69ee404bf662c138fd9f911ce990:72:compatibility
+    conduct_run_id: run-7b0b69ee404bf662c138fd9f911ce990
+    conduct_lease_id: lease-72-7b0b69ee404bf662
+    conduct_generation: 72
+  predicate: test "$(gh issue view 374 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/374
+  updated: 2026-07-25T17:47:22.703Z
 - id: LIMEN-289
   title: "Seed user recruitment \u2014 creator outreach + first cohort admissions"
   repo: organvm/peer-audited--behavioral-blockchain
