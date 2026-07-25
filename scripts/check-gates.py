@@ -18,6 +18,7 @@ Named checks (mirrors scripts/check-params.py's ratchet discipline):
      deploy-trigger path literal still appears in the charter; once armed, the charter
      carries the registry pointer instead of path lists
   H  file_sets sanity — every include matches ≥1 tracked file; excludes exist and are noted
+  I  pytest hermetic — registered pytest commands ignore host Git config and editor surfaces
 
 Run directly (``scripts/check-gates.py``) or via pr-gate / verify-whole.
 """
@@ -35,6 +36,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "gates.yaml"
 WORKFLOWS = ROOT / ".github" / "workflows"
+PYTEST_WRAPPER = "scripts/run-pytest-hermetic.sh"
 
 VALID_TIERS = {"cheap", "heavy"}
 VALID_KINDS = {"per_file", "file_set"}
@@ -46,6 +48,15 @@ RATCHET_KEYS = {
 }
 # Repo-path prefixes that must exist when they appear as command tokens.
 _PATH_TOKEN = re.compile(r"^(scripts|organs|web|cli|mcp|ianva|container|spec|moneta)/|^\.github/")
+_HERMETIC_PYTEST_ENV = {
+    "GIT_CONFIG_GLOBAL=/dev/null",
+    "GIT_CONFIG_SYSTEM=/dev/null",
+    "XDG_CONFIG_HOME=/dev/null",
+    "GIT_EDITOR=true",
+    "GIT_SEQUENCE_EDITOR=true",
+    "VISUAL=true",
+    "EDITOR=true",
+}
 
 failures: list[str] = []
 
@@ -85,9 +96,7 @@ def workflow_doc(path: Path) -> dict:
 
 
 def tracked_files() -> list[str]:
-    out = subprocess.run(
-        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True
-    )
+    out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True)
     return out.stdout.splitlines()
 
 
@@ -188,7 +197,7 @@ def main() -> int:
             fail("F", "verify-scoped.sh must be a thin wrapper over scripts/verify.py --changed")
     if ratchets.get("merge_policy_derives"):
         policy = (ROOT / "scripts" / "merge-policy.sh").read_text()
-        if "--deploy-regex" not in policy or re.search(r"^DASHBOARD_RE=", policy, re.M):
+        if "--deploy-regex" not in policy or re.search(r"^DASHBOARD_RE=", policy, re.MULTILINE):
             fail("F", "merge-policy.sh must derive DEPLOY_RE via scripts/verify.py --deploy-regex")
     if ratchets.get("verify_whole_derives"):
         whole = (ROOT / "scripts" / "verify-whole.sh").read_text()
@@ -217,6 +226,18 @@ def main() -> int:
                 fail("H", f"file_sets.{set_name}: exclude entries need a path AND a note")
             elif entry.get("path") not in tracked:
                 fail("H", f"file_sets.{set_name}: exclude {entry.get('path')!r} is not tracked (dead exclude)")
+
+    # --- I: Python test gates cannot inherit host Git/editor state -----------
+    wrapper = (ROOT / PYTEST_WRAPPER).read_text(encoding="utf-8")
+    missing_wrapper_env = sorted(token for token in _HERMETIC_PYTEST_ENV if token not in wrapper)
+    if missing_wrapper_env:
+        fail("I", f"{PYTEST_WRAPPER}: lacks hermetic environment {missing_wrapper_env}")
+    for gate_id, gate in gates.items():
+        command = str(gate.get("command") or "")
+        if "-m pytest" not in command and PYTEST_WRAPPER not in command:
+            continue
+        if PYTEST_WRAPPER not in shlex.split(command):
+            fail("I", f"{gate_id}: pytest command must use {PYTEST_WRAPPER}")
 
     if failures:
         print(f"GATES DRIFT: {len(failures)} finding(s) — registry and repo disagree:")
