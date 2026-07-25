@@ -151752,7 +151752,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/362
   updated: 2026-07-25T17:50:32.145Z
 - id: LIMEN-301
-  title: "Enterprise demo environment \u2014 sandboxed Render instance"
+  title: Enterprise demo environment — sandboxed Render instance
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: jules
@@ -151766,8 +151766,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/361
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:55.781Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/361"
+    conduct_event_id: conduct:run-8200efd36f85938b0776b850edf66621:208:compatibility
+    conduct_run_id: run-8200efd36f85938b0776b850edf66621
+    conduct_lease_id: lease-208-8200efd36f85938b
+    conduct_generation: 208
+  predicate: test "$(gh issue view 361 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/361
+  updated: 2026-07-25T17:54:55.781Z
 - id: LIMEN-302
   title: "Outreach sequence \u2014 5-email cold outreach + LinkedIn"
   repo: organvm/peer-audited--behavioral-blockchain
