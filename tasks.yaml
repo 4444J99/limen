@@ -151554,8 +151554,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/366
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:29.284Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/366"
+    conduct_event_id: conduct:run-59cffe3dff910854b001f820087ffc0c:200:compatibility
+    conduct_run_id: run-59cffe3dff910854b001f820087ffc0c
+    conduct_lease_id: lease-200-59cffe3dff910854
+    conduct_generation: 200
+  predicate: test "$(gh issue view 366 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/366
+  updated: 2026-07-25T17:54:29.284Z
 - id: LIMEN-297
   title: Apple Developer Account + TestFlight setup
   repo: organvm/peer-audited--behavioral-blockchain
