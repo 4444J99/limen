@@ -149857,7 +149857,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/415
   updated: 2026-07-25T17:46:55.083Z
 - id: LIMEN-248
-  title: "Guardrails: Tests \u2014 detection accuracy + false positive rate"
+  title: "Guardrails: Tests — detection accuracy + false positive rate"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -149870,8 +149870,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/414
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:49:28.119Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/414"
+    conduct_event_id: conduct:run-7b4745817c1bd0b039e1132fcce503a8:110:compatibility
+    conduct_run_id: run-7b4745817c1bd0b039e1132fcce503a8
+    conduct_lease_id: lease-110-7b4745817c1bd0b0
+    conduct_generation: 110
+  predicate: test "$(gh issue view 414 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/414
+  updated: 2026-07-25T17:49:28.119Z
 - id: LIMEN-249
   title: "Guardrails: API \u2014 crisis event logging + escalation trigger"
   repo: organvm/peer-audited--behavioral-blockchain
