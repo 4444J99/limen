@@ -154188,7 +154188,7 @@ tasks:
   created: '2026-07-19'
   dispatch_log: []
 - id: LIMEN-365
-  title: 'checklist: TestFlight Beta readiness gate'
+  title: "checklist: TestFlight Beta readiness gate"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -154202,8 +154202,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/295
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:25.375Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/295"
+    conduct_event_id: conduct:run-14c615267258095b8e8d044589bc8f4f:270:compatibility
+    conduct_run_id: run-14c615267258095b8e8d044589bc8f4f
+    conduct_lease_id: lease-270-14c615267258095b
+    conduct_generation: 270
+  predicate: test "$(gh issue view 295 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/295
+  updated: 2026-07-25T17:58:25.375Z
 - id: LIMEN-366
   title: "milestone: Launch operations timeline (Mar-Dec 2026)"
   repo: organvm/peer-audited--behavioral-blockchain
