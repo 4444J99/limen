@@ -152171,7 +152171,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/381
   updated: 2026-07-25T17:51:29.453Z
 - id: LIMEN-282
-  title: "Legal Counsel \u2014 retainer engagement"
+  title: Legal Counsel — retainer engagement
   repo: organvm/peer-audited--behavioral-blockchain
   type: docs
   target_agent: codex
@@ -152185,8 +152185,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/380
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:00:34.699Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/380"
+    conduct_event_id: conduct:run-d9ab4775373955df8b0600822f3689d2:308:compatibility
+    conduct_run_id: run-d9ab4775373955df8b0600822f3689d2
+    conduct_lease_id: lease-308-d9ab4775373955df
+    conduct_generation: 308
+  predicate: test "$(gh issue view 380 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/380
+  updated: 2026-07-25T18:00:34.699Z
 - id: LIMEN-283
   title: Mobile Native Engineer (Swift) — contract sourcing
   repo: organvm/peer-audited--behavioral-blockchain
