@@ -152297,8 +152297,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/340
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:54:52.747Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/340"
+    conduct_event_id: conduct:run-432374177475c8917496a9fce370e396:207:compatibility
+    conduct_run_id: run-432374177475c8917496a9fce370e396
+    conduct_lease_id: lease-207-432374177475c891
+    conduct_generation: 207
+  predicate: test "$(gh issue view 340 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/340
+  updated: 2026-07-25T17:54:52.747Z
 - id: LIMEN-323
   title: "Load testing \u2014 5,000 concurrent users at scale"
   repo: organvm/peer-audited--behavioral-blockchain
