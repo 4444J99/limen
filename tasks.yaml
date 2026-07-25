@@ -149350,7 +149350,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/478
   updated: 2026-07-25T17:56:45.881Z
 - id: LIMEN-192
-  title: "TKT-P1-007: Tests \u2014 data sync accuracy + privacy compliance"
+  title: "TKT-P1-007: Tests — data sync accuracy + privacy compliance"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: codex
@@ -149362,8 +149362,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/477
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:57:09.107Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/477"
+    conduct_event_id: conduct:run-fd105acf50563228b002171a1c2c3af9:247:compatibility
+    conduct_run_id: run-fd105acf50563228b002171a1c2c3af9
+    conduct_lease_id: lease-247-fd105acf50563228
+    conduct_generation: 247
+  predicate: test "$(gh issue view 477 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/477
+  updated: 2026-07-25T17:57:09.107Z
 - id: LIMEN-193
   title: "TKT-P1-007: UI — health data display + consent management"
   repo: organvm/peer-audited--behavioral-blockchain
