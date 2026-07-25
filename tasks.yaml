@@ -153665,7 +153665,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/293
   updated: 2026-07-25T17:52:19.868Z
 - id: LIMEN-368
-  title: 'feat: Skill-contest whitepaper release gate (TKT-P1-019)'
+  title: "feat: Skill-contest whitepaper release gate (TKT-P1-019)"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: agy
@@ -153679,8 +153679,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/292
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:55:36.692Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/292"
+    conduct_event_id: conduct:run-31bc60b2f0c5a674166657f0edd25f46:219:compatibility
+    conduct_run_id: run-31bc60b2f0c5a674166657f0edd25f46
+    conduct_lease_id: lease-219-31bc60b2f0c5a674
+    conduct_generation: 219
+  predicate: test "$(gh issue view 292 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/292
+  updated: 2026-07-25T17:55:36.692Z
 - id: LIMEN-369
   title: "Customer Success Department \u2014 Task Tracker"
   repo: organvm/peer-audited--behavioral-blockchain
