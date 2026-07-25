@@ -151661,7 +151661,7 @@ tasks:
   receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/384
   updated: 2026-07-25T17:56:55.446Z
 - id: LIMEN-279
-  title: "Growth / Community Manager \u2014 hiring"
+  title: Growth / Community Manager — hiring
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
   target_agent: claude
@@ -151674,8 +151674,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/383
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T17:58:06.099Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/383"
+    conduct_event_id: conduct:run-2f5a0461ec949227381ad318426727d7:264:compatibility
+    conduct_run_id: run-2f5a0461ec949227381ad318426727d7
+    conduct_lease_id: lease-264-2f5a0461ec949227
+    conduct_generation: 264
+  predicate: test "$(gh issue view 383 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/383
+  updated: 2026-07-25T17:58:06.099Z
 - id: LIMEN-280
   title: QA / Beta Coordinator — part-time hire
   repo: organvm/peer-audited--behavioral-blockchain
