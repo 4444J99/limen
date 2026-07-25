@@ -152459,8 +152459,22 @@ tasks:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/377
   context: Ingested via script
   depends_on: []
-  created: '2026-07-19'
-  dispatch_log: []
+  created: 2026-07-19
+  dispatch_log:
+  - timestamp: 2026-07-25T18:01:58.193Z
+    agent: codex
+    session_id: codex-omega-s4-019f996d-20260725
+    logical_agent: codex
+    logical_session_id: omega-s4-019f996d-20260725
+    status: open
+    output: "ask-gate-owner-contracts-20260725: typed exact GitHub issue owner contract; receipt=https://github.com/organvm/peer-audited--behavioral-blockchain/issues/377"
+    conduct_event_id: conduct:run-543f4f668f22844a5663dae9b9bc1b26:332:compatibility
+    conduct_run_id: run-543f4f668f22844a5663dae9b9bc1b26
+    conduct_lease_id: lease-332-543f4f668f22844a
+    conduct_generation: 332
+  predicate: test "$(gh issue view 377 --repo organvm/peer-audited--behavioral-blockchain --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/peer-audited--behavioral-blockchain/issues/377
+  updated: 2026-07-25T18:01:58.193Z
 - id: LIMEN-286
   title: Open beta expansion — 500+ users
   repo: organvm/peer-audited--behavioral-blockchain
