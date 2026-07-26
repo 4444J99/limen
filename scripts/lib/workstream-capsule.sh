@@ -1179,6 +1179,9 @@ refresh_workstream_runway() {
   IFS=: read -r LIMEN_WORKSTREAM_REQUESTED LIMEN_WORKSTREAM_RUNWAY_SECONDS LIMEN_WORKSTREAM_STARTED_EPOCH LIMEN_WORKSTREAM_DEADLINE_EPOCH LIMEN_WORKSTREAM_REMAINING_SECONDS <<< "\$runway_fields"
   export LIMEN_WORKSTREAM_REQUESTED LIMEN_WORKSTREAM_RUNWAY_SECONDS LIMEN_WORKSTREAM_STARTED_EPOCH LIMEN_WORKSTREAM_DEADLINE_EPOCH LIMEN_WORKSTREAM_REMAINING_SECONDS
 }
+if [[ "\$conduct" -eq 1 ]]; then
+  workstream_register_conduct_session "\$agent" "\$PWD" "\$agent_capabilities"
+fi
 refresh_workstream_runway
 preflight_timeout="\${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
 case "\$preflight_timeout" in
@@ -1197,9 +1200,6 @@ if git remote get-url origin >/dev/null 2>&1 9>&-; then
 fi
 python3 "\$contract_helper" run-bounded \
   --timeout-seconds "\$preflight_timeout" -- git status --short --branch 9>&-
-if [[ "\$conduct" -eq 1 ]]; then
-  workstream_register_conduct_session "\$agent" "\$PWD" "\$agent_capabilities"
-fi
 refresh_workstream_runway
 if [[ "\$agent" != "jules" ]]; then
   exec 9>&-

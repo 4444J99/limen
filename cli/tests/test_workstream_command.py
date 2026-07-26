@@ -1190,6 +1190,113 @@ render_workstream_capsule \
     assert "invalid capsule: missing or empty module" in invalid.stderr
 
 
+def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    events = tmp_path / "events.txt"
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text(
+        '#!/usr/bin/env bash\nprintf "register\\n" >> "$EVENTS_CAPTURE"\nexit "${REGISTER_RC:-0}"\n',
+        encoding="utf-8",
+    )
+    fake_limen.chmod(0o755)
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        '#!/usr/bin/env bash\nprintf "provider\\n" >> "$EVENTS_CAPTURE"\n',
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    rendered = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--autonomous",
+            "--conduct",
+            "--prompt",
+            "Prove conduct before admission.",
+            str(repo),
+            "Conduct Ordering",
+        ],
+    )
+    assert rendered.exit_code == 0, rendered.output
+
+    wt = repo / ".worktrees" / "conduct-ordering"
+    capsule = wt / ".limen-workstream"
+    kickstart = capsule / "kickstart.sh"
+    contract = capsule / "workstream.json"
+    identity = capsule / "capsule.identity"
+    receipt = wt / "docs" / "continuations" / "conduct-ordering" / "workstream.json"
+    protected = (contract, identity, receipt)
+    bytes_before = {path: path.read_bytes() for path in protected}
+    mtimes_before = {path: path.stat().st_mtime_ns for path in protected}
+
+    real_python = shutil.which("python3")
+    assert real_python is not None
+    fake_python = fake_bin / "python3"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        'if [[ "${2:-}" == "admit-identity" ]]; then\n'
+        '  printf "admit\\n" >> "$EVENTS_CAPTURE"\n'
+        "fi\n"
+        'exec "$REAL_PYTHON" "$@"\n',
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    launch_env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "EVENTS_CAPTURE": str(events),
+        "REAL_PYTHON": real_python,
+        "REGISTER_RC": "42",
+    }
+
+    rejected = subprocess.run(
+        ["bash", str(kickstart)],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rejected.returncode == 42
+    assert events.read_text(encoding="utf-8").splitlines() == ["register"]
+    assert {path: path.read_bytes() for path in protected} == bytes_before
+    assert {path: path.stat().st_mtime_ns for path in protected} == mtimes_before
+    assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
+
+    events.write_text("", encoding="utf-8")
+    launch_env["REGISTER_RC"] = "0"
+    launched = subprocess.run(
+        ["bash", str(kickstart)],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert launched.returncode == 0, launched.stderr
+    assert events.read_text(encoding="utf-8").splitlines() == [
+        "register",
+        "admit",
+        "admit",
+        "provider",
+    ]
+    assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is not None
+
+
 def test_workstream_refuses_an_ignored_tracked_receipt_path(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "demo-repo"
     repo.mkdir()
