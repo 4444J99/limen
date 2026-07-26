@@ -13,15 +13,18 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 real_omega="$here/../omega.sh"
 real_watch="$here/../overnight-watch.py"
+real_core="$here/../../institutio/governance/omega-core-rungs.json"
 [ -f "$real_omega" ] || { echo "FAIL: cannot find omega.sh at $real_omega" >&2; exit 1; }
 [ -f "$real_watch" ] || { echo "FAIL: cannot find overnight-watch.py at $real_watch" >&2; exit 1; }
+[ -f "$real_core" ] || { echo "FAIL: cannot find core rung registry at $real_core" >&2; exit 1; }
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 # A stub ROOT: omega.sh + a scripts/ dir of fake predicates whose exit codes we control per case.
-mkdir -p "$work/scripts" "$work/cli/src" "$work/logs"
+mkdir -p "$work/scripts" "$work/cli/src" "$work/logs" "$work/institutio/governance"
 cp "$real_omega" "$work/scripts/omega.sh"
+cp "$real_core" "$work/institutio/governance/omega-core-rungs.json"
 
 # write_stubs <ask_gate_rc> — all det children exit 0 except ask-gate.py, whose rc is the argument.
 # (In --offline the live children are SKIPped without running. Registry-owned checks are discovered
@@ -45,22 +48,39 @@ write_stubs() {
 #!/usr/bin/env python3
 import sys
 import os
-if "--list-omega" in sys.argv:
+import json
+if "--list-omega-json" in sys.argv:
     rows = [
-        "arbitrary.future.id\t0\tdet\tarbitrary registry parity\tpython3 scripts/future.py --check\t30",
-        "arbitrary.future.id\t1\tlive\tarbitrary registry posture\tpython3 scripts/future.py --live\t45",
-        "independently.renamed.no-timeout.v47\t0\tdet\trenamed no-timeout contract\tpython3 scripts/no-timeout.py --check\tnull",
+        {"id": "sensor.arbitrary.parity", "sensor_id": "arbitrary.future.id", "check_index": 0,
+         "tier": "det", "label": "arbitrary registry parity",
+         "command": "python3 scripts/future.py --check", "timeout": 30,
+         "semantic_inputs": [{"path": "scripts/beat-sensors.py", "normalization": "raw",
+                              "role": "input", "volatile_fields": []}]},
+        {"id": "sensor.arbitrary.posture", "sensor_id": "arbitrary.future.id", "check_index": 1,
+         "tier": "live", "label": "arbitrary registry posture",
+         "command": "python3 scripts/future.py --live", "timeout": 45,
+         "semantic_inputs": [{"path": "scripts/beat-sensors.py", "normalization": "raw",
+                              "role": "input", "volatile_fields": []}]},
+        {"id": "sensor.renamed.no-timeout", "sensor_id": "independently.renamed.no-timeout.v47",
+         "check_index": 0, "tier": "det", "label": "renamed no-timeout contract",
+         "command": "python3 scripts/no-timeout.py --check", "timeout": None,
+         "semantic_inputs": [{"path": "scripts/beat-sensors.py", "normalization": "raw",
+                              "role": "input", "volatile_fields": []}]},
     ]
     mode = os.environ.get("OMEGA_TEST_SENSOR_MODE")
     if mode == "reverse":
         rows.reverse()
     elif mode == "added":
-        rows.append("new.sensor.id\t0\tdet\tnew registry contract\tpython3 scripts/new.py\t60")
+        rows.append({"id": "sensor.added", "sensor_id": "new.sensor.id", "check_index": 0,
+                     "tier": "det", "label": "new registry contract",
+                     "command": "python3 scripts/new.py", "timeout": 60,
+                     "semantic_inputs": [{"path": "scripts/beat-sensors.py", "normalization": "raw",
+                                          "role": "input", "volatile_fields": []}]})
     elif mode == "command":
-        rows[0] = "arbitrary.future.id\t0\tdet\tarbitrary registry parity\tpython3 scripts/renamed.py --check\t30"
+        rows[0]["command"] = "python3 scripts/renamed.py --check"
     elif mode == "timeout-metadata":
-        rows[2] = "independently.renamed.no-timeout.v47\t0\tdet\trenamed no-timeout contract\tpython3 scripts/no-timeout.py --check\t17"
-    print("\n".join(rows))
+        rows[2]["timeout"] = 17
+    print(json.dumps({"schema": "limen.omega_sensor_rungs.v1", "rungs": rows}, sort_keys=True))
     raise SystemExit(0)
 if "--run-omega" in sys.argv:
     raise SystemExit(0)
@@ -82,13 +102,14 @@ echo "$out" | grep -q "OMEGA HOLDS" && check "holds" "holds" "case1 verdict" || 
 python3 - "$work/logs/omega.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
-assert d["schema_version"] == 1, d
+assert d["schema_version"] == 2, d
 assert d["generated_at"] == d["generated"], d
 assert len(d["contract_hash"]) == 64, d
 assert d["verdict"] == "HOLDS", d["verdict"]
 assert d["strict"] is False, d
 assert d["fail"] == 0, d
-assert all({"rung", "tier", "status"} <= set(r) for r in d["rungs"]), "rung shape"
+assert all({"id", "rung", "tier", "status"} <= set(r) for r in d["rungs"]), "rung shape"
+assert len({r["id"] for r in d["rungs"]}) == len(d["rungs"]), "stable rung ids"
 # every live rung must be SKIP in offline mode (never a silent PASS)
 live = [r for r in d["rungs"] if r["tier"] == "live"]
 assert live and all(r["status"] == "SKIP" for r in live), [r["status"] for r in live]
