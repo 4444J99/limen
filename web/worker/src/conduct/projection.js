@@ -3,6 +3,12 @@ import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
 
 const GITHUB_API = "https://api.github.com";
 const inlineBoards = new WeakMap();
+const PROJECTION_YAML_OPTIONS = {
+  defaultKeyType: "PLAIN",
+  defaultStringType: "QUOTE_SINGLE",
+  indentSeq: false,
+  lineWidth: 0,
+};
 const VALID_STATUSES = new Set([
   "open",
   "dispatched",
@@ -773,7 +779,7 @@ async function reconcileProjectionBranch(env, fetchImpl) {
 }
 
 function renderedTaskBlock(task, indent = "") {
-  const rendered = YAML.stringify({ tasks: [task] }, { indentSeq: false, lineWidth: 0 });
+  const rendered = YAML.stringify({ tasks: [task] }, PROJECTION_YAML_OPTIONS);
   const marker = "tasks:\n";
   if (!rendered.startsWith(marker)) {
     throw new ConductProjectionError("task projection serializer emitted an invalid document");
@@ -830,7 +836,7 @@ function replacePortal(yamlText, portal) {
   if (!portalHeader || !tasksHeader || portalHeader.index >= tasksHeader.index) {
     throw new ConductProjectionError("canonical board top-level portal/tasks layout is invalid", 409);
   }
-  const rendered = YAML.stringify({ portal }, { indentSeq: false, lineWidth: 0 });
+  const rendered = YAML.stringify({ portal }, PROJECTION_YAML_OPTIONS);
   return `${yamlText.slice(0, portalHeader.index)}${rendered}${yamlText.slice(tasksHeader.index)}`;
 }
 

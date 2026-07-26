@@ -2501,6 +2501,45 @@ test("GitHub task projection preserves unrelated board bytes", async () => {
   assert.deepEqual((await import("yaml")).default.parse(changedText), changed);
 });
 
+test("GitHub task projection quotes strings for YAML 1.1-compatible consumers", async () => {
+  const yaml = (await import("yaml")).default;
+  const source = [
+    "version: '1.0'",
+    "portal:",
+    "  budget:",
+    "    track:",
+    "      date: '2026-07-25'",
+    "      per_agent_reset:",
+    "        codex: '2026-07-25T12:00:00.000Z'",
+    "tasks:",
+    "- id: TASK-DATE",
+    "  title: 'Preserve string types'",
+    "  status: open",
+    "  created: '2026-07-25'",
+    "  updated: '2026-07-25T12:00:00.000Z'",
+    "  dispatch_log: []",
+    "",
+  ].join("\n");
+  const before = yaml.parse(source);
+  const after = structuredClone(before);
+  after.portal.budget.track.date = "2026-07-26";
+  after.portal.budget.track.per_agent_reset.codex = "2026-07-26T12:00:00.000Z";
+  after.tasks[0].status = "dispatched";
+  after.tasks[0].updated = "2026-07-26T12:00:00.000Z";
+  after.tasks[0].dispatch_log.push({
+    timestamp: "2026-07-26T12:00:00.000Z",
+    status: "dispatched",
+  });
+
+  const rendered = renderTaskBoardProjection(source, before, after, "TASK-DATE");
+  assert.match(rendered, /date: '2026-07-26'/);
+  assert.match(rendered, /codex: '2026-07-26T12:00:00.000Z'/);
+  assert.match(rendered, /created: '2026-07-25'/);
+  assert.match(rendered, /updated: '2026-07-26T12:00:00.000Z'/);
+  assert.match(rendered, /timestamp: '2026-07-26T12:00:00.000Z'/);
+  assert.deepEqual(yaml.parse(rendered), after);
+});
+
 test("Durable Object HTTP routes match the authenticated client surface and survive recreation", async () => {
   class FakeStorage {
     constructor() { this.values = new Map(); }
