@@ -212,6 +212,19 @@ def cmd_doctor() -> int:
         return 1
     if "schema_version" not in seeds:
         fails.append("seo-seeds: missing schema_version")
+    defaults = seeds.get("defaults") or {}
+    if not isinstance(defaults, dict):
+        fails.append("seo-seeds: defaults must be a mapping")
+    else:
+        default_topics = defaults.get("topics") or []
+        if not isinstance(default_topics, list):
+            fails.append("seo-seeds: defaults.topics must be a list")
+        else:
+            if len(default_topics) > 20:
+                fails.append("seo-seeds: defaults.topics has >20 topics")
+            for topic in default_topics:
+                if not _TOPIC_RE.match(str(topic)):
+                    fails.append(f"seo-seeds: defaults.topics has invalid topic '{topic}'")
     try:
         positioned = set((json.loads(POSITIONING_SEEDS.read_text()).get("repos") or {}).keys())
     except Exception:

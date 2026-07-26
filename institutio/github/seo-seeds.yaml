@@ -15,7 +15,13 @@ schema_version: 0.1
 
 defaults:
   homepage: "https://github.com/organvm"   # the portal edge every homepage-gap repo points into
+  topics: ["open-source", "developer-tools", "organvm", "creative-technology", "digital-humanities"]
   owner: seo
   note: "Defaults for the derivation layer; per-repo judgment rows below."
 
-repos: {}
+repos:
+  organvm/_tui:
+    description: "Terminal user interface components and tooling for the ORGANVM ecosystem."
+    topics: []
+    owner: seo
+    note: "README has no derivable prose; curated fallback closes the required description."
