@@ -104951,51 +104951,56 @@ tasks:
     conduct_generation: 357
   predicate: 'test "$(gh issue view 5 --repo organvm/advocata --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/advocata/issues/5'
-- id: GH-organvm-limen-642
-  title: 'full-stack review: shard the depth queue across parallel lanes (single-lane
-    ~8.5 rows/h vs 1,778-row queue)'
-  repo: organvm/limen
-  type: code
-  target_agent: jules
-  priority: medium
+- id: 'GH-organvm-limen-642'
+  title: 'full-stack review: shard the depth queue across parallel lanes (single-lane ~8.5 rows/h vs 1,778-row queue)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'jules'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - slow
+  - 'slow'
   urls:
-  - https://github.com/organvm/limen/issues/642
-  context: "GitHub issue organvm/limen#642. Adjudicated throughput of the founding\
-    \ full-stack-review run (Codex session 019f2a04): 182 ledger entries in ~15h of\
-    \ sustained single-lane work \u2248 12 rows/hour. Against 1,778 changed-file candidates\
-    \ + 875 reconstruction roots, single-lane drain is ~6-9 days of continuous wall-clock.\
-    \ PR #638 added the executable depth-queue stop predicate (at merge time: blocked;\
-    \ 257 open of 287 eligible rows at rev"
+  - 'https://github.com/organvm/limen/issues/642'
+  context: 'GitHub issue organvm/limen#642. Adjudicated throughput of the founding full-stack-review run (Codex session 019f2a04): 182 ledger entries in ~15h of sustained single-lane work ≈ 12 rows/hour. Against 1,778 changed-file candidates + 875 reconstruction roots, single-lane drain is ~6-9 days of continuous wall-clock. PR #638 added the executable depth-queue stop predicate (at merge time: blocked; 257 open of 287 eligible rows at rev'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:50:27.393Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
-    agent: codex
-    session_id: codex-jules-fill-20260709
-    status: open
-    output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
-      local OpenCode/Agy slots'
+    agent: 'codex'
+    session_id: 'codex-jules-fill-20260709'
+    status: 'open'
+    output: 'fleet fill: retargeted codex->jules to use Jules async capacity before local OpenCode/Agy slots'
   - timestamp: '2026-07-10T10:45:51.370902Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T11:17:49.202653Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: jules
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head timeout->jules'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'jules'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head timeout->jules'
+  - timestamp: '2026-07-26T21:50:27.393Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-a3bcdbf6cb5c7b79dfec7443b4915814:358:compatibility'
+    conduct_run_id: 'run-a3bcdbf6cb5c7b79dfec7443b4915814'
+    conduct_lease_id: 'lease-358-a3bcdbf6cb5c7b79'
+    conduct_generation: 358
+  predicate: 'test "$(gh issue view 642 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/642'
 - id: GH-organvm-limen-641
   title: 'agy: decode native Antigravity IDE conversations into the prompt corpus
     (weakest review quadrant)'
