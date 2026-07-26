@@ -13,6 +13,9 @@ surfaces:
   .github/workflows/auto-scale.yml:
     disposition: board-projection-pr
     expected: {}
+  .github/workflows/deploy-worker.yml:
+    disposition: read-only-exact-main-deploy-source-no-git-write
+    expected: {default_ref_literal: 2}
   .github/workflows/fleet-gate.yml:
     disposition: generated-topic-branch-pr
     expected: {git_push: 1}

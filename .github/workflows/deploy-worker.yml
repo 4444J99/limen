@@ -1,0 +1,72 @@
+name: Deploy Runtime Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact 40-character main commit to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-runtime-worker-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CF_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Require exact main identity
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          actual_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_sha must be a lowercase 40-character commit SHA"
+            exit 1
+          fi
+          if [ "$GITHUB_REF" != "refs/heads/main" ] || [ "$actual_sha" != "$EXPECTED_SHA" ] || [ "$GITHUB_SHA" != "$EXPECTED_SHA" ]; then
+            echo "::error::dispatch identity drift: ref=$GITHUB_REF checkout=$actual_sha event=$GITHUB_SHA expected=$EXPECTED_SHA"
+            exit 1
+          fi
+
+      - name: Require cached Cloudflare credential
+        run: |
+          if [ "$CF_TOKEN_SET" != "true" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is absent from the repository secret cache"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/worker/package-lock.json
+
+      - name: Install exact dependencies
+        run: npm ci
+        working-directory: web/worker
+
+      - name: Verify Worker
+        run: npm run check
+        working-directory: web/worker
+
+      - name: Deploy exact main Worker
+        run: npm run deploy -- --message "exact-main:${GITHUB_SHA}"
+        working-directory: web/worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Record exact-head receipt
+        run: echo "### limen-runtime deployed from \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
