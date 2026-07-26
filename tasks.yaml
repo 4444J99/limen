@@ -157037,8 +157037,7 @@ tasks:
   dispatch_log: []
 - id: VIC-GOV-001
   title: Victoroff governance source manifest
-  description: Create the classified governance-source manifest with provenance, checksums,
-    and explicit missing-source failures.
+  description: Create the classified governance-source manifest with provenance, checksums, and explicit missing-source failures.
   repo: organvm/victoroff-os
   type: code
   target_agent: jules
@@ -157054,27 +157053,41 @@ tasks:
   urls:
   - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
   - https://github.com/organvm/victoroff-os/actions/runs/29950685515
-  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
-    \nTask: VIC-GOV-001 \u2014 Create the classified governance-source manifest with\
-    \ provenance, checksums, and explicit missing-source failures.\nRepository: organvm/victoroff-os\n\
-    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\nPhase/module: Phase 0 /\
-    \ governance sources\nOwner: victoroff-governance\nAllowed paths: docs/governance/**\n\
-    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml\n\
-    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77;\
-    \ receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\nRequired\
-    \ behavior: Add a public-safe, synthetic governance-source manifest whose validation\
-    \ rejects absent sources, missing provenance, and checksum drift.\nAuthority boundary:\
-    \ public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend,\
-    \ use real BBNC data, or represent client authority.\nPredicate: node --test docs/governance/*.test.mjs\n\
-    Receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-001\n\nReturn a bounded\
-    \ patch, tests, documentation, and the exact predicate result. Stop with a precise\
-    \ blocker if required authority or source is missing."
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-GOV-001 — Create the classified governance-source manifest with provenance, checksums, and explicit missing-source failures.
+    Repository: organvm/victoroff-os
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
+    Phase/module: Phase 0 / governance sources
+    Owner: victoroff-governance
+    Allowed paths: docs/governance/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515
+    Required behavior: Add a public-safe, synthetic governance-source manifest whose validation rejects absent sources, missing provenance, and checksum drift.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: node --test docs/governance/*.test.mjs
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
   predicate: node --test docs/governance/*.test.mjs
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-GOV-001
   depends_on: []
-  created: '2026-07-22'
-  updated: '2026-07-22T19:28:29.693732Z'
-  dispatch_log: []
+  created: 2026-07-22
+  updated: 2026-07-26T20:21:14.545Z
+  dispatch_log:
+  - timestamp: 2026-07-26T20:21:14.545Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Route evidence-backed merged receipt reconciliation to the authenticated Codex session.
+    route_to: codex
+    conduct_event_id: conduct:run-5576020cd8fe3da0fb711826ace7cc99:334:compatibility
+    conduct_run_id: run-5576020cd8fe3da0fb711826ace7cc99
+    conduct_lease_id: lease-334-5576020cd8fe3da0
+    conduct_generation: 334
 - id: VIC-CONTRACT-001
   title: Victoroff governance and intent contracts
   description: Add schemas and validation tests for GovernanceDocument, ActionIntent,
