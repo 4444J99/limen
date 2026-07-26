@@ -14,11 +14,11 @@ portal:
       claude: 100
     track:
       date: 2026-07-26
-      spent: 2
+      spent: 3
       per_agent:
         jules: 0
         gemini: 0
-        codex: 2
+        codex: 3
         opencode: 0
         agy: 0
         claude: 0
@@ -157225,7 +157225,7 @@ tasks:
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - victoroff
   - canary
@@ -157255,7 +157255,7 @@ tasks:
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001
   depends_on: []
   created: 2026-07-22
-  updated: 2026-07-26T21:02:40.649Z
+  updated: 2026-07-26T21:02:44.856Z
   dispatch_log:
   - timestamp: 2026-07-26T21:02:40.649Z
     agent: codex
@@ -157269,6 +157269,18 @@ tasks:
     conduct_run_id: run-30b784d9b0e216008a73cb0dc96087ed
     conduct_lease_id: lease-340-30b784d9b0e21600
     conduct_generation: 340
+  - timestamp: 2026-07-26T21:02:44.856Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: dispatched
+    output: Claim the evidence-backed merged receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-b94eeb7b685277916a5512e62a2ff1c9:341:compatibility
+    conduct_run_id: run-b94eeb7b685277916a5512e62a2ff1c9
+    conduct_lease_id: lease-341-b94eeb7b68527791
+    conduct_generation: 341
   origin: human_prompt
   horizon: past
   value_case: The merged deterministic resolver closes authority precedence, ambiguity, conflict preservation, and the one-valid-next-action contract.
