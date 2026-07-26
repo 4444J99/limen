@@ -1,11 +1,10 @@
 version: '1.0'
 portal:
-  name: Universal Task Intake
-  description: "One file to aim every agent you have \u2014 cross-repo, cross-agent,\
-    \ budget-capped"
+  name: 'Universal Task Intake'
+  description: 'One file to aim every agent you have — cross-repo, cross-agent, budget-capped'
   budget:
     daily: 600
-    unit: runs
+    unit: 'runs'
     per_agent:
       jules: 100
       gemini: 10
@@ -14,17 +13,15 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-07-21'
-      spent: 4
+      date: '2026-07-26'
+      spent: 6
       per_agent:
         jules: 0
         gemini: 0
-        codex: 0
+        codex: 6
         opencode: 0
         agy: 0
         claude: 0
-        github_actions: 1
-        ollama: 3
       per_agent_reset:
         jules: '2026-07-21T01:53:14.706904+00:00'
         gemini: '2026-07-21T01:53:14.706904+00:00'
@@ -34,10 +31,10 @@ portal:
         claude: '2026-07-21T19:50:50.757267+00:00'
   agents:
     opencode:
-      status: idle
+      status: 'idle'
       accepting_tasks: true
-      token_usage_pct: 0.0
-      clock_health: ok
+      token_usage_pct: 0
+      clock_health: 'ok'
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
@@ -157037,15 +157034,14 @@ tasks:
   dispatch_log: []
 - id: VIC-GOV-001
   title: Victoroff governance source manifest
-  description: Create the classified governance-source manifest with provenance, checksums,
-    and explicit missing-source failures.
+  description: Create the classified governance-source manifest with provenance, checksums, and explicit missing-source failures.
   repo: organvm/victoroff-os
   type: code
   target_agent: jules
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - victoroff
   - canary
@@ -157054,38 +157050,96 @@ tasks:
   urls:
   - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
   - https://github.com/organvm/victoroff-os/actions/runs/29950685515
-  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
-    \nTask: VIC-GOV-001 \u2014 Create the classified governance-source manifest with\
-    \ provenance, checksums, and explicit missing-source failures.\nRepository: organvm/victoroff-os\n\
-    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\nPhase/module: Phase 0 /\
-    \ governance sources\nOwner: victoroff-governance\nAllowed paths: docs/governance/**\n\
-    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml\n\
-    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77;\
-    \ receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\nRequired\
-    \ behavior: Add a public-safe, synthetic governance-source manifest whose validation\
-    \ rejects absent sources, missing provenance, and checksum drift.\nAuthority boundary:\
-    \ public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend,\
-    \ use real BBNC data, or represent client authority.\nPredicate: node --test docs/governance/*.test.mjs\n\
-    Receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-001\n\nReturn a bounded\
-    \ patch, tests, documentation, and the exact predicate result. Stop with a precise\
-    \ blocker if required authority or source is missing."
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-GOV-001 — Create the classified governance-source manifest with provenance, checksums, and explicit missing-source failures.
+    Repository: organvm/victoroff-os
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
+    Phase/module: Phase 0 / governance sources
+    Owner: victoroff-governance
+    Allowed paths: docs/governance/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515
+    Required behavior: Add a public-safe, synthetic governance-source manifest whose validation rejects absent sources, missing provenance, and checksum drift.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: node --test docs/governance/*.test.mjs
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
   predicate: node --test docs/governance/*.test.mjs
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-GOV-001
   depends_on: []
-  created: '2026-07-22'
-  updated: '2026-07-22T19:28:29.693732Z'
-  dispatch_log: []
+  created: 2026-07-22
+  updated: 2026-07-26T21:01:53.314Z
+  dispatch_log:
+  - timestamp: 2026-07-26T20:21:14.545Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Route evidence-backed merged receipt reconciliation to the authenticated Codex session.
+    route_to: codex
+    conduct_event_id: conduct:run-5576020cd8fe3da0fb711826ace7cc99:334:compatibility
+    conduct_run_id: run-5576020cd8fe3da0fb711826ace7cc99
+    conduct_lease_id: lease-334-5576020cd8fe3da0
+    conduct_generation: 334
+  - timestamp: 2026-07-26T20:23:44.629Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Underwrite the evidence-backed historical receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-9b690051239c5022866ff55fa46641ff:335:compatibility
+    conduct_run_id: run-9b690051239c5022866ff55fa46641ff
+    conduct_lease_id: lease-335-9b690051239c5022
+    conduct_generation: 335
+  - timestamp: 2026-07-26T21:01:46.399Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: dispatched
+    output: Claim the evidence-backed merged receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-1c520d3ee0144c919c11fc0ead50c354:335:compatibility
+    conduct_run_id: run-1c520d3ee0144c919c11fc0ead50c354
+    conduct_lease_id: lease-335-1c520d3ee0144c91
+    conduct_generation: 335
+  - timestamp: 2026-07-26T21:01:53.314Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: done
+    output: "Observed merged Victoroff PR #18 with green exact-head checks and merge commit reachable from verified main 9ffa9b240d316d156e2001897ac05e6fc4cdcc0b."
+    lifecycle_repair: pr-observed-terminal
+    pr_observed_state: merged
+    pr_observed_ref: organvm/victoroff-os#18
+    predicate_exit_code: 0
+    verification_context_digest: db2327a2825504e877d352ecfeb46ffed4c3019d5f5ecd3ffd8b0df9fbab0dfa
+    remote_receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-001
+    conduct_event_id: conduct:run-232a2241b442b77b1a360db78ae9d5c7:336:compatibility
+    conduct_run_id: run-232a2241b442b77b1a360db78ae9d5c7
+    conduct_lease_id: lease-336-232a2241b442b77b
+    conduct_generation: 336
+  origin: human_prompt
+  horizon: past
+  value_case: The merged governance manifest gives every Victoroff governance source an explicit public-safe provenance and checksum contract.
+  receipt_verified: true
 - id: VIC-CONTRACT-001
   title: Victoroff governance and intent contracts
-  description: Add schemas and validation tests for GovernanceDocument, ActionIntent,
-    GovernanceResolution, and delivery checkpoints.
+  description: Add schemas and validation tests for GovernanceDocument, ActionIntent, GovernanceResolution, and delivery checkpoints.
   repo: organvm/victoroff-os
   type: code
   target_agent: jules
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - victoroff
   - canary
@@ -157094,38 +157148,84 @@ tasks:
   urls:
   - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
   - https://github.com/organvm/victoroff-os/actions/runs/29950685515
-  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
-    \nTask: VIC-CONTRACT-001 \u2014 Add schemas and validation tests for GovernanceDocument,\
-    \ ActionIntent, GovernanceResolution, and delivery checkpoints.\nRepository: organvm/victoroff-os\n\
-    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\nPhase/module: Phase 2 /\
-    \ contracts\nOwner: victoroff-contracts\nAllowed paths: packages/contracts/**\n\
-    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml\n\
-    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77;\
-    \ receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\nRequired\
-    \ behavior: Implement versioned schemas plus validation tests for the four named\
-    \ contracts without editing shared configuration or lockfiles.\nAuthority boundary:\
-    \ public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend,\
-    \ use real BBNC data, or represent client authority.\nPredicate: pnpm --filter\
-    \ @victoroff/contracts typecheck\nReceipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001\n\
-    \nReturn a bounded patch, tests, documentation, and the exact predicate result.\
-    \ Stop with a precise blocker if required authority or source is missing."
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-CONTRACT-001 — Add schemas and validation tests for GovernanceDocument, ActionIntent, GovernanceResolution, and delivery checkpoints.
+    Repository: organvm/victoroff-os
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
+    Phase/module: Phase 2 / contracts
+    Owner: victoroff-contracts
+    Allowed paths: packages/contracts/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515
+    Required behavior: Implement versioned schemas plus validation tests for the four named contracts without editing shared configuration or lockfiles.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @victoroff/contracts typecheck
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
   predicate: pnpm --filter @victoroff/contracts typecheck
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001
   depends_on: []
-  created: '2026-07-22'
-  updated: '2026-07-22T19:28:29.694840Z'
-  dispatch_log: []
+  created: 2026-07-22
+  updated: 2026-07-26T21:02:36.359Z
+  dispatch_log:
+  - timestamp: 2026-07-26T21:01:58.161Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Underwrite the evidence-backed historical receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-074186a86ff8d15279f3455a0efaf1e9:337:compatibility
+    conduct_run_id: run-074186a86ff8d15279f3455a0efaf1e9
+    conduct_lease_id: lease-337-074186a86ff8d152
+    conduct_generation: 337
+  - timestamp: 2026-07-26T21:02:31.831Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: dispatched
+    output: Claim the evidence-backed merged receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-ca73360e7306a39dc2b06a5d593a7451:338:compatibility
+    conduct_run_id: run-ca73360e7306a39dc2b06a5d593a7451
+    conduct_lease_id: lease-338-ca73360e7306a39d
+    conduct_generation: 338
+  - timestamp: 2026-07-26T21:02:36.359Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: done
+    output: "Observed merged Victoroff PR #19 with green exact-head checks and merge commit reachable from verified main 9ffa9b240d316d156e2001897ac05e6fc4cdcc0b."
+    lifecycle_repair: pr-observed-terminal
+    pr_observed_state: merged
+    pr_observed_ref: organvm/victoroff-os#19
+    predicate_exit_code: 0
+    verification_context_digest: 9a0d7f9ad79fd9b7eb251d4c12503a92efab9c65e504d115b5d3265cd57fa4ce
+    remote_receipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001
+    conduct_event_id: conduct:run-64d680755cbf34779d1a273f148a68f0:339:compatibility
+    conduct_run_id: run-64d680755cbf34779d1a273f148a68f0
+    conduct_lease_id: lease-339-64d680755cbf3477
+    conduct_generation: 339
+  origin: human_prompt
+  horizon: past
+  value_case: The merged governance and intent schemas give every Victoroff request a versioned, validated public-synthetic contract.
+  receipt_verified: true
 - id: VIC-DOMAIN-001
   title: Victoroff deterministic seven-intent resolver
-  description: Implement deterministic seven-intent resolver fixtures, authority precedence,
-    ambiguity and conflict handling, and tests.
+  description: Implement deterministic seven-intent resolver fixtures, authority precedence, ambiguity and conflict handling, and tests.
   repo: organvm/victoroff-os
   type: code
   target_agent: jules
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - victoroff
   - canary
@@ -157134,27 +157234,74 @@ tasks:
   urls:
   - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
   - https://github.com/organvm/victoroff-os/actions/runs/29950685515
-  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
-    \nTask: VIC-DOMAIN-001 \u2014 Implement deterministic seven-intent resolver fixtures,\
-    \ authority precedence, ambiguity and conflict handling, and tests.\nRepository:\
-    \ organvm/victoroff-os\nExact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\n\
-    Phase/module: Phase 2 / domain resolver\nOwner: victoroff-domain\nAllowed paths:\
-    \ packages/domain/**\nForbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json,\
-    \ pnpm-lock.yaml\nDependencies: control-main-green passed on exact remote main\
-    \ 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\n\
-    Required behavior: Resolve the seven registered ActionIntent values deterministically,\
-    \ preserve citations and conflicts, and return exactly one valid next action.\n\
-    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy,\
-    \ transfer, spend, use real BBNC data, or represent client authority.\nPredicate:\
-    \ pnpm --filter @victoroff/domain test\nReceipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001\n\
-    \nReturn a bounded patch, tests, documentation, and the exact predicate result.\
-    \ Stop with a precise blocker if required authority or source is missing."
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-DOMAIN-001 — Implement deterministic seven-intent resolver fixtures, authority precedence, ambiguity and conflict handling, and tests.
+    Repository: organvm/victoroff-os
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
+    Phase/module: Phase 2 / domain resolver
+    Owner: victoroff-domain
+    Allowed paths: packages/domain/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515
+    Required behavior: Resolve the seven registered ActionIntent values deterministically, preserve citations and conflicts, and return exactly one valid next action.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @victoroff/domain test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
   predicate: pnpm --filter @victoroff/domain test
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001
   depends_on: []
-  created: '2026-07-22'
-  updated: '2026-07-22T19:28:29.695237Z'
-  dispatch_log: []
+  created: 2026-07-22
+  updated: 2026-07-26T21:02:49.222Z
+  dispatch_log:
+  - timestamp: 2026-07-26T21:02:40.649Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Underwrite the evidence-backed historical receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-30b784d9b0e216008a73cb0dc96087ed:340:compatibility
+    conduct_run_id: run-30b784d9b0e216008a73cb0dc96087ed
+    conduct_lease_id: lease-340-30b784d9b0e21600
+    conduct_generation: 340
+  - timestamp: 2026-07-26T21:02:44.856Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: dispatched
+    output: Claim the evidence-backed merged receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-b94eeb7b685277916a5512e62a2ff1c9:341:compatibility
+    conduct_run_id: run-b94eeb7b685277916a5512e62a2ff1c9
+    conduct_lease_id: lease-341-b94eeb7b68527791
+    conduct_generation: 341
+  - timestamp: 2026-07-26T21:02:49.222Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: done
+    output: "Observed merged Victoroff PR #20 with green exact-head checks and merge commit reachable from verified main 9ffa9b240d316d156e2001897ac05e6fc4cdcc0b."
+    lifecycle_repair: pr-observed-terminal
+    pr_observed_state: merged
+    pr_observed_ref: organvm/victoroff-os#20
+    predicate_exit_code: 0
+    verification_context_digest: 9eb78871395673ac38334e0a826485fda068e2d52232f219d54b031944c4c2c6
+    remote_receipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001
+    conduct_event_id: conduct:run-af63a8f90f80bed2413fa5be8881155c:342:compatibility
+    conduct_run_id: run-af63a8f90f80bed2413fa5be8881155c
+    conduct_lease_id: lease-342-af63a8f90f80bed2
+    conduct_generation: 342
+  origin: human_prompt
+  horizon: past
+  value_case: The merged deterministic resolver closes authority precedence, ambiguity, conflict preservation, and the one-valid-next-action contract.
+  receipt_verified: true
 - id: GH-organvm-hospes-9
   title: HOSPES private Pilot 1 activation by 2026-08-05
   repo: organvm/hospes
@@ -159491,7 +159638,7 @@ tasks:
   workstream: governance
   priority: medium
   budget_cost: 2
-  status: open
+  status: done
   labels:
   - jules-engine
   - board-integrity
@@ -159517,8 +159664,58 @@ tasks:
     conduct_run_id: run-ffaebd491fd0265f57e5bfd0cd395ab9
     conduct_lease_id: lease-27-ffaebd491fd0265f
     conduct_generation: 27
+  - timestamp: 2026-07-26T21:05:02.139Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Route the now-green canary state reconciliation predicate to Codex.
+    route_to: codex
+    conduct_event_id: conduct:run-7731209cd4b6ae94ba715c0a4f6ab749:343:compatibility
+    conduct_run_id: run-7731209cd4b6ae94ba715c0a4f6ab749
+    conduct_lease_id: lease-343-7731209cd4b6ae94
+    conduct_generation: 343
+  - timestamp: 2026-07-26T21:05:07.587Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: dispatched
+    output: Claim the verified canary state reconciliation closeout.
+    route_to: codex
+    conduct_event_id: conduct:run-c6d515ed7699654387e5182d005ced14:344:compatibility
+    conduct_run_id: run-c6d515ed7699654387e5182d005ced14
+    conduct_lease_id: lease-344-c6d515ed76996543
+    conduct_generation: 344
+  - timestamp: 2026-07-26T21:05:12.207Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: in_progress
+    output: Validate all three canonical terminal receipts.
+    conduct_event_id: conduct:run-f73552fdb8044b8d15d98c1ee6ec0538:345:compatibility
+    conduct_run_id: run-f73552fdb8044b8d15d98c1ee6ec0538
+    conduct_lease_id: lease-345-f73552fdb8044b8d
+    conduct_generation: 345
+  - timestamp: 2026-07-26T21:05:16.948Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: done
+    output: All three canonical Victoroff canaries carry verified terminal receipts.
+    predicate_exit_code: 0
+    verification_context_digest: abb4b9feca31d654890db23397807ef3d2523049c86e2d68b44c65da7ce0374e
+    remote_receipt: git:organvm/limen:tasks.yaml#VIC-CANARY-STATE-RECONCILE
+    conduct_event_id: conduct:run-5f06fbaded47547f701a3521cf5d6862:346:compatibility
+    conduct_run_id: run-5f06fbaded47547f701a3521cf5d6862
+    conduct_lease_id: lease-346-5f06fbaded47547f
+    conduct_generation: 346
   source_origin: agent_recommendation
-  updated: 2026-07-23T11:45:40.273Z
+  updated: 2026-07-26T21:05:16.948Z
+  receipt_verified: true
 - id: JULES-RECOVERY-EFFECTORS
   title: Effectors for Jules orphan/recovery sessions (25 orphans, 22 recovery)
   description: "The jules-quota sensor alarms on orphaned completed sessions and recovery states (failed / awaiting feedback / awaiting plan approval) but only landing has an effector (jules-land). Build the recovery effectors: land-or-adopt each orphan (jules remote pull --session <id> --apply in an isolated worktree, run its predicate, PR, or record adoption in docs/jules-orphan-adoptions.jsonl), relaunch Failed sessions as fresh bounded packets, and abandon+relaunch stale awaiting-feedback sessions (the CLI has no answer verb). Sensor-without-effector is a defect class; this closes it."
@@ -159737,3 +159934,86 @@ tasks:
     conduct_lease_id: lease-32-7f189064a53ebc04
     conduct_generation: 32
   updated: 2026-07-23T17:29:44.354Z
+- id: 'TABVLARIVS-YAML-STRING-TYPES-20260726'
+  title: 'Preserve YAML string types in the TABVLARIVS projection'
+  description: 'Quote keeper-generated string scalars so YAML 1.1-compatible consumers cannot coerce dates or timestamps into non-string schema values.'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'codex'
+  workstream: 'laptop-wide-recovery'
+  priority: 'critical'
+  budget_cost: 1
+  status: 'done'
+  labels:
+  - 'control-plane'
+  - 'task-board'
+  - 'omega'
+  urls:
+  - 'https://github.com/organvm/limen/pull/1564'
+  - 'https://github.com/organvm/limen/actions/runs/30220735165'
+  - 'https://github.com/organvm/limen/actions/runs/30221389398'
+  context: 'PR #1564 merged through the protected queue; exact-main CI and the exact-head production deployment are the immutable implementation evidence.'
+  predicate: 'test "$(gh pr view 1564 --repo organvm/limen --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/limen/pull/1564'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Restore a parseable keeper-owned board projection without hand-editing tasks.yaml.'
+  owner_surface: 'organvm/limen'
+  depends_on: []
+  created: '2026-07-26'
+  dispatch_log:
+  - timestamp: '2026-07-26T21:37:25.324Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-43c9e01fd1087f3e9cbd1b597879da38:347:compatibility'
+    conduct_run_id: 'run-43c9e01fd1087f3e9cbd1b597879da38'
+    conduct_lease_id: 'lease-347-43c9e01fd1087f3e'
+    conduct_generation: 347
+  - timestamp: '2026-07-26T21:37:31.060Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'dispatched'
+    output: 'Exact-main repair merged and deployed; reconcile the live projection.'
+    base_sha: 'a7390f5d4f647ff8658ae728fd1f49b4bd252026'
+    workflow_id: 30221389398
+    conduct_event_id: 'conduct:run-730055542bfcdc35b474226f6c00420a:348:compatibility'
+    conduct_run_id: 'run-730055542bfcdc35b474226f6c00420a'
+    conduct_lease_id: 'lease-348-730055542bfcdc35'
+    conduct_generation: 348
+  - timestamp: '2026-07-26T21:37:35.750Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'in_progress'
+    output: 'Applying the corrected serializer through the authenticated keeper.'
+    base_sha: 'a7390f5d4f647ff8658ae728fd1f49b4bd252026'
+    workflow_id: 30221389398
+    conduct_event_id: 'conduct:run-7e0324c0065da2e2d1fd39df40f43ab8:349:compatibility'
+    conduct_run_id: 'run-7e0324c0065da2e2d1fd39df40f43ab8'
+    conduct_lease_id: 'lease-349-7e0324c0065da2e2'
+    conduct_generation: 349
+  - timestamp: '2026-07-26T21:37:40.873Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'done'
+    output: 'Merged exact-main serializer repair is live in production.'
+    base_sha: 'a7390f5d4f647ff8658ae728fd1f49b4bd252026'
+    workflow_id: 30221389398
+    predicate_exit_code: 0
+    verification_context_digest: '3da8406d55a46ec4bf6e86ab7571b9987ba8fcf026b2df3c5de86b0f8d4a7c37'
+    remote_receipt: 'https://github.com/organvm/limen/pull/1564'
+    conduct_event_id: 'conduct:run-6350972e111ed6bc3e33f850b884b73f:350:compatibility'
+    conduct_run_id: 'run-6350972e111ed6bc3e33f850b884b73f'
+    conduct_lease_id: 'lease-350-6350972e111ed6bc'
+    conduct_generation: 350
+  updated: '2026-07-26T21:37:40.873Z'
+  receipt_verified: true
