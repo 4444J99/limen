@@ -152,10 +152,24 @@ corpora:
     redacted: true
     path: ingest/atoms.jsonl
     owner: session-meta
+    harvest_sources:
+      - copilot-captures-2026-03
+      - gemini-export-2025-10
+      - browser
+      - misc-vendor-captures
+      - chatgpt-gap-pull-2026-07-14
     note: >
-      The atomized, redacted flat stream over the whole raw archive (~1.36 GB). Already one
-      record per conversation turn, so it is the cheapest harvest source — no re-parsing of
-      provider-native shapes required.
+      The atomized, redacted flat stream over the whole raw archive (~1.36 GB, ~336k
+      records, 4,020 sessions). Already one record per conversation turn, so it is the
+      cheapest harvest source — no re-parsing of provider-native shapes required.
+      harvest_sources is the brainstorm-harvest allowlist: only sessions whose `source`
+      is listed mint extracts. The listed five (~17 sessions, measured 2026-07-26) are
+      conversational material no CCE corpus covers — they fill the copilot/gemini
+      vacuums with real content. Deliberately excluded, with reasons: `codex` (2,469
+      agent rollouts, work logs not brainstorms), `claude-projects` (1,222, overlaps
+      claude-local-session-memory), `chatgpt-export-2026-04` (150, overlaps
+      chatgpt-local-session-memory; reconcile at Phase-C convergence),
+      `knowledge-base-canonical-sources` (162, reference documents not conversations).
 
 # ── declared-but-unpopulated ─────────────────────────────────────────────────────────────
 # CCE's provider catalog names a corpus id for each of these; none has ever been populated.
