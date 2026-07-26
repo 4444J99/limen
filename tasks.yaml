@@ -1,10 +1,10 @@
 version: '1.0'
 portal:
-  name: Universal Task Intake
-  description: One file to aim every agent you have — cross-repo, cross-agent, budget-capped
+  name: 'Universal Task Intake'
+  description: 'One file to aim every agent you have — cross-repo, cross-agent, budget-capped'
   budget:
     daily: 600
-    unit: runs
+    unit: 'runs'
     per_agent:
       jules: 100
       gemini: 10
@@ -13,28 +13,28 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: 2026-07-26
-      spent: 5
+      date: '2026-07-26'
+      spent: 6
       per_agent:
         jules: 0
         gemini: 0
-        codex: 5
+        codex: 6
         opencode: 0
         agy: 0
         claude: 0
       per_agent_reset:
-        jules: 2026-07-21T01:53:14.706904+00:00
-        gemini: 2026-07-21T01:53:14.706904+00:00
-        codex: 2026-07-21T19:50:50.757267+00:00
-        opencode: 2026-07-21T01:53:14.706904+00:00
-        agy: 2026-07-21T01:53:14.706904+00:00
-        claude: 2026-07-21T19:50:50.757267+00:00
+        jules: '2026-07-21T01:53:14.706904+00:00'
+        gemini: '2026-07-21T01:53:14.706904+00:00'
+        codex: '2026-07-21T19:50:50.757267+00:00'
+        opencode: '2026-07-21T01:53:14.706904+00:00'
+        agy: '2026-07-21T01:53:14.706904+00:00'
+        claude: '2026-07-21T19:50:50.757267+00:00'
   agents:
     opencode:
-      status: idle
+      status: 'idle'
       accepting_tasks: true
       token_usage_pct: 0
-      clock_health: ok
+      clock_health: 'ok'
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
@@ -159943,7 +159943,7 @@ tasks:
   workstream: 'laptop-wide-recovery'
   priority: 'critical'
   budget_cost: 1
-  status: 'open'
+  status: 'dispatched'
   labels:
   - 'control-plane'
   - 'task-board'
@@ -159973,4 +159973,17 @@ tasks:
     conduct_run_id: 'run-43c9e01fd1087f3e9cbd1b597879da38'
     conduct_lease_id: 'lease-347-43c9e01fd1087f3e'
     conduct_generation: 347
-  updated: '2026-07-26T21:37:25.324Z'
+  - timestamp: '2026-07-26T21:37:31.060Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'dispatched'
+    output: 'Exact-main repair merged and deployed; reconcile the live projection.'
+    base_sha: 'a7390f5d4f647ff8658ae728fd1f49b4bd252026'
+    workflow_id: 30221389398
+    conduct_event_id: 'conduct:run-730055542bfcdc35b474226f6c00420a:348:compatibility'
+    conduct_run_id: 'run-730055542bfcdc35b474226f6c00420a'
+    conduct_lease_id: 'lease-348-730055542bfcdc35'
+    conduct_generation: 348
+  updated: '2026-07-26T21:37:31.060Z'
