@@ -1,8 +1,7 @@
 version: '1.0'
 portal:
   name: Universal Task Intake
-  description: "One file to aim every agent you have \u2014 cross-repo, cross-agent,\
-    \ budget-capped"
+  description: One file to aim every agent you have — cross-repo, cross-agent, budget-capped
   budget:
     daily: 600
     unit: runs
@@ -14,29 +13,27 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-07-21'
-      spent: 4
+      date: 2026-07-26
+      spent: 1
       per_agent:
         jules: 0
         gemini: 0
-        codex: 0
+        codex: 1
         opencode: 0
         agy: 0
         claude: 0
-        github_actions: 1
-        ollama: 3
       per_agent_reset:
-        jules: '2026-07-21T01:53:14.706904+00:00'
-        gemini: '2026-07-21T01:53:14.706904+00:00'
-        codex: '2026-07-21T19:50:50.757267+00:00'
-        opencode: '2026-07-21T01:53:14.706904+00:00'
-        agy: '2026-07-21T01:53:14.706904+00:00'
-        claude: '2026-07-21T19:50:50.757267+00:00'
+        jules: 2026-07-21T01:53:14.706904+00:00
+        gemini: 2026-07-21T01:53:14.706904+00:00
+        codex: 2026-07-21T19:50:50.757267+00:00
+        opencode: 2026-07-21T01:53:14.706904+00:00
+        agy: 2026-07-21T01:53:14.706904+00:00
+        claude: 2026-07-21T19:50:50.757267+00:00
   agents:
     opencode:
       status: idle
       accepting_tasks: true
-      token_usage_pct: 0.0
+      token_usage_pct: 0
       clock_health: ok
 tasks:
 - id: FORCE-route-all-services
@@ -157044,7 +157041,7 @@ tasks:
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - victoroff
   - canary
@@ -157074,7 +157071,7 @@ tasks:
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-GOV-001
   depends_on: []
   created: 2026-07-22
-  updated: 2026-07-26T20:23:44.629Z
+  updated: 2026-07-26T21:01:46.399Z
   dispatch_log:
   - timestamp: 2026-07-26T20:21:14.545Z
     agent: codex
@@ -157099,6 +157096,18 @@ tasks:
     conduct_event_id: conduct:run-9b690051239c5022866ff55fa46641ff:335:compatibility
     conduct_run_id: run-9b690051239c5022866ff55fa46641ff
     conduct_lease_id: lease-335-9b690051239c5022
+    conduct_generation: 335
+  - timestamp: 2026-07-26T21:01:46.399Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: dispatched
+    output: Claim the evidence-backed merged receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-1c520d3ee0144c919c11fc0ead50c354:335:compatibility
+    conduct_run_id: run-1c520d3ee0144c919c11fc0ead50c354
+    conduct_lease_id: lease-335-1c520d3ee0144c91
     conduct_generation: 335
   origin: human_prompt
   horizon: past
