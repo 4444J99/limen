@@ -105200,7 +105200,7 @@ tasks:
   context: 'GitHub issue organvm/limen#640. Fable adjudication of Codex session 019f2a04 (full-stack review founding run) found template drift in docs/agent-code-diff-review.md: of 182 entries in the ledger at the session''s last commit (f404f85), only 124 carry the literal `Ideal prompt diff:` section and 123 carry `What was fucked up:` (182/182 have Severity+Evidence; 179 have Verification+Result). Those two lenses are the mandate''s signat'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-26T21:50:36.306Z'
+  updated: '2026-07-26T21:53:04.008Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
     agent: 'codex'
@@ -105233,8 +105233,23 @@ tasks:
     conduct_run_id: 'run-0e506dc8b122df32754243121016c537'
     conduct_lease_id: 'lease-360-0e506dc8b122df32'
     conduct_generation: 360
+  - timestamp: '2026-07-26T21:53:04.008Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-283b185e4cbdeb0ab419d13c221e7531:372:compatibility'
+    conduct_run_id: 'run-283b185e4cbdeb0ab419d13c221e7531'
+    conduct_lease_id: 'lease-372-283b185e4cbdeb0a'
+    conduct_generation: 372
   predicate: 'test "$(gh issue view 640 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/640'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GH-organvm-limen-640 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: ORG-hr-organ-kernel-0704
   title: Map the VLTIMA 5-primitive kernel to the hr organ
   repo: organvm/limen
