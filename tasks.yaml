@@ -14,11 +14,11 @@ portal:
       claude: 100
     track:
       date: 2026-07-26
-      spent: 1
+      spent: 2
       per_agent:
         jules: 0
         gemini: 0
-        codex: 1
+        codex: 2
         opencode: 0
         agy: 0
         claude: 0
@@ -157139,7 +157139,7 @@ tasks:
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - victoroff
   - canary
@@ -157169,7 +157169,7 @@ tasks:
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001
   depends_on: []
   created: 2026-07-22
-  updated: 2026-07-26T21:01:58.161Z
+  updated: 2026-07-26T21:02:31.831Z
   dispatch_log:
   - timestamp: 2026-07-26T21:01:58.161Z
     agent: codex
@@ -157183,6 +157183,18 @@ tasks:
     conduct_run_id: run-074186a86ff8d15279f3455a0efaf1e9
     conduct_lease_id: lease-337-074186a86ff8d152
     conduct_generation: 337
+  - timestamp: 2026-07-26T21:02:31.831Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: dispatched
+    output: Claim the evidence-backed merged receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-ca73360e7306a39dc2b06a5d593a7451:338:compatibility
+    conduct_run_id: run-ca73360e7306a39dc2b06a5d593a7451
+    conduct_lease_id: lease-338-ca73360e7306a39d
+    conduct_generation: 338
   origin: human_prompt
   horizon: past
   value_case: The merged governance and intent schemas give every Victoroff request a versioned, validated public-synthetic contract.
