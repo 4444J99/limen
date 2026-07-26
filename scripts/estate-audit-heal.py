@@ -334,6 +334,31 @@ def _worktree_root() -> Path:
     return Path(wt)
 
 
+def _cleanup_owned_clone(clone_dir: Path, *, owned_by_invocation: bool) -> tuple[bool, str]:
+    """Remove only a clone target created by this organ in the current invocation.
+
+    Estate audit clones are disposable execution caches. Detection/no-value runs have no
+    durable local payload, and an armed run becomes disposable once its exact commit is pushed.
+    Guard the destructive edge by requiring the generated basename, the configured direct
+    parent, and a non-symlink target. A missing target is already at the fixed point.
+    """
+    if not owned_by_invocation:
+        return False, "refused-unowned-target"
+    root = _worktree_root().resolve()
+    target = clone_dir.resolve(strict=False)
+    if target.parent != root or not target.name.startswith("estate-audit-"):
+        return False, "refused-outside-generated-root"
+    if clone_dir.is_symlink():
+        return False, "refused-symlink"
+    if not clone_dir.exists():
+        return True, "absent"
+    try:
+        shutil.rmtree(clone_dir)
+    except OSError as exc:
+        return False, f"cleanup-failed:{type(exc).__name__}"
+    return True, "removed"
+
+
 def _npm_project_dirs(repo_root: Path) -> list[Path]:
     """A repo's npm/pnpm project dirs: the root if it has a lockfile, plus immediate children with one
     (covers the common flat + shallow-monorepo layouts). Deep workspace trees are handled by the root
@@ -354,12 +379,32 @@ def heal_repo(repo: str, *, apply: bool) -> dict:
     clone_dir = _worktree_root() / f"estate-audit-{repo.split('/')[-1]}-{stamp}"
     report: dict = {"repo": repo, "tier1": {}, "tier2": [], "human": [], "pr": None, "error": None}
 
+    # Atomically reserve the empty target. This closes the same-second race where two runs both
+    # observe absence and the losing clone could otherwise delete the winner's in-flight directory.
+    try:
+        clone_dir.mkdir()
+    except FileExistsError:
+        report["error"] = "clone target already exists"
+        return report
+    except OSError as exc:
+        report["error"] = f"clone target reservation failed:{type(exc).__name__}"
+        return report
+    owned_by_invocation = True
+
     dbase = _gh(["api", f"/repos/{repo}", "--jq", ".default_branch"], timeout=20)
     default = (dbase.stdout or "").strip() or "main"
     clone = _gh(["repo", "clone", repo, str(clone_dir), "--", "--depth=1"], timeout=180)
     if clone.returncode != 0:
         report["error"] = "clone failed"
+        cleaned, detail = _cleanup_owned_clone(clone_dir, owned_by_invocation=owned_by_invocation)
+        report["clone_cleanup"] = detail
+        if not cleaned:
+            report["clone_retained"] = clone_dir.name
         return report
+
+    # Detection/no-value clones are disposable. Once an armed commit exists locally, retain it
+    # until push establishes remote custody; after push, cleanup is safe even if PR creation fails.
+    cleanup_on_exit = True
     try:
         project_dirs = _npm_project_dirs(clone_dir)
         aggregate_tier1: dict[str, dict] = {}
@@ -381,6 +426,7 @@ def heal_repo(repo: str, *, apply: bool) -> dict:
 
         # armed: branch, commit the changed manifests+lockfiles, push, open PR (NO merge)
         branch = f"fix/audit-heal-{stamp}"
+        cleanup_on_exit = False
         _bounded_git(clone_dir, "checkout", "-b", branch)
         _bounded_git(clone_dir, "add", "-A")
         msg = ("fix: pin verify-cleared audit advisories via overrides\n\n"
@@ -394,6 +440,8 @@ def heal_repo(repo: str, *, apply: bool) -> dict:
         if push.returncode != 0:
             report["error"] = "push failed"
             return report
+        report["remote_branch"] = branch
+        cleanup_on_exit = True
         tier2_note = ("\n\n**Deferred to Dependabot (Tier-2, override-resistant / framework-major-held):** "
                       + ", ".join(report["tier2"])) if report["tier2"] else ""
         body = ("Auto-authored by `scripts/estate-audit-heal.py` — the estate dependency-audit healer.\n\n"
@@ -407,7 +455,15 @@ def heal_repo(repo: str, *, apply: bool) -> dict:
         report["pr"] = "opened" if pr.returncode == 0 else f"pr-create-failed: {(pr.stderr or '')[:80]}"
         return report
     finally:
-        report["clone"] = str(clone_dir)  # retained for reclaim organs
+        if cleanup_on_exit:
+            cleaned, detail = _cleanup_owned_clone(clone_dir, owned_by_invocation=owned_by_invocation)
+            report["clone_cleanup"] = detail
+            if not cleaned:
+                report["clone_retained"] = clone_dir.name
+                if not report.get("error"):
+                    report["error"] = f"clone cleanup failed:{detail}"
+        else:
+            report["clone_retained"] = clone_dir.name
 
 
 # ---------------------------------------------------------------------------
