@@ -632,17 +632,6 @@
       "issue": 1190
     },
     {
-      "id": "L-SEO-METADATA",
-      "label": "Arm the repo-metadata effector: setting LIMEN_REPO_METADATA_APPLY=1 (with LIMEN_GITVS_APPLY=1 so the reconcile beat dispatches it) lets repo-metadata-sync.py write description/topics/homepage on governed public repos — outward-facing but reversible. Seeds (positioning-seeds.json, seo-seeds.yaml) win; derivation only fills gaps, never overwrites a human-set value; bounded 25 repos/run. Review one dry plan first: python3 scripts/repo-metadata-sync.py",
-      "owner": "him",
-      "cost": "5 min review + one env flip",
-      "status": "needs_human",
-      "gate": "review the dry plan; set LIMEN_REPO_METADATA_APPLY=1 in the runtime env",
-      "unlocks": [],
-      "source_task": "publication-engine lane (SEO organ)",
-      "issue": 1191
-    },
-    {
       "id": "L-ORG-TEAM-UPGRADE",
       "label": "Upgrade the `organvm` org to Team (~$4/mo) — the ONE surviving atom of the old enterprise-cancel lever (#1185, closed with receipts). The Enterprise half is DONE by machine (2026-07-17): all 8 shell orgs were removed from the meta-organvm enterprise via scripted same-origin form posts (0 organizations, 0 consumed licenses, every org standalone on the free plan, names kept; gitvs doctor class J green, verified live). Team on organvm arms private-repo rulesets/branch-protection (#257). Optional, unforced: delete the now-empty meta-organvm enterprise container.",
       "owner": "yours",
