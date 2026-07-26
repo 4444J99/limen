@@ -17,7 +17,7 @@ CHECK = ROOT / "scripts" / "check-sensors.py"
 
 
 def run(*extra):
-    return subprocess.run([sys.executable, str(CHECK), *extra], capture_output=True, text=True)
+    return subprocess.run([sys.executable, str(CHECK), *extra], capture_output=True, text=True, check=False)
 
 
 def _mod():
@@ -195,12 +195,76 @@ sensors:
         escalation: skipped
     omega_eligible:
       - label: arbitrary parity
+        rung_id: sensor.arbitrary.parity
+        tier: det
+        command: "python3 scripts/gitvs.py doctor --offline --parity-only"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
+""",
+    )
+    r = run("--registry", str(reg))
+    assert r.returncode == 0, r.stdout
+
+
+def test_omega_identity_and_semantic_input_contract_fails_closed(tmp_path):
+    reg = _write(
+        tmp_path,
+        """\
+sensors:
+  alpha:
+    section: heartbeat
+    source: [metabolize]
+    gate: LIMEN_GITVS
+    default: "1"
+    steps:
+      - {command: "python3 scripts/gitvs.py reconcile", severity: silent, escalation: skipped}
+    omega_eligible:
+      - label: alpha
+        rung_id: sensor.duplicate
+        tier: det
+        command: "python3 scripts/gitvs.py doctor --offline --parity-only"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
+      - label: beta
+        rung_id: sensor.duplicate
+        tier: det
+        command: "python3 scripts/gitvs.py doctor --offline --parity-only"
+        semantic_inputs:
+          - path: /absolute/not-allowed.json
+            normalization: opaque
+            volatile_fields: [anything]
+""",
+    )
+    r = run("--registry", str(reg))
+    assert r.returncode == 1
+    assert "duplicate rung_id sensor.duplicate" in r.stdout
+    assert "safe relative path" in r.stdout
+    assert "normalization" in r.stdout
+    assert "undeclared field" in r.stdout
+
+
+def test_omega_capability_requires_stable_id_and_semantic_inputs(tmp_path):
+    reg = _write(
+        tmp_path,
+        """\
+sensors:
+  alpha:
+    section: heartbeat
+    source: [metabolize]
+    gate: LIMEN_GITVS
+    default: "1"
+    steps:
+      - {command: "python3 scripts/gitvs.py reconcile", severity: silent, escalation: skipped}
+    omega_eligible:
+      - label: alpha
         tier: det
         command: "python3 scripts/gitvs.py doctor --offline --parity-only"
 """,
     )
     r = run("--registry", str(reg))
-    assert r.returncode == 0, r.stdout
+    assert r.returncode == 1
+    assert "rung_id is missing or invalid" in r.stdout
+    assert "semantic_inputs: must be a non-empty list" in r.stdout
 
 
 def test_unreachable_heartbeat_sensor_without_cadence_fails_f(tmp_path):

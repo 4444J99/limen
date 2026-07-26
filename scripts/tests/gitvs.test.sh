@@ -298,12 +298,14 @@ estate = {
                  "seo": {"description": "required", "topics_min": 2, "homepage": "required"}},
     },
     "repo_overrides": {
-        "o/candidate": {"class": "pub", "why": "wave", "publish_candidate": True},
+        "o/candidate-private": {"class": "priv", "why": "wave", "publish_candidate": True},
+        "o/candidate-public": {"class": "priv", "why": "wave", "publish_candidate": True},
         "o/leak": {"class": "priv", "why": "vault"},
     },
 }
 rows = [
-    {"full_name": "o/candidate", "private": True},                       # desired pub, cand -> CITE
+    {"full_name": "o/candidate-private", "private": True},               # desired pub, cand -> CITE
+    {"full_name": "o/candidate-public", "private": False},               # desired pub, cand -> converged
     {"full_name": "o/leak", "private": False},                           # desired priv, public -> FAIL
     {"full_name": "o/fork", "private": True, "fork": True},              # any -> exempt
     {"full_name": "o/ok", "private": False, "description": "d", "topics_count": 3, "homepage": "h"},
@@ -312,7 +314,7 @@ rows = [
 fails, cites = g.visibility_drift(rows, estate)
 gaps = g.seo_floor_gaps(rows, estate)
 print(len(fails), len(cites), len(gaps))
-print("leak" in fails[0], "candidate" in cites[0])
+print("leak" in fails[0], "candidate-private" in cites[0])
 print(gaps[0].startswith("o/bare:") and "description" in gaps[0] and "topics<2" in gaps[0] and "homepage" in gaps[0])
 PY
 )"
@@ -322,6 +324,39 @@ True" ]; then
   pass=$((pass+1))
 else
   echo "  MISMATCH (case18 G/K pure rungs): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
+# ── Case 18b: the metadata effector fills the declared topic floor without replacing human topics ──
+out="$(python3 - <<PY
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("repo_metadata", "$ROOT/scripts/repo-metadata-sync.py")
+m = importlib.util.module_from_spec(spec); sys.modules["repo_metadata"] = m
+spec.loader.exec_module(m)
+row = {
+    "full_name": "o/plain",
+    "description": "kept",
+    "homepage": "",
+    "topics_count": 1,
+    "_current_topics": ["human-topic"],
+    "language": "Python",
+}
+want = m.desired_for(
+    row, {}, {}, "https://example.test", ["open-source", "developer-tools", "organvm"],
+    {"topics_min": 3, "homepage": "optional"},
+)
+print(want["description"])
+print(want["homepage"] == "")
+print(want["topics"])
+print(len(want["topics"]) >= 3 and want["topics"][0] == "human-topic")
+PY
+)"
+if [ "$out" = "kept
+True
+['human-topic', 'plain', 'python', 'open-source', 'developer-tools', 'organvm']
+True" ]; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case18b metadata topic floor): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
 
 # ── Case 19: a well-formed `orgs:` (ACCOUNT-layer) row passes ──

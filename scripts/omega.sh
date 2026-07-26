@@ -30,7 +30,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="$ROOT/cli/src${PYTHONPATH:+:$PYTHONPATH}"
 STAMP="$ROOT/logs/omega.json"   # derived from ROOT; the test drives it via a temp-ROOT copy
-OMEGA_SCHEMA_VERSION=1
+OMEGA_SCHEMA_VERSION=2
 
 OFFLINE=0
 FULL=0
@@ -51,11 +51,11 @@ PASS_N=0; FAIL_N=0; SKIP_N=0
 declare -a ROWS=()      # "STATUS\tlabel" for the summary table
 declare -a JSON_ROWS=() # {"rung":..,"tier":..,"status":..} for the stamp
 
-# rung <label> <tier:det|live> <cmd...>
+# rung <stable-id> <label> <tier:det|live> <cmd...>
 # Runs the command, classifies PASS/FAIL/SKIP, tallies, and records a row. A live rung in
 # --offline mode is SKIPped without running. Child stdout/stderr is shown unless --quiet.
 rung() {
-  local label="$1"; local tier="$2"; shift 2
+  local rung_id="$1"; local label="$2"; local tier="$3"; shift 3
   local status
   if [[ "$tier" == "live" && "$OFFLINE" == "1" ]]; then
     status="SKIP"
@@ -75,71 +75,80 @@ rung() {
     SKIP) SKIP_N=$((SKIP_N+1)) ;;
   esac
   ROWS+=("$status	[$tier] $label")
-  JSON_ROWS+=("{\"rung\":\"$label\",\"tier\":\"$tier\",\"status\":\"$status\"}")
+  JSON_ROWS+=("{\"id\":\"$rung_id\",\"rung\":\"$label\",\"tier\":\"$tier\",\"status\":\"$status\"}")
 }
 
-# skip_rung <label> <tier> <reason> — a rung with no runnable predicate YET (reported, never faked).
+# skip_rung <stable-id> <label> <tier> <reason> — no runnable predicate YET (reported, never faked).
 skip_rung() {
-  local label="$1"; local tier="$2"; local reason="$3"
+  local rung_id="$1"; local label="$2"; local tier="$3"; local reason="$4"
   SKIP_N=$((SKIP_N+1))
   ROWS+=("SKIP	[$tier] $label — $reason")
-  JSON_ROWS+=("{\"rung\":\"$label\",\"tier\":\"$tier\",\"status\":\"SKIP\",\"reason\":\"$reason\"}")
+  JSON_ROWS+=("{\"id\":\"$rung_id\",\"rung\":\"$label\",\"tier\":\"$tier\",\"status\":\"SKIP\",\"reason\":\"$reason\"}")
 }
 
 cd "$ROOT"
 
-# Discover the registry-owned rungs once.  The same normalized rows feed both execution and the
-# contract hash, so the stamp identifies the exact contract that produced its verdict.  Sorting in
-# the hash makes registry serialization order irrelevant while add/remove/rename/capability changes
-# still change the identity.
-SENSOR_OMEGA_ROWS="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors.XXXXXX")"
-trap 'rm -f "$SENSOR_OMEGA_ROWS"' EXIT
+# Discover the registry-owned rungs once through the stable JSON contract. A private TSV projection
+# carries only the execution coordinates Bash needs; the JSON contract and explicit core registry
+# remain the semantic identity hashed into every stamp.
+CORE_RUNG_REGISTRY="$ROOT/institutio/governance/omega-core-rungs.json"
+SENSOR_OMEGA_JSON="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors-json.XXXXXX")"
+SENSOR_OMEGA_ROWS="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors-tsv.XXXXXX")"
+trap 'rm -f "$SENSOR_OMEGA_JSON" "$SENSOR_OMEGA_ROWS"' EXIT
 SENSOR_DISCOVERY_OK=0
-if python3 "$ROOT/scripts/beat-sensors.py" --list-omega > "$SENSOR_OMEGA_ROWS"; then
-  SENSOR_DISCOVERY_OK=1
-fi
-CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" "$SENSOR_OMEGA_ROWS" <<'PY'
-import hashlib
+if python3 "$ROOT/scripts/beat-sensors.py" --list-omega-json > "$SENSOR_OMEGA_JSON" && \
+   python3 - "$SENSOR_OMEGA_JSON" > "$SENSOR_OMEGA_ROWS" <<'PY'
 import json
 import sys
 from pathlib import Path
 
-script_path, sensor_path = map(Path, sys.argv[1:])
-rows = []
-for raw in sensor_path.read_text(encoding="utf-8").splitlines():
-    if not raw:
-        continue
-    parts = raw.split("\t", 5)
-    if len(parts) != 6:
-        raise SystemExit(f"invalid omega sensor row: {raw!r}")
-    sensor_id, check_index, tier, label, command, timeout_token = parts
-    try:
-        timeout = json.loads(timeout_token)
-    except json.JSONDecodeError as exc:
-        raise SystemExit(f"invalid omega sensor timeout {timeout_token!r}: {exc}") from exc
-    if timeout is not None and (type(timeout) is not int or timeout <= 0):
-        raise SystemExit(f"invalid omega sensor timeout: {timeout!r}")
-    rows.append(
-        {
-            "check_index": int(check_index),
-            "id": sensor_id,
-            "label": label,
-            "tier": tier,
-            "command": command,
-            "timeout": timeout,
-        }
-    )
-normalized = json.dumps(
-    sorted(rows, key=lambda row: (row["id"], row["check_index"], row["tier"], row["label"])),
-    ensure_ascii=True,
-    separators=(",", ":"),
-    sort_keys=True,
-).encode("ascii")
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+if payload.get("schema") != "limen.omega_sensor_rungs.v1":
+    raise SystemExit("unknown sensor rung discovery schema")
+for rung in payload.get("rungs", []):
+    fields = [rung["id"], rung["sensor_id"], str(rung["check_index"]), rung["tier"], rung["label"]]
+    if any("\t" in field or "\n" in field for field in fields):
+        raise SystemExit("invalid tab/newline in omega sensor execution metadata")
+    print("\t".join(fields))
+PY
+then
+  SENSOR_DISCOVERY_OK=1
+fi
+CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" "$CORE_RUNG_REGISTRY" "$SENSOR_OMEGA_JSON" <<'PY'
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+script_path, core_path, sensor_path = map(Path, sys.argv[1:])
+core = json.loads(core_path.read_text(encoding="utf-8"))
+sensors = json.loads(sensor_path.read_text(encoding="utf-8"))
+if core.get("schema") != "limen.omega_rung_registry.v1":
+    raise SystemExit("unknown core rung schema")
+if sensors.get("schema") != "limen.omega_sensor_rungs.v1":
+    raise SystemExit("unknown sensor rung schema")
+ids = []
+for rung in [*core.get("rungs", []), *sensors.get("rungs", [])]:
+    rung_id = rung.get("id")
+    if not isinstance(rung_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9_.-]*", rung_id):
+        raise SystemExit("missing or invalid omega rung id")
+    if not rung.get("semantic_inputs"):
+        raise SystemExit(f"{rung_id}: missing semantic inputs")
+    ids.append(rung_id)
+if len(ids) != len(set(ids)):
+    raise SystemExit("duplicate omega rung id")
+core_for_hash = {**core, "rungs": sorted(core["rungs"], key=lambda rung: rung["id"])}
+sensors_for_hash = {**sensors, "rungs": sorted(sensors["rungs"], key=lambda rung: rung["id"])}
+normalized_core = json.dumps(core_for_hash, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("ascii")
+normalized_sensors = json.dumps(sensors_for_hash, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("ascii")
 digest = hashlib.sha256()
 digest.update(b"omega.sh\0")
 digest.update(script_path.read_bytes())
+digest.update(b"\0normalized-core-rungs\0")
+digest.update(normalized_core)
 digest.update(b"\0normalized-sensor-rungs\0")
-digest.update(normalized)
+digest.update(normalized_sensors)
 print(digest.hexdigest())
 PY
 )"
@@ -158,66 +167,66 @@ echo "══ omega.sh — autonomic fixed-point predicate$([[ $OFFLINE == 1 ]] &
 # 1. main green — the trunk itself compiles/tests/builds. Authoritative locally via verify-whole.sh
 #    (--full); on the beat require the workflow-filtered completed CI run for the exact origin/main.
 if [[ "$FULL" == "1" ]]; then
-  rung "main-green (verify-whole)" det bash "$ROOT/scripts/verify-whole.sh"
+  rung core.main-green "main-green (verify-whole)" det bash "$ROOT/scripts/verify-whole.sh"
 elif command -v gh >/dev/null 2>&1 && [[ "$OFFLINE" == "0" ]]; then
-  rung "main-green (exact-head completed CI)" live env LIMEN_ROOT="$ROOT" python3 "$ROOT/scripts/check-main-green.py" --exact-head-check
+  rung core.main-green "main-green (exact-head completed CI)" live env LIMEN_ROOT="$ROOT" python3 "$ROOT/scripts/check-main-green.py" --exact-head-check
 else
-  skip_rung "main-green" live "no gh / offline — run omega.sh --full for the authoritative check"
+  skip_rung core.main-green "main-green" live "no gh / offline — run omega.sh --full for the authoritative check"
 fi
 
 # 2. enactment — every declared-ON fleet gate is actually wired live, not merely merged.
-rung "enactment (gates wired)" det python3 "$ROOT/scripts/enactment-audit.py" --check --wiring-only
+rung core.enactment "enactment (gates wired)" det python3 "$ROOT/scripts/enactment-audit.py" --check --wiring-only
 
 # 3. armed-valve — no deliverable-IS-behavior valve is silently OFF (registry-completeness contract).
-rung "armed-valve (no silent-off)" det python3 "$ROOT/scripts/armed-valve-audit.py" --check --contract --offline --stamp /dev/null
+rung core.armed-valve "armed-valve (no silent-off)" det python3 "$ROOT/scripts/armed-valve-audit.py" --check --contract --offline --stamp /dev/null
 
 # 4. ask-gate — every intake-window ask is predicate-shaped/bounded/owned (no SPLIT verdicts).
-rung "ask-gate (intake predicate-shaped)" det python3 "$ROOT/scripts/ask-gate.py" --audit --since 7 --check --top 0
+rung core.ask-gate "ask-gate (intake predicate-shaped)" det python3 "$ROOT/scripts/ask-gate.py" --audit --since 7 --check --top 0
 
 # 5. ask-lineage convergence — the prompt-corpus control plane is coherent and can advance:
 #    cursor checkpoint-bound, scanner version current, no unresolved obligation orphaned on a
 #    stale scan-version key (the merge-deadlock class, fixed 2026-07-14). The sensor default is 1
 #    (armed since PR fix/agy-steps-schema-v2); the rung runs unless LIMEN_PROMPT_ATOM_CONTROL=0.
 if [[ "${LIMEN_PROMPT_ATOM_CONTROL:-1}" == "1" ]]; then
-  rung "ask-lineage convergence" det python3 "$ROOT/scripts/prompt-atom-ledger.py" --check-cursor
+  rung core.ask-lineage "ask-lineage convergence" det python3 "$ROOT/scripts/prompt-atom-ledger.py" --check-cursor
 else
-  skip_rung "ask-lineage convergence" det "prompt-corpus sensor dark: source cursor not bound to private checkpoint — reseal via prompt-atom-ledger.py --scan"
+  skip_rung core.ask-lineage "ask-lineage convergence" det "prompt-corpus sensor dark: source cursor not bound to private checkpoint — reseal via prompt-atom-ledger.py --scan"
 fi
 
 # 6. ship-gate — every product-facing done-claim resolves to a reachable external artifact.
-rung "ship-gate (products reachable)" live python3 "$ROOT/scripts/ship-gate.py" --check
+rung core.ship-gate "ship-gate (products reachable)" live python3 "$ROOT/scripts/ship-gate.py" --check
 
 # 7. heal-convergence — the healer converges (no chronic cluster re-spending on the same wall).
-rung "heal-convergence (no chronic wall)" live python3 "$ROOT/scripts/heal-convergence.py" --check
+rung core.heal-convergence "heal-convergence (no chronic wall)" live python3 "$ROOT/scripts/heal-convergence.py" --check
 
 # 8. overnight-trial — the most recent unattended overnight run met its content-addressed contract.
 #    The producer verifies eight-hour coverage, every 90-minute value/blocker window, a warm handoff,
 #    at least one structured session seam, zero operator interventions, zero alerts, and
 #    evaluator/input hashes reconstructed from the exact bounded source receipts.
 if [[ -f "$ROOT/logs/overnight-trial.json" ]]; then
-  rung "overnight-trial (last run passed)" live env LIMEN_ROOT="$ROOT" python3 "$ROOT/scripts/overnight-watch.py" --check-trial
+  rung core.overnight-trial "overnight-trial (last run passed)" live env LIMEN_ROOT="$ROOT" python3 "$ROOT/scripts/overnight-watch.py" --check-trial
 else
-  skip_rung "overnight-trial (last run passed)" live "no logs/overnight-trial.json yet — run one trial"
+  skip_rung core.overnight-trial "overnight-trial (last run passed)" live "no logs/overnight-trial.json yet — run one trial"
 fi
 
 # 9. handoff-relay — a fresh, complete seam-survival packet exists (a warm resume IS possible).
-rung "handoff (warm resume ready)" det python3 "$ROOT/scripts/handoff-relay.py" --check
+rung core.handoff "handoff (warm resume ready)" det python3 "$ROOT/scripts/handoff-relay.py" --check
 
 # 10. no-tasks-on-me — nothing hangs on the ephemeral session; every owed item is homed in a
 #     git-tracked owner (lever / credential organ / registry), no stranded staged refs.
-rung "no-tasks-on-me (owed work homed)" det bash "$ROOT/scripts/no-tasks-on-me.sh"
+rung core.no-tasks-on-me "no-tasks-on-me (owed work homed)" det bash "$ROOT/scripts/no-tasks-on-me.sh"
 
 # 11. credential-wall — every secret in use is homed in its organ (validity, not just presence).
 if [[ "$OFFLINE" == "1" ]]; then
-  skip_rung "credential-wall (secrets homed)" live "--offline (credential validity authenticates against services)"
+  skip_rung core.credential-wall "credential-wall (secrets homed)" live "--offline (credential validity authenticates against services)"
 else
-  rung "credential-wall (secrets homed)" live python3 "$ROOT/scripts/credential-wall.py" --check
+  rung core.credential-wall "credential-wall (secrets homed)" live python3 "$ROOT/scripts/credential-wall.py" --check
 fi
 
 # 12. lifecycle closure — preserved worktree debt is a diagnostic during ordinary dispatch, but
 #     Omega is the exact-zero fixed point: no debt roots and no accepted-reaper residue. The scan is
 #     intentionally live/explicit (not a dispatch hot-path check), so offline CI reports SKIP.
-rung "worktree lifecycle (exact zero)" live python3 "$ROOT/scripts/worktree-debt.py" \
+rung core.worktree-lifecycle "worktree lifecycle (exact zero)" live python3 "$ROOT/scripts/worktree-debt.py" \
   --strict --fail-on-debt --fail-reapable-over-cap
 
 # 13+. Registry-declared fixed-point checks. Sensor ids and commands remain inside sensors.yaml;
@@ -225,12 +234,12 @@ rung "worktree lifecycle (exact zero)" live python3 "$ROOT/scripts/worktree-debt
 #      sensor is added or renamed. ``rung`` owns offline handling, so every live check remains an
 #      explicit SKIP rather than a fake pass.
 if [[ "$SENSOR_DISCOVERY_OK" == "1" ]]; then
-  while IFS=$'\t' read -r sensor_id check_index tier label _command _timeout; do
-    [[ -n "$sensor_id" ]] || continue
-    rung "$label" "$tier" python3 "$ROOT/scripts/beat-sensors.py" --run-omega "$sensor_id" "$check_index"
+  while IFS=$'\t' read -r rung_id sensor_id check_index tier label; do
+    [[ -n "$rung_id" ]] || continue
+    rung "$rung_id" "$label" "$tier" python3 "$ROOT/scripts/beat-sensors.py" --run-omega "$sensor_id" "$check_index"
   done < "$SENSOR_OMEGA_ROWS"
 else
-  rung "sensor registry fixed-point discovery" det false
+  rung core.sensor-discovery "sensor registry fixed-point discovery" det false
 fi
 
 # ── verdict ──────────────────────────────────────────────────────────────────

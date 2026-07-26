@@ -111,8 +111,11 @@ sensors:
     # component is absent, so a bare CI host is green by construction.
     omega_eligible:
       - label: "MCP estate — servers boot + doorway + ownership"
+        rung_id: sensor.mcp.estate
         tier: live
         command: "bash scripts/verify-mcp-estate.sh"
+        semantic_inputs:
+          - {path: scripts/verify-mcp-estate.sh, normalization: raw}
 
   cartridge-connected:
     section: "0c"
@@ -175,11 +178,17 @@ sensors:
         escalation: "GitHub estate reconciliation skipped or exceeded its bound"
     omega_eligible:
       - label: "GitHub estate parity"
+        rung_id: sensor.github.parity
         tier: det
         command: "python3 scripts/gitvs.py doctor --offline --parity-only"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
       - label: "GitHub estate posture"
+        rung_id: sensor.github.posture
         tier: live
         command: "python3 scripts/gitvs.py doctor"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
 
   github-actions-usage:
     section: "heartbeat"
@@ -200,8 +209,11 @@ sensors:
         escalation: "Actions spend over budget or the account-billing canary is red — read docs/github-actions-usage.json; roots: L-CARD-FRAUD-HOLD (#182) then L-ORG-TEAM-UPGRADE (docs/github-estate-runbook.md)"
     omega_eligible:
       - label: "GitHub Actions budget"
+        rung_id: sensor.github.actions-budget
         tier: live
         command: "python3 scripts/gitvs.py usage --check"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
 
   seo-drift:
     section: "heartbeat"
@@ -235,11 +247,17 @@ sensors:
         escalation: "seo backlog generation skipped or exceeded its bound"
     omega_eligible:
       - label: "seo registry parity"
+        rung_id: sensor.seo.parity
         tier: det
         command: "python3 scripts/seo-audit.py --doctor"
+        semantic_inputs:
+          - {path: scripts/seo-audit.py, normalization: raw}
       - label: "seo estate posture"
+        rung_id: sensor.seo.posture
         tier: live
         command: "python3 scripts/seo-audit.py --check"
+        semantic_inputs:
+          - {path: scripts/seo-audit.py, normalization: raw}
 
   estate-audit-heal:
     section: "heartbeat"
@@ -302,8 +320,11 @@ sensors:
         escalation: "OBSERVATORY loop skipped or exceeded its bound"
     omega_eligible:
       - label: "observatory wiring"
+        rung_id: sensor.observatory.wiring
         tier: det
         command: "python3 scripts/observatory-beat.py --doctor"
+        semantic_inputs:
+          - {path: scripts/observatory-beat.py, normalization: raw}
 
   dependabot-security-guard:
     section: "heartbeat"
@@ -355,11 +376,17 @@ sensors:
         escalation: "experience backlog generation skipped or exceeded its bound"
     omega_eligible:
       - label: "experience registry parity"
+        rung_id: sensor.experience.parity
         tier: det
         command: "python3 scripts/experience-audit.py --doctor"
+        semantic_inputs:
+          - {path: scripts/experience-audit.py, normalization: raw}
       - label: "visitor-experience posture"
+        rung_id: sensor.experience.posture
         tier: live
         command: "python3 scripts/experience-audit.py --check"
+        semantic_inputs:
+          - {path: scripts/experience-audit.py, normalization: raw}
 
   prompt-corpus-control:
     section: "heartbeat"
@@ -403,11 +430,17 @@ sensors:
         escalation: "BIFRONS PORTAL.md drift — a re-render is owed"
     omega_eligible:
       - label: "bifrons portal render"
+        rung_id: sensor.bifrons.render
         tier: det
         command: "python3 scripts/bifrons-organ.py --check"
+        semantic_inputs:
+          - {path: scripts/bifrons-organ.py, normalization: raw}
       - label: "bifrons portal liveness"
+        rung_id: sensor.bifrons.liveness
         tier: live
         command: "python3 scripts/bifrons-organ.py --doctor"
+        semantic_inputs:
+          - {path: scripts/bifrons-organ.py, normalization: raw}
 
   fable-balance:
     section: "0e"
@@ -549,8 +582,11 @@ sensors:
         escalation: "scheduled sensor NEVER-RAN or STALE above — a lane is dark or a rung is unreachable (merged is not running); check LIMEN_BEAT_DERIVE and the sensor's source/cadence"
     omega_eligible:
       - label: "sensor canary — scheduled lane observed live"
+        rung_id: sensor.canary.live
         tier: live                # reads the live daemon's voice stamps — offline omega SKIPs it visibly
         command: "python3 scripts/beat-sensors.py --canary"
+        semantic_inputs:
+          - {path: scripts/beat-sensors.py, normalization: raw}
 
   reclassify-needs-human:
     section: "0g6"
@@ -636,8 +672,11 @@ sensors:
         escalation: "disk capacity BREACHED — arm LIMEN_DISK_CAPACITY_APPLY=1 so the beat removes gitignored probes and truncates the heartbeat error log"
     omega_eligible:
       - label: "disk capacity below threshold"
+        rung_id: sensor.disk.capacity
         tier: det
         command: "python3 scripts/disk-capacity.py --check"
+        semantic_inputs:
+          - {path: scripts/disk-capacity.py, normalization: raw}
 
   dialogs-silenced:
     section: "0g8b"
@@ -690,8 +729,11 @@ sensors:
         escalation: "an agent-curable dialog class still prompts after the heal pass — arm the matching LIMEN_*_HEAL valve (lever L-DIALOGS-HEAL) so it self-cures"
     omega_eligible:
       - label: "dialogs silenced (agent-curable)"
+        rung_id: sensor.dialogs.agent-curable
         tier: live
         command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
+        semantic_inputs:
+          - {path: scripts/dialogs-silenced.sh, normalization: raw}
 
   foreign-litter:
     section: "0g9"
@@ -954,11 +996,17 @@ sensors:
         escalation: "storage rail drifted from its declared role (logs/cloud-storage-health.json) — see docs/storage-endgame.md; NEVER terminal-delete under ~/Library/CloudStorage or ~/Library/Mobile Documents"
     omega_eligible:
       - label: "storage-roles registry parity"
+        rung_id: sensor.storage.parity
         tier: det
         command: "python3 scripts/cloud-storage-doctor.py --doctor"
+        semantic_inputs:
+          - {path: scripts/cloud-storage-doctor.py, normalization: raw}
       - label: "storage rails posture"
+        rung_id: sensor.storage.posture
         tier: live
         command: "python3 scripts/cloud-storage-doctor.py --check"
+        semantic_inputs:
+          - {path: scripts/cloud-storage-doctor.py, normalization: raw}
 
   horrevm-custody:
     section: "heartbeat"
@@ -993,11 +1041,17 @@ sensors:
         escalation: "custody rail unproven or stale (logs/horrevm.json) — pull L-CLOUD-EGRESS-CONSENT (issue #1109) to consent + arm, or re-consent a dead token via the same lever; NEVER install a File Provider desktop app"
     omega_eligible:
       - label: "custody config parity"
+        rung_id: sensor.custody.parity
         tier: det
         command: "python3 scripts/horrevm-custody.py --doctor"
+        semantic_inputs:
+          - {path: scripts/horrevm-custody.py, normalization: raw}
       - label: "custody freshness"
+        rung_id: sensor.custody.freshness
         tier: live
         command: "python3 scripts/horrevm-custody.py --status"
+        semantic_inputs:
+          - {path: scripts/horrevm-custody.py, normalization: raw}
 
   relationship-review-delta:
     section: heartbeat
@@ -1162,8 +1216,11 @@ sensors:
         escalation: "closeout reconciliation found unverified done-claim(s) — see logs/closeout-reconcile.json"
     omega_eligible:
       - label: "closeout classifier self-test (verdicts correct)"
+        rung_id: sensor.closeout.self-test
         tier: det
         command: "python3 scripts/reconcile-closeouts.py --doctor"
+        semantic_inputs:
+          - {path: scripts/reconcile-closeouts.py, normalization: raw}
 
   insight-cross-vendor:
     section: "0z0"
@@ -1265,5 +1322,8 @@ sensors:
         escalation: "DECORVM found a public egg-face — see logs/decorum.json (blocking finding at/above floor 'high')"
     omega_eligible:
       - label: "keeper wiring self-test (registry + schema valid)"
+        rung_id: sensor.decorum.self-test
         tier: det
         command: "python3 scripts/decorum-keeper.py --doctor"
+        semantic_inputs:
+          - {path: scripts/decorum-keeper.py, normalization: raw}
