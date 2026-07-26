@@ -157218,8 +157218,7 @@ tasks:
   receipt_verified: true
 - id: VIC-DOMAIN-001
   title: Victoroff deterministic seven-intent resolver
-  description: Implement deterministic seven-intent resolver fixtures, authority precedence,
-    ambiguity and conflict handling, and tests.
+  description: Implement deterministic seven-intent resolver fixtures, authority precedence, ambiguity and conflict handling, and tests.
   repo: organvm/victoroff-os
   type: code
   target_agent: jules
@@ -157235,27 +157234,44 @@ tasks:
   urls:
   - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
   - https://github.com/organvm/victoroff-os/actions/runs/29950685515
-  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
-    \nTask: VIC-DOMAIN-001 \u2014 Implement deterministic seven-intent resolver fixtures,\
-    \ authority precedence, ambiguity and conflict handling, and tests.\nRepository:\
-    \ organvm/victoroff-os\nExact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\n\
-    Phase/module: Phase 2 / domain resolver\nOwner: victoroff-domain\nAllowed paths:\
-    \ packages/domain/**\nForbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json,\
-    \ pnpm-lock.yaml\nDependencies: control-main-green passed on exact remote main\
-    \ 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\n\
-    Required behavior: Resolve the seven registered ActionIntent values deterministically,\
-    \ preserve citations and conflicts, and return exactly one valid next action.\n\
-    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy,\
-    \ transfer, spend, use real BBNC data, or represent client authority.\nPredicate:\
-    \ pnpm --filter @victoroff/domain test\nReceipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001\n\
-    \nReturn a bounded patch, tests, documentation, and the exact predicate result.\
-    \ Stop with a precise blocker if required authority or source is missing."
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-DOMAIN-001 — Implement deterministic seven-intent resolver fixtures, authority precedence, ambiguity and conflict handling, and tests.
+    Repository: organvm/victoroff-os
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
+    Phase/module: Phase 2 / domain resolver
+    Owner: victoroff-domain
+    Allowed paths: packages/domain/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515
+    Required behavior: Resolve the seven registered ActionIntent values deterministically, preserve citations and conflicts, and return exactly one valid next action.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @victoroff/domain test
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
   predicate: pnpm --filter @victoroff/domain test
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-001
   depends_on: []
-  created: '2026-07-22'
-  updated: '2026-07-22T19:28:29.695237Z'
-  dispatch_log: []
+  created: 2026-07-22
+  updated: 2026-07-26T21:02:40.649Z
+  dispatch_log:
+  - timestamp: 2026-07-26T21:02:40.649Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Underwrite the evidence-backed historical receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-30b784d9b0e216008a73cb0dc96087ed:340:compatibility
+    conduct_run_id: run-30b784d9b0e216008a73cb0dc96087ed
+    conduct_lease_id: lease-340-30b784d9b0e21600
+    conduct_generation: 340
+  origin: human_prompt
+  horizon: past
+  value_case: The merged deterministic resolver closes authority precedence, ambiguity, conflict preservation, and the one-valid-next-action contract.
 - id: GH-organvm-hospes-9
   title: HOSPES private Pilot 1 activation by 2026-08-05
   repo: organvm/hospes
