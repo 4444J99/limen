@@ -162,6 +162,11 @@ gates:
     paths: ["scripts/worktree-preserve-dirty.py", "scripts/tests/test_worktree_preserve_dirty.py"]
     owner: continuity
     note: "Dirty-worktree custody stays bounded and loss-averse: binary patches stream under hard per-item and aggregate ceilings, untracked or changing sources fail before durable writes, public evidence is sampled and digested, and unchanged content-addressed receipts are byte-idempotent."
+  estate-audit-heal-test:
+    command: "python3 scripts/tests/estate-audit-heal.test.py"
+    paths: ["scripts/estate-audit-heal.py", "scripts/tests/estate-audit-heal.test.py"]
+    owner: estate-audit-heal
+    note: "Estate audit clones are invocation-owned disposable caches: failed, detection-only, no-value, and remotely pushed clones return to an absent fixed point, while any commit that fails to push remains locally retained for custody."
   sync-release-test:
     command: "bash scripts/tests/sync-release.test.sh"
     paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
