@@ -159934,3 +159934,43 @@ tasks:
     conduct_lease_id: lease-32-7f189064a53ebc04
     conduct_generation: 32
   updated: 2026-07-23T17:29:44.354Z
+- id: 'TABVLARIVS-YAML-STRING-TYPES-20260726'
+  title: 'Preserve YAML string types in the TABVLARIVS projection'
+  description: 'Quote keeper-generated string scalars so YAML 1.1-compatible consumers cannot coerce dates or timestamps into non-string schema values.'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'codex'
+  workstream: 'laptop-wide-recovery'
+  priority: 'critical'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'control-plane'
+  - 'task-board'
+  - 'omega'
+  urls:
+  - 'https://github.com/organvm/limen/pull/1564'
+  - 'https://github.com/organvm/limen/actions/runs/30220735165'
+  - 'https://github.com/organvm/limen/actions/runs/30221389398'
+  context: 'PR #1564 merged through the protected queue; exact-main CI and the exact-head production deployment are the immutable implementation evidence.'
+  predicate: 'test "$(gh pr view 1564 --repo organvm/limen --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/limen/pull/1564'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Restore a parseable keeper-owned board projection without hand-editing tasks.yaml.'
+  owner_surface: 'organvm/limen'
+  depends_on: []
+  created: '2026-07-26'
+  dispatch_log:
+  - timestamp: '2026-07-26T21:37:25.324Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-43c9e01fd1087f3e9cbd1b597879da38:347:compatibility'
+    conduct_run_id: 'run-43c9e01fd1087f3e9cbd1b597879da38'
+    conduct_lease_id: 'lease-347-43c9e01fd1087f3e'
+    conduct_generation: 347
+  updated: '2026-07-26T21:37:25.324Z'
