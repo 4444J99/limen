@@ -157,6 +157,11 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: gitvs
     note: "Every executable Git push, GitHub Contents PUT, and literal default-ref seam is count-bound to a reviewed disposition; the lifecycle publisher additionally proves it refuses the actual default branch before any remote write."
+  worktree-preserve-dirty-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_worktree_preserve_dirty.py -q"
+    paths: ["scripts/worktree-preserve-dirty.py", "scripts/tests/test_worktree_preserve_dirty.py"]
+    owner: continuity
+    note: "Dirty-worktree custody stays bounded and loss-averse: binary patches stream under hard per-item and aggregate ceilings, untracked or changing sources fail before durable writes, public evidence is sampled and digested, and unchanged content-addressed receipts are byte-idempotent."
   sync-release-test:
     command: "bash scripts/tests/sync-release.test.sh"
     paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
