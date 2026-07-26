@@ -10,7 +10,8 @@ resolve in three layers, judgment above derivation:
   2. institutio/github/seo-seeds.yaml `repos:` rows — the thin judgment overlay for the tail.
   3. Deterministic derivation, FILL-GAPS-NEVER-OVERWRITE: keep any live human-set value; when a gap
      exists, description ← README first paragraph (≤350, price-clean), topics ← current ∪ (name
-     tokens + language + baseline) capped at 20, homepage ← the defaults.homepage portal edge.
+     tokens + language + defaults.topics baseline) capped at 20, homepage ← the defaults.homepage
+     portal edge.
 
 Idempotent: run #2 plans 0 writes. Bounded (LIMEN_REPO_METADATA_MAX per run). DOUBLE-DARK: mutation
 requires --apply AND LIMEN_REPO_METADATA_APPLY=1 (arming lever L-SEO-METADATA) — outward-facing but
@@ -67,8 +68,8 @@ def _gh(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
         return subprocess.CompletedProcess(args, 1, "", str(e))
 
 
-def _seeds() -> tuple[dict, dict, str]:
-    """(positioning rows, seo-seed rows, default homepage)."""
+def _seeds() -> tuple[dict, dict, str, list[str]]:
+    """(positioning rows, seo-seed rows, default homepage, default topic baseline)."""
     try:
         pos = json.loads(POSITIONING_SEEDS.read_text(encoding="utf-8")).get("repos") or {}
     except Exception:
@@ -77,8 +78,10 @@ def _seeds() -> tuple[dict, dict, str]:
         seo = yaml.safe_load(SEO_SEEDS.read_text(encoding="utf-8")) or {}
     except Exception:
         seo = {}
-    default_home = str((seo.get("defaults") or {}).get("homepage") or "https://github.com/organvm")
-    return pos, seo.get("repos") or {}, default_home
+    defaults = seo.get("defaults") or {}
+    default_home = str(defaults.get("homepage") or "https://github.com/organvm")
+    default_topics = [str(t) for t in (defaults.get("topics") or []) if _TOPIC_RE.match(str(t))][:20]
+    return pos, seo.get("repos") or {}, default_home, default_topics
 
 
 def _derive_description(repo: str) -> str:
@@ -122,7 +125,14 @@ def _current(repo: str) -> dict | None:
         return None
 
 
-def desired_for(row: dict, pos: dict, seo_rows: dict, default_home: str, seo_block: dict) -> dict:
+def desired_for(
+    row: dict,
+    pos: dict,
+    seo_rows: dict,
+    default_home: str,
+    default_topics: list[str],
+    seo_block: dict,
+) -> dict:
     """The desired metadata triple for one repo. Pure given its inputs (derivation reads live only
     for description when a gap exists — the caller passes the fetched value via row['_derived'])."""
     repo = str(row["full_name"])
@@ -152,7 +162,9 @@ def desired_for(row: dict, pos: dict, seo_rows: dict, default_home: str, seo_blo
     # derivation: fill gaps only.
     want_topics = None
     if n_topics < floor:
-        merged = list(dict.fromkeys((row.get("_current_topics") or []) + _derive_topics(row)))[:20]
+        merged = list(
+            dict.fromkeys((row.get("_current_topics") or []) + _derive_topics(row) + default_topics)
+        )[:20]
         want_topics = merged if len(merged) > n_topics else None
     return {
         "description": cur_desc or row.get("_derived_description") or "",
@@ -175,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     if rows is None:
         print("[repo-metadata] no census facts — run `gitvs.py census` first (skip, fail-open)")
         return 0
-    pos, seo_rows, default_home = _seeds()
+    pos, seo_rows, default_home, default_topics = _seeds()
     classes = estate.get("classes") or {}
 
     plans: list[dict] = []
@@ -228,7 +240,7 @@ def main(argv: list[str] | None = None) -> int:
                    "language": live.get("language")}
         if not str(row.get("description") or "").strip() and repo not in pos and repo not in seo_rows:
             row["_derived_description"] = _derive_description(repo)
-        want = desired_for(row, pos, seo_rows, default_home, seo_block)
+        want = desired_for(row, pos, seo_rows, default_home, default_topics, seo_block)
         changes: list[str] = []
         if want["description"] and want["description"] != str(row.get("description") or "").strip():
             changes.append("description")
