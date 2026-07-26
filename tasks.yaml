@@ -159943,7 +159943,7 @@ tasks:
   workstream: 'laptop-wide-recovery'
   priority: 'critical'
   budget_cost: 1
-  status: 'in_progress'
+  status: 'done'
   labels:
   - 'control-plane'
   - 'task-board'
@@ -159999,4 +159999,21 @@ tasks:
     conduct_run_id: 'run-7e0324c0065da2e2d1fd39df40f43ab8'
     conduct_lease_id: 'lease-349-7e0324c0065da2e2'
     conduct_generation: 349
-  updated: '2026-07-26T21:37:35.750Z'
+  - timestamp: '2026-07-26T21:37:40.873Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'done'
+    output: 'Merged exact-main serializer repair is live in production.'
+    base_sha: 'a7390f5d4f647ff8658ae728fd1f49b4bd252026'
+    workflow_id: 30221389398
+    predicate_exit_code: 0
+    verification_context_digest: '3da8406d55a46ec4bf6e86ab7571b9987ba8fcf026b2df3c5de86b0f8d4a7c37'
+    remote_receipt: 'https://github.com/organvm/limen/pull/1564'
+    conduct_event_id: 'conduct:run-6350972e111ed6bc3e33f850b884b73f:350:compatibility'
+    conduct_run_id: 'run-6350972e111ed6bc3e33f850b884b73f'
+    conduct_lease_id: 'lease-350-6350972e111ed6bc'
+    conduct_generation: 350
+  updated: '2026-07-26T21:37:40.873Z'
+  receipt_verified: true
