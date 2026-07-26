@@ -1,3 +1,4 @@
+import { ChunkedDurableStateStore } from "./durable-store.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
 import {
   canonicalHash,
@@ -1605,17 +1606,9 @@ export class MemoryConductStore {
   }
 }
 
-export class DurableConductStore {
+export class DurableConductStore extends ChunkedDurableStateStore {
   constructor(storage) {
-    this.storage = storage;
-  }
-
-  async load() {
-    return (await this.storage.get("conduct_state")) || emptyConductState();
-  }
-
-  async save(state) {
-    await this.storage.put("conduct_state", state);
+    super(storage, emptyConductState);
   }
 }
 
