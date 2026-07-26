@@ -139,28 +139,27 @@ capabilities:
 
   # ── unresolved: real capabilities, no owner chosen — counted vacuums ────────────────
   rubric-schema:
-    status: unresolved
-    owner: null
+    status: lifting
+    owner: "organvm/edu-organism::kernel/schemas/standard.schema.json"
     doc: docs/convergence/learning-engine.md
     tenants: []
     duplicates:
-      - {impl: "edu-organism/kernel/schemas/standard.schema.json", disposition: lift, note: "the most formal candidate"}
-      - {impl: "editorial-standards/schemas", disposition: lift, note: ""}
+      - {impl: "editorial-standards/schemas", disposition: lift, note: "fold its fields into the kernel schema, then retire to tenant"}
       - {impl: "composition-1-2 rubric HTML docs", disposition: tenant, note: "FERPA-adjacent course docs; render FROM the schema, never ingested"}
     owner_of_record: education
-    note: "One canonical rubric schema, currently encoded three ways. Owner decision pending: promote edu-organism's kernel schema or mint a standalone registry."
+    note: "Resolved 2026-07-26 by the promote-existing-over-mint precedent (worker-toolkit→writelens, data-export→aps): edu-organism's kernel schema — already the most formal encoding — is the owner; a standalone registry would be new substrate with no demand. Lifting: fold editorial-standards' fields in, then tenants render from the one schema."
 
   auditor-verdicts:
-    status: unresolved
-    owner: null
-    doc: null
-    tenants: []
-    duplicates:
-      - {impl: organvm/growth-auditor, disposition: lift, note: ""}
-      - {impl: organvm/organvm-scrutator, disposition: lift, note: ""}
-      - {impl: organvm/laurea, disposition: tenant, note: "developer-metrics tool mis-clustered as education; belongs here"}
-      - {impl: organvm/vulnpulse, disposition: tenant, note: "also a worker-toolkit tenant; the verdict shape is what recurs"}
-      - {impl: organvm/cve-watch, disposition: tenant, note: ""}
-      - {impl: organvm/bountyscope, disposition: tenant, note: ""}
+    status: converged
+    owner: docs/convergence/auditor-verdicts.md
+    doc: docs/convergence/auditor-verdicts.md
+    tenants:
+      - organvm/growth-auditor
+      - organvm/organvm-scrutator
+      - organvm/laurea
+      - organvm/vulnpulse
+      - organvm/cve-watch
+      - organvm/bountyscope
+    duplicates: []
     owner_of_record: governance
-    note: "Six repos implement 'score a thing against criteria, emit a verdict'. The shared shape is real; whether it becomes a library or a convention is undecided."
+    note: "Resolved 2026-07-26: CONVENTION, not library — the declared-data-plus-derivation precedent (GATES/SENSORS/PARAMETERS/CORPORA) and the zero-cross-repo-dependency baseline both cut against coupling six release cycles for six struct definitions. The verdict shape + process rules live in the owner doc; the six implementations are tenants conforming to it. Reopens as lifting only if a seventh implementation duplicates non-trivial logic."
