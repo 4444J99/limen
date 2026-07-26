@@ -41,7 +41,7 @@ PRIVATE_ROOT = Path(
         ROOT / ".limen-private" / "session-corpus",
     )
 )
-ATOM_INDEX = ROOT / "docs" / "prompt-atom-ledger.json"
+ATOM_INDEX = PRIVATE_ROOT / "prompt-atoms" / "prompt-atom-index.json"
 TASKS_PATH = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 PRIVATE_OUTPUT = PRIVATE_ROOT / "lifecycle" / "prompt-estate-reconciliation.json"
 PRIORITY_MAP_SCRIPT = Path(__file__).with_name("prompt-priority-map.py")

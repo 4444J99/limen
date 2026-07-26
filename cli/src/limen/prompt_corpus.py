@@ -168,7 +168,11 @@ class LedgerPaths:
             cursor=private_dir / "source-cursor.json",
             lock=private_dir / "writer.lock",
             private_snapshot=private_dir / "prompt-atom-ledger.json",
-            public_snapshot=public_snapshot or root / "docs" / "prompt-atom-ledger.json",
+            # The complete redacted atom queue is operational control state, not
+            # a publishable repository artifact.  Keep it beside the private
+            # journals by default; docs/ receives only the bounded Markdown view
+            # and authority seal.
+            public_snapshot=public_snapshot or private_dir / "prompt-atom-index.json",
             public_markdown=public_markdown or root / "docs" / "prompt-atom-ledger.md",
             public_seal=public_seal or root / "docs" / "prompt-authority-seal.json",
             policy=policy or root / "docs" / "prompt-corpus-policy.json",
@@ -4332,7 +4336,7 @@ def update_ledger(
         marker_bytes = _json_bytes(next_marker)
         changed = False
         if not paths.public_snapshot.exists() or paths.public_snapshot.read_bytes() != public_bytes:
-            atomic_write_bytes(paths.public_snapshot, public_bytes, mode=0o644)
+            atomic_write_bytes(paths.public_snapshot, public_bytes, mode=0o600)
             changed = True
         if not paths.public_seal.exists() or paths.public_seal.read_bytes() != seal_bytes:
             atomic_write_bytes(paths.public_seal, seal_bytes, mode=0o644)

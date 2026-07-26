@@ -7,6 +7,7 @@ receipts and prompt hashes are retained as a clearly non-authoritative custody
 view; they can never replace, reorder, or route the atom queue.
 
 * tracked docs/prompt-priority-map.md: public-safe atom queue preview and compatibility context;
+* ignored .limen-private/.../prompt-atom-index.json: complete redacted atom authority;
 * ignored .limen-private/.../prompt-priority-map.json: complete atom queue and compatibility map.
 """
 
@@ -29,7 +30,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
-ATOM_INDEX = ROOT / "docs" / "prompt-atom-ledger.json"
+ATOM_INDEX = PRIVATE_ROOT / "prompt-atoms" / "prompt-atom-index.json"
 POLICY_PATH = ROOT / "docs" / "prompt-corpus-policy.json"
 CODEX_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
 ATTACK_INDEX = PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"

@@ -134,7 +134,7 @@ def test_private_session_corpus_env_owns_default_journal_root(tmp_path: Path, mo
     paths = corpus.LedgerPaths.for_root(tmp_path / "checkout")
 
     assert paths.private_dir == durable / "prompt-atoms"
-    assert paths.public_snapshot == tmp_path / "checkout" / "docs" / "prompt-atom-ledger.json"
+    assert paths.public_snapshot == durable / "prompt-atoms" / "prompt-atom-index.json"
     assert paths.public_seal == tmp_path / "checkout" / "docs" / "prompt-authority-seal.json"
 
 
@@ -483,7 +483,7 @@ def test_raw_fenced_body_round_trips_and_private_files_are_private(tmp_path: Pat
     assert "value = 1" in {atom["intent"] for atom in snapshot["atoms"]}
     assert paths.event_journal.stat().st_mode & 0o777 == 0o600
     assert paths.private_snapshot.stat().st_mode & 0o777 == 0o600
-    assert paths.public_snapshot.stat().st_mode & 0o777 == 0o644
+    assert paths.public_snapshot.stat().st_mode & 0o777 == 0o600
 
 
 def test_event_journal_row_is_transactional_and_incomplete_row_fails_check(tmp_path: Path):
@@ -938,6 +938,7 @@ def test_require_all_rejects_exact_scope_without_authority_ready_seal(tmp_path: 
     public = corpus.public_projection(snapshot)
     seal = corpus.prompt_authority_seal(snapshot, public=public)
     paths.public_snapshot.parent.mkdir(parents=True, exist_ok=True)
+    paths.public_seal.parent.mkdir(parents=True, exist_ok=True)
     paths.public_snapshot.write_bytes(corpus._json_bytes(public))
     paths.public_seal.write_bytes(corpus._json_bytes(seal))
     paths.public_markdown.write_text(corpus.render_markdown(public, policy), encoding="utf-8")
