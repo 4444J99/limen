@@ -105139,7 +105139,7 @@ tasks:
   context: 'GitHub issue organvm/limen#641. The full-stack review founding run (Codex session 019f2a04) inventoried only 15 Agy sessions vs ~1,270-1,295 each for Claude/Codex/OpenCode, and only 4 of the 182 deep-review entries at f404f85 name Agy in their headings. The run itself recorded the cause: native Antigravity IDE conversation decoding is unsolved; only Gemini/capfill surfaces and scratch residue are readable today. The ledger''s Rem'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-26T21:50:31.705Z'
+  updated: '2026-07-26T21:52:59.653Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:42:24.102867Z'
     agent: 'opencode'
@@ -105167,8 +105167,23 @@ tasks:
     conduct_run_id: 'run-3cbe3d1cf7854e134b8726ac196390cc'
     conduct_lease_id: 'lease-359-3cbe3d1cf7854e13'
     conduct_generation: 359
+  - timestamp: '2026-07-26T21:52:59.653Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-3478a0ef0334b1d17343236d75622cee:371:compatibility'
+    conduct_run_id: 'run-3478a0ef0334b1d17343236d75622cee'
+    conduct_lease_id: 'lease-371-3478a0ef0334b1d1'
+    conduct_generation: 371
   predicate: 'test "$(gh issue view 641 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/641'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GH-organvm-limen-641 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: 'GH-organvm-limen-640'
   title: 'review-ledger: enforce the entry template with an executable lint (Ideal prompt diff / What was fucked up)'
   repo: 'organvm/limen'
