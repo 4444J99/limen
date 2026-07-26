@@ -93,13 +93,30 @@ def slugify(value: str) -> str:
     return re.sub(r"-{2,}", "-", value).strip("-") or "thread"
 
 
-def _harvestable_corpora() -> dict[str, dict]:
-    doc = yaml.safe_load(CORPORA_REGISTRY.read_text(encoding="utf-8")) or {}
+_HARVESTABLE_KINDS = {"session-memory", "atom-stream"}
+
+
+def _registry() -> dict:
+    return yaml.safe_load(CORPORA_REGISTRY.read_text(encoding="utf-8")) or {}
+
+
+def _harvestable_corpora(doc: dict | None = None) -> dict[str, dict]:
+    doc = doc if doc is not None else _registry()
     out = {}
     for cid, row in (doc.get("corpora") or {}).items():
-        if row.get("harvestable") and row.get("kind") == "session-memory":
+        if row.get("harvestable") and row.get("kind") in _HARVESTABLE_KINDS:
             out[cid] = row
     return out
+
+
+def _store_path(doc: dict, row: dict) -> Path:
+    """Resolve a corpus row's on-disk location from its declared store + path.
+
+    Roots come from the registry's stores table, never a literal — the
+    check-corpora D-check bans a second copy of any store root."""
+    store = (doc.get("stores") or {}).get(row.get("store") or "") or {}
+    root = Path(str(store.get("root", ""))).expanduser()
+    return root / str(row.get("path", ""))
 
 
 def _load_corpus(corpus_dir: Path) -> tuple[list[dict], dict[str, list[dict]], list[dict]]:
@@ -117,6 +134,79 @@ def _load_corpus(corpus_dir: Path) -> tuple[list[dict], dict[str, list[dict]], l
     for rows in by_thread.values():
         rows.sort(key=lambda p: p.get("pair_id", ""))
     return threads, by_thread, actions
+
+
+def _load_atom_stream(src: Path, sources: list[str]) -> tuple[list[dict], dict[str, list[dict]], list[dict]]:
+    """Adapt a session-meta atom stream (one JSONL record per conversation turn) to the
+    same (threads, by_thread, actions) shape the CCE corpora produce.
+
+    Only sessions whose `source` is in the registry-declared harvest_sources allowlist
+    are admitted — the stream also carries thousands of agent rollouts that are work
+    logs, not brainstorms. Streaming parse: the file is ~1.36 GB but the allowlist
+    keeps only a handful of sessions in memory. thread_uid = session-<session_id>
+    (source-native id when the provider had one, so stable across re-atomization);
+    adjacent user→assistant turns re-pair into the pair shape downstream expects."""
+    if not src.is_file():
+        raise SystemExit(f"ERROR: atom stream not found: {src}")
+    allow = set(sources)
+    sessions: dict[str, dict] = {}
+    with src.open(encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                r = json.loads(line)
+            except (json.JSONDecodeError, ValueError):
+                continue
+            if r.get("source") not in allow:
+                continue
+            sid = str(r.get("session_id") or "").strip()
+            if not sid:
+                continue
+            entry = sessions.setdefault(sid, {"source": r.get("source"), "atoms": []})
+            entry["atoms"].append(r)
+    threads: list[dict] = []
+    by_thread: dict[str, list[dict]] = {}
+    for sid, entry in sessions.items():
+        atoms = sorted(entry["atoms"], key=lambda a: (a.get("ordinal") or 0))
+        uid = f"session-{sid}"
+        pairs: list[dict] = []
+        current: dict | None = None
+        for a in atoms:
+            text = str(a.get("text") or "").strip()
+            if not text:
+                continue
+            if a.get("role") == "user" or current is None:
+                current = {"user": text if a.get("role") == "user" else "", "rest": []}
+                if a.get("role") != "user":
+                    current["rest"].append(text)
+                pairs.append(current)
+            else:
+                current["rest"].append(text)
+        pair_rows = []
+        for i, p in enumerate(pairs, start=1):
+            body = "\n\n".join(x for x in [p["user"], *p["rest"]] if x)
+            first = (p["user"] or (p["rest"][0] if p["rest"] else "")).splitlines()[0][:120]
+            pair_rows.append(
+                {
+                    "thread_uid": uid,
+                    "pair_id": f"{uid}-pair-{i:03d}",
+                    "title": first,
+                    "search_text": body,
+                }
+            )
+        if not pair_rows:
+            continue
+        title = pair_rows[0]["title"][:80]
+        threads.append(
+            {
+                "thread_uid": uid,
+                "title_raw": title,
+                "title_normalized": title.lower(),
+                "keywords": [],
+                "provider": entry["source"],
+            }
+        )
+        by_thread[uid] = pair_rows
+    return threads, by_thread, []
 
 
 # Render-time redaction: extracts are verbatim transcripts, and past sessions pasted
@@ -234,13 +324,17 @@ def _existing_extracts(tdir: Path) -> dict[str, tuple[Path, dict]]:
     return found
 
 
-def harvest_corpus(cid: str, provider: str, out_root: Path) -> dict:
-    home = corpus_resolve.corpus_home()
-    corpus_dir = home / cid
-    if not corpus_dir.is_dir():
-        raise SystemExit(f"ERROR: corpus {cid!r} not found under {home}")
-
-    threads, by_thread, actions = _load_corpus(corpus_dir)
+def harvest_corpus(cid: str, provider: str, out_root: Path, row: dict | None = None, doc: dict | None = None) -> dict:
+    row = row or {}
+    if row.get("kind") == "atom-stream":
+        src = _store_path(doc or _registry(), row)
+        threads, by_thread, actions = _load_atom_stream(src, list(row.get("harvest_sources") or []))
+    else:
+        home = corpus_resolve.corpus_home()
+        corpus_dir = home / cid
+        if not corpus_dir.is_dir():
+            raise SystemExit(f"ERROR: corpus {cid!r} not found under {home}")
+        threads, by_thread, actions = _load_corpus(corpus_dir)
 
     out = out_root / cid
     tdir = out / "threads"
@@ -278,7 +372,9 @@ def harvest_corpus(cid: str, provider: str, out_root: Path) -> dict:
         else:
             path = tdir / f"{next_no:03d}-{slugify(title)[:60]}.md"
             next_no += 1
-        path.write_text(_render_extract(t, by_thread.get(uid, []), "pending", provider), encoding="utf-8")
+        path.write_text(
+            _render_extract(t, by_thread.get(uid, []), "pending", t.get("provider") or provider), encoding="utf-8"
+        )
         index_rows.append(
             {"thread_uid": uid, "stream": "pending", "file": str(path.relative_to(out)), "semantic_atoms": "pending"}
         )
@@ -414,10 +510,11 @@ def main() -> int:
         ap.error("--corpus <id> or --all required")
     unknown = [t for t in targets if t not in corpora]
     if unknown:
-        ap.error(f"not harvestable session-memory corpora: {unknown} (declared: {sorted(corpora)})")
+        ap.error(f"not harvestable corpora: {unknown} (declared: {sorted(corpora)})")
 
+    doc = _registry()
     for cid in targets:
-        stats = harvest_corpus(cid, corpora[cid].get("provider", "unknown"), out_root)
+        stats = harvest_corpus(cid, corpora[cid].get("provider", "unknown"), out_root, row=corpora[cid], doc=doc)
         print(
             f"harvested {stats['corpus']}: {stats['threads']} threads "
             f"({stats['preserved']} drained extract(s) preserved), {stats['actions']} candidate actions"
