@@ -83127,7 +83127,7 @@ tasks:
     Severity: medium'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-26T21:50:17.542Z'
+  updated: '2026-07-26T21:52:45.949Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
     agent: 'opencode'
@@ -83155,8 +83155,23 @@ tasks:
     conduct_run_id: 'run-32316467fe3fda1f6226ca94dbacba80'
     conduct_lease_id: 'lease-356-32316467fe3fda1f'
     conduct_generation: 356
+  - timestamp: '2026-07-26T21:52:45.949Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-c6902c7d5c549edaea54808f64c57dd9:368:compatibility'
+    conduct_run_id: 'run-c6902c7d5c549edaea54808f64c57dd9'
+    conduct_lease_id: 'lease-368-c6902c7d5c549eda'
+    conduct_generation: 368
   predicate: 'test "$(gh issue view 1566 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/1566'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give TASK-LED-strategic-rollup an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: TASK-LED-rev-organvm/public-recor
   title: 'Heal insight: waste on revenue repo: organvm/public-record-data-scrapper'
   description: Product 'Public Record Data Scraper' spent 50 with 20 wasted (20 shipped).
