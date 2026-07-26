@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import signal
 import subprocess
@@ -30,6 +31,10 @@ import yaml
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 REGISTRY = ROOT / "institutio" / "governance" / "sensors.yaml"
+OMEGA_DISCOVERY_SCHEMA = "limen.omega_sensor_rungs.v1"
+OMEGA_RUNG_ID_RX = re.compile(r"^[a-z0-9][a-z0-9_.-]*$")
+OMEGA_NORMALIZATIONS = {"raw", "json"}
+OMEGA_VOLATILE_FIELDS = {"generated", "generated_at"}
 
 
 def load_sensors(registry: Path = REGISTRY) -> dict:
@@ -103,7 +108,7 @@ def _run_command(command: str, *, timeout: int | None, quiet: bool) -> int:
     """
     stdout = subprocess.DEVNULL if quiet else None
     try:
-        proc = subprocess.Popen(  # noqa: S602 - commands are trusted, reviewed registry data
+        proc = subprocess.Popen(
             command,
             shell=True,
             cwd=str(ROOT),
@@ -177,8 +182,7 @@ def _load_env_file(path: Path) -> None:
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        if line.startswith("export "):
-            line = line[len("export ") :]
+        line = line.removeprefix("export ")
         if "=" not in line:
             continue
         key, _, val = line.partition("=")
@@ -308,6 +312,73 @@ def iter_omega(sensors: dict):
             yield sensor_id, index, sensor, check
 
 
+def _omega_semantic_inputs(rung_id: str, raw_inputs: object) -> list[dict]:
+    if not isinstance(raw_inputs, list) or not raw_inputs:
+        raise ValueError(f"{rung_id}: semantic_inputs must be a non-empty list")
+    normalized: list[dict] = []
+    for index, raw in enumerate(raw_inputs):
+        if not isinstance(raw, dict):
+            raise TypeError(f"{rung_id}: semantic_inputs[{index}] must be a mapping")
+        unknown = set(raw) - {"path", "normalization", "volatile_fields", "role"}
+        if unknown:
+            raise ValueError(f"{rung_id}: semantic_inputs[{index}] has unknown fields {sorted(unknown)}")
+        path = str(raw.get("path") or "")
+        path_parts = Path(path).parts
+        if not path or Path(path).is_absolute() or ".." in path_parts:
+            raise ValueError(f"{rung_id}: semantic_inputs[{index}].path must be a safe relative path")
+        normalization = str(raw.get("normalization") or "")
+        if normalization not in OMEGA_NORMALIZATIONS:
+            raise ValueError(
+                f"{rung_id}: semantic_inputs[{index}].normalization must be one of {sorted(OMEGA_NORMALIZATIONS)}"
+            )
+        volatile = raw.get("volatile_fields") or []
+        if not isinstance(volatile, list) or any(not isinstance(value, str) for value in volatile):
+            raise ValueError(f"{rung_id}: semantic_inputs[{index}].volatile_fields must be a string list")
+        if set(volatile) - OMEGA_VOLATILE_FIELDS:
+            raise ValueError(f"{rung_id}: semantic_inputs[{index}] declares unknown volatile fields")
+        if volatile and normalization != "json":
+            raise ValueError(f"{rung_id}: volatile fields require json normalization")
+        role = str(raw.get("role") or "input")
+        if role not in {"input", "owner_receipt"}:
+            raise ValueError(f"{rung_id}: semantic_inputs[{index}].role is invalid")
+        normalized.append(
+            {
+                "normalization": normalization,
+                "path": path,
+                "role": role,
+                "volatile_fields": sorted(set(volatile)),
+            }
+        )
+    return normalized
+
+
+def omega_contract(sensors: dict) -> dict:
+    """Return the stable, typed discovery surface consumed by strict Omega proof tooling."""
+    rungs: list[dict] = []
+    seen: set[str] = set()
+    for sensor_id, index, sensor, check in iter_omega(sensors):
+        rung_id = str(check.get("rung_id") or "")
+        if not OMEGA_RUNG_ID_RX.fullmatch(rung_id):
+            raise ValueError(f"{sensor_id}[{index}]: rung_id is missing or invalid")
+        if rung_id in seen:
+            raise ValueError(f"duplicate omega rung id: {rung_id}")
+        seen.add(rung_id)
+        timeout = _positive_int(check.get("timeout"), fallback=_positive_int(sensor.get("timeout")))
+        rungs.append(
+            {
+                "check_index": index,
+                "command": str(check["command"]),
+                "id": rung_id,
+                "label": str(check.get("label", sensor_id)),
+                "semantic_inputs": _omega_semantic_inputs(rung_id, check.get("semantic_inputs")),
+                "sensor_id": sensor_id,
+                "tier": str(check.get("tier", "det")),
+                "timeout": timeout,
+            }
+        )
+    return {"rungs": rungs, "schema": OMEGA_DISCOVERY_SCHEMA}
+
+
 def list_omega(registry: Path = REGISTRY) -> int:
     """Emit stable TSV contract metadata; execution still stays inside the registry runner.
 
@@ -316,20 +387,34 @@ def list_omega(registry: Path = REGISTRY) -> int:
     check emits ``null``.  In particular, never serialize Python's ``None`` text;
     it is neither a typed value nor parseable by the Omega contract hasher.
     """
-    for sensor_id, index, sensor, check in iter_omega(load_sensors(registry)):
-        timeout = _positive_int(check.get("timeout"), fallback=_positive_int(sensor.get("timeout")))
+    try:
+        rungs = omega_contract(load_sensors(registry))["rungs"]
+    except (KeyError, TypeError, ValueError) as exc:
+        print(f"beat-sensors: invalid omega contract: {exc}", file=sys.stderr)
+        return 2
+    for rung in rungs:
         fields = (
-            sensor_id,
-            str(index),
-            str(check.get("tier", "det")),
-            str(check.get("label", sensor_id)),
-            str(check["command"]),
-            json.dumps(timeout),
+            rung["sensor_id"],
+            str(rung["check_index"]),
+            rung["tier"],
+            rung["label"],
+            rung["command"],
+            json.dumps(rung["timeout"]),
         )
         if any("\t" in field or "\n" in field for field in fields):
-            print(f"beat-sensors: invalid tab/newline in omega metadata for {sensor_id}", file=sys.stderr)
+            print(f"beat-sensors: invalid tab/newline in omega metadata for {rung['sensor_id']}", file=sys.stderr)
             return 2
         print("\t".join(fields))
+    return 0
+
+
+def list_omega_json(registry: Path = REGISTRY) -> int:
+    try:
+        payload = omega_contract(load_sensors(registry))
+    except (KeyError, TypeError, ValueError) as exc:
+        print(f"beat-sensors: invalid omega contract: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(payload, ensure_ascii=True, separators=(",", ":"), sort_keys=True))
     return 0
 
 
@@ -374,6 +459,7 @@ def main(argv=None) -> int:
     ap.add_argument("--loop-max", type=int, default=1800, help="maximum loop seconds for overdue detection")
     ap.add_argument("--voice-dir", type=Path, default=None, help="voice-stamp directory")
     ap.add_argument("--list-omega", action="store_true", help="emit TSV metadata for omega-eligible checks")
+    ap.add_argument("--list-omega-json", action="store_true", help="emit stable JSON omega rung discovery")
     ap.add_argument("--run-omega", nargs=2, metavar=("SENSOR_ID", "INDEX"), help="run one omega check")
     ap.add_argument("--canary", action="store_true", help="audit scheduled sensors for never-ran/stale voice stamps")
     args = ap.parse_args(argv)
@@ -384,6 +470,8 @@ def main(argv=None) -> int:
         return list_sensors(args.registry)
     if args.list_omega:
         return list_omega(args.registry)
+    if args.list_omega_json:
+        return list_omega_json(args.registry)
     if args.run_omega:
         try:
             index = int(args.run_omega[1])
