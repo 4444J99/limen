@@ -157074,7 +157074,7 @@ tasks:
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-GOV-001
   depends_on: []
   created: 2026-07-22
-  updated: 2026-07-26T20:21:14.545Z
+  updated: 2026-07-26T20:23:44.629Z
   dispatch_log:
   - timestamp: 2026-07-26T20:21:14.545Z
     agent: codex
@@ -157088,6 +157088,21 @@ tasks:
     conduct_run_id: run-5576020cd8fe3da0fb711826ace7cc99
     conduct_lease_id: lease-334-5576020cd8fe3da0
     conduct_generation: 334
+  - timestamp: 2026-07-26T20:23:44.629Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Underwrite the evidence-backed historical receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-9b690051239c5022866ff55fa46641ff:335:compatibility
+    conduct_run_id: run-9b690051239c5022866ff55fa46641ff
+    conduct_lease_id: lease-335-9b690051239c5022
+    conduct_generation: 335
+  origin: human_prompt
+  horizon: past
+  value_case: The merged governance manifest gives every Victoroff governance source an explicit public-safe provenance and checksum contract.
 - id: VIC-CONTRACT-001
   title: Victoroff governance and intent contracts
   description: Add schemas and validation tests for GovernanceDocument, ActionIntent,
