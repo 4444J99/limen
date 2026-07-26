@@ -1101,6 +1101,119 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
 # ── entrypoint ──────────────────────────────────────────────────────────────
 
 
+# ── private atom evidence (never published) ─────────────────────────────────
+#
+# The drained brainstorm estate carries per-thread semantic atoms in the
+# PRIVATE corpus store. Scoring their statements against the register's lane
+# keywords yields the same kind of evidence the unclaimed-repo sweep produces —
+# but the material is conversation-derived, so it renders ONLY to a local page
+# under logs/ (gitignored) and is never part of the published surface:
+# publish-constellation.py runs the generators in public mode without this
+# flag, and the standing rule is that atom content never enters the public
+# tree. Evidence, never registration — a human confirms by editing
+# registry.yaml, exactly as with unclaimed repos.
+
+_ATOMS_PAGE_OUT = REPO_ROOT / "logs" / "constellation" / "streams-atoms-private.html"
+_ATOM_EXTRACT_RE = re.compile(r"^---\n(.*?)\n---\n.*?## SEMANTIC ATOMS\s*\n+```yaml\n(.*?)```", re.DOTALL)
+
+
+def _extracts_root() -> Path:
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
+    import corpus_resolve  # the one resolver — no second copy of the store root
+
+    return corpus_resolve.corpus_home() / "brainstorm-extracts"
+
+
+def atoms_evidence(registry: dict[str, Any]) -> dict[str, Any]:
+    """Score every drained atom statement against every lane's keywords."""
+    root = _extracts_root()
+    lanes: list[dict[str, Any]] = []
+    for person in registry.get("people") or []:
+        for proj in person.get("projects") or []:
+            lanes.append(
+                {
+                    "slug": person.get("slug"),
+                    "project": proj.get("name"),
+                    "keywords": proj.get("keywords") or [],
+                }
+            )
+    matched: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    n_files = n_atoms = 0
+    for path in sorted(root.glob("*/threads/*.md")):
+        m = _ATOM_EXTRACT_RE.match(path.read_text(encoding="utf-8"))
+        if not m:
+            continue
+        n_files += 1
+        try:
+            front = yaml.safe_load(m.group(1)) or {}
+            block = yaml.safe_load(m.group(2)) or {}
+        except yaml.YAMLError:
+            continue
+        stream = str(front.get("stream") or "")
+        for atom in block.get("atoms") or []:
+            statement = str(atom.get("statement") or "").strip()
+            if not statement:
+                continue
+            n_atoms += 1
+            pseudo = {"name": stream, "description": statement, "topics": [str(atom.get("kind") or "")]}
+            best: dict[str, Any] | None = None
+            for lane in lanes:
+                pts, hits = score(pseudo, lane["keywords"])
+                grade = confidence(pts, hits)
+                if grade in ("likely", "possible") and (best is None or pts > best["points"]):
+                    best = {"lane": lane, "points": pts, "hits": hits, "confidence": grade}
+            if best:
+                matched[best["lane"]["slug"]].append(
+                    {
+                        "project": best["lane"]["project"],
+                        "stream": stream,
+                        "atom_id": atom.get("id"),
+                        "kind": atom.get("kind"),
+                        "statement": statement,
+                        "confidence": best["confidence"],
+                        "hits": best["hits"],
+                    }
+                )
+    for rows in matched.values():
+        rows.sort(key=lambda r: (r["confidence"] != "likely", r["stream"], str(r["atom_id"])))
+    return {
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "files": n_files,
+        "atoms": n_atoms,
+        "matched": dict(sorted(matched.items())),
+    }
+
+
+def render_atoms_page(ev: dict[str, Any]) -> str:
+    css = STYLESHEET.read_text(encoding="utf-8") if STYLESHEET.is_file() else ""
+    total = sum(len(v) for v in ev["matched"].values())
+    parts = [
+        "<!doctype html><meta charset='utf-8'>",
+        "<title>Atom evidence — PRIVATE</title>",
+        f"<style>{css}</style>",
+        "<h1>Atom evidence (private — never published)</h1>",
+        (
+            f"<p class='meta'>generated {html.escape(ev['generated_at'])} · "
+            f"{ev['files']} extracts · {ev['atoms']} atoms scanned · {total} matched. "
+            "Every match is EVIDENCE for the demand review, never a registration — "
+            "confirm a candidate by adding it to registry.yaml.</p>"
+        ),
+    ]
+    for slug, rows in ev["matched"].items():
+        parts.append(f"<h2>{html.escape(str(slug))}</h2><ul>")
+        for r in rows:
+            parts.append(
+                "<li>"
+                f"<strong>{html.escape(str(r['confidence']))}</strong> "
+                f"[{html.escape(str(r['kind']))}] {html.escape(str(r['statement']))} "
+                f"<em>— stream {html.escape(str(r['stream']))}, lane {html.escape(str(r['project']))}, "
+                f"hits: {html.escape(', '.join(r['hits']))}</em>"
+                "</li>"
+            )
+        parts.append("</ul>")
+    return "\n".join(parts)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--refresh", action="store_true", help="re-sweep the live estate before rendering")
@@ -1108,12 +1221,35 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=None, help=f"output path (default {DEFAULT_OUT})")
     ap.add_argument("--json", action="store_true", help="emit findings as JSON instead of a page")
     ap.add_argument("--open", action="store_true", help="open the rendered page")
+    ap.add_argument(
+        "--atoms-evidence",
+        action="store_true",
+        help="render the PRIVATE atom-evidence page from the drained brainstorm estate (never published)",
+    )
     args = ap.parse_args()
 
     if not REGISTRY.is_file():
         print(f"ERROR: register not found at {REGISTRY}", file=sys.stderr)
         return 2
     registry = yaml.safe_load(REGISTRY.read_text(encoding="utf-8")) or {}
+
+    if args.atoms_evidence:
+        if args.public_safe:
+            print("ERROR: --atoms-evidence is private-only; refuse --public-safe", file=sys.stderr)
+            return 2
+        ev = atoms_evidence(registry)
+        if args.json:
+            print(json.dumps(ev, indent=2, default=str))
+            return 0
+        out = (args.out or _ATOMS_PAGE_OUT).expanduser().resolve()
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(render_atoms_page(ev), encoding="utf-8")
+        total = sum(len(v) for v in ev["matched"].values())
+        print(
+            f"wrote {out}  ({ev['atoms']} atoms scanned / {total} matched into "
+            f"{len(ev['matched'])} lanes) — PRIVATE, never published"
+        )
+        return 0
 
     census = load_census(refresh=args.refresh)
     findings = analyse(registry, census)
