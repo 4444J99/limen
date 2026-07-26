@@ -73058,7 +73058,7 @@ tasks:
   context: 'Derive an accurate Usage section in organvm/a-i-chat--exporter''s README from the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented features, no TODOs — only what the code actually does. [auto-generated 2026-06-30 to keep the stream endless]'
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-26T21:49:53.170Z'
+  updated: '2026-07-26T21:52:23.927Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: 'codex'
@@ -73119,8 +73119,23 @@ tasks:
     conduct_run_id: 'run-838064ebc1f59f2e6af9f87e2bd1156b'
     conduct_lease_id: 'lease-351-838064ebc1f59f2e'
     conduct_generation: 351
+  - timestamp: '2026-07-26T21:52:23.927Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-9e73673e4d8be4b03850f8160bdc34a8:363:compatibility'
+    conduct_run_id: 'run-9e73673e4d8be4b03850f8160bdc34a8'
+    conduct_lease_id: 'lease-363-9e73673e4d8be4b0'
+    conduct_generation: 363
   predicate: 'test "$(gh issue view 141 --repo organvm/a-i-chat--exporter --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/a-i-chat--exporter/issues/141'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GEN-organvm-a-i-chat--exporter-docs-0630 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/a-i-chat--exporter'
 - id: GEN-organvm-limen-docs-0630
   title: Real usage docs for organvm/limen
   repo: organvm/limen
