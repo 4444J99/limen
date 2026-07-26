@@ -159943,7 +159943,7 @@ tasks:
   workstream: 'laptop-wide-recovery'
   priority: 'critical'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'control-plane'
   - 'task-board'
@@ -159986,4 +159986,17 @@ tasks:
     conduct_run_id: 'run-730055542bfcdc35b474226f6c00420a'
     conduct_lease_id: 'lease-348-730055542bfcdc35'
     conduct_generation: 348
-  updated: '2026-07-26T21:37:31.060Z'
+  - timestamp: '2026-07-26T21:37:35.750Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-yaml-projection'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-yaml-projection'
+    status: 'in_progress'
+    output: 'Applying the corrected serializer through the authenticated keeper.'
+    base_sha: 'a7390f5d4f647ff8658ae728fd1f49b4bd252026'
+    workflow_id: 30221389398
+    conduct_event_id: 'conduct:run-7e0324c0065da2e2d1fd39df40f43ab8:349:compatibility'
+    conduct_run_id: 'run-7e0324c0065da2e2d1fd39df40f43ab8'
+    conduct_lease_id: 'lease-349-7e0324c0065da2e2'
+    conduct_generation: 349
+  updated: '2026-07-26T21:37:35.750Z'
