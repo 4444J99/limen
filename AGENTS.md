@@ -352,6 +352,11 @@ chat-only blockers.
 - Put each pain point in the repo that owns the fix: issue, task packet, PR, pinned wall, or receipt.
 - Credential, token, secret, API-key, login, and env-var problems belong to the credential wall owner;
   never paste values into chat, tasks, commits, or PRs.
+- 1Password access is a one-touch owner transaction, never a discovery or retry loop. Consume the
+  mode-`600` private cache first. If promptless access cannot read the registered item, record that
+  owner gate once and continue independent work; do not fall back to repeated desktop-backed
+  `op` item/vault probes. An explicitly authorized rotation may perform one owner-native transaction,
+  hydrate the cache, verify the named service predicate, and then stop touching 1Password.
 - A blocker is incomplete unless it names the owning repo/surface, the failed predicate, and the next
   command that would clear it.
 - If the same pain point appears twice, update the owner receipt instead of explaining it again.
