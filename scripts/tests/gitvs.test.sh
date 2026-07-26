@@ -326,6 +326,39 @@ else
   echo "  MISMATCH (case18 G/K pure rungs): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
 
+# ── Case 18b: the metadata effector fills the declared topic floor without replacing human topics ──
+out="$(python3 - <<PY
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("repo_metadata", "$ROOT/scripts/repo-metadata-sync.py")
+m = importlib.util.module_from_spec(spec); sys.modules["repo_metadata"] = m
+spec.loader.exec_module(m)
+row = {
+    "full_name": "o/plain",
+    "description": "kept",
+    "homepage": "",
+    "topics_count": 1,
+    "_current_topics": ["human-topic"],
+    "language": "Python",
+}
+want = m.desired_for(
+    row, {}, {}, "https://example.test", ["open-source", "developer-tools", "organvm"],
+    {"topics_min": 3, "homepage": "optional"},
+)
+print(want["description"])
+print(want["homepage"] == "")
+print(want["topics"])
+print(len(want["topics"]) >= 3 and want["topics"][0] == "human-topic")
+PY
+)"
+if [ "$out" = "kept
+True
+['human-topic', 'plain', 'python', 'open-source', 'developer-tools', 'organvm']
+True" ]; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case18b metadata topic floor): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
 # ── Case 19: a well-formed `orgs:` (ACCOUNT-layer) row passes ──
 FIX="$work/orgsok.yaml"; valid_estate "$FIX"
 python3 - "$FIX" <<'PY'
