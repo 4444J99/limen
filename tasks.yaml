@@ -80664,7 +80664,7 @@ tasks:
   context: 'Eliminate the worst untyped hotspots in organvm/limen''s most-imported module (remove `any` / add type hints / fix loose signatures). Keep the build and tests green. [auto-generated 2026-07-03 to keep the stream endless]'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-26T21:50:12.535Z'
+  updated: '2026-07-26T21:52:41.401Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: 'codex'
@@ -80682,8 +80682,23 @@ tasks:
     conduct_run_id: 'run-9fec39e420769edab3d13f7f06ef5567'
     conduct_lease_id: 'lease-355-9fec39e420769eda'
     conduct_generation: 355
+  - timestamp: '2026-07-26T21:52:41.401Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-db6d726cbb042efad348b37a69ec9d89:367:compatibility'
+    conduct_run_id: 'run-db6d726cbb042efad348b37a69ec9d89'
+    conduct_lease_id: 'lease-367-db6d726cbb042efa'
+    conduct_generation: 367
   predicate: 'test "$(gh issue view 1565 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/1565'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GEN-organvm-limen-typing-0703 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: ORG-legal-organ-charter-0703
   title: Charter the legal organ as an institution rivaling a top-tier litigation
     firm (the Cochran standard)
