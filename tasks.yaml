@@ -157132,8 +157132,7 @@ tasks:
   receipt_verified: true
 - id: VIC-CONTRACT-001
   title: Victoroff governance and intent contracts
-  description: Add schemas and validation tests for GovernanceDocument, ActionIntent,
-    GovernanceResolution, and delivery checkpoints.
+  description: Add schemas and validation tests for GovernanceDocument, ActionIntent, GovernanceResolution, and delivery checkpoints.
   repo: organvm/victoroff-os
   type: code
   target_agent: jules
@@ -157149,27 +157148,44 @@ tasks:
   urls:
   - https://github.com/organvm/victoroff-os/blob/0ee9a20d43abc936ffa70cf73621639b99a39b77/program/registry.v1.json
   - https://github.com/organvm/victoroff-os/actions/runs/29950685515
-  context: "Do not ask for feedback or approval. Complete only this bounded packet.\n\
-    \nTask: VIC-CONTRACT-001 \u2014 Add schemas and validation tests for GovernanceDocument,\
-    \ ActionIntent, GovernanceResolution, and delivery checkpoints.\nRepository: organvm/victoroff-os\n\
-    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77\nPhase/module: Phase 2 /\
-    \ contracts\nOwner: victoroff-contracts\nAllowed paths: packages/contracts/**\n\
-    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml\n\
-    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77;\
-    \ receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515\nRequired\
-    \ behavior: Implement versioned schemas plus validation tests for the four named\
-    \ contracts without editing shared configuration or lockfiles.\nAuthority boundary:\
-    \ public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend,\
-    \ use real BBNC data, or represent client authority.\nPredicate: pnpm --filter\
-    \ @victoroff/contracts typecheck\nReceipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001\n\
-    \nReturn a bounded patch, tests, documentation, and the exact predicate result.\
-    \ Stop with a precise blocker if required authority or source is missing."
+  context: |-
+    Do not ask for feedback or approval. Complete only this bounded packet.
+
+    Task: VIC-CONTRACT-001 — Add schemas and validation tests for GovernanceDocument, ActionIntent, GovernanceResolution, and delivery checkpoints.
+    Repository: organvm/victoroff-os
+    Exact base: 0ee9a20d43abc936ffa70cf73621639b99a39b77
+    Phase/module: Phase 2 / contracts
+    Owner: victoroff-contracts
+    Allowed paths: packages/contracts/**
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+    Dependencies: control-main-green passed on exact remote main 0ee9a20d43abc936ffa70cf73621639b99a39b77; receipt https://github.com/organvm/victoroff-os/actions/runs/29950685515
+    Required behavior: Implement versioned schemas plus validation tests for the four named contracts without editing shared configuration or lockfiles.
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+    Predicate: pnpm --filter @victoroff/contracts typecheck
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
   predicate: pnpm --filter @victoroff/contracts typecheck
   receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-001
   depends_on: []
-  created: '2026-07-22'
-  updated: '2026-07-22T19:28:29.694840Z'
-  dispatch_log: []
+  created: 2026-07-22
+  updated: 2026-07-26T21:01:58.161Z
+  dispatch_log:
+  - timestamp: 2026-07-26T21:01:58.161Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Underwrite the evidence-backed historical receipt reconciliation.
+    route_to: codex
+    conduct_event_id: conduct:run-074186a86ff8d15279f3455a0efaf1e9:337:compatibility
+    conduct_run_id: run-074186a86ff8d15279f3455a0efaf1e9
+    conduct_lease_id: lease-337-074186a86ff8d152
+    conduct_generation: 337
+  origin: human_prompt
+  horizon: past
+  value_case: The merged governance and intent schemas give every Victoroff request a versioned, validated public-synthetic contract.
 - id: VIC-DOMAIN-001
   title: Victoroff deterministic seven-intent resolver
   description: Implement deterministic seven-intent resolver fixtures, authority precedence,
