@@ -105073,7 +105073,7 @@ tasks:
   context: 'GitHub issue organvm/limen#642. Adjudicated throughput of the founding full-stack-review run (Codex session 019f2a04): 182 ledger entries in ~15h of sustained single-lane work ≈ 12 rows/hour. Against 1,778 changed-file candidates + 875 reconstruction roots, single-lane drain is ~6-9 days of continuous wall-clock. PR #638 added the executable depth-queue stop predicate (at merge time: blocked; 257 open of 287 eligible rows at rev'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-26T21:50:27.393Z'
+  updated: '2026-07-26T21:52:55.048Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: 'codex'
@@ -105106,8 +105106,23 @@ tasks:
     conduct_run_id: 'run-a3bcdbf6cb5c7b79dfec7443b4915814'
     conduct_lease_id: 'lease-358-a3bcdbf6cb5c7b79'
     conduct_generation: 358
+  - timestamp: '2026-07-26T21:52:55.048Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-f332892c0c0368d843bb40e0e386a5c2:370:compatibility'
+    conduct_run_id: 'run-f332892c0c0368d843bb40e0e386a5c2'
+    conduct_lease_id: 'lease-370-f332892c0c0368d8'
+    conduct_generation: 370
   predicate: 'test "$(gh issue view 642 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/642'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GH-organvm-limen-642 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: 'GH-organvm-limen-641'
   title: 'agy: decode native Antigravity IDE conversations into the prompt corpus (weakest review quadrant)'
   repo: 'organvm/limen'
