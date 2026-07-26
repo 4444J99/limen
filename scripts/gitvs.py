@@ -1518,10 +1518,11 @@ def _facts_rows() -> list[dict] | None:
 
 
 def visibility_drift(rows: list[dict], estate: dict) -> tuple[list[str], list[str]]:
-    """Class G, pure: desired (class) visibility − observed. 'any' is exempt; a desired-public repo
-    still private whose row carries publish_candidate is CITED (homed with the publish-wave lever,
-    the GitOps direction: the registry is desired-state, the effector converges reality); every
-    other mismatch — including a desired-private repo observed public (leak posture) — is drift."""
+    """Class G, pure: desired visibility − observed. ``publish_candidate`` is desired-public,
+    matching apply-visibility.py: its nominal operation-private class preserves the pre-publication
+    posture while a green history sweep gates the actual flip. A candidate still private is CITED
+    (homed with the publish-wave owner); an already-public candidate is converged. ``any`` is
+    exempt. Every other mismatch, including desired-private observed-public, is drift."""
     fails: list[str] = []
     cites: list[str] = []
     classes = estate.get("classes") or {}
@@ -1530,12 +1531,15 @@ def visibility_drift(rows: list[dict], estate: dict) -> tuple[list[str], list[st
         full = str(row.get("full_name") or "")
         cls_name = classify_repo(full, estate, facts=row)
         desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
+        publish_candidate = bool((overrides.get(full) or {}).get("publish_candidate"))
+        if publish_candidate:
+            desired = "public"
         if desired not in ("public", "private"):
             continue  # 'any' is exempt; unclassed is rung J's finding
         observed = "private" if row.get("private") else "public"
         if desired == observed:
             continue
-        if desired == "public" and (overrides.get(full) or {}).get("publish_candidate"):
+        if desired == "public" and publish_candidate:
             cites.append(
                 f"[G visibility-drift] {full}: desired public, observed private — publish-wave pending (lever-gated)"
             )
