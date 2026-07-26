@@ -14,11 +14,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-26'
-      spent: 6
+      spent: 8
       per_agent:
         jules: 0
         gemini: 0
-        codex: 6
+        codex: 8
         opencode: 0
         agy: 0
         claude: 0
@@ -73038,79 +73038,104 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR merged \u2192 done"
-- id: GEN-organvm-a-i-chat--exporter-docs-0630
-  title: Real usage docs for organvm/a-i-chat--exporter
-  repo: organvm/a-i-chat--exporter
-  type: code
-  target_agent: jules
-  workstream: contributions
-  priority: low
+- id: 'GEN-organvm-a-i-chat--exporter-docs-0630'
+  title: 'Real usage docs for organvm/a-i-chat--exporter'
+  repo: 'organvm/a-i-chat--exporter'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'contributions'
+  priority: 'low'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - docs
-  - generated
-  - build-out
-  - slow
-  - tried:jules
-  urls: []
-  context: "Derive an accurate Usage section in organvm/a-i-chat--exporter's README\
-    \ from the ACTUAL entrypoints/exports (install, run, key commands + flags). No\
-    \ invented features, no TODOs \u2014 only what the code actually does. [auto-generated\
-    \ 2026-06-30 to keep the stream endless]"
+  - 'docs'
+  - 'generated'
+  - 'build-out'
+  - 'slow'
+  - 'tried:jules'
+  urls:
+  - 'https://github.com/organvm/a-i-chat--exporter/issues/141'
+  context: 'Derive an accurate Usage section in organvm/a-i-chat--exporter''s README from the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented features, no TODOs — only what the code actually does. [auto-generated 2026-06-30 to keep the stream endless]'
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:52:23.927Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
-    agent: codex
-    session_id: async-reserve
-    status: dispatched
+    agent: 'codex'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-06-30T16:01:36.749678Z'
-    agent: codex
-    session_id: cli
-    status: ratelimited->opencode
+    agent: 'codex'
+    session_id: 'cli'
+    status: 'ratelimited->opencode'
   - timestamp: '2026-06-30T16:07:01.496110Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-06-30T16:46:26.526136Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-06-30T17:39:39.612945Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-06-30T17:50:00.457139Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
+    agent: 'jules'
+    session_id: 'cli'
+    status: 'dispatched'
   - timestamp: '2026-07-01T19:59:22.678277Z'
-    agent: limen
-    session_id: cli
-    status: open
-    output: Released stale claim after 24h
+    agent: 'limen'
+    session_id: 'cli'
+    status: 'open'
+    output: 'Released stale claim after 24h'
   - timestamp: '2026-07-10T01:51:52.187290Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T01:54:46.222690Z'
-    agent: jules
-    session_id: cli
-    status: failed->codex
-    output: remote/service lane failed; reopened to healthy fleet cascade
+    agent: 'jules'
+    session_id: 'cli'
+    status: 'failed->codex'
+    output: 'remote/service lane failed; reopened to healthy fleet cascade'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: codex
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head failed->codex'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'codex'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head failed->codex'
+  - timestamp: '2026-07-26T21:49:53.170Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-838064ebc1f59f2e6af9f87e2bd1156b:351:compatibility'
+    conduct_run_id: 'run-838064ebc1f59f2e6af9f87e2bd1156b'
+    conduct_lease_id: 'lease-351-838064ebc1f59f2e'
+    conduct_generation: 351
+  - timestamp: '2026-07-26T21:52:23.927Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-9e73673e4d8be4b03850f8160bdc34a8:363:compatibility'
+    conduct_run_id: 'run-9e73673e4d8be4b03850f8160bdc34a8'
+    conduct_lease_id: 'lease-363-9e73673e4d8be4b0'
+    conduct_generation: 363
+  predicate: 'test "$(gh issue view 141 --repo organvm/a-i-chat--exporter --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/a-i-chat--exporter/issues/141'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GEN-organvm-a-i-chat--exporter-docs-0630 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/a-i-chat--exporter'
 - id: GEN-organvm-limen-docs-0630
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -73605,89 +73630,115 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
-- id: GEN-organvm-mirror-mirror-simplify-0630
-  title: Reduce complexity in organvm/mirror-mirror
-  repo: organvm/mirror-mirror
-  type: code
-  target_agent: jules
-  workstream: contributions
-  priority: medium
+- id: 'GEN-organvm-mirror-mirror-simplify-0630'
+  title: 'Reduce complexity in organvm/mirror-mirror'
+  repo: 'organvm/mirror-mirror'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'contributions'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - simplify
-  - generated
-  - build-out
-  - tried:claude
-  - tried:gemini
-  - slow
-  - tried:jules
-  urls: []
-  context: Identify the most complex or most-duplicated module in organvm/mirror-mirror
-    and refactor it for clarity, with tests proving behavior is unchanged. Net lines
-    should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
+  - 'simplify'
+  - 'generated'
+  - 'build-out'
+  - 'tried:claude'
+  - 'tried:gemini'
+  - 'slow'
+  - 'tried:jules'
+  urls:
+  - 'https://github.com/organvm/mirror-mirror/issues/133'
+  context: 'Identify the most complex or most-duplicated module in organvm/mirror-mirror and refactor it for clarity, with tests proving behavior is unchanged. Net lines should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]'
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:52:28.624Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
-    agent: claude
-    session_id: async-reserve
-    status: dispatched
+    agent: 'claude'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-06-30T15:52:13.295171Z'
-    agent: claude
-    session_id: cli
-    status: failed->gemini
+    agent: 'claude'
+    session_id: 'cli'
+    status: 'failed->gemini'
   - timestamp: '2026-06-30T16:01:43.038008Z'
-    agent: gemini
-    session_id: async-reserve
-    status: dispatched
+    agent: 'gemini'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-06-30T16:26:03.561086Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
+    agent: 'gemini'
+    session_id: 'cli'
+    status: 'failed->jules'
   - timestamp: '2026-06-30T17:15:22.535369Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-06-30T17:24:19.337797Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
+    agent: 'jules'
+    session_id: 'cli'
+    status: 'dispatched'
   - timestamp: '2026-07-01T17:30:19.614807Z'
-    agent: limen
-    session_id: cli
-    status: open
-    output: Released stale claim after 24h
+    agent: 'limen'
+    session_id: 'cli'
+    status: 'open'
+    output: 'Released stale claim after 24h'
   - timestamp: '2026-07-09T20:16:23.453596Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-09T20:50:53.394389Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T01:51:52.187290Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T01:55:33.266128Z'
-    agent: jules
-    session_id: cli
-    status: failed->codex
-    output: remote/service lane failed; reopened to healthy fleet cascade
+    agent: 'jules'
+    session_id: 'cli'
+    status: 'failed->codex'
+    output: 'remote/service lane failed; reopened to healthy fleet cascade'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: codex
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head failed->codex'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'codex'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head failed->codex'
+  - timestamp: '2026-07-26T21:49:58.357Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-a3a47ee1860ef88226949e800f60376d:352:compatibility'
+    conduct_run_id: 'run-a3a47ee1860ef88226949e800f60376d'
+    conduct_lease_id: 'lease-352-a3a47ee1860ef882'
+    conduct_generation: 352
+  - timestamp: '2026-07-26T21:52:28.624Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-dec26948aae2bfadac4e09044160a274:364:compatibility'
+    conduct_run_id: 'run-dec26948aae2bfadac4e09044160a274'
+    conduct_lease_id: 'lease-364-dec26948aae2bfad'
+    conduct_generation: 364
+  predicate: 'test "$(gh issue view 133 --repo organvm/mirror-mirror --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/mirror-mirror/issues/133'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GEN-organvm-mirror-mirror-simplify-0630 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/mirror-mirror'
 - id: GEN-organvm-domus-genoma-simplify-0630
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -78951,100 +79002,164 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
-- id: GEN-organvm-mirror-mirror-ci-green-0702
-  title: Make organvm/mirror-mirror CI green
-  repo: organvm/mirror-mirror
-  type: code
-  target_agent: jules
-  workstream: contributions
-  priority: high
+- id: 'GEN-organvm-mirror-mirror-ci-green-0702'
+  title: 'Make organvm/mirror-mirror CI green'
+  repo: 'organvm/mirror-mirror'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'contributions'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'done'
   labels:
-  - ci-green
-  - generated
-  - build-out
-  - slow
-  urls: []
-  context: Inspect the latest FAILING checks on organvm/mirror-mirror's default branch,
-    fix the root cause (lint / types / failing test / config), and confirm the checks
-    pass. If CI is already green, add the single most valuable missing check (e.g.
-    typecheck or test-matrix) instead. [auto-generated 2026-07-02 to keep the stream
-    endless]
+  - 'ci-green'
+  - 'generated'
+  - 'build-out'
+  - 'slow'
+  urls:
+  - 'https://github.com/organvm/mirror-mirror/pull/99'
+  context: 'Inspect the latest FAILING checks on organvm/mirror-mirror''s default branch, fix the root cause (lint / types / failing test / config), and confirm the checks pass. If CI is already green, add the single most valuable missing check (e.g. typecheck or test-matrix) instead. [auto-generated 2026-07-02 to keep the stream endless]'
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-03T10:52:55.139329Z'
+  updated: '2026-07-26T21:53:26.279Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:33:46.431227Z'
-    agent: claude
-    session_id: async-reserve
-    status: dispatched
+    agent: 'claude'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-02T04:44:57.597667Z'
-    agent: claude
-    session_id: cli
-    status: failed->opencode
+    agent: 'claude'
+    session_id: 'cli'
+    status: 'failed->opencode'
   - timestamp: '2026-07-02T05:22:23.031996Z'
-    agent: codex
-    session_id: async-reserve
-    status: dispatched
+    agent: 'codex'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-02T05:43:53.335195Z'
-    agent: codex
-    session_id: async-reap-stale
-    status: open
+    agent: 'codex'
+    session_id: 'async-reap-stale'
+    status: 'open'
     output: 'dispatch-async: stale worker marker older than 1200s reaped; task reopened'
   - timestamp: '2026-07-02T05:44:18.105109Z'
-    agent: codex
-    session_id: async-reserve
-    status: dispatched
+    agent: 'codex'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-02T06:03:32.254811Z'
-    agent: codex
-    session_id: cli
-    status: timeout->jules
+    agent: 'codex'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-02T06:23:30.048422Z'
-    agent: codex
-    session_id: cli
-    status: timeout->jules
+    agent: 'codex'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-03T08:31:07.342422Z'
-    agent: agy
-    session_id: async-reserve
-    status: dispatched
+    agent: 'agy'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-03T08:34:00Z'
-    agent: agy
-    session_id: https://github.com/organvm/mirror-mirror/pull/99
-    status: pr_open
-    output: "Removed .github/workflows/deploy.yml \u2014 GitHub Pages 404 on private\
-      \ repo; Netlify handles deploy. CI (lint/typecheck/build/test) is the sole check\
-      \ and passes."
+    agent: 'agy'
+    session_id: 'https://github.com/organvm/mirror-mirror/pull/99'
+    status: 'pr_open'
+    output: 'Removed .github/workflows/deploy.yml — GitHub Pages 404 on private repo; Netlify handles deploy. CI (lint/typecheck/build/test) is the sole check and passes.'
   - timestamp: '2026-07-03T08:39:24.674131Z'
-    agent: agy
-    session_id: cli
-    status: failed->claude
-    output: Stale false result from async worker; PR receipt above verified separately.
+    agent: 'agy'
+    session_id: 'cli'
+    status: 'failed->claude'
+    output: 'Stale false result from async worker; PR receipt above verified separately.'
   - timestamp: '2026-07-03T08:39:45Z'
-    agent: limen
-    session_id: https://github.com/organvm/mirror-mirror/pull/99
-    status: pr_open
-    output: 'Board repaired from stale false result: PR #99 is OPEN, mergeStateStatus=CLEAN,
-      and check `Lint, build & test` completed SUCCESS at 2026-07-03T08:34:56Z.'
+    agent: 'limen'
+    session_id: 'https://github.com/organvm/mirror-mirror/pull/99'
+    status: 'pr_open'
+    output: 'Board repaired from stale false result: PR #99 is OPEN, mergeStateStatus=CLEAN, and check `Lint, build & test` completed SUCCESS at 2026-07-03T08:34:56Z.'
   - timestamp: '2026-07-03T09:05:02.070117Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-03T09:08:34.823210Z'
-    agent: opencode
-    session_id: result-lifecycle-guard
-    status: pr_open
-    output: dispatch result ignored because this task already recorded an open PR
+    agent: 'opencode'
+    session_id: 'result-lifecycle-guard'
+    status: 'pr_open'
+    output: 'dispatch result ignored because this task already recorded an open PR'
   - timestamp: '2026-07-03T10:52:55.139329Z'
-    agent: limen
-    session_id: heal
-    status: open
-    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+    agent: 'limen'
+    session_id: 'heal'
+    status: 'open'
+    output: 'heal-dispatch: dispatched but no PR (silent no-op) → reopened'
+  - timestamp: '2026-07-26T21:50:03.243Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    route_to: 'codex'
+    conduct_event_id: 'conduct:run-c6452b798d65cbd7bea341f8a4d123a2:353:compatibility'
+    conduct_run_id: 'run-c6452b798d65cbd7bea341f8a4d123a2'
+    conduct_lease_id: 'lease-353-c6452b798d65cbd7'
+    conduct_generation: 353
+  - timestamp: '2026-07-26T21:52:32.835Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    route_to: 'codex'
+    conduct_event_id: 'conduct:run-bfee00f574ca4544e24371cc3a9d81ac:365:compatibility'
+    conduct_run_id: 'run-bfee00f574ca4544e24371cc3a9d81ac'
+    conduct_lease_id: 'lease-365-bfee00f574ca4544'
+    conduct_generation: 365
+  - timestamp: '2026-07-26T21:53:17.686Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'dispatched'
+    output: 'Reconciled historical merged receipt.'
+    base_sha: 'a7873abef1dce405c7e3301ea7c108a498d6f148'
+    conduct_event_id: 'conduct:run-8ac1cef053c8f4f8b8e62af11f7d8540:375:compatibility'
+    conduct_run_id: 'run-8ac1cef053c8f4f8b8e62af11f7d8540'
+    conduct_lease_id: 'lease-375-8ac1cef053c8f4f8'
+    conduct_generation: 375
+  - timestamp: '2026-07-26T21:53:22.034Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'in_progress'
+    output: 'Verifying exact merged PR receipt.'
+    base_sha: 'a7873abef1dce405c7e3301ea7c108a498d6f148'
+    conduct_event_id: 'conduct:run-bf04e0d2a614df89f1706f61b06ecc9b:376:compatibility'
+    conduct_run_id: 'run-bf04e0d2a614df89f1706f61b06ecc9b'
+    conduct_lease_id: 'lease-376-bf04e0d2a614df89'
+    conduct_generation: 376
+  - timestamp: '2026-07-26T21:53:26.279Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'done'
+    output: 'Historical task completion reconciled to its merged PR.'
+    base_sha: '85b481707de20462cead7ae93a68db18eef5884e'
+    predicate_exit_code: 0
+    verification_context_digest: 'cec49d88592296570f06d5741bb0e7a18b5e132b143b448dd3c7d61f9d7cb49e'
+    remote_receipt: 'https://github.com/organvm/mirror-mirror/pull/99'
+    conduct_event_id: 'conduct:run-9083bc0395f16c65167fe9d7cbe0baa6:377:compatibility'
+    conduct_run_id: 'run-9083bc0395f16c65167fe9d7cbe0baa6'
+    conduct_lease_id: 'lease-377-9083bc0395f16c65'
+    conduct_generation: 377
+  predicate: 'test "$(gh pr view 99 --repo organvm/mirror-mirror --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/mirror-mirror/pull/99'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GEN-organvm-mirror-mirror-ci-green-0702 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/mirror-mirror'
+  receipt_verified: true
 - id: GEN-organvm-universal-mail--automation-ci-green-0702
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
@@ -79310,69 +79425,137 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
-- id: GEN-organvm-session-meta-typing-0702
-  title: Tighten types in organvm/session-meta
-  repo: organvm/session-meta
-  type: code
-  target_agent: jules
-  workstream: contributions
-  priority: medium
+- id: 'GEN-organvm-session-meta-typing-0702'
+  title: 'Tighten types in organvm/session-meta'
+  repo: 'organvm/session-meta'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'contributions'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'done'
   labels:
-  - typing
-  - generated
-  - build-out
-  - slow
-  - tried:jules
-  urls: []
-  context: Eliminate the worst untyped hotspots in organvm/session-meta's most-imported
-    module (remove `any` / add type hints / fix loose signatures). Keep the build
-    and tests green. [auto-generated 2026-07-02 to keep the stream endless]
+  - 'typing'
+  - 'generated'
+  - 'build-out'
+  - 'slow'
+  - 'tried:jules'
+  urls:
+  - 'https://github.com/organvm/session-meta/pull/163'
+  context: 'Eliminate the worst untyped hotspots in organvm/session-meta''s most-imported module (remove `any` / add type hints / fix loose signatures). Keep the build and tests green. [auto-generated 2026-07-02 to keep the stream endless]'
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:53:38.425Z'
   dispatch_log:
   - timestamp: '2026-07-02T08:01:33.979564Z'
-    agent: codex
-    session_id: async-reserve
-    status: dispatched
+    agent: 'codex'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-02T08:29:32.177343Z'
-    agent: codex
-    session_id: async-reap-stale
-    status: open
+    agent: 'codex'
+    session_id: 'async-reap-stale'
+    status: 'open'
     output: 'dispatch-async: stale worker marker older than 1200s reaped; task reopened'
   - timestamp: '2026-07-02T08:30:03.577691Z'
-    agent: codex
-    session_id: async-reserve
-    status: dispatched
+    agent: 'codex'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-02T08:40:50.189796Z'
-    agent: codex
-    session_id: cli
-    status: timeout->jules
+    agent: 'codex'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-02T09:06:23.463757Z'
-    agent: codex
-    session_id: cli
-    status: timeout->jules
+    agent: 'codex'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T01:51:52.187290Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T01:55:33.266128Z'
-    agent: jules
-    session_id: cli
-    status: failed->codex
-    output: remote/service lane failed; reopened to healthy fleet cascade
+    agent: 'jules'
+    session_id: 'cli'
+    status: 'failed->codex'
+    output: 'remote/service lane failed; reopened to healthy fleet cascade'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: codex
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head failed->codex'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'codex'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head failed->codex'
+  - timestamp: '2026-07-26T21:50:07.662Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    route_to: 'codex'
+    conduct_event_id: 'conduct:run-e4ebd0f279b7980d5a6215bdd2d7678a:354:compatibility'
+    conduct_run_id: 'run-e4ebd0f279b7980d5a6215bdd2d7678a'
+    conduct_lease_id: 'lease-354-e4ebd0f279b7980d'
+    conduct_generation: 354
+  - timestamp: '2026-07-26T21:52:37.041Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    route_to: 'codex'
+    conduct_event_id: 'conduct:run-bc19c3b875b165e15097ba6bc2597a0a:366:compatibility'
+    conduct_run_id: 'run-bc19c3b875b165e15097ba6bc2597a0a'
+    conduct_lease_id: 'lease-366-bc19c3b875b165e1'
+    conduct_generation: 366
+  - timestamp: '2026-07-26T21:53:30.341Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'dispatched'
+    output: 'Reconciled historical merged receipt.'
+    base_sha: '470f59f2663f6d4f6f01c7c0a293ae3536d6a23c'
+    conduct_event_id: 'conduct:run-48d130765d81faa01079851d4d2ddb2a:378:compatibility'
+    conduct_run_id: 'run-48d130765d81faa01079851d4d2ddb2a'
+    conduct_lease_id: 'lease-378-48d130765d81faa0'
+    conduct_generation: 378
+  - timestamp: '2026-07-26T21:53:34.431Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'in_progress'
+    output: 'Verifying exact merged PR receipt.'
+    base_sha: '470f59f2663f6d4f6f01c7c0a293ae3536d6a23c'
+    conduct_event_id: 'conduct:run-039981a6db0f6cef717e2a3ed970e9c2:379:compatibility'
+    conduct_run_id: 'run-039981a6db0f6cef717e2a3ed970e9c2'
+    conduct_lease_id: 'lease-379-039981a6db0f6cef'
+    conduct_generation: 379
+  - timestamp: '2026-07-26T21:53:38.425Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'done'
+    output: 'Historical task completion reconciled to its merged PR.'
+    base_sha: '5b586e3ec314434e1b0f274b19897686d38dfdd3'
+    predicate_exit_code: 0
+    verification_context_digest: '80a9a367489c62916f2a841f0185a784d56107a28357db411128c0bed4589d40'
+    remote_receipt: 'https://github.com/organvm/session-meta/pull/163'
+    conduct_event_id: 'conduct:run-c1b60d6b7f504938e99de9ba140fefd8:380:compatibility'
+    conduct_run_id: 'run-c1b60d6b7f504938e99de9ba140fefd8'
+    conduct_lease_id: 'lease-380-c1b60d6b7f504938'
+    conduct_generation: 380
+  predicate: 'test "$(gh pr view 163 --repo organvm/session-meta --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/session-meta/pull/163'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GEN-organvm-session-meta-typing-0702 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/session-meta'
+  receipt_verified: true
 - id: GEN-organvm-universal-mail--automation-typing-0702
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -80543,33 +80726,59 @@ tasks:
     status: failed_blocked
     output: "heal-dispatch: chronic escalation re-homed needs_human \u2192 failed_blocked\
       \ (fleet-debt, not a human atom)"
-- id: GEN-organvm-limen-typing-0703
-  title: Tighten types in organvm/limen
-  repo: organvm/limen
-  type: code
-  target_agent: agy
-  workstream: contributions
-  priority: medium
+- id: 'GEN-organvm-limen-typing-0703'
+  title: 'Tighten types in organvm/limen'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'agy'
+  workstream: 'contributions'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - typing
-  - generated
-  - build-out
-  urls: []
-  context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
-    (remove `any` / add type hints / fix loose signatures). Keep the build and tests
-    green. [auto-generated 2026-07-03 to keep the stream endless]
+  - 'typing'
+  - 'generated'
+  - 'build-out'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1565'
+  context: 'Eliminate the worst untyped hotspots in organvm/limen''s most-imported module (remove `any` / add type hints / fix loose signatures). Keep the build and tests green. [auto-generated 2026-07-03 to keep the stream endless]'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-09T20:10:27.583194Z'
+  updated: '2026-07-26T21:52:41.401Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
-    agent: codex
-    session_id: codex-jules-fill-20260709
-    status: open
-    output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
-      local OpenCode/Agy slots'
+    agent: 'codex'
+    session_id: 'codex-jules-fill-20260709'
+    status: 'open'
+    output: 'fleet fill: retargeted codex->jules to use Jules async capacity before local OpenCode/Agy slots'
+  - timestamp: '2026-07-26T21:50:12.535Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-9fec39e420769edab3d13f7f06ef5567:355:compatibility'
+    conduct_run_id: 'run-9fec39e420769edab3d13f7f06ef5567'
+    conduct_lease_id: 'lease-355-9fec39e420769eda'
+    conduct_generation: 355
+  - timestamp: '2026-07-26T21:52:41.401Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-db6d726cbb042efad348b37a69ec9d89:367:compatibility'
+    conduct_run_id: 'run-db6d726cbb042efad348b37a69ec9d89'
+    conduct_lease_id: 'lease-367-db6d726cbb042efa'
+    conduct_generation: 367
+  predicate: 'test "$(gh issue view 1565 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1565'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GEN-organvm-limen-typing-0703 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: ORG-legal-organ-charter-0703
   title: Charter the legal organ as an institution rivaling a top-tier litigation
     firm (the Cochran standard)
@@ -82978,45 +83187,71 @@ tasks:
     status: failed_blocked
     output: "heal-dispatch: chronic escalation re-homed needs_human \u2192 failed_blocked\
       \ (fleet-debt, not a human atom)"
-- id: TASK-LED-strategic-rollup
+- id: 'TASK-LED-strategic-rollup'
   title: 'Heal insight: strategic rollup: net WORTH IT (shipped=605, spent=1465, sunk=176)'
-  description: 'Over 1269 tasks: 48% success rate, 176 sunk runs worth organvm/organvm-engine.
-    Cost per shipped: 2.42.'
-  repo: organvm/limen
-  type: code
-  target_agent: jules
-  priority: medium
+  description: 'Over 1269 tasks: 48% success rate, 176 sunk runs worth organvm/organvm-engine. Cost per shipped: 2.42.'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'jules'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - slow
-  urls: []
-  context: 'Suggested action: Continue rebalancing lanes away from waste sinks. Prioritize
-    revenue-attributed repos.
+  - 'slow'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1566'
+  context: 'Suggested action: Continue rebalancing lanes away from waste sinks. Prioritize revenue-attributed repos.
 
     Source: /Users/4jp/Workspace/limen/logs/ledger.json
 
     Severity: medium'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:52:45.949Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T13:03:57.769532Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: jules
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head timeout->jules'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'jules'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head timeout->jules'
+  - timestamp: '2026-07-26T21:50:17.542Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-32316467fe3fda1f6226ca94dbacba80:356:compatibility'
+    conduct_run_id: 'run-32316467fe3fda1f6226ca94dbacba80'
+    conduct_lease_id: 'lease-356-32316467fe3fda1f'
+    conduct_generation: 356
+  - timestamp: '2026-07-26T21:52:45.949Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-c6902c7d5c549edaea54808f64c57dd9:368:compatibility'
+    conduct_run_id: 'run-c6902c7d5c549edaea54808f64c57dd9'
+    conduct_lease_id: 'lease-368-c6902c7d5c549eda'
+    conduct_generation: 368
+  predicate: 'test "$(gh issue view 1566 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1566'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give TASK-LED-strategic-rollup an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: TASK-LED-rev-organvm/public-recor
   title: 'Heal insight: waste on revenue repo: organvm/public-record-data-scrapper'
   description: Product 'Public Record Data Scraper' spent 50 with 20 wasted (20 shipped).
@@ -104829,194 +105064,272 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
-- id: DISCOVER-organvm-advocata
-  title: Discover the latent value of organvm/advocata
-  repo: organvm/advocata
-  type: research
-  target_agent: jules
-  workstream: conductor
-  priority: medium
+- id: 'DISCOVER-organvm-advocata'
+  title: 'Discover the latent value of organvm/advocata'
+  repo: 'organvm/advocata'
+  type: 'research'
+  target_agent: 'jules'
+  workstream: 'conductor'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - discover
-  - value-discovery
-  - slow
-  - tried:jules
-  urls: []
-  context: "DISCOVER the latent value of organvm/advocata. This repo currently has\
-    \ NO ranked value \u2014 your job is to find it (value is discovered, never assumed\
-    \ absent). Steps: (1) Read the repo \u2014 what it is, its real entrypoints/exports,\
-    \ what it already does. (2) Identify its highest latent value: a concrete product,\
-    \ revenue path, reusable asset, or capability the rest of the estate could use\
-    \ \u2014 be specific and honest. (3) DECIDE: if there is real value, write a one-paragraph\
-    \ value thesis to DISCOVERY.md AND open a PR that ALSO appends \"organvm/advocata\"\
-    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
-    \ AND name the single best concrete first task; if it is genuinely archival, write\
-    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
-    \ Keep any build green. Output the thesis. [auto-discovery 2026-07-04; no repo\
-    \ stays dark]"
+  - 'discover'
+  - 'value-discovery'
+  - 'slow'
+  - 'tried:jules'
+  urls:
+  - 'https://github.com/organvm/advocata/issues/5'
+  context: 'DISCOVER the latent value of organvm/advocata. This repo currently has NO ranked value — your job is to find it (value is discovered, never assumed absent). Steps: (1) Read the repo — what it is, its real entrypoints/exports, what it already does. (2) Identify its highest latent value: a concrete product, revenue path, reusable asset, or capability the rest of the estate could use — be specific and honest. (3) DECIDE: if there is real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR that ALSO appends "organvm/advocata" to value-repos.json (promote it into the ranked tier so build-out can follow) AND name the single best concrete first task; if it is genuinely archival, write the thesis saying so (so it is never re-discovered) — do NOT promote it. Keep any build green. Output the thesis. [auto-discovery 2026-07-04; no repo stays dark]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:52:50.597Z'
   dispatch_log:
   - timestamp: '2026-07-09T21:20:20.353186Z'
-    agent: gemini
-    session_id: async-reserve
-    status: dispatched
+    agent: 'gemini'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-09T21:51:31.137192Z'
-    agent: gemini
-    session_id: cli
-    status: timeout->jules
+    agent: 'gemini'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T01:51:52.187290Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T01:55:33.266128Z'
-    agent: jules
-    session_id: cli
-    status: failed->codex
-    output: remote/service lane failed; reopened to healthy fleet cascade
+    agent: 'jules'
+    session_id: 'cli'
+    status: 'failed->codex'
+    output: 'remote/service lane failed; reopened to healthy fleet cascade'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: codex
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head failed->codex'
-- id: GH-organvm-limen-642
-  title: 'full-stack review: shard the depth queue across parallel lanes (single-lane
-    ~8.5 rows/h vs 1,778-row queue)'
-  repo: organvm/limen
-  type: code
-  target_agent: jules
-  priority: medium
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'codex'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head failed->codex'
+  - timestamp: '2026-07-26T21:50:23.038Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-99e8c4429d3002ff9666efea58d3dfce:357:compatibility'
+    conduct_run_id: 'run-99e8c4429d3002ff9666efea58d3dfce'
+    conduct_lease_id: 'lease-357-99e8c4429d3002ff'
+    conduct_generation: 357
+  - timestamp: '2026-07-26T21:52:50.597Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-c924091d36b4de89c84f14fec41bb2d7:369:compatibility'
+    conduct_run_id: 'run-c924091d36b4de89c84f14fec41bb2d7'
+    conduct_lease_id: 'lease-369-c924091d36b4de89'
+    conduct_generation: 369
+  predicate: 'test "$(gh issue view 5 --repo organvm/advocata --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/advocata/issues/5'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give DISCOVER-organvm-advocata an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/advocata'
+- id: 'GH-organvm-limen-642'
+  title: 'full-stack review: shard the depth queue across parallel lanes (single-lane ~8.5 rows/h vs 1,778-row queue)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'jules'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - slow
+  - 'slow'
   urls:
-  - https://github.com/organvm/limen/issues/642
-  context: "GitHub issue organvm/limen#642. Adjudicated throughput of the founding\
-    \ full-stack-review run (Codex session 019f2a04): 182 ledger entries in ~15h of\
-    \ sustained single-lane work \u2248 12 rows/hour. Against 1,778 changed-file candidates\
-    \ + 875 reconstruction roots, single-lane drain is ~6-9 days of continuous wall-clock.\
-    \ PR #638 added the executable depth-queue stop predicate (at merge time: blocked;\
-    \ 257 open of 287 eligible rows at rev"
+  - 'https://github.com/organvm/limen/issues/642'
+  context: 'GitHub issue organvm/limen#642. Adjudicated throughput of the founding full-stack-review run (Codex session 019f2a04): 182 ledger entries in ~15h of sustained single-lane work ≈ 12 rows/hour. Against 1,778 changed-file candidates + 875 reconstruction roots, single-lane drain is ~6-9 days of continuous wall-clock. PR #638 added the executable depth-queue stop predicate (at merge time: blocked; 257 open of 287 eligible rows at rev'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:52:55.048Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
-    agent: codex
-    session_id: codex-jules-fill-20260709
-    status: open
-    output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
-      local OpenCode/Agy slots'
+    agent: 'codex'
+    session_id: 'codex-jules-fill-20260709'
+    status: 'open'
+    output: 'fleet fill: retargeted codex->jules to use Jules async capacity before local OpenCode/Agy slots'
   - timestamp: '2026-07-10T10:45:51.370902Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T11:17:49.202653Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: jules
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head timeout->jules'
-- id: GH-organvm-limen-641
-  title: 'agy: decode native Antigravity IDE conversations into the prompt corpus
-    (weakest review quadrant)'
-  repo: organvm/limen
-  type: code
-  target_agent: jules
-  workstream: prompt-parity
-  priority: medium
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'jules'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head timeout->jules'
+  - timestamp: '2026-07-26T21:50:27.393Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-a3bcdbf6cb5c7b79dfec7443b4915814:358:compatibility'
+    conduct_run_id: 'run-a3bcdbf6cb5c7b79dfec7443b4915814'
+    conduct_lease_id: 'lease-358-a3bcdbf6cb5c7b79'
+    conduct_generation: 358
+  - timestamp: '2026-07-26T21:52:55.048Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-f332892c0c0368d843bb40e0e386a5c2:370:compatibility'
+    conduct_run_id: 'run-f332892c0c0368d843bb40e0e386a5c2'
+    conduct_lease_id: 'lease-370-f332892c0c0368d8'
+    conduct_generation: 370
+  predicate: 'test "$(gh issue view 642 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/642'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GH-organvm-limen-642 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
+- id: 'GH-organvm-limen-641'
+  title: 'agy: decode native Antigravity IDE conversations into the prompt corpus (weakest review quadrant)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'prompt-parity'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - slow
+  - 'slow'
   urls:
-  - https://github.com/organvm/limen/issues/641
-  context: 'GitHub issue organvm/limen#641. The full-stack review founding run (Codex
-    session 019f2a04) inventoried only 15 Agy sessions vs ~1,270-1,295 each for Claude/Codex/OpenCode,
-    and only 4 of the 182 deep-review entries at f404f85 name Agy in their headings.
-    The run itself recorded the cause: native Antigravity IDE conversation decoding
-    is unsolved; only Gemini/capfill surfaces and scratch residue are readable today.
-    The ledger''s Rem'
+  - 'https://github.com/organvm/limen/issues/641'
+  context: 'GitHub issue organvm/limen#641. The full-stack review founding run (Codex session 019f2a04) inventoried only 15 Agy sessions vs ~1,270-1,295 each for Claude/Codex/OpenCode, and only 4 of the 182 deep-review entries at f404f85 name Agy in their headings. The run itself recorded the cause: native Antigravity IDE conversation decoding is unsolved; only Gemini/capfill surfaces and scratch residue are readable today. The ledger''s Rem'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:52:59.653Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:42:24.102867Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T11:15:20.919719Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: jules
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head timeout->jules'
-- id: GH-organvm-limen-640
-  title: 'review-ledger: enforce the entry template with an executable lint (Ideal
-    prompt diff / What was fucked up)'
-  repo: organvm/limen
-  type: code
-  target_agent: jules
-  workstream: prompt-parity
-  priority: medium
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'jules'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head timeout->jules'
+  - timestamp: '2026-07-26T21:50:31.705Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-3cbe3d1cf7854e134b8726ac196390cc:359:compatibility'
+    conduct_run_id: 'run-3cbe3d1cf7854e134b8726ac196390cc'
+    conduct_lease_id: 'lease-359-3cbe3d1cf7854e13'
+    conduct_generation: 359
+  - timestamp: '2026-07-26T21:52:59.653Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-3478a0ef0334b1d17343236d75622cee:371:compatibility'
+    conduct_run_id: 'run-3478a0ef0334b1d17343236d75622cee'
+    conduct_lease_id: 'lease-371-3478a0ef0334b1d1'
+    conduct_generation: 371
+  predicate: 'test "$(gh issue view 641 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/641'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GH-organvm-limen-641 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
+- id: 'GH-organvm-limen-640'
+  title: 'review-ledger: enforce the entry template with an executable lint (Ideal prompt diff / What was fucked up)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'prompt-parity'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'open'
   labels:
-  - slow
+  - 'slow'
   urls:
-  - https://github.com/organvm/limen/issues/640
-  context: 'GitHub issue organvm/limen#640. Fable adjudication of Codex session 019f2a04
-    (full-stack review founding run) found template drift in docs/agent-code-diff-review.md:
-    of 182 entries in the ledger at the session''s last commit (f404f85), only 124
-    carry the literal `Ideal prompt diff:` section and 123 carry `What was fucked
-    up:` (182/182 have Severity+Evidence; 179 have Verification+Result). Those two
-    lenses are the mandate''s signat'
+  - 'https://github.com/organvm/limen/issues/640'
+  context: 'GitHub issue organvm/limen#640. Fable adjudication of Codex session 019f2a04 (full-stack review founding run) found template drift in docs/agent-code-diff-review.md: of 182 entries in the ledger at the session''s last commit (f404f85), only 124 carry the literal `Ideal prompt diff:` section and 123 carry `What was fucked up:` (182/182 have Severity+Evidence; 179 have Verification+Result). Those two lenses are the mandate''s signat'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:53:04.008Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
-    agent: codex
-    session_id: codex-jules-fill-20260709b
-    status: open
-    output: 'fleet fill: retargeted claude->jules to consume live Jules usage runway
-      before reset'
+    agent: 'codex'
+    session_id: 'codex-jules-fill-20260709b'
+    status: 'open'
+    output: 'fleet fill: retargeted claude->jules to consume live Jules usage runway before reset'
   - timestamp: '2026-07-10T10:42:24.102867Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T11:15:20.919719Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: jules
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head timeout->jules'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'jules'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head timeout->jules'
+  - timestamp: '2026-07-26T21:50:36.306Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-0e506dc8b122df32754243121016c537:360:compatibility'
+    conduct_run_id: 'run-0e506dc8b122df32754243121016c537'
+    conduct_lease_id: 'lease-360-0e506dc8b122df32'
+    conduct_generation: 360
+  - timestamp: '2026-07-26T21:53:04.008Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-283b185e4cbdeb0ab419d13c221e7531:372:compatibility'
+    conduct_run_id: 'run-283b185e4cbdeb0ab419d13c221e7531'
+    conduct_lease_id: 'lease-372-283b185e4cbdeb0a'
+    conduct_generation: 372
+  predicate: 'test "$(gh issue view 640 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/640'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give GH-organvm-limen-640 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: ORG-hr-organ-kernel-0704
   title: Map the VLTIMA 5-primitive kernel to the hr organ
   repo: organvm/limen
@@ -117814,86 +118127,104 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
-- id: ORG-artist-organ-face-0705
-  title: Make the artist organ's macro + micro face excellent
-  repo: organvm/limen
-  type: content
-  target_agent: jules
-  workstream: artist
-  priority: high
+- id: 'ORG-artist-organ-face-0705'
+  title: 'Make the artist organ''s macro + micro face excellent'
+  repo: 'organvm/limen'
+  type: 'content'
+  target_agent: 'jules'
+  workstream: 'artist'
+  priority: 'high'
   budget_cost: 2
-  status: open
+  status: 'open'
   labels:
-  - organ-face
-  - pillar:artist
-  - organ
-  - institution
-  - vltima
-  - generated
-  - tried:github_actions
-  - tried:jules
-  - tried:opencode
-  - slow
-  urls: []
-  context: "In organvm/limen organs/artist/, author the polished MACRO face (a studio/temple\
-    \ platform any artist can hold \u2014 9-chamber toolkit with Curatorial Voice\
-    \ and Provenance Contract frameworks \u2014 the platform anyone can hold) AND\
-    \ the MICRO instance (Anthony's a-mavs-olevm chambers (444-file photo archive,\
-    \ ET4L, LOCREANCE) \u2014 all 3/3 validated \u2014 his own), grounded in what\
-    \ the organ actually does. Real copy, ready to show. One PR. CONSTRAINT: temple\
-    \ built (70%) chambers filling; Curatorial Voice + Provenance Contract frameworks\
-    \ formalized; macro + micro faces polished; 3/3 chambers validated; no longer\
-    \ subordinate to education. [organ-backlog 2026-07-05: rank 7, maturity 70% stage\
-    \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  - 'organ-face'
+  - 'pillar:artist'
+  - 'organ'
+  - 'institution'
+  - 'vltima'
+  - 'generated'
+  - 'tried:github_actions'
+  - 'tried:jules'
+  - 'tried:opencode'
+  - 'slow'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1567'
+  context: 'In organvm/limen organs/artist/, author the polished MACRO face (a studio/temple platform any artist can hold — 9-chamber toolkit with Curatorial Voice and Provenance Contract frameworks — the platform anyone can hold) AND the MICRO instance (Anthony''s a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE) — all 3/3 validated — his own), grounded in what the organ actually does. Real copy, ready to show. One PR. CONSTRAINT: temple built (70%) chambers filling; Curatorial Voice + Provenance Contract frameworks formalized; macro + micro faces polished; 3/3 chambers validated; no longer subordinate to education. [organ-backlog 2026-07-05: rank 7, maturity 70% stage maturing — convert idle fleet capacity into institutional weight (VLTIMA).]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:53:08.637Z'
   dispatch_log:
   - timestamp: '2026-07-06T01:26:39.018572Z'
-    agent: github_actions
-    session_id: async-reserve
-    status: dispatched
+    agent: 'github_actions'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-06T01:37:26.768124Z'
-    agent: github_actions
-    session_id: cli
-    status: failed->codex
-    output: remote/service lane failed; reopened to healthy fleet cascade
+    agent: 'github_actions'
+    session_id: 'cli'
+    status: 'failed->codex'
+    output: 'remote/service lane failed; reopened to healthy fleet cascade'
   - timestamp: '2026-07-09T18:38:25.193412Z'
-    agent: jules
-    session_id: cli
-    status: failed->ollama
+    agent: 'jules'
+    session_id: 'cli'
+    status: 'failed->ollama'
   - timestamp: '2026-07-09T19:53:57.020939Z'
-    agent: codex
-    session_id: codex-closeout-ollama-fallout-20260709
-    status: open
-    output: 'board repair: latest jules failed->ollama came from unarmed/noncanonical
-      ollama fallback; retargeted ollama->opencode; code-side guard in https://github.com/organvm/limen/pull/839'
+    agent: 'codex'
+    session_id: 'codex-closeout-ollama-fallout-20260709'
+    status: 'open'
+    output: 'board repair: latest jules failed->ollama came from unarmed/noncanonical ollama fallback; retargeted ollama->opencode; code-side guard in https://github.com/organvm/limen/pull/839'
   - timestamp: '2026-07-09T20:16:23.453596Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-09T20:31:41.786627Z'
-    agent: opencode
-    session_id: cli
-    status: failed->agy
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'failed->agy'
   - timestamp: '2026-07-10T09:00:35.067712Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T09:31:35.236703Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: jules
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head timeout->jules'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'jules'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head timeout->jules'
+  - timestamp: '2026-07-26T21:50:41.051Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-328187be7ae450a048d4f8bf3749b5af:361:compatibility'
+    conduct_run_id: 'run-328187be7ae450a048d4f8bf3749b5af'
+    conduct_lease_id: 'lease-361-328187be7ae450a0'
+    conduct_generation: 361
+  - timestamp: '2026-07-26T21:53:08.637Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-26c7fa675f35d119617c25e93094c6a4:373:compatibility'
+    conduct_run_id: 'run-26c7fa675f35d119617c25e93094c6a4'
+    conduct_lease_id: 'lease-373-26c7fa675f35d119'
+    conduct_generation: 373
+  predicate: 'test "$(gh issue view 1567 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1567'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give ORG-artist-organ-face-0705 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: ORG-consulting-organ-face-0705
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
@@ -117949,73 +118280,88 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
-- id: ORG-health-organ-firstslice-0705
-  title: Build the first working vertical slice of the health organ
-  repo: organvm/limen
-  type: content
-  target_agent: jules
-  workstream: health
-  priority: high
+- id: 'ORG-health-organ-firstslice-0705'
+  title: 'Build the first working vertical slice of the health organ'
+  repo: 'organvm/limen'
+  type: 'content'
+  target_agent: 'jules'
+  workstream: 'health'
+  priority: 'high'
   budget_cost: 2
-  status: open
+  status: 'open'
   labels:
-  - organ-firstslice
-  - pillar:health
-  - organ
-  - institution
-  - vltima
-  - generated
-  - tried:opencode
-  - slow
-  urls: []
-  context: "In organvm/limen organs/health/, deliver one real end-to-end artifact\
-    \ the organ produces: charter the health organ + a personal recovery/access protocol\
-    \ (informational, not medical advice). A tangible proof the institution works\
-    \ for ONE real case. One PR; tested where it is code; drafts only for anything\
-    \ outbound (his hand on send/sign). CONSTRAINT: unnamed; post-injury (4th-story\
-    \ fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md\
-    \ + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional\
-    \ prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow\
-    \ orchestration, AI role org-chart, leverage math, platform + instance faces.\
-    \ PROTOCOL-recovery-access.md + posture.md generated for 01-post-injury case.\
-    \ Maturity 18%\u219220% by agy beat 2026-07-05.. [organ-backlog 2026-07-05: rank\
-    \ 9, maturity 20% stage scaffold \u2014 convert idle fleet capacity into institutional\
-    \ weight (VLTIMA).]"
+  - 'organ-firstslice'
+  - 'pillar:health'
+  - 'organ'
+  - 'institution'
+  - 'vltima'
+  - 'generated'
+  - 'tried:opencode'
+  - 'slow'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1568'
+  context: 'In organvm/limen organs/health/, deliver one real end-to-end artifact the organ produces: charter the health organ + a personal recovery/access protocol (informational, not medical advice). A tangible proof the institution works for ONE real case. One PR; tested where it is code; drafts only for anything outbound (his hand on send/sign). CONSTRAINT: unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math, platform + instance faces. PROTOCOL-recovery-access.md + posture.md generated for 01-post-injury case. Maturity 18%→20% by agy beat 2026-07-05.. [organ-backlog 2026-07-05: rank 9, maturity 20% stage scaffold — convert idle fleet capacity into institutional weight (VLTIMA).]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-26T21:53:13.224Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
-    agent: codex
-    session_id: codex-local-fill-20260709
-    status: open
-    output: 'fleet fill: retargeted codex->opencode to saturate OpenCode/Agy local
-      async slots after Jules live runway'
+    agent: 'codex'
+    session_id: 'codex-local-fill-20260709'
+    status: 'open'
+    output: 'fleet fill: retargeted codex->opencode to saturate OpenCode/Agy local async slots after Jules live runway'
   - timestamp: '2026-07-09T20:16:23.453596Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-09T20:31:41.786627Z'
-    agent: opencode
-    session_id: cli
-    status: failed->agy
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'failed->agy'
   - timestamp: '2026-07-10T09:00:35.067712Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T09:31:35.236703Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-10T21:56:45.562692Z'
-    agent: heal-board
-    session_id: heal-board
-    status: open
-    route_to: jules
-    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
-      preserved legacy head timeout->jules'
+    agent: 'heal-board'
+    session_id: 'heal-board'
+    status: 'open'
+    route_to: 'jules'
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open; preserved legacy head timeout->jules'
+  - timestamp: '2026-07-26T21:50:45.412Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-a8f26a90d9d26d7bee4eec8f296f42ad:362:compatibility'
+    conduct_run_id: 'run-a8f26a90d9d26d7bee4eec8f296f42ad'
+    conduct_lease_id: 'lease-362-a8f26a90d9d26d7b'
+    conduct_generation: 362
+  - timestamp: '2026-07-26T21:53:13.224Z'
+    agent: 'codex'
+    session_id: 'codex-omega-s12-ask-gate'
+    logical_agent: 'codex'
+    logical_session_id: 'omega-s12-ask-gate'
+    status: 'open'
+    output: 'Bound executable predicate and durable remote owner through TABVLARIVS.'
+    conduct_event_id: 'conduct:run-6ffcfaeac420d765148e484149df8fb8:374:compatibility'
+    conduct_run_id: 'run-6ffcfaeac420d765148e484149df8fb8'
+    conduct_lease_id: 'lease-374-6ffcfaeac420d765'
+    conduct_generation: 374
+  predicate: 'test "$(gh issue view 1568 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1568'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Give ORG-health-organ-firstslice-0705 an executable owner predicate and durable receipt.'
+  owner_surface: 'organvm/limen'
 - id: HEAL-rebase-organvm-session-meta-164
   title: rebase/resolve conflicts on organvm/session-meta#164
   repo: organvm/session-meta
