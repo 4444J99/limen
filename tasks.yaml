@@ -159664,8 +159664,20 @@ tasks:
     conduct_run_id: run-ffaebd491fd0265f57e5bfd0cd395ab9
     conduct_lease_id: lease-27-ffaebd491fd0265f
     conduct_generation: 27
+  - timestamp: 2026-07-26T21:05:02.139Z
+    agent: codex
+    session_id: codex-omega-vic-terminal-reconcile-20260726
+    logical_agent: codex
+    logical_session_id: omega-vic-terminal-reconcile-20260726
+    status: open
+    output: Route the now-green canary state reconciliation predicate to Codex.
+    route_to: codex
+    conduct_event_id: conduct:run-7731209cd4b6ae94ba715c0a4f6ab749:343:compatibility
+    conduct_run_id: run-7731209cd4b6ae94ba715c0a4f6ab749
+    conduct_lease_id: lease-343-7731209cd4b6ae94
+    conduct_generation: 343
   source_origin: agent_recommendation
-  updated: 2026-07-23T11:45:40.273Z
+  updated: 2026-07-26T21:05:02.139Z
 - id: JULES-RECOVERY-EFFECTORS
   title: Effectors for Jules orphan/recovery sessions (25 orphans, 22 recovery)
   description: "The jules-quota sensor alarms on orphaned completed sessions and recovery states (failed / awaiting feedback / awaiting plan approval) but only landing has an effector (jules-land). Build the recovery effectors: land-or-adopt each orphan (jules remote pull --session <id> --apply in an isolated worktree, run its predicate, PR, or record adoption in docs/jules-orphan-adoptions.jsonl), relaunch Failed sessions as fresh bounded packets, and abandon+relaunch stale awaiting-feedback sessions (the CLI has no answer verb). Sensor-without-effector is a defect class; this closes it."
