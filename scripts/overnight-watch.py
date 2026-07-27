@@ -93,7 +93,31 @@ LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", os.environ.get("LIMEN_LAUNCHD_LA
 WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
 LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
 
-MAX_LOG_AGE_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", "1200") or "1200")
+
+def _positive_env_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)) or str(default))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+# The heartbeat writes its tick at the end of a beat. Its longest healthy silence is therefore
+# the idle backoff plus bounded dispatch work plus reconciliation overhead. Keep this derivation
+# aligned with watchdog.py and heartbeat-loop.sh; a shorter independent literal guarantees false
+# alerts whenever the healthy idle cadence exceeds the monitor threshold.
+_HEARTBEAT_MAX_BEAT_SEC = _positive_env_int("LIMEN_LOOP_MAX", 1800)
+_HEARTBEAT_LANE_TIMEOUT_SEC = _positive_env_int("LIMEN_LANE_TIMEOUT", 1800)
+_HEARTBEAT_DISPATCH_CEILING_SEC = _positive_env_int(
+    "LIMEN_DISPATCH_CEILING", _HEARTBEAT_LANE_TIMEOUT_SEC + 600
+)
+_HEARTBEAT_OVERHEAD_SEC = _positive_env_int("LIMEN_WATCHDOG_OVERHEAD_SEC", 600)
+_HEARTBEAT_MAX_INTER_TICK_SEC = (
+    _HEARTBEAT_MAX_BEAT_SEC + _HEARTBEAT_DISPATCH_CEILING_SEC + _HEARTBEAT_OVERHEAD_SEC
+)
+MAX_LOG_AGE_SEC = _positive_env_int(
+    "LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", _HEARTBEAT_MAX_INTER_TICK_SEC
+)
 MAX_STALE_TICKS = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS", "6") or "6")
 HEAL_ENABLED = (os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL", "1") or "1") != "0"
 HEAL_COOLDOWN_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC", "1200") or "1200")
