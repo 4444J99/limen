@@ -174,7 +174,7 @@ class FakeClient:
                     "active_leases": 0,
                     "concurrency": 2,
                 },
-            ]
+            ],
         }
 
     def submit_graph(self, packets):
