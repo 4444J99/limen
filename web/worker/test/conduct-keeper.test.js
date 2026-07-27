@@ -748,6 +748,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
     resource: "task/fanout-root",
     effect: "read",
     spendLimit: 2,
+    campaign: campaignPacket(),
   });
   const root = await validateWorkPacket({
     ...rootTemplate,
@@ -769,6 +770,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
     rootRunId,
     depth: 1,
     spendLimit: 1,
+    campaign: campaignPacket(),
   });
   const secondTemplate = await packet({
     workId: "fanout-second",
@@ -778,6 +780,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
     rootRunId,
     depth: 1,
     spendLimit: 1,
+    campaign: campaignPacket(),
   });
   const second = await validateWorkPacket({
     ...secondTemplate,
@@ -811,6 +814,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
         predicate: { command: "pytest -q", exit_code: 0 },
         spend: { runs: 1 },
         child_runs: [],
+        campaign: campaignReceipt(),
         outcome: "succeeded",
       }, NOW),
     });
@@ -826,6 +830,14 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
   assert.deepEqual(terminal.by_status, { succeeded: 3 });
   assert.deepEqual(terminal.unharvested, []);
   assert.equal(terminal.receipt_count, 3);
+  const terminalGraph = await service.call("graph", { run_id: rootRunId });
+  const rootReceipt = terminalGraph.nodes
+    .find((node) => node.packet.work_id === "fanout-root").receipts[0];
+  assert.deepEqual(rootReceipt.spend, { runs: 2 });
+  assert.equal(rootReceipt.campaign.actual_value, 2);
+  assert.equal(rootReceipt.campaign.boundary, "settled");
+  assert.equal(rootReceipt.campaign.blocker, null);
+  assert.equal(rootReceipt.campaign.successor_capsule, null);
 });
 
 test("registration timestamps are server-owned while protection and healthy worktree ownership are sticky", async () => {
@@ -965,6 +977,16 @@ test("work ids and deterministic work keys share one idempotency index", async (
   assert.equal(store.snapshot().work_index["work-index-alias"], first.run_id);
   assert.equal(store.snapshot().work_key_index["stable-work-key"], first.run_id);
   assert.equal(Object.keys(store.snapshot().leases).length, 1);
+
+  const changedCampaign = await validateWorkPacket({
+    ...original,
+    work_id: "campaign-index-alias",
+    campaign: campaignPacket(),
+  });
+  await assert.rejects(
+    service.call("submit", { packet: changedCampaign }),
+    /reused with different immutable hashes or contract/,
+  );
 
   await assert.rejects(
     service.call("submit", {
@@ -1463,6 +1485,13 @@ test("campaign contract validation is bounded and backward compatible", async ()
   const codex = session("codex");
   const legacy = await packet({ workId: "legacy-campaignless", conductor: codex.identity });
   assert.equal(legacy.campaign, null);
+  const normalized = await validateWorkPacket({
+    ...legacy,
+    predicate: "  pytest -q  ",
+    receipt_target: "  github:organvm/limen:pull-request:legacy-campaignless  ",
+  });
+  assert.equal(normalized.predicate, "pytest -q");
+  assert.equal(normalized.receipt_target, "github:organvm/limen:pull-request:legacy-campaignless");
 
   await assert.rejects(
     packet({
@@ -1543,6 +1572,21 @@ test("campaign contract validation is bounded and backward compatible", async ()
     }, NOW),
     /precise blocker ownership/,
   );
+  for (const outcome of ["failed", "succeeded"]) {
+    assert.throws(
+      () => validateReceipt({
+        receipt_id: `receipt-settled-${outcome}`,
+        run_id: `run-settled-${outcome}`,
+        lease_id: `lease-settled-${outcome}`,
+        lease_generation: 1,
+        executor: codex.identity,
+        predicate: { command: "pytest -q", exit_code: 1 },
+        campaign: { ...campaignReceipt(), boundary: "settled" },
+        outcome,
+      }, NOW),
+      /successful outcome and predicate/,
+    );
+  }
 });
 
 test("moved heads fence leases and late receipts remain evidence only", async () => {

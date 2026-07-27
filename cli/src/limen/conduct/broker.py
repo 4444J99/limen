@@ -14,6 +14,9 @@ from typing import Any, Callable
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
+    CampaignBlockerV1,
+    CampaignOutputEvidenceV1,
+    CampaignReceiptV1,
     ConductorSessionV1,
     ConductPrincipalV1,
     LeaseV1,
@@ -91,6 +94,57 @@ def _require_work_loan(packet: WorkPacketV1) -> None:
     missing = packet_work_loan_missing(packet)
     if missing:
         raise ConductConflict(work_loan_denial(missing))
+
+
+def _fanout_campaign_evidence(
+    root: dict[str, Any],
+    children: list[dict[str, Any]],
+    outcome: str,
+) -> dict[str, Any] | None:
+    """Aggregate typed child evidence into the keeper-settled campaign root."""
+
+    packet = root.get("packet") or {}
+    campaign = packet.get("campaign")
+    if not isinstance(campaign, dict):
+        return None
+    child_campaigns: list[dict[str, Any]] = []
+    spend: dict[str, int | float] = {}
+    for child in children:
+        for receipt in child.get("receipts", []):
+            receipt_campaign = receipt.get("campaign")
+            if isinstance(receipt_campaign, dict):
+                child_campaigns.append(receipt_campaign)
+            for unit, value in (receipt.get("spend") or {}).items():
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    spend[unit] = spend.get(unit, 0) + value
+    outputs = [item["output"] for item in child_campaigns]
+    ceiling = int(campaign["output_ceiling_bytes"])
+    output_summary = "".join(str(item["sha256"]) for item in outputs).encode()
+    emitted_summary = output_summary[:ceiling]
+    typed = CampaignReceiptV1(
+        campaign_id=campaign["campaign_id"],
+        actual_value=sum(float(item.get("actual_value", 0)) for item in child_campaigns),
+        value_unit="predicate_passes",
+        output=CampaignOutputEvidenceV1(
+            output_ceiling_bytes=ceiling,
+            bytes_emitted=len(emitted_summary),
+            lines_emitted=len(emitted_summary.splitlines()),
+            sha256=hashlib.sha256(emitted_summary).hexdigest(),
+            truncated=(len(output_summary) > ceiling or any(bool(item.get("truncated")) for item in outputs)),
+        ),
+        blocker=(
+            CampaignBlockerV1(
+                owner=campaign["owner"],
+                failed_predicate=campaign["failed_predicate"],
+                next_action=campaign["next_action"],
+            )
+            if outcome != "succeeded"
+            else None
+        ),
+        successor_capsule=str(packet["receipt_target"]) if outcome != "succeeded" else None,
+        boundary="settled" if outcome == "succeeded" else "wait_relay",
+    )
+    return {"campaign": _dump(typed), "spend": spend}
 
 
 class ConductBroker:
@@ -243,6 +297,7 @@ class ConductBroker:
                     or stored.predicate != packet.predicate
                     or stored.receipt_target != packet.receipt_target
                     or stored.work_loan != packet.work_loan
+                    or stored.campaign != packet.campaign
                 ):
                     raise ConductConflict("duplicate work changed its identity, authority, or contract")
                 state["work_index"][packet.work_id] = duplicate
@@ -1111,6 +1166,7 @@ class ConductBroker:
         ):
             return
         outcome = "succeeded" if all(child["status"] == "succeeded" for child in children) else "blocked"
+        campaign_evidence = _fanout_campaign_evidence(root, children, outcome)
         root["status"] = outcome
         root["updated_at"] = now.isoformat()
         root["receipts"] = [
@@ -1122,6 +1178,7 @@ class ConductBroker:
                 "child_runs": list(root["children"]),
                 "mutation_authorized": True,
                 "accepted_at": now.isoformat(),
+                **(campaign_evidence or {}),
             }
         ]
         _event(state, "fanout.campaign_settled", run_id=root_run_id, outcome=outcome)

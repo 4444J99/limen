@@ -259,8 +259,7 @@ class WorkPacketV1(ProtocolModel):
     @field_validator("predicate", "receipt_target")
     @classmethod
     def validate_contract_text(cls, value: str, info) -> str:
-        _bounded_text(value, info.field_name)
-        return value
+        return _bounded_text(value, info.field_name)
 
     @model_validator(mode="after")
     def validate_hashes_and_shape(self) -> "WorkPacketV1":
@@ -470,7 +469,13 @@ class RunReceiptV1(ProtocolModel):
         return _identifier(value, info.field_name)
 
     @model_validator(mode="after")
-    def campaign_blocker_is_precise(self) -> "RunReceiptV1":
+    def validate_campaign_outcome(self) -> "RunReceiptV1":
+        if (
+            self.campaign is not None
+            and self.campaign.boundary == "settled"
+            and (self.outcome != "succeeded" or self.predicate.exit_code != 0)
+        ):
+            raise ValueError("settled campaign receipts require a successful outcome and predicate")
         if self.campaign is not None and self.outcome == "blocked" and self.campaign.blocker is None:
             raise ValueError("blocked campaign receipts require precise blocker ownership")
         return self
