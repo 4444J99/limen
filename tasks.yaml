@@ -160566,3 +160566,67 @@ tasks:
     conduct_lease_id: 'lease-386-adce629e0f954ff8'
     conduct_generation: 386
   updated: '2026-07-27T13:07:55.021Z'
+- id: 'VIC-TIER-001'
+  title: 'Evidence-backed five-tier economic-agency domain'
+  description: 'Implement the evidence-backed five-tier economic-agency domain without fabricated progress.'
+  repo: 'organvm/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'progression'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-progression'
+  urls: []
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
+
+    Task: VIC-TIER-001 — Evidence-backed five-tier economic-agency domain.
+
+    Repository: organvm/victoroff-os
+
+    Exact base: 1718b3a0e7cbb14debfa81e4cc7818441cc6e78b
+
+    Owner: victoroff-progression
+
+    Allowed paths: packages/progression/**
+
+    Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
+    Dependency: VIC-DOMAIN-001 is merged on exact remote main.
+
+    Required behavior: implement the registry-defined five ordered economic-agency tiers, measurable unlocks, sourced freshness, unknown-not-zero behavior, and non-guarantee language. Keep implementation provider-neutral and synthetic-only.
+
+    Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
+    Predicate: pnpm --filter @victoroff/progression test
+
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-TIER-001
+
+    '
+  predicate: 'pnpm --filter @victoroff/progression test'
+  receipt_target: 'github:organvm/victoroff-os:pull-request:VIC-TIER-001'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'A deterministic, evidence-backed progression contract that exposes economic agency without fabricating progress or authority.'
+  owner_surface: 'victoroff-progression'
+  external_deadline: false
+  depends_on:
+  - 'VIC-DOMAIN-001'
+  created: '2026-07-27'
+  dispatch_log:
+  - timestamp: '2026-07-27T17:15:24.476Z'
+    agent: 'codex'
+    session_id: 'codex-codex-vic-tier-finance-20260727'
+    logical_agent: 'codex'
+    logical_session_id: 'codex-vic-tier-finance-20260727'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-639cf1221b6bf563b81e1be028eeb426:418:compatibility'
+    conduct_run_id: 'run-639cf1221b6bf563b81e1be028eeb426'
+    conduct_lease_id: 'lease-418-639cf1221b6bf563'
+    conduct_generation: 418
+  updated: '2026-07-27T17:15:24.476Z'
