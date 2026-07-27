@@ -84,6 +84,15 @@ class _CompletedVault(_Vault):
         raise AssertionError("completed custody must not create another receipt")
 
 
+class _AdvancedRemoteVault(_CompletedVault):
+    def completed_receipt_commits(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str] | None:
+        raise PipelineError("ARCA completed receipt is not exact on the remote")
+
+
 def _interrupted_tree(tmp_path: Path) -> tuple[Path, Path, Path, RetentionPlan]:
     source = tmp_path / "source"
     source.mkdir()
@@ -220,6 +229,28 @@ def test_resume_accepts_completed_exact_receipt_without_another_push(
     _source, vault, _payload, plan = _interrupted_tree(tmp_path)
     first = _resume(monkeypatch, tmp_path, plan, vault)
     monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+
+    resumed = tree_pipeline.resume_cold_tree_capture(
+        "icloud-drive",
+        plan,
+        vault,
+        tmp_path / "external",
+        tmp_path / "private-receipt.json",
+        run_id="run",
+        require_external_mount=False,
+    )
+
+    assert resumed.as_dict() == first.as_dict()
+
+
+def test_resume_accepts_completed_receipt_reachable_behind_remote_head(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    monkeypatch.setattr(tree_pipeline, "GitVault", _AdvancedRemoteVault)
     monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
 
     resumed = tree_pipeline.resume_cold_tree_capture(

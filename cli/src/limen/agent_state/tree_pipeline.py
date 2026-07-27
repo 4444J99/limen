@@ -341,13 +341,23 @@ def resume_cold_tree_capture(
     receipt.restorations = [sample, full, external]
     receipt.git_remote = repository
     receipt_message = f"agent-state: receipt {name} {run_id}"
-    completed = vault.completed_receipt_commits(relative, receipt_message)
+    remote_completed: tuple[str, str, str] | None = None
+    try:
+        completed = vault.completed_receipt_commits(relative, receipt_message)
+    except PipelineError as exc:
+        if str(exc) != "ARCA completed receipt is not exact on the remote":
+            raise
+        remote_completed = vault.completed_receipt_at_remote(relative, receipt_message)
+        completed = (remote_completed[0], remote_completed[1])
     if completed is not None:
         payload_commit, receipt_commit = completed
         receipt.git_commit = payload_commit
-        receipt_path = payload_root / "receipt.json"
         try:
-            durable = json.loads(receipt_path.read_text(encoding="utf-8"))
+            durable = json.loads(
+                remote_completed[2]
+                if remote_completed is not None
+                else (payload_root / "receipt.json").read_text(encoding="utf-8")
+            )
         except (OSError, json.JSONDecodeError) as exc:
             raise PipelineError("completed ARCA receipt is missing or invalid") from exc
         expected = json.loads(json.dumps(receipt.as_dict(), sort_keys=True))
