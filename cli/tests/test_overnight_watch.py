@@ -328,6 +328,16 @@ def test_missing_pause_marker_runs_normal_snapshot(tmp_path, monkeypatch):
     assert calls == [{"refresh_handoff": False, "record_gate": False, "submit_lane_switch": False}]
 
 
+def test_successful_bounded_lane_preserves_explicit_zero_exit(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = _minimal_ok_snapshot()
+    snapshot["status"] = "blocked"
+    snapshot["dispatch_control"] = {"allow_dispatch": False, "exit_code": 0}
+    monkeypatch.setattr(module, "build_snapshot", lambda **_kwargs: snapshot)
+
+    assert module.run_once(dry_run=True, json_output=False) == 0
+
+
 def test_existing_force_autonomy_override_runs_normal_snapshot(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_FORCE_AUTONOMY=1)
     module.PAUSE_MARKER.write_text("reason: overridden by governed escape hatch\n", encoding="utf-8")
@@ -1415,6 +1425,25 @@ def test_lane_switch_next_command_uses_repo_owned_dispatch_script(tmp_path, monk
     assert argv[0] == os.sys.executable
     assert argv[1] == str(module.DISPATCH_ASYNC_SCRIPT)
     assert argv[argv.index("--execution-contract-hash") + 1] == module.execution_contract_hash(task)
+
+
+def test_launched_owner_packet_closes_generic_dispatch_with_success(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    dispatch = {"allow_dispatch": False, "exit_code": 20, "reason": "gate stopped"}
+
+    controlled = module.apply_lane_switch_control(
+        dispatch,
+        {
+            "requested": True,
+            "status": "launched",
+            "packet": {"task_id": "AW-SUBSTRATE-DISK-TEMP-fixture"},
+            "next_command": "python3 scripts/overnight-watch.py --dry-run --json",
+        },
+    )
+
+    assert controlled["allow_dispatch"] is False
+    assert controlled["exit_code"] == 0
+    assert "AW-SUBSTRATE-DISK-TEMP-fixture" in controlled["reason"]
 
 
 def test_alert_state_resolves(tmp_path, monkeypatch):
