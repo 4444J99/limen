@@ -45,8 +45,8 @@ from pathlib import Path
 from . import params
 
 OK = "ok"
-THROTTLE = "throttle"  # >= warn: dispatch continues, cap divided by VITALS_THROTTLE_DIVISOR
-SHED = "shed"  # >= critical: local admission stops; remote dispatch remains live
+THROTTLE = "throttle"  # >= warn: report pressure; the keeper owns campaign admission
+SHED = "shed"  # >= critical: local admission stops; keeper-routed off-box work remains eligible
 
 # kernel level for "normal" — the fail-open value when the gauge can't be read.
 _NORMAL = 1

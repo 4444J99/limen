@@ -214,19 +214,13 @@ parameters:
     env: LIMEN_VITALS_WARN
     self_update: none
     owner: vitals
-    note: "At >=warn (2): THROTTLE — dispatch continues with the async cap divided by VITALS_THROTTLE_DIVISOR. A 16GB host lives at warn under normal load; the old skip-at-warn idle beat starved the fleet for a night (2026-07-08: 273 skipped beats, budget unused)."
+    note: "At >=warn (2), report pressure while the keeper-backed campaign supervisor retains provider admission. A 16GB host lives at warn under normal load; the old skip-at-warn idle beat starved the fleet for a night (2026-07-08: 273 skipped beats, budget unused)."
   VITALS_PRESSURE_CRITICAL:
     default: 4
     env: LIMEN_VITALS_CRIT
     self_update: none
     owner: vitals
     note: "At >=critical (4): block new local checkout work and shed running discretionary load (e.g. ollama) before jetsam escalates; off-box provider lanes remain eligible."
-  VITALS_THROTTLE_DIVISOR:
-    default: 2
-    env: LIMEN_VITALS_THROTTLE_DIVISOR
-    self_update: none
-    owner: vitals
-    note: "Divisor applied to both async local slots and synchronous local workers while memory pressure is at warn (floor 1). At critical, local admission sheds while off-box lanes continue."
   VITALS_HEAVY_SURFACE_LIMIT:
     default: 1
     env: LIMEN_VITALS_HEAVY_LIMIT
@@ -2379,6 +2373,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "launchctl service label used by dispatch-health.py to compare loaded heartbeat env with the plist. Probe-only, never a launchd write."
+  LIMEN_CAMPAIGN_WAKE_TIMEOUT:
+    default: 300
+    env: LIMEN_CAMPAIGN_WAKE_TIMEOUT
+    self_update: none
+    owner: limen-daemon
+    note: "Seconds allowed for one canonical campaign-supervisor evaluation from the heartbeat. The legacy loop adds a fixed 30-second outer ceiling for capsule discovery and remote-default preflight, fails closed without timeout(1), and never falls back to direct provider launch."
   LIMEN_RELEASE_BRANCH:
     default: "main"
     env: LIMEN_RELEASE_BRANCH

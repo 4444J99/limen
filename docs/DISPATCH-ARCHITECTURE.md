@@ -1,29 +1,37 @@
-# Dispatch architecture — how the fleet turns tasks.yaml into PRs
+# Campaign supervision and legacy dispatch architecture
 
-Update verified 2026-06-28:
+Repository contract verified 2026-07-27:
 
-- Live launchd heartbeat is running and `python3 scripts/watchdog.py --dry-run` reports healthy.
-- Live heartbeat is still using SYNC dispatch. The installed plist now records `LIMEN_DISPATCH_ASYNC=0`; the currently loaded launchd job has not been reloaded since that file repair.
-- Async orchestration is implemented and tested. `pytest -q cli/tests/test_async_dispatch.py` passes after fixing stale-worker reaping so async-reserved tasks reopen when their detached worker dies.
-- `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --dry-run` reports current async workers and launchable tasks using the live host-derived local ceiling.
+- `scripts/heartbeat-loop.sh` and `scripts/heartbeat.sh` are wake/monitor surfaces. They do not
+  select providers or invoke either legacy dispatch engine.
+- Each active-mode beat invokes `scripts/campaign-heartbeat.py`, which discovers the latest tracked,
+  admitted v2 `institutional-omega` capsule and calls the canonical
+  `limen conduct campaign run --terminal-predicate omega` entrypoint.
+- A wake fails closed unless the checkout is clean at the exact live remote default branch, the
+  finite capsule remains valid, a conductor identity is present, and the supervisor returns a
+  schema-valid boundary for the same exact head. There is no direct-launch fallback.
+- The synchronous and asynchronous dispatch engines remain available as historical/manual
+  compatibility surfaces and retain their focused tests. They are not heartbeat implementations.
 
 The heartbeat (`scripts/heartbeat-loop.sh`, launchd `com.limen.heartbeat`) runs one polyrhythmic
-beat repeatedly: drain → heal → feed (mine) → route/rebalance → **dispatch** → reconcile → web.
-Dispatch is where open tasks become worktree→PR. There are two interchangeable dispatch engines.
+beat repeatedly: monitor → derive → drain/heal/feed/plan → **campaign wake** → reconcile → web.
+The campaign supervisor evaluates strict Omega, compiles typed remediation leaves, discovers live
+keeper capabilities, atomically submits the graph, and harvests bounded receipts. TABVLARIVS owns
+leases and lifecycle transitions; the local `tasks.yaml` remains a projection.
 
 Route and rebalance are read-only planners. `target_agent` is durable eligibility/ownership metadata,
 not a heartbeat scratch field. A bounded failure records the next live lane in the latest open
 `dispatch_log.route_to`; selection consumes that receipt at claim time, and the claim receipt records
 the actual authenticated executor. Neither planning nor fallback rewrites `target_agent`.
 
-## The two engines
+## Legacy direct engines
 
-### SYNC (default) — `scripts/dispatch-parallel.py` → `dispatch.dispatch_parallel()`
+### SYNC — `scripts/dispatch-parallel.py` → `dispatch.dispatch_parallel()`
 RESERVE (mark open→dispatched, save once) → RUN all picked tasks concurrently in a thread pool →
 COMMIT (apply results, save once). **The beat blocks until the slowest agent finishes** — that is
 the throughput ceiling ("900s gates every beat"). Safe + simple; one process owns the two writes.
 
-### ASYNC (opt-in, `LIMEN_DISPATCH_ASYNC=1`) — `scripts/dispatch-async.py` + `scripts/async-run-one.py`
+### ASYNC — `scripts/dispatch-async.py` + `scripts/async-run-one.py`
 Decouples agent runtime from the beat. Each beat: **reap** dead workers → **harvest** finished
 results → **reserve + launch** detached workers up to a local host slot cap, then **return
 immediately**.
@@ -37,9 +45,8 @@ immediately**.
   and they do not consume the local host slot cap. Per-agent in-flight is counted from
   `__<agent>.running` markers so reservations hold between reserve & harvest; `reap_stale`
   (LIMEN_ASYNC_MAX_AGE=1200s) reopens tasks whose worker died without a result (no leaked slots).
-- Beats stay fast; a slow/stuck agent can't gate the beat. CI-tested in `cli/tests/test_async_dispatch.py`.
-- TO ACTIVATE: set `LIMEN_DISPATCH_ASYNC=1` in the plist + restart **between beats** (no in-flight
-  dispatch, else reserved tasks strand as phantoms). Left OFF until a focused, monitored switch.
+- The engine remains CI-tested in `cli/tests/test_async_dispatch.py`, but no heartbeat flag activates
+  it. A caller must hold its own explicit owner contract and lifecycle receipt.
 
 ## Cross-cutting keystones (apply to both engines)
 
@@ -86,6 +93,7 @@ auto-mode-classifier-gated — grant `Bash(gh pr merge:*)` / `Bash(gh pr close:*
 
 ## Operational gotchas
 - dispatch.py changes take effect the NEXT beat (fresh subprocess) — NO restart needed.
-- heartbeat-loop.sh changes need a restart — do it BETWEEN beats (mid-dispatch restart strands phantoms).
-- A long-running `dispatch-parallel`/worker with live agent children is WORKING (slow), not hung —
-  check `ps` descendants before killing; only no-children + no-progress past timeout is a real hang.
+- `heartbeat-loop.sh` changes need a live-root convergence and launchd restart owned by the runtime
+  cartridge. A code PR does not prove that installed runtime mutation.
+- A manually launched legacy worker with live agent children is WORKING (slow), not hung. Check its
+  descendants and owner receipt before any cooperative stop request.

@@ -218,21 +218,26 @@ def test_vitals_warn_streak_counts_resets_and_escalates(tmp_path, monkeypatch):
     assert g["action"] == "shed" and g["sustained_warn"] is True and g["warn_streak"] == 3
 
 
-def test_heartbeat_vitals_preserves_remote_dispatch_and_throttles_both_local_modes():
+def test_heartbeat_vitals_leaves_provider_admission_to_the_campaign_supervisor():
     heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
-    assert "vitals-pressure: dispatch skipped" not in heartbeat
-    assert "local admission shed; remote dispatch remains live" in heartbeat
-    assert '_async_max="$HOST_LOCAL_CEILING"' in heartbeat
-    assert '_sync_workers="${LIMEN_WORKERS:-$HOST_LOCAL_CEILING}"' in heartbeat
-    assert '--workers "$_sync_workers"' in heartbeat
+    assert "canonical campaign wake remains live" in heartbeat
+    assert 'scripts/campaign-heartbeat.py"' in heartbeat
+    assert "campaign admission remains keeper-owned" in heartbeat
+    assert "VITALS_THROTTLE" not in heartbeat
 
 
-def test_launchd_local_ceiling_has_no_literal_fleet_cap():
+def test_launchd_heartbeat_has_no_legacy_provider_or_worker_configuration():
     generator = (Path(__file__).resolve().parents[2] / "scripts" / "gen-launchd-plist.sh").read_text(encoding="utf-8")
+    template = (
+        Path(__file__).resolve().parents[2] / "container" / "launchd" / "com.limen.heartbeat.plist.tmpl"
+    ).read_text(encoding="utf-8")
 
-    assert 'ASYNC_MAX_DERIVED="$NCPU"' in generator
-    assert "NCPU > 12" not in generator
+    assert "LIMEN_CAMPAIGN_WAKE_TIMEOUT" in generator
+    assert "LIMEN_CAMPAIGN_WAKE_TIMEOUT" in template
+    for legacy in ("LIMEN_LANES", "LIMEN_DISPATCH_LANES", "LIMEN_LOCAL_LIMIT", "LIMEN_ASYNC_MAX"):
+        assert legacy not in generator
+        assert legacy not in template
 
 
 # ---------------------------------------------------------------- continuity
