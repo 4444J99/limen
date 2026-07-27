@@ -82,6 +82,7 @@ def campaign_repo(tmp_path: Path) -> tuple[Path, Path, int, int]:
     _git(root, "add", ".")
     _git(root, "commit", "-qm", "fixture")
     _git(tmp_path, "init", "--bare", str(remote))
+    _git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
     _git(root, "remote", "add", "origin", str(remote))
     _git(root, "push", "-u", "origin", "main")
     return root, receipt, now, deadline
