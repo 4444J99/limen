@@ -301,10 +301,12 @@ def test_expired_maintenance_window_fails_loud_with_stable_receipt(tmp_path):
     first = receipt.read_bytes()
 
     second = run_governor(tmp_path, "mode")
+    assert second.returncode == 0
     assert second.stdout.strip() == "paused"
     assert receipt.read_bytes() == first
 
     explained = run_governor(tmp_path, "explain")
+    assert explained.returncode == 0
     payload = json.loads(explained.stdout)
     assert payload["mode"] == "paused"
     assert payload["maintenanceBlocker"]["state"] == "expired"
@@ -318,3 +320,19 @@ def test_malformed_maintenance_expiry_fails_closed(tmp_path):
     assert proc.stdout.strip() == "paused"
     blocker = json.loads((logs / "autonomy-maintenance-blocker.json").read_text())
     assert blocker["state"] == "invalid-expiry"
+
+
+
+def test_non_object_maintenance_window_fails_closed(tmp_path):
+    for index, malformed in enumerate((None, [], "until later")):
+        case = tmp_path / f"case-{index}"
+        logs = case / "logs"
+        logs.mkdir(parents=True)
+        (logs / "autonomy-policy.json").write_text(
+            json.dumps({"mode": "observe", "dispatch_enabled": False, "maintenance_window": malformed})
+        )
+        proc = run_governor(case, "mode")
+        assert proc.returncode == 0
+        assert proc.stdout.strip() == "paused"
+        blocker = json.loads((logs / "autonomy-maintenance-blocker.json").read_text())
+        assert blocker["state"] == "invalid-window"
