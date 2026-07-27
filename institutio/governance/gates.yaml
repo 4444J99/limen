@@ -170,6 +170,11 @@ gates:
     paths: ["scripts/estate-audit-heal.py", "scripts/tests/estate-audit-heal.test.py"]
     owner: estate-audit-heal
     note: "Estate audit clones are invocation-owned disposable caches: failed, detection-only, no-value, and remotely pushed clones return to an absent fixed point, while any commit that fails to push remains locally retained for custody."
+  estate-audit-custody-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_estate_audit_custody.py -q"
+    paths: ["cli/src/limen/estate_audit_custody.py", "cli/tests/test_estate_audit_custody.py", "scripts/estate-audit-custody.py"]
+    owner: lifecycle
+    note: "Generated estate-audit custody dynamically covers every exact HEAD, preserves non-HEAD working payloads content-addressably, proves fresh Git and payload restoration, rejects drift and ambient Git configuration, and emits only redacted bounded receipts."
   sync-release-test:
     command: "bash scripts/tests/sync-release.test.sh"
     paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
