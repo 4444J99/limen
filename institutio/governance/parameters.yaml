@@ -1244,6 +1244,30 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Credential-wall-owned bearer for exactly one authenticated conduct principal. The Worker derives principal, native lane, surface, and roles from LIMEN_CONDUCT_PRINCIPAL_REGISTRY; this client-side value is consumed by the adapter and removed before launching a model process."
+  LIMEN_CONDUCT_KEEPALIVE_SECONDS:
+    default: 180
+    env: LIMEN_CONDUCT_KEEPALIVE_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Protected workstream conductor refresh cadence. Kickstart validates a finite 1..240 second value so the same human-protected session remains healthy inside the keeper's five-minute liveness window."
+  LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS:
+    default: 30
+    env: LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Retry cadence after a protected conduct refresh failure. Kickstart validates a finite 1..60 second value and never restarts or signals the provider."
+  LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS:
+    default: 5
+    env: LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Exact-provider identity and capsule-deadline observation cadence for the protected conductor channel. Kickstart validates a finite 1..30 second value."
+  LIMEN_CONDUCT_KEEPALIVE_PID:
+    default: null
+    env: LIMEN_CONDUCT_KEEPALIVE_PID
+    self_update: "exported by a conducting workstream kickstart after the keeper acknowledges readiness"
+    owner: dispatch
+    note: "Read-only process identity for the current conductor-only keepalive channel. It grants no authority and is withheld from non-conduct workstreams."
   LIMEN_CONDUCT_EXECUTOR_TOKEN:
     default: ""
     env: LIMEN_CONDUCT_EXECUTOR_TOKEN

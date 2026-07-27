@@ -1471,6 +1471,129 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
     assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is not None
 
 
+def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    events = tmp_path / "events.txt"
+    registration_attempts = tmp_path / "registration-attempts.txt"
+    provider_env = tmp_path / "provider-env.txt"
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text(
+        "#!/usr/bin/env bash\n"
+        'if [[ -z "${LIMEN_CONDUCT_TOKEN:-}" ]]; then exit 41; fi\n'
+        'attempts="$(cat "$REGISTRATION_ATTEMPTS_CAPTURE" 2>/dev/null || printf 0)"\n'
+        "attempts=$((attempts + 1))\n"
+        'printf "%s\\n" "$attempts" > "$REGISTRATION_ATTEMPTS_CAPTURE"\n'
+        'printf "register\\n" >> "$EVENTS_CAPTURE"\n'
+        'if [[ "$attempts" -eq 2 ]]; then exit 42; fi\n',
+        encoding="utf-8",
+    )
+    fake_limen.chmod(0o755)
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        "#!/usr/bin/env bash\n"
+        'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
+        'printf "credential=%s\\nkeepalive=%s\\n" '
+        '"${LIMEN_CONDUCT_TOKEN-unset}" "${LIMEN_CONDUCT_KEEPALIVE_PID:-}" > "$PROVIDER_ENV_CAPTURE"\n'
+        "sleep 5\n",
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("LIMEN_CONDUCT_TOKEN", "fixture-only")
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    rendered = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--autonomous",
+            "--conduct",
+            "--prompt",
+            "Keep the protected conductor live for the provider epoch.",
+            str(repo),
+            "Conduct Keepalive",
+        ],
+    )
+    assert rendered.exit_code == 0, rendered.output
+
+    wt = repo / ".worktrees" / "conduct-keepalive"
+    capsule = wt / ".limen-workstream"
+    launch_env = {
+        **os.environ,
+        "EVENTS_CAPTURE": str(events),
+        "REGISTRATION_ATTEMPTS_CAPTURE": str(registration_attempts),
+        "PROVIDER_ENV_CAPTURE": str(provider_env),
+        "LIMEN_CONDUCT_KEEPALIVE_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS": "1",
+    }
+    launched = subprocess.run(
+        ["bash", str(capsule / "kickstart.sh")],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert launched.returncode == 0, launched.stderr
+    observed_events = events.read_text(encoding="utf-8").splitlines()
+    assert observed_events[0] == "register"
+    assert observed_events.count("provider") == 1
+    assert observed_events.count("register") >= 4
+    assert int(registration_attempts.read_text(encoding="utf-8")) >= 4
+    provider_values = dict(line.split("=", 1) for line in provider_env.read_text(encoding="utf-8").splitlines())
+    assert provider_values["credential"] == "unset"
+    assert provider_values["keepalive"].isdigit()
+
+    status_path = capsule / "conduct-keepalive.json"
+    deadline = time.monotonic() + 5
+    status = {}
+    while time.monotonic() < deadline:
+        if status_path.exists():
+            status = json.loads(status_path.read_text(encoding="utf-8"))
+            if status.get("state") == "stopped":
+                break
+        time.sleep(0.1)
+    assert status["schema"] == "limen.workstream.conduct-keepalive.v1"
+    assert status["state"] == "stopped"
+    assert status["refresh_count"] >= 3
+    assert status["last_failure_epoch"] is not None
+    assert status["last_success_epoch"] >= status["last_failure_epoch"]
+    assert status["detail"] == "provider process exited or changed identity"
+    assert status_path.stat().st_mode & 0o777 == 0o600
+    assert ".limen-workstream" not in _git("status", "--short", cwd=wt).stdout
+
+    status_path.unlink()
+    outside_status = tmp_path / "outside-status.json"
+    status_path.symlink_to(outside_status)
+    denied = subprocess.run(
+        ["bash", str(capsule / "kickstart.sh")],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert denied.returncode != 0
+    assert "keepalive did not acknowledge" in denied.stderr
+    assert events.read_text(encoding="utf-8").splitlines().count("provider") == 1
+    assert not outside_status.exists()
+
+
 def test_workstream_refuses_an_ignored_tracked_receipt_path(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "demo-repo"
     repo.mkdir()
