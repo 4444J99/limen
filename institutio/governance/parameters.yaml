@@ -3855,6 +3855,24 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Test/override hook for npm-audit-autofix.py: colon-separated npm project dirs (relative-to-root or absolute) to audit instead of the derived web/* subdirs holding a package-lock.json. Empty (default) → derive. Used only by the hermetic test and ad-hoc fixture runs; never set in production."
+  LIMEN_PIP_AUDIT_AUTOFIX:
+    default: "1"               # ON — detect Python advisories each beat (the pip tier, sibling of npm-audit-autofix)
+    env: LIMEN_PIP_AUDIT_AUTOFIX
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the pip-audit-autofix sensor (scripts/pip-audit-autofix.py) run each beat by metabolize.sh. Closes the 2026-07-22 Python blind spot: ci.yml audited npm but nothing ran pip-audit, so limen's own core (cli/, web/api/, mcp/) had UNSCANNED dependency advisories (the first run found 5 in mcp: cryptography/mcp/starlette). Audits each component's pinned lockfile via `pip-audit --no-deps` (uv components exported first); on a present advisory the sensor exits non-zero so the beat surfaces it. Tier-2 (no published fix) defers to Dependabot, already guarded. Fail-open when pip-audit is absent/offline. Set 0 to silence."
+  LIMEN_PIP_AUDIT_AUTOFIX_APPLY:
+    default: "0"               # OFF (DARK) — detection-only until armed; then opens a verify-gated forward-pin PR
+    env: LIMEN_PIP_AUDIT_AUTOFIX_APPLY
+    self_update: none
+    owner: tabularius
+    note: "Effector arm for pip-audit-autofix (observable-before-autonomous, the LIMEN_MAIN_GREEN_APPLY pattern, read internally). When 0 (default) a Python advisory is only detected + printed. When 1, pip-audit-autofix.py applies the minimal forward pin (uv components → `uv lock --upgrade-package`; plain requirements → rewrite the pin), RE-AUDITS to verify the advisory measurably cleared (verify-gated, like estate-audit-heal — never ships a pin it did not watch work), and opens a fix PR gated by merge-policy.sh. Residual advisories (a pyproject cap holds the bump back) reclassify Tier-2 → Dependabot. Idempotent on the advisory-set signature. Arm after watching the detection log prove out."
+  LIMEN_PIP_AUDIT_DIRS:
+    default: ""
+    env: LIMEN_PIP_AUDIT_DIRS
+    self_update: none
+    owner: tabularius
+    note: "Test/override hook for pip-audit-autofix.py: colon-separated Python component dirs (relative-to-root or absolute) holding a requirements.txt or uv.lock, audited instead of the derived cli/web-api/mcp set. Empty (default) → derive. Used only by the hermetic test and ad-hoc fixture runs; never set in production."
 
   LIMEN_ESTATE_AUDIT_HEAL:
     default: "1"               # ON — detect other-repo audit-CI reds on the slow heartbeat cadence
