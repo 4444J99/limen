@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -46,7 +47,7 @@ def _hash_label(prefix: str, raw: str) -> str:
 def _process_table() -> dict[int, tuple[int, str]]:
     try:
         result = subprocess.run(
-            ["ps", "-axo", "pid=,ppid=,comm="],
+            ["ps", "-axo", "pid=,ppid=,command="],
             capture_output=True,
             text=True,
             timeout=0.5,
@@ -65,15 +66,40 @@ def _process_table() -> dict[int, tuple[int, str]]:
     return table
 
 
+def _is_codex_process(command: str) -> bool:
+    """Return true only for an evidence-bearing Codex or ChatGPT process."""
+
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    if not tokens:
+        return False
+    executable_path = tokens[0].casefold()
+    executable = Path(executable_path).name
+    if executable.startswith("codex") or executable == "chatgpt":
+        return True
+    if "/applications/chatgpt.app/contents/" in executable_path:
+        return True
+    if executable not in {"node", "nodejs"}:
+        return False
+    for token in tokens[1:]:
+        candidate = token.casefold().rstrip("/")
+        if "/@openai/codex/" in candidate:
+            return True
+        if Path(candidate).name.startswith("codex"):
+            return True
+    return False
+
+
 def codex_owner_pid() -> int:
-    """Resolve the durable Codex ancestor instead of leasing to this short hook."""
+    """Resolve a proven durable Codex ancestor; never lease a terminal fallback."""
 
     current = os.getppid()
     table = _process_table()
     if not table:
         raise ValueError("durable Codex owner process table is unavailable")
     seen: set[int] = set()
-    oldest: int | None = None
     for _ in range(32):
         if current <= 1 or current in seen:
             break
@@ -82,14 +108,10 @@ def codex_owner_pid() -> int:
         if row is None:
             break
         parent, command = row
-        oldest = current
-        lowered = command.lower()
-        if any(marker in lowered for marker in ("codex", "chatgpt", "openai")):
+        if _is_codex_process(command):
             return current
         current = parent
-    if oldest is None:
-        raise ValueError("durable Codex owner ancestor cannot be proven")
-    return oldest
+    raise ValueError("durable Codex owner ancestor cannot be proven")
 
 
 def _turn_owner(payload: dict[str, Any]) -> str | None:
