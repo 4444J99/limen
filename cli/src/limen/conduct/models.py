@@ -15,6 +15,7 @@ from limen.work_loan import WorkLoanV1
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@*+-]{0,1023}$")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 def utc_now() -> datetime:
@@ -31,6 +32,13 @@ def _identifier(value: str, field_name: str) -> str:
     if not _IDENTIFIER_RE.fullmatch(value):
         raise ValueError(f"{field_name} must be a bounded protocol identifier")
     return value
+
+
+def _bounded_text(value: str, field_name: str) -> str:
+    normalized = value.strip()
+    if not normalized or "\x00" in normalized or len(normalized) > 8192:
+        raise ValueError(f"{field_name} must be a non-empty bounded string")
+    return normalized
 
 
 class ProtocolModel(BaseModel):
@@ -180,6 +188,27 @@ class FanoutBoundsV1(ProtocolModel):
     max_depth: int = Field(default=0, ge=0, le=64)
 
 
+class CampaignPacketV1(ProtocolModel):
+    """Typed remediation context carried only by institutional campaigns."""
+
+    schema_version: Literal["limen.campaign_packet.v1"] = "limen.campaign_packet.v1"
+    campaign_id: str
+    failed_predicate: str
+    owner: str
+    next_action: str
+    output_ceiling_bytes: int = Field(gt=0, le=10_485_760)
+
+    @field_validator("campaign_id")
+    @classmethod
+    def validate_campaign_id(cls, value: str) -> str:
+        return _identifier(value, "campaign_id")
+
+    @field_validator("failed_predicate", "owner", "next_action")
+    @classmethod
+    def validate_bounded_text(cls, value: str, info) -> str:
+        return _bounded_text(value, info.field_name)
+
+
 class WorkPacketV1(ProtocolModel):
     schema_version: Literal["limen.work_packet.v1"] = "limen.work_packet.v1"
     root_run_id: str | None = None
@@ -200,6 +229,7 @@ class WorkPacketV1(ProtocolModel):
     # Optional at the schema boundary so old stored runs remain inspectable.
     # Admission is activated separately after producer adoption.
     work_loan: WorkLoanV1 | None = None
+    campaign: CampaignPacketV1 | None = None
     authority: AuthorityEnvelopeV1
     deadline: datetime
     spend: SpendEnvelopeV1 = Field(default_factory=SpendEnvelopeV1)
@@ -229,8 +259,7 @@ class WorkPacketV1(ProtocolModel):
     @field_validator("predicate", "receipt_target")
     @classmethod
     def validate_contract_text(cls, value: str, info) -> str:
-        if not value.strip() or len(value) > 8192 or "\x00" in value:
-            raise ValueError(f"{info.field_name} must be a non-empty bounded string")
+        _bounded_text(value, info.field_name)
         return value
 
     @model_validator(mode="after")
@@ -249,6 +278,11 @@ class WorkPacketV1(ProtocolModel):
             raise ValueError("child work packet depth must be positive")
         if self.effect == "external" and not self.authority.external_effects:
             raise ValueError("external work requires an explicit external-effect authority")
+        if self.campaign is not None:
+            if self.work_loan is None:
+                raise ValueError("campaign work packets require a value/cost work loan")
+            if not self.authority.actions:
+                raise ValueError("campaign work packets require an explicit authority scope")
         return self
 
 
@@ -333,6 +367,82 @@ class ReviewEvidenceV1(ProtocolModel):
     url: str | None = None
 
 
+class CampaignOutputEvidenceV1(ProtocolModel):
+    """Content-free proof that one campaign result respected its output ceiling."""
+
+    schema_version: Literal["limen.campaign_output_evidence.v1"] = "limen.campaign_output_evidence.v1"
+    output_ceiling_bytes: int = Field(gt=0, le=10_485_760)
+    bytes_emitted: int = Field(ge=0, le=10_485_760)
+    lines_emitted: int = Field(default=0, ge=0, le=10_000_000)
+    sha256: str
+    truncated: bool = False
+
+    @field_validator("sha256")
+    @classmethod
+    def validate_sha256(cls, value: str) -> str:
+        if not _SHA256_RE.fullmatch(value):
+            raise ValueError("sha256 must be a lowercase SHA-256 digest")
+        return value
+
+    @model_validator(mode="after")
+    def emitted_output_fits(self) -> "CampaignOutputEvidenceV1":
+        if self.bytes_emitted > self.output_ceiling_bytes:
+            raise ValueError("campaign output exceeds its declared ceiling")
+        return self
+
+
+class CampaignBlockerV1(ProtocolModel):
+    """Owner-routable evidence for an exact campaign blocker."""
+
+    schema_version: Literal["limen.campaign_blocker.v1"] = "limen.campaign_blocker.v1"
+    owner: str
+    failed_predicate: str
+    next_action: str
+
+    @field_validator("owner", "failed_predicate", "next_action")
+    @classmethod
+    def validate_bounded_text(cls, value: str, info) -> str:
+        return _bounded_text(value, info.field_name)
+
+
+class CampaignReceiptV1(ProtocolModel):
+    """Campaign-only value, output, blocker, and succession evidence."""
+
+    schema_version: Literal["limen.campaign_receipt.v1"] = "limen.campaign_receipt.v1"
+    campaign_id: str
+    actual_value: float = Field(ge=0, le=1_000_000_000_000)
+    value_unit: str
+    output: CampaignOutputEvidenceV1
+    blocker: CampaignBlockerV1 | None = None
+    successor_capsule: str | None = None
+    boundary: Literal["continue", "switch", "wait_relay", "settled", "invalid"]
+
+    @field_validator("campaign_id", "value_unit")
+    @classmethod
+    def validate_identifiers(cls, value: str, info) -> str:
+        return _identifier(value, info.field_name)
+
+    @field_validator("actual_value", mode="before")
+    @classmethod
+    def reject_boolean_value(cls, value: Any) -> Any:
+        if isinstance(value, bool):
+            raise ValueError("actual_value must be numeric, not boolean")
+        return value
+
+    @field_validator("successor_capsule")
+    @classmethod
+    def validate_successor_capsule(cls, value: str | None) -> str | None:
+        return _bounded_text(value, "successor_capsule") if value is not None else None
+
+    @model_validator(mode="after")
+    def validate_boundary(self) -> "CampaignReceiptV1":
+        if self.boundary in {"switch", "wait_relay"} and self.successor_capsule is None:
+            raise ValueError(f"{self.boundary} campaign receipts require a successor capsule")
+        if self.boundary == "settled" and self.successor_capsule is not None:
+            raise ValueError("settled campaign receipts cannot name a successor capsule")
+        return self
+
+
 class RunReceiptV1(ProtocolModel):
     schema_version: Literal["limen.run_receipt.v1"] = "limen.run_receipt.v1"
     receipt_id: str
@@ -350,6 +460,7 @@ class RunReceiptV1(ProtocolModel):
     reviews: tuple[ReviewEvidenceV1, ...] = ()
     spend: dict[str, int | float | str] = Field(default_factory=dict)
     child_runs: tuple[str, ...] = ()
+    campaign: CampaignReceiptV1 | None = None
     outcome: Literal["succeeded", "failed", "blocked", "cancelled", "partial"]
     completed_at: datetime = Field(default_factory=utc_now)
 
@@ -357,3 +468,9 @@ class RunReceiptV1(ProtocolModel):
     @classmethod
     def validate_identifiers(cls, value: str, info) -> str:
         return _identifier(value, info.field_name)
+
+    @model_validator(mode="after")
+    def campaign_blocker_is_precise(self) -> "RunReceiptV1":
+        if self.campaign is not None and self.outcome == "blocked" and self.campaign.blocker is None:
+            raise ValueError("blocked campaign receipts require precise blocker ownership")
+        return self

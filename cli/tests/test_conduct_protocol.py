@@ -11,6 +11,10 @@ import pytest
 from limen.conduct import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
+    CampaignBlockerV1,
+    CampaignOutputEvidenceV1,
+    CampaignPacketV1,
+    CampaignReceiptV1,
     ConductorSessionV1,
     ConductBroker,
     ConductConflict,
@@ -76,6 +80,7 @@ def packet(
     spend_limit: int = 4,
     underwritten: bool = True,
     task_id: str | None = None,
+    campaign: CampaignPacketV1 | None = None,
 ) -> WorkPacketV1:
     return WorkPacketV1(
         root_run_id=root_run_id,
@@ -102,6 +107,7 @@ def packet(
             if underwritten
             else None
         ),
+        campaign=campaign,
         authority=authority
         or AuthorityEnvelopeV1(
             actions=frozenset({"code", "review"}),
@@ -221,6 +227,93 @@ def test_work_packet_schema_exposes_optional_work_loan_compatibly() -> None:
         **WorkPacketV1.model_json_schema(mode="validation"),
     }
     assert "work_loan" not in schema["required"]
+    assert "campaign" not in schema["required"]
+
+
+def test_run_receipt_schema_exposes_optional_campaign_compatibly() -> None:
+    schema_path = Path(__file__).resolve().parents[2] / "spec" / "contracts" / "conduct" / "run-receipt-v1.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    assert schema == {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        **RunReceiptV1.model_json_schema(mode="validation"),
+    }
+    assert "campaign" not in schema["required"]
+
+
+def campaign_packet(campaign_id: str = "github:organvm/limen:issue:1571") -> CampaignPacketV1:
+    return CampaignPacketV1(
+        campaign_id=campaign_id,
+        failed_predicate="python3 scripts/omega.sh --strict",
+        owner="github:organvm/limen:issue:1571",
+        next_action="Repair the typed failing rung and rerun its exact predicate",
+        output_ceiling_bytes=4096,
+    )
+
+
+def campaign_receipt(
+    campaign_id: str = "github:organvm/limen:issue:1571",
+    *,
+    output_ceiling_bytes: int = 4096,
+    blocker: CampaignBlockerV1 | None = None,
+) -> CampaignReceiptV1:
+    return CampaignReceiptV1(
+        campaign_id=campaign_id,
+        actual_value=1,
+        value_unit="predicate_passes",
+        output=CampaignOutputEvidenceV1(
+            output_ceiling_bytes=output_ceiling_bytes,
+            bytes_emitted=2,
+            lines_emitted=1,
+            sha256="8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+        ),
+        blocker=blocker,
+        boundary="continue",
+    )
+
+
+def test_campaign_contracts_are_bounded_and_legacy_packets_remain_readable() -> None:
+    conductor = identity("codex")
+    legacy = packet(work_id="legacy-campaignless", conductor=conductor)
+    assert legacy.campaign is None
+
+    with pytest.raises(ValueError, match="value/cost work loan"):
+        packet(
+            work_id="campaign-without-loan",
+            conductor=conductor,
+            underwritten=False,
+            campaign=campaign_packet(),
+        )
+    with pytest.raises(ValueError, match="campaign output exceeds"):
+        CampaignOutputEvidenceV1(
+            output_ceiling_bytes=1,
+            bytes_emitted=2,
+            sha256="0" * 64,
+        )
+    with pytest.raises(ValueError, match="numeric, not boolean"):
+        CampaignReceiptV1.model_validate(campaign_receipt().model_dump() | {"actual_value": True})
+    with pytest.raises(ValueError, match="successor capsule"):
+        CampaignReceiptV1(
+            campaign_id="github:organvm/limen:issue:1571",
+            actual_value=0,
+            value_unit="predicate_passes",
+            output=CampaignOutputEvidenceV1(
+                output_ceiling_bytes=1,
+                bytes_emitted=0,
+                sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            ),
+            boundary="switch",
+        )
+    with pytest.raises(ValueError, match="precise blocker ownership"):
+        RunReceiptV1(
+            receipt_id="receipt-campaign-blocked",
+            run_id="run-campaign-blocked",
+            lease_id="lease-campaign-blocked",
+            lease_generation=1,
+            executor=conductor,
+            predicate=PredicateEvidenceV1(command="pytest -q", exit_code=1),
+            campaign=campaign_receipt(),
+            outcome="blocked",
+        )
 
 
 def test_broker_reserve_and_claim_fail_closed_with_stable_underwriting_denial() -> None:
@@ -681,6 +774,58 @@ def test_read_receipt_cannot_change_paths_or_heads() -> None:
         now=NOW,
     )
     assert result["mutation_authorized"] is False
+
+
+def test_campaign_receipt_must_match_packet_identity_and_output_ceiling() -> None:
+    codex = session("codex")
+    broker = broker_with(codex)
+    reserved = broker.submit(
+        packet(
+            work_id="campaign-receipt-match",
+            conductor=codex.identity,
+            campaign=campaign_packet(),
+        ),
+        now=NOW,
+    )
+    lease = reserved["lease"]
+
+    def report(receipt_id: str, campaign: CampaignReceiptV1 | None) -> dict:
+        return broker.report(
+            lease["lease_id"],
+            capability(broker, reserved),
+            RunReceiptV1(
+                receipt_id=receipt_id,
+                run_id=reserved["run_id"],
+                lease_id=lease["lease_id"],
+                lease_generation=lease["generation"],
+                executor=codex.identity,
+                observed_heads_before={"pr": "abc123"},
+                changed_paths=("cli/changed.py",),
+                predicate=PredicateEvidenceV1(command="pytest -q", exit_code=0),
+                spend={"runs": 1},
+                campaign=campaign,
+                outcome="succeeded",
+            ),
+            generation=lease["generation"],
+            now=NOW,
+        )
+
+    assert (
+        report(
+            "receipt-campaign-wrong-id",
+            campaign_receipt("github:organvm/limen:issue:other"),
+        )["mutation_authorized"]
+        is False
+    )
+    assert (
+        report(
+            "receipt-campaign-wrong-ceiling",
+            campaign_receipt(output_ceiling_bytes=2048),
+        )["mutation_authorized"]
+        is False
+    )
+    assert report("receipt-campaign-missing", None)["mutation_authorized"] is False
+    assert report("receipt-campaign-valid", campaign_receipt())["mutation_authorized"] is True
 
 
 def test_graph_submission_is_atomic_and_idempotent() -> None:

@@ -1069,6 +1069,14 @@ export class ConductKernel {
     const childRunsAuthorized = childIds.size === receipt.child_runs.length
       && childIds.size === run.children.length
       && run.children.every((childId) => childIds.has(childId));
+    const packetCampaign = packet.campaign ?? null;
+    const receiptCampaign = receipt.campaign ?? null;
+    const campaignAuthorized = (packetCampaign === null && receiptCampaign === null)
+      || (packetCampaign !== null
+        && receiptCampaign !== null
+        && packetCampaign.campaign_id === receiptCampaign.campaign_id
+        && packetCampaign.output_ceiling_bytes
+          === receiptCampaign.output.output_ceiling_bytes);
     const predicateAuthorized = receipt.predicate.command === packet.predicate
       && (receipt.outcome !== "succeeded" || receipt.predicate.exit_code === 0);
     const mutationAuthorized = ACTIVE_LEASE_STATES.has(lease.state)
@@ -1079,6 +1087,7 @@ export class ConductKernel {
       && readOnlyAuthorized
       && spendAuthorized
       && childRunsAuthorized
+      && campaignAuthorized
       && predicateAuthorized;
     run.receipts.push({
       ...clone(receipt),

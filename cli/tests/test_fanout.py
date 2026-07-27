@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from copy import deepcopy
@@ -35,6 +36,7 @@ from limen.fanout_executor import (
     FanoutExecutionError,
     ProviderLaunch,
     _assert_topic_branch,
+    _campaign_receipt,
     _working_tree_changed_paths,
     register_execution_sessions,
 )
@@ -104,6 +106,21 @@ def manifest_payload() -> dict:
     }
 
 
+def campaign_context(
+    *,
+    failed_predicate: str = "python3 scripts/omega.sh --strict",
+    owner: str = "github:organvm/limen:issue:1571",
+) -> dict:
+    return {
+        "schema_version": "limen.campaign_packet.v1",
+        "campaign_id": "github:organvm/limen:issue:1571",
+        "failed_predicate": failed_predicate,
+        "owner": owner,
+        "next_action": "Repair the typed failing rung and rerun its exact predicate",
+        "output_ceiling_bytes": 4096,
+    }
+
+
 def sync_manifest_budget(payload: dict) -> None:
     payload["work_loan"]["budget_cost"] = sum(leaf["spend"]["limit"] for leaf in payload["leaves"])
 
@@ -122,6 +139,67 @@ def test_legacy_manifest_remains_readable_during_work_loan_adoption() -> None:
         match="^task-not-underwritten:source_origin,horizon,value_case,budget_cost,owner_surface$",
     ):
         compile_packets(manifest, {"routes": []})
+
+
+def test_campaign_manifest_requires_typed_leaf_context_and_compiles_it_to_packets() -> None:
+    payload = manifest_payload()
+    payload["campaign"] = campaign_context()
+    payload["leaves"][0]["campaign"] = campaign_context(failed_predicate="python3 scripts/omega.sh RUNG")
+    manifest = FanoutManifestV1.model_validate(payload)
+    routing = {
+        "routes": [
+            {
+                "work_id": "leaf-a",
+                "status": "eligible",
+                "session_id": "remote-1",
+                "agent": "arbitrary-remote",
+                "transport": "remote-api",
+                "local_heavy": False,
+            }
+        ]
+    }
+
+    root, leaf = compile_packets(manifest, routing)
+
+    assert root.campaign == manifest.campaign
+    assert leaf.campaign == manifest.leaves[0].campaign
+    assert root.campaign.campaign_id == leaf.campaign.campaign_id
+
+    missing_leaf = manifest_payload()
+    missing_leaf["campaign"] = campaign_context()
+    with pytest.raises(ValidationError, match="campaign context on every leaf"):
+        FanoutManifestV1.model_validate(missing_leaf)
+
+    orphan_leaf = manifest_payload()
+    orphan_leaf["leaves"][0]["campaign"] = campaign_context()
+    with pytest.raises(ValidationError, match="require a campaign manifest"):
+        FanoutManifestV1.model_validate(orphan_leaf)
+
+
+def test_campaign_executor_receipt_bounds_output_and_routes_blocker() -> None:
+    campaign = campaign_context()
+    campaign["output_ceiling_bytes"] = 4
+
+    summary, receipt = _campaign_receipt(
+        {"campaign": campaign},
+        "ééé",
+        actual_value=0,
+        blocked=True,
+    )
+
+    assert summary == "éé"
+    assert receipt is not None
+    assert receipt.output.bytes_emitted == 4
+    assert receipt.output.sha256 == hashlib.sha256("éé".encode()).hexdigest()
+    assert receipt.output.truncated is True
+    assert receipt.blocker is not None
+    assert receipt.blocker.owner == campaign["owner"]
+    assert receipt.blocker.failed_predicate == campaign["failed_predicate"]
+    assert receipt.blocker.next_action == campaign["next_action"]
+
+    unchanged, absent = _campaign_receipt({}, "legacy output", actual_value=1)
+    assert unchanged == "legacy output"
+    assert absent is None
 
 
 def session(

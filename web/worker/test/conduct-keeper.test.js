@@ -83,6 +83,7 @@ async function packet({
   maxAttempts = 2,
   transientOnly = true,
   underwritten = true,
+  campaign = null,
   deadline = new Date(NOW.getTime() + 60 * 60 * 1000),
 } = {}) {
   return validateWorkPacket({
@@ -109,6 +110,7 @@ async function packet({
       external_deadline: false,
       due_at: null,
     } : null,
+    campaign,
     authority: authority || {
       actions: ["code", "review"],
       repositories: ["organvm/limen"],
@@ -124,6 +126,40 @@ async function packet({
     effect,
     task_id: taskId,
   });
+}
+
+function campaignPacket(campaignId = "github:organvm/limen:issue:1571") {
+  return {
+    schema_version: "limen.campaign_packet.v1",
+    campaign_id: campaignId,
+    failed_predicate: "python3 scripts/omega.sh --strict",
+    owner: "github:organvm/limen:issue:1571",
+    next_action: "Repair the typed failing rung and rerun its exact predicate",
+    output_ceiling_bytes: 4096,
+  };
+}
+
+function campaignReceipt(
+  campaignId = "github:organvm/limen:issue:1571",
+  outputCeilingBytes = 4096,
+) {
+  return {
+    schema_version: "limen.campaign_receipt.v1",
+    campaign_id: campaignId,
+    actual_value: 1,
+    value_unit: "predicate_passes",
+    output: {
+      schema_version: "limen.campaign_output_evidence.v1",
+      output_ceiling_bytes: outputCeilingBytes,
+      bytes_emitted: 2,
+      lines_emitted: 1,
+      sha256: "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+      truncated: false,
+    },
+    blocker: null,
+    successor_capsule: null,
+    boundary: "continue",
+  };
 }
 
 async function taskPacket({
@@ -1423,6 +1459,92 @@ test("RFC 8785 canonical hashes match the cross-runtime Unicode and integral-flo
   }
 });
 
+test("campaign contract validation is bounded and backward compatible", async () => {
+  const codex = session("codex");
+  const legacy = await packet({ workId: "legacy-campaignless", conductor: codex.identity });
+  assert.equal(legacy.campaign, null);
+
+  await assert.rejects(
+    packet({
+      workId: "campaign-without-loan",
+      conductor: codex.identity,
+      underwritten: false,
+      campaign: campaignPacket(),
+    }),
+    /value\/cost work loan/,
+  );
+  await assert.rejects(
+    packet({
+      workId: "campaign-invalid-id",
+      conductor: codex.identity,
+      campaign: { ...campaignPacket(), campaign_id: "contains spaces" },
+    }),
+    /campaign\.campaign_id/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-output-over-ceiling",
+      run_id: "run-output-over-ceiling",
+      lease_id: "lease-output-over-ceiling",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 0 },
+      campaign: {
+        ...campaignReceipt(),
+        output: {
+          ...campaignReceipt().output,
+          output_ceiling_bytes: 1,
+          bytes_emitted: 2,
+        },
+      },
+      outcome: "succeeded",
+    }, NOW),
+    /campaign output/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-invalid-output-digest",
+      run_id: "run-invalid-output-digest",
+      lease_id: "lease-invalid-output-digest",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 0 },
+      campaign: {
+        ...campaignReceipt(),
+        output: { ...campaignReceipt().output, sha256: "A".repeat(64) },
+      },
+      outcome: "succeeded",
+    }, NOW),
+    /lowercase SHA-256/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-switch-without-successor",
+      run_id: "run-switch-without-successor",
+      lease_id: "lease-switch-without-successor",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 1 },
+      campaign: { ...campaignReceipt(), boundary: "switch" },
+      outcome: "blocked",
+    }, NOW),
+    /successor capsule/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-blocked-without-owner",
+      run_id: "run-blocked-without-owner",
+      lease_id: "lease-blocked-without-owner",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 1 },
+      campaign: campaignReceipt(),
+      outcome: "blocked",
+    }, NOW),
+    /precise blocker ownership/,
+  );
+});
+
 test("moved heads fence leases and late receipts remain evidence only", async () => {
   const codex = session("codex");
   const { service } = await serviceWith([codex]);
@@ -1535,6 +1657,49 @@ test("receipts authorize mutation only with exact predicates, scoped paths, boun
     child_runs: ["run-forged-child"],
   })).mutation_authorized, false);
   assert.equal((await report("receipt-contract-valid")).mutation_authorized, true);
+});
+
+test("campaign receipts must match the packet identity and output ceiling", async () => {
+  const codex = session("codex");
+  const { service } = await serviceWith([codex]);
+  const reserved = await service.call("submit", {
+    packet: await packet({
+      workId: "campaign-receipt-match",
+      conductor: codex.identity,
+      resource: "path/organvm/limen/main/cli/campaign-receipt",
+      campaign: campaignPacket(),
+    }),
+  });
+  const claimProof = await leaseCapability(service, reserved);
+  const report = async (receiptId, campaign) => service.call("report", {
+    lease_id: reserved.lease.lease_id,
+    capability_token: claimProof,
+    generation: reserved.lease.generation,
+    receipt: validateReceipt({
+      receipt_id: receiptId,
+      run_id: reserved.run_id,
+      lease_id: reserved.lease.lease_id,
+      lease_generation: reserved.lease.generation,
+      executor: codex.identity,
+      observed_heads_before: { pr: "abc123" },
+      changed_paths: ["cli/campaign-receipt.js"],
+      predicate: { command: "pytest -q", exit_code: 0 },
+      spend: { runs: 1 },
+      campaign,
+      outcome: "succeeded",
+    }, NOW),
+  });
+
+  assert.equal((await report(
+    "receipt-campaign-wrong-id",
+    campaignReceipt("github:organvm/limen:issue:other"),
+  )).mutation_authorized, false);
+  assert.equal((await report(
+    "receipt-campaign-wrong-ceiling",
+    campaignReceipt("github:organvm/limen:issue:1571", 2048),
+  )).mutation_authorized, false);
+  assert.equal((await report("receipt-campaign-missing", null)).mutation_authorized, false);
+  assert.equal((await report("receipt-campaign-valid", campaignReceipt())).mutation_authorized, true);
 });
 
 test("read receipts cannot change paths or observed heads", async () => {
