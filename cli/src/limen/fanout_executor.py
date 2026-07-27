@@ -21,6 +21,9 @@ from pathlib import Path
 from typing import Any, Literal, Protocol, cast
 
 from limen.conduct.models import (
+    CampaignBlockerV1,
+    CampaignOutputEvidenceV1,
+    CampaignReceiptV1,
     CheckEvidenceV1,
     ConductorSessionV1,
     ExecutorAttemptV1,
@@ -112,6 +115,50 @@ class ExecutionAdapter(Protocol):
         capability_token: str,
         client: Any,
     ) -> RunReceiptV1: ...
+
+
+def _campaign_receipt(
+    packet: dict[str, Any],
+    output: str,
+    *,
+    actual_value: float,
+    blocked: bool = False,
+    boundary: Literal["continue", "switch", "wait_relay", "settled", "invalid"] = "continue",
+    successor_capsule: str | None = None,
+) -> tuple[str, CampaignReceiptV1 | None]:
+    campaign = packet.get("campaign")
+    if not isinstance(campaign, dict):
+        return output, None
+    ceiling = int(campaign["output_ceiling_bytes"])
+    raw = output.encode("utf-8")
+    emitted_text = raw[:ceiling].decode("utf-8", errors="ignore")
+    emitted = emitted_text.encode("utf-8")
+    return (
+        emitted_text,
+        CampaignReceiptV1(
+            campaign_id=campaign["campaign_id"],
+            actual_value=actual_value,
+            value_unit="predicate_passes",
+            output=CampaignOutputEvidenceV1(
+                output_ceiling_bytes=ceiling,
+                bytes_emitted=len(emitted),
+                lines_emitted=len(emitted_text.splitlines()),
+                sha256=hashlib.sha256(emitted).hexdigest(),
+                truncated=len(raw) > ceiling,
+            ),
+            blocker=(
+                CampaignBlockerV1(
+                    owner=campaign["owner"],
+                    failed_predicate=campaign["failed_predicate"],
+                    next_action=campaign["next_action"],
+                )
+                if blocked
+                else None
+            ),
+            successor_capsule=successor_capsule,
+            boundary=boundary,
+        ),
+    )
 
 
 def _run(
@@ -680,6 +727,7 @@ class PatchLandingMixin:
     ) -> RunReceiptV1:
         packet = node["packet"]
         summary = ((predicate.stdout or "") + (predicate.stderr or "")).strip()[-1000:]
+        summary, campaign = _campaign_receipt(packet, summary, actual_value=1)
         return RunReceiptV1(
             receipt_id=f"receipt-{attempt.attempt_id}",
             run_id=node["run_id"],
@@ -706,6 +754,7 @@ class PatchLandingMixin:
                 CheckEvidenceV1(name="pull-request", status="success", url=pr_url, head=head),
             ),
             spend={packet["spend"]["unit"]: 1},
+            campaign=campaign,
             outcome="succeeded",
         )
 
@@ -1369,6 +1418,20 @@ def settle_exhausted_attempts(
         claim = executor_client.claim(current.lease_id, current.lease_generation)
         repository = str(packet["execution"]["owner_repository"])
         exact_base = str(packet["execution"]["exact_base"])
+        summary = (
+            "finite provider attempt limit exhausted"
+            if exhausted
+            else "campaign deadline reached without an exact provider receipt"
+        )
+        deadline_boundary = deadline_imminent and not exhausted
+        summary, campaign = _campaign_receipt(
+            packet,
+            summary,
+            actual_value=0,
+            blocked=True,
+            boundary="wait_relay" if deadline_boundary else "continue",
+            successor_capsule=str(packet["receipt_target"]) if deadline_boundary else None,
+        )
         receipt = RunReceiptV1(
             receipt_id=f"receipt-exhausted-{node['run_id'].removeprefix('run-')[:24]}",
             run_id=node["run_id"],
@@ -1383,11 +1446,7 @@ def settle_exhausted_attempts(
             predicate=PredicateEvidenceV1(
                 command=packet["predicate"],
                 exit_code=1,
-                summary=(
-                    "finite provider attempt limit exhausted"
-                    if exhausted
-                    else "campaign deadline reached without an exact provider receipt"
-                ),
+                summary=summary,
             ),
             checks=(
                 CheckEvidenceV1(
@@ -1397,6 +1456,7 @@ def settle_exhausted_attempts(
                 ),
             ),
             spend={packet["spend"]["unit"]: len(attempts)},
+            campaign=campaign,
             outcome="blocked",
         )
         result = executor_client.report(

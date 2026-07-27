@@ -16,6 +16,7 @@ from limen.conduct.client import HttpConductClient, LocalConductClient, client_f
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
+    CampaignPacketV1,
     FanoutBoundsV1,
     ProtocolModel,
     ResourceClaimV1,
@@ -104,6 +105,7 @@ class FanoutLeafV1(ProtocolModel):
     # Optional while historical manifests remain readable. The enforcement
     # layer activates admission separately after sanctioned producers adopt it.
     work_loan: WorkLoanV1 | None = None
+    campaign: CampaignPacketV1 | None = None
     deadline: datetime
     retry: RetryPolicyV1 = Field(default_factory=RetryPolicyV1)
     spend: SpendEnvelopeV1 = Field(default_factory=SpendEnvelopeV1)
@@ -179,6 +181,8 @@ class FanoutLeafV1(ProtocolModel):
             raise ValueError("fanout leaf work-loan budget must equal its spend limit")
         if self.work_loan is not None and self.work_loan.owner_surface != self.owner_repository:
             raise ValueError("fanout leaf work-loan owner must equal owner_repository")
+        if self.campaign is not None and self.work_loan is None:
+            raise ValueError("campaign fanout leaves require a value/cost work loan")
         return self
 
 
@@ -194,6 +198,7 @@ class FanoutManifestV1(ProtocolModel):
     receipt_target: str
     # Optional for compatibility reads until the enforcement PR lands.
     work_loan: WorkLoanV1 | None = None
+    campaign: CampaignPacketV1 | None = None
     deadline: datetime
     leaves: tuple[FanoutLeafV1, ...]
 
@@ -239,6 +244,19 @@ class FanoutManifestV1(ProtocolModel):
                 raise ValueError(f"{leaf.work_id} exceeds the manifest deadline")
         if self.work_loan is not None and self.work_loan.budget_cost != sum(leaf.spend.limit for leaf in self.leaves):
             raise ValueError("manifest work-loan budget must equal aggregate leaf spend")
+        leaf_campaigns = [leaf.campaign for leaf in self.leaves]
+        if self.campaign is None and any(campaign is not None for campaign in leaf_campaigns):
+            raise ValueError("campaign fanout leaves require a campaign manifest")
+        if self.campaign is not None:
+            if self.work_loan is None:
+                raise ValueError("campaign fanout manifests require a value/cost work loan")
+            if any(campaign is None for campaign in leaf_campaigns):
+                raise ValueError("campaign fanout manifests require campaign context on every leaf")
+            if any(
+                campaign is not None and campaign.campaign_id != self.campaign.campaign_id
+                for campaign in leaf_campaigns
+            ):
+                raise ValueError("fanout campaign IDs must match the manifest campaign")
         _topological_order(self.leaves)
         return self
 
@@ -564,6 +582,7 @@ def compile_packets(
         predicate=canonical.predicate,
         receipt_target=canonical.receipt_target,
         work_loan=canonical.work_loan,
+        campaign=canonical.campaign,
         authority=AuthorityEnvelopeV1(
             actions=frozenset({"read", "write"}),
             repositories=repositories,
@@ -623,6 +642,7 @@ def compile_packets(
                 predicate=leaf.predicate,
                 receipt_target=leaf.receipt_target,
                 work_loan=leaf.work_loan,
+                campaign=leaf.campaign,
                 authority=AuthorityEnvelopeV1(
                     actions=frozenset({"read", "write"} if leaf.effect == "write" else {"read"}),
                     repositories=frozenset({leaf.owner_repository}),

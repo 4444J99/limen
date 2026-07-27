@@ -54,6 +54,49 @@
       "title": "AgentIdentityV1",
       "type": "object"
     },
+    "CampaignPacketV1": {
+      "additionalProperties": false,
+      "description": "Typed remediation context carried only by institutional campaigns.",
+      "properties": {
+        "campaign_id": {
+          "title": "Campaign Id",
+          "type": "string"
+        },
+        "failed_predicate": {
+          "title": "Failed Predicate",
+          "type": "string"
+        },
+        "next_action": {
+          "title": "Next Action",
+          "type": "string"
+        },
+        "output_ceiling_bytes": {
+          "exclusiveMinimum": 0,
+          "maximum": 10485760,
+          "title": "Output Ceiling Bytes",
+          "type": "integer"
+        },
+        "owner": {
+          "title": "Owner",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.campaign_packet.v1",
+          "default": "limen.campaign_packet.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "campaign_id",
+        "failed_predicate",
+        "owner",
+        "next_action",
+        "output_ceiling_bytes"
+      ],
+      "title": "CampaignPacketV1",
+      "type": "object"
+    },
     "FanoutLeafV1": {
       "additionalProperties": false,
       "description": "One independently receiptable leaf with no provider/model coupling.",
@@ -64,6 +107,17 @@
           },
           "title": "Allowed Paths",
           "type": "array"
+        },
+        "campaign": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CampaignPacketV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "deadline": {
           "format": "date-time",
@@ -381,6 +435,17 @@
   "additionalProperties": false,
   "description": "Canonical direct-session graph; it never contains task-board state.",
   "properties": {
+    "campaign": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CampaignPacketV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "conductor": {
       "$ref": "#/$defs/AgentIdentityV1"
     },

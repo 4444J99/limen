@@ -54,6 +54,156 @@
       "title": "AgentIdentityV1",
       "type": "object"
     },
+    "CampaignBlockerV1": {
+      "additionalProperties": false,
+      "description": "Owner-routable evidence for an exact campaign blocker.",
+      "properties": {
+        "failed_predicate": {
+          "title": "Failed Predicate",
+          "type": "string"
+        },
+        "next_action": {
+          "title": "Next Action",
+          "type": "string"
+        },
+        "owner": {
+          "title": "Owner",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.campaign_blocker.v1",
+          "default": "limen.campaign_blocker.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "owner",
+        "failed_predicate",
+        "next_action"
+      ],
+      "title": "CampaignBlockerV1",
+      "type": "object"
+    },
+    "CampaignOutputEvidenceV1": {
+      "additionalProperties": false,
+      "description": "Content-free proof that one campaign result respected its output ceiling.",
+      "properties": {
+        "bytes_emitted": {
+          "maximum": 10485760,
+          "minimum": 0,
+          "title": "Bytes Emitted",
+          "type": "integer"
+        },
+        "lines_emitted": {
+          "default": 0,
+          "maximum": 10000000,
+          "minimum": 0,
+          "title": "Lines Emitted",
+          "type": "integer"
+        },
+        "output_ceiling_bytes": {
+          "exclusiveMinimum": 0,
+          "maximum": 10485760,
+          "title": "Output Ceiling Bytes",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "limen.campaign_output_evidence.v1",
+          "default": "limen.campaign_output_evidence.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "truncated": {
+          "default": false,
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "output_ceiling_bytes",
+        "bytes_emitted",
+        "sha256"
+      ],
+      "title": "CampaignOutputEvidenceV1",
+      "type": "object"
+    },
+    "CampaignReceiptV1": {
+      "additionalProperties": false,
+      "description": "Campaign-only value, output, blocker, and succession evidence.",
+      "properties": {
+        "actual_value": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Actual Value",
+          "type": "number"
+        },
+        "blocker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CampaignBlockerV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "boundary": {
+          "enum": [
+            "continue",
+            "switch",
+            "wait_relay",
+            "settled",
+            "invalid"
+          ],
+          "title": "Boundary",
+          "type": "string"
+        },
+        "campaign_id": {
+          "title": "Campaign Id",
+          "type": "string"
+        },
+        "output": {
+          "$ref": "#/$defs/CampaignOutputEvidenceV1"
+        },
+        "schema_version": {
+          "const": "limen.campaign_receipt.v1",
+          "default": "limen.campaign_receipt.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "successor_capsule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Successor Capsule"
+        },
+        "value_unit": {
+          "title": "Value Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "campaign_id",
+        "actual_value",
+        "value_unit",
+        "output",
+        "boundary"
+      ],
+      "title": "CampaignReceiptV1",
+      "type": "object"
+    },
     "CheckEvidenceV1": {
       "additionalProperties": false,
       "properties": {
@@ -189,6 +339,17 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
+    "campaign": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CampaignReceiptV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "changed_paths": {
       "default": [],
       "items": {
