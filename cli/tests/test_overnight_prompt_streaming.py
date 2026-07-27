@@ -87,9 +87,7 @@ def _row(occurrence_id: str, authority: str, **extra) -> bytes:
     return json.dumps(value, sort_keys=True).encode("utf-8") + b"\n"
 
 
-def test_prompt_authority_streams_large_event_journal_without_whole_file_read(
-    tmp_path, monkeypatch
-):
+def test_prompt_authority_streams_large_event_journal_without_whole_file_read(tmp_path, monkeypatch):
     module = _load_module(tmp_path, monkeypatch)
     captured_at = dt.datetime(2026, 7, 27, tzinfo=dt.timezone.utc)
     material = b"".join(
@@ -121,9 +119,7 @@ def test_prompt_authority_streams_large_event_journal_without_whole_file_read(
     }
 
 
-def test_streamed_revision_count_and_prefix_custody_match_byte_semantics(
-    tmp_path, monkeypatch
-):
+def test_streamed_revision_count_and_prefix_custody_match_byte_semantics(tmp_path, monkeypatch):
     module = _load_module(tmp_path, monkeypatch)
     events = tmp_path / "prompt-events.jsonl"
     material = b"".join(
