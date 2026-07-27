@@ -80,9 +80,20 @@ def maintenance_blocker(
     """
     if str(policy.get("mode", "")).lower() != "observe":
         return None
-    window = policy.get("maintenance_window")
-    if not isinstance(window, dict):
+    if "maintenance_window" not in policy:
         return None
+    window = policy["maintenance_window"]
+    if not isinstance(window, dict):
+        return {
+            "schema_version": "limen.autonomy-maintenance-blocker.v1",
+            "state": "invalid-window",
+            "reason": "finite autonomy maintenance_window must be an object",
+            "owner": "autonomy-policy-owner",
+            "expires_at": "",
+            "resume_predicate": "",
+            "policy_path": str(POLICY_PATH),
+            "next_command": "python3 scripts/autonomy-governor.py explain",
+        }
 
     expires_raw = window.get("expires_at")
     expires = _parse_timestamp(expires_raw)
