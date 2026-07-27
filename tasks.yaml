@@ -160372,7 +160372,7 @@ tasks:
   workstream: 'revenue-value-repos'
   priority: 'medium'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'failed'
   labels:
   - 'always-working'
   - 'receipt-first'
@@ -160423,7 +160423,16 @@ tasks:
     conduct_run_id: 'run-90feac07d9d412ac1926c00b41705aea'
     conduct_lease_id: 'lease-384-90feac07d9d412ac'
     conduct_generation: 384
-  updated: '2026-07-27T07:02:11.959Z'
+  - timestamp: '2026-07-27T13:07:34.734Z'
+    agent: 'jules'
+    session_id: 'run-90feac07d9d412ac1926c00b41705aea'
+    status: 'failed'
+    output: 'Conduct lease lease-384-90feac07d9d412ac reached its hard deadline'
+    conduct_event_id: 'conduct:run-90feac07d9d412ac1926c00b41705aea:384:expired'
+    conduct_run_id: 'run-90feac07d9d412ac1926c00b41705aea'
+    conduct_lease_id: 'lease-384-90feac07d9d412ac'
+    conduct_generation: 384
+  updated: '2026-07-27T13:07:34.734Z'
 - id: 'AW-SUBSTRATE-DISK-TEMP-d9c4f989152f'
   title: 'Keep disk/temp/voice substrate from starving the swarm'
   description: 'substrate lifecycle predicate is failing'
