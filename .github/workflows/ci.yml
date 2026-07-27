@@ -77,6 +77,11 @@ jobs:
       - name: Compile Python modules
         run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
 
+      - name: Audit Python dependencies (pip-audit)
+        run: |
+          python -m pip install pip-audit uv
+          python3 scripts/pip-audit-autofix.py --check
+
       - name: Shell syntax check (bash -n) on all shell scripts
         run: |
           find . -name "*.sh" \
