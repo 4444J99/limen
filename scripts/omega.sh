@@ -67,7 +67,13 @@ rung() {
       "$@"
     fi
     local rc=$?
-    if [[ $rc -eq 0 ]]; then status="PASS"; else status="FAIL"; fi
+    if [[ $rc -eq 0 ]]; then
+      status="PASS"
+    elif [[ $rc -eq 77 ]]; then
+      status="SKIP"
+    else
+      status="FAIL"
+    fi
   fi
   case "$status" in
     PASS) PASS_N=$((PASS_N+1)) ;;
@@ -84,6 +90,11 @@ skip_rung() {
   SKIP_N=$((SKIP_N+1))
   ROWS+=("SKIP	[$tier] $label — $reason")
   JSON_ROWS+=("{\"id\":\"$rung_id\",\"rung\":\"$label\",\"tier\":\"$tier\",\"status\":\"SKIP\",\"reason\":\"$reason\"}")
+}
+
+owner_rung() {
+  local rung_id="$1"; local label="$2"
+  rung "$rung_id" "$label" live python3 "$ROOT/scripts/omega-owner-receipt.py" --rung-id "$rung_id"
 }
 
 cd "$ROOT"
@@ -138,15 +149,54 @@ if core.get("schema") != "limen.omega_rung_registry.v1":
 if sensors.get("schema") != "limen.omega_sensor_rungs.v1":
     raise SystemExit("unknown sensor rung schema")
 ids = []
-for rung in [*core.get("rungs", []), *sensors.get("rungs", [])]:
+owner_receipt_paths = []
+for source, rung in [
+    *(("core", rung) for rung in core.get("rungs", [])),
+    *(("sensor", rung) for rung in sensors.get("rungs", [])),
+]:
     rung_id = rung.get("id")
     if not isinstance(rung_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9_.-]*", rung_id):
         raise SystemExit("missing or invalid omega rung id")
-    if not rung.get("semantic_inputs"):
+    semantic_inputs = rung.get("semantic_inputs")
+    if not isinstance(semantic_inputs, list) or not semantic_inputs:
         raise SystemExit(f"{rung_id}: missing semantic inputs")
+    if rung.get("tier") not in {"det", "live"}:
+        raise SystemExit(f"{rung_id}: invalid tier")
+    owner_receipts = [
+        descriptor
+        for descriptor in semantic_inputs
+        if isinstance(descriptor, dict) and descriptor.get("role") == "owner_receipt"
+    ]
+    if rung.get("tier") == "live":
+        if len(owner_receipts) != 1:
+            raise SystemExit(f"{rung_id}: live rung must declare exactly one owner receipt")
+        descriptor = owner_receipts[0]
+        if (
+            descriptor.get("normalization") != "json"
+            or descriptor.get("volatile_fields") != ["observed_at"]
+            or isinstance(descriptor.get("max_age_seconds"), bool)
+            or not isinstance(descriptor.get("max_age_seconds"), int)
+            or not 1 <= descriptor["max_age_seconds"] <= 604800
+        ):
+            raise SystemExit(f"{rung_id}: live owner receipt descriptor is invalid")
+        receipt_path = descriptor.get("path")
+        if (
+            not isinstance(receipt_path, str)
+            or not receipt_path
+            or Path(receipt_path).is_absolute()
+            or ".." in Path(receipt_path).parts
+        ):
+            raise SystemExit(f"{rung_id}: live owner receipt path is invalid")
+        owner_receipt_paths.append(receipt_path)
+        if source == "core":
+            timeout = rung.get("timeout")
+            if isinstance(timeout, bool) or not isinstance(timeout, int) or not 1 <= timeout <= 7200:
+                raise SystemExit(f"{rung_id}: live core timeout is invalid")
     ids.append(rung_id)
 if len(ids) != len(set(ids)):
     raise SystemExit("duplicate omega rung id")
+if len(owner_receipt_paths) != len(set(owner_receipt_paths)):
+    raise SystemExit("duplicate live owner receipt path")
 core_for_hash = {**core, "rungs": sorted(core["rungs"], key=lambda rung: rung["id"])}
 sensors_for_hash = {**sensors, "rungs": sorted(sensors["rungs"], key=lambda rung: rung["id"])}
 normalized_core = json.dumps(core_for_hash, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("ascii")
@@ -163,17 +213,11 @@ digest.update(json.dumps(remediations, ensure_ascii=True, separators=(",", ":"),
 print(digest.hexdigest())
 PY
 )"
-if [[ ! "$CONTRACT_HASH" =~ ^[0-9a-f]{64}$ || "$REMEDIATION_OK" != "1" ]]; then
-  SENSOR_DISCOVERY_OK=0
-  CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" <<'PY'
-import hashlib, sys
-from pathlib import Path
-print(hashlib.sha256(b"omega.sh\0" + Path(sys.argv[1]).read_bytes() + b"\0sensor-discovery-error").hexdigest())
-PY
-)"
-fi
-
 echo "══ omega.sh — autonomic fixed-point predicate$([[ $OFFLINE == 1 ]] && echo ' (offline/det subset)')$([[ $STRICT == 1 ]] && echo ' (strict)') ══"
+if [[ "$SENSOR_DISCOVERY_OK" != "1" || ! "$CONTRACT_HASH" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "══ OMEGA CONTRACT INVALID ══  (rung discovery or contract validation failed; no stamp was written)" >&2
+  exit 1
+fi
 if [[ "$REMEDIATION_OK" != "1" ]]; then
   echo "══ OMEGA CONTRACT INVALID ══  (every discovered rung requires typed remediation metadata)" >&2
   exit 1
@@ -209,53 +253,40 @@ else
 fi
 
 # 6. ship-gate — every product-facing done-claim resolves to a reachable external artifact.
-rung core.ship-gate "ship-gate (products reachable)" live python3 "$ROOT/scripts/ship-gate.py" --check
+owner_rung core.ship-gate "ship-gate (products reachable)"
 
 # 7. heal-convergence — the healer converges (no chronic cluster re-spending on the same wall).
-rung core.heal-convergence "heal-convergence (no chronic wall)" live python3 "$ROOT/scripts/heal-convergence.py" --check
+owner_rung core.heal-convergence "heal-convergence (no chronic wall)"
 
 # 8. overnight-trial — the most recent unattended overnight run met its content-addressed contract.
 #    The producer verifies eight-hour coverage, every 90-minute value/blocker window, a warm handoff,
 #    at least one structured session seam, zero operator interventions, zero alerts, and
 #    evaluator/input hashes reconstructed from the exact bounded source receipts.
-if [[ -f "$ROOT/logs/overnight-trial.json" ]]; then
-  rung core.overnight-trial "overnight-trial (last run passed)" live env LIMEN_ROOT="$ROOT" python3 "$ROOT/scripts/overnight-watch.py" --check-trial
-else
-  skip_rung core.overnight-trial "overnight-trial (last run passed)" live "no logs/overnight-trial.json yet — run one trial"
-fi
+owner_rung core.overnight-trial "overnight-trial (last run passed)"
 
 # 9. handoff-relay — a fresh, complete seam-survival packet exists (a warm resume IS possible).
 rung core.handoff "handoff (warm resume ready)" det python3 "$ROOT/scripts/handoff-relay.py" --check
 
 # 10. no-tasks-on-me — nothing hangs on the ephemeral session; every owed item is homed in a
 #     git-tracked owner (lever / credential organ / registry), no stranded staged refs.
-rung core.no-tasks-on-me "no-tasks-on-me (owed work homed)" det bash "$ROOT/scripts/no-tasks-on-me.sh"
+owner_rung core.no-tasks-on-me "no-tasks-on-me (owed work homed)"
 
 # 11. credential-wall — every secret in use is homed in its organ (validity, not just presence).
-if [[ "$OFFLINE" == "1" ]]; then
-  skip_rung core.credential-wall "credential-wall (secrets homed)" live "--offline (credential validity authenticates against services)"
-else
-  rung core.credential-wall "credential-wall (secrets homed)" live python3 "$ROOT/scripts/credential-wall.py" --check
-fi
+owner_rung core.credential-wall "credential-wall (secrets homed)"
 
 # 12. lifecycle closure — preserved worktree debt is a diagnostic during ordinary dispatch, but
 #     Omega is the exact-zero fixed point: no debt roots and no accepted-reaper residue. The scan is
 #     intentionally live/explicit (not a dispatch hot-path check), so offline CI reports SKIP.
-rung core.worktree-lifecycle "worktree lifecycle (exact zero)" live python3 "$ROOT/scripts/worktree-debt.py" \
-  --strict --fail-on-debt --fail-reapable-over-cap
+owner_rung core.worktree-lifecycle "worktree lifecycle (exact zero)"
 
 # 13+. Registry-declared fixed-point checks. Sensor ids and commands remain inside sensors.yaml;
 #      omega consumes only generic {id,index,tier,label} metadata and therefore needs no edit when a
 #      sensor is added or renamed. ``rung`` owns offline handling, so every live check remains an
 #      explicit SKIP rather than a fake pass.
-if [[ "$SENSOR_DISCOVERY_OK" == "1" ]]; then
-  while IFS=$'\t' read -r rung_id sensor_id check_index tier label; do
-    [[ -n "$rung_id" ]] || continue
-    rung "$rung_id" "$label" "$tier" python3 "$ROOT/scripts/beat-sensors.py" --run-omega "$sensor_id" "$check_index"
-  done < "$SENSOR_OMEGA_ROWS"
-else
-  rung core.sensor-discovery "sensor registry fixed-point discovery" det false
-fi
+while IFS=$'\t' read -r rung_id sensor_id check_index tier label; do
+  [[ -n "$rung_id" ]] || continue
+  rung "$rung_id" "$label" "$tier" python3 "$ROOT/scripts/beat-sensors.py" --run-omega "$sensor_id" "$check_index"
+done < "$SENSOR_OMEGA_ROWS"
 
 # ── verdict ──────────────────────────────────────────────────────────────────
 echo

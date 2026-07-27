@@ -69,7 +69,6 @@ def _rungs(predicate: str = "python3 scripts/future.py --check") -> tuple[OmegaR
 
 def test_shipped_registry_covers_every_live_discovered_rung() -> None:
     rungs, remediations = load_omega_remediations(ROOT)
-    assert len(rungs) == 32
     assert set(remediations) == {rung.id for rung in rungs}
     assert all(remediation.authority.may_delegate is False for remediation in remediations.values())
     assert all(remediation.work_loan.owner_surface == remediation.owner for remediation in remediations.values())

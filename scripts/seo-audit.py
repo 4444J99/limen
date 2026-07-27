@@ -37,6 +37,7 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -46,6 +47,7 @@ ROOT = SCRIPT_DIR.parent.resolve()
 AUDIT = ROOT / "logs" / "seo-audit.json"
 SEO_SEEDS = ROOT / "institutio" / "github" / "seo-seeds.yaml"
 POSITIONING_SEEDS = ROOT / "positioning-seeds.json"
+STRICT_ARTIFACT_MAX_AGE_SECONDS = 3600
 
 sys.path.insert(0, str(SCRIPT_DIR))
 
@@ -154,6 +156,7 @@ def cmd_sweep(estate: dict, gitvs) -> int:
     failing = sorted(r for r, v in results.items() if not v["pass"])
     body = {
         "schema": "limen.seo_audit.v1",
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "audited": len(results),
         "passing": len(results) - len(failing),
         "failing": failing,
@@ -161,7 +164,9 @@ def cmd_sweep(estate: dict, gitvs) -> int:
     }
     AUDIT.parent.mkdir(parents=True, exist_ok=True)
     AUDIT.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
-    print(f"[seo-audit] swept {len(results)} public repos: {body['passing']} pass, {len(failing)} fail → {AUDIT.relative_to(ROOT)}")
+    print(
+        f"[seo-audit] swept {len(results)} public repos: {body['passing']} pass, {len(failing)} fail → {AUDIT.relative_to(ROOT)}"
+    )
     return 0
 
 
@@ -179,16 +184,54 @@ def cmd_check_repo(repo: str, estate: dict, gitvs) -> int:
     rungs = score_readme(_readme(repo)) | score_metadata(row, seo)
     ok = passes(rungs, standard)
     misses = sorted(k for k, v in rungs.items() if not v)
-    print(f"[seo-audit] {repo} [{standard}]: {'PASS' if ok else 'FAIL'}" + (f" — missing {', '.join(misses)}" if misses else ""))
+    print(
+        f"[seo-audit] {repo} [{standard}]: {'PASS' if ok else 'FAIL'}"
+        + (f" — missing {', '.join(misses)}" if misses else "")
+    )
     return 0 if ok else 1
 
 
-def cmd_check(estate: dict) -> int:
+def cmd_check(estate: dict, *, strict: bool = False) -> int:
     try:
         body = json.loads(AUDIT.read_text(encoding="utf-8"))
-    except Exception:
+    except FileNotFoundError:
         print("[seo-audit] no sweep artifact yet — run --sweep first (skip)")
-        return 0
+        return 77 if strict else 0
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        print("[seo-audit] sweep artifact is unreadable or malformed")
+        return 1 if strict else 0
+    if not isinstance(body, dict):
+        print("[seo-audit] sweep artifact is not an object")
+        return 1 if strict else 0
+    if strict and body.get("schema") != "limen.seo_audit.v1":
+        print("[seo-audit] sweep artifact schema is invalid")
+        return 1
+    audited = body.get("audited")
+    if audited == 0:
+        print("[seo-audit] sweep artifact covers zero governed public repos (skip)")
+        return 77 if strict else 0
+    if isinstance(audited, bool) or not isinstance(audited, int) or audited < 0:
+        print("[seo-audit] sweep artifact has an invalid audited count")
+        return 1 if strict else 0
+    if strict:
+        raw_generated_at = body.get("generated_at")
+        if not raw_generated_at:
+            print("[seo-audit] sweep artifact has no observation time (skip)")
+            return 77
+        try:
+            generated_at = datetime.fromisoformat(str(raw_generated_at).replace("Z", "+00:00"))
+            if generated_at.tzinfo is None or generated_at.utcoffset() is None:
+                raise ValueError("generated_at must be timezone-aware")
+            age_seconds = (datetime.now(UTC) - generated_at.astimezone(UTC)).total_seconds()
+        except (TypeError, ValueError):
+            print("[seo-audit] sweep artifact observation time is malformed")
+            return 1
+        if age_seconds < -60:
+            print("[seo-audit] sweep artifact is future-dated")
+            return 1
+        if age_seconds > STRICT_ARTIFACT_MAX_AGE_SECONDS:
+            print("[seo-audit] sweep artifact is stale (skip)")
+            return 77
     failing = body.get("failing") or []
     if failing:
         print(f"[seo-audit] {len(failing)}/{body.get('audited')} public repos below their README standard")
@@ -264,6 +307,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sweep", action="store_true")
     ap.add_argument("--repo")
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--strict", action="store_true", help="exit 77 when no live sweep evidence is available")
     ap.add_argument("--doctor", action="store_true")
     args = ap.parse_args(argv)
 
@@ -276,7 +320,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.repo:
         return cmd_check_repo(args.repo, estate, gitvs)
     if args.check:
-        return cmd_check(estate)
+        return cmd_check(estate, strict=args.strict)
     ap.print_help()
     return 2
 

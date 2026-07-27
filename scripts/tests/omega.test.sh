@@ -63,8 +63,13 @@ if "--list-omega-json" in sys.argv:
         {"id": "sensor.arbitrary.posture", "sensor_id": "arbitrary.future.id", "check_index": 1,
          "tier": "live", "label": "arbitrary registry posture",
          "command": "python3 scripts/future.py --live", "timeout": 45,
-         "semantic_inputs": [{"path": "scripts/beat-sensors.py", "normalization": "raw",
-                              "role": "input", "volatile_fields": []}]},
+         "semantic_inputs": [
+             {"path": "scripts/beat-sensors.py", "normalization": "raw",
+              "role": "input", "volatile_fields": []},
+             {"path": "logs/omega-owner-receipts/sensor.arbitrary.posture.json",
+              "normalization": "json", "role": "owner_receipt",
+              "volatile_fields": ["observed_at"], "max_age_seconds": 300},
+         ]},
         {"id": "sensor.renamed.no-timeout", "sensor_id": "independently.renamed.no-timeout.v47",
          "check_index": 0, "tier": "det", "label": "renamed no-timeout contract",
          "command": "python3 scripts/no-timeout.py --check", "timeout": None,
@@ -84,6 +89,9 @@ if "--list-omega-json" in sys.argv:
         rows[0]["command"] = "python3 scripts/renamed.py --check"
     elif mode == "timeout-metadata":
         rows[2]["timeout"] = 17
+    elif mode == "invalid":
+        print("{")
+        raise SystemExit(0)
     print(json.dumps({"schema": "limen.omega_sensor_rungs.v1", "rungs": rows}, sort_keys=True))
     raise SystemExit(0)
 if "--run-omega" in sys.argv:
@@ -179,9 +187,23 @@ assert rows["arbitrary registry posture"]["status"] == "SKIP", rows
 assert rows["renamed no-timeout contract"]["status"] == "PASS", rows
 print("  case1 stamp OK")
 PY
-grep -q -- '--strict --fail-on-debt --fail-reapable-over-cap' "$work/scripts/omega.sh" \
-  && check "strict" "strict" "case1 omega lifecycle inventory" \
-  || check "missing" "strict" "case1 omega lifecycle inventory"
+set +e
+python3 - "$work/institutio/governance/omega-core-rungs.json" <<'PY'
+import json
+import sys
+
+rungs = {rung["id"]: rung for rung in json.load(open(sys.argv[1]))["rungs"]}
+assert rungs["core.worktree-lifecycle"]["predicate"].endswith(
+    "--strict --fail-on-debt --fail-reapable-over-cap"
+)
+PY
+registry_rc=$?
+set -e
+if [ "$registry_rc" -eq 0 ]; then
+  check "strict" "strict" "case1 omega lifecycle inventory"
+else
+  check "missing" "strict" "case1 omega lifecycle inventory"
+fi
 base_hash="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_hash"])' "$work/logs/omega.json")"
 
 # ── Case 1b: normalized contract identity ignores row order, but changes on a new rung ────────────
@@ -210,6 +232,21 @@ if [ "$timeout_hash" != "$base_hash" ]; then
   check "changed" "changed" "case1b optional-timeout metadata changes hash"
 else
   check "unchanged" "changed" "case1b optional-timeout metadata changes hash"
+fi
+
+# ── Case 1d: failed discovery aborts before replacing the last trusted stamp ─────────────────────
+rm -f "$work/logs/omega.json"
+set +e
+out="$(OMEGA_TEST_SENSOR_MODE=invalid bash "$work/scripts/omega.sh" --offline --quiet 2>&1)"; rc=$?
+set -e
+check "$rc" "1" "case1d discovery failure exit"
+echo "$out" | grep -q "no stamp was written" \
+  && check "unstamped" "unstamped" "case1d discovery failure verdict" \
+  || check "missing" "unstamped" "case1d discovery failure verdict"
+if [ ! -e "$work/logs/omega.json" ]; then
+  check "absent" "absent" "case1d discovery failure stamp"
+else
+  check "present" "absent" "case1d discovery failure stamp"
 fi
 
 # ── Case 1c: strict rejects the same otherwise-green offline run because live rungs SKIP ──────────

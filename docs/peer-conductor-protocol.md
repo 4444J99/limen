@@ -71,6 +71,14 @@ and receipt target. `logs/omega.json` schema 3 embeds that typed contract on eve
 unknown, newly added, or tampered remediation makes the Omega contract invalid and cannot enter the
 two-pass settlement proof.
 
+Every live core or sensor rung declares exactly one fresh source-owned
+`limen.omega_owner_receipt.v1` receipt. The shared runner maps source exit `0` to `PASS`, `1`
+(and every non-protocol error) to `FAIL`, and `77` to `SKIP`; bounded evidence is hashed but never
+stored in the receipt. Receipt validation binds the rung ID and predicate digest, rejects stale,
+future, malformed, truncated, or non-passing evidence, and permits the two-pass convergence proof
+to normalize only `observed_at`. Deterministic rungs may retain their source-specific semantic
+inputs, but a live rung without exactly one standard owner receipt is an invalid Omega contract.
+
 The canonical institutional supervisor joins those contracts without adding another keeper:
 
 ```bash

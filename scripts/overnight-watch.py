@@ -109,12 +109,8 @@ def _positive_env_int(name: str, default: int) -> int:
 _HEARTBEAT_MAX_BEAT_SEC = _positive_env_int("LIMEN_LOOP_MAX", 1800)
 _HEARTBEAT_CAMPAIGN_WAKE_SEC = _positive_env_int("LIMEN_CAMPAIGN_WAKE_TIMEOUT", 300) + 30
 _HEARTBEAT_OVERHEAD_SEC = _positive_env_int("LIMEN_WATCHDOG_OVERHEAD_SEC", 600)
-_HEARTBEAT_MAX_INTER_TICK_SEC = (
-    _HEARTBEAT_MAX_BEAT_SEC + _HEARTBEAT_CAMPAIGN_WAKE_SEC + _HEARTBEAT_OVERHEAD_SEC
-)
-MAX_LOG_AGE_SEC = _positive_env_int(
-    "LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", _HEARTBEAT_MAX_INTER_TICK_SEC
-)
+_HEARTBEAT_MAX_INTER_TICK_SEC = _HEARTBEAT_MAX_BEAT_SEC + _HEARTBEAT_CAMPAIGN_WAKE_SEC + _HEARTBEAT_OVERHEAD_SEC
+MAX_LOG_AGE_SEC = _positive_env_int("LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", _HEARTBEAT_MAX_INTER_TICK_SEC)
 MAX_STALE_TICKS = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS", "6") or "6")
 HEAL_ENABLED = (os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL", "1") or "1") != "0"
 HEAL_COOLDOWN_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC", "1200") or "1200")
@@ -1885,10 +1881,7 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
             }
         )
 
-    if (
-        EXPECT_CAMPAIGN_WAKE_TIMEOUT
-        and env.get("LIMEN_CAMPAIGN_WAKE_TIMEOUT") != EXPECT_CAMPAIGN_WAKE_TIMEOUT
-    ):
+    if EXPECT_CAMPAIGN_WAKE_TIMEOUT and env.get("LIMEN_CAMPAIGN_WAKE_TIMEOUT") != EXPECT_CAMPAIGN_WAKE_TIMEOUT:
         alerts.append(
             {
                 "id": "heartbeat-campaign-timeout-env-mismatch",
@@ -5716,6 +5709,11 @@ def main(argv: list[str] | None = None) -> int:
         help="counts-only receipt path for --check-trial (finalization always uses the active marker owner)",
     )
     parser.add_argument(
+        "--omega-strict",
+        action="store_true",
+        help="with --check-trial, exit 77 only when the terminal receipt is absent",
+    )
+    parser.add_argument(
         "--watch", action="store_true", help="run an attached loop; launchd should prefer one-shot mode"
     )
     parser.add_argument(
@@ -5770,7 +5768,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if receipt.get("pass") else 1
 
     if args.check_trial:
-        ok, errors = check_trial_receipt(Path(args.trial_output).expanduser())
+        trial_output = Path(args.trial_output).expanduser()
+        if args.omega_strict and not trial_output.exists():
+            print("overnight-watch: trial receipt SKIP - terminal receipt is absent", file=sys.stderr)
+            return 77
+        ok, errors = check_trial_receipt(trial_output)
         if ok:
             receipt = load_json(Path(args.trial_output).expanduser())
             print(

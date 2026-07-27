@@ -308,11 +308,11 @@ def restore_test(remote: str, workdir: Path, kernel_dir: Path | None) -> bool:
     return ok
 
 
-def status() -> int:
+def status(*, strict: bool = False) -> int:
     state = load_state()
     if parked():
-        say(f"status: PARKED on {LEVER} (dark by design) — exit 0")
-        return 0
+        say(f"status: PARKED on {LEVER} (dark by design)")
+        return 77 if strict else 0
     armed = os.environ.get("LIMEN_HORREVM_APPLY", "0") == "1"
     stale = []
     for remote in PAYLOADS:
@@ -323,10 +323,8 @@ def status() -> int:
         elif now() - datetime.fromisoformat(last) > timedelta(days=MAX_AGE_DAYS):
             stale.append(f"{remote}: last verified {last}")
     if not armed:
-        say(
-            f"status: consented-but-unarmed dry-run (set LIMEN_HORREVM_APPLY=1); {len(stale)} rail(s) unproven — exit 0"
-        )
-        return 0
+        say(f"status: consented-but-unarmed dry-run (set LIMEN_HORREVM_APPLY=1); {len(stale)} rail(s) unproven")
+        return 77 if strict else 0
     if stale:
         say("status: STALE — " + "; ".join(stale))
         return 1
@@ -362,11 +360,12 @@ def main() -> int:
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--doctor", action="store_true")
+    ap.add_argument("--strict", action="store_true", help="exit 77 when custody is parked or unarmed")
     args = ap.parse_args()
     if args.doctor:
         return doctor()
     if args.status:
-        return status()
+        return status(strict=args.strict)
     if args.probe:
         state = load_state()
         if parked():

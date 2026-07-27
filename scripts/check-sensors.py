@@ -40,7 +40,7 @@ VALID_OMEGA_TIER = {"det", "live"}
 VALID_VALVE_TYPE = {"deliverable", "safety"}
 VALID_OMEGA_NORMALIZATION = {"json", "raw"}
 VALID_OMEGA_ROLE = {"input", "owner_receipt"}
-VALID_OMEGA_VOLATILE_FIELD = {"generated", "generated_at"}
+VALID_OMEGA_VOLATILE_FIELD = {"generated", "generated_at", "observed_at"}
 SENSOR_ID_RX = re.compile(r"^[a-z0-9][a-z0-9_.-]*$")
 SCRIPT_RX = re.compile(r"scripts/[\w./-]+\.(?:py|sh)")
 SHELL_DEFAULT_RX = re.compile(r"\$\{(LIMEN_[A-Z0-9_]+):-([^}\n]+)\}")
@@ -173,17 +173,24 @@ def _numeric_capability(sid: str, name: str, spec, params: set[str]) -> None:
         fail("A", f"{sid}.{name}: default must be a positive integer")
 
 
-def _omega_semantic_inputs(sid: str, index: int, raw_inputs) -> None:
+def _omega_semantic_inputs(sid: str, index: int, raw_inputs) -> list[dict]:
     location = f"{sid}.omega_eligible[{index}].semantic_inputs"
     if not isinstance(raw_inputs, list) or not raw_inputs:
         fail("A", f"{location}: must be a non-empty list")
-        return
+        return []
+    normalized: list[dict] = []
     for input_index, descriptor in enumerate(raw_inputs):
         item = f"{location}[{input_index}]"
         if not isinstance(descriptor, dict):
             fail("A", f"{item}: must be a mapping")
             continue
-        unknown = set(descriptor) - {"path", "normalization", "volatile_fields", "role"}
+        unknown = set(descriptor) - {
+            "path",
+            "normalization",
+            "volatile_fields",
+            "role",
+            "max_age_seconds",
+        }
         if unknown:
             fail("A", f"{item}: unknown fields {sorted(unknown)}")
         path = str(descriptor.get("path") or "")
@@ -203,6 +210,28 @@ def _omega_semantic_inputs(sid: str, index: int, raw_inputs) -> None:
             fail("A", f"{item}.volatile_fields: contains an undeclared field")
         if volatile and normalization != "json":
             fail("A", f"{item}.volatile_fields: requires json normalization")
+        max_age_seconds = descriptor.get("max_age_seconds")
+        if role == "owner_receipt":
+            if normalization != "json" or volatile != ["observed_at"]:
+                fail("A", f"{item}: owner receipt must be JSON with only observed_at volatile")
+            if (
+                isinstance(max_age_seconds, bool)
+                or not isinstance(max_age_seconds, int)
+                or not 1 <= max_age_seconds <= 604800
+            ):
+                fail("A", f"{item}.max_age_seconds: owner receipt freshness must be 1..604800")
+        elif max_age_seconds is not None:
+            fail("A", f"{item}.max_age_seconds: only owner receipts declare freshness")
+        normalized.append(
+            {
+                "normalization": normalization,
+                "path": path,
+                "role": role,
+                "volatile_fields": sorted(set(volatile)),
+                **({"max_age_seconds": max_age_seconds} if role == "owner_receipt" else {}),
+            }
+        )
+    return normalized
 
 
 def main(argv=None) -> int:
@@ -228,6 +257,7 @@ def main(argv=None) -> int:
     shell = beat_source_text()
     derived = derived_sources(shell)
     omega_rung_ids: set[str] = set()
+    omega_owner_receipt_paths: set[str] = set()
 
     for sid, s in sensors.items():
         # A schema
@@ -302,12 +332,27 @@ def main(argv=None) -> int:
                 fail("A", f"{sid}.omega_eligible[{i}]: duplicate rung_id {rung_id}")
             else:
                 omega_rung_ids.add(rung_id)
-            _omega_semantic_inputs(sid, i, check.get("semantic_inputs"))
-            if check.get("tier") not in VALID_OMEGA_TIER:
+            semantic_inputs = _omega_semantic_inputs(sid, i, check.get("semantic_inputs"))
+            tier = check.get("tier")
+            if tier not in VALID_OMEGA_TIER:
                 fail(
                     "A",
-                    f"{sid}.omega_eligible[{i}]: tier {check.get('tier')!r} not in {sorted(VALID_OMEGA_TIER)}",
+                    f"{sid}.omega_eligible[{i}]: tier {tier!r} not in {sorted(VALID_OMEGA_TIER)}",
                 )
+            owner_receipts = [item for item in semantic_inputs if item["role"] == "owner_receipt"]
+            if tier == "live" and len(owner_receipts) != 1:
+                fail(
+                    "A",
+                    f"{sid}.omega_eligible[{i}]: live rung must declare exactly one owner receipt",
+                )
+            elif tier == "live":
+                owner_receipt_path = owner_receipts[0]["path"]
+                if owner_receipt_path in omega_owner_receipt_paths:
+                    fail(
+                        "A",
+                        f"{sid}.omega_eligible[{i}]: duplicate live owner receipt path {owner_receipt_path}",
+                    )
+                omega_owner_receipt_paths.add(owner_receipt_path)
             _script_exists(sid, check.get("command", ""))
             _numeric_capability(sid, f"omega_eligible[{i}].timeout", check.get("timeout"), params)
 

@@ -120,6 +120,11 @@
       "owner": "observatory"
     },
     {
+      "id": "sensor.observatory.posture",
+      "next_action": "Open the Observatory gate through its declared owner, then require every operational stage to report ok.",
+      "owner": "observatory"
+    },
+    {
       "id": "sensor.experience.parity",
       "next_action": "Run the experience registry doctor and repair only source-contract or producer parity failures.",
       "owner": "observatory"
@@ -177,6 +182,11 @@
     {
       "id": "sensor.closeout.self-test",
       "next_action": "Run the closeout classifier doctor and repair any verdict-shape or terminal-receipt regression before accepting done claims.",
+      "owner": "continuity"
+    },
+    {
+      "id": "sensor.closeout.posture",
+      "next_action": "Open the closeout-reconciliation gate through its declared owner and resolve every live false-closeout finding.",
       "owner": "continuity"
     },
     {

@@ -51,6 +51,7 @@ import json
 import os
 import re
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
@@ -71,6 +72,7 @@ DEFAULT_MAX_KB = 1500
 DEFAULT_MAX_REQUESTS = 75
 NAV_CAP_S = 25
 VALID_VERDICTS = {"pass", "fail"}
+STRICT_ARTIFACT_MAX_AGE_SECONDS = 3600
 SCORE_KEYS = ("layout", "typography", "coherence", "trust")
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
@@ -536,12 +538,47 @@ def cmd_sweep(surfaces_path: str | None, registry_path: str | None) -> int:
     return 0
 
 
-def cmd_check() -> int:
+def cmd_check(*, strict: bool = False) -> int:
     try:
         body = json.loads(AUDIT.read_text(encoding="utf-8"))
-    except Exception:
+    except FileNotFoundError:
         print("[experience-audit] no sweep artifact yet — run --sweep first (skip)")
-        return 0
+        return 77 if strict else 0
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        print("[experience-audit] sweep artifact is unreadable or malformed")
+        return 1 if strict else 0
+    if not isinstance(body, dict):
+        print("[experience-audit] sweep artifact is not an object")
+        return 1 if strict else 0
+    if strict and body.get("schema") != SCHEMA:
+        print("[experience-audit] sweep artifact schema is invalid")
+        return 1
+    audited = body.get("audited")
+    if audited == 0:
+        print("[experience-audit] sweep artifact covers zero governed surfaces (skip)")
+        return 77 if strict else 0
+    if isinstance(audited, bool) or not isinstance(audited, int) or audited < 0:
+        print("[experience-audit] sweep artifact has an invalid audited count")
+        return 1 if strict else 0
+    if strict:
+        raw_generated_at = body.get("generated_at")
+        if not raw_generated_at:
+            print("[experience-audit] sweep artifact has no observation time (skip)")
+            return 77
+        try:
+            generated_at = datetime.fromisoformat(str(raw_generated_at).replace("Z", "+00:00"))
+            if generated_at.tzinfo is None or generated_at.utcoffset() is None:
+                raise ValueError("generated_at must be timezone-aware")
+            age_seconds = (datetime.now(UTC) - generated_at.astimezone(UTC)).total_seconds()
+        except (TypeError, ValueError):
+            print("[experience-audit] sweep artifact observation time is malformed")
+            return 1
+        if age_seconds < -60:
+            print("[experience-audit] sweep artifact is future-dated")
+            return 1
+        if age_seconds > STRICT_ARTIFACT_MAX_AGE_SECONDS:
+            print("[experience-audit] sweep artifact is stale (skip)")
+            return 77
     failing = body.get("failing") or []
     if failing:
         print(
@@ -692,6 +729,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Visitor-experience standard as a predicate (experience-v1).")
     ap.add_argument("--sweep", action="store_true")
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--strict", action="store_true", help="exit 77 when no live sweep evidence is available")
     ap.add_argument("--surface")
     ap.add_argument("--doctor", action="store_true")
     ap.add_argument("--surfaces", help="overlay path override (tests)")
@@ -705,7 +743,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.surface and args.check:
         return cmd_check_surface(args.surface)
     if args.check:
-        return cmd_check()
+        return cmd_check(strict=args.strict)
     ap.print_help()
     return 2
 
