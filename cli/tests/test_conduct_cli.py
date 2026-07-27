@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from click.testing import CliRunner
+import json
+from pathlib import Path
 
+from click.testing import CliRunner
 from limen.conduct.cli import conduct_group
+from limen.conduct.supervisor import CampaignSupervisorError
 
 
 class RecordingClient:
@@ -69,3 +72,77 @@ def test_register_explicit_metadata_overrides_profile(monkeypatch) -> None:
     assert client.session.native_session_id == "provider-session"
     assert client.session.identity.native_run_id == "provider-run"
     assert client.session.human_protected is True
+
+
+def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatch, tmp_path) -> None:
+    capsule = tmp_path / "workstream.json"
+    capsule.write_text("{}\n", encoding="utf-8")
+    client = object()
+    observed = {}
+
+    def supervise(**kwargs):
+        observed.update(kwargs)
+        return {
+            "schema": "limen.campaign_supervisor_result.v1",
+            "boundary": "continue",
+            "campaign_id": "fixture",
+        }
+
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    monkeypatch.setattr("limen.conduct.cli.run_campaign", supervise)
+    result = CliRunner().invoke(
+        conduct_group,
+        [
+            "campaign",
+            "run",
+            "--capsule",
+            str(capsule),
+            "--agent",
+            "codex",
+            "--session-id",
+            "campaign-session",
+            "--evaluation-timeout",
+            "17",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["boundary"] == "continue"
+    assert observed["client"] is client
+    assert observed["root"] == Path.cwd()
+    assert observed["capsule"] == capsule
+    assert observed["identity"].agent == "codex"
+    assert observed["identity"].session_id == "campaign-session"
+    assert observed["terminal_predicate"] == "omega"
+    assert observed["evaluation_timeout_seconds"] == 17
+
+
+def test_campaign_run_emits_one_structured_invalid_boundary(monkeypatch, tmp_path) -> None:
+    capsule = tmp_path / "workstream.json"
+    capsule.write_text("{}\n", encoding="utf-8")
+
+    def reject(**_kwargs):
+        raise CampaignSupervisorError("exact remote main moved")
+
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", object)
+    monkeypatch.setattr("limen.conduct.cli.run_campaign", reject)
+    result = CliRunner().invoke(
+        conduct_group,
+        [
+            "campaign",
+            "run",
+            "--capsule",
+            str(capsule),
+            "--agent",
+            "codex",
+            "--session-id",
+            "campaign-session",
+        ],
+    )
+    assert result.exit_code == 1
+    assert json.loads(result.output) == {
+        "boundary": "invalid",
+        "reason": "exact remote main moved",
+        "schema": "limen.campaign_supervisor_result.v1",
+        "successor_required": False,
+        "terminal_predicate": "omega",
+    }
