@@ -13,12 +13,12 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-07-26'
-      spent: 8
+      date: '2026-07-27'
+      spent: 1
       per_agent:
-        jules: 0
+        jules: 1
         gemini: 0
-        codex: 8
+        codex: 0
         opencode: 0
         agy: 0
         claude: 0
@@ -160424,7 +160424,7 @@ tasks:
   workstream: 'substrate'
   priority: 'critical'
   budget_cost: 1
-  status: 'open'
+  status: 'dispatched'
   labels:
   - 'always-working'
   - 'receipt-first'
@@ -160467,4 +160467,13 @@ tasks:
     conduct_run_id: 'run-65d65c66e39baa034e2f25a849b291ef'
     conduct_lease_id: 'lease-382-65d65c66e39baa03'
     conduct_generation: 382
-  updated: '2026-07-27T05:31:07.209Z'
+  - timestamp: '2026-07-27T06:06:34.178Z'
+    agent: 'jules'
+    session_id: 'run-152f7eccf8d53c83bca290d3b36faa51'
+    status: 'dispatched'
+    output: 'Conduct broker reserved run-152f7eccf8d53c83bca290d3b36faa51 for jules'
+    conduct_event_id: 'conduct:run-152f7eccf8d53c83bca290d3b36faa51:383:reserved'
+    conduct_run_id: 'run-152f7eccf8d53c83bca290d3b36faa51'
+    conduct_lease_id: 'lease-383-152f7eccf8d53c83'
+    conduct_generation: 383
+  updated: '2026-07-27T06:06:34.178Z'
