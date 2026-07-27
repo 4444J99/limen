@@ -459,7 +459,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
 
     if blocked_count:
         route = (
-            "Run `python3 scripts/dispatch-health.py --write --probe-async` for a heartbeat/operator snapshot,"
+            "Run `python3 scripts/dispatch-health.py --write` for a campaign-heartbeat/operator snapshot,"
             " then re-run `python3 scripts/capacity-fill-ledger.py --write` after repairs."
         )
     else:
@@ -477,7 +477,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Commands",
         "",
         "- Refresh this ledger: `python3 scripts/capacity-fill-ledger.py --write`",
-        "- Refresh dispatch heartbeat: `python3 scripts/dispatch-health.py --write --probe-async`",
+        "- Refresh campaign heartbeat: `python3 scripts/dispatch-health.py --write`",
     ]
 
     return "\n".join(lines) + "\n"

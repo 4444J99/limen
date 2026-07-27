@@ -766,7 +766,7 @@ t "tick switching can be explicitly opted in" "_st_tick_switch_optin"
     assert network.PRIVATE_INDEX.exists()
 
 
-def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
+def test_dispatch_health_records_live_root_and_campaign_runtime_drift(tmp_path: Path):
     dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health")
     dispatch.ROOT = tmp_path
     dispatch.HOME = tmp_path
@@ -781,14 +781,14 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
         "path": str(path),
         "keep_alive": True,
         "run_at_load": True,
-        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT), "LIMEN_DISPATCH_ASYNC": "0"},
+        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
     }
     dispatch.launchd_snapshot = lambda: {
         "present": True,
         "running": True,
         "state": "running",
         "pid": "123",
-        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT)},
+        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120"},
     }
 
     def fake_git_snapshot(path: Path):
@@ -859,7 +859,7 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert "live-root-not-at-origin-main" in blocker_ids
     assert "live-root-dirty" in blocker_ids
     assert "heartbeat-loaded-env-drift" in blocker_ids
-    assert "Dispatch/heartbeat health is not proven by tests in a detached worktree alone." in markdown
+    assert "Campaign-heartbeat health is not proven by tests in a detached worktree alone." in markdown
     assert "Async skipped down lanes: `gemini, jules`" in markdown
     assert "`gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`." in markdown
     assert "`jules`: usage health `exhausted`; signal `count`; remaining `0` of `100`." in markdown
@@ -879,9 +879,7 @@ def test_dispatch_health_blocks_when_generated_plist_drifts_from_installed(tmp_p
                 "LIMEN_ROOT": str(live_root),
                 "LIMEN_WORKTREES": str(scratch),
                 "LIMEN_WORKTREE_ROOT": str(scratch),
-                "LIMEN_DISPATCH_ASYNC": "1",
-                "LIMEN_DISPATCH_LANES": "auto",
-                "LIMEN_ASYNC_MAX": "8",
+                "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300",
             },
         },
         "heartbeat_plist": {
@@ -891,9 +889,7 @@ def test_dispatch_health_blocks_when_generated_plist_drifts_from_installed(tmp_p
                 "LIMEN_ROOT": str(live_root),
                 "LIMEN_WORKTREES": str(local),
                 "LIMEN_WORKTREE_ROOT": str(local),
-                "LIMEN_DISPATCH_ASYNC": "1",
-                "LIMEN_DISPATCH_LANES": "auto",
-                "LIMEN_ASYNC_MAX": "1",
+                "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120",
             },
         },
         "launchd": {
@@ -902,9 +898,7 @@ def test_dispatch_health_blocks_when_generated_plist_drifts_from_installed(tmp_p
             "env": {
                 "LIMEN_WORKTREES": str(local),
                 "LIMEN_WORKTREE_ROOT": str(local),
-                "LIMEN_DISPATCH_ASYNC": "1",
-                "LIMEN_DISPATCH_LANES": "auto",
-                "LIMEN_ASYNC_MAX": "1",
+                "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120",
             },
         },
         "live_root_git": {
@@ -926,7 +920,7 @@ def test_dispatch_health_blocks_when_generated_plist_drifts_from_installed(tmp_p
     drift = [item for item in blockers if item["id"] == "heartbeat-generated-plist-env-drift"]
     assert drift
     assert "LIMEN_WORKTREES" in drift[0]["evidence"]
-    assert "LIMEN_ASYNC_MAX" in drift[0]["evidence"]
+    assert "LIMEN_CAMPAIGN_WAKE_TIMEOUT" in drift[0]["evidence"]
 
 
 def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
@@ -986,14 +980,14 @@ def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
         "path": str(path),
         "keep_alive": True,
         "run_at_load": True,
-        "env": {"LIMEN_DISPATCH_ASYNC": "0", "LIMEN_DISPATCH_LANES": "auto"},
+        "env": {"LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
     }
     dispatch.launchd_snapshot = lambda: {
         "present": True,
         "running": True,
         "state": "running",
         "pid": "123",
-        "env": {"LIMEN_DISPATCH_ASYNC": "0", "LIMEN_DISPATCH_LANES": "auto"},
+        "env": {"LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
     }
     dispatch.git_snapshot = lambda path: {
         "path": str(path),
@@ -1135,13 +1129,13 @@ def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
     gate.read_plist = lambda path: {
         "present": True,
         "path": str(path),
-        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT), "LIMEN_DISPATCH_ASYNC": "0"},
+        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
     }
     gate.launchd_snapshot = lambda: {
         "running": True,
         "state": "running",
         "pid": "123",
-        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT)},
+        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120"},
     }
 
     snapshot = gate.build_snapshot(type("Args", (), {"fetch": False})())
@@ -1629,7 +1623,7 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
                     "dirty_entries": 2,
                 },
                 "launchd": {"state": "running"},
-                "launchd_env_drift": [{"key": "LIMEN_DISPATCH_ASYNC"}],
+                "launchd_env_drift": [{"key": "LIMEN_CAMPAIGN_WAKE_TIMEOUT"}],
             }
         ),
         encoding="utf-8",
@@ -1639,7 +1633,7 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
     markdown = blockers.render_markdown(snapshot)
 
     ids = {item["id"] for item in snapshot["blockers"]}
-    assert "dispatch-heartbeat-substrate-unhealthy" in ids
+    assert "campaign-heartbeat-substrate-unhealthy" in ids
     assert snapshot["coverage"]["dispatch_substrate"]["status"] == "blocked"
     assert snapshot["coverage"]["live_root_gate"]["status"] == "blocked"
     assert "Dispatch substrate: status `blocked`, launchd `running`, live root `feature/live`" in markdown

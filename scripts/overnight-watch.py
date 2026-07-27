@@ -107,13 +107,10 @@ def _positive_env_int(name: str, default: int) -> int:
 # aligned with watchdog.py and heartbeat-loop.sh; a shorter independent literal guarantees false
 # alerts whenever the healthy idle cadence exceeds the monitor threshold.
 _HEARTBEAT_MAX_BEAT_SEC = _positive_env_int("LIMEN_LOOP_MAX", 1800)
-_HEARTBEAT_LANE_TIMEOUT_SEC = _positive_env_int("LIMEN_LANE_TIMEOUT", 1800)
-_HEARTBEAT_DISPATCH_CEILING_SEC = _positive_env_int(
-    "LIMEN_DISPATCH_CEILING", _HEARTBEAT_LANE_TIMEOUT_SEC + 600
-)
+_HEARTBEAT_CAMPAIGN_WAKE_SEC = _positive_env_int("LIMEN_CAMPAIGN_WAKE_TIMEOUT", 300) + 30
 _HEARTBEAT_OVERHEAD_SEC = _positive_env_int("LIMEN_WATCHDOG_OVERHEAD_SEC", 600)
 _HEARTBEAT_MAX_INTER_TICK_SEC = (
-    _HEARTBEAT_MAX_BEAT_SEC + _HEARTBEAT_DISPATCH_CEILING_SEC + _HEARTBEAT_OVERHEAD_SEC
+    _HEARTBEAT_MAX_BEAT_SEC + _HEARTBEAT_CAMPAIGN_WAKE_SEC + _HEARTBEAT_OVERHEAD_SEC
 )
 MAX_LOG_AGE_SEC = _positive_env_int(
     "LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", _HEARTBEAT_MAX_INTER_TICK_SEC
@@ -133,7 +130,7 @@ THROUGHPUT_FLOOR_FRACTION = float(os.environ.get("LIMEN_THROUGHPUT_FLOOR_FRACTIO
 THROUGHPUT_BASELINE_DAYS = int(os.environ.get("LIMEN_THROUGHPUT_BASELINE_DAYS", "7") or "7")
 ISSUE_ESCALATE = (os.environ.get("LIMEN_THROUGHPUT_ISSUE_ESCALATE", "1") or "1") != "0"
 ESCALATE_REPO = os.environ.get("LIMEN_CENSOR_ISSUES_REPO", "organvm/limen")
-PLIST_DRIFT_KEYS = ("LIMEN_ASYNC_MAX", "LIMEN_DISPATCH_ASYNC", "LIMEN_DISPATCH_LANES", "LIMEN_ROOT")
+PLIST_DRIFT_KEYS = ("LIMEN_CAMPAIGN_WAKE_TIMEOUT", "LIMEN_ROOT", "LIMEN_VIGILIA")
 TAIL_BYTES = 192 * 1024
 TRIAL_SCHEMA_VERSION = "overnight-trial.v2"
 TRIAL_MARKER_SCHEMA_VERSION = "overnight-trial-window.v2"
@@ -150,8 +147,7 @@ TRIAL_PROMPT_MAX_AGE_SEC = 10 * 60
 TRIAL_PREDICATE_TIMEOUT_SEC = 120
 TRIAL_CLOCK_TOLERANCE_SEC = 60
 
-EXPECT_DISPATCH_ASYNC = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC", "")
-EXPECT_DISPATCH_LANES = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES", "")
+EXPECT_CAMPAIGN_WAKE_TIMEOUT = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT", "")
 try:
     VALUE_GATE_HOURS = float(os.environ.get("LIMEN_OVERNIGHT_VALUE_GATE_HOURS", "1.5") or "1.5")
 except ValueError:
@@ -1889,18 +1885,17 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
             }
         )
 
-    if EXPECT_DISPATCH_ASYNC and env.get("LIMEN_DISPATCH_ASYNC") != EXPECT_DISPATCH_ASYNC:
+    if (
+        EXPECT_CAMPAIGN_WAKE_TIMEOUT
+        and env.get("LIMEN_CAMPAIGN_WAKE_TIMEOUT") != EXPECT_CAMPAIGN_WAKE_TIMEOUT
+    ):
         alerts.append(
             {
-                "id": "heartbeat-async-env-mismatch",
-                "evidence": f"LIMEN_DISPATCH_ASYNC={env.get('LIMEN_DISPATCH_ASYNC')} expected={EXPECT_DISPATCH_ASYNC}",
-            }
-        )
-    if EXPECT_DISPATCH_LANES and env.get("LIMEN_DISPATCH_LANES") != EXPECT_DISPATCH_LANES:
-        alerts.append(
-            {
-                "id": "heartbeat-lanes-env-mismatch",
-                "evidence": f"LIMEN_DISPATCH_LANES={env.get('LIMEN_DISPATCH_LANES')} expected={EXPECT_DISPATCH_LANES}",
+                "id": "heartbeat-campaign-timeout-env-mismatch",
+                "evidence": (
+                    "LIMEN_CAMPAIGN_WAKE_TIMEOUT="
+                    f"{env.get('LIMEN_CAMPAIGN_WAKE_TIMEOUT')} expected={EXPECT_CAMPAIGN_WAKE_TIMEOUT}"
+                ),
             }
         )
 

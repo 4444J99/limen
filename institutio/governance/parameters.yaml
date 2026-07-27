@@ -77,11 +77,11 @@ parameters:
     note: "Repo home is a decision, not a constant. Extracting later is a clean git subtree."
 
   LIMEN_ASYNC_MAX:
-    default: "hw.ncpu — derived at plist generation, override only via env"
+    default: "hw.ncpu — derived by the legacy manual async engine"
     env: LIMEN_ASYNC_MAX
     self_update: none
     owner: dispatch
-    note: "Host-sized concurrency ceiling for local async dispatch workers. It derives from live CPU count with no literal fleet cap; per-lane limits prevent monopolization and VITALS supplies runtime memory backpressure. Remote lanes do not consume it. A manual override remains an escape hatch."
+    note: "Host-sized concurrency ceiling for explicitly invoked legacy async dispatch workers. The canonical heartbeat does not consume this knob; campaign capacity comes from live keeper capabilities and packet authority."
   LIMEN_ASYNC_LOCAL_PER_LANE:
     default: "$LIMEN_LOCAL_LIMIT"
     env: LIMEN_ASYNC_LOCAL_PER_LANE
@@ -119,11 +119,11 @@ parameters:
     owner: identity
     note: "Toggles the beat's personal-fact presence check (identity.py verify, sensor 0a2 in sensors.yaml). 1=on: a blank applicable&required atom surfaces in the beat log, never chat. Sibling of LIMEN_CREDS_HYDRATE — creds rotate, identity atoms don't."
   LIMEN_DISPATCH_ASYNC:
-    default: 1
+    default: 0
     env: LIMEN_DISPATCH_ASYNC
     self_update: none
     owner: dispatch
-    note: "Async dispatch is the enacted fleet mode (overnight-watch expects 1). Generator default was 0 until 2026-07-09, when a regen under a bare session env silently rendered async OFF — the default now matches the enacted state."
+    note: "Legacy manual dispatcher selector retained for compatibility. The canonical heartbeat ignores it and invokes only the keeper-backed campaign supervisor; 0 prevents old callers from silently treating async dispatch as the enacted daemon mode."
   LIMEN_PROVIDER_FAILURE_WINDOW_SECONDS:
     default: 86400
     env: LIMEN_PROVIDER_FAILURE_WINDOW_SECONDS
@@ -1749,18 +1749,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "launchd label for the watchdog service the overnight monitor restores when it is booted out."
-  LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC:
+  LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT:
     default: ""
-    env: LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC
+    env: LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT
     self_update: none
     owner: continuity
-    note: "Optional expected LIMEN_DISPATCH_ASYNC value for overnight monitor env-drift alerts."
-  LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES:
-    default: ""
-    env: LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES
-    self_update: none
-    owner: continuity
-    note: "Optional expected LIMEN_DISPATCH_LANES value for overnight monitor env-drift alerts."
+    note: "Optional expected LIMEN_CAMPAIGN_WAKE_TIMEOUT value for overnight monitor env-drift alerts."
   LIMEN_OVERNIGHT_WATCH_INTERVAL_SEC:
     default: 300
     env: LIMEN_OVERNIGHT_WATCH_INTERVAL_SEC
@@ -2342,7 +2336,7 @@ parameters:
     env: LIMEN_LIVE_ROOT
     self_update: none
     owner: limen-daemon
-    note: "Live checkout that launchd is expected to run. dispatch-health.py compares this root to the verified conductor worktree before async/heartbeat receipts are trusted."
+    note: "Live checkout that launchd is expected to run. dispatch-health.py compares this root to the verified conductor worktree before campaign-heartbeat receipts are trusted."
   LIMEN_ALLOW_LIVE_COMMIT:
     default: "0"
     env: LIMEN_ALLOW_LIVE_COMMIT
@@ -2402,7 +2396,7 @@ parameters:
     env: LIMEN_DISPATCH_LANES
     self_update: none
     owner: arms-agents
-    note: "Fleet dispatch boundary selector. `auto` derives reachable registered lanes from the capacity registry; explicit comma lists are normalized and filtered for down lanes."
+    note: "Legacy manual dispatcher and backlog-planner selector. `auto` derives reachable registered lanes from the capacity registry; the canonical campaign supervisor ignores this knob and discovers keeper capabilities live."
   LIMEN_PR_CONTEXT_TIMEOUT:
     default: 20
     env: LIMEN_PR_CONTEXT_TIMEOUT

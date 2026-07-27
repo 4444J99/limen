@@ -39,8 +39,7 @@ def _fresh_module(tmp_path, monkeypatch, **env):
 def _clear_heartbeat_budget_env(monkeypatch):
     for name in (
         "LIMEN_LOOP_MAX",
-        "LIMEN_LANE_TIMEOUT",
-        "LIMEN_DISPATCH_CEILING",
+        "LIMEN_CAMPAIGN_WAKE_TIMEOUT",
         "LIMEN_WATCHDOG_OVERHEAD_SEC",
         "LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC",
     ):
@@ -65,7 +64,7 @@ def test_max_log_age_defaults_to_complete_heartbeat_cadence(tmp_path, monkeypatc
 
     module = _fresh_module(tmp_path, monkeypatch)
 
-    assert module.MAX_LOG_AGE_SEC == 4800
+    assert module.MAX_LOG_AGE_SEC == 2730
 
 
 def test_complete_healthy_cadence_does_not_raise_stale_alert(tmp_path, monkeypatch):
@@ -99,12 +98,11 @@ def test_max_log_age_tracks_live_heartbeat_components(tmp_path, monkeypatch):
         tmp_path,
         monkeypatch,
         LIMEN_LOOP_MAX=120,
-        LIMEN_LANE_TIMEOUT=240,
-        LIMEN_DISPATCH_CEILING=360,
+        LIMEN_CAMPAIGN_WAKE_TIMEOUT=240,
         LIMEN_WATCHDOG_OVERHEAD_SEC=480,
     )
 
-    assert module.MAX_LOG_AGE_SEC == 960
+    assert module.MAX_LOG_AGE_SEC == 870
 
 
 def test_explicit_max_log_age_override_wins(tmp_path, monkeypatch):
@@ -114,8 +112,7 @@ def test_explicit_max_log_age_override_wins(tmp_path, monkeypatch):
         tmp_path,
         monkeypatch,
         LIMEN_LOOP_MAX=120,
-        LIMEN_LANE_TIMEOUT=240,
-        LIMEN_DISPATCH_CEILING=360,
+        LIMEN_CAMPAIGN_WAKE_TIMEOUT=240,
         LIMEN_WATCHDOG_OVERHEAD_SEC=480,
         LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC=777,
     )
@@ -123,14 +120,13 @@ def test_explicit_max_log_age_override_wins(tmp_path, monkeypatch):
     assert module.MAX_LOG_AGE_SEC == 777
 
 
-def _launchd_output(*, state="active", async_env="1", lanes="auto"):
+def _launchd_output(*, state="active", campaign_timeout="300"):
     return f"""
 state = {state}
 pid = 4242
 last exit code = (never exited)
 environment = {{
-    LIMEN_DISPATCH_ASYNC => {async_env}
-    LIMEN_DISPATCH_LANES => {lanes}
+    LIMEN_CAMPAIGN_WAKE_TIMEOUT => {campaign_timeout}
 }}
 """
 
@@ -501,16 +497,14 @@ def test_expected_env_mismatch_alerts(tmp_path, monkeypatch):
     module = _fresh_module(
         tmp_path,
         monkeypatch,
-        LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC=1,
-        LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES="auto",
+        LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT=300,
     )
-    _mock_launchd(module, monkeypatch, stdout=_launchd_output(async_env="0", lanes="codex"))
+    _mock_launchd(module, monkeypatch, stdout=_launchd_output(campaign_timeout="120"))
     _write_heartbeat(module)
 
     snapshot = module.build_snapshot()
     ids = {alert["id"] for alert in snapshot["alerts"]}
-    assert "heartbeat-async-env-mismatch" in ids
-    assert "heartbeat-lanes-env-mismatch" in ids
+    assert ids == {"heartbeat-campaign-timeout-env-mismatch"}
 
 
 def test_stale_handoff_blocks_new_dispatch(tmp_path, monkeypatch):
