@@ -12,6 +12,7 @@ single local switch:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import os
 import re
@@ -24,6 +25,7 @@ from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 POLICY_PATH = ROOT / "logs" / "autonomy-policy.json"
+MAINTENANCE_BLOCKER_PATH = ROOT / "logs" / "autonomy-maintenance-blocker.json"
 PAUSE_MARKER = ROOT / "logs" / "AUTONOMY_PAUSED"
 MARKER_RECHECK_STAMP = ROOT / "logs" / ".autonomy-marker-recheck"
 VALID_MODES = {"paused", "observe", "dispatch"}
@@ -52,6 +54,71 @@ def load_policy() -> dict[str, Any]:
         policy["dispatch_enabled"] = False
         policy["reason"] = f"invalid mode {mode!r}"
     return policy
+
+
+def _parse_timestamp(value: Any) -> datetime.datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+    return parsed.astimezone(datetime.timezone.utc)
+
+
+def maintenance_blocker(
+    policy: dict[str, Any], *, now: datetime.datetime | None = None
+) -> dict[str, Any] | None:
+    """Return a stable blocker when a finite observe window expired or is malformed.
+
+    A maintenance window is an executable lifecycle boundary, not decoration. Before its
+    expiry the requested observe mode remains intact. After expiry the governor fails loudly
+    toward paused until the declared resume predicate is satisfied and the policy owner
+    explicitly restores dispatch. Ordinary indefinite observe policies are unchanged.
+    """
+    if str(policy.get("mode", "")).lower() != "observe":
+        return None
+    window = policy.get("maintenance_window")
+    if not isinstance(window, dict):
+        return None
+
+    expires_raw = window.get("expires_at")
+    expires = _parse_timestamp(expires_raw)
+    if expires is None:
+        state = "invalid-expiry"
+        reason = "finite autonomy maintenance window has an invalid expires_at value"
+    else:
+        observed = now or datetime.datetime.now(datetime.timezone.utc)
+        if observed.astimezone(datetime.timezone.utc) <= expires:
+            return None
+        state = "expired"
+        reason = "finite autonomy maintenance window expired without a recorded resume"
+
+    return {
+        "schema_version": "limen.autonomy-maintenance-blocker.v1",
+        "state": state,
+        "reason": reason,
+        "owner": str(window.get("owner") or "autonomy-policy-owner"),
+        "expires_at": str(expires_raw or ""),
+        "resume_predicate": str(window.get("resume_predicate") or ""),
+        "policy_path": str(POLICY_PATH),
+        "next_command": "python3 scripts/autonomy-governor.py explain",
+    }
+
+
+def _persist_maintenance_blocker(blocker: dict[str, Any]) -> None:
+    """Write the stable owner receipt once; repeated governor reads are byte-idempotent."""
+    rendered = json.dumps(blocker, indent=2, sort_keys=True) + "\n"
+    try:
+        MAINTENANCE_BLOCKER_PATH.parent.mkdir(parents=True, exist_ok=True)
+        if MAINTENANCE_BLOCKER_PATH.exists() and MAINTENANCE_BLOCKER_PATH.read_text() == rendered:
+            return
+        MAINTENANCE_BLOCKER_PATH.write_text(rendered)
+    except OSError:
+        # Admission still fails closed through current_mode even when the receipt path is unwritable.
+        pass
 
 
 def usage_dead_lanes() -> set[str]:
@@ -289,7 +356,12 @@ def current_mode() -> str:
             # by the ship-gate / omega sensors.)
         else:
             return "paused"
-    return str(load_policy().get("mode", "observe")).lower()
+    policy = load_policy()
+    blocker = maintenance_blocker(policy)
+    if blocker is not None:
+        _persist_maintenance_blocker(blocker)
+        return "paused"
+    return str(policy.get("mode", "observe")).lower()
 
 
 def dispatch_allowed() -> tuple[bool, str]:
@@ -321,12 +393,15 @@ def main() -> int:
         print(reason)
         return 0 if ok else 2
     policy = load_policy()
+    blocker = maintenance_blocker(policy)
     ok, reason = dispatch_allowed()
     print(
         json.dumps(
             {
                 "mode": current_mode(),
                 "policy": policy,
+                "maintenanceBlocker": blocker,
+                "maintenanceBlockerReceipt": str(MAINTENANCE_BLOCKER_PATH) if blocker else None,
                 "dispatchAllowed": ok,
                 "dispatchReason": reason,
                 "deadLanes": sorted(usage_dead_lanes()),
