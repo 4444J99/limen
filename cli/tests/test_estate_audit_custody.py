@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import limen.estate_audit_custody as custody_module
 import pytest
 from limen.estate_audit_custody import (
     GENERATED_ROOT_RE,
@@ -83,6 +84,70 @@ def error_code(callable_) -> str:
     with pytest.raises(EstateAuditCustodyError) as raised:
         callable_()
     return raised.value.code
+
+
+def test_git_environment_keeps_auth_explicit_and_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    helper = tmp_path / "gh"
+    helper.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    helper.chmod(0o700)
+    monkeypatch.setattr(custody_module, "GH", str(helper))
+    monkeypatch.setenv("GH_TOKEN", "must-not-leak")
+    monkeypatch.setenv("GITHUB_TOKEN", "must-not-leak")
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "99")
+    monkeypatch.setenv("GIT_CONFIG_KEY_98", "credential.helper")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_98", "hostile")
+
+    neutral = custody_module._git_environment()
+    authenticated = custody_module._git_environment(github_auth=True)
+
+    assert "GH_TOKEN" not in neutral
+    assert "GITHUB_TOKEN" not in neutral
+    assert "GIT_CONFIG_COUNT" not in neutral
+    assert "GIT_CONFIG_KEY_98" not in neutral
+    assert "GIT_CONFIG_VALUE_98" not in neutral
+    assert authenticated["GIT_CONFIG_COUNT"] == "1"
+    assert authenticated["GIT_CONFIG_KEY_0"] == "credential.https://github.com.helper"
+    assert authenticated["GIT_CONFIG_VALUE_0"] == f"!{helper} auth git-credential"
+    assert set(authenticated) - set(neutral) == {
+        "GIT_CONFIG_COUNT",
+        "GIT_CONFIG_KEY_0",
+        "GIT_CONFIG_VALUE_0",
+    }
+
+    monkeypatch.setattr(custody_module, "GH", None)
+    assert (
+        error_code(lambda: custody_module._git_environment(github_auth=True)) == "github-credential-helper-unavailable"
+    )
+
+
+def test_github_hydration_requires_the_explicit_credential_helper(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    remote, _head, _tree = make_remote(tmp_path)
+    _root, target = make_failed_checkout(tmp_path, remote, stamp="20260727010000")
+    plan = discover_plan(tmp_path, targets=[target])
+    custody = tmp_path / "custody"
+    monkeypatch.setattr(custody_module, "GH", None)
+
+    assert (
+        error_code(
+            lambda: apply_plan(
+                plan,
+                custody,
+                expected_plan_sha256=plan.plan_sha256,
+                revalidate=lambda: plan,
+                remote_url_for=lambda _repository: "https://github.com/organvm/example.git",
+                max_seconds=60,
+                require_volume=False,
+            )
+        )
+        == "github-credential-helper-unavailable"
+    )
+    assert not (custody / "receipts" / f"{plan.plan_sha256}.json").exists()
 
 
 def test_generated_name_is_strict_and_plan_is_dynamic_and_public_safe(tmp_path: Path) -> None:
