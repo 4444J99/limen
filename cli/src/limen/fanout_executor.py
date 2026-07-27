@@ -123,15 +123,18 @@ def _campaign_receipt(
     *,
     actual_value: float,
     blocked: bool = False,
+    boundary: Literal["continue", "switch", "wait_relay", "settled", "invalid"] = "continue",
+    successor_capsule: str | None = None,
 ) -> tuple[str, CampaignReceiptV1 | None]:
     campaign = packet.get("campaign")
     if not isinstance(campaign, dict):
         return output, None
     ceiling = int(campaign["output_ceiling_bytes"])
     raw = output.encode("utf-8")
-    emitted = raw[:ceiling]
+    emitted_text = raw[:ceiling].decode("utf-8", errors="ignore")
+    emitted = emitted_text.encode("utf-8")
     return (
-        emitted.decode("utf-8", errors="ignore"),
+        emitted_text,
         CampaignReceiptV1(
             campaign_id=campaign["campaign_id"],
             actual_value=actual_value,
@@ -139,7 +142,7 @@ def _campaign_receipt(
             output=CampaignOutputEvidenceV1(
                 output_ceiling_bytes=ceiling,
                 bytes_emitted=len(emitted),
-                lines_emitted=len(emitted.splitlines()),
+                lines_emitted=len(emitted_text.splitlines()),
                 sha256=hashlib.sha256(emitted).hexdigest(),
                 truncated=len(raw) > ceiling,
             ),
@@ -152,7 +155,8 @@ def _campaign_receipt(
                 if blocked
                 else None
             ),
-            boundary="continue",
+            successor_capsule=successor_capsule,
+            boundary=boundary,
         ),
     )
 
@@ -1419,7 +1423,15 @@ def settle_exhausted_attempts(
             if exhausted
             else "campaign deadline reached without an exact provider receipt"
         )
-        summary, campaign = _campaign_receipt(packet, summary, actual_value=0, blocked=True)
+        deadline_boundary = deadline_imminent and not exhausted
+        summary, campaign = _campaign_receipt(
+            packet,
+            summary,
+            actual_value=0,
+            blocked=True,
+            boundary="wait_relay" if deadline_boundary else "continue",
+            successor_capsule=str(packet["receipt_target"]) if deadline_boundary else None,
+        )
         receipt = RunReceiptV1(
             receipt_id=f"receipt-exhausted-{node['run_id'].removeprefix('run-')[:24]}",
             run_id=node["run_id"],
