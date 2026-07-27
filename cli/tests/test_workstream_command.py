@@ -236,7 +236,12 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     assert events_capture.read_text(encoding="utf-8").splitlines() == ["push", "jules", "push"]
     kickstart = wt / ".limen-workstream" / "kickstart.sh"
     kickstart_text = kickstart.read_text(encoding="utf-8")
-    assert 'if [[ "$agent" != "jules" ]]; then\n  exec 9>&-\nfi' in kickstart_text
+    assert (
+        'if [[ "$agent" != "jules" ]]; then\n'
+        '  workstream_publish_admitted_receipt "$receipt" "$expected_branch" "$expected_slug"\n'
+        "  exec 9>&-\n"
+        "fi"
+    ) in kickstart_text
 
     original_receipt = receipt_path.read_text(encoding="utf-8")
     args_capture.unlink()
@@ -505,6 +510,175 @@ def test_shell_launcher_hands_off_to_generated_kickstart_without_a_tty(tmp_path:
         "exec",
     ]
     assert "# Continuation capsule: agent-launch" in prompt_capture.read_text(encoding="utf-8")
+
+
+def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    remote = tmp_path / "origin.git"
+    remote.mkdir()
+    _git("init", "--bare", "-q", cwd=remote)
+    _git("remote", "add", "origin", str(remote), cwd=repo)
+    _git("push", "-u", "origin", "main", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'branch="$(git branch --show-current)"\n'
+            'head="$(git rev-parse HEAD)"\n'
+            'remote_head="$(git ls-remote origin "refs/heads/$branch" | awk \'{print $1}\')"\n'
+            '[[ "$head" == "$remote_head" ]] || exit 42\n'
+            '[[ -z "$(git status --porcelain --untracked-files=all)" ]] || exit 43\n'
+            'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    events = tmp_path / "events.txt"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "EVENTS_CAPTURE": str(events),
+    }
+    command = [
+        "bash",
+        str(ROOT / "scripts" / "start-worktree-session.sh"),
+        "--autonomous",
+        "--agent",
+        "codex",
+        "--prompt",
+        "Publish the admitted receipt before provider launch.",
+        str(repo),
+        "Codex Admission Publication",
+    ]
+
+    launched = subprocess.run(command, env=env, text=True, capture_output=True, timeout=15, check=False)
+    assert launched.returncode == 0, launched.stdout + launched.stderr
+    wt = repo / ".worktrees" / "codex-admission-publication"
+    branch = "work/codex-admission-publication"
+    receipt_rel = "docs/continuations/codex-admission-publication/workstream.json"
+    first_head = _git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+    remote_head = _git("ls-remote", "origin", f"refs/heads/{branch}", cwd=wt).stdout.split()[0]
+    assert first_head == remote_head
+    assert _git("status", "--short", "--untracked-files=all", cwd=wt).stdout == ""
+    assert (
+        _git("log", "-1", "--format=%s", cwd=wt).stdout.strip()
+        == "docs: publish admitted codex-admission-publication runway"
+    )
+    assert _git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD", cwd=wt).stdout.strip() == receipt_rel
+    assert events.read_text(encoding="utf-8").splitlines() == ["provider"]
+
+    relaunched = subprocess.run(
+        ["bash", str(wt / ".limen-workstream" / "kickstart.sh")],
+        cwd=wt,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert relaunched.returncode == 0, relaunched.stdout + relaunched.stderr
+    assert _git("rev-parse", "HEAD", cwd=wt).stdout.strip() == first_head
+    assert events.read_text(encoding="utf-8").splitlines() == ["provider", "provider"]
+
+
+def test_codex_workstream_denies_provider_when_admitted_receipt_push_fails(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    remote = tmp_path / "origin.git"
+    remote.mkdir()
+    _git("init", "--bare", "-q", cwd=remote)
+    _git("remote", "add", "origin", str(remote), cwd=repo)
+    _git("push", "-u", "origin", "main", cwd=repo)
+    pre_receive = remote / "hooks" / "pre-receive"
+    pre_receive.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            "while read -r _old _new ref; do\n"
+            '  [[ "$ref" == "refs/heads/work/codex-publication-rejected" ]] && exit 1\n'
+            "done\n"
+        ),
+        encoding="utf-8",
+    )
+    pre_receive.chmod(0o755)
+    _git("config", "core.hooksPath", "hooks", cwd=remote)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        '#!/usr/bin/env bash\nprintf "provider\\n" > "$PROVIDER_MARKER"\n',
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    provider_marker = tmp_path / "provider-started"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "PROVIDER_MARKER": str(provider_marker),
+    }
+
+    rejected = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--autonomous",
+            "--agent",
+            "codex",
+            "--prompt",
+            "Fail closed when publication is rejected.",
+            str(repo),
+            "Codex Publication Rejected",
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert rejected.returncode != 0
+    assert "could not be published before provider launch" in rejected.stdout + rejected.stderr
+    assert not provider_marker.exists()
+
+    pre_receive.unlink()
+    wt = repo / ".worktrees" / "codex-publication-rejected"
+    retried = subprocess.run(
+        ["bash", str(wt / ".limen-workstream" / "kickstart.sh")],
+        cwd=wt,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert retried.returncode == 0, retried.stdout + retried.stderr
+    assert provider_marker.read_text(encoding="utf-8") == "provider\n"
+    local_head = _git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+    remote_head = _git(
+        "ls-remote",
+        "origin",
+        "refs/heads/work/codex-publication-rejected",
+        cwd=wt,
+    ).stdout.split()[0]
+    assert local_head == remote_head
 
 
 def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(tmp_path: Path) -> None:

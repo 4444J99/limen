@@ -25,6 +25,12 @@ owned for the registration call: the launcher never writes or prints their value
 conduct credential before the native agent process starts. If the broker cannot acknowledge the
 registration, the agent does not start.
 
+After admission, a repository-backed non-Jules launcher commits only the synchronized public receipt
+and fast-forward-pushes that exact head to its topic branch before provider `exec`. Unrelated dirty
+state, remote branch drift, commit failure, or push failure denies provider launch. Re-entry at an
+already published exact head is byte-idempotent. Local-only repositories without an `origin` retain
+the legacy owner-native behavior; autonomous campaign repositories require the remote receipt.
+
 The contract also carries the no-modal authorization boundary. Codex starts with
 `--ask-for-approval never --sandbox workspace-write`: reversible work inside the packet proceeds
 without confirmation, while destructive, credential, paid-spend, public-send, and runtime/host

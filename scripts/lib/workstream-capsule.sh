@@ -294,6 +294,104 @@ workstream_jules_publish_receipt() {
     git push --set-upstream origin "$publish_commit:refs/heads/$branch"
 }
 
+workstream_publish_admitted_receipt() {
+  local receipt="$1"
+  local expected_branch="$2"
+  local slug="$3"
+  local contract_helper="${LIMEN_CAPSULE_DIR:-}/workstream-contract.py"
+  local timeout_seconds="${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
+  local branch="" current_head="" receipt_rel="" dirty="" staged_paths="" publish_commit=""
+  local remote_line="" remote_head=""
+  local current_subject="" changed_paths="" parent_head=""
+
+  # Preserve backward compatibility for local-only fixture and owner-native repositories. A
+  # configured remote, however, makes durable publication a hard pre-provider gate.
+  if ! git remote get-url origin >/dev/null 2>&1; then
+    return 0
+  fi
+
+  branch="$(git branch --show-current 2>/dev/null || true)"
+  current_head="$(git rev-parse HEAD 2>/dev/null || true)"
+  receipt_rel="${receipt#"${LIMEN_WORKTREE:-}/"}"
+  if [[ -z "$branch" || "$branch" != "$expected_branch" || -z "$current_head"
+    || ! -f "$contract_helper" || "$receipt_rel" == "$receipt" || ! -f "$receipt_rel" ]]; then
+    printf 'workstream launch could not resolve its admitted receipt publication boundary\n' >&2
+    return 2
+  fi
+  if ! dirty="$(git status --porcelain --untracked-files=all -- . ":(exclude)$receipt_rel" 2>/dev/null)"; then
+    printf 'workstream launch could not inspect the admitted receipt worktree\n' >&2
+    return 2
+  fi
+  if [[ -n "$dirty" ]]; then
+    printf 'workstream launch requires a clean worktree before admitted receipt publication\n' >&2
+    return 2
+  fi
+
+  if ! remote_line="$(
+    GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+      --timeout-seconds "$timeout_seconds" -- \
+      git ls-remote origin "refs/heads/$branch"
+  )"; then
+    printf 'workstream launch could not resolve its remote receipt branch\n' >&2
+    return 2
+  fi
+  remote_head="${remote_line%%[[:space:]]*}"
+  if [[ -n "$remote_head" && ! "$remote_head" =~ ^[0-9a-fA-F]{40,64}$ ]]; then
+    printf 'workstream launch received an invalid remote receipt branch head\n' >&2
+    return 2
+  fi
+  if [[ -n "$remote_head" && "$remote_head" != "$current_head" ]]; then
+    current_subject="$(git log -1 --format=%s 2>/dev/null || true)"
+    changed_paths="$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null || true)"
+    parent_head="$(git rev-parse HEAD^ 2>/dev/null || true)"
+    if [[ "$current_subject" != "docs: publish admitted $slug runway"
+      || "$changed_paths" != "$receipt_rel" || "$parent_head" != "$remote_head" ]] ||
+      ! git diff --quiet HEAD -- "$receipt_rel"; then
+      printf 'workstream launch no longer owns its remote receipt branch\n' >&2
+      return 2
+    fi
+  fi
+
+  if ! git add -- "$receipt_rel"; then
+    printf 'workstream admitted receipt could not be staged\n' >&2
+    return 2
+  fi
+  staged_paths="$(git diff --cached --name-only)"
+  if [[ -n "$staged_paths" ]]; then
+    if [[ "$staged_paths" != "$receipt_rel" ]]; then
+      printf 'workstream admitted receipt publication found unrelated staged paths\n' >&2
+      return 2
+    fi
+    if ! git -c commit.gpgsign=false commit -qm \
+      "docs: publish admitted $slug runway" -- "$receipt_rel"; then
+      printf 'workstream admitted receipt could not be committed\n' >&2
+      return 2
+    fi
+  elif ! git cat-file -e "HEAD:$receipt_rel" 2>/dev/null ||
+    ! git diff --quiet HEAD -- "$receipt_rel"; then
+    printf 'workstream admitted receipt is not durably committed\n' >&2
+    return 2
+  fi
+  if ! dirty="$(git status --porcelain --untracked-files=all 2>/dev/null)" ||
+    [[ -n "$dirty" ]] || ! git diff --quiet || ! git diff --cached --quiet; then
+    printf 'workstream admitted receipt publication left uncommitted state\n' >&2
+    return 2
+  fi
+
+  publish_commit="$(git rev-parse HEAD 2>/dev/null || true)"
+  if [[ -z "$publish_commit" ]]; then
+    printf 'workstream admitted receipt publication lost its exact head\n' >&2
+    return 2
+  fi
+  if ! GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+    --timeout-seconds "$timeout_seconds" -- \
+    git push --set-upstream origin "$publish_commit:refs/heads/$branch"; then
+    printf 'workstream admitted receipt could not be published before provider launch\n' >&2
+    return 2
+  fi
+  printf 'admitted workstream receipt published: %s\n' "$receipt_rel"
+}
+
 workstream_export_context() {
   local agent="$1"
   local wt="$2"
@@ -834,6 +932,7 @@ PY
       workstream_jules_reserve_receipt_branch \
       workstream_jules_sync_receipt \
       workstream_jules_publish_receipt \
+      workstream_publish_admitted_receipt \
       workstream_export_context \
       workstream_register_conduct_session \
       workstream_launch_native_agent
@@ -1202,6 +1301,7 @@ python3 "\$contract_helper" run-bounded \
   --timeout-seconds "\$preflight_timeout" -- git status --short --branch 9>&-
 refresh_workstream_runway
 if [[ "\$agent" != "jules" ]]; then
+  workstream_publish_admitted_receipt "\$receipt" "\$expected_branch" "\$expected_slug"
   exec 9>&-
 fi
 workstream_launch_native_agent \
