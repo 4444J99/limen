@@ -970,6 +970,12 @@ class ConductBroker:
                 and 0 <= spend_value <= packet.spend.limit
             )
             child_runs_authorized = set(receipt.child_runs) == set(run["children"])
+            campaign_authorized = (packet.campaign is None and receipt.campaign is None) or (
+                packet.campaign is not None
+                and receipt.campaign is not None
+                and receipt.campaign.campaign_id == packet.campaign.campaign_id
+                and receipt.campaign.output.output_ceiling_bytes == packet.campaign.output_ceiling_bytes
+            )
             mutation_authorized = (
                 lease.state in {"reserved", "active"}
                 and receipt.lease_generation == lease.generation
@@ -979,6 +985,7 @@ class ConductBroker:
                 and read_only_authorized
                 and spend_authorized
                 and child_runs_authorized
+                and campaign_authorized
                 and receipt.predicate.command == packet.predicate
                 and (receipt.outcome != "succeeded" or receipt.predicate.exit_code == 0)
             )

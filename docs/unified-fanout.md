@@ -51,6 +51,12 @@ Every leaf declares:
 - finite deadline, bounded retry policy, and spend ceiling;
 - SHA-256 prompt and plan hashes, never raw prompt or plan text.
 
+A campaign manifest may additionally carry `CampaignPacketV1` context at the root and on every
+leaf. All campaign IDs must match; mixed campaign/non-campaign graphs fail closed. Compilation
+preserves the root and leaf extensions in their respective `WorkPacketV1` records, and built-in
+executors emit matching bounded-output and owner-routable blocker evidence. Manifests without the
+extension remain byte-compatible inputs.
+
 The schema rejects raw prompts, provider/model/tier selectors, missing predicates, expired deadlines,
 unbounded retries, dependency cycles, unknown dependencies, and unresolved resource conflicts.
 Automatic evaluation (two or more independently verifiable reversible leaves), conversational

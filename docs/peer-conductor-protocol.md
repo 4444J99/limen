@@ -12,6 +12,7 @@ The CLI and MCP expose the same operations:
 | CLI | MCP |
 | --- | --- |
 | `limen conduct capabilities` | `conduct_capabilities` |
+| `limen conduct campaign run --capsule FILE --terminal-predicate omega` | keeper graph registration and harvest |
 | `limen conduct register` | `conduct_register` |
 | `limen conduct submit --packet FILE` | `conduct_submit` |
 | authenticated `POST /api/conduct/graphs` | fanout graph registration |
@@ -52,6 +53,47 @@ configured.
   The keeper rejects attempts beyond the packet limit and refuses a new attempt while an earlier one
   remains live. A read-effect receipt is authorized only when its changed-path set is empty and its
   before/after head maps are identical.
+
+Institutional campaigns use optional, backward-compatible typed extensions. `CampaignPacketV1`
+binds a packet to its campaign ID, failed predicate, owner, next action, and byte output ceiling;
+the packet's existing authority, work loan, and receipt target remain the authority scope,
+value/cost case, and durable destination. `CampaignReceiptV1` records actual value alongside the
+existing actual-spend map, content-free bounded-output evidence, precise blocker ownership, one
+campaign boundary, and any successor-capsule reference. The keeper authorizes a campaign receipt
+only when its campaign ID and output ceiling match the leased packet. Historical packets and
+receipts without either extension remain readable and retain their original authorization rules.
+
+Strict Omega supplies campaign leaves from declared data rather than a hard-coded rung table.
+`institutio/governance/omega-remediations.json` must exactly cover the union of the core registry
+and live sensor discovery. Each materialized remediation carries its current predicate, owner,
+next action, required capabilities, attenuated non-delegating authority, work loan, output ceiling,
+and receipt target. `logs/omega.json` schema 3 embeds that typed contract on every rung. A missing,
+unknown, newly added, or tampered remediation makes the Omega contract invalid and cannot enter the
+two-pass settlement proof.
+
+The canonical institutional supervisor joins those contracts without adding another keeper:
+
+```bash
+limen conduct campaign run \
+  --capsule docs/continuations/EPOCH/workstream.json \
+  --terminal-predicate omega
+```
+
+The command accepts only a tracked admitted capsule from a clean checkout at the exact live remote
+default branch (currently `main`). It runs a fresh live strict-Omega evaluation, rejects untyped or inconsistent rung state,
+derives provider-neutral packets from the current capability catalog, and submits the complete
+root/leaf graph in one keeper transaction. Packet work IDs and work keys are deterministic for one
+exact head, Omega contract, and evaluated state; a changed state receives a new identity while an
+unchanged retry deduplicates. The supervisor accepts a reservation or harvest only when the keeper
+acknowledges the exact graph.
+
+Every invocation emits exactly one bounded boundary: `continue` after reservation and immediate
+harvest, `switch` when no healthy accepting session can satisfy a required capability set,
+`wait_relay` when a graph is busy or the capsule reaches T-30, `invalid` with a nonzero exit for
+stale or malformed truth, or `settled` only after strict Omega holds and one `--run` plus two
+unchanged `--check` receipts reproduce. T-30 admits no new leaves and marks the successor capsule
+required; the continuation owner must publish and launch that successor before invoking another
+epoch.
 
 Delegation is a bounded DAG. A child reserves through the broker before it consumes separate
 capacity or mutates state. Its authority, repository/path scope, deadline, spend, retry, depth, and

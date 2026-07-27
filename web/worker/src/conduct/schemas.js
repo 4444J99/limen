@@ -148,6 +148,7 @@ export async function validateWorkPacket(payload) {
     intent_hash: "",
     execution_hash: "",
     work_loan: null,
+    campaign: null,
     preferred_agent: null,
     required_capabilities: [],
     resource_claims: [],
@@ -203,6 +204,14 @@ export async function validateWorkPacket(payload) {
   if (packet.effect === "external" && !packet.authority.external_effects.length) {
     fail("external work requires an explicit external-effect authority");
   }
+  if (packet.campaign !== null) {
+    if (packet.work_loan === null) fail("campaign work packets require a value/cost work loan");
+    if (!packet.authority.actions.length) fail("campaign work packets require an explicit authority scope");
+    assertIdentifier(packet.campaign.campaign_id, "campaign.campaign_id");
+    for (const field of ["failed_predicate", "owner", "next_action"]) {
+      assertBoundedText(packet.campaign[field], `campaign.${field}`);
+    }
+  }
   const expectedIntentHash = await canonicalHash(packet.intent);
   const expectedExecutionHash = await canonicalHash(packet.execution);
   if (packet.intent_hash && !HASH_RE.test(packet.intent_hash)) fail("intent_hash must be a lowercase SHA-256 digest");
@@ -227,6 +236,7 @@ export function validateReceipt(payload, now = new Date()) {
     reviews: [],
     spend: {},
     child_runs: [],
+    campaign: null,
     completed_at: timestamp,
     ...clone(payload),
   };
@@ -245,6 +255,35 @@ export function validateReceipt(payload, now = new Date()) {
   assertIdentity(receipt.executor, "executor");
   assertDate(receipt.completed_at, "completed_at");
   assertDate(receipt.predicate.observed_at, "predicate.observed_at");
+  if (receipt.campaign !== null) {
+    const campaign = receipt.campaign;
+    assertIdentifier(campaign.campaign_id, "campaign.campaign_id");
+    assertIdentifier(campaign.value_unit, "campaign.value_unit");
+    if (!HASH_RE.test(campaign.output.sha256)) {
+      fail("campaign.output.sha256 must be a lowercase SHA-256 digest");
+    }
+    if (campaign.output.bytes_emitted > campaign.output.output_ceiling_bytes) {
+      fail("campaign output exceeds its declared ceiling");
+    }
+    if (campaign.successor_capsule !== null) {
+      assertBoundedText(campaign.successor_capsule, "campaign.successor_capsule");
+    }
+    if (campaign.blocker !== null) {
+      for (const field of ["owner", "failed_predicate", "next_action"]) {
+        assertBoundedText(campaign.blocker[field], `campaign.blocker.${field}`);
+      }
+    }
+    if (["switch", "wait_relay"].includes(campaign.boundary)
+        && campaign.successor_capsule === null) {
+      fail(`${campaign.boundary} campaign receipts require a successor capsule`);
+    }
+    if (campaign.boundary === "settled" && campaign.successor_capsule !== null) {
+      fail("settled campaign receipts cannot name a successor capsule");
+    }
+    if (receipt.outcome === "blocked" && campaign.blocker === null) {
+      fail("blocked campaign receipts require precise blocker ownership");
+    }
+  }
   return receipt;
 }
 
