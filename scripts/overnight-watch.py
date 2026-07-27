@@ -142,6 +142,7 @@ LANE_SWITCH_ACTIVE_TASK_STATUSES = frozenset({"open", "dispatched", "in_progress
 LANE_SWITCH_GOOD_STATUSES = frozenset(
     {"would_submit", "would_launch", "launched", "already_running", "result_pending_harvest"}
 )
+LANE_SWITCH_EXECUTION_PROGRESS_STATUSES = frozenset({"launched", "already_running", "result_pending_harvest"})
 LANE_SWITCH_BAD_PROVIDER_HEALTH = frozenset(
     {"blocked", "disabled", "down", "exhausted", "low", "rate_limited", "unavailable"}
 )
@@ -1548,9 +1549,10 @@ def apply_lane_switch_control(dispatch: dict[str, Any], lane_switch: dict[str, A
     result["allow_dispatch"] = False
     if lane_switch.get("status") in LANE_SWITCH_GOOD_STATUSES:
         task_id = str((lane_switch.get("packet") or {}).get("task_id") or "owner packet")
+        exit_code = 0 if lane_switch.get("status") in LANE_SWITCH_EXECUTION_PROGRESS_STATUSES else 10
         result.update(
             {
-                "exit_code": 10,
+                "exit_code": exit_code,
                 "reason": f"generic dispatch remains closed; bounded owner packet {task_id} selected",
                 "next_command": str(lane_switch.get("next_command") or ""),
             }
@@ -5605,7 +5607,8 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
     ):
         return 1
     if snapshot.get("status") == "blocked":
-        return int((snapshot.get("dispatch_control") or {}).get("exit_code") or 10)
+        exit_code = (snapshot.get("dispatch_control") or {}).get("exit_code")
+        return 10 if exit_code is None else int(exit_code)
     return 0
 
 
