@@ -82,6 +82,10 @@ class HttpConductClient:
         root = urllib.parse.quote(root_run_id, safe="")
         return self._request("GET", f"/api/conduct/runs/{root}/graph")
 
+    def task_run(self, task_id: str) -> dict[str, Any]:
+        task = urllib.parse.quote(task_id, safe="")
+        return self._request("GET", f"/api/conduct/tasks/{task}/run")
+
     def claim(self, lease_id: str, generation: int) -> dict[str, Any]:
         lease = urllib.parse.quote(lease_id, safe="")
         return self._request(
@@ -183,6 +187,9 @@ class LocalConductClient:
 
     def replay_projection(self, work_id: str) -> dict[str, Any] | None:
         return self.broker.replay_work(work_id)
+
+    def task_run(self, task_id: str) -> dict[str, Any]:
+        return self.broker.task_run(task_id)
 
     def local_board_projection(self) -> dict[str, Any] | None:
         return self.broker.local_board_projection()

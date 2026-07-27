@@ -604,6 +604,49 @@ class ConductBroker:
                 raise ConductError(f"work index points to missing run: {work_id}")
             return self._submit_result(state, run, duplicate=True)
 
+    def task_run(self, task_id: str) -> dict[str, Any]:
+        """Return the canonical current run for one task without rebuilding its packet."""
+
+        with self.store.transaction() as state:
+            candidates = [
+                run for run in state["runs"].values() if str((run.get("packet") or {}).get("task_id") or "") == task_id
+            ]
+            active = [
+                run for run in candidates if run.get("status") in {"waiting", "reserved", "running", "stop_requested"}
+            ]
+            if len(active) > 1:
+                raise ConductConflict(f"task {task_id} has multiple active conduct runs")
+            if active:
+                selected = active[0]
+            elif candidates:
+                selected = max(
+                    candidates,
+                    key=lambda run: (
+                        _load_time(run.get("updated_at") or run.get("created_at")),
+                        str(run.get("run_id") or ""),
+                    ),
+                )
+            else:
+                return {
+                    "schema_version": "limen.conduct_task_run.v1",
+                    "task_id": task_id,
+                    "found": False,
+                }
+            packet = selected.get("packet") or {}
+            execution = packet.get("execution") or {}
+            return {
+                "schema_version": "limen.conduct_task_run.v1",
+                "task_id": task_id,
+                "found": True,
+                "run_id": selected["run_id"],
+                "root_run_id": selected["root_run_id"],
+                "status": selected["status"],
+                "executor_session_id": selected.get("executor_session_id"),
+                "exact_base": execution.get("exact_base"),
+                "receipt_count": len(selected.get("receipts") or []),
+                "updated_at": selected.get("updated_at"),
+            }
+
     def local_board_projection(self) -> dict[str, Any] | None:
         """Read the explicit local keeper's latest full canonical projection."""
 
