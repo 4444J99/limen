@@ -7,6 +7,7 @@ import json
 import os
 import re
 import secrets
+import shlex
 import shutil
 import stat
 import subprocess
@@ -30,6 +31,8 @@ GITHUB_REMOTE_RE = re.compile(
 )
 OBJECT_ID_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 GIT = shutil.which("git", path=os.defpath) or "/usr/bin/git"
+_GH = shutil.which("gh")
+GH = str(Path(_GH).resolve()) if _GH else None
 DEFAULT_CUSTODY_ROOT = Path("/Volumes/Archive4T/limen-private/estate-audit-git-custody")
 MAX_ROOTS = 1000
 MAX_SECONDS = 900
@@ -124,10 +127,10 @@ def _path_sha256(path: Path) -> str:
     return hashlib.sha256(str(path).encode("utf-8", errors="surrogateescape")).hexdigest()
 
 
-def _git_environment() -> dict[str, str]:
+def _git_environment(*, github_auth: bool = False) -> dict[str, str]:
     """Use Git without ambient signers, credential prompts, hooks, or user configuration."""
 
-    return {
+    environment = {
         "GIT_CONFIG_GLOBAL": "/dev/null",
         "GIT_CONFIG_NOSYSTEM": "1",
         "GIT_TERMINAL_PROMPT": "0",
@@ -135,6 +138,17 @@ def _git_environment() -> dict[str, str]:
         "LC_ALL": "C",
         "PATH": os.defpath,
     }
+    if github_auth:
+        if not GH or not Path(GH).is_file() or not os.access(GH, os.X_OK):
+            raise EstateAuditCustodyError("github-credential-helper-unavailable")
+        environment.update(
+            {
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "credential.https://github.com.helper",
+                "GIT_CONFIG_VALUE_0": f"!{shlex.quote(GH)} auth git-credential",
+            }
+        )
+    return environment
 
 
 def _run_git(
@@ -144,12 +158,13 @@ def _run_git(
     timeout: float = 120,
     input_bytes: bytes | None = None,
     stdin: Any = None,
+    github_auth: bool = False,
 ) -> subprocess.CompletedProcess[bytes]:
     try:
         return subprocess.run(
             [GIT, "-c", "protocol.file.allow=always", *arguments],
             cwd=str(cwd),
-            env=_git_environment(),
+            env=_git_environment(github_auth=github_auth),
             input=input_bytes,
             stdin=stdin,
             capture_output=True,
@@ -160,16 +175,18 @@ def _run_git(
         raise EstateAuditCustodyError("git-execution-failed", type(exc).__name__) from exc
 
 
-def _git_bytes(cwd: Path, *arguments: str, timeout: float = 120) -> bytes:
-    result = _run_git(cwd, arguments, timeout=timeout)
+def _git_bytes(cwd: Path, *arguments: str, timeout: float = 120, github_auth: bool = False) -> bytes:
+    result = _run_git(cwd, arguments, timeout=timeout, github_auth=github_auth)
     if result.returncode:
         detail = result.stderr.decode("utf-8", errors="replace").strip()[:300]
         raise EstateAuditCustodyError("git-command-failed", detail or f"exit-{result.returncode}")
     return result.stdout
 
 
-def _git_text(cwd: Path, *arguments: str, timeout: float = 120) -> str:
-    return _git_bytes(cwd, *arguments, timeout=timeout).decode("utf-8", errors="strict").strip()
+def _git_text(cwd: Path, *arguments: str, timeout: float = 120, github_auth: bool = False) -> str:
+    return (
+        _git_bytes(cwd, *arguments, timeout=timeout, github_auth=github_auth).decode("utf-8", errors="strict").strip()
+    )
 
 
 def _github_repository(remote: str) -> str:
@@ -336,6 +353,7 @@ def _ensure_repository(
         if not _has_exact_ref(store, head, tree, timeout=_remaining(deadline))
     }
     if missing:
+        github_auth = remote_url.startswith("https://github.com/")
         with tempfile.TemporaryDirectory(prefix=".source-", dir=custody_root) as temporary:
             source = Path(temporary) / "source.git"
             _git_bytes(
@@ -346,11 +364,21 @@ def _ensure_repository(
                 remote_url,
                 str(source),
                 timeout=_remaining(deadline),
+                github_auth=github_auth,
             )
             for head, tree in sorted(missing.items()):
                 exists = _run_git(source, ["cat-file", "-e", f"{head}^{{commit}}"], timeout=_remaining(deadline))
                 if exists.returncode:
-                    _git_bytes(source, "fetch", "--quiet", "--no-tags", "origin", head, timeout=_remaining(deadline))
+                    _git_bytes(
+                        source,
+                        "fetch",
+                        "--quiet",
+                        "--no-tags",
+                        "origin",
+                        head,
+                        timeout=_remaining(deadline),
+                        github_auth=github_auth,
+                    )
                 if _git_text(source, "rev-parse", f"{head}^{{tree}}", timeout=_remaining(deadline)) != tree:
                     raise EstateAuditCustodyError("remote-tree-mismatch")
                 ref = _ref_for_head(head)
