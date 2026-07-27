@@ -154,12 +154,14 @@ the immediately preceding row, advance `assessed_at`, and cannot roll a terminal
 
 ## Privacy and concurrency
 
-Raw bodies, source paths, session references, full hashes, and journals live under the ignored
-`.limen-private/session-corpus/prompt-atoms/` root. Exact bodies are gzip-compressed,
-content-addressed private objects; each append-only event row contains its occurrence and all of its
-atoms as one transaction. The compact private checkpoint does not duplicate the raw corpus. The
-tracked JSON and Markdown projections contain only opaque IDs, aggregate counts, numeric dimensions,
-dispositions, owner routes, and canonical receipt references.
+Raw bodies, source paths, session references, full hashes, journals, and the complete redacted
+operational atom index live under the ignored `.limen-private/session-corpus/prompt-atoms/` root.
+Exact bodies are gzip-compressed, content-addressed private objects; each append-only event row
+contains its occurrence and all of its atoms as one transaction. The compact private checkpoint does
+not duplicate the raw corpus. The mode-600 `prompt-atom-index.json` contains opaque IDs, aggregate
+counts, numeric dimensions, dispositions, owner routes, and canonical receipt references. Tracked
+`docs/` receives only the bounded Markdown summary and authority seal, never the complete per-atom
+queue.
 
 `docs/prompt-authority-seal.json` is the bounded publication receipt for source-corpus authority. Its
 schema is `limen.prompt-authority-seal.v1`; it contains only fixed numeric aggregates, safe family and
@@ -177,10 +179,11 @@ An exclusive writer lock serializes updates; journal appends are flushed before 
 replacement, and the compact checkpoint is written last. Stable occurrence and atom IDs plus a
 monotonic cursor merge make concurrent or repeated drains idempotent. The cursor digest is embedded
 in the projection, so a cursor advance without a matching projection fails closed. Before the
-zero-input fast path adopts existing public bytes, it re-derives the full seal inputs from the private
-checkpoint and current cursor; coherently rehashed projection/seal references that disagree with that
-custody are rebuilt. Verification rebuilds the public JSON and Markdown byte-for-byte from the private
-journals and detects missing, malformed, or altered raw objects.
+zero-input fast path adopts existing projection bytes, it re-derives the full seal inputs from the
+private checkpoint and current cursor; coherently rehashed projection/seal references that disagree
+with that custody are rebuilt. Verification rebuilds the private redacted index plus the public
+Markdown and seal byte-for-byte from the private journals and detects missing, malformed, or altered
+raw objects.
 
 The priority map additionally binds the projection to the currently loaded runtime-policy digest.
 A projection and private receipt that agree with each other but carry stale weights, authority bands,
