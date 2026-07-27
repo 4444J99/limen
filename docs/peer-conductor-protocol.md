@@ -53,6 +53,15 @@ configured.
   remains live. A read-effect receipt is authorized only when its changed-path set is empty and its
   before/after head maps are identical.
 
+Institutional campaigns use optional, backward-compatible typed extensions. `CampaignPacketV1`
+binds a packet to its campaign ID, failed predicate, owner, next action, and byte output ceiling;
+the packet's existing authority, work loan, and receipt target remain the authority scope,
+value/cost case, and durable destination. `CampaignReceiptV1` records actual value alongside the
+existing actual-spend map, content-free bounded-output evidence, precise blocker ownership, one
+campaign boundary, and any successor-capsule reference. The keeper authorizes a campaign receipt
+only when its campaign ID and output ceiling match the leased packet. Historical packets and
+receipts without either extension remain readable and retain their original authorization rules.
+
 Delegation is a bounded DAG. A child reserves through the broker before it consumes separate
 capacity or mutates state. Its authority, repository/path scope, deadline, spend, retry, depth, and
 fanout cannot exceed its parent. Repeated ancestry work keys are rejected. A dead conductor does
