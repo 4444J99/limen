@@ -21,13 +21,26 @@ def _script(name: str):
     return module
 
 
-def test_gitvs_strict_doctor_and_usage_report_unavailable(monkeypatch) -> None:
+def test_gitvs_strict_doctor_and_usage_report_unavailable(tmp_path, monkeypatch, capsys) -> None:
     gitvs = _script("gitvs.py")
     assert gitvs._verdict([], [], ["live unavailable"], "test", strict=False) == 0
     assert gitvs._verdict([], [], ["live unavailable"], "test", strict=True) == 77
 
     monkeypatch.setenv("LIMEN_OFFLINE", "1")
     assert gitvs.usage({}, check=True, print_json=False, strict=True) == 77
+
+    monkeypatch.delenv("LIMEN_OFFLINE")
+    monkeypatch.setenv("LIMEN_BILLING_CANARY_REPO", "private-owner/private-repo")
+    monkeypatch.setattr(gitvs.shutil, "which", lambda _command: "/usr/bin/gh")
+    monkeypatch.setattr(gitvs, "owners", lambda _estate: ["organvm"])
+    monkeypatch.setattr(gitvs, "_usage_month", lambda *_args: {"net_usd_total": 0.0})
+    monkeypatch.setattr(gitvs, "_billing_canary", lambda _repo: (None, "private diagnostic detail"))
+    monkeypatch.setattr(gitvs, "USAGE_DOC", tmp_path / "usage.json")
+    monkeypatch.setattr(gitvs, "USAGE_STAMP", tmp_path / "usage-stamp.json")
+    assert gitvs.usage({}, check=True, print_json=False, strict=True) == 77
+    output = capsys.readouterr().out
+    assert "private-owner/private-repo" not in output
+    assert "private diagnostic detail" not in output
 
 
 def test_artifact_backed_posture_checks_skip_only_when_evidence_is_absent(tmp_path, monkeypatch) -> None:

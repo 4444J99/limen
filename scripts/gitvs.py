@@ -2304,7 +2304,7 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) 
         print(f"✗ gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
         return 1
     if strict and canary_green is None:
-        print(f"[gitvs] usage: SKIP (billing canary unreadable on {canary_repo})")
+        print("[gitvs] usage: SKIP (billing canary unreadable)")
         return 77
     canary_word = "green" if canary_green else ("RED" if canary_green is False else "unreadable")
     print(
