@@ -2112,16 +2112,77 @@ def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _stream_file_custody(
+    path: Path,
+    *,
+    label: str,
+    size: int | None = None,
+) -> tuple[dict[str, Any], list[str]]:
+    """Hash one trusted file snapshot without materializing it in memory.
+
+    A full snapshot binds to the descriptor size observed before the first
+    read, so a concurrent append cannot make the reader chase a moving EOF.
+    An explicit size binds the digest to an already-recorded append-only
+    prefix.
+    """
+
+    empty = {"present": False, "size": 0, "digest": _sha256_bytes(b"")}
+    path_errors = _trusted_canonical_file_errors(path, label=label)
+    if path_errors:
+        return empty, path_errors
+    directory_flags = (
+        os.O_RDONLY
+        | getattr(os, "O_DIRECTORY", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
+    directory_fd: int | None = None
+    file_fd: int | None = None
+    try:
+        directory_fd = os.open(path.parent, directory_flags)
+        file_flags = (
+            os.O_RDONLY
+            | getattr(os, "O_NOFOLLOW", 0)
+            | getattr(os, "O_NONBLOCK", 0)
+        )
+        file_fd = os.open(path.name, file_flags, dir_fd=directory_fd)
+        metadata = os.fstat(file_fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return empty, [f"{label} is not a regular file"]
+        target_size = metadata.st_size if size is None else size
+        if (
+            not _strict_nonnegative_int(target_size)
+            or target_size > metadata.st_size
+        ):
+            return empty, [f"{label} is shorter than its required custody prefix"]
+        digest = hashlib.sha256()
+        remaining = target_size
+        with os.fdopen(file_fd, "rb") as handle:
+            file_fd = None
+            while remaining:
+                chunk = handle.read(min(1024 * 1024, remaining))
+                if not chunk:
+                    return empty, [
+                        f"{label} changed while its custody snapshot was read"
+                    ]
+                digest.update(chunk)
+                remaining -= len(chunk)
+        return {
+            "present": True,
+            "size": target_size,
+            "digest": digest.hexdigest(),
+        }, []
+    except OSError as exc:
+        return empty, [f"{label} no-follow stream failed: {exc}"]
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if directory_fd is not None:
+            os.close(directory_fd)
+
+
 def _file_custody(path: Path) -> dict[str, Any]:
-    payload, _, file_errors = _read_trusted_regular_file(path, label="custody source")
-    present = not file_errors and payload is not None
-    if payload is None:
-        payload = b""
-    return {
-        "present": present,
-        "size": len(payload),
-        "digest": _sha256_bytes(payload),
-    }
+    custody, _ = _stream_file_custody(path, label="custody source")
+    return custody
 
 
 def _custody_errors(value: Any) -> list[str]:
@@ -2144,13 +2205,22 @@ def _prefix_matches(path: Path, custody: dict[str, Any]) -> bool:
     try:
         path.lstat()
     except OSError:
-        return size == 0 and custody.get("present") is False and custody.get("digest") == _sha256_bytes(b"")
-    payload, _, file_errors = _read_trusted_regular_file(path, label="prefix source")
-    if file_errors or payload is None:
-        return False
-    prefix = payload[:size]
-    current_size = len(payload)
-    return current_size >= size and len(prefix) == size and _sha256_bytes(prefix) == custody.get("digest")
+        return (
+            size == 0
+            and custody.get("present") is False
+            and custody.get("digest") == _sha256_bytes(b"")
+        )
+    prefix, file_errors = _stream_file_custody(
+        path,
+        label="prefix source",
+        size=size,
+    )
+    return (
+        not file_errors
+        and prefix.get("present") is True
+        and prefix.get("size") == size
+        and prefix.get("digest") == custody.get("digest")
+    )
 
 
 def _jsonl_bytes(payload: bytes) -> tuple[list[dict[str, Any]], int]:
@@ -3620,13 +3690,133 @@ def _operator_count_from_event_bytes(payload: bytes) -> tuple[int, int]:
     return count, errors
 
 
-def _operator_count_at_custody(path: Path, custody: dict[str, Any]) -> tuple[int, int]:
-    if not _prefix_matches(path, custody):
+def _operator_event_file_snapshot(
+    path: Path,
+    *,
+    size: int | None = None,
+) -> tuple[int, int, dict[str, Any], list[str]]:
+    """Stream operator lineage and custody in one bounded-memory pass."""
+
+    empty = {"present": False, "size": 0, "digest": _sha256_bytes(b"")}
+    label = "prompt operator journal"
+    path_errors = _trusted_canonical_file_errors(path, label=label)
+    if path_errors:
+        return 0, 0, empty, path_errors
+    directory_flags = (
+        os.O_RDONLY
+        | getattr(os, "O_DIRECTORY", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
+    directory_fd: int | None = None
+    file_fd: int | None = None
+    try:
+        directory_fd = os.open(path.parent, directory_flags)
+        file_flags = (
+            os.O_RDONLY
+            | getattr(os, "O_NOFOLLOW", 0)
+            | getattr(os, "O_NONBLOCK", 0)
+        )
+        file_fd = os.open(path.name, file_flags, dir_fd=directory_fd)
+        metadata = os.fstat(file_fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return 0, 0, empty, [f"{label} is not a regular file"]
+        target_size = metadata.st_size if size is None else size
+        if (
+            not _strict_nonnegative_int(target_size)
+            or target_size > metadata.st_size
+        ):
+            return 0, 0, empty, [
+                f"{label} is shorter than its required custody prefix"
+            ]
+        digest = hashlib.sha256()
+        authority_by_occurrence: dict[str, bool] = {}
+        journal_errors = 0
+        remaining = target_size
+        read_error = ""
+        with os.fdopen(file_fd, "rb") as handle:
+            file_fd = None
+            while remaining:
+                line = handle.readline(remaining)
+                if not line:
+                    read_error = f"{label} changed while its snapshot was read"
+                    break
+                remaining -= len(line)
+                digest.update(line)
+                if not line.endswith(b"\n"):
+                    journal_errors += 1
+                    break
+                try:
+                    row = json.loads(line)
+                except (UnicodeError, ValueError):
+                    journal_errors += 1
+                    continue
+                if not isinstance(row, dict):
+                    journal_errors += 1
+                    continue
+                occurrence = row.get("occurrence")
+                atoms = row.get("atoms")
+                if not isinstance(occurrence, dict) or not isinstance(atoms, list):
+                    journal_errors += 1
+                    continue
+                occurrence_id = str(occurrence.get("occurrence_id") or "")
+                revision_of = str(row.get("revision_of") or "")
+                if not occurrence_id:
+                    journal_errors += 1
+                    continue
+                if (
+                    occurrence_id in authority_by_occurrence
+                    and revision_of != occurrence_id
+                ):
+                    journal_errors += 1
+                    continue
+                if revision_of and revision_of not in authority_by_occurrence:
+                    journal_errors += 1
+                    continue
+                authority_by_occurrence[occurrence_id] = (
+                    occurrence.get("authority") == "operator"
+                )
+        if read_error or remaining:
+            return 0, journal_errors, empty, [
+                read_error or f"{label} changed while its snapshot was read"
+            ]
+        custody = {
+            "present": True,
+            "size": target_size,
+            "digest": digest.hexdigest(),
+        }
+        return (
+            sum(1 for is_operator in authority_by_occurrence.values() if is_operator),
+            journal_errors,
+            custody,
+            [],
+        )
+    except OSError as exc:
+        return 0, 0, empty, [f"{label} no-follow stream failed: {exc}"]
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if directory_fd is not None:
+            os.close(directory_fd)
+
+
+def _operator_count_at_custody(
+    path: Path,
+    custody: dict[str, Any],
+) -> tuple[int, int]:
+    if _custody_errors(custody) or custody.get("present") is not True:
         return 0, 1
-    payload, _, file_errors = _read_trusted_regular_file(path, label="prompt operator journal")
-    if file_errors or payload is None:
-        return 0, 1
-    return _operator_count_from_event_bytes(payload[: int(custody["size"])])
+    count, errors, actual, file_errors = _operator_event_file_snapshot(
+        path,
+        size=int(custody["size"]),
+    )
+    if (
+        file_errors
+        or actual.get("present") is not True
+        or actual.get("size") != custody.get("size")
+        or actual.get("digest") != custody.get("digest")
+    ):
+        return 0, errors + 1
+    return count, errors
 
 
 def _prompt_scope_exact(snapshot: dict[str, Any], cursor: dict[str, Any]) -> bool:
@@ -3719,9 +3909,16 @@ def prompt_authority_snapshot(
             label=f"prompt {name} source",
         )
     ]
+    journal_operator_count, journal_errors, event_custody, event_file_errors = (
+        _operator_event_file_snapshot(paths["events"])
+    )
     payloads: dict[str, bytes] = {}
-    for name, path_value in paths.items():
-        payload, _, file_errors = _read_trusted_regular_file(path_value, label=f"prompt {name} source")
+    for name in ("snapshot", "cursor"):
+        path_value = paths[name]
+        payload, _, file_errors = _read_trusted_regular_file(
+            path_value,
+            label=f"prompt {name} source",
+        )
         if not file_errors and payload is not None:
             payloads[name] = payload
     try:
@@ -3734,7 +3931,7 @@ def prompt_authority_snapshot(
         cursor_value = {}
     snapshot = snapshot_value if isinstance(snapshot_value, dict) else {}
     cursor = cursor_value if isinstance(cursor_value, dict) else {}
-    errors = len(path_errors)
+    errors = len(path_errors) + len(event_file_errors)
     if not snapshot:
         errors += 1
     if not cursor:
@@ -3745,7 +3942,12 @@ def prompt_authority_snapshot(
     if not operator_valid:
         errors += 1
     validation_ok = bool((snapshot.get("validation") or {}).get("ok"))
-    exact = not path_errors and validation_ok and _prompt_scope_exact(snapshot, cursor)
+    exact = (
+        not path_errors
+        and not event_file_errors
+        and validation_ok
+        and _prompt_scope_exact(snapshot, cursor)
+    )
     expected_cursor_digest = str(snapshot.get("source_cursor_digest") or "")
     actual_cursor_digest = _cursor_digest(cursor) if cursor else ""
     if not re.fullmatch(r"[0-9a-f]{64}", expected_cursor_digest) or expected_cursor_digest != actual_cursor_digest:
@@ -3767,9 +3969,14 @@ def prompt_authority_snapshot(
         if not signature_ok:
             errors += 1
             exact = False
-    source_custody = {name: _file_custody(path_value) for name, path_value in paths.items()}
-    event_bytes = payloads.get("events", b"")
-    journal_operator_count, journal_errors = _operator_count_from_event_bytes(event_bytes)
+    source_custody = {
+        name: (
+            event_custody
+            if name == "events"
+            else _file_custody(path_value)
+        )
+        for name, path_value in paths.items()
+    }
     if journal_errors or not operator_valid or journal_operator_count != operator_value:
         errors += max(1, journal_errors)
         exact = False
