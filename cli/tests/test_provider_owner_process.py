@@ -38,9 +38,7 @@ def test_process_table_preserves_full_argv(path: Path, monkeypatch: pytest.Monke
     )
     monkeypatch.setattr(hook.subprocess, "run", lambda *args, **kwargs: process)
 
-    assert hook._process_table() == {
-        401: (101, "/usr/local/bin/node /opt/provider/package/cli.js --flag")
-    }
+    assert hook._process_table() == {401: (101, "/usr/local/bin/node /opt/provider/package/cli.js --flag")}
 
 
 @pytest.mark.parametrize(
