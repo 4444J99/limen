@@ -322,7 +322,6 @@ def test_malformed_maintenance_expiry_fails_closed(tmp_path):
     assert blocker["state"] == "invalid-expiry"
 
 
-
 def test_non_object_maintenance_window_fails_closed(tmp_path):
     for index, malformed in enumerate((None, [], "until later")):
         case = tmp_path / f"case-{index}"
