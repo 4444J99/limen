@@ -14,9 +14,9 @@ portal:
       claude: 100
     track:
       date: '2026-07-27'
-      spent: 1
+      spent: 2
       per_agent:
-        jules: 1
+        jules: 2
         gemini: 0
         codex: 0
         opencode: 0
@@ -160372,7 +160372,7 @@ tasks:
   workstream: 'revenue-value-repos'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'dispatched'
   labels:
   - 'always-working'
   - 'receipt-first'
@@ -160414,7 +160414,16 @@ tasks:
     conduct_run_id: 'run-daff5a69ab6c72511d944b4c420c89ec'
     conduct_lease_id: 'lease-381-daff5a69ab6c7251'
     conduct_generation: 381
-  updated: '2026-07-27T03:52:05.153Z'
+  - timestamp: '2026-07-27T07:02:11.959Z'
+    agent: 'jules'
+    session_id: 'run-90feac07d9d412ac1926c00b41705aea'
+    status: 'dispatched'
+    output: 'Conduct broker reserved run-90feac07d9d412ac1926c00b41705aea for jules'
+    conduct_event_id: 'conduct:run-90feac07d9d412ac1926c00b41705aea:384:reserved'
+    conduct_run_id: 'run-90feac07d9d412ac1926c00b41705aea'
+    conduct_lease_id: 'lease-384-90feac07d9d412ac'
+    conduct_generation: 384
+  updated: '2026-07-27T07:02:11.959Z'
 - id: 'AW-SUBSTRATE-DISK-TEMP-d9c4f989152f'
   title: 'Keep disk/temp/voice substrate from starving the swarm'
   description: 'substrate lifecycle predicate is failing'
