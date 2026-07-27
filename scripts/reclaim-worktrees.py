@@ -85,8 +85,10 @@ from limen.estate_audit_custody import (
     verify_receipt as verify_estate_custody_receipt,
 )
 from limen.worktree_abandonment import (
+    CustodyPathIdentity,
     WorktreeAbandonmentError,
     detach_registered_worktree,
+    purge_custody_proven_path,
     quarantine_path,
 )
 from limen.worktree_debt import is_generated_log_shell
@@ -471,12 +473,21 @@ def load_estate_custody_context() -> dict[str, object] | None:
         raise EstateAuditCustodyError("custody-current-roots-mismatch")
 
     restored_paths: set[Path] = set()
+    restored_identities: dict[str, dict[str, object]] = {}
     for root in receipt.get("roots") or []:
         if not isinstance(root, dict) or int(root.get("index_entry_count", -1)) != 0:
             continue
         try:
-            restored_paths.add(Path(str(root["path"])).resolve(strict=True))
-        except (KeyError, OSError) as exc:
+            restored = Path(str(root["path"])).resolve(strict=True)
+            restored_paths.add(restored)
+            restored_identities[str(restored)] = {
+                "path": str(restored),
+                "path_sha256": str(root["path_sha256"]),
+                "device": int(root["device"]),
+                "inode": int(root["inode"]),
+                "mtime_ns": int(root["mtime_ns"]),
+            }
+        except (KeyError, OSError, TypeError, ValueError) as exc:
             raise EstateAuditCustodyError("custody-root-unavailable") from exc
     failed_checkout_count = int(receipt.get("failed_checkout_root_count", -1))
     if not restored_paths or failed_checkout_count != len(restored_paths):
@@ -484,6 +495,7 @@ def load_estate_custody_context() -> dict[str, object] | None:
 
     return {
         "paths": frozenset(restored_paths),
+        "identities": restored_identities,
         "proof": {
             "schema": "limen.worktree_reclaim_estate_custody.v1",
             "plan_sha256": ESTATE_CUSTODY_PLAN_SHA,
@@ -856,17 +868,10 @@ def build_candidate_manifest(
 ) -> tuple[dict, str, list[tuple[str, str]], list[str]]:
     """Return the canonical, bounded, accepted candidate set and its digest."""
 
-    custody_paths = (
-        estate_custody_context.get("paths", frozenset())
-        if estate_custody_context
-        else frozenset()
-    )
-    custody_proof = (
-        estate_custody_context.get("proof")
-        if estate_custody_context
-        else None
-    )
-    candidates: list[dict[str, str]] = []
+    custody_paths = estate_custody_context.get("paths", frozenset()) if estate_custody_context else frozenset()
+    custody_proof = estate_custody_context.get("proof") if estate_custody_context else None
+    custody_identities = estate_custody_context.get("identities", {}) if estate_custody_context else {}
+    candidates: list[dict[str, object]] = []
     skipped: list[tuple[str, str]] = []
     for directory, min_age_h, source in dirs:
         action, reason = classify(
@@ -890,15 +895,22 @@ def build_candidate_manifest(
         if not accepted:
             skipped.append((directory.name, accept_reason))
             continue
-        candidates.append(
-            {
-                "action": action,
-                "path": str(directory),
-                "reason": reason,
-                "root": directory.name,
-                "source": source,
-            }
-        )
+        candidate: dict[str, object] = {
+            "action": action,
+            "path": str(directory),
+            "reason": reason,
+            "root": directory.name,
+            "source": source,
+        }
+        if reason == CUSTODY_RESTORED_REASON:
+            try:
+                identity = custody_identities[str(directory.resolve(strict=True))]
+            except (KeyError, OSError) as exc:
+                raise EstateAuditCustodyError("custody-root-identity-missing") from exc
+            if not isinstance(identity, dict):
+                raise EstateAuditCustodyError("custody-root-identity-invalid")
+            candidate["custody_identity"] = identity
+        candidates.append(candidate)
 
     candidates.sort(key=lambda row: (row["path"], row["action"], row["reason"]))
     selected = candidates[:MAX_REMOVE]
@@ -1076,16 +1088,8 @@ def main():
         for planned in manifest["candidates"]:
             directory = Path(planned["path"])
             _ACTIVE_PROCESS_CWDS = active_process_cwds()
-            custody_paths = (
-                estate_custody_context.get("paths", frozenset())
-                if estate_custody_context
-                else frozenset()
-            )
-            custody_proof = (
-                estate_custody_context.get("proof")
-                if estate_custody_context
-                else None
-            )
+            custody_paths = estate_custody_context.get("paths", frozenset()) if estate_custody_context else frozenset()
+            custody_proof = estate_custody_context.get("proof") if estate_custody_context else None
             action, reason = classify(
                 directory,
                 time.time(),
@@ -1115,6 +1119,31 @@ def main():
                         Path(super_root),
                         directory,
                         reason=reason,
+                        receipt_root=ABANDONMENT_RECEIPTS,
+                        owner_probe=lambda _path, root=directory: active_process_owner(root),
+                    )
+                elif action == "remove-clone" and reason == CUSTODY_RESTORED_REASON:
+                    identity = planned.get("custody_identity")
+                    if not isinstance(identity, dict) or not isinstance(custody_proof, dict):
+                        failed.append((directory.name, "custody-purge-proof-missing"))
+                        continue
+                    try:
+                        expected_identity = CustodyPathIdentity(
+                            path=str(identity["path"]),
+                            path_sha256=str(identity["path_sha256"]),
+                            device=int(identity["device"]),
+                            inode=int(identity["inode"]),
+                            mtime_ns=int(identity["mtime_ns"]),
+                        )
+                    except (KeyError, TypeError, ValueError):
+                        failed.append((directory.name, "custody-purge-identity-invalid"))
+                        continue
+                    receipt = purge_custody_proven_path(
+                        directory,
+                        expected_identity,
+                        reason=reason,
+                        custody_plan_sha256=str(custody_proof.get("plan_sha256") or ""),
+                        custody_content_sha256=str(custody_proof.get("content_sha256") or ""),
                         receipt_root=ABANDONMENT_RECEIPTS,
                         owner_probe=lambda _path, root=directory: active_process_owner(root),
                     )

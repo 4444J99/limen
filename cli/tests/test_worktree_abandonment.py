@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -196,6 +197,84 @@ def test_quarantine_nesting_denial_has_no_preflight_directory_side_effect(tmp_pa
 
     assert source.exists()
     assert not quarantine.exists()
+
+
+def test_custody_purge_requires_exact_identity_and_removes_only_isolated_tree(tmp_path: Path) -> None:
+    source = tmp_path / "creation-root" / "candidate"
+    source.mkdir(parents=True)
+    (source / "tracked.txt").write_text("restored elsewhere\n", encoding="utf-8")
+    symlink_target = tmp_path / "outside.txt"
+    symlink_target.write_text("do not follow\n", encoding="utf-8")
+    (source / "link").symlink_to(symlink_target)
+    raw = source.stat()
+    resolved = source.resolve()
+    identity = abandonment.CustodyPathIdentity(
+        path=str(resolved),
+        path_sha256=hashlib.sha256(str(resolved).encode()).hexdigest(),
+        device=raw.st_dev,
+        inode=raw.st_ino,
+        mtime_ns=raw.st_mtime_ns,
+    )
+
+    result = abandonment.purge_custody_proven_path(
+        source,
+        identity,
+        reason="custody-restored+idle",
+        custody_plan_sha256="a" * 64,
+        custody_content_sha256="b" * 64,
+        receipt_root=tmp_path / "receipts",
+        owner_probe=lambda _path: None,
+    )
+
+    assert result["state"] == "completed"
+    assert result["result"]["purged"] is True
+    assert not source.exists()
+    assert symlink_target.read_text(encoding="utf-8") == "do not follow\n"
+
+
+def test_custody_purge_identity_or_owner_drift_preserves_source(tmp_path: Path) -> None:
+    source = tmp_path / "candidate"
+    source.mkdir()
+    raw = source.stat()
+    resolved = source.resolve()
+    wrong = abandonment.CustodyPathIdentity(
+        path=str(resolved),
+        path_sha256="0" * 64,
+        device=raw.st_dev,
+        inode=raw.st_ino,
+        mtime_ns=raw.st_mtime_ns,
+    )
+
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="identity"):
+        abandonment.purge_custody_proven_path(
+            source,
+            wrong,
+            reason="custody-restored+idle",
+            custody_plan_sha256="a" * 64,
+            custody_content_sha256="b" * 64,
+            receipt_root=tmp_path / "receipts",
+            owner_probe=lambda _path: None,
+        )
+    assert source.exists()
+
+    exact = abandonment.CustodyPathIdentity(
+        path=str(resolved),
+        path_sha256=hashlib.sha256(str(resolved).encode()).hexdigest(),
+        device=raw.st_dev,
+        inode=raw.st_ino,
+        mtime_ns=raw.st_mtime_ns,
+    )
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="active-process"):
+        abandonment.purge_custody_proven_path(
+            source,
+            exact,
+            reason="custody-restored+idle",
+            custody_plan_sha256="a" * 64,
+            custody_content_sha256="b" * 64,
+            receipt_root=tmp_path / "receipts",
+            owner_probe=lambda _path: 4242,
+        )
+    assert source.exists()
 
 
 def test_stable_zero_byte_lock_removal_requires_exact_unowned_identity(tmp_path: Path) -> None:

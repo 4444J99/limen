@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -497,6 +498,26 @@ def _custody_proof(
     }
 
 
+def _custody_identity(root: Path) -> dict[str, object]:
+    resolved = root.resolve()
+    current = resolved.stat()
+    return {
+        "path": str(resolved),
+        "path_sha256": hashlib.sha256(str(resolved).encode()).hexdigest(),
+        "device": current.st_dev,
+        "inode": current.st_ino,
+        "mtime_ns": current.st_mtime_ns,
+    }
+
+
+def _custody_context(root: Path, *, content: str = "b" * 64) -> dict[str, object]:
+    return {
+        "paths": frozenset({root.resolve()}),
+        "identities": {str(root.resolve()): _custody_identity(root)},
+        "proof": _custody_proof(content=content),
+    }
+
+
 def _custody_acceptance(proof: dict[str, object]) -> dict[str, object]:
     return {
         "accepted_at": "2026-07-27T13:08:49Z",
@@ -594,8 +615,8 @@ def test_reclaim_custody_context_admits_only_failed_checkout_payload_roots(
     indexed.mkdir()
     plan_sha = "a" * 64
     roots = [
-        {"path": str(failed_checkout.resolve()), "index_entry_count": 0},
-        {"path": str(indexed.resolve()), "index_entry_count": 3},
+        {**_custody_identity(failed_checkout), "index_entry_count": 0},
+        {**_custody_identity(indexed), "index_entry_count": 3},
     ]
     receipt = {
         "roots": roots,
@@ -621,6 +642,7 @@ def test_reclaim_custody_context_admits_only_failed_checkout_payload_roots(
 
     assert context is not None
     assert context["paths"] == frozenset({failed_checkout.resolve()})
+    assert context["identities"] == {str(failed_checkout.resolve()): _custody_identity(failed_checkout)}
     assert context["proof"] == _custody_proof(root_count=2)
 
 
@@ -634,11 +656,8 @@ def test_reclaim_manifest_digest_binds_public_custody_proof(tmp_path: Path, monk
         lambda *_args, **_kwargs: ("remove-clone", "custody-restored+idle"),
     )
     monkeypatch.setattr(reclaim, "reclaim_accepted", lambda *_args, **_kwargs: (True, "accepted"))
-    first_context = {"paths": frozenset({repo.resolve()}), "proof": _custody_proof()}
-    second_context = {
-        "paths": frozenset({repo.resolve()}),
-        "proof": _custody_proof(content="d" * 64),
-    }
+    first_context = _custody_context(repo)
+    second_context = _custody_context(repo, content="d" * 64)
 
     first = reclaim.build_candidate_manifest([(repo, 0, "test")], 1.0, {}, [], first_context)
     second = reclaim.build_candidate_manifest([(repo, 0, "test")], 1.0, {}, [], second_context)
@@ -656,11 +675,8 @@ def test_reclaim_apply_rechecks_and_blocks_custody_proof_drift(
     repo = tmp_path / "failed-checkout"
     repo.mkdir()
     target = type("Target", (), {"path": repo, "min_age_h": 0, "source": "test"})()
-    first_context = {"paths": frozenset({repo.resolve()}), "proof": _custody_proof()}
-    drifted_context = {
-        "paths": frozenset({repo.resolve()}),
-        "proof": _custody_proof(content="d" * 64),
-    }
+    first_context = _custody_context(repo)
+    drifted_context = _custody_context(repo, content="d" * 64)
     monkeypatch.setattr(
         reclaim,
         "classify",

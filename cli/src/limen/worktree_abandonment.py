@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import secrets
 import stat
 import subprocess
@@ -15,9 +16,15 @@ from typing import Any, Callable, Literal, NoReturn
 
 
 WORKTREE_ABANDONMENT_SCHEMA = "limen.worktree_abandonment.v1"
-AbandonmentAction = Literal["detach-worktree", "quarantine", "remove-stable-lock"]
+AbandonmentAction = Literal[
+    "detach-worktree",
+    "purge-custody-path",
+    "quarantine",
+    "remove-stable-lock",
+]
 AbandonmentState = Literal["planned", "verified", "applying", "completed", "crashed"]
 OwnerProbe = Callable[[Path], int | None]
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 @dataclass(frozen=True)
@@ -26,6 +33,15 @@ class LockIdentity:
     device: int
     inode: int
     size: int
+    mtime_ns: int
+
+
+@dataclass(frozen=True)
+class CustodyPathIdentity:
+    path: str
+    path_sha256: str
+    device: int
+    inode: int
     mtime_ns: int
 
 
@@ -365,6 +381,135 @@ def _same_filesystem(source: Path, destination_root: Path) -> bool:
     return source.stat().st_dev == destination_root.stat().st_dev
 
 
+def _custody_identity_matches(path: Path, expected: CustodyPathIdentity) -> bool:
+    try:
+        raw = path.lstat()
+        actual_path = str(path.resolve(strict=True))
+    except OSError:
+        return False
+    return (
+        actual_path == expected.path
+        and hashlib.sha256(actual_path.encode("utf-8", errors="surrogateescape")).hexdigest() == expected.path_sha256
+        and not stat.S_ISLNK(raw.st_mode)
+        and stat.S_ISDIR(raw.st_mode)
+        and raw.st_dev == expected.device
+        and raw.st_ino == expected.inode
+        and raw.st_mtime_ns == expected.mtime_ns
+    )
+
+
+def _purge_directory_fd(directory_fd: int) -> None:
+    """Unlink one already-isolated directory tree without following symlinks."""
+
+    for name in os.listdir(directory_fd):
+        entry = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+        if stat.S_ISDIR(entry.st_mode):
+            flags = os.O_RDONLY | os.O_DIRECTORY
+            if hasattr(os, "O_NOFOLLOW"):
+                flags |= os.O_NOFOLLOW
+            child_fd = os.open(name, flags, dir_fd=directory_fd)
+            try:
+                child = os.fstat(child_fd)
+                if (child.st_dev, child.st_ino) != (entry.st_dev, entry.st_ino):
+                    raise RuntimeError("purge-child-identity-changed")
+                _purge_directory_fd(child_fd)
+            finally:
+                os.close(child_fd)
+            os.rmdir(name, dir_fd=directory_fd)
+        else:
+            os.unlink(name, dir_fd=directory_fd)
+
+
+def purge_custody_proven_path(
+    source: Path,
+    expected: CustodyPathIdentity,
+    *,
+    reason: str,
+    custody_plan_sha256: str,
+    custody_content_sha256: str,
+    receipt_root: Path,
+    owner_probe: OwnerProbe | None = None,
+) -> dict[str, Any]:
+    """Purge one exact directory only after the caller proves external restoration custody."""
+
+    receipt_path, receipt = _new_receipt(
+        receipt_root=receipt_root,
+        action="purge-custody-path",
+        target=source,
+        reason=reason,
+    )
+    phase = "preflight"
+    staging: Path | None = None
+    try:
+        if reason != "custody-restored+idle":
+            raise RuntimeError("custody-purge-reason-invalid")
+        if not SHA256_RE.fullmatch(custody_plan_sha256) or not SHA256_RE.fullmatch(custody_content_sha256):
+            raise RuntimeError("custody-purge-digest-invalid")
+        if not _custody_identity_matches(source, expected):
+            raise RuntimeError("custody-path-identity-mismatch")
+        owner = (owner_probe or _default_cwd_owner_probe)(source)
+        if owner is not None:
+            code = "owner-probe-unavailable" if owner == -1 else f"active-process-cwd:{owner}"
+            raise RuntimeError(code)
+        if not _custody_identity_matches(source, expected):
+            raise RuntimeError("custody-path-identity-changed-after-owner-probe")
+        staging = source.parent / f".{source.name}.custody-purge-{receipt_path.stem[:16]}"
+        if staging.exists() or staging.is_symlink():
+            raise RuntimeError("custody-purge-staging-exists")
+        receipt = _write_state(
+            receipt_path,
+            receipt,
+            state="verified",
+            phase="verify",
+            result={
+                "identity": asdict(expected),
+                "custody_plan_sha256": custody_plan_sha256,
+                "custody_content_sha256": custody_content_sha256,
+                "staging": str(staging),
+                "owner": None,
+            },
+        )
+        phase = "isolate"
+        receipt = _write_state(receipt_path, receipt, state="applying", phase=phase)
+        os.rename(source, staging)
+        if source.exists() or source.is_symlink():
+            raise RuntimeError("custody-purge-source-remains")
+        flags = os.O_RDONLY | os.O_DIRECTORY
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        staging_fd = os.open(staging, flags)
+        try:
+            isolated = os.fstat(staging_fd)
+            if (isolated.st_dev, isolated.st_ino) != (expected.device, expected.inode):
+                raise RuntimeError("custody-purge-isolated-identity-mismatch")
+            phase = "purge"
+            receipt = _write_state(receipt_path, receipt, state="applying", phase=phase)
+            _purge_directory_fd(staging_fd)
+        finally:
+            os.close(staging_fd)
+        os.rmdir(staging)
+        if staging.exists() or staging.is_symlink():
+            raise RuntimeError("custody-purge-staging-remains")
+        completed = _write_state(
+            receipt_path,
+            receipt,
+            state="completed",
+            phase="verify-final",
+            result={**dict(receipt.get("result") or {}), "purged": True},
+        )
+        return {**completed, "receipt_path": str(receipt_path)}
+    except WorktreeAbandonmentError:
+        raise
+    except Exception as exc:
+        _raise_crash(
+            receipt_path,
+            receipt,
+            phase=phase,
+            code="custody-path-purge-denied",
+            detail=str(exc),
+        )
+
+
 def capture_lock_identity(lock_path: Path) -> LockIdentity:
     """Capture the exact regular zero-byte lock identity for a later approved removal."""
 
@@ -496,11 +641,13 @@ def remove_stable_zero_byte_lock(
 
 
 __all__ = [
+    "CustodyPathIdentity",
     "LockIdentity",
     "WORKTREE_ABANDONMENT_SCHEMA",
     "WorktreeAbandonmentError",
     "capture_lock_identity",
     "detach_registered_worktree",
+    "purge_custody_proven_path",
     "quarantine_path",
     "remove_stable_zero_byte_lock",
 ]
