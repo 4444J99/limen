@@ -200,6 +200,80 @@ def test_open_cold_file_denies_retirement(tmp_path: Path) -> None:
     assert cold.exists()
 
 
+def test_active_cwd_directory_denies_descendant_retirement(tmp_path: Path) -> None:
+    now = time.time()
+    active = tmp_path / "session"
+    nested = active / "nested"
+    nested.mkdir(parents=True)
+    cold_files = (active / "one.jsonl", nested / "two.jsonl")
+    for cold in cold_files:
+        cold.write_bytes(b"old")
+        _set_age(cold, days=9, now=now)
+    plan = plan_retention(tmp_path, now=now)
+    packer = EncryptedAtomPacker(tmp_path / "encrypted", KEY)
+    result = atomize_file_tree(plan, packer)
+    packs = list(packer.close())
+    receipt = MetabolismReceipt(
+        schema="limen.agent_state_metabolism.v1",
+        run_id="run",
+        source=result.source,
+        atom_count=result.atom_count,
+        logical_sha256=result.logical_sha256,
+        packs=packs,
+        git_remote="organvm/arca",
+        git_commit="a" * 40,
+        git_receipt_commit="b" * 40,
+        external_chunks=[packs[0].chunks[0]],
+        restorations=[
+            RestoreProof(scope="git-sample", passed=True),
+            RestoreProof(scope="git-full-manifest", passed=True),
+            RestoreProof(scope="external-full", passed=True),
+        ],
+    )
+
+    with pytest.raises(RuntimeError, match="active"):
+        retire_cold_files(receipt, plan, open_probe=lambda _root: {active.resolve()})
+    assert all(cold.exists() for cold in cold_files)
+
+
+def test_active_sibling_prefix_does_not_block_retirement(tmp_path: Path) -> None:
+    now = time.time()
+    active = tmp_path / "session"
+    active.mkdir()
+    sibling = tmp_path / "session-old"
+    sibling.mkdir()
+    cold = sibling / "old.jsonl"
+    cold.write_bytes(b"old")
+    _set_age(cold, days=9, now=now)
+    plan = plan_retention(tmp_path, now=now)
+    packer = EncryptedAtomPacker(tmp_path / "encrypted", KEY)
+    result = atomize_file_tree(plan, packer)
+    packs = list(packer.close())
+    receipt = MetabolismReceipt(
+        schema="limen.agent_state_metabolism.v1",
+        run_id="run",
+        source=result.source,
+        atom_count=result.atom_count,
+        logical_sha256=result.logical_sha256,
+        packs=packs,
+        git_remote="organvm/arca",
+        git_commit="a" * 40,
+        git_receipt_commit="b" * 40,
+        external_chunks=[packs[0].chunks[0]],
+        restorations=[
+            RestoreProof(scope="git-sample", passed=True),
+            RestoreProof(scope="git-full-manifest", passed=True),
+            RestoreProof(scope="external-full", passed=True),
+        ],
+    )
+
+    deleted = retire_cold_files(receipt, plan, open_probe=lambda _root: {active.resolve()})
+
+    assert deleted == 1
+    assert not cold.exists()
+    assert active.exists()
+
+
 def test_cloud_plan_never_selects_placeholder(tmp_path: Path) -> None:
     materialized = tmp_path / "materialized.mov"
     materialized.write_bytes(b"local")
@@ -305,8 +379,10 @@ def test_cloud_eviction_retains_non_evictable_finder_metadata(tmp_path: Path) ->
     assert remaining == {metadata.resolve()}
 
 
-def test_cloud_eviction_denies_open_file(tmp_path: Path) -> None:
-    materialized = tmp_path / "materialized.mov"
+def test_cloud_eviction_denies_active_cwd_ancestor(tmp_path: Path) -> None:
+    active = tmp_path / "session"
+    active.mkdir()
+    materialized = active / "materialized.mov"
     materialized.write_bytes(b"local")
     plan = plan_cloud_materializations(tmp_path, materialized_probe=lambda _path: True)
     packer = EncryptedAtomPacker(tmp_path / "encrypted", KEY)
@@ -334,6 +410,6 @@ def test_cloud_eviction_denies_open_file(tmp_path: Path) -> None:
         evict_cloud_materializations(
             receipt,
             plan,
-            open_probe=lambda _root: {materialized.resolve()},
+            open_probe=lambda _root: {active.resolve()},
             materialized_probe=lambda _path: True,
         )

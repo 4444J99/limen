@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,17 @@ def _is_lower_hex(value: object, length: int) -> bool:
     return (
         isinstance(value, str) and len(value) == length and all(character in "0123456789abcdef" for character in value)
     )
+
+
+def _create_private_parents(parent: Path) -> None:
+    missing: list[Path] = []
+    current = parent
+    while not current.exists():
+        missing.append(current)
+        current = current.parent
+    for directory in reversed(missing):
+        directory.mkdir(mode=0o700)
+        directory.chmod(0o700)
 
 
 @dataclass(frozen=True)
@@ -227,9 +239,17 @@ class MetabolismReceipt:
         return asdict(self)
 
     def write(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
+        _create_private_parents(path.parent)
         payload = json.dumps(self.as_dict(), indent=2, sort_keys=True) + "\n"
-        path.write_text(payload, encoding="utf-8")
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            os.fchmod(descriptor, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                descriptor = -1
+                handle.write(payload)
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
 
     def require_capture_stable(self) -> None:
         if not self.source.stable:

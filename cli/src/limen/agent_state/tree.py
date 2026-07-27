@@ -8,7 +8,7 @@ import sqlite3
 import subprocess
 import tempfile
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -328,6 +328,17 @@ def open_files_under(root: Path) -> set[Path]:
     }
 
 
+def _active_path_conflicts(selected: Iterable[Path], active: Iterable[Path]) -> set[Path]:
+    """Return selected paths that are active or descend from an active directory."""
+
+    active_paths = tuple(path.resolve() for path in active)
+    return {
+        candidate
+        for candidate in selected
+        if any(candidate.is_relative_to(active_path) for active_path in active_paths)
+    }
+
+
 def retire_cold_files(
     receipt: MetabolismReceipt,
     plan: RetentionPlan,
@@ -340,7 +351,7 @@ def retire_cold_files(
     require_plan_matches_source(plan, receipt.source)
     opened = open_probe(plan.root)
     selected = {(plan.root / relative).resolve() for relative in plan.cold_paths}
-    conflicts = selected & opened
+    conflicts = _active_path_conflicts(selected, opened)
     if conflicts:
         raise RuntimeError(f"captured cold file is active: {len(conflicts)} open path(s)")
     deleted = 0
@@ -394,7 +405,7 @@ def evict_cloud_materializations(
     planned = tuple((plan.root / relative).resolve() for relative in plan.cold_paths)
     retained = tuple(path for path in planned if path.name in NON_EVICTABLE_CLOUD_NAMES)
     selected = tuple(path for path in planned if path.name not in NON_EVICTABLE_CLOUD_NAMES)
-    conflicts = set(selected) & opened
+    conflicts = _active_path_conflicts(selected, opened)
     if conflicts:
         raise RuntimeError(f"captured CloudKit file is active: {len(conflicts)} open path(s)")
     allocated_before = sum(path.stat().st_blocks * 512 for path in selected)
