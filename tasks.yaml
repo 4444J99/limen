@@ -160433,7 +160433,7 @@ tasks:
   workstream: 'substrate'
   priority: 'critical'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'failed'
   labels:
   - 'always-working'
   - 'receipt-first'
@@ -160485,4 +160485,13 @@ tasks:
     conduct_run_id: 'run-152f7eccf8d53c83bca290d3b36faa51'
     conduct_lease_id: 'lease-383-152f7eccf8d53c83'
     conduct_generation: 383
-  updated: '2026-07-27T06:06:34.178Z'
+  - timestamp: '2026-07-27T12:40:15.289Z'
+    agent: 'jules'
+    session_id: 'run-152f7eccf8d53c83bca290d3b36faa51'
+    status: 'failed'
+    output: 'Conduct lease lease-383-152f7eccf8d53c83 reached its hard deadline'
+    conduct_event_id: 'conduct:run-152f7eccf8d53c83bca290d3b36faa51:383:expired'
+    conduct_run_id: 'run-152f7eccf8d53c83bca290d3b36faa51'
+    conduct_lease_id: 'lease-383-152f7eccf8d53c83'
+    conduct_generation: 383
+  updated: '2026-07-27T12:40:15.289Z'
