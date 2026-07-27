@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import sqlite3
+import stat
 import subprocess
 from pathlib import Path
 
@@ -109,6 +111,30 @@ def _receipt(source: Path, *, external_passed: bool = True) -> MetabolismReceipt
             RestoreProof(scope="external-full", passed=external_passed),
         ],
     )
+
+
+def test_metabolism_receipt_write_uses_private_modes(tmp_path: Path) -> None:
+    source = tmp_path / "opencode.db"
+    _database(source)
+    receipt = _receipt(source)
+    private_parent = tmp_path / "private"
+    nested_parent = private_parent / "nested"
+    path = nested_parent / "receipt.json"
+
+    previous_umask = os.umask(0)
+    try:
+        receipt.write(path)
+    finally:
+        os.umask(previous_umask)
+
+    assert stat.S_IMODE(private_parent.stat().st_mode) == 0o700
+    assert stat.S_IMODE(nested_parent.stat().st_mode) == 0o700
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+    path.chmod(0o644)
+    receipt.write(path)
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
 
 
 def test_unmounted_external_custody_fails_closed(tmp_path: Path) -> None:
