@@ -2,8 +2,12 @@
 set -euo pipefail
 
 # Test fixtures must derive behavior from their local setup, never from the
-# operator's credentials, signing helpers, ignore files, or interactive editor.
-unset LIMEN_API_TOKEN LIMEN_OWNER_TOKEN LIMEN_CLIENT_TOKEN
+# operator's credentials, active workstream identity, signing helpers, ignore
+# files, or interactive editor. Scrub the namespace dynamically so a newly
+# introduced Limen runtime variable cannot silently become test input.
+while IFS= read -r name; do
+  unset "$name"
+done < <(compgen -A variable LIMEN_)
 export GIT_CONFIG_GLOBAL=/dev/null
 export GIT_CONFIG_SYSTEM=/dev/null
 # Git's default global ignore lives under XDG independently of gitconfig.
