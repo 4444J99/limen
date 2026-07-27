@@ -93,11 +93,7 @@ def _missing_capability_sets(
             or active_leases < 0
         ):
             raise CampaignSupervisorError("keeper capability catalog contains an invalid session")
-        if (
-            raw.get("healthy") is True
-            and raw.get("accepting_work") is True
-            and active_leases < concurrency
-        ):
+        if raw.get("healthy") is True and raw.get("accepting_work") is True and active_leases < concurrency:
             available.append(frozenset(raw_capabilities))
     required = {packet.required_capabilities for packet in packets}
     return [
@@ -144,9 +140,7 @@ def exact_remote_main(root: Path) -> dict[str, str]:
     if not _SHA_RE.fullmatch(head) or not _SHA_RE.fullmatch(remote):
         raise CampaignSupervisorError("local or remote default-branch identity is malformed")
     if head != remote:
-        raise CampaignSupervisorError(
-            f"campaign checkout is not exact remote default: head={head} remote={remote}"
-        )
+        raise CampaignSupervisorError(f"campaign checkout is not exact remote default: head={head} remote={remote}")
     if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
         raise CampaignSupervisorError("campaign checkout is not clean")
     return {
