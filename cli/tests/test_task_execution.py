@@ -104,6 +104,7 @@ def test_task_execution_paths_reject_keeper_projection_authority():
 def test_local_keeper_start_is_reserved_once_and_idempotent(tmp_path, monkeypatch):
     keeper = LocalConductClient(tmp_path / "conduct.sqlite")
     adapter = FakeAdapter()
+    monkeypatch.setattr("limen.conduct.broker.utc_now", lambda: NOW)
     monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda _repo: BASE)
 
     first = start_task_execution(
