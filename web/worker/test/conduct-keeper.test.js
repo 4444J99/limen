@@ -229,6 +229,77 @@ test("conduct auth fails closed without a principal registry and derives identit
   assert.equal("bearer" in auth.principal, false);
 });
 
+test("task-run lookup reuses one broker-owned execution and rejects ambiguous active runs", async () => {
+  const codex = session("codex");
+  const jules = session("jules", { capabilities: ["code", "review"] });
+  const { service, store } = await serviceWith([codex, jules]);
+  const first = await service.call("submit", {
+    packet: await packet({
+      workId: "task-run-one",
+      conductor: codex.identity,
+      preferredAgent: "jules",
+      taskId: "TASK-RUN",
+    }),
+  });
+
+  assert.deepEqual(await service.call("task_run", { task_id: "MISSING" }), {
+    schema_version: "limen.conduct_task_run.v1",
+    task_id: "MISSING",
+    found: false,
+  });
+  assert.deepEqual(await service.call("task_run", { task_id: "TASK-RUN" }), {
+    schema_version: "limen.conduct_task_run.v1",
+    task_id: "TASK-RUN",
+    found: true,
+    run_id: first.run_id,
+    root_run_id: first.root_run_id,
+    status: "reserved",
+    executor_session_id: jules.session_id,
+    exact_base: null,
+    receipt_count: 0,
+    updated_at: NOW.toISOString(),
+  });
+
+  const state = store.snapshot();
+  const duplicate = structuredClone(state.runs[first.run_id]);
+  duplicate.run_id = "run-ambiguous-task";
+  duplicate.root_run_id = "run-ambiguous-task";
+  state.runs[duplicate.run_id] = duplicate;
+  await store.save(state);
+  await assert.rejects(
+    service.call("task_run", { task_id: "TASK-RUN" }),
+    /multiple active conduct runs/,
+  );
+});
+
+test("task-run HTTP route exposes the bounded lookup to conductor principals", async () => {
+  const durable = Object.create(ConductKeeperDurableObject.prototype);
+  durable.env = {};
+  const calls = [];
+  durable.service = {
+    async call(operation, payload) {
+      calls.push([operation, payload]);
+      return {
+        schema_version: "limen.conduct_task_run.v1",
+        task_id: payload.task_id,
+        found: false,
+      };
+    },
+  };
+  const response = await durable.route(
+    new Request("https://limen.example/api/conduct/tasks/HTTP-TASK/run"),
+    principalMeta("route-conductor", "codex", ["conductor"]),
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    schema_version: "limen.conduct_task_run.v1",
+    task_id: "HTTP-TASK",
+    found: false,
+  });
+  assert.deepEqual(calls, [["task_run", { task_id: "HTTP-TASK" }]]);
+});
+
 test("principal-bound executor claims are recoverable and secret from conductors", async () => {
   const store = new MemoryConductStore();
   const service = new SerializedConductService(store, {
