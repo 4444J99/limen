@@ -55,6 +55,23 @@ Accepted archive statuses and redaction reviews are code-defined in
 `not_required_remote_only` only when the worktree/root is clean, idle, and
 already preserved by its merged remote/default lifecycle.
 
+Generated estate-audit failed-checkout roots have one additional, plan-bound
+path. Pass both `--estate-custody-root` and `--estate-custody-plan-sha`; the
+reaper independently performs a full restoration check, rediscovers the
+current generated-root denominator, and requires its exact plan digest and
+root records to match the receipt. Only roots whose empty index and working
+payloads are covered by that receipt may become
+`custody-restored+idle` candidates. Active-process ownership, Git locks, Agy
+ownership, and the ordinary minimum-idle gate still take precedence.
+
+The candidate manifest includes the public custody plan/content digests and
+counts, so `--apply --expected-plan-sha` binds the physical action to that
+exact proof. Apply repeats the full restoration and discovery checks before
+moving anything. A wildcard acceptance event (`"root":"*"`) is valid only for
+`custody-restored+idle` and only when both its `custody_plan_sha256` and
+`custody_content_sha256` equal the live proof. It never authorizes another
+reason or custody plan.
+
 Pushed-but-unmerged branches and open PRs are not a removal class. They stay as
 `not-merged-to-default` until the PR is merged or the local patch is proven
 patch-equivalent to the remote default branch.

@@ -75,17 +75,28 @@ if str(SCRIPT_DIR) not in sys.path:
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 
-from reap_acceptance import (  # noqa: E402
-    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
-    has_required_acceptance_proof,
+from limen.estate_audit_custody import (
+    EstateAuditCustodyError,
 )
-from limen.worktree_abandonment import (  # noqa: E402
+from limen.estate_audit_custody import (
+    discover_plan as discover_estate_custody_plan,
+)
+from limen.estate_audit_custody import (
+    verify_receipt as verify_estate_custody_receipt,
+)
+from limen.worktree_abandonment import (
     WorktreeAbandonmentError,
     detach_registered_worktree,
     quarantine_path,
 )
-from limen.worktree_debt import is_generated_log_shell  # noqa: E402
-from limen.worktree_roots import iter_worktree_targets  # noqa: E402
+from limen.worktree_debt import is_generated_log_shell
+from limen.worktree_roots import iter_worktree_targets
+from reap_acceptance import (
+    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
+)
+from reap_acceptance import (
+    has_required_acceptance_proof,
+)
 
 HOME = os.environ.get("HOME", "/Users/4jp")
 
@@ -133,8 +144,11 @@ def _option_value(name: str) -> str:
 
 
 EXPECTED_PLAN_SHA = _option_value("--expected-plan-sha")
+ESTATE_CUSTODY_ROOT = _option_value("--estate-custody-root")
+ESTATE_CUSTODY_PLAN_SHA = _option_value("--estate-custody-plan-sha")
 REMOTE_MERGED_LANES = {"remote-merged"}
 REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
+CUSTODY_RESTORED_REASON = "custody-restored+idle"
 ACCEPTED_ARCHIVE_STATUSES = {
     "verified",
     "remote_merged_receipt_verified",
@@ -427,6 +441,60 @@ def load_reclaim_acceptance():
     return events
 
 
+def load_estate_custody_context() -> dict[str, object] | None:
+    """Verify one exact external custody plan and expose only its public reclaim proof.
+
+    The custody override is deliberately limited to failed-checkout roots whose
+    working payloads are present in the fully restored receipt. Indexed roots
+    continue through the ordinary clean/remote lifecycle gates.
+    """
+
+    if not ESTATE_CUSTODY_ROOT and not ESTATE_CUSTODY_PLAN_SHA:
+        return None
+    if not ESTATE_CUSTODY_ROOT or not ESTATE_CUSTODY_PLAN_SHA:
+        raise EstateAuditCustodyError("custody-arguments-incomplete")
+    if len(ESTATE_CUSTODY_PLAN_SHA) != 64 or any(
+        character not in "0123456789abcdef" for character in ESTATE_CUSTODY_PLAN_SHA
+    ):
+        raise EstateAuditCustodyError("invalid-custody-plan-sha")
+
+    receipt = verify_estate_custody_receipt(
+        Path(ESTATE_CUSTODY_ROOT),
+        ESTATE_CUSTODY_PLAN_SHA,
+        full_restore=True,
+        max_seconds=900,
+    )
+    current = discover_estate_custody_plan(LIMEN_ROOT)
+    if current.plan_sha256 != ESTATE_CUSTODY_PLAN_SHA:
+        raise EstateAuditCustodyError("custody-current-plan-mismatch")
+    if receipt.get("roots") != current.private_payload()["roots"]:
+        raise EstateAuditCustodyError("custody-current-roots-mismatch")
+
+    restored_paths: set[Path] = set()
+    for root in receipt.get("roots") or []:
+        if not isinstance(root, dict) or int(root.get("index_entry_count", -1)) != 0:
+            continue
+        try:
+            restored_paths.add(Path(str(root["path"])).resolve(strict=True))
+        except (KeyError, OSError) as exc:
+            raise EstateAuditCustodyError("custody-root-unavailable") from exc
+    failed_checkout_count = int(receipt.get("failed_checkout_root_count", -1))
+    if not restored_paths or failed_checkout_count != len(restored_paths):
+        raise EstateAuditCustodyError("custody-failed-checkout-coverage-mismatch")
+
+    return {
+        "paths": frozenset(restored_paths),
+        "proof": {
+            "schema": "limen.worktree_reclaim_estate_custody.v1",
+            "plan_sha256": ESTATE_CUSTODY_PLAN_SHA,
+            "content_sha256": str(receipt.get("content_sha256") or ""),
+            "root_count": int(receipt.get("root_count") or 0),
+            "failed_checkout_root_count": failed_checkout_count,
+            "restoration_passed": receipt.get("restoration_passed") is True,
+        },
+    }
+
+
 STANDING_ACCEPTANCE = os.environ.get("LIMEN_RECLAIM_STANDING_ACCEPTANCE", "1") != "0"
 # PUSHED-REAP POLICY (LIMEN_RECLAIM_PUSHED_OK, declared in parameters.yaml). DEFAULT ON —
 # a clean, inactive worktree whose HEAD is
@@ -571,7 +639,13 @@ def quarantine_orphan(d: Path, stamp: str) -> tuple[bool, str]:
     return True, str(dest)
 
 
-def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:
+def reclaim_accepted(
+    path: Path,
+    action: str,
+    reason: str,
+    acceptance_events,
+    estate_custody_proof: dict[str, object] | None = None,
+) -> tuple[bool, str]:
     if STANDING_ACCEPTANCE and reason in STANDING_ACCEPTANCE_REASONS:
         return True, "standing-grant-2026-07-09"
     try:
@@ -579,7 +653,18 @@ def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) ->
     except OSError:
         resolved = str(path)
     for event in reversed(acceptance_events):
-        if event.get("root") != path.name:
+        root = event.get("root")
+        wildcard_custody = root == "*" and reason == CUSTODY_RESTORED_REASON
+        if root != path.name and not wildcard_custody:
+            continue
+        if reason == CUSTODY_RESTORED_REASON:
+            if not estate_custody_proof:
+                continue
+            if event.get("custody_plan_sha256") != estate_custody_proof.get("plan_sha256"):
+                continue
+            if event.get("custody_content_sha256") != estate_custody_proof.get("content_sha256"):
+                continue
+        elif root == "*":
             continue
         if event.get("accepted") is not True:
             continue
@@ -646,7 +731,14 @@ def worktree_lock_reason(path: Path) -> str | None:
     return None
 
 
-def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, source: str = ""):
+def classify(
+    d: Path,
+    now: float,
+    min_age_h: float,
+    preservation_receipts=None,
+    source: str = "",
+    estate_custody_paths: frozenset[Path] | set[Path] | None = None,
+):
     """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue,
     quarantine-orphan, skip}. quarantine-orphan MOVES (never deletes) a dead-gitdir orphan."""
     preservation_receipts = preservation_receipts or {}
@@ -682,7 +774,17 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, 
     age_h = (now - d.stat().st_mtime) / 3600.0
     if age_h < min_age_h:
         return "skip", f"active(<{min_age_h:g}h, age={age_h:.1f}h)"
-    if git(["status", "--porcelain"], d).stdout.strip():
+    status = git(["status", "--porcelain"], d)
+    if status.returncode != 0:
+        return "skip", "status-unavailable"
+    if status.stdout.strip():
+        try:
+            custody_restored = d.resolve() in (estate_custody_paths or set())
+        except OSError:
+            custody_restored = False
+        if custody_restored:
+            is_wt = (d / ".git").is_file()
+            return ("remove-worktree" if is_wt else "remove-clone"), CUSTODY_RESTORED_REASON
         return "skip", "dirty"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
     if receipt_remote_merged(d, preservation_receipts):
@@ -750,9 +852,20 @@ def build_candidate_manifest(
     now: float,
     preservation_receipts: dict,
     reclaim_acceptance: list[dict],
+    estate_custody_context: dict[str, object] | None = None,
 ) -> tuple[dict, str, list[tuple[str, str]], list[str]]:
     """Return the canonical, bounded, accepted candidate set and its digest."""
 
+    custody_paths = (
+        estate_custody_context.get("paths", frozenset())
+        if estate_custody_context
+        else frozenset()
+    )
+    custody_proof = (
+        estate_custody_context.get("proof")
+        if estate_custody_context
+        else None
+    )
     candidates: list[dict[str, str]] = []
     skipped: list[tuple[str, str]] = []
     for directory, min_age_h, source in dirs:
@@ -762,6 +875,7 @@ def build_candidate_manifest(
             min_age_h,
             preservation_receipts,
             source=source,
+            estate_custody_paths=custody_paths,
         )
         if action == "skip":
             skipped.append((directory.name, reason))
@@ -771,6 +885,7 @@ def build_candidate_manifest(
             action,
             reason,
             reclaim_acceptance,
+            estate_custody_proof=custody_proof,
         )
         if not accepted:
             skipped.append((directory.name, accept_reason))
@@ -793,6 +908,8 @@ def build_candidate_manifest(
         "max_reclaim": MAX_REMOVE,
         "candidates": selected,
     }
+    if custody_proof:
+        manifest["estate_custody"] = custody_proof
     canonical = json.dumps(
         manifest,
         ensure_ascii=False,
@@ -843,11 +960,32 @@ def main():
     if HELP:
         print(
             "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] "
-            "[--generated-only] [--expected-plan-sha SHA256]\n\n"
+            "[--generated-only] [--expected-plan-sha SHA256] "
+            "[--estate-custody-root PATH --estate-custody-plan-sha SHA256]\n\n"
             "Dry-run by default. Use --check --json for a canonical candidate manifest, "
-            "then --apply --expected-plan-sha SHA256 to re-probe and remove only that plan."
+            "then --apply --expected-plan-sha SHA256 to re-probe and remove only that plan. "
+            "The estate-custody pair admits only exact fully restored failed-checkout roots."
         )
         return 0
+
+    try:
+        estate_custody_context = load_estate_custody_context()
+    except EstateAuditCustodyError as exc:
+        if JSON_OUT:
+            print(
+                json.dumps(
+                    {
+                        "mode": "CUSTODY-BLOCKED",
+                        "apply": APPLY,
+                        "failed": [{"root": "estate-custody", "reason": exc.code}],
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(f"reclaim [CUSTODY-BLOCKED]: {exc.code}")
+        return 2
 
     targets = iter_worktree_targets(LIMEN_ROOT)
     if not targets:
@@ -892,6 +1030,7 @@ def main():
         now,
         preservation_receipts,
         reclaim_acceptance,
+        estate_custody_context,
     )
     generated_reclaim = {"enabled": False, "cleaned": [], "failed": []}
     removed: list[tuple[str, str]] = []
@@ -907,6 +1046,15 @@ def main():
                     f"plan-sha-mismatch:expected={EXPECTED_PLAN_SHA}:actual={plan_sha256}",
                 )
             )
+        if not failed and estate_custody_context:
+            try:
+                refreshed_custody = load_estate_custody_context()
+            except EstateAuditCustodyError as exc:
+                failed.append(("estate-custody", exc.code))
+            else:
+                if refreshed_custody != estate_custody_context:
+                    failed.append(("estate-custody", "custody-proof-drift"))
+                estate_custody_context = refreshed_custody
         if failed:
             if JSON_OUT:
                 _print_json_result(
@@ -928,18 +1076,30 @@ def main():
         for planned in manifest["candidates"]:
             directory = Path(planned["path"])
             _ACTIVE_PROCESS_CWDS = active_process_cwds()
+            custody_paths = (
+                estate_custody_context.get("paths", frozenset())
+                if estate_custody_context
+                else frozenset()
+            )
+            custody_proof = (
+                estate_custody_context.get("proof")
+                if estate_custody_context
+                else None
+            )
             action, reason = classify(
                 directory,
                 time.time(),
                 next(min_age_h for path, min_age_h, _source in dirs if path == directory),
                 preservation_receipts,
                 source=planned["source"],
+                estate_custody_paths=custody_paths,
             )
             accepted, accept_reason = reclaim_accepted(
                 directory,
                 action,
                 reason,
                 reclaim_acceptance,
+                estate_custody_proof=custody_proof,
             )
             if not accepted or action != planned["action"] or reason != planned["reason"]:
                 detail = accept_reason if not accepted else f"candidate-drift:{action}:{reason}"
