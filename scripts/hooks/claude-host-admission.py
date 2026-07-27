@@ -56,6 +56,8 @@ def _is_claude_process(command: str) -> bool:
     executable = Path(executable_path).name
     if executable in {"claude", "claude-code"}:
         return True
+    if "/.local/share/claude/versions/" in executable_path:
+        return True
     if "/applications/claude.app/contents/" in executable_path:
         return True
     if executable not in {"node", "nodejs"}:
