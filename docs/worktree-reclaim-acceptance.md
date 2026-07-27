@@ -3,9 +3,10 @@
 `scripts/reclaim-worktrees.py --apply` detaches registered worktrees and moves
 standalone worktree-like clones or generated residue into recoverable
 same-filesystem quarantine only after the loss-free reclaim gate passes.
-The exact-plan `custody-restored+idle` class is the sole exception: after a
-second full restoration, current-plan, path-identity, and active-owner check,
-the canonical abandonment helper purges that exact local copy instead of
+Exact-plan `custody-restored+idle` roots and clean remote-preserved standalone
+clones are the bounded exceptions: after current-plan, path-identity,
+active-owner, and external-restoration or exact-remote-HEAD checks, the
+canonical abandonment helper purges that exact local copy instead of
 quarantining it.
 Every physical action is mediated by `limen.worktree_abandonment.v1`.
 Registered worktrees use non-forced Git detach; every other root uses one atomic

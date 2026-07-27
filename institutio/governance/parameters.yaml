@@ -2795,6 +2795,18 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Min idle hours before a registered sibling worktree can be reclaimed. Covers sibling Limen branches such as limen-main-trench-* that are not inside the central worktree roots."
+  LIMEN_RECLAIM_WORKSPACE_CHECKOUTS:
+    default: "0"
+    env: LIMEN_RECLAIM_WORKSPACE_CHECKOUTS
+    self_update: none
+    owner: limen-daemon
+    note: "Explicit bounded switch for lifecycle discovery to include Git checkout roots themselves under LIMEN_RECLAIM_WORKSPACE_ROOTS. Clean exact-HEAD remote-preserved clones may then be purged locally; dirty, unpushed, active, locked, and non-Git roots remain excluded."
+  LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H:
+    default: 24
+    env: LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H
+    self_update: none
+    owner: limen-daemon
+    note: "Min idle hours for a workspace checkout root when LIMEN_RECLAIM_WORKSPACE_CHECKOUTS=1."
   LIMEN_RECLAIM_MAIN_REPOS:
     default: "$LIMEN_ROOT:$HOME/Workspace/4444J99/portvs"
     env: LIMEN_RECLAIM_MAIN_REPOS

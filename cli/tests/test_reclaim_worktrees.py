@@ -192,6 +192,16 @@ def test_candidate_manifest_digest_is_order_independent_and_bounded(tmp_path: Pa
         "reclaim_accepted",
         lambda *_args, **_kwargs: (True, "accepted"),
     )
+    monkeypatch.setattr(
+        reclaim,
+        "git",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 0, "a" * 40, ""),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "remote_refs_containing_head",
+        lambda *_args, **_kwargs: ("refs/remotes/origin/main",),
+    )
 
     left = reclaim.build_candidate_manifest(
         [(second, 0, "test"), (first, 0, "test")],
@@ -237,6 +247,16 @@ def test_apply_requires_matching_plan_digest_before_abandonment(tmp_path: Path, 
         reclaim,
         "classify",
         lambda *_args, **_kwargs: ("remove-clone", "clean+merged+idle"),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "git",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 0, "a" * 40, ""),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "remote_refs_containing_head",
+        lambda *_args, **_kwargs: ("refs/remotes/origin/main",),
     )
     monkeypatch.setattr(
         reclaim,
@@ -793,6 +813,19 @@ def test_reclaim_classifies_git_locked_worktree_before_candidate_selection(tmp_p
 
     assert action == "skip"
     assert reason == "locked:active prompt-corpus"
+
+
+def test_reclaim_preserves_clone_that_owns_registered_sibling_worktrees(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    main = _committed_repo(tmp_path, "main")
+    sibling = tmp_path / "sibling"
+    subprocess.run(["git", "worktree", "add", "-qb", "sibling", str(sibling)], cwd=main, check=True)
+
+    action, reason = reclaim.classify(main, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "registered-worktree-owner"
+    assert sibling in reclaim.registered_sibling_worktrees(main)
 
 
 def test_reclaim_keeps_pushed_unmerged_when_pushed_ok_off(tmp_path: Path, monkeypatch) -> None:

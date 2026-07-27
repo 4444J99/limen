@@ -277,6 +277,35 @@ def test_custody_purge_identity_or_owner_drift_preserves_source(tmp_path: Path) 
     assert source.exists()
 
 
+def test_remote_purge_requires_exact_remote_head_proof(tmp_path: Path) -> None:
+    source = tmp_path / "remote-clone"
+    source.mkdir()
+    (source / "tracked.txt").write_text("remote copy\n", encoding="utf-8")
+    raw = source.stat()
+    resolved = source.resolve()
+    identity = abandonment.CustodyPathIdentity(
+        path=str(resolved),
+        path_sha256=hashlib.sha256(str(resolved).encode()).hexdigest(),
+        device=raw.st_dev,
+        inode=raw.st_ino,
+        mtime_ns=raw.st_mtime_ns,
+    )
+
+    result = abandonment.purge_remote_proven_path(
+        source,
+        identity,
+        reason="clean+pushed+idle",
+        head="a" * 40,
+        remote_refs=("refs/remotes/origin/work/example",),
+        receipt_root=tmp_path / "receipts",
+        owner_probe=lambda _path: None,
+    )
+
+    assert result["result"]["proof"]["kind"] == "remote-head"
+    assert result["result"]["purged"] is True
+    assert not source.exists()
+
+
 def test_stable_zero_byte_lock_removal_requires_exact_unowned_identity(tmp_path: Path) -> None:
     lock = tmp_path / "index.lock"
     lock.touch()
