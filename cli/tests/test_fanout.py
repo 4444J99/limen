@@ -4,7 +4,7 @@ import hashlib
 import json
 import subprocess
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -15,8 +15,10 @@ from limen.cli import main
 from limen.conduct.client import LocalConductClient
 from limen.conduct.models import (
     AgentIdentityV1,
+    CampaignReceiptV1,
     CheckEvidenceV1,
     ConductorSessionV1,
+    ExecutorAttemptV1,
     PredicateEvidenceV1,
     RunReceiptV1,
 )
@@ -33,12 +35,14 @@ from limen.fanout import (
     start_manifest,
 )
 from limen.fanout_executor import (
+    ExecutionLane,
     FanoutExecutionError,
     ProviderLaunch,
     _assert_topic_branch,
     _campaign_receipt,
     _working_tree_changed_paths,
     register_execution_sessions,
+    settle_exhausted_attempts,
 )
 
 
@@ -178,7 +182,7 @@ def test_campaign_manifest_requires_typed_leaf_context_and_compiles_it_to_packet
 
 def test_campaign_executor_receipt_bounds_output_and_routes_blocker() -> None:
     campaign = campaign_context()
-    campaign["output_ceiling_bytes"] = 4
+    campaign["output_ceiling_bytes"] = 3
 
     summary, receipt = _campaign_receipt(
         {"campaign": campaign},
@@ -187,10 +191,10 @@ def test_campaign_executor_receipt_bounds_output_and_routes_blocker() -> None:
         blocked=True,
     )
 
-    assert summary == "éé"
+    assert summary == "é"
     assert receipt is not None
-    assert receipt.output.bytes_emitted == 4
-    assert receipt.output.sha256 == hashlib.sha256("éé".encode()).hexdigest()
+    assert receipt.output.bytes_emitted == 2
+    assert receipt.output.sha256 == hashlib.sha256("é".encode()).hexdigest()
     assert receipt.output.truncated is True
     assert receipt.blocker is not None
     assert receipt.blocker.owner == campaign["owner"]
@@ -200,6 +204,73 @@ def test_campaign_executor_receipt_bounds_output_and_routes_blocker() -> None:
     unchanged, absent = _campaign_receipt({}, "legacy output", actual_value=1)
     assert unchanged == "legacy output"
     assert absent is None
+
+
+def test_campaign_deadline_emits_wait_relay_successor_boundary() -> None:
+    executor = AgentIdentityV1(agent="runtime", surface="remote", session_id="remote-deadline")
+    attempt = ExecutorAttemptV1(
+        attempt_id="attempt-deadline",
+        run_id="run-deadline",
+        lease_id="lease-deadline",
+        lease_generation=1,
+        executor=executor,
+        adapter="fake-remote",
+        provider_run_id="provider-deadline",
+        provider_run_url="https://executor.example/deadline",
+        status="running",
+    )
+    packet = {
+        "deadline": (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat(),
+        "retry": {"max_attempts": 2, "transient_only": True},
+        "spend": {"unit": "runs", "limit": 2},
+        "execution": {"owner_repository": "organvm/limen", "exact_base": BASE},
+        "predicate": "pytest -q cli/tests/test_fanout.py",
+        "receipt_target": "github:organvm/limen:pull-request:successor",
+        "campaign": campaign_context(),
+    }
+
+    class DeadlineClient:
+        reported: RunReceiptV1 | None = None
+
+        def graph(self, root_run_id: str) -> dict:
+            assert root_run_id == "run-root"
+            return {
+                "nodes": [
+                    {
+                        "run_id": "run-deadline",
+                        "status": "running",
+                        "executor_session_id": executor.session_id,
+                        "receipts": [],
+                        "attempts": [attempt.model_dump(mode="json")],
+                        "packet": packet,
+                    }
+                ]
+            }
+
+        def claim(self, lease_id: str, generation: int) -> dict:
+            return {
+                "lease_id": lease_id,
+                "generation": generation,
+                "capability_token": "test-token",  # allow-secret: inert test fixture
+            }
+
+        def report(self, lease_id: str, capability: str, receipt: RunReceiptV1, *, generation: int) -> dict:
+            del lease_id, capability, generation
+            self.reported = receipt
+            return {"mutation_authorized": True}
+
+    client = DeadlineClient()
+    lane = ExecutionLane(primary=FakeExecutionAdapter(), adapters=(), client=client)
+
+    assert settle_exhausted_attempts(
+        "run-root",
+        client=client,
+        execution_lanes={executor.session_id: lane},
+    ) == [{"mutation_authorized": True}]
+    assert client.reported is not None
+    assert client.reported.campaign is not None
+    assert client.reported.campaign.boundary == "wait_relay"
+    assert client.reported.campaign.successor_capsule == packet["receipt_target"]
 
 
 def session(
@@ -528,6 +599,8 @@ def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
     monkeypatch,
 ) -> None:
     payload = manifest_payload()
+    payload["campaign"] = campaign_context()
+    payload["leaves"][0]["campaign"] = campaign_context()
     second = deepcopy(payload["leaves"][0])
     second.update(
         {
@@ -616,6 +689,7 @@ def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
                 ),
             ),
             spend={"runs": 1},
+            campaign=_campaign_receipt(node["packet"], work_id, actual_value=1)[1],
             outcome="succeeded",
         )
         keeper.report(
@@ -629,6 +703,14 @@ def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
     assert terminal["unharvested"] == []
     assert terminal["by_status"] == {"succeeded": 3}
     assert terminal["receipt_count"] == 3
+    terminal_graph = keeper.graph(started["root_run_id"])
+    root = next(item for item in terminal_graph["nodes"] if item["packet"]["work_id"] == "campaign")
+    root_receipt = root["receipts"][0]
+    assert root_receipt["spend"] == {"runs": 2}
+    assert CampaignReceiptV1.model_validate(root_receipt["campaign"]).actual_value == 2
+    assert root_receipt["campaign"]["boundary"] == "settled"
+    assert root_receipt["campaign"]["blocker"] is None
+    assert root_receipt["campaign"]["successor_capsule"] is None
     after_terminal = start_manifest(
         manifest,
         client=keeper,

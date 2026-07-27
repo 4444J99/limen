@@ -275,6 +275,15 @@ def test_campaign_contracts_are_bounded_and_legacy_packets_remain_readable() -> 
     conductor = identity("codex")
     legacy = packet(work_id="legacy-campaignless", conductor=conductor)
     assert legacy.campaign is None
+    normalized = WorkPacketV1.model_validate(
+        legacy.model_dump(mode="json")
+        | {
+            "predicate": "  pytest -q  ",
+            "receipt_target": "  github:organvm/limen:pull-request:legacy-campaignless  ",
+        }
+    )
+    assert normalized.predicate == "pytest -q"
+    assert normalized.receipt_target == "github:organvm/limen:pull-request:legacy-campaignless"
 
     with pytest.raises(ValueError, match="value/cost work loan"):
         packet(
@@ -314,6 +323,40 @@ def test_campaign_contracts_are_bounded_and_legacy_packets_remain_readable() -> 
             campaign=campaign_receipt(),
             outcome="blocked",
         )
+    settled = campaign_receipt().model_copy(update={"boundary": "settled"})
+    for outcome in ("failed", "succeeded"):
+        with pytest.raises(ValueError, match="successful outcome and predicate"):
+            RunReceiptV1(
+                receipt_id=f"receipt-campaign-settled-{outcome}",
+                run_id=f"run-campaign-settled-{outcome}",
+                lease_id=f"lease-campaign-settled-{outcome}",
+                lease_generation=1,
+                executor=conductor,
+                predicate=PredicateEvidenceV1(command="pytest -q", exit_code=1),
+                campaign=settled,
+                outcome=outcome,
+            )
+
+
+def test_duplicate_work_rejects_changed_campaign_contract() -> None:
+    codex = session("codex")
+    broker = broker_with(codex)
+    original = packet(
+        work_id="campaign-identity-original",
+        work_key="campaign-identity",
+        conductor=codex.identity,
+        campaign=campaign_packet(),
+    )
+    broker.submit(original, now=NOW)
+    changed = original.model_copy(
+        update={
+            "work_id": "campaign-identity-alias",
+            "campaign": campaign_packet().model_copy(update={"next_action": "Route a different successor"}),
+        }
+    )
+
+    with pytest.raises(ConductConflict, match="changed its identity, authority, or contract"):
+        broker.submit(changed, now=NOW)
 
 
 def test_broker_reserve_and_claim_fail_closed_with_stable_underwriting_denial() -> None:
