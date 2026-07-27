@@ -83,6 +83,55 @@ async function sha256Text(value) {
   return [...new Uint8Array(raw)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function fanoutCampaignEvidence(root, children, outcome) {
+  const packet = root.packet || {};
+  const campaign = packet.campaign;
+  if (campaign === null || typeof campaign !== "object") return null;
+  const childCampaigns = [];
+  const spend = {};
+  for (const child of children) {
+    for (const receipt of child.receipts || []) {
+      if (receipt.campaign && typeof receipt.campaign === "object") {
+        childCampaigns.push(receipt.campaign);
+      }
+      for (const [unit, value] of Object.entries(receipt.spend || {})) {
+        if (typeof value === "number" && Number.isFinite(value)) {
+          spend[unit] = (spend[unit] || 0) + value;
+        }
+      }
+    }
+  }
+  const outputs = childCampaigns.map((item) => item.output);
+  const ceiling = Number(campaign.output_ceiling_bytes);
+  const outputSummary = outputs.map((item) => item.sha256).join("");
+  const emittedSummary = outputSummary.slice(0, ceiling);
+  return {
+    spend,
+    campaign: {
+      schema_version: "limen.campaign_receipt.v1",
+      campaign_id: campaign.campaign_id,
+      actual_value: childCampaigns.reduce((total, item) => total + Number(item.actual_value || 0), 0),
+      value_unit: "predicate_passes",
+      output: {
+        schema_version: "limen.campaign_output_evidence.v1",
+        output_ceiling_bytes: ceiling,
+        bytes_emitted: encoder.encode(emittedSummary).length,
+        lines_emitted: emittedSummary ? emittedSummary.split(/\r?\n/).length : 0,
+        sha256: await sha256Text(emittedSummary),
+        truncated: outputSummary.length > ceiling || outputs.some((item) => Boolean(item.truncated)),
+      },
+      blocker: outcome === "succeeded" ? null : {
+        schema_version: "limen.campaign_blocker.v1",
+        owner: campaign.owner,
+        failed_predicate: campaign.failed_predicate,
+        next_action: campaign.next_action,
+      },
+      successor_capsule: outcome === "succeeded" ? null : packet.receipt_target,
+      boundary: outcome === "succeeded" ? "settled" : "wait_relay",
+    },
+  };
+}
+
 async function capabilityToken(secret, leaseId, generation, principalId) {
   if (typeof secret !== "string" || secret.length < 24) {
     throw new ConductError("conduct capability secret is not configured", 503);
@@ -429,7 +478,8 @@ export class ConductKernel {
         && stableStringify(stored.resource_claims) === stableStringify(packet.resource_claims)
         && stored.predicate === packet.predicate
         && stored.receipt_target === packet.receipt_target
-        && stableStringify(stored.work_loan) === stableStringify(packet.work_loan);
+        && stableStringify(stored.work_loan) === stableStringify(packet.work_loan)
+        && stableStringify(stored.campaign) === stableStringify(packet.campaign);
       if (!samePayload) {
         throw new ConductError("work id/key was reused with different immutable hashes or contract");
       }
@@ -1211,6 +1261,7 @@ export class ConductKernel {
     if (!children.length || children.some((child) =>
       ["waiting", "reserved", "running", "stop_requested"].includes(child.status))) return;
     const outcome = children.every((child) => child.status === "succeeded") ? "succeeded" : "blocked";
+    const campaignEvidence = await fanoutCampaignEvidence(root, children, outcome);
     root.status = outcome;
     root.updated_at = this.timestamp;
     root.receipts = [{
@@ -1221,6 +1272,7 @@ export class ConductKernel {
       child_runs: [...root.children],
       mutation_authorized: true,
       accepted_at: this.timestamp,
+      ...(campaignEvidence || {}),
     }];
     this.recordEvent("fanout.campaign_settled", { run_id: rootRunId, outcome });
   }
