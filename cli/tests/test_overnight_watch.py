@@ -36,6 +36,17 @@ def _fresh_module(tmp_path, monkeypatch, **env):
     return module
 
 
+def _clear_heartbeat_budget_env(monkeypatch):
+    for name in (
+        "LIMEN_LOOP_MAX",
+        "LIMEN_LANE_TIMEOUT",
+        "LIMEN_DISPATCH_CEILING",
+        "LIMEN_WATCHDOG_OVERHEAD_SEC",
+        "LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+
 def _minimal_ok_snapshot():
     return {
         "status": "ok",
@@ -47,6 +58,69 @@ def _minimal_ok_snapshot():
         "stale_tick_count": 0,
         "log_age_sec": 0,
     }
+
+
+def test_max_log_age_defaults_to_complete_heartbeat_cadence(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+
+    module = _fresh_module(tmp_path, monkeypatch)
+
+    assert module.MAX_LOG_AGE_SEC == 4800
+
+
+def test_complete_healthy_cadence_does_not_raise_stale_alert(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = {
+        "launchd": {"ok": True, "state": "active"},
+        "log_age_sec": 1800,
+        "heartbeat": {"latest_tick": {"timestamp": "2026-07-27T08:00:00+00:00"}},
+        "stale_tick_count": 0,
+        "worker_count": 0,
+        "heartbeat_child_count": 0,
+    }
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "ok"
+    assert alerts == []
+
+    snapshot["log_age_sec"] = module.MAX_LOG_AGE_SEC + 1
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {"heartbeat-log-stale"}
+
+
+def test_max_log_age_tracks_live_heartbeat_components(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+
+    module = _fresh_module(
+        tmp_path,
+        monkeypatch,
+        LIMEN_LOOP_MAX=120,
+        LIMEN_LANE_TIMEOUT=240,
+        LIMEN_DISPATCH_CEILING=360,
+        LIMEN_WATCHDOG_OVERHEAD_SEC=480,
+    )
+
+    assert module.MAX_LOG_AGE_SEC == 960
+
+
+def test_explicit_max_log_age_override_wins(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+
+    module = _fresh_module(
+        tmp_path,
+        monkeypatch,
+        LIMEN_LOOP_MAX=120,
+        LIMEN_LANE_TIMEOUT=240,
+        LIMEN_DISPATCH_CEILING=360,
+        LIMEN_WATCHDOG_OVERHEAD_SEC=480,
+        LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC=777,
+    )
+
+    assert module.MAX_LOG_AGE_SEC == 777
 
 
 def _launchd_output(*, state="active", async_env="1", lanes="auto"):
