@@ -198,9 +198,7 @@ def test_pre_tool_use_read_only_returns_before_owner_ancestry(
     monkeypatch.setattr(
         hook,
         "codex_owner_pid",
-        lambda: (_ for _ in ()).throw(
-            AssertionError("read-only admission must not resolve owner ancestry")
-        ),
+        lambda: (_ for _ in ()).throw(AssertionError("read-only admission must not resolve owner ancestry")),
     )
 
     output = hook.handle(
@@ -221,9 +219,7 @@ def test_pre_tool_use_mutation_still_fails_without_owner_ancestry(
     monkeypatch.setattr(
         hook,
         "codex_owner_pid",
-        lambda: (_ for _ in ()).throw(
-            ValueError("durable Codex owner ancestor cannot be proven")
-        ),
+        lambda: (_ for _ in ()).throw(ValueError("durable Codex owner ancestor cannot be proven")),
     )
 
     with pytest.raises(ValueError, match="owner ancestor cannot be proven"):
