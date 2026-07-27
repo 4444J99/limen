@@ -9,11 +9,11 @@ import re
 import secrets
 import stat
 import subprocess
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Literal, NoReturn
-
+from typing import Any, Literal, NoReturn
 
 WORKTREE_ABANDONMENT_SCHEMA = "limen.worktree_abandonment.v1"
 AbandonmentAction = Literal[
@@ -24,6 +24,7 @@ AbandonmentAction = Literal[
 ]
 AbandonmentState = Literal["planned", "verified", "applying", "completed", "crashed"]
 OwnerProbe = Callable[[Path], int | None]
+RootPrepare = Callable[[Path], None]
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 OBJECT_ID_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 
@@ -56,7 +57,7 @@ class WorktreeAbandonmentError(RuntimeError):
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _run_git(repo: Path, *args: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -430,6 +431,8 @@ def _purge_proven_path(
     proof: dict[str, Any],
     receipt_root: Path,
     owner_probe: OwnerProbe | None = None,
+    root_prepare: RootPrepare | None = None,
+    retain_empty_root: bool = False,
 ) -> dict[str, Any]:
     """Purge one exact directory after its typed owner proves replacement custody."""
 
@@ -452,6 +455,14 @@ def _purge_proven_path(
             raise RuntimeError(code)
         if not _custody_identity_matches(source, expected):
             raise RuntimeError("proven-path-identity-changed-after-owner-probe")
+        if root_prepare is not None:
+            root_prepare(source)
+            if not _custody_identity_matches(source, expected):
+                raise RuntimeError("proven-path-identity-changed-after-root-prepare")
+            owner = (owner_probe or _default_cwd_owner_probe)(source)
+            if owner is not None:
+                code = "owner-probe-unavailable" if owner == -1 else f"active-process-cwd:{owner}"
+                raise RuntimeError(code)
         staging = source.parent / f".{source.name}.proven-purge-{receipt_path.stem[:16]}"
         if staging.exists() or staging.is_symlink():
             raise RuntimeError("proven-purge-staging-exists")
@@ -463,10 +474,39 @@ def _purge_proven_path(
             result={
                 "identity": asdict(expected),
                 "proof": proof,
-                "staging": str(staging),
+                "staging": None if retain_empty_root else str(staging),
                 "owner": None,
+                "retained_empty_root": retain_empty_root,
             },
         )
+        if retain_empty_root:
+            phase = "purge"
+            receipt = _write_state(receipt_path, receipt, state="applying", phase=phase)
+            flags = os.O_RDONLY | os.O_DIRECTORY
+            if hasattr(os, "O_NOFOLLOW"):
+                flags |= os.O_NOFOLLOW
+            source_fd = os.open(source, flags)
+            try:
+                isolated = os.fstat(source_fd)
+                if (isolated.st_dev, isolated.st_ino) != (expected.device, expected.inode):
+                    raise RuntimeError("proven-purge-root-identity-mismatch")
+                _purge_directory_fd(source_fd)
+            finally:
+                os.close(source_fd)
+            if not source.is_dir() or any(source.iterdir()):
+                raise RuntimeError("proven-purge-root-not-empty")
+            completed = _write_state(
+                receipt_path,
+                receipt,
+                state="completed",
+                phase="verify-final",
+                result={
+                    **dict(receipt.get("result") or {}),
+                    "purged": True,
+                    "retained_empty_root": True,
+                },
+            )
+            return {**completed, "receipt_path": str(receipt_path)}
         phase = "isolate"
         receipt = _write_state(receipt_path, receipt, state="applying", phase=phase)
         os.rename(source, staging)
@@ -517,6 +557,7 @@ def purge_custody_proven_path(
     custody_content_sha256: str,
     receipt_root: Path,
     owner_probe: OwnerProbe | None = None,
+    root_prepare: RootPrepare | None = None,
 ) -> dict[str, Any]:
     """Purge one exact directory only after full external restoration proof."""
 
@@ -534,6 +575,37 @@ def purge_custody_proven_path(
         },
         receipt_root=receipt_root,
         owner_probe=owner_probe,
+        root_prepare=root_prepare,
+    )
+
+
+def purge_custody_proven_contents(
+    source: Path,
+    expected: CustodyPathIdentity,
+    *,
+    reason: str,
+    custody_plan_sha256: str,
+    custody_content_sha256: str,
+    receipt_root: Path,
+    owner_probe: OwnerProbe | None = None,
+) -> dict[str, Any]:
+    """Empty one exact directory after restoration proof while retaining its shell."""
+
+    if not SHA256_RE.fullmatch(custody_plan_sha256) or not SHA256_RE.fullmatch(custody_content_sha256):
+        raise ValueError("custody-purge-digest-invalid")
+    return _purge_proven_path(
+        source,
+        expected,
+        reason=reason,
+        allowed_reasons=frozenset({"custody-restored+idle"}),
+        proof={
+            "kind": "external-restoration",
+            "custody_plan_sha256": custody_plan_sha256,
+            "custody_content_sha256": custody_content_sha256,
+        },
+        receipt_root=receipt_root,
+        owner_probe=owner_probe,
+        retain_empty_root=True,
     )
 
 
@@ -703,12 +775,13 @@ def remove_stable_zero_byte_lock(
 
 
 __all__ = [
+    "WORKTREE_ABANDONMENT_SCHEMA",
     "CustodyPathIdentity",
     "LockIdentity",
-    "WORKTREE_ABANDONMENT_SCHEMA",
     "WorktreeAbandonmentError",
     "capture_lock_identity",
     "detach_registered_worktree",
+    "purge_custody_proven_contents",
     "purge_custody_proven_path",
     "purge_remote_proven_path",
     "quarantine_path",

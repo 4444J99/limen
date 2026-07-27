@@ -19,10 +19,10 @@ import shutil
 import stat
 import subprocess
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 HOME = Path(os.environ.get("HOME", "/Users/4jp")).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
@@ -36,6 +36,7 @@ class CacheSpec:
 
 
 CACHE_SPECS = (
+    CacheSpec("~/.cache/codex-runtimes", ()),
     CacheSpec("~/.cache/npm", ("npm", "npx", "node")),
     CacheSpec("~/.cache/pnpm", ("pnpm", "node")),
     CacheSpec("~/.cache/pre-commit", ("pre-commit",)),
@@ -46,6 +47,8 @@ CACHE_SPECS = (
     CacheSpec("~/.local/share/pnpm/store", ("pnpm", "node")),
     CacheSpec("~/Library/Caches/ms-playwright", ("playwright",)),
     CacheSpec("~/Library/Caches/ms-playwright-go", ("playwright",)),
+    CacheSpec("~/Library/Caches/go-build", ("go",)),
+    CacheSpec("~/Library/Caches/Homebrew", ("brew",)),
     CacheSpec("~/Library/Caches/node-gyp", ("node-gyp", "npm", "node")),
     CacheSpec("~/Library/Caches/pip", ("pip",)),
     CacheSpec("~/Library/Caches/pip-audit", ("pip-audit",)),

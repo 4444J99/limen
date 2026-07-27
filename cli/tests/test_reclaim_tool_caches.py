@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "reclaim-tool-caches.py"
 
@@ -76,6 +75,32 @@ def test_active_process_excludes_cache_from_candidate_manifest(monkeypatch, tmp_
     assert checked["blocked_count"] == 1
     assert checked["rows"][0]["classification"] == "active-process"
     assert checked["rows"][0]["active_pids"] == [44]
+    assert cache.exists()
+
+
+def test_empty_process_token_allowlist_still_rejects_process_cwd(monkeypatch, tmp_path):
+    mod = _load("reclaim_tool_caches_empty_tokens_uut")
+    cache = tmp_path / ".cache" / "codex-runtimes"
+    cache.mkdir(parents=True)
+    (cache / "bundle").write_text("generated runtime bundle", encoding="utf-8")
+    monkeypatch.setattr(mod, "HOME", tmp_path)
+    monkeypatch.setattr(
+        mod,
+        "CACHE_SPECS",
+        (mod.CacheSpec("~/.cache/codex-runtimes", ()),),
+    )
+    monkeypatch.setattr(
+        mod,
+        "process_snapshot",
+        lambda: ([{"pid": 45, "command": "unrelated", "cwd": str(cache)}], ""),
+    )
+    monkeypatch.setattr(mod, "LOG_PATH", tmp_path / "reclaim.jsonl")
+
+    checked = mod.check_payload()
+
+    assert checked["candidate_count"] == 0
+    assert checked["rows"][0]["classification"] == "active-process"
+    assert checked["rows"][0]["active_pids"] == [45]
     assert cache.exists()
 
 
