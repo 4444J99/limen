@@ -466,7 +466,7 @@ def test_canonical_task_projection_uses_rest_ref_and_sha_pinned_raw_blob(monkeyp
 
     def fake_urlopen(request, *, timeout):
         requested.append((request.full_url, timeout))
-        if "api.github.com" in request.full_url:
+        if tabularius.urllib.parse.urlsplit(request.full_url).hostname == "api.github.com":
             return Response(f'{{"object":{{"sha":"{head}"}}}}'.encode())
         return Response(document)
 

@@ -77,8 +77,10 @@ def task_execution_paths(task: Task) -> tuple[str, ...]:
     raw_paths = extras.get("allowed_paths")
     if isinstance(raw_paths, (list, tuple)):
         values.extend(str(value) for value in raw_paths if str(value).strip())
-    contract = task.workstream_contract if isinstance(task.workstream_contract, dict) else {}
-    authority = contract.get("authority") if isinstance(contract.get("authority"), dict) else {}
+    raw_contract = task.workstream_contract
+    contract: dict[str, Any] = raw_contract if isinstance(raw_contract, dict) else {}
+    raw_authority = contract.get("authority")
+    authority: dict[str, Any] = raw_authority if isinstance(raw_authority, dict) else {}
     contract_paths = authority.get("path_prefixes")
     if isinstance(contract_paths, (list, tuple)):
         values.extend(str(value) for value in contract_paths if str(value).strip())
