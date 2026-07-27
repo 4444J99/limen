@@ -535,6 +535,21 @@ sensors:
         severity: advisory
         escalation: "a new high/critical npm advisory is red on ci.yml (web/app or web/worker) — the effector pins the patched transitive via overrides and opens a fix PR once LIMEN_NPM_AUDIT_AUTOFIX_APPLY=1 arms it (env lever, read internally like LIMEN_MAIN_GREEN_APPLY; merge-policy gates web/app until CI green); until armed it is detection-only. See scripts/npm-audit-autofix.py"
 
+  pip-audit-autofix:
+    section: "0g3b"
+    title: "pip-audit autofix — the Python tier: limen's own core (cli/web-api/mcp) advisories detected each beat, never an unscanned ecosystem"
+    gate: LIMEN_PIP_AUDIT_AUTOFIX
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # No cadence — every metabolize beat, like its npm sibling (a [metabolize] sensor WITH a cadence
+    # fires in neither beat path — the launch-agent-liveness incident). pip-audit --no-deps on the
+    # pinned lockfiles is fast; uv components are exported first.
+    steps:
+      - command: "python3 scripts/pip-audit-autofix.py"
+        severity: advisory
+        escalation: "a Python dependency advisory is present in cli/, web/api/, or mcp/ (ci.yml now runs pip-audit too) — the effector applies the minimal forward pin (uv lock upgrade / requirements rewrite), re-audits to verify it cleared, and opens a fix PR once LIMEN_PIP_AUDIT_AUTOFIX_APPLY=1 arms it (env lever, read internally); until armed it is detection-only. No-fix residue defers to Dependabot. See scripts/pip-audit-autofix.py"
+
   launch-agent-liveness:
     section: "0g4"
     title: "launch-agent liveness — critical organs (mint, tunnel, creds, ianva) must stay alive"
