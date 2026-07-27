@@ -14,7 +14,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-SCHEMA = "limen.omega_owner_receipt.v1"
+SCHEMA: Literal["limen.omega_owner_receipt.v1"] = "limen.omega_owner_receipt.v1"
 OUTPUT_CEILING_BYTES = 65_536
 RECEIPT_CEILING_BYTES = 16_384
 MAX_FRESHNESS_SECONDS = 604_800
@@ -110,7 +110,13 @@ def build_owner_receipt(
     observed_at: datetime | None = None,
 ) -> OmegaOwnerReceiptV1:
     normalized_exit = normalize_exit_code(returncode, truncated=truncated)
-    status = {0: "PASS", 1: "FAIL", 77: "SKIP"}[normalized_exit]
+    status: Literal["PASS", "FAIL", "SKIP"]
+    if normalized_exit == 0:
+        status = "PASS"
+    elif normalized_exit == 77:
+        status = "SKIP"
+    else:
+        status = "FAIL"
     bounded_stdout = stdout[:OUTPUT_CEILING_BYTES]
     remaining = OUTPUT_CEILING_BYTES - len(bounded_stdout)
     bounded_stderr = stderr[:remaining]
