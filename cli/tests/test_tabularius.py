@@ -391,6 +391,8 @@ def test_drain_archives_only_broker_acknowledged_ticket(tmp_path, monkeypatch):
     assert (_rejected(board) / "unsupported.json").exists()
     assert pending_count(board) == 0
     assert fake.tasks["T-1"]["status"] == "dispatched"
+    assert result.projected_tasks["T-1"]["status"] == "dispatched"
+    assert result.projected_tasks["T-1"] == fake.tasks["T-1"]
     assert board.read_bytes() == before
 
 
@@ -433,6 +435,58 @@ def test_remote_registration_identity_is_bound_into_compatibility_packet():
     assert fake.packets[0].conductor.agent == "codex"
     assert fake.packets[0].conductor.surface == "credential-principal"
     assert fake.packets[0].initiator == fake.packets[0].conductor
+
+
+def test_canonical_task_projection_uses_rest_ref_and_sha_pinned_raw_blob(monkeypatch):
+    head = "f" * 40
+    document = tabularius.yaml.safe_dump(
+        {
+            "version": "1.0",
+            "tasks": [
+                _task("T-REMOTE", status="dispatched"),
+                _task("T-AFTER", status="open"),
+            ],
+        },
+        sort_keys=False,
+    ).encode()
+    requested = []
+
+    class Response:
+        def __init__(self, body):
+            self.body = body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return self.body
+
+    def fake_urlopen(request, *, timeout):
+        requested.append((request.full_url, timeout))
+        if "api.github.com" in request.full_url:
+            return Response(f'{{"object":{{"sha":"{head}"}}}}'.encode())
+        return Response(document)
+
+    monkeypatch.setattr(tabularius.urllib.request, "urlopen", fake_urlopen)
+
+    projection = tabularius.fetch_canonical_task_projection("T-REMOTE", timeout=17)
+
+    assert projection.repository == "organvm/limen"
+    assert projection.branch == "tabularius/board-projection"
+    assert projection.head_sha == head
+    assert projection.task is not None
+    assert projection.task.id == "T-REMOTE"
+    assert projection.task.status == "dispatched"
+    assert requested == [
+        (
+            "https://api.github.com/repos/organvm/limen/git/ref/heads/tabularius%2Fboard-projection",
+            17,
+        ),
+        (f"https://raw.githubusercontent.com/organvm/limen/{head}/tasks.yaml", 17),
+    ]
 
 
 def test_drain_defers_all_tickets_when_broker_is_unavailable(tmp_path, monkeypatch):
