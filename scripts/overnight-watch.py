@@ -37,6 +37,11 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SOURCE_ROOT / "cli" / "src"))
 
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
+from limen.conduct.client import HttpConductClient, client_from_env  # noqa: E402
+from limen.conduct.task_execution import (  # noqa: E402
+    TaskExecutionError,
+    start_task_execution,
+)
 from limen.dispatch import agent_can_run_task  # noqa: E402
 from limen.execution_contract import execution_contract_hash, execution_contract_payload  # noqa: E402
 from limen.intake import validate_intake_contract  # noqa: E402
@@ -45,6 +50,8 @@ from limen.models import Task, dispatch_session_id  # noqa: E402
 from limen.tabularius import (  # noqa: E402
     INTENT_UPSERT,
     Ticket,
+    drain_once,
+    fetch_canonical_task_projection,
     new_ticket_id,
     pending_upsert_patches,
     submit_task_upsert,
@@ -946,41 +953,123 @@ def _owner_contract_reconcile_ticket(task: Task) -> dict[str, Any]:
     return {"status": "reconcile_submitted", "ticket_name": path.name, "fields": sorted(patch)}
 
 
-def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str, Any]:
+def _drain_and_dispatch_one_owner_task(
+    task: Task,
+    owner_state: str,
+    canonical_task: Task | None = None,
+) -> dict[str, Any]:
     """Drain/launch one exact packet, or return a named fail-closed blocker."""
 
-    existing_async = _async_task_state(task.id)
-    if existing_async:
-        if existing_async.get("status") in {"already_running", "result_pending_harvest"}:
-            return {**existing_async, "owner_state": owner_state, "targeted_launch_count": 0}
-        return _active_owner_outcome(task, owner_state)
-    if owner_state in {"dispatched", "in_progress"}:
-        return _active_owner_outcome(task, owner_state)
+    try:
+        conduct_client = client_from_env()
+    except Exception as exc:
+        return {
+            "status": "blocked",
+            "blocker": _named_lane_blocker(
+                "overnight-owner-conduct-unavailable",
+                f"authenticated conduct is unavailable for exact owner packet {task.id}: {exc}",
+                owner=str(task.repo or "organvm/limen"),
+                failed_predicate=str(task.predicate or ""),
+                next_command="PYTHONPATH=cli/src limen conduct capabilities",
+            ),
+        }
+    remote_conduct = isinstance(conduct_client, HttpConductClient)
+    if not remote_conduct:
+        existing_async = _async_task_state(task.id)
+        if existing_async:
+            if existing_async.get("status") in {"already_running", "result_pending_harvest"}:
+                return {**existing_async, "owner_state": owner_state, "targeted_launch_count": 0}
+            return _active_owner_outcome(task, owner_state)
+        if owner_state in {"dispatched", "in_progress"}:
+            return _active_owner_outcome(task, owner_state)
 
     if owner_state == "pending":
-        keeper = run([sys.executable, str(TABULARIUS_SCRIPT)], timeout=120)
-        if keeper.returncode != 0:
+        if remote_conduct:
+            try:
+                keeper_result = drain_once(TASKS_PATH)
+            except Exception as exc:
+                keeper_result = None
+                keeper_error = str(exc)
+            else:
+                keeper_error = keeper_result.note
+            if (
+                keeper_result is None
+                or keeper_result.deferred
+                or keeper_result.rejected
+                or task.id not in keeper_result.projected_tasks
+            ):
+                return {
+                    "status": "blocked",
+                    "blocker": _named_lane_blocker(
+                        "overnight-owner-ticket-drain-failed",
+                        (f"TABVLARIVS returned no canonical receipt for exact owner packet {task.id}: {keeper_error}"),
+                        owner=str(task.repo or "organvm/limen"),
+                        failed_predicate="python3 scripts/check-tabularius.py",
+                        next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                    ),
+                }
+            try:
+                canonical_task = Task.model_validate(keeper_result.projected_tasks[task.id])
+            except ValueError as exc:
+                return {
+                    "status": "blocked",
+                    "blocker": _named_lane_blocker(
+                        "overnight-owner-canonical-task-invalid",
+                        f"keeper receipt for exact owner packet {task.id} is invalid: {exc}",
+                        owner=str(task.repo or "organvm/limen"),
+                        failed_predicate="python3 scripts/validate-task-board.py --tasks tasks.yaml",
+                        next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                    ),
+                }
+        else:
+            keeper = run([sys.executable, str(TABULARIUS_SCRIPT)], timeout=120)
+            if keeper.returncode != 0:
+                return {
+                    "status": "blocked",
+                    "blocker": _named_lane_blocker(
+                        "overnight-owner-ticket-drain-failed",
+                        f"TABVLARIVS could not drain exact owner packet {task.id} (exit {keeper.returncode})",
+                        owner=str(task.repo or "organvm/limen"),
+                        failed_predicate="python3 scripts/check-tabularius.py",
+                        next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                    ),
+                }
+
+    if remote_conduct:
+        if canonical_task is None:
             return {
                 "status": "blocked",
                 "blocker": _named_lane_blocker(
-                    "overnight-owner-ticket-drain-failed",
-                    f"TABVLARIVS could not drain exact owner packet {task.id} (exit {keeper.returncode})",
+                    "overnight-owner-canonical-receipt-missing",
+                    f"exact owner packet {task.id} has no fresh canonical remote task receipt",
                     owner=str(task.repo or "organvm/limen"),
                     failed_predicate="python3 scripts/check-tabularius.py",
                     next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                 ),
             }
-
-    try:
-        board = load_limen_file(TASKS_PATH)
-        pending_ids = {
-            str(patch.get("id"))
-            for patch in pending_upsert_patches(TASKS_PATH)
-            if isinstance(patch, dict) and patch.get("id")
-        }
-        current_state = _owned_task_state(task, board, pending_ids)
-    except Exception:
-        current_state = None
+        if canonical_task.id != task.id or execution_contract_hash(canonical_task) != execution_contract_hash(task):
+            return {
+                "status": "blocked",
+                "blocker": _named_lane_blocker(
+                    "overnight-owner-canonical-contract-mismatch",
+                    f"canonical remote task receipt for {task.id} changed its execution contract",
+                    owner=str(task.repo or "organvm/limen"),
+                    failed_predicate=str(task.predicate or ""),
+                    next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
+                ),
+            }
+        current_state = canonical_task.status
+    else:
+        try:
+            board = load_limen_file(TASKS_PATH)
+            pending_ids = {
+                str(patch.get("id"))
+                for patch in pending_upsert_patches(TASKS_PATH)
+                if isinstance(patch, dict) and patch.get("id")
+            }
+            current_state = _owned_task_state(task, board, pending_ids)
+        except Exception:
+            current_state = None
     if current_state == "pending" or current_state is None:
         return {
             "status": "blocked",
@@ -992,6 +1081,28 @@ def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str
                 failed_predicate="python3 scripts/check-tabularius.py",
                 next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
             ),
+        }
+    if remote_conduct and current_state in {"open", "dispatched", "in_progress"}:
+        try:
+            execution = start_task_execution(canonical_task, client=conduct_client)
+        except TaskExecutionError as exc:
+            return {
+                "status": "blocked",
+                "owner_state": current_state,
+                "targeted_launch_count": 0,
+                "blocker": _named_lane_blocker(
+                    "overnight-owner-conduct-reservation-failed",
+                    str(exc),
+                    owner=str(task.repo or "organvm/limen"),
+                    failed_predicate=str(task.predicate or ""),
+                    next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --json",
+                ),
+            }
+        return {
+            **execution,
+            "execution_mode": "conduct",
+            "owner_state": "dispatched" if execution.get("status") != "result_pending_harvest" else current_state,
+            "next_command": "PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
         }
     if current_state in {"dispatched", "in_progress"}:
         return _active_owner_outcome(task, current_state)
@@ -1281,6 +1392,52 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
                 base["skipped"].append({"task_id": task.id, "gate": local_gate, "reason": local_reason[:300]})
                 continue
         owner_state = _owned_task_state(task, board, pending_ids)
+        canonical_owner_task: Task | None = None
+        try:
+            configured_conduct = client_from_env()
+        except Exception:
+            configured_conduct = None
+        if isinstance(configured_conduct, HttpConductClient):
+            try:
+                projection = fetch_canonical_task_projection(task.id)
+            except Exception as exc:
+                base.update(
+                    {
+                        "status": "blocked",
+                        "blocker": _named_lane_blocker(
+                            "overnight-owner-remote-projection-unavailable",
+                            f"canonical remote task lookup failed for {task.id}: {exc}",
+                            owner=str(task.repo or "organvm/limen"),
+                            failed_predicate="python3 scripts/check-tabularius.py",
+                            next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                        ),
+                    }
+                )
+                return base
+            canonical_owner_task = projection.task
+            if canonical_owner_task is not None:
+                if execution_contract_hash(canonical_owner_task) != execution_contract_hash(task):
+                    base.update(
+                        {
+                            "status": "blocked",
+                            "blocker": _named_lane_blocker(
+                                "overnight-owner-canonical-contract-mismatch",
+                                f"canonical remote task {task.id} changed its execution contract",
+                                owner=str(task.repo or "organvm/limen"),
+                                failed_predicate=str(task.predicate or ""),
+                                next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
+                            ),
+                        }
+                    )
+                    return base
+                owner_state = canonical_owner_task.status
+            else:
+                # The remote publication is authoritative.  A row left behind
+                # in the disposable local projection must not suppress the
+                # canonical upsert that creates this task.  Preserve only an
+                # actual pending inbox ticket, which the drain below can
+                # consume idempotently.
+                owner_state = "pending" if task.id in pending_ids else None
         if owner_state and owner_state not in {"pending", *LANE_SWITCH_ACTIVE_TASK_STATUSES}:
             base["skipped"].append(
                 {
@@ -1292,6 +1449,16 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
             continue
         base["packet"] = _packet_summary(task)
         if not submit:
+            if canonical_owner_task is not None and owner_state in LANE_SWITCH_ACTIVE_TASK_STATUSES:
+                base.update(
+                    {
+                        "status": "would_launch",
+                        "execution_mode": "conduct",
+                        "owner_state": owner_state,
+                        "next_command": "PYTHONPATH=cli/src python3 scripts/overnight-watch.py --json",
+                    }
+                )
+                return base
             if owner_state in {"dispatched", "in_progress"}:
                 base.update(_active_owner_outcome(task, owner_state))
                 if base.get("status") in LANE_SWITCH_GOOD_STATUSES:
@@ -1330,9 +1497,17 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
         if base.get("status") == "blocked":
             return base
         execution_state = str(base.get("owner_state") or ("pending" if base.get("ticket_submitted") else ""))
-        execution = _drain_and_dispatch_one_owner_task(task, execution_state)
+        execution = (
+            _drain_and_dispatch_one_owner_task(task, execution_state)
+            if canonical_owner_task is None
+            else _drain_and_dispatch_one_owner_task(
+                task,
+                execution_state,
+                canonical_task=canonical_owner_task,
+            )
+        )
         base.update(execution)
-        if base.get("status") in LANE_SWITCH_GOOD_STATUSES:
+        if base.get("status") in LANE_SWITCH_GOOD_STATUSES and base.get("execution_mode") != "conduct":
             base["next_command"] = _exact_task_command(task)
         return base
 
@@ -2130,29 +2305,18 @@ def _stream_file_custody(
     path_errors = _trusted_canonical_file_errors(path, label=label)
     if path_errors:
         return empty, path_errors
-    directory_flags = (
-        os.O_RDONLY
-        | getattr(os, "O_DIRECTORY", 0)
-        | getattr(os, "O_NOFOLLOW", 0)
-    )
+    directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
     directory_fd: int | None = None
     file_fd: int | None = None
     try:
         directory_fd = os.open(path.parent, directory_flags)
-        file_flags = (
-            os.O_RDONLY
-            | getattr(os, "O_NOFOLLOW", 0)
-            | getattr(os, "O_NONBLOCK", 0)
-        )
+        file_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
         file_fd = os.open(path.name, file_flags, dir_fd=directory_fd)
         metadata = os.fstat(file_fd)
         if not stat.S_ISREG(metadata.st_mode):
             return empty, [f"{label} is not a regular file"]
         target_size = metadata.st_size if size is None else size
-        if (
-            not _strict_nonnegative_int(target_size)
-            or target_size > metadata.st_size
-        ):
+        if not _strict_nonnegative_int(target_size) or target_size > metadata.st_size:
             return empty, [f"{label} is shorter than its required custody prefix"]
         digest = hashlib.sha256()
         remaining = target_size
@@ -2161,9 +2325,7 @@ def _stream_file_custody(
             while remaining:
                 chunk = handle.read(min(1024 * 1024, remaining))
                 if not chunk:
-                    return empty, [
-                        f"{label} changed while its custody snapshot was read"
-                    ]
+                    return empty, [f"{label} changed while its custody snapshot was read"]
                 digest.update(chunk)
                 remaining -= len(chunk)
         return {
@@ -2205,11 +2367,7 @@ def _prefix_matches(path: Path, custody: dict[str, Any]) -> bool:
     try:
         path.lstat()
     except OSError:
-        return (
-            size == 0
-            and custody.get("present") is False
-            and custody.get("digest") == _sha256_bytes(b"")
-        )
+        return size == 0 and custody.get("present") is False and custody.get("digest") == _sha256_bytes(b"")
     prefix, file_errors = _stream_file_custody(
         path,
         label="prefix source",
@@ -3702,32 +3860,19 @@ def _operator_event_file_snapshot(
     path_errors = _trusted_canonical_file_errors(path, label=label)
     if path_errors:
         return 0, 0, empty, path_errors
-    directory_flags = (
-        os.O_RDONLY
-        | getattr(os, "O_DIRECTORY", 0)
-        | getattr(os, "O_NOFOLLOW", 0)
-    )
+    directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
     directory_fd: int | None = None
     file_fd: int | None = None
     try:
         directory_fd = os.open(path.parent, directory_flags)
-        file_flags = (
-            os.O_RDONLY
-            | getattr(os, "O_NOFOLLOW", 0)
-            | getattr(os, "O_NONBLOCK", 0)
-        )
+        file_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
         file_fd = os.open(path.name, file_flags, dir_fd=directory_fd)
         metadata = os.fstat(file_fd)
         if not stat.S_ISREG(metadata.st_mode):
             return 0, 0, empty, [f"{label} is not a regular file"]
         target_size = metadata.st_size if size is None else size
-        if (
-            not _strict_nonnegative_int(target_size)
-            or target_size > metadata.st_size
-        ):
-            return 0, 0, empty, [
-                f"{label} is shorter than its required custody prefix"
-            ]
+        if not _strict_nonnegative_int(target_size) or target_size > metadata.st_size:
+            return 0, 0, empty, [f"{label} is shorter than its required custody prefix"]
         digest = hashlib.sha256()
         authority_by_occurrence: dict[str, bool] = {}
         journal_errors = 0
@@ -3763,22 +3908,15 @@ def _operator_event_file_snapshot(
                 if not occurrence_id:
                     journal_errors += 1
                     continue
-                if (
-                    occurrence_id in authority_by_occurrence
-                    and revision_of != occurrence_id
-                ):
+                if occurrence_id in authority_by_occurrence and revision_of != occurrence_id:
                     journal_errors += 1
                     continue
                 if revision_of and revision_of not in authority_by_occurrence:
                     journal_errors += 1
                     continue
-                authority_by_occurrence[occurrence_id] = (
-                    occurrence.get("authority") == "operator"
-                )
+                authority_by_occurrence[occurrence_id] = occurrence.get("authority") == "operator"
         if read_error or remaining:
-            return 0, journal_errors, empty, [
-                read_error or f"{label} changed while its snapshot was read"
-            ]
+            return 0, journal_errors, empty, [read_error or f"{label} changed while its snapshot was read"]
         custody = {
             "present": True,
             "size": target_size,
@@ -3909,8 +4047,8 @@ def prompt_authority_snapshot(
             label=f"prompt {name} source",
         )
     ]
-    journal_operator_count, journal_errors, event_custody, event_file_errors = (
-        _operator_event_file_snapshot(paths["events"])
+    journal_operator_count, journal_errors, event_custody, event_file_errors = _operator_event_file_snapshot(
+        paths["events"]
     )
     payloads: dict[str, bytes] = {}
     for name in ("snapshot", "cursor"):
@@ -3942,12 +4080,7 @@ def prompt_authority_snapshot(
     if not operator_valid:
         errors += 1
     validation_ok = bool((snapshot.get("validation") or {}).get("ok"))
-    exact = (
-        not path_errors
-        and not event_file_errors
-        and validation_ok
-        and _prompt_scope_exact(snapshot, cursor)
-    )
+    exact = not path_errors and not event_file_errors and validation_ok and _prompt_scope_exact(snapshot, cursor)
     expected_cursor_digest = str(snapshot.get("source_cursor_digest") or "")
     actual_cursor_digest = _cursor_digest(cursor) if cursor else ""
     if not re.fullmatch(r"[0-9a-f]{64}", expected_cursor_digest) or expected_cursor_digest != actual_cursor_digest:
@@ -3970,12 +4103,7 @@ def prompt_authority_snapshot(
             errors += 1
             exact = False
     source_custody = {
-        name: (
-            event_custody
-            if name == "events"
-            else _file_custody(path_value)
-        )
-        for name, path_value in paths.items()
+        name: (event_custody if name == "events" else _file_custody(path_value)) for name, path_value in paths.items()
     }
     if journal_errors or not operator_valid or journal_operator_count != operator_value:
         errors += max(1, journal_errors)

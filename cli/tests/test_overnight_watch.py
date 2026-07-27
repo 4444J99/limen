@@ -762,6 +762,201 @@ def test_lane_switch_drains_launches_exactly_one_and_is_idempotent(tmp_path, mon
     assert "SECOND" not in first["packet"]["task_id"]
 
 
+def test_remote_lane_switch_uses_canonical_receipt_and_never_legacy_dispatch(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="REMOTE-BROKER", target_agent="jules", priority=1)
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+    expected = module.owner_task_from_item(item)
+    calls = []
+
+    class FakeHttp(module.HttpConductClient):
+        def __init__(self):
+            super().__init__("https://conduct.example", "test-token")
+
+    remote = FakeHttp()
+    monkeypatch.setattr(module, "client_from_env", lambda: remote)
+    monkeypatch.setattr(
+        module,
+        "fetch_canonical_task_projection",
+        lambda _task_id: type(
+            "Projection",
+            (),
+            {"task": None, "head_sha": "f" * 40},
+        )(),
+    )
+
+    def fake_drain(_board):
+        from limen.tabularius import DrainResult
+
+        return DrainResult(
+            pending=1,
+            applied=1,
+            wrote=False,
+            note="broker-committed",
+            projected_tasks={
+                expected.id: expected.model_dump(mode="json", exclude_none=True),
+            },
+        )
+
+    def fake_start(task, *, client):
+        calls.append((task, client))
+        return {
+            "schema_version": "limen.task_execution_start.v1",
+            "status": "launched",
+            "run_id": "run-remote",
+            "root_run_id": "run-remote",
+            "executor_session_id": "renamed-capability-executor",
+            "targeted_launch_count": 1,
+            "executor_wakes": [
+                {
+                    "session_id": "renamed-capability-executor",
+                    "adapter": "capability-runtime",
+                    "status": "woken",
+                }
+            ],
+            "unavailable_adapters": [],
+            "idempotent": False,
+        }
+
+    monkeypatch.setattr(module, "drain_once", fake_drain)
+    monkeypatch.setattr(module, "start_task_execution", fake_start)
+    monkeypatch.setattr(
+        module,
+        "run",
+        lambda args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError(f"remote broker path invoked legacy subprocess: {args}")
+        ),
+    )
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "launched"
+    assert result["execution_mode"] == "conduct"
+    assert result["targeted_launch_count"] == 1
+    assert result["next_command"].endswith("scripts/overnight-watch.py --dry-run --json")
+    assert calls == [(expected, remote)]
+    assert json.loads(module.TASKS_PATH.read_text(encoding="utf-8"))["tasks"] == []
+
+
+def test_remote_existing_task_resumes_from_sha_pinned_projection_without_new_ticket(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="REMOTE-RESUME", target_agent="jules", priority=1)
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+    expected = module.owner_task_from_item(item).model_copy(update={"status": "dispatched"})
+
+    class FakeHttp(module.HttpConductClient):
+        def __init__(self):
+            super().__init__("https://conduct.example", "test-token")
+
+    remote = FakeHttp()
+    monkeypatch.setattr(module, "client_from_env", lambda: remote)
+    monkeypatch.setattr(
+        module,
+        "fetch_canonical_task_projection",
+        lambda task_id: type(
+            "Projection",
+            (),
+            {"task": expected, "head_sha": "e" * 40},
+        )(),
+    )
+    monkeypatch.setattr(
+        module,
+        "drain_once",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("existing canonical task must not emit or drain another upsert")
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "start_task_execution",
+        lambda task, *, client: {
+            "schema_version": "limen.task_execution_start.v1",
+            "status": "already_running",
+            "run_id": "run-existing",
+            "root_run_id": "run-existing",
+            "executor_session_id": "runtime-renamed",
+            "targeted_launch_count": 1,
+            "executor_wakes": [{"session_id": "runtime-renamed", "adapter": "capability-runtime", "status": "woken"}],
+            "unavailable_adapters": [],
+            "idempotent": True,
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "run",
+        lambda args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError(f"remote resume invoked legacy subprocess: {args}")
+        ),
+    )
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "already_running"
+    assert result["owner_state"] == "dispatched"
+    assert result["ticket_count"] == 0
+    assert result["execution_mode"] == "conduct"
+    assert not list((module.LOGS / "tickets" / "inbox").glob("*.json"))
+
+
+def test_remote_missing_task_ignores_stale_local_projection_and_submits_canonical_upsert(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="REMOTE-STALE-LOCAL", target_agent="jules", priority=1)
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+    expected = module.owner_task_from_item(item)
+    module.TASKS_PATH.write_text(
+        json.dumps({"tasks": [expected.model_dump(mode="json", exclude_none=True)]}),
+        encoding="utf-8",
+    )
+    submitted = []
+
+    class FakeHttp(module.HttpConductClient):
+        def __init__(self):
+            super().__init__("https://conduct.example", "test-token")
+
+    remote = FakeHttp()
+    monkeypatch.setattr(module, "client_from_env", lambda: remote)
+    monkeypatch.setattr(
+        module,
+        "fetch_canonical_task_projection",
+        lambda _task_id: type("Projection", (), {"task": None, "head_sha": "d" * 40})(),
+    )
+
+    def fake_submit(task):
+        submitted.append(task)
+        return {
+            "status": "submitted",
+            "ticket_submitted": True,
+            "owner_state": "pending",
+        }
+
+    monkeypatch.setattr(module, "_submit_one_owner_task", fake_submit)
+    monkeypatch.setattr(
+        module,
+        "_drain_and_dispatch_one_owner_task",
+        lambda task, state, canonical_task=None: {
+            "status": "launched",
+            "execution_mode": "conduct",
+            "owner_state": "dispatched",
+            "targeted_launch_count": 1,
+        },
+    )
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "launched"
+    assert result["ticket_count"] == 1
+    assert submitted == [expected]
+
+
 def test_lane_switch_zero_launch_is_named_blocker(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     item = _owner_item(item_id="ZERO")
