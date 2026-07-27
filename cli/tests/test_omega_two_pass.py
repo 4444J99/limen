@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from limen.omega_remediation import load_omega_remediations, remediation_payload
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "omega-two-pass.py"
@@ -35,6 +36,7 @@ def _sensor_payload(rung_id: str = "sensor.dynamic") -> dict:
             {
                 "id": rung_id,
                 "label": "dynamic sensor",
+                "command": "python3 scripts/sensor-input.txt",
                 "semantic_inputs": [{"normalization": "raw", "path": "scripts/sensor-input.txt"}],
                 "tier": "det",
             }
@@ -61,6 +63,7 @@ def proof_root(tmp_path):
     (root / "tasks.yaml").write_text("tasks: []\n", encoding="utf-8")
     (root / "scripts" / "omega.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
     (root / "scripts" / "omega-two-pass.py").write_text("# proof contract\n", encoding="utf-8")
+    (root / "scripts" / "omega-remediation.py").write_text("# remediation contract\n", encoding="utf-8")
     (root / "scripts" / "input.txt").write_text("core input\n", encoding="utf-8")
     (root / "scripts" / "sensor-input.txt").write_text("sensor input\n", encoding="utf-8")
     (root / "scripts" / "beat-sensors.py").write_text(
@@ -116,8 +119,48 @@ print((root / 'institutio/governance/sensor-rungs.json').read_text())
         ],
         "schema": "limen.omega_rung_registry.v1",
     }
+    for rung in core["rungs"]:
+        rung["predicate"] = f"python3 scripts/{rung['id'].replace('.', '-')}.py --check"
     _write_json(root / "institutio" / "governance" / "omega-core-rungs.json", core)
     _write_json(root / "institutio" / "governance" / "sensor-rungs.json", _sensor_payload())
+    _write_json(
+        root / "institutio" / "governance" / "omega-remediations.json",
+        {
+            "schema": "limen.omega_remediation_registry.v1",
+            "defaults": {
+                "authority": {
+                    "schema_version": "limen.authority_envelope.v1",
+                    "actions": ["read"],
+                    "repositories": ["organvm/limen"],
+                    "path_prefixes": ["."],
+                    "external_effects": [],
+                    "may_delegate": False,
+                },
+                "effect": "read",
+                "output_ceiling_bytes": 4096,
+                "receipt_target": "github:organvm/limen:issue:1571",
+                "required_capabilities": ["shell"],
+                "work_loan": {
+                    "schema_version": "limen.work_loan.v1",
+                    "source_origin": "system_debt",
+                    "horizon": "present",
+                    "value_case": "Close one typed strict-Omega predicate.",
+                    "budget_cost": 1,
+                    "owner_surface": "fixture",
+                    "external_deadline": False,
+                    "due_at": None,
+                },
+            },
+            "rungs": [
+                {
+                    "id": rung["id"],
+                    "owner": "fixture-owner",
+                    "next_action": "Run the exact fixture predicate.",
+                }
+                for rung in [*core["rungs"], *_sensor_payload()["rungs"]]
+            ],
+        },
+    )
     _write_json(root / "logs" / "overnight-trial.json", {"generated_at": "one", "verdict": "PASS"})
     _write_json(root / "logs" / "owner.json", {"value": "sealed"})
     prompt_root = root / ".limen-private" / "session-corpus" / "prompt-atoms"
@@ -139,6 +182,7 @@ print((root / 'institutio/governance/sensor-rungs.json').read_text())
 
 def _stamp(root: Path, *, ids: list[str] | None = None, fail: int = 0, skip: int = 0, pass_no: int = 1):
     ids = ids or ["core.input", "core.tasks", "core.trial", "core.owner", "sensor.dynamic"]
+    _rungs, remediations = load_omega_remediations(root)
     verdict = "HOLDS" if fail == 0 and skip == 0 else ("BROKEN" if fail else "INCOMPLETE")
     payload = {
         "contract_hash": "a" * 64,
@@ -153,10 +197,11 @@ def _stamp(root: Path, *, ids: list[str] | None = None, fail: int = 0, skip: int
                 "rung": rung_id,
                 "status": "FAIL" if fail and index == 0 else "SKIP" if skip and index == 0 else "PASS",
                 "tier": "det",
+                "remediation": remediation_payload(remediations[rung_id]),
             }
             for index, rung_id in enumerate(ids)
         ],
-        "schema_version": 2,
+        "schema_version": 3,
         "skip": skip,
         "strict": True,
         "verdict": verdict,
@@ -288,6 +333,7 @@ def test_sensor_add_remove_or_rename_between_passes_fails_closed(proof_root, cha
                 {
                     "id": "sensor.added",
                     "label": "added",
+                    "command": "python3 scripts/sensor-input.txt --added",
                     "semantic_inputs": [{"normalization": "raw", "path": "scripts/sensor-input.txt"}],
                     "tier": "det",
                 }
@@ -298,7 +344,7 @@ def test_sensor_add_remove_or_rename_between_passes_fails_closed(proof_root, cha
             payload = _sensor_payload("sensor.renamed")
         _write_json(path, payload)
 
-    with pytest.raises(module.OmegaProofError, match="rung|registry is empty"):
+    with pytest.raises(module.OmegaProofError, match="rung|registry is empty|remediation"):
         module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", _runner(mutate))
 
 
@@ -311,6 +357,25 @@ def test_fail_or_skip_stamp_is_rejected_even_if_runner_returns_zero(proof_root, 
             proof_root / "logs" / "receipt.json",
             _runner(fail=fail, skip=skip),
         )
+
+
+@pytest.mark.parametrize("mode", ["missing", "tampered"])
+def test_missing_or_tampered_remediation_stamp_cannot_settle(proof_root, mode):
+    module = _mod()
+
+    def run(root: Path, pass_no: int) -> int:
+        _stamp(root, pass_no=pass_no)
+        stamp = root / "logs" / "omega.json"
+        payload = json.loads(stamp.read_text(encoding="utf-8"))
+        if mode == "missing":
+            payload["rungs"][0].pop("remediation")
+        else:
+            payload["rungs"][0]["remediation"]["owner"] = "wrong-owner"
+        _write_json(stamp, payload)
+        return 0
+
+    with pytest.raises(module.OmegaProofError, match="remediation metadata differs"):
+        module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", run)
 
 
 def test_check_detects_tamper_without_rewriting_receipt(proof_root):

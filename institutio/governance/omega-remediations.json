@@ -1,0 +1,189 @@
+{
+  "defaults": {
+    "authority": {
+      "actions": ["read"],
+      "external_effects": [],
+      "may_delegate": false,
+      "path_prefixes": ["."],
+      "repositories": ["organvm/limen"],
+      "schema_version": "limen.authority_envelope.v1"
+    },
+    "effect": "read",
+    "output_ceiling_bytes": 65536,
+    "receipt_target": "github:organvm/limen:issue:1571",
+    "required_capabilities": ["shell"],
+    "work_loan": {
+      "budget_cost": 1,
+      "due_at": null,
+      "external_deadline": false,
+      "horizon": "present",
+      "owner_surface": "github:organvm/limen:issue:1571",
+      "schema_version": "limen.work_loan.v1",
+      "source_origin": "system_debt",
+      "value_case": "Close one strict-Omega predicate without shrinking a declared capability."
+    }
+  },
+  "rungs": [
+    {
+      "id": "core.main-green",
+      "next_action": "Reconstruct the exact remote main and required CI receipts, then owner-route only a changed or failing exact-head predicate.",
+      "owner": "verify"
+    },
+    {
+      "id": "core.enactment",
+      "next_action": "Run the wiring-only enactment audit and route every missing declared gate through the enactment owner.",
+      "owner": "enactment"
+    },
+    {
+      "id": "core.armed-valve",
+      "next_action": "Run the offline armed-valve contract and route every silent-off deliverable capability through its declared valve owner.",
+      "owner": "valves"
+    },
+    {
+      "id": "core.ask-gate",
+      "next_action": "Run the bounded ask audit and owner-route every unbounded, unowned, or non-predicate ask without rewriting task projection state.",
+      "owner": "intake"
+    },
+    {
+      "id": "core.ask-lineage",
+      "next_action": "Validate the current private checkpoint binding and use the guarded checkpoint-rebind owner before any all-source drain.",
+      "owner": "tabularius"
+    },
+    {
+      "id": "core.ship-gate",
+      "next_action": "Run the product reachability predicate and route each failed external artifact to its declared product owner.",
+      "owner": "ship-gate"
+    },
+    {
+      "id": "core.heal-convergence",
+      "next_action": "Run the healer convergence check and route each chronic repeated wall through its existing owner receipt.",
+      "owner": "heal"
+    },
+    {
+      "id": "core.overnight-trial",
+      "next_action": "Validate the latest content-addressed prospective trial; start a new eight-hour trial only after every executable prerequisite is green.",
+      "owner": "continuity"
+    },
+    {
+      "id": "core.handoff",
+      "next_action": "Validate the warm handoff receipt and emit a finite successor capsule when the current boundary requires relay.",
+      "owner": "continuity"
+    },
+    {
+      "id": "core.no-tasks-on-me",
+      "next_action": "Run the owed-work homing predicate and route every residual to its tracked owner without editing tasks.yaml directly.",
+      "owner": "tabularius"
+    },
+    {
+      "id": "core.credential-wall",
+      "next_action": "Run the credential-wall validity check once and route each exact secret or login gate to the credential owner without exposing values.",
+      "owner": "credential-wall"
+    },
+    {
+      "id": "core.worktree-lifecycle",
+      "next_action": "Run strict worktree debt discovery and route each root by exact clean, dirty, active, locked, or unpreserved ownership state.",
+      "owner": "lifecycle"
+    },
+    {
+      "id": "sensor.mcp.estate",
+      "next_action": "Run the MCP estate predicate and route each boot, doorway, ownership, or placeholder failure to its registered server owner.",
+      "owner": "tabularius"
+    },
+    {
+      "id": "sensor.github.parity",
+      "next_action": "Run offline GitHub-estate parity and repair only the declared registry or producer seam named by the result.",
+      "owner": "gitvs"
+    },
+    {
+      "id": "sensor.github.posture",
+      "next_action": "Run live GitHub-estate posture and route each remote drift leaf through its repository or access owner.",
+      "owner": "gitvs"
+    },
+    {
+      "id": "sensor.github.actions-budget",
+      "next_action": "Run the implemented usage predicate and preserve the exact budget or policy-to-code blocker until rollover or reviewed repair.",
+      "owner": "gitvs"
+    },
+    {
+      "id": "sensor.seo.parity",
+      "next_action": "Run the SEO registry doctor and repair only source-contract or producer parity failures.",
+      "owner": "gitvs"
+    },
+    {
+      "id": "sensor.seo.posture",
+      "next_action": "Run the live SEO posture check and route stable-signature remediation waves through each repository owner.",
+      "owner": "gitvs"
+    },
+    {
+      "id": "sensor.observatory.wiring",
+      "next_action": "Run the Observatory doctor and repair the exact registry, wiring, or producer seam it reports.",
+      "owner": "observatory"
+    },
+    {
+      "id": "sensor.experience.parity",
+      "next_action": "Run the experience registry doctor and repair only source-contract or producer parity failures.",
+      "owner": "observatory"
+    },
+    {
+      "id": "sensor.experience.posture",
+      "next_action": "Run the live visitor-experience check and route measured HTTP, interaction, and visual leaves through their surface owners.",
+      "owner": "observatory"
+    },
+    {
+      "id": "sensor.bifrons.render",
+      "next_action": "Run the BIFRONS render check and regenerate only from the declared source owner when drift is proven.",
+      "owner": "tabularius"
+    },
+    {
+      "id": "sensor.bifrons.liveness",
+      "next_action": "Run the BIFRONS doctor and route each portal liveness failure through the portal owner.",
+      "owner": "tabularius"
+    },
+    {
+      "id": "sensor.canary.live",
+      "next_action": "Run the scheduled-sensor canary and route each never-run or stale lane to its heartbeat source owner.",
+      "owner": "vigilia"
+    },
+    {
+      "id": "sensor.disk.capacity",
+      "next_action": "Run the disk-capacity predicate and use only fresh SHA-bound, custody-gated owner reclaim plans for any remediation.",
+      "owner": "lifecycle"
+    },
+    {
+      "id": "sensor.dialogs.agent-curable",
+      "next_action": "Run the agent-curable dialog predicate and route each class through its named Domus-owned healer without broad host mutation.",
+      "owner": "tabularius"
+    },
+    {
+      "id": "sensor.storage.parity",
+      "next_action": "Run storage registry parity and repair only declared rail-role or producer-contract drift.",
+      "owner": "continuity"
+    },
+    {
+      "id": "sensor.storage.posture",
+      "next_action": "Run live storage posture and route each mount, service, custody, or free-space leaf through its exact owner and retained gate.",
+      "owner": "continuity"
+    },
+    {
+      "id": "sensor.custody.parity",
+      "next_action": "Run custody configuration parity and repair only the declared sealed-copy or restore-contract seam.",
+      "owner": "horrevm"
+    },
+    {
+      "id": "sensor.custody.freshness",
+      "next_action": "Run custody freshness and preserve the exact consent or restore blocker without implicit egress or credential access.",
+      "owner": "horrevm"
+    },
+    {
+      "id": "sensor.closeout.self-test",
+      "next_action": "Run the closeout classifier doctor and repair any verdict-shape or terminal-receipt regression before accepting done claims.",
+      "owner": "continuity"
+    },
+    {
+      "id": "sensor.decorum.self-test",
+      "next_action": "Run the DECORVM keeper doctor and repair any registry, schema, or owner-wiring regression.",
+      "owner": "decorum"
+    }
+  ],
+  "schema": "limen.omega_remediation_registry.v1"
+}

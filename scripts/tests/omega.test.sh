@@ -12,9 +12,11 @@ set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
 real_omega="$here/../omega.sh"
+real_remediation="$here/../omega-remediation.py"
 real_watch="$here/../overnight-watch.py"
 real_core="$here/../../institutio/governance/omega-core-rungs.json"
 [ -f "$real_omega" ] || { echo "FAIL: cannot find omega.sh at $real_omega" >&2; exit 1; }
+[ -f "$real_remediation" ] || { echo "FAIL: cannot find omega-remediation.py at $real_remediation" >&2; exit 1; }
 [ -f "$real_watch" ] || { echo "FAIL: cannot find overnight-watch.py at $real_watch" >&2; exit 1; }
 [ -f "$real_core" ] || { echo "FAIL: cannot find core rung registry at $real_core" >&2; exit 1; }
 
@@ -24,7 +26,9 @@ trap 'rm -rf "$work"' EXIT
 # A stub ROOT: omega.sh + a scripts/ dir of fake predicates whose exit codes we control per case.
 mkdir -p "$work/scripts" "$work/cli/src" "$work/logs" "$work/institutio/governance"
 cp "$real_omega" "$work/scripts/omega.sh"
+cp "$real_remediation" "$work/scripts/omega-remediation.py"
 cp "$real_core" "$work/institutio/governance/omega-core-rungs.json"
+export PYTHONPATH="$here/../../cli/src${PYTHONPATH:+:$PYTHONPATH}"
 
 # write_stubs <ask_gate_rc> — all det children exit 0 except ask-gate.py, whose rc is the argument.
 # (In --offline the live children are SKIPped without running. Registry-owned checks are discovered
@@ -94,6 +98,58 @@ check() { if [ "$1" = "$2" ]; then pass=$((pass+1)); else echo "  MISMATCH ($3):
 
 # ── Case 1: every det child green → OMEGA HOLDS, exit 0 ──────────────────────────
 write_stubs 0
+python3 - "$work/institutio/governance/omega-core-rungs.json" \
+  "$work/institutio/governance/omega-remediations.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+core = json.loads(Path(sys.argv[1]).read_text())
+ids = [rung["id"] for rung in core["rungs"]]
+ids.extend(
+    [
+        "sensor.arbitrary.parity",
+        "sensor.arbitrary.posture",
+        "sensor.renamed.no-timeout",
+    ]
+)
+payload = {
+    "schema": "limen.omega_remediation_registry.v1",
+    "defaults": {
+        "authority": {
+            "schema_version": "limen.authority_envelope.v1",
+            "actions": ["read"],
+            "repositories": ["organvm/limen"],
+            "path_prefixes": ["."],
+            "external_effects": [],
+            "may_delegate": False,
+        },
+        "effect": "read",
+        "output_ceiling_bytes": 4096,
+        "receipt_target": "github:organvm/limen:issue:1571",
+        "required_capabilities": ["shell"],
+        "work_loan": {
+            "schema_version": "limen.work_loan.v1",
+            "source_origin": "system_debt",
+            "horizon": "present",
+            "value_case": "Close one typed strict-Omega predicate.",
+            "budget_cost": 1,
+            "owner_surface": "fixture",
+            "external_deadline": False,
+            "due_at": None,
+        },
+    },
+    "rungs": [
+        {
+            "id": rung_id,
+            "owner": "fixture-owner",
+            "next_action": "Run the exact fixture predicate.",
+        }
+        for rung_id in ids
+    ],
+}
+Path(sys.argv[2]).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+PY
 set +e
 out="$(bash "$work/scripts/omega.sh" --offline --quiet 2>&1)"; rc=$?
 set -e
@@ -102,13 +158,14 @@ echo "$out" | grep -q "OMEGA HOLDS" && check "holds" "holds" "case1 verdict" || 
 python3 - "$work/logs/omega.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
-assert d["schema_version"] == 2, d
+assert d["schema_version"] == 3, d
 assert d["generated_at"] == d["generated"], d
 assert len(d["contract_hash"]) == 64, d
 assert d["verdict"] == "HOLDS", d["verdict"]
 assert d["strict"] is False, d
 assert d["fail"] == 0, d
-assert all({"id", "rung", "tier", "status"} <= set(r) for r in d["rungs"]), "rung shape"
+assert all({"id", "rung", "tier", "status", "remediation"} <= set(r) for r in d["rungs"]), "rung shape"
+assert all(r["remediation"]["schema_version"] == "limen.omega_remediation.v1" for r in d["rungs"])
 assert len({r["id"] for r in d["rungs"]}) == len(d["rungs"]), "stable rung ids"
 # every live rung must be SKIP in offline mode (never a silent PASS)
 live = [r for r in d["rungs"] if r["tier"] == "live"]
@@ -131,12 +188,14 @@ base_hash="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["co
 OMEGA_TEST_SENSOR_MODE=reverse bash "$work/scripts/omega.sh" --offline --quiet >/dev/null
 reverse_hash="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_hash"])' "$work/logs/omega.json")"
 check "$reverse_hash" "$base_hash" "case1b normalized sensor order"
-OMEGA_TEST_SENSOR_MODE=added bash "$work/scripts/omega.sh" --offline --quiet >/dev/null
-added_hash="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_hash"])' "$work/logs/omega.json")"
-if [ "$added_hash" != "$base_hash" ]; then
-  check "changed" "changed" "case1b added sensor changes hash"
+set +e
+out="$(OMEGA_TEST_SENSOR_MODE=added bash "$work/scripts/omega.sh" --offline --quiet 2>&1)"; rc=$?
+set -e
+check "$rc" "1" "case1b untyped added sensor fails closed"
+if echo "$out" | grep -q "OMEGA CONTRACT INVALID"; then
+  check "invalid" "invalid" "case1b untyped added sensor verdict"
 else
-  check "unchanged" "changed" "case1b added sensor changes hash"
+  check "missing" "invalid" "case1b untyped added sensor verdict"
 fi
 OMEGA_TEST_SENSOR_MODE=command bash "$work/scripts/omega.sh" --offline --quiet >/dev/null
 command_hash="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_hash"])' "$work/logs/omega.json")"
