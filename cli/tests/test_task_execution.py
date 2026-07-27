@@ -132,6 +132,57 @@ def test_local_keeper_start_is_reserved_once_and_idempotent(tmp_path, monkeypatc
     assert node["packet"]["execution"]["exact_base"] == BASE
 
 
+@pytest.mark.parametrize(
+    ("run_status", "expected_status"),
+    [("running", "already_running"), ("succeeded", "result_pending_harvest")],
+)
+def test_active_canonical_task_reuses_broker_run_before_executor_discovery(run_status, expected_status):
+    class ExistingRunKeeper:
+        def task_run(self, task_id):
+            assert task_id == "AW-VALUE-REPOS-test"
+            return {
+                "schema_version": "limen.conduct_task_run.v1",
+                "task_id": task_id,
+                "found": True,
+                "run_id": "run-existing",
+                "root_run_id": "run-existing",
+                "status": run_status,
+                "executor_session_id": "overnight-jules-remote",
+            }
+
+        def register(self, _session):
+            raise AssertionError("existing task run must be reused before session registration")
+
+    result = start_task_execution(
+        _task(status="dispatched"),
+        client=ExistingRunKeeper(),
+        execution_adapters=(),
+        exact_base=BASE,
+        now=NOW,
+    )
+
+    assert result["status"] == expected_status
+    assert result["run_id"] == "run-existing"
+    assert result["executor_session_id"] == "overnight-jules-remote"
+    assert result["targeted_launch_count"] == 0
+    assert result["executor_wakes"] == []
+
+
+def test_active_canonical_task_without_broker_run_fails_closed():
+    class MissingRunKeeper:
+        def task_run(self, _task_id):
+            return {"schema_version": "limen.conduct_task_run.v1", "found": False}
+
+    with pytest.raises(TaskExecutionError, match="active without a conduct run"):
+        start_task_execution(
+            _task(status="in_progress"),
+            client=MissingRunKeeper(),
+            execution_adapters=(),
+            exact_base=BASE,
+            now=NOW,
+        )
+
+
 class BindingRemoteKeeper:
     def __init__(self):
         self.packet = None

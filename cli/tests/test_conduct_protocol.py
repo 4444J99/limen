@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
@@ -74,6 +75,7 @@ def packet(
     authority: AuthorityEnvelopeV1 | None = None,
     spend_limit: int = 4,
     underwritten: bool = True,
+    task_id: str | None = None,
 ) -> WorkPacketV1:
     return WorkPacketV1(
         root_run_id=root_run_id,
@@ -113,6 +115,7 @@ def packet(
         depth=depth,
         fanout=FanoutBoundsV1(max_children=max_children, max_depth=max_depth),
         effect=effect,
+        task_id=task_id,
     )
 
 
@@ -149,6 +152,47 @@ def test_packet_hashes_are_canonical_and_mismatch_is_rejected() -> None:
     assert first.execution_hash == second.execution_hash
     with pytest.raises(ValueError, match="intent_hash"):
         WorkPacketV1(**(first.model_dump() | {"intent_hash": "0" * 64}))
+
+
+def test_task_run_returns_existing_execution_and_rejects_multiple_active_runs() -> None:
+    codex = session("codex")
+    jules = session("jules", capabilities=frozenset({"code", "review"}))
+    broker = broker_with(codex, jules)
+    first = broker.submit(
+        packet(
+            work_id="task-run-one",
+            conductor=codex.identity,
+            preferred_agent="jules",
+            task_id="TASK-RUN",
+        ),
+        now=NOW,
+    )
+
+    assert broker.task_run("MISSING") == {
+        "schema_version": "limen.conduct_task_run.v1",
+        "task_id": "MISSING",
+        "found": False,
+    }
+    assert broker.task_run("TASK-RUN") == {
+        "schema_version": "limen.conduct_task_run.v1",
+        "task_id": "TASK-RUN",
+        "found": True,
+        "run_id": first["run_id"],
+        "root_run_id": first["root_run_id"],
+        "status": "reserved",
+        "executor_session_id": jules.session_id,
+        "exact_base": None,
+        "receipt_count": 0,
+        "updated_at": NOW.isoformat(),
+    }
+
+    with broker.store.transaction() as state:
+        duplicate = copy.deepcopy(state["runs"][first["run_id"]])
+        duplicate["run_id"] = "run-ambiguous-task"
+        duplicate["root_run_id"] = "run-ambiguous-task"
+        state["runs"][duplicate["run_id"]] = duplicate
+    with pytest.raises(ConductConflict, match="multiple active conduct runs"):
+        broker.task_run("TASK-RUN")
 
 
 def test_rfc8785_hash_fixture_matches_worker_runtime() -> None:

@@ -157,6 +157,7 @@ export class ConductKernel {
     switch (operation) {
       case "register": return this.register(payload.session, payload.principal);
       case "capabilities": return this.capabilities();
+      case "task_run": return this.taskRun(payload.task_id);
       case "submit": return this.submit(payload.packet, payload.principal);
       case "submit_graph": return this.submitGraph(payload.packets, payload.principal);
       case "split": return this.split(payload.parent_run_id, payload.packet, payload.principal);
@@ -336,6 +337,43 @@ export class ConductKernel {
       schema_version: "limen.conduct_capabilities.v1",
       generated_at: this.timestamp,
       sessions,
+    };
+  }
+
+  taskRun(taskId) {
+    const candidates = Object.values(this.state.runs)
+      .filter((run) => String(run.packet?.task_id || "") === taskId);
+    const active = candidates.filter((run) =>
+      run.status === "waiting" || ACTIVE_RUN_STATES.has(run.status));
+    if (active.length > 1) {
+      throw new ConductError(`task ${taskId} has multiple active conduct runs`);
+    }
+    let selected = active[0] || null;
+    if (!selected && candidates.length) {
+      selected = [...candidates].sort((left, right) => {
+        const leftTime = asDate(left.updated_at || left.created_at).getTime();
+        const rightTime = asDate(right.updated_at || right.created_at).getTime();
+        return rightTime - leftTime || right.run_id.localeCompare(left.run_id);
+      })[0];
+    }
+    if (!selected) {
+      return {
+        schema_version: "limen.conduct_task_run.v1",
+        task_id: taskId,
+        found: false,
+      };
+    }
+    return {
+      schema_version: "limen.conduct_task_run.v1",
+      task_id: taskId,
+      found: true,
+      run_id: selected.run_id,
+      root_run_id: selected.root_run_id,
+      status: selected.status,
+      executor_session_id: selected.executor_session_id,
+      exact_base: selected.packet?.execution?.exact_base || null,
+      receipt_count: (selected.receipts || []).length,
+      updated_at: selected.updated_at,
     };
   }
 
@@ -1670,7 +1708,7 @@ export class SerializedConductService {
         result.projection_receipts = projectionReceipts;
         const run = kernel.state.runs[result.run_id];
         if (run) run.projection_receipts = clone(projectionReceipts);
-      } else if (result?.run_id) {
+      } else if (result?.run_id && operation !== "task_run") {
         const stored = kernel.state.runs[result.run_id]?.projection_receipts || [];
         if (stored.length) result.projection_receipts = clone(stored);
       }

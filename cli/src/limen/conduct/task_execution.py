@@ -47,6 +47,40 @@ class TaskExecutionError(RuntimeError):
     """The canonical task could not be safely reserved or woken."""
 
 
+_ACTIVE_CONDUCT_RUN_STATUSES = frozenset({"waiting", "reserved", "running", "stop_requested"})
+
+
+def _existing_task_execution(task: Task, keeper: Any) -> dict[str, Any] | None:
+    """Reuse broker-owned execution for an already-active canonical task."""
+
+    if task.status not in {"dispatched", "in_progress"}:
+        return None
+    lookup = getattr(keeper, "task_run", None)
+    if not callable(lookup):
+        raise TaskExecutionError("conduct client cannot prove the canonical task's active run")
+    existing = lookup(task.id)
+    if not existing.get("found"):
+        raise TaskExecutionError(f"canonical task {task.id} is active without a conduct run")
+    status = str(existing.get("status") or "")
+    if status in _ACTIVE_CONDUCT_RUN_STATUSES:
+        result_status = "already_running"
+    elif status == "succeeded":
+        result_status = "result_pending_harvest"
+    else:
+        raise TaskExecutionError(f"canonical task conduct run is terminal ({status or 'unknown'})")
+    return {
+        "schema_version": "limen.task_execution_start.v1",
+        "status": result_status,
+        "run_id": str(existing.get("run_id") or ""),
+        "root_run_id": str(existing.get("root_run_id") or ""),
+        "executor_session_id": str(existing.get("executor_session_id") or ""),
+        "targeted_launch_count": 0,
+        "executor_wakes": [],
+        "unavailable_adapters": [],
+        "idempotent": True,
+    }
+
+
 def _registered_session(response: Any) -> ConductorSessionV1:
     payload = response.get("session", response) if isinstance(response, dict) else response
     if not isinstance(payload, dict):
@@ -214,6 +248,9 @@ def start_task_execution(
     repository = str(task.repo or "").strip()
     if not _REPOSITORY_RE.fullmatch(repository):
         raise TaskExecutionError("canonical task has no exact owner/repository")
+    existing = _existing_task_execution(task, keeper)
+    if existing is not None:
+        return existing
     base = exact_base or remote_default_head(repository)
     deadline = _task_deadline(now)
     conductor_session_id = f"overnight-owner-conductor-{canonical_hash(repository)[:12]}"
