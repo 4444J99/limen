@@ -160363,3 +160363,55 @@ tasks:
     conduct_generation: 350
   updated: '2026-07-26T21:37:40.873Z'
   receipt_verified: true
+- id: 'AW-VALUE-REPOS-77d88c87bfb2'
+  title: 'Assign revenue/value repo work from existing ledgers'
+  description: '19 value repos define the funded work lane'
+  repo: 'organvm/limen'
+  type: 'coordination'
+  target_agent: 'jules'
+  workstream: 'revenue-value-repos'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'always-working'
+  - 'receipt-first'
+  - 'overnight-lane-switch'
+  - 'revenue-value-repos'
+  urls: []
+  context: 'Receipt-first verdict: 19 value repos define the funded work lane
+
+    Execution scope: repository
+
+    Packet epoch: static
+
+    Task: Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.
+
+    Predicate: python3 scripts/product-ledger.py --write
+
+    Receipt target: git:organvm/limen:docs/product-ledger.md
+
+    Stop condition: top value repo has shipped PR, open PR with predicate, owner task, or blocker
+
+    This is the single bounded alternate selected after generic dispatch was value-gated.'
+  predicate: 'python3 scripts/product-ledger.py --write'
+  receipt_target: 'git:organvm/limen:docs/product-ledger.md'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Close the selected always-working owner packet VALUE-REPOS'
+  external_deadline: false
+  depends_on: []
+  created: '2026-07-27'
+  dispatch_log:
+  - timestamp: '2026-07-27T03:52:05.153Z'
+    agent: 'codex'
+    session_id: 'github_actions-overnight-lane-switch'
+    logical_agent: 'github_actions'
+    logical_session_id: 'overnight-lane-switch'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-daff5a69ab6c72511d944b4c420c89ec:381:compatibility'
+    conduct_run_id: 'run-daff5a69ab6c72511d944b4c420c89ec'
+    conduct_lease_id: 'lease-381-daff5a69ab6c7251'
+    conduct_generation: 381
+  updated: '2026-07-27T03:52:05.153Z'
