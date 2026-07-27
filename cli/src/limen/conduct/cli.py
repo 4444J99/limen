@@ -9,8 +9,10 @@ from typing import Any, Literal
 
 import click
 
+from limen.conduct.broker import ConductError
 from limen.conduct.client import client_from_env
 from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
+from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, run_campaign
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -67,6 +69,56 @@ def conduct_group() -> None:
 @conduct_group.command("capabilities")
 def capabilities() -> None:
     _emit(client_from_env().capabilities())
+
+
+@conduct_group.group("campaign")
+def campaign_group() -> None:
+    """Evaluate and route one finite institutional campaign epoch."""
+
+
+@campaign_group.command("run")
+@click.option("--capsule", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--terminal-predicate", type=click.Choice(["omega"]), default="omega", show_default=True)
+@click.option("--session-id", default=None)
+@click.option("--agent", default=lambda: os.environ.get("LIMEN_AGENT"))
+@click.option("--evaluation-timeout", type=click.IntRange(1, 7200), default=1800, show_default=True)
+def campaign_run(
+    capsule: Path,
+    terminal_predicate: str,
+    session_id: str | None,
+    agent: str | None,
+    evaluation_timeout: int,
+) -> None:
+    if not agent:
+        raise click.ClickException("agent identity is required via --agent or LIMEN_AGENT")
+    identity = AgentIdentityV1(
+        agent=agent,
+        surface=os.environ.get("LIMEN_SURFACE", "workstream"),
+        session_id=_session_id(session_id),
+        native_run_id=os.environ.get("LIMEN_NATIVE_RUN_ID"),
+        provider_identity=os.environ.get("LIMEN_PROVIDER_IDENTITY"),
+    )
+    try:
+        result = run_campaign(
+            client=client_from_env(),
+            root=Path.cwd(),
+            capsule=capsule,
+            identity=identity,
+            terminal_predicate=terminal_predicate,
+            evaluation_timeout_seconds=evaluation_timeout,
+        )
+    except (CampaignSupervisorError, ConductError) as exc:
+        _emit(
+            {
+                "schema": RESULT_SCHEMA,
+                "boundary": "invalid",
+                "reason": str(exc)[:2000],
+                "successor_required": False,
+                "terminal_predicate": terminal_predicate,
+            }
+        )
+        raise click.exceptions.Exit(1) from exc
+    _emit(result)
 
 
 @conduct_group.command("register")

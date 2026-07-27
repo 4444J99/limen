@@ -1376,6 +1376,12 @@ parameters:
     self_update: "injected from the native provider session"
     owner: dispatch
     note: "Provider-native session identity retained without replacing canonical agent or conduct identities."
+  LIMEN_PROVIDER_IDENTITY:
+    default: null
+    env: LIMEN_PROVIDER_IDENTITY
+    self_update: "injected from authenticated provider metadata"
+    owner: dispatch
+    note: "Opaque provider principal identity retained for receipt provenance; it is not a model selector or authority grant."
   LIMEN_SURFACE:
     default: "cli"
     env: LIMEN_SURFACE
