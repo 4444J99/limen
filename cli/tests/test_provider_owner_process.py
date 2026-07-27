@@ -64,6 +64,14 @@ def test_process_table_preserves_full_argv(path: Path, monkeypatch: pytest.Monke
             401,
         ),
         (
+            CLAUDE_HOOK,
+            {
+                500: (401, "/usr/bin/python3 /opt/limen/claude-host-admission.py"),
+                401: (1, "/Users/test/.local/share/claude/versions/2.1.220 --print"),
+            },
+            401,
+        ),
+        (
             CODEX_HOOK,
             {
                 500: (401, "/usr/bin/python3 /opt/limen/codex-host-admission.py"),
