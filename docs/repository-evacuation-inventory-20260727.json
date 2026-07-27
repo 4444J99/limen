@@ -1,0 +1,83 @@
+{
+  "schema": "limen.storage_evacuation_inventory.v1",
+  "inventory_id": "repository-evacuation-20260727T231437Z",
+  "frozen_at": "2026-07-27T23:14:37Z",
+  "scope": "workspace_repository_estate",
+  "critical_path": "remove_all_local_repository_roots",
+  "source": {
+    "repository": "organvm/limen",
+    "branch": "work/finish-laptop-evacuation-20260727",
+    "head": "9df8df05db88c329e48cad9a77f2dee1fecf6f96",
+    "generated_reclaim_enabled": false
+  },
+  "success_predicate": {
+    "local_repository_roots_remaining": 0,
+    "active_execution_root_reaped_last": true,
+    "exact_remote_or_two_copy_restoration_required": true
+  },
+  "custody_devices": [
+    {
+      "name": "Archive4T",
+      "mount": "/Volumes/Archive4T",
+      "device": "/dev/disk5s1",
+      "physical_device": "/dev/disk4",
+      "volume_uuid": "45C8AA30-307B-41E2-908D-5112E93B4AF5",
+      "independence_class": "copy_a"
+    },
+    {
+      "name": "T7Recovery",
+      "mount": "/Volumes/T7Recovery",
+      "device": "/dev/disk7s1",
+      "physical_device": "/dev/disk6",
+      "volume_uuid": "0287E02B-989A-419B-A7CA-B4BCE4ECA1FF",
+      "independence_class": "copy_b"
+    }
+  ],
+  "copy_counting_rule": {
+    "independent_physical_devices_required": 2,
+    "archive4t_and_t7recovery_are_independent": true,
+    "archive4t_ingress_scratch_tm_mac_count_as_one_copy": true
+  },
+  "frozen_denominator": {
+    "selected_root_count": 34,
+    "selected_root_kib": 22801032,
+    "selected_root_bytes": 23348256768,
+    "new_unrelated_discoveries_expand_this_denominator": false
+  },
+  "roots": [
+    {"root":"/Users/4jp/Workspace/.home-cartridge","size_kib":324040,"size_bytes":331816960,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/.limen-worktrees","size_kib":9776224,"size_bytes":10010853376,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/.vox-worktrees","size_kib":1476,"size_bytes":1511424,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/4444J99","size_kib":261128,"size_bytes":267395072,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/_conversations-private","size_kib":418700,"size_bytes":428748800,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/_limen-worktree-abandonment","size_kib":197408,"size_bytes":202145792,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/_matters-private","size_kib":169988,"size_bytes":174067712,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/_people-private","size_kib":124352,"size_bytes":127336448,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/a-i-chat--exporter","size_kib":12268,"size_bytes":12562432,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/a-organvm","size_kib":661620,"size_bytes":677498880,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/application-pipeline","size_kib":290612,"size_bytes":297586688,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/application-pipeline-check","size_kib":80664,"size_bytes":82599936,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/application-pipeline-remote-only-reply-20260721","size_kib":57956,"size_bytes":59346944,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/content-engine-check","size_kib":33884,"size_bytes":34697216,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/daily-engine","size_kib":2996,"size_bytes":3067904,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/domus-genoma","size_kib":707728,"size_bytes":724713472,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/edu-organism-main","size_kib":47068,"size_bytes":48197632,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/edu-organism-student-email-doctrine-20260709","size_kib":60912,"size_bytes":62373888,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/limen","size_kib":7072396,"size_bytes":7242133504,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/limen-watch-pause-guard-0714","size_kib":36260,"size_bytes":37130240,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/limen-worktrees","size_kib":214572,"size_bytes":219721728,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/mirror-mirror","size_kib":11520,"size_bytes":11796480,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/organvm-corpvs-testamentvm","size_kib":466988,"size_bytes":478195712,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/organvm-i-theoria","size_kib":106592,"size_bytes":109150208,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/organvm-iii-ergon","size_kib":4344,"size_bytes":4448256,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/organvm-v-logos","size_kib":2240,"size_bytes":2293760,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/peer-audited--behavioral-blockchain","size_kib":707040,"size_bytes":724008960,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/pr-752-pabb","size_kib":155040,"size_bytes":158760960,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/pr-775","size_kib":153916,"size_bytes":157609984,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/script-doctor","size_kib":500,"size_bytes":512000,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/specvla-ergon--avditor-mvndi","size_kib":2868,"size_bytes":2936832,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/studio","size_kib":4688,"size_bytes":4800512,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/universal-mail--automation","size_kib":361412,"size_bytes":370085888,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"},
+    {"root":"/Users/4jp/Workspace/victoroff-os","size_kib":271632,"size_bytes":278151168,"owner":"repository-evacuation","class":"repository_estate_root","selected_action":"two_copy_restore_then_remove_internal_root","gate":"exact_sha_bound_custody","status":"pending_custody"}
+  ]
+}
