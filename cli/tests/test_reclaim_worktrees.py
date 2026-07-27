@@ -7,6 +7,7 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "reclaim-worktrees.py"
@@ -228,9 +229,9 @@ def test_apply_requires_matching_plan_digest_before_abandonment(tmp_path: Path, 
     monkeypatch.setattr(reclaim, "GENERATED_ONLY", False)
     monkeypatch.setattr(reclaim, "EXPECTED_PLAN_SHA", "")
     monkeypatch.setattr(reclaim, "iter_worktree_targets", lambda _root: [target])
-    monkeypatch.setattr(reclaim, "active_process_cwds", lambda: {})
-    monkeypatch.setattr(reclaim, "load_preservation_receipts", lambda: {})
-    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", lambda: [])
+    monkeypatch.setattr(reclaim, "active_process_cwds", dict)
+    monkeypatch.setattr(reclaim, "load_preservation_receipts", dict)
+    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", list)
     monkeypatch.setattr(
         reclaim,
         "classify",
@@ -380,7 +381,7 @@ def test_reclaim_generated_payloads_preserves_tracked_generated_name(
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
     (repo / "dist").mkdir()
     (repo / "dist" / "bundle.js").write_text("tracked\n", encoding="utf-8")
-    subprocess.run(["git", "add", "dist/bundle.js"], cwd=repo, check=True)
+    subprocess.run(["git", "add", "-f", "dist/bundle.js"], cwd=repo, check=True)
     subprocess.run(
         ["git", "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", "base"],
         cwd=repo,
@@ -481,6 +482,224 @@ def _committed_repo(tmp_path: Path, name: str = "pushed-unmerged") -> Path:
     return repo
 
 
+def _custody_proof(
+    plan: str = "a" * 64,
+    content: str = "b" * 64,
+    root_count: int = 1,
+) -> dict[str, object]:
+    return {
+        "schema": "limen.worktree_reclaim_estate_custody.v1",
+        "plan_sha256": plan,
+        "content_sha256": content,
+        "root_count": root_count,
+        "failed_checkout_root_count": 1,
+        "restoration_passed": True,
+    }
+
+
+def _custody_acceptance(proof: dict[str, object]) -> dict[str, object]:
+    return {
+        "accepted_at": "2026-07-27T13:08:49Z",
+        "root": "*",
+        "accepted": True,
+        "reason": "custody-restored+idle",
+        "archive_status": "verified",
+        "archive_proof": "exact full restoration passed",
+        "redaction_review": "private_archive_only",
+        "redaction_proof": "working payloads are present in private external custody",
+        "custody_plan_sha256": proof["plan_sha256"],
+        "custody_content_sha256": proof["content_sha256"],
+    }
+
+
+def test_reclaim_dirty_root_requires_exact_restored_custody(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = _committed_repo(tmp_path, "failed-checkout")
+    (repo / "untracked.txt").write_text("preserve me\n", encoding="utf-8")
+
+    assert reclaim.classify(repo, time.time(), 0) == ("skip", "dirty")
+    assert reclaim.classify(
+        repo,
+        time.time(),
+        0,
+        estate_custody_paths=frozenset({repo.resolve()}),
+    ) == ("remove-clone", "custody-restored+idle")
+
+
+def test_reclaim_custody_wildcard_accepts_only_exact_plan_and_reason(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    reclaim.STANDING_ACCEPTANCE = False
+    repo = tmp_path / "failed-checkout"
+    repo.mkdir()
+    proof = _custody_proof()
+    event = _custody_acceptance(proof)
+
+    assert reclaim.reclaim_accepted(
+        repo,
+        "remove-clone",
+        "custody-restored+idle",
+        [event],
+        estate_custody_proof=proof,
+    ) == (True, "reclaim-accepted")
+    assert reclaim.reclaim_accepted(
+        repo,
+        "remove-clone",
+        "custody-restored+idle",
+        [event],
+        estate_custody_proof=_custody_proof(plan="c" * 64),
+    ) == (False, "missing-reclaim-acceptance")
+    assert reclaim.reclaim_accepted(
+        repo,
+        "remove-clone",
+        "dirty",
+        [event],
+        estate_custody_proof=proof,
+    ) == (False, "missing-reclaim-acceptance")
+
+
+def test_reclaim_custody_arguments_and_plan_drift_fail_closed(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    monkeypatch.setattr(reclaim, "ESTATE_CUSTODY_ROOT", str(tmp_path))
+    monkeypatch.setattr(reclaim, "ESTATE_CUSTODY_PLAN_SHA", "")
+    with pytest.raises(reclaim.EstateAuditCustodyError) as incomplete:
+        reclaim.load_estate_custody_context()
+    assert incomplete.value.code == "custody-arguments-incomplete"
+
+    monkeypatch.setattr(reclaim, "ESTATE_CUSTODY_PLAN_SHA", "a" * 64)
+    monkeypatch.setattr(
+        reclaim,
+        "verify_estate_custody_receipt",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(reclaim.EstateAuditCustodyError("custody-restoration-failed")),
+    )
+    with pytest.raises(reclaim.EstateAuditCustodyError) as restoration:
+        reclaim.load_estate_custody_context()
+    assert restoration.value.code == "custody-restoration-failed"
+
+    monkeypatch.setattr(reclaim, "verify_estate_custody_receipt", lambda *_args, **_kwargs: {})
+    mismatched = type("Plan", (), {"plan_sha256": "c" * 64})()
+    monkeypatch.setattr(reclaim, "discover_estate_custody_plan", lambda _root: mismatched)
+    with pytest.raises(reclaim.EstateAuditCustodyError) as drift:
+        reclaim.load_estate_custody_context()
+    assert drift.value.code == "custody-current-plan-mismatch"
+
+
+def test_reclaim_custody_context_admits_only_failed_checkout_payload_roots(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    failed_checkout = tmp_path / "failed-checkout"
+    indexed = tmp_path / "indexed"
+    failed_checkout.mkdir()
+    indexed.mkdir()
+    plan_sha = "a" * 64
+    roots = [
+        {"path": str(failed_checkout.resolve()), "index_entry_count": 0},
+        {"path": str(indexed.resolve()), "index_entry_count": 3},
+    ]
+    receipt = {
+        "roots": roots,
+        "content_sha256": "b" * 64,
+        "root_count": 2,
+        "failed_checkout_root_count": 1,
+        "restoration_passed": True,
+    }
+    plan = type(
+        "Plan",
+        (),
+        {
+            "plan_sha256": plan_sha,
+            "private_payload": lambda _self: {"roots": roots},
+        },
+    )()
+    monkeypatch.setattr(reclaim, "ESTATE_CUSTODY_ROOT", str(tmp_path))
+    monkeypatch.setattr(reclaim, "ESTATE_CUSTODY_PLAN_SHA", plan_sha)
+    monkeypatch.setattr(reclaim, "verify_estate_custody_receipt", lambda *_args, **_kwargs: receipt)
+    monkeypatch.setattr(reclaim, "discover_estate_custody_plan", lambda _root: plan)
+
+    context = reclaim.load_estate_custody_context()
+
+    assert context is not None
+    assert context["paths"] == frozenset({failed_checkout.resolve()})
+    assert context["proof"] == _custody_proof(root_count=2)
+
+
+def test_reclaim_manifest_digest_binds_public_custody_proof(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = tmp_path / "failed-checkout"
+    repo.mkdir()
+    monkeypatch.setattr(
+        reclaim,
+        "classify",
+        lambda *_args, **_kwargs: ("remove-clone", "custody-restored+idle"),
+    )
+    monkeypatch.setattr(reclaim, "reclaim_accepted", lambda *_args, **_kwargs: (True, "accepted"))
+    first_context = {"paths": frozenset({repo.resolve()}), "proof": _custody_proof()}
+    second_context = {
+        "paths": frozenset({repo.resolve()}),
+        "proof": _custody_proof(content="d" * 64),
+    }
+
+    first = reclaim.build_candidate_manifest([(repo, 0, "test")], 1.0, {}, [], first_context)
+    second = reclaim.build_candidate_manifest([(repo, 0, "test")], 1.0, {}, [], second_context)
+
+    assert first[0]["estate_custody"] == first_context["proof"]
+    assert first[1] != second[1]
+
+
+def test_reclaim_apply_rechecks_and_blocks_custody_proof_drift(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = tmp_path / "failed-checkout"
+    repo.mkdir()
+    target = type("Target", (), {"path": repo, "min_age_h": 0, "source": "test"})()
+    first_context = {"paths": frozenset({repo.resolve()}), "proof": _custody_proof()}
+    drifted_context = {
+        "paths": frozenset({repo.resolve()}),
+        "proof": _custody_proof(content="d" * 64),
+    }
+    monkeypatch.setattr(
+        reclaim,
+        "classify",
+        lambda *_args, **_kwargs: ("remove-clone", "custody-restored+idle"),
+    )
+    monkeypatch.setattr(reclaim, "reclaim_accepted", lambda *_args, **_kwargs: (True, "accepted"))
+    plan_sha = reclaim.build_candidate_manifest(
+        [(repo, 0, "test")],
+        1.0,
+        {},
+        [],
+        first_context,
+    )[1]
+    contexts = iter((first_context, drifted_context))
+
+    monkeypatch.setattr(reclaim, "APPLY", True)
+    monkeypatch.setattr(reclaim, "CHECK", False)
+    monkeypatch.setattr(reclaim, "JSON_OUT", True)
+    monkeypatch.setattr(reclaim, "FORCE", True)
+    monkeypatch.setattr(reclaim, "GENERATED_ONLY", False)
+    monkeypatch.setattr(reclaim, "EXPECTED_PLAN_SHA", plan_sha)
+    monkeypatch.setattr(reclaim, "iter_worktree_targets", lambda _root: [target])
+    monkeypatch.setattr(reclaim, "active_process_cwds", dict)
+    monkeypatch.setattr(reclaim, "load_preservation_receipts", dict)
+    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", list)
+    monkeypatch.setattr(reclaim, "load_estate_custody_context", lambda: next(contexts))
+    monkeypatch.setattr(
+        reclaim,
+        "quarantine_path",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("custody drift must precede abandonment")),
+    )
+
+    assert reclaim.main() == 2
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["mode"] == "APPLY-BLOCKED"
+    assert payload["failed"] == [{"reason": "custody-proof-drift", "root": "estate-custody"}]
+    assert repo.exists()
+
+
 def _model_pushed_unmerged(reclaim, monkeypatch) -> None:
     # HEAD is on a remote ref (preserved/re-cloneable) but NOT merged to default and not patch-equal.
     monkeypatch.setattr(reclaim, "reachable_from_remote", lambda d, head: True)
@@ -498,7 +717,12 @@ def test_reclaim_reaps_pushed_unmerged_when_pushed_ok(tmp_path: Path, monkeypatc
     monkeypatch.setattr(reclaim, "PUSHED_OK", True)
     _model_pushed_unmerged(reclaim, monkeypatch)
 
-    action, reason = reclaim.classify(repo, time.time(), 0)
+    action, reason = reclaim.classify(
+        repo,
+        time.time(),
+        0,
+        estate_custody_paths=frozenset({repo.resolve()}),
+    )
 
     assert action == "remove-clone"  # real git init ⇒ .git is a dir ⇒ not a registered worktree
     assert reason == "clean+pushed+idle"
@@ -522,7 +746,12 @@ def test_reclaim_keeps_root_owned_by_live_process(tmp_path: Path, monkeypatch) -
     nested_cwd.mkdir()
     monkeypatch.setattr(reclaim, "_ACTIVE_PROCESS_CWDS", {nested_cwd.resolve(): 4242})
 
-    action, reason = reclaim.classify(repo, time.time(), 0)
+    action, reason = reclaim.classify(
+        repo,
+        time.time(),
+        0,
+        estate_custody_paths=frozenset({repo.resolve()}),
+    )
 
     assert action == "skip"
     assert reason == "active-process-cwd:4242"
@@ -539,7 +768,12 @@ def test_reclaim_classifies_git_locked_worktree_before_candidate_selection(tmp_p
         check=True,
     )
 
-    action, reason = reclaim.classify(worktree, time.time(), 0)
+    action, reason = reclaim.classify(
+        worktree,
+        time.time(),
+        0,
+        estate_custody_paths=frozenset({worktree.resolve()}),
+    )
 
     assert action == "skip"
     assert reason == "locked:active prompt-corpus"
