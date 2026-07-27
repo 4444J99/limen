@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
-# heartbeat.sh — the autonomic cycle (rung 1: self-sustaining + self-feeding).
+# heartbeat.sh — one bounded wake/monitor cycle for the canonical campaign.
 #
-#   drain -> mine -> route -> rebalance -> release-stale -> dispatch(jules + all live
-#   local lanes) -> board.
+#   closeout drain -> telemetry -> campaign supervisor wake -> lifecycle hygiene -> status.
 #
-# Designed to be fired by launchd/cron on a timer with NO human present. Every local
-# dispatch is worktree-isolated -> reviewable PR, never touches a live checkout.
-# Outward volume is bounded by the per-day budgets in tasks.yaml (jules 100, locals 50
-# each); firing more often cannot exceed them. Shares the saturate lock so ticks never
-# overlap each other or a manual saturate run.
+# Designed to be fired by launchd/cron on a timer with NO human present. This legacy
+# entrypoint does not choose providers or launch workers. It may only wake the admitted,
+# finite institutional campaign, whose canonical supervisor derives live capabilities and
+# submits keeper-owned packets. Shares the saturate lock so ticks never overlap.
 set -uo pipefail
 export HOME="${HOME:-/Users/4jp}"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -73,58 +71,41 @@ fi
 export LIMEN_WORKTREE_ROOT="${LIMEN_WORKTREE_ROOT:-$LIMEN_WORKTREES}"
 mkdir -p "$LIMEN_WORKTREES" "$LIMEN_WORKTREE_ROOT" 2>/dev/null || true
 
-LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"   # local-lane preference/display
-DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
-LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-50}"
-JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"
-MINE_LIMIT="${LIMEN_MINE_LIMIT:-25}"
+CAMPAIGN_WAKE_TIMEOUT="${LIMEN_CAMPAIGN_WAKE_TIMEOUT:-300}"
+case "$CAMPAIGN_WAKE_TIMEOUT" in
+  ''|*[!0-9]*) CAMPAIGN_WAKE_CEILING=330 ;;
+  *)
+    if [ "$CAMPAIGN_WAKE_TIMEOUT" -ge 1 ] && [ "$CAMPAIGN_WAKE_TIMEOUT" -le 7200 ]; then
+      CAMPAIGN_WAKE_CEILING=$((CAMPAIGN_WAKE_TIMEOUT + 30))
+    else
+      CAMPAIGN_WAKE_CEILING=330
+    fi
+    ;;
+esac
 
-resolve_dispatch_lanes() {
-  python3 - "$1" <<'PY'
-import os
-import sys
-from pathlib import Path
-from limen.capacity import select_lanes
-from limen.dispatch import _down_lanes
-from limen.io import load_limen_file
-
-root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-tasks = Path(os.environ.get("LIMEN_TASKS", str(root / "tasks.yaml")))
-try:
-    board = load_limen_file(tasks)
-except Exception:
-    board = None
-print(",".join(select_lanes(sys.argv[1], board, down_lanes=_down_lanes())))
-PY
+wake_campaign() {
+  if [ -z "$SESSION_END_TIMEOUT_BIN" ]; then
+    echo "campaign wake denied: timeout/gtimeout is unavailable"
+    return 125
+  fi
+  "$SESSION_END_TIMEOUT_BIN" -s KILL "$CAMPAIGN_WAKE_CEILING" \
+    python3 "$LIMEN_ROOT/scripts/campaign-heartbeat.py" \
+      --root "$LIMEN_ROOT" \
+      --workstream institutional-omega
 }
 
-echo "═══ heartbeat $(date '+%F %T') lanes=$LANES dispatch_lanes=$DISPATCH_LANES ═══"
+echo "═══ heartbeat $(date '+%F %T') campaign=institutional-omega ═══"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py"                    2>&1 | tail -2 || true
 python3 "$LIMEN_ROOT/scripts/token-value-gauge.py"                 2>&1 | tail -2 || true
 if [ "$MODE" != "dispatch" ]; then
-  echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
+  echo "autonomy mode=$MODE — telemetry/status only; campaign wake skipped"
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
   python3 -m limen doctor 2>&1 | head -10
   echo "═══ heartbeat done $(date '+%F %T') ═══"
   exit 0
 fi
 
-bash   "$LIMEN_ROOT/scripts/drain.sh"                              2>&1 | tail -3 || true
-python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "$MINE_LIMIT" --apply 2>&1 | tail -3 || true
-python3 "$LIMEN_ROOT/scripts/route.py" --apply                    2>&1 | tail -3 || true
-python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$LANES" --apply 2>&1 | tail -2 || true
-python3 -m limen release-stale --agent jules --hours 24 --apply   2>&1 | tail -2 || true
-EFFECTIVE_DISPATCH_LANES="$(resolve_dispatch_lanes "$DISPATCH_LANES")"
-echo "── dispatch selector $DISPATCH_LANES -> ${EFFECTIVE_DISPATCH_LANES:-none} ──"
-IFS=',' read -ra A <<< "$EFFECTIVE_DISPATCH_LANES"
-for v in "${A[@]}"; do
-  echo "── lane $v ──"
-  if [ "$v" = "jules" ]; then
-    python3 -m limen dispatch --agent "$v" --live --limit "$JULES_LIMIT" 2>&1 | tail -4 || true
-  else
-    python3 -m limen dispatch --agent "$v" --live --limit "$LOCAL_LIMIT" 2>&1 | tail -4 || true
-  fi
-done
+wake_campaign 2>&1 | tail -2 || true
 echo "── clone lifecycle hygiene (worktree prune + gc --auto + reap-report) ──"
 bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -6 || true
 python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
