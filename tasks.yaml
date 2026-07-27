@@ -160513,7 +160513,7 @@ tasks:
   workstream: 'substrate'
   priority: 'critical'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'failed'
   labels:
   - 'always-working'
   - 'receipt-first'
@@ -160565,7 +160565,16 @@ tasks:
     conduct_run_id: 'run-adce629e0f954ff83387ebb83ef12753'
     conduct_lease_id: 'lease-386-adce629e0f954ff8'
     conduct_generation: 386
-  updated: '2026-07-27T13:07:55.021Z'
+  - timestamp: '2026-07-27T19:14:14.993Z'
+    agent: 'jules'
+    session_id: 'run-adce629e0f954ff83387ebb83ef12753'
+    status: 'failed'
+    output: 'Conduct lease lease-386-adce629e0f954ff8 reached its hard deadline'
+    conduct_event_id: 'conduct:run-adce629e0f954ff83387ebb83ef12753:386:expired'
+    conduct_run_id: 'run-adce629e0f954ff83387ebb83ef12753'
+    conduct_lease_id: 'lease-386-adce629e0f954ff8'
+    conduct_generation: 386
+  updated: '2026-07-27T19:14:14.993Z'
 - id: 'VIC-TIER-001'
   title: 'Evidence-backed five-tier economic-agency domain'
   description: 'Implement the evidence-backed five-tier economic-agency domain without fabricated progress.'
