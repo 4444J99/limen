@@ -14,6 +14,16 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
+CLI_SRC = Path(__file__).resolve().parent.parent / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.omega_remediation import (  # noqa: E402
+    OmegaRemediationError,
+    load_omega_remediations,
+    remediation_payload,
+)
+
 SCHEMA = "limen.omega_two_pass_receipt.v1"
 CORE_SCHEMA = "limen.omega_rung_registry.v1"
 SENSOR_SCHEMA = "limen.omega_sensor_rungs.v1"
@@ -37,8 +47,10 @@ STATE_KEYS = (
 CONTRACT_PATHS = (
     "scripts/omega.sh",
     "scripts/omega-two-pass.py",
+    "scripts/omega-remediation.py",
     "scripts/beat-sensors.py",
     "institutio/governance/omega-core-rungs.json",
+    "institutio/governance/omega-remediations.json",
     "institutio/governance/sensors.yaml",
 )
 
@@ -158,10 +170,15 @@ def _validated_rungs(payload: object, schema: str, source: str) -> list[dict]:
             raise OmegaProofError(f"{rung_id}: invalid tier")
         if not str(raw.get("label") or ""):
             raise OmegaProofError(f"{rung_id}: label is required")
+        predicate_field = "predicate" if source == "core" else "command"
+        predicate = str(raw.get(predicate_field) or "")
+        if not predicate or "\x00" in predicate or len(predicate) > 8192:
+            raise OmegaProofError(f"{rung_id}: typed predicate is required")
         rungs.append(
             {
                 "id": rung_id,
                 "label": str(raw["label"]),
+                "predicate": predicate,
                 "semantic_inputs": [
                     _descriptor(rung_id, item_index, item) for item_index, item in enumerate(semantic_inputs)
                 ],
@@ -185,6 +202,14 @@ def discover_rungs(root: Path) -> tuple[list[dict], dict, dict]:
     ids = [rung["id"] for rung in rungs]
     if len(ids) != len(set(ids)):
         raise OmegaProofError("duplicate Omega rung identity")
+    try:
+        remediation_rungs, remediations = load_omega_remediations(root, sensor_payload=sensor_payload)
+    except OmegaRemediationError as exc:
+        raise OmegaProofError(f"invalid Omega remediation contract: {exc}") from exc
+    if [rung.id for rung in remediation_rungs] != ids:
+        raise OmegaProofError("Omega remediation rung identity differs from the semantic manifest")
+    for rung in rungs:
+        rung["remediation"] = remediation_payload(remediations[rung["id"]])
     return rungs, core_payload, sensor_payload
 
 
@@ -282,7 +307,14 @@ def capture_state(root: Path) -> tuple[dict, list[str]]:
     if not tasks_path.is_file() or tasks_path.is_symlink():
         raise OmegaProofError(f"missing tasks projection: {tasks_path}")
     rung_manifest = [
-        {"id": rung["id"], "label": rung["label"], "semantic_inputs": rung["semantic_inputs"], "tier": rung["tier"]}
+        {
+            "id": rung["id"],
+            "label": rung["label"],
+            "predicate": rung["predicate"],
+            "remediation": rung["remediation"],
+            "semantic_inputs": rung["semantic_inputs"],
+            "tier": rung["tier"],
+        }
         for rung in rungs
     ]
     state = {
@@ -297,20 +329,24 @@ def capture_state(root: Path) -> tuple[dict, list[str]]:
         "tree": tree,
         "trial_digest": trial_digest,
     }
-    return state, [rung["id"] for rung in rungs]
+    return state, rungs
 
 
-def _omega_stamp(root: Path, expected_ids: list[str]) -> tuple[str, str]:
+def _omega_stamp(root: Path, expected_rungs: list[dict]) -> tuple[str, str]:
     path = root / "logs" / "omega.json"
     payload = _load_json(path)
     if not isinstance(payload, dict):
         raise OmegaProofError("omega stamp must be a JSON object")
     rungs = payload.get("rungs")
-    if payload.get("schema_version") != 2 or not isinstance(rungs, list):
+    if payload.get("schema_version") != 3 or not isinstance(rungs, list):
         raise OmegaProofError("omega stamp has an unknown schema")
+    expected_ids = [rung["id"] for rung in expected_rungs]
     ids = [str(rung.get("id") or "") for rung in rungs if isinstance(rung, dict)]
     if len(ids) != len(rungs) or ids != expected_ids or len(ids) != len(set(ids)):
         raise OmegaProofError("omega stamp rung identity differs from the semantic manifest")
+    expected_remediations = {rung["id"]: rung["remediation"] for rung in expected_rungs}
+    if any(row.get("remediation") != expected_remediations.get(str(row.get("id") or "")) for row in rungs):
+        raise OmegaProofError("omega stamp remediation metadata differs from the semantic manifest")
     if payload.get("verdict") != "HOLDS" or payload.get("fail") != 0 or payload.get("skip") != 0:
         raise OmegaProofError("strict Omega did not hold without FAIL/SKIP")
     normalized = {key: value for key, value in payload.items() if key not in VOLATILE_FIELDS}
@@ -359,17 +395,20 @@ def run_two_pass(
     omega_runner: Callable[[Path, int], int] | None = None,
 ) -> dict:
     runner = omega_runner or _default_omega_runner
-    before, before_ids = capture_state(root)
+    before, before_rungs = capture_state(root)
+    before_ids = [rung["id"] for rung in before_rungs]
     if runner(root, 1) != 0:
         raise OmegaProofError("strict Omega pass 1 failed")
-    pass_one_digest, pass_one_contract = _omega_stamp(root, before_ids)
-    middle, middle_ids = capture_state(root)
+    pass_one_digest, pass_one_contract = _omega_stamp(root, before_rungs)
+    middle, middle_rungs = capture_state(root)
+    middle_ids = [rung["id"] for rung in middle_rungs]
     if middle_ids != before_ids:
         raise OmegaProofError("Omega rung identity changed after pass 1")
     if runner(root, 2) != 0:
         raise OmegaProofError("strict Omega pass 2 failed")
-    pass_two_digest, pass_two_contract = _omega_stamp(root, middle_ids)
-    after, after_ids = capture_state(root)
+    pass_two_digest, pass_two_contract = _omega_stamp(root, middle_rungs)
+    after, after_rungs = capture_state(root)
+    after_ids = [rung["id"] for rung in after_rungs]
     if after_ids != before_ids:
         raise OmegaProofError("Omega rung identity changed after pass 2")
     _same_states([before, middle, after])
@@ -408,8 +447,9 @@ def _load_receipt(path: Path) -> tuple[dict, bytes]:
 
 def check_receipt(root: Path, receipt_path: Path) -> dict:
     receipt, _raw = _load_receipt(receipt_path)
-    state, rung_ids = capture_state(root)
-    omega_digest, omega_contract_hash = _omega_stamp(root, rung_ids)
+    state, rungs = capture_state(root)
+    rung_ids = [rung["id"] for rung in rungs]
+    omega_digest, omega_contract_hash = _omega_stamp(root, rungs)
     changed = (
         receipt.get("state") != state
         or receipt.get("rung_ids") != rung_ids

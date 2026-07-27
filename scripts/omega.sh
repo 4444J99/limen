@@ -30,7 +30,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="$ROOT/cli/src${PYTHONPATH:+:$PYTHONPATH}"
 STAMP="$ROOT/logs/omega.json"   # derived from ROOT; the test drives it via a temp-ROOT copy
-OMEGA_SCHEMA_VERSION=2
+OMEGA_SCHEMA_VERSION=3
 
 OFFLINE=0
 FULL=0
@@ -92,6 +92,7 @@ cd "$ROOT"
 # carries only the execution coordinates Bash needs; the JSON contract and explicit core registry
 # remain the semantic identity hashed into every stamp.
 CORE_RUNG_REGISTRY="$ROOT/institutio/governance/omega-core-rungs.json"
+REMEDIATION_REGISTRY="$ROOT/institutio/governance/omega-remediations.json"
 SENSOR_OMEGA_JSON="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors-json.XXXXXX")"
 SENSOR_OMEGA_ROWS="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors-tsv.XXXXXX")"
 trap 'rm -f "$SENSOR_OMEGA_JSON" "$SENSOR_OMEGA_ROWS"' EXIT
@@ -114,16 +115,24 @@ PY
 then
   SENSOR_DISCOVERY_OK=1
 fi
-CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" "$CORE_RUNG_REGISTRY" "$SENSOR_OMEGA_JSON" <<'PY'
+REMEDIATION_OK=0
+if python3 "$ROOT/scripts/omega-remediation.py" --check --quiet; then
+  REMEDIATION_OK=1
+fi
+CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" "$CORE_RUNG_REGISTRY" \
+  "$SENSOR_OMEGA_JSON" "$REMEDIATION_REGISTRY" <<'PY'
 import hashlib
 import json
 import re
 import sys
 from pathlib import Path
 
-script_path, core_path, sensor_path = map(Path, sys.argv[1:])
+from limen.omega_remediation import normalized_registry_payload
+
+script_path, core_path, sensor_path, remediation_path = map(Path, sys.argv[1:])
 core = json.loads(core_path.read_text(encoding="utf-8"))
 sensors = json.loads(sensor_path.read_text(encoding="utf-8"))
+remediations = normalized_registry_payload(json.loads(remediation_path.read_text(encoding="utf-8")))
 if core.get("schema") != "limen.omega_rung_registry.v1":
     raise SystemExit("unknown core rung schema")
 if sensors.get("schema") != "limen.omega_sensor_rungs.v1":
@@ -149,10 +158,12 @@ digest.update(b"\0normalized-core-rungs\0")
 digest.update(normalized_core)
 digest.update(b"\0normalized-sensor-rungs\0")
 digest.update(normalized_sensors)
+digest.update(b"\0normalized-remediations\0")
+digest.update(json.dumps(remediations, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("ascii"))
 print(digest.hexdigest())
 PY
 )"
-if [[ ! "$CONTRACT_HASH" =~ ^[0-9a-f]{64}$ ]]; then
+if [[ ! "$CONTRACT_HASH" =~ ^[0-9a-f]{64}$ || "$REMEDIATION_OK" != "1" ]]; then
   SENSOR_DISCOVERY_OK=0
   CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" <<'PY'
 import hashlib, sys
@@ -163,6 +174,10 @@ PY
 fi
 
 echo "══ omega.sh — autonomic fixed-point predicate$([[ $OFFLINE == 1 ]] && echo ' (offline/det subset)')$([[ $STRICT == 1 ]] && echo ' (strict)') ══"
+if [[ "$REMEDIATION_OK" != "1" ]]; then
+  echo "══ OMEGA CONTRACT INVALID ══  (every discovered rung requires typed remediation metadata)" >&2
+  exit 1
+fi
 
 # 1. main green — the trunk itself compiles/tests/builds. Authoritative locally via verify-whole.sh
 #    (--full); on the beat require the workflow-filtered completed CI run for the exact origin/main.
@@ -261,9 +276,19 @@ fi
 
 # Stamp logs/omega.json so session-orient / handoff can read the fixed-point state without re-running.
 mkdir -p "$(dirname "$STAMP")" 2>/dev/null || true
-python3 - "$STAMP" "$OMEGA_SCHEMA_VERSION" "$CONTRACT_HASH" "$VERDICT" "$PASS_N" "$FAIL_N" "$SKIP_N" "$OFFLINE" "$STRICT" "${JSON_ROWS[@]}" <<'PY' 2>/dev/null || true
-import datetime as dt, json, sys
-stamp, schema, contract_hash, verdict, p, f, s, offline, strict, *rows = sys.argv[1:]
+STAMP_OK=0
+if python3 - "$ROOT" "$STAMP" "$OMEGA_SCHEMA_VERSION" "$CONTRACT_HASH" "$VERDICT" \
+  "$PASS_N" "$FAIL_N" "$SKIP_N" "$OFFLINE" "$STRICT" "${JSON_ROWS[@]}" <<'PY'
+import datetime as dt
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+from limen.omega_remediation import annotate_omega_stamp, load_omega_remediations
+
+root, stamp, schema, contract_hash, verdict, p, f, s, offline, strict, *rows = sys.argv[1:]
 generated_at = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 payload = {
     "schema_version": int(schema),
@@ -276,10 +301,30 @@ payload = {
     "pass": int(p), "fail": int(f), "skip": int(s),
     "rungs": [json.loads(r) for r in rows],
 }
-tmp = stamp + ".tmp"
-open(tmp, "w").write(json.dumps(payload, indent=1, sort_keys=True))
-import os; os.replace(tmp, stamp)
+rung_contracts, remediations = load_omega_remediations(Path(root))
+payload = annotate_omega_stamp(payload, rung_contracts, remediations)
+stamp_path = Path(stamp)
+with tempfile.NamedTemporaryFile(
+    dir=stamp_path.parent,
+    prefix=f".{stamp_path.name}.",
+    delete=False,
+) as handle:
+    handle.write((json.dumps(payload, indent=1, sort_keys=True) + "\n").encode("ascii"))
+    handle.flush()
+    os.fsync(handle.fileno())
+    temporary = Path(handle.name)
+try:
+    os.replace(temporary, stamp_path)
+finally:
+    temporary.unlink(missing_ok=True)
 PY
+then
+  STAMP_OK=1
+fi
+if [[ "$STAMP_OK" != "1" ]]; then
+  echo "══ OMEGA CONTRACT INVALID ══  (typed remediation stamp could not be written)" >&2
+  exit 1
+fi
 
 if [[ "$VERDICT" == "HOLDS" ]]; then
   echo "══ OMEGA HOLDS ══  (SKIPs above are unverified rungs, not failures — close them to raise confidence)"

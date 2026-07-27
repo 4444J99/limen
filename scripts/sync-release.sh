@@ -29,7 +29,12 @@ BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
 # left diverged when origin advanced (a merged PR) before its push landed → ff-only fails open forever,
 # pinning the daemon to stale code. Distinct from the patch-id valve ("already upstream"): this is
 # "regenerable, so losing it costs nothing". Override the globs via LIMEN_SYNC_RECEIPT_GLOBS.
-RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json}"
+# tasks.yaml belongs here by this organ's own DATA doctrine (header): the board file is a read-only
+# local cache of the keeper's projection — never preserved across a release change; TABVLARIVS
+# republishes it every beat and the collapse guard restores from the projection branch. Observed
+# park this closes: a local-only "fix validation errors in tasks.yaml" commit (2026-07-19) pinned
+# the live checkout 60 commits behind for 3 days of loud fail-open beats.
+RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json}"
 _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a receipt glob
   local f p matched any=0
   local -a globs

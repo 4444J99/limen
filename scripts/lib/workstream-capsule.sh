@@ -430,6 +430,293 @@ workstream_export_context() {
   export LIMEN_EXECUTION_HASH="${LIMEN_EXECUTION_HASH:-}"
 }
 
+workstream_write_conduct_keepalive_status() {
+  local status_path="$1"
+  local capsule_dir="$2"
+  local session_id="$3"
+  local state="$4"
+  local target_pid="$5"
+  local keepalive_pid="$6"
+  local deadline_epoch="$7"
+  local refresh_count="$8"
+  local last_success_epoch="$9"
+  local last_failure_epoch="${10}"
+  local detail="${11}"
+
+  python3 - "$status_path" "$capsule_dir" "$session_id" "$state" "$target_pid" \
+    "$keepalive_pid" "$deadline_epoch" "$refresh_count" "$last_success_epoch" \
+    "$last_failure_epoch" "$detail" <<'PY'
+import json
+import os
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+(
+    raw_status,
+    raw_capsule,
+    session_id,
+    state,
+    raw_target_pid,
+    raw_keepalive_pid,
+    raw_deadline,
+    raw_refresh_count,
+    raw_last_success,
+    raw_last_failure,
+    detail,
+) = sys.argv[1:]
+status_path = Path(raw_status)
+capsule_dir = Path(raw_capsule)
+try:
+    resolved_capsule = capsule_dir.resolve(strict=True)
+    resolved_parent = status_path.parent.resolve(strict=True)
+except OSError as exc:
+    raise SystemExit(f"conduct keepalive status path is invalid: {exc}")
+if (
+    capsule_dir.is_symlink()
+    or resolved_parent != resolved_capsule
+    or status_path.name != "conduct-keepalive.json"
+    or status_path.is_symlink()
+):
+    raise SystemExit("conduct keepalive status must be a real file inside the private capsule")
+if state not in {"active", "refresh_failed", "stopped"}:
+    raise SystemExit("conduct keepalive status has an invalid state")
+
+
+def optional_epoch(raw: str) -> int | None:
+    if not raw:
+        return None
+    value = int(raw)
+    if value < 0:
+        raise ValueError("epoch must be non-negative")
+    return value
+
+
+observed_epoch = int(datetime.now(UTC).timestamp())
+payload = {
+    "schema": "limen.workstream.conduct-keepalive.v1",
+    "session_id": session_id,
+    "state": state,
+    "target_pid": int(raw_target_pid),
+    "keepalive_pid": int(raw_keepalive_pid),
+    "deadline_epoch": int(raw_deadline),
+    "refresh_count": int(raw_refresh_count),
+    "last_success_epoch": optional_epoch(raw_last_success),
+    "last_failure_epoch": optional_epoch(raw_last_failure),
+    "observed_epoch": observed_epoch,
+    "observed_at": datetime.fromtimestamp(observed_epoch, UTC).isoformat().replace("+00:00", "Z"),
+    "detail": detail[:512],
+}
+temporary = status_path.with_name(f".{status_path.name}.tmp.{os.getpid()}")
+descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+try:
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, status_path)
+    os.chmod(status_path, 0o600)
+finally:
+    try:
+        temporary.unlink()
+    except FileNotFoundError:
+        pass
+PY
+}
+
+workstream_conduct_target_is_live() {
+  local target_pid="$1"
+  local target_started="$2"
+  local observed_started=""
+
+  if ! kill -0 "$target_pid" 2>/dev/null; then
+    return 1
+  fi
+  observed_started="$(ps -o lstart= -p "$target_pid" 2>/dev/null || true)"
+  [[ -n "$observed_started" && "$observed_started" == "$target_started" ]]
+}
+
+workstream_conduct_keepalive_is_ready() {
+  local status_path="$1"
+  local session_id="$2"
+  local target_pid="$3"
+  local keepalive_pid="$4"
+  local minimum_observed_epoch="$5"
+
+  python3 - "$status_path" "$session_id" "$target_pid" "$keepalive_pid" \
+    "$minimum_observed_epoch" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+status_path = Path(sys.argv[1])
+if status_path.is_symlink():
+    raise SystemExit(1)
+try:
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    raise SystemExit(1)
+expected = {
+    "schema": "limen.workstream.conduct-keepalive.v1",
+    "session_id": sys.argv[2],
+    "target_pid": int(sys.argv[3]),
+    "keepalive_pid": int(sys.argv[4]),
+}
+if any(payload.get(key) != value for key, value in expected.items()):
+    raise SystemExit(1)
+if payload.get("state") not in {"active", "refresh_failed"}:
+    raise SystemExit(1)
+if payload.get("observed_epoch", -1) < int(sys.argv[5]):
+    raise SystemExit(1)
+PY
+}
+
+workstream_conduct_keepalive_loop() {
+  local agent="$1"
+  local wt="$2"
+  local capabilities="$3"
+  local target_pid="$4"
+  local target_started="$5"
+  local deadline_epoch="$6"
+  local status_path="$7"
+  local capsule_dir="$8"
+  local interval_seconds="$9"
+  local retry_seconds="${10}"
+  local poll_seconds="${11}"
+  local limen_binary="${12}"
+  local conduct_token="${13}"
+  local capability
+  local capability_args=()
+  local now_epoch next_refresh refresh_count=1
+  local last_success_epoch last_failure_epoch=""
+  local register_rc=0 detail="initial registration passed"
+
+  trap 'exit 0' HUP INT TERM
+  for capability in $capabilities; do
+    capability_args+=(--capability "$capability")
+  done
+  now_epoch="$(date +%s)"
+  last_success_epoch="$now_epoch"
+  next_refresh=$((now_epoch + interval_seconds))
+  workstream_write_conduct_keepalive_status \
+    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$BASHPID" \
+    "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+  while workstream_conduct_target_is_live "$target_pid" "$target_started"; do
+    now_epoch="$(date +%s)"
+    if (( now_epoch >= deadline_epoch )); then
+      detail="capsule deadline reached"
+      break
+    fi
+    if (( now_epoch < next_refresh )); then
+      sleep "$poll_seconds"
+      continue
+    fi
+    register_rc=0
+    LIMEN_CONDUCT_TOKEN="$conduct_token" "$limen_binary" conduct register \
+      --agent "$agent" \
+      --surface workstream \
+      --session-id "$LIMEN_SESSION_ID" \
+      --origin direct \
+      "${capability_args[@]}" \
+      --worktree "$wt" \
+      --human-protected \
+      --concurrency 1 >/dev/null 2>&1 || register_rc=$?
+    now_epoch="$(date +%s)"
+    if [[ "$register_rc" -eq 0 ]]; then
+      refresh_count=$((refresh_count + 1))
+      last_success_epoch="$now_epoch"
+      detail="protected session refreshed"
+      next_refresh=$((now_epoch + interval_seconds))
+      workstream_write_conduct_keepalive_status \
+        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$BASHPID" \
+        "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+    else
+      last_failure_epoch="$now_epoch"
+      detail="conduct registration refresh failed with exit $register_rc"
+      next_refresh=$((now_epoch + retry_seconds))
+      workstream_write_conduct_keepalive_status \
+        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" refresh_failed "$target_pid" "$BASHPID" \
+        "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+    fi
+  done
+  if [[ "$detail" != "capsule deadline reached" ]]; then
+    detail="provider process exited or changed identity"
+  fi
+  workstream_write_conduct_keepalive_status \
+    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" stopped "$target_pid" "$BASHPID" \
+    "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+}
+
+workstream_start_conduct_keepalive() {
+  local agent="$1"
+  local wt="$2"
+  local capabilities="$3"
+  local target_pid="$4"
+  local deadline_epoch="$5"
+  local capsule_dir="$6"
+  local limen_binary="${LIMEN_CLI_BIN:-limen}"
+  local interval_seconds="${LIMEN_CONDUCT_KEEPALIVE_SECONDS:-180}"
+  local retry_seconds="${LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS:-30}"
+  local poll_seconds="${LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS:-5}"
+  local status_path="$capsule_dir/conduct-keepalive.json"
+  local target_started=""
+  local launched_epoch=""
+  local ready=0
+  local attempt
+
+  for value in "$target_pid" "$deadline_epoch" "$interval_seconds" "$retry_seconds" "$poll_seconds"; do
+    case "$value" in
+      ""|*[!0-9]*)
+        printf 'invalid conduct keepalive numeric contract\n' >&2
+        return 2
+        ;;
+    esac
+  done
+  if (( interval_seconds < 1 || interval_seconds > 240
+    || retry_seconds < 1 || retry_seconds > 60
+    || poll_seconds < 1 || poll_seconds > 30
+    || deadline_epoch <= $(date +%s) )); then
+    printf 'conduct keepalive interval, retry, poll, or deadline is out of bounds\n' >&2
+    return 2
+  fi
+  target_started="$(ps -o lstart= -p "$target_pid" 2>/dev/null || true)"
+  if [[ -z "$target_started" ]]; then
+    printf 'conduct keepalive could not bind the provider process identity\n' >&2
+    return 2
+  fi
+  launched_epoch="$(date +%s)"
+  (
+    exec 9>&-
+    workstream_conduct_keepalive_loop \
+      "$agent" "$wt" "$capabilities" "$target_pid" "$target_started" "$deadline_epoch" \
+      "$status_path" "$capsule_dir" "$interval_seconds" "$retry_seconds" "$poll_seconds" \
+      "$limen_binary" "${workstream_conduct_token:-}"
+  ) </dev/null >/dev/null 2>&1 &
+  workstream_conduct_keepalive_pid=$!
+  unset workstream_conduct_token
+  for ((attempt = 0; attempt < 50; attempt++)); do
+    if ! kill -0 "$workstream_conduct_keepalive_pid" 2>/dev/null; then
+      break
+    fi
+    if workstream_conduct_keepalive_is_ready \
+      "$status_path" "$LIMEN_SESSION_ID" "$target_pid" \
+      "$workstream_conduct_keepalive_pid" "$launched_epoch"; then
+      ready=1
+      break
+    fi
+    sleep 0.1
+  done
+  if [[ "$ready" -ne 1 ]]; then
+    kill "$workstream_conduct_keepalive_pid" 2>/dev/null || true
+    wait "$workstream_conduct_keepalive_pid" 2>/dev/null || true
+    printf 'conduct keepalive did not acknowledge a live protected-session channel\n' >&2
+    return 2
+  fi
+  export LIMEN_CONDUCT_KEEPALIVE_PID="$workstream_conduct_keepalive_pid"
+  printf 'started protected conduct keepalive: %s\n' "$workstream_conduct_keepalive_pid"
+}
+
 workstream_register_conduct_session() {
   local agent="$1"
   local wt="$2"
@@ -439,7 +726,9 @@ workstream_register_conduct_session() {
   local capability
   local capability_args=()
 
+  workstream_conduct_token="${LIMEN_CONDUCT_TOKEN:-}"
   if ! command -v "$limen_binary" >/dev/null 2>&1; then
+    unset workstream_conduct_token
     unset LIMEN_CONDUCT_TOKEN
     printf 'conduct registration requires the limen CLI (set LIMEN_CLI_BIN to its path)\n' >&2
     return 127
@@ -465,6 +754,7 @@ workstream_register_conduct_session() {
   # The broker client consumes its credential; the native model process must not inherit it.
   unset LIMEN_CONDUCT_TOKEN
   if [[ "$register_rc" -ne 0 ]]; then
+    unset workstream_conduct_token
     return "$register_rc"
   fi
   export LIMEN_HUMAN_PROTECTED=1
@@ -934,6 +1224,11 @@ PY
       workstream_jules_publish_receipt \
       workstream_publish_admitted_receipt \
       workstream_export_context \
+      workstream_write_conduct_keepalive_status \
+      workstream_conduct_target_is_live \
+      workstream_conduct_keepalive_is_ready \
+      workstream_conduct_keepalive_loop \
+      workstream_start_conduct_keepalive \
       workstream_register_conduct_session \
       workstream_launch_native_agent
   )"
@@ -1303,6 +1598,10 @@ refresh_workstream_runway
 if [[ "\$agent" != "jules" ]]; then
   workstream_publish_admitted_receipt "\$receipt" "\$expected_branch" "\$expected_slug"
   exec 9>&-
+fi
+if [[ "\$conduct" -eq 1 ]]; then
+  workstream_start_conduct_keepalive \
+    "\$agent" "\$PWD" "\$agent_capabilities" "\$\$" "\$LIMEN_WORKSTREAM_DEADLINE_EPOCH" "\$capsule_dir"
 fi
 workstream_launch_native_agent \
   "\$agent" "\$registry_binary" "$autonomous" "\$readme" "\$allow_shell_fallback" \

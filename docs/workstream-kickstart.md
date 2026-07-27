@@ -25,6 +25,14 @@ owned for the registration call: the launcher never writes or prints their value
 conduct credential before the native agent process starts. If the broker cannot acknowledge the
 registration, the agent does not start.
 
+After the admitted receipt is published, a conductor-only background channel inherits the broker
+credential while the provider still receives none. It refreshes the same protected session every
+three minutes, retries a failed refresh within the five-minute liveness window, and stops without
+signalling the provider when either the exact provider process identity disappears or the capsule
+deadline arrives. The channel closes its inherited capsule-lock descriptor and overwrites one
+bounded mode-`0600` private status object at
+`.limen-workstream/conduct-keepalive.json`; it creates no second session or local campaign store.
+
 After admission, a repository-backed non-Jules launcher commits only the synchronized public receipt
 and fast-forward-pushes that exact head to its topic branch before provider `exec`. Unrelated dirty
 state, remote branch drift, commit failure, or push failure denies provider launch. Re-entry at an
