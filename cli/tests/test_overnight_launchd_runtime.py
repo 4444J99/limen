@@ -20,9 +20,7 @@ def test_overnight_watch_launchd_uses_signed_immutable_runtime() -> None:
         f"{IMMUTABLE_ROOT}/source/scripts/overnight-watch.py",
     ]
     assert payload["EnvironmentVariables"]["LIMEN_ROOT"] == "/Users/4jp/Workspace/limen"
-    assert payload["EnvironmentVariables"]["PYTHONPATH"] == (
-        f"{IMMUTABLE_ROOT}/source/cli/src"
-    )
+    assert payload["EnvironmentVariables"]["PYTHONPATH"] == (f"{IMMUTABLE_ROOT}/source/cli/src")
     assert payload["StartInterval"] == 300
 
     command = " ".join(payload["ProgramArguments"])
