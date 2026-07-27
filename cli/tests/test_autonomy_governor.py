@@ -246,3 +246,92 @@ def test_throttle_bounds_the_completion_attempt(tmp_path):
     proc = run_governor_completion(tmp_path, LOGGING_GH, HOLD_POLICY, "mode", extra_env=extra)
     assert proc.stdout.strip() == "paused"
     assert _gh_log(tmp_path).count("\n") == first  # second call throttled — zero new gh reads
+
+
+# ── finite maintenance-window lifecycle (#1578) ────────────────────────────────
+
+
+def _seed_maintenance_policy(tmp_path, *, expires_at):
+    logs = tmp_path / "logs"
+    logs.mkdir(exist_ok=True)
+    policy = {
+        "mode": "observe",
+        "dispatch_enabled": False,
+        "maintenance_window": {
+            "owner": "whole-estate-custody-reset",
+            "expires_at": expires_at,
+            "resume_predicate": "host admission valid; live root exact and clean",
+        },
+    }
+    (logs / "autonomy-policy.json").write_text(json.dumps(policy))
+    return logs
+
+
+def test_explicit_observe_without_maintenance_window_is_unchanged(tmp_path):
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps({"mode": "observe", "dispatch_enabled": False, "reason": "explicit operator observation"})
+    )
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "observe"
+    assert not (logs / "autonomy-maintenance-blocker.json").exists()
+
+
+def test_unexpired_maintenance_window_stays_observe(tmp_path):
+    logs = _seed_maintenance_policy(tmp_path, expires_at="2999-01-01T00:00:00Z")
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "observe"
+    assert not (logs / "autonomy-maintenance-blocker.json").exists()
+
+
+def test_expired_maintenance_window_fails_loud_with_stable_receipt(tmp_path):
+    logs = _seed_maintenance_policy(tmp_path, expires_at="2000-01-01T00:00:00Z")
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "paused"
+
+    receipt = logs / "autonomy-maintenance-blocker.json"
+    blocker = json.loads(receipt.read_text())
+    assert blocker["state"] == "expired"
+    assert blocker["owner"] == "whole-estate-custody-reset"
+    assert blocker["resume_predicate"] == "host admission valid; live root exact and clean"
+    first = receipt.read_bytes()
+
+    second = run_governor(tmp_path, "mode")
+    assert second.returncode == 0
+    assert second.stdout.strip() == "paused"
+    assert receipt.read_bytes() == first
+
+    explained = run_governor(tmp_path, "explain")
+    assert explained.returncode == 0
+    payload = json.loads(explained.stdout)
+    assert payload["mode"] == "paused"
+    assert payload["maintenanceBlocker"]["state"] == "expired"
+    assert payload["maintenanceBlockerReceipt"] == str(receipt)
+
+
+def test_malformed_maintenance_expiry_fails_closed(tmp_path):
+    logs = _seed_maintenance_policy(tmp_path, expires_at="not-a-timestamp")
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "paused"
+    blocker = json.loads((logs / "autonomy-maintenance-blocker.json").read_text())
+    assert blocker["state"] == "invalid-expiry"
+
+
+def test_non_object_maintenance_window_fails_closed(tmp_path):
+    for index, malformed in enumerate((None, [], "until later")):
+        case = tmp_path / f"case-{index}"
+        logs = case / "logs"
+        logs.mkdir(parents=True)
+        (logs / "autonomy-policy.json").write_text(
+            json.dumps({"mode": "observe", "dispatch_enabled": False, "maintenance_window": malformed})
+        )
+        proc = run_governor(case, "mode")
+        assert proc.returncode == 0
+        assert proc.stdout.strip() == "paused"
+        blocker = json.loads((logs / "autonomy-maintenance-blocker.json").read_text())
+        assert blocker["state"] == "invalid-window"
