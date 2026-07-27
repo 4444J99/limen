@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -23,7 +24,7 @@ _EXECUTION_TTL_SECONDS = 24 * 60 * 60
 def _process_table() -> dict[int, tuple[int, str]]:
     try:
         result = subprocess.run(
-            ["ps", "-axo", "pid=,ppid=,comm="],
+            ["ps", "-axo", "pid=,ppid=,command="],
             capture_output=True,
             text=True,
             timeout=0.5,
@@ -42,15 +43,42 @@ def _process_table() -> dict[int, tuple[int, str]]:
     return table
 
 
+def _is_claude_process(command: str) -> bool:
+    """Return true only for an evidence-bearing Claude executable or entrypoint."""
+
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    if not tokens:
+        return False
+    executable_path = tokens[0].casefold()
+    executable = Path(executable_path).name
+    if executable in {"claude", "claude-code"}:
+        return True
+    if "/.local/share/claude/versions/" in executable_path:
+        return True
+    if "/applications/claude.app/contents/" in executable_path:
+        return True
+    if executable not in {"node", "nodejs"}:
+        return False
+    for token in tokens[1:]:
+        candidate = token.casefold().rstrip("/")
+        if "/@anthropic-ai/claude-code/" in candidate:
+            return True
+        if Path(candidate).name in {"claude", "claude-code"}:
+            return True
+    return False
+
+
 def claude_owner_pid() -> int:
-    """Resolve the durable Claude ancestor instead of leasing to this short hook."""
+    """Resolve a proven durable Claude ancestor; never lease a terminal fallback."""
 
     current = os.getppid()
     table = _process_table()
     if not table:
         raise ValueError("durable Claude owner process table is unavailable")
     seen: set[int] = set()
-    oldest: int | None = None
     for _ in range(32):
         if current <= 1 or current in seen:
             break
@@ -59,13 +87,10 @@ def claude_owner_pid() -> int:
         if row is None:
             break
         parent, command = row
-        oldest = current
-        if "claude" in command.lower():
+        if _is_claude_process(command):
             return current
         current = parent
-    if oldest is None:
-        raise ValueError("durable Claude owner ancestor cannot be proven")
-    return oldest
+    raise ValueError("durable Claude owner ancestor cannot be proven")
 
 
 def _turn_owner(payload: dict[str, Any]) -> str | None:
