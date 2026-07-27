@@ -1590,7 +1590,7 @@ def _homed_levers() -> set[str]:
     return out
 
 
-def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
+def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = False) -> int:
     """The Diff operator. Exit 0 ⟺ drift == ∅ (over the rungs that could run). SKIP is never a faked PASS."""
     fails: list[str] = []
     cites: list[str] = []
@@ -1601,7 +1601,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
     fails += [f"[H parity] {m}" for m in h]
 
     if parity_only:
-        return _verdict(fails, cites, skips, "parity-only")
+        return _verdict(fails, cites, skips, "parity-only", strict=strict)
 
     # SPLIT — owed form-twin/eviction work: every override row carrying split: is CITED until the
     # hygiene predicate (scripts/check-split-hygiene.py) retires the row — owned, never a memory chore.
@@ -1644,7 +1644,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
             "N collaborator-drift",
         ):
             skips.append(f"[{tag}] live rung — offline")
-        return _verdict(fails, cites, skips, "offline")
+        return _verdict(fails, cites, skips, "offline", strict=strict)
 
     led = observe(estate)
 
@@ -1828,10 +1828,17 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
     for tag in ("A protection-missing", "D permission-over-grant"):
         skips.append(f"[{tag}] per-repo posture rung — arms with the reconcile layer (PR B)")
 
-    return _verdict(fails, cites, skips, "live")
+    return _verdict(fails, cites, skips, "live", strict=strict)
 
 
-def _verdict(fails: list[str], cites: list[str], skips: list[str], mode: str) -> int:
+def _verdict(
+    fails: list[str],
+    cites: list[str],
+    skips: list[str],
+    mode: str,
+    *,
+    strict: bool = False,
+) -> int:
     for c in cites:
         print(f"  · cited (homed) {c}")
     for s in skips:
@@ -1841,6 +1848,9 @@ def _verdict(fails: list[str], cites: list[str], skips: list[str], mode: str) ->
         for f in fails:
             print(f"   {f}")
         return 1
+    if strict and skips:
+        print(f"\n~ gitvs doctor ({mode}): {len(skips)} rung(s) unavailable under --strict")
+        return 77
     print(
         f"✓ gitvs doctor ({mode}): drift == ∅ over {len(skips)} skipped + all run rungs; "
         f"{len(cites)} homed atom(s) cited."
@@ -2236,13 +2246,13 @@ def _billing_canary(repo: str) -> tuple[bool | None, str]:
     return True, f"newest run {run_id} failed, but not on the billing wall"
 
 
-def usage(estate: dict, *, check: bool, print_json: bool) -> int:
+def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) -> int:
     """The Meter: projected monthly NET Actions spend vs the declared budget AND the billing canary.
     Exit 0 ⟺ within budget and no account-billing block; offline/unreadable → SKIP exit 0 (the
     fail-open sibling-organ contract). Writes the durable doc + volatile stamp (the census idiom)."""
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         print("[gitvs] usage: SKIP (offline)")
-        return 0
+        return 77 if strict else 0
     now = datetime.now(timezone.utc)
     org = owners(estate)[0]
     month_data = _usage_month(org, now.year, now.month)
@@ -2250,7 +2260,7 @@ def usage(estate: dict, *, check: bool, print_json: bool) -> int:
         print(
             f"[gitvs] usage: SKIP (billing usage endpoint unreadable for {org} — needs the user-scoped keyring token)"
         )
-        return 0
+        return 77 if strict else 0
     canary_repo = os.environ.get("LIMEN_BILLING_CANARY_REPO") or "organvm/limen"
     canary_green, canary_detail = _billing_canary(canary_repo)
     budget_default = ((estate.get("budgets") or {}).get("actions_spend") or {}).get("monthly_net_usd_max", 25)
@@ -2290,9 +2300,12 @@ def usage(estate: dict, *, check: bool, print_json: bool) -> int:
         fails.append(f"projected ${projected} exceeds budget ${budget}")
     if canary_green is False:
         fails.append(f"billing canary RED on {canary_repo} ({canary_detail}) → L-CARD-FRAUD-HOLD (#182)")
-    if check and fails:
+    if (check or strict) and fails:
         print(f"✗ gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
         return 1
+    if strict and canary_green is None:
+        print(f"[gitvs] usage: SKIP (billing canary unreadable on {canary_repo})")
+        return 77
     canary_word = "green" if canary_green else ("RED" if canary_green is False else "unreadable")
     print(
         f"✓ gitvs usage: net MTD ${doc['net_usd_total']}, projected ${projected} vs budget ${budget}, "
@@ -2310,6 +2323,7 @@ def main(argv: list[str] | None = None) -> int:
     pd = sub.add_parser("doctor", help="diff desired − observed; exit 0 ⟺ drift == ∅ (the Predicate)")
     pd.add_argument("--parity-only", action="store_true", help="class H only (deterministic, the PR gate)")
     pd.add_argument("--offline", action="store_true", help="det + offline-safe rungs; live rungs → SKIP")
+    pd.add_argument("--strict", action="store_true", help="exit 77 when any declared rung is skipped")
     prc = sub.add_parser("reconcile", help="drive drift → policy via the three effector sinks (the Effector)")
     prc.add_argument(
         "--apply",
@@ -2328,6 +2342,7 @@ def main(argv: list[str] | None = None) -> int:
     pu.add_argument(
         "--check", action="store_true", help="exit 1 when projected spend exceeds budget or the canary is red"
     )
+    pu.add_argument("--strict", action="store_true", help="exit 77 when live usage or canary evidence is unavailable")
     pu.add_argument("--print", action="store_true", help="print the usage doc JSON to stdout too")
     ppd = sub.add_parser("pr-debt", help="exact paginated open-PR custody and owner-route predicate")
     ppd.add_argument("--check", action="store_true", help="exit 1 unless enumeration is exhaustive and typed")
@@ -2357,7 +2372,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "doctor":
         offline = bool(args.offline) or bool(os.environ.get("LIMEN_OFFLINE"))
-        return doctor(estate, parity_only=bool(args.parity_only), offline=offline)
+        return doctor(
+            estate,
+            parity_only=bool(args.parity_only),
+            offline=offline,
+            strict=bool(args.strict),
+        )
 
     if args.cmd == "reconcile":
         # --check is the report-only sensor idiom; --apply mutates. Report wins if both are given (safety).
@@ -2373,7 +2393,12 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.cmd == "usage":
-        return usage(estate, check=bool(args.check), print_json=bool(args.print))
+        return usage(
+            estate,
+            check=bool(args.check),
+            print_json=bool(args.print),
+            strict=bool(args.strict),
+        )
 
     if args.cmd == "pr-debt":
         return pr_debt(

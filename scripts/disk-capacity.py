@@ -76,12 +76,12 @@ def _capacity_pct(volume: str = VOLUME) -> float | None:
         return None
 
 
-def check(threshold: int) -> int:
+def check(threshold: int, *, strict: bool = False) -> int:
     pct = _capacity_pct()
     if pct is None:
         # Volume absent (CI / non-macOS / VM) — fail open.
         print(f"disk-capacity: volume {VOLUME!r} not found — check skipped (fail-open)")
-        return 0
+        return 77 if strict else 0
     print(f"disk-capacity: {VOLUME} used {pct:.1f}% (threshold {threshold}%)")
     if pct >= threshold:
         print(
@@ -171,6 +171,7 @@ def apply(log_cap_mb: int) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="disk-capacity beat sensor — check + optional effector")
     ap.add_argument("--check", action="store_true", help="advisory check: exit 1 when capacity >= threshold")
+    ap.add_argument("--strict", action="store_true", help="exit 77 when the declared volume is unavailable")
     ap.add_argument(
         "--threshold",
         type=int,
@@ -187,7 +188,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     if args.check:
-        return check(args.threshold)
+        return check(args.threshold, strict=args.strict)
     if args.apply:
         return apply(args.log_cap_mb)
 
