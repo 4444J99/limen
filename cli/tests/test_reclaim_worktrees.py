@@ -569,9 +569,7 @@ def test_reclaim_custody_arguments_and_plan_drift_fail_closed(tmp_path: Path, mo
     monkeypatch.setattr(
         reclaim,
         "verify_estate_custody_receipt",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(
-            reclaim.EstateAuditCustodyError("custody-restoration-failed")
-        ),
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(reclaim.EstateAuditCustodyError("custody-restoration-failed")),
     )
     with pytest.raises(reclaim.EstateAuditCustodyError) as restoration:
         reclaim.load_estate_custody_context()
@@ -692,9 +690,7 @@ def test_reclaim_apply_rechecks_and_blocks_custody_proof_drift(
     monkeypatch.setattr(
         reclaim,
         "quarantine_path",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(
-            AssertionError("custody drift must precede abandonment")
-        ),
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("custody drift must precede abandonment")),
     )
 
     assert reclaim.main() == 2
