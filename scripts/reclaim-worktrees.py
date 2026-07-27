@@ -804,8 +804,6 @@ def classify(
     owner_pid = active_process_owner(d)
     if owner_pid is not None:
         return "skip", f"active-process-cwd:{owner_pid}"
-    if inside_agy_scratch_root(d):
-        return "skip", "antigravity-scratch-uses-bridge-acceptance"
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
         if is_generated_log_shell(d):
             return "remove-residue", "generated-log-shell"

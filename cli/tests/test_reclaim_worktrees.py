@@ -100,20 +100,27 @@ def test_debt_classifier_matches_accepted_reaper_for_remote_merged_receipt(tmp_p
     assert debt_reason in debt.REAPABLE_REASONS
 
 
-def test_reclaim_skips_antigravity_scratch_root_removal(tmp_path: Path) -> None:
+def test_reclaim_applies_remote_preserved_contract_inside_antigravity_scratch(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     reclaim = load_reclaim_worktrees()
     scratch = tmp_path / "agy-scratch"
-    root = scratch / "clean-merged-root"
-    root.mkdir(parents=True)
+    scratch.mkdir()
+    root = _committed_repo(scratch, "clean-remote-root")
     reclaim.AGY_SCRATCH_ROOT = scratch
+    monkeypatch.setattr(reclaim, "PUSHED_OK", True)
+    _model_pushed_unmerged(reclaim, monkeypatch)
 
     action, reason = reclaim.classify(root, time.time(), 0)
 
-    assert action == "skip"
-    assert reason == "antigravity-scratch-uses-bridge-acceptance"
+    assert action == "remove-clone"
+    assert reason == "clean+pushed+idle"
 
 
-def test_reclaim_skips_antigravity_system_generated_worktree(tmp_path: Path) -> None:
+def test_reclaim_keeps_non_git_antigravity_system_generated_root(
+    tmp_path: Path,
+) -> None:
     reclaim = load_reclaim_worktrees()
     agy_root = tmp_path / "antigravity-cli"
     root = agy_root / "brain" / "session" / ".system_generated" / "worktrees" / "child"
@@ -124,7 +131,7 @@ def test_reclaim_skips_antigravity_system_generated_worktree(tmp_path: Path) -> 
     action, reason = reclaim.classify(root, time.time(), 0)
 
     assert action == "skip"
-    assert reason == "antigravity-scratch-uses-bridge-acceptance"
+    assert reason == "not-a-git-dir"
 
 
 def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, monkeypatch) -> None:
