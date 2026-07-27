@@ -160504,3 +160504,56 @@ tasks:
     conduct_lease_id: 'lease-383-152f7eccf8d53c83'
     conduct_generation: 383
   updated: '2026-07-27T12:40:15.289Z'
+- id: 'AW-SUBSTRATE-DISK-TEMP-19bd81c84242'
+  title: 'Keep disk/temp/voice substrate from starving the swarm'
+  description: 'substrate lifecycle predicate is failing'
+  repo: 'organvm/limen'
+  type: 'coordination'
+  target_agent: 'codex'
+  workstream: 'substrate'
+  priority: 'critical'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'always-working'
+  - 'receipt-first'
+  - 'overnight-lane-switch'
+  - 'substrate'
+  - 'execution:control-host'
+  urls: []
+  context: 'Receipt-first verdict: substrate lifecycle predicate is failing
+
+    Execution scope: control-host
+
+    Packet epoch: worktree-debt:131:reapable:2
+
+    Task: Run exactly one accepted worktree-reclaim tranche from an isolated Limen owner worktree: LIMEN_RECLAIM_GENERATED=0 LIMEN_RECLAIM_MAX=3 python3 scripts/reclaim-worktrees.py --apply --force --json. The generated-cleanup disable is mandatory: do not run generated-state, tool-cache, Ollama, or clone reclaimers in this packet. Record each removed root and the exact apply receipt in docs/worktree-preservation-receipts.json, then push one narrow owner PR.
+
+    Predicate: python3 -m pytest cli/tests/test_reclaim_worktrees.py -q
+
+    Receipt target: git:organvm/limen:docs/worktree-preservation-receipts.json
+
+    Stop condition: one tranche removes at most three accepted roots or records that no accepted root remains; every residual root stays preserved for a later packet
+
+    This is the single bounded alternate selected after generic dispatch was value-gated.'
+  predicate: 'python3 -m pytest cli/tests/test_reclaim_worktrees.py -q'
+  receipt_target: 'git:organvm/limen:docs/worktree-preservation-receipts.json'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Close the selected always-working owner packet SUBSTRATE-DISK-TEMP'
+  external_deadline: false
+  depends_on: []
+  created: '2026-07-27'
+  dispatch_log:
+  - timestamp: '2026-07-27T13:07:34.734Z'
+    agent: 'codex'
+    session_id: 'github_actions-overnight-lane-switch'
+    logical_agent: 'github_actions'
+    logical_session_id: 'overnight-lane-switch'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-67a76559eb86d1d0b855138cfce66a2c:385:compatibility'
+    conduct_run_id: 'run-67a76559eb86d1d0b855138cfce66a2c'
+    conduct_lease_id: 'lease-385-67a76559eb86d1d0'
+    conduct_generation: 385
+  updated: '2026-07-27T13:07:34.734Z'
