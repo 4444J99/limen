@@ -234,6 +234,12 @@ def _discover_workspace_checkouts(*, strict: bool = False) -> list[Path]:
     checkouts: list[Path] = []
 
     def walk(path: Path, depth: int) -> None:
+        # Package-manager project indexes may expose symlinks to checkouts outside
+        # the configured inventory root. Their owning cache reclaimer must handle
+        # the link; treating the resolved target as this lexical checkout creates
+        # an identity mismatch and risks crossing the configured boundary.
+        if path.is_symlink():
+            return
         if depth > max_depth or not _inventory_is_dir(path, strict=strict, source="workspace checkout root"):
             return
         if (path / ".git").is_dir() or (path / ".git").is_file():
@@ -246,7 +252,7 @@ def _discover_workspace_checkouts(*, strict: bool = False) -> list[Path]:
                 raise WorktreeInventoryError(f"cannot enumerate workspace checkout root {path}: {exc}") from exc
             return
         for child in children:
-            if child.name in SKIP_DIR_NAMES or child.name.startswith("."):
+            if child.name in SKIP_DIR_NAMES or child.name.startswith(".") or child.is_symlink():
                 continue
             if _inventory_is_dir(child, strict=strict, source="workspace checkout child"):
                 walk(child, depth + 1)

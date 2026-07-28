@@ -232,6 +232,21 @@ def test_discover_workspace_checkouts_stops_at_git_roots(tmp_path, monkeypatch):
     assert roots == [checkout]
 
 
+def test_discover_workspace_checkouts_skips_symlinked_checkout(tmp_path, monkeypatch):
+    external = tmp_path / "external"
+    (external / ".git").mkdir(parents=True)
+    inventory = tmp_path / "inventory"
+    inventory.mkdir()
+    linked = inventory / "package-manager-project"
+    linked.symlink_to(external, target_is_directory=True)
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(inventory))
+
+    roots = _discover_workspace_checkouts(strict=True)
+
+    assert roots == []
+    assert linked.exists()
+
+
 # ---------------------------------------------------------------- _git_worktree_paths
 def test_git_worktree_paths_parses_porcelain(tmp_path):
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=tmp_path, check=True)
