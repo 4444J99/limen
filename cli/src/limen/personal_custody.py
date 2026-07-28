@@ -477,12 +477,18 @@ def create_plan(
     records = content_records(source)
     record_payload = [asdict(record) for record in records]
     content_sha256 = _canonical_sha256(record_payload)
-    payload = {
+    inventory_sha256 = hashlib.sha256(inventory_bytes).hexdigest()
+    file_count = sum(record.kind == "file" for record in records)
+    directory_count = sum(record.kind == "directory" for record in records)
+    symlink_count = sum(record.kind == "symlink" for record in records)
+    size_bytes = sum(record.size_bytes for record in records)
+    physical_bytes = sum(record.physical_bytes for record in records)
+    payload: dict[str, Any] = {
         "schema": PLAN_SCHEMA,
         "created_at": _now(),
         "inventory": {
             "id": inventory.get("inventory_id"),
-            "sha256": hashlib.sha256(inventory_bytes).hexdigest(),
+            "sha256": inventory_sha256,
             "frozen_at": inventory.get("frozen_at"),
             "selected_root": selected.get("root"),
             "selected_size_bytes": selected.get("size_bytes"),
@@ -498,11 +504,11 @@ def create_plan(
         },
         "private_root": private_root.as_posix(),
         "content_sha256": content_sha256,
-        "file_count": sum(record.kind == "file" for record in records),
-        "directory_count": sum(record.kind == "directory" for record in records),
-        "symlink_count": sum(record.kind == "symlink" for record in records),
-        "size_bytes": sum(record.size_bytes for record in records),
-        "physical_bytes": sum(record.physical_bytes for record in records),
+        "file_count": file_count,
+        "directory_count": directory_count,
+        "symlink_count": symlink_count,
+        "size_bytes": size_bytes,
+        "physical_bytes": physical_bytes,
         "records": record_payload,
     }
     plan_sha256 = _canonical_sha256(payload)
@@ -515,12 +521,12 @@ def create_plan(
         "event": "planned",
         "label": label,
         "reclaim_mode": reclaim_mode,
-        "inventory_sha256": payload["inventory"]["sha256"],
+        "inventory_sha256": inventory_sha256,
         "plan_sha256": plan_sha256,
         "content_sha256": content_sha256,
-        "file_count": payload["file_count"],
-        "size_bytes": payload["size_bytes"],
-        "physical_bytes": payload["physical_bytes"],
+        "file_count": file_count,
+        "size_bytes": size_bytes,
+        "physical_bytes": physical_bytes,
         "archive_plan": str(archive / relative),
         "recovery_plan": str(recovery / relative),
         "independent_physical_devices": True,

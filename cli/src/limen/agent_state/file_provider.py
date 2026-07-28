@@ -1357,6 +1357,7 @@ def process_file_provider_items(
             raise PipelineError("File Provider authorization and progress paths must be distinct")
     if campaign_planning:
         assert prepare_campaign_authorization is not None
+        assert isinstance(authorization_principal, str)
         verify_materialized_content(tuple(eligible))
         eligible_hashes = [item.item_hash for item in eligible]
         required_batches = (len(remaining) + MAX_BATCH_ITEMS - 1) // MAX_BATCH_ITEMS
@@ -1414,6 +1415,7 @@ def process_file_provider_items(
         return _result_from_progress(progress, items, authorization_prepared=True)
     if planning:
         assert prepare_authorization is not None
+        assert isinstance(authorization_principal, str)
         batch = tuple(remaining[:MAX_BATCH_ITEMS])
         verify_materialized_content(batch)
         attempt_id = _attempt_id(receipt, int(progress["next_attempt"]))
