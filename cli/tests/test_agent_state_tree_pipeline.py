@@ -244,6 +244,32 @@ def test_resume_accepts_completed_exact_receipt_without_another_push(
     assert resumed.as_dict() == first.as_dict()
 
 
+def test_resume_rematerializes_missing_private_receipt_from_exact_custody(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    private_receipt = tmp_path / "private-receipt.json"
+    private_receipt.unlink()
+    monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+
+    resumed = tree_pipeline.resume_cold_tree_capture(
+        "icloud-drive",
+        plan,
+        vault,
+        tmp_path / "external",
+        private_receipt,
+        run_id="run",
+        require_external_mount=False,
+    )
+
+    assert resumed.as_dict() == first.as_dict()
+    assert MetabolismReceipt.read(private_receipt).as_dict() == first.as_dict()
+    assert private_receipt.stat().st_mode & 0o777 == 0o600
+
+
 def test_resume_accepts_completed_receipt_reachable_behind_remote_head(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -364,6 +364,8 @@ def resume_cold_tree_capture(
         if durable != expected:
             raise PipelineError("completed ARCA receipt does not match verified custody")
         receipt.git_receipt_commit = receipt_commit
+        if not private_receipt.exists():
+            receipt.write(private_receipt)
         _require_private_retirement_receipt(receipt, private_receipt)
         return receipt
     expected_paths = [relative / chunk.path for pack in receipt.packs for chunk in pack.chunks]
