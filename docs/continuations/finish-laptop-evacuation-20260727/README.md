@@ -9,9 +9,10 @@ inventory denominator is bound to SHA-256
 `5034e1ca795fd1900f05f34068edb028da569bebc28d020e211a35f7abfa5be6`.
 
 Limen PR #1604 owns the coordinator, contracts, custody/reclaim rails, and
-redacted projections. Domus PR #354 owns the source materializer for standing
-File Provider authority at exact head
-`c4c7d1e518b0f128323c0a4e68de94ec960e80ff`. Historical fixed-GiB plans and
+redacted projections. Merged Domus PR #354 owns the source materializer for
+standing File Provider authority at reviewed head
+`b45828490a03113d7249bf6b50d504435b514f81` and squash merge
+`45760db8334ced1e99b112e45dabadb7d3f7df23`. Historical fixed-GiB plans and
 receipts remain immutable evidence, never present execution authority.
 
 ## Authorities and prohibitions
@@ -42,6 +43,16 @@ receipts remain immutable evidence, never present execution authority.
    churn, error telemetry, task claims, staging, and rollback lifetimes.
 5. Reuse unchanged exact-head predicate receipts. Run only newly implicated
    scoped checks.
+
+## Current nonterminal evidence
+
+The 2026-07-28 dirty-primary census is not a completion receipt. Local `main`
+at `681f0294` is remotely preserved, but the checkout still has 4,207 status
+entries: seven tracked projections and 4,200 untracked files. Of those,
+4,191 files belong to the recipe-owned `.agent-runtime` root (1.1 GiB
+aggregate). Protected peer and service CWDs remain active there, so the
+canonical reclaimer must continue to reject the root. Do not hide this
+denominator with ignore rules or purge it while an owner remains active.
 
 ## Executable terminal predicate
 

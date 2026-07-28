@@ -4,8 +4,9 @@ Status: active superseding execution plan
 Frozen inventory: `docs/storage-evacuation-inventory-20260727.json`
 Frozen inventory SHA-256: `5034e1ca795fd1900f05f34068edb028da569bebc28d020e211a35f7abfa5be6`
 Delivery owner: PR #1604, branch `work/finish-laptop-evacuation-20260727`
-Source-owned Domus receipt: PR #354, exact head
-`c4c7d1e518b0f128323c0a4e68de94ec960e80ff`
+Source-owned Domus receipt: merged PR #354, reviewed head
+`b45828490a03113d7249bf6b50d504435b514f81`, squash merge
+`45760db8334ced1e99b112e45dabadb7d3f7df23`
 
 This plan supersedes the implementation and completion authority in
 `2026-07-27-finish-laptop-evacuation.md`. It does not rewrite that plan, the
@@ -139,6 +140,22 @@ On empty scratch, install release tooling without a repository checkout,
 hydrate one selected graph, restore its encrypted inputs, reproduce it at its
 declared replay level, render its composition, publish receipts, and remove the
 checkout.
+
+## Current nonterminal reconciliation
+
+The 2026-07-28 live dirty-primary census remains part of the denominator:
+
+- local `main` HEAD `681f0294` is remotely preserved by three `preserve/*`
+  refs;
+- the checkout has 4,207 status entries: seven tracked projections
+  (`+3,666/-500`) and 4,200 untracked files;
+- 4,191 untracked files are in the recipe-owned `.agent-runtime` root
+  (1.1 GiB aggregate); and
+- active peer and service CWDs still reference the checkout and runtime.
+
+This root is active and therefore not automatically safe. It was neither
+purged nor hidden. A later SHA-bound reconciliation must classify its generated
+recipes and reach terminal custody after every protected owner exits.
 
 ## Terminal predicate
 
