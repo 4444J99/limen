@@ -55,17 +55,6 @@ def _load(tmp_path, n_open=6, agent="codex"):
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
     os.environ["LIMEN_DISPATCH_ADMISSION"] = "0"
     os.environ["LIMEN_WORKTREE_DEBT_GATE"] = "0"
-    resource_graph = tmp_path / "resource-task-graph.json"
-    resource_graph.write_text(
-        json.dumps(
-            {
-                "schema": "limen.resource_task_graph.v1",
-                "claims": [],
-            },
-        ),
-        encoding="utf-8",
-    )
-    os.environ["LIMEN_RESOURCE_TASK_GRAPH"] = str(resource_graph)
     today = datetime.date.today()
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={agent: 50}, track=BudgetTrack(date=today.isoformat()))),
@@ -96,6 +85,20 @@ def _load(tmp_path, n_open=6, agent="codex"):
     da.current_required_free_gib = lambda: 0.0
     da.RUNS.mkdir(parents=True, exist_ok=True)
     return da
+
+
+def _empty_resource_graph(tmp_path):
+    resource_graph = tmp_path / "resource-task-graph.json"
+    resource_graph.write_text(
+        json.dumps(
+            {
+                "schema": "limen.resource_task_graph.v1",
+                "claims": [],
+            },
+        ),
+        encoding="utf-8",
+    )
+    return resource_graph
 
 
 def _load_worker(tmp_path):
@@ -1476,6 +1479,7 @@ def test_async_marker_holds_checkout_room_until_worktree_birth(tmp_path):
 def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_path):
     """The durable lease closes the board-save -> running-marker cross-process race."""
     da = _load(tmp_path, n_open=2)
+    resource_graph = _empty_resource_graph(tmp_path)
     ready = tmp_path / "first-at-spawn"
     release = tmp_path / "release-first"
     first_out = tmp_path / "first.json"
@@ -1486,6 +1490,7 @@ def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_pa
         "LIMEN_TASKS": str(tmp_path / "tasks.yaml"),
         "LIMEN_DISPATCH_ADMISSION": "0",
         "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
+        "LIMEN_RESOURCE_TASK_GRAPH": str(resource_graph),
         "LIMEN_WORKTREE_DEBT_GATE": "0",
         "LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH": "0",
         "PYTHONPATH": str(CLI_SRC),
@@ -3092,6 +3097,7 @@ def test_targeted_only_dry_run_is_unmocked_byte_identical_across_control_surface
     os.environ["LIMEN_ROOT"] = str(tmp_path)
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
     _load(tmp_path, n_open=1)
+    resource_graph = _empty_resource_graph(tmp_path)
     board = load_limen_file(tmp_path / "tasks.yaml")
     task = board.tasks[0]
     task.context = "exact dry-run byte identity"
@@ -3169,6 +3175,7 @@ pathlib.Path("logs/handoff.json").write_text("MUTATED BY FORBIDDEN REFRESH")
         "LIMEN_SESSION_VALUE_GATE": "1",
         "LIMEN_WORKTREE_DEBT_GATE": "0",
         "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
+        "LIMEN_RESOURCE_TASK_GRAPH": str(resource_graph),
     }
     proc = subprocess.run(
         [
