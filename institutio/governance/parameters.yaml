@@ -1132,11 +1132,11 @@ parameters:
     owner: continuity
     note: "Pushed-reap policy — DEFAULT ON. A clean, inactive worktree whose exact HEAD is reachable from a remote ref is disposable local cache: removing it loses zero work while the branch and PR lifecycle continue on the remote owner. Set 0 only for a bounded diagnostic hold. Dirty, unpushed, process-owned, or explicitly locked roots remain fail-closed."
   LIMEN_RECLAIM_ORPHANS:
-    default: "1"
+    default: "0"
     env: LIMEN_RECLAIM_ORPHANS
     self_update: none
     owner: continuity
-    note: "Dead-gitdir orphan sweep — observable-first criterion satisfied 2026-07-16: first full bounded drain clean moved 431 orphans loss-free, 431 receipts written, re-run finds 0 (fixed point). Now DEFAULT ON. A worktree checkout under a THROWAWAY root (dispatch/scratch) whose `.git` pointer targets a superproject gitdir that no longer exists is prune-race debris: `git worktree prune` (clone-maintenance.sh) reaped the gitdir while the worktree's volume (Scratch) was briefly unmounted, and the checkout returned orphaned on remount — classified not-a-git-dir, uncleanable by the git-dependent loss-free gates, and the dominant cause of the 2026-07-15 worktree-debt tripling (372/537 roots). CRITICAL: it does NOT delete — because git is dead on the checkout, the reaper cannot prove the orphan walked its lifecycle (merged/pushed), so it PRESERVES it by MOVE into an off-worktree quarantine (LIMEN_ORPHAN_QUARANTINE), reversible, losing nothing walked-or-not, which resolves the debt. Deleting a quarantined orphan is a SEPARATE proof-gated step (branch provably on origin, or an operator grace). Confined to throwaway roots only — never .claude/worktrees, repo-local, or registered cells. The prune GUARD in clone-maintenance.sh stops new orphans being manufactured; this quarantines the existing backlog. Set 0 to disarm."
+    note: "Dead-gitdir orphan quarantine is DEFAULT OFF. When explicitly armed, a checkout under a THROWAWAY root whose `.git` pointer targets a missing superproject gitdir is preserved by same-volume MOVE into LIMEN_ORPHAN_QUARANTINE, never deleted. The owner must review the current census and arm this reversible lane per bounded run; deletion of quarantined material remains a separate custody-gated action."
   LIMEN_ORPHAN_QUARANTINE:
     default: ""
     env: LIMEN_ORPHAN_QUARANTINE
@@ -4369,7 +4369,7 @@ parameters:
     env: LIMEN_WORKTREE_REAPABLE_MAX
     self_update: none
     owner: limen-daemon
-    note: "Maximum clean merged local worktree roots allowed to linger after the reaper should be able to remove them. Default 0 makes clean+merged+idle residue fail focused lifecycle gates until reclaim applies or an owner blocker is recorded. Pushed-but-unmerged roots are not reapable; they remain not-merged-to-default until merged or patch-equivalent."
+    note: "Maximum clean remote-preserved local worktree roots allowed to linger after the reaper should be able to remove them. Default 0 makes clean+merged+idle and clean+pushed+idle residue fail focused lifecycle gates until reclaim applies or an owner blocker is recorded. The remote branch or PR remains the durable lifecycle owner after its disposable checkout is removed."
   LIMEN_LIFECYCLE_PRESSURE_THROTTLE:
     default: 1800             # 30 min — skip the session-lifecycle-pressure census if the snapshot is younger
     env: LIMEN_LIFECYCLE_PRESSURE_THROTTLE

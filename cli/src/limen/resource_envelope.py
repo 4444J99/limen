@@ -83,6 +83,9 @@ class ResourceEnvelope:
     observed_at: datetime
     observed_system_reserve_bytes: int
     peak_concurrent_task_bytes: int
+    peak_concurrent_memory_bytes: int
+    memory_available_bytes: int
+    memory_nonnegative: bool
     custody_and_rollback_staging_bytes: int
     telemetry_error_bytes: int
     required_free_bytes: int
@@ -111,6 +114,13 @@ def evaluate_resource_envelope(
         (sum(claim.active_bytes(boundary) for claim in live_claims) for boundary in boundaries),
         default=0,
     )
+    peak_memory = max(
+        (
+            sum(claim.memory_bytes for claim in live_claims if claim.effective_from <= boundary < claim.effective_until)
+            for boundary in boundaries
+        ),
+        default=0,
+    )
     staging = max(
         (
             sum(
@@ -128,6 +138,9 @@ def evaluate_resource_envelope(
         observed_at=instant,
         observed_system_reserve_bytes=system,
         peak_concurrent_task_bytes=peak,
+        peak_concurrent_memory_bytes=peak_memory,
+        memory_available_bytes=telemetry.ram_available_bytes,
+        memory_nonnegative=telemetry.ram_available_bytes >= peak_memory,
         custody_and_rollback_staging_bytes=staging,
         telemetry_error_bytes=telemetry.telemetry_error_bytes,
         required_free_bytes=required,
@@ -224,6 +237,8 @@ def load_task_graph_claims(path: Path | None = None) -> tuple[ResourceClaimV1, .
     ):
         raise ValueError("resource task graph has an invalid shape")
     claims = tuple(ResourceClaimV1.model_validate(value) for value in payload["claims"])
+    if not claims:
+        raise ValueError("resource task graph must contain concrete claims")
     identifiers = [claim.claim_id for claim in claims]
     if len(identifiers) != len(set(identifiers)):
         raise ValueError("resource task graph contains duplicate claim IDs")
@@ -234,10 +249,13 @@ def current_required_free_gib(
     claims: tuple[ResourceClaimV1, ...] | None = None,
 ) -> float:
     selected = load_task_graph_claims() if claims is None else claims
-    return evaluate_resource_envelope(
+    envelope = evaluate_resource_envelope(
         observe_resource_telemetry(),
         selected,
-    ).required_free_gib
+    )
+    if not envelope.memory_nonnegative:
+        raise RuntimeError("selected resource task graph exceeds live memory headroom")
+    return envelope.required_free_gib
 
 
 def main() -> int:

@@ -3,12 +3,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 import rfc8785
-from limen.prima_materia import ResourceClaimV1, SourceAdapterV1
+from limen.prima_materia import SourceAdapterV1
 from limen.prima_materia_store import (
     EncryptedObjectStore,
     PrimaMateriaStoreError,
@@ -20,7 +19,6 @@ DIGEST = "a" * 64
 
 
 def _adapter(adapter_id: str, source_id: str) -> SourceAdapterV1:
-    start = datetime(2026, 7, 28, tzinfo=UTC)
     return SourceAdapterV1(
         adapter_id=adapter_id,
         source_id=source_id,
@@ -29,18 +27,7 @@ def _adapter(adapter_id: str, source_id: str) -> SourceAdapterV1:
         cursor_schema_digest=DIGEST,
         completeness_predicate="cursor exhausted",
         privacy_transform_digest=DIGEST,
-        resource_claim=ResourceClaimV1(
-            claim_id=f"claim{source_id}",
-            hydrated_inputs_bytes=1,
-            workspace_bytes=2,
-            temporary_expansion_bytes=3,
-            output_bytes=4,
-            encryption_chunking_bytes=5,
-            rollback_bytes=6,
-            effective_from=start,
-            effective_until=start + timedelta(hours=1),
-            rollback_until=start + timedelta(hours=2),
-        ),
+        claim_recipe=f"claim-recipe-{source_id}",
         recipe_version="recipe-v1",
         custody_target_refs=("archive", "recovery"),
         restoration_predicate="both copies restore",

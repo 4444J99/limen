@@ -290,7 +290,7 @@ class _AesGcm:
             self.library.EVP_CIPHER_CTX_free(context)
 
 
-def _canonical_digest(value: object) -> str:
+def _canonical_digest(value: Any) -> str:
     return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
 
 

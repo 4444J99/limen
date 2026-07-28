@@ -93,3 +93,11 @@ def test_registry_rejects_escaping_relative_path(tmp_path: Path) -> None:
 
     with pytest.raises(ProtectedExclusionError, match="path-must-be-safe-relative"):
         ProtectedExclusionRegistry.load(tmp_path, registry)
+
+
+def test_registry_translates_missing_repository_root(tmp_path: Path) -> None:
+    with pytest.raises(
+        ProtectedExclusionError,
+        match="protected-exclusion-repository-root-unavailable",
+    ):
+        ProtectedExclusionRegistry.load(tmp_path / "missing")

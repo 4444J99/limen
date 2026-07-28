@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Produce two redacted live alpha-to-omega reconciliation audits."""
+"""Produce two independently bounded, frozen-wave alpha-to-omega audits."""
 
 from __future__ import annotations
 
@@ -18,39 +18,30 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.alpha_omega import (
+    MAX_FROZEN_ROOTS,
     build_reconciliation_manifest,
+    control_plane_projection,
+    denominator_identifier,
+    discover_repository_denominator,
     fixed_point_pair,
+    load_frozen_wave,
+    load_lambda_rungs,
+    load_reclaim_census,
+    load_source_inventory,
+    load_storage_inventory_roots,
     physical_device_projection,
+    predicate_state_digest,
     protected_process_projection,
+    registered_worktree_denominator,
 )
 from limen.prima_materia_store import SourceRegistry
 from limen.protected_exclusions import ProtectedExclusionRegistry
-from limen.resource_envelope import observe_resource_telemetry
+from limen.resource_envelope import load_task_graph_claims, observe_resource_telemetry
 
-MAX_REPOSITORIES = 4096
 CommandRunner = Callable[
     [list[str], Path | None, int],
     subprocess.CompletedProcess[str],
 ]
-SKIP_DIRECTORIES = {
-    ".cache",
-    ".next",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".venv",
-    "__pycache__",
-    "build",
-    "coverage",
-    "dist",
-    "node_modules",
-    "target",
-    "vendor",
-}
-
-
-def _identifier(prefix: str, path: Path) -> str:
-    digest = hashlib.sha256(str(path.resolve(strict=False)).encode()).hexdigest()
-    return f"{prefix}-{digest[:16]}"
 
 
 def _parse_mapping(values: list[str], label: str) -> dict[str, Path]:
@@ -63,88 +54,6 @@ def _parse_mapping(values: list[str], label: str) -> dict[str, Path]:
             raise ValueError(f"{label} contains an invalid or duplicate ID")
         parsed[identifier] = Path(raw_path).expanduser()
     return parsed
-
-
-def _discover_repositories(
-    search_roots: list[Path],
-    *,
-    deadline: float,
-) -> tuple[dict[str, Path], bool]:
-    found: dict[Path, None] = {}
-    complete = True
-    for search_root in search_roots:
-        root = search_root.expanduser().resolve(strict=False)
-        if not root.is_dir():
-            continue
-        for current, directories, files in os.walk(root, followlinks=False):
-            if time.monotonic() >= deadline:
-                complete = False
-                break
-            directories[:] = sorted(name for name in directories if name not in SKIP_DIRECTORIES and name != ".git")
-            candidate = Path(current)
-            if ".git" in files or (candidate / ".git").is_dir():
-                found[candidate.resolve(strict=False)] = None
-                if len(found) > MAX_REPOSITORIES:
-                    raise ValueError("repository discovery exceeded the bounded limit")
-        if not complete:
-            break
-    return (
-        {_identifier("repository", path): path for path in sorted(found, key=str)},
-        complete,
-    )
-
-
-def _inventory_private_roots(path: Path | None) -> dict[str, Path]:
-    if path is None:
-        return {}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError("storage inventory is unavailable") from exc
-    roots = payload.get("roots") if isinstance(payload, dict) else None
-    if not isinstance(roots, list) or len(roots) > MAX_REPOSITORIES:
-        raise ValueError("storage inventory roots are invalid")
-    result: dict[str, Path] = {}
-    for row in roots:
-        if not isinstance(row, dict) or not isinstance(row.get("root"), str):
-            raise TypeError("storage inventory root is invalid")
-        root = Path(row["root"]).expanduser()
-        result[_identifier("private-root", root)] = root
-    return result
-
-
-def _base_sha(
-    repository_root: Path,
-    runner: CommandRunner,
-) -> str:
-    result = runner(
-        ["git", "rev-parse", "HEAD"],
-        repository_root,
-        30,
-    )
-    if result.returncode != 0:
-        raise ValueError("repository base SHA is unavailable")
-    return result.stdout.strip()
-
-
-def _registered_worktrees(
-    repository_root: Path,
-    runner: CommandRunner,
-) -> tuple[dict[str, Path], bool]:
-    result = runner(
-        ["git", "worktree", "list", "--porcelain"],
-        repository_root,
-        60,
-    )
-    if result.returncode != 0:
-        return {}, False
-    paths = [Path(line.split(" ", 1)[1]) for line in result.stdout.splitlines() if line.startswith("worktree ")]
-    if len(paths) > MAX_REPOSITORIES:
-        raise ValueError("registered worktree census exceeded the bounded limit")
-    return (
-        {_identifier("worktree", path): path for path in paths},
-        True,
-    )
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
@@ -164,10 +73,6 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--repository-root", type=Path, default=ROOT)
     result.add_argument(
-        "--base-sha",
-        help="Exact 40-character merged base SHA; defaults to repository HEAD.",
-    )
-    result.add_argument(
         "--repository-search-root",
         action="append",
         default=[],
@@ -176,6 +81,10 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--repository", action="append", default=[])
     result.add_argument("--private-root", action="append", default=[])
     result.add_argument("--storage-inventory", type=Path)
+    result.add_argument("--frozen-wave", type=Path, required=True)
+    result.add_argument("--source-inventory", type=Path, required=True)
+    result.add_argument("--reclaim-census", type=Path, required=True)
+    result.add_argument("--resource-task-graph", type=Path, required=True)
     result.add_argument(
         "--source-registry",
         type=Path,
@@ -186,21 +95,67 @@ def parser() -> argparse.ArgumentParser:
         type=Path,
         default=ROOT / "institutio" / "governance" / "reconciliation-protected-exclusions.json",
     )
-    result.add_argument("--observed-source", action="append", default=[])
     result.add_argument(
-        "--safe-reclaim-count",
-        type=int,
-        help="Exact completed reclaim census count; omission remains visible debt.",
+        "--lambda-rungs",
+        type=Path,
+        default=ROOT / "institutio" / "governance" / "prima-materia-lambda-rungs.json",
     )
-    result.add_argument("--receipt-predicates", type=Path)
     result.add_argument(
         "--max-seconds",
         type=int,
         default=300,
-        help="Whole live-probe deadline (30..1800 seconds).",
+        help="Independent deadline for each audit (30..1800 seconds).",
+    )
+    result.add_argument(
+        "--max-threads",
+        type=int,
+        default=3,
+        help="Local repository probe threads (1..3).",
     )
     result.add_argument("--output", type=Path)
     return result
+
+
+def _bounded_runner(deadline: float) -> CommandRunner:
+    def run(
+        command: list[str],
+        cwd: Path | None,
+        timeout: int,
+    ) -> subprocess.CompletedProcess[str]:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return subprocess.CompletedProcess(
+                command,
+                124,
+                "",
+                "alpha-omega-audit-deadline-exhausted",
+            )
+        try:
+            return subprocess.run(
+                command,
+                cwd=str(cwd) if cwd else None,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=min(timeout, max(0.1, remaining)),
+                stdin=subprocess.DEVNULL,
+            )
+        except subprocess.TimeoutExpired:
+            return subprocess.CompletedProcess(
+                command,
+                124,
+                "",
+                "alpha-omega-command-timeout",
+            )
+        except OSError as exc:
+            return subprocess.CompletedProcess(
+                command,
+                127,
+                "",
+                type(exc).__name__,
+            )
+
+    return run
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -208,143 +163,116 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if not 30 <= arguments.max_seconds <= 1800:
             raise ValueError("--max-seconds must be between 30 and 1800")
-        deadline = time.monotonic() + arguments.max_seconds
-
-        def bounded_runner(
-            command: list[str],
-            cwd: Path | None,
-            timeout: int,
-        ) -> subprocess.CompletedProcess[str]:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return subprocess.CompletedProcess(
-                    command,
-                    124,
-                    "",
-                    "alpha-omega-deadline-exhausted",
-                )
-            try:
-                return subprocess.run(
-                    command,
-                    cwd=str(cwd) if cwd else None,
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                    timeout=min(timeout, max(0.1, remaining)),
-                    stdin=subprocess.DEVNULL,
-                )
-            except subprocess.TimeoutExpired:
-                return subprocess.CompletedProcess(
-                    command,
-                    124,
-                    "",
-                    "alpha-omega-command-timeout",
-                )
-            except OSError as exc:
-                return subprocess.CompletedProcess(
-                    command,
-                    127,
-                    "",
-                    type(exc).__name__,
-                )
-
+        if not 1 <= arguments.max_threads <= 3:
+            raise ValueError("--max-threads must be between 1 and 3")
         repository_root = arguments.repository_root.expanduser().resolve(strict=True)
-        base_sha = arguments.base_sha or _base_sha(
-            repository_root,
-            bounded_runner,
-        )
-        if len(base_sha) != 40 or any(character not in "0123456789abcdef" for character in base_sha):
-            raise ValueError("--base-sha must be a full lowercase Git SHA")
-        base_exists = bounded_runner(
-            ["git", "cat-file", "-e", f"{base_sha}^{{commit}}"],
-            repository_root,
-            30,
-        )
-        if base_exists.returncode != 0:
-            raise ValueError("--base-sha is unavailable in the repository object database")
-        explicit_repositories = _parse_mapping(
-            arguments.repository,
-            "--repository",
-        )
+        explicit_repositories = _parse_mapping(arguments.repository, "--repository")
         explicit_private_roots = _parse_mapping(
             arguments.private_root,
             "--private-root",
         )
+        frozen_wave = load_frozen_wave(arguments.frozen_wave)
+        source_inventory = load_source_inventory(arguments.source_inventory)
+        reclaim_census = load_reclaim_census(arguments.reclaim_census)
+        lambda_rungs = load_lambda_rungs(arguments.lambda_rungs)
+        source_registry = SourceRegistry.load(arguments.source_registry)
+        protected_registry = ProtectedExclusionRegistry.load(
+            repository_root,
+            arguments.protected_registry,
+        )
+        resource_claims = load_task_graph_claims(arguments.resource_task_graph)
+        task_graph_digest = hashlib.sha256(arguments.resource_task_graph.read_bytes()).hexdigest()
 
         def audit() -> dict[str, object]:
-            repositories, discovery_complete = _discover_repositories(
+            deadline = time.monotonic() + arguments.max_seconds
+            runner = _bounded_runner(deadline)
+            repositories, discovery_complete = discover_repository_denominator(
                 arguments.repository_search_root,
                 deadline=deadline,
             )
-            registered, registrations_complete = _registered_worktrees(
+            registered, registrations_complete = registered_worktree_denominator(
                 repository_root,
-                bounded_runner,
+                runner,
             )
             repositories.update(registered)
             repositories.update(explicit_repositories)
             repositories.setdefault(
-                _identifier("repository", repository_root),
+                denominator_identifier("repository", repository_root),
                 repository_root,
             )
-            if len(repositories) > MAX_REPOSITORIES:
+            if len(repositories) > MAX_FROZEN_ROOTS:
                 raise ValueError("combined repository census exceeded the bounded limit")
-            private_roots = _inventory_private_roots(arguments.storage_inventory)
+            private_roots = load_storage_inventory_roots(arguments.storage_inventory)
             private_roots.update(explicit_private_roots)
-            if len(private_roots) > MAX_REPOSITORIES:
+            if len(private_roots) > MAX_FROZEN_ROOTS:
                 raise ValueError("combined private-root census exceeded the bounded limit")
-            source_registry = SourceRegistry.load(arguments.source_registry)
-            observed_sources = tuple(arguments.observed_source) or tuple(
-                adapter.source_id for adapter in source_registry.adapters
-            )
-            protected_registry = ProtectedExclusionRegistry.load(
-                repository_root,
-                arguments.protected_registry,
-            )
-            receipts: dict[str, bool] = {}
-            if arguments.receipt_predicates:
-                raw_receipts = json.loads(arguments.receipt_predicates.read_text(encoding="utf-8"))
-                if not isinstance(raw_receipts, dict) or any(
-                    not isinstance(key, str) or not isinstance(value, bool) for key, value in raw_receipts.items()
-                ):
-                    raise ValueError("receipt predicates must be a boolean object")
-                receipts = raw_receipts
-            telemetry = observe_resource_telemetry()
-            devices = physical_device_projection(runner=bounded_runner)
+            devices = physical_device_projection(runner=runner)
             processes = protected_process_projection(
                 protected_registry,
-                runner=bounded_runner,
+                runner=runner,
             )
-            return build_reconciliation_manifest(
+            control_plane = control_plane_projection(
+                repository_root,
+                frozen_wave,
+                runner=runner,
+            )
+            manifest = build_reconciliation_manifest(
                 repository_root=repository_root,
-                base_sha=base_sha,
+                frozen_wave=frozen_wave,
                 repositories=repositories,
                 private_roots=private_roots,
                 source_registry=source_registry,
-                observed_source_ids=observed_sources,
+                source_inventory=source_inventory,
                 protected_registry=protected_registry,
-                resource_telemetry=telemetry,
+                resource_claims=resource_claims,
+                resource_task_graph_digest=task_graph_digest,
+                reclaim_census=reclaim_census,
+                lambda_rungs=lambda_rungs,
+                resource_telemetry=observe_resource_telemetry(),
                 physical_devices=devices,
                 protected_processes=processes,
-                automatically_safe_reclaim_count=arguments.safe_reclaim_count,
-                repository_census_complete=(discovery_complete and registrations_complete),
-                receipt_predicates=receipts,
+                control_plane=control_plane,
+                audit_deadline_seconds=arguments.max_seconds,
                 observed_at=datetime.now(UTC),
-                runner=bounded_runner,
+                runner=runner,
+                max_workers=arguments.max_threads,
             )
+            if not discovery_complete or not registrations_complete:
+                state = manifest["state"]
+                if isinstance(state, dict):
+                    state["audit_complete"] = False
+                    incomplete = state.get("incomplete_inputs", [])
+                    if isinstance(incomplete, list):
+                        incomplete.append("repository_enumeration_complete")
+                        state["incomplete_inputs"] = sorted(set(incomplete))
+                    manifest["state_sha256"] = predicate_state_digest(state)
+                manifest["audit_complete"] = False
+                manifest["lambda_passed"] = False
+                manifest["omega_admitted"] = False
+            return manifest
 
         first = audit()
         second = audit()
+        fixed_point = fixed_point_pair(first, second)
         payload: dict[str, object] = {
-            "schema": "limen.alpha_omega_reconciliation_receipt.v1",
+            "schema": "limen.alpha_omega_reconciliation_receipt.v2",
+            "audit_deadline_seconds_each": arguments.max_seconds,
+            "max_local_probe_threads": arguments.max_threads,
             "first": first,
             "second": second,
-            "fixed_point": fixed_point_pair(first, second),
+            "fixed_point": fixed_point,
         }
-    except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as exc:
+    except (
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+        json.JSONDecodeError,
+    ) as exc:
         print(
             json.dumps(
                 {
-                    "schema": "limen.alpha_omega_reconciliation_error.v1",
+                    "schema": "limen.alpha_omega_reconciliation_error.v2",
                     "error": str(exc),
                 },
                 sort_keys=True,
@@ -356,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         _write_json(arguments.output, payload)
     else:
         print(json.dumps(payload, indent=2, sort_keys=True))
-    return 0
+    return 0 if fixed_point["omega_admitted"] is True else 1
 
 
 if __name__ == "__main__":

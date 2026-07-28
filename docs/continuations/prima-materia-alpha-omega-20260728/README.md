@@ -2,20 +2,25 @@
 
 ## Objective
 
-Drive the live estate from the redacted reconciliation receipt to two equal λ
-state digests, while retaining the career-portal lane as an externally owned
-hard exclusion until its owner closes it independently.
+Land PR #1606 as an honest admission gate. Do not begin repository evacuation,
+private-data movement, reclaim, eviction, or dematerialization until that head
+is merged through the queue, installed as the immutable runtime, and a
+successor worktree is launched from the merged SHA.
 
 ## Authorities and prohibitions
 
-- Base implementation SHA:
-  `4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1`.
+- Delivery receipt: PR #1606. Derive its exact head and checks live.
+- Current installed/runtime authority is recorded in `frozen-wave.json`; never
+  treat the active PR checkout as the control-plane anchor.
 - Protection registry:
   `institutio/governance/reconciliation-protected-exclusions.json`.
 - Source registry:
   `institutio/governance/prima-materia-source-registry.json`.
 - Live evidence:
   `live-reconciliation.json`.
+- Frozen denominator and independent inputs:
+  `frozen-wave.json`, `source-inventory.json`, `resource-task-graph.json`, and
+  `reclaim-census.json`.
 - Never mutate, signal, preserve, archive, prune, remove, or repair a protected
   owner root, branch, registration, file, or process.
 - Never apply a reclaim plan without its unchanged expected digest and required
@@ -28,14 +33,21 @@ hard exclusion until its owner closes it independently.
 domus-limen-runtime status
 git ls-remote origin refs/heads/main
 git status --short --branch
-uv run --project cli python scripts/reclaim-worktrees.py --check --json
+uv run --project cli python scripts/reclaim-worktrees.py \
+  --repository-root /path/to/canonical-limen --check --json
 uv run --project cli python scripts/alpha-omega-reconcile.py --help
 ```
 
 ## Completion and switch predicates
 
-The workstream ends only when `live-reconciliation.json` reports:
+This α workstream ends when the exact PR head has green `python` and `pr-gate`
+checks and is published ready for Anthony's merge-queue admission. The
+post-merge successor begins only after the merged SHA is installed and the
+direct session is registered `human_protected`.
 
+The overall campaign ends only when `live-reconciliation.json` reports:
+
+- `fixed_point.complete = true`;
 - `fixed_point.unchanged = true`;
 - `fixed_point.lambda_passed = true`;
 - `fixed_point.omega_admitted = true`.
@@ -45,10 +57,13 @@ current exact head and this capsule have remote custody.
 
 ## Ownership
 
-The career-portal session exclusively owns the protected career lane. This
-continuation owns all other λ evidence, including a complete bounded reclaim
-census, repository reconstruction receipts, two-device private restoration,
-and empty-scratch hydration/replay/composition/dematerialization receipts.
+The career-portal session exclusively owns the protected career lane and its
+`OmegaOwnerReceiptV1`. This continuation only consumes that receipt. It never
+mutates, signals, registers, prunes, or retires the protected lane.
+
+The conduct broker owns claims and lifecycle transitions. If its authenticated
+capabilities endpoint is unavailable, inspection and already-leased local work
+may continue, but no new β–Ω packet or transition may be invented locally.
 
 ## Launch
 

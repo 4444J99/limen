@@ -10,7 +10,7 @@
       "cursor_schema_digest": "888c9beefcd9e315dce994080ea5d4c72eaa7f5a9b5bab525463181e9cf90d00",
       "completeness_predicate": "every configured repository root, local ref, worktree registration, and provider-advertised ref is observed",
       "privacy_transform_digest": "bfa0be94b53558431c6185d67432bf163f8ed312ae28897831f5c7ca20a789e1",
-      "resource_claim": {"schema_version": "limen.resource_claim.v1", "claim_id": "claimGitEstate01", "hydrated_inputs_bytes": 0, "workspace_bytes": 1048576, "temporary_expansion_bytes": 1048576, "output_bytes": 1048576, "encryption_chunking_bytes": 4194304, "rollback_bytes": 4194304, "effective_from": "2026-07-28T00:00:00Z", "effective_until": "2036-07-28T00:00:00Z", "rollback_until": "2036-07-29T00:00:00Z"},
+      "claim_recipe": "git-source-instance-resource-claim-v1",
       "recipe_version": "git-estate-v1",
       "custody_target_refs": ["encrypted-primary", "encrypted-recovery"],
       "restoration_predicate": "all refs and exact working state restore in an isolated clone"
@@ -24,7 +24,7 @@
       "cursor_schema_digest": "cf44708d9d9eb202b1425a26d155a6561d6c853244724d8246c849b9a3d66675",
       "completeness_predicate": "native process cwd probe completed without an unavailable sentinel",
       "privacy_transform_digest": "995f54c95e7c35ccb9cabb55d5e1c2e43c9602447663021b0580d106a32bf31b",
-      "resource_claim": {"schema_version": "limen.resource_claim.v1", "claim_id": "claimProcessCwd1", "hydrated_inputs_bytes": 0, "workspace_bytes": 1048576, "temporary_expansion_bytes": 0, "output_bytes": 1048576, "encryption_chunking_bytes": 0, "rollback_bytes": 1048576, "effective_from": "2026-07-28T00:00:00Z", "effective_until": "2036-07-28T00:00:00Z", "rollback_until": "2036-07-29T00:00:00Z"},
+      "claim_recipe": "process-cwd-resource-claim-v1",
       "recipe_version": "process-cwd-v1",
       "custody_target_refs": ["redacted-reconciliation-receipt"],
       "restoration_predicate": "projection reproduces counts without publishing paths or process identifiers"
@@ -38,7 +38,7 @@
       "cursor_schema_digest": "cb25c33d7a4770080949ac19e15a90c88d68132210344849078d0107640753b8",
       "completeness_predicate": "every frozen private root has a source identity or explicit unavailable debt",
       "privacy_transform_digest": "11b033dbf52b25cd899110a014d83922567dc4310249fa940d622b9b5adad14d",
-      "resource_claim": {"schema_version": "limen.resource_claim.v1", "claim_id": "claimPrivateRoot", "hydrated_inputs_bytes": 0, "workspace_bytes": 1048576, "temporary_expansion_bytes": 1048576, "output_bytes": 1048576, "encryption_chunking_bytes": 4194304, "rollback_bytes": 4194304, "effective_from": "2026-07-28T00:00:00Z", "effective_until": "2036-07-28T00:00:00Z", "rollback_until": "2036-07-29T00:00:00Z"},
+      "claim_recipe": "private-root-resource-claim-v1",
       "recipe_version": "private-root-v1",
       "custody_target_refs": ["encrypted-primary", "encrypted-recovery"],
       "restoration_predicate": "two physical-device copies restore content and metadata"
@@ -52,7 +52,7 @@
       "cursor_schema_digest": "03a093d9dfe53c8dac8b4caeb61841d493e36c287744ccc9cf1e5f883ed30175",
       "completeness_predicate": "native device inventory parses and every configured custody target maps to one physical identity",
       "privacy_transform_digest": "6e30a8b9324cb5db6cdab67ef8b3b20b54be9bf65ba4a7be18181ed4ac9769ee",
-      "resource_claim": {"schema_version": "limen.resource_claim.v1", "claim_id": "claimPhysicalDev", "hydrated_inputs_bytes": 0, "workspace_bytes": 1048576, "temporary_expansion_bytes": 0, "output_bytes": 1048576, "encryption_chunking_bytes": 0, "rollback_bytes": 1048576, "effective_from": "2026-07-28T00:00:00Z", "effective_until": "2036-07-28T00:00:00Z", "rollback_until": "2036-07-29T00:00:00Z"},
+      "claim_recipe": "physical-device-resource-claim-v1",
       "recipe_version": "physical-device-v1",
       "custody_target_refs": ["redacted-reconciliation-receipt"],
       "restoration_predicate": "device identity digests remain stable across the restore probe"
@@ -66,7 +66,7 @@
       "cursor_schema_digest": "9f719435aee1d21143e0e1f83cf479721051dfd6779c5b14a30ad8505bd146b1",
       "completeness_predicate": "every observed source has exactly one schema-valid adapter",
       "privacy_transform_digest": "f1546ac4dc95e9d7a5190f96150bff2d22ecebd806476947add4502411af2a5c",
-      "resource_claim": {"schema_version": "limen.resource_claim.v1", "claim_id": "claimSourceReg01", "hydrated_inputs_bytes": 0, "workspace_bytes": 1048576, "temporary_expansion_bytes": 0, "output_bytes": 1048576, "encryption_chunking_bytes": 0, "rollback_bytes": 1048576, "effective_from": "2026-07-28T00:00:00Z", "effective_until": "2036-07-28T00:00:00Z", "rollback_until": "2036-07-29T00:00:00Z"},
+      "claim_recipe": "source-registry-resource-claim-v1",
       "recipe_version": "source-registry-v1",
       "custody_target_refs": ["git-tracked-redacted-registry"],
       "restoration_predicate": "registry loads in arbitrary order with the same canonical digest"
@@ -80,7 +80,7 @@
       "cursor_schema_digest": "7bd188744b46424abcc825226a0e29495666473d9a24cc5930728b2be1de216e",
       "completeness_predicate": "all required live sensors return and selected task claims are schema-valid",
       "privacy_transform_digest": "65d399ec3877d2607b2e5df878da9e84b8ea87a7c3cd8fc4ae5f8f8fe6a44931",
-      "resource_claim": {"schema_version": "limen.resource_claim.v1", "claim_id": "claimResourceTel", "hydrated_inputs_bytes": 0, "workspace_bytes": 1048576, "temporary_expansion_bytes": 0, "output_bytes": 1048576, "encryption_chunking_bytes": 0, "rollback_bytes": 1048576, "effective_from": "2026-07-28T00:00:00Z", "effective_until": "2036-07-28T00:00:00Z", "rollback_until": "2036-07-29T00:00:00Z"},
+      "claim_recipe": "resource-telemetry-task-graph-claim-v1",
       "recipe_version": "resource-telemetry-v1",
       "custody_target_refs": ["redacted-reconciliation-receipt"],
       "restoration_predicate": "resource envelope recomputes from the captured claims and sensor values"

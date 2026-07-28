@@ -24,7 +24,7 @@ class ProtectedExclusionError(ValueError):
     """The protected-exclusion registry is unavailable or unsafe."""
 
 
-def _digest(value: object) -> str:
+def _digest(value: Any) -> str:
     return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
 
 
@@ -124,7 +124,10 @@ class ProtectedExclusionRegistry:
         repository_root: Path,
         registry_path: Path | None = None,
     ) -> ProtectedExclusionRegistry:
-        root = repository_root.resolve(strict=True)
+        try:
+            root = repository_root.resolve(strict=True)
+        except OSError as exc:
+            raise ProtectedExclusionError("protected-exclusion-repository-root-unavailable") from exc
         path = registry_path or (root / "institutio" / "governance" / "reconciliation-protected-exclusions.json")
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))

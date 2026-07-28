@@ -7,7 +7,7 @@ accumulate (the dispatch root hit 91 dirs / 3.4 GB; the interactive root leaked 
 those:
 
   • clean working tree (no uncommitted or untracked changes), AND
-  • HEAD/content is reachable from a remote ref, already merged into the remote default branch,
+  • HEAD/content and required local refs are reachable from a remote owner, merged into or
     patch-equivalent to default, or covered by a preservation receipt, AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
   • no live process has its current directory inside the candidate root.
@@ -47,7 +47,7 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
      LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_WORKSPACE_CHECKOUTS,
      LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
      LIMEN_RECLAIM_PROTECTED_EXCLUSIONS (tracked runtime-source registry; invalid/missing blocks all),
-     LIMEN_RECLAIM_ORPHANS (0 — observable-first arm for the dead-gitdir orphan sweep),
+     LIMEN_RECLAIM_ORPHANS (0 — explicit arm for the dead-gitdir orphan sweep),
      LIMEN_ORPHAN_QUARANTINE (same-volume off-worktree target for preserved orphans),
      LIMEN_ABANDONMENT_QUARANTINE (same-volume target for clones/residue/generated payloads),
      LIMEN_WORKTREE_ABANDONMENT_RECEIPTS (private typed receipt root).
@@ -113,6 +113,16 @@ from reap_acceptance import (
 HOME = os.environ.get("HOME", "/Users/4jp")
 
 
+def _option_value(name: str) -> str:
+    prefix = f"{name}="
+    for index, value in enumerate(sys.argv):
+        if value.startswith(prefix):
+            return value[len(prefix) :]
+        if value == name and index + 1 < len(sys.argv):
+            return sys.argv[index + 1]
+    return ""
+
+
 def _int_env(name: str, default: int) -> int:
     try:
         return int(os.environ.get(name, str(default)))
@@ -130,7 +140,10 @@ def _float_env(name: str, default: float) -> float:
 MAX_REMOVE = _int_env("LIMEN_RECLAIM_MAX", 50)
 EVERY_MIN = _float_env("LIMEN_RECLAIM_EVERY_MIN", 30)
 GENERATED_RECLAIM_MAX = _int_env("LIMEN_RECLAIM_GENERATED_MAX", 80)
-LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
+LIMEN_ROOT = Path(
+    _option_value("--repository-root")
+    or os.environ.get("LIMEN_ROOT", str(SCRIPT_ROOT))
+)
 PROTECTED_EXCLUSION_REGISTRY = Path(
     os.environ.get(
         "LIMEN_RECLAIM_PROTECTED_EXCLUSIONS",
@@ -154,16 +167,6 @@ APPLY = "--apply" in sys.argv and not CHECK
 FORCE = "--force" in sys.argv  # ignore the throttle
 GENERATED_ONLY = "--generated-only" in sys.argv
 HELP = "--help" in sys.argv or "-h" in sys.argv
-
-
-def _option_value(name: str) -> str:
-    prefix = f"{name}="
-    for index, value in enumerate(sys.argv):
-        if value.startswith(prefix):
-            return value[len(prefix) :]
-        if value == name and index + 1 < len(sys.argv):
-            return sys.argv[index + 1]
-    return ""
 
 
 EXPECTED_PLAN_SHA = _option_value("--expected-plan-sha")
@@ -768,7 +771,7 @@ STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean
 # which resolves the debt without destroying data. Actual deletion of a quarantined orphan is a
 # SEPARATE, proof-gated step (branch provably on origin, or a long operator grace) — out of scope of
 # this autonomous sweep. Confined to THROWAWAY roots, past min-age, only when armed.
-ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "1") != "0"
+ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "0") != "0"
 ORPHAN_REASON = "orphan-dead-gitdir+throwaway+idle"
 # Off-worktree quarantine root (a MOVE target, not a delete). Default: a sibling of the worktree
 # root on the same volume (an instant rename, off the worktree-scan path). An override must stay on
@@ -1280,6 +1283,7 @@ def main():
     if HELP:
         print(
             "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] "
+            "[--repository-root PATH] "
             "[--generated-only] [--expected-plan-sha SHA256] "
             "[--estate-custody-root PATH --estate-custody-plan-sha SHA256]\n\n"
             "Dry-run by default. Use --check --json for a canonical candidate manifest, "

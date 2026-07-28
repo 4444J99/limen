@@ -1,0 +1,12 @@
+{
+  "candidate_count": null,
+  "complete": false,
+  "deferred_count": 0,
+  "failure_count": 1,
+  "frozen_wave_sha256": "b2d34ee55c5524d3e1a892205f7ec75442453b847b629fdbaa79e517fa5720b6",
+  "observed_at": "2026-07-28T19:33:10.211551Z",
+  "plan_sha256": null,
+  "protected_registry_digest": "7fd4bfd220f294a42fd598c502fa4bce075a0f76e815f6af0dd2b728fadb8ac8",
+  "scanned_count": 0,
+  "schema": "limen.prima_materia_reclaim_census.v1"
+}

@@ -1445,6 +1445,14 @@ def test_reclaim_skips_orphan_when_sweep_disarmed(tmp_path: Path, monkeypatch) -
     assert reclaim.classify(orphan, time.time(), 0, source="dispatch-root") == ("skip", "not-a-git-dir")
 
 
+def test_reclaim_orphan_quarantine_defaults_off(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_RECLAIM_ORPHANS", raising=False)
+
+    reclaim = load_reclaim_worktrees()
+
+    assert reclaim.ORPHAN_SWEEP is False
+
+
 def test_reclaim_skips_orphan_under_interactive_source_even_when_armed(tmp_path: Path, monkeypatch) -> None:
     # SAFETY: only THROWAWAY roots are orphan-eligible; interactive/registered cells are never reaped.
     reclaim = load_reclaim_worktrees()
