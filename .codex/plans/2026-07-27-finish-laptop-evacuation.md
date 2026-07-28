@@ -9,6 +9,9 @@ The terminal predicate is:
 
 - stop physical deletion at or above 220 GiB available on `/System/Volumes/Data`;
 - obtain two readings of at least 200 GiB available, separated by at least 30 minutes;
+- leave zero repository checkouts on the laptop: every retained Git object must be reachable from
+  its remote owner, and a fresh clone plus the tracked receipts must reconstruct the intended
+  working state;
 - make the canonical worktree reclaimer report zero automatically safe roots;
 - preserve every dirty, unpushed, locked, active, unique, or restoration-unproven root;
 - leave no removed root referenced by Git worktree metadata or an active process.
@@ -88,6 +91,12 @@ lane.
 
 ### 6. Prove the fixed point
 
+- Reconcile and push the exact heads of the final active Limen and victoroff-os worktrees, then
+  remove those checkouts through Git's worktree/checkout ownership surface after their current
+  processes exit.
+- Require a fresh whole-laptop repository scan to return zero local checkouts.
+- Prove a clean reconstruction from each remote owner and the tracked restore index without
+  depending on any laptop-only file.
 - Require a second canonical plan with zero automatically safe roots.
 - Verify Git metadata and active-process references after removal.
 - Record the retained hot-cache and owner-organized external-drive manifests.
