@@ -1,0 +1,43 @@
+{
+  "schema": "limen.repository_evacuation_projection.v2",
+  "inventory_id": "repository-evacuation-20260727T231437Z",
+  "frozen_at": "2026-07-27T23:14:37Z",
+  "scope": "workspace_repository_estate",
+  "projection_privacy": {
+    "contains_private_paths": false,
+    "contains_private_names": false,
+    "contains_device_identities": false,
+    "contains_plaintext_content_digests": false,
+    "private_inventory_required_for_reclaim": true
+  },
+  "source": {
+    "repository": "organvm/limen",
+    "branch": "work/finish-laptop-evacuation-20260727",
+    "generated_reclaim_enabled": false
+  },
+  "success_predicate": {
+    "local_repository_roots_remaining": 0,
+    "stale_worktree_registrations_remaining": 0,
+    "all_local_refs_remotely_recoverable": true,
+    "ambiguous_working_state_has_encrypted_two_copy_restoration": true,
+    "active_execution_root_reaped_last": true
+  },
+  "custody": {
+    "independent_physical_devices_required": 2,
+    "observed_independent_physical_devices": 2,
+    "same_physical_device_volumes_count_as_one": true,
+    "device_identities_private": true
+  },
+  "frozen_denominator": {
+    "selected_root_count": 34,
+    "selected_root_kib": 22801032,
+    "selected_root_bytes": 23348256768,
+    "new_unrelated_discoveries_expand_this_denominator": false
+  },
+  "root_projection": {
+    "opaque_root_count": 34,
+    "pending_custody_count": 34,
+    "terminal_count": 0,
+    "root_identifiers_private": true
+  }
+}

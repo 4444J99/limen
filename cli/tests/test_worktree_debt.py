@@ -199,11 +199,11 @@ def test_remote_merged_receipt_is_visible_but_not_debt(tmp_path: Path, monkeypat
     report = worktree_debt_report(tmp_path)
 
     assert report["items"][0]["name"] == "merged-pr-root"
-    assert report["items"][0]["reason"] == "receipt-remote-merged+clean+idle"
-    assert report["items"][0]["debt"] is False
-    assert report["items"][0]["reapable"] is True
-    assert report["debt"] == 0
-    assert report["reapable"] == 1
+    assert report["items"][0]["reason"] == "unpreserved-local-refs"
+    assert report["items"][0]["debt"] is True
+    assert report["items"][0]["reapable"] is False
+    assert report["debt"] == 1
+    assert report["reapable"] == 0
 
 
 def test_remote_pr_open_receipt_is_visible_but_not_debt(tmp_path: Path, monkeypatch):
@@ -303,7 +303,7 @@ def test_clean_git_root_still_classifies_without_receipt(tmp_path: Path, monkeyp
     report = worktree_debt_report(tmp_path)
 
     assert report["items"][0]["name"] == "git-root"
-    assert report["items"][0]["reason"] == "unpushed-commits"
+    assert report["items"][0]["reason"] == "unpreserved-local-refs"
     assert report["items"][0]["debt"] is True
     assert report["items"][0]["reapable"] is False
 
@@ -509,7 +509,7 @@ def _isolate(tmp_path: Path, monkeypatch, *, floor="1") -> Path:
     monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(wtroot))
-    monkeypatch.setenv("LIMEN_DISK_FLOOR_GIB", floor)
+    monkeypatch.setattr(wd, "_required_free_gib", lambda: float(floor))
     monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
     monkeypatch.setenv("LIMEN_RECLAIM", "1")
     monkeypatch.setenv("LIMEN_RECLAIM_APPLY", "1")
@@ -557,7 +557,7 @@ def test_admission_at_floor_cannot_admit_tiny_unavoidable_checkout() -> None:
     snapshot = _live_snapshot(free_gib=60.0, floor_gib=60.0, room_gib=0.0)
     blocked, reason = wd.admission_blocks(wd.IMPACT_DEBT_CREATING, snapshot, 4096 / (1024**3))
     assert blocked is True
-    assert "only 0.000 GiB remains above floor" in reason
+    assert "only 0.000 GiB remains above the live resource envelope" in reason
 
 
 def test_admission_reserves_cumulative_room_for_selected_local_candidates() -> None:
@@ -624,7 +624,7 @@ def test_snapshot_resource_blocks_below_floor(tmp_path: Path, monkeypatch) -> No
     monkeypatch.setattr(wd, "_worktree_disk_free_gib", lambda _p: 3.0)
     snap = wd.take_admission_snapshot(tmp_path)
     assert snap["resource_blocked"] is True and snap["block_new_local"] is True
-    assert "45 GiB floor" in snap["reason"]
+    assert "dynamic required 45.000 GiB" in snap["reason"]
 
 
 def test_snapshot_resource_unknown_free_fails_closed(tmp_path: Path, monkeypatch) -> None:
@@ -635,35 +635,32 @@ def test_snapshot_resource_unknown_free_fails_closed(tmp_path: Path, monkeypatch
     assert "unknown" in snap["reason"]
 
 
-def test_snapshot_floor_from_registered_parameter(tmp_path: Path, monkeypatch) -> None:
-    # No env floor → the LIMEN_DISK_FLOOR_GIB panel default (parameter authority) is used, not 45.
+def test_snapshot_requirement_comes_from_live_resource_envelope(tmp_path: Path, monkeypatch) -> None:
     _isolate(tmp_path, monkeypatch)
-    monkeypatch.delenv("LIMEN_DISK_FLOOR_GIB", raising=False)
+    monkeypatch.setattr(wd, "_required_free_gib", lambda: 2.75)
     monkeypatch.setattr(wd, "_worktree_disk_free_gib", lambda _p: 500.0)
     snap = wd.take_admission_snapshot(tmp_path)
-    assert snap["floor_gib"] == 60  # parameters.yaml default
+    assert snap["floor_gib"] == 2.75
     assert snap["resource_blocked"] is False
 
 
-def test_disk_floor_accepts_positive_override(monkeypatch) -> None:
-    monkeypatch.setenv("LIMEN_DISK_FLOOR_GIB", "45.5")
+def test_legacy_disk_floor_alias_uses_dynamic_envelope(monkeypatch) -> None:
+    monkeypatch.setattr(wd, "_required_free_gib", lambda: 45.5)
     assert wd._disk_floor_gib() == 45.5
 
 
-def test_disk_floor_rejects_nonpositive_nonfinite_and_invalid(monkeypatch) -> None:
-    for value in ("-1", "0", "nan", "inf", "bogus", ""):
-        monkeypatch.setenv("LIMEN_DISK_FLOOR_GIB", value)
-        assert wd._disk_floor_gib() is None
+def test_resource_envelope_unknown_fails_closed(monkeypatch) -> None:
+    monkeypatch.setattr(wd, "_required_free_gib", lambda: None)
+    assert wd._disk_floor_gib() is None
 
 
-def test_snapshot_invalid_disk_floor_fails_closed_local(tmp_path: Path, monkeypatch) -> None:
+def test_snapshot_unknown_resource_envelope_fails_closed_local(tmp_path: Path, monkeypatch) -> None:
     _isolate(tmp_path, monkeypatch)
     monkeypatch.setattr(wd, "_worktree_disk_free_gib", lambda _p: 500.0)
-    for value in ("-1", "0", "nan", "bogus"):
-        monkeypatch.setenv("LIMEN_DISK_FLOOR_GIB", value)
-        snap = wd.take_admission_snapshot(tmp_path)
-        assert snap["floor_gib"] is None
-        assert snap["resource_blocked"] is True and snap["block_new_local"] is True
+    monkeypatch.setattr(wd, "_required_free_gib", lambda: None)
+    snap = wd.take_admission_snapshot(tmp_path)
+    assert snap["floor_gib"] is None
+    assert snap["resource_blocked"] is True and snap["block_new_local"] is True
 
 
 # ---- VITALS fold ----

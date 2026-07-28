@@ -23,6 +23,7 @@ It scans every known creation site (the historical blind spot — see worktree-l
   • LIMEN_AGY_SCRATCH_ROOT (~/.gemini/antigravity-cli/scratch) — Antigravity/Agy scratch clones,
     min-age LIMEN_AGY_SCRATCH_MIN_IDLE_H.
   • repo-local .worktrees roots discovered under LIMEN_RECLAIM_WORKSPACE_ROOTS.
+  • workspace checkout roots themselves only when LIMEN_RECLAIM_WORKSPACE_CHECKOUTS=1.
   • registered git worktrees from LIMEN_RECLAIM_MAIN_REPOS (default: Limen and Portvs).
 Set LIMEN_RECLAIM_CLAUDE_WT=0 to disable the interactive sweep.
 
@@ -43,7 +44,8 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
      LIMEN_RECLAIM_CLAUDE_AGE_H (24), LIMEN_RECLAIM_REPO_LOCAL_WT, LIMEN_RECLAIM_REPO_LOCAL_AGE_H,
      LIMEN_RECLAIM_AGY_SCRATCH, LIMEN_AGY_SCRATCH_ROOT, LIMEN_AGY_SCRATCH_MIN_IDLE_H,
      LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
-     LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
+     LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_WORKSPACE_CHECKOUTS,
+     LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
      LIMEN_RECLAIM_ORPHANS (0 — observable-first arm for the dead-gitdir orphan sweep),
      LIMEN_ORPHAN_QUARANTINE (same-volume off-worktree target for preserved orphans),
      LIMEN_ABANDONMENT_QUARANTINE (same-volume target for clones/residue/generated payloads),
@@ -66,6 +68,7 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -77,6 +80,7 @@ sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 
 from limen.estate_audit_custody import (
     EstateAuditCustodyError,
+    verify_failed_checkout_state,
 )
 from limen.estate_audit_custody import (
     discover_plan as discover_estate_custody_plan,
@@ -85,8 +89,11 @@ from limen.estate_audit_custody import (
     verify_receipt as verify_estate_custody_receipt,
 )
 from limen.worktree_abandonment import (
+    CustodyPathIdentity,
     WorktreeAbandonmentError,
     detach_registered_worktree,
+    purge_custody_proven_path,
+    purge_remote_proven_path,
     quarantine_path,
 )
 from limen.worktree_debt import is_generated_log_shell
@@ -324,7 +331,7 @@ def reclaim_generated_payloads(targets) -> dict[str, object]:
     It does not remove source files, untracked non-ignored files, worktree roots, branches, or
     private artifacts.
     """
-    if os.environ.get("LIMEN_RECLAIM_GENERATED", "1") != "1":
+    if os.environ.get("LIMEN_RECLAIM_GENERATED", "0") != "1":
         return {"enabled": False, "cleaned": [], "failed": []}
     active_prefixes = active_async_task_prefixes()
     now = time.time()
@@ -356,10 +363,152 @@ def reclaim_generated_payloads(targets) -> dict[str, object]:
 
 
 def reachable_from_remote(cwd, head) -> bool:
-    r = git(["for-each-ref", f"--contains={head}", "--format=%(refname)", "refs/remotes"], cwd)
-    if r.returncode != 0:
-        return False
-    return bool(r.stdout.strip())
+    return bool(remote_refs_containing_head(cwd, head))
+
+
+def remote_refs_containing_head(cwd: Path, head: str) -> tuple[str, ...]:
+    """Return only provider-advertised refs that currently preserve ``head``.
+
+    Local ``refs/remotes/*`` are caches and can outlive a deleted server
+    branch. Reclaim proof therefore queries the live remote on every planning
+    and apply pass.
+    """
+
+    if not head:
+        return ()
+    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
+    if advertised.returncode != 0:
+        return ()
+    containing: list[str] = []
+    for line in advertised.stdout.splitlines():
+        try:
+            remote_object, remote_ref = line.split("\t", 1)
+        except ValueError:
+            return ()
+        if not remote_object or not remote_ref.startswith("refs/"):
+            return ()
+        if remote_object == head or git(
+            ["merge-base", "--is-ancestor", head, remote_object],
+            cwd,
+        ).returncode == 0:
+            containing.append(remote_ref)
+    return tuple(sorted(containing))
+
+
+def all_local_refs_remote_proof(cwd: Path) -> tuple[dict[str, object], ...] | None:
+    """Prove every local ref's object is recoverable from the live origin.
+
+    HEAD-only proof loses local branches, tags, notes, and stashes. This queries
+    the provider-native advertised refs and then proves each local object is
+    either advertised exactly or is an ancestor of an advertised commit that is
+    already present locally. Unknown object type or reachability fails closed.
+    """
+
+    local = git(
+        [
+            "for-each-ref",
+            "--format=%(refname)%00%(objectname)%00%(*objectname)",
+            "refs/heads",
+            "refs/tags",
+            "refs/notes",
+            "refs/stash",
+        ],
+        cwd,
+        timeout=60,
+    )
+    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
+    if local.returncode != 0 or advertised.returncode != 0:
+        return None
+    remote: list[tuple[str, str]] = []
+    for line in advertised.stdout.splitlines():
+        try:
+            object_id, ref = line.split("\t", 1)
+        except ValueError:
+            return None
+        if not object_id or not ref.startswith("refs/"):
+            return None
+        remote.append((ref, object_id))
+    if not remote:
+        return None
+    proof: list[dict[str, object]] = []
+    for line in local.stdout.splitlines():
+        parts = line.split("\0")
+        if len(parts) != 3:
+            return None
+        local_ref, object_id, peeled = parts
+        containing: list[str] = [
+            remote_ref
+            for remote_ref, remote_object in remote
+            if object_id == remote_object
+        ]
+        object_type = git(["cat-file", "-t", object_id], cwd)
+        if object_type.returncode != 0:
+            return None
+        if object_type.stdout.strip() == "commit":
+            for remote_ref, remote_object in remote:
+                if remote_ref in containing:
+                    continue
+                if git(["merge-base", "--is-ancestor", object_id, remote_object], cwd).returncode == 0:
+                    containing.append(remote_ref)
+        if not containing:
+            return None
+        proof.append(
+            {
+                "local_ref": local_ref,
+                "object": object_id,
+                "peeled_object": peeled or None,
+                "remote_refs": sorted(containing),
+            }
+        )
+    return tuple(sorted(proof, key=lambda value: str(value["local_ref"])))
+
+
+def estate_checkout_content_probe(
+    root_record: dict[str, object],
+    state: dict[str, object],
+) -> Callable[[Path], None]:
+    def probe(_path: Path) -> None:
+        verify_failed_checkout_state(root_record, state, max_seconds=900)
+
+    return probe
+
+
+def remote_clone_content_probe(
+    expected_head: str,
+    expected_refs: tuple[str, ...],
+    expected_local_refs: tuple[dict[str, object], ...],
+) -> Callable[[Path], None]:
+    def probe(current: Path) -> None:
+        status = git(["status", "--porcelain=v1", "-z", "--untracked-files=all"], current)
+        if status.returncode != 0 or status.stdout:
+            raise RuntimeError("remote-purge-working-tree-drift")
+        observed_head = git(["rev-parse", "HEAD"], current).stdout.strip()
+        observed_refs = remote_refs_containing_head(current, observed_head)
+        observed_local_refs = all_local_refs_remote_proof(current)
+        if (
+            observed_head,
+            observed_refs,
+            observed_local_refs,
+        ) != (
+            expected_head,
+            expected_refs,
+            expected_local_refs,
+        ):
+            raise RuntimeError("remote-purge-all-ref-proof-drift")
+
+    return probe
+
+
+def path_identity(path: Path) -> dict[str, object]:
+    resolved = path.resolve(strict=True)
+    current = resolved.lstat()
+    return {
+        "path": str(resolved),
+        "path_sha256": hashlib.sha256(str(resolved).encode("utf-8", errors="surrogateescape")).hexdigest(),
+        "device": int(current.st_dev),
+        "inode": int(current.st_ino),
+        "mtime_ns": int(current.st_mtime_ns),
+    }
 
 
 def remote_default_ref(cwd) -> str | None:
@@ -471,12 +620,34 @@ def load_estate_custody_context() -> dict[str, object] | None:
         raise EstateAuditCustodyError("custody-current-roots-mismatch")
 
     restored_paths: set[Path] = set()
+    restored_identities: dict[str, dict[str, object]] = {}
+    private_content_states: dict[str, dict[str, object]] = {}
+    states_by_path_sha = {
+        str(state.get("path_sha256") or ""): state
+        for state in receipt.get("failed_checkout_states") or []
+        if isinstance(state, dict)
+    }
     for root in receipt.get("roots") or []:
         if not isinstance(root, dict) or int(root.get("index_entry_count", -1)) != 0:
             continue
         try:
-            restored_paths.add(Path(str(root["path"])).resolve(strict=True))
-        except (KeyError, OSError) as exc:
+            restored = Path(str(root["path"])).resolve(strict=True)
+            restored_paths.add(restored)
+            restored_identities[str(restored)] = {
+                "path": str(restored),
+                "path_sha256": str(root["path_sha256"]),
+                "device": int(root["device"]),
+                "inode": int(root["inode"]),
+                "mtime_ns": int(root["mtime_ns"]),
+            }
+            state = states_by_path_sha.get(str(root["path_sha256"]))
+            if not isinstance(state, dict):
+                raise EstateAuditCustodyError("custody-content-state-missing")
+            private_content_states[str(restored)] = {
+                "root_record": root,
+                "state": state,
+            }
+        except (KeyError, OSError, TypeError, ValueError) as exc:
             raise EstateAuditCustodyError("custody-root-unavailable") from exc
     failed_checkout_count = int(receipt.get("failed_checkout_root_count", -1))
     if not restored_paths or failed_checkout_count != len(restored_paths):
@@ -484,6 +655,8 @@ def load_estate_custody_context() -> dict[str, object] | None:
 
     return {
         "paths": frozenset(restored_paths),
+        "identities": restored_identities,
+        "content_states": private_content_states,
         "proof": {
             "schema": "limen.worktree_reclaim_estate_custody.v1",
             "plan_sha256": ESTATE_CUSTODY_PLAN_SHA,
@@ -731,6 +904,29 @@ def worktree_lock_reason(path: Path) -> str | None:
     return None
 
 
+def registered_sibling_worktrees(path: Path) -> tuple[Path, ...]:
+    """Return live sibling worktrees whose admin state is owned by this clone."""
+
+    listed = git(["worktree", "list", "--porcelain"], path)
+    if listed.returncode != 0:
+        raise RuntimeError("registered-worktree-state-unavailable")
+    try:
+        current = path.resolve(strict=True)
+    except OSError as exc:
+        raise RuntimeError("registered-worktree-owner-unavailable") from exc
+    siblings: list[Path] = []
+    for line in listed.stdout.splitlines():
+        if not line.startswith("worktree "):
+            continue
+        try:
+            candidate = Path(line.split(" ", 1)[1]).resolve(strict=True)
+        except OSError as exc:
+            raise RuntimeError("registered-sibling-worktree-unavailable") from exc
+        if candidate != current:
+            siblings.append(candidate)
+    return tuple(siblings)
+
+
 def classify(
     d: Path,
     now: float,
@@ -750,8 +946,6 @@ def classify(
     owner_pid = active_process_owner(d)
     if owner_pid is not None:
         return "skip", f"active-process-cwd:{owner_pid}"
-    if inside_agy_scratch_root(d):
-        return "skip", "antigravity-scratch-uses-bridge-acceptance"
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
         if is_generated_log_shell(d):
             return "remove-residue", "generated-log-shell"
@@ -787,7 +981,17 @@ def classify(
             return ("remove-worktree" if is_wt else "remove-clone"), CUSTODY_RESTORED_REASON
         return "skip", "dirty"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
+    if source == "workspace-checkout" and is_wt:
+        return "skip", "workspace-checkout-source-contract-violation"
+    if not is_wt:
+        try:
+            if registered_sibling_worktrees(d):
+                return "skip", "registered-worktree-owner"
+        except RuntimeError as exc:
+            return "skip", str(exc)
     if receipt_remote_merged(d, preservation_receipts):
+        if not is_wt and all_local_refs_remote_proof(d) is None:
+            return "skip", "unpreserved-local-refs"
         return ("remove-worktree" if is_wt else "remove-clone"), "receipt-remote-merged+clean+idle"
     head = git(["rev-parse", "HEAD"], d).stdout.strip()
     patch_equivalent = patch_equivalent_to_default(d)
@@ -799,8 +1003,12 @@ def classify(
         # operator's push-first rule this LOCAL checkout is loss-free to remove — the branch stays
         # on origin, resumable. Without PUSHED_OK, keep the conservative merged-only gate.
         if PUSHED_OK:
+            if all_local_refs_remote_proof(d) is None:
+                return "skip", "unpreserved-local-refs"
             return ("remove-worktree" if is_wt else "remove-clone"), "clean+pushed+idle"
         return "skip", "not-merged-to-default"
+    if not is_wt and all_local_refs_remote_proof(d) is None:
+        return "skip", "unpreserved-local-refs"
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
 
@@ -856,17 +1064,10 @@ def build_candidate_manifest(
 ) -> tuple[dict, str, list[tuple[str, str]], list[str]]:
     """Return the canonical, bounded, accepted candidate set and its digest."""
 
-    custody_paths = (
-        estate_custody_context.get("paths", frozenset())
-        if estate_custody_context
-        else frozenset()
-    )
-    custody_proof = (
-        estate_custody_context.get("proof")
-        if estate_custody_context
-        else None
-    )
-    candidates: list[dict[str, str]] = []
+    custody_paths = estate_custody_context.get("paths", frozenset()) if estate_custody_context else frozenset()
+    custody_proof = estate_custody_context.get("proof") if estate_custody_context else None
+    custody_identities = estate_custody_context.get("identities", {}) if estate_custody_context else {}
+    candidates: list[dict[str, object]] = []
     skipped: list[tuple[str, str]] = []
     for directory, min_age_h, source in dirs:
         action, reason = classify(
@@ -890,15 +1091,35 @@ def build_candidate_manifest(
         if not accepted:
             skipped.append((directory.name, accept_reason))
             continue
-        candidates.append(
-            {
-                "action": action,
-                "path": str(directory),
-                "reason": reason,
-                "root": directory.name,
-                "source": source,
+        candidate: dict[str, object] = {
+            "action": action,
+            "path": str(directory),
+            "reason": reason,
+            "root": directory.name,
+            "source": source,
+        }
+        if reason == CUSTODY_RESTORED_REASON:
+            try:
+                identity = custody_identities[str(directory.resolve(strict=True))]
+            except (KeyError, OSError) as exc:
+                raise EstateAuditCustodyError("custody-root-identity-missing") from exc
+            if not isinstance(identity, dict):
+                raise EstateAuditCustodyError("custody-root-identity-invalid")
+            candidate["custody_identity"] = identity
+        elif action == "remove-clone":
+            head = git(["rev-parse", "HEAD"], directory).stdout.strip()
+            remote_refs = remote_refs_containing_head(directory, head)
+            local_ref_proof = all_local_refs_remote_proof(directory)
+            if not head or not remote_refs or local_ref_proof is None:
+                skipped.append((directory.name, "remote-clone-proof-drift"))
+                continue
+            candidate["path_identity"] = path_identity(directory)
+            candidate["remote_proof"] = {
+                "head": head,
+                "remote_refs": list(remote_refs),
+                "local_refs": list(local_ref_proof),
             }
-        )
+        candidates.append(candidate)
 
     candidates.sort(key=lambda row: (row["path"], row["action"], row["reason"]))
     selected = candidates[:MAX_REMOVE]
@@ -1076,16 +1297,8 @@ def main():
         for planned in manifest["candidates"]:
             directory = Path(planned["path"])
             _ACTIVE_PROCESS_CWDS = active_process_cwds()
-            custody_paths = (
-                estate_custody_context.get("paths", frozenset())
-                if estate_custody_context
-                else frozenset()
-            )
-            custody_proof = (
-                estate_custody_context.get("proof")
-                if estate_custody_context
-                else None
-            )
+            custody_paths = estate_custody_context.get("paths", frozenset()) if estate_custody_context else frozenset()
+            custody_proof = estate_custody_context.get("proof") if estate_custody_context else None
             action, reason = classify(
                 directory,
                 time.time(),
@@ -1117,6 +1330,103 @@ def main():
                         reason=reason,
                         receipt_root=ABANDONMENT_RECEIPTS,
                         owner_probe=lambda _path, root=directory: active_process_owner(root),
+                    )
+                elif action == "remove-clone" and reason == CUSTODY_RESTORED_REASON:
+                    identity = planned.get("custody_identity")
+                    if not isinstance(identity, dict) or not isinstance(custody_proof, dict):
+                        failed.append((directory.name, "custody-purge-proof-missing"))
+                        continue
+                    try:
+                        expected_identity = CustodyPathIdentity(
+                            path=str(identity["path"]),
+                            path_sha256=str(identity["path_sha256"]),
+                            device=int(identity["device"]),
+                            inode=int(identity["inode"]),
+                            mtime_ns=int(identity["mtime_ns"]),
+                        )
+                    except (KeyError, TypeError, ValueError):
+                        failed.append((directory.name, "custody-purge-identity-invalid"))
+                        continue
+                    content_states = (
+                        estate_custody_context.get("content_states", {})
+                        if estate_custody_context
+                        else {}
+                    )
+                    content_state = (
+                        content_states.get(str(directory.resolve(strict=True)))
+                        if isinstance(content_states, dict)
+                        else None
+                    )
+                    if not isinstance(content_state, dict):
+                        failed.append((directory.name, "custody-content-state-missing"))
+                        continue
+
+                    rehash_estate_checkout = estate_checkout_content_probe(
+                        dict(content_state["root_record"]),
+                        dict(content_state["state"]),
+                    )
+
+                    receipt = purge_custody_proven_path(
+                        directory,
+                        expected_identity,
+                        reason=reason,
+                        custody_plan_sha256=str(custody_proof.get("plan_sha256") or ""),
+                        custody_content_sha256=str(custody_proof.get("content_sha256") or ""),
+                        receipt_root=ABANDONMENT_RECEIPTS,
+                        owner_probe=lambda _path, root=directory: active_process_owner(root),
+                        content_probe=rehash_estate_checkout,
+                    )
+                elif action == "remove-clone":
+                    identity = planned.get("path_identity")
+                    remote_proof = planned.get("remote_proof")
+                    if not isinstance(identity, dict) or not isinstance(remote_proof, dict):
+                        failed.append((directory.name, "remote-purge-proof-missing"))
+                        continue
+                    try:
+                        expected_identity = CustodyPathIdentity(
+                            path=str(identity["path"]),
+                            path_sha256=str(identity["path_sha256"]),
+                            device=int(identity["device"]),
+                            inode=int(identity["inode"]),
+                            mtime_ns=int(identity["mtime_ns"]),
+                        )
+                        planned_head = str(remote_proof["head"])
+                        planned_refs = tuple(str(value) for value in remote_proof["remote_refs"])
+                        planned_local_refs = tuple(remote_proof["local_refs"])
+                    except (KeyError, TypeError, ValueError):
+                        failed.append((directory.name, "remote-purge-proof-invalid"))
+                        continue
+                    current_head = git(["rev-parse", "HEAD"], directory).stdout.strip()
+                    current_refs = remote_refs_containing_head(directory, current_head)
+                    current_local_refs = all_local_refs_remote_proof(directory)
+                    if (
+                        current_head,
+                        current_refs,
+                        current_local_refs,
+                    ) != (
+                        planned_head,
+                        planned_refs,
+                        planned_local_refs,
+                    ):
+                        failed.append((directory.name, "remote-purge-proof-drift"))
+                        continue
+
+                    rehash_remote_clone = remote_clone_content_probe(
+                        planned_head,
+                        planned_refs,
+                        planned_local_refs,
+                    )
+
+                    receipt = purge_remote_proven_path(
+                        directory,
+                        expected_identity,
+                        reason=reason,
+                        head=current_head,
+                        remote_refs=current_refs,
+                        local_ref_proof=current_local_refs,
+                        receipt_root=ABANDONMENT_RECEIPTS,
+                        owner_probe=lambda _path, root=directory: active_process_owner(root),
+                        content_probe=rehash_remote_clone,
                     )
                 elif action == "quarantine-orphan":
                     ok, destination = quarantine_orphan(directory, stamp)

@@ -1,0 +1,151 @@
+{
+  "$defs": {
+    "ResourceClaimV1": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "effective_from": {
+          "format": "date-time",
+          "title": "Effective From",
+          "type": "string"
+        },
+        "effective_until": {
+          "format": "date-time",
+          "title": "Effective Until",
+          "type": "string"
+        },
+        "encryption_chunking_bytes": {
+          "minimum": 0,
+          "title": "Encryption Chunking Bytes",
+          "type": "integer"
+        },
+        "hydrated_inputs_bytes": {
+          "minimum": 0,
+          "title": "Hydrated Inputs Bytes",
+          "type": "integer"
+        },
+        "output_bytes": {
+          "minimum": 0,
+          "title": "Output Bytes",
+          "type": "integer"
+        },
+        "rollback_bytes": {
+          "minimum": 0,
+          "title": "Rollback Bytes",
+          "type": "integer"
+        },
+        "rollback_until": {
+          "format": "date-time",
+          "title": "Rollback Until",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.resource_claim.v1",
+          "default": "limen.resource_claim.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "temporary_expansion_bytes": {
+          "minimum": 0,
+          "title": "Temporary Expansion Bytes",
+          "type": "integer"
+        },
+        "workspace_bytes": {
+          "minimum": 0,
+          "title": "Workspace Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "claim_id",
+        "hydrated_inputs_bytes",
+        "workspace_bytes",
+        "temporary_expansion_bytes",
+        "output_bytes",
+        "encryption_chunking_bytes",
+        "rollback_bytes",
+        "effective_from",
+        "effective_until",
+        "rollback_until"
+      ],
+      "title": "ResourceClaimV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter_id": {
+      "title": "Adapter Id",
+      "type": "string"
+    },
+    "completeness_predicate": {
+      "title": "Completeness Predicate",
+      "type": "string"
+    },
+    "cursor_schema_digest": {
+      "title": "Cursor Schema Digest",
+      "type": "string"
+    },
+    "custody_target_refs": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Custody Target Refs",
+      "type": "array"
+    },
+    "owner_ref": {
+      "title": "Owner Ref",
+      "type": "string"
+    },
+    "privacy_transform_digest": {
+      "title": "Privacy Transform Digest",
+      "type": "string"
+    },
+    "recipe_version": {
+      "title": "Recipe Version",
+      "type": "string"
+    },
+    "resource_claim": {
+      "$ref": "#/$defs/ResourceClaimV1"
+    },
+    "restoration_predicate": {
+      "title": "Restoration Predicate",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.source_adapter.v1",
+      "default": "limen.source_adapter.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_id": {
+      "title": "Source Id",
+      "type": "string"
+    },
+    "source_native_acquisition": {
+      "title": "Source Native Acquisition",
+      "type": "string"
+    }
+  },
+  "required": [
+    "adapter_id",
+    "source_id",
+    "owner_ref",
+    "source_native_acquisition",
+    "cursor_schema_digest",
+    "completeness_predicate",
+    "privacy_transform_digest",
+    "resource_claim",
+    "recipe_version",
+    "custody_target_refs",
+    "restoration_predicate"
+  ],
+  "title": "SourceAdapterV1",
+  "type": "object"
+}

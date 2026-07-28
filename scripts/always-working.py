@@ -25,6 +25,7 @@ from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(ROOT / "cli" / "src"))
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
 from limen.worktree_debt import REAPABLE_REASONS  # noqa: E402
 
 HOME = Path.home()
@@ -1251,16 +1252,29 @@ def tabularius_receipt() -> dict[str, Any]:
 
 def substrate_receipt() -> dict[str, Any]:
     disk = disk_receipt()
-    target_free_gib = float(os.environ.get("LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB", "200"))
+    try:
+        required_free_gib = current_required_free_gib()
+    except (RuntimeError, ValueError):
+        required_free_gib = None
     lifecycle = substrate_lifecycle_receipt()
     worktree_debt = lifecycle["worktree_debt"]
     debt = worktree_debt.get("debt")
     reapable = worktree_debt.get("reapable")
     storage_pressure = load_json(SUBSTRATE_STORAGE_INDEX, {})
-    shortfall_gib = round(max(target_free_gib - float(disk["free_gib"]), 0.0), 1)
-    open_substrate = bool(shortfall_gib > 0 or not disk["tmp_ok"] or not lifecycle["predicate_ok"])
+    headroom_gib = (
+        round(float(disk["free_gib"]) - required_free_gib, 1)
+        if required_free_gib is not None
+        else None
+    )
+    envelope_ok = headroom_gib is not None and headroom_gib >= 0
+    open_substrate = bool(
+        not envelope_ok
+        or not disk["tmp_ok"]
+        or not lifecycle["predicate_ok"]
+    )
     owner_gated = bool(
-        shortfall_gib > 0
+        headroom_gib is not None
+        and headroom_gib < 0
         and disk["tmp_ok"]
         and lifecycle["predicate_ok"]
         and isinstance(storage_pressure, dict)
@@ -1268,7 +1282,9 @@ def substrate_receipt() -> dict[str, Any]:
     )
     if not lifecycle["predicate_ok"]:
         verdict = "substrate lifecycle predicate is failing"
-    elif shortfall_gib > 0:
+    elif headroom_gib is None:
+        verdict = "live resource envelope is unavailable"
+    elif headroom_gib < 0:
         last_reclaim = lifecycle["generated_state_reclaim"]
         last_tool_reclaim = lifecycle["tool_cache_reclaim"]
         last_ollama_reclaim = lifecycle["ollama_model_reclaim"]
@@ -1282,10 +1298,10 @@ def substrate_receipt() -> dict[str, Any]:
         suffix = f"; recorded reclaim freed {', '.join(reclaim_parts)}" if reclaim_parts else ""
         if owner_gated:
             verdict = (
-                f"internal free space is {shortfall_gib} GiB below target{suffix}; remaining bytes require owner gates"
+                f"resource envelope is {-headroom_gib} GiB negative{suffix}; remaining bytes require owner gates"
             )
         else:
-            verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}"
+            verdict = f"resource envelope is {-headroom_gib} GiB negative{suffix}"
     elif not disk["tmp_ok"]:
         verdict = "temp writes are failing"
     else:
@@ -1299,8 +1315,8 @@ def substrate_receipt() -> dict[str, Any]:
         "verdict": verdict,
         "evidence": {
             **disk,
-            "target_free_gib": target_free_gib,
-            "shortfall_gib": shortfall_gib,
+            "required_free_gib": required_free_gib,
+            "resource_headroom_gib": headroom_gib,
             "lifecycle": lifecycle,
             "storage_pressure_status": storage_pressure.get("status") if isinstance(storage_pressure, dict) else None,
         },

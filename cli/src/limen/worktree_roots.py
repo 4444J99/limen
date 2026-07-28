@@ -226,6 +226,42 @@ def _discover_repo_local_roots(limen_root: Path, *, strict: bool = False) -> lis
     return out
 
 
+def _discover_workspace_checkouts(*, strict: bool = False) -> list[Path]:
+    """Discover Git checkout roots themselves, stopping descent at each repository."""
+
+    workspace_roots = _path_list("LIMEN_RECLAIM_WORKSPACE_ROOTS", [Path.home() / "Workspace"])
+    max_depth = _int_env("LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH", 5)
+    checkouts: list[Path] = []
+
+    def walk(path: Path, depth: int) -> None:
+        # Package-manager project indexes may expose symlinks to checkouts outside
+        # the configured inventory root. Their owning cache reclaimer must handle
+        # the link; treating the resolved target as this lexical checkout creates
+        # an identity mismatch and risks crossing the configured boundary.
+        if path.is_symlink():
+            return
+        if depth > max_depth or not _inventory_is_dir(path, strict=strict, source="workspace checkout root"):
+            return
+        if (path / ".git").is_dir() or (path / ".git").is_file():
+            checkouts.append(path)
+            return
+        try:
+            children = sorted(path.iterdir())
+        except OSError as exc:
+            if strict:
+                raise WorktreeInventoryError(f"cannot enumerate workspace checkout root {path}: {exc}") from exc
+            return
+        for child in children:
+            if child.name in SKIP_DIR_NAMES or child.name.startswith(".") or child.is_symlink():
+                continue
+            if _inventory_is_dir(child, strict=strict, source="workspace checkout child"):
+                walk(child, depth + 1)
+
+    for workspace_root in workspace_roots:
+        walk(workspace_root, 0)
+    return checkouts
+
+
 def _git_worktree_paths(repo: Path, *, strict: bool = False) -> list[Path]:
     try:
         proc = subprocess.run(
@@ -379,6 +415,17 @@ def iter_worktree_targets(limen_root: Path | None = None, *, strict: bool = Fals
             WorktreeTarget(path=path, min_age_h=registered_age, source="registered-worktree")
             for path in sorted(_registered_repo_roots(root, strict=strict))
             if _inventory_is_dir(path, strict=strict, source="registered worktree")
+        )
+
+    if _flag("LIMEN_RECLAIM_WORKSPACE_CHECKOUTS", False):
+        checkout_age = _float_env("LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H", 24)
+        targets.extend(
+            WorktreeTarget(
+                path=path,
+                min_age_h=checkout_age,
+                source="workspace-checkout",
+            )
+            for path in _discover_workspace_checkouts(strict=strict)
         )
 
     return _dedupe_targets(targets, strict=strict)

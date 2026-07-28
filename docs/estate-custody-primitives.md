@@ -39,8 +39,8 @@ Key rules recovered from those surfaces:
   not be erased until offsite/versioned backup is proven and restore-tested.
 - Important data is safe only when it exists in at least two independent places
   and at least one place has retention or version history.
-- Internal free space should stay above the healthy band. Limen's active target
-  is 200 GiB free for autonomous work.
+- Internal free space must cover the telemetry-backed resource envelope for the
+  selected task graph. Historical fixed-space targets remain evidence only.
 - No mass deletion, dedupe, repo movement, or archive rewrite is authorized by
   this doc.
 

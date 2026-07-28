@@ -111,6 +111,11 @@ def parser() -> argparse.ArgumentParser:
         type=Path,
         help="write one path-free Domus authorization request for the next batch",
     )
+    cloudkit.add_argument(
+        "--prepare-eviction-campaign-authorization",
+        type=Path,
+        help="write one path-free Domus authorization request for the immutable corpus",
+    )
     cloudkit.add_argument("--eviction-authorizer")
     cloudkit.add_argument("--eviction-authorization", type=Path)
     cloudkit.add_argument("--eviction-signature", type=Path)
@@ -180,15 +185,24 @@ def main(argv: list[str] | None = None) -> int:
         if restore_selectors and (
             args.evict
             or args.prepare_eviction_authorization
+            or args.prepare_eviction_campaign_authorization
             or args.eviction_authorization
             or args.eviction_signature
             or args.eviction_progress
         ):
             argument_parser.error("item restoration cannot be combined with eviction operations")
-        if args.prepare_eviction_authorization and args.evict:
+        if args.prepare_eviction_authorization and args.prepare_eviction_campaign_authorization:
+            argument_parser.error("choose one eviction authorization planning mode")
+        if (
+            args.prepare_eviction_authorization
+            or args.prepare_eviction_campaign_authorization
+        ) and args.evict:
             argument_parser.error("authorization planning and --evict are separate operations")
-        if args.prepare_eviction_authorization and not args.eviction_authorizer:
-            argument_parser.error("--prepare-eviction-authorization requires --eviction-authorizer")
+        if (
+            args.prepare_eviction_authorization
+            or args.prepare_eviction_campaign_authorization
+        ) and not args.eviction_authorizer:
+            argument_parser.error("eviction authorization planning requires --eviction-authorizer")
         if args.evict and (not args.eviction_authorization or not args.eviction_signature):
             argument_parser.error("--evict requires --eviction-authorization and --eviction-signature")
         if not args.evict and (args.eviction_authorization or args.eviction_signature):
@@ -262,6 +276,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_id=args.run_id,
                 progress_path=args.eviction_progress,
                 prepare_authorization=args.prepare_eviction_authorization,
+                prepare_campaign_authorization=args.prepare_eviction_campaign_authorization,
                 authorization_principal=args.eviction_authorizer,
                 authorization_receipt=args.eviction_authorization,
                 authorization_signature=args.eviction_signature,
@@ -278,6 +293,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_id=args.run_id,
                 progress_path=args.eviction_progress,
                 prepare_authorization=args.prepare_eviction_authorization,
+                prepare_campaign_authorization=args.prepare_eviction_campaign_authorization,
                 authorization_principal=args.eviction_authorizer,
                 authorization_receipt=args.eviction_authorization,
                 authorization_signature=args.eviction_signature,

@@ -98,10 +98,10 @@ def test_host_posture_sources_distinguish_unavailable_from_failure(tmp_path, mon
     disk = _script("disk-capacity.py")
     custody = _script("horrevm-custody.py")
     storage = _script("cloud-storage-doctor.py")
-    monkeypatch.setattr(disk, "_capacity_pct", lambda: None)
+    monkeypatch.setattr(disk, "_free_gib", lambda: None)
     monkeypatch.setattr(custody, "load_state", dict)
     monkeypatch.setattr(custody, "parked", lambda: True)
-    assert disk.check(90, strict=True) == 77
+    assert disk.check(strict=True) == 77
     assert custody.status(strict=True) == 77
     monkeypatch.setattr(storage, "OUT", tmp_path / "storage.json")
     monkeypatch.setattr(storage, "load_registry", lambda: {"rails": {"archive": {}}})

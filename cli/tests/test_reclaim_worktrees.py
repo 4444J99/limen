@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -91,28 +92,35 @@ def test_debt_classifier_matches_accepted_reaper_for_remote_merged_receipt(tmp_p
     accepted, _accept_reason = reclaim.reclaim_accepted(root, action, reaper_reason, [])
 
     assert (action, reaper_reason, accepted) == (
-        "remove-clone",
-        "receipt-remote-merged+clean+idle",
-        True,
+        "skip",
+        "unpreserved-local-refs",
+        False,
     )
     assert debt_reason == reaper_reason
-    assert debt_reason in debt.REAPABLE_REASONS
+    assert debt_reason in debt.DEBT_REASONS
 
 
-def test_reclaim_skips_antigravity_scratch_root_removal(tmp_path: Path) -> None:
+def test_reclaim_applies_remote_preserved_contract_inside_antigravity_scratch(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     reclaim = load_reclaim_worktrees()
     scratch = tmp_path / "agy-scratch"
-    root = scratch / "clean-merged-root"
-    root.mkdir(parents=True)
+    scratch.mkdir()
+    root = _committed_repo(scratch, "clean-remote-root")
     reclaim.AGY_SCRATCH_ROOT = scratch
+    monkeypatch.setattr(reclaim, "PUSHED_OK", True)
+    _model_pushed_unmerged(reclaim, monkeypatch)
 
     action, reason = reclaim.classify(root, time.time(), 0)
 
-    assert action == "skip"
-    assert reason == "antigravity-scratch-uses-bridge-acceptance"
+    assert action == "remove-clone"
+    assert reason == "clean+pushed+idle"
 
 
-def test_reclaim_skips_antigravity_system_generated_worktree(tmp_path: Path) -> None:
+def test_reclaim_keeps_non_git_antigravity_system_generated_root(
+    tmp_path: Path,
+) -> None:
     reclaim = load_reclaim_worktrees()
     agy_root = tmp_path / "antigravity-cli"
     root = agy_root / "brain" / "session" / ".system_generated" / "worktrees" / "child"
@@ -123,27 +131,29 @@ def test_reclaim_skips_antigravity_system_generated_worktree(tmp_path: Path) -> 
     action, reason = reclaim.classify(root, time.time(), 0)
 
     assert action == "skip"
-    assert reason == "antigravity-scratch-uses-bridge-acceptance"
+    assert reason == "not-a-git-dir"
 
 
-def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, monkeypatch) -> None:
+def test_reclaim_remote_reachability_uses_live_advertised_refs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     reclaim = load_reclaim_worktrees()
     calls: list[list[str]] = []
 
-    def fake_git(args: list[str], cwd: Path, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+    def fake_git(
+        args: list[str],
+        cwd: Path,
+        timeout: int = 20,
+    ) -> subprocess.CompletedProcess[str]:
         calls.append(args)
         assert cwd == tmp_path
-        assert timeout == 20
-        if args == [
-            "for-each-ref",
-            "--contains=abc123",
-            "--format=%(refname)",
-            "refs/remotes",
-        ]:
+        assert timeout == 120
+        if args == ["ls-remote", "--refs", "origin"]:
             return subprocess.CompletedProcess(
                 ["git", *args],
                 0,
-                "refs/remotes/origin/main\nrefs/remotes/origin/feature\n",
+                "abc123\trefs/heads/main\nabc123\trefs/heads/feature\n",
                 "",
             )
         raise AssertionError(f"unexpected git call: {args}")
@@ -151,14 +161,47 @@ def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, 
     monkeypatch.setattr(reclaim, "git", fake_git)
 
     assert reclaim.reachable_from_remote(tmp_path, "abc123") is True
-    assert calls == [
-        [
-            "for-each-ref",
-            "--contains=abc123",
-            "--format=%(refname)",
-            "refs/remotes",
-        ]
-    ]
+    assert calls == [["ls-remote", "--refs", "origin"]]
+    assert reclaim.remote_refs_containing_head(tmp_path, "abc123") == (
+        "refs/heads/feature",
+        "refs/heads/main",
+    )
+
+
+def test_detached_head_cached_only_in_stale_remote_ref_is_not_preserved(
+    tmp_path: Path,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = _committed_repo(tmp_path, "detached")
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+    subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=repo, check=True)
+    subprocess.run(["git", "push", "-qu", "origin", "main"], cwd=repo, check=True)
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(["git", "checkout", "-q", "--detach", head], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "update-ref", "refs/remotes/origin/stale", head],
+        cwd=repo,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "update-ref", "-d", "refs/heads/main"],
+        cwd=remote,
+        check=True,
+    )
+
+    assert reclaim.remote_refs_containing_head(repo, head) == ()
+    assert reclaim.reachable_from_remote(repo, head) is False
+    assert reclaim.classify(repo, time.time(), 0) == (
+        "skip",
+        "unpushed-commits",
+    )
 
 
 def test_reclaim_help_does_not_discover_targets(monkeypatch, capsys) -> None:
@@ -190,6 +233,28 @@ def test_candidate_manifest_digest_is_order_independent_and_bounded(tmp_path: Pa
         reclaim,
         "reclaim_accepted",
         lambda *_args, **_kwargs: (True, "accepted"),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "git",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 0, "a" * 40, ""),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "remote_refs_containing_head",
+        lambda *_args, **_kwargs: ("refs/remotes/origin/main",),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "all_local_refs_remote_proof",
+        lambda *_args, **_kwargs: (
+            {
+                "local_ref": "refs/heads/main",
+                "object": "a" * 40,
+                "peeled_object": None,
+                "remote_refs": ["refs/heads/main"],
+            },
+        ),
     )
 
     left = reclaim.build_candidate_manifest(
@@ -236,6 +301,28 @@ def test_apply_requires_matching_plan_digest_before_abandonment(tmp_path: Path, 
         reclaim,
         "classify",
         lambda *_args, **_kwargs: ("remove-clone", "clean+merged+idle"),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "git",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 0, "a" * 40, ""),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "remote_refs_containing_head",
+        lambda *_args, **_kwargs: ("refs/remotes/origin/main",),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "all_local_refs_remote_proof",
+        lambda *_args, **_kwargs: (
+            {
+                "local_ref": "refs/heads/main",
+                "object": "a" * 40,
+                "peeled_object": None,
+                "remote_refs": ["refs/heads/main"],
+            },
+        ),
     )
     monkeypatch.setattr(
         reclaim,
@@ -317,6 +404,7 @@ def test_reclaim_acceptance_requires_archive_and_redaction_proofs(tmp_path: Path
 
 def test_reclaim_generated_payloads_cleans_inactive_ignored_dirs(tmp_path: Path, monkeypatch) -> None:
     reclaim = load_reclaim_worktrees()
+    monkeypatch.setenv("LIMEN_RECLAIM_GENERATED", "1")
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
@@ -376,6 +464,7 @@ def test_reclaim_generated_payloads_preserves_tracked_generated_name(
     monkeypatch,
 ) -> None:
     reclaim = load_reclaim_worktrees()
+    monkeypatch.setenv("LIMEN_RECLAIM_GENERATED", "1")
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
@@ -497,6 +586,26 @@ def _custody_proof(
     }
 
 
+def _custody_identity(root: Path) -> dict[str, object]:
+    resolved = root.resolve()
+    current = resolved.stat()
+    return {
+        "path": str(resolved),
+        "path_sha256": hashlib.sha256(str(resolved).encode()).hexdigest(),
+        "device": current.st_dev,
+        "inode": current.st_ino,
+        "mtime_ns": current.st_mtime_ns,
+    }
+
+
+def _custody_context(root: Path, *, content: str = "b" * 64) -> dict[str, object]:
+    return {
+        "paths": frozenset({root.resolve()}),
+        "identities": {str(root.resolve()): _custody_identity(root)},
+        "proof": _custody_proof(content=content),
+    }
+
+
 def _custody_acceptance(proof: dict[str, object]) -> dict[str, object]:
     return {
         "accepted_at": "2026-07-27T13:08:49Z",
@@ -594,11 +703,17 @@ def test_reclaim_custody_context_admits_only_failed_checkout_payload_roots(
     indexed.mkdir()
     plan_sha = "a" * 64
     roots = [
-        {"path": str(failed_checkout.resolve()), "index_entry_count": 0},
-        {"path": str(indexed.resolve()), "index_entry_count": 3},
+        {**_custody_identity(failed_checkout), "index_entry_count": 0},
+        {**_custody_identity(indexed), "index_entry_count": 3},
     ]
     receipt = {
         "roots": roots,
+        "failed_checkout_states": [
+            {
+                "path_sha256": roots[0]["path_sha256"],
+                "content_sha256": "c" * 64,
+            }
+        ],
         "content_sha256": "b" * 64,
         "root_count": 2,
         "failed_checkout_root_count": 1,
@@ -621,6 +736,7 @@ def test_reclaim_custody_context_admits_only_failed_checkout_payload_roots(
 
     assert context is not None
     assert context["paths"] == frozenset({failed_checkout.resolve()})
+    assert context["identities"] == {str(failed_checkout.resolve()): _custody_identity(failed_checkout)}
     assert context["proof"] == _custody_proof(root_count=2)
 
 
@@ -634,11 +750,8 @@ def test_reclaim_manifest_digest_binds_public_custody_proof(tmp_path: Path, monk
         lambda *_args, **_kwargs: ("remove-clone", "custody-restored+idle"),
     )
     monkeypatch.setattr(reclaim, "reclaim_accepted", lambda *_args, **_kwargs: (True, "accepted"))
-    first_context = {"paths": frozenset({repo.resolve()}), "proof": _custody_proof()}
-    second_context = {
-        "paths": frozenset({repo.resolve()}),
-        "proof": _custody_proof(content="d" * 64),
-    }
+    first_context = _custody_context(repo)
+    second_context = _custody_context(repo, content="d" * 64)
 
     first = reclaim.build_candidate_manifest([(repo, 0, "test")], 1.0, {}, [], first_context)
     second = reclaim.build_candidate_manifest([(repo, 0, "test")], 1.0, {}, [], second_context)
@@ -656,11 +769,8 @@ def test_reclaim_apply_rechecks_and_blocks_custody_proof_drift(
     repo = tmp_path / "failed-checkout"
     repo.mkdir()
     target = type("Target", (), {"path": repo, "min_age_h": 0, "source": "test"})()
-    first_context = {"paths": frozenset({repo.resolve()}), "proof": _custody_proof()}
-    drifted_context = {
-        "paths": frozenset({repo.resolve()}),
-        "proof": _custody_proof(content="d" * 64),
-    }
+    first_context = _custody_context(repo)
+    drifted_context = _custody_context(repo, content="d" * 64)
     monkeypatch.setattr(
         reclaim,
         "classify",
@@ -706,6 +816,18 @@ def _model_pushed_unmerged(reclaim, monkeypatch) -> None:
     monkeypatch.setattr(reclaim, "merged_into_default", lambda d, head: False)
     monkeypatch.setattr(reclaim, "patch_equivalent_to_default", lambda d: False)
     monkeypatch.setattr(reclaim, "receipt_remote_merged", lambda d, r: False)
+    monkeypatch.setattr(
+        reclaim,
+        "all_local_refs_remote_proof",
+        lambda _d: (
+            {
+                "local_ref": "refs/heads/feature",
+                "object": "a" * 40,
+                "peeled_object": None,
+                "remote_refs": ["refs/heads/feature"],
+            },
+        ),
+    )
 
 
 def test_reclaim_reaps_pushed_unmerged_when_pushed_ok(tmp_path: Path, monkeypatch) -> None:
@@ -777,6 +899,102 @@ def test_reclaim_classifies_git_locked_worktree_before_candidate_selection(tmp_p
 
     assert action == "skip"
     assert reason == "locked:active prompt-corpus"
+
+
+def test_reclaim_preserves_clone_that_owns_registered_sibling_worktrees(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    main = _committed_repo(tmp_path, "main")
+    sibling = tmp_path / "sibling"
+    subprocess.run(["git", "worktree", "add", "-qb", "sibling", str(sibling)], cwd=main, check=True)
+
+    action, reason = reclaim.classify(main, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "registered-worktree-owner"
+    assert sibling in reclaim.registered_sibling_worktrees(main)
+
+
+def test_reclaim_fails_closed_when_registered_sibling_is_unavailable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    main = _committed_repo(tmp_path, "main")
+    missing = tmp_path / "missing-sibling"
+    real_git = reclaim.git
+
+    def unavailable_sibling(args, cwd, timeout=20):
+        if args == ["worktree", "list", "--porcelain"]:
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                0,
+                f"worktree {main}\n\nworktree {missing}\n",
+                "",
+            )
+        return real_git(args, cwd, timeout=timeout)
+
+    monkeypatch.setattr(reclaim, "git", unavailable_sibling)
+
+    action, reason = reclaim.classify(main, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "registered-sibling-worktree-unavailable"
+
+
+def test_workspace_checkout_source_rejects_linked_worktree(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    main = _committed_repo(tmp_path, "main")
+    linked = tmp_path / "linked"
+    subprocess.run(
+        ["git", "worktree", "add", "-qb", "linked", str(linked)],
+        cwd=main,
+        check=True,
+    )
+
+    action, reason = reclaim.classify(
+        linked,
+        time.time(),
+        0,
+        source="workspace-checkout",
+    )
+
+    assert action == "skip"
+    assert reason == "workspace-checkout-source-contract-violation"
+
+
+def test_unpushed_annotated_tag_blocks_all_local_ref_proof(
+    tmp_path: Path,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = _committed_repo(tmp_path, "main")
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+    subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=repo, check=True)
+    subprocess.run(["git", "push", "-qu", "origin", "main"], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=t@example.com",
+            "-c",
+            "user.name=test",
+            "tag",
+            "-a",
+            "private-annotation",
+            "-m",
+            "not yet remote",
+        ],
+        cwd=repo,
+        check=True,
+    )
+
+    assert reclaim.all_local_refs_remote_proof(repo) is None
+    subprocess.run(
+        ["git", "push", "-q", "origin", "refs/tags/private-annotation"],
+        cwd=repo,
+        check=True,
+    )
+    assert reclaim.all_local_refs_remote_proof(repo) is not None
 
 
 def test_reclaim_keeps_pushed_unmerged_when_pushed_ok_off(tmp_path: Path, monkeypatch) -> None:

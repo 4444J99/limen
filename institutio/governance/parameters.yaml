@@ -528,12 +528,6 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether an always-working timeout alone blocks dispatch reservation. The broader hard gate still blocks non-timeout failures; default 0 preserves live dispatch if lifecycle reconciliation exceeds its timeout."
-  LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB:
-    default: 200
-    env: LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB
-    self_update: none
-    owner: continuity
-    note: "Local-system free-space target used by always-working to keep the laptop as hot cache instead of durable storage."
   LIMEN_ESTATE_SCAN_SECONDS:
     default: 75
     env: LIMEN_ESTATE_SCAN_SECONDS
@@ -919,11 +913,11 @@ parameters:
     owner: continuity
     note: "Maximum heartbeat-loop backoff in seconds. Worktree admission uses this live scheduler bound with LIMEN_BEAT_DRAIN and LIMEN_RECLAIM_TIMEOUT; it is not a worktree-count cap."
   LIMEN_RECLAIM_GENERATED:
-    default: "1"
+    default: "0"
     env: LIMEN_RECLAIM_GENERATED
     self_update: none
     owner: continuity
-    note: "Whether generated checkout payload reclaim is enabled. This removes ignored/cache/build payloads only after lifecycle and idle gates pass."
+    note: "Whether generated checkout payload reclaim is explicitly enabled. Default OFF: generated projections and caches must first be classified by their owning recipe."
   LIMEN_RECLAIM_GENERATED_MAX:
     default: 80
     env: LIMEN_RECLAIM_GENERATED_MAX
@@ -1001,7 +995,7 @@ parameters:
     env: LIMEN_REAP_CLONES_APPLY
     self_update: none
     owner: continuity
-    note: "Beat-wire clone-reap in --apply mode (2026-07-09): the hygiene voice runs scripts/reap-clones.py so the reclaim engine is ALIVE, not a script that never ran. reap-clones self-gates on disk pressure + idle age + the loss-free pushed-mirror gate, so it is inert above the free-floor and only removes the pushed-mirror class. Set 0 to run it in dry-run/report mode only."
+    note: "Beat-wire clone-reap in --apply mode (2026-07-09): the hygiene voice runs scripts/reap-clones.py so the reclaim engine is ALIVE, not a script that never ran. Reclaim intensity follows the live resource envelope plus idle age and the loss-free pushed-mirror gate; no fixed free-space target controls it. Set 0 to run it in dry-run/report mode only."
   LIMEN_REAP_CLONES_TIMEOUT:
     default: "300"
     env: LIMEN_REAP_CLONES_TIMEOUT
@@ -1014,12 +1008,30 @@ parameters:
     self_update: none
     owner: continuity
     note: "Filesystem path used by async dispatch to measure local free space before launching more work."
-  LIMEN_DISK_FLOOR_GIB:
-    default: 60
-    env: LIMEN_DISK_FLOOR_GIB
+  LIMEN_RESOURCE_UPDATER_CLAIM_BYTES:
+    default: "0"
+    env: LIMEN_RESOURCE_UPDATER_CLAIM_BYTES
     self_update: none
     owner: continuity
-    note: "Minimum local free space in GiB before async dispatch should prefer low-burn value-first work or stop opening new local-heavy lanes."
+    note: "Live updater staging claim in bytes consumed by the dynamic resource-envelope evaluator. Zero means the source-native updater reports no current claim, not a storage floor."
+  LIMEN_RESOURCE_APFS_CHURN_BYTES:
+    default: "0"
+    env: LIMEN_RESOURCE_APFS_CHURN_BYTES
+    self_update: none
+    owner: continuity
+    note: "Observed APFS churn/rollback claim in bytes supplied to the dynamic resource-envelope evaluator."
+  LIMEN_RESOURCE_TELEMETRY_ERROR_BYTES:
+    default: "0"
+    env: LIMEN_RESOURCE_TELEMETRY_ERROR_BYTES
+    self_update: none
+    owner: continuity
+    note: "Current measurement-error allowance in bytes supplied by telemetry; it is an observation, never a fixed disk authority."
+  LIMEN_RESOURCE_TASK_GRAPH:
+    default: ""
+    env: LIMEN_RESOURCE_TASK_GRAPH
+    self_update: none
+    owner: continuity
+    note: "Required bounded limen.resource_task_graph.v1 file for local work admission. Empty fails closed; every storage gate evaluates peak concurrent claims across this exact selected graph. Callers with an explicitly empty graph may pass an empty claim tuple directly for observation-only evaluation."
   LIMEN_DISK_PRESSURE_VALUE_ONLY:
     default: "1"
     env: LIMEN_DISK_PRESSURE_VALUE_ONLY
@@ -1044,12 +1056,6 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "When true, dispatch applies the value gate even if the value-repo list is empty, so empty configuration fails closed instead of draining generic queue work."
-  LIMEN_ALWAYS_WORKING_MIN_FREE_GIB:
-    default: 60
-    env: LIMEN_ALWAYS_WORKING_MIN_FREE_GIB
-    self_update: none
-    owner: continuity
-    note: "Minimum free-space threshold used by always-working receipts when judging substrate pressure."
   LIMEN_REPO_SCAN_DEPTH:
     default: 4
     env: LIMEN_REPO_SCAN_DEPTH
@@ -1080,18 +1086,6 @@ parameters:
     self_update: none
     owner: continuity
     note: "Hard timeout (s) for one top-level ~/Workspace entry's additive rsync inside preserve_workspace() (library-preserve.py), so a slow multi-GB repo copy never wedges the C_BACKUP beat."
-  LIMEN_STORAGE_FREE_FLOOR_GIB:
-    default: 5
-    env: LIMEN_STORAGE_FREE_FLOOR_GIB
-    self_update: none
-    owner: continuity
-    note: "Minimum free-space floor used by substrate-ledger status classification."
-  LIMEN_STORAGE_USAGE_CEILING_PCT:
-    default: 95
-    env: LIMEN_STORAGE_USAGE_CEILING_PCT
-    self_update: none
-    owner: continuity
-    note: "Maximum storage usage percentage before substrate-ledger marks a root constrained."
   LIMEN_CLOUD_STORAGE:
     default: 1
     env: LIMEN_CLOUD_STORAGE
@@ -2789,6 +2783,18 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Min idle hours before a registered sibling worktree can be reclaimed. Covers sibling Limen branches such as limen-main-trench-* that are not inside the central worktree roots."
+  LIMEN_RECLAIM_WORKSPACE_CHECKOUTS:
+    default: "0"
+    env: LIMEN_RECLAIM_WORKSPACE_CHECKOUTS
+    self_update: none
+    owner: limen-daemon
+    note: "Explicit bounded switch for lifecycle discovery to include Git checkout roots themselves under LIMEN_RECLAIM_WORKSPACE_ROOTS. Clean exact-HEAD remote-preserved clones may then be purged locally; dirty, unpushed, active, locked, and non-Git roots remain excluded."
+  LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H:
+    default: 24
+    env: LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H
+    self_update: none
+    owner: limen-daemon
+    note: "Min idle hours for a workspace checkout root when LIMEN_RECLAIM_WORKSPACE_CHECKOUTS=1."
   LIMEN_RECLAIM_MAIN_REPOS:
     default: "$LIMEN_ROOT:$HOME/Workspace/4444J99/portvs"
     env: LIMEN_RECLAIM_MAIN_REPOS
@@ -2800,7 +2806,7 @@ parameters:
     env: LIMEN_RECLAIM_WORKSPACE_ROOTS
     self_update: none
     owner: limen-daemon
-    note: "Colon-separated workspace roots searched for repo-local .worktrees directories, with cache/vendor folders pruned."
+    note: "Colon-separated workspace roots searched for repo-local .worktrees directories, with cache/vendor folders pruned; when LIMEN_RECLAIM_WORKSPACE_CHECKOUTS=1, the same bounded discovery also includes Git checkout roots themselves."
   LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH:
     default: 5
     env: LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH
@@ -2819,24 +2825,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Total best-effort time budget for worktree reclaim candidate size measurement."
-  LIMEN_DISK_HIGH_WATER:
-    default: 85
-    env: LIMEN_DISK_HIGH_WATER
-    self_update: none
-    owner: limen-daemon
-    note: "Percent-used high-water mark for the workspace data volume. INFORMATIONAL/legacy — kept for display. The pressure DECISION now keys off absolute free (LIMEN_DISK_FREE_FLOOR_GIB), because df/statvfs percent counts ~100GB of purgeable APFS space as used (the meter-lie: a 95%-by-percent disk can have ~120GB effectively free)."
-  LIMEN_DISK_FREE_FLOOR_GIB:
-    default: 15
-    env: LIMEN_DISK_FREE_FLOOR_GIB
-    self_update: none
-    owner: limen-daemon
-    note: "GiB of ABSOLUTE raw free space below which disk pressure is ON (emergency reap waives the loss-free age gate; the beat ramps hygiene to every tick). Honest signal on a large APFS volume where df% is inflated by ~100GB of purgeable-but-reclaimable space. Consumed by reap-clones.py and heartbeat-loop.sh's hygiene ramp."
   LIMEN_DISK_PRESSURE_ESCALATE:
     default: "1"
     env: LIMEN_DISK_PRESSURE_ESCALATE
     self_update: none
     owner: limen-daemon
-    note: "ON — when absolute free space is at/below LIMEN_DISK_FREE_FLOOR_GIB the heartbeat drops hygiene cadence to every beat until it drains. Set 0 to keep hygiene on its fixed LIMEN_BEAT_HYGIENE cadence regardless of fullness."
+    note: "ON — when absolute free space is at/below the live resource-envelope requirement the heartbeat drops hygiene cadence to every beat until it drains. Set 0 to retain fixed hygiene cadence."
   LIMEN_CLONE_REAP_APPLY:
     default: "1"
     env: LIMEN_CLONE_REAP_APPLY
@@ -3424,7 +3418,7 @@ parameters:
     env: LIMEN_WORKTREE_DEBT_GATE
     self_update: none
     owner: limen-daemon
-    note: "Master switch for per-candidate marginal worktree admission (limen.worktree_debt.take_admission_snapshot). When ON, a NEW LOCAL worktree is admitted only when the host can take custody — free disk >= LIMEN_DISK_FLOOR_GIB, VITALS not shedding, and, whenever lifecycle targets exist, a fresh heartbeat reaper apply receipt proves the inventory is draining. Remote lanes are never gated. There is NO tolerated debt count; completion is debt == 0. Set 0 as the documented operator override to admit all local work regardless of custody."
+    note: "Master switch for per-candidate marginal worktree admission (limen.worktree_debt.take_admission_snapshot). When ON, a NEW LOCAL worktree is admitted only when free disk satisfies the telemetry-backed resource envelope, VITALS is not shedding, and any lifecycle targets have a fresh reaper receipt. Remote lanes are never gated. There is NO tolerated debt count; completion is debt == 0."
   LIMEN_RECLAIM_EVERY_MIN:
     default: 30                # reclaim-worktrees self-throttle; input to scheduler-derived freshness
     env: LIMEN_RECLAIM_EVERY_MIN
@@ -4356,18 +4350,11 @@ parameters:
 
   # --- disk-capacity sensor (sensors.yaml 0g7) ------------------------------------
   LIMEN_DISK_CAPACITY:
-    default: "1"               # ON — assert /System/Volumes/Data stays below capacity threshold each beat
+    default: "1"               # ON — assert free bytes cover the live resource envelope each beat
     env: LIMEN_DISK_CAPACITY
     self_update: none
     owner: tabularius
-    note: "Beat gate for the disk-capacity sensor (scripts/disk-capacity.py --check, sensor 0g7 in sensors.yaml). Closes the disk-full silent-failure root cause: the fleet stalled with no beat-visible signal when the host ran out of space. Green ⟺ /System/Volumes/Data percent-used < LIMEN_DISK_CAPACITY_THRESHOLD (default 80%). Fail-open when the volume is absent (CI / non-macOS). The armed effector is LIMEN_DISK_CAPACITY_APPLY. Set 0 to silence."
-
-  LIMEN_DISK_CAPACITY_THRESHOLD:
-    default: 80
-    env: LIMEN_DISK_CAPACITY_THRESHOLD
-    self_update: none
-    owner: tabularius
-    note: "Percent-used high-water mark for /System/Volumes/Data checked by disk-capacity.py --check. Breaching this threshold exits non-zero and surfaces the escalation in the beat log. Default 80 leaves room before genuine space-out; lower for earlier warnings, raise if the host routinely saturates purgeable space (the APFS df%-lies precedent) without real impact. Override via env or --threshold flag."
+    note: "Beat gate for the disk-capacity sensor (scripts/disk-capacity.py --check, sensor 0g7 in sensors.yaml). Closes the disk-full silent-failure root cause: green means live free bytes cover the telemetry-backed resource envelope for the selected task graph. The portable non-macOS absence case skips; envelope telemetry failure on the live host fails closed. The armed effector is LIMEN_DISK_CAPACITY_APPLY. Set 0 to silence."
 
   LIMEN_BEAT_DISK_CAPACITY:
     default: 4

@@ -588,11 +588,18 @@ workstream_conduct_keepalive_loop() {
   local conduct_token="${13}"
   local capability
   local capability_args=()
+  local keepalive_pid
   local now_epoch next_refresh refresh_count=1
   local last_success_epoch last_failure_epoch=""
   local register_rc=0 detail="initial registration passed"
 
   trap 'exit 0' HUP INT TERM
+  # Apple's Bash 3.2 does not expose BASHPID. A direct child reports this
+  # background subshell as its PPID, which is the exact PID returned by $!.
+  keepalive_pid="$(/bin/sh -c 'printf "%s\n" "$PPID"')"
+  case "$keepalive_pid" in
+    ""|*[!0-9]*) return 2 ;;
+  esac
   for capability in $capabilities; do
     capability_args+=(--capability "$capability")
   done
@@ -600,7 +607,7 @@ workstream_conduct_keepalive_loop() {
   last_success_epoch="$now_epoch"
   next_refresh=$((now_epoch + interval_seconds))
   workstream_write_conduct_keepalive_status \
-    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$BASHPID" \
+    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$keepalive_pid" \
     "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
   while workstream_conduct_target_is_live "$target_pid" "$target_started"; do
     now_epoch="$(date +%s)"
@@ -629,14 +636,14 @@ workstream_conduct_keepalive_loop() {
       detail="protected session refreshed"
       next_refresh=$((now_epoch + interval_seconds))
       workstream_write_conduct_keepalive_status \
-        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$BASHPID" \
+        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$keepalive_pid" \
         "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
     else
       last_failure_epoch="$now_epoch"
       detail="conduct registration refresh failed with exit $register_rc"
       next_refresh=$((now_epoch + retry_seconds))
       workstream_write_conduct_keepalive_status \
-        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" refresh_failed "$target_pid" "$BASHPID" \
+        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" refresh_failed "$target_pid" "$keepalive_pid" \
         "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
     fi
   done
@@ -644,7 +651,7 @@ workstream_conduct_keepalive_loop() {
     detail="provider process exited or changed identity"
   fi
   workstream_write_conduct_keepalive_status \
-    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" stopped "$target_pid" "$BASHPID" \
+    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" stopped "$target_pid" "$keepalive_pid" \
     "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
 }
 

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "composition_id": {
+      "title": "Composition Id",
+      "type": "string"
+    },
+    "explicit_order": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Explicit Order",
+      "type": "array"
+    },
+    "omissions": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Omissions",
+      "type": "array"
+    },
+    "ordering": {
+      "enum": [
+        "observed_time",
+        "effective_time",
+        "explicit"
+      ],
+      "title": "Ordering",
+      "type": "string"
+    },
+    "output_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "title": "Output Digests",
+      "type": "array"
+    },
+    "redaction_receipt_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Redaction Receipt Digests",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "limen.composition_manifest.v1",
+      "default": "limen.composition_manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "selected_event_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "title": "Selected Event Ids",
+      "type": "array"
+    },
+    "transform_recipe_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Transform Recipe Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "composition_id",
+    "selected_event_ids",
+    "ordering",
+    "output_digests"
+  ],
+  "title": "CompositionManifestV1",
+  "type": "object"
+}

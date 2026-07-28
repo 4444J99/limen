@@ -80,8 +80,25 @@ def _load(tmp_path, n_open=6, agent="codex"):
     spec = importlib.util.spec_from_file_location("dispatch_async_under_test", SCRIPT)
     da = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(da)
+    # Unit tests isolate resource admission from the host. Dedicated pressure
+    # tests replace this deterministic empty-graph requirement explicitly.
+    da.current_required_free_gib = lambda: 0.0
     da.RUNS.mkdir(parents=True, exist_ok=True)
     return da
+
+
+def _empty_resource_graph(tmp_path):
+    resource_graph = tmp_path / "resource-task-graph.json"
+    resource_graph.write_text(
+        json.dumps(
+            {
+                "schema": "limen.resource_task_graph.v1",
+                "claims": [],
+            },
+        ),
+        encoding="utf-8",
+    )
+    return resource_graph
 
 
 def _load_worker(tmp_path):
@@ -1462,6 +1479,7 @@ def test_async_marker_holds_checkout_room_until_worktree_birth(tmp_path):
 def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_path):
     """The durable lease closes the board-save -> running-marker cross-process race."""
     da = _load(tmp_path, n_open=2)
+    resource_graph = _empty_resource_graph(tmp_path)
     ready = tmp_path / "first-at-spawn"
     release = tmp_path / "release-first"
     first_out = tmp_path / "first.json"
@@ -1471,6 +1489,8 @@ def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_pa
         "LIMEN_ROOT": str(tmp_path),
         "LIMEN_TASKS": str(tmp_path / "tasks.yaml"),
         "LIMEN_DISPATCH_ADMISSION": "0",
+        "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
+        "LIMEN_RESOURCE_TASK_GRAPH": str(resource_graph),
         "LIMEN_WORKTREE_DEBT_GATE": "0",
         "LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH": "0",
         "PYTHONPATH": str(CLI_SRC),
@@ -1969,11 +1989,11 @@ def test_async_reserve_skips_cifix_superseded_by_active_rebase_task(tmp_path, mo
     assert picked == [("codex", "HEAL-rebase-organvm-domus-genoma-185")]
 
 
-def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, monkeypatch):
+def test_resource_envelope_breach_blocks_local_dispatch(tmp_path, monkeypatch):
     monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
     monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
-    monkeypatch.setenv("LIMEN_DISK_FLOOR_GIB", "999999")
     da = _load(tmp_path, n_open=0, agent="codex")
+    monkeypatch.setattr(da, "current_required_free_gib", lambda: 999999.0)
     today = datetime.date.today()
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.tasks = [
@@ -2013,7 +2033,36 @@ def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, 
 
     picked = da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True)
 
-    assert picked == [("codex", "PROMPT-LIFECYCLE-MEDIUM")]
+    assert picked == []
+
+
+def test_missing_selected_graph_blocks_local_but_not_remote(
+    tmp_path,
+    monkeypatch,
+):
+    local_root = tmp_path / "local"
+    local_root.mkdir()
+    local = _load(local_root, n_open=1, agent="codex")
+    monkeypatch.setattr(
+        local,
+        "current_required_free_gib",
+        lambda: (_ for _ in ()).throw(ValueError("missing graph")),
+    )
+
+    assert local.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True) == []
+
+    remote_root = tmp_path / "remote"
+    remote_root.mkdir()
+    remote = _load(remote_root, n_open=1, agent="jules")
+    monkeypatch.setattr(
+        remote,
+        "current_required_free_gib",
+        lambda: (_ for _ in ()).throw(ValueError("missing graph")),
+    )
+
+    assert remote.reserve_and_launch(["jules"], per_agent=1, cap=1, dry=True) == [
+        ("jules", "T0"),
+    ]
 
 
 def test_worktree_resource_pressure_suppresses_all_local_async_candidates(tmp_path, monkeypatch):
@@ -3048,6 +3097,7 @@ def test_targeted_only_dry_run_is_unmocked_byte_identical_across_control_surface
     os.environ["LIMEN_ROOT"] = str(tmp_path)
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
     _load(tmp_path, n_open=1)
+    resource_graph = _empty_resource_graph(tmp_path)
     board = load_limen_file(tmp_path / "tasks.yaml")
     task = board.tasks[0]
     task.context = "exact dry-run byte identity"
@@ -3125,6 +3175,7 @@ pathlib.Path("logs/handoff.json").write_text("MUTATED BY FORBIDDEN REFRESH")
         "LIMEN_SESSION_VALUE_GATE": "1",
         "LIMEN_WORKTREE_DEBT_GATE": "0",
         "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
+        "LIMEN_RESOURCE_TASK_GRAPH": str(resource_graph),
     }
     proc = subprocess.run(
         [

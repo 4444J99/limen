@@ -714,6 +714,31 @@ def _capture_failed_checkout_states(
     return captured, changed
 
 
+def verify_failed_checkout_state(
+    root_record: dict[str, Any],
+    expected_state: dict[str, Any],
+    *,
+    max_seconds: int = 900,
+) -> str:
+    """Immediately rehash one live failed checkout against its custody state."""
+
+    if max_seconds <= 0 or max_seconds > MAX_SECONDS:
+        raise EstateAuditCustodyError("invalid-time-limit")
+    try:
+        record = GeneratedRootRecord(**root_record)
+    except TypeError as exc:
+        raise EstateAuditCustodyError("custody-root-record-invalid") from exc
+    current, _changed = _failed_checkout_state(
+        record,
+        Path("."),
+        deadline=time.monotonic() + max_seconds,
+        capture=False,
+    )
+    if current != expected_state:
+        raise EstateAuditCustodyError("failed-checkout-content-drift")
+    return str(current["content_sha256"])
+
+
 def _payload_stats(states: list[dict[str, Any]]) -> dict[str, int]:
     payloads = [payload for state in states for payload in state["payloads"] if isinstance(payload, dict)]
     unique = {str(payload["payload_sha256"]): int(payload["payload_bytes"]) for payload in payloads}

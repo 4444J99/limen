@@ -351,11 +351,20 @@ def handle(
     if event == "UserPromptSubmit":
         return None
 
-    controller = controller or AdmissionController()
-    owner = _turn_owner(payload)
-    pid = owner_pid or codex_owner_pid()
-
     if event == "PreToolUse":
+        # Observation and sanctioned self-gated controls do not need a durable
+        # writer owner. Return before walking process ancestry so read-only
+        # operation remains available when that ancestry cannot be proven.
+        action = classify_action(payload)
+        if action.category in {"observe", "sanctioned_control"}:
+            return None
+        controller = controller or AdmissionController()
+        owner = _turn_owner(payload)
+        if owner is None:
+            return _tool_deny(
+                "Limen host admission denied mutation: durable Codex session identity is missing"
+            )
+        pid = owner_pid or codex_owner_pid()
         decision = admit_pre_tool_action(
             payload,
             controller=controller,
@@ -380,6 +389,10 @@ def handle(
                 ),
             },
         }
+
+    controller = controller or AdmissionController()
+    owner = _turn_owner(payload)
+    pid = owner_pid or codex_owner_pid()
 
     if event == "Stop" and owner is not None:
         # Codex may expose the compatibility flag used by Stop hooks. Only that

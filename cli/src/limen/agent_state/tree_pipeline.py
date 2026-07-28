@@ -26,7 +26,13 @@ from .file_provider import (
     retention_plan_from_capture,
 )
 from .models import AtomPack, CipherChunk, MetabolismReceipt, ReceiptError, RestoreProof, SourceProof
-from .pipeline import GitVault, PipelineError, require_mounted_external, run_id_now
+from .pipeline import (
+    ARCA_REMOTE_EXACT_ERROR,
+    GitVault,
+    PipelineError,
+    require_mounted_external,
+    run_id_now,
+)
 from .tree import (
     RetentionPlan,
     atomize_file_tree,
@@ -341,19 +347,31 @@ def resume_cold_tree_capture(
     receipt.restorations = [sample, full, external]
     receipt.git_remote = repository
     receipt_message = f"agent-state: receipt {name} {run_id}"
-    completed = vault.completed_receipt_commits(relative, receipt_message)
+    remote_completed: tuple[str, str, str] | None = None
+    try:
+        completed = vault.completed_receipt_commits(relative, receipt_message)
+    except PipelineError as exc:
+        if str(exc) != ARCA_REMOTE_EXACT_ERROR:
+            raise
+        remote_completed = vault.completed_receipt_at_remote(relative, receipt_message)
+        completed = (remote_completed[0], remote_completed[1])
     if completed is not None:
         payload_commit, receipt_commit = completed
         receipt.git_commit = payload_commit
-        receipt_path = payload_root / "receipt.json"
         try:
-            durable = json.loads(receipt_path.read_text(encoding="utf-8"))
+            durable = json.loads(
+                remote_completed[2]
+                if remote_completed is not None
+                else (payload_root / "receipt.json").read_text(encoding="utf-8")
+            )
         except (OSError, json.JSONDecodeError) as exc:
             raise PipelineError("completed ARCA receipt is missing or invalid") from exc
         expected = json.loads(json.dumps(receipt.as_dict(), sort_keys=True))
         if durable != expected:
             raise PipelineError("completed ARCA receipt does not match verified custody")
         receipt.git_receipt_commit = receipt_commit
+        if not private_receipt.exists():
+            receipt.write(private_receipt)
         _require_private_retirement_receipt(receipt, private_receipt)
         return receipt
     expected_paths = [relative / chunk.path for pack in receipt.packs for chunk in pack.chunks]
@@ -664,6 +682,7 @@ def _run_file_provider_action(
     *,
     progress_path: Path | None,
     prepare_authorization: Path | None,
+    prepare_campaign_authorization: Path | None,
     authorization_principal: str | None,
     authorization_receipt: Path | None,
     authorization_signature: Path | None,
@@ -675,6 +694,7 @@ def _run_file_provider_action(
         captured,
         progress_path or progress_path_for(private_receipt),
         prepare_authorization=prepare_authorization,
+        prepare_campaign_authorization=prepare_campaign_authorization,
         authorization_principal=authorization_principal,
         authorization_receipt=authorization_receipt,
         authorization_signature=authorization_signature,
@@ -693,6 +713,7 @@ def run_cloudkit_materialization_campaign(
     run_id: str | None = None,
     progress_path: Path | None = None,
     prepare_authorization: Path | None = None,
+    prepare_campaign_authorization: Path | None = None,
     authorization_principal: str | None = None,
     authorization_receipt: Path | None = None,
     authorization_signature: Path | None = None,
@@ -712,7 +733,7 @@ def run_cloudkit_materialization_campaign(
             record_consumer=lambda record: collect_file_entry(records, record),
         )
         captured = reconstruct_captured_files(receipt, plan.root, records)
-        if evict or prepare_authorization is not None:
+        if evict or prepare_authorization is not None or prepare_campaign_authorization is not None:
             _run_file_provider_action(
                 receipt,
                 plan.root,
@@ -720,6 +741,7 @@ def run_cloudkit_materialization_campaign(
                 private_receipt,
                 progress_path=progress_path,
                 prepare_authorization=prepare_authorization,
+                prepare_campaign_authorization=prepare_campaign_authorization,
                 authorization_principal=authorization_principal,
                 authorization_receipt=authorization_receipt,
                 authorization_signature=authorization_signature,
@@ -738,6 +760,7 @@ def run_resume_cloudkit_materialization_campaign(
     evict: bool = False,
     progress_path: Path | None = None,
     prepare_authorization: Path | None = None,
+    prepare_campaign_authorization: Path | None = None,
     authorization_principal: str | None = None,
     authorization_receipt: Path | None = None,
     authorization_signature: Path | None = None,
@@ -757,7 +780,7 @@ def run_resume_cloudkit_materialization_campaign(
             reconstruct_root=root,
             captured_files=captured_files,
         )
-        if evict or prepare_authorization is not None:
+        if evict or prepare_authorization is not None or prepare_campaign_authorization is not None:
             _run_file_provider_action(
                 receipt,
                 root,
@@ -765,6 +788,7 @@ def run_resume_cloudkit_materialization_campaign(
                 private_receipt,
                 progress_path=progress_path,
                 prepare_authorization=prepare_authorization,
+                prepare_campaign_authorization=prepare_campaign_authorization,
                 authorization_principal=authorization_principal,
                 authorization_receipt=authorization_receipt,
                 authorization_signature=authorization_signature,

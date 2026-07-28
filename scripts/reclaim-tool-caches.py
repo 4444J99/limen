@@ -19,10 +19,10 @@ import shutil
 import stat
 import subprocess
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 HOME = Path(os.environ.get("HOME", "/Users/4jp")).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
@@ -36,7 +36,9 @@ class CacheSpec:
 
 
 CACHE_SPECS = (
+    CacheSpec("~/.cache/codex-runtimes", ()),
     CacheSpec("~/.cache/npm", ("npm", "npx", "node")),
+    CacheSpec("~/.cache/organvm/capabilities", ("capabilities/conductor", "capabilities/voice-scorer")),
     CacheSpec("~/.cache/pnpm", ("pnpm", "node")),
     CacheSpec("~/.cache/pre-commit", ("pre-commit",)),
     CacheSpec("~/.cache/puppeteer", ("puppeteer", "chrome-for-testing")),
@@ -44,8 +46,15 @@ CACHE_SPECS = (
     CacheSpec("~/.npm/_cacache", ("npm", "npx", "node")),
     CacheSpec("~/.pytest_cache", ("pytest",)),
     CacheSpec("~/.local/share/pnpm/store", ("pnpm", "node")),
+    CacheSpec("~/.local/share/codex/.tmp", ("codex",)),
+    CacheSpec("~/.local/share/limen/runtimes", ("limen",)),
+    CacheSpec("~/.local/share/nvim/mason", ("nvim", "mason", "lua-language-server")),
+    CacheSpec("~/.serena/language_servers/static", ("serena", "language_servers/static", "lua-language-server")),
+    CacheSpec("~/.claude/plugins/marketplaces/claude-code-warp", ("claude-code-warp",)),
     CacheSpec("~/Library/Caches/ms-playwright", ("playwright",)),
     CacheSpec("~/Library/Caches/ms-playwright-go", ("playwright",)),
+    CacheSpec("~/Library/Caches/go-build", ("go",)),
+    CacheSpec("~/Library/Caches/Homebrew", ("brew",)),
     CacheSpec("~/Library/Caches/node-gyp", ("node-gyp", "npm", "node")),
     CacheSpec("~/Library/Caches/pip", ("pip",)),
     CacheSpec("~/Library/Caches/pip-audit", ("pip-audit",)),
@@ -53,6 +62,7 @@ CACHE_SPECS = (
     CacheSpec("~/Library/Caches/prisma-nodejs", ("prisma", "node")),
     CacheSpec("~/Library/Caches/pylint", ("pylint",)),
     CacheSpec("~/Library/Caches/virtualenv", ("virtualenv",)),
+    CacheSpec("~/Library/Application Support/Godot/export_templates", ("godot",)),
 )
 
 EXCLUDED_CLASSES = (

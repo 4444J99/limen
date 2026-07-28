@@ -11,16 +11,18 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
-
 HOME = Path(os.environ.get("HOME", "/Users/4jp")).expanduser()
-ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser()
+sys.path.insert(0, str(ROOT / "cli" / "src"))
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
+
 DOC_PATH = ROOT / "docs" / "substrate-storage-pressure.md"
 PRIVATE_PATH = ROOT / ".limen-private" / "session-corpus" / "lifecycle" / "substrate-storage-pressure.json"
-TARGET_FREE_GIB = float(os.environ.get("LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB", "200"))
 
 RECLAIM_LOGS = {
     "generated-state": ROOT / "logs" / "reclaim-generated-state.jsonl",
@@ -249,7 +251,15 @@ def worktree_lifecycle_summary() -> dict[str, Any]:
 
 def build_snapshot() -> dict[str, Any]:
     free = disk_free_gib()
-    shortfall = round(max(TARGET_FREE_GIB - (free or 0), 0), 1) if free is not None else None
+    try:
+        required = current_required_free_gib()
+    except (RuntimeError, ValueError):
+        required = None
+    headroom = (
+        round(free - required, 1)
+        if free is not None and required is not None
+        else None
+    )
     opencode_intake = latest_opencode_intake()
     rows = []
     for bucket in BUCKETS:
@@ -276,16 +286,20 @@ def build_snapshot() -> dict[str, Any]:
     rows.sort(key=lambda row: int(row["size_kib"]), reverse=True)
     reclaim = {name: reclaim_summary(path) for name, path in RECLAIM_LOGS.items()}
     return {
-        "schema": "limen.substrate_storage_pressure.v1",
+        "schema": "limen.substrate_storage_pressure.v2",
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "target_free_gib": TARGET_FREE_GIB,
+        "required_free_gib": required,
         "internal_free_gib": free,
-        "shortfall_gib": shortfall,
+        "resource_headroom_gib": headroom,
         "safe_reclaim": reclaim,
         "opencode_intake": opencode_intake,
         "worktree_lifecycle": worktree_lifecycle_summary(),
         "buckets": rows,
-        "status": "needs-owner-gates" if shortfall else "clear",
+        "status": (
+            "resource-envelope-unavailable"
+            if headroom is None
+            else ("needs-owner-gates" if headroom < 0 else "clear")
+        ),
     }
 
 
@@ -296,8 +310,8 @@ def render(snapshot: dict[str, Any]) -> str:
         f"Generated: `{snapshot['generated_at']}`",
         f"Status: `{snapshot['status']}`",
         f"Internal free: `{snapshot['internal_free_gib']} GiB`",
-        f"Target free: `{snapshot['target_free_gib']} GiB`",
-        f"Shortfall: `{snapshot['shortfall_gib']} GiB`",
+        f"Required free: `{snapshot['required_free_gib']} GiB`",
+        f"Resource headroom: `{snapshot['resource_headroom_gib']} GiB`",
         "",
         "## Safe Reclaim Already Run",
         "",
@@ -379,7 +393,7 @@ def main() -> int:
     else:
         print(
             f"substrate-storage-pressure: {snapshot['status']} free={snapshot['internal_free_gib']}GiB "
-            f"shortfall={snapshot['shortfall_gib']}GiB"
+            f"headroom={snapshot['resource_headroom_gib']}GiB"
         )
     return 0
 

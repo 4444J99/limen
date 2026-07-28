@@ -154,6 +154,7 @@ cell reap-dead --apply      # actually reclaim after operator acceptance
 | `LIMEN_RECLAIM_CLAUDE_AGE_H` | `24` | min idle hours before a cell is reclaim-eligible |
 | `LIMEN_RECLAIM_REPO_LOCAL_WT` | auto | also sweep repo-local `.worktrees/` roots under `LIMEN_RECLAIM_WORKSPACE_ROOTS` |
 | `LIMEN_RECLAIM_REGISTERED_WT` | auto | also sweep registered sibling worktrees from `LIMEN_RECLAIM_MAIN_REPOS` |
+| `LIMEN_RECLAIM_WORKSPACE_CHECKOUTS` | 0 | when explicitly armed, also sweep checkout roots themselves under `LIMEN_RECLAIM_WORKSPACE_ROOTS`; only clean exact-HEAD remote-preserved clones can be purged |
 | `LIMEN_RECLAIM_APPLY` | `1` | automated drain removes eligible roots by default; set `0` for preview-only |
 | `LIMEN_BRANCH_PREFIX` | (derived) | scoped conductor's branch namespace (`cell-<slug>-`) |
 

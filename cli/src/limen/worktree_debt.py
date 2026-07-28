@@ -11,12 +11,12 @@ from typing import Any, TypedDict
 
 from limen.worktree_roots import effective_worktree_root, iter_worktree_targets
 
-
 DEBT_REASONS = {
     "dirty",
     "not-a-git-dir",
     "not-merged-to-default",
     "unpushed-commits",
+    "unpreserved-local-refs",
     "unresolved",
 }
 REAPABLE_REASONS = {
@@ -89,7 +89,60 @@ def _reachable_from_remote(cwd: Path, head: str) -> bool:
     refs = _git(["for-each-ref", f"--contains={head}", "--format=%(refname)", "refs/remotes"], cwd)
     if refs.returncode != 0:
         return False
-    return bool(refs.stdout.strip())
+    if refs.stdout.strip():
+        return True
+    advertised = _git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
+    if advertised.returncode != 0:
+        return False
+    for line in advertised.stdout.splitlines():
+        remote_object = line.split("\t", 1)[0]
+        if remote_object == head or _git(["merge-base", "--is-ancestor", head, remote_object], cwd).returncode == 0:
+            return True
+    return False
+
+
+def _all_local_refs_remote(cwd: Path) -> bool:
+    local = _git(
+        [
+            "for-each-ref",
+            "--format=%(refname)%00%(objectname)%00%(*objectname)",
+            "refs/heads",
+            "refs/tags",
+            "refs/notes",
+            "refs/stash",
+        ],
+        cwd,
+        timeout=60,
+    )
+    advertised = _git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
+    if local.returncode != 0 or advertised.returncode != 0:
+        return False
+    remote: list[str] = []
+    for line in advertised.stdout.splitlines():
+        try:
+            object_id, remote_ref = line.split("\t", 1)
+        except ValueError:
+            return False
+        if object_id and remote_ref.startswith("refs/"):
+            remote.append(object_id)
+    if not remote:
+        return False
+    for line in local.stdout.splitlines():
+        parts = line.split("\0")
+        if len(parts) != 3:
+            return False
+        _local_ref, object_id, _peeled = parts
+        if object_id in remote:
+            continue
+        object_type = _git(["cat-file", "-t", object_id], cwd)
+        if object_type.returncode != 0 or object_type.stdout.strip() != "commit":
+            return False
+        if not any(
+            _git(["merge-base", "--is-ancestor", object_id, remote_object], cwd).returncode == 0
+            for remote_object in remote
+        ):
+            return False
+    return True
 
 
 def _merged_into_default(cwd: Path, head: str) -> bool:
@@ -272,6 +325,8 @@ def _classify(
         return f"active(<{min_age_h:g}h)"
     if _git(["status", "--porcelain"], path).stdout.strip():
         return "dirty"
+    if not (path / ".git").is_file() and not _all_local_refs_remote(path):
+        return "unpreserved-local-refs"
     if _is_remote_merged(path, preservation_receipts):
         return "receipt-remote-merged+clean+idle"
     head = _git(["rev-parse", "HEAD"], path).stdout.strip()
@@ -367,8 +422,8 @@ def worktree_reapable_exceeded(limit: int | None = None) -> tuple[bool, Worktree
 # (remote always continues):
 #
 #   1. RESOURCE  — free disk on ``effective_worktree_root()`` (where the worktree is actually
-#                  created) vs the registered ``LIMEN_DISK_FLOOR_GIB`` parameter. Unknown free space
-#                  or unknown floor → blocked.
+#                  created) vs the telemetry-backed resource envelope for the selected graph.
+#                  Unknown free space or envelope truth → blocked.
 #   2. VITALS    — ``vigilia.vitals.beat_gate(shed=False)``; ``action == 'shed'`` (critical memory
 #                  pressure) blocks local +1. ``throttle`` is NOT a block here — it is already served
 #                  by the separate reduced-concurrency ceiling, and we invent no score.
@@ -396,7 +451,7 @@ class WorktreeAdmissionSnapshot(TypedDict):
     vitals_shed: bool  # VITALS critical-memory shed
     reaper_blocked: bool  # target inventory/reaper state cannot prove bounded drain
     free_gib: float | None  # observed free space on effective_worktree_root()
-    floor_gib: float | None  # positive registered LIMEN_DISK_FLOOR_GIB (None → unknown)
+    floor_gib: float | None  # compatibility name for dynamic required_free_gib (None → unknown)
     reserved_gib: float  # checkout bytes already promised to selected LOCAL candidates
     room_gib: float | None  # free - floor - reserved; None when resource truth is unknown
     targets_present: bool | None  # cheap direct target inventory (None → unknown/fail closed)
@@ -444,14 +499,22 @@ def _finite_float(value: object) -> float | None:
     return number if number is not None and math.isfinite(number) else None
 
 
-def _disk_floor_gib() -> float | None:
-    """Registered LIMEN_DISK_FLOOR_GIB (env override > panel default). None if unresolvable.
+def _required_free_gib() -> float | None:
+    """Evaluate the live resource envelope; unknown telemetry fails closed."""
 
-    Uses the parameter-panel authority — never a hardcoded fallback number.
-    """
-    raw = _live_parameter("LIMEN_DISK_FLOOR_GIB")
-    floor = _finite_float(raw)
-    return floor if floor is not None and floor > 0 else None
+    try:
+        from limen.resource_envelope import current_required_free_gib
+
+        required = _finite_float(current_required_free_gib())
+    except Exception:
+        return None
+    return required if required is not None and required >= 0 else None
+
+
+def _disk_floor_gib() -> float | None:
+    """Deprecated compatibility alias for callers reading the old snapshot key."""
+
+    return _required_free_gib()
 
 
 def _vitals_action() -> str:
@@ -633,7 +696,7 @@ def take_admission_snapshot(limen_root: Path | None = None) -> WorktreeAdmission
     Fails CLOSED for NEW LOCAL creation on any unknown state; remote lanes always continue.
     """
     root = limen_root or Path(os.environ.get("LIMEN_ROOT", "."))
-    floor = _disk_floor_gib()
+    floor = _required_free_gib()
     if not _gate_active():
         # Operator override (LIMEN_WORKTREE_DEBT_GATE=0, documented reason/receipt): admit everything.
         return {
@@ -657,10 +720,12 @@ def take_admission_snapshot(limen_root: Path | None = None) -> WorktreeAdmission
     free = _worktree_disk_free_gib(partition)
     if free is None or floor is None:
         resource_blocked = True
-        resource_reason = f"disk/floor unknown ({partition}) — failing closed for new local worktree"
+        resource_reason = f"disk/resource-envelope unknown ({partition}) — failing closed for new local worktree"
     else:
         resource_blocked = free < floor
-        resource_reason = f"local free {free:.1f} GiB < {floor:g} GiB floor on {partition}" if resource_blocked else ""
+        resource_reason = (
+            f"local free {free:.1f} GiB < dynamic required {floor:.3f} GiB on {partition}" if resource_blocked else ""
+        )
 
     # 2. VITALS memory-pressure shed.
     vitals_action = _vitals_action()
@@ -752,7 +817,10 @@ def admission_blocks(
     if room < 0:
         return True, "local checkout room is invalid — failing closed for new local worktree"
     if estimate > room:
-        return True, f"tracked HEAD checkout needs {estimate:.3f} GiB but only {room:.3f} GiB remains above floor"
+        return True, (
+            f"tracked HEAD checkout needs {estimate:.3f} GiB but only {room:.3f} GiB remains "
+            "above the live resource envelope"
+        )
 
     if reserve:
         reserved_raw = snapshot.get("reserved_gib", 0.0)
