@@ -56,6 +56,7 @@ CACHE_SPECS = (
     CacheSpec("~/Library/Caches/prisma-nodejs", ("prisma", "node")),
     CacheSpec("~/Library/Caches/pylint", ("pylint",)),
     CacheSpec("~/Library/Caches/virtualenv", ("virtualenv",)),
+    CacheSpec("~/Library/Application Support/Godot/export_templates", ("godot",)),
 )
 
 EXCLUDED_CLASSES = (
