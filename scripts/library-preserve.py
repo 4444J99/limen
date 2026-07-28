@@ -318,25 +318,13 @@ def _icloud_units(src: str):
 
 
 def _evict_unit(s: str, d: str) -> int:
-    """copy→verify→evict ONE unit (reversible). Returns real bytes freed, or 0 if not evicted.
-    Both rsyncs are timeout-bounded so a single large/contended unit can't hang the beat — rsync is
-    additive, so a killed transfer just resumes (and completes) on a later pass."""
-    is_dir = os.path.isdir(s)
-    s_, d_ = (s + "/", d + "/") if is_dir else (s, d)
-    os.makedirs(d if is_dir else os.path.dirname(d), exist_ok=True)
-    local = _local_bytes(s)                       # measure BEFORE evict (what we'll reclaim)
-    try:
-        subprocess.run(["rsync", "-a", s_, d_], capture_output=True, text=True,
-                       timeout=RECLAIM_UNIT_TIMEOUT_SEC)
-        chk = subprocess.run(["rsync", "-anc", s_, d_], capture_output=True, text=True,
-                             timeout=RECLAIM_UNIT_TIMEOUT_SEC)
-    except subprocess.TimeoutExpired:
-        return 0                                  # too slow this pass — partial copy kept, resume later
-    pending = [ln for ln in chk.stdout.splitlines() if ln[:2] in (">f", "<f")]
-    if pending:
-        return 0                                  # verify not clean — leave source untouched, retry
-    subprocess.run(["brctl", "evict", s], capture_output=True, text=True)
-    return local
+    """Reject the retired one-copy eviction path.
+
+    Physical File Provider eviction now requires a frozen-inventory plan, two
+    independent devices, restoration receipts, and the signed Domus adapter.
+    """
+    del s, d
+    raise RuntimeError("legacy-one-copy-file-provider-eviction-disabled")
 
 
 def reclaim_icloud() -> int:
@@ -348,6 +336,10 @@ def reclaim_icloud() -> int:
     heartbeat, and frees space incrementally over beats."""
     src = os.path.join(HOME, "Library/Mobile Documents/com~apple~CloudDocs")
     if not os.path.isdir(src):
+        return 0
+    if APPLY:
+        print("── iCloud Drive reclaim disabled in legacy mode ──")
+        print("  requires exact two-copy restoration proof plus the signed File Provider adapter.")
         return 0
     print("── iCloud Drive reclaim (per-unit copy→verify→evict; reversible, bounded, locked) ──")
     if not _archive_mounted():
@@ -444,4 +436,15 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    custody_commands = {
+        "custody-plan": "plan",
+        "custody-apply": "apply",
+        "custody-reclaim": "reclaim",
+    }
+    if sys.argv[1:2] and sys.argv[1] in custody_commands:
+        source_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, os.path.join(source_root, "cli", "src"))
+        from limen.personal_custody import main as custody_main
+
+        sys.exit(custody_main([custody_commands[sys.argv[1]], *sys.argv[2:]]))
     sys.exit(main())

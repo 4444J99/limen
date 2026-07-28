@@ -1608,7 +1608,10 @@ def _record_model_selection(
 
 
 def resolve_agent() -> str:
-    return canonical_agent(os.environ.get("LIMEN_AGENT", "claude"))
+    agent = canonical_agent(os.environ.get("LIMEN_AGENT"))
+    if not agent:
+        raise RuntimeError("LIMEN_AGENT identity is required for generic dispatch")
+    return agent
 
 
 def session_id() -> str:

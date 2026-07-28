@@ -518,7 +518,7 @@ while true; do
   # `if [ "$MODE" != "dispatch" ]`. They must run every live beat (observe mode included), not only
   # on dispatch beats; the 2026-07-21 22h-blind incident was exactly this block sitting below the
   # observe-branch `continue`. Do not re-add a dispatch-gated copy here.
-  # DISK PRESSURE — when the data volume is past high-water, run hygiene (clone-maintenance:
+  # DISK PRESSURE — when the live resource envelope is negative, run hygiene (clone-maintenance:
   # capture→reap→node_modules) EVERY beat, not just every C_HYGIENE, until it drains back under
   # target. Reclaim intensity tracks real fullness instead of a fixed clock (the "creeps back to
   # full" fix). Cheap df probe; off with LIMEN_DISK_PRESSURE_ESCALATE=0.
@@ -527,13 +527,19 @@ while true; do
     # ABSOLUTE free (GiB), not df% — df counts ~100GB of purgeable-but-reclaimable APFS space as
     # "used", so a 95%-by-percent disk with ~120GB effectively free would falsely ramp hygiene to
     # EVERY beat and slow the whole beat (clone-maintenance runs each tick). Ramp only when raw free
-    # genuinely drops below the floor. ([[meter-lie-and-dead-daemon-incident]])
+    # genuinely drops below the graph-derived requirement. ([[meter-lie-and-dead-daemon-incident]])
     _dfree="$(df -Pk "${LIMEN_WORKDIR:-$HOME/Workspace}" 2>/dev/null | awk 'NR==2 {print int($4/1048576)}')"
+    _required_free="$(PYTHONPATH="$LIMEN_ROOT/cli/src" python3 -m limen.resource_envelope 2>/dev/null || true)"
     # Memory-shed OVERRIDES the disk-pressure ramp: never ramp the clone-maintenance git storm to
     # EVERY beat to relieve DISK while MEMORY/swap is critical — that trades a slow disk for a
     # thrashing host. Under shed, hold the normal cadence (and the git voices below skip anyway).
-    [ -n "$_dfree" ] && [ "$_dfree" -le "${LIMEN_DISK_FREE_FLOOR_GIB:-15}" ] 2>/dev/null \
-      && [ "$VITALS_PRESSURE" != "1" ] && HYG_CAD=1
+    if [ "$VITALS_PRESSURE" != "1" ]; then
+      if [ -z "$_dfree" ] || [ -z "$_required_free" ]; then
+        HYG_CAD=1
+      elif awk -v free="$_dfree" -v required="$_required_free" 'BEGIN {exit !(free < required)}'; then
+        HYG_CAD=1
+      fi
+    fi
   fi
   # clone-maintenance (git gc/prune across every repo) + reap-clones are local git storms; skip BOTH
   # while VITALS is shedding so the beat adds no git load to a memory/swap-critical host. They resume
@@ -547,7 +553,7 @@ while true; do
   # removes the loss-free pushed-mirror class (adversarially-audited gate + standing grant). Beat-wired
   # 2026-07-09 so the reclaim engine is ALIVE instead of a script that never ran (the round-two storage
   # deadlock: ~/Workspace crept back because nothing autonomously reaped it). Self-gates on disk pressure
-  # + idle age; inert above the free-floor. Disarm --apply with LIMEN_REAP_CLONES_APPLY=0.
+  # + idle age; intensity follows the live envelope. Disarm --apply with LIMEN_REAP_CLONES_APPLY=0.
   REAP_CLONES_ARG=""; [ "${LIMEN_REAP_CLONES_APPLY:-1}" = "1" ] && REAP_CLONES_ARG="--apply"
   [ "$VITALS_PRESSURE" != "1" ] && due_voice hygiene "$HYG_CAD" && timeout "${LIMEN_REAP_CLONES_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reap-clones.py" $REAP_CLONES_ARG 2>&1 | tail -3 || true
   due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true

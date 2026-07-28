@@ -47,6 +47,7 @@ from limen.intake import IntakeContractError, normalize_selected_legacy_task  # 
 from limen.io import load_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry, dispatch_agent, dispatch_session_id  # noqa: E402
 from limen.provider_selection import execution_profile_for  # noqa: E402
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
 from limen.remote_execution import (  # noqa: E402
     RemoteExecutionError,
     validate_remote_submission_harvest,
@@ -134,15 +135,26 @@ def _disk_free_gib() -> float | None:
         return None
 
 
+def _resource_envelope_admission() -> tuple[bool, str]:
+    """Fail closed unless the selected local task graph fits live disk."""
+
+    free = _disk_free_gib()
+    try:
+        required = current_required_free_gib()
+    except (RuntimeError, ValueError):
+        return False, "selected resource task graph or telemetry is unavailable"
+    if free is None:
+        return False, "live disk telemetry is unavailable"
+    if free < required:
+        return False, f"resource envelope breached ({free:.3f} < {required:.3f} GiB)"
+    return True, "resource envelope admitted"
+
+
 def _disk_pressure_active() -> bool:
     if not _truthy_env("LIMEN_DISK_PRESSURE_VALUE_ONLY", True):
         return False
-    floor = _env_int(
-        "LIMEN_DISK_FLOOR_GIB",
-        _env_int("LIMEN_ALWAYS_WORKING_MIN_FREE_GIB", 45),
-    )
-    free = _disk_free_gib()
-    return free is not None and free < floor
+    admitted, _reason = _resource_envelope_admission()
+    return not admitted
 
 
 def _now():
@@ -1516,7 +1528,11 @@ def _pick_reservations(
     track = lf.portal.budget.track
     unbounded_remaining = _effectively_unbounded_remaining(lf)
     value_repos = _value_tier_repos()
-    disk_pressure = _disk_pressure_active()
+    resource_admitted, resource_reason = _resource_envelope_admission()
+    disk_pressure = (
+        _truthy_env("LIMEN_DISK_PRESSURE_VALUE_ONLY", True)
+        and not resource_admitted
+    )
     # Loud-not-silent (PR #1329): the WorkLoan admission gate inside _dispatchable now filters
     # un-underwritten candidates BEFORE they reach normalization, where the "INTAKE BLOCKED"
     # notice used to surface.  Report each agent-relevant rejection here, once, so a legacy
@@ -1560,6 +1576,10 @@ def _pick_reservations(
             agent_rem = usage_remaining.get(agent)
         rem = unbounded_remaining if agent_rem is None else max(0, agent_rem)
         if rem <= 0:
+            continue
+        if not is_async and not resource_admitted:
+            if not dry:
+                print(f"  Local resource admission blocked {agent}: {resource_reason}")
             continue
         cands = [
             t

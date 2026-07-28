@@ -88,6 +88,86 @@ def test_cloud_authorization_plan_requires_principal(tmp_path: Path) -> None:
     assert "requires --eviction-authorizer" in result.stderr
 
 
+def test_cloud_campaign_authorization_plan_requires_principal(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--prepare-eviction-campaign-authorization",
+            str(tmp_path / "campaign-authorization.json"),
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "requires --eviction-authorizer" in result.stderr
+
+
+def test_cloud_campaign_authorization_is_forwarded_to_resume(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "agent_state_metabolism_cli_campaign",
+        SCRIPT,
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    observed: dict[str, object] = {}
+
+    def resume(*args, **kwargs):
+        observed["args"] = args
+        observed["kwargs"] = kwargs
+        return SimpleNamespace(
+            schema="limen.agent_state_receipt.v1",
+            run_id="run",
+            atom_count=2,
+            duplicate_payloads=0,
+            git_commit="payload",
+            git_receipt_commit="receipt",
+            restorations=(),
+            source_retired=False,
+        )
+
+    campaign = tmp_path / "campaign-authorization.json"
+    monkeypatch.setattr(module, "run_resume_cloudkit_materialization_campaign", resume)
+    result = module.main(
+        [
+            "cloudkit-materialized",
+            "icloud-drive",
+            "--root",
+            str(tmp_path),
+            "--private-receipt",
+            str(tmp_path / "receipt.json"),
+            "--run-id",
+            "run",
+            "--resume",
+            "--prepare-eviction-campaign-authorization",
+            str(campaign),
+            "--eviction-authorizer",
+            "test-authorizer",
+        ]
+    )
+
+    assert result == 0
+    assert observed["kwargs"]["prepare_campaign_authorization"] == campaign
+    assert observed["kwargs"]["prepare_authorization"] is None
+    assert observed["kwargs"]["authorization_principal"] == "test-authorizer"
+
+
 def test_exact_retention_rejects_age_or_size_heuristics(tmp_path: Path) -> None:
     result = subprocess.run(
         [

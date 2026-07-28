@@ -189,6 +189,67 @@ def test_pre_tool_use_read_only_command_never_acquires_writer(tmp_path: Path) ->
     assert service.status(probe=False)["leases"] == []
 
 
+def test_pre_tool_use_read_only_returns_before_owner_ancestry(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    hook = load_hook()
+    service = controller(tmp_path)
+    monkeypatch.setattr(
+        hook,
+        "codex_owner_pid",
+        lambda: (_ for _ in ()).throw(AssertionError("read-only admission must not resolve owner ancestry")),
+    )
+
+    output = hook.handle(
+        payload("PreToolUse", tool_input={"command": "git status --short"}),
+        controller=service,
+    )
+
+    assert output is None
+    assert service.status(probe=False)["leases"] == []
+
+
+def test_pre_tool_use_mutation_still_fails_without_owner_ancestry(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    hook = load_hook()
+    service = controller(tmp_path)
+    monkeypatch.setattr(
+        hook,
+        "codex_owner_pid",
+        lambda: (_ for _ in ()).throw(ValueError("durable Codex owner ancestor cannot be proven")),
+    )
+
+    with pytest.raises(ValueError, match="owner ancestor cannot be proven"):
+        hook.handle(
+            payload("PreToolUse", tool_input={"command": "git checkout -b topic"}),
+            controller=service,
+        )
+
+
+def test_pre_tool_use_mutation_without_session_identity_denies_before_ancestry(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    hook = load_hook()
+    service = controller(tmp_path)
+    request = payload("PreToolUse", tool_input={"command": "git checkout -b topic"})
+    request.pop("session_id")
+    monkeypatch.setattr(
+        hook,
+        "codex_owner_pid",
+        lambda: (_ for _ in ()).throw(AssertionError("missing identity must deny before ancestry")),
+    )
+
+    output = hook.handle(request, controller=service)
+
+    assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "session identity is missing" in output["hookSpecificOutput"]["permissionDecisionReason"]
+    assert service.status(probe=False)["leases"] == []
+
+
 def test_generated_cache_reclaimer_is_a_self_gated_sanctioned_control(tmp_path: Path) -> None:
     hook = load_hook()
     service = controller(tmp_path)
