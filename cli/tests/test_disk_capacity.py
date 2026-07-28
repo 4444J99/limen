@@ -57,3 +57,4 @@ def test_absent_non_host_volume_remains_a_portable_skip(
 
     assert module.check() == 0
     assert "not found" in capsys.readouterr().out
+    assert module.check(strict=True) == 77

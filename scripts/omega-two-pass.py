@@ -18,7 +18,13 @@ CLI_SRC = Path(__file__).resolve().parent.parent / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
-from limen.omega_remediation import (  # noqa: E402
+from limen.omega_owner_receipt import (
+    MAX_FRESHNESS_SECONDS,
+    OmegaOwnerReceiptError,
+    load_owner_receipt,
+    normalized_owner_receipt,
+)
+from limen.omega_remediation import (
     OmegaRemediationError,
     load_omega_remediations,
     remediation_payload,
@@ -29,7 +35,7 @@ CORE_SCHEMA = "limen.omega_rung_registry.v1"
 SENSOR_SCHEMA = "limen.omega_sensor_rungs.v1"
 RUNG_ID_RX = re.compile(r"^[a-z0-9][a-z0-9_.-]*$")
 NORMALIZATIONS = {"json", "raw"}
-VOLATILE_FIELDS = {"generated", "generated_at"}
+VOLATILE_FIELDS = {"generated", "generated_at", "observed_at"}
 ROLES = {"input", "owner_receipt"}
 PROMPT_REQUIRED = {"prompt-atom-ledger.json", "prompt-events.jsonl", "source-cursor.json"}
 STATE_KEYS = (
@@ -47,8 +53,10 @@ STATE_KEYS = (
 CONTRACT_PATHS = (
     "scripts/omega.sh",
     "scripts/omega-two-pass.py",
+    "scripts/omega-owner-receipt.py",
     "scripts/omega-remediation.py",
     "scripts/beat-sensors.py",
+    "cli/src/limen/omega_owner_receipt.py",
     "institutio/governance/omega-core-rungs.json",
     "institutio/governance/omega-remediations.json",
     "institutio/governance/sensors.yaml",
@@ -122,7 +130,13 @@ def _normalized_file(path: Path, normalization: str, volatile_fields: list[str])
 def _descriptor(rung_id: str, index: int, raw: object) -> dict:
     if not isinstance(raw, dict):
         raise OmegaProofError(f"{rung_id}: semantic_inputs[{index}] must be a mapping")
-    unknown = set(raw) - {"path", "normalization", "volatile_fields", "role"}
+    unknown = set(raw) - {
+        "path",
+        "normalization",
+        "volatile_fields",
+        "role",
+        "max_age_seconds",
+    }
     if unknown:
         raise OmegaProofError(f"{rung_id}: semantic_inputs[{index}] has unknown fields {sorted(unknown)}")
     path = str(raw.get("path") or "")
@@ -141,11 +155,24 @@ def _descriptor(rung_id: str, index: int, raw: object) -> dict:
         raise OmegaProofError(f"{rung_id}: volatile fields require JSON normalization")
     if role not in ROLES:
         raise OmegaProofError(f"{rung_id}: unknown semantic input role {role!r}")
+    max_age_seconds = raw.get("max_age_seconds")
+    if role == "owner_receipt" and max_age_seconds is not None:
+        if (
+            normalization != "json"
+            or volatile != ["observed_at"]
+            or isinstance(max_age_seconds, bool)
+            or not isinstance(max_age_seconds, int)
+            or not 1 <= max_age_seconds <= MAX_FRESHNESS_SECONDS
+        ):
+            raise OmegaProofError(f"{rung_id}: standard owner receipt descriptor is invalid")
+    elif max_age_seconds is not None:
+        raise OmegaProofError(f"{rung_id}: only owner receipts declare freshness")
     return {
         "normalization": normalization,
         "path": path,
         "role": role,
         "volatile_fields": sorted(set(volatile)),
+        **({"max_age_seconds": max_age_seconds} if max_age_seconds is not None else {}),
     }
 
 
@@ -174,14 +201,26 @@ def _validated_rungs(payload: object, schema: str, source: str) -> list[dict]:
         predicate = str(raw.get(predicate_field) or "")
         if not predicate or "\x00" in predicate or len(predicate) > 8192:
             raise OmegaProofError(f"{rung_id}: typed predicate is required")
+        descriptors = [_descriptor(rung_id, item_index, item) for item_index, item in enumerate(semantic_inputs)]
+        owner_receipts = [descriptor for descriptor in descriptors if descriptor["role"] == "owner_receipt"]
+        if tier == "live":
+            if len(owner_receipts) != 1:
+                raise OmegaProofError(f"{rung_id}: live rung must declare exactly one owner receipt")
+            receipt = owner_receipts[0]
+            if (
+                receipt["normalization"] != "json"
+                or receipt["volatile_fields"] != ["observed_at"]
+                or "max_age_seconds" not in receipt
+            ):
+                raise OmegaProofError(
+                    f"{rung_id}: live owner receipt must be fresh JSON with only observed_at volatile"
+                )
         rungs.append(
             {
                 "id": rung_id,
                 "label": str(raw["label"]),
                 "predicate": predicate,
-                "semantic_inputs": [
-                    _descriptor(rung_id, item_index, item) for item_index, item in enumerate(semantic_inputs)
-                ],
+                "semantic_inputs": descriptors,
                 "tier": tier,
             }
         )
@@ -202,6 +241,15 @@ def discover_rungs(root: Path) -> tuple[list[dict], dict, dict]:
     ids = [rung["id"] for rung in rungs]
     if len(ids) != len(set(ids)):
         raise OmegaProofError("duplicate Omega rung identity")
+    owner_receipt_paths = [
+        descriptor["path"]
+        for rung in rungs
+        if rung["tier"] == "live"
+        for descriptor in rung["semantic_inputs"]
+        if descriptor["role"] == "owner_receipt"
+    ]
+    if len(owner_receipt_paths) != len(set(owner_receipt_paths)):
+        raise OmegaProofError("duplicate live owner receipt path")
     try:
         remediation_rungs, remediations = load_omega_remediations(root, sensor_payload=sensor_payload)
     except OmegaRemediationError as exc:
@@ -238,8 +286,28 @@ def _semantic_digests(root: Path, rungs: list[dict]) -> tuple[str, str]:
     for rung in rungs:
         for descriptor in rung["semantic_inputs"]:
             path = _safe_path(root, descriptor["path"])
-            digest = _sha256(_normalized_file(path, descriptor["normalization"], descriptor["volatile_fields"]))
+            if rung["tier"] == "live" and descriptor["role"] == "owner_receipt":
+                try:
+                    receipt = load_owner_receipt(
+                        path,
+                        rung_id=rung["id"],
+                        predicate=rung["predicate"],
+                        max_age_seconds=descriptor["max_age_seconds"],
+                        require_pass=True,
+                    )
+                except OmegaOwnerReceiptError as exc:
+                    raise OmegaProofError(str(exc)) from exc
+                digest = _sha256(_canonical(normalized_owner_receipt(receipt)))
+            else:
+                digest = _sha256(
+                    _normalized_file(
+                        path,
+                        descriptor["normalization"],
+                        descriptor["volatile_fields"],
+                    )
+                )
             entry = {
+                **({"max_age_seconds": descriptor["max_age_seconds"]} if "max_age_seconds" in descriptor else {}),
                 "normalization": descriptor["normalization"],
                 "path_digest": _sha256(descriptor["path"].encode("utf-8")),
                 "role": descriptor["role"],
@@ -294,7 +362,7 @@ def capture_state(root: Path) -> tuple[dict, list[str]]:
     head, tree, origin = _assert_clean_exact_main(root)
     rungs, core_payload, sensor_payload = discover_rungs(root)
     semantic_input_digest, owner_receipt_digest = _semantic_digests(root, rungs)
-    trial_descriptor = _unique_semantic_descriptor(rungs, "logs/overnight-trial.json", "owner_receipt")
+    trial_descriptor = _unique_semantic_descriptor(rungs, "logs/overnight-trial.json", "input")
     trial_path = root / trial_descriptor["path"]
     trial_digest = _sha256(
         _normalized_file(
@@ -395,23 +463,24 @@ def run_two_pass(
     omega_runner: Callable[[Path, int], int] | None = None,
 ) -> dict:
     runner = omega_runner or _default_omega_runner
-    before, before_rungs = capture_state(root)
+    _assert_clean_exact_main(root)
+    before_rungs, _core_payload, _sensor_payload = discover_rungs(root)
     before_ids = [rung["id"] for rung in before_rungs]
     if runner(root, 1) != 0:
         raise OmegaProofError("strict Omega pass 1 failed")
     pass_one_digest, pass_one_contract = _omega_stamp(root, before_rungs)
-    middle, middle_rungs = capture_state(root)
-    middle_ids = [rung["id"] for rung in middle_rungs]
-    if middle_ids != before_ids:
+    pass_one, pass_one_rungs = capture_state(root)
+    pass_one_ids = [rung["id"] for rung in pass_one_rungs]
+    if pass_one_ids != before_ids:
         raise OmegaProofError("Omega rung identity changed after pass 1")
     if runner(root, 2) != 0:
         raise OmegaProofError("strict Omega pass 2 failed")
-    pass_two_digest, pass_two_contract = _omega_stamp(root, middle_rungs)
-    after, after_rungs = capture_state(root)
-    after_ids = [rung["id"] for rung in after_rungs]
-    if after_ids != before_ids:
+    pass_two_digest, pass_two_contract = _omega_stamp(root, pass_one_rungs)
+    pass_two, pass_two_rungs = capture_state(root)
+    pass_two_ids = [rung["id"] for rung in pass_two_rungs]
+    if pass_two_ids != before_ids:
         raise OmegaProofError("Omega rung identity changed after pass 2")
-    _same_states([before, middle, after])
+    _same_states([pass_one, pass_two])
     if pass_one_digest != pass_two_digest or pass_one_contract != pass_two_contract:
         raise OmegaProofError("strict Omega pass evidence changed")
     payload = {
@@ -421,11 +490,17 @@ def run_two_pass(
         "rung_count": len(before_ids),
         "rung_ids": before_ids,
         "schema": SCHEMA,
-        "state": before,
+        "state": pass_one,
     }
     sealed = _seal(payload)
     changed = _write_atomic(receipt, _receipt_bytes(sealed))
-    return {"changed": changed, "head": before["head"], "ok": True, "receipt": str(receipt), **sealed}
+    return {
+        "changed": changed,
+        "head": pass_one["head"],
+        "ok": True,
+        "receipt": str(receipt),
+        **sealed,
+    }
 
 
 def _load_receipt(path: Path) -> tuple[dict, bytes]:

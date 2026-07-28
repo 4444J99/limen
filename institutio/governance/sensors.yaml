@@ -113,9 +113,10 @@ sensors:
       - label: "MCP estate — servers boot + doorway + ownership"
         rung_id: sensor.mcp.estate
         tier: live
-        command: "bash scripts/verify-mcp-estate.sh"
+        command: "bash scripts/verify-mcp-estate.sh --strict"
         semantic_inputs:
           - {path: scripts/verify-mcp-estate.sh, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.mcp.estate.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   cartridge-connected:
     section: "0c"
@@ -186,9 +187,10 @@ sensors:
       - label: "GitHub estate posture"
         rung_id: sensor.github.posture
         tier: live
-        command: "python3 scripts/gitvs.py doctor"
+        command: "python3 scripts/gitvs.py doctor --strict"
         semantic_inputs:
           - {path: scripts/gitvs.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.github.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   github-actions-usage:
     section: "heartbeat"
@@ -211,9 +213,10 @@ sensors:
       - label: "GitHub Actions budget"
         rung_id: sensor.github.actions-budget
         tier: live
-        command: "python3 scripts/gitvs.py usage --check"
+        command: "python3 scripts/gitvs.py usage --check --strict"
         semantic_inputs:
           - {path: scripts/gitvs.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.github.actions-budget.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   seo-drift:
     section: "heartbeat"
@@ -255,9 +258,10 @@ sensors:
       - label: "seo estate posture"
         rung_id: sensor.seo.posture
         tier: live
-        command: "python3 scripts/seo-audit.py --check"
+        command: "python3 scripts/seo-audit.py --check --strict"
         semantic_inputs:
           - {path: scripts/seo-audit.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.seo.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   estate-audit-heal:
     section: "heartbeat"
@@ -325,6 +329,13 @@ sensors:
         command: "python3 scripts/observatory-beat.py --doctor"
         semantic_inputs:
           - {path: scripts/observatory-beat.py, normalization: raw}
+      - label: "observatory operational posture"
+        rung_id: sensor.observatory.posture
+        tier: live
+        command: "python3 scripts/observatory-beat.py --check"
+        semantic_inputs:
+          - {path: scripts/observatory-beat.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.observatory.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   dependabot-security-guard:
     section: "heartbeat"
@@ -384,9 +395,10 @@ sensors:
       - label: "visitor-experience posture"
         rung_id: sensor.experience.posture
         tier: live
-        command: "python3 scripts/experience-audit.py --check"
+        command: "python3 scripts/experience-audit.py --check --strict"
         semantic_inputs:
           - {path: scripts/experience-audit.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.experience.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   prompt-corpus-control:
     section: "heartbeat"
@@ -441,6 +453,7 @@ sensors:
         command: "python3 scripts/bifrons-organ.py --doctor"
         semantic_inputs:
           - {path: scripts/bifrons-organ.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.bifrons.liveness.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   fable-balance:
     section: "0e"
@@ -602,6 +615,7 @@ sensors:
         command: "python3 scripts/beat-sensors.py --canary"
         semantic_inputs:
           - {path: scripts/beat-sensors.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.canary.live.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   reclassify-needs-human:
     section: "0g6"
@@ -688,10 +702,11 @@ sensors:
     omega_eligible:
       - label: "disk capacity covers live resource envelope"
         rung_id: sensor.disk.capacity
-        tier: det
-        command: "python3 scripts/disk-capacity.py --check"
+        tier: live
+        command: "python3 scripts/disk-capacity.py --check --strict"
         semantic_inputs:
           - {path: scripts/disk-capacity.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.disk.capacity.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   dialogs-silenced:
     section: "0g8b"
@@ -749,6 +764,7 @@ sensors:
         command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         semantic_inputs:
           - {path: scripts/dialogs-silenced.sh, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.dialogs.agent-curable.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   foreign-litter:
     section: "0g9"
@@ -1019,9 +1035,10 @@ sensors:
       - label: "storage rails posture"
         rung_id: sensor.storage.posture
         tier: live
-        command: "python3 scripts/cloud-storage-doctor.py --check"
+        command: "python3 scripts/cloud-storage-doctor.py --check --strict"
         semantic_inputs:
           - {path: scripts/cloud-storage-doctor.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.storage.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   horrevm-custody:
     section: "heartbeat"
@@ -1064,9 +1081,10 @@ sensors:
       - label: "custody freshness"
         rung_id: sensor.custody.freshness
         tier: live
-        command: "python3 scripts/horrevm-custody.py --status"
+        command: "python3 scripts/horrevm-custody.py --status --strict"
         semantic_inputs:
           - {path: scripts/horrevm-custody.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.custody.freshness.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   relationship-review-delta:
     section: heartbeat
@@ -1236,6 +1254,13 @@ sensors:
         command: "python3 scripts/reconcile-closeouts.py --doctor"
         semantic_inputs:
           - {path: scripts/reconcile-closeouts.py, normalization: raw}
+      - label: "closeout operational posture"
+        rung_id: sensor.closeout.posture
+        tier: live
+        command: "python3 scripts/reconcile-closeouts.py --check"
+        semantic_inputs:
+          - {path: scripts/reconcile-closeouts.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.closeout.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
   insight-cross-vendor:
     section: "0z0"

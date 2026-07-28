@@ -5,7 +5,7 @@ Reads institutio/governance/storage-roles.yaml (the roles registry — the strat
 Archive4T endgame prose declared but never wired) and derives actual-vs-declared per rail each
 scheduled beat, writing logs/cloud-storage-health.json (counts + masked identifiers only, no PII).
 
-Pure sensor: zero mutations, lockless, fail-open — modeled on cvstos-organ.py. Every probe is a
+Pure sensor: zero mutations, lockless, fail-open by default — modeled on cvstos-organ.py. Every probe is a
 bounded read-only subprocess (the library-preserve.py shape); a probe that errors or times out
 degrades to `unknown` (advisory), never a false red and never a wedge. Drift — a rail whose actual
 state contradicts its declaration (a 4th churned iCloud provider domain, a desktop File Provider
@@ -14,6 +14,7 @@ advisory escalation surfaces it.
 
 Verbs:
   --check     (default) evaluate every rail; write the health log; exit 0 iff no drift
+  --strict    with --check, exit 77 when any declared rail is unknown
   --doctor    repo-deterministic self-check (registry schema/enums/paths) — no host probes
   --baseline  PRINT (never write) an accepted_remnants YAML block from the live census, masked
 """
@@ -308,7 +309,7 @@ def load_registry() -> dict | None:
         return None
 
 
-def check() -> int:
+def check(*, strict: bool = False) -> int:
     reg = load_registry()
     if not reg or not isinstance(reg.get("rails"), dict):
         return 1
@@ -324,7 +325,7 @@ def check() -> int:
         counts[res["verdict"]] += 1
     if unrecognized:
         counts["drift"] += 1
-    exit_code = 1 if counts["drift"] else 0
+    exit_code = 1 if counts["drift"] else (77 if strict and counts["unknown"] else 0)
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "schema_version": "0.1",
@@ -409,6 +410,7 @@ def main() -> int:
     os.environ.setdefault("OS_ACTIVITY_MODE", "disable")  # fork/os_log SIGSEGV mitigation (#831)
     parser = argparse.ArgumentParser(description="HORREVM storage-rails doctor")
     parser.add_argument("--check", action="store_true", help="evaluate rails vs declarations (default)")
+    parser.add_argument("--strict", action="store_true", help="exit 77 when any declared rail is unknown")
     parser.add_argument("--doctor", action="store_true", help="registry schema self-check (no host probes)")
     parser.add_argument("--baseline", action="store_true", help="print an accepted_remnants block (never writes)")
     args = parser.parse_args()
@@ -416,7 +418,7 @@ def main() -> int:
         return doctor()
     if args.baseline:
         return baseline()
-    return check()
+    return check(strict=args.strict)
 
 
 if __name__ == "__main__":

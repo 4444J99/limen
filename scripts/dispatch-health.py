@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Record heartbeat/dispatch substrate health without mutating the live daemon.
+"""Record canonical campaign-heartbeat health without mutating the live daemon.
 
 This receipt answers a narrow conductor question: does the code we just verified
 match the Limen root that launchd is actually running, and are heartbeat plus
-async-dispatch probes healthy enough to trust?
+campaign-wake boundaries healthy enough to trust?
 
 It is read-only. It does not restart launchd, edit plist files, touch
 tasks.yaml, switch branches, or repair credentials.
@@ -50,11 +50,8 @@ HEARTBEAT_ENV_KEYS = (
     "LIMEN_ROOT",
     "LIMEN_WORKTREES",
     "LIMEN_WORKTREE_ROOT",
-    "LIMEN_DISPATCH_ASYNC",
-    "LIMEN_DISPATCH_LANES",
-    "LIMEN_LOCAL_LIMIT",
-    "LIMEN_ASYNC_MAX",
-    "LIMEN_LANES",
+    "LIMEN_CAMPAIGN_WAKE_TIMEOUT",
+    "LIMEN_VIGILIA",
 )
 
 
@@ -531,7 +528,6 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
     loaded = snapshot["launchd"]
     git = snapshot["live_root_git"]
     watchdog = snapshot["watchdog"]
-    async_probe = snapshot["async_probe"]
     prompt_packets = snapshot["prompt_packets"]
     always_working = snapshot["always_working"]
 
@@ -585,27 +581,7 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
             }
         )
 
-    plist_async = (plist.get("env") or {}).get("LIMEN_DISPATCH_ASYNC")
-    loaded_async = (loaded.get("env") or {}).get("LIMEN_DISPATCH_ASYNC")
-    if plist_async != loaded_async:
-        blockers.append(
-            {
-                "id": "heartbeat-loaded-env-drift",
-                "evidence": f"plist LIMEN_DISPATCH_ASYNC={plist_async!r}, loaded={loaded_async!r}.",
-            }
-        )
-
-    plist_dispatch_lanes = (plist.get("env") or {}).get("LIMEN_DISPATCH_LANES")
-    loaded_dispatch_lanes = (loaded.get("env") or {}).get("LIMEN_DISPATCH_LANES")
-    if plist_dispatch_lanes != loaded_dispatch_lanes:
-        blockers.append(
-            {
-                "id": "heartbeat-dispatch-lanes-env-drift",
-                "evidence": (f"plist LIMEN_DISPATCH_LANES={plist_dispatch_lanes!r}, loaded={loaded_dispatch_lanes!r}."),
-            }
-        )
-
-    for key in ("LIMEN_WORKTREES", "LIMEN_WORKTREE_ROOT", "LIMEN_ASYNC_MAX"):
+    for key in HEARTBEAT_ENV_KEYS:
         plist_value = (plist.get("env") or {}).get(key)
         loaded_value = (loaded.get("env") or {}).get(key)
         if plist_value != loaded_value:
@@ -615,14 +591,6 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
                     "evidence": f"plist {key}={plist_value!r}, loaded={loaded_value!r}.",
                 }
             )
-
-    if async_probe.get("requested") and not async_probe.get("ok"):
-        blockers.append(
-            {
-                "id": "async-dry-run-unhealthy",
-                "evidence": async_probe.get("last_line") or "async dry-run did not complete cleanly.",
-            }
-        )
 
     if int(prompt_packets.get("conductor_required_packets") or 0):
         blockers.append(
@@ -689,7 +657,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     always_working = snapshot["always_working"]
     blockers = snapshot["blockers"]
     lines = [
-        "# Dispatch Health",
+        "# Campaign Heartbeat Health",
         "",
         f"Generated: `{snapshot['generated_at']}`",
         "",
@@ -697,7 +665,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Incident Class",
         "",
-        "- Dispatch/heartbeat health is not proven by tests in a detached worktree alone.",
+        "- Campaign-heartbeat health is not proven by tests in a detached worktree alone.",
         "- The live launchd daemon must run the same substrate that the conductor just verified, or the next lane can rediscover stale behavior.",
         "- This receipt is read-only. It stops before launchd reloads, branch switches, resets, task-board writes, or live-root commits.",
         "",
@@ -706,29 +674,23 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Generated plist probe: `{generated.get('present')}` from `{relpath(Path(generated.get('path') or ''))}`.",
         f"- Generated LIMEN_WORKTREES: `{(generated.get('env') or {}).get('LIMEN_WORKTREES')}`.",
         f"- Generated LIMEN_WORKTREE_ROOT: `{(generated.get('env') or {}).get('LIMEN_WORKTREE_ROOT')}`.",
-        f"- Generated LIMEN_DISPATCH_ASYNC: `{(generated.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
-        f"- Generated LIMEN_ASYNC_MAX: `{(generated.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",
+        f"- Generated LIMEN_CAMPAIGN_WAKE_TIMEOUT: `{(generated.get('env') or {}).get('LIMEN_CAMPAIGN_WAKE_TIMEOUT')}`.",
         f"- LaunchAgent plist: `{relpath(Path(plist.get('path') or HEARTBEAT_PLIST))}` present `{plist.get('present')}`.",
         f"- Plist KeepAlive: `{plist.get('keep_alive')}`; RunAtLoad: `{plist.get('run_at_load')}`.",
         f"- Plist LIMEN_ROOT: `{(plist.get('env') or {}).get('LIMEN_ROOT')}`.",
         f"- Plist LIMEN_WORKTREES: `{(plist.get('env') or {}).get('LIMEN_WORKTREES')}`.",
         f"- Plist LIMEN_WORKTREE_ROOT: `{(plist.get('env') or {}).get('LIMEN_WORKTREE_ROOT')}`.",
-        f"- Plist LIMEN_DISPATCH_ASYNC: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
-        f"- Plist LIMEN_DISPATCH_LANES: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
-        f"- Plist LIMEN_ASYNC_MAX: `{(plist.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",
-        f"- Plist LIMEN_LANES: `{(plist.get('env') or {}).get('LIMEN_LANES')}`.",
+        f"- Plist LIMEN_CAMPAIGN_WAKE_TIMEOUT: `{(plist.get('env') or {}).get('LIMEN_CAMPAIGN_WAKE_TIMEOUT')}`.",
         f"- Loaded launchd state: `{loaded.get('state')}` pid `{loaded.get('pid')}`.",
         f"- Loaded LIMEN_ROOT: `{(loaded.get('env') or {}).get('LIMEN_ROOT')}`.",
         f"- Loaded LIMEN_WORKTREES: `{(loaded.get('env') or {}).get('LIMEN_WORKTREES')}`.",
         f"- Loaded LIMEN_WORKTREE_ROOT: `{(loaded.get('env') or {}).get('LIMEN_WORKTREE_ROOT')}`.",
-        f"- Loaded LIMEN_DISPATCH_ASYNC: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
-        f"- Loaded LIMEN_DISPATCH_LANES: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
-        f"- Loaded LIMEN_ASYNC_MAX: `{(loaded.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",
-        f"- Loaded LIMEN_LANES: `{(loaded.get('env') or {}).get('LIMEN_LANES')}`.",
+        f"- Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `{(loaded.get('env') or {}).get('LIMEN_CAMPAIGN_WAKE_TIMEOUT')}`.",
         f"- Watchdog dry-run healthy: `{watchdog.get('healthy')}`; `{watchdog.get('first_line')}`.",
         "",
-        "## Async Dispatch",
+        "## Legacy Manual Async Diagnostic",
         "",
+        "- This optional diagnostic is retained for manual-engine compatibility and does not define campaign-heartbeat health.",
         f"- Async dry-run requested: `{async_probe.get('requested')}`.",
         f"- Async dry-run lanes: `{async_probe.get('lanes', '')}`; max `{async_probe.get('max', '')}`.",
         f"- Async dry-run ok: `{async_probe.get('ok')}`; timed out `{async_probe.get('timed_out', False)}`.",
@@ -821,7 +783,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Commands",
         "",
-        "- Refresh this receipt: `python3 scripts/dispatch-health.py --write --probe-async`",
+        "- Refresh this receipt: `python3 scripts/dispatch-health.py --write`",
         "- Refresh the operator gate: `python3 scripts/live-root-gate.py --write`",
         "- Refresh prompt packets: `python3 scripts/prompt-packet-ledger.py --write`",
         "- Refresh always-working reconciliation: `python3 scripts/always-working.py --write`",
@@ -841,7 +803,7 @@ def write_outputs(snapshot: dict[str, Any], markdown: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh the heartbeat/dispatch health receipt.")
+    parser = argparse.ArgumentParser(description="Refresh the canonical campaign-heartbeat health receipt.")
     parser.add_argument("--write", action="store_true", help="write docs and ignored private index")
     parser.add_argument("--probe-async", action="store_true", help="run the bounded async dispatch dry-run probe")
     args = parser.parse_args()
@@ -851,7 +813,7 @@ def main() -> int:
         write_outputs(snapshot, markdown)
     else:
         print(markdown)
-    msg = f"dispatch-health: {snapshot['status']} with {len(snapshot['blockers'])} blockers"
+    msg = f"campaign-heartbeat-health: {snapshot['status']} with {len(snapshot['blockers'])} blockers"
     if args.write:
         msg += f"; wrote {DOC_PATH}"
     print(msg)

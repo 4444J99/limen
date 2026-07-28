@@ -19,7 +19,8 @@ Two modes:
                (default 50 MiB) — the log file that most commonly grows unbounded.
             Writes a JSON receipt to logs/disk-capacity-apply.json.
 
-Exit codes: 0 = ok; 1 = envelope breached (--check) or effector error (--apply).
+Exit codes: 0 = ok; 1 = envelope breached (--check) or effector error (--apply);
+77 = the declared volume is unavailable under --strict.
 
 Usage:
   python3 scripts/disk-capacity.py --check
@@ -58,21 +59,18 @@ def _free_gib(volume: str = VOLUME) -> float | None:
         return None
 
 
-def check() -> int:
+def check(*, strict: bool = False) -> int:
     free_gib = _free_gib()
     if free_gib is None:
         # Volume absent (CI / non-macOS / VM) — fail open.
         print(f"disk-capacity: volume {VOLUME!r} not found — check skipped (fail-open)")
-        return 0
+        return 77 if strict else 0
     try:
         required_gib = current_required_free_gib()
     except (RuntimeError, ValueError):
         print("disk-capacity: resource envelope unavailable — live check failed closed")
         return 1
-    print(
-        f"disk-capacity: {VOLUME} free {free_gib:.3f} GiB "
-        f"(required {required_gib:.3f} GiB)"
-    )
+    print(f"disk-capacity: {VOLUME} free {free_gib:.3f} GiB (required {required_gib:.3f} GiB)")
     if free_gib < required_gib:
         print(
             f"  ↑ disk-capacity BREACHED — {free_gib:.3f} GiB free is below "
@@ -166,6 +164,7 @@ def main(argv=None) -> int:
         action="store_true",
         help="advisory check: exit 1 when free space is below the live envelope",
     )
+    ap.add_argument("--strict", action="store_true", help="exit 77 when the declared volume is unavailable")
     ap.add_argument("--apply", action="store_true", help="safety effector: remove probes + truncate log")
     ap.add_argument(
         "--log-cap-mb",
@@ -176,7 +175,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     if args.check:
-        return check()
+        return check(strict=args.strict)
     if args.apply:
         return apply(args.log_cap_mb)
 
