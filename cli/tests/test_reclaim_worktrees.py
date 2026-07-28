@@ -134,24 +134,26 @@ def test_reclaim_keeps_non_git_antigravity_system_generated_root(
     assert reason == "not-a-git-dir"
 
 
-def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, monkeypatch) -> None:
+def test_reclaim_remote_reachability_uses_live_advertised_refs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     reclaim = load_reclaim_worktrees()
     calls: list[list[str]] = []
 
-    def fake_git(args: list[str], cwd: Path, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+    def fake_git(
+        args: list[str],
+        cwd: Path,
+        timeout: int = 20,
+    ) -> subprocess.CompletedProcess[str]:
         calls.append(args)
         assert cwd == tmp_path
-        assert timeout == 20
-        if args == [
-            "for-each-ref",
-            "--contains=abc123",
-            "--format=%(refname)",
-            "refs/remotes",
-        ]:
+        assert timeout == 120
+        if args == ["ls-remote", "--refs", "origin"]:
             return subprocess.CompletedProcess(
                 ["git", *args],
                 0,
-                "refs/remotes/origin/main\nrefs/remotes/origin/feature\n",
+                "abc123\trefs/heads/main\nabc123\trefs/heads/feature\n",
                 "",
             )
         raise AssertionError(f"unexpected git call: {args}")
@@ -159,14 +161,47 @@ def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, 
     monkeypatch.setattr(reclaim, "git", fake_git)
 
     assert reclaim.reachable_from_remote(tmp_path, "abc123") is True
-    assert calls == [
-        [
-            "for-each-ref",
-            "--contains=abc123",
-            "--format=%(refname)",
-            "refs/remotes",
-        ]
-    ]
+    assert calls == [["ls-remote", "--refs", "origin"]]
+    assert reclaim.remote_refs_containing_head(tmp_path, "abc123") == (
+        "refs/heads/feature",
+        "refs/heads/main",
+    )
+
+
+def test_detached_head_cached_only_in_stale_remote_ref_is_not_preserved(
+    tmp_path: Path,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = _committed_repo(tmp_path, "detached")
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+    subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=repo, check=True)
+    subprocess.run(["git", "push", "-qu", "origin", "main"], cwd=repo, check=True)
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(["git", "checkout", "-q", "--detach", head], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "update-ref", "refs/remotes/origin/stale", head],
+        cwd=repo,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "update-ref", "-d", "refs/heads/main"],
+        cwd=remote,
+        check=True,
+    )
+
+    assert reclaim.remote_refs_containing_head(repo, head) == ()
+    assert reclaim.reachable_from_remote(repo, head) is False
+    assert reclaim.classify(repo, time.time(), 0) == (
+        "skip",
+        "unpushed-commits",
+    )
 
 
 def test_reclaim_help_does_not_discover_targets(monkeypatch, capsys) -> None:

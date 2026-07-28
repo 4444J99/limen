@@ -94,7 +94,14 @@ def _fixture(
 def _probe(
     identities: dict[Path, custody.VolumeIdentity],
 ) -> custody.VolumeProbe:
-    return lambda path: identities[path.resolve()]
+    def probe(path: Path) -> custody.VolumeIdentity:
+        resolved = path.resolve()
+        for mount, identity in identities.items():
+            if resolved == mount or mount in resolved.parents:
+                return identity
+        raise KeyError(resolved)
+
+    return probe
 
 
 def _copy_tree(source: Path, destination: Path) -> None:
@@ -216,6 +223,54 @@ def test_same_physical_device_is_not_a_second_copy(tmp_path: Path) -> None:
             require_volume=False,
             volume_probe=_probe(identities),
         )
+
+
+def test_symlinked_content_addressed_destination_fails_closed(
+    tmp_path: Path,
+) -> None:
+    plan_result, source, archive, _recovery, _inventory, identities = _plan(tmp_path)
+    destination = archive / "evacuation" / "objects" / "desktop" / str(plan_result["content_sha256"])
+    destination.parent.mkdir(parents=True)
+    destination.symlink_to(source, target_is_directory=True)
+
+    with pytest.raises(
+        custody.PersonalCustodyError,
+        match="custody-object-path-symlink",
+    ):
+        custody.apply_plan(
+            plan_path=Path(str(plan_result["archive_plan"])),
+            expected_plan_sha256=str(plan_result["plan_sha256"]),
+            require_volume=False,
+            volume_probe=_probe(identities),
+            copy_tree=_copy_tree,
+        )
+    assert source.exists()
+
+
+def test_materialized_object_must_remain_on_planned_volume(
+    tmp_path: Path,
+) -> None:
+    plan_result, source, archive, recovery, _inventory, identities = _plan(tmp_path)
+    ordinary_probe = _probe(identities)
+
+    def drifting_probe(path: Path) -> custody.VolumeIdentity:
+        resolved = path.resolve()
+        if archive.resolve() in resolved.parents:
+            return identities[recovery.resolve()]
+        return ordinary_probe(path)
+
+    with pytest.raises(
+        custody.PersonalCustodyError,
+        match="custody-object-volume-identity-drift",
+    ):
+        custody.apply_plan(
+            plan_path=Path(str(plan_result["archive_plan"])),
+            expected_plan_sha256=str(plan_result["plan_sha256"]),
+            require_volume=False,
+            volume_probe=drifting_probe,
+            copy_tree=_copy_tree,
+        )
+    assert source.exists()
 
 
 def test_active_owner_blocks_reclaim_after_valid_restoration(tmp_path: Path) -> None:

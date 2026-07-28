@@ -756,6 +756,40 @@ def test_authorization_plan_is_capped_at_one_thousand_items(
     assert len(planned["items"]) == file_provider.MAX_BATCH_ITEMS
 
 
+def test_content_verification_has_a_process_deadline_without_path_arguments(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _receipt, captured, root = _captured(tmp_path, ("one.txt",))
+    items = file_provider.inspect_captured_files(
+        root,
+        captured,
+        materialized_probe=lambda _path: True,
+    )
+    observed: dict[str, object] = {}
+
+    def stalled(args, **kwargs):
+        observed["args"] = args
+        observed["timeout"] = kwargs["timeout"]
+        observed["input"] = kwargs["input"]
+        raise file_provider.subprocess.TimeoutExpired(args, kwargs["timeout"])
+
+    monkeypatch.setattr(file_provider.subprocess, "run", stalled)
+
+    with pytest.raises(
+        PipelineError,
+        match="exceeded its bounded deadline",
+    ):
+        file_provider.verify_materialized_content(
+            items,
+            timeout_seconds=7,
+        )
+
+    assert observed["timeout"] == 7
+    assert str(root) not in " ".join(observed["args"])
+    assert str(root).encode() in observed["input"]
+
+
 def test_one_campaign_authorization_advances_multiple_batches_without_replanning(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

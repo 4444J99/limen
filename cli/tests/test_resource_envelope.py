@@ -4,6 +4,7 @@ import json
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from limen import resource_envelope
 from limen.prima_materia import ResourceClaimV1
 from limen.resource_envelope import (
@@ -38,6 +39,36 @@ def test_host_telemetry_uses_its_native_process_seam(monkeypatch) -> None:
 
     assert resource_envelope._capture_command(["telemetry-probe"]) == "observed\n"
     assert calls == [["telemetry-probe"]]
+
+
+def test_darwin_vm_stat_whitespace_is_parsed(monkeypatch) -> None:
+    observations = {
+        ("/usr/sbin/sysctl", "-n", "hw.memsize"): str(16 * GIB),
+        ("/usr/sbin/sysctl", "-n", "hw.pagesize"): "4096",
+        ("/usr/bin/vm_stat",): (
+            "Mach Virtual Memory Statistics: (page size of 4096 bytes)\n"
+            "Pages free:                               1.\n"
+            "Pages inactive:                           2.\n"
+            "Pages speculative:                        3.\n"
+            "Pages purgeable:                          4."
+        ),
+        (
+            "/usr/sbin/sysctl",
+            "-n",
+            "vm.swapusage",
+        ): "total = 4.00G  used = 2.50G  free = 1.50G",
+    }
+    monkeypatch.setattr(
+        resource_envelope,
+        "_capture_command",
+        lambda args: observations[tuple(args)],
+    )
+
+    assert resource_envelope._darwin_memory() == (
+        16 * GIB,
+        10 * 4096,
+        int(2.5 * GIB),
+    )
 
 
 def _telemetry() -> ResourceTelemetry:
@@ -168,3 +199,22 @@ def test_selected_task_graph_claims_are_registry_data(tmp_path) -> None:
         "claimIdentifier02",
         "claimIdentifier01",
     ]
+
+
+def test_missing_selected_task_graph_fails_closed(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_RESOURCE_TASK_GRAPH", raising=False)
+
+    with pytest.raises(ValueError, match="selected resource task graph is required"):
+        load_task_graph_claims()
+
+
+def test_explicit_empty_graph_remains_observable(monkeypatch) -> None:
+    monkeypatch.setattr(
+        resource_envelope,
+        "observe_resource_telemetry",
+        _telemetry,
+    )
+
+    assert resource_envelope.current_required_free_gib(claims=()) == (
+        evaluate_resource_envelope(_telemetry(), ()).required_free_gib
+    )

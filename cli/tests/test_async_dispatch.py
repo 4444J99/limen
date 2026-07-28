@@ -55,6 +55,17 @@ def _load(tmp_path, n_open=6, agent="codex"):
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
     os.environ["LIMEN_DISPATCH_ADMISSION"] = "0"
     os.environ["LIMEN_WORKTREE_DEBT_GATE"] = "0"
+    resource_graph = tmp_path / "resource-task-graph.json"
+    resource_graph.write_text(
+        json.dumps(
+            {
+                "schema": "limen.resource_task_graph.v1",
+                "claims": [],
+            },
+        ),
+        encoding="utf-8",
+    )
+    os.environ["LIMEN_RESOURCE_TASK_GRAPH"] = str(resource_graph)
     today = datetime.date.today()
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={agent: 50}, track=BudgetTrack(date=today.isoformat()))),
@@ -1973,7 +1984,7 @@ def test_async_reserve_skips_cifix_superseded_by_active_rebase_task(tmp_path, mo
     assert picked == [("codex", "HEAL-rebase-organvm-domus-genoma-185")]
 
 
-def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, monkeypatch):
+def test_resource_envelope_breach_blocks_local_dispatch(tmp_path, monkeypatch):
     monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
     monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
     da = _load(tmp_path, n_open=0, agent="codex")
@@ -2017,7 +2028,36 @@ def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, 
 
     picked = da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True)
 
-    assert picked == [("codex", "PROMPT-LIFECYCLE-MEDIUM")]
+    assert picked == []
+
+
+def test_missing_selected_graph_blocks_local_but_not_remote(
+    tmp_path,
+    monkeypatch,
+):
+    local_root = tmp_path / "local"
+    local_root.mkdir()
+    local = _load(local_root, n_open=1, agent="codex")
+    monkeypatch.setattr(
+        local,
+        "current_required_free_gib",
+        lambda: (_ for _ in ()).throw(ValueError("missing graph")),
+    )
+
+    assert local.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True) == []
+
+    remote_root = tmp_path / "remote"
+    remote_root.mkdir()
+    remote = _load(remote_root, n_open=1, agent="jules")
+    monkeypatch.setattr(
+        remote,
+        "current_required_free_gib",
+        lambda: (_ for _ in ()).throw(ValueError("missing graph")),
+    )
+
+    assert remote.reserve_and_launch(["jules"], per_agent=1, cap=1, dry=True) == [
+        ("jules", "T0"),
+    ]
 
 
 def test_worktree_resource_pressure_suppresses_all_local_async_candidates(tmp_path, monkeypatch):

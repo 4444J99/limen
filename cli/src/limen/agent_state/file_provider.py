@@ -12,6 +12,7 @@ import secrets
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -20,7 +21,7 @@ from datetime import datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from .atomize import canonical_bytes, sha256_file
+from .atomize import canonical_bytes
 from .crypto import verify_atom_packs
 from .models import MetabolismReceipt
 from .pipeline import PipelineError
@@ -46,6 +47,48 @@ MAX_ADAPTER_OUTPUT_BYTES = 8 * 1024 * 1024
 MAX_AUTHORIZATION_BYTES = 8 * 1024 * 1024
 MAX_SIGNATURE_BYTES = 32 * 1024
 MAX_PROGRESS_BYTES = 64 * 1024 * 1024
+MAX_CONTENT_VERIFICATION_INPUT_BYTES = 32 * 1024 * 1024
+
+_CONTENT_HASH_HELPER = r"""
+import hashlib
+import json
+import os
+import stat
+import sys
+
+paths = json.load(sys.stdin)
+digests = []
+for path in paths:
+    descriptor = os.open(
+        path,
+        os.O_RDONLY
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_CLOEXEC", 0),
+    )
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise OSError("not a regular file")
+        digest = hashlib.sha256()
+        while True:
+            block = os.read(descriptor, 4 * 1024 * 1024)
+            if not block:
+                break
+            digest.update(block)
+        after = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    current = os.lstat(path)
+    identity = ("st_dev", "st_ino", "st_size", "st_mtime_ns")
+    if (
+        any(getattr(before, key) != getattr(after, key) for key in identity)
+        or any(getattr(after, key) != getattr(current, key) for key in identity)
+        or stat.S_ISLNK(current.st_mode)
+    ):
+        raise OSError("file identity changed during verification")
+    digests.append(digest.hexdigest())
+json.dump(digests, sys.stdout, separators=(",", ":"))
+"""
 
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 BASE64_TEXT = re.compile(r"^[A-Za-z0-9+/]*={0,2}$")
@@ -656,14 +699,53 @@ def restore_captured_file(
         return result
 
 
-def verify_materialized_content(items: tuple[FileProviderItem, ...]) -> None:
-    for item in items:
-        if not item.materialized:
-            continue
-        try:
-            digest = sha256_file(item.path)
-        except OSError as exc:
-            raise PipelineError("captured File Provider item content is unreadable") from exc
+def verify_materialized_content(
+    items: tuple[FileProviderItem, ...],
+    *,
+    timeout_seconds: int = BATCH_TIMEOUT_SECONDS,
+) -> None:
+    """Verify a bounded set without allowing one File Provider read to stall."""
+
+    materialized = tuple(item for item in items if item.materialized)
+    if not materialized:
+        return
+    if (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, int)
+        or timeout_seconds < 1
+        or timeout_seconds > BATCH_TIMEOUT_SECONDS
+    ):
+        raise PipelineError("File Provider content verification deadline is invalid")
+    payload = canonical_bytes([str(item.path) for item in materialized])
+    if len(payload) > MAX_CONTENT_VERIFICATION_INPUT_BYTES:
+        raise PipelineError("File Provider content verification input is too large")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", _CONTENT_HASH_HELPER],
+            input=payload,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise PipelineError("File Provider content verification exceeded its bounded deadline") from exc
+    except OSError as exc:
+        raise PipelineError("captured File Provider item content is unreadable") from exc
+    maximum_output = len(materialized) * 67 + 2
+    if result.returncode != 0 or not result.stdout or len(result.stdout) > maximum_output:
+        raise PipelineError("captured File Provider item content is unreadable")
+    try:
+        digests = json.loads(result.stdout)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PipelineError("File Provider content verification emitted an invalid response") from exc
+    if (
+        not isinstance(digests, list)
+        or len(digests) != len(materialized)
+        or any(not isinstance(value, str) or not HEX64.fullmatch(value) for value in digests)
+    ):
+        raise PipelineError("File Provider content verification emitted an invalid response")
+    for item, digest in zip(materialized, digests):
         if digest != item.captured.sha256:
             raise PipelineError("captured File Provider item content mutated")
 

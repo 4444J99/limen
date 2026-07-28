@@ -236,11 +236,13 @@ class ActionReceiptV1(PrimaMateriaModel):
 
 class RestorationProofV1(PrimaMateriaModel):
     custody_target_ref: str
+    device_id: str
     restored_at: datetime
     restored_output_digest: _Digest
     predicate_digest: _Digest
     passed: Literal[True] = True
 
+    _device_id = field_validator("device_id")(_validate_opaque_id)
     _digests = field_validator("restored_output_digest", "predicate_digest")(_validate_digest)
     _restored_at = field_validator("restored_at")(_validate_aware_datetime)
 
@@ -259,14 +261,23 @@ class CustodyReceiptV1(PrimaMateriaModel):
     _manifests = field_validator("chunk_manifest_digests")(
         lambda values: tuple(_validate_digest(value) for value in values)
     )
+    _devices = field_validator("independent_device_ids")(
+        lambda values: tuple(_validate_opaque_id(value) for value in values)
+    )
 
     @model_validator(mode="after")
     def copies_are_independent_and_restored(self) -> CustodyReceiptV1:
-        if len(set(self.independent_device_ids)) != len(self.independent_device_ids):
+        device_ids = set(self.independent_device_ids)
+        if len(device_ids) != len(self.independent_device_ids):
             raise ValueError("custody device identities must be independent")
         restored = {proof.custody_target_ref for proof in self.restoration_proofs}
         if len(restored) < 2:
             raise ValueError("at least two distinct custody targets must be restore-tested")
+        restored_devices = {proof.device_id for proof in self.restoration_proofs}
+        if not restored_devices.issubset(device_ids):
+            raise ValueError("restoration proof device must belong to the custody receipt")
+        if len(restored_devices) < 2:
+            raise ValueError("at least two independent custody devices must be restore-tested")
         return self
 
 
@@ -291,7 +302,12 @@ class CompositionManifestV1(PrimaMateriaModel):
 
     @model_validator(mode="after")
     def explicit_order_is_complete(self) -> CompositionManifestV1:
-        if self.ordering == "explicit" and self.explicit_order != self.selected_event_ids:
+        selected = set(self.selected_event_ids)
+        if len(selected) != len(self.selected_event_ids):
+            raise ValueError("selected events must be unique")
+        if self.ordering == "explicit" and (
+            len(self.explicit_order) != len(self.selected_event_ids) or set(self.explicit_order) != selected
+        ):
             raise ValueError("explicit ordering must enumerate selected events exactly")
         if self.ordering != "explicit" and self.explicit_order:
             raise ValueError("explicit_order is only valid with explicit ordering")

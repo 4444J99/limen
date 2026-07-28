@@ -1031,7 +1031,7 @@ parameters:
     env: LIMEN_RESOURCE_TASK_GRAPH
     self_update: none
     owner: continuity
-    note: "Optional bounded limen.resource_task_graph.v1 file for the selected workstream. Empty means no task graph is materialized; every storage gate otherwise evaluates peak concurrent claims across this exact graph."
+    note: "Required bounded limen.resource_task_graph.v1 file for local work admission. Empty fails closed; every storage gate evaluates peak concurrent claims across this exact selected graph. Callers with an explicitly empty graph may pass an empty claim tuple directly for observation-only evaluation."
   LIMEN_DISK_PRESSURE_VALUE_ONLY:
     default: "1"
     env: LIMEN_DISK_PRESSURE_VALUE_ONLY

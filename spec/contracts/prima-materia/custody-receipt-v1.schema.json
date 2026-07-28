@@ -7,6 +7,10 @@
           "title": "Custody Target Ref",
           "type": "string"
         },
+        "device_id": {
+          "title": "Device Id",
+          "type": "string"
+        },
         "passed": {
           "const": true,
           "default": true,
@@ -29,6 +33,7 @@
       },
       "required": [
         "custody_target_ref",
+        "device_id",
         "restored_at",
         "restored_output_digest",
         "predicate_digest"

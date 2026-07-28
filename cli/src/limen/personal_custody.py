@@ -452,6 +452,46 @@ def _assert_content(path: Path, expected: tuple[ContentRecord, ...]) -> None:
         raise PersonalCustodyError("custody-content-drift")
 
 
+def _assert_object_destination(
+    destination: Path,
+    *,
+    custody_root: Path,
+    expected_volume: VolumeIdentity,
+    volume_probe: VolumeProbe,
+    require_exists: bool,
+) -> None:
+    """Reject path indirection and prove the object lives on its planned volume."""
+
+    try:
+        root = custody_root.resolve(strict=True)
+        relative = destination.absolute().relative_to(root)
+    except (OSError, ValueError) as exc:
+        raise PersonalCustodyError("custody-object-outside-private-root") from exc
+    current = root
+    for index, component in enumerate(relative.parts):
+        current /= component
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            if require_exists:
+                raise PersonalCustodyError("custody-object-unavailable") from None
+            break
+        except OSError as exc:
+            raise PersonalCustodyError("custody-object-path-unavailable") from exc
+        if stat.S_ISLNK(info.st_mode):
+            raise PersonalCustodyError("custody-object-path-symlink")
+        if index < len(relative.parts) - 1 and not stat.S_ISDIR(info.st_mode):
+            raise PersonalCustodyError("custody-object-parent-not-directory")
+    if not require_exists:
+        return
+    try:
+        observed = volume_probe(destination)
+    except (OSError, KeyError, PersonalCustodyError) as exc:
+        raise PersonalCustodyError("custody-object-volume-identity-unavailable") from exc
+    if asdict(observed) != asdict(expected_volume):
+        raise PersonalCustodyError("custody-object-volume-identity-drift")
+
+
 def _copy_with_ditto(source: Path, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     result = subprocess.run(
@@ -652,19 +692,50 @@ def _materialize_copy(
     destination: Path,
     expected: tuple[ContentRecord, ...],
     *,
+    custody_root: Path,
+    expected_volume: VolumeIdentity,
+    volume_probe: VolumeProbe,
     copy_tree: CopyTree,
 ) -> dict[str, Any]:
+    _assert_object_destination(
+        destination,
+        custody_root=custody_root,
+        expected_volume=expected_volume,
+        volume_probe=volume_probe,
+        require_exists=False,
+    )
     if destination.exists():
+        _assert_object_destination(
+            destination,
+            custody_root=custody_root,
+            expected_volume=expected_volume,
+            volume_probe=volume_probe,
+            require_exists=True,
+        )
         try:
             _assert_content(destination, expected)
         except PersonalCustodyError:
             # A prior bounded copy may have stopped mid-file. The destination is
             # content-addressed by this exact plan, so ditto may resume into it.
             copy_tree(source, destination)
+            _assert_object_destination(
+                destination,
+                custody_root=custody_root,
+                expected_volume=expected_volume,
+                volume_probe=volume_probe,
+                require_exists=True,
+            )
             _assert_content(destination, expected)
         return _restore_probe(destination, expected)
     destination.parent.mkdir(parents=True, exist_ok=True)
     copy_tree(source, destination)
+    _assert_object_destination(
+        destination,
+        custody_root=custody_root,
+        expected_volume=expected_volume,
+        volume_probe=volume_probe,
+        require_exists=True,
+    )
     _assert_content(destination, expected)
     return _restore_probe(destination, expected)
 
@@ -746,8 +817,24 @@ def apply_plan(
     object_relative = _object_relative(plan["label"], plan["content_sha256"])
     archive_copy = archive / object_relative
     recovery_copy = recovery / object_relative
-    archive_restore = _materialize_copy(source, archive_copy, expected, copy_tree=copy_tree)
-    recovery_restore = _materialize_copy(source, recovery_copy, expected, copy_tree=copy_tree)
+    archive_restore = _materialize_copy(
+        source,
+        archive_copy,
+        expected,
+        custody_root=archive,
+        expected_volume=VolumeIdentity(**plan["volumes"]["archive"]),
+        volume_probe=volume_probe,
+        copy_tree=copy_tree,
+    )
+    recovery_restore = _materialize_copy(
+        source,
+        recovery_copy,
+        expected,
+        custody_root=recovery,
+        expected_volume=VolumeIdentity(**plan["volumes"]["recovery"]),
+        volume_probe=volume_probe,
+        copy_tree=copy_tree,
+    )
     _assert_content(source, expected)
     receipt_payload = {
         "schema": RECEIPT_SCHEMA,

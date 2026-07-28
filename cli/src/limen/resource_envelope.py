@@ -165,7 +165,7 @@ def _darwin_memory() -> tuple[int, int, int] | None:
         vm = _capture_command(["/usr/bin/vm_stat"])
         pages = 0
         for label in ("Pages free", "Pages inactive", "Pages speculative", "Pages purgeable"):
-            match = re.search(rf"^{re.escape(label)}:\\s+([0-9]+)\\.", vm, re.MULTILINE)
+            match = re.search(rf"^{re.escape(label)}:\s+([0-9]+)\.", vm, re.MULTILINE)
             if match:
                 pages += int(match.group(1))
         swap = _capture_command(["/usr/sbin/sysctl", "-n", "vm.swapusage"])
@@ -202,7 +202,7 @@ def load_task_graph_claims(path: Path | None = None) -> tuple[ResourceClaimV1, .
     if selected is None:
         raw = os.environ.get("LIMEN_RESOURCE_TASK_GRAPH")
         if not raw:
-            return ()
+            raise ValueError("selected resource task graph is required")
         selected = Path(raw).expanduser()
     try:
         info = selected.lstat()

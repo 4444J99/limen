@@ -8,10 +8,13 @@ from pathlib import Path
 
 import pytest
 from limen.prima_materia import (
+    CompositionManifestV1,
+    CustodyReceiptV1,
     EncryptedPayloadRefV1,
     PrimaMateriaEventV1,
     PrivacyConsentPolicyV1,
     ResourceClaimV1,
+    RestorationProofV1,
     SourceAdapterV1,
     SourceCoverageV1,
     StandingAuthorityV1,
@@ -140,6 +143,84 @@ def test_semantic_recipe_requires_original_output_and_equivalence() -> None:
             time_declaration="recorded",
             output_digests=(DIGEST,),
             replay_class="semantic",
+        )
+
+
+def test_explicit_composition_order_accepts_a_complete_permutation() -> None:
+    manifest = CompositionManifestV1(
+        composition_id="compositionId0001",
+        selected_event_ids=("eventIdentifierA1", "eventIdentifierB2"),
+        ordering="explicit",
+        explicit_order=("eventIdentifierB2", "eventIdentifierA1"),
+        output_digests=(DIGEST,),
+    )
+
+    assert manifest.explicit_order == (
+        "eventIdentifierB2",
+        "eventIdentifierA1",
+    )
+
+    with pytest.raises(ValueError, match="enumerate selected events exactly"):
+        CompositionManifestV1(
+            **{
+                **manifest.model_dump(),
+                "explicit_order": ("eventIdentifierA1",),
+            },
+        )
+
+
+def test_custody_restoration_proofs_cover_independent_devices() -> None:
+    restored_at = datetime(2026, 7, 28, tzinfo=UTC)
+    proofs = (
+        RestorationProofV1(
+            custody_target_ref="encrypted-primary",
+            device_id="deviceIdentifierA1",
+            restored_at=restored_at,
+            restored_output_digest=DIGEST,
+            predicate_digest=DIGEST,
+        ),
+        RestorationProofV1(
+            custody_target_ref="encrypted-recovery",
+            device_id="deviceIdentifierB2",
+            restored_at=restored_at,
+            restored_output_digest=DIGEST,
+            predicate_digest=DIGEST,
+        ),
+    )
+    receipt = CustodyReceiptV1(
+        custody_id="custodyReceipt0001",
+        encryption_profile_digest=DIGEST,
+        chunk_manifest_digests=(DIGEST,),
+        independent_device_ids=(
+            "deviceIdentifierA1",
+            "deviceIdentifierB2",
+        ),
+        restoration_proofs=proofs,
+    )
+
+    assert {proof.device_id for proof in receipt.restoration_proofs} == {
+        "deviceIdentifierA1",
+        "deviceIdentifierB2",
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="independent custody devices must be restore-tested",
+    ):
+        CustodyReceiptV1(
+            custody_id="custodyReceipt0002",
+            encryption_profile_digest=DIGEST,
+            chunk_manifest_digests=(DIGEST,),
+            independent_device_ids=(
+                "deviceIdentifierA1",
+                "deviceIdentifierB2",
+            ),
+            restoration_proofs=(
+                proofs[0],
+                proofs[1].model_copy(
+                    update={"device_id": "deviceIdentifierA1"},
+                ),
+            ),
         )
 
 

@@ -363,23 +363,36 @@ def reclaim_generated_payloads(targets) -> dict[str, object]:
 
 
 def reachable_from_remote(cwd, head) -> bool:
-    if remote_refs_containing_head(cwd, head):
-        return True
-    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
-    if advertised.returncode != 0:
-        return False
-    for line in advertised.stdout.splitlines():
-        remote_object = line.split("\t", 1)[0]
-        if remote_object == head or git(["merge-base", "--is-ancestor", head, remote_object], cwd).returncode == 0:
-            return True
-    return False
+    return bool(remote_refs_containing_head(cwd, head))
 
 
 def remote_refs_containing_head(cwd: Path, head: str) -> tuple[str, ...]:
-    r = git(["for-each-ref", f"--contains={head}", "--format=%(refname)", "refs/remotes"], cwd)
-    if r.returncode != 0:
+    """Return only provider-advertised refs that currently preserve ``head``.
+
+    Local ``refs/remotes/*`` are caches and can outlive a deleted server
+    branch. Reclaim proof therefore queries the live remote on every planning
+    and apply pass.
+    """
+
+    if not head:
         return ()
-    return tuple(sorted(value for value in r.stdout.splitlines() if value.startswith("refs/remotes/")))
+    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
+    if advertised.returncode != 0:
+        return ()
+    containing: list[str] = []
+    for line in advertised.stdout.splitlines():
+        try:
+            remote_object, remote_ref = line.split("\t", 1)
+        except ValueError:
+            return ()
+        if not remote_object or not remote_ref.startswith("refs/"):
+            return ()
+        if remote_object == head or git(
+            ["merge-base", "--is-ancestor", head, remote_object],
+            cwd,
+        ).returncode == 0:
+            containing.append(remote_ref)
+    return tuple(sorted(containing))
 
 
 def all_local_refs_remote_proof(cwd: Path) -> tuple[dict[str, object], ...] | None:
