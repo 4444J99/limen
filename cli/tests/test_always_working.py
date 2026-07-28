@@ -152,6 +152,7 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 250.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""}
     )
+    monkeypatch.setattr(mod, "current_required_free_gib", lambda: 200.0)
     monkeypatch.setattr(
         mod,
         "estate_custody_receipt",

@@ -247,6 +247,7 @@ def test_async_reservation_value_gate_withholds_generic_non_value_work(tmp_path,
     # test actually asserts. Every other test in this file gets the overrides via the `board` fixture;
     # this one builds its board inline.
     monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
+    monkeypatch.setenv("LIMEN_DISK_PRESSURE_VALUE_ONLY", "0")
     monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "0")
     tasks_path = tmp_path / "tasks.yaml"
     runs = tmp_path / "logs" / "async-runs"
@@ -292,6 +293,7 @@ def test_async_reservation_value_gate_withholds_generic_non_value_work(tmp_path,
     save_limen_file(tasks_path, lf)
     monkeypatch.setattr(dispatch_async, "TASKS", tasks_path)
     monkeypatch.setattr(dispatch_async, "RUNS", runs)
+    monkeypatch.setattr(dispatch_async, "current_required_free_gib", lambda: 0.0)
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
 

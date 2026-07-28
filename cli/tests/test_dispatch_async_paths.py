@@ -81,8 +81,10 @@ def _task(task_id: str, agent: str) -> Task:
 def test_async_reservation_uses_live_usage_not_stale_board_caps(monkeypatch, tmp_path):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     # This test owns provider usage arithmetic; dedicated admission tests own host-custody probes.
+    monkeypatch.setenv("LIMEN_DISK_PRESSURE_VALUE_ONLY", "0")
     monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "0")
     dispatch_async = _load_script("dispatch_async_usage_math_test", "scripts/dispatch-async.py")
+    monkeypatch.setattr(dispatch_async, "current_required_free_gib", lambda: 0.0)
     dispatch_async.RUNS.mkdir(parents=True)
 
     board = LimenFile(
