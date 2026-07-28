@@ -2812,7 +2812,7 @@ parameters:
     env: LIMEN_RECLAIM_WORKSPACE_ROOTS
     self_update: none
     owner: limen-daemon
-    note: "Colon-separated workspace roots searched for repo-local .worktrees directories, with cache/vendor folders pruned."
+    note: "Colon-separated workspace roots searched for repo-local .worktrees directories, with cache/vendor folders pruned; when LIMEN_RECLAIM_WORKSPACE_CHECKOUTS=1, the same bounded discovery also includes Git checkout roots themselves."
   LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH:
     default: 5
     env: LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH

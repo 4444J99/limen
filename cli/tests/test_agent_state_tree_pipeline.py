@@ -10,7 +10,7 @@ import pytest
 from limen.agent_state import tree_pipeline
 from limen.agent_state.crypto import EncryptedAtomPacker
 from limen.agent_state.models import MetabolismReceipt, ReceiptError
-from limen.agent_state.pipeline import PipelineError
+from limen.agent_state.pipeline import ARCA_REMOTE_EXACT_ERROR, PipelineError
 from limen.agent_state.tree import RetentionPlan, atomize_file_tree, plan_retention
 
 KEY = "tree-resume-test-key"
@@ -90,7 +90,7 @@ class _AdvancedRemoteVault(_CompletedVault):
         relative: Path,
         message: str,
     ) -> tuple[str, str] | None:
-        raise PipelineError("ARCA completed receipt is not exact on the remote")
+        raise PipelineError(ARCA_REMOTE_EXACT_ERROR)
 
 
 def _interrupted_tree(tmp_path: Path) -> tuple[Path, Path, Path, RetentionPlan]:
