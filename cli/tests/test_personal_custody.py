@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -274,6 +275,68 @@ def test_contents_reclaim_retains_empty_standard_folder(tmp_path: Path) -> None:
     assert receipt["reclaim_mode"] == "contents"
     assert source.is_dir()
     assert list(source.iterdir()) == []
+    repeated = custody.reclaim_plan(
+        plan_path=plan_path,
+        expected_plan_sha256=plan_sha256,
+        require_volume=False,
+        volume_probe=_probe(identities),
+        owner_probe=lambda _path: None,
+    )
+    assert repeated["receipt_sha256"] == receipt["receipt_sha256"]
+
+
+@pytest.mark.parametrize("completed_writes", [0, 1])
+def test_post_purge_receipt_write_crash_recovers_without_repurging(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    completed_writes: int,
+) -> None:
+    plan_result, source, _archive, _recovery, _inventory, identities = _plan(tmp_path)
+    plan_path = Path(str(plan_result["archive_plan"]))
+    plan_sha256 = str(plan_result["plan_sha256"])
+    custody.apply_plan(
+        plan_path=plan_path,
+        expected_plan_sha256=plan_sha256,
+        require_volume=False,
+        volume_probe=_probe(identities),
+        copy_tree=_copy_tree,
+    )
+    real_write_pair = custody._write_receipt_pair
+
+    def interrupt_completed(
+        archive_path: Path,
+        recovery_path: Path,
+        payload: dict[str, object],
+    ) -> None:
+        if payload.get("status") != "reclaimed":
+            real_write_pair(archive_path, recovery_path, payload)
+            return
+        if completed_writes:
+            custody._atomic_json(archive_path, payload)
+        raise custody.PersonalCustodyError("simulated-post-purge-crash")
+
+    monkeypatch.setattr(custody, "_write_receipt_pair", interrupt_completed)
+    with pytest.raises(custody.PersonalCustodyError, match="simulated-post-purge-crash"):
+        custody.reclaim_plan(
+            plan_path=plan_path,
+            expected_plan_sha256=plan_sha256,
+            require_volume=False,
+            volume_probe=_probe(identities),
+            owner_probe=lambda _path: None,
+        )
+    assert not source.exists()
+
+    monkeypatch.setattr(custody, "_write_receipt_pair", real_write_pair)
+    recovered = custody.reclaim_plan(
+        plan_path=plan_path,
+        expected_plan_sha256=plan_sha256,
+        require_volume=False,
+        volume_probe=_probe(identities),
+        owner_probe=lambda _path: (_ for _ in ()).throw(AssertionError("recovery must not attempt a second purge")),
+    )
+
+    assert recovered["reclaimed"] is True
+    assert not source.exists()
 
 
 def test_special_file_is_rejected(tmp_path: Path) -> None:
@@ -292,3 +355,66 @@ def test_special_file_is_rejected(tmp_path: Path) -> None:
             custody.content_records(source)
     finally:
         fifo.unlink(missing_ok=True)
+
+
+@pytest.mark.parametrize("private_root", [Path("/absolute"), Path("../escape"), Path(".")])
+def test_private_root_must_be_safe_and_relative(tmp_path: Path, private_root: Path) -> None:
+    source, archive, recovery, inventory, identities = _fixture(tmp_path)
+    with pytest.raises(custody.PersonalCustodyError, match="private-root-"):
+        custody.create_plan(
+            inventory_path=inventory,
+            label="desktop",
+            source=source,
+            archive_root=archive,
+            recovery_root=recovery,
+            private_root=private_root,
+            require_volume=False,
+            volume_probe=_probe(identities),
+        )
+
+
+def test_apply_validates_both_canonical_plan_copies(tmp_path: Path) -> None:
+    plan_result, _source, _archive, recovery, _inventory, identities = _plan(tmp_path)
+    plan_sha256 = str(plan_result["plan_sha256"])
+    recovery_plan = Path(str(plan_result["recovery_plan"]))
+    payload = json.loads(recovery_plan.read_text())
+    payload["label"] = "tampered"
+    recovery_plan.write_text(json.dumps(payload))
+
+    with pytest.raises(custody.PersonalCustodyError, match="custody-plan-sha-mismatch"):
+        custody.apply_plan(
+            plan_path=Path(str(plan_result["archive_plan"])),
+            expected_plan_sha256=plan_sha256,
+            require_volume=False,
+            volume_probe=_probe(identities),
+            copy_tree=_copy_tree,
+        )
+    assert recovery.exists()
+
+
+def test_public_receipt_cannot_be_reclaimed_with_source(tmp_path: Path) -> None:
+    plan_result, source, _archive, _recovery, _inventory, identities = _plan(tmp_path)
+    with pytest.raises(custody.PersonalCustodyError, match="public-receipt-inside-reclaimed-source"):
+        custody.apply_plan(
+            plan_path=Path(str(plan_result["archive_plan"])),
+            expected_plan_sha256=str(plan_result["plan_sha256"]),
+            public_receipt_path=source / "receipt.jsonl",
+            require_volume=False,
+            volume_probe=_probe(identities),
+            copy_tree=_copy_tree,
+        )
+
+
+def test_content_manifest_includes_metadata_digests(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    document = source / "document"
+    document.write_text("metadata\n")
+    if hasattr(os, "setxattr"):
+        try:
+            os.setxattr(document, "user.limen-test", b"retained")
+        except OSError:
+            pass
+    records = custody.content_records(source)
+    assert all(record.xattrs_sha256 for record in records)
+    assert all(record.acl_sha256 for record in records)

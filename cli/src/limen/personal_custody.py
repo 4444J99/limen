@@ -26,6 +26,7 @@ from typing import Any
 
 from limen.agent_state.pipeline import PipelineError, require_mounted_external
 from limen.worktree_abandonment import (
+    WORKTREE_ABANDONMENT_SCHEMA,
     CustodyPathIdentity,
     WorktreeAbandonmentError,
     purge_custody_proven_contents,
@@ -37,6 +38,9 @@ RECEIPT_SCHEMA = "limen.personal_custody_receipt.v1"
 PUBLIC_RECEIPT_SCHEMA = "limen.personal_custody_public_receipt.v1"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 CHUNK_BYTES = 4 * 1024 * 1024
+COPY_TIMEOUT_SECONDS = 900
+RESTORE_TIMEOUT_SECONDS = 900
+MAX_PURGE_RECEIPTS = 4_096
 DEFAULT_ARCHIVE_ROOT = Path("/Volumes/Archive4T")
 DEFAULT_RECOVERY_ROOT = Path("/Volumes/T7Recovery")
 DEFAULT_PRIVATE_ROOT = Path("laptop-evacuation/20260727")
@@ -79,6 +83,8 @@ class ContentRecord:
     physical_bytes: int
     sha256: str | None
     link_target: str | None
+    xattrs_sha256: str | None = None
+    acl_sha256: str | None = None
 
 
 def _now() -> str:
@@ -116,6 +122,50 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _xattrs_sha256(path: Path) -> str:
+    """Digest names and bytes for every extended attribute, without following links."""
+
+    try:
+        names = sorted(os.listxattr(path, follow_symlinks=False))
+        payload = [
+            (
+                name,
+                hashlib.sha256(
+                    os.getxattr(path, name, follow_symlinks=False),
+                ).hexdigest(),
+            )
+            for name in names
+        ]
+    except (AttributeError, OSError) as exc:
+        # Unsupported metadata is not silently rendered as an empty set: the
+        # platform limitation remains explicit in the private manifest.
+        return f"unavailable:{type(exc).__name__}"
+    return _canonical_sha256(payload)
+
+
+def _acl_sha256(path: Path) -> str:
+    """Digest the native ACL entries. Mode bits are recorded independently."""
+
+    if sys.platform != "darwin":
+        return "unavailable:platform"
+    try:
+        result = subprocess.run(
+            ["/bin/ls", "-lde", str(path)],
+            capture_output=True,
+            check=False,
+            timeout=5,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"unavailable:{type(exc).__name__}"
+    if result.returncode:
+        return f"unavailable:exit-{result.returncode}"
+    # The first line contains the private filename; ACL entries begin on the
+    # following lines. Hash only the normalized entries.
+    entries = [line.strip() for line in result.stdout.splitlines()[1:] if line.strip()]
+    return hashlib.sha256(b"\n".join(entries)).hexdigest()
+
+
 def _record(path: Path, source: Path) -> ContentRecord:
     try:
         info = path.lstat()
@@ -124,8 +174,20 @@ def _record(path: Path, source: Path) -> ContentRecord:
     relative = "." if path == source else path.relative_to(source).as_posix()
     mode = stat.S_IMODE(info.st_mode)
     physical = int(getattr(info, "st_blocks", 0) * 512)
+    xattrs_sha256 = _xattrs_sha256(path)
+    acl_sha256 = _acl_sha256(path)
     if stat.S_ISDIR(info.st_mode):
-        return ContentRecord(relative, "directory", mode, 0, physical, None, None)
+        return ContentRecord(
+            relative,
+            "directory",
+            mode,
+            0,
+            physical,
+            None,
+            None,
+            xattrs_sha256,
+            acl_sha256,
+        )
     if stat.S_ISREG(info.st_mode):
         return ContentRecord(
             relative,
@@ -135,6 +197,8 @@ def _record(path: Path, source: Path) -> ContentRecord:
             physical,
             _file_sha256(path),
             None,
+            xattrs_sha256,
+            acl_sha256,
         )
     if stat.S_ISLNK(info.st_mode):
         try:
@@ -150,6 +214,8 @@ def _record(path: Path, source: Path) -> ContentRecord:
             physical,
             hashlib.sha256(encoded).hexdigest(),
             target,
+            xattrs_sha256,
+            acl_sha256,
         )
     raise PersonalCustodyError("source-special-file", relative)
 
@@ -283,6 +349,18 @@ def _prepare_external_root(path: Path, *, require_volume: bool) -> Path:
     return resolved
 
 
+def _contained_private_root(mount: Path, private_root: Path) -> Path:
+    if private_root.is_absolute() or private_root in {Path(), Path(".")} or ".." in private_root.parts:
+        raise PersonalCustodyError("private-root-not-safe-relative")
+    try:
+        resolved_mount = mount.expanduser().resolve(strict=True)
+        candidate = (resolved_mount / private_root).resolve(strict=False)
+        candidate.relative_to(resolved_mount)
+    except (OSError, ValueError) as exc:
+        raise PersonalCustodyError("private-root-escapes-volume") from exc
+    return candidate
+
+
 def _private_plan_relative(label: str, plan_sha256: str) -> Path:
     return Path("_MANIFESTS") / label / f"{plan_sha256}.plan.json"
 
@@ -344,10 +422,13 @@ def _validated_plan(path: Path, expected_sha256: str) -> dict[str, Any]:
 
 def _expected_records(plan: dict[str, Any]) -> tuple[ContentRecord, ...]:
     try:
-        records = tuple(ContentRecord(**value) for value in plan["records"])
+        raw_records = plan["records"]
+        records = tuple(ContentRecord(**value) for value in raw_records)
     except (KeyError, TypeError) as exc:
         raise PersonalCustodyError("custody-plan-records-invalid") from exc
-    if _canonical_sha256([asdict(value) for value in records]) != plan.get("content_sha256"):
+    # Hash the original private payload so older immutable v1 plans that
+    # predate metadata fields remain verifiable.
+    if _canonical_sha256(raw_records) != plan.get("content_sha256"):
         raise PersonalCustodyError("custody-plan-content-mismatch")
     return records
 
@@ -355,7 +436,7 @@ def _expected_records(plan: dict[str, Any]) -> tuple[ContentRecord, ...]:
 def _assert_content(path: Path, expected: tuple[ContentRecord, ...]) -> None:
     current = content_records(path)
 
-    def logical(record: ContentRecord) -> tuple[str, str, int, int, str | None, str | None]:
+    def logical(record: ContentRecord) -> tuple[object, ...]:
         return (
             record.relative,
             record.kind,
@@ -363,6 +444,8 @@ def _assert_content(path: Path, expected: tuple[ContentRecord, ...]) -> None:
             record.size_bytes,
             record.sha256,
             record.link_target,
+            record.xattrs_sha256,
+            record.acl_sha256,
         )
 
     if tuple(map(logical, current)) != tuple(map(logical, expected)):
@@ -384,6 +467,8 @@ def _copy_with_ditto(source: Path, destination: Path) -> None:
         capture_output=True,
         text=True,
         check=False,
+        timeout=COPY_TIMEOUT_SECONDS,
+        stdin=subprocess.DEVNULL,
     )
     if result.returncode:
         detail = (result.stderr or result.stdout).strip()[:300]
@@ -396,11 +481,6 @@ def _restore_probe(
     *,
     copy_file: Callable[[Path, Path], None] | None = None,
 ) -> dict[str, Any]:
-    regular = [record for record in records if record.kind == "file"]
-    if not regular:
-        return {"kind": "empty-tree-manifest", "passed": True}
-    selected = max(regular, key=lambda value: (value.size_bytes, value.relative))
-    source = copy / selected.relative
     probe_root = copy.parent / f".restore-probe-{os.getpid()}-{secrets.token_hex(6)}"
     probe = probe_root / "restored"
     probe_root.mkdir(mode=0o700)
@@ -413,30 +493,33 @@ def _restore_probe(
                         "--rsrc",
                         "--extattr",
                         "--acl",
-                        str(source),
+                        str(copy),
                         str(probe),
                     ],
                     capture_output=True,
                     text=True,
                     check=False,
+                    timeout=RESTORE_TIMEOUT_SECONDS,
+                    stdin=subprocess.DEVNULL,
                 )
                 if result.returncode:
                     raise PersonalCustodyError("restore-probe-copy-failed")
             else:
-                shutil.copy2(source, probe)
+                shutil.copytree(copy, probe, symlinks=True, copy_function=shutil.copy2)
         else:
-            copy_file(source, probe)
-        if _file_sha256(probe) != selected.sha256:
-            raise PersonalCustodyError("restore-probe-hash-mismatch")
+            copy_file(copy, probe)
+        _assert_content(probe, records)
         return {
-            "kind": "materialized-file",
-            "relative_sha256": hashlib.sha256(selected.relative.encode("utf-8", errors="surrogateescape")).hexdigest(),
-            "size_bytes": selected.size_bytes,
+            "kind": "materialized-tree",
+            "record_count": len(records),
+            "metadata_verified": True,
             "passed": True,
         }
     finally:
-        if probe.exists() or probe.is_symlink():
+        if probe.is_symlink() or probe.is_file():
             probe.unlink()
+        elif probe.is_dir():
+            shutil.rmtree(probe)
         if probe_root.exists():
             probe_root.rmdir()
 
@@ -465,8 +548,10 @@ def create_plan(
     if not isinstance(inventory, dict) or inventory.get("schema") != ("limen.storage_evacuation_inventory.v1"):
         raise PersonalCustodyError("inventory-schema-mismatch")
     selected = _inventory_root(inventory, source)
-    archive = _prepare_external_root(archive_root / private_root, require_volume=require_volume)
-    recovery = _prepare_external_root(recovery_root / private_root, require_volume=require_volume)
+    archive_private = _contained_private_root(archive_root, private_root)
+    recovery_private = _contained_private_root(recovery_root, private_root)
+    archive = _prepare_external_root(archive_private, require_volume=require_volume)
+    recovery = _prepare_external_root(recovery_private, require_volume=require_volume)
     archive_identity = volume_probe(archive_root.resolve(strict=True))
     recovery_identity = volume_probe(recovery_root.resolve(strict=True))
     _inventory_volume(inventory, "Archive4T", archive_identity)
@@ -551,8 +636,14 @@ def _live_volume_roots(
     if archive_live.physical_device == recovery_live.physical_device:
         raise PersonalCustodyError("custody-volumes-share-physical-device")
     private_root = Path(plan["private_root"])
-    archive = _prepare_external_root(archive_mount / private_root, require_volume=require_volume)
-    recovery = _prepare_external_root(recovery_mount / private_root, require_volume=require_volume)
+    archive = _prepare_external_root(
+        _contained_private_root(archive_mount, private_root),
+        require_volume=require_volume,
+    )
+    recovery = _prepare_external_root(
+        _contained_private_root(recovery_mount, private_root),
+        require_volume=require_volume,
+    )
     return archive, recovery
 
 
@@ -578,6 +669,56 @@ def _materialize_copy(
     return _restore_probe(destination, expected)
 
 
+def _validate_plan_copies(
+    supplied: Path,
+    *,
+    archive: Path,
+    recovery: Path,
+    plan: dict[str, Any],
+    expected_plan_sha256: str,
+) -> None:
+    relative = _private_plan_relative(plan["label"], expected_plan_sha256)
+    archive_plan = archive / relative
+    recovery_plan = recovery / relative
+    try:
+        supplied_resolved = supplied.expanduser().resolve(strict=True)
+        allowed = {
+            archive_plan.resolve(strict=True),
+            recovery_plan.resolve(strict=True),
+        }
+    except OSError as exc:
+        raise PersonalCustodyError("custody-plan-copy-unavailable") from exc
+    if supplied_resolved not in allowed:
+        raise PersonalCustodyError("custody-plan-outside-canonical-copies")
+    if _validated_plan(archive_plan, expected_plan_sha256) != plan:
+        raise PersonalCustodyError("archive-plan-content-mismatch")
+    if _validated_plan(recovery_plan, expected_plan_sha256) != plan:
+        raise PersonalCustodyError("recovery-plan-content-mismatch")
+
+
+def _assert_public_receipt_outside_source(path: Path | None, source: Path) -> None:
+    if path is None:
+        return
+    try:
+        root = source.expanduser().resolve(strict=True)
+        candidate = path.expanduser().resolve(strict=False)
+    except OSError as exc:
+        raise PersonalCustodyError("public-receipt-path-unavailable") from exc
+    if candidate == root or root in candidate.parents:
+        raise PersonalCustodyError("public-receipt-inside-reclaimed-source")
+
+
+def _write_receipt_pair(archive_path: Path, recovery_path: Path, payload: dict[str, Any]) -> None:
+    failures: list[str] = []
+    for label, path in (("archive", archive_path), ("recovery", recovery_path)):
+        try:
+            _atomic_json(path, payload)
+        except OSError:
+            failures.append(label)
+    if failures:
+        raise PersonalCustodyError("custody-receipt-write-incomplete", ",".join(failures))
+
+
 def apply_plan(
     *,
     plan_path: Path,
@@ -590,11 +731,15 @@ def apply_plan(
     plan = _validated_plan(plan_path, expected_plan_sha256)
     expected = _expected_records(plan)
     archive, recovery = _live_volume_roots(plan, require_volume=require_volume, volume_probe=volume_probe)
-    relative_plan = _private_plan_relative(plan["label"], expected_plan_sha256)
-    peer_plan = recovery / relative_plan
-    if _validated_plan(peer_plan, expected_plan_sha256) != plan:
-        raise PersonalCustodyError("recovery-plan-content-mismatch")
+    _validate_plan_copies(
+        plan_path,
+        archive=archive,
+        recovery=recovery,
+        plan=plan,
+        expected_plan_sha256=expected_plan_sha256,
+    )
     source = Path(plan["source"]["path"])
+    _assert_public_receipt_outside_source(public_receipt_path, source)
     if asdict(_source_identity(source)) != plan["source"]:
         raise PersonalCustodyError("source-identity-drift")
     _assert_content(source, expected)
@@ -635,8 +780,11 @@ def apply_plan(
     }
     receipt_payload["receipt_sha256"] = _canonical_sha256(receipt_payload)
     relative_receipt = _receipt_relative(plan["label"], expected_plan_sha256)
-    _atomic_json(archive / relative_receipt, receipt_payload)
-    _atomic_json(recovery / relative_receipt, receipt_payload)
+    _write_receipt_pair(
+        archive / relative_receipt,
+        recovery / relative_receipt,
+        receipt_payload,
+    )
     public = {
         "schema": PUBLIC_RECEIPT_SCHEMA,
         "event": "custody_restored",
@@ -675,10 +823,127 @@ def _validated_receipt(path: Path, plan: dict[str, Any], expected_plan_sha256: s
     return receipt
 
 
+def _reconcile_receipt_pair(
+    archive_path: Path,
+    recovery_path: Path,
+    *,
+    plan: dict[str, Any],
+    expected_plan_sha256: str,
+    source_exists: bool,
+) -> dict[str, Any]:
+    archive = _validated_receipt(archive_path, plan, expected_plan_sha256)
+    recovery = _validated_receipt(recovery_path, plan, expected_plan_sha256)
+    if archive == recovery:
+        return archive
+    by_status = {str(archive.get("status")): archive, str(recovery.get("status")): recovery}
+    if source_exists and set(by_status) == {"restored", "reclaiming"}:
+        selected = by_status["reclaiming"]
+    elif not source_exists and set(by_status) == {"reclaiming", "reclaimed"}:
+        selected = by_status["reclaimed"]
+    else:
+        raise PersonalCustodyError("custody-receipts-diverged")
+    _write_receipt_pair(archive_path, recovery_path, selected)
+    return selected
+
+
+def _completed_purge_receipt(
+    receipt_root: Path,
+    *,
+    plan: dict[str, Any],
+    expected_plan_sha256: str,
+    source: Path,
+) -> dict[str, Any] | None:
+    """Recover a committed purge whose final custody receipt write crashed."""
+
+    try:
+        root_info = receipt_root.lstat()
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        raise PersonalCustodyError("purge-receipt-root-unavailable") from exc
+    if stat.S_ISLNK(root_info.st_mode) or not stat.S_ISDIR(root_info.st_mode):
+        raise PersonalCustodyError("purge-receipt-root-invalid")
+    try:
+        candidates = sorted(
+            receipt_root.glob("*.json"),
+            key=lambda path: path.stat().st_mtime_ns,
+            reverse=True,
+        )
+    except OSError as exc:
+        raise PersonalCustodyError("purge-receipt-scan-failed") from exc
+    if len(candidates) > MAX_PURGE_RECEIPTS:
+        raise PersonalCustodyError("purge-receipt-scan-unbounded")
+    expected_proof = {
+        "kind": "external-restoration",
+        "custody_plan_sha256": expected_plan_sha256,
+        "custody_content_sha256": plan["content_sha256"],
+    }
+    expected_contents = plan.get("reclaim_mode", "root") == "contents"
+    for path in candidates:
+        try:
+            receipt = _load_json(path, schema=WORKTREE_ABANDONMENT_SCHEMA)
+        except PersonalCustodyError:
+            continue
+        result = receipt.get("result")
+        if (
+            receipt.get("action") == "purge-proven-path"
+            and receipt.get("state") == "completed"
+            and receipt.get("phase") == "verify-final"
+            and receipt.get("target") == str(source)
+            and receipt.get("reason") == "custody-restored+idle"
+            and isinstance(result, dict)
+            and result.get("proof") == expected_proof
+            and result.get("purged") is True
+            and bool(result.get("retained_empty_root")) == expected_contents
+        ):
+            if expected_contents:
+                try:
+                    source_info = source.lstat()
+                except OSError as exc:
+                    raise PersonalCustodyError("retained-source-root-unavailable") from exc
+                if stat.S_ISLNK(source_info.st_mode) or not stat.S_ISDIR(source_info.st_mode) or any(source.iterdir()):
+                    raise PersonalCustodyError("retained-source-root-postcondition-failed")
+            elif source.exists() or source.is_symlink():
+                raise PersonalCustodyError("purged-source-root-postcondition-failed")
+            return receipt
+    return None
+
+
+def _completed_reclaim_receipt(
+    reclaiming: dict[str, Any],
+    *,
+    archive_restore: dict[str, Any],
+    recovery_restore: dict[str, Any],
+    purge_receipt: dict[str, Any],
+) -> dict[str, Any]:
+    persisted_purge = {key: value for key, value in purge_receipt.items() if key != "receipt_path"}
+    completed = {
+        **reclaiming,
+        "status": "reclaimed",
+        "updated_at": _now(),
+        "copies": {
+            **reclaiming["copies"],
+            "archive": {
+                **reclaiming["copies"]["archive"],
+                "restore": archive_restore,
+            },
+            "recovery": {
+                **reclaiming["copies"]["recovery"],
+                "restore": recovery_restore,
+            },
+        },
+        "reclaimed": True,
+        "purge_receipt_sha256": _canonical_sha256(persisted_purge),
+    }
+    completed.pop("receipt_sha256", None)
+    completed["receipt_sha256"] = _canonical_sha256(completed)
+    return completed
+
+
 def _open_owner_probe(path: Path, *, ignore_root: bool) -> int | None:
     try:
         result = subprocess.run(
-            ["lsof", "-n", "-Fpn", "+D", str(path)],
+            ["/usr/sbin/lsof", "-n", "-Fpn", "+D", str(path)],
             capture_output=True,
             text=True,
             timeout=60,
@@ -738,11 +1003,26 @@ def reclaim_plan(
     plan = _validated_plan(plan_path, expected_plan_sha256)
     expected = _expected_records(plan)
     archive, recovery = _live_volume_roots(plan, require_volume=require_volume, volume_probe=volume_probe)
+    _validate_plan_copies(
+        plan_path,
+        archive=archive,
+        recovery=recovery,
+        plan=plan,
+        expected_plan_sha256=expected_plan_sha256,
+    )
+    source = Path(plan["source"]["path"])
+    _assert_public_receipt_outside_source(public_receipt_path, source)
     relative_receipt = _receipt_relative(plan["label"], expected_plan_sha256)
-    archive_receipt = _validated_receipt(archive / relative_receipt, plan, expected_plan_sha256)
-    recovery_receipt = _validated_receipt(recovery / relative_receipt, plan, expected_plan_sha256)
-    if archive_receipt != recovery_receipt:
-        raise PersonalCustodyError("custody-receipts-diverged")
+    archive_receipt_path = archive / relative_receipt
+    recovery_receipt_path = recovery / relative_receipt
+    source_exists = source.exists()
+    archive_receipt = _reconcile_receipt_pair(
+        archive_receipt_path,
+        recovery_receipt_path,
+        plan=plan,
+        expected_plan_sha256=expected_plan_sha256,
+        source_exists=source_exists,
+    )
     object_relative = _object_relative(plan["label"], plan["content_sha256"])
     archive_copy = archive / object_relative
     recovery_copy = recovery / object_relative
@@ -750,7 +1030,45 @@ def reclaim_plan(
     archive_restore = _restore_probe(archive_copy, expected)
     _assert_content(recovery_copy, expected)
     recovery_restore = _restore_probe(recovery_copy, expected)
-    source = Path(plan["source"]["path"])
+    if archive_receipt.get("status") == "reclaiming":
+        committed_purge = _completed_purge_receipt(
+            archive / "_PURGE_RECEIPTS",
+            plan=plan,
+            expected_plan_sha256=expected_plan_sha256,
+            source=source,
+        )
+        if committed_purge is not None:
+            completed = _completed_reclaim_receipt(
+                archive_receipt,
+                archive_restore=archive_restore,
+                recovery_restore=recovery_restore,
+                purge_receipt=committed_purge,
+            )
+            _write_receipt_pair(
+                archive_receipt_path,
+                recovery_receipt_path,
+                completed,
+            )
+            public = _public_reclaim_receipt(plan, completed)
+            if public_receipt_path is not None:
+                _append_public_receipt(public_receipt_path, public)
+            return public
+    if archive_receipt.get("status") == "reclaimed":
+        if plan.get("reclaim_mode", "root") == "contents":
+            try:
+                source_info = source.lstat()
+            except OSError as exc:
+                raise PersonalCustodyError("retained-source-root-unavailable") from exc
+            if stat.S_ISLNK(source_info.st_mode) or not stat.S_ISDIR(source_info.st_mode) or any(source.iterdir()):
+                raise PersonalCustodyError("retained-source-root-postcondition-failed")
+        elif source_exists or source.is_symlink():
+            raise PersonalCustodyError("reclaimed-receipt-source-still-present")
+        public = _public_reclaim_receipt(plan, archive_receipt)
+        if public_receipt_path is not None:
+            _append_public_receipt(public_receipt_path, public)
+        return public
+    if not source_exists:
+        raise PersonalCustodyError("source-missing-without-reclaimed-receipt")
     if asdict(_source_identity(source)) != plan["source"]:
         raise PersonalCustodyError("source-identity-drift")
     _assert_content(source, expected)
@@ -768,6 +1086,21 @@ def reclaim_plan(
         if reclaim_mode == "contents" and owner_probe is _open_file_owner_probe
         else owner_probe
     )
+    reclaiming = {
+        **archive_receipt,
+        "status": "reclaiming",
+        "updated_at": _now(),
+        "reclaim_transaction_sha256": _canonical_sha256(
+            {
+                "plan_sha256": expected_plan_sha256,
+                "content_sha256": plan["content_sha256"],
+                "source_path_sha256": plan["source"]["path_sha256"],
+            }
+        ),
+    }
+    reclaiming.pop("receipt_sha256", None)
+    reclaiming["receipt_sha256"] = _canonical_sha256(reclaiming)
+    _write_receipt_pair(archive_receipt_path, recovery_receipt_path, reclaiming)
     try:
         arguments = {
             "source": source,
@@ -777,6 +1110,7 @@ def reclaim_plan(
             "custody_content_sha256": plan["content_sha256"],
             "receipt_root": archive / "_PURGE_RECEIPTS",
             "owner_probe": effective_owner_probe,
+            "content_probe": lambda current: _assert_content(current, expected),
         }
         if reclaim_mode == "contents":
             purge = purge_custody_proven_contents(**arguments)
@@ -787,36 +1121,28 @@ def reclaim_plan(
             )
     except WorktreeAbandonmentError as exc:
         raise PersonalCustodyError("custody-reclaim-denied", str(exc).splitlines()[0]) from exc
-    completed = {
-        **archive_receipt,
-        "status": "reclaimed",
-        "updated_at": _now(),
-        "copies": {
-            **archive_receipt["copies"],
-            "archive": {
-                **archive_receipt["copies"]["archive"],
-                "restore": archive_restore,
-            },
-            "recovery": {
-                **archive_receipt["copies"]["recovery"],
-                "restore": recovery_restore,
-            },
-        },
-        "reclaimed": True,
-        "purge_receipt_sha256": _canonical_sha256(purge),
-    }
-    completed.pop("receipt_sha256", None)
-    completed["receipt_sha256"] = _canonical_sha256(completed)
-    _atomic_json(archive / relative_receipt, completed)
-    _atomic_json(recovery / relative_receipt, completed)
-    public = {
+    completed = _completed_reclaim_receipt(
+        reclaiming,
+        archive_restore=archive_restore,
+        recovery_restore=recovery_restore,
+        purge_receipt=purge,
+    )
+    _write_receipt_pair(archive_receipt_path, recovery_receipt_path, completed)
+    public = _public_reclaim_receipt(plan, completed)
+    if public_receipt_path is not None:
+        _append_public_receipt(public_receipt_path, public)
+    return public
+
+
+def _public_reclaim_receipt(plan: dict[str, Any], completed: dict[str, Any]) -> dict[str, Any]:
+    return {
         "schema": PUBLIC_RECEIPT_SCHEMA,
         "event": "internal_copy_reclaimed",
         "recorded_at": _now(),
         "label": plan["label"],
-        "reclaim_mode": reclaim_mode,
+        "reclaim_mode": plan.get("reclaim_mode", "root"),
         "inventory_sha256": plan["inventory"]["sha256"],
-        "plan_sha256": expected_plan_sha256,
+        "plan_sha256": plan["plan_sha256"],
         "content_sha256": plan["content_sha256"],
         "receipt_sha256": completed["receipt_sha256"],
         "file_count": plan["file_count"],
@@ -827,9 +1153,6 @@ def reclaim_plan(
         "restoration_passed": True,
         "reclaimed": True,
     }
-    if public_receipt_path is not None:
-        _append_public_receipt(public_receipt_path, public)
-    return public
 
 
 def _append_public_receipt(path: Path, payload: dict[str, Any]) -> None:

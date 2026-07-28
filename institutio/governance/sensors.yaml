@@ -664,7 +664,7 @@ sensors:
 
   disk-capacity:
     section: "0g8"
-    title: "disk capacity — /System/Volumes/Data must stay below threshold; heal-probe artifacts + heartbeat err log reaped when armed"
+    title: "disk capacity — live free bytes must cover the resource envelope; heal-probe artifacts + heartbeat err log reaped when armed"
     gate: LIMEN_DISK_CAPACITY
     default: "1"
     source: [metabolize]
@@ -686,7 +686,7 @@ sensors:
         severity: advisory
         escalation: "disk capacity BREACHED — arm LIMEN_DISK_CAPACITY_APPLY=1 so the beat removes gitignored probes and truncates the heartbeat error log"
     omega_eligible:
-      - label: "disk capacity below threshold"
+      - label: "disk capacity covers live resource envelope"
         rung_id: sensor.disk.capacity
         tier: det
         command: "python3 scripts/disk-capacity.py --check"

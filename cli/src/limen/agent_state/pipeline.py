@@ -30,6 +30,7 @@ class PipelineError(RuntimeError):
     """The custody pipeline failed before its destructive gate."""
 
 
+ARCA_REMOTE_EXACT_ERROR = "ARCA completed receipt is not exact on the remote"
 GITHUB_PUSH_LIMIT_BYTES = 2 * 1024 * 1024 * 1024
 DEFAULT_GIT_BATCH_LIMIT_BYTES = 1024 * 1024 * 1024
 
@@ -203,7 +204,7 @@ class GitVault:
             raise PipelineError("ARCA completed receipt commit has invalid history")
         remote = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()[0]
         if remote != head:
-            raise PipelineError("ARCA completed receipt is not exact on the remote")
+            raise PipelineError(ARCA_REMOTE_EXACT_ERROR)
         return history[1], head
 
     def completed_receipt_at_remote(

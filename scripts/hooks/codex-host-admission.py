@@ -360,6 +360,10 @@ def handle(
             return None
         controller = controller or AdmissionController()
         owner = _turn_owner(payload)
+        if owner is None:
+            return _tool_deny(
+                "Limen host admission denied mutation: durable Codex session identity is missing"
+            )
         pid = owner_pid or codex_owner_pid()
         decision = admit_pre_tool_action(
             payload,

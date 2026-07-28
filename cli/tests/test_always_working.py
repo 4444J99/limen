@@ -278,6 +278,7 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 78.0, "used_pct": 82.0, "tmp_ok": True, "tmp_error": ""}
     )
+    monkeypatch.setattr(mod, "current_required_free_gib", lambda: 200.0)
     monkeypatch.setattr(
         mod,
         "run_command",
@@ -286,7 +287,7 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
     receipt = mod.substrate_receipt()
 
     assert receipt["status"] == mod.STATUS_ASSIGNED
-    assert receipt["evidence"]["shortfall_gib"] == 122.0
+    assert receipt["evidence"]["resource_headroom_gib"] == -122.0
     assert receipt["evidence"]["lifecycle"]["predicate_ok"] is True
     assert receipt["evidence"]["lifecycle"]["generated_state_reclaim"]["cumulative_reclaimed_size"] == "26.6 GiB"
     assert receipt["evidence"]["lifecycle"]["tool_cache_reclaim"]["cumulative_reclaimed_size"] == "4.7 GiB"
@@ -305,8 +306,8 @@ def test_substrate_receipt_blocks_when_storage_pressure_needs_owner_gates(monkey
             {
                 "status": "needs-owner-gates",
                 "internal_free_gib": 93.0,
-                "target_free_gib": 200.0,
-                "shortfall_gib": 107.0,
+                "required_free_gib": 200.0,
+                "resource_headroom_gib": -107.0,
             }
         ),
         encoding="utf-8",
@@ -329,6 +330,7 @@ def test_substrate_receipt_blocks_when_storage_pressure_needs_owner_gates(monkey
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 93.0, "used_pct": 80.0, "tmp_ok": True, "tmp_error": ""}
     )
+    monkeypatch.setattr(mod, "current_required_free_gib", lambda: 200.0)
     receipt = mod.substrate_receipt()
 
     assert receipt["status"] == mod.STATUS_BLOCKED

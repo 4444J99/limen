@@ -25,6 +25,7 @@ AbandonmentAction = Literal[
 AbandonmentState = Literal["planned", "verified", "applying", "completed", "crashed"]
 OwnerProbe = Callable[[Path], int | None]
 RootPrepare = Callable[[Path], None]
+ContentProbe = Callable[[Path], None]
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 OBJECT_ID_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 
@@ -176,8 +177,8 @@ def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
             continue
         try:
             paths.append(Path(line.removeprefix("worktree ")).resolve(strict=True))
-        except OSError:
-            continue
+        except OSError as exc:
+            raise RuntimeError("registered-worktree-path-unavailable") from exc
     return tuple(paths)
 
 
@@ -186,7 +187,7 @@ def _default_cwd_owner_probe(target: Path) -> int | None:
 
     try:
         result = subprocess.run(
-            ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
+            ["/usr/sbin/lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
             capture_output=True,
             text=True,
             timeout=20,
@@ -432,6 +433,7 @@ def _purge_proven_path(
     receipt_root: Path,
     owner_probe: OwnerProbe | None = None,
     root_prepare: RootPrepare | None = None,
+    content_probe: ContentProbe | None = None,
     retain_empty_root: bool = False,
 ) -> dict[str, Any]:
     """Purge one exact directory after its typed owner proves replacement custody."""
@@ -449,12 +451,16 @@ def _purge_proven_path(
             raise RuntimeError("proven-purge-reason-invalid")
         if not _custody_identity_matches(source, expected):
             raise RuntimeError("proven-path-identity-mismatch")
+        if content_probe is not None:
+            content_probe(source)
         owner = (owner_probe or _default_cwd_owner_probe)(source)
         if owner is not None:
             code = "owner-probe-unavailable" if owner == -1 else f"active-process-cwd:{owner}"
             raise RuntimeError(code)
         if not _custody_identity_matches(source, expected):
             raise RuntimeError("proven-path-identity-changed-after-owner-probe")
+        if content_probe is not None:
+            content_probe(source)
         if root_prepare is not None:
             root_prepare(source)
             if not _custody_identity_matches(source, expected):
@@ -463,6 +469,10 @@ def _purge_proven_path(
             if owner is not None:
                 code = "owner-probe-unavailable" if owner == -1 else f"active-process-cwd:{owner}"
                 raise RuntimeError(code)
+        if content_probe is not None:
+            # This is the final content rehash before rename or fd-isolated
+            # destruction. A plan-time or pre-owner hash is not deletion proof.
+            content_probe(source)
         staging = source.parent / f".{source.name}.proven-purge-{receipt_path.stem[:16]}"
         if staging.exists() or staging.is_symlink():
             raise RuntimeError("proven-purge-staging-exists")
@@ -558,6 +568,7 @@ def purge_custody_proven_path(
     receipt_root: Path,
     owner_probe: OwnerProbe | None = None,
     root_prepare: RootPrepare | None = None,
+    content_probe: ContentProbe | None = None,
 ) -> dict[str, Any]:
     """Purge one exact directory only after full external restoration proof."""
 
@@ -576,6 +587,7 @@ def purge_custody_proven_path(
         receipt_root=receipt_root,
         owner_probe=owner_probe,
         root_prepare=root_prepare,
+        content_probe=content_probe,
     )
 
 
@@ -588,6 +600,7 @@ def purge_custody_proven_contents(
     custody_content_sha256: str,
     receipt_root: Path,
     owner_probe: OwnerProbe | None = None,
+    content_probe: ContentProbe | None = None,
 ) -> dict[str, Any]:
     """Empty one exact directory after restoration proof while retaining its shell."""
 
@@ -605,6 +618,7 @@ def purge_custody_proven_contents(
         },
         receipt_root=receipt_root,
         owner_probe=owner_probe,
+        content_probe=content_probe,
         retain_empty_root=True,
     )
 
@@ -616,8 +630,10 @@ def purge_remote_proven_path(
     reason: str,
     head: str,
     remote_refs: tuple[str, ...],
+    local_ref_proof: tuple[dict[str, Any], ...],
     receipt_root: Path,
     owner_probe: OwnerProbe | None = None,
+    content_probe: ContentProbe | None = None,
 ) -> dict[str, Any]:
     """Purge one clean clone whose exact HEAD is reachable from a remote ref."""
 
@@ -627,6 +643,14 @@ def purge_remote_proven_path(
         not value.startswith("refs/remotes/") or "\n" in value or "\r" in value for value in remote_refs
     ):
         raise ValueError("remote-purge-refs-invalid")
+    if not local_ref_proof or any(
+        not isinstance(value.get("local_ref"), str)
+        or not isinstance(value.get("object"), str)
+        or not isinstance(value.get("remote_refs"), list)
+        or not value["remote_refs"]
+        for value in local_ref_proof
+    ):
+        raise ValueError("remote-purge-local-ref-proof-invalid")
     return _purge_proven_path(
         source,
         expected,
@@ -638,9 +662,15 @@ def purge_remote_proven_path(
                 "receipt-remote-merged+clean+idle",
             }
         ),
-        proof={"kind": "remote-head", "head": head, "remote_refs": list(remote_refs)},
+        proof={
+            "kind": "remote-all-local-refs",
+            "head": head,
+            "remote_refs": list(remote_refs),
+            "local_refs": list(local_ref_proof),
+        },
         receipt_root=receipt_root,
         owner_probe=owner_probe,
+        content_probe=content_probe,
     )
 
 

@@ -92,12 +92,12 @@ def test_debt_classifier_matches_accepted_reaper_for_remote_merged_receipt(tmp_p
     accepted, _accept_reason = reclaim.reclaim_accepted(root, action, reaper_reason, [])
 
     assert (action, reaper_reason, accepted) == (
-        "remove-clone",
-        "receipt-remote-merged+clean+idle",
-        True,
+        "skip",
+        "unpreserved-local-refs",
+        False,
     )
     assert debt_reason == reaper_reason
-    assert debt_reason in debt.REAPABLE_REASONS
+    assert debt_reason in debt.DEBT_REASONS
 
 
 def test_reclaim_applies_remote_preserved_contract_inside_antigravity_scratch(
@@ -209,6 +209,18 @@ def test_candidate_manifest_digest_is_order_independent_and_bounded(tmp_path: Pa
         "remote_refs_containing_head",
         lambda *_args, **_kwargs: ("refs/remotes/origin/main",),
     )
+    monkeypatch.setattr(
+        reclaim,
+        "all_local_refs_remote_proof",
+        lambda *_args, **_kwargs: (
+            {
+                "local_ref": "refs/heads/main",
+                "object": "a" * 40,
+                "peeled_object": None,
+                "remote_refs": ["refs/heads/main"],
+            },
+        ),
+    )
 
     left = reclaim.build_candidate_manifest(
         [(second, 0, "test"), (first, 0, "test")],
@@ -264,6 +276,18 @@ def test_apply_requires_matching_plan_digest_before_abandonment(tmp_path: Path, 
         reclaim,
         "remote_refs_containing_head",
         lambda *_args, **_kwargs: ("refs/remotes/origin/main",),
+    )
+    monkeypatch.setattr(
+        reclaim,
+        "all_local_refs_remote_proof",
+        lambda *_args, **_kwargs: (
+            {
+                "local_ref": "refs/heads/main",
+                "object": "a" * 40,
+                "peeled_object": None,
+                "remote_refs": ["refs/heads/main"],
+            },
+        ),
     )
     monkeypatch.setattr(
         reclaim,
@@ -345,6 +369,7 @@ def test_reclaim_acceptance_requires_archive_and_redaction_proofs(tmp_path: Path
 
 def test_reclaim_generated_payloads_cleans_inactive_ignored_dirs(tmp_path: Path, monkeypatch) -> None:
     reclaim = load_reclaim_worktrees()
+    monkeypatch.setenv("LIMEN_RECLAIM_GENERATED", "1")
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
@@ -404,6 +429,7 @@ def test_reclaim_generated_payloads_preserves_tracked_generated_name(
     monkeypatch,
 ) -> None:
     reclaim = load_reclaim_worktrees()
+    monkeypatch.setenv("LIMEN_RECLAIM_GENERATED", "1")
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
@@ -647,6 +673,12 @@ def test_reclaim_custody_context_admits_only_failed_checkout_payload_roots(
     ]
     receipt = {
         "roots": roots,
+        "failed_checkout_states": [
+            {
+                "path_sha256": roots[0]["path_sha256"],
+                "content_sha256": "c" * 64,
+            }
+        ],
         "content_sha256": "b" * 64,
         "root_count": 2,
         "failed_checkout_root_count": 1,
@@ -749,6 +781,18 @@ def _model_pushed_unmerged(reclaim, monkeypatch) -> None:
     monkeypatch.setattr(reclaim, "merged_into_default", lambda d, head: False)
     monkeypatch.setattr(reclaim, "patch_equivalent_to_default", lambda d: False)
     monkeypatch.setattr(reclaim, "receipt_remote_merged", lambda d, r: False)
+    monkeypatch.setattr(
+        reclaim,
+        "all_local_refs_remote_proof",
+        lambda _d: (
+            {
+                "local_ref": "refs/heads/feature",
+                "object": "a" * 40,
+                "peeled_object": None,
+                "remote_refs": ["refs/heads/feature"],
+            },
+        ),
+    )
 
 
 def test_reclaim_reaps_pushed_unmerged_when_pushed_ok(tmp_path: Path, monkeypatch) -> None:
@@ -833,6 +877,89 @@ def test_reclaim_preserves_clone_that_owns_registered_sibling_worktrees(tmp_path
     assert action == "skip"
     assert reason == "registered-worktree-owner"
     assert sibling in reclaim.registered_sibling_worktrees(main)
+
+
+def test_reclaim_fails_closed_when_registered_sibling_is_unavailable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    main = _committed_repo(tmp_path, "main")
+    missing = tmp_path / "missing-sibling"
+    real_git = reclaim.git
+
+    def unavailable_sibling(args, cwd, timeout=20):
+        if args == ["worktree", "list", "--porcelain"]:
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                0,
+                f"worktree {main}\n\nworktree {missing}\n",
+                "",
+            )
+        return real_git(args, cwd, timeout=timeout)
+
+    monkeypatch.setattr(reclaim, "git", unavailable_sibling)
+
+    action, reason = reclaim.classify(main, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "registered-sibling-worktree-unavailable"
+
+
+def test_workspace_checkout_source_rejects_linked_worktree(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    main = _committed_repo(tmp_path, "main")
+    linked = tmp_path / "linked"
+    subprocess.run(
+        ["git", "worktree", "add", "-qb", "linked", str(linked)],
+        cwd=main,
+        check=True,
+    )
+
+    action, reason = reclaim.classify(
+        linked,
+        time.time(),
+        0,
+        source="workspace-checkout",
+    )
+
+    assert action == "skip"
+    assert reason == "workspace-checkout-source-contract-violation"
+
+
+def test_unpushed_annotated_tag_blocks_all_local_ref_proof(
+    tmp_path: Path,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = _committed_repo(tmp_path, "main")
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+    subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=repo, check=True)
+    subprocess.run(["git", "push", "-qu", "origin", "main"], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=t@example.com",
+            "-c",
+            "user.name=test",
+            "tag",
+            "-a",
+            "private-annotation",
+            "-m",
+            "not yet remote",
+        ],
+        cwd=repo,
+        check=True,
+    )
+
+    assert reclaim.all_local_refs_remote_proof(repo) is None
+    subprocess.run(
+        ["git", "push", "-q", "origin", "refs/tags/private-annotation"],
+        cwd=repo,
+        check=True,
+    )
+    assert reclaim.all_local_refs_remote_proof(repo) is not None
 
 
 def test_reclaim_keeps_pushed_unmerged_when_pushed_ok_off(tmp_path: Path, monkeypatch) -> None:

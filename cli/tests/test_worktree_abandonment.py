@@ -95,6 +95,26 @@ def test_detach_denies_dirty_root_without_cleanup(tmp_path: Path) -> None:
     assert (target / "untracked.txt").read_text(encoding="utf-8") == "keep me\n"
 
 
+def test_registered_worktree_scan_fails_closed_on_unresolvable_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    missing = tmp_path / "missing-linked-root"
+    monkeypatch.setattr(
+        abandonment,
+        "_run_git",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(
+            ["git", "worktree", "list"],
+            0,
+            f"worktree {missing}\n",
+            "",
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="registered-worktree-path-unavailable"):
+        abandonment._registered_worktree_paths(tmp_path)
+
+
 def test_quarantine_atomically_preserves_bytes(tmp_path: Path) -> None:
     source = tmp_path / "creation-root" / "candidate"
     source.mkdir(parents=True)
@@ -297,13 +317,69 @@ def test_remote_purge_requires_exact_remote_head_proof(tmp_path: Path) -> None:
         reason="clean+pushed+idle",
         head="a" * 40,
         remote_refs=("refs/remotes/origin/work/example",),
+        local_ref_proof=(
+            {
+                "local_ref": "refs/heads/work/example",
+                "object": "a" * 40,
+                "peeled_object": None,
+                "remote_refs": ["refs/heads/work/example"],
+            },
+        ),
         receipt_root=tmp_path / "receipts",
         owner_probe=lambda _path: None,
     )
 
-    assert result["result"]["proof"]["kind"] == "remote-head"
+    assert result["result"]["proof"]["kind"] == "remote-all-local-refs"
     assert result["result"]["purged"] is True
     assert not source.exists()
+
+
+def test_custody_purge_rehashes_after_root_prepare_before_isolation(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "candidate"
+    source.mkdir()
+    document = source / "document.txt"
+    document.write_text("preserved\n", encoding="utf-8")
+    raw = source.stat()
+    resolved = source.resolve()
+    identity = abandonment.CustodyPathIdentity(
+        path=str(resolved),
+        path_sha256=hashlib.sha256(str(resolved).encode()).hexdigest(),
+        device=raw.st_dev,
+        inode=raw.st_ino,
+        mtime_ns=raw.st_mtime_ns,
+    )
+    probe_calls = 0
+
+    def exact_content_probe(_path: Path) -> None:
+        nonlocal probe_calls
+        probe_calls += 1
+        if document.read_text(encoding="utf-8") != "preserved\n":
+            raise RuntimeError("content-changed")
+
+    def mutate_during_prepare(_path: Path) -> None:
+        document.write_text("changed\n", encoding="utf-8")
+
+    with pytest.raises(
+        abandonment.WorktreeAbandonmentError,
+        match="content-changed",
+    ):
+        abandonment.purge_custody_proven_path(
+            source,
+            identity,
+            reason="custody-restored+idle",
+            custody_plan_sha256="a" * 64,
+            custody_content_sha256="b" * 64,
+            receipt_root=tmp_path / "receipts",
+            owner_probe=lambda _path: None,
+            root_prepare=mutate_during_prepare,
+            content_probe=exact_content_probe,
+        )
+
+    assert probe_calls == 3
+    assert source.is_dir()
+    assert document.read_text(encoding="utf-8") == "changed\n"
 
 
 def test_stable_zero_byte_lock_removal_requires_exact_unowned_identity(tmp_path: Path) -> None:

@@ -26,7 +26,13 @@ from .file_provider import (
     retention_plan_from_capture,
 )
 from .models import AtomPack, CipherChunk, MetabolismReceipt, ReceiptError, RestoreProof, SourceProof
-from .pipeline import GitVault, PipelineError, require_mounted_external, run_id_now
+from .pipeline import (
+    ARCA_REMOTE_EXACT_ERROR,
+    GitVault,
+    PipelineError,
+    require_mounted_external,
+    run_id_now,
+)
 from .tree import (
     RetentionPlan,
     atomize_file_tree,
@@ -345,7 +351,7 @@ def resume_cold_tree_capture(
     try:
         completed = vault.completed_receipt_commits(relative, receipt_message)
     except PipelineError as exc:
-        if str(exc) != "ARCA completed receipt is not exact on the remote":
+        if str(exc) != ARCA_REMOTE_EXACT_ERROR:
             raise
         remote_completed = vault.completed_receipt_at_remote(relative, receipt_message)
         completed = (remote_completed[0], remote_completed[1])

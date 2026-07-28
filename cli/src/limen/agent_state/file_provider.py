@@ -31,6 +31,8 @@ CAMPAIGN_PLAN_SCHEMA = "domus.file_provider_evict_campaign_plan.v1"
 RECEIPT_SCHEMA = "domus.file_provider_evict_receipt.v1"
 AUTHORIZATION_SCHEMA = "domus.host_mutation_authorization.v2"
 CAMPAIGN_AUTHORIZATION_SCHEMA = "domus.host_mutation_authorization.v3"
+STANDING_AUTHORIZATION_SCHEMA = "domus.host_mutation_standing_authority.v1"
+DERIVED_CAPABILITY_SCHEMA = "domus.host_mutation_child_capability.v1"
 PROGRESS_SCHEMA = "limen.file_provider_evict_progress.v1"
 AUTHORIZATION_ACTION = "file_provider_evict.apply"
 CAMPAIGN_AUTHORIZATION_ACTION = "file_provider_evict.apply_campaign"
@@ -38,8 +40,6 @@ ADAPTER_NAME = "domus-file-provider-evict"
 
 MAX_BATCH_ITEMS = 1_000
 MAX_CAMPAIGN_ITEMS = 100_000
-MAX_CAMPAIGN_ATTEMPTS = 256
-CAMPAIGN_RETRY_RUNWAY = 8
 BATCH_TIMEOUT_SECONDS = 15 * 60
 ITEM_TIMEOUT_SECONDS = 60
 MAX_ADAPTER_OUTPUT_BYTES = 8 * 1024 * 1024
@@ -1032,7 +1032,6 @@ def _campaign_plan(
     eligible_hashes: list[str],
     *,
     principal: str,
-    max_attempts: int,
 ) -> dict[str, Any]:
     return {
         "schema": CAMPAIGN_PLAN_SCHEMA,
@@ -1041,18 +1040,54 @@ def _campaign_plan(
         "authorization_principal": principal,
         "timeout_seconds": BATCH_TIMEOUT_SECONDS,
         "per_item_timeout_seconds": ITEM_TIMEOUT_SECONDS,
-        "max_attempts": max_attempts,
         "item_hashes": eligible_hashes,
     }
 
 
-def _validate_campaign_authorization(
+def _standing_authority_id(value: dict[str, Any]) -> str:
+    return hashlib.sha256(
+        canonical_bytes(
+            {
+                "action": CAMPAIGN_AUTHORIZATION_ACTION,
+                "attempt_prefix": value["attempt_prefix"],
+                "authorized_by": value["authorized_by"],
+                "issued_at": value["issued_at"],
+                "item_set_sha256": value["item_set_sha256"],
+                "item_hashes": value["item_hashes"],
+                "max_batch_items": value["max_batch_items"],
+                "max_batch_timeout_seconds": value["max_batch_timeout_seconds"],
+                "max_item_timeout_seconds": value["max_item_timeout_seconds"],
+            }
+        )
+    ).hexdigest()
+
+
+def _migrate_campaign_authorization(value: dict[str, Any], source_bytes: bytes) -> dict[str, Any]:
+    return {
+        "schema": STANDING_AUTHORIZATION_SCHEMA,
+        "action": CAMPAIGN_AUTHORIZATION_ACTION,
+        "authority_id": _standing_authority_id(value),
+        "attempt_prefix": value["attempt_prefix"],
+        "authorized_by": value["authorized_by"],
+        "issued_at": value["issued_at"],
+        "item_set_sha256": value["item_set_sha256"],
+        "item_count": value["item_count"],
+        "item_hashes": value["item_hashes"],
+        "max_batch_items": value["max_batch_items"],
+        "max_batch_timeout_seconds": value["max_batch_timeout_seconds"],
+        "max_item_timeout_seconds": value["max_item_timeout_seconds"],
+        "signature_subject_b64": base64.b64encode(source_bytes).decode("ascii"),
+        "revoked_at": None,
+    }
+
+
+def _validate_standing_authorization(
     payload: bytes,
     receipt: MetabolismReceipt,
     eligible_hashes: list[str],
 ) -> dict[str, Any]:
-    value = _json_object(payload, label="File Provider campaign authorization receipt")
-    expected = {
+    original = _json_object(payload, label="File Provider standing authorization receipt")
+    legacy_expected = {
         "schema",
         "action",
         "campaign_id",
@@ -1068,34 +1103,68 @@ def _validate_campaign_authorization(
         "max_item_timeout_seconds",
         "max_attempts",
     }
-    max_attempts = value.get("max_attempts")
+    standing_expected = {
+        "schema",
+        "action",
+        "authority_id",
+        "attempt_prefix",
+        "authorized_by",
+        "issued_at",
+        "item_set_sha256",
+        "item_count",
+        "item_hashes",
+        "max_batch_items",
+        "max_batch_timeout_seconds",
+        "max_item_timeout_seconds",
+        "signature_subject_b64",
+        "revoked_at",
+    }
+    if original.get("schema") == CAMPAIGN_AUTHORIZATION_SCHEMA:
+        value = original
+        if (
+            set(value) != legacy_expected
+            or canonical_bytes(value) + b"\n" != payload
+            or not _valid_time(value.get("expires_at"))
+            or isinstance(value.get("max_attempts"), bool)
+            or not isinstance(value.get("max_attempts"), int)
+            or value["max_attempts"] < 1
+        ):
+            raise PipelineError("File Provider standing authorization migration source is invalid")
+        normalized = _migrate_campaign_authorization(value, payload)
+    else:
+        value = original
+        normalized = value
     if (
         not 1 <= len(eligible_hashes) <= MAX_CAMPAIGN_ITEMS
-        or set(value) != expected
-        or canonical_bytes(value) + b"\n" != payload
-        or value.get("schema") != CAMPAIGN_AUTHORIZATION_SCHEMA
-        or value.get("action") != CAMPAIGN_AUTHORIZATION_ACTION
-        or value.get("campaign_id") != _campaign_identity(receipt)
-        or value.get("attempt_prefix") != _attempt_prefix(receipt)
-        or not isinstance(value.get("authorized_by"), str)
-        or not TOKEN.fullmatch(value["authorized_by"])
-        or value.get("item_set_sha256") != _campaign_item_set_sha256(eligible_hashes)
-        or value.get("item_count") != len(eligible_hashes)
-        or value.get("item_hashes") != eligible_hashes
-        or value.get("max_batch_items") != MAX_BATCH_ITEMS
-        or value.get("max_batch_timeout_seconds") != BATCH_TIMEOUT_SECONDS
-        or value.get("max_item_timeout_seconds") != ITEM_TIMEOUT_SECONDS
-        or isinstance(max_attempts, bool)
-        or not isinstance(max_attempts, int)
-        or not 1 <= max_attempts <= MAX_CAMPAIGN_ATTEMPTS
-        or not _valid_time(value.get("issued_at"))
-        or not _valid_time(value.get("expires_at"))
+        or set(normalized) != standing_expected
+        or (value is normalized and canonical_bytes(value) + b"\n" != payload)
     ):
-        raise PipelineError("File Provider campaign authorization does not bind immutable custody")
-    return value
+        raise PipelineError("File Provider standing authorization is not canonical")
+    if (
+        normalized.get("schema") != STANDING_AUTHORIZATION_SCHEMA
+        or normalized.get("action") != CAMPAIGN_AUTHORIZATION_ACTION
+        or normalized.get("attempt_prefix") != _attempt_prefix(receipt)
+        or not isinstance(normalized.get("authorized_by"), str)
+        or not TOKEN.fullmatch(normalized["authorized_by"])
+        or normalized.get("item_set_sha256") != _campaign_item_set_sha256(eligible_hashes)
+        or normalized.get("item_count") != len(eligible_hashes)
+        or normalized.get("item_hashes") != eligible_hashes
+        or normalized.get("max_batch_items") != MAX_BATCH_ITEMS
+        or normalized.get("max_batch_timeout_seconds") != BATCH_TIMEOUT_SECONDS
+        or normalized.get("max_item_timeout_seconds") != ITEM_TIMEOUT_SECONDS
+        or not _valid_time(normalized.get("issued_at"))
+        or normalized.get("authority_id") != _standing_authority_id(normalized)
+        or normalized.get("revoked_at") is not None
+        or (
+            normalized.get("signature_subject_b64") is not None
+            and not isinstance(normalized.get("signature_subject_b64"), str)
+        )
+    ):
+        raise PipelineError("File Provider standing authorization does not bind immutable custody")
+    return normalized
 
 
-def _validate_campaign_batch(
+def _validate_standing_batch(
     authorization: dict[str, Any],
     manifest: dict[str, Any],
 ) -> None:
@@ -1108,13 +1177,36 @@ def _validate_campaign_batch(
         manifest["authorization_principal"] != authorization["authorized_by"]
         or len(suffix) != 6
         or not suffix.isdigit()
-        or int(suffix) >= authorization["max_attempts"]
         or len(batch_hashes) > authorization["max_batch_items"]
         or not set(batch_hashes) <= authorized_hashes
         or manifest["timeout_seconds"] > authorization["max_batch_timeout_seconds"]
         or manifest["per_item_timeout_seconds"] > authorization["max_item_timeout_seconds"]
     ):
-        raise PipelineError("File Provider batch exceeds the signed campaign")
+        raise PipelineError("File Provider batch exceeds the standing authority")
+
+
+def _derived_capability(
+    authorization: dict[str, Any],
+    manifest: dict[str, Any],
+) -> dict[str, Any]:
+    core = {
+        "schema": DERIVED_CAPABILITY_SCHEMA,
+        "authority_id": authorization["authority_id"],
+        "action": AUTHORIZATION_ACTION,
+        "attempt_id": manifest["attempt_id"],
+        "manifest_hash": _manifest_hash(manifest),
+    }
+    return {
+        **core,
+        "capability_sha256": hashlib.sha256(
+            canonical_bytes(
+                {
+                    **core,
+                    "standing_authority_sha256": hashlib.sha256(canonical_bytes(authorization) + b"\n").hexdigest(),
+                }
+            )
+        ).hexdigest(),
+    }
 
 
 def _read_authorization_inputs(
@@ -1137,12 +1229,16 @@ def _read_authorization_inputs(
 def _authorization_envelope(
     receipt_bytes: bytes,
     signature: bytes,
+    capability: dict[str, Any] | None = None,
 ) -> tuple[dict[str, str], str]:
+    envelope = {
+        "receipt_b64": base64.b64encode(receipt_bytes).decode("ascii"),
+        "signature_b64": base64.b64encode(signature).decode("ascii"),
+    }
+    if capability is not None:
+        envelope["capability_b64"] = base64.b64encode(canonical_bytes(capability) + b"\n").decode("ascii")
     return (
-        {
-            "receipt_b64": base64.b64encode(receipt_bytes).decode("ascii"),
-            "signature_b64": base64.b64encode(signature).decode("ascii"),
-        },
+        envelope,
         hashlib.sha256(receipt_bytes).hexdigest(),
     )
 
@@ -1229,7 +1325,9 @@ def _validate_receipt(
         or (returncode == 0) != (value.get("status") == "succeeded")
     ):
         raise PipelineError("Domus File Provider receipt does not match the exact request")
-    parsed_items = [_validate_receipt_item(item, item_hash) for item, item_hash in zip(raw_items, expected_hashes)]
+    parsed_items = [
+        _validate_receipt_item(item, item_hash) for item, item_hash in zip(raw_items, expected_hashes, strict=True)
+    ]
     counts = value.get("result_counts")
     if not isinstance(counts, dict) or set(counts) != ITEM_STATUSES:
         raise PipelineError("Domus File Provider receipt counts are invalid")
@@ -1261,11 +1359,8 @@ def _stage_pending_batch(
     remaining: list[FileProviderItem],
     *,
     principal: str,
-    max_attempts: int | None = None,
 ) -> tuple[FileProviderItem, ...]:
     ordinal = int(progress["next_attempt"])
-    if max_attempts is not None and ordinal >= max_attempts:
-        raise PipelineError("File Provider campaign exhausted its signed attempt bound")
     batch = tuple(remaining[:MAX_BATCH_ITEMS])
     verify_materialized_content(batch)
     attempt_id = _attempt_id(receipt, ordinal)
@@ -1321,7 +1416,7 @@ def process_file_provider_items(
     adapter_name: str = ADAPTER_NAME,
     materialized_probe=is_materialized_cloud_path,
 ) -> FileProviderResult:
-    """Prepare or execute one signed, finite File Provider batch or campaign."""
+    """Prepare or execute a signed batch or revocation-only standing authority."""
 
     receipt.require_retirement_gate()
     items = inspect_captured_files(root, captured, materialized_probe=materialized_probe)
@@ -1360,17 +1455,10 @@ def process_file_provider_items(
         assert isinstance(authorization_principal, str)
         verify_materialized_content(tuple(eligible))
         eligible_hashes = [item.item_hash for item in eligible]
-        required_batches = (len(remaining) + MAX_BATCH_ITEMS - 1) // MAX_BATCH_ITEMS
-        max_attempts = int(progress["next_attempt"]) + required_batches + CAMPAIGN_RETRY_RUNWAY
-        if max_attempts > MAX_CAMPAIGN_ATTEMPTS:
-            raise PipelineError("File Provider campaign exceeds the bounded attempt ceiling")
-        if max_attempts <= int(progress["next_attempt"]):
-            raise PipelineError("File Provider campaign has no bounded attempt runway")
         campaign_plan = _campaign_plan(
             receipt,
             eligible_hashes,
             principal=authorization_principal,
-            max_attempts=max_attempts,
         )
         returncode, authorization_request = _run_adapter(
             executable,
@@ -1380,13 +1468,11 @@ def process_file_provider_items(
         )
         if returncode != 0:
             raise PipelineError("Domus File Provider adapter rejected the campaign plan")
-        validated = _validate_campaign_authorization(
+        _validate_standing_authorization(
             authorization_request,
             receipt,
             eligible_hashes,
         )
-        if validated["max_attempts"] != max_attempts:
-            raise PipelineError("Domus File Provider adapter changed the campaign attempt bound")
         pending = progress.get("pending_batch")
         if pending is None:
             _stage_pending_batch(
@@ -1394,7 +1480,6 @@ def process_file_provider_items(
                 receipt,
                 remaining,
                 principal=authorization_principal,
-                max_attempts=max_attempts,
             )
         else:
             pending_attempt = pending["attempt_id"]
@@ -1407,9 +1492,8 @@ def process_file_provider_items(
                 pending["authorization_principal"] != authorization_principal
                 or len(pending_suffix) != 6
                 or not pending_suffix.isdigit()
-                or int(pending_suffix) >= max_attempts
             ):
-                raise PipelineError("File Provider pending batch does not fit the campaign plan")
+                raise PipelineError("File Provider pending batch does not fit the standing authority")
         _atomic_private_write(prepare_campaign_authorization, authorization_request)
         _write_progress(progress_path, progress)
         return _result_from_progress(progress, items, authorization_prepared=True)
@@ -1444,23 +1528,25 @@ def process_file_provider_items(
         authorization_bytes,
         label="File Provider authorization receipt",
     )
-    campaign_authorization: dict[str, Any] | None = None
-    if authorization_value.get("schema") == CAMPAIGN_AUTHORIZATION_SCHEMA:
-        campaign_authorization = _validate_campaign_authorization(
+    standing_authorization: dict[str, Any] | None = None
+    if authorization_value.get("schema") in {
+        CAMPAIGN_AUTHORIZATION_SCHEMA,
+        STANDING_AUTHORIZATION_SCHEMA,
+    }:
+        standing_authorization = _validate_standing_authorization(
             authorization_bytes,
             receipt,
             [item.item_hash for item in eligible],
         )
     pending = progress.get("pending_batch")
     if not isinstance(pending, dict):
-        if campaign_authorization is None:
+        if standing_authorization is None:
             raise PipelineError("File Provider eviction has no pending authorization plan")
         _stage_pending_batch(
             progress,
             receipt,
             remaining,
-            principal=campaign_authorization["authorized_by"],
-            max_attempts=campaign_authorization["max_attempts"],
+            principal=standing_authorization["authorized_by"],
         )
         _write_progress(progress_path, progress)
         pending = progress["pending_batch"]
@@ -1478,13 +1564,18 @@ def process_file_provider_items(
     )
     if _manifest_hash(manifest) != pending["manifest_hash"]:
         raise PipelineError("File Provider pending manifest hash changed")
-    if campaign_authorization is None:
+    if standing_authorization is None:
         _validate_authorization(authorization_bytes, manifest)
+        effective_authorization_bytes = authorization_bytes
+        capability = None
     else:
-        _validate_campaign_batch(campaign_authorization, manifest)
+        _validate_standing_batch(standing_authorization, manifest)
+        effective_authorization_bytes = canonical_bytes(standing_authorization) + b"\n"
+        capability = _derived_capability(standing_authorization, manifest)
     authorization_envelope, authorization_sha256 = _authorization_envelope(
-        authorization_bytes,
+        effective_authorization_bytes,
         signature_bytes,
+        capability,
     )
     apply_manifest = _manifest(
         batch,

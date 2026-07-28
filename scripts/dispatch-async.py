@@ -47,6 +47,7 @@ from limen.intake import IntakeContractError, normalize_selected_legacy_task  # 
 from limen.io import load_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry, dispatch_agent, dispatch_session_id  # noqa: E402
 from limen.provider_selection import execution_profile_for  # noqa: E402
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
 from limen.remote_execution import (  # noqa: E402
     RemoteExecutionError,
     validate_remote_submission_harvest,
@@ -137,12 +138,12 @@ def _disk_free_gib() -> float | None:
 def _disk_pressure_active() -> bool:
     if not _truthy_env("LIMEN_DISK_PRESSURE_VALUE_ONLY", True):
         return False
-    floor = _env_int(
-        "LIMEN_DISK_FLOOR_GIB",
-        _env_int("LIMEN_ALWAYS_WORKING_MIN_FREE_GIB", 45),
-    )
     free = _disk_free_gib()
-    return free is not None and free < floor
+    try:
+        required = current_required_free_gib()
+    except (RuntimeError, ValueError):
+        return True
+    return free is None or free < required
 
 
 def _now():

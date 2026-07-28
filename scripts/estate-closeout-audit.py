@@ -17,17 +17,19 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
-
 HOME = Path(os.environ.get("HOME", "/Users/4jp")).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser()
+sys.path.insert(0, str(ROOT / "cli" / "src"))
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
+
 LIVE_ROOT = Path(os.environ.get("LIMEN_LIVE_ROOT", HOME / "Workspace" / "limen")).expanduser()
 DOC_PATH = ROOT / "docs" / "estate-closeout-audit.md"
 PRIVATE_PATH = ROOT / ".limen-private" / "session-corpus" / "lifecycle" / "estate-closeout-audit.json"
-TARGET_FREE_GIB = float(os.environ.get("LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB", "200"))
 
 DEFAULT_SCAN_ROOTS = (
     HOME / "Workspace",
@@ -382,13 +384,25 @@ def disk_snapshot() -> dict[str, Any]:
         rows.append({"path": stable(path), "exists": True, "free_gib": free_gib, "total_gib": total_gib})
     internal = next((row for row in rows if row.get("path") == "/System/Volumes/Data"), rows[0] if rows else {})
     free = internal.get("free_gib")
-    shortfall = round(max(TARGET_FREE_GIB - float(free), 0), 1) if isinstance(free, (int, float)) else None
+    try:
+        required = current_required_free_gib()
+    except (RuntimeError, ValueError):
+        required = None
+    headroom = (
+        round(float(free) - required, 1)
+        if isinstance(free, (int, float)) and required is not None
+        else None
+    )
     return {
-        "target_free_gib": TARGET_FREE_GIB,
+        "required_free_gib": required,
         "internal_free_gib": free,
-        "internal_shortfall_gib": shortfall,
+        "resource_headroom_gib": headroom,
         "filesystems": rows,
-        "status": "needs-owner-gates" if shortfall else "clear",
+        "status": (
+            "resource-envelope-unavailable"
+            if headroom is None
+            else ("needs-owner-gates" if headroom < 0 else "clear")
+        ),
     }
 
 
@@ -615,7 +629,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         live_root_gate = run_text_command(["python3", "scripts/live-root-gate.py"], timeout=120, env=live_root_env)
 
     return {
-        "schema": "limen.estate_closeout_audit.v1",
+        "schema": "limen.estate_closeout_audit.v2",
         "generated_at": utc_now(),
         "status": "blocked",
         "contract": {
@@ -691,7 +705,7 @@ def render(snapshot: dict[str, Any]) -> str:
         "## Verdict",
         "",
         "- Whole-estate closeout is not done.",
-        f"- Internal free space is `{disk.get('internal_free_gib')} GiB`; target is `{disk.get('target_free_gib')} GiB`; shortfall is `{disk.get('internal_shortfall_gib')} GiB`.",
+        f"- Internal free space is `{disk.get('internal_free_gib')} GiB`; the live requirement is `{disk.get('required_free_gib')} GiB`; resource headroom is `{disk.get('resource_headroom_gib')} GiB`.",
         f"- Worktree debt is `{worktree.get('debt')}` debt roots / `{worktree.get('total')}` scanned; reapable roots `{worktree.get('reapable')}`.",
         f"- Remote PR search returned `{remote.get('total_returned') if remote_ok else 'unavailable'}` open PRs across `{remote.get('repos') if remote_ok else 'unavailable'}` repos; query hit limit `{remote.get('hit_limit') if remote_ok else 'unavailable'}`.",
         f"- Live root gate is `{live.get('status')}`; dispatch health is `{dispatch.get('status')}`.",
@@ -850,7 +864,7 @@ def main() -> int:
             "estate-closeout-audit: "
             f"status={snapshot.get('status')} "
             f"free={disk.get('internal_free_gib')}GiB "
-            f"shortfall={disk.get('internal_shortfall_gib')}GiB "
+            f"headroom={disk.get('resource_headroom_gib')}GiB "
             f"git_roots={local.get('discovery', {}).get('git_roots_count')} "
             f"open_prs_returned={remote.get('total_returned')} "
             f"remote_pr_hit_limit={remote.get('hit_limit')}"

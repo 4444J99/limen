@@ -80,6 +80,9 @@ def _load(tmp_path, n_open=6, agent="codex"):
     spec = importlib.util.spec_from_file_location("dispatch_async_under_test", SCRIPT)
     da = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(da)
+    # Unit tests isolate resource admission from the host. Dedicated pressure
+    # tests replace this deterministic empty-graph requirement explicitly.
+    da.current_required_free_gib = lambda: 0.0
     da.RUNS.mkdir(parents=True, exist_ok=True)
     return da
 
@@ -1471,6 +1474,7 @@ def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_pa
         "LIMEN_ROOT": str(tmp_path),
         "LIMEN_TASKS": str(tmp_path / "tasks.yaml"),
         "LIMEN_DISPATCH_ADMISSION": "0",
+        "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
         "LIMEN_WORKTREE_DEBT_GATE": "0",
         "LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH": "0",
         "PYTHONPATH": str(CLI_SRC),
@@ -1972,8 +1976,8 @@ def test_async_reserve_skips_cifix_superseded_by_active_rebase_task(tmp_path, mo
 def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, monkeypatch):
     monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
     monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
-    monkeypatch.setenv("LIMEN_DISK_FLOOR_GIB", "999999")
     da = _load(tmp_path, n_open=0, agent="codex")
+    monkeypatch.setattr(da, "current_required_free_gib", lambda: 999999.0)
     today = datetime.date.today()
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.tasks = [
