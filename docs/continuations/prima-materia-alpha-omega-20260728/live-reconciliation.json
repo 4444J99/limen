@@ -1,0 +1,1186 @@
+{
+  "first": {
+    "automatically_safe_reclaim_count": null,
+    "base_sha": "4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1",
+    "lambda_passed": false,
+    "lambda_predicates": {
+      "automatically_safe_reclaim_zero": false,
+      "composition_passed": false,
+      "dematerialization_passed": false,
+      "dynamic_resource_envelope_nonnegative": true,
+      "empty_scratch_bootstrap_passed": false,
+      "frozen_repository_terminal_custody": false,
+      "frozen_storage_terminal_custody": false,
+      "frozen_wave_adapter_debt_zero": true,
+      "hydration_passed": false,
+      "private_material_restores_from_two_devices": false,
+      "removed_repositories_reconstruct": false,
+      "replay_passed": false,
+      "repository_and_stale_registration_census_zero_except_protected": false
+    },
+    "observed_at": "2026-07-28T17:48:17.484113+00:00",
+    "omega_admitted": false,
+    "physical_devices": {
+      "available": true,
+      "device_count": 8,
+      "device_identity_digests": [
+        "b8c9291a5c7c0b653be2d7a88774fea2d2bbd7c58f2a9dac932fb5cb685c3f2e",
+        "cbde7003b291dbdca40c04698420428147d7787f835f981debb85f3e1570a9f9",
+        "e6774d8cc6e76721d6a31920350b4c31830fd39602f15ee331b7851bfa0ddd0e",
+        "e8e9e706a59605b93b49a26e5224c5cefd89158662f28eef2f9ec6622793ea18",
+        "aa6c427e69520dd69512be08144be00f9baebb33fbe72ede4ccf29a80073dfab",
+        "8fa409f2f74d1504941b5f038539dc14df02a3d1b1f8b1bc7436f2c9d36cc60f",
+        "56709386a0d728a59ea640bb64e06e6d0b27bb1e9d249dc793f9c4b8de414244",
+        "30f8ea68c1b1a741508d1c8830df20774baa806c2dbd24828e380c09f2f84b68"
+      ],
+      "inventory_sha256": "ae478f7d4bf60c7f2ab4cda496fcc246ca82b7ebaf21a91b3f843f40383af49f"
+    },
+    "private_roots": [
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 338881,
+        "mtime_ns": "1785257874459774689",
+        "path_sha256": "0f4ff74dc946d5195707638d044bc55676ae2062526c9550510b6c4fb7193d9d",
+        "root_id": "private-root-0f4ff74dc946d519"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 338890,
+        "mtime_ns": "1785244244594329865",
+        "path_sha256": "10b2e28aaefaa2b5308c27424d570605b1b06dc1b4b82438a1729645f5547783",
+        "root_id": "private-root-10b2e28aaefaa2b5"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 330129972,
+        "mtime_ns": "1785192116638547853",
+        "path_sha256": "13ab0fba0f0046e06669edea6957e02ec99da698721d5d0104f8b03d38c2bcb4",
+        "root_id": "private-root-13ab0fba0f0046e0"
+      },
+      {
+        "exists": false,
+        "path_sha256": "16c21bb693e18a6d9820cc40cadc7cd5d0dff570be5b030ca564c735aea11cd3",
+        "root_id": "private-root-16c21bb693e18a6d"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 330086265,
+        "mtime_ns": "1785199666226364525",
+        "path_sha256": "1b136503256f010aca1d7a7c207f4d5638ea4b3e13de259bb89eef853d05a121",
+        "root_id": "private-root-1b136503256f010a"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 320821466,
+        "mtime_ns": "1785257785208235667",
+        "path_sha256": "1bdc84ea1c297882823d928e446b1351a77082c123cc05d46a47abf0b7c4d10e",
+        "root_id": "private-root-1bdc84ea1c297882"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 12598210,
+        "mtime_ns": "1784904177822435667",
+        "path_sha256": "227d27b35baa32342e451bee0fbe2a5c42bfae6e71646f98f477e40b37182839",
+        "root_id": "private-root-227d27b35baa3234"
+      },
+      {
+        "exists": false,
+        "path_sha256": "2eec1fb30ea132db7e2ca040e4ac713c1fb73c1a8fe4b8ffeba79cef467362a6",
+        "root_id": "private-root-2eec1fb30ea132db"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 508416209,
+        "mtime_ns": "1784743689164276119",
+        "path_sha256": "3305df425d859fc4630b2c325cfcb1a0a646130d037da61ad60c62c3e081fdbc",
+        "root_id": "private-root-3305df425d859fc4"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 144770173,
+        "mtime_ns": "1774436914276436537",
+        "path_sha256": "4814122395f811b231a725ffc38d7ea2529011be7259c34c20900025e2187c45",
+        "root_id": "private-root-4814122395f811b2"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 338847,
+        "mtime_ns": "1785197927930917947",
+        "path_sha256": "5e7306b8975c106dc3a02cadfa0481066675a6f36cc316d98edba8ecd75336f9",
+        "root_id": "private-root-5e7306b8975c106d"
+      },
+      {
+        "exists": false,
+        "path_sha256": "66a63282ebf6f91071e829a655b14a828c2c6cdca5360f6ed8de79851a96c6cc",
+        "root_id": "private-root-66a63282ebf6f910"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 531332918,
+        "mtime_ns": "1785257822637273310",
+        "path_sha256": "75a6b306dea2fdacdb7117596795c859d4d2c638a125f9c008e99af1a73fea2a",
+        "root_id": "private-root-75a6b306dea2fdac"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 330118125,
+        "mtime_ns": "1785190625398166668",
+        "path_sha256": "76e478625f177eb58fa2042b126c16fb65101dee8a9570a7ac5dae0158164f94",
+        "root_id": "private-root-76e478625f177eb5"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 530650616,
+        "mtime_ns": "1785189976563057761",
+        "path_sha256": "7a5d814bf3d04a40ff310d744b324b3c3d4ed80e0baceed10aa546b12f6b513b",
+        "root_id": "private-root-7a5d814bf3d04a40"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 321539940,
+        "mtime_ns": "1785259036243508143",
+        "path_sha256": "89e3bd907783d8a9db3906f6375024c7638d6b877a47f64fa22e94fd21164dc7",
+        "root_id": "private-root-89e3bd907783d8a9"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 321572871,
+        "mtime_ns": "1785260380614497000",
+        "path_sha256": "bbd6b0603cbc7f67e4f4653f406d1b8ee7981ee0481ad35a9e92fdc9481295ef",
+        "root_id": "private-root-bbd6b0603cbc7f67"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 339212,
+        "mtime_ns": "1785253947612446026",
+        "path_sha256": "f7b092d495a94939848ee1122c1763f3d3e4dbd4db9426b51fb45ec194d757f1",
+        "root_id": "private-root-f7b092d495a94939"
+      }
+    ],
+    "protected_exclusions": {
+      "omega_blocker_count": 1,
+      "projection_sha256": "d7f2899c7ff55b11db94da3e9cae38982d61b13bd9d0ce879a202484a2b85622",
+      "protected_exclusions": [
+        {
+          "blocks_omega": true,
+          "branch_sha256": "616023af8fc5e59d3ce9ad5075e961c9612b678c97b51176c9edcfba25b4d097",
+          "exclusion_id": "career-portal-20260728",
+          "owner": "career-portal-session",
+          "path_exists": true,
+          "path_sha256": "67187251af3f10c0ced9073ad348065350cdc9519c4177bc7abf3856791f42ff",
+          "projection_sha256": "96a263099131f3977beda8c2d7adf42497a56b7c55a06a01e24ac19e0050e00a",
+          "reason": "active externally owned dirty workstream",
+          "registration_exists": true,
+          "registration_sha256": "ff94f5e491df51c5a48f4a43083a2655e3b9f639527c26951e2a02dff2dc96e2",
+          "schema": "limen.protected_exclusion_projection.v1"
+        }
+      ],
+      "registry_digest": "7fd4bfd220f294a42fd598c502fa4bce075a0f76e815f6af0dd2b728fadb8ac8",
+      "schema": "limen.protected_exclusion_registry_projection.v1"
+    },
+    "protected_processes": {
+      "available": true,
+      "protected_cwds": [
+        {
+          "active_cwd_count": 7,
+          "exclusion_id": "career-portal-20260728"
+        }
+      ]
+    },
+    "repositories": [
+      {
+        "all_local_refs_remote": false,
+        "available": true,
+        "branch_sha256": "0cef418456308821e8b9509e999df3d89ebdd223b11487dbbb32cd72102aba95",
+        "dirty_entry_count": 2,
+        "head": "63e6cf6bb37e47e73b4d0306cc928538139b5c19",
+        "local_ref_count": 541,
+        "local_refs_sha256": "d8d37c43124513878997eaf36864d0d7edc031de98d10a57b1a77bef093367d8",
+        "path_sha256": "0214cf160cbfb3e7759df346c9cdcdc3812d2d03c3c2281663ffa52d1ed03c22",
+        "registered_worktree_count": 66,
+        "registration_state_sha256": "2e9d9680dc6f1e23ad19e8bbc0b4f95efa7a8de7ff50820e09323a43e1260bff",
+        "remote_proof_available": true,
+        "remote_ref_count": 3038,
+        "remote_refs_sha256": "6c968af0c24ce91dbe1aa224d34cfb195d1233fff361384c4ac409bb0de43668",
+        "repository_id": "repository-0214cf160cbfb3e7",
+        "stale_registration_count": 0,
+        "tree": "0b3c8ed0c1043790ed4bed441a5b5588335acde2",
+        "working_state_sha256": "6606e4fd084579f3ffc8a8e1590e4266b728cbbb60895796eaecd2ad302c2b05"
+      },
+      {
+        "available": false,
+        "path_sha256": "02aa0fccfd64848a328612a60259a92f94f027b742e5ba947f9b788f3efaa73d",
+        "reason": "repository-probe-incomplete",
+        "repository_id": "repository-02aa0fccfd64848a"
+      },
+      {
+        "available": false,
+        "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-0665800866c86d3c"
+      },
+      {
+        "available": false,
+        "path_sha256": "0d1535ec981741891b2ecfb642e1e8c1e01bf8a4c835dd3ac260d0ed4ab11e79",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-0d1535ec98174189"
+      },
+      {
+        "available": false,
+        "path_sha256": "0eec96426b9e2d0c1adf97c190d2ce01cabc513d7337612dbb86fe5acc90c1cf",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-0eec96426b9e2d0c"
+      },
+      {
+        "available": false,
+        "path_sha256": "0f0d43f28146c18c84f3adf8e2adbb327c969a78696ac2a827a39f37093b66fb",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-0f0d43f28146c18c"
+      },
+      {
+        "available": false,
+        "path_sha256": "13031a4d5dcb973e6f3fa3b5951d26b2b94084c902d3d893b32e057bfb6f90c7",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-13031a4d5dcb973e"
+      },
+      {
+        "available": false,
+        "path_sha256": "17bcb95973bec28a646bb65faa1f978eb50482fcc62b7fa51e1d2cd4649c57a9",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-17bcb95973bec28a"
+      },
+      {
+        "available": false,
+        "path_sha256": "1bae7180d9e225986c019d196111ed297c2a0c754d478f9f4931394bc4a168f3",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-1bae7180d9e22598"
+      },
+      {
+        "available": false,
+        "path_sha256": "2178954009931f21353db9d2b4616fbf3abafa4ef01f0458c9362ac1bbd8de21",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-2178954009931f21"
+      },
+      {
+        "available": false,
+        "path_sha256": "29fe2b11a60a6ff758f344cc8c72021eca50b6cf28e45b88be59617890bd23dc",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-29fe2b11a60a6ff7"
+      },
+      {
+        "available": false,
+        "path_sha256": "328e8e68e771a01f44f02a733728bd9938ec1c8cc918f358b4278d1688bfd507",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-328e8e68e771a01f"
+      },
+      {
+        "available": false,
+        "path_sha256": "36a8468649a8a0c913ed84b62ca0237139f9bd1c5080f622b0c2c7e4d4f700be",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-36a8468649a8a0c9"
+      },
+      {
+        "available": false,
+        "path_sha256": "3c500bd1cf46267f8d1aa23950cc1382b6e0b4e1a70307c365d1dc71b6073cee",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-3c500bd1cf46267f"
+      },
+      {
+        "available": false,
+        "path_sha256": "444fb286c042ada913bef8738a89c88c502ec4eefa8c0bbf1a8a86a375866ff5",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-444fb286c042ada9"
+      },
+      {
+        "available": false,
+        "path_sha256": "4a2af63b41fbf2a2ad12e2224ff3c1abc12c13df232790f52e09af4f790e356b",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-4a2af63b41fbf2a2"
+      },
+      {
+        "available": false,
+        "path_sha256": "4d6b397319cd42bbb711df6505464d7556659f758f7dfc6d774f3fcab65c7261",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-4d6b397319cd42bb"
+      },
+      {
+        "available": false,
+        "path_sha256": "4f35c91e600a6cfaecb4499db1a1be84a98be587e1861879b3e1f9e07613da7f",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-4f35c91e600a6cfa"
+      },
+      {
+        "available": false,
+        "path_sha256": "4fa163971aaf7296580005c476b9c0a7aff8af0e7700c7240c9406ba8ee5bd28",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-4fa163971aaf7296"
+      },
+      {
+        "available": false,
+        "path_sha256": "5e50fb2cba4a842ed05a62f8fc24ac563d9918eac758fea4d1ef7ed9c69d9f49",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-5e50fb2cba4a842e"
+      },
+      {
+        "available": false,
+        "path_sha256": "5fe94c9212a23bd5a067619dec735a53e8307c7fc199a6b95b42f52446786fba",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-5fe94c9212a23bd5"
+      },
+      {
+        "available": false,
+        "path_sha256": "61b7fc564c8a6c3fbf0647f58a02fe806598eb4ea736010275e500a3035772a9",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-61b7fc564c8a6c3f"
+      },
+      {
+        "available": false,
+        "path_sha256": "67187251af3f10c0ced9073ad348065350cdc9519c4177bc7abf3856791f42ff",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-67187251af3f10c0"
+      },
+      {
+        "available": false,
+        "path_sha256": "695d7450f9c2c412a40d13a2c0af5777f9873901f742e77dda811fc3267837b1",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-695d7450f9c2c412"
+      },
+      {
+        "available": false,
+        "path_sha256": "69b96e9f7217ad519458f917bbc3e9b800390e2e4e31eb1f9fa44575cd8d6d6c",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-69b96e9f7217ad51"
+      },
+      {
+        "available": false,
+        "path_sha256": "6d237bc9a0b08b585bcedc029e1633c6a62757a35efa5ab53e96a02787da4f45",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-6d237bc9a0b08b58"
+      },
+      {
+        "available": false,
+        "path_sha256": "8265280fbb625079cb29f6a1085ed0f63464770d456f2eeafd87b2ee1518fa95",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-8265280fbb625079"
+      },
+      {
+        "available": false,
+        "path_sha256": "8bcacd9a5b0ed673fa87244d5b4a1f75c25a9069dedea842c8aa82f2cc43509b",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-8bcacd9a5b0ed673"
+      },
+      {
+        "available": false,
+        "path_sha256": "8cde68d7803e0deb63dde4934b73bb393aaae292a3897fe42f5b8e492ea2771f",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-8cde68d7803e0deb"
+      },
+      {
+        "available": false,
+        "path_sha256": "8fafac63312b6338876a991cab28dfef5892fc90a7ddc76b1ff3f7e46c13bf6a",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-8fafac63312b6338"
+      },
+      {
+        "available": false,
+        "path_sha256": "8fe2b3ca86e84d65569a8d488a09383f00079d0e3d71f162c03d97aa973eff48",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-8fe2b3ca86e84d65"
+      },
+      {
+        "available": false,
+        "path_sha256": "901e2faccff800a528bc5d8bc98f057acd5b2a5a8ff6430ac857b4ffce860812",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-901e2faccff800a5"
+      },
+      {
+        "available": false,
+        "path_sha256": "920e84d208b4b12143313306b1eba05a6accc1155d0220247c808ee241316ec8",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-920e84d208b4b121"
+      },
+      {
+        "available": false,
+        "path_sha256": "a43ca0f6f8cfce50e2a29c2a9f99be41ca6de838ef87bb2c5f4e83bace370aaa",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-a43ca0f6f8cfce50"
+      },
+      {
+        "available": false,
+        "path_sha256": "ab42aa5fd74250737b75e88fb2f5a78aa6437acd34c90846d2b191e708dff80a",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-ab42aa5fd7425073"
+      },
+      {
+        "available": false,
+        "path_sha256": "b639b0c2e0f139314b67d84859607e9c82863758b5d3a984fae28a758b38a989",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-b639b0c2e0f13931"
+      },
+      {
+        "available": false,
+        "path_sha256": "c2d8a44f6f1e15dfa5fa294c567c8f99eb42cc7c8d330d59afcb056e0583a0db",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-c2d8a44f6f1e15df"
+      },
+      {
+        "available": false,
+        "path_sha256": "cc0bbfe5785da4580cd26857a7cdb36ca8fb11eef1e5a93ea31042bb404a5ff4",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-cc0bbfe5785da458"
+      },
+      {
+        "available": false,
+        "path_sha256": "cdee0ca72b5eabbd624ba9997224d6d41029e55a11bb6aa8f5ff7ba914a227d4",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-cdee0ca72b5eabbd"
+      },
+      {
+        "available": false,
+        "path_sha256": "da193296d00330193f38fd36a68f149d2a35fcb429e0e91de9881cf6de9e7522",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-da193296d0033019"
+      },
+      {
+        "available": false,
+        "path_sha256": "ddd41e7c38578c262e39d8f96befd3fe1dd15085f002831581766cb32c039aac",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-ddd41e7c38578c26"
+      },
+      {
+        "available": false,
+        "path_sha256": "e5ac1b9946a29bc5aed3f6b80961cc56fdd6831c4dfd6f8cbdecb3e90fdab843",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-e5ac1b9946a29bc5"
+      },
+      {
+        "available": false,
+        "path_sha256": "e75510868b0fbc5f0be990146052077e6994e1ef3c9f1d0544950efb09603554",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-e75510868b0fbc5f"
+      },
+      {
+        "available": false,
+        "path_sha256": "e7b4d7e9c2abf61f2dec42ab079f4543abada324fb68bca178f94f4848d2997e",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-e7b4d7e9c2abf61f"
+      },
+      {
+        "available": false,
+        "path_sha256": "e81a203d04b126b61dd3f76e89c7271c3ed63139e3bcce773a93cd9dd4d1c562",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-e81a203d04b126b6"
+      },
+      {
+        "available": false,
+        "path_sha256": "f0901b101b5f95af9718b8f994001dccb64598e4272bd0e42e3569790670a887",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-f0901b101b5f95af"
+      },
+      {
+        "available": false,
+        "path_sha256": "f546360ce8315025dadc751410932c77c15e399e948d5eb37bacbb802696a88e",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-f546360ce8315025"
+      },
+      {
+        "available": false,
+        "path_sha256": "f9201c3b64a75cd1727d35b8b943e80d195d353d7b3ff78ad25040195337b281",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-f9201c3b64a75cd1"
+      },
+      {
+        "available": false,
+        "path_sha256": "f95a271ab70888364c349e43342078413eefa99e192b5379b8a95b3e26c7be3a",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-f95a271ab7088836"
+      },
+      {
+        "available": false,
+        "path_sha256": "fa5eb7cbff1c4f8edb3f5d0ff73f49c7e396b641c136097e63bd1b8e2171b44b",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-fa5eb7cbff1c4f8e"
+      },
+      {
+        "available": false,
+        "path_sha256": "0214cf160cbfb3e7759df346c9cdcdc3812d2d03c3c2281663ffa52d1ed03c22",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-0214cf160cbfb3e7"
+      },
+      {
+        "available": false,
+        "path_sha256": "02aa0fccfd64848a328612a60259a92f94f027b742e5ba947f9b788f3efaa73d",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-02aa0fccfd64848a"
+      },
+      {
+        "available": false,
+        "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-0665800866c86d3c"
+      },
+      {
+        "available": false,
+        "path_sha256": "0d1535ec981741891b2ecfb642e1e8c1e01bf8a4c835dd3ac260d0ed4ab11e79",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-0d1535ec98174189"
+      },
+      {
+        "available": false,
+        "path_sha256": "0e5df63a1e3069ae0e4228ef6700064dfc1c7fc41ff057701aa33f29d905a1dd",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-0e5df63a1e3069ae"
+      },
+      {
+        "available": false,
+        "path_sha256": "0eec96426b9e2d0c1adf97c190d2ce01cabc513d7337612dbb86fe5acc90c1cf",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-0eec96426b9e2d0c"
+      },
+      {
+        "available": false,
+        "path_sha256": "100f56771741c8d729479d40bf123ca95865a395df68fe7ff991a8ddc4c7b2ca",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-100f56771741c8d7"
+      },
+      {
+        "available": false,
+        "path_sha256": "162bd6223f7a13a32392b33ebe3513f8bfba3076f38c05f113ca7aec9034f323",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-162bd6223f7a13a3"
+      },
+      {
+        "available": false,
+        "path_sha256": "17bcb95973bec28a646bb65faa1f978eb50482fcc62b7fa51e1d2cd4649c57a9",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-17bcb95973bec28a"
+      },
+      {
+        "available": false,
+        "path_sha256": "1f3ac30cdd47f2c3a506e66dfe13fbb1227af633e0eb29ee68a6a4f356b0ca8c",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-1f3ac30cdd47f2c3"
+      },
+      {
+        "available": false,
+        "path_sha256": "21241ef54cf572c19eff9f1aba4f0864dfd704076acc79de93262da364b4611e",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-21241ef54cf572c1"
+      },
+      {
+        "available": false,
+        "path_sha256": "2178954009931f21353db9d2b4616fbf3abafa4ef01f0458c9362ac1bbd8de21",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-2178954009931f21"
+      },
+      {
+        "available": false,
+        "path_sha256": "24a22e5e3c7c5dbc7600fa5800a0f3c2ab39773d1dd7b137e5c742cb228c1017",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-24a22e5e3c7c5dbc"
+      },
+      {
+        "available": false,
+        "path_sha256": "25b16e8cf9ea495a6f2c6c4d0389662634ee0d345400f01185df6bee174d5b57",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-25b16e8cf9ea495a"
+      },
+      {
+        "available": false,
+        "path_sha256": "278f6f64f26c84440f4ee974a2560774eee883e7bd8f1783e54de54b0a6b5e72",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-278f6f64f26c8444"
+      },
+      {
+        "available": false,
+        "path_sha256": "2ae36231659c47401c738f6b12c2b0984e5ea3cf252f9225a4834d39a3ab471e",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-2ae36231659c4740"
+      },
+      {
+        "available": false,
+        "path_sha256": "328e8e68e771a01f44f02a733728bd9938ec1c8cc918f358b4278d1688bfd507",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-328e8e68e771a01f"
+      },
+      {
+        "available": false,
+        "path_sha256": "32cf1abdf4db5c524169285d9fcc774b06f9653aa84835e16cd690d39ec63498",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-32cf1abdf4db5c52"
+      },
+      {
+        "available": false,
+        "path_sha256": "3392190b0d55aa5dc6ab61a8bc0a33c615a84a23f251f2b3cb29773dd56ddf48",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-3392190b0d55aa5d"
+      },
+      {
+        "available": false,
+        "path_sha256": "36a8468649a8a0c913ed84b62ca0237139f9bd1c5080f622b0c2c7e4d4f700be",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-36a8468649a8a0c9"
+      },
+      {
+        "available": false,
+        "path_sha256": "3c500bd1cf46267f8d1aa23950cc1382b6e0b4e1a70307c365d1dc71b6073cee",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-3c500bd1cf46267f"
+      },
+      {
+        "available": false,
+        "path_sha256": "3ea18c3c7dc558048a48672ad1c46697cede5854bad02498b8481230032aed8c",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-3ea18c3c7dc55804"
+      },
+      {
+        "available": false,
+        "path_sha256": "444fb286c042ada913bef8738a89c88c502ec4eefa8c0bbf1a8a86a375866ff5",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-444fb286c042ada9"
+      },
+      {
+        "available": false,
+        "path_sha256": "4d6b397319cd42bbb711df6505464d7556659f758f7dfc6d774f3fcab65c7261",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-4d6b397319cd42bb"
+      },
+      {
+        "available": false,
+        "path_sha256": "4fa163971aaf7296580005c476b9c0a7aff8af0e7700c7240c9406ba8ee5bd28",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-4fa163971aaf7296"
+      },
+      {
+        "available": false,
+        "path_sha256": "5856c16ec133ac392200a6adb7e868c2414fe8aec0e98d06de29356673baa691",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-5856c16ec133ac39"
+      },
+      {
+        "available": false,
+        "path_sha256": "5ba9fdfe7845868a7d2883a99c8da28d078067236b4512a1452b0e0f9315624c",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-5ba9fdfe7845868a"
+      },
+      {
+        "available": false,
+        "path_sha256": "5e50fb2cba4a842ed05a62f8fc24ac563d9918eac758fea4d1ef7ed9c69d9f49",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-5e50fb2cba4a842e"
+      },
+      {
+        "available": false,
+        "path_sha256": "5fe94c9212a23bd5a067619dec735a53e8307c7fc199a6b95b42f52446786fba",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-5fe94c9212a23bd5"
+      },
+      {
+        "available": false,
+        "path_sha256": "61b7fc564c8a6c3fbf0647f58a02fe806598eb4ea736010275e500a3035772a9",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-61b7fc564c8a6c3f"
+      },
+      {
+        "available": false,
+        "path_sha256": "65bbacd9615b6c166fdf69d311d091c8658641d188f26cbda3dafa13f661c0ac",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-65bbacd9615b6c16"
+      },
+      {
+        "available": false,
+        "path_sha256": "67187251af3f10c0ced9073ad348065350cdc9519c4177bc7abf3856791f42ff",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-67187251af3f10c0"
+      },
+      {
+        "available": false,
+        "path_sha256": "682b2b49558007f6bf81393fe002b77ce04a7b22fc3e7252fad8ca25ff8c5fd3",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-682b2b49558007f6"
+      },
+      {
+        "available": false,
+        "path_sha256": "695d7450f9c2c412a40d13a2c0af5777f9873901f742e77dda811fc3267837b1",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-695d7450f9c2c412"
+      },
+      {
+        "available": false,
+        "path_sha256": "69b96e9f7217ad519458f917bbc3e9b800390e2e4e31eb1f9fa44575cd8d6d6c",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-69b96e9f7217ad51"
+      },
+      {
+        "available": false,
+        "path_sha256": "6a07b97c3826ba947d70cb1368b5f83b14c096b64d6c5649c30f4a2caadceaf4",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-6a07b97c3826ba94"
+      },
+      {
+        "available": false,
+        "path_sha256": "6c72df1980dbd6abfd35d284ca86e4fa3c2ac847073abb0d5a7e12420c1b70d8",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-6c72df1980dbd6ab"
+      },
+      {
+        "available": false,
+        "path_sha256": "6d237bc9a0b08b585bcedc029e1633c6a62757a35efa5ab53e96a02787da4f45",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-6d237bc9a0b08b58"
+      },
+      {
+        "available": false,
+        "path_sha256": "6fe02e7fa47f566df720d76eb9caff2ade99b6cbf0c0f5da1561be0afbf9e64f",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-6fe02e7fa47f566d"
+      },
+      {
+        "available": false,
+        "path_sha256": "7e8e8aded814a1292db451cef184848e94eb2732378211d40d33fc0279670e6b",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-7e8e8aded814a129"
+      },
+      {
+        "available": false,
+        "path_sha256": "7eb0b3cd0d62458279526752d86a2a1140d6ff2839766030866e900038e9b3fc",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-7eb0b3cd0d624582"
+      },
+      {
+        "available": false,
+        "path_sha256": "80c310c1d12e540e116aa4694971111d05d04c7e1b4b63308d10b58aba1c2859",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-80c310c1d12e540e"
+      },
+      {
+        "available": false,
+        "path_sha256": "837f1da0cc42222a3437afad953bebf87a21a516d0eacbf71a3c9bf639475184",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-837f1da0cc42222a"
+      },
+      {
+        "available": false,
+        "path_sha256": "8cde68d7803e0deb63dde4934b73bb393aaae292a3897fe42f5b8e492ea2771f",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-8cde68d7803e0deb"
+      },
+      {
+        "available": false,
+        "path_sha256": "8fafac63312b6338876a991cab28dfef5892fc90a7ddc76b1ff3f7e46c13bf6a",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-8fafac63312b6338"
+      },
+      {
+        "available": false,
+        "path_sha256": "9286bc4e5ea6980aa1caf947eda795401258eb3b0f6c785f14b793654fcb8fce",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-9286bc4e5ea6980a"
+      },
+      {
+        "available": false,
+        "path_sha256": "982442f7d4459a4dae80fd6ef6224405e6840a40c8155f0057ea58119ae1f8ef",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-982442f7d4459a4d"
+      },
+      {
+        "available": false,
+        "path_sha256": "a43ca0f6f8cfce50e2a29c2a9f99be41ca6de838ef87bb2c5f4e83bace370aaa",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-a43ca0f6f8cfce50"
+      },
+      {
+        "available": false,
+        "path_sha256": "ab42aa5fd74250737b75e88fb2f5a78aa6437acd34c90846d2b191e708dff80a",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-ab42aa5fd7425073"
+      },
+      {
+        "available": false,
+        "path_sha256": "ad70cd1f80fa63bcf11aa23a03bd975a5ff5206a4c294337123697730db1a782",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-ad70cd1f80fa63bc"
+      },
+      {
+        "available": false,
+        "path_sha256": "b639b0c2e0f139314b67d84859607e9c82863758b5d3a984fae28a758b38a989",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-b639b0c2e0f13931"
+      },
+      {
+        "available": false,
+        "path_sha256": "c08f40db50603b5f64dc7255f3aefaf8debaa2ff91cd6ec2796867c27f287b7c",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-c08f40db50603b5f"
+      },
+      {
+        "available": false,
+        "path_sha256": "c2d8a44f6f1e15dfa5fa294c567c8f99eb42cc7c8d330d59afcb056e0583a0db",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-c2d8a44f6f1e15df"
+      },
+      {
+        "available": false,
+        "path_sha256": "c7f2116b7e994c11e564b054c38bb753e917b072eb904dff61ffca7100c2c199",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-c7f2116b7e994c11"
+      },
+      {
+        "available": false,
+        "path_sha256": "cc0bbfe5785da4580cd26857a7cdb36ca8fb11eef1e5a93ea31042bb404a5ff4",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-cc0bbfe5785da458"
+      },
+      {
+        "available": false,
+        "path_sha256": "d0b3c1085d663ac81cebdc259859c20ff3d464cbd6caf0318225b6139355705c",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-d0b3c1085d663ac8"
+      },
+      {
+        "available": false,
+        "path_sha256": "d198300573aa6731e9f2dca6bd5941741e0aa6e91427b5e3afbb85b0bf41bcaa",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-d198300573aa6731"
+      },
+      {
+        "available": false,
+        "path_sha256": "da193296d00330193f38fd36a68f149d2a35fcb429e0e91de9881cf6de9e7522",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-da193296d0033019"
+      },
+      {
+        "available": false,
+        "path_sha256": "e81a203d04b126b61dd3f76e89c7271c3ed63139e3bcce773a93cd9dd4d1c562",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-e81a203d04b126b6"
+      },
+      {
+        "available": false,
+        "path_sha256": "eea1cd33db9b060d74a3299c7b03522cdc3104d80c171c9208887af697de447a",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-eea1cd33db9b060d"
+      },
+      {
+        "available": false,
+        "path_sha256": "f0901b101b5f95af9718b8f994001dccb64598e4272bd0e42e3569790670a887",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-f0901b101b5f95af"
+      },
+      {
+        "available": false,
+        "path_sha256": "f173421dba390e4ce156dffc29c92a744c8da63eb0286d2819bcc269f894189e",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-f173421dba390e4c"
+      },
+      {
+        "available": false,
+        "path_sha256": "f9201c3b64a75cd1727d35b8b943e80d195d353d7b3ff78ad25040195337b281",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-f9201c3b64a75cd1"
+      },
+      {
+        "available": false,
+        "path_sha256": "fa5eb7cbff1c4f8edb3f5d0ff73f49c7e396b641c136097e63bd1b8e2171b44b",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-fa5eb7cbff1c4f8e"
+      },
+      {
+        "available": false,
+        "path_sha256": "fdcf61a5e172537f4dbb46e5f5c2dd64321e9a41fbf87110d49d2ad7a29d9e23",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-fdcf61a5e172537f"
+      },
+      {
+        "available": false,
+        "path_sha256": "fec27fcbe09c7ab5b4d0e4b7209b436ca9906bb1015595f2c1a1196e33dff2d2",
+        "reason": "not-a-git-worktree",
+        "repository_id": "worktree-fec27fcbe09c7ab5"
+      }
+    ],
+    "repository_census_complete": true,
+    "resource_envelope": {
+      "disk_free_bytes": 187425288192,
+      "nonnegative": true,
+      "observed_at": "2026-07-28T17:48:17.413150+00:00",
+      "ram_available_bytes": 5672714240,
+      "ram_total_bytes": 17179869184,
+      "required_free_bytes": 35651584,
+      "swap_used_bytes": 0
+    },
+    "resource_envelope_nonnegative": true,
+    "schema": "limen.alpha_omega_reconciliation.v1",
+    "source_coverage": {
+      "adapter_count": 6,
+      "missing_adapter_count": 0,
+      "missing_adapter_source_digests": [],
+      "observed_source_count": 6,
+      "projection_sha256": "463dbc58e670559c061d0f10fe7cbcf5c5a2217b9b2014296d7ae8d7cb9b7c41",
+      "registered_source_digests": [
+        "6149df18f8e50122d69551d7dd76c29bdbcdf1bc07ad597cbd63aee1d2d4a91b",
+        "f5086b6dec618cd501588bf81def86cdf0ae7fb136ac631b82f6e1aa5a22e205",
+        "c0cd44f03da4637d7799a365ec38eabbda8e5864f6b4aa6872279bbccd1def9a",
+        "ca5407e19013693dca0f87b4e935b313ebbae6aeffcb90b6bff6dbbc10d00444",
+        "71237c0706b62062cddec766a6276b98d1be28e977a0039559bf4f2c9f5a938b",
+        "4232ac6c4fceb502056cdcd082ce245f84e70279d44e78d0ed133a4fcd3a9bb7"
+      ],
+      "registry_digest": "4ca1e5075c85d59ff3238cce9725a0c39310adef3766947b865db56c773b72fe",
+      "schema": "limen.source_registry_projection.v1"
+    },
+    "state_sha256": "74f6b0287689479baa0bc31d7c66d620fee6d2227f16c224238c94006791f634"
+  },
+  "fixed_point": {
+    "first_observed_at": "2026-07-28T17:48:17.484113+00:00",
+    "first_state_sha256": "74f6b0287689479baa0bc31d7c66d620fee6d2227f16c224238c94006791f634",
+    "lambda_passed": false,
+    "omega_admitted": false,
+    "pair_sha256": "30f76c963683d06e2d179d36639783a6b2250843a2f4ae3b8df46ea0f8db0583",
+    "schema": "limen.alpha_omega_fixed_point_pair.v1",
+    "second_observed_at": "2026-07-28T17:48:46.556475+00:00",
+    "second_state_sha256": "b8bbc6b99f04cfce7d2590c4a5925167811489877f00b69c90d0eede41ee9543",
+    "unchanged": false
+  },
+  "schema": "limen.alpha_omega_reconciliation_receipt.v1",
+  "second": {
+    "automatically_safe_reclaim_count": null,
+    "base_sha": "4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1",
+    "lambda_passed": false,
+    "lambda_predicates": {
+      "automatically_safe_reclaim_zero": false,
+      "composition_passed": false,
+      "dematerialization_passed": false,
+      "dynamic_resource_envelope_nonnegative": true,
+      "empty_scratch_bootstrap_passed": false,
+      "frozen_repository_terminal_custody": false,
+      "frozen_storage_terminal_custody": false,
+      "frozen_wave_adapter_debt_zero": true,
+      "hydration_passed": false,
+      "private_material_restores_from_two_devices": false,
+      "removed_repositories_reconstruct": false,
+      "replay_passed": false,
+      "repository_and_stale_registration_census_zero_except_protected": false
+    },
+    "observed_at": "2026-07-28T17:48:46.556475+00:00",
+    "omega_admitted": false,
+    "physical_devices": {
+      "available": false,
+      "device_count": 0,
+      "inventory_sha256": "d7da3381d9acb48c90f1fdff39170e3c8100b76ced0d5c6bd3f3247f1ae4dc1f"
+    },
+    "private_roots": [
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 338881,
+        "mtime_ns": "1785257874459774689",
+        "path_sha256": "0f4ff74dc946d5195707638d044bc55676ae2062526c9550510b6c4fb7193d9d",
+        "root_id": "private-root-0f4ff74dc946d519"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 338890,
+        "mtime_ns": "1785244244594329865",
+        "path_sha256": "10b2e28aaefaa2b5308c27424d570605b1b06dc1b4b82438a1729645f5547783",
+        "root_id": "private-root-10b2e28aaefaa2b5"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 330129972,
+        "mtime_ns": "1785192116638547853",
+        "path_sha256": "13ab0fba0f0046e06669edea6957e02ec99da698721d5d0104f8b03d38c2bcb4",
+        "root_id": "private-root-13ab0fba0f0046e0"
+      },
+      {
+        "exists": false,
+        "path_sha256": "16c21bb693e18a6d9820cc40cadc7cd5d0dff570be5b030ca564c735aea11cd3",
+        "root_id": "private-root-16c21bb693e18a6d"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 330086265,
+        "mtime_ns": "1785199666226364525",
+        "path_sha256": "1b136503256f010aca1d7a7c207f4d5638ea4b3e13de259bb89eef853d05a121",
+        "root_id": "private-root-1b136503256f010a"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 320821466,
+        "mtime_ns": "1785257785208235667",
+        "path_sha256": "1bdc84ea1c297882823d928e446b1351a77082c123cc05d46a47abf0b7c4d10e",
+        "root_id": "private-root-1bdc84ea1c297882"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 12598210,
+        "mtime_ns": "1784904177822435667",
+        "path_sha256": "227d27b35baa32342e451bee0fbe2a5c42bfae6e71646f98f477e40b37182839",
+        "root_id": "private-root-227d27b35baa3234"
+      },
+      {
+        "exists": false,
+        "path_sha256": "2eec1fb30ea132db7e2ca040e4ac713c1fb73c1a8fe4b8ffeba79cef467362a6",
+        "root_id": "private-root-2eec1fb30ea132db"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 508416209,
+        "mtime_ns": "1784743689164276119",
+        "path_sha256": "3305df425d859fc4630b2c325cfcb1a0a646130d037da61ad60c62c3e081fdbc",
+        "root_id": "private-root-3305df425d859fc4"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 144770173,
+        "mtime_ns": "1774436914276436537",
+        "path_sha256": "4814122395f811b231a725ffc38d7ea2529011be7259c34c20900025e2187c45",
+        "root_id": "private-root-4814122395f811b2"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 338847,
+        "mtime_ns": "1785197927930917947",
+        "path_sha256": "5e7306b8975c106dc3a02cadfa0481066675a6f36cc316d98edba8ecd75336f9",
+        "root_id": "private-root-5e7306b8975c106d"
+      },
+      {
+        "exists": false,
+        "path_sha256": "66a63282ebf6f91071e829a655b14a828c2c6cdca5360f6ed8de79851a96c6cc",
+        "root_id": "private-root-66a63282ebf6f910"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 531332918,
+        "mtime_ns": "1785257822637273310",
+        "path_sha256": "75a6b306dea2fdacdb7117596795c859d4d2c638a125f9c008e99af1a73fea2a",
+        "root_id": "private-root-75a6b306dea2fdac"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 330118125,
+        "mtime_ns": "1785190625398166668",
+        "path_sha256": "76e478625f177eb58fa2042b126c16fb65101dee8a9570a7ac5dae0158164f94",
+        "root_id": "private-root-76e478625f177eb5"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 530650616,
+        "mtime_ns": "1785189976563057761",
+        "path_sha256": "7a5d814bf3d04a40ff310d744b324b3c3d4ed80e0baceed10aa546b12f6b513b",
+        "root_id": "private-root-7a5d814bf3d04a40"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 321539940,
+        "mtime_ns": "1785259036243508143",
+        "path_sha256": "89e3bd907783d8a9db3906f6375024c7638d6b877a47f64fa22e94fd21164dc7",
+        "root_id": "private-root-89e3bd907783d8a9"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 321572871,
+        "mtime_ns": "1785260380614497000",
+        "path_sha256": "bbd6b0603cbc7f67e4f4653f406d1b8ee7981ee0481ad35a9e92fdc9481295ef",
+        "root_id": "private-root-bbd6b0603cbc7f67"
+      },
+      {
+        "device": 16777231,
+        "exists": true,
+        "inode": 339212,
+        "mtime_ns": "1785253947612446026",
+        "path_sha256": "f7b092d495a94939848ee1122c1763f3d3e4dbd4db9426b51fb45ec194d757f1",
+        "root_id": "private-root-f7b092d495a94939"
+      }
+    ],
+    "protected_exclusions": {
+      "omega_blocker_count": 1,
+      "projection_sha256": "d7f2899c7ff55b11db94da3e9cae38982d61b13bd9d0ce879a202484a2b85622",
+      "protected_exclusions": [
+        {
+          "blocks_omega": true,
+          "branch_sha256": "616023af8fc5e59d3ce9ad5075e961c9612b678c97b51176c9edcfba25b4d097",
+          "exclusion_id": "career-portal-20260728",
+          "owner": "career-portal-session",
+          "path_exists": true,
+          "path_sha256": "67187251af3f10c0ced9073ad348065350cdc9519c4177bc7abf3856791f42ff",
+          "projection_sha256": "96a263099131f3977beda8c2d7adf42497a56b7c55a06a01e24ac19e0050e00a",
+          "reason": "active externally owned dirty workstream",
+          "registration_exists": true,
+          "registration_sha256": "ff94f5e491df51c5a48f4a43083a2655e3b9f639527c26951e2a02dff2dc96e2",
+          "schema": "limen.protected_exclusion_projection.v1"
+        }
+      ],
+      "registry_digest": "7fd4bfd220f294a42fd598c502fa4bce075a0f76e815f6af0dd2b728fadb8ac8",
+      "schema": "limen.protected_exclusion_registry_projection.v1"
+    },
+    "protected_processes": {
+      "available": false,
+      "protected_cwds": []
+    },
+    "repositories": [
+      {
+        "available": false,
+        "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+        "reason": "not-a-git-worktree",
+        "repository_id": "repository-0665800866c86d3c"
+      }
+    ],
+    "repository_census_complete": false,
+    "resource_envelope": {
+      "disk_free_bytes": 187425288192,
+      "nonnegative": true,
+      "observed_at": "2026-07-28T17:48:46.556424+00:00",
+      "ram_available_bytes": 5648760832,
+      "ram_total_bytes": 17179869184,
+      "required_free_bytes": 35651584,
+      "swap_used_bytes": 0
+    },
+    "resource_envelope_nonnegative": true,
+    "schema": "limen.alpha_omega_reconciliation.v1",
+    "source_coverage": {
+      "adapter_count": 6,
+      "missing_adapter_count": 0,
+      "missing_adapter_source_digests": [],
+      "observed_source_count": 6,
+      "projection_sha256": "463dbc58e670559c061d0f10fe7cbcf5c5a2217b9b2014296d7ae8d7cb9b7c41",
+      "registered_source_digests": [
+        "6149df18f8e50122d69551d7dd76c29bdbcdf1bc07ad597cbd63aee1d2d4a91b",
+        "f5086b6dec618cd501588bf81def86cdf0ae7fb136ac631b82f6e1aa5a22e205",
+        "c0cd44f03da4637d7799a365ec38eabbda8e5864f6b4aa6872279bbccd1def9a",
+        "ca5407e19013693dca0f87b4e935b313ebbae6aeffcb90b6bff6dbbc10d00444",
+        "71237c0706b62062cddec766a6276b98d1be28e977a0039559bf4f2c9f5a938b",
+        "4232ac6c4fceb502056cdcd082ce245f84e70279d44e78d0ed133a4fcd3a9bb7"
+      ],
+      "registry_digest": "4ca1e5075c85d59ff3238cce9725a0c39310adef3766947b865db56c773b72fe",
+      "schema": "limen.source_registry_projection.v1"
+    },
+    "state_sha256": "b8bbc6b99f04cfce7d2590c4a5925167811489877f00b69c90d0eede41ee9543"
+  }
+}

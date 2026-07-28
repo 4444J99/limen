@@ -146,12 +146,32 @@ def test_semantic_recipe_requires_original_output_and_equivalence() -> None:
         )
 
 
+def test_observable_only_recipe_requires_preserved_original_output() -> None:
+    with pytest.raises(ValueError, match="observable-only replay"):
+        TransformRecipeV1(
+            recipe_id="external-action",
+            version="v1",
+            input_digests=(DIGEST,),
+            code_digest=DIGEST,
+            config_digest=DIGEST,
+            environment_digest=DIGEST,
+            randomness_declaration="provider controlled",
+            time_declaration="provider observed",
+            output_digests=(DIGEST,),
+            replay_class="observable_only",
+        )
+
+
 def test_explicit_composition_order_accepts_a_complete_permutation() -> None:
     manifest = CompositionManifestV1(
         composition_id="compositionId0001",
         selected_event_ids=("eventIdentifierA1", "eventIdentifierB2"),
         ordering="explicit",
         explicit_order=("eventIdentifierB2", "eventIdentifierA1"),
+        decision_receipt_digests=(DIGEST,),
+        redaction_receipt_digests=(DIGEST,),
+        failure_receipt_digests=(DIGEST,),
+        custody_receipt_digests=(DIGEST,),
         output_digests=(DIGEST,),
     )
 
@@ -159,6 +179,9 @@ def test_explicit_composition_order_accepts_a_complete_permutation() -> None:
         "eventIdentifierB2",
         "eventIdentifierA1",
     )
+    assert manifest.decision_receipt_digests == (DIGEST,)
+    assert manifest.failure_receipt_digests == (DIGEST,)
+    assert manifest.custody_receipt_digests == (DIGEST,)
 
     with pytest.raises(ValueError, match="enumerate selected events exactly"):
         CompositionManifestV1(

@@ -1,0 +1,14 @@
+{
+  "schema": "limen.reconciliation_protected_exclusions.v1",
+  "exclusions": [
+    {
+      "exclusion_id": "career-portal-20260728",
+      "owner": "career-portal-session",
+      "path": ".worktrees/career-portal-20260728",
+      "branch": "work/career-portal-20260728",
+      "registration": ".git/worktrees/career-portal-20260728",
+      "blocks_omega": true,
+      "reason": "active externally owned dirty workstream"
+    }
+  ]
+}

@@ -177,8 +177,8 @@ class TransformRecipeV1(PrimaMateriaModel):
     config_digest: _Digest
     environment_digest: _Digest
     parameters: dict[str, Any] = Field(default_factory=dict)
-    randomness_declaration: str
-    time_declaration: str
+    randomness_declaration: str = Field(min_length=1, max_length=4096)
+    time_declaration: str = Field(min_length=1, max_length=4096)
     output_digests: tuple[_Digest, ...] = Field(min_length=1, max_length=4096)
     replay_class: ReplayClass
     semantic_equivalence_predicate: str | None = None
@@ -200,6 +200,8 @@ class TransformRecipeV1(PrimaMateriaModel):
             raise ValueError("semantic replay requires an equivalence predicate and preserved original outputs")
         if self.replay_class == "exact" and self.semantic_equivalence_predicate is not None:
             raise ValueError("exact replay must not substitute semantic equivalence")
+        if self.replay_class == "observable_only" and not self.original_output_refs:
+            raise ValueError("observable-only replay requires preserved original outputs")
         return self
 
 
@@ -288,7 +290,19 @@ class CompositionManifestV1(PrimaMateriaModel):
     ordering: Literal["observed_time", "effective_time", "explicit"]
     explicit_order: tuple[str, ...] = Field(default_factory=tuple, max_length=100_000)
     omissions: tuple[str, ...] = Field(default_factory=tuple, max_length=100_000)
+    decision_receipt_digests: tuple[_Digest, ...] = Field(
+        default_factory=tuple,
+        max_length=100_000,
+    )
     redaction_receipt_digests: tuple[_Digest, ...] = Field(default_factory=tuple, max_length=100_000)
+    failure_receipt_digests: tuple[_Digest, ...] = Field(
+        default_factory=tuple,
+        max_length=100_000,
+    )
+    custody_receipt_digests: tuple[_Digest, ...] = Field(
+        default_factory=tuple,
+        max_length=100_000,
+    )
     transform_recipe_ids: tuple[str, ...] = Field(default_factory=tuple, max_length=100_000)
     output_digests: tuple[_Digest, ...] = Field(min_length=1, max_length=100_000)
 
@@ -296,9 +310,13 @@ class CompositionManifestV1(PrimaMateriaModel):
     _event_ids = field_validator("selected_event_ids", "explicit_order")(
         lambda values: tuple(_validate_opaque_id(value) for value in values)
     )
-    _digests = field_validator("redaction_receipt_digests", "output_digests")(
-        lambda values: tuple(_validate_digest(value) for value in values)
-    )
+    _digests = field_validator(
+        "decision_receipt_digests",
+        "redaction_receipt_digests",
+        "failure_receipt_digests",
+        "custody_receipt_digests",
+        "output_digests",
+    )(lambda values: tuple(_validate_digest(value) for value in values))
 
     @model_validator(mode="after")
     def explicit_order_is_complete(self) -> CompositionManifestV1:

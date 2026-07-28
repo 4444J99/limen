@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import importlib.util
 import json
@@ -9,6 +10,10 @@ import time
 from pathlib import Path
 
 import pytest
+from limen.protected_exclusions import (
+    ProtectedExclusion,
+    ProtectedExclusionRegistry,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "reclaim-worktrees.py"
@@ -75,6 +80,7 @@ def test_debt_classifier_matches_accepted_reaper_for_remote_merged_receipt(tmp_p
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=root, check=True)
+    subprocess.run(["git", "config", "commit.gpgsign", "false"], cwd=root, check=True)
     subprocess.run(["git", "commit", "-qm", "init", "--allow-empty"], cwd=root, check=True)
     receipts = {
         root.name: {
@@ -383,6 +389,205 @@ def test_candidate_manifest_digest_is_order_independent_and_bounded(tmp_path: Pa
     assert deferred == ["b"]
 
 
+def test_dirty_active_protected_worktree_never_enters_apply_plan(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.invalid"],
+        cwd=repository,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=repository,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "commit.gpgsign", "false"],
+        cwd=repository,
+        check=True,
+    )
+    tracked = repository / "tracked.txt"
+    tracked.write_text("base\n", encoding="utf-8")
+    subprocess.run(["git", "add", "tracked.txt"], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "base"], cwd=repository, check=True)
+    protected = repository / ".worktrees" / "career-portal"
+    protected.parent.mkdir()
+    subprocess.run(
+        [
+            "git",
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            "work/career-portal",
+            str(protected),
+        ],
+        cwd=repository,
+        check=True,
+    )
+    (protected / "tracked.txt").write_text("live career work\n", encoding="utf-8")
+    exclusion = ProtectedExclusion(
+        exclusion_id="career-portal",
+        owner="career-owner",
+        path=Path(".worktrees/career-portal"),
+        branch="work/career-portal",
+        registration=Path(".git/worktrees/career-portal"),
+        blocks_omega=True,
+        reason="active externally owned workstream",
+    )
+    registry = ProtectedExclusionRegistry.from_exclusions(
+        repository,
+        (exclusion,),
+    )
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            "import time; time.sleep(30)",
+        ],
+        cwd=protected,
+    )
+    try:
+        before = {
+            "head": subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=protected,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout,
+            "branch": subprocess.run(
+                ["git", "branch", "--show-current"],
+                cwd=protected,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout,
+            "status": subprocess.run(
+                ["git", "status", "--porcelain=v1", "-z"],
+                cwd=protected,
+                check=True,
+                capture_output=True,
+            ).stdout,
+            "registration": sorted(
+                path.relative_to(repository / ".git" / "worktrees" / "career-portal").as_posix()
+                for path in (repository / ".git" / "worktrees" / "career-portal").rglob("*")
+            ),
+        }
+        monkeypatch.setattr(reclaim, "_ACTIVE_PROCESS_CWDS", {protected.resolve(): process.pid})
+
+        manifest, _digest, skipped, _deferred = reclaim.build_candidate_manifest(
+            [(protected, 0, "repo-local")],
+            time.time(),
+            {},
+            [],
+            protected_registry=registry,
+        )
+
+        assert manifest["candidates"] == []
+        assert manifest["protected_exclusions"]
+        assert skipped == [
+            (
+                "career-portal",
+                "protected-exclusion:career-portal:path-overlap",
+            )
+        ]
+        assert process.poll() is None
+        after = {
+            "head": subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=protected,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout,
+            "branch": subprocess.run(
+                ["git", "branch", "--show-current"],
+                cwd=protected,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout,
+            "status": subprocess.run(
+                ["git", "status", "--porcelain=v1", "-z"],
+                cwd=protected,
+                check=True,
+                capture_output=True,
+            ).stdout,
+            "registration": sorted(
+                path.relative_to(repository / ".git" / "worktrees" / "career-portal").as_posix()
+                for path in (repository / ".git" / "worktrees" / "career-portal").rglob("*")
+            ),
+        }
+        assert after == before
+    finally:
+        process.terminate()
+        process.wait(timeout=10)
+
+
+def test_protected_path_short_circuits_before_any_git_mutation_command(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    protected = tmp_path / ".worktrees" / "career"
+    protected.mkdir(parents=True)
+    exclusion = ProtectedExclusion(
+        exclusion_id="career",
+        owner="career-owner",
+        path=Path(".worktrees/career"),
+        branch="work/career",
+        registration=Path(".git/worktrees/career"),
+        blocks_omega=True,
+        reason="active",
+    )
+    registry = ProtectedExclusionRegistry.from_exclusions(tmp_path, (exclusion,))
+    calls: list[list[str]] = []
+
+    def record_git(args, *_rest, **_kwargs):
+        calls.append(args)
+        return subprocess.CompletedProcess([], 1, "", "")
+
+    monkeypatch.setattr(reclaim, "git", record_git)
+
+    assert reclaim.classify(
+        protected,
+        time.time(),
+        0,
+        protected_registry=registry,
+    ) == ("skip", "protected-exclusion:career:path-overlap")
+    assert calls == []
+
+
+def test_reclaim_execution_path_contains_no_global_worktree_prune() -> None:
+    tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
+    commands: list[tuple[str, ...]] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not node.args:
+            continue
+        first = node.args[0]
+        if not isinstance(first, (ast.List, ast.Tuple)):
+            continue
+        values: list[str] = []
+        for element in first.elts:
+            if isinstance(element, ast.Constant) and isinstance(element.value, str):
+                values.append(element.value)
+            elif isinstance(element, ast.Starred):
+                values.append("*")
+            else:
+                values.append("?")
+        commands.append(tuple(values))
+
+    assert ("worktree", "prune") not in commands
+    assert ("git", "worktree", "prune") not in commands
+
+
 def test_apply_requires_matching_plan_digest_before_abandonment(tmp_path: Path, monkeypatch, capsys) -> None:
     reclaim = load_reclaim_worktrees()
     candidate = tmp_path / "candidate"
@@ -613,16 +818,26 @@ def test_reclaim_root_apply_does_not_run_generated_cleanup(
     monkeypatch.setattr(reclaim, "CHECK", False)
     monkeypatch.setattr(reclaim, "GENERATED_ONLY", False)
     monkeypatch.setattr(reclaim, "iter_worktree_targets", lambda _root: [target])
-    monkeypatch.setattr(reclaim, "active_process_cwds", lambda: {})
+    monkeypatch.setattr(reclaim, "active_process_cwds", dict)
     monkeypatch.setattr(
         reclaim,
         "reclaim_generated_payloads",
         lambda _targets: (_ for _ in ()).throw(AssertionError("root apply must not clean generated payloads")),
     )
-    monkeypatch.setattr(reclaim, "load_preservation_receipts", lambda: {})
-    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", lambda: [])
+    monkeypatch.setattr(reclaim, "load_preservation_receipts", dict)
+    monkeypatch.setattr(reclaim, "load_reclaim_acceptance", list)
     monkeypatch.setattr(reclaim, "classify", lambda *_args, **_kwargs: ("skip", "dirty"))
-    plan_sha = reclaim.build_candidate_manifest([(repo, 0, "test")], 0.0, {}, [])[1]
+    protected_registry = reclaim.ProtectedExclusionRegistry.load(
+        limen_root,
+        reclaim.PROTECTED_EXCLUSION_REGISTRY,
+    )
+    plan_sha = reclaim.build_candidate_manifest(
+        [(repo, 0, "test")],
+        0.0,
+        {},
+        [],
+        protected_registry=protected_registry,
+    )[1]
     monkeypatch.setattr(reclaim, "EXPECTED_PLAN_SHA", plan_sha)
 
     assert reclaim.main() == 0
@@ -882,12 +1097,17 @@ def test_reclaim_apply_rechecks_and_blocks_custody_proof_drift(
         lambda *_args, **_kwargs: ("remove-clone", "custody-restored+idle"),
     )
     monkeypatch.setattr(reclaim, "reclaim_accepted", lambda *_args, **_kwargs: (True, "accepted"))
+    protected_registry = reclaim.ProtectedExclusionRegistry.load(
+        reclaim.LIMEN_ROOT,
+        reclaim.PROTECTED_EXCLUSION_REGISTRY,
+    )
     plan_sha = reclaim.build_candidate_manifest(
         [(repo, 0, "test")],
         1.0,
         {},
         [],
         first_context,
+        protected_registry,
     )[1]
     contexts = iter((first_context, drifted_context))
 

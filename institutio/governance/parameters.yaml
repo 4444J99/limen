@@ -3522,6 +3522,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Optional colon-separated direct list of repo-local .worktrees roots. Empty means discover under LIMEN_RECLAIM_WORKSPACE_ROOTS."
+  LIMEN_RECLAIM_PROTECTED_EXCLUSIONS:
+    default: "<runtime-source>/institutio/governance/reconciliation-protected-exclusions.json"
+    env: LIMEN_RECLAIM_PROTECTED_EXCLUSIONS
+    self_update: none
+    owner: limen-daemon
+    note: "Tracked repo-relative hard-exclusion registry loaded from the exact runtime source by default. Missing or invalid input blocks the entire reclaim pass. An override is an explicit owner-supplied registry path, never an implicit fallback."
   LIMEN_RECLAIM_REGISTERED_WT:
     default: "auto"
     env: LIMEN_RECLAIM_REGISTERED_WT
