@@ -16,16 +16,18 @@ CORE="limen session-meta sovereign-systems--elevate-align portfolio portvs unive
 
 # ── DISK PRESSURE — the reclaim intensity tracks genuine low free space, not df% alone.
 # On APFS, df% counts purgeable-but-reclaimable space as used, so a high percentage can still have
-# enough raw free GiB. Keep percent for display; make pressure decisions from the absolute floor.
+# enough raw free GiB. Keep percent for display; derive pressure from the live resource envelope.
 # Under pressure we (a) waive the node_modules idle window and (b) capture-then-reap in this same run.
 disk_pct() { df -P "$1" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5+0}'; }
 disk_free_gib() { df -Pk "$1" 2>/dev/null | awk 'NR==2 {print int($4/1048576)}'; }
-HIGH="${LIMEN_DISK_HIGH_WATER:-85}"
-FREE_FLOOR="${LIMEN_DISK_FREE_FLOOR_GIB:-15}"
+REQUIRED_GIB="$(python3 -m limen.resource_envelope 2>/dev/null || true)"
 PCT="$(disk_pct "$WS")"; [ -n "$PCT" ] || PCT=0
 FREE_GIB="$(disk_free_gib "$WS")"; [ -n "$FREE_GIB" ] || FREE_GIB=999999
-PRESSURE=0; [ "$FREE_GIB" -le "$FREE_FLOOR" ] 2>/dev/null && PRESSURE=1
-echo "── clone-maintenance: disk ${PCT}% used, ${FREE_GIB}GiB free (floor ${FREE_FLOOR}GiB, high-water ${HIGH}% info) → pressure=$([ "$PRESSURE" = 1 ] && echo ON || echo off) ──"
+PRESSURE=1
+if [ -n "$REQUIRED_GIB" ]; then
+  PRESSURE="$(awk -v free="$FREE_GIB" -v required="$REQUIRED_GIB" 'BEGIN {print (free < required) ? 1 : 0}')"
+fi
+echo "── clone-maintenance: disk ${PCT}% used, ${FREE_GIB}GiB free (required ${REQUIRED_GIB:-unknown}GiB) → pressure=$([ "$PRESSURE" = 1 ] && echo ON || echo off) ──"
 
 # ── PRUNE GUARD (prune-race prevention). `git worktree prune` reaps the admin gitdir of any
 # worktree whose checkout dir looks GONE — but a worktree on an UNMOUNTED external volume (Scratch)

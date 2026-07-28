@@ -22,7 +22,7 @@ force-push/ahead-of-origin, submodules, LFS, linked worktrees, TOCTOU — all no
   • no skip-worktree / assume-unchanged bit hiding a tracked-file edit, AND
   • not a submodule / LFS / linked-worktree parent (nested contexts outside the parent ref graph), AND
   • HEAD reachable from an origin ref, no active limen task, not CORE / live-root / worktree-root, AND
-  • idle >= min-age — UNLESS disk pressure >= high-water, which WAIVES the age gate (still loss-free), AND
+  • idle >= min-age — UNLESS the live resource envelope is negative, which waives the age gate, AND
   • the NETWORK BELT confirms against a fresh `git fetch --prune` that no local object is un-mirrored
     (catches stale/force-rewound remotes that make refs/heads commits merely LOOK pushed), re-checked
     a final time (porcelain + stash) at the instant before rmtree to close the TOCTOU window.
@@ -40,7 +40,7 @@ auto-detected via df on the workspace volume, or forced with --pressure / disabl
 Bounded per run (--max, default 50). Fails OPEN: any error on one clone is logged and skipped.
 
 Env: LIMEN_WORKSPACE (~/Workspace), LIMEN_ROOT, LIMEN_REAP_CORE, LIMEN_REAP_IDLE_DAYS (2),
-     LIMEN_DISK_HIGH_WATER (85), LIMEN_REAP_MAX (50), LIMEN_REAP_MAXDEPTH (3).
+     LIMEN_REAP_MAX (50), LIMEN_REAP_MAXDEPTH (3).
 """
 
 from __future__ import annotations
@@ -61,12 +61,17 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from reap_acceptance import (  # noqa: E402
     REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
+)
+from reap_acceptance import (
     has_required_acceptance_proof,
 )
 
 HOME = os.environ.get("HOME", str(Path.home()))
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE", f"{HOME}/Workspace"))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
+sys.path.insert(0, str(LIMEN_ROOT / "cli" / "src"))
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
+
 LOG = LIMEN_ROOT / "logs" / "reap-clones.jsonl"
 CLONE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "clone-reap-acceptance.jsonl"
 CLONE_REAP_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "clone-reap-acceptance.md"
@@ -464,16 +469,13 @@ def disk_pct_used(path: Path) -> float:
         return 0.0
 
 
-def disk_free_gib(path: Path) -> float:
-    """Absolute free space (GiB) — the HONEST pressure signal on a large APFS volume. df/statvfs
-    counts ~100GB of purgeable-but-reclaimable space (snapshots, caches macOS releases on demand) as
-    "used", so `disk_pct_used` can read 95% while the volume has ~120GB effectively free (the
-    meter-lie). Emergency reap keys off THIS absolute floor, not the misleading percentage. Fail-open
-    to +inf (→ no pressure) so a probe error never triggers an aggressive waived-gate reap."""
+def disk_free_gib(path: Path) -> float | None:
+    """Return observable free GiB; an unavailable probe is unknown, never green."""
+
     try:
         return shutil.disk_usage(str(path)).free / (1024**3)
     except Exception:
-        return float("inf")
+        return None
 
 
 def discover_clones(workspace: Path, maxdepth: int) -> list[Path]:
@@ -513,25 +515,27 @@ def main() -> int:
     _ACTIVE_PROCESS_CWDS = active_process_cwds()
 
     idle_days = float(os.environ.get("LIMEN_REAP_IDLE_DAYS", "2"))
-    high_water = float(os.environ.get("LIMEN_DISK_HIGH_WATER", "85"))
-    free_floor = float(os.environ.get("LIMEN_DISK_FREE_FLOOR_GIB", "15"))
+    try:
+        required_free = current_required_free_gib()
+    except (RuntimeError, ValueError):
+        required_free = None
     maxdepth = int(os.environ.get("LIMEN_REAP_MAXDEPTH", "3"))
 
     pct = disk_pct_used(WORKSPACE)
     free_gib = disk_free_gib(WORKSPACE)
-    # Emergency pressure (age-gate WAIVED → aggressive rmtree every beat) now keys off ABSOLUTE low
-    # free space, not the percentage. On a large APFS volume, df/statvfs counts ~100GB of
-    # purgeable-but-reclaimable space as "used", so a 95%-by-percent disk can still have ~120GB
-    # effectively free — waiving the loss-free age gate on that false 95% made the daemon reap hard
-    # every beat for no reason (and slowed the beat). It now fires only when raw free genuinely drops
-    # below the floor; the normal idle-gate reap still runs the rest of the time. ([[meter-lie-and-dead-daemon-incident]])
-    pressure = args.pressure if args.pressure is not None else (free_gib <= free_floor)
+    # Pressure waives only the idle age, never a preservation predicate. Percent
+    # remains display-only; the live envelope is the sole storage authority.
+    pressure = args.pressure if args.pressure is not None else (
+        required_free is None or free_gib is None or free_gib < required_free
+    )
     active = active_task_slugs(LIMEN_ROOT / "tasks.yaml")
     now = time.time()
 
     mode = "APPLY" if args.apply else "dry-run"
     print(
-        f"[reap-clones] disk {pct:.0f}% used, {free_gib:.0f}GiB free (floor {free_floor:.0f}GiB, hw {high_water:.0f}%) → "
+        f"[reap-clones] disk {pct:.0f}% used, "
+        f"{f'{free_gib:.0f}GiB' if free_gib is not None else 'unknown'} free "
+        f"(required {required_free if required_free is not None else 'unknown'}GiB) → "
         f"pressure={'ON' if pressure else 'off'}; mode={mode}; idle-gate={'waived' if pressure else f'{idle_days:g}d'}"
     )
 

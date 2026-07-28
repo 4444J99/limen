@@ -7,13 +7,15 @@ regardless of whether the ``limen`` package is pip-installed in the beat environ
 convenes the organ's executive for one beat. It ALWAYS exits 0 — an organ fault must never
 wedge the heartbeat.
 
-  python3 scripts/observatory-beat.py            # run the whole loop (dry by default)
-  python3 scripts/observatory-beat.py --apply    # arm the human-gated proposal write
-  python3 scripts/observatory-beat.py --doctor    # the offline self-verifying predicate
+  python3 scripts/observatory-beat.py           # run the whole loop (dry by default)
+  python3 scripts/observatory-beat.py --apply   # arm the human-gated proposal write
+  python3 scripts/observatory-beat.py --doctor  # the offline self-verifying predicate
+  python3 scripts/observatory-beat.py --check   # require every operational stage to be ok
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -25,20 +27,31 @@ if SRC.exists() and str(SRC) not in sys.path:
 
 
 def main(argv: list[str] | None = None) -> int:
-    argv = list(sys.argv[1:] if argv is None else argv)
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--doctor", action="store_true")
+    mode.add_argument("--check", action="store_true")
+    parser.add_argument("--apply", action="store_true")
+    args = parser.parse_args(argv)
     try:
-        if "--doctor" in argv:
+        if args.doctor:
             from limen.observatory import doctor
 
             report = doctor.run(offline=True)
             print(f"observatory-beat: doctor ok={report['ok']}")
-            return 0
+            return 0 if report["ok"] else 1
         from limen.observatory import executive
 
-        status = executive.run_beat(apply="--apply" in argv)
+        status = executive.run_beat(apply=args.apply and not args.check)
         print(executive.summary_line(status))
+        if args.check:
+            stages = status.get("stages")
+            if not isinstance(stages, list) or not stages or any(stage.get("status") != "ok" for stage in stages):
+                return 1
     except Exception as exc:  # fail-open: never wedge the beat
         print(f"observatory-beat: error — {str(exc)[:160]}")
+        if args.check or args.doctor:
+            return 1
     return 0
 
 

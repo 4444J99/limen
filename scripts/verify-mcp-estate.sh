@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+STRICT=0
+for arg in "$@"; do
+  case "$arg" in
+    --strict) STRICT=1 ;;
+    -h|--help)
+      printf 'usage: %s [--strict]\n' "${0##*/}"
+      exit 0
+      ;;
+    *)
+      printf 'verify-mcp-estate.sh: unknown argument %s\n' "$arg" >&2
+      exit 2
+      ;;
+  esac
+done
+
 # verify-mcp-estate.sh — the MCP-estate fixed-point predicate (the Ω of the MCP organ).
 #
 # Exit 0 ⟺ the local MCP estate holds three invariants:
@@ -26,9 +41,11 @@ step() {
 }
 
 FAIL=0
+SKIP=0
 fail() { printf 'FAIL  %s\n' "$*"; FAIL=1; }
 ok()   { printf 'ok    %s\n' "$*"; }
 warn() { printf 'warn  %s\n' "$*"; }
+skip() { printf 'SKIP  %s\n' "$*"; SKIP=1; }
 
 # ── Invariant 1: BOOT ─────────────────────────────────────────────────────────────────────────────
 step "MCP boot — every configured local server across every agent CLI starts/reaches"
@@ -41,7 +58,7 @@ fi
 # ── Invariant 2: DOORWAY ──────────────────────────────────────────────────────────────────────────
 step "ianva doorway — the aggregator forwards ≥1 upstream (empty hub = every agent routes to nothing)"
 if ! command -v ianva >/dev/null 2>&1 && [[ ! -d "$HOME/.config/ianva" ]]; then
-  ok "ianva not present on this host — doorway check fail-open (CI/bare host)"
+  skip "ianva not present on this host — doorway check unavailable (CI/bare host)"
 else
   # Count upstreams offline across ianva's two registry sources + its materialized settings. Any
   # non-empty source counts. Shapes handled: {name:{…}}, {"servers":[…]}, {"mcpServers":{…}}.
@@ -114,6 +131,10 @@ done
 # ── Verdict ─────────────────────────────────────────────────────────────────────────────────────
 echo
 if [[ "$FAIL" -eq 0 ]]; then
+  if [[ "$STRICT" -eq 1 && "$SKIP" -ne 0 ]]; then
+    printf '\nMCP estate verification SKIPPED — a declared live invariant was unavailable\n'
+    exit 77
+  fi
   printf '\nMCP estate verification passed\n'
   exit 0
 fi

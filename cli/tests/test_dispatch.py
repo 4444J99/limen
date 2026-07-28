@@ -78,6 +78,17 @@ def write_board(path: Path, tasks: list[dict]) -> None:
     )
 
 
+def test_resolve_agent_requires_explicit_native_identity(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_AGENT", raising=False)
+    with pytest.raises(RuntimeError, match="LIMEN_AGENT identity is required"):
+        D.resolve_agent()
+
+
+def test_resolve_agent_preserves_explicit_native_identity(monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_AGENT", "jules")
+    assert D.resolve_agent() == "jules"
+
+
 def read_board(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
 

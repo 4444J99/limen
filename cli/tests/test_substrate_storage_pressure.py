@@ -59,7 +59,7 @@ def test_build_snapshot_classifies_configured_bucket(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(mod, "RECLAIM_LOGS", {})
     monkeypatch.setattr(mod, "disk_free_gib", lambda: 50.0)
-    monkeypatch.setattr(mod, "TARGET_FREE_GIB", 200.0)
+    monkeypatch.setattr(mod, "current_required_free_gib", lambda: 200.0)
     monkeypatch.setattr(
         mod,
         "worktree_lifecycle_summary",
@@ -80,7 +80,7 @@ def test_build_snapshot_classifies_configured_bucket(monkeypatch, tmp_path):
     snapshot = mod.build_snapshot()
 
     assert snapshot["status"] == "needs-owner-gates"
-    assert snapshot["shortfall_gib"] == 150.0
+    assert snapshot["resource_headroom_gib"] == -150.0
     assert snapshot["buckets"][0]["id"] == "bucket"
     assert snapshot["buckets"][0]["exists"] is True
     assert snapshot["worktree_lifecycle"]["summary"] == "0 debt roots / 2 scanned; 0 reapable roots"
@@ -130,7 +130,7 @@ def test_opencode_bucket_reflects_verified_intake(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(mod, "RECLAIM_LOGS", {})
     monkeypatch.setattr(mod, "disk_free_gib", lambda: 90.0)
-    monkeypatch.setattr(mod, "TARGET_FREE_GIB", 200.0)
+    monkeypatch.setattr(mod, "current_required_free_gib", lambda: 200.0)
     monkeypatch.setattr(mod, "worktree_lifecycle_summary", lambda: {"present": True, "ok": True})
 
     snapshot = mod.build_snapshot()
@@ -187,8 +187,8 @@ def test_render_includes_worktree_lifecycle(monkeypatch, tmp_path):
         "generated_at": "2026-07-10T00:00:00Z",
         "status": "needs-owner-gates",
         "internal_free_gib": 90.0,
-        "target_free_gib": 200.0,
-        "shortfall_gib": 110.0,
+        "required_free_gib": 200.0,
+        "resource_headroom_gib": -110.0,
         "safe_reclaim": {},
         "worktree_lifecycle": {
             "ok": True,

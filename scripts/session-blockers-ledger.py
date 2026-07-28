@@ -753,12 +753,12 @@ def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
             blocker_id="dispatch-health-not-refreshed",
             category="dispatch_lifecycle",
             status="needs_refresh",
-            evidence="No current heartbeat/dispatch-health receipt is available.",
-            owner="dispatch heartbeat substrate",
+            evidence="No current campaign-heartbeat health receipt is available.",
+            owner="campaign heartbeat substrate",
             route=(
-                "Run `python3 scripts/dispatch-health.py --write --probe-async`; "
+                "Run `python3 scripts/dispatch-health.py --write`; "
                 "then run `python3 scripts/live-root-gate.py --write`; "
-                "do not enable async or reload launchd from stale dispatch evidence."
+                "do not reload launchd from stale campaign evidence."
             ),
             source="dispatch-health",
             details={"path": str(DISPATCH_HEALTH_INDEX)},
@@ -777,20 +777,20 @@ def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
         needs_human = any(item in human_gate_ids for item in blocker_ids)
         add_blocker(
             blockers,
-            blocker_id="dispatch-heartbeat-substrate-unhealthy",
+            blocker_id="campaign-heartbeat-substrate-unhealthy",
             category="dispatch_lifecycle",
             status="needs_human_gate" if needs_human else "needs_refresh",
             evidence=(
-                f"Dispatch-health receipt is `{status}` with {len(receipt_blockers)} blocker(s): "
+                f"Campaign-heartbeat health receipt is `{status}` with {len(receipt_blockers)} blocker(s): "
                 f"{', '.join(blocker_ids) or 'unknown'}."
             ),
-            owner="dispatch heartbeat substrate",
+            owner="campaign heartbeat substrate",
             route=(
                 "Use `docs/live-root-gate.md` to preserve/reconcile the live Limen root and reload "
                 "launchd only under an explicit operator gate; stop before reset, branch switch, "
-                "task-board edits, or async enablement."
+                "task-board edits, or provider launch."
                 if needs_human
-                else "Refresh dispatch-health and repair heartbeat/async probes before trusting dispatch receipts."
+                else "Refresh campaign-heartbeat health and repair its exact runtime boundary before trusting receipts."
             ),
             source="dispatch-health",
             details={

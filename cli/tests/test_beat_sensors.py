@@ -5,6 +5,7 @@ tests never execute the real beat sensors.
 """
 
 import importlib.util
+import json
 import os
 import sys
 import time
@@ -136,6 +137,18 @@ def test_real_registry_derives_nonempty_metabolize_loop(capsys):
     assert rc == 0
     assert out.count("── ") >= 15
     assert "scripts/creds-hydrate.py --apply" in out
+
+
+def test_real_omega_manifest_derives_exact_live_owner_receipt_invariant():
+    m = _mod()
+    core = json.loads((ROOT / "institutio/governance/omega-core-rungs.json").read_text())["rungs"]
+    sensors = m.omega_contract(m.load_sensors(REAL_REGISTRY))["rungs"]
+    rungs = [*core, *sensors]
+    live = [rung for rung in rungs if rung["tier"] == "live"]
+
+    assert len(rungs) == 34
+    assert len(live) == 19
+    assert all(sum(item.get("role") == "owner_receipt" for item in rung["semantic_inputs"]) == 1 for rung in live)
 
 
 def test_scheduled_sensor_is_identity_agnostic_and_stamps_only_when_due(tmp_path, monkeypatch):
@@ -303,14 +316,13 @@ sensors:
         semantic_inputs:
           - path: logs/example.json
             normalization: json
-            volatile_fields: [generated_at]
+            volatile_fields: [observed_at]
             role: owner_receipt
+            max_age_seconds: 300
 """,
         encoding="utf-8",
     )
     assert m.list_omega_json(registry) == 0
-    import json
-
     payload = json.loads(capsys.readouterr().out)
     assert payload["schema"] == "limen.omega_sensor_rungs.v1"
     assert payload["rungs"][0]["id"] == "sensor.semantic-receipt"
@@ -318,8 +330,49 @@ sensors:
         "normalization": "json",
         "path": "logs/example.json",
         "role": "owner_receipt",
-        "volatile_fields": ["generated_at"],
+        "volatile_fields": ["observed_at"],
+        "max_age_seconds": 300,
     }
+
+
+def test_live_omega_emits_explicit_skip_and_pass_owner_receipts(tmp_path, monkeypatch):
+    m = _mod()
+    monkeypatch.setattr(m, "ROOT", tmp_path)
+    registry = tmp_path / "live-omega.yaml"
+    registry.write_text(
+        """\
+sensors:
+  live-source:
+    section: heartbeat
+    title: live source
+    gate: TEST_LIVE_SOURCE
+    default: "0"
+    source: [metabolize]
+    steps: [{command: "true", severity: silent, escalation: skipped}]
+    omega_eligible:
+      - label: live source
+        rung_id: sensor.live-source
+        tier: live
+        timeout: 10
+        command: "printf stable"
+        semantic_inputs:
+          - {path: scripts/source.py, normalization: raw}
+          - path: logs/omega-owner-receipts/sensor.live-source.json
+            normalization: json
+            volatile_fields: [observed_at]
+            role: owner_receipt
+            max_age_seconds: 300
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("TEST_LIVE_SOURCE", raising=False)
+    assert m.run_omega("live-source", 0, registry=registry) == 77
+    receipt = tmp_path / "logs/omega-owner-receipts/sensor.live-source.json"
+    assert json.loads(receipt.read_text())["status"] == "SKIP"
+
+    monkeypatch.setenv("TEST_LIVE_SOURCE", "1")
+    assert m.run_omega("live-source", 0, registry=registry) == 0
+    assert json.loads(receipt.read_text())["status"] == "PASS"
 
 
 def test_omega_discovery_rejects_missing_duplicate_or_unknown_identity(tmp_path, capsys):

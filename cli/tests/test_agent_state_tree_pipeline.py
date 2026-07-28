@@ -10,7 +10,7 @@ import pytest
 from limen.agent_state import tree_pipeline
 from limen.agent_state.crypto import EncryptedAtomPacker
 from limen.agent_state.models import MetabolismReceipt, ReceiptError
-from limen.agent_state.pipeline import PipelineError
+from limen.agent_state.pipeline import ARCA_REMOTE_EXACT_ERROR, PipelineError
 from limen.agent_state.tree import RetentionPlan, atomize_file_tree, plan_retention
 
 KEY = "tree-resume-test-key"
@@ -82,6 +82,15 @@ class _CompletedVault(_Vault):
 
     def commit_and_push(self, *_args, **_kwargs) -> str:
         raise AssertionError("completed custody must not create another receipt")
+
+
+class _AdvancedRemoteVault(_CompletedVault):
+    def completed_receipt_commits(
+        self,
+        relative: Path,
+        message: str,
+    ) -> tuple[str, str] | None:
+        raise PipelineError(ARCA_REMOTE_EXACT_ERROR)
 
 
 def _interrupted_tree(tmp_path: Path) -> tuple[Path, Path, Path, RetentionPlan]:
@@ -220,6 +229,54 @@ def test_resume_accepts_completed_exact_receipt_without_another_push(
     _source, vault, _payload, plan = _interrupted_tree(tmp_path)
     first = _resume(monkeypatch, tmp_path, plan, vault)
     monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+
+    resumed = tree_pipeline.resume_cold_tree_capture(
+        "icloud-drive",
+        plan,
+        vault,
+        tmp_path / "external",
+        tmp_path / "private-receipt.json",
+        run_id="run",
+        require_external_mount=False,
+    )
+
+    assert resumed.as_dict() == first.as_dict()
+
+
+def test_resume_rematerializes_missing_private_receipt_from_exact_custody(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    private_receipt = tmp_path / "private-receipt.json"
+    private_receipt.unlink()
+    monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+
+    resumed = tree_pipeline.resume_cold_tree_capture(
+        "icloud-drive",
+        plan,
+        vault,
+        tmp_path / "external",
+        private_receipt,
+        run_id="run",
+        require_external_mount=False,
+    )
+
+    assert resumed.as_dict() == first.as_dict()
+    assert MetabolismReceipt.read(private_receipt).as_dict() == first.as_dict()
+    assert private_receipt.stat().st_mode & 0o777 == 0o600
+
+
+def test_resume_accepts_completed_receipt_reachable_behind_remote_head(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    monkeypatch.setattr(tree_pipeline, "GitVault", _AdvancedRemoteVault)
     monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
 
     resumed = tree_pipeline.resume_cold_tree_capture(

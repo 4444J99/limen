@@ -39,28 +39,56 @@
       "id": "core.ship-gate",
       "label": "ship-gate (products reachable)",
       "predicate": "python3 scripts/ship-gate.py --check",
-      "semantic_inputs": [{"normalization": "raw", "path": "scripts/ship-gate.py"}],
+      "semantic_inputs": [
+        {"normalization": "raw", "path": "scripts/ship-gate.py"},
+        {
+          "max_age_seconds": 3600,
+          "normalization": "json",
+          "path": "logs/omega-owner-receipts/core.ship-gate.json",
+          "role": "owner_receipt",
+          "volatile_fields": ["observed_at"]
+        }
+      ],
+      "timeout": 300,
       "tier": "live"
     },
     {
       "id": "core.heal-convergence",
       "label": "heal-convergence (no chronic wall)",
       "predicate": "python3 scripts/heal-convergence.py --check",
-      "semantic_inputs": [{"normalization": "raw", "path": "scripts/heal-convergence.py"}],
+      "semantic_inputs": [
+        {"normalization": "raw", "path": "scripts/heal-convergence.py"},
+        {
+          "max_age_seconds": 3600,
+          "normalization": "json",
+          "path": "logs/omega-owner-receipts/core.heal-convergence.json",
+          "role": "owner_receipt",
+          "volatile_fields": ["observed_at"]
+        }
+      ],
+      "timeout": 120,
       "tier": "live"
     },
     {
       "id": "core.overnight-trial",
       "label": "overnight-trial (last run passed)",
-      "predicate": "python3 scripts/overnight-watch.py --check-trial",
+      "predicate": "python3 scripts/overnight-watch.py --check-trial --omega-strict",
       "semantic_inputs": [
         {
           "normalization": "json",
           "path": "logs/overnight-trial.json",
-          "role": "owner_receipt",
+          "role": "input",
           "volatile_fields": ["generated_at"]
+        },
+        {
+          "max_age_seconds": 3600,
+          "normalization": "json",
+          "path": "logs/omega-owner-receipts/core.overnight-trial.json",
+          "role": "owner_receipt",
+          "volatile_fields": ["observed_at"]
         }
       ],
+      "timeout": 120,
       "tier": "live"
     },
     {
@@ -81,21 +109,51 @@
       "id": "core.no-tasks-on-me",
       "label": "no-tasks-on-me (owed work homed)",
       "predicate": "bash scripts/no-tasks-on-me.sh",
-      "semantic_inputs": [{"normalization": "raw", "path": "tasks.yaml", "role": "owner_receipt"}],
-      "tier": "det"
+      "semantic_inputs": [
+        {"normalization": "raw", "path": "tasks.yaml"},
+        {
+          "max_age_seconds": 3600,
+          "normalization": "json",
+          "path": "logs/omega-owner-receipts/core.no-tasks-on-me.json",
+          "role": "owner_receipt",
+          "volatile_fields": ["observed_at"]
+        }
+      ],
+      "timeout": 300,
+      "tier": "live"
     },
     {
       "id": "core.credential-wall",
       "label": "credential-wall (secrets homed)",
       "predicate": "python3 scripts/credential-wall.py --check",
-      "semantic_inputs": [{"normalization": "raw", "path": "scripts/credential-wall.py"}],
+      "semantic_inputs": [
+        {"normalization": "raw", "path": "scripts/credential-wall.py"},
+        {
+          "max_age_seconds": 3600,
+          "normalization": "json",
+          "path": "logs/omega-owner-receipts/core.credential-wall.json",
+          "role": "owner_receipt",
+          "volatile_fields": ["observed_at"]
+        }
+      ],
+      "timeout": 120,
       "tier": "live"
     },
     {
       "id": "core.worktree-lifecycle",
       "label": "worktree lifecycle (exact zero)",
       "predicate": "python3 scripts/worktree-debt.py --strict --fail-on-debt --fail-reapable-over-cap",
-      "semantic_inputs": [{"normalization": "raw", "path": "scripts/worktree-debt.py"}],
+      "semantic_inputs": [
+        {"normalization": "raw", "path": "scripts/worktree-debt.py"},
+        {
+          "max_age_seconds": 3600,
+          "normalization": "json",
+          "path": "logs/omega-owner-receipts/core.worktree-lifecycle.json",
+          "role": "owner_receipt",
+          "volatile_fields": ["observed_at"]
+        }
+      ],
+      "timeout": 600,
       "tier": "live"
     }
   ],

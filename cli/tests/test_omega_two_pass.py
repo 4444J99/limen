@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from limen.omega_owner_receipt import build_owner_receipt, write_owner_receipt
 from limen.omega_remediation import load_omega_remediations, remediation_payload
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,6 +54,7 @@ def proof_root(tmp_path):
         root / "scripts",
         root / "institutio" / "governance",
         root / "logs",
+        root / "cli" / "src" / "limen",
         root / ".limen-private" / "session-corpus" / "prompt-atoms",
     ):
         directory.mkdir(parents=True, exist_ok=True)
@@ -63,7 +65,12 @@ def proof_root(tmp_path):
     (root / "tasks.yaml").write_text("tasks: []\n", encoding="utf-8")
     (root / "scripts" / "omega.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
     (root / "scripts" / "omega-two-pass.py").write_text("# proof contract\n", encoding="utf-8")
+    (root / "scripts" / "omega-owner-receipt.py").write_text("# owner receipt runner\n", encoding="utf-8")
     (root / "scripts" / "omega-remediation.py").write_text("# remediation contract\n", encoding="utf-8")
+    (root / "cli" / "src" / "limen" / "omega_owner_receipt.py").write_text(
+        "# owner receipt contract\n",
+        encoding="utf-8",
+    )
     (root / "scripts" / "input.txt").write_text("core input\n", encoding="utf-8")
     (root / "scripts" / "sensor-input.txt").write_text("sensor input\n", encoding="utf-8")
     (root / "scripts" / "beat-sensors.py").write_text(
@@ -98,9 +105,15 @@ print((root / 'institutio/governance/sensor-rungs.json').read_text())
                     {
                         "normalization": "json",
                         "path": "logs/overnight-trial.json",
-                        "role": "owner_receipt",
                         "volatile_fields": ["generated_at"],
-                    }
+                    },
+                    {
+                        "max_age_seconds": 300,
+                        "normalization": "json",
+                        "path": "logs/owner-receipts/core.trial.json",
+                        "role": "owner_receipt",
+                        "volatile_fields": ["observed_at"],
+                    },
                 ],
                 "tier": "live",
             },
@@ -110,8 +123,10 @@ print((root / 'institutio/governance/sensor-rungs.json').read_text())
                 "semantic_inputs": [
                     {
                         "normalization": "json",
-                        "path": "logs/owner.json",
+                        "path": "logs/owner-receipts/core.owner.json",
                         "role": "owner_receipt",
+                        "volatile_fields": ["observed_at"],
+                        "max_age_seconds": 300,
                     }
                 ],
                 "tier": "live",
@@ -162,7 +177,6 @@ print((root / 'institutio/governance/sensor-rungs.json').read_text())
         },
     )
     _write_json(root / "logs" / "overnight-trial.json", {"generated_at": "one", "verdict": "PASS"})
-    _write_json(root / "logs" / "owner.json", {"value": "sealed"})
     prompt_root = root / ".limen-private" / "session-corpus" / "prompt-atoms"
     _write_json(prompt_root / "prompt-atom-ledger.json", {"validation": {"ok": True}})
     (prompt_root / "prompt-events.jsonl").write_text('{"event":"one"}\n', encoding="utf-8")
@@ -209,10 +223,53 @@ def _stamp(root: Path, *, ids: list[str] | None = None, fail: int = 0, skip: int
     _write_json(root / "logs" / "omega.json", payload)
 
 
-def _runner(mutation=None, *, fail: int = 0, skip: int = 0):
+def _write_live_owner_receipts(
+    root: Path,
+    *,
+    pass_no: int,
+    changed_owner_evidence: bool = False,
+    failed_owner: bool = False,
+    omit_owner: bool = False,
+) -> None:
+    payload = json.loads((root / "institutio/governance/omega-core-rungs.json").read_text())
+    for rung in payload["rungs"]:
+        if rung["tier"] != "live":
+            continue
+        if omit_owner and rung["id"] == "core.owner":
+            continue
+        descriptor = next(item for item in rung["semantic_inputs"] if item.get("role") == "owner_receipt")
+        evidence = f"{rung['id']}:green"
+        if changed_owner_evidence and pass_no == 2 and rung["id"] == "core.owner":
+            evidence += ":changed"
+        receipt = build_owner_receipt(
+            rung_id=rung["id"],
+            predicate=rung["predicate"],
+            returncode=1 if failed_owner and rung["id"] == "core.owner" else 0,
+            stdout=evidence.encode(),
+        )
+        write_owner_receipt(root / descriptor["path"], receipt)
+
+
+def _runner(
+    mutation=None,
+    *,
+    mutation_pass: int = 1,
+    fail: int = 0,
+    skip: int = 0,
+    changed_owner_evidence: bool = False,
+    failed_owner: bool = False,
+    omit_owner: bool = False,
+):
     def run(root: Path, pass_no: int) -> int:
+        _write_live_owner_receipts(
+            root,
+            pass_no=pass_no,
+            changed_owner_evidence=changed_owner_evidence,
+            failed_owner=failed_owner,
+            omit_owner=omit_owner,
+        )
         _stamp(root, fail=fail, skip=skip, pass_no=pass_no)
-        if pass_no == 1 and mutation:
+        if pass_no == mutation_pass and mutation:
             mutation(root)
         return 0
 
@@ -256,7 +313,11 @@ def test_head_drift_between_passes_fails_closed(proof_root):
         _git(root, "commit", "--allow-empty", "-m", "drift")
 
     with pytest.raises(module.OmegaProofError, match="not exact origin/main"):
-        module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", _runner(mutate))
+        module.run_two_pass(
+            proof_root,
+            proof_root / "logs" / "receipt.json",
+            _runner(mutate, mutation_pass=2),
+        )
 
 
 def test_origin_drift_between_passes_fails_closed(proof_root):
@@ -281,7 +342,11 @@ def test_prompt_append_or_rewrite_between_passes_fails_closed(proof_root, mode):
             path.write_text('{"event":"rewritten"}\n', encoding="utf-8")
 
     with pytest.raises(module.OmegaProofError, match="prompt_digest"):
-        module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", _runner(mutate))
+        module.run_two_pass(
+            proof_root,
+            proof_root / "logs" / "receipt.json",
+            _runner(mutate, mutation_pass=2),
+        )
 
 
 def test_trial_or_owner_receipt_change_between_passes_fails_closed(proof_root):
@@ -291,7 +356,11 @@ def test_trial_or_owner_receipt_change_between_passes_fails_closed(proof_root):
         _write_json(root / "logs/overnight-trial.json", {"generated_at": "two", "verdict": "FAIL"})
 
     with pytest.raises(module.OmegaProofError, match="trial_digest|owner_receipt_digest"):
-        module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", _runner(mutate_trial))
+        module.run_two_pass(
+            proof_root,
+            proof_root / "logs" / "receipt.json",
+            _runner(mutate_trial, mutation_pass=2),
+        )
 
 
 def test_declared_volatile_trial_field_does_not_change_identity(proof_root):
@@ -300,25 +369,42 @@ def test_declared_volatile_trial_field_does_not_change_identity(proof_root):
     def mutate(root):
         _write_json(root / "logs/overnight-trial.json", {"generated_at": "two", "verdict": "PASS"})
 
-    result = module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", _runner(mutate))
+    result = module.run_two_pass(
+        proof_root,
+        proof_root / "logs" / "receipt.json",
+        _runner(mutate, mutation_pass=2),
+    )
     assert result["ok"] is True
 
 
 def test_owner_receipt_change_or_missing_evidence_fails_closed(proof_root):
     module = _mod()
-
-    def mutate(root):
-        _write_json(root / "logs/owner.json", {"value": "changed"})
-
     with pytest.raises(module.OmegaProofError, match="owner_receipt_digest"):
-        module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", _runner(mutate))
+        module.run_two_pass(
+            proof_root,
+            proof_root / "logs" / "receipt.json",
+            _runner(changed_owner_evidence=True),
+        )
 
 
 def test_missing_semantic_evidence_fails_before_suites(proof_root):
     module = _mod()
-    (proof_root / "logs/owner.json").unlink()
-    with pytest.raises(module.OmegaProofError, match="missing evidence"):
-        module.run_two_pass(proof_root, proof_root / "logs" / "receipt.json", _runner())
+    with pytest.raises(module.OmegaProofError, match="missing source-owned receipt"):
+        module.run_two_pass(
+            proof_root,
+            proof_root / "logs" / "receipt.json",
+            _runner(omit_owner=True),
+        )
+
+
+def test_failed_live_owner_receipt_cannot_be_downgraded_by_a_green_stamp(proof_root):
+    module = _mod()
+    with pytest.raises(module.OmegaProofError, match="source-owned receipt is FAIL"):
+        module.run_two_pass(
+            proof_root,
+            proof_root / "logs" / "receipt.json",
+            _runner(failed_owner=True),
+        )
 
 
 @pytest.mark.parametrize("change", ["add", "remove", "rename"])

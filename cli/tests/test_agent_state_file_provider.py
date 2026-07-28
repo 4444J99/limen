@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -114,6 +115,46 @@ def _authorization(manifest: dict[str, Any]) -> bytes:
         "item_count": len(manifest["items"]),
         "item_hashes": [item["item_hash"] for item in manifest["items"]],
     }
+    return canonical_bytes(value) + b"\n"
+
+
+def _legacy_campaign_authorization(plan: dict[str, Any], *, max_attempts: int = 1) -> bytes:
+    value = {
+        "schema": file_provider.CAMPAIGN_AUTHORIZATION_SCHEMA,
+        "action": file_provider.CAMPAIGN_AUTHORIZATION_ACTION,
+        "campaign_id": plan["campaign_id"],
+        "attempt_prefix": plan["attempt_prefix"],
+        "authorized_by": plan["authorization_principal"],
+        "issued_at": "2026-07-28T12:00:00Z",
+        "expires_at": "2026-07-29T00:00:00Z",
+        "item_set_sha256": file_provider._campaign_item_set_sha256(plan["item_hashes"]),
+        "item_count": len(plan["item_hashes"]),
+        "item_hashes": plan["item_hashes"],
+        "max_batch_items": file_provider.MAX_BATCH_ITEMS,
+        "max_batch_timeout_seconds": plan["timeout_seconds"],
+        "max_item_timeout_seconds": plan["per_item_timeout_seconds"],
+        "max_attempts": max_attempts,
+    }
+    return canonical_bytes(value) + b"\n"
+
+
+def _standing_authorization(plan: dict[str, Any]) -> bytes:
+    value = {
+        "schema": file_provider.STANDING_AUTHORIZATION_SCHEMA,
+        "action": file_provider.CAMPAIGN_AUTHORIZATION_ACTION,
+        "attempt_prefix": plan["attempt_prefix"],
+        "authorized_by": plan["authorization_principal"],
+        "issued_at": "2026-07-28T12:00:00Z",
+        "item_set_sha256": file_provider._campaign_item_set_sha256(plan["item_hashes"]),
+        "item_count": len(plan["item_hashes"]),
+        "item_hashes": plan["item_hashes"],
+        "max_batch_items": file_provider.MAX_BATCH_ITEMS,
+        "max_batch_timeout_seconds": plan["timeout_seconds"],
+        "max_item_timeout_seconds": plan["per_item_timeout_seconds"],
+        "signature_subject_b64": None,
+        "revoked_at": None,
+    }
+    value["authority_id"] = file_provider._standing_authority_id(value)
     return canonical_bytes(value) + b"\n"
 
 
@@ -713,3 +754,214 @@ def test_authorization_plan_is_capped_at_one_thousand_items(
     )
 
     assert len(planned["items"]) == file_provider.MAX_BATCH_ITEMS
+
+
+def test_content_verification_has_a_process_deadline_without_path_arguments(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _receipt, captured, root = _captured(tmp_path, ("one.txt",))
+    items = file_provider.inspect_captured_files(
+        root,
+        captured,
+        materialized_probe=lambda _path: True,
+    )
+    observed: dict[str, object] = {}
+
+    def stalled(args, **kwargs):
+        observed["args"] = args
+        observed["timeout"] = kwargs["timeout"]
+        observed["input"] = kwargs["input"]
+        raise file_provider.subprocess.TimeoutExpired(args, kwargs["timeout"])
+
+    monkeypatch.setattr(file_provider.subprocess, "run", stalled)
+
+    with pytest.raises(
+        PipelineError,
+        match="exceeded its bounded deadline",
+    ):
+        file_provider.verify_materialized_content(
+            items,
+            timeout_seconds=7,
+        )
+
+    assert observed["timeout"] == 7
+    assert str(root) not in " ".join(observed["args"])
+    assert str(root).encode() in observed["input"]
+
+
+def test_one_campaign_authorization_advances_multiple_batches_without_replanning(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(file_provider, "MAX_BATCH_ITEMS", 2)
+    receipt, captured, root = _captured(
+        tmp_path,
+        ("one.txt", "three.txt", "two.txt"),
+    )
+    progress = tmp_path / "progress.json"
+    authorization = tmp_path / "campaign-authorization.json"
+    signature = tmp_path / "campaign-authorization.json.sig"
+    dataless: set[str] = set()
+    planned: dict[str, Any] = {}
+
+    def probe(path: Path) -> bool:
+        return hashlib.sha256(path.absolute().as_uri().encode()).hexdigest() not in dataless
+
+    def plan_campaign(
+        _executable: Path,
+        manifest: dict[str, Any],
+        *,
+        plan: bool,
+        campaign: bool = False,
+    ):
+        assert not plan and campaign
+        planned.update(manifest)
+        return 0, _standing_authorization(manifest)
+
+    monkeypatch.setattr(file_provider, "_discover_adapter", lambda _name: Path("/bin/true"))
+    monkeypatch.setattr(file_provider, "_run_adapter", plan_campaign)
+    result = file_provider.process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        progress,
+        prepare_campaign_authorization=authorization,
+        authorization_principal="test-authorizer",
+        materialized_probe=probe,
+    )
+
+    assert result.authorization_prepared
+    assert planned["item_hashes"] == [
+        file_provider.file_provider_item_hash(root, name) for name in ("one.txt", "three.txt", "two.txt")
+    ]
+    assert str(root).encode() not in authorization.read_bytes()
+    assert str(root).encode() not in progress.read_bytes()
+    signature.write_bytes(b"fake-openssh-signature")
+    signature.chmod(0o600)
+    attempts: list[str] = []
+    authorization_hashes: list[str] = []
+
+    def apply(
+        _executable: Path,
+        manifest: dict[str, Any],
+        *,
+        plan: bool,
+        campaign: bool = False,
+    ):
+        assert not plan and not campaign
+        attempts.append(manifest["attempt_id"])
+        authorization_bytes = base64.b64decode(manifest["authorization"]["receipt_b64"])
+        authorization_hashes.append(hashlib.sha256(authorization_bytes).hexdigest())
+        dataless.update(item["item_hash"] for item in manifest["items"])
+        return 0, _success_receipt(manifest, ["evicted"] * len(manifest["items"]))
+
+    monkeypatch.setattr(file_provider, "_run_adapter", apply)
+    first = file_provider.process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        progress,
+        authorization_receipt=authorization,
+        authorization_signature=signature,
+        materialized_probe=probe,
+    )
+    second = file_provider.process_file_provider_items(
+        receipt,
+        root,
+        captured,
+        progress,
+        authorization_receipt=authorization,
+        authorization_signature=signature,
+        materialized_probe=probe,
+    )
+
+    assert first.remaining_files == 1
+    assert second.complete
+    assert attempts == ["limen-run-0001-000000", "limen-run-0001-000001"]
+    assert len(set(authorization_hashes)) == 1
+    progress_value = json.loads(progress.read_bytes())
+    assert progress_value["pending_batch"] is None
+    assert progress_value["next_attempt"] == 2
+    assert len(progress_value["receipts"]) == 2
+
+
+def test_campaign_authorization_rejects_hash_outside_immutable_custody(
+    tmp_path: Path,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("one.txt", "two.txt"))
+    items = file_provider.inspect_captured_files(
+        root,
+        captured,
+        materialized_probe=lambda _path: True,
+    )
+    eligible_hashes = [item.item_hash for item in items]
+    plan = file_provider._campaign_plan(receipt, eligible_hashes, principal="test-authorizer")
+    authorization = json.loads(_standing_authorization(plan))
+    authorization["item_hashes"][0] = "f" * 64
+    authorization["item_set_sha256"] = file_provider._campaign_item_set_sha256(authorization["item_hashes"])
+
+    with pytest.raises(PipelineError, match="does not bind immutable custody"):
+        file_provider._validate_standing_authorization(
+            canonical_bytes(authorization) + b"\n",
+            receipt,
+            eligible_hashes,
+        )
+
+
+def test_campaign_batch_may_narrow_but_not_widen_signed_timeout_caps(
+    tmp_path: Path,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("one.txt",))
+    items = file_provider.inspect_captured_files(
+        root,
+        captured,
+        materialized_probe=lambda _path: True,
+    )
+    plan = file_provider._campaign_plan(
+        receipt,
+        [item.item_hash for item in items],
+        principal="test-authorizer",
+    )
+    authorization = json.loads(_standing_authorization(plan))
+    manifest = file_provider._manifest(
+        items,
+        attempt_id="limen-run-0001-000000",
+        principal="test-authorizer",
+    )
+    manifest["timeout_seconds"] -= 1
+    manifest["per_item_timeout_seconds"] -= 1
+
+    file_provider._validate_standing_batch(authorization, manifest)
+    manifest["timeout_seconds"] = authorization["max_batch_timeout_seconds"] + 1
+    with pytest.raises(PipelineError, match="exceeds the standing authority"):
+        file_provider._validate_standing_batch(authorization, manifest)
+
+
+def test_standing_authority_has_no_attempt_bound_and_legacy_receipt_migrates(
+    tmp_path: Path,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("one.txt",))
+    items = file_provider.inspect_captured_files(root, captured, materialized_probe=lambda _path: True)
+    plan = file_provider._campaign_plan(
+        receipt,
+        [item.item_hash for item in items],
+        principal="test-authorizer",
+    )
+    legacy = _legacy_campaign_authorization(plan, max_attempts=1)
+    authority = file_provider._validate_standing_authorization(
+        legacy,
+        receipt,
+        plan["item_hashes"],
+    )
+
+    assert "expires_at" not in authority
+    assert "max_attempts" not in authority
+    assert authority["signature_subject_b64"] is not None
+    for ordinal in range(300):
+        manifest = file_provider._manifest(
+            items,
+            attempt_id=f"{authority['attempt_prefix']}{ordinal:06d}",
+            principal=authority["authorized_by"],
+        )
+        file_provider._validate_standing_batch(authority, manifest)
