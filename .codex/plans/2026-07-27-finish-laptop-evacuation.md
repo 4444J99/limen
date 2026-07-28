@@ -20,6 +20,16 @@ copies whose remote or external custody and restoration predicates pass. It does
 credentials, paid spending, public sending, or deletion of unique or restoration-unproven personal
 data. The old `full_non_destructive` capsule does not narrow this authority.
 
+The operator's later correction tightens the custody predicate. Two unencrypted raw copies are
+necessary staging evidence, but they are not terminal custody for personal, bulk, non-Git, dirty,
+or unpushed material. Before its internal source may be deleted, that material must also pass the
+canonical encrypted, chunked, content-addressed capture and restoration pipeline. Exact remote Git
+custody and classified generated/reinstallable material are the only exemptions from that
+encryption-and-chunking gate; both still require an exact signed reclaim plan. Material already
+reclaimed into two raw staging copies remains open on the processing denominator until its
+encrypted archive restores from both independent drives. Raw staging is removed only after those
+two encrypted restore predicates pass.
+
 The storage denominator is frozen to the signed machine inventory produced by this workstream.
 Unrelated work discovered after that inventory receives a separate owner and cannot enlarge this
 lane.
@@ -54,11 +64,16 @@ lane.
 ### 4. Establish custody
 
 - Revalidate generated-root custody against the frozen inventory.
-- Put bulk or personal material under owner-organized Archive4T custody and, where two-copy policy
-  applies, T7Recovery custody.
-- Hash both copies, perform restoration checks, and track redacted receipts.
+- Put bulk, personal, non-Git, dirty, and unpushed material through the canonical encrypted,
+  chunked, content-addressed capture before internal deletion.
+- Materialize the final owner-organized encrypted archive on Archive4T and an independently
+  verified recovery copy on T7Recovery.
+- Hash both encrypted copies, perform full restoration checks, and track redacted receipts.
+- Treat raw content-addressed copies as temporary staging, not as the final external layout.
+  Remove the raw staging objects only after both encrypted archives restore and the owner-indexed
+  manifest accounts for every source.
 - Keep Backblaze repair separate; it does not block reclaim after two independent local copies and
-  restoration proof exist.
+  encrypted restoration proof exist.
 
 ### 5. Apply bounded reclaim
 
@@ -67,14 +82,18 @@ lane.
   custody contract.
 - Apply one bounded batch at a time and measure available space after each batch.
 - Remove only exact remote-preserved checkouts, restoration-proven generated/cache material,
-  two-copy verified bulk duplicates, and signed safely evictable File Provider material.
+  two-copy encrypted-and-restored bulk duplicates, and signed safely evictable File Provider
+  material whose current metadata is bound to the encrypted capture.
 - Stop physical deletion once 220 GiB is available.
 
 ### 6. Prove the fixed point
 
 - Require a second canonical plan with zero automatically safe roots.
 - Verify Git metadata and active-process references after removal.
-- Record the retained hot-cache and external-drive manifests.
+- Record the retained hot-cache and owner-organized external-drive manifests.
+- Require zero unprocessed raw staging objects: every temporary object is either represented by
+  two restore-tested encrypted archives and removed, or retained with an exact owner and failed
+  predicate.
 - Record the first reading at or above 200 GiB, then a second qualifying reading at least 30
   minutes later.
 - Remove the Omega admission fence only after every predicate above is green.
@@ -96,4 +115,3 @@ lane.
   56 roots, 4 repositories, 7 exact heads, restoration passed.
 - Current zero-safe-root worktree plan:
   `4677b937f2a7ac1590cfe8c8eda96bc272ec816881a984cdd7e85d514a393520`.
-
