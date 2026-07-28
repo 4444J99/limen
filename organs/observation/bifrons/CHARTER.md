@@ -7,6 +7,13 @@ absorbs the starred repo's wiring inward (dossiers, resonance, transmutation pro
 prepares value outward (contribution candidates, packets), threading both faces on one `exchange_id`.
 It **sends nothing**: the single external write — an upstream PR — is the operator's hand.
 
+Career and network ingress uses the same loop. A live person or organization is
+expanded through current roles, products, public repositories, and maintainers;
+the repository face enters BIFRONS for resonance and then SPECVLVM for its
+contribution lifecycle. Career fit and contribution fit are independent
+verdicts, but their receipts share the organization relationship and route
+evidenced learning back to the owning internal repository.
+
 ## The loop (who does what)
 
 | Stage | Owner | Verb |

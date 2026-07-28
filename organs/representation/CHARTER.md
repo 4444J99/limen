@@ -62,6 +62,24 @@ The same representation record can render:
 Every output is a draft packet. The system does not send submissions, publish
 pages, contact collaborators, or act outward automatically.
 
+## Career and Network Portal
+
+Career representation is a composed mode of this substrate, not a new engine.
+The Limen doorway is [`CAREER-PORTAL.md`](CAREER-PORTAL.md); its machine-readable
+owner and edge contract is [`career-portal.yaml`](career-portal.yaml).
+`organvm/application-pipeline` remains the opportunity, CRM, materials, and
+submission engine. UMA remains the inbound-mail and verified-delivery owner.
+The portfolio and corpvs remain the public-proof and identity owners. Koinonia
+supplies relationship posture; Kerygma stages distribution; provider surfaces
+return receipts.
+
+Every live person/organization opportunity also hands a product/repository/
+maintainer graph to BIFRONS and SPECVLVM. That outward face studies comparable
+work and prepares genuine contributions; its backflow returns evidenced
+learning to the internal repo and career record. It does not require a
+reputation-only contribution, create a career-only mirror, or bypass the
+upstream-send gate.
+
 Packet renderers include subject summary, works, relations, source appendix
 summary, approval gates, and a no-outward-action notice. Each packet is scoped to
 the `claim_ids` declared by its output mode.

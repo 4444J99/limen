@@ -1,0 +1,108 @@
+schema_version: career.portal.v1
+id: limen-career-network
+host:
+  surface: organvm/limen
+  organ: representation
+  kind: composed_portal
+  new_service: false
+
+owners:
+  identity_and_corpus: meta-organvm/organvm-corpvs-testamentvm
+  public_evidence: 4444j99/portfolio
+  inbound_mail_and_delivery: organvm/universal-mail--automation
+  opportunity_crm_and_submission: organvm/application-pipeline
+  relationship_posture: organvm/limen:organs/social
+  representation_surface: organvm/limen:organs/representation
+  external_mapping: organvm/limen:organs/observation/bifrons
+  contribution_lifecycle: organvm/limen:organs/contributions
+  content_distribution: organvm-vii-kerygma/social-automation
+
+edges:
+  - from: identity_and_corpus
+    to: opportunity_crm_and_submission
+    artifact: canonical identity, evidence, and current corpus metrics
+  - from: public_evidence
+    to: opportunity_crm_and_submission
+    artifact: canonical portfolio proof
+  - from: inbound_mail_and_delivery
+    to: opportunity_crm_and_submission
+    artifact: constituent intake, obligations, delivery receipts, and replies
+  - from: representation_surface
+    to: opportunity_crm_and_submission
+    artifact: bounded owner view and ephemeral submit authorization
+  - from: opportunity_crm_and_submission
+    to: content_distribution
+    artifact: approved staged content and distribution receipt request
+  - from: opportunity_crm_and_submission
+    to: external_mapping
+    artifact: person, organization, product, repository, and maintainer graph
+  - from: external_mapping
+    to: contribution_lifecycle
+    artifact: resonance edges and non-colliding contribution candidates
+  - from: contribution_lifecycle
+    to: identity_and_corpus
+    artifact: upstream outcome and evidenced backflow learning
+
+provider_surfaces:
+  ats:
+    adapters: [greenhouse, lever, ashby, workable, guarded_email]
+    confirmation_required: true
+  neogov:
+    adapter: authenticated_browser
+    action_time_confirmation: true
+  linkedin:
+    adapter: authenticated_browser
+    api_claimed: false
+    action_time_confirmation: true
+  email:
+    adapter: uma_mail_send_or_authenticated_provider_ui
+    sent_proof_required: true
+  upstream_github:
+    adapter: existing_contrib_workspace
+    action_time_confirmation: true
+
+opportunity_expansion:
+  path:
+    - person
+    - organization
+    - current_roles
+    - products
+    - public_repositories
+    - maintainers
+    - contribution_candidates
+    - upstream_receipts
+    - inward_learning
+  full_estate_mode: recurring_coverage_ledger
+  daily_priority: live_inbound_and_current_high_fit_targets
+  collision_policy: watch_or_coordinate
+
+submission_policy:
+  acceptable_location_classes: [us-remote, remote-global]
+  state_restriction_must_match_candidate: true
+  minimum_fit_score: 9.0
+  rolling_window_days: 7
+  rolling_window_cap: 2
+  active_or_submitted_per_normalized_organization: 1
+  current_staged_state_required: true
+  unchanged_material_fingerprints_required: true
+  external_confirmation_required: true
+
+receipt_backflow:
+  - provider_delivery
+  - provider_application_id
+  - material_fingerprints
+  - pipeline_transition
+  - relationship_outcome
+  - distribution_url_and_metrics
+  - upstream_contribution_outcome
+  - inward_learning_owner
+
+prohibitions:
+  - persistent_global_submit_arm
+  - linkedin_api_claim
+  - launchagent
+  - paid_application_service
+  - suspicious_site_interaction
+  - credential_disclosure
+  - destructive_evidence_deletion
+  - parallel_career_or_contribution_system
