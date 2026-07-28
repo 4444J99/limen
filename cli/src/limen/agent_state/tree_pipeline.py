@@ -674,6 +674,7 @@ def _run_file_provider_action(
     *,
     progress_path: Path | None,
     prepare_authorization: Path | None,
+    prepare_campaign_authorization: Path | None,
     authorization_principal: str | None,
     authorization_receipt: Path | None,
     authorization_signature: Path | None,
@@ -685,6 +686,7 @@ def _run_file_provider_action(
         captured,
         progress_path or progress_path_for(private_receipt),
         prepare_authorization=prepare_authorization,
+        prepare_campaign_authorization=prepare_campaign_authorization,
         authorization_principal=authorization_principal,
         authorization_receipt=authorization_receipt,
         authorization_signature=authorization_signature,
@@ -703,6 +705,7 @@ def run_cloudkit_materialization_campaign(
     run_id: str | None = None,
     progress_path: Path | None = None,
     prepare_authorization: Path | None = None,
+    prepare_campaign_authorization: Path | None = None,
     authorization_principal: str | None = None,
     authorization_receipt: Path | None = None,
     authorization_signature: Path | None = None,
@@ -722,7 +725,7 @@ def run_cloudkit_materialization_campaign(
             record_consumer=lambda record: collect_file_entry(records, record),
         )
         captured = reconstruct_captured_files(receipt, plan.root, records)
-        if evict or prepare_authorization is not None:
+        if evict or prepare_authorization is not None or prepare_campaign_authorization is not None:
             _run_file_provider_action(
                 receipt,
                 plan.root,
@@ -730,6 +733,7 @@ def run_cloudkit_materialization_campaign(
                 private_receipt,
                 progress_path=progress_path,
                 prepare_authorization=prepare_authorization,
+                prepare_campaign_authorization=prepare_campaign_authorization,
                 authorization_principal=authorization_principal,
                 authorization_receipt=authorization_receipt,
                 authorization_signature=authorization_signature,
@@ -748,6 +752,7 @@ def run_resume_cloudkit_materialization_campaign(
     evict: bool = False,
     progress_path: Path | None = None,
     prepare_authorization: Path | None = None,
+    prepare_campaign_authorization: Path | None = None,
     authorization_principal: str | None = None,
     authorization_receipt: Path | None = None,
     authorization_signature: Path | None = None,
@@ -767,7 +772,7 @@ def run_resume_cloudkit_materialization_campaign(
             reconstruct_root=root,
             captured_files=captured_files,
         )
-        if evict or prepare_authorization is not None:
+        if evict or prepare_authorization is not None or prepare_campaign_authorization is not None:
             _run_file_provider_action(
                 receipt,
                 root,
@@ -775,6 +780,7 @@ def run_resume_cloudkit_materialization_campaign(
                 private_receipt,
                 progress_path=progress_path,
                 prepare_authorization=prepare_authorization,
+                prepare_campaign_authorization=prepare_campaign_authorization,
                 authorization_principal=authorization_principal,
                 authorization_receipt=authorization_receipt,
                 authorization_signature=authorization_signature,

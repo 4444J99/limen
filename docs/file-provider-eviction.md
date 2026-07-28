@@ -17,20 +17,22 @@ Progress defaults to a private sibling of `--private-receipt` named
 and hashed provider/domain identities. A successful partial batch is not repeated. Finder metadata
 such as `.DS_Store` is retained and explicitly accounted for.
 
-## Signed two-step apply
+## Signed campaign apply
 
-Prepare one path-free authorization request for the next batch:
+For a corpus larger than one batch, prepare one path-free authorization request
+that binds the complete immutable item-hash set:
 
 ```bash
 python3 scripts/agent-state-metabolism.py cloudkit-materialized <custody-name> \
   --root <icloud-root> --vault-root <vault> --external-root <external-custody> \
   --private-receipt <private-receipt> --run-id <run-id> --resume \
-  --prepare-eviction-authorization <private-authorization.json> \
+  --prepare-eviction-campaign-authorization <private-authorization.json> \
   --eviction-authorizer <allowed-signers-principal>
 ```
 
 Sign that exact canonical receipt with the registered OpenSSH identity and namespace
-`domus-host-mutation`. Then apply it as a separate invocation:
+`domus-host-mutation` once. Then reuse those exact authorization and signature
+bytes for each separate apply invocation:
 
 ```bash
 python3 scripts/agent-state-metabolism.py cloudkit-materialized <custody-name> \
@@ -41,8 +43,15 @@ python3 scripts/agent-state-metabolism.py cloudkit-materialized <custody-name> \
 ```
 
 Each invocation is serial, at most 1,000 items, and at most 15 minutes. Raw item URLs cross only the
-adapter's stdin. Stop on any partial or unexpected result; verified successes remain in private
-progress for the next authorization cycle.
+adapter's stdin. Limen stages the next ordered batch in its private progress
+ledger before mutation and never selects a recorded success again. The signed
+campaign caps its attempt count and admits only hashes from the restored corpus.
+Stop on any partial or unexpected result; verified successes remain in private
+progress for the next invocation with the same campaign signature.
+
+`--prepare-eviction-authorization` retains the narrower legacy mode for a
+single exact batch. It requires a new exact authorization before any later
+batch and should not be used for a multi-batch restored corpus.
 
 `source_retired` becomes true only when every eligible captured item has a verified `evicted` or
 `already_dataless` receipt, every such item remains dataless, and retained metadata is accounted for.
