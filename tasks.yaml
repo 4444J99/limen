@@ -160648,7 +160648,7 @@ tasks:
   workstream: 'substrate'
   priority: 'critical'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'failed'
   labels:
   - 'always-working'
   - 'receipt-first'
@@ -160700,4 +160700,13 @@ tasks:
     conduct_run_id: 'run-041b6d24ac0c7eda161b7a1942d14c70'
     conduct_lease_id: 'lease-437-041b6d24ac0c7eda'
     conduct_generation: 437
-  updated: '2026-07-27T20:05:21.310Z'
+  - timestamp: '2026-07-28T18:52:13.124Z'
+    agent: 'jules'
+    session_id: 'run-041b6d24ac0c7eda161b7a1942d14c70'
+    status: 'failed'
+    output: 'Conduct lease lease-437-041b6d24ac0c7eda reached its hard deadline'
+    conduct_event_id: 'conduct:run-041b6d24ac0c7eda161b7a1942d14c70:437:expired'
+    conduct_run_id: 'run-041b6d24ac0c7eda161b7a1942d14c70'
+    conduct_lease_id: 'lease-437-041b6d24ac0c7eda'
+    conduct_generation: 437
+  updated: '2026-07-28T18:52:13.124Z'
