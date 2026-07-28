@@ -42,7 +42,7 @@ MAX_CAMPAIGN_ATTEMPTS = 256
 CAMPAIGN_RETRY_RUNWAY = 8
 BATCH_TIMEOUT_SECONDS = 15 * 60
 ITEM_TIMEOUT_SECONDS = 60
-MAX_ADAPTER_OUTPUT_BYTES = 4 * 1024 * 1024
+MAX_ADAPTER_OUTPUT_BYTES = 8 * 1024 * 1024
 MAX_AUTHORIZATION_BYTES = 8 * 1024 * 1024
 MAX_SIGNATURE_BYTES = 32 * 1024
 MAX_PROGRESS_BYTES = 64 * 1024 * 1024
@@ -1111,8 +1111,8 @@ def _validate_campaign_batch(
         or int(suffix) >= authorization["max_attempts"]
         or len(batch_hashes) > authorization["max_batch_items"]
         or not set(batch_hashes) <= authorized_hashes
-        or manifest["timeout_seconds"] != authorization["max_batch_timeout_seconds"]
-        or manifest["per_item_timeout_seconds"] != authorization["max_item_timeout_seconds"]
+        or manifest["timeout_seconds"] > authorization["max_batch_timeout_seconds"]
+        or manifest["per_item_timeout_seconds"] > authorization["max_item_timeout_seconds"]
     ):
         raise PipelineError("File Provider batch exceeds the signed campaign")
 

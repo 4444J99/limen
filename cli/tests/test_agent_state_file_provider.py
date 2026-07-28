@@ -860,6 +860,36 @@ def test_campaign_authorization_rejects_hash_outside_immutable_custody(
         )
 
 
+def test_campaign_batch_may_narrow_but_not_widen_signed_timeout_caps(
+    tmp_path: Path,
+) -> None:
+    receipt, captured, root = _captured(tmp_path, ("one.txt",))
+    items = file_provider.inspect_captured_files(
+        root,
+        captured,
+        materialized_probe=lambda _path: True,
+    )
+    plan = file_provider._campaign_plan(
+        receipt,
+        [item.item_hash for item in items],
+        principal="test-authorizer",
+        max_attempts=2,
+    )
+    authorization = json.loads(_campaign_authorization(plan))
+    manifest = file_provider._manifest(
+        items,
+        attempt_id="limen-run-0001-000000",
+        principal="test-authorizer",
+    )
+    manifest["timeout_seconds"] -= 1
+    manifest["per_item_timeout_seconds"] -= 1
+
+    file_provider._validate_campaign_batch(authorization, manifest)
+    manifest["timeout_seconds"] = authorization["max_batch_timeout_seconds"] + 1
+    with pytest.raises(PipelineError, match="exceeds the signed campaign"):
+        file_provider._validate_campaign_batch(authorization, manifest)
+
+
 def test_campaign_authorization_fails_closed_at_attempt_bound(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
