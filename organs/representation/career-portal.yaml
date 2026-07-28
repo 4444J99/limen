@@ -34,6 +34,9 @@ edges:
     to: content_distribution
     artifact: approved staged content and distribution receipt request
   - from: opportunity_crm_and_submission
+    to: relationship_posture
+    artifact: relationship outcomes, current posture, and next-action receipts
+  - from: opportunity_crm_and_submission
     to: external_mapping
     artifact: person, organization, product, repository, and maintainer graph
   - from: external_mapping
@@ -56,22 +59,34 @@ provider_surfaces:
     action_time_confirmation: true
   email:
     adapter: uma_mail_send_or_authenticated_provider_ui
+    exact_preview_required: true
+    current_signed_authorization_receipt_required: true
+    one_shot_attempt_id_required: true
     sent_proof_required: true
   upstream_github:
     adapter: existing_contrib_workspace
     action_time_confirmation: true
 
 opportunity_expansion:
-  path:
-    - person
-    - organization
-    - current_roles
-    - products
-    - public_repositories
-    - maintainers
-    - contribution_candidates
-    - upstream_receipts
-    - inward_learning
+  branch_after: organization
+  paths:
+    application:
+      sequence:
+        - person
+        - organization
+        - current_roles
+        - application_eligibility
+    reciprocity:
+      sequence:
+        - person
+        - organization
+        - products
+        - public_repositories
+        - maintainers
+        - contribution_candidates
+        - upstream_receipts
+        - inward_learning
+      current_roles_required: false
   full_estate_mode: recurring_coverage_ledger
   daily_priority: live_inbound_and_current_high_fit_targets
   collision_policy: watch_or_coordinate
