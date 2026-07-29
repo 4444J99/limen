@@ -840,6 +840,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Seconds closeout-fast waits for the shared queue lock while it validates tasks.yaml and live-root-gate against a stable board snapshot."
+  LIMEN_STREAMS_MAX_PARALLEL:
+    default: ""
+    env: LIMEN_STREAMS_MAX_PARALLEL
+    self_update: none
+    owner: continuity
+    note: "Caps how many READY session streams scripts/open-streams.sh opens at once. Empty means derive the bound from physical RAM (reserve for OS/browser/daemon, then a per-stream budget) rather than hardcode a number — this estate runs on a 16GB machine with logged jetsam kills, and an interactive agent session killed mid-flight loses its context silently. Streams over the bound are always NAMED with their exact command, never dropped quietly."
+  LIMEN_STREAMS_TMUX_SESSION:
+    default: "limen-streams"
+    env: LIMEN_STREAMS_TMUX_SESSION
+    self_update: none
+    owner: continuity
+    note: "tmux session name scripts/open-streams.sh opens stream windows into (one window per stream, named by stream id). tmux rather than background jobs because `limen workstream --agent ...` ends in exec and an interactive agent needs a controlling TTY; the window name is also how a re-run detects an already-open stream."
   LIMEN_VERIFY_LOCK_FILE:
     default: "${TMPDIR:-/tmp}/limen-verify-whole.lock"
     env: LIMEN_VERIFY_LOCK_FILE

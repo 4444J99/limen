@@ -1,0 +1,174 @@
+"""Tests for the stream REOPEN path: check-session-streams.py's launch emission + open-streams.sh.
+
+The defect these lock down is a round trip that silently did nothing. `--ready` derived the openable
+set correctly, but:
+
+  * the command it printed omitted `--agent`, and start-worktree-session.sh execs the agent kickstart
+    ONLY under `launch_agent=1`, which only `--agent` sets — so pasting the registry's own command
+    wrote a capsule and opened no session at all; and
+  * `--ready` was a printer with no machine consumer, so acting on the derived set meant a human
+    reading four blocks and retyping four commands — the hand-loop the registry exists to abolish.
+
+Both halves are asserted here, plus the invariant that keeps them honest: the human view and the
+machine view come from ONE builder, so a launcher can never run a command the operator was not shown.
+"""
+
+import importlib.util
+import json
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[2]
+CHECK = ROOT / "scripts" / "check-session-streams.py"
+OPEN = ROOT / "scripts" / "open-streams.sh"
+STARTER = ROOT / "scripts" / "start-worktree-session.sh"
+
+
+def _mod():
+    spec = importlib.util.spec_from_file_location("check_session_streams_under_test", CHECK)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def run(*argv):
+    return subprocess.run([sys.executable, str(CHECK), *argv], cwd=ROOT, capture_output=True, text=True, check=False)
+
+
+ROW = {
+    "title": "t",
+    "runway": "8h",
+    "intent": "docs/continuations/x/intent.md",
+    "job_class": "governance",
+    "owner_of_record": "o",
+    "max_children": 2,
+}
+
+
+# ── the emitted command must actually be able to open an agent ───────────────────────
+
+
+def test_launch_argv_carries_agent_auto_which_is_what_makes_it_launch():
+    """Without `--agent` the emitted command opens NOTHING — it writes a capsule and exits.
+
+    This is not a style preference. start-worktree-session.sh sets `launch_agent=1` only in the
+    `--agent` branch and reaches its `exec` only under that flag (both coupled below). `auto` rather
+    than a vendor name because the capsule contract declares
+    `lane_selection: derive_from_live_capabilities`; naming a provider here would be the violation,
+    and `auto` resolves through the live census instead.
+    """
+    argv = _mod().launch_argv("s0-x", ROW)
+    assert "--agent" in argv, "no --agent ⇒ launch_agent stays 0 ⇒ the command opens no session"
+    assert argv[argv.index("--agent") + 1] == "auto", "a pinned vendor breaks derive_from_live_capabilities"
+
+
+def test_the_starter_still_couples_agent_to_launching():
+    """Pins the coupling the test above depends on, so the two can never drift apart silently.
+
+    If someone reworks start-worktree-session.sh so `--agent` no longer gates the exec, the reason
+    `launch_argv` passes `--agent auto` evaporates — and this fails with that explanation rather than
+    leaving the previous test asserting a flag whose purpose has quietly moved.
+    """
+    src = STARTER.read_text()
+    assert re.search(r"launch_agent=1", src), "start-worktree-session.sh no longer sets launch_agent"
+    assert re.search(r'if \[\[ "\$launch_agent" -eq 1 \]\]; then\s*\n\s*exec bash', src), (
+        "the --agent → exec coupling moved; re-verify why launch_argv passes --agent"
+    )
+
+
+# ── one builder: the human view and the machine view can never disagree ─────────────
+
+
+def test_the_rendered_command_is_exactly_the_argv():
+    """A second copy of the command shape is the drift this registry exists to prevent.
+
+    Rendering is allowed to add line continuations and indentation; it may not add, drop, or reorder
+    a single token. Tokenising the rendered form and comparing to argv is what proves that.
+    """
+    m = _mod()
+    argv = m.launch_argv("s0-x", ROW)
+    rendered = m.launch_command("s0-x", ROW)
+    assert rendered.replace("\\\n", " ").split() == argv
+
+
+def test_json_rows_carry_the_same_argv_the_text_view_prints():
+    m = _mod()
+    streams = m.load()
+    proc = run("--ready", "--json")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    for row in json.loads(proc.stdout):
+        assert row["argv"] == m.launch_argv(row["id"], streams[row["id"]])
+
+
+def test_json_and_text_agree_on_which_streams_are_ready():
+    """The launcher must never open a set the operator was not shown, in either direction."""
+    from_json = {row["id"] for row in json.loads(run("--ready", "--json").stdout)}
+    text = run("--ready").stdout
+    # The text view prints ready ids as `── <id> — <title>` headers; every other state is indented.
+    from_text = set(re.findall(r"^── (\S+) —", text, re.MULTILINE))
+    assert from_json == from_text
+
+
+def test_json_requires_ready_rather_than_silently_meaning_something_else():
+    proc = run("--json")
+    assert proc.returncode != 0
+    assert "--json applies to --ready" in proc.stderr
+
+
+def test_drift_refuses_to_emit_machine_readable_rows_too():
+    """The JSON path must inherit the same drift guard as the text path.
+
+    open-streams.sh runs the emitted argv without reading it, so an incoherent graph reaching the
+    launcher is the one failure that would open real sessions on bad data.
+    """
+    src = CHECK.read_text()
+    guard = src.index("refusing to derive launch commands")
+    emit = src.index("print_ready_json(streams) if args.json")
+    assert guard < emit, "the JSON emission escaped the registry-coherence guard"
+
+
+# ── the launcher ────────────────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def launcher_env():
+    if shutil.which("limen") is None:
+        pytest.skip("limen not on PATH (pip install -e cli) — the launcher refuses to open windows without it")
+
+
+def _open(*argv):
+    return subprocess.run(["bash", str(OPEN), *argv], cwd=ROOT, capture_output=True, text=True, check=False)
+
+
+def test_dry_run_touches_nothing_and_needs_no_tmux(launcher_env):
+    proc = _open("--dry-run")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "DRY RUN" in proc.stdout
+    assert "nothing was touched" in proc.stdout
+
+
+def test_the_bound_is_enforced_and_every_deferred_stream_is_named(launcher_env):
+    """A silent cap reads as "all of them opened" when it did not — so deferrals are printed WITH
+    the exact command to open them later, not merely counted."""
+    ready = json.loads(run("--ready", "--json").stdout)
+    if len(ready) < 2:
+        pytest.skip("needs ≥2 ready streams to observe a bound")
+    out = _open("--dry-run", "--max-parallel", "1").stdout
+    assert out.count("\n  WOULD ") == 1
+    deferred = re.findall(r"^  DEFER  (\S+)", out, re.MULTILINE)
+    assert len(deferred) == len(ready) - 1
+    for sid in deferred:
+        assert f"--workstream {sid}" in out, f"{sid} was dropped without printing how to open it"
+
+
+def test_the_resolved_lane_is_reported_before_anything_opens(launcher_env):
+    """`--agent auto` is vendor-neutral by contract, so on a stock environment the census order — not
+    the operator's intent — picks the lane. Printing it up front is what keeps that from being a
+    surprise discovered inside a pane."""
+    out = _open("--dry-run").stdout
+    assert re.search(r"^  lane: ", out, re.MULTILINE), "the launcher stopped reporting the resolved lane"

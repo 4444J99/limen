@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+# open-streams.sh — open every READY session stream, each in its own TTY. One command.
+#
+# THE DEFECT THIS CLOSES
+#   `check-session-streams.py --ready` DERIVES the openable set, but it is a printer: its output is
+#   formatted for human eyes, and its only registered consumer (gates.yaml) runs the checker bare as
+#   a validator. So the operator's round trip was: exit the session, run --ready, read four blocks,
+#   open four terminal tabs, retype four commands. That is precisely the hand-loop the registry
+#   exists to abolish, displaced one level up — and worse, until this change the printed command
+#   omitted --agent and so opened no agent at all.
+#
+# WHY tmux AND NOT `cmd &`
+#   `limen workstream --agent ...` ENDS IN exec (start-worktree-session.sh:479): it replaces its own
+#   process with the agent's kickstart. An interactive agent needs a controlling TTY, so backgrounding
+#   it in one shell does not give you N sessions — it gives you N headless jobs with nowhere to type.
+#   tmux is the cheapest thing that hands each stream a real TTY, survives the operator closing the
+#   laptop, needs no AppleScript/GUI, and is already installed.
+#
+# CONCURRENCY IS BOUNDED ON PURPOSE
+#   Interactive agent sessions are heavy and this estate runs on a 16GB machine with LOGGED jetsam
+#   kills; CLAUDE.md caps concurrent heavy processes for exactly that reason. Opening every ready
+#   stream at once is the shape that gets killed, and a killed session loses its context silently.
+#   The bound is DERIVED from physical RAM (see the helper) rather than being a magic number, is
+#   overridable with --max-parallel / $LIMEN_STREAMS_MAX_PARALLEL, and every deferred stream is
+#   NAMED with its exact command — a silent cap would read as "all four opened" when it did not.
+#
+# IDEMPOTENT
+#   Re-running opens only what is not already open. Two independent reasons, and both must hold:
+#   the checker classifies a stream with a live worktree as `running`, not `ready`, so it never
+#   reaches this script; and a stream whose tmux window already exists is skipped here — which
+#   covers the window that outlived its worktree.
+#
+# Usage:
+#   scripts/open-streams.sh                  # open the ready set, up to the derived bound
+#   scripts/open-streams.sh --dry-run        # print exactly what would open, touch nothing
+#   scripts/open-streams.sh --max-parallel 1 # open one, name the rest
+#   scripts/open-streams.sh --all            # ignore the bound (you accept the jetsam risk)
+
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/.." && pwd)"
+
+session="${LIMEN_STREAMS_TMUX_SESSION:-limen-streams}"
+max_parallel="${LIMEN_STREAMS_MAX_PARALLEL:-}"
+dry_run=0
+unbounded=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) dry_run=1; shift ;;
+    --all) unbounded=1; shift ;;
+    --max-parallel)
+      [[ $# -ge 2 ]] || { echo "missing value for --max-parallel" >&2; exit 2; }
+      max_parallel="$2"; shift 2 ;;
+    --session)
+      [[ $# -ge 2 ]] || { echo "missing value for --session" >&2; exit 2; }
+      session="$2"; shift 2 ;;
+    -h|--help) sed -n '2,40p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
+done
+
+if [[ "$dry_run" -eq 0 ]] && ! command -v tmux >/dev/null 2>&1; then
+  echo "open-streams: tmux not found — install it (brew install tmux) or use --dry-run" >&2
+  exit 127
+fi
+
+# `limen` must resolve BEFORE any window is opened. Discovering it is missing inside a tmux window
+# means N windows each printing 'command not found' into a pane nobody is looking at.
+if ! command -v limen >/dev/null 2>&1; then
+  echo "open-streams: 'limen' not on PATH — pip install -e '$repo_root/cli'" >&2
+  exit 127
+fi
+
+# The ready set, its bound, and each row's shell-quoted command — derived in one place. The checker
+# exits non-zero on registry drift, and `set -e` makes that fatal here: we never open a set derived
+# from an incoherent graph.
+plan="$(
+  python3 - "$repo_root" "${max_parallel:-}" "$unbounded" <<'PY'
+import json
+import os
+import shlex
+import subprocess
+import sys
+
+root, requested_cap, unbounded = sys.argv[1], sys.argv[2].strip(), sys.argv[3] == "1"
+
+rows = json.loads(
+    subprocess.run(
+        [sys.executable, os.path.join(root, "scripts", "check-session-streams.py"), "--ready", "--json"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+)
+
+# Derived, not magic. An interactive agent session plus its tooling sits around GB_PER_STREAM; the
+# reserve is the OS, the browser, and the heartbeat daemon, which are running regardless. Stated as
+# constants so the arithmetic is auditable and the number moves when the machine does.
+GB_PER_STREAM = 3.0
+GB_RESERVED = 6.0
+try:
+    total_gb = int(subprocess.run(["sysctl", "-n", "hw.memsize"], capture_output=True, text=True).stdout) / 1024**3
+except (ValueError, OSError):
+    total_gb = 0.0
+derived = max(1, int((total_gb - GB_RESERVED) // GB_PER_STREAM)) if total_gb else 1
+
+if unbounded:
+    cap, why = len(rows), "--all (bound waived)"
+elif requested_cap:
+    cap, why = max(1, int(requested_cap)), "--max-parallel"
+else:
+    cap, why = derived, f"derived from {total_gb:.0f}GB RAM ({GB_RESERVED:.0f} reserved, {GB_PER_STREAM:.0f}/stream)"
+
+# Resolve what `--agent auto` will actually pick, ONCE, and report it — using the same census rule
+# start-worktree-session.sh:283-306 applies. `auto` is vendor-neutral by contract (the registry may
+# never pin a provider), which means the lane is chosen by census ORDER unless $LIMEN_AGENT says
+# otherwise: on a stock environment that is codex, not claude. An operator who asked for N claude
+# sessions and silently got another vendor has been surprised by a contract detail, so the choice is
+# printed before anything opens rather than discovered inside a pane.
+lane = "unresolved"
+try:
+    sys.path.insert(0, os.path.join(root, "cli", "src"))
+    import shutil
+
+    from limen.census import VENDORS, by_name, canonical
+
+    def _cands(v):
+        override = os.environ.get(f"LIMEN_{v.name.upper().replace('-', '_')}_BIN", "").strip()
+        return tuple(dict.fromkeys(x for x in (override, v.name, v.binary if v.binary == v.name else "") if x))
+
+    def _native(v):
+        p = getattr(v, "execution", None)
+        return v.local_checkout if p is None else (p.transport == "native-cli" or p.transport.startswith("ianva-"))
+
+    preferred = canonical(os.environ.get("LIMEN_AGENT"))
+    ordered = list(VENDORS)
+    if preferred and by_name(preferred):
+        ordered.sort(key=lambda v: v.name != preferred)
+    eligible = [v for v in ordered if v.status.available and v.status.state == "live" and _native(v)]
+    picked = next(((v, b) for v in eligible for b in _cands(v) if shutil.which(b)), None)
+    if picked:
+        lane = picked[0].name + ("" if preferred else "  (census default — set LIMEN_AGENT to steer)")
+except Exception:  # noqa: BLE001 — reporting only; the launcher must not fail on a census hiccup
+    pass
+
+print(f"CAP\t{cap}\t{why}\t{len(rows)}\t{lane}")
+for i, row in enumerate(rows):
+    kind = "OPEN" if i < cap else "DEFER"
+    print(f"{kind}\t{row['id']}\t{row['job_class']}\t{shlex.join(row['argv'])}\t{row['title']}")
+PY
+)"
+
+cap_line="$(printf '%s\n' "$plan" | awk -F'\t' '$1=="CAP"')"
+cap="$(printf '%s' "$cap_line" | cut -f2)"
+cap_why="$(printf '%s' "$cap_line" | cut -f3)"
+ready_n="$(printf '%s' "$cap_line" | cut -f4)"
+lane="$(printf '%s' "$cap_line" | cut -f5)"
+
+if [[ "$ready_n" -eq 0 ]]; then
+  echo "open-streams: NONE READY — nothing to open"
+  python3 "$repo_root/scripts/check-session-streams.py" --ready
+  exit 0
+fi
+
+echo "open-streams: $ready_n ready, opening up to $cap  [$cap_why]"
+echo "  lane:         $lane"
+echo "  tmux session: $session"
+echo
+
+opened=0
+skipped=0
+
+while IFS=$'\t' read -r kind sid job_class cmd title; do
+  [[ "$kind" == "CAP" ]] && continue
+
+  if [[ "$kind" == "DEFER" ]]; then
+    # Named, never silent: a dropped stream the operator cannot see reads as one that opened.
+    echo "  DEFER  $sid — over the bound; open later with:"
+    echo "           $cmd"
+    continue
+  fi
+
+  if [[ "$dry_run" -eq 0 ]] && tmux has-session -t "$session" 2>/dev/null &&
+     tmux list-windows -t "$session" -F '#W' 2>/dev/null | grep -qx "$sid"; then
+    echo "  SKIP   $sid — tmux window already open"
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    echo "  WOULD  $sid ($job_class) — $title"
+    echo "           $cmd"
+    opened=$((opened + 1))
+    continue
+  fi
+
+  # Keep the window after the agent exits: the operator needs to read the closeout, and a window
+  # that vanishes on exit destroys exactly the output worth seeing.
+  window_cmd="$cmd; printf '\n── stream %s exited — window kept ──\n' $(printf '%q' "$sid"); exec ${SHELL:-/bin/zsh} -l"
+
+  if tmux has-session -t "$session" 2>/dev/null; then
+    tmux new-window -t "$session" -n "$sid" -c "$repo_root" "$window_cmd"
+  else
+    tmux new-session -d -s "$session" -n "$sid" -c "$repo_root" "$window_cmd"
+  fi
+  echo "  OPEN   $sid ($job_class) — $title"
+  opened=$((opened + 1))
+done < <(printf '%s\n' "$plan")
+
+echo
+if [[ "$dry_run" -eq 1 ]]; then
+  echo "open-streams: DRY RUN — $opened would open, nothing was touched"
+  exit 0
+fi
+
+echo "open-streams: $opened opened, $skipped already running"
+[[ "$opened" -gt 0 || "$skipped" -gt 0 ]] && echo "  attach: tmux attach -t $session"
+exit 0

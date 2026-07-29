@@ -44,6 +44,7 @@ Run directly, via pr-gate, or verify-whole. Fails toward caution: a broken regis
 
 import argparse
 import importlib.util
+import json
 import os
 import re
 import subprocess
@@ -151,19 +152,56 @@ def state_of(sid, stream, settled_cache):
     return "blocked" if unmet else "ready"
 
 
-def launch_command(sid, stream):
-    """The exact command for this domain. --agent is deliberately omitted: the capsule contract
-    declares `lane_selection: derive_from_live_capabilities` and never pins a provider, so the
-    operator picks the lane per domain (or adds `--agent auto` to derive one from the census).
-    Without --agent the capsule is written and NOT launched; open it from any terminal via the
-    kickstart.sh path the launcher prints.
+def launch_argv(sid, stream):
+    """The exact command for this domain — one that actually OPENS an agent.
+
+    `--agent auto` is load-bearing twice over, and omitting it was the defect:
+
+      * start-worktree-session.sh sets `launch_agent=1` only when --agent is passed (:88-89) and
+        execs the capsule's kickstart only under that flag (:478-480). WITHOUT --agent the script
+        writes the capsule, prints a `Next:` hint, and exits — so the command this registry printed
+        could never open a session. The operator was told to open four streams and handed four
+        commands that each opened zero.
+      * `auto` is not a pin. It resolves through the live census (start-worktree-session.sh
+        :283-306): live + available + native-execution lanes only, ordered by $LIMEN_AGENT, first
+        one whose binary is actually on PATH. That IS
+        `lane_selection: derive_from_live_capabilities` — the capsule contract's requirement — so
+        naming a vendor here would be the violation, and `auto` is the thing that honours it.
+
+    Emitting a bare `limen workstream` and expecting a human to remember to add `--agent auto` is
+    the same hand-maintained step the registry exists to abolish.
+
+    Returns argv, not a shell string: the human view renders it and the machine view (--ready
+    --json, consumed by scripts/open-streams.sh) emits it verbatim. One builder, so the command a
+    launcher runs is by construction the command the operator was shown — a second copy would drift
+    the moment either grew a flag.
     """
-    return (
-        f"limen workstream --conduct --runway {stream['runway']} \\\n"
-        f"  --workstream {sid} \\\n"
-        f"  --prompt-file {stream['intent']} \\\n"
-        f"  limen {sid}"
-    )
+    return [
+        "limen",
+        "workstream",
+        "--agent",
+        "auto",
+        "--conduct",
+        "--runway",
+        str(stream["runway"]),
+        "--workstream",
+        sid,
+        "--prompt-file",
+        stream["intent"],
+        "limen",
+        sid,
+    ]
+
+
+def launch_command(sid, stream):
+    """`launch_argv` rendered for human eyes — wrapped at the flag boundaries it already has."""
+    argv = launch_argv(sid, stream)
+    head, tail = argv[:7], argv[7:]
+    lines = [" ".join(head)]
+    for i in range(0, len(tail) - 2, 2):
+        lines.append(f"  {tail[i]} {tail[i + 1]}")
+    lines.append(f"  {tail[-2]} {tail[-1]}")
+    return " \\\n".join(lines)
 
 
 # ── checks ──────────────────────────────────────────────────────────────────────
@@ -321,11 +359,49 @@ def print_all(streams):
     return 0
 
 
-def print_ready(streams):
+def _bucket(streams):
+    """The ONE state derivation. Both the human view and the machine view read this, so a launcher
+    can never open a set the operator was not shown (and vice versa)."""
     settled_cache = {sid: _settled(sid) for sid in streams}
     buckets = {"ready": [], "running": [], "blocked": [], "settled": []}
     for sid, s in streams.items():
         buckets[state_of(sid, s, settled_cache)].append((sid, s))
+    return buckets, settled_cache
+
+
+def print_ready_json(streams):
+    """Machine-readable ready set — what `scripts/open-streams.sh` consumes.
+
+    Exists because --ready was a PRINTER: its formatted text was for human eyes, so the only way to
+    act on the derived set was to read it and retype it. That is the hand-loop this registry exists
+    to abolish, displaced one level up. Emitting the resolved argv (not a shell string) keeps the
+    launcher from re-deriving — or quietly disagreeing with — the registry's own command.
+    """
+    buckets, _ = _bucket(streams)
+    print(
+        json.dumps(
+            [
+                {
+                    "id": sid,
+                    "title": s["title"],
+                    "job_class": s["job_class"],
+                    "runway": s["runway"],
+                    "intent": s["intent"],
+                    "owner_of_record": s["owner_of_record"],
+                    "max_children": s["max_children"],
+                    # The same builder the text view renders — never a second copy.
+                    "argv": launch_argv(sid, s),
+                }
+                for sid, s in sorted(buckets["ready"])
+            ],
+            indent=2,
+        )
+    )
+    return 0
+
+
+def print_ready(streams):
+    buckets, settled_cache = _bucket(streams)
 
     if not buckets["ready"]:
         print("session streams: NONE READY")
@@ -363,6 +439,12 @@ def main():
         help="derive each domain's state from ground truth and print the launch command for every openable one",
     )
     ap.add_argument(
+        "--json",
+        action="store_true",
+        help="with --ready, emit the ready set as JSON (each row carries the resolved argv) instead "
+        "of formatted text — this is what scripts/open-streams.sh consumes",
+    )
+    ap.add_argument(
         "--all",
         action="store_true",
         help="print the launch command for EVERY unsettled domain, ready or blocked, in dependency "
@@ -371,16 +453,23 @@ def main():
     )
     args = ap.parse_args()
 
+    if args.json and not args.ready:
+        ap.error("--json applies to --ready")
+
     streams = load()
 
     if args.ready or args.all:
-        # A launch command is only meaningful over a coherent registry.
+        # A launch command is only meaningful over a coherent registry. This guard is what makes it
+        # safe for open-streams.sh to run the emitted argv unread: drift is exit 1 with no rows, so
+        # a launcher can never open a set derived from an incoherent graph.
         run_checks(streams)
         if failures:
             print("session-streams registry: DRIFT — refusing to derive launch commands")
             print("\n".join(failures))
             sys.exit(1)
-        sys.exit(print_all(streams) if args.all else print_ready(streams))
+        if args.all:
+            sys.exit(print_all(streams))
+        sys.exit(print_ready_json(streams) if args.json else print_ready(streams))
 
     run_checks(streams)
     if failures:
