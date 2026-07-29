@@ -196,9 +196,15 @@ def _live_lanes():
 
 
 def test_each_live_lane_can_be_selected(launcher_env):
-    """The operator's ask: open the domains via claude OR codex OR agy OR opencode."""
+    """The operator's ask: open the domains via claude OR codex OR agy OR opencode.
+
+    SKIPS where no lane is live. A CI runner with no agent CLI installed is a legitimate
+    environment, not a failure — asserting non-empty made this test demand that the machine running
+    it have agents, which is a property of the host and not of the code under test.
+    """
     lanes = _live_lanes()
-    assert lanes, "no live native lane on this host"
+    if not lanes:
+        pytest.skip("no live native lane on this host (e.g. CI runner without an agent CLI)")
     for lane in lanes:
         out = _open("--lane", lane, "--dry-run", "--max-parallel", "1").stdout
         assert re.search(rf"^  lane: +{re.escape(lane)}\b", out, re.MULTILINE), (
@@ -212,6 +218,8 @@ def test_a_lane_that_is_not_live_is_refused_before_anything_opens(launcher_env):
     proc = _open("--lane", "definitely-not-a-lane", "--dry-run")
     assert proc.returncode == 2
     assert "is not a live native lane" in proc.stderr
+    # Holds with zero live lanes too: the refusal then reports "(none)", which is still an honest
+    # answer to "what IS available".
     for lane in _live_lanes():
         assert lane in proc.stderr, "the refusal must name what IS available, not just what is not"
 
