@@ -36,6 +36,18 @@
 #   directory: worktree_roots.iter_worktree_targets() sweeps ROOTS, so a nested child is invisible to
 #   the SPRAWL-RECLAIM organ and leaks (the ~50GB blind spot, docs/PARALLEL-CELLS.md).
 #
+# HOW A DOMAIN SETTLES (the state is derived; this is the ONLY way to write it)
+#   Put an anchored trailer at column 0 of the merge commit message:
+#
+#       Settles: <stream-id>[, <stream-id>…]
+#
+#   and make that commit change something outside this registry and docs/{plans,continuations}/ —
+#   bookkeeping records an outcome, it cannot produce one. There is no `settled:` field, and a
+#   passing mention of an id does NOT settle it: the rule used to be an unanchored
+#   `git log --grep=<id>`, which settled `s10-axis-coverage` off a docs commit whose entire subject
+#   was that s10 owns work a plan should not do. `settled_by:` is a bounded, checked backfill for
+#   the two domains that settled before this convention existed — not a second path.
+#
 # FIELDS
 #   id                 stable slug; also the worktree slug and the docs/continuations/<id>/ key
 #   title              one line, human-facing
@@ -57,6 +69,10 @@
 #   runway             finite workstream runway handed to --runway (15m..30d)
 #   owner_of_record    the git-tracked surface that owns this domain's result
 #   max_children       IF-AMALGAMATION bound on the umbrella's fan-out
+#   settled_by         OPTIONAL, migration-only: the SHA that settled this domain BEFORE the
+#                      `Settles:` convention existed. Check H proves it is a real commit reachable
+#                      from origin/main that changed paths outside this registry, and bounds how
+#                      many rows may carry one. A new domain never gets this — it claims its own.
 #   note               the measured defect this domain closes — never a wish
 #
 # Provenance: the nine domains and their measured ground truth come from
@@ -116,6 +132,10 @@ streams:
   s9-lane-tier-pin:
     title: "Lane tier pin — stop launched lanes inheriting a prohibited tier"
     branch_prefix: heal
+    # Settled before the `Settles:` convention existed. 7ba07525 is #1619, whose diff is the fix
+    # itself (cli/src/limen/workstream_contract.py, cli.py, tests) — check H proves it is reachable
+    # from origin/main and changed paths outside this registry.
+    settled_by: 7ba07525
     intent: docs/continuations/s9-lane-tier-pin/intent.md
     requires: []
     unblocks: []
@@ -161,6 +181,11 @@ streams:
   s1-homing-spine:
     title: "The homing spine — declared data before any homing"
     branch_prefix: feat
+    # Settled before the `Settles:` convention existed. Under the OLD unanchored rule this row read
+    # settled only because the registry's own bookkeeping commit b5d7909f said "record
+    # s1-homing-spine settled by #1608" — the real work commit never names the id. 9a319395 IS that
+    # real work (institutio/governance/atom-homing.yaml, atom-census.yaml, the residue baseline).
+    settled_by: 9a319395
     intent: docs/continuations/s1-homing-spine/intent.md
     # NOT [s0]: the spine was authored store-free on purpose, so it never needed the corpus.
     # Measured by its own landing — #1608 shipped with the store cold-archived off this host.

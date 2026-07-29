@@ -71,9 +71,12 @@ inherits this session's model.
 ## Constraints
 
 Fresh branch `heal/convergence-rows-match-ground-truth` off updated `origin/main`, one concern.
-`scripts/verify-scoped.sh`; `merge-policy.sh` → `await-pr.sh --merge`. **Include the string
-`s6-registry-correction` in the merge commit subject** — the STREAMS registry derives this domain's
-settled state from `git log origin/main --grep=s6-registry-correction`.
+`scripts/verify-scoped.sh`; `merge-policy.sh` → `await-pr.sh --merge`. **Claim the settlement with an anchored trailer in the merge commit message** — a line at
+column 0 reading `Settles: s6-registry-correction`. The STREAMS registry derives this domain's settled
+state from that claim, and *only* from it: an unanchored mention no longer counts (it once
+settled `s10-axis-coverage` off a docs commit that merely named it). The claiming commit must
+also change something outside the registry and `docs/{plans,continuations}/` — bookkeeping
+records an outcome, it cannot produce one.
 
 ## Done
 

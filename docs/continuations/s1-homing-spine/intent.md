@@ -90,9 +90,12 @@ child explicitly by job; no worker inherits this session's model.
 ## Constraints
 
 Fresh branch `feat/atom-homing-registry` off updated `origin/main`, one concern.
-`scripts/verify-scoped.sh`; `merge-policy.sh` → `await-pr.sh --merge`. **Include the string
-`s1-homing-spine` in the merge commit subject** — the STREAMS registry derives settled state from
-`git log origin/main --grep=s1-homing-spine`. When `check-atom-homing.py` lands, flip this stream's
+`scripts/verify-scoped.sh`; `merge-policy.sh` → `await-pr.sh --merge`. **Claim the settlement with an anchored trailer in the merge commit message** — a line at
+column 0 reading `Settles: s1-homing-spine`. The STREAMS registry derives this domain's settled
+state from that claim, and *only* from it: an unanchored mention no longer counts (it once
+settled `s10-axis-coverage` off a docs commit that merely named it). The claiming commit must
+also change something outside the registry and `docs/{plans,continuations}/` — bookkeeping
+records an outcome, it cannot produce one. When `check-atom-homing.py` lands, flip this stream's
 `predicate_status` in `institutio/governance/session-streams.yaml` from `to_be_built` to `existing`;
 check C fails **both ways**, so the registry cannot drift from reality in either direction.
 
