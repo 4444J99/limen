@@ -8,6 +8,7 @@ import os
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import rfc8785
 
@@ -17,7 +18,7 @@ from .crypto import encryption_profile_digest
 from .models import MetabolismReceipt, ReceiptError, RestoreProof
 
 
-def _digest(value: object) -> str:
+def _digest(value: Any) -> str:
     return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
 
 
