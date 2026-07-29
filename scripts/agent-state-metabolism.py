@@ -8,7 +8,8 @@ import json
 import os
 from pathlib import Path
 
-from limen.agent_state.pipeline import run_opencode_campaign
+from limen.agent_state.custody import run_custody_verification_campaign
+from limen.agent_state.pipeline import RETIREMENT_AUTHORIZATION_REQUIRED, run_opencode_campaign
 from limen.agent_state.tree import plan_cloud_materializations, plan_exact_retention, plan_retention
 from limen.agent_state.tree_pipeline import (
     run_cloudkit_materialization_campaign,
@@ -50,7 +51,7 @@ def parser() -> argparse.ArgumentParser:
     opencode.add_argument(
         "--retire",
         action="store_true",
-        help="replace the source only after every custody and restoration gate passes",
+        help="reserved for a separately authorized canonical-custody retirement workflow",
     )
     tree = subcommands.add_parser("cold-tree", help="capture a bounded cold file set")
     tree.add_argument("name")
@@ -84,7 +85,11 @@ def parser() -> argparse.ArgumentParser:
     )
     tree.add_argument("--run-id")
     tree.add_argument("--resume", action="store_true")
-    tree.add_argument("--retire", action="store_true")
+    tree.add_argument(
+        "--retire",
+        action="store_true",
+        help="reserved for a separately authorized canonical-custody retirement workflow",
+    )
     cloudkit = subcommands.add_parser(
         "cloudkit-materialized",
         help="capture only materialized iCloud files and optionally evict them through File Provider",
@@ -137,6 +142,17 @@ def parser() -> argparse.ArgumentParser:
         action="store_true",
         help="explicitly apply the requested one-item restoration after all custody gates pass",
     )
+    custody = subcommands.add_parser(
+        "custody-receipt",
+        help="independently restore both copies and emit the path-free custody contract",
+    )
+    custody.add_argument("name")
+    custody.add_argument("--metabolism-receipt", type=Path, required=True)
+    custody.add_argument("--vault-root", type=Path, required=True)
+    custody.add_argument("--external-root", type=Path, required=True)
+    custody.add_argument("--repository", default="organvm/arca")
+    custody.add_argument("--key-service", default="limen-arca-vault")
+    custody.add_argument("--output", type=Path, required=True)
     return command
 
 
@@ -145,6 +161,8 @@ def main(argv: list[str] | None = None) -> int:
     args = argument_parser.parse_args(argv)
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
+    if args.command in {"opencode", "cold-tree"} and args.retire:
+        argument_parser.error(RETIREMENT_AUTHORIZATION_REQUIRED)
     if (
         args.command == "cold-tree"
         and args.retain_relative
@@ -154,11 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     if (
         args.command == "cold-tree"
         and args.capture_all
-        and (
-            args.retain_relative
-            or args.hot_days is not None
-            or args.maximum_hot_gib is not None
-        )
+        and (args.retain_relative or args.hot_days is not None or args.maximum_hot_gib is not None)
     ):
         argument_parser.error(
             "--capture-all cannot be combined with --retain-relative, --hot-days, or --maximum-hot-gib"
@@ -193,20 +207,40 @@ def main(argv: list[str] | None = None) -> int:
             argument_parser.error("item restoration cannot be combined with eviction operations")
         if args.prepare_eviction_authorization and args.prepare_eviction_campaign_authorization:
             argument_parser.error("choose one eviction authorization planning mode")
-        if (
-            args.prepare_eviction_authorization
-            or args.prepare_eviction_campaign_authorization
-        ) and args.evict:
+        if (args.prepare_eviction_authorization or args.prepare_eviction_campaign_authorization) and args.evict:
             argument_parser.error("authorization planning and --evict are separate operations")
         if (
-            args.prepare_eviction_authorization
-            or args.prepare_eviction_campaign_authorization
+            args.prepare_eviction_authorization or args.prepare_eviction_campaign_authorization
         ) and not args.eviction_authorizer:
             argument_parser.error("eviction authorization planning requires --eviction-authorizer")
         if args.evict and (not args.eviction_authorization or not args.eviction_signature):
             argument_parser.error("--evict requires --eviction-authorization and --eviction-signature")
         if not args.evict and (args.eviction_authorization or args.eviction_signature):
             argument_parser.error("signed eviction inputs require --evict")
+    if args.command == "custody-receipt":
+        metabolism, projected, metabolism_changed, custody_changed = run_custody_verification_campaign(
+            args.name,
+            args.metabolism_receipt,
+            args.vault_root,
+            args.external_root,
+            args.output,
+            repository=args.repository,
+            key_service=args.key_service,
+        )
+        print(
+            json.dumps(
+                {
+                    "schema": projected.schema_version,
+                    "custody_id": projected.custody_id,
+                    "restoration_count": len(projected.restoration_proofs),
+                    "source_retired": metabolism.source_retired,
+                    "metabolism_changed": metabolism_changed,
+                    "changed": custody_changed,
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
     if args.command == "opencode":
         receipt = run_opencode_campaign(
             args.source,

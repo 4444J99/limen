@@ -273,6 +273,35 @@ def test_completed_remote_receipt_ignores_dirty_checkout(
     assert _git(vault.root, "status", "--porcelain=v1")
 
 
+def test_remote_payload_restoration_reads_fetched_commit_not_checkout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vault, relative, expected = _interrupted_vault(
+        tmp_path,
+        monkeypatch,
+        remote_has_local_head=False,
+    )
+    _git(vault.root, "add", *(str(path) for path in expected[1:]))
+    _git(vault.root, "commit", "-m", "agent-state: seal icloud-drive run")
+    payload_commit = _git(vault.root, "rev-parse", "HEAD")
+    _git(vault.root, "push", "origin", "HEAD:main")
+    (vault.root / expected[0]).write_bytes(b"local-only")
+    destination = tmp_path / "restored"
+
+    vault.materialize_remote_payload(
+        relative,
+        payload_commit,
+        [Path(path.name) for path in expected],
+        destination,
+    )
+
+    assert (destination / expected[0].name).read_bytes() == b"aaaa"
+    assert (destination / expected[1].name).read_bytes() == b"bbbb"
+    assert (destination / expected[2].name).read_bytes() == b"ccc"
+    assert (vault.root / expected[0]).read_bytes() == b"local-only"
+
+
 def test_active_vendor_denies_capture_before_writes(tmp_path: Path) -> None:
     source = tmp_path / "opencode.db"
     _database(source)
