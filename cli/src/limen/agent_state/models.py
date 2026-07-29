@@ -307,6 +307,8 @@ class MetabolismReceipt:
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
+        payload["source"]["stat_before"] = list(payload["source"]["stat_before"])
+        payload["source"]["stat_after"] = list(payload["source"]["stat_after"])
         if self.encryption_profile_digest is None:
             payload.pop("encryption_profile_digest")
         for proof in payload["restorations"]:
