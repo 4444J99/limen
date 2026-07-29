@@ -123,6 +123,30 @@ streams:
       prohibited. Its own domain because workstream_contract.py models primary_launch as strictly
       Codex and is SHA-bound over nine modules on both build and re-entry.
 
+  s10-axis-coverage:
+    title: "Axis coverage — make \"every axis is green\" one command, not a hand-loop"
+    branch_prefix: feat
+    intent: docs/continuations/s10-axis-coverage/intent.md
+    requires: []
+    unblocks: []
+    job_class: governance
+    predicate: scripts/check-gates.py
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: institutio/governance/gates.yaml
+    max_children: 2
+    note: >-
+      Measured 2026-07-29 on 6bac5cad: 27 scripts/check-*.py on disk, 19 registered in gates.yaml,
+      9 in sensors.yaml (4 in both) — 3 wired nowhere. verify-whole.sh invokes 4 of the 27
+      literally; pr-gate.yml's LIMEN_PRGATE_SCOPED=0 full-literal-matrix lists 7, omitting corpora,
+      convergence, atom-homing, custody, ideal-forms and session-streams. check-gates.py check F
+      covers only verify-whole.sh's file_set derivation, not its check invocations, and no axis
+      predicate appears in sensors.yaml so omega.sh misses them too. Each axis prevents drift in
+      its own domain while the SET of axes drifts unchecked — the CORPORA founding defect (two
+      consumers, two wrong copies of one list) one level up. Also folds in the axis->ideal
+      coupling: CUSTODY (#1615) and STREAMS (#1612) each shipped a registry, predicate and gate
+      row with no IF-* entry, the same gap IF-ATOM-HOMING had at the 6th axis.
+
   # ── settled: the spine landed as #1608 while this registry was being authored ──
   s1-homing-spine:
     title: "The homing spine — declared data before any homing"
