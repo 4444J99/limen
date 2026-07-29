@@ -1,0 +1,262 @@
+# STREAMS — the declared work-domain registry (VIGILIA's fourth axis beside GATES, SENSORS, PARAMETERS)
+#
+# WHY THIS EXISTS
+#   A session stream is one work DOMAIN: an umbrella worktree an operator opens and interacts with,
+#   which spawns bounded children under its own lineage (`limen conduct split`, never a nested
+#   worktree — see the note on containment below).
+#
+#   The defect this closes: the arc's dependency graph and its "open these today" answer lived as
+#   PROSE in docs/plans/2026-07-29-session-stream-cartridges.md. Prose decays the moment a branch
+#   merges, and a human then re-derives it by hand every session. Here the graph is declared data and
+#   the ready-set is DERIVED:
+#
+#       python3 scripts/check-session-streams.py --ready
+#
+#   prints, per openable domain, the exact `workstream` command. The question "which streams do I
+#   open?" is a command's output, not a table somebody maintains.
+#
+# THE ENGINE IS NOT NEW (IF-LEARNING-ENGINE, subject/cartridge contract)
+#   `limen workstream <repo> <slug>` (-> scripts/start-worktree-session.sh) is the estate's only
+#   worktree-creating CLI verb and the single owner of lane creation. A stream is a SUBJECT loaded
+#   into that engine — a row here, never a second launcher. Adding a domain = adding ONE row.
+#
+# CONTAINMENT IS BY LINEAGE, NOT BY DIRECTORY
+#   Children are reserved with `limen conduct split <parent_run> --packet` and bounded by
+#   FanoutBoundsV1{max_children, max_depth}. A child worktree is NEVER nested inside its parent's
+#   directory: worktree_roots.iter_worktree_targets() sweeps ROOTS, so a nested child is invisible to
+#   the SPRAWL-RECLAIM organ and leaks (the ~50GB blind spot, docs/PARALLEL-CELLS.md).
+#
+# FIELDS
+#   id                 stable slug; also the worktree slug and the docs/continuations/<id>/ key
+#   title              one line, human-facing
+#   branch_prefix      from the CLAUDE.md branch-cadence table (feat|fix|heal|chore|docs|refactor)
+#   intent             the --prompt-file payload; must exist (check A)
+#   requires           stream ids that must be SETTLED first; [] means openable now
+#   unblocks           inverse of requires; held mutually consistent + acyclic (check B)
+#   job_class          feeds tier derivation. NEVER a model or a vendor: the capsule contract
+#                      declares `lane_selection: derive_from_live_capabilities` and "never pin a
+#                      future provider or model". Classes that claim reserved-Opus standing are
+#                      validated against model_selection._CLAUDE_OPUS_CLASSES_DEFAULT (check G) —
+#                      derived from the tier authority, never a second copy of the ladder.
+#   predicate          the executable that decides this stream's DONE
+#   predicate_status   existing     — the predicate exists today and must resolve
+#                      to_be_built  — this stream BUILDS its own predicate; it must NOT exist yet,
+#                                     and the stream may not be `settled` while it is missing.
+#                                     Flipping this field without shipping the file is caught both
+#                                     ways (check C) — the anti-fake rung.
+#   runway             finite workstream runway handed to --runway (15m..30d)
+#   owner_of_record    the git-tracked surface that owns this domain's result
+#   max_children       IF-AMALGAMATION bound on the umbrella's fan-out
+#   note               the measured defect this domain closes — never a wish
+#
+# Provenance: the nine domains and their measured ground truth come from
+# docs/plans/2026-07-29-session-stream-cartridges.md, itself instantiating the a->w roadmap approved
+# 2026-07-26 (zero phases of which landed; the session stopped on a spend limit).
+
+schema_version: 0.1
+
+streams:
+
+  # ── open now: no unmet precondition ──────────────────────────────────────────
+  s0-corpus-custody:
+    title: "Corpus custody — teach the registry where the store actually lives"
+    branch_prefix: heal
+    intent: docs/continuations/s0-corpus-custody/intent.md
+    requires: []
+    # DIRECT edges only — `unblocks` is the exact inverse of the other row's `requires` (check B).
+    # s0 gates the four DISTILLATION domains directly, not through s1: the spine (s1) shipped
+    # deliberately store-free (#1608, "runs in CI where the corpus can never exist"), but you
+    # cannot distill atoms whose statement text you cannot read.
+    unblocks:
+      - s2-public-distillation
+      - s3-governance-case-law
+      - s4-operator-routing
+      - s5-commercial-offerings
+    job_class: governance
+    predicate: scripts/check-corpora.py
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: institutio/governance/corpora.yaml
+    max_children: 4
+    note: >-
+      corpora.yaml declares the conversations-private store at ~/Workspace/_conversations-private;
+      that path does not resolve. The store was evacuated 2026-07-27 by the laptop-evacuation custody
+      lane (#1604). The evacuation is correct; check-corpora.py never asserted a root RESOLVES, so
+      the registry is green over a store nobody can open.
+
+  s6-registry-correction:
+    title: "Registry correction — make convergence.yaml describe the code it names"
+    branch_prefix: heal
+    intent: docs/continuations/s6-registry-correction/intent.md
+    requires: []
+    unblocks: [s7-smallest-lifts]
+    job_class: canon
+    predicate: scripts/check-convergence.py
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: institutio/governance/convergence.yaml
+    max_children: 4
+    note: >-
+      Four of twelve capability rows were measured false on 2026-07-26 (worker-toolkit names no seam
+      though organvm/payrail exists; data-export claims near-identical copies that share zero
+      function names; text-quality-scoring names a frontmatter validator as a quality scorer;
+      learning-engine.md claims a mirror-drift control that does not exist). Declared data that
+      misdescribes ground truth routes work at the wrong target.
+
+  s9-lane-tier-pin:
+    title: "Lane tier pin — stop launched lanes inheriting a prohibited tier"
+    branch_prefix: heal
+    intent: docs/continuations/s9-lane-tier-pin/intent.md
+    requires: []
+    unblocks: []
+    job_class: kernel
+    predicate: cli/tests/test_workstream_contract.py
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: cli/src/limen/workstream_contract.py
+    max_children: 2
+    note: >-
+      Measured 2026-07-29 while building this registry: the capsule's non-Codex branch execs the lane
+      binary with no --model, and start-worktree-session.sh gates --model behind the Codex triple. So
+      a claude umbrella inherits ~/.claude/settings.json's interactive default — currently
+      claude-fable-5[1m] — and docs/fable-allotment.md declares Fable PLAN-ONLY with building on it
+      prohibited. Its own domain because workstream_contract.py models primary_launch as strictly
+      Codex and is SHA-bound over nine modules on both build and re-entry.
+
+  # ── settled: the spine landed as #1608 while this registry was being authored ──
+  s1-homing-spine:
+    title: "The homing spine — declared data before any homing"
+    branch_prefix: feat
+    intent: docs/continuations/s1-homing-spine/intent.md
+    # NOT [s0]: the spine was authored store-free on purpose, so it never needed the corpus.
+    # Measured by its own landing — #1608 shipped with the store cold-archived off this host.
+    requires: []
+    unblocks:
+      - s2-public-distillation
+      - s3-governance-case-law
+      - s4-operator-routing
+      - s5-commercial-offerings
+    job_class: kernel
+    predicate: scripts/check-atom-homing.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: institutio/governance/atom-homing.yaml
+    max_children: 6
+    note: >-
+      SETTLED by #1608 (9a319395), landed 2026-07-29 by a parallel session while this registry was
+      being authored — measured by check C of this very registry, which refused the row that still
+      claimed the predicate was to-be-built. What shipped is exactly this domain's ask: atom-homing.yaml
+      (one row per kind), the statement-free atom-census.yaml, the residue baseline, and
+      check-atom-homing.py checks A-G — including D, the executable form of `redacted:false ⇒ never
+      leaves its store`. The DECLARATION is done; all 4,099 atoms remain residual, which is the work
+      of s2..s5 and is why they gate on s0 rather than on this row.
+
+  # ── blocked on s1 — the seven kinds, one domain per destination ───────────────
+  s2-public-distillation:
+    title: "Public distillation — 1,194 atoms into ideal forms and schemas"
+    branch_prefix: feat
+    intent: docs/continuations/s2-public-distillation/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/check-atom-homing.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: docs/IDEAL-FORMS-LEDGER.md
+    max_children: 8
+    note: >-
+      functionality-to-repeat 518 + schema-proposals 676 — declared homed by the s1 spine (#1608),
+      all still RESIDUAL against the committed baseline. Success is INVERSE to volume: if
+      output is proportional to input this transferred rather than distilled. A 518-entry ideal-forms
+      ledger is worse than no homing, because it looks done.
+
+  s3-governance-case-law:
+    title: "Governance case law — 1,343 atoms into precedents and counted vacuums"
+    branch_prefix: feat
+    intent: docs/continuations/s3-governance-case-law/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: []
+    job_class: canon
+    predicate: scripts/check-convergence.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: censor/precedents.jsonl
+    max_children: 8
+    note: >-
+      decisions 877 + vacuums 466, un-homed. Precedents stay curated — a precedent is consulted, and
+      a corpus nobody can read is consulted by nobody. convergence.yaml asserting 0 unresolved while
+      466 vacuum atoms sit un-homed is the same declared-data defect s6 corrects one file over.
+
+  s4-operator-routing:
+    title: "Operator routing — 1,067 atoms without handing him a list"
+    branch_prefix: feat
+    intent: docs/continuations/s4-operator-routing/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: []
+    job_class: governance
+    predicate: scripts/no-tasks-on-me.sh
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: his-hand-levers.json
+    max_children: 6
+    note: >-
+      questions-unresolved 316 + tasks 751, un-homed. Success metric is INVERTED: routing 1,067 atoms
+      at the human is the failure mode. The charter is explicit that a closeout handing him a list has
+      failed even when every item is technically homed. Baseline to beat: 62 levers, 11 unresolved.
+
+  s5-commercial-offerings:
+    title: "Commercial offerings — 54 atoms into the funnel"
+    branch_prefix: feat
+    intent: docs/continuations/s5-commercial-offerings/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: [s8-mint-by-demand]
+    job_class: synthesis
+    predicate: scripts/no-tasks-on-me.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organs/consulting
+    max_children: 4
+    note: >-
+      client-offerings 54 — the smallest kind, the only one with direct revenue consequence, and the
+      sole input to s8's G1 demand gate. Bundled into a bulk homing pass it gets buried under 877
+      decisions and never resurfaces.
+
+  # ── blocked on s6 ────────────────────────────────────────────────────────────
+  s7-smallest-lifts:
+    title: "The smallest real lifts — de-risked by measurement, one branch each"
+    branch_prefix: refactor
+    intent: docs/continuations/s7-smallest-lifts/intent.md
+    requires: [s6-registry-correction]
+    unblocks: []
+    job_class: irreversible
+    predicate: scripts/check-convergence.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: institutio/governance/convergence.yaml
+    max_children: 4
+    note: >-
+      Blocked on s6 because lifting against uncorrected rows lifts the wrong seam — it would extract
+      a toolkit that organvm/payrail already is, and unify an export_all() sharing zero function
+      names. De-risked by a measured fact: no Worker repo deploys on merge, so a merged lift is a
+      reviewable code change and deploy stays a human action.
+
+  # ── blocked on s5 ────────────────────────────────────────────────────────────
+  s8-mint-by-demand:
+    title: "Mint by demand — the scaffolding gate the estate never had"
+    branch_prefix: feat
+    intent: docs/continuations/s8-mint-by-demand/intent.md
+    requires: [s5-commercial-offerings]
+    unblocks: []
+    job_class: irreversible
+    predicate: scripts/repo-genesis.py
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: institutio/governance/estate.yaml
+    max_children: 2
+    note: >-
+      The gate EXISTS — scripts/repo-genesis.py landed in PR #1535 with four gates
+      (gate_evidence, gate_name, gate_class, gate_seed). Measured 2026-07-29 by check C of this very
+      registry, which caught the plans doc claiming it was still to-be-built. What is genuinely
+      missing is the demand half: no gate asks WHICH repo-only affordance is required, none queries
+      convergence.yaml for an existing owner, and none enforces IF-AMALGAMATION (mints must not
+      outpace lifts). 149 repos minted from one export date is what that absence produced.
