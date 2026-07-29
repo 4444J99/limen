@@ -259,6 +259,15 @@ automatic delete. `main` is the trunk **and** the live deploy source.
 
 **Chunking.** A branch is **one concern, not one session.** When a session produces multiple concerns, cut a fresh branch per concern off `origin/main` — finish → push → PR → next branch — never accumulate heterogeneous commits on a single session branch. And the **live checkout rests on `main`**: parking it on a work branch pins the running fleet to stale code and entangles every autonomic capture into that branch (the 2026-06-29 jules-capfill park: 5 days, 65 behind, a feature slice + daemon receipts fused onto one ref). `scripts/sync-release.sh` auto-unparks a fully-pushed, clean park each beat and fails open loudly otherwise — do session work in a worktree, never in the live checkout.
 
+**Settling a session stream.** If a PR completes a domain declared in
+[`institutio/governance/session-streams.yaml`](institutio/governance/session-streams.yaml), claim it
+with an anchored trailer at **column 0** of the merge commit message — `Settles: <stream-id>` (comma-separated
+for several). That claim is the *only* thing that marks a domain settled, and the claiming commit must
+change something outside the registry and `docs/{plans,continuations}/`: bookkeeping records an outcome,
+it cannot produce one. A passing mention no longer counts — the old unanchored `git log --grep=<id>` rule
+settled `s10-axis-coverage` off a docs commit whose whole subject was that s10 owns work a plan should
+*not* do. `scripts/check-session-streams.py` is the predicate.
+
 **No side doors — docs included.** The branch cadence applies to *every* tracked change, including
 one-file docs appends (the `docs: review … run` class, which was landing as direct `main` commits —
 35 of 40 at its worst). Ship those with **`scripts/ship-docs.sh <slug> "<msg>" <file…>`**: it stages

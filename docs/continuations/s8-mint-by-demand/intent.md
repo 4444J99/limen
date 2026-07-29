@@ -76,9 +76,12 @@ child explicitly; no worker inherits this session's model.
 ## Constraints
 
 Fresh branch `feat/repo-genesis-demand-gates` off updated `origin/main`, one concern.
-`scripts/verify-scoped.sh`; `merge-policy.sh` → `await-pr.sh --merge`. **Include the string
-`s8-mint-by-demand` in the merge commit subject** — settled state is derived from
-`git log origin/main --grep=s8-mint-by-demand`.
+`scripts/verify-scoped.sh`; `merge-policy.sh` → `await-pr.sh --merge`. **Claim the settlement with an anchored trailer in the merge commit message** — a line at
+column 0 reading `Settles: s8-mint-by-demand`. The STREAMS registry derives this domain's settled
+state from that claim, and *only* from it: an unanchored mention no longer counts (it once
+settled `s10-axis-coverage` off a docs commit that merely named it). The claiming commit must
+also change something outside the registry and `docs/{plans,continuations}/` — bookkeeping
+records an outcome, it cannot produce one.
 
 ## Done
 

@@ -74,8 +74,12 @@ inherits this session's model.
 
 Fresh branch `feat/axis-coverage-registry` off updated `origin/main`, one concern.
 `scripts/verify-scoped.sh` as the push gate; `merge-policy.sh` → `await-pr.sh <PR#> --merge`.
-**Include the string `s10-axis-coverage` in the merge commit subject** — the STREAMS registry
-derives this domain's settled state from `git log origin/main --grep=s10-axis-coverage`.
+**Claim the settlement with an anchored trailer in the merge commit message** — a line at
+column 0 reading `Settles: s10-axis-coverage`. The STREAMS registry derives this domain's settled
+state from that claim, and *only* from it: an unanchored mention no longer counts (it once
+settled `s10-axis-coverage` off a docs commit that merely named it). The claiming commit must
+also change something outside the registry and `docs/{plans,continuations}/` — bookkeeping
+records an outcome, it cannot produce one.
 
 ## Done
 

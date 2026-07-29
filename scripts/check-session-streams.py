@@ -12,11 +12,17 @@ Exit 0 iff institutio/governance/session-streams.yaml is internally coherent:
   E  orphans     — every <repo>/.worktrees/<slug> capsule whose slug is stream-shaped is declared
                    here (catches a lane opened by hand and then forgotten).
   F  no hand-state — NO row may carry status/state/settled/ready/done. State is DERIVED from git
-                   (see `state_of`), never written. This is what makes the ready-set untamperable:
-                   there is no field to lie in.
+                   (see `state_of`), never written. NOTE: this alone does NOT make the ready-set
+                   untamperable — the docstring used to claim it did. A commit message is as
+                   writable as a YAML field; F only stops the registry CONTRADICTING git. The
+                   anchored `Settles:` claim plus check H are what make the git side hard to fake.
   G  tier authority — any job_class claiming reserved-Opus standing must be in
                    model_selection._CLAUDE_OPUS_CLASSES_DEFAULT, DERIVED by import from the tier
                    authority rather than re-encoded here (the "consumers derive" discipline).
+  H  settlement backfill — `settled_by: <sha>` exists only for streams that settled BEFORE the
+                   `Settles:` convention. Each must be a real commit reachable from origin/main that
+                   changed paths outside this registry, and at most MAX_SETTLED_BY rows may carry
+                   one — a migration that can only shrink, never a second settlement path.
 
 Also the mode that answers the operator's actual question:
 
@@ -33,8 +39,17 @@ ready one — the registry reports what each waits on and the operator decides. 
 (commands plus `#` comments), so it can be redirected to a file or piped.
 
 State is derived, never declared:
-  settled  — a commit naming the stream id has landed on origin/main (Rule #11: atomic commits,
-             one id per commit, `git log --grep=<id>` → the SHA). Local work cannot fake it.
+  settled  — a commit that did REAL WORK has landed on origin/main CLAIMING this stream, with an
+             anchored trailer at column 0 of its message:
+
+                 Settles: <stream-id>[, <stream-id>…]
+
+             "Real work" = it changed at least one path outside this registry and docs/{plans,
+             continuations}/ — bookkeeping records an outcome, it does not produce one. Local work
+             cannot fake it, and neither can a passing mention: the previous rule was an UNANCHORED
+             `git log --grep=<id>`, which settled `s10-axis-coverage` off a docs commit whose whole
+             subject was that s10 owns work a plan should not do. Pre-convention settlements use the
+             bounded `settled_by:` backfill (check H).
   running  — the umbrella worktree exists at <repo>/.worktrees/<id>.
   ready    — not settled, not running, and every `requires` id is settled.
   blocked  — not settled, and some `requires` id is not.
@@ -129,14 +144,83 @@ def load():
 # ── state derivation ────────────────────────────────────────────────────────────
 
 
+# A settling commit must CLAIM the settlement on its own line, at column 0, in its own message.
+# Anchored deliberately: the previous rule was `git log --grep=<id> --fixed-strings`, which matched
+# an id ANYWHERE in a message and so could not tell "this commit settles s10" from "this commit
+# mentions s10". That is not hypothetical — it fired within a day of the registry shipping:
+#
+#   0a17877b  docs(plans): the omega rung belongs to s10-axis-coverage, not to this plan (#1624)
+#
+# a docs commit whose entire point was that s10 owns work THIS plan should not do, which marked s10
+# SETTLED and removed it from the ready set with none of its work built. `s1-homing-spine` settled
+# the same way, off the registry's own bookkeeping commit.
+#
+# Read from %B (the raw body), NOT via `%(trailers:…)`. GitHub's squash-merge appends its own
+# `Co-authored-by:` paragraph, which demotes an author-written trailer out of the final paragraph —
+# git's trailer parser then returns EMPTY for it. Measured: 9 of 9 commits carrying a
+# `Claude-Session:` line return nothing from `%(trailers:key=Claude-Session,valueonly)`. A regex over
+# the whole body is what survives the squash.
+SETTLES_RE = re.compile(r"^Settles:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+# The registry may not settle itself. A commit that only edits the registry (or only docs about it)
+# is bookkeeping: it records an outcome, it does not produce one. Requiring at least one changed
+# path outside these is what stops a row from being talked into `settled`.
+SELF_REFERENTIAL_PATHS = (
+    "institutio/governance/session-streams.yaml",
+    "docs/continuations/",
+    "docs/plans/",
+)
+
+# `settled_by: <sha>` is the ONE migration affordance: streams that genuinely settled before the
+# `Settles:` convention existed, and whose real-work commit therefore cannot be amended (it is on
+# main). Bounded at exactly the number legitimately needed today, so a third is a deliberate,
+# reviewed registry edit and never a quiet escape hatch. Check H proves each SHA is real, reachable
+# on origin/main, and did work outside the registry — the same bar a live `Settles:` claim must meet.
+MAX_SETTLED_BY = 2
+
+
+def _settled_by_backfill():
+    """{sid: sha} from the registry's `settled_by` rows. Loaded once, validated by check H."""
+    return {sid: s["settled_by"] for sid, s in load().items() if isinstance(s, dict) and s.get("settled_by")}
+
+
+def _settling_commits(sid):
+    """SHAs on origin/main whose message carries an anchored `Settles: <sid>` claim.
+
+    `--grep` still does the cheap prefilter (git-side, no full log walk); the regex is what decides.
+    """
+    raw = _git("log", "origin/main", "--grep", f"Settles: {sid}", "--fixed-strings", "--format=%H%x00%B%x01")
+    out = []
+    for record in raw.split("\x01"):
+        if "\x00" not in record:
+            continue
+        sha, body = record.split("\x00", 1)
+        sha = sha.strip()
+        for claim in SETTLES_RE.findall(body):
+            # One trailer may settle several ids: `Settles: s2-foo, s3-bar`.
+            if sid in [part.strip() for part in claim.split(",")]:
+                out.append(sha)
+                break
+    return out
+
+
+def _does_real_work(sha):
+    """True iff this commit changed at least one path outside the registry's own bookkeeping."""
+    files = _git("show", "--name-only", "--format=", sha).splitlines()
+    return any(f.strip() and not f.startswith(SELF_REFERENTIAL_PATHS) for f in files)
+
+
 def _settled(sid):
-    """A stream is settled when a commit naming it has landed on origin/main.
+    """A stream is settled when a commit that did REAL WORK claimed it with a `Settles:` trailer.
 
     Fails toward NOT-settled: if git or the remote ref is unavailable we report unsettled, so a
     broken environment can only under-report readiness, never invent it.
     """
-    log = _git("log", "origin/main", "--grep", sid, "--fixed-strings", "--format=%H")
-    return bool(log)
+    if any(_does_real_work(sha) for sha in _settling_commits(sid)):
+        return True
+    # Pre-convention backfill: streams that genuinely settled before `Settles:` existed. Bounded and
+    # reviewable (check H), never a general escape hatch — see MAX_SETTLED_BY.
+    return sid in _settled_by_backfill()
 
 
 def _running(sid):
@@ -283,7 +367,11 @@ def run_checks(streams):
                     f"{sid}: predicate_status:to_be_built but {pred} EXISTS — flip it to `existing`",
                 )
 
-        # F — no hand-written state (there must be no field to lie in)
+        # F — no hand-written state. This does NOT make state untamperable on its own, and the
+        # docstring used to claim it did ("there is no field to lie in"). The lie simply moved into
+        # a commit message, which is equally writable — see the s10 false-settlement in SETTLES_RE.
+        # What F actually buys is that the registry cannot contradict git; the anchored trailer plus
+        # check H are what make the git side hard to fake.
         for forbidden in FORBIDDEN_STATE_FIELDS:
             if forbidden in s:
                 fail(
@@ -291,10 +379,40 @@ def run_checks(streams):
                     f"{sid}: carries `{forbidden}` — state is DERIVED from git, never declared",
                 )
 
+        # H — the pre-convention backfill is bounded and every entry is real
+        sb = s.get("settled_by")
+        if sb is not None:
+            if not isinstance(sb, str) or not re.fullmatch(r"[0-9a-f]{7,40}", sb):
+                fail("H", f"{sid}: settled_by must be a hex commit SHA, got {sb!r}")
+            elif _git("cat-file", "-t", sb) != "commit":
+                fail("H", f"{sid}: settled_by {sb} is not a commit in this repo")
+            # `rev-list <sha> ^origin/main` lists commits reachable from the SHA but NOT from main.
+            # Empty ⇒ the SHA is an ancestor of main, i.e. the work really landed. A SHA on some
+            # unmerged branch would list itself here and is rejected.
+            elif _git("rev-list", "--max-count=1", sb, "^origin/main") != "":
+                fail("H", f"{sid}: settled_by {sb} is not reachable from origin/main")
+            elif not _does_real_work(sb):
+                fail(
+                    "H",
+                    f"{sid}: settled_by {sb} changed only registry/docs paths — bookkeeping "
+                    "cannot settle a stream, the same bar a live `Settles:` claim must clear",
+                )
+
         # G — job_class is validated against the tier authority, not a local copy
         jc = s.get("job_class")
         if not isinstance(jc, str) or not jc:
             fail("G", f"{sid}: job_class must be a non-empty string")
+
+    # H — the backfill is a migration, not a mechanism: bound the whole-registry count so it can
+    # only shrink as those streams' work is re-proven, never grow into a parallel settlement path.
+    backfilled = sorted(sid for sid, s in streams.items() if isinstance(s, dict) and s.get("settled_by"))
+    if len(backfilled) > MAX_SETTLED_BY:
+        fail(
+            "H",
+            f"{len(backfilled)} rows carry settled_by (max {MAX_SETTLED_BY}): {', '.join(backfilled)} — "
+            "this field exists only for streams that settled BEFORE the `Settles:` convention; a new "
+            "stream settles by claiming it in its own commit",
+        )
 
     # B — acyclicity over the whole graph
     color = {}

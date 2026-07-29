@@ -47,9 +47,13 @@ child explicitly; no worker inherits this session's model.
 
 Each branch off updated `origin/main`; `scripts/verify-scoped.sh` per branch; `merge-policy.sh` →
 `await-pr.sh --merge`. `web/worker` merges do not auto-deploy, but any website-sensitive diff
-requires the **full** green rollup first — merging that *is* the deploy. **Include the string
-`s7-smallest-lifts` in each merge commit subject** — settled state is derived from
-`git log origin/main --grep=s7-smallest-lifts`.
+requires the **full** green rollup first — merging that *is* the deploy. **Claim the settlement with an anchored trailer in the merge commit message** — a line at
+column 0 reading `Settles: s7-smallest-lifts`. The STREAMS registry derives this domain's settled
+state from that claim, and *only* from it: an unanchored mention no longer counts (it once settled
+`s10-axis-coverage` off a docs commit that merely named it). The claiming commit must also change
+something outside the registry and `docs/{plans,continuations}/` — bookkeeping records an outcome,
+it cannot produce one. This domain lands as several lifts; put the trailer on the **last** one, so
+the claim is made once the domain is actually done rather than after its first PR.
 
 ## Done
 
