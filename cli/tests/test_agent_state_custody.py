@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import json
+import plistlib
+from contextlib import nullcontext
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from limen.agent_state import custody
 from limen.agent_state.crypto import encryption_profile_digest
 from limen.agent_state.custody import (
     project_custody_receipt,
+    run_custody_verification_campaign,
     verify_custody_restorations,
     write_custody_receipt,
 )
@@ -209,14 +213,23 @@ def test_projection_accepts_opencode_external_source_digest() -> None:
         stat_before=receipt.source.stat_before,
         stat_after=receipt.source.stat_after,
     )
+    opencode_profile = encryption_profile_digest("opencode-sqlite")
+    receipt.encryption_profile_digest = opencode_profile
     external = receipt.restorations[-1]
+    git = receipt.restorations[-2]
+    receipt.restorations[-2] = RestoreProof(
+        **{
+            **asdict(git),
+            "encryption_profile_digest": opencode_profile,
+        }
+    )
     receipt.restorations[-1] = RestoreProof(
         scope=external.scope,
         passed=True,
         source_sha256=receipt.source.sha256,
         device_id=external.device_id,
         restored_at=external.restored_at,
-        encryption_profile_digest=external.encryption_profile_digest,
+        encryption_profile_digest=opencode_profile,
     )
 
     projected = project_custody_receipt(receipt)
@@ -269,8 +282,7 @@ def test_independent_restore_binds_remote_refs_and_observed_devices(
             observed.append("identity")
 
         def require_exact_remote_head(self) -> str:
-            observed.append("head")
-            return "2" * 40
+            raise AssertionError("historical custody must not require local HEAD")
 
         def completed_receipt_at_remote(
             self,
@@ -311,7 +323,7 @@ def test_independent_restore_binds_remote_refs_and_observed_devices(
 
     git_proof = next(proof for proof in verified.restorations if proof.scope == "git-full-manifest")
     external_proof = next(proof for proof in verified.restorations if proof.scope == "external-full")
-    assert observed == ["identity", "head", "receipt"]
+    assert observed == ["identity", "receipt"]
     assert git_proof.device_id == PRIMARY_DEVICE
     assert git_proof.remote_refs == REMOTE_REFS
     assert external_proof.device_id == EXTERNAL_DEVICE
@@ -325,3 +337,118 @@ def test_encryption_profile_digest_is_lowercase_sha256() -> None:
 
     assert len(digest) == 64
     assert set(digest) <= set("0123456789abcdef")
+
+
+def test_opencode_profile_records_raw_external_payload_form() -> None:
+    assert encryption_profile_digest("opencode-sqlite") != encryption_profile_digest("file-tree")
+
+
+def test_device_identity_collapses_apfs_volumes_to_physical_disk(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    external = tmp_path / "external"
+    for path in (first, second, external):
+        path.mkdir()
+    physical_stores = {
+        str(first): "disk0s2",
+        str(second): "disk0s5",
+        str(external): "disk4s1",
+    }
+
+    def diskutil(args, **_kwargs):
+        return SimpleNamespace(
+            returncode=0,
+            stdout=plistlib.dumps(
+                {
+                    "DeviceIdentifier": "disk9s1",
+                    "APFSPhysicalStores": [
+                        {
+                            "APFSPhysicalStore": physical_stores[args[-1]],
+                        }
+                    ],
+                }
+            ),
+        )
+
+    monkeypatch.setattr(custody.subprocess, "run", diskutil)
+
+    assert custody._device_identity(first) == custody._device_identity(second)
+    assert custody._device_identity(first) != custody._device_identity(external)
+
+
+def test_campaign_conflicting_projection_does_not_replace_private_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    private_receipt = tmp_path / "private" / "metabolism.json"
+    output = tmp_path / "projection" / "custody.json"
+    initial = metabolism_receipt(evidence=False)
+    initial.write(private_receipt)
+    original = private_receipt.read_bytes()
+    verified = metabolism_receipt()
+    conflicting = metabolism_receipt()
+    external = conflicting.restorations[-1]
+    conflicting.restorations[-1] = RestoreProof(
+        **{
+            **asdict(external),
+            "device_id": "otherRecoveryDevice01",
+        }
+    )
+    write_custody_receipt(output, project_custody_receipt(conflicting))
+    monkeypatch.setattr(custody, "hold_lease", lambda *_args, **_kwargs: nullcontext())
+    monkeypatch.setattr(
+        custody,
+        "verify_custody_restorations",
+        lambda *_args, **_kwargs: verified,
+    )
+
+    with pytest.raises(ReceiptError, match="conflicts with verified custody"):
+        run_custody_verification_campaign(
+            "codex-sessions",
+            private_receipt,
+            tmp_path / "vault",
+            tmp_path / "external",
+            output,
+            require_external_mount=False,
+        )
+
+    assert private_receipt.read_bytes() == original
+
+
+def test_campaign_projection_failure_does_not_replace_private_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    private_receipt = tmp_path / "private" / "metabolism.json"
+    output = tmp_path / "projection" / "custody.json"
+    initial = metabolism_receipt(evidence=False)
+    initial.write(private_receipt)
+    original = private_receipt.read_bytes()
+    verified = metabolism_receipt()
+    monkeypatch.setattr(custody, "hold_lease", lambda *_args, **_kwargs: nullcontext())
+    monkeypatch.setattr(
+        custody,
+        "verify_custody_restorations",
+        lambda *_args, **_kwargs: verified,
+    )
+    monkeypatch.setattr(
+        custody.os,
+        "link",
+        lambda *_args: (_ for _ in ()).throw(OSError("publication failed")),
+    )
+
+    with pytest.raises(ReceiptError, match="atomically persist"):
+        run_custody_verification_campaign(
+            "codex-sessions",
+            private_receipt,
+            tmp_path / "vault",
+            tmp_path / "external",
+            output,
+            require_external_mount=False,
+        )
+
+    assert private_receipt.read_bytes() == original
+    assert not output.exists()

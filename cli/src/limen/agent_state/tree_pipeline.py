@@ -293,7 +293,7 @@ def capture_cold_tree(
             source=result.source,
             atom_count=result.atom_count,
             logical_sha256=result.logical_sha256,
-            encryption_profile_digest=encryption_profile_digest(),
+            encryption_profile_digest=encryption_profile_digest("file-tree"),
             packs=packs,
             duplicate_payloads=result.duplicate_chunks,
             external_chunks=external_chunks,
@@ -385,7 +385,7 @@ def resume_cold_tree_capture(
     )
     external_base.mkdir(parents=True, exist_ok=True)
     key = keychain_key(key_service)
-    available_profile = encryption_profile_digest()
+    available_profile = encryption_profile_digest("file-tree")
     if receipt.encryption_profile_digest is not None and receipt.encryption_profile_digest != available_profile:
         raise PipelineError("tree capture encryption profile does not match the available restorer")
     records: list[dict[str, Any]] = []

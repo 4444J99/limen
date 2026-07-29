@@ -5,6 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import plistlib
+import re
+import subprocess
 import tempfile
 from dataclasses import asdict
 from dataclasses import replace as dataclass_replace
@@ -156,10 +159,30 @@ def project_custody_receipt(
 
 def _device_identity(path: Path) -> str:
     try:
-        device = path.stat().st_dev
-    except OSError as exc:
-        raise ReceiptError("custody restoration target is unavailable") from exc
-    material = f"limen-custody-device-v1:{device}".encode()
+        result = subprocess.run(
+            ["/usr/sbin/diskutil", "info", "-plist", str(path.resolve(strict=True))],
+            capture_output=True,
+            check=False,
+            timeout=20,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ReceiptError("custody physical-device probe failed") from exc
+    if result.returncode:
+        raise ReceiptError("custody physical-device probe failed")
+    try:
+        payload = plistlib.loads(result.stdout)
+        stores = payload.get("APFSPhysicalStores")
+        if isinstance(stores, list) and len(stores) == 1 and isinstance(stores[0], dict):
+            store = str(stores[0]["APFSPhysicalStore"])
+            match = re.fullmatch(r"(disk[0-9]+)s[0-9]+", store)
+            physical = match.group(1) if match else store
+        else:
+            physical = str(payload["ParentWholeDisk"])
+    except (KeyError, plistlib.InvalidFileException, TypeError) as exc:
+        raise ReceiptError("custody physical-device evidence is invalid") from exc
+    if not re.fullmatch(r"disk[0-9]+", physical):
+        raise ReceiptError("custody physical-device evidence is invalid")
+    material = f"limen-custody-physical-device-v2:{physical}".encode()
     return "device_" + hashlib.sha256(material).hexdigest()[:32]
 
 
@@ -205,7 +228,6 @@ def _require_remote_receipt(
     receipt_message: str,
 ) -> tuple[str, str]:
     vault.verify_identity()
-    vault.require_exact_remote_head()
     payload_commit, receipt_commit, receipt_text = vault.completed_receipt_at_remote(
         relative,
         receipt_message,
@@ -276,7 +298,7 @@ def verify_custody_restorations(
     profile_digest = receipt.encryption_profile_digest
     if profile_digest is None:
         raise ReceiptError("capture-time encryption profile is missing")
-    if profile_digest != encryption_profile_digest():
+    if profile_digest != encryption_profile_digest(receipt.source.kind):
         raise ReceiptError("capture-time encryption profile is unavailable to this restorer")
 
     relative = Path("agent-state") / name / receipt.run_id
@@ -412,13 +434,22 @@ def _write_synced_temp(path: Path, encoded: bytes) -> Path:
     return temporary
 
 
-def _validate_existing_custody(path: Path, receipt: CustodyReceiptV1) -> bool:
+def _validate_existing_custody(
+    path: Path,
+    receipt: CustodyReceiptV1,
+    *,
+    persist_permissions: bool = True,
+) -> bool:
+    if path.is_symlink():
+        raise ReceiptError("canonical custody receipt cannot be a symlink")
     try:
         existing = CustodyReceiptV1.model_validate_json(path.read_bytes())
     except (OSError, ValueError) as exc:
         raise ReceiptError("canonical custody receipt is invalid") from exc
     if existing != receipt:
         raise ReceiptError("canonical custody receipt conflicts with verified custody")
+    if not persist_permissions:
+        return False
     try:
         path.chmod(0o600)
         _fsync_directory(path.parent)
@@ -431,6 +462,8 @@ def write_custody_receipt(path: Path, receipt: CustodyReceiptV1) -> bool:
     """Write once with private permissions; exact repeats are a no-op."""
 
     encoded = (json.dumps(receipt.model_dump(mode="json"), indent=2, sort_keys=True) + "\n").encode("utf-8")
+    if path.is_symlink():
+        raise ReceiptError("canonical custody receipt cannot be a symlink")
     if path.exists():
         return _validate_existing_custody(path, receipt)
 
@@ -452,7 +485,7 @@ def write_custody_receipt(path: Path, receipt: CustodyReceiptV1) -> bool:
     return True
 
 
-def _write_verified_metabolism_receipt(
+def _metabolism_write_required(
     path: Path,
     receipt: MetabolismReceipt,
 ) -> bool:
@@ -461,24 +494,119 @@ def _write_verified_metabolism_receipt(
     if path.exists():
         existing = MetabolismReceipt.read(path)
         if existing.as_dict() == receipt.as_dict():
-            path.chmod(0o600)
-            _fsync_directory(path.parent)
             return False
-    _create_private_parents(path.parent)
-    encoded = (json.dumps(receipt.as_dict(), indent=2, sort_keys=True) + "\n").encode()
-    temporary: Path | None = None
-    try:
-        temporary = _write_synced_temp(path, encoded)
-        os.replace(temporary, path)
-        temporary = None
-        path.chmod(0o600)
-        _fsync_directory(path.parent)
-    except OSError as exc:
-        raise ReceiptError("cannot persist verified metabolism receipt") from exc
-    finally:
-        if temporary is not None:
-            temporary.unlink(missing_ok=True)
     return True
+
+
+def _rollback_campaign_publication(
+    *,
+    metabolism_receipt: Path,
+    metabolism_backup: Path | None,
+    metabolism_replaced: bool,
+    output: Path,
+    custody_temporary: Path | None,
+    custody_created: bool,
+) -> None:
+    failures: list[OSError] = []
+    if metabolism_replaced and metabolism_backup is not None:
+        try:
+            os.replace(metabolism_backup, metabolism_receipt)
+            _fsync_directory(metabolism_receipt.parent)
+        except OSError as exc:
+            failures.append(exc)
+    if custody_created and custody_temporary is not None:
+        try:
+            if output.exists() and os.path.samefile(output, custody_temporary):
+                output.unlink()
+                _fsync_directory(output.parent)
+        except OSError as exc:
+            failures.append(exc)
+    if failures:
+        raise ReceiptError("custody receipt publication rollback was incomplete") from failures[0]
+
+
+def _publish_campaign_receipts(
+    *,
+    metabolism_receipt: Path,
+    verified: MetabolismReceipt,
+    output: Path,
+    projected: CustodyReceiptV1,
+) -> tuple[bool, bool]:
+    """Stage both receipts, then expose the projection before replacing owner evidence."""
+
+    if output.is_symlink():
+        raise ReceiptError("canonical custody receipt cannot be a symlink")
+    custody_changed = not output.exists()
+    if not custody_changed:
+        _validate_existing_custody(
+            output,
+            projected,
+            persist_permissions=False,
+        )
+    metabolism_changed = _metabolism_write_required(metabolism_receipt, verified)
+    _create_private_parents(output.parent)
+    _create_private_parents(metabolism_receipt.parent)
+    custody_encoded = (json.dumps(projected.model_dump(mode="json"), indent=2, sort_keys=True) + "\n").encode("utf-8")
+    metabolism_encoded = (json.dumps(verified.as_dict(), indent=2, sort_keys=True) + "\n").encode()
+    custody_temporary: Path | None = None
+    metabolism_temporary: Path | None = None
+    metabolism_backup: Path | None = None
+    custody_created = False
+    metabolism_replaced = False
+    try:
+        if custody_changed:
+            custody_temporary = _write_synced_temp(output, custody_encoded)
+        if metabolism_changed:
+            metabolism_temporary = _write_synced_temp(
+                metabolism_receipt,
+                metabolism_encoded,
+            )
+            metabolism_backup = _write_synced_temp(
+                metabolism_receipt,
+                metabolism_receipt.read_bytes(),
+            )
+
+        if custody_temporary is not None:
+            try:
+                os.link(custody_temporary, output)
+                custody_created = True
+            except FileExistsError:
+                _validate_existing_custody(
+                    output,
+                    projected,
+                    persist_permissions=False,
+                )
+                custody_changed = False
+            if custody_created:
+                _fsync_directory(output.parent)
+
+        if metabolism_temporary is not None:
+            os.replace(metabolism_temporary, metabolism_receipt)
+            metabolism_temporary = None
+            metabolism_replaced = True
+            _fsync_directory(metabolism_receipt.parent)
+    except OSError as exc:
+        try:
+            _rollback_campaign_publication(
+                metabolism_receipt=metabolism_receipt,
+                metabolism_backup=metabolism_backup,
+                metabolism_replaced=metabolism_replaced,
+                output=output,
+                custody_temporary=custody_temporary,
+                custody_created=custody_created,
+            )
+        except ReceiptError as rollback_error:
+            raise rollback_error from exc
+        raise ReceiptError("cannot atomically persist verified custody receipts") from exc
+    finally:
+        for temporary in (
+            custody_temporary,
+            metabolism_temporary,
+            metabolism_backup,
+        ):
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+    return metabolism_changed, custody_changed
 
 
 def run_custody_verification_campaign(
@@ -494,6 +622,8 @@ def run_custody_verification_campaign(
 ) -> tuple[MetabolismReceipt, CustodyReceiptV1, bool, bool]:
     """Verify both copies under the heavy lease, then publish private and path-free receipts."""
 
+    if output.expanduser().resolve(strict=False) == metabolism_receipt.expanduser().resolve(strict=False):
+        raise ReceiptError("canonical and private custody receipts require distinct paths")
     receipt = MetabolismReceipt.read(metabolism_receipt)
     if _target_is_within_source(Path(receipt.source.path), output):
         raise ReceiptError("canonical custody output must remain outside the source tree")
@@ -509,9 +639,10 @@ def run_custody_verification_campaign(
             require_external_mount=require_external_mount,
         )
         projected = project_custody_receipt(verified)
-        metabolism_changed = _write_verified_metabolism_receipt(
-            metabolism_receipt,
-            verified,
+        metabolism_changed, custody_changed = _publish_campaign_receipts(
+            metabolism_receipt=metabolism_receipt,
+            verified=verified,
+            output=output,
+            projected=projected,
         )
-        custody_changed = write_custody_receipt(output, projected)
     return verified, projected, metabolism_changed, custody_changed

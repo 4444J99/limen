@@ -48,16 +48,40 @@ ARCA_ENCRYPTION_PROFILE: dict[str, Any] = {
     },
     "record_format": "canonical-jsonl-atoms",
 }
+ARCA_RAW_FILE_ENCRYPTION_PROFILE: dict[str, Any] = {
+    "cipher_command": list(_OPENSSL_ENCRYPT),
+    "compression": {
+        "format": "none",
+    },
+    "record_format": "raw-file-bytes",
+}
 
 
 class CryptoError(RuntimeError):
     """Ciphertext could not be created or restored safely."""
 
 
-def encryption_profile_digest() -> str:
-    """Return the canonical digest of the non-secret ARCA encryption recipe."""
+def encryption_profile_digest(source_kind: str = "file-tree") -> str:
+    """Return the run-level digest for every encrypted payload form."""
 
-    return hashlib.sha256(rfc8785.dumps(ARCA_ENCRYPTION_PROFILE)).hexdigest()
+    if source_kind == "file-tree":
+        external: dict[str, Any] = {
+            "form": "replicated-git-ciphertext",
+            "profile_ref": "git-atom-packs",
+        }
+    elif source_kind == "opencode-sqlite":
+        external = {
+            "form": "raw-source-copy",
+            "profile": ARCA_RAW_FILE_ENCRYPTION_PROFILE,
+        }
+    else:
+        raise ValueError(f"unsupported agent-state source kind: {source_kind}")
+    profile: dict[str, Any] = {
+        "schema": "limen.agent_state_encryption_profile.v2",
+        "git-atom-packs": ARCA_ENCRYPTION_PROFILE,
+        "external": external,
+    }
+    return hashlib.sha256(rfc8785.dumps(profile)).hexdigest()
 
 
 def keychain_key(service: str = "limen-arca-vault") -> str:

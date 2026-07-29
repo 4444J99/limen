@@ -478,7 +478,7 @@ def capture_opencode(
             source=result.source,
             atom_count=result.atom_count,
             logical_sha256=result.logical_sha256,
-            encryption_profile_digest=encryption_profile_digest(),
+            encryption_profile_digest=encryption_profile_digest("opencode-sqlite"),
             packs=packs,
             duplicate_payloads=result.duplicate_payloads,
             external_chunks=external_chunks,
