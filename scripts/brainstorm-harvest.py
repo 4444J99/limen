@@ -73,19 +73,28 @@ import corpus_resolve
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CORPORA_REGISTRY = REPO_ROOT / "institutio" / "governance" / "corpora.yaml"
+ATOM_HOMING_REGISTRY = REPO_ROOT / "institutio" / "governance" / "atom-homing.yaml"
+ATOM_CENSUS = REPO_ROOT / "institutio" / "governance" / "atom-census.yaml"
 
 EXTRACTS_DIRNAME = "brainstorm-extracts"
 
-ATOM_KINDS = [
-    "projects-to-start",
-    "decisions",
-    "tasks",
-    "vacuums",
-    "questions-unresolved",
-    "client-offerings",
-    "schema-proposals",
-    "functionality-to-repeat",
-]
+
+def _atom_kinds() -> list[str]:
+    """The eight-kind schema, DERIVED from atom-homing.yaml — never a second literal copy.
+
+    The homing registry is the authority on which kinds exist, because it is the file that
+    must declare a home for each one. A literal list here too is precisely how a ninth kind
+    gets harvested into a store with nowhere to land. check-atom-homing.py check F holds
+    this derivation in place.
+    """
+    doc = yaml.safe_load(ATOM_HOMING_REGISTRY.read_text(encoding="utf-8")) or {}
+    kinds = list((doc.get("kinds") or {}).keys())
+    if not kinds:
+        raise SystemExit(f"no atom kinds declared in {ATOM_HOMING_REGISTRY}")
+    return kinds
+
+
+ATOM_KINDS = _atom_kinds()
 
 
 def slugify(value: str) -> str:
@@ -479,16 +488,149 @@ def semantic_queue(out_root: Path) -> list[str]:
     return pending
 
 
+# The one extract parser lives in the constellation streams organ; this mirrors only the
+# atom-block shape, which is fixed by _render_extract above (this module writes it).
+_ATOM_BLOCK_RE = re.compile(r"## SEMANTIC ATOMS\s*\n+```yaml\n(.*?)```", re.DOTALL)
+
+
+def census(out_root: Path) -> dict:
+    """Statement-free projection of the drain: counts, kinds, and ids — never statements.
+
+    This is the artifact that lets the drain's outcome survive its own store. The corpus
+    is declared `remote: none`, so it can never be published and CI can never read it;
+    without a committed projection the entire 4,099-atom result is invisible to git and
+    dies with the volume it sits on.
+
+    Deliberately CLOCK-FREE so re-running is byte-idempotent: the git commit is the
+    timestamp. Emitting `generated_at` here would make every run a diff.
+    """
+    by_kind: dict[str, int] = {k: 0 for k in ATOM_KINDS}
+    streams: set[str] = set()
+    seen_ids: set[str] = set()
+    duplicates = 0
+    extracts = extracts_with_atoms = atoms = 0
+    explicit = implied = 0
+    unknown_kinds: dict[str, int] = {}
+
+    for path in sorted(out_root.glob("*/threads/*.md")):
+        extracts += 1
+        text = path.read_text(encoding="utf-8")
+        front = _read_frontmatter(path)
+        stream = str(front.get("stream") or "").strip()
+        if stream and stream != "pending":
+            streams.add(stream)
+        m = _ATOM_BLOCK_RE.search(text)
+        if not m:
+            continue
+        try:
+            block = yaml.safe_load(m.group(1)) or {}
+        except yaml.YAMLError:
+            continue
+        rows = block.get("atoms") or []
+        if not rows:
+            continue
+        extracts_with_atoms += 1
+        for atom in rows:
+            if not isinstance(atom, dict):
+                continue
+            atoms += 1
+            kind = str(atom.get("kind") or "").strip()
+            if kind in by_kind:
+                by_kind[kind] += 1
+            elif kind:
+                unknown_kinds[kind] = unknown_kinds.get(kind, 0) + 1
+            aid = str(atom.get("id") or "").strip()
+            if aid:
+                if aid in seen_ids:
+                    duplicates += 1
+                seen_ids.add(aid)
+            conf = str(atom.get("confidence") or "").strip()
+            if conf == "explicit":
+                explicit += 1
+            elif conf == "implied":
+                implied += 1
+
+    doc: dict = {
+        "schema_version": 0.1,
+        "generated_by": "scripts/brainstorm-harvest.py --census",
+        "source": {
+            "store": "conversations-private",
+            "corpus": EXTRACTS_DIRNAME,
+            "corpus_state": "present",
+        },
+        "totals": {
+            "extracts": extracts,
+            "extracts_with_atoms": extracts_with_atoms,
+            "streams": len(streams),
+            "atoms": atoms,
+            "duplicate_atom_ids": duplicates,
+            "confidence_explicit_pct": round(explicit * 100.0 / atoms, 1) if atoms else 0.0,
+            "confidence_implied_pct": round(implied * 100.0 / atoms, 1) if atoms else 0.0,
+        },
+        # Sorted by count then name: a stable order is what makes reruns byte-identical.
+        "by_kind": dict(sorted(by_kind.items(), key=lambda kv: (-kv[1], kv[0]))),
+    }
+    if unknown_kinds:
+        # An undeclared kind is a schema change that must surface, never be dropped.
+        doc["undeclared_kinds"] = dict(sorted(unknown_kinds.items()))
+
+    homing = out_root / "homing.yaml"
+    if homing.is_file():
+        hdoc = yaml.safe_load(homing.read_text(encoding="utf-8")) or {}
+        recorded = {k: len(v or {}) for k, v in hdoc.items() if isinstance(v, dict)}
+        if recorded:
+            doc["homed"] = {
+                key.replace("_", "-"): {"unit": "stream", "count": count}
+                for key, count in sorted(recorded.items())
+            }
+    return doc
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--corpus", help="one corpus id from corpora.yaml")
     ap.add_argument("--all", action="store_true", help="every harvestable session-memory corpus")
     ap.add_argument("--queue", action="store_true", help="list extracts awaiting the semantic pass")
     ap.add_argument("--sync-index", action="store_true", help="re-derive index.yaml rows from extract frontmatter")
+    ap.add_argument(
+        "--census",
+        action="store_true",
+        help="write the statement-free atom census to institutio/governance/atom-census.yaml",
+    )
     args = ap.parse_args()
 
     corpora = _harvestable_corpora()
     out_root = corpus_resolve.corpus_home() / EXTRACTS_DIRNAME
+
+    if args.census:
+        if not out_root.is_dir():
+            # Refuse to write an empty census over a real one: an absent store is a host
+            # fact (the corpus is cold-archived), not evidence that the drain produced
+            # nothing. Silently emitting zeros would erase the only committed record.
+            print(f"census: extracts root not present: {out_root}", file=sys.stderr)
+            print(
+                "The conversations-private store is `remote: none` and may be archived off "
+                "this host. Restore it, then re-run --census. The committed census at "
+                f"{ATOM_CENSUS.relative_to(REPO_ROOT)} carries the restore path.",
+                file=sys.stderr,
+            )
+            return 1
+        doc = census(out_root)
+        body = yaml.safe_dump(doc, sort_keys=False, allow_unicode=True)
+        previous = ATOM_CENSUS.read_text(encoding="utf-8") if ATOM_CENSUS.is_file() else ""
+        header = previous.split("\nschema_version:", 1)[0] if previous.startswith("#") else ""
+        text = (header.rstrip("\n") + "\n\n" + body) if header else body
+        changed = text != previous
+        if changed:
+            ATOM_CENSUS.write_text(text, encoding="utf-8")
+        t = doc["totals"]
+        print(
+            f"census: {t['atoms']} atoms across {len(doc['by_kind'])} kinds, "
+            f"{t['extracts']} extracts, {t['streams']} streams, "
+            f"{t['duplicate_atom_ids']} duplicate id(s) — "
+            f"{'updated' if changed else 'unchanged'} {ATOM_CENSUS.relative_to(REPO_ROOT)}"
+        )
+        return 0
 
     if args.sync_index:
         changed = sync_index(out_root)

@@ -1,0 +1,24 @@
+# ATOM RESIDUE CEILING — the monotonic half of the homing ratchet.
+#
+# `<kind> <count>` — the maximum residual atoms atom-homing.yaml may declare for that
+# kind. check-atom-homing.py check E fails if any residue_baseline exceeds its ceiling.
+#
+# WHY A SECOND FILE. Without a ceiling, residue_baseline is self-declared: a kind whose
+# homing regressed could quietly raise its own number and stay green. Splitting the
+# ceiling out means shrinking residue is a deliberate two-file edit and RAISING it is a
+# visible diff in a file whose only purpose is to go down. Same discipline as
+# corpus-root-literals-baseline.txt.
+#
+# Seeded 2026-07-29 at the measured per-kind totals — i.e. nothing is homed yet except
+# the 165 stream-level projects-to-start decisions, which cannot be attributed to atom
+# ids until the archived store is remounted and --census re-runs. Lower these as each
+# kind's homing branch lands; never raise one without saying why in the commit.
+
+decisions 877
+tasks 751
+schema-proposals 676
+functionality-to-repeat 518
+vacuums 466
+projects-to-start 441
+questions-unresolved 316
+client-offerings 54
