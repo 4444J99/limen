@@ -72,6 +72,28 @@ def _manifest_stat(value: object) -> tuple[int, int, int]:
     return (int(value[0]), int(value[1]), int(value[2]))
 
 
+def _require_custody_targets_outside_source(
+    source_root: Path,
+    targets: Mapping[str, Path],
+) -> None:
+    """Fail before writes when a custody target could capture itself."""
+
+    source = source_root.expanduser().resolve(strict=False)
+    nested: list[str] = []
+    for label, target in targets.items():
+        resolved = target.expanduser().resolve(strict=False)
+        try:
+            resolved.relative_to(source)
+        except ValueError:
+            continue
+        nested.append(label)
+    if nested:
+        raise PipelineError(
+            "custody targets must remain outside the source tree: "
+            + ", ".join(nested)
+        )
+
+
 def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
     """Load and validate the immutable portion of an interrupted tree capture."""
 
@@ -183,14 +205,37 @@ def capture_cold_tree(
         raise ValueError("tree custody name must be lowercase alphanumeric with hyphens")
     if not plan.cold_paths:
         raise PipelineError(f"no cold files selected for {name}")
-    external_base = require_mounted_external(external_root) if require_external_mount else external_root.resolve()
-    external_base.mkdir(parents=True, exist_ok=True)
     run_id = run_id or run_id_now()
     vault = GitVault(vault_root, repository=repository)
-    vault.verify()
     relative = Path("agent-state") / name / run_id
     payload_root = vault.root / relative
+    unresolved_external = external_root.expanduser().resolve(strict=False)
+    exact_root = unresolved_external / name / run_id
+    _require_custody_targets_outside_source(
+        plan.root,
+        {
+            "vault-root": vault.root,
+            "external-root": unresolved_external,
+            "private-receipt": private_receipt,
+            "encrypted-git-output": payload_root,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    vault.verify()
+    external_base = (
+        require_mounted_external(external_root)
+        if require_external_mount
+        else unresolved_external
+    )
     exact_root = external_base / name / run_id
+    _require_custody_targets_outside_source(
+        plan.root,
+        {
+            "external-root": external_base,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    external_base.mkdir(parents=True, exist_ok=True)
     if payload_root.exists() or exact_root.exists():
         raise PipelineError(f"custody run already exists: {run_id}")
     payload_root.mkdir(parents=True, mode=0o700)
@@ -288,8 +333,6 @@ def resume_cold_tree_capture(
 ) -> MetabolismReceipt:
     """Resume after encrypted atoms reached Git but final custody did not close."""
 
-    external_base = require_mounted_external(external_root) if require_external_mount else external_root.resolve()
-    external_base.mkdir(parents=True, exist_ok=True)
     vault = GitVault(vault_root, repository=repository)
     vault.verify_identity()
     relative = Path("agent-state") / name / run_id
@@ -299,6 +342,38 @@ def resume_cold_tree_capture(
     receipt = load_tree_manifest(payload_root)
     if receipt.run_id != run_id:
         raise PipelineError("tree capture run identity does not match resume request")
+    if reconstruct_root is not None:
+        source_root = reconstruct_root
+    elif plan is not None:
+        source_root = plan.root
+    else:
+        source_root = Path(receipt.source.path)
+    unresolved_external = external_root.expanduser().resolve(strict=False)
+    exact_root = unresolved_external / name / run_id
+    _require_custody_targets_outside_source(
+        source_root,
+        {
+            "vault-root": vault.root,
+            "external-root": unresolved_external,
+            "private-receipt": private_receipt,
+            "encrypted-git-output": payload_root,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    external_base = (
+        require_mounted_external(external_root)
+        if require_external_mount
+        else unresolved_external
+    )
+    exact_root = external_base / name / run_id
+    _require_custody_targets_outside_source(
+        source_root,
+        {
+            "external-root": external_base,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    external_base.mkdir(parents=True, exist_ok=True)
     key = keychain_key(key_service)
     records: list[dict[str, Any]] = []
     sample = verify_atom_packs(
@@ -329,7 +404,6 @@ def resume_cold_tree_capture(
             raise PipelineError("current cold total does not match interrupted capture")
         require_plan_matches_source(plan, receipt.source)
     receipt.retained_hot_bytes = plan.hot_bytes
-    exact_root = external_base / name / run_id
     exact_root.mkdir(parents=True, mode=0o700, exist_ok=True)
     external_packs = _copy_packs(receipt.packs, payload_root, exact_root)
     external = replace(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -10,6 +11,82 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "agent-state-metabolism.py"
+
+
+def test_custody_projection_command_is_path_free_and_idempotent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "agent_state_metabolism_cli_custody",
+        SCRIPT,
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    metabolism = SimpleNamespace(source_retired=False)
+    projected = SimpleNamespace(
+        schema_version="limen.custody_receipt.v1",
+        custody_id="custody_0123456789abcdef0123456789abcdef",
+        restoration_proofs=(object(), object()),
+    )
+    observed: dict[str, object] = {}
+    monkeypatch.setattr(
+        module,
+        "MetabolismReceipt",
+        SimpleNamespace(read=lambda path: metabolism),
+    )
+
+    def project(receipt, **kwargs):
+        observed["receipt"] = receipt
+        observed["project"] = kwargs
+        return projected
+
+    def write(path, receipt):
+        observed["output"] = path
+        observed["projected"] = receipt
+        return True
+
+    monkeypatch.setattr(module, "project_custody_receipt", project)
+    monkeypatch.setattr(module, "write_custody_receipt", write)
+    metabolism_path = tmp_path / "private-metabolism.json"
+    output_path = tmp_path / "private-custody.json"
+
+    result = module.main(
+        [
+            "custody-receipt",
+            "--metabolism-receipt",
+            str(metabolism_path),
+            "--output",
+            str(output_path),
+            "--primary-device-id",
+            "githubRemoteDevice0001",
+            "--external-device-id",
+            "t7RecoveryDevice0001",
+            "--restored-at",
+            "2026-07-29T14:30:00Z",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    payload = json.loads(stdout)
+    assert result == 0
+    assert observed["receipt"] is metabolism
+    assert observed["output"] == output_path
+    assert observed["projected"] is projected
+    assert observed["project"]["primary_device_id"] == "githubRemoteDevice0001"
+    assert observed["project"]["external_device_id"] == "t7RecoveryDevice0001"
+    assert observed["project"]["restored_at"].utcoffset() is not None
+    assert payload == {
+        "changed": True,
+        "custody_id": projected.custody_id,
+        "restoration_count": 2,
+        "schema": "limen.custody_receipt.v1",
+        "source_retired": False,
+    }
+    assert str(metabolism_path) not in stdout
+    assert str(output_path) not in stdout
 
 
 def test_resume_requires_explicit_run_id(tmp_path: Path) -> None:

@@ -12,6 +12,8 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any, BinaryIO, TypeVar, cast
 
+import rfc8785
+
 from .models import AtomPack, CipherChunk, RestoreProof
 
 T = TypeVar("T")
@@ -37,10 +39,25 @@ _OPENSSL_DECRYPT = (
     "-pass",
     "env:ARCA_KEY",
 )
+ARCA_ENCRYPTION_PROFILE = {
+    "cipher_command": list(_OPENSSL_ENCRYPT),
+    "compression": {
+        "format": "gzip",
+        "filename": "",
+        "mtime": 0,
+    },
+    "record_format": "canonical-jsonl-atoms",
+}
 
 
 class CryptoError(RuntimeError):
     """Ciphertext could not be created or restored safely."""
+
+
+def encryption_profile_digest() -> str:
+    """Return the canonical digest of the non-secret ARCA encryption recipe."""
+
+    return hashlib.sha256(rfc8785.dumps(ARCA_ENCRYPTION_PROFILE)).hexdigest()
 
 
 def keychain_key(service: str = "limen-arca-vault") -> str:
