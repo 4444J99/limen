@@ -160742,3 +160742,47 @@ tasks:
     conduct_lease_id: 'lease-442-bea0ce75902ebef1'
     conduct_generation: 442
   updated: '2026-07-29T02:17:51.607Z'
+- id: 'PM-E2-S17-20260729'
+  title: 'Complete PM-E2-S17 authenticated streaming custody'
+  description: 'Close the incomplete S17 packet. Reproduced gaps: a late restore failure leaves a published plaintext destination; source drift after post-write validation is accepted; and an aliased objects ancestor is accepted. Move physical-device and dual-store orchestration into a cohesive custody module with compatibility re-exports; make legacy byte restoration delegate to the streaming validator; secure object and lock roots; authenticate complete resume state; serialize writers; revalidate the source immediately before return; and clean every failed restore publication.'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'prima-materia'
+  - 'epoch-2'
+  - 'custody'
+  - 'owner:S17'
+  urls:
+  - 'https://github.com/organvm/limen/tree/work/prima-materia-alpha-omega-universe-20260728-s17/docs/continuations/prima-materia-alpha-omega-universe-20260728-s17'
+  context: 'Existing branch head 36909af39abb785b3b470d7cacda9278dce43833 holds an uncommitted two-file delta. Existing 16 focused tests and Ruff pass but do not cover the reproduced v5 failures. Host admission is separately owned by LIMEN-400 and Domus issue 319; do not mutate until a scoped writer lease is valid. S17 remains nonterminal until focused predicates, one unchanged-head verify-scoped receipt, remote head equality, confirmed self-email, and a pushed redacted message-id receipt all exist.'
+  predicate: 'test -f cli/src/limen/prima_materia_custody.py && python -m pytest -q cli/tests/test_prima_materia_store.py -k ''objects_root_alias or published_output or immediate_source_revalidation or concurrent_put_path or legacy_restore_delegate'''
+  receipt_target: 'git:organvm/limen:refs/heads/work/prima-materia-alpha-omega-universe-20260728-s17'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Close the incomplete S17 custody packet with alias-resistant encrypted streaming, failure-safe publication, remote custody, and a confirmed self-email before Epoch 2 begins.'
+  owner_surface: 'docs/continuations/prima-materia-alpha-omega-universe-20260728-s17'
+  external_deadline: false
+  due_at: null
+  receipt_verified: null
+  execution_requirements: null
+  claude_tier: null
+  depends_on:
+  - 'LIMEN-400'
+  created: '2026-07-28'
+  dispatch_log:
+  - timestamp: '2026-07-29T02:23:46.958Z'
+    agent: 'codex'
+    session_id: '019faba2-74bc-7551-8585-62f132a1c1dc'
+    logical_agent: 'codex'
+    logical_session_id: '019faba2-74bc-7551-8585-62f132a1c1dc'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6cb439154dc6139a0f110fa355ef9708:443:compatibility'
+    conduct_run_id: 'run-6cb439154dc6139a0f110fa355ef9708'
+    conduct_lease_id: 'lease-443-6cb439154dc6139a'
+    conduct_generation: 443
+  updated: '2026-07-29T02:23:46.958Z'
