@@ -69,6 +69,18 @@ capabilities:
     owner_of_record: governance
     note: "Two consumers each carried their own wrong copy of 'where the corpora live'; both were wrong the same way and the dossier pipeline silently moved nothing. The founding case for this registry."
 
+  reference-liveness:
+    status: converged
+    owner: scripts/reference_state.py
+    doc: institutio/governance/custody.yaml
+    tenants: [scripts/check-corpora.py, scripts/check-convergence.py, scripts/check-atom-homing.py]
+    duplicates:
+      - {impl: "check-corpora.py `on_host` heuristic", disposition: lift, note: "an absent store root degraded to an ADVISORY whenever no declared store was on disk — after the evacuation archived every store at once, that branch became permanent and the check went green THROUGH absence"}
+      - {impl: "check-convergence.py `_owner_reachable` local-path branch", disposition: lift, note: "called an archived root 'missing' whenever ~/Workspace existed, so an evacuated repo read as a deleted one; PR #1611 patched two rows by hand and left the resolver"}
+      - {impl: "check-atom-homing.py `_home_reachable` private branch", disposition: lift, note: "the third copy"}
+    owner_of_record: governance
+    note: "Exactly the corpus-resolution row one axis over, with three consumers instead of two: each carried its own copy of 'is this reference alive' and each was wrong in a DIFFERENT direction once the 2026-07-27 evacuation moved 34 roots off the host — one fail-open, one fail-closed, one untested. The single resolver distinguishes ok / archived / unaccounted / unverifiable-here by consuming the 87 committed custody receipts that, until now, nothing read (Rule #7: a producer with no consumer)."
+
   brainstorm-extraction:
     status: converged
     owner: scripts/brainstorm-harvest.py
