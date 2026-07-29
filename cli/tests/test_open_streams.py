@@ -172,3 +172,63 @@ def test_the_resolved_lane_is_reported_before_anything_opens(launcher_env):
     surprise discovered inside a pane."""
     out = _open("--dry-run").stdout
     assert re.search(r"^  lane: ", out, re.MULTILINE), "the launcher stopped reporting the resolved lane"
+
+
+# ── --lane: which native lane opens the domains ─────────────────────────────────────
+# The registry emits `--agent auto` and may never pin a provider (capsule contract:
+# `lane_selection: derive_from_live_capabilities`). `auto` resolves through the live census ordered
+# by $LIMEN_AGENT — so WITHOUT a choice, census ORDER decides, which on a stock host is codex, not
+# claude. `--lane` is that choice, expressed in the environment rather than in declared data.
+
+
+def _live_lanes():
+    """Ask the SCRIPT which lanes it accepts — never re-derive the rule here.
+
+    A second copy is exactly what broke: this test used `(vendor.name, vendor.binary)` while
+    start-worktree-session.sh uses `(override, name, binary if binary == name else "")`. `copilot`
+    declares binary `gh`, so the permissive copy listed a lane the launcher could not resolve. It
+    passed locally (a real `copilot` binary on PATH) and failed in CI (only `gh`) — a divergence
+    invisible on the machine that wrote it.
+    """
+    out = _open("--list-lanes")
+    assert out.returncode == 0, out.stdout + out.stderr
+    return out.stdout.split()
+
+
+def test_each_live_lane_can_be_selected(launcher_env):
+    """The operator's ask: open the domains via claude OR codex OR agy OR opencode.
+
+    SKIPS where no lane is live. A CI runner with no agent CLI installed is a legitimate
+    environment, not a failure — asserting non-empty made this test demand that the machine running
+    it have agents, which is a property of the host and not of the code under test.
+    """
+    lanes = _live_lanes()
+    if not lanes:
+        pytest.skip("no live native lane on this host (e.g. CI runner without an agent CLI)")
+    for lane in lanes:
+        out = _open("--lane", lane, "--dry-run", "--max-parallel", "1").stdout
+        assert re.search(rf"^  lane: +{re.escape(lane)}\b", out, re.MULTILINE), (
+            f"--lane {lane} did not resolve to {lane}:\n{out}"
+        )
+
+
+def test_a_lane_that_is_not_live_is_refused_before_anything_opens(launcher_env):
+    """Refused HERE, with the real alternatives named. Discovering it inside a tmux window means N
+    panes each printing an error nobody is watching."""
+    proc = _open("--lane", "definitely-not-a-lane", "--dry-run")
+    assert proc.returncode == 2
+    assert "is not a live native lane" in proc.stderr
+    # Holds with zero live lanes too: the refusal then reports "(none)", which is still an honest
+    # answer to "what IS available".
+    for lane in _live_lanes():
+        assert lane in proc.stderr, "the refusal must name what IS available, not just what is not"
+
+
+def test_the_registry_itself_stays_vendor_neutral(launcher_env):
+    """--lane must not leak a vendor into declared data. The emitted argv stays `--agent auto`
+    whichever lane is chosen; only the environment differs."""
+    for lane in _live_lanes()[:2]:
+        out = _open("--lane", lane, "--dry-run").stdout
+        if "WOULD" in out:
+            assert "--agent auto" in out, f"--lane {lane} pinned a vendor into the emitted command"
+            assert f"--agent {lane}" not in out
