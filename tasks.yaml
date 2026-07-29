@@ -160710,3 +160710,35 @@ tasks:
     conduct_lease_id: 'lease-437-041b6d24ac0c7eda'
     conduct_generation: 437
   updated: '2026-07-28T18:52:13.124Z'
+- id: 'LIMEN-400'
+  title: 'Repair projected scoped lease torn-refresh convergence'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls: []
+  predicate: 'python -m pytest -q cli/tests/test_host_admission.py -k projected_scoped_refresh'
+  receipt_target: 'https://github.com/organvm/domus-genoma/issues/319'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Restore fail-closed but recoverable machine-wide writer admission for Prima Materia S17 and all other linked worktrees without deleting, rewriting, signaling, or bypassing a live peer lease.'
+  owner_surface: 'https://github.com/organvm/domus-genoma/issues/319'
+  external_deadline: false
+  depends_on: []
+  created: '2026-07-28'
+  dispatch_log:
+  - timestamp: '2026-07-29T02:17:51.607Z'
+    agent: 'any'
+    session_id: 'mcp-add-any'
+    logical_agent: 'any'
+    logical_session_id: 'mcp-add-any'
+    status: 'open'
+    output: 'Created by any through the conduct keeper'
+    conduct_event_id: 'conduct:run-bea0ce75902ebef1d8376fb1ae572c3f:442:compatibility'
+    conduct_run_id: 'run-bea0ce75902ebef1d8376fb1ae572c3f'
+    conduct_lease_id: 'lease-442-bea0ce75902ebef1'
+    conduct_generation: 442
+  updated: '2026-07-29T02:17:51.607Z'
