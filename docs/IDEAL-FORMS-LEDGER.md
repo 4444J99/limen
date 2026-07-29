@@ -14,8 +14,17 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 |-------|---------|
 | **Ideal form** | the condition when this is fully alive |
 | **Distance** | how far from it we are *right now*, with evidence |
-| **Status** | OPEN · PARTIAL · BLOCKED(human) · SEEDED · CLOSED |
+| **Status** | OPEN · PARTIAL · SEEDED · BLOCKED(human) · SHIPPED · DONE · CLOSED |
 | **Owner** | who closes the remaining distance |
+
+**This prose is the narrative; `institutio/governance/ideal-forms.yaml` is the machine form.**
+Every heading below has a row there naming the **command** that measures its distance, and
+`scripts/check-ideal-forms.py` (VIGILIA's seventh axis) holds the two in parity — including
+the rule that a **Status:** line contradicting its own probe is *drift*, not a stale note.
+Update a distance with `python3 scripts/check-ideal-forms.py --measure`, never from memory:
+this ledger sat for 34 days with its own self-entry recording that nothing verified it, during
+which `IF-LIVE-TREE-COHERENCE` drifted 5× and `IF-SHARED-SUBSTRATE`'s counts went stale. A row
+may not carry a distance *in the registry* — there is no field to lie in; the number is derived.
 
 ---
 
@@ -53,12 +62,21 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 ### IF-LIVE-TREE-COHERENCE — the live checkout never drifts
 - **Ideal form:** the live daemon checkout is always `≡ origin/main`; capture/sync keeps it
   fast-forwarded; no ahead/behind divergence, no stranded local commits.
-- **Distance:** live `main` is **ahead 6 / behind 24** with uncommitted daemon state
-  (`tasks.yaml`, `state/`, `obligations-ledger.json`); 6 local commits novel by patch-id
-  (one is `health-office` — needs a PHI scan before any push). Residue of the
-  capture↔sync deadly-embrace.
-- **Status:** OPEN.
-- **Owner:** Claude + the sync organ.
+- **Distance (re-measured 2026-07-29 by `scripts/check-live-checkout.py`):** the hand-written
+  distance this entry carried — "ahead 6 / behind 24" — had gone stale by **5×** and nobody
+  knew, which is the defect the probe now closes. At 10:37 the live checkout sat at a
+  **2026-07-23** commit: **behind 120**, one unpushed local commit, 12 dirty paths — so for six
+  days the fleet executed a tree in which CORPORA, CONVERGENCE and ATOM-HOMING did not exist.
+  It went unseen because `sync-release.sh` fails *open* when a park is not fully-pushed-and-clean,
+  and nothing read that. Masked meanwhile by the governor holding autonomy paused behind the
+  evacuation fence — a loaded gun, not a firing one. By 10:43 it had fast-forwarded on its own
+  to `b5d7909f`; the probe then caught a **second, subtler** failure the first draft would have
+  passed: comparing HEAD to the local `origin/main` *ref* reports `behind=0` on a checkout that
+  simply has not fetched. Ground truth is `git ls-remote`, so a stale ref is drift, not a green.
+- **Status:** OPEN — coherent at this instant, but the ideal is *never drifts*, and the only
+  thing that makes that checkable is the probe; the beat-sensor wiring is the remaining distance.
+- **Owner:** Claude + the sync organ (`scripts/sync-release.sh` owns reconciliation — a
+  hand fast-forward of a daemon-contended tree races the running beat).
 
 ### IF-SESSION-NON-CONTENTION — sessions don't sit in contended worktrees
 - **Ideal form:** an interactive session's cwd is an isolated, non-recycled worktree; the fleet
@@ -173,8 +191,16 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is
   linked from memory and the autopoiesis heartbeat references it (closing the self-loop).
-- **Distance:** created 2026-06-25; not yet wired into a verification/heartbeat lane.
-- **Status:** SEEDED (this commit).
+- **Distance:** created 2026-06-25 with the gap recorded as "not yet wired into a
+  verification/heartbeat lane" — **still exactly true 34 days later**, `metabolize.sh` referencing
+  this ledger only in a *comment*. That is what a hand-maintained distance does: it decays with
+  nothing to notice, and two entries here had. Closed 2026-07-29 for the **verification** half:
+  `institutio/governance/ideal-forms.yaml` + `scripts/check-ideal-forms.py` (checks A–E) make
+  every distance a derived number, wired into pr-gate as the seventh VIGILIA axis. Remaining
+  distance: the **heartbeat** half — a `sensors.yaml` rung so the beat re-derives distances
+  continuously, not only per-PR (needs a paired `parameters.yaml` gate token, deliberately a
+  separate change).
+- **Status:** PARTIAL — verified per-PR; not yet per-beat.
 - **Owner:** Claude.
 
 ### IF-DECORUM — no public surface is ever egg-facing
@@ -226,6 +252,27 @@ measures the **distance from ideal** at a moment in time, and carries a **status
   Stripe/auth/rate-limiting; rubric logic encoded four ways; `data_export.py` copy-pasted across
   three repos; two full builds of the speech-score product, neither referencing the other or the
   existing `vox` voice infrastructure.
-- **Status:** PARTIAL — registry live with 12 capabilities (6 converged, 4 lifting, 2 counted
-  vacuums); the worker-toolkit and daily-engine-core lifts are the named next extractions.
+- **Status:** PARTIAL — registry live with **13** capabilities (**7** converged, **5** lifting,
+  **1** counted vacuum: `mirror-drift-detection`); the worker-toolkit and daily-engine-core lifts
+  are the named next extractions. *(The counts above read "12 (6/4/2)" until 2026-07-29 — stale
+  the moment a row landed. They are now derived: `check-ideal-forms.py` extracts the unresolved
+  count from `check-convergence.py` and fails when this prose disagrees.)*
 - **Owner:** Claude (registry + predicate) + the per-row `owner_of_record`.
+
+### IF-ATOM-HOMING — every harvested atom lands in a git-tracked owner, or is dispositioned
+- **Ideal form:** every semantic atom the harvest produces is either **homed** in an owner that
+  git tracks, or **dispositioned** with a cited reason — residue and deferral both reaching their
+  floor. Homing is **distillation, never transfer**: counts, ids and generalizations cross into
+  the public tree; a *statement* never does (the executable form of `redacted: false ⇒ never
+  leaves its store`). Adding a kind is one registry row.
+- **Distance:** the axis shipped 2026-07-29 (PR #1608) — `institutio/governance/atom-homing.yaml`
+  (8 kinds, each with a home / `admits` gate / unit / ratchet), `check-atom-homing.py` (checks
+  A–G), a statement-free `atom-census.yaml`, and a monotonic residue ceiling. What it *measures*
+  is the open distance: of 4,099 drained atoms, **4,099 remain residual** and **2,080 are
+  deferred** — homing itself has not begun. Two fail-open bugs found by negative-testing before
+  merge (a nonexistent public home read as advisory; a `re.escape`d pattern making `git grep -E`
+  exit 2, which the caller read as "no matches", silently disabling the entire leak scan).
+  Blocked only in appearance: the corpus is sealed in `organvm/arca`, restorable off the
+  evacuation fence's measured volume.
+- **Status:** PARTIAL — the registry and predicate are live; the homing is the work.
+- **Owner:** Claude (registry + predicate) + the per-kind `owner_of_record`.
