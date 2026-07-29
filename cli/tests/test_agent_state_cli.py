@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -10,6 +11,84 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "agent-state-metabolism.py"
+
+
+def test_custody_projection_command_is_path_free_and_idempotent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "agent_state_metabolism_cli_custody",
+        SCRIPT,
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    metabolism = SimpleNamespace(source_retired=False)
+    projected = SimpleNamespace(
+        schema_version="limen.custody_receipt.v1",
+        custody_id="custody_0123456789abcdef0123456789abcdef",
+        restoration_proofs=(object(), object()),
+    )
+    observed: dict[str, object] = {}
+
+    def run(name, metabolism_path, vault_root, external_root, output, **kwargs):
+        observed.update(
+            {
+                "name": name,
+                "metabolism_path": metabolism_path,
+                "vault_root": vault_root,
+                "external_root": external_root,
+                "output": output,
+                "kwargs": kwargs,
+            }
+        )
+        return metabolism, projected, True, True
+
+    monkeypatch.setattr(module, "run_custody_verification_campaign", run)
+    metabolism_path = tmp_path / "private-metabolism.json"
+    output_path = tmp_path / "private-custody.json"
+    vault_root = tmp_path / "fresh-clone"
+    external_root = tmp_path / "external"
+
+    result = module.main(
+        [
+            "custody-receipt",
+            "codex-sessions",
+            "--metabolism-receipt",
+            str(metabolism_path),
+            "--vault-root",
+            str(vault_root),
+            "--external-root",
+            str(external_root),
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    payload = json.loads(stdout)
+    assert result == 0
+    assert observed["name"] == "codex-sessions"
+    assert observed["metabolism_path"] == metabolism_path
+    assert observed["vault_root"] == vault_root
+    assert observed["external_root"] == external_root
+    assert observed["output"] == output_path
+    assert observed["kwargs"] == {
+        "repository": "organvm/arca",
+        "key_service": "limen-arca-vault",
+    }
+    assert payload == {
+        "changed": True,
+        "custody_id": projected.custody_id,
+        "metabolism_changed": True,
+        "restoration_count": 2,
+        "schema": "limen.custody_receipt.v1",
+        "source_retired": False,
+    }
+    assert str(metabolism_path) not in stdout
+    assert str(output_path) not in stdout
 
 
 def test_resume_requires_explicit_run_id(tmp_path: Path) -> None:
@@ -33,6 +112,34 @@ def test_resume_requires_explicit_run_id(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "--resume requires --run-id" in result.stderr
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["opencode", "--retire"],
+        [
+            "cold-tree",
+            "codex-sessions",
+            "--root",
+            ".",
+            "--private-receipt",
+            "receipt.json",
+            "--retire",
+        ],
+    ],
+)
+def test_retirement_requires_separate_authorized_workflow(arguments: list[str]) -> None:
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), *arguments],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "canonical custody and a separately authorized retirement workflow" in result.stderr
 
 
 def test_cloud_eviction_requires_both_signed_inputs(tmp_path: Path) -> None:
