@@ -62,6 +62,7 @@ import importlib.util
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 
@@ -93,6 +94,27 @@ VALID_PREDICATE_STATUS = {"existing", "to_be_built"}
 FORBIDDEN_STATE_FIELDS = ("status", "state", "settled", "ready", "done", "complete")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 RUNWAY_RE = re.compile(r"^([1-9][0-9]*)([mhd])$")
+
+# ── predicate_command: the argv actually RUN to prove a stream done ─────────────────
+#
+# Distinct from `predicate` (the FILE whose existence check C validates). A file existing proves
+# nothing about the work; this is what gets executed.
+#
+# THE GUARD IS THE POINT. `predicate` fields already name executables that MUTATE THE WORLD —
+# scripts/repo-genesis.py without --dry-run creates a real GitHub repo and pushes seed material
+# (repo-genesis.py:28). Running predicates naively would make settlement an irreversible, outward
+# -facing action. So the argv is constrained STATICALLY and a violation is REFUSED BY THE CHECKER,
+# never executed: there is no path from this registry to a live mint.
+PREDICATE_ARGV0 = {"python3", "bash", "scripts/run-pytest-hermetic.sh"}
+# Tokens that mean "actually do it". Refused anywhere in the argv, not just position 1.
+PREDICATE_FORBIDDEN_TOKENS = ("--apply", "--no-dry-run", "--write", "--live", "--force", "--execute")
+# Scripts that MUTATE BY DEFAULT, mapped to the flag that neutralises them. Blocking "act" flags is
+# backwards for these: repo-genesis.py mints a real GitHub repo and pushes seed material unless
+# --dry-run is passed (repo-genesis.py:28,100-107) — `--dry-run` is opt-IN, so an argv carrying no
+# forbidden token at all is still an effector. A predicate naming one of these MUST carry its
+# neutralising flag. This is the difference between a guard that looks right and one that is.
+PREDICATE_EFFECTORS = {"scripts/repo-genesis.py": "--dry-run"}
+PREDICATE_TIMEOUT_S = 180
 
 failures = []
 
@@ -179,6 +201,55 @@ SELF_REFERENTIAL_PATHS = (
 MAX_SETTLED_BY = 2
 
 
+def predicate_argv_violation(cmd):
+    """Why this argv may not be run, or None if it is safe. Pure — no execution, no filesystem."""
+    if not isinstance(cmd, str) or not cmd.strip():
+        return "must be a non-empty string"
+    try:
+        argv = shlex.split(cmd)
+    except ValueError as exc:
+        return f"is not parseable as a shell command ({exc})"
+    if not argv:
+        return "is empty after parsing"
+    if argv[0] not in PREDICATE_ARGV0:
+        return f"argv[0] {argv[0]!r} is not one of {sorted(PREDICATE_ARGV0)} — a predicate must be a runner, not an effector"
+    for token in argv:
+        if token in PREDICATE_FORBIDDEN_TOKENS:
+            return f"carries {token!r} — a settlement probe must be side-effect-free"
+    for effector, neutraliser in PREDICATE_EFFECTORS.items():
+        if any(tok == effector or tok.endswith("/" + effector.rsplit("/", 1)[-1]) for tok in argv):
+            if neutraliser not in argv:
+                return (
+                    f"names {effector}, which MUTATES BY DEFAULT, without {neutraliser}. "
+                    "It creates a real GitHub repo and pushes seed material unless told otherwise, so "
+                    "an argv carrying no forbidden flag at all is still an effector"
+                )
+    return None
+
+
+def _predicate_proven(sid, stream):
+    """Run this stream's predicate_command. True only on a clean exit 0.
+
+    Every other outcome — absent command, guard violation, nonzero, timeout, missing binary —
+    resolves identically to NOT PROVEN. Failing toward unproven is what keeps a broken environment
+    from inventing settlement.
+    """
+    cmd = (stream or {}).get("predicate_command")
+    if not cmd or predicate_argv_violation(cmd):
+        return False
+    try:
+        out = subprocess.run(
+            shlex.split(cmd),
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=PREDICATE_TIMEOUT_S,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return out.returncode == 0
+
+
 def _settled_by_backfill():
     """{sid: sha} from the registry's `settled_by` rows. Loaded once, validated by check H."""
     return {sid: s["settled_by"] for sid, s in load().items() if isinstance(s, dict) and s.get("settled_by")}
@@ -210,17 +281,32 @@ def _does_real_work(sha):
     return any(f.strip() and not f.startswith(SELF_REFERENTIAL_PATHS) for f in files)
 
 
-def _settled(sid):
-    """A stream is settled when a commit that did REAL WORK claimed it with a `Settles:` trailer.
+def _settled(sid, stream=None):
+    """settled ⟺ (anchored claim on real work AND its predicate exits 0) OR bounded backfill.
+
+    Two paths, and the asymmetry is deliberate:
+
+      * A NEW settlement must clear BOTH halves. The claim says "this is done"; the predicate
+        PROVES it. Either alone is an assertion — the trailer is as writable as a YAML field, and a
+        green predicate shared with another stream cannot tell which one it settled.
+      * The `settled_by:` backfill is exempt from the predicate half, because it exists precisely
+        for rows that settled BEFORE any of this existed and whose real-work commit is already on
+        main and cannot be amended. It is not unproven: check H verifies the SHA is a real commit
+        reachable from origin/main that changed paths outside this registry, and MAX_SETTLED_BY
+        bounds it at exactly today's legitimate count. Requiring a second, independent proof of a
+        grandfathered row would un-settle it for a reason unrelated to whether it is done, which is
+        what makes a migration useless.
 
     Fails toward NOT-settled: if git or the remote ref is unavailable we report unsettled, so a
     broken environment can only under-report readiness, never invent it.
     """
-    if any(_does_real_work(sha) for sha in _settling_commits(sid)):
+    if sid in _settled_by_backfill():
         return True
-    # Pre-convention backfill: streams that genuinely settled before `Settles:` existed. Bounded and
-    # reviewable (check H), never a general escape hatch — see MAX_SETTLED_BY.
-    return sid in _settled_by_backfill()
+    if not any(_does_real_work(sha) for sha in _settling_commits(sid)):
+        return False
+    if stream is None:
+        stream = load().get(sid) or {}
+    return _predicate_proven(sid, stream)
 
 
 def _running(sid):
@@ -379,6 +465,14 @@ def run_checks(streams):
                     f"{sid}: carries `{forbidden}` — state is DERIVED from git, never declared",
                 )
 
+        # I — predicate_command, if declared, must be statically safe to RUN. Validated for every
+        # row whether or not it will ever execute, so an unsafe argv is caught the moment it is
+        # written rather than the day that stream settles.
+        if "predicate_command" in s and s.get("predicate_command") is not None:
+            violation = predicate_argv_violation(s["predicate_command"])
+            if violation:
+                fail("I", f"{sid}: predicate_command {violation}")
+
         # H — the pre-convention backfill is bounded and every entry is real
         sb = s.get("settled_by")
         if sb is not None:
@@ -402,6 +496,22 @@ def run_checks(streams):
         jc = s.get("job_class")
         if not isinstance(jc, str) or not jc:
             fail("G", f"{sid}: job_class must be a non-empty string")
+
+    # J — a shared predicate_command cannot decide either stream it serves. This is not
+    # hypothetical: check-convergence.py is the `predicate` of s3/s6/s7, check-atom-homing.py of
+    # s1/s2, no-tasks-on-me.sh of s4/s5 — 7 of 11 rows. Green on a shared, argument-less command
+    # says "some axis is healthy", never "THIS domain is done", so it may not settle anything.
+    by_cmd = {}
+    for sid, s in streams.items():
+        if isinstance(s, dict) and s.get("predicate_command"):
+            by_cmd.setdefault(" ".join(shlex.split(str(s["predicate_command"]))), []).append(sid)
+    for cmd, sids in sorted(by_cmd.items()):
+        if len(sids) > 1:
+            fail(
+                "J",
+                f"{', '.join(sorted(sids))} share predicate_command {cmd!r} — a shared probe cannot "
+                "prove which domain is done; narrow it per stream or leave it null (null = not provable yet)",
+            )
 
     # H — the backfill is a migration, not a mechanism: bound the whole-registry count so it can
     # only shrink as those streams' work is re-proven, never grow into a parallel settlement path.
@@ -454,7 +564,7 @@ def print_all(streams):
     domain launches exactly like a ready one. The operator decides — the registry only reports what
     each is waiting on. Ordering ready-first, then blocked, is the only opinion expressed here.
     """
-    settled_cache = {sid: _settled(sid) for sid in streams}
+    settled_cache = {sid: _settled(sid, s) for sid, s in streams.items()}
     states = {sid: state_of(sid, s, settled_cache) for sid, s in streams.items()}
     rank = {"ready": 0, "running": 1, "blocked": 2}
     openable = sorted(
@@ -480,7 +590,7 @@ def print_all(streams):
 def _bucket(streams):
     """The ONE state derivation. Both the human view and the machine view read this, so a launcher
     can never open a set the operator was not shown (and vice versa)."""
-    settled_cache = {sid: _settled(sid) for sid in streams}
+    settled_cache = {sid: _settled(sid, s) for sid, s in streams.items()}
     buckets = {"ready": [], "running": [], "blocked": [], "settled": []}
     for sid, s in streams.items():
         buckets[state_of(sid, s, settled_cache)].append((sid, s))
