@@ -24,8 +24,8 @@
 #      versioned, visible receipt lane for private-estate work. Unpushed seal commits
 #      (e.g. a rejected push) are retried on every subsequent run, changed or not.
 #
-# VERBS:
-#   arca.sh backup             — sweep all stores, push what changed (default; beat-wired)
+# VERBS (one is REQUIRED — a bare invocation prints this list and exits 2):
+#   arca.sh backup             — sweep all stores, push what changed (beat-wired)
 #   arca.sh restore <store> [dest]  — decrypt a store to <dest> (default ~/arca-restore/)
 #   arca.sh status             — manifest vs local: what's covered, what's stale
 #   arca.sh seal <src> <out.enc>    — one-off envelope: tar+encrypt any file/dir, roundtrip
@@ -43,10 +43,43 @@ VAULT_DIR="${ARCA_VAULT_DIR:-$HOME/.arca-vault}"
 KEY_SERVICE="${ARCA_KEY_SERVICE:-limen-arca-vault}"
 MAX_MB="${ARCA_MAX_MB:-512}"
 CHUNK_MB="${ARCA_CHUNK_MB:-90}"   # per-blob ceiling; GitHub hard-rejects files >100MB
-CMD="${1:-backup}"
+# A VERB IS REQUIRED. This used to default to `backup`, which meant typing `arca.sh` to see what it
+# does silently STARTED A BACKUP — sweeping every ~/Workspace/_*-private store, encrypting, and
+# pushing ciphertext to a private remote. There was no --help either (it hit the unknown-verb `die`),
+# so the natural way to ask "what are the verbs?" was the one input that ran the destructive-ish path.
+# Measured 2026-07-29 by doing exactly that. The only caller in the estate is metabolize.sh:115,
+# which passes `backup` explicitly, so requiring the verb costs nothing and closes the trap.
+CMD="${1:-}"
 
 log() { echo "arca: $*"; }
 die() { echo "arca: FATAL: $*" >&2; exit 1; }
+
+usage() {
+  cat <<'USAGE'
+arca.sh — encrypted private-estate vault. A VERB IS REQUIRED.
+
+  arca.sh backup                  sweep all stores, push what changed (beat-wired)
+  arca.sh restore <store> [dest]  decrypt a store to <dest> (default ~/arca-restore/)
+  arca.sh status                  manifest vs local: what's covered, what's stale
+  arca.sh seal <src> <out.enc>    one-off envelope: tar+encrypt, roundtrip verified
+  arca.sh unseal <in.enc> <dest>  decrypt a one-off envelope into <dest>
+
+Config (env): ARCA_WORKSPACE, ARCA_REPO, ARCA_VAULT_DIR, ARCA_KEY_SERVICE, ARCA_MAX_MB, ARCA_CHUNK_MB
+USAGE
+}
+
+case "$CMD" in
+  -h | --help | help)
+    usage
+    exit 0
+    ;;
+  "")
+    # stderr + nonzero: a caller that relied on the old implicit default must FAIL LOUDLY here
+    # rather than silently do nothing, which would be a different and quieter bug.
+    usage >&2
+    exit 2
+    ;;
+esac
 
 vault_key() {
   # Fetch (or first-run: generate) the vault key. The value is captured by callers into a
