@@ -25,6 +25,13 @@ Also the mode that answers the operator's actual question:
 which derives each domain's state from ground truth and prints, for every openable one, the exact
 `workstream` command. "Which streams do I open?" is a command's output, not a table someone keeps.
 
+    python3 scripts/check-session-streams.py --all
+
+prints EVERY unsettled domain's command, ready or blocked, in dependency order. `blocked` is
+ADVISORY: `limen workstream` never reads this registry, so a blocked domain launches exactly like a
+ready one — the registry reports what each waits on and the operator decides. Output is valid shell
+(commands plus `#` comments), so it can be redirected to a file or piped.
+
 State is derived, never declared:
   settled  — a commit naming the stream id has landed on origin/main (Rule #11: atomic commits,
              one id per commit, `git log --grep=<id>` → the SHA). Local work cannot fake it.
@@ -284,6 +291,36 @@ def run_checks(streams):
                 fail("E", f"{slug}: stream-shaped lane exists on disk but is not declared in the registry")
 
 
+def print_all(streams):
+    """Every unsettled domain's launch command, in dependency order.
+
+    `blocked` is ADVISORY, not enforced: `limen workstream` never reads this registry, so a blocked
+    domain launches exactly like a ready one. The operator decides — the registry only reports what
+    each is waiting on. Ordering ready-first, then blocked, is the only opinion expressed here.
+    """
+    settled_cache = {sid: _settled(sid) for sid in streams}
+    states = {sid: state_of(sid, s, settled_cache) for sid, s in streams.items()}
+    rank = {"ready": 0, "running": 1, "blocked": 2}
+    openable = sorted(
+        ((sid, s) for sid, s in streams.items() if states[sid] != "settled"),
+        key=lambda kv: (rank[states[kv[0]]], kv[0]),
+    )
+
+    print(f"session streams: {len(openable)} openable ({sum(1 for k in states.values() if k == 'ready')} with every precondition met)\n")
+    for n, (sid, s) in enumerate(openable, 1):
+        unmet = [r for r in s.get("requires", []) if not settled_cache.get(r)]
+        waits = ", ".join(unmet) if unmet else "nothing"
+        print(f"# {n}. {s['title']}")
+        print(f"#    state: {states[sid]}   waits on: {waits}   owner: {s['owner_of_record']}")
+        print(launch_command(sid, s))
+        print()
+
+    settled = sorted(sid for sid, k in states.items() if k == "settled")
+    if settled:
+        print("# settled (do not open): " + ", ".join(settled))
+    return 0
+
+
 def print_ready(streams):
     settled_cache = {sid: _settled(sid) for sid in streams}
     buckets = {"ready": [], "running": [], "blocked": [], "settled": []}
@@ -325,18 +362,25 @@ def main():
         action="store_true",
         help="derive each domain's state from ground truth and print the launch command for every openable one",
     )
+    ap.add_argument(
+        "--all",
+        action="store_true",
+        help="print the launch command for EVERY unsettled domain, ready or blocked, in dependency "
+        "order — blocked is advisory (the launcher never reads this registry), so the operator "
+        "decides which to open",
+    )
     args = ap.parse_args()
 
     streams = load()
 
-    if args.ready:
-        # The ready-set is only meaningful over a coherent registry.
+    if args.ready or args.all:
+        # A launch command is only meaningful over a coherent registry.
         run_checks(streams)
         if failures:
-            print("session-streams registry: DRIFT — refusing to derive a ready-set")
+            print("session-streams registry: DRIFT — refusing to derive launch commands")
             print("\n".join(failures))
             sys.exit(1)
-        sys.exit(print_ready(streams))
+        sys.exit(print_all(streams) if args.all else print_ready(streams))
 
     run_checks(streams)
     if failures:
