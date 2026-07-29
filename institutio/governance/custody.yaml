@@ -66,6 +66,25 @@ vaults:
     restore_command: "scripts/arca.sh restore <store> [dest]"
     key_location: "macOS Keychain, service limen-arca-vault"
     escrow_lever: L-ARCA-KEY-ESCROW
+    # MEASURED 2026-07-29 — read this BEFORE running the restore command above.
+    # `cmd_restore` calls `ensure_vault`, which clones the WHOLE vault repo to
+    # ARCA_VAULT_DIR (default ~/.arca-vault) when it is absent. organvm/arca is ~45 GB and
+    # holds every sealed store, so restoring one 390 MB store pulls 45 GB onto the INTERNAL
+    # disk — the exact volume the laptop-evacuation fence measures. Free space today is
+    # 159.3 GiB against a 200 GiB release predicate, so a naive restore moves that predicate
+    # ~45 GiB the WRONG way while the fence is up.
+    restore_cost:
+      vault_repo_gib: 45
+      clones_to: "~/.arca-vault (ARCA_VAULT_DIR), on the internal disk"
+      fence_interaction: "consumes the volume the evacuation fence's release predicate measures"
+      cheaper_path: >
+        The ciphertext is ALSO on Archive4T (limen-private/…/<store>.tar.enc.part.*), already
+        local and already counted by the custody receipts. arca.sh's own header documents the
+        format — "alphabetic split suffixes glob back in order, so restore is just
+        `cat parts | decrypt`" — so a single store can be decrypted straight from the mounted
+        archive to an external destination with no vault clone and zero internal-disk cost.
+        Same key, same cipher, same result; it simply skips downloading 44.6 GB that is not
+        wanted. Prefer this while the fence is up.
     note: >
       ARCA seals every ~/Workspace/_*-private store AES-256 into a private GitHub repo, so an
       archive-class root has a THIRD copy beyond the two physical devices — offsite, versioned,
