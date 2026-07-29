@@ -54,6 +54,7 @@ max_parallel="${LIMEN_STREAMS_MAX_PARALLEL:-}"
 dry_run=0
 unbounded=0
 lane_choice=""
+list_lanes_only=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -65,6 +66,10 @@ while [[ $# -gt 0 ]]; do
     --session)
       [[ $# -ge 2 ]] || { echo "missing value for --session" >&2; exit 2; }
       session="$2"; shift 2 ;;
+    --list-lanes)
+      # Print the lanes this script will accept, one per line, then exit. Exists so nothing has to
+      # re-derive the rule: tests and callers ask the script instead of keeping a second copy.
+      lane_choice="--list"; list_lanes_only=1; shift ;;
     --lane)
       # Choose which native lane opens the domains. The REGISTRY stays vendor-neutral — it emits
       # `--agent auto` because the capsule contract declares `lane_selection:
@@ -86,10 +91,11 @@ done
 if [[ -n "$lane_choice" ]]; then
   if ! lane_ok="$(
     PYTHONPATH="$repo_root/cli/src${PYTHONPATH:+:$PYTHONPATH}" python3 - "$lane_choice" <<'PY'
+import os
 import shutil
 import sys
 
-from limen.census import VENDORS, by_name, canonical
+from limen.census import VENDORS, canonical
 
 
 def native(v):
@@ -98,7 +104,20 @@ def native(v):
 
 
 def binary(v):
-    for cand in dict.fromkeys(x for x in (v.name, getattr(v, "binary", "")) if x):
+    """EXACTLY start-worktree-session.sh's candidate rule (:262-306). Copied deliberately, not
+    improved: this validator's only job is to predict what THAT script will do, so any divergence
+    makes it wrong even when it looks more correct.
+
+    The narrow `v.binary if v.binary == v.name else ""` clause is the load-bearing part. `copilot`
+    declares binary `gh`, so the launcher will NOT resolve it — and a more permissive rule here
+    accepted `--lane copilot`, set LIMEN_AGENT=copilot, and then watched `auto` silently fall
+    through to codex. It passed locally (both `copilot` and `gh` on PATH) and failed in CI (only
+    `gh`), which is the signature of a validator that disagrees with the thing it validates.
+    """
+    override = os.environ.get(f"LIMEN_{v.name.upper().replace('-', '_')}_BIN", "").strip()
+    for cand in dict.fromkeys(
+        x for x in (override, v.name, v.binary if v.binary == v.name else "") if x
+    ):
         found = shutil.which(cand)
         if found:
             return found
@@ -107,6 +126,13 @@ def binary(v):
 
 live = [v for v in VENDORS if v.status.available and v.status.state == "live" and native(v) and binary(v)]
 want = canonical(sys.argv[1].strip().lower()) or sys.argv[1].strip().lower()
+if want == "--list":
+    # The set this script will accept, printed by the script itself. Anything that needs to know
+    # which lanes are selectable asks HERE rather than re-deriving it — a second copy of this rule
+    # is what let `--lane copilot` be accepted and then silently resolve to codex.
+    for v in live:
+        print(v.name)
+    raise SystemExit(0)
 if any(v.name == want for v in live):
     print(want)
     raise SystemExit(0)
@@ -117,6 +143,10 @@ PY
   )"; then
     echo "open-streams: refusing to open — see above" >&2
     exit 2
+  fi
+  if [[ "$list_lanes_only" -eq 1 ]]; then
+    printf '%s\n' "$lane_ok"
+    exit 0
   fi
   # `auto` reads this: the registry stays neutral, the operator's choice rides the environment.
   export LIMEN_AGENT="$lane_ok"

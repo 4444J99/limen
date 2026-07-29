@@ -182,20 +182,17 @@ def test_the_resolved_lane_is_reported_before_anything_opens(launcher_env):
 
 
 def _live_lanes():
-    import shutil
-    import sys as _sys
+    """Ask the SCRIPT which lanes it accepts — never re-derive the rule here.
 
-    _sys.path.insert(0, str(ROOT / "cli" / "src"))
-    from limen.census import VENDORS
-
-    def native(v):
-        p = getattr(v, "execution", None)
-        return v.local_checkout if p is None else (p.transport == "native-cli" or p.transport.startswith("ianva-"))
-
-    def has_binary(v):
-        return any(shutil.which(c) for c in dict.fromkeys(x for x in (v.name, getattr(v, "binary", "")) if x))
-
-    return [v.name for v in VENDORS if v.status.available and v.status.state == "live" and native(v) and has_binary(v)]
+    A second copy is exactly what broke: this test used `(vendor.name, vendor.binary)` while
+    start-worktree-session.sh uses `(override, name, binary if binary == name else "")`. `copilot`
+    declares binary `gh`, so the permissive copy listed a lane the launcher could not resolve. It
+    passed locally (a real `copilot` binary on PATH) and failed in CI (only `gh`) — a divergence
+    invisible on the machine that wrote it.
+    """
+    out = _open("--list-lanes")
+    assert out.returncode == 0, out.stdout + out.stderr
+    return out.stdout.split()
 
 
 def test_each_live_lane_can_be_selected(launcher_env):
