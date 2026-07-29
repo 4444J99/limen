@@ -366,12 +366,20 @@ Each lane launches from the emitted command, which after Phase 3a carries its ow
 **ω is reached when `--all` prints no openable domain and every settlement is backed by an executed,
 side-effect-free, stream-distinguishing predicate.**
 
-To make that self-sustaining, register STREAMS as a **beat sensor** in
+To make that self-sustaining, STREAMS must become a **beat sensor** in
 `institutio/governance/sensors.yaml` with `omega_eligible`. It is currently a pr-gate row only, and
 that is the wrong home: settlement is a function of **whole-repo state**, not of the streams files'
 diff, so a path-scoped gate cannot see it change. As a sensor the beat re-derives the ready-set every
-cycle and the fixed point becomes observable rather than asserted. This routes through an existing
-canonical surface (SENSORS) rather than forking substrate.
+cycle and the fixed point becomes observable rather than asserted.
+
+> **CORRECTION 2026-07-29 — this rung is NOT this plan's to execute; it belongs to
+> `s10-axis-coverage`.** That domain's `intent.md` already measures the exact gap ("None of the six
+> named axis predicates appear in `sensors.yaml`, so `scripts/omega.sh` does not cover them either")
+> and its mission is to make the axis SET declared data — of which registering STREAMS is one
+> instance, not a standalone errand. Executing it here would preempt a declared owner and fork the
+> work, which is the failure this registry exists to prevent: route through the canonical surface,
+> and the surface here is the stream that owns the axis set. **The ω condition above stands; the
+> mechanism that makes it self-sustaining is s10's deliverable.** s10 is already `ready`.
 
 ---
 
