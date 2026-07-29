@@ -8,9 +8,9 @@
 >
 > | mission item | status | evidence |
 > |---|---|---|
-> | 1. teach `corpora.yaml` about custody | **delivered, by a better mechanism** | custody is resolved by `scripts/reference_state.py` `ReferenceResolver` from the custody lane's own receipts — not by a field in `corpora.yaml` |
+> | 1. teach `corpora.yaml` about custody | **delivered as a dedicated registry** (#1615, the CUSTODY axis) | `institutio/governance/custody.yaml` → `roots.conversations-private`: `class: archive`, `custody_label: repo_conversations-private`, `vault: arca`, and `referenced_by: ["institutio/governance/corpora.yaml::stores.conversations-private"]`. `scripts/reference_state.py` is the resolver that reads it. |
 > | 2. add a check that an unresolvable root is RED | **delivered as check B, not a new check F** | `scripts/check-corpora.py:122-131` — `UNACCOUNTED` ⇒ `fail`, `ARCHIVED` ⇒ advisory |
-> | 3. give it a reclaim verb a cold session can execute | **delivered** | `python3 -m limen.personal_custody {plan,apply,reclaim}` |
+> | 3. give it a reclaim verb a cold session can execute | **delivered** | `scripts/arca.sh restore <store> [dest]` (`:29`, `:164`; cost measured in #1618) |
 >
 > Reproduce:
 >
@@ -20,13 +20,26 @@
 >                                                 #   root is archived off-host: 2 receipt(s);
 >                                                 #   restoration verified, 2 copies on independent
 >                                                 #   devices (1763 files)
-> PYTHONPATH=cli/src python3 -m limen.personal_custody --help   # → {plan,apply,reclaim}
+> sed -n '98,110p' institutio/governance/custody.yaml   # → the declared archive record
+> sed -n '29p;229,235p' scripts/arca.sh                 # → the restore verb and the verb table
 > ```
 >
+> ⚠️ **Never invoke `scripts/arca.sh` with no arguments to "see its usage."** `:46` is
+> `CMD="${1:-backup}"` — a bare invocation defaults to **`backup`** and starts one. There is no
+> `--help`; read the verb table at `:229-235` instead. Verified 2026-07-29 by doing it wrong.
+>
 > **Do NOT add a custody field to `corpora.yaml`.** Item 1 below warned against inventing a second
-> custody schema, and that warning now cuts against item 1's own wording: the receipts are the
-> custody record, and a parallel field in a public registry would be exactly the second source of
-> truth `check-corpora.py`'s check D exists to forbid.
+> custody schema, and that warning now cuts against item 1's own wording: `custody.yaml` already
+> owns the record *and* points at `corpora.yaml` through `referenced_by`, so the link exists — in the
+> right direction. A parallel field in the public corpus registry would be exactly the second source
+> of truth `check-corpora.py`'s check D exists to forbid.
+>
+> **`cli/src/limen/personal_custody.py` is not the reclaim verb.** It is the evacuation lane that
+> *produced* the receipts (#1604), and it does expose a `reclaim` subcommand — which is why a first
+> pass at this table named it. The verb a cold session should run for this store is `arca.sh restore`.
+> Checking that `python3 -m limen.personal_custody --help` succeeds proves only that the module
+> exists, not that it is the documented path; that is the same "confirmed it with the one input that
+> could not fail" error this cartridge is being corrected for.
 >
 > **What actually remains: nothing this domain must build.** The store is archived with verified
 > restoration on two independent devices and a reclaim verb that acts on it, which is the declared-data
