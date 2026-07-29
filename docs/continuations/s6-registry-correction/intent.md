@@ -2,8 +2,23 @@
 
 ## Objective
 
-`institutio/governance/convergence.yaml` on `origin/main` holds 12 capabilities — 7 converged,
-**5 lifting**, 0 unresolved. **Four of its claims were measured false on 2026-07-26.**
+`institutio/governance/convergence.yaml` on `origin/main` holds **14 capabilities — 8 converged,
+5 lifting, 1 unresolved**. **Four of its claims were measured false on 2026-07-26.**
+
+> **RE-MEASURED 2026-07-29.** This line read *"12 capabilities — 7 converged, 5 lifting, 0
+> unresolved"*. The row set has moved twice since authoring; re-count before citing any total:
+>
+> ```bash
+> python3 -c "import yaml,collections; c=yaml.safe_load(open('institutio/governance/convergence.yaml'))['capabilities']; print(len(c), collections.Counter(v.get('status') for v in c.values()))"
+> ```
+>
+> **Claim 4 below is HALF-ADDRESSED — narrow it, do not drop it.** #1611 added the
+> `mirror-drift-detection` row (`status: unresolved`, `owner: null`), so the vacuum is now *counted*
+> as declared data under Rule #1 — that half is done. But the doc the claim is actually about is
+> **still wrong**: `docs/convergence/learning-engine.md:102` continues to assert mirror drift is
+> *"currently caught only by a manual `verify.sh`"*, and nothing checks mirror drift. Counting a
+> vacuum is not correcting the document that hides it. Claim 4's remaining work is the doc, plus the
+> `mirrors.yaml` + `check-mirrors.py` pair under "Also resolve" — neither of which exists on `main`.
 
 Declared data that misdescribes ground truth is worse than a vacuum: it routes work at the wrong
 target. **Re-verify each finding against the code before rewriting a row** — this document is a

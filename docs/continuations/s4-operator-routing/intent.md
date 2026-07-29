@@ -8,7 +8,29 @@ read the registry first and obey it.
 ## Objective
 
 `questions-unresolved` = **316 atoms**, `tasks` = **751 atoms**. Both un-homed as of 2026-07-29.
-`his-hand-levers.json` currently holds **62 levers, 11 unresolved** (6 `open`, 5 `needs_human`).
+
+> **RE-MEASURED 2026-07-29 (later same day) — and the metric is not well-defined.** This section
+> read *"62 levers, 11 unresolved (6 `open`, 5 `needs_human`)"*, a figure carried from a file dated
+> 2026-06-25. Actual:
+>
+> | | |
+> |---|---|
+> | levers | **61** |
+> | `open` | 6 |
+> | `needs_human` | **4** |
+> | **no `status` key at all** | **47** |
+> | `status` holding free-text prose | **4** — e.g. `"optional-fallback (keyed IMAP path designs the grant out for Gmail)"`, `"awaiting sign-off (tokens authored, dark until approved)"` |
+>
+> ```bash
+> python3 -c "import json,collections; r=json.load(open('his-hand-levers.json')); r=r if isinstance(r,list) else r['levers']; print(len(r)); print(collections.Counter(x.get('status','<NO STATUS KEY>') for x in r))"
+> ```
+>
+> **"11 unresolved" is not merely stale — it is uncomputable.** `status` is absent on 47 of 61 rows
+> and is a free-text sentence on 4 more, so no honest count exists over this file today. **Define
+> what an absent `status` means, and whether a prose `status` is a state or a note, BEFORE setting
+> any baseline.** A baseline set over an undefined field is a number that will read as measured and
+> is not.
+
 Re-measure before trusting these numbers.
 
 Home both kinds **without enlarging the operator's burden.** This domain's success metric is
