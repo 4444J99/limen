@@ -28,6 +28,12 @@ launching immediately, while --agent codex launches the validated capsule.
 --model flag form is verified (claude, gemini, agy, opencode); any other lane refuses the pin rather
 than ignoring it. A pin never builds a Codex launch profile, so it needs no effort or sandbox.
 
+--branch-prefix sets the branch namespace for a NEW worktree (work|feat|fix|heal|chore|docs|
+refactor; default work). An unknown value is REFUSED, never coerced, and the check runs before any
+binary probe so CI reaches the same verdict as a workstation. It affects only newly created
+worktrees: `branch` is bound into the capsule identity digest, so an existing capsule keeps the
+namespace it was created with and re-entry validation is unaffected.
+
 --conduct registers the launched direct session with the shared broker as human-protected. Broker
 credentials are read from the environment, never written into the capsule or command line, and
 removed before the native agent process starts.
@@ -48,7 +54,7 @@ Aliases:
   relpipe         /Users/4jp/Workspace/4444J99/relationship-pipeline
 
 Creates or reuses:
-  <repo>/.worktrees/<slug> on branch work/<slug>
+  <repo>/.worktrees/<slug> on branch <branch-prefix>/<slug> (default work/)
   <repo>/.worktrees/<slug>/.limen-workstream/README.md as a thin prompt index
   <repo>/.worktrees/<slug>/.limen-workstream/{manifest,workstream,intent,runtime,closeout}.md
   <repo>/.worktrees/<slug>/docs/continuations/<slug>/workstream.json as a tracked redacted receipt
@@ -80,12 +86,30 @@ launch_sandbox=""
 # launch_model is what builds the v2 Codex contract, which requires an effort and a sandbox.
 launch_lane_model=""
 write_readme=1
+# The branch namespace for a NEW worktree. `work` reproduces the previous hardcoded behaviour
+# exactly, so every existing caller (cli.py, lead-spawn.py, the test harnesses, humans) is
+# unaffected by construction. Only a caller that asks gets anything different.
+branch_prefix="work"
+# The CLAUDE.md branch-cadence table, plus `work` for auto-named isolation branches. An unknown
+# prefix is REFUSED, never coerced: silently rewriting it would put the lane on a branch whose name
+# the caller did not choose, and `branch` is bound into the capsule identity digest.
+VALID_BRANCH_PREFIXES="work feat fix heal chore docs refactor"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --autonomous)
       autonomous=1
       shift
+      ;;
+    --branch-prefix)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --branch-prefix" >&2
+        usage >&2
+        exit 2
+      fi
+      branch_prefix="$2"
+      shift 2
+      continue
       ;;
     --agent)
       if [[ $# -lt 2 ]]; then
@@ -205,6 +229,18 @@ if [[ $# -ne 2 ]]; then
   usage >&2
   exit 2
 fi
+
+# REFUSE an unknown branch prefix, never coerce — and validate it HERE, among the argument checks,
+# far ahead of any binary probe. Argument validity is a property of the arguments, not of what is
+# installed, so CI (no agent binary) must reach the same verdict as a workstation that has one.
+# This is the same ordering lesson the lane pin and the Codex sandbox each had to be fixed for.
+case " $VALID_BRANCH_PREFIXES " in
+  *" $branch_prefix "*) ;;
+  *)
+    echo "unknown --branch-prefix '$branch_prefix' (one of: $VALID_BRANCH_PREFIXES)" >&2
+    exit 2
+    ;;
+esac
 
 if [[ "$autonomous" -eq 1 && "$write_readme" -ne 1 ]]; then
   echo "--autonomous cannot be combined with --no-readme" >&2
@@ -456,7 +492,7 @@ if [[ -n "$workstream" ]]; then
   )"
 fi
 
-branch="work/$slug"
+branch="$branch_prefix/$slug"
 wt="$repo/.worktrees/$slug"
 
 git_info_dir="$(git -C "$repo" rev-parse --path-format=absolute --git-path info)"
