@@ -33,6 +33,10 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import reference_state
+from reference_state import ReferenceResolver
+
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "corpora.yaml"
 RESOLVER = ROOT / "scripts" / "corpus_resolve.py"
@@ -68,11 +72,7 @@ def load_baseline() -> set[str]:
     """
     if not BASELINE.is_file():
         return set()
-    return {
-        line
-        for line in BASELINE.read_text(encoding="utf-8").splitlines()
-        if line and not line.startswith("#")
-    }
+    return {line for line in BASELINE.read_text(encoding="utf-8").splitlines() if line and not line.startswith("#")}
 
 
 def expand(path: str) -> Path:
@@ -97,27 +97,45 @@ def check_a_schema(doc: dict) -> None:
 
 
 def check_b_roots(doc: dict) -> dict[str, Path]:
-    """Resolve store roots; absence severity depends on the host.
+    """Resolve store roots, deriving absence severity from the CUSTODY axis.
 
-    The stores are LOCAL-ONLY by design (that is what makes them safe for raw
-    conversation content), so a CI runner never has them — their absence there
-    is a fact about the host, not registry drift. On a host that has ANY
-    declared store (or with LIMEN_CORPORA_HOST=1), a missing root is a real
-    failure; on a host with none, every disk check degrades to an advisory and
-    the schema/resolver checks (A, D) still bind.
+    This used to key off `on_host = any(root.is_dir())` and degrade a missing root to an
+    ADVISORY whenever no declared store happened to be on disk. The 2026-07-27 evacuation
+    archived every store at once, so that branch became permanent: a store safely archived
+    with two verified copies and a store somebody deleted read IDENTICALLY, and the check
+    stayed green. Green through absence.
+
+    The verdict now comes from `reference_state.ReferenceResolver` — the single resolver
+    the three axes share (see convergence.yaml `reference-liveness`) — which distinguishes:
+
+      ok / archived      accounted for: present, or receipts prove two verified copies on
+                         independent devices. Reported, never failed.
+      unaccounted        absent, provably so here, and NOTHING declares where it went.
+                         This is a REAL failure and the reason the axis exists.
+      unverifiable-here  a CI runner with no ~/Workspace. Absence of evidence stays a host
+                         fact, never drift — the one part of the old behaviour that was right.
     """
     roots: dict[str, Path] = {}
     for name, store in (doc.get("stores") or {}).items():
         roots[name] = expand(str(store.get("root", "")))
 
-    on_host = os.environ.get("LIMEN_CORPORA_HOST") == "1" or any(r.is_dir() for r in roots.values())
-    for name, root in roots.items():
-        if not root.is_dir():
-            msg = f"store {name!r} root does not exist: {root}"
-            if on_host:
-                fail("B", msg)
-            else:
-                advise("B", msg + " (local-only store; disk checks bind on the operator host)")
+    resolver = ReferenceResolver()
+    forced_host = os.environ.get("LIMEN_CORPORA_HOST") == "1"
+    for name, store in (doc.get("stores") or {}).items():
+        root = roots[name]
+        if root.is_dir():
+            continue
+        res = resolver.resolve(str(store.get("root", "")))
+        if res.state == reference_state.UNACCOUNTED:
+            fail("B", f"store {name!r} root does not exist and is UNACCOUNTED: {root} — {res.detail}")
+        elif res.state == reference_state.ARCHIVED:
+            advise("B", f"store {name!r} root is archived off-host: {res.detail}")
+        elif forced_host:
+            # LIMEN_CORPORA_HOST=1 asserts this machine CAN prove absence, so an
+            # unverifiable verdict here is the caller contradicting the evidence.
+            fail("B", f"store {name!r} root does not exist: {root} (LIMEN_CORPORA_HOST=1 asserts absence is provable)")
+        else:
+            advise("B", f"store {name!r} root not resolvable here: {res.detail}")
     return roots
 
 
@@ -153,11 +171,7 @@ def check_c_disk_parity(doc: dict, roots: dict[str, Path]) -> None:
 
     # a row claiming a CCE id different from its directory name must say so explicitly
     for cid, row in corpora.items():
-        undeclared_row = (
-            row.get("cce_declared") is False
-            and row.get("provider") != "multi"
-            and not row.get("path")
-        )
+        undeclared_row = row.get("cce_declared") is False and row.get("provider") != "multi" and not row.get("path")
         if undeclared_row and not row.get("cce_id") and not row.get("note"):
             fail("C", f"corpus {cid!r} is not CCE-declared but records no cce_id and no note")
 
@@ -301,8 +315,7 @@ def main(argv=None) -> int:
             "# Format: <path>::<literal>  — keyed on the literal, never a line number, so an\n"
             "# unrelated edit above cannot masquerade as a new violation.\n"
             "# Ratchet: new literals fail check-corpora D; this list only shrinks.\n"
-            "# Convert a consumer, then delete its lines here.\n"
-            + "".join(f"{k}\n" for k in keys),
+            "# Convert a consumer, then delete its lines here.\n" + "".join(f"{k}\n" for k in keys),
             encoding="utf-8",
         )
         print(f"wrote {BASELINE} ({len(keys)} grandfathered literals)")
