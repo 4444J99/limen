@@ -309,13 +309,17 @@ class MetabolismReceipt:
         payload = asdict(self)
         payload["source"]["stat_before"] = list(payload["source"]["stat_before"])
         payload["source"]["stat_after"] = list(payload["source"]["stat_after"])
+        for pack in payload["packs"]:
+            pack["chunks"] = list(pack["chunks"])
         if self.encryption_profile_digest is None:
             payload.pop("encryption_profile_digest")
         for proof in payload["restorations"]:
             for key in ("device_id", "restored_at", "encryption_profile_digest"):
                 if proof[key] is None:
                     proof.pop(key)
-            if not proof["remote_refs"]:
+            if proof["remote_refs"]:
+                proof["remote_refs"] = list(proof["remote_refs"])
+            else:
                 proof.pop("remote_refs")
         return payload
 
