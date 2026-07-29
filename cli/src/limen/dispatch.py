@@ -106,6 +106,7 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _fable_reserve_receipt_present,
     _guard_fable_model_pin,
     _resolve_claude_model,
+    tier_for_classes,
 )
 from limen.worktree_debt import (
     IMPACT_DEBT_CREATING,
@@ -5706,17 +5707,14 @@ def _claude_tier_for(task: Task | None) -> str:
         if pin == "fable":
             return _earned_fable_tier()
         return str(pin)
-    classes = _task_classes(task)
-    override = _claude_tier_overrides()
-    if classes & (_claude_fable_classes() | set(override.get("fable") or [])):
-        return _earned_fable_tier() if _claude_fable_acceptance_present() else _fable_fallback_tier()
-    if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
-        return "opus"
-    lane_data = _ledger_lanes().get("claude") or {}
-    waste = set(lane_data.get("waste_classes") or [])
-    if classes & (waste | set(override.get("sonnet") or [])):
-        return "sonnet"
-    return "haiku"
+    # The class sort itself lives in model_selection.tier_for_classes — the ONE ladder, so the
+    # STREAMS registry can derive a job_class's tier without importing dispatch. This function
+    # keeps what is genuinely task-local: the per-task pin above, and the two lane inputs below.
+    return tier_for_classes(
+        _task_classes(task),
+        waste_classes=(_ledger_lanes().get("claude") or {}).get("waste_classes") or (),
+        overrides=_claude_tier_overrides(),
+    )
 
 
 def _bump_tier(tier: str, task: Task | None) -> str:
