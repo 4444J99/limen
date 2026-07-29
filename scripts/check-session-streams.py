@@ -16,9 +16,20 @@ Exit 0 iff institutio/governance/session-streams.yaml is internally coherent:
                    untamperable — the docstring used to claim it did. A commit message is as
                    writable as a YAML field; F only stops the registry CONTRADICTING git. The
                    anchored `Settles:` claim plus check H are what make the git side hard to fake.
-  G  tier authority — any job_class claiming reserved-Opus standing must be in
-                   model_selection._CLAUDE_OPUS_CLASSES_DEFAULT, DERIVED by import from the tier
-                   authority rather than re-encoded here (the "consumers derive" discipline).
+  G  tier authority — job_class must be a class the tier authority RECOGNISES, DERIVED by import
+                   rather than re-encoded here. A reserved-FABLE class is refused outright (building
+                   on Fable is prohibited, so it would recreate the defect s9 healed); an unknown
+                   class is refused because it derives the cheapest default tier in silence. This
+                   check was a literal NO-OP until 2026-07-29 — it computed the class set and never
+                   compared it — during which three rows quietly derived the default.
+  I  predicate argv — a declared predicate_command must be statically safe to run: argv[0] a runner,
+                   no act-tokens, and a mutate-by-default effector must carry its neutraliser.
+  J  predicate uniqueness — two rows may not share a predicate_command; a shared probe cannot say
+                   WHICH domain is done.
+  K  owner resolves — owner_of_record must exist. Nothing checked this, and s8 pointed at
+                   institutio/governance/estate.yaml (never a real path) for the registry's life.
+  L  fan-out parity — max_children must equal the bound its cartridge states in prose; the prose
+                   copy is the one a cold session actually reads.
   H  settlement backfill — `settled_by: <sha>` exists only for streams that settled BEFORE the
                    `Settles:` convention. Each must be a real commit reachable from origin/main that
                    changed paths outside this registry, and at most MAX_SETTLED_BY rows may carry
@@ -123,8 +134,8 @@ def fail(check, msg):
     failures.append(f"  ✗ [{check}] {msg}")
 
 
-def _opus_classes():
-    """DERIVE the reserved-Opus class set from the tier authority; never keep a second copy.
+def _tier_classes(attr):
+    """DERIVE a reserved class set from the tier authority by name; never keep a second copy.
 
     model_selection.py owns Claude's ladder. Importing it by path is the same idiom
     scripts/claude-workflow-guard.py and scripts/shims/claude use, so a rename of the ladder
@@ -138,8 +149,18 @@ def _opus_classes():
         return None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    classes = getattr(mod, "_CLAUDE_OPUS_CLASSES_DEFAULT", None)
+    classes = getattr(mod, attr, None)
     return set(classes) if classes else None
+
+
+def _opus_classes():
+    """The reserved-Opus set."""
+    return _tier_classes("_CLAUDE_OPUS_CLASSES_DEFAULT")
+
+
+def _fable_classes():
+    """The reserved-Fable set — building on Fable is prohibited, so a row may not declare one."""
+    return _tier_classes("_CLAUDE_FABLE_CLASSES_DEFAULT")
 
 
 def _git(*args):
@@ -386,6 +407,10 @@ def run_checks(streams):
     if opus_classes is None:
         fail("G", "could not import model_selection._CLAUDE_OPUS_CLASSES_DEFAULT (tier authority)")
         opus_classes = set()
+    fable_classes = _fable_classes()
+    if fable_classes is None:
+        fail("G", "could not import model_selection._CLAUDE_FABLE_CLASSES_DEFAULT (tier authority)")
+        fable_classes = set()
 
     ids = set(streams)
 
@@ -465,6 +490,32 @@ def run_checks(streams):
                     f"{sid}: carries `{forbidden}` — state is DERIVED from git, never declared",
                 )
 
+        # L — max_children is stated TWICE: here, and in prose in the cartridge ("At most **N**
+        # children"). The registry value is not inert — FanoutBoundsV1 enforces it when a child is
+        # reserved via `conduct split` — but the cartridge copy is what a cold session actually
+        # READS before deciding how many children to open. Two copies of a bound is the same
+        # second-source defect the rest of this file exists to prevent, and the prose copy is the
+        # one nothing would ever check. Hold them equal.
+        intent_path = os.path.join(ROOT, s["intent"]) if isinstance(s.get("intent"), str) else None
+        if intent_path and os.path.exists(intent_path) and isinstance(s.get("max_children"), int):
+            with open(intent_path) as fh:
+                stated = re.search(r"[Aa]t most \*\*(\d+)\*\* children", fh.read())
+            if stated and int(stated.group(1)) != s["max_children"]:
+                fail(
+                    "L",
+                    f"{sid}: max_children {s['max_children']} but its cartridge says "
+                    f"{stated.group(1)} — the prose copy is what a cold session reads",
+                )
+
+        # K — owner_of_record must RESOLVE. The field names the git-tracked surface that owns this
+        # domain's result, and nothing ever checked it existed: s8 pointed at
+        # institutio/governance/estate.yaml for the registry's whole life, while the real file is
+        # institutio/github/estate.yaml — s8's OWN predicate reads the github/ one. A registry whose
+        # job is naming owners cannot have an owner that is not there.
+        owner = s.get("owner_of_record")
+        if isinstance(owner, str) and owner and not os.path.exists(os.path.join(ROOT, owner)):
+            fail("K", f"{sid}: owner_of_record {owner!r} does not exist")
+
         # I — predicate_command, if declared, must be statically safe to RUN. Validated for every
         # row whether or not it will ever execute, so an unsafe argv is caught the moment it is
         # written rather than the day that stream settles.
@@ -492,10 +543,35 @@ def run_checks(streams):
                     "cannot settle a stream, the same bar a live `Settles:` claim must clear",
                 )
 
-        # G — job_class is validated against the tier authority, not a local copy
+        # G — job_class is validated against the tier authority, not a local copy.
+        #
+        # This was a LITERAL NO-OP: `opus_classes` was computed above and never compared, and the
+        # body only asserted a non-empty string. So the one field that decides which model a
+        # launched lane runs on was unvalidated, and three rows declaring `governance` — a class the
+        # authority has never heard of — derived the DEFAULT haiku in silence.
         jc = s.get("job_class")
         if not isinstance(jc, str) or not jc:
             fail("G", f"{sid}: job_class must be a non-empty string")
+        elif jc in fable_classes:
+            # docs/fable-allotment.md: Fable is PLAN-ONLY and building on it is PROHIBITED. A row
+            # declaring one of these derives a Fable pin for a lane whose whole purpose is build
+            # work — recreating the exact defect s9 was opened to heal.
+            fail(
+                "G",
+                f"{sid}: job_class {jc!r} is RESERVED-FABLE — it would derive a Fable pin, and "
+                "docs/fable-allotment.md prohibits building on Fable. Use a reserved-Opus class.",
+            )
+        elif jc not in opus_classes:
+            # Unknown to the authority ⇒ tier_for_classes returns the cheapest default. Silently.
+            # A work DOMAIN running on the default tier is almost never intended, and nothing would
+            # have surfaced it — the row looks declarative and derives nothing.
+            fail(
+                "G",
+                f"{sid}: job_class {jc!r} is unknown to the tier authority, so it derives the "
+                f"cheapest default tier silently. Use one of {sorted(opus_classes)}, or add it to "
+                "model_selection._CLAUDE_OPUS_CLASSES_DEFAULT — never widen the authority just to "
+                "green a row, since that changes tier derivation for every fleet task estate-wide.",
+            )
 
     # J — a shared predicate_command cannot decide either stream it serves. This is not
     # hypothetical: check-convergence.py is the `predicate` of s3/s6/s7, check-atom-homing.py of
