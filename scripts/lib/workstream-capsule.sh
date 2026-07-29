@@ -778,6 +778,10 @@ workstream_launch_native_agent() {
   local launch_reasoning_effort="${7:-}"
   local launch_sandbox="${8:-}"
   local launch_contract_helper="${9:-}"
+  # Positional and defaulted, so a capsule rendered before the lane pin existed still calls this
+  # with nine arguments and behaves exactly as it did.
+  local launch_lane_model="${10:-}"
+  local -a lane_args=()
   local binary capsule_prompt="" jules_repo="" intent_path=""
   local contract_helper="" timeout_seconds=""
   local jules_output="" jules_rc=0 jules_session_id="" jules_session_url="" jules_receipt=""
@@ -818,6 +822,36 @@ workstream_launch_native_agent() {
     codex_args=(--ask-for-approval never --sandbox workspace-write)
   fi
 
+  # ── lane tier pin ────────────────────────────────────────────────────────────
+  # A bare `--model` for a NON-Codex lane. Codex keeps its own validated triple above and is
+  # rejected here on purpose, so there stays exactly one way to launch Codex explicitly.
+  #
+  # The allowlist is lanes whose `--model <value>` form was verified against the installed CLI's
+  # own --help (2026-07-29):
+  #   claude    "--model <model>            Model for the current session"
+  #   gemini    "-m, --model                Model  [string]"
+  #   agy       "--model                    Model for the current CLI session"
+  #   opencode  "-m, --model                model to use in the format of provider/model"
+  # opencode takes a provider-qualified value; the operator owns the string, this only proves the
+  # flag exists. Any lane not listed REFUSES the pin rather than dropping it — a silently ignored
+  # pin is precisely the defect this closes (the lane would run on the inherited default and look
+  # pinned).
+  if [[ -n "$launch_lane_model" ]]; then
+    case "$agent" in
+      claude|gemini|agy|opencode)
+        lane_args=(--model "$launch_lane_model")
+        ;;
+      codex)
+        printf 'lane tier pin refused: the codex lane requires the validated --model/--reasoning-effort/--sandbox profile, not a bare pin\n' >&2
+        return 2
+        ;;
+      *)
+        printf 'lane tier pin refused: lane %s has no verified --model flag form; remove the pin or extend the verified allowlist\n' "$agent" >&2
+        return 2
+        ;;
+    esac
+  fi
+
   if [[ "$autonomous" -eq 1 ]]; then
     IFS= read -r -d '' capsule_prompt < "$readme" || true
     case "$agent" in
@@ -829,10 +863,10 @@ workstream_launch_native_agent() {
         exec "$binary" "${codex_args[@]}" exec "$capsule_prompt"
         ;;
       opencode)
-        exec "$binary" --prompt "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt "$capsule_prompt"
         ;;
       agy|gemini)
-        exec "$binary" --prompt-interactive "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt-interactive "$capsule_prompt"
         ;;
       jules)
         if ! jules_repo="$(workstream_jules_repository)"; then
@@ -912,7 +946,7 @@ workstream_launch_native_agent() {
         return 2
         ;;
       *)
-        exec "$binary" "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" "$capsule_prompt"
         ;;
     esac
   fi
@@ -925,11 +959,11 @@ workstream_launch_native_agent() {
       # Agy has no argument-free interactive session.
       if [[ -s "$readme" ]]; then
         IFS= read -r -d '' capsule_prompt < "$readme" || true
-        exec "$binary" --prompt-interactive "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt-interactive "$capsule_prompt"
       fi
       ;;
   esac
-  exec "$binary"
+  exec "$binary" "${lane_args[@]+"${lane_args[@]}"}"
 }
 
 _limen_capsule_input_digest() {
@@ -1024,6 +1058,10 @@ render_workstream_capsule() {
   local launch_model="${17:-}"
   local launch_reasoning_effort="${18:-}"
   local launch_sandbox="${19:-}"
+  # The lane tier pin is DELIBERATELY a separate variable from launch_model. launch_model being
+  # non-empty is what triggers the v2 Codex contract build below, and a v2 contract requires a
+  # reasoning effort and a sandbox; reusing it for a bare pin raises ContractError at render.
+  local launch_lane_model="${20:-}"
   local capsule_dir="$wt/.limen-workstream"
   local readme="$capsule_dir/README.md"
   local manifest="$capsule_dir/manifest.md"
@@ -1045,7 +1083,7 @@ render_workstream_capsule() {
   local q_wt q_capsule_dir q_capsule_lock q_receipt q_identity q_readme q_manifest q_contract q_contract_helper
   local q_intent q_runtime q_closeout q_kickstart q_slug q_branch q_workstream q_input_digest
   local q_agent q_registry_binary q_conduct q_allow_shell_fallback q_agent_capabilities
-  local q_launch_model q_launch_reasoning_effort q_launch_sandbox
+  local q_launch_model q_launch_reasoning_effort q_launch_sandbox q_launch_lane_model
   local capsule_preexisting=0
   local capsule_changed=0
 
@@ -1144,6 +1182,15 @@ PY
   runtime_source_digest="$(_limen_capsule_file_digest "$runtime_template")"
   closeout_source_digest="$(_limen_capsule_file_digest "$spec_dir/closeout.md")"
   contract_source_digest="$(_limen_capsule_file_digest "$contract_source")"
+  # CONDITIONAL ON PURPOSE. An unconditional new digest field would change the recomputed
+  # invocation digest of every capsule already on disk, and the pre-existing-capsule path below
+  # runs `verify-identity` against the stored one and exits 1 on mismatch — that would brick every
+  # live capsule on its next render. Appending only when a pin is actually set leaves the unpinned
+  # digest byte-identical to what it has always been, while still binding a pin to the identity.
+  local -a lane_pin_digest_field=()
+  if [[ -n "$launch_lane_model" ]]; then
+    lane_pin_digest_field=("launch-lane-model=$launch_lane_model")
+  fi
   input_digest="$(
     _limen_capsule_input_digest \
       "limen.workstream.capsule-identity.v2" \
@@ -1155,7 +1202,8 @@ PY
       "launch-sandbox=$launch_sandbox" \
       "runtime-source-sha256=$runtime_source_digest" \
       "closeout-source-sha256=$closeout_source_digest" \
-      "contract-source-sha256=$contract_source_digest"
+      "contract-source-sha256=$contract_source_digest" \
+      "${lane_pin_digest_field[@]+"${lane_pin_digest_field[@]}"}"
   )"
   actual_branch="$(git -C "$wt" branch --show-current)"
   if [[ "$actual_branch" != "$branch" ]]; then
@@ -1269,7 +1317,7 @@ PY
 - Autonomous: \`$([[ "$autonomous" -eq 1 ]] && printf yes || printf no)\`
 - Agent: \`$agent\`
 - Agent capabilities: \`$agent_capabilities\`
-- Primary model: \`${launch_model:-provider-auto}\`
+- Primary model: \`${launch_model:-${launch_lane_model:-provider-auto}}\`
 - Primary reasoning effort: \`${launch_reasoning_effort:-provider-auto}\`
 - Primary sandbox: \`${launch_sandbox:-workspace-write}\`
 - Conduct: \`$([[ "$conduct" -eq 1 ]] && printf yes || printf no)\`
@@ -1367,6 +1415,7 @@ EOF
   printf -v q_launch_model '%q' "$launch_model"
   printf -v q_launch_reasoning_effort '%q' "$launch_reasoning_effort"
   printf -v q_launch_sandbox '%q' "$launch_sandbox"
+  printf -v q_launch_lane_model '%q' "$launch_lane_model"
   _capsule_write_module "$kickstart" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
@@ -1397,6 +1446,7 @@ agent_capabilities=$q_agent_capabilities
 launch_model=$q_launch_model
 launch_reasoning_effort=$q_launch_reasoning_effort
 launch_sandbox=$q_launch_sandbox
+launch_lane_model=$q_launch_lane_model
 if [[ -L "\$capsule_dir" || ! -d "\$capsule_dir" \
   || "\$(cd "\$capsule_dir" && pwd -P)" != "\$capsule_dir" ]]; then
   printf 'invalid capsule: private root is not the expected real directory\n' >&2
@@ -1612,7 +1662,8 @@ if [[ "\$conduct" -eq 1 ]]; then
 fi
 workstream_launch_native_agent \
   "\$agent" "\$registry_binary" "$autonomous" "\$readme" "\$allow_shell_fallback" \
-  "\$launch_model" "\$launch_reasoning_effort" "\$launch_sandbox" "\$contract_helper"
+  "\$launch_model" "\$launch_reasoning_effort" "\$launch_sandbox" "\$contract_helper" \
+  "\$launch_lane_model"
 EOF
   if [[ ! -x "$kickstart" ]]; then
     chmod +x "$kickstart"

@@ -751,3 +751,128 @@ def test_bounded_runner_kills_resistant_descendant_after_leader_exits(tmp_path: 
                 os.killpg(process_group_id, signal.SIGKILL)
             except ProcessLookupError:
                 pass
+
+
+# ── lane tier pin (s9-lane-tier-pin) ────────────────────────────────────────────
+#
+# A bare `--model` pins the launched non-Codex lane's model. It is threaded OUTSIDE the v2 launch
+# contract on purpose: `_primary_launch` models a launch profile as strictly Codex and demands a
+# reasoning effort, so reusing `launch_model` for a bare pin raises ContractError at render. These
+# tests hold that separation, and hold the pin to "refuse, never silently ignore".
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+CAPSULE_LIB = REPO_ROOT / "scripts" / "lib" / "workstream-capsule.sh"
+LAUNCHER = REPO_ROOT / "scripts" / "start-worktree-session.sh"
+
+
+def _fake_lane_binary(tmp_path: Path) -> Path:
+    """A stand-in CLI that records its argv instead of starting a model."""
+    binary = tmp_path / "fake-lane"
+    binary.write_text('#!/usr/bin/env bash\nprintf "ARGV:"; printf " [%s]" "$@"; printf "\\n"\n')
+    binary.chmod(0o755)
+    return binary
+
+
+def _launch_argv(tmp_path: Path, lane: str, pin: str) -> subprocess.CompletedProcess[str]:
+    binary = _fake_lane_binary(tmp_path)
+    readme = tmp_path / "README.md"
+    readme.write_text("capsule prompt body")
+    env = dict(os.environ)
+    for name in ("CLAUDE", "GEMINI", "AGY", "OPENCODE", "CODEX", "JULES"):
+        env[f"LIMEN_{name}_BIN"] = str(binary)
+    script = (
+        f'source "{CAPSULE_LIB}"\nworkstream_launch_native_agent "{lane}" "limen" 1 "{readme}" 0 "" "" "" "" "{pin}"\n'
+    )
+    return subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=60,
+        check=False,
+    )
+
+
+@pytest.mark.parametrize("lane", ["claude", "gemini", "agy", "opencode"])
+def test_lane_tier_pin_reaches_the_launched_argv(tmp_path: Path, lane: str) -> None:
+    """The pin must arrive as a real `--model <value>` pair in the exec'd argv, not be dropped."""
+    result = _launch_argv(tmp_path, lane, "opus")
+    assert "ARGV: [--model] [opus]" in result.stdout, result.stdout or result.stderr
+
+
+def test_unpinned_launch_argv_is_unchanged(tmp_path: Path) -> None:
+    """No pin must add NO argument — not an empty string, which would break a strict lane parser."""
+    result = _launch_argv(tmp_path, "claude", "")
+    assert "ARGV: [capsule prompt body]" in result.stdout, result.stdout or result.stderr
+    assert "--model" not in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("lane", "expected"),
+    [
+        ("codex", "requires the validated --model/--reasoning-effort/--sandbox profile"),
+        ("jules", "no verified --model flag form"),
+    ],
+)
+def test_lane_tier_pin_is_refused_never_ignored(tmp_path: Path, lane: str, expected: str) -> None:
+    """A lane that cannot honour a pin must FAIL. Silently launching unpinned is the bug itself:
+    the lane would run on the inherited default while the operator believes it is pinned."""
+    result = _launch_argv(tmp_path, lane, "opus")
+    assert result.returncode == 2, result.stdout
+    assert expected in result.stderr, result.stderr
+    assert "ARGV:" not in result.stdout
+
+
+def _launcher(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["bash", str(LAUNCHER), *args, "limen", "zz-lane-pin-never-created"],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        timeout=120,
+        check=False,
+    )
+
+
+def test_bare_pin_requires_a_launch_and_partial_codex_profile_still_rejected() -> None:
+    """A pin with no --agent has no consumer; a two-of-three Codex profile is still invalid."""
+    no_agent = _launcher("--model", "opus")
+    assert no_agent.returncode == 2
+    assert "requires --agent" in no_agent.stderr, no_agent.stderr
+
+    partial = _launcher("--model", "opus", "--sandbox", "workspace-write")
+    assert partial.returncode == 2
+    assert "must be supplied together" in partial.stderr, partial.stderr
+
+
+def test_codex_lane_still_demands_its_triple_and_never_accepts_a_bare_pin() -> None:
+    """The Codex launch profile is untouched: exactly one way to launch it explicitly.
+
+    Both refusals must be ENVIRONMENT-INDEPENDENT, and each needed its own ordering fix:
+      * the bare pin is refused before the generic binary probe;
+      * an invalid --sandbox is rejected by the STATIC `validate-codex-sandbox` helper before that
+        same probe, because `validate-codex-launch` needs a resolved --binary and so cannot run
+        until codex is known to exist.
+    An argument is invalid regardless of what happens to be installed, so CI (no codex binary) must
+    reach the same verdict as a workstation that has one. Without either fix this exits 127 on CI
+    and 2 locally — the same assertion passing or failing on environment alone.
+    """
+    bare = _launcher("--model", "opus", "--agent", "codex")
+    assert bare.returncode == 2
+    assert "lane tier pin refused" in bare.stderr, bare.stderr
+
+    bad_sandbox = _launcher("--agent", "codex", "--model", "x", "--reasoning-effort", "high", "--sandbox", "nope")
+    assert bad_sandbox.returncode != 0
+    assert "Codex sandbox must be one of" in (bad_sandbox.stderr + bad_sandbox.stdout)
+
+
+def test_bare_pin_never_builds_a_v2_launch_contract() -> None:
+    """The regression that made this its own domain: a bare pin routed through the Codex launch
+    profile raises, because a v2 contract requires an effort and a sandbox it does not have."""
+    # Sandbox is validated first, so that is the message a bare pin actually hits here.
+    with pytest.raises(ContractError, match="Codex sandbox must be one of"):
+        W.new_contract_v2("8h", agent="claude", model="opus", reasoning_effort="", sandbox="")
+    # And the lane itself is rejected independently, which is why the pin routes around this path
+    # entirely rather than extending it.
+    with pytest.raises(ContractError, match="require the Codex native lane"):
+        W._primary_launch(agent="claude", model="opus", reasoning_effort="high")
