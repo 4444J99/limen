@@ -50,7 +50,10 @@ M = _mod()
         # Mid-line ⇒ not a claim.
         ("feat: whatever\n\nsee also Settles: s6-registry-correction", []),
         # One commit may honestly settle several ids.
-        ("feat: x\n\nSettles: s2-public-distillation, s3-governance-case-law", ["s2-public-distillation, s3-governance-case-law"]),
+        (
+            "feat: x\n\nSettles: s2-public-distillation, s3-governance-case-law",
+            ["s2-public-distillation, s3-governance-case-law"],
+        ),
     ],
 )
 def test_only_an_anchored_claim_counts(body, expected):
@@ -67,9 +70,21 @@ def test_the_trailer_is_read_from_the_body_not_gits_trailer_parser():
     not. If this ever starts failing, git's parser has changed and the choice can be revisited.
     """
     out = subprocess.run(
-        ["git", "-C", str(ROOT), "log", "origin/main", "--grep", "Claude-Session:", "--fixed-strings",
-         "--max-count=9", "--format=%H%x00%(trailers:key=Claude-Session,valueonly)%x00%B%x01"],
-        capture_output=True, text=True, check=False,
+        [
+            "git",
+            "-C",
+            str(ROOT),
+            "log",
+            "origin/main",
+            "--grep",
+            "Claude-Session:",
+            "--fixed-strings",
+            "--max-count=9",
+            "--format=%H%x00%(trailers:key=Claude-Session,valueonly)%x00%B%x01",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
     ).stdout
     records = [r for r in out.split("\x01") if r.count("\x00") >= 2]
     if not records:
@@ -123,6 +138,8 @@ def test_the_backfill_is_bounded_and_every_entry_is_real():
         # Reachable from origin/main — an unmerged SHA would list itself here.
         unreached = subprocess.run(
             ["git", "-C", str(ROOT), "rev-list", "--max-count=1", sha, "^origin/main"],
-            capture_output=True, text=True, check=False,
+            capture_output=True,
+            text=True,
+            check=False,
         ).stdout.strip()
         assert unreached == "", f"{sid}: settled_by {sha} is not on origin/main"
