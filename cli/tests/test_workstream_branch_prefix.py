@@ -12,6 +12,7 @@ passed locally and failed in CI on environment alone.
 """
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -88,10 +89,12 @@ def test_the_refusal_does_not_depend_on_what_is_installed(repo: Path, tmp_path: 
     """
     stripped = tmp_path / "bin"
     stripped.mkdir()
+    # shutil.which, NOT `command -v`: `command` is a shell BUILTIN, not an executable. macOS happens
+    # to ship /usr/bin/command so this passed locally and raised FileNotFoundError on the Linux
+    # runner — a test-harness bug that looked like a product failure.
     for tool in ("git", "python3", "bash", "sed", "tr", "awk", "grep", "cat", "mktemp", "dirname", "basename"):
-        found = subprocess.run(["command", "-v", tool], capture_output=True, text=True, shell=False, check=False)
-        src = found.stdout.strip() or f"/usr/bin/{tool}"
-        if os.path.exists(src):
+        src = shutil.which(tool)
+        if src:
             os.symlink(src, stripped / tool)
 
     bad_stripped = _run("--branch-prefix", "nope", "--agent", "claude", str(repo), "p1", path=str(stripped))
