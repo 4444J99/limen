@@ -1,11 +1,30 @@
 # S1 — The homing spine: declared data before any homing
 
-## Precondition
+## SETTLED — do not open this domain
 
-`s0-corpus-custody` merged, and the store resident via its reclaim verb. Without it, check C below
-has no census to read. Verify before starting.
+**This work landed as [#1608](https://github.com/organvm/limen/pull/1608) (`9a319395`) on
+2026-07-29**, shipped by a parallel session while this registry was being authored. Check C of
+`scripts/check-session-streams.py` caught the row still claiming the predicate was to-be-built, which
+is how the drift surfaced — the registry refused to describe a world that had moved.
 
-## Objective
+What shipped is this domain's ask, in full: `institutio/governance/atom-homing.yaml` (one row per
+kind), the statement-free `atom-census.yaml`, `atom-residue-baseline.txt`, and
+`scripts/check-atom-homing.py` with checks A–G — including **D**, the executable form of
+`redacted: false ⇒ never leaves its store`.
+
+Two corrections to the planning below, both measured:
+
+- **The precondition was wrong.** This spine did *not* require `s0-corpus-custody`. #1608 authored
+  check C **store-free on purpose** — "so it runs in CI where the corpus can never exist." The
+  registry now records `requires: []` here, and moves the s0 edge onto s2–s5, which genuinely cannot
+  proceed without readable statement text.
+- **Declaring a home is not homing.** All **4,099 atoms remain residual** against the committed
+  baseline. The distillation is s2–s5; this row only ever owned the spine.
+
+The rest of this file is retained as the authored record of what was asked for, and as the
+provenance for the counts s2–s5 still rely on. Do not execute it.
+
+## Objective (as authored, now satisfied)
 
 4,099 atoms in 8 kinds. Exactly **one** kind is homed — `projects-to-start`, as **165 `IRF-BRC` rows**
 in the private `organvm-corpvs-testamentvm` (verified present 2026-07-29). **3,658 atoms across 7

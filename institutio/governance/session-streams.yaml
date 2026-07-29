@@ -64,9 +64,14 @@ streams:
     intent: docs/continuations/s0-corpus-custody/intent.md
     requires: []
     # DIRECT edges only — `unblocks` is the exact inverse of the other row's `requires` (check B).
-    # s2..s5 are unblocked TRANSITIVELY through s1; recording that here would be a second,
-    # drift-prone copy of the closure.
-    unblocks: [s1-homing-spine]
+    # s0 gates the four DISTILLATION domains directly, not through s1: the spine (s1) shipped
+    # deliberately store-free (#1608, "runs in CI where the corpus can never exist"), but you
+    # cannot distill atoms whose statement text you cannot read.
+    unblocks:
+      - s2-public-distillation
+      - s3-governance-case-law
+      - s4-operator-routing
+      - s5-commercial-offerings
     job_class: governance
     predicate: scripts/check-corpora.py
     predicate_status: existing
@@ -118,12 +123,14 @@ streams:
       prohibited. Its own domain because workstream_contract.py models primary_launch as strictly
       Codex and is SHA-bound over nine modules on both build and re-entry.
 
-  # ── blocked on s0 ────────────────────────────────────────────────────────────
+  # ── settled: the spine landed as #1608 while this registry was being authored ──
   s1-homing-spine:
     title: "The homing spine — declared data before any homing"
     branch_prefix: feat
     intent: docs/continuations/s1-homing-spine/intent.md
-    requires: [s0-corpus-custody]
+    # NOT [s0]: the spine was authored store-free on purpose, so it never needed the corpus.
+    # Measured by its own landing — #1608 shipped with the store cold-archived off this host.
+    requires: []
     unblocks:
       - s2-public-distillation
       - s3-governance-case-law
@@ -131,32 +138,35 @@ streams:
       - s5-commercial-offerings
     job_class: kernel
     predicate: scripts/check-atom-homing.py
-    predicate_status: to_be_built
+    predicate_status: existing
     runway: 1d
     owner_of_record: institutio/governance/atom-homing.yaml
     max_children: 6
     note: >-
-      3,658 atoms across 7 kinds have no declared owner and rest in a store that is remote:none /
-      redacted:false — by declared design it can never be published. Rule #1: a vacuum is never a
-      resting state. This stream authors its own predicate (checks A-G) plus the statement-free
-      --census artifact, because the drain's entire product is local-only today (Rule #2 breach:
-      logs/.gitignore is `*`).
+      SETTLED by #1608 (9a319395), landed 2026-07-29 by a parallel session while this registry was
+      being authored — measured by check C of this very registry, which refused the row that still
+      claimed the predicate was to-be-built. What shipped is exactly this domain's ask: atom-homing.yaml
+      (one row per kind), the statement-free atom-census.yaml, the residue baseline, and
+      check-atom-homing.py checks A-G — including D, the executable form of `redacted:false ⇒ never
+      leaves its store`. The DECLARATION is done; all 4,099 atoms remain residual, which is the work
+      of s2..s5 and is why they gate on s0 rather than on this row.
 
   # ── blocked on s1 — the seven kinds, one domain per destination ───────────────
   s2-public-distillation:
     title: "Public distillation — 1,194 atoms into ideal forms and schemas"
     branch_prefix: feat
     intent: docs/continuations/s2-public-distillation/intent.md
-    requires: [s1-homing-spine]
+    requires: [s0-corpus-custody, s1-homing-spine]
     unblocks: []
     job_class: synthesis
     predicate: scripts/check-atom-homing.py
-    predicate_status: to_be_built
+    predicate_status: existing
     runway: 1d
     owner_of_record: docs/IDEAL-FORMS-LEDGER.md
     max_children: 8
     note: >-
-      functionality-to-repeat 518 + schema-proposals 676, un-homed. Success is INVERSE to volume: if
+      functionality-to-repeat 518 + schema-proposals 676 — declared homed by the s1 spine (#1608),
+      all still RESIDUAL against the committed baseline. Success is INVERSE to volume: if
       output is proportional to input this transferred rather than distilled. A 518-entry ideal-forms
       ledger is worse than no homing, because it looks done.
 
@@ -164,7 +174,7 @@ streams:
     title: "Governance case law — 1,343 atoms into precedents and counted vacuums"
     branch_prefix: feat
     intent: docs/continuations/s3-governance-case-law/intent.md
-    requires: [s1-homing-spine]
+    requires: [s0-corpus-custody, s1-homing-spine]
     unblocks: []
     job_class: canon
     predicate: scripts/check-convergence.py
@@ -181,7 +191,7 @@ streams:
     title: "Operator routing — 1,067 atoms without handing him a list"
     branch_prefix: feat
     intent: docs/continuations/s4-operator-routing/intent.md
-    requires: [s1-homing-spine]
+    requires: [s0-corpus-custody, s1-homing-spine]
     unblocks: []
     job_class: governance
     predicate: scripts/no-tasks-on-me.sh
@@ -198,7 +208,7 @@ streams:
     title: "Commercial offerings — 54 atoms into the funnel"
     branch_prefix: feat
     intent: docs/continuations/s5-commercial-offerings/intent.md
-    requires: [s1-homing-spine]
+    requires: [s0-corpus-custody, s1-homing-spine]
     unblocks: [s8-mint-by-demand]
     job_class: synthesis
     predicate: scripts/no-tasks-on-me.sh
