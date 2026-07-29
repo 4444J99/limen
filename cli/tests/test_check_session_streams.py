@@ -197,3 +197,51 @@ def test_an_unprovable_stream_is_not_settled_by_a_claim_alone():
     assert M._predicate_proven("fake", {}) is False
     assert M._predicate_proven("fake", {"predicate_command": "python3 -c 'raise SystemExit(1)'"}) is False
     assert M._predicate_proven("fake", {"predicate_command": "python3 -c 'pass'"}) is True
+
+
+# ── checks G, K, L: fields that were declared and unread ────────────────────────────
+# Each of these guarded nothing until 2026-07-29, and each had a live violation sitting in the
+# registry the whole time. A declared field nothing reads is a field that has already drifted.
+
+
+def test_check_g_rejects_a_class_the_tier_authority_cannot_see():
+    """G was a LITERAL no-op: it computed the class set and never compared it. Three rows declared
+    `governance` — unknown to the authority — and silently derived the cheapest default tier for a
+    work domain."""
+    opus = M._opus_classes()
+    assert opus, "the tier authority is unreachable"
+    for sid, s in M.load().items():
+        assert s["job_class"] in opus, f"{sid}: {s['job_class']!r} derives the default tier silently"
+
+
+def test_check_g_refuses_a_reserved_fable_class():
+    """docs/fable-allotment.md makes Fable PLAN-ONLY and prohibits building on it. A row declaring
+    one of these would derive a Fable pin for a build lane — recreating the defect s9 healed."""
+    fable = M._fable_classes()
+    assert fable, "the reserved-Fable set is unreachable"
+    assert not (set(fable) & {s["job_class"] for s in M.load().values()})
+    # The two sets must stay disjoint, or "reject Fable" and "require Opus" could contradict.
+    assert not (set(fable) & set(M._opus_classes()))
+
+
+def test_check_k_every_owner_of_record_resolves():
+    """Nothing checked this. s8 pointed at institutio/governance/estate.yaml — a path that never
+    existed — while its own predicate reads institutio/github/estate.yaml."""
+    for sid, s in M.load().items():
+        owner = s["owner_of_record"]
+        assert (ROOT / owner).exists(), f"{sid}: owner_of_record {owner!r} does not exist"
+
+
+def test_check_l_fanout_bound_matches_the_cartridge():
+    """max_children is stated twice — here and in prose in the cartridge. The prose copy is what a
+    cold session actually reads before deciding how many children to open, and it is the copy
+    nothing would ever check."""
+    import re as _re
+
+    for sid, s in M.load().items():
+        text = (ROOT / s["intent"]).read_text()
+        stated = _re.search(r"[Aa]t most \*\*(\d+)\*\* children", text)
+        if stated:
+            assert int(stated.group(1)) == s["max_children"], (
+                f"{sid}: registry says {s['max_children']}, cartridge says {stated.group(1)}"
+            )
