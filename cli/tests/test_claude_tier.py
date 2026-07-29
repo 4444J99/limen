@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import limen.dispatch as D
+import limen.model_selection as M
 from limen.model_selection import _CLAUDE_TIER_ORDER
 from limen.models import Task
 
@@ -413,3 +414,43 @@ def test_all_agent_type_models_are_valid_tier_aliases():
             f"{md.name} pins model={pinned!r} ∉ {sorted(valid)} — use a bare tier alias so "
             f"_resolve_claude_model resolves it to today's model (derive-never-pin)"
         )
+
+
+# ── the extracted ladder (model_selection.tier_for_classes) ──────────────────────────
+# The sort moved OUT of _claude_tier_for so the STREAMS registry can derive a job_class's
+# tier without importing dispatch (which would break model_selection's pure-stdlib contract).
+#
+# Read the agreement test honestly: while dispatch DELEGATES, the two can never disagree, so
+# equality alone proves nothing. What pins behavior is the `expected` column — verified by
+# mutation (forcing a reserved class to return "sonnet" fails these). The equality half earns
+# its keep only LATER, the day somebody reinstates a local sort inside _claude_tier_for; that
+# is the second-copy-of-the-ladder defect the charter forbids, and this is where it surfaces.
+
+
+def test_extracted_ladder_agrees_with_the_per_task_ladder(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": ["chore"]})
+    for cls, expected in (("canon", "opus"), ("kernel", "opus"), ("chore", "sonnet"), ("code", "haiku")):
+        via_task = D._claude_tier_for(_task(type_=cls))
+        via_classes = M.tier_for_classes({cls}, waste_classes=["chore"])
+        assert via_task == via_classes == expected, f"{cls}: task={via_task} classes={via_classes}"
+
+
+def test_extracted_ladder_defaults_to_haiku_not_the_account_default():
+    # No waste classes, no overrides, an unreserved class: the cheapest rung, so the existing
+    # escalation cascade does the work rather than a pre-assigned expensive tier.
+    assert M.tier_for_classes({"code"}) == "haiku"
+    assert M.tier_for_classes(set()) == "haiku"
+
+
+def test_extracted_ladder_honours_the_operator_override_map():
+    assert M.tier_for_classes({"docs"}, overrides={"opus": ["docs"]}) == "opus"
+    assert M.tier_for_classes({"docs"}, overrides={"sonnet": ["docs"]}) == "sonnet"
+
+
+def test_extracted_ladder_never_returns_fable_without_acceptance(monkeypatch):
+    # Fable is reserved above Opus and PLAN-ONLY; a reserved-Fable class must degrade, never
+    # silently select the top rung. Mirrors the acceptance gate the per-task ladder enforces.
+    monkeypatch.setattr(M, "_claude_fable_acceptance_present", lambda: False)
+    for cls in M._claude_fable_classes():
+        assert M.tier_for_classes({cls}) != "fable"

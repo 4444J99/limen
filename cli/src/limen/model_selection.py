@@ -21,6 +21,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+from collections.abc import Iterable, Mapping
 
 # The ladder rungs, cheapest-first. Shared with dispatch's earned-tier ladder. Fable is a
 # reserved top tier above Opus, not a new default escalation target.
@@ -175,6 +176,34 @@ def _fable_or_downgrade(fable_tier: str = "fable") -> str:
     top of the accept-time receipt gate."""
     downgrade = _fable_capped_tier(_fable_reserve_receipt_present())
     return downgrade if downgrade is not None else fable_tier
+
+
+def tier_for_classes(
+    classes: Iterable[str],
+    *,
+    waste_classes: Iterable[str] = (),
+    overrides: Mapping[str, Iterable[str]] | None = None,
+) -> str:
+    """THE class -> tier sort, cheapest-first. Default = haiku (verifiable, so the existing cascade
+    escalates); a higher rung is pre-assigned ONLY where failure is undetectable.
+
+    Extracted from ``dispatch._claude_tier_for`` so a THIRD consumer — the STREAMS registry's
+    ``job_class`` -> ``--model`` derivation — can reach the ladder without importing ``dispatch``
+    (which drags in the whole ``limen`` package and would break this module's pure-stdlib contract,
+    see the module docstring). Callers supply the two lane-local inputs rather than this module
+    reaching for them: ``waste_classes`` (ledger-DISCOVERED) and ``overrides``
+    (``logs/model-tiers.json``). ``dispatch`` keeps its per-task pin and its ``Task`` plumbing and
+    calls this for the sort, so there is exactly one ladder, not a second copy.
+    """
+    wanted = set(classes)
+    override = dict(overrides or {})
+    if wanted & (_claude_fable_classes() | set(override.get("fable") or [])):
+        return _fable_or_downgrade() if _claude_fable_acceptance_present() else _fable_fallback_tier()
+    if wanted & (_claude_opus_classes() | set(override.get("opus") or [])):
+        return "opus"
+    if wanted & (set(waste_classes) | set(override.get("sonnet") or [])):
+        return "sonnet"
+    return "haiku"
 
 
 def _claude_model_is_fable(model: str | None) -> bool:
