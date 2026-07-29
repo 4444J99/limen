@@ -359,6 +359,20 @@ def test_device_identity_collapses_apfs_volumes_to_physical_disk(
     }
 
     def diskutil(args, **_kwargs):
+        if args[-1].startswith("/dev/"):
+            return SimpleNamespace(
+                returncode=0,
+                stdout=plistlib.dumps(
+                    {
+                        "DeviceIdentifier": args[-1].removeprefix("/dev/"),
+                        "ParentWholeDisk": args[-1].removeprefix("/dev/"),
+                        "VirtualOrPhysical": "Physical",
+                        "WholeDisk": True,
+                        "BusProtocol": "PCI-Express",
+                        "SystemImage": False,
+                    }
+                ),
+            )
         return SimpleNamespace(
             returncode=0,
             stdout=plistlib.dumps(
@@ -377,6 +391,67 @@ def test_device_identity_collapses_apfs_volumes_to_physical_disk(
 
     assert custody._device_identity(first) == custody._device_identity(second)
     assert custody._device_identity(first) != custody._device_identity(external)
+
+
+def test_device_identity_rejects_virtual_disk_image(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mounted_image = tmp_path / "mounted-image"
+    mounted_image.mkdir()
+
+    def diskutil(args, **_kwargs):
+        payload = (
+            {
+                "DeviceIdentifier": "disk8s1",
+                "APFSPhysicalStores": [{"APFSPhysicalStore": "disk8s1"}],
+            }
+            if not args[-1].startswith("/dev/")
+            else {
+                "DeviceIdentifier": "disk8",
+                "ParentWholeDisk": "disk8",
+                "VirtualOrPhysical": "Virtual",
+                "WholeDisk": True,
+                "BusProtocol": "Disk Image",
+                "SystemImage": False,
+            }
+        )
+        return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
+
+    monkeypatch.setattr(custody.subprocess, "run", diskutil)
+
+    with pytest.raises(ReceiptError, match="not backed by a physical"):
+        custody._device_identity(mounted_image)
+
+
+def test_campaign_rejects_private_receipt_inside_source_tree(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    private_receipt = source / "metabolism.json"
+    initial = metabolism_receipt(evidence=False)
+    initial.source = SourceProof(
+        path=str(source),
+        kind=initial.source.kind,
+        bytes=initial.source.bytes,
+        sha256=initial.source.sha256,
+        stat_before=initial.source.stat_before,
+        stat_after=initial.source.stat_after,
+        inventory_before_sha256=initial.source.inventory_before_sha256,
+        inventory_after_sha256=initial.source.inventory_after_sha256,
+    )
+    initial.write(private_receipt)
+
+    with pytest.raises(ReceiptError, match="private metabolism receipt"):
+        run_custody_verification_campaign(
+            "codex-sessions",
+            private_receipt,
+            tmp_path / "vault",
+            tmp_path / "external",
+            tmp_path / "custody.json",
+            require_external_mount=False,
+        )
 
 
 def test_campaign_conflicting_projection_does_not_replace_private_evidence(
@@ -452,3 +527,52 @@ def test_campaign_projection_failure_does_not_replace_private_evidence(
 
     assert private_receipt.read_bytes() == original
     assert not output.exists()
+
+
+def test_campaign_repairs_existing_projection_permissions(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    private_receipt = tmp_path / "private" / "metabolism.json"
+    output = tmp_path / "projection" / "custody.json"
+    verified = metabolism_receipt()
+    verified.write(private_receipt)
+    write_custody_receipt(output, project_custody_receipt(verified))
+    output.chmod(0o644)
+    monkeypatch.setattr(custody, "hold_lease", lambda *_args, **_kwargs: nullcontext())
+    monkeypatch.setattr(
+        custody,
+        "verify_custody_restorations",
+        lambda *_args, **_kwargs: verified,
+    )
+
+    _, _, metabolism_changed, custody_changed = run_custody_verification_campaign(
+        "codex-sessions",
+        private_receipt,
+        tmp_path / "vault",
+        tmp_path / "external",
+        output,
+        require_external_mount=False,
+    )
+
+    assert metabolism_changed is False
+    assert custody_changed is False
+    assert output.stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("device_id", 1),
+        ("remote_refs", [1]),
+    ],
+)
+def test_receipt_rejects_non_string_restoration_identifiers(
+    field: str,
+    value: object,
+) -> None:
+    payload = metabolism_receipt().as_dict()
+    payload["restorations"][1][field] = value
+
+    with pytest.raises(ReceiptError, match="failed consistency checks"):
+        MetabolismReceipt.from_dict(payload)

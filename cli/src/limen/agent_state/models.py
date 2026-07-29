@@ -267,9 +267,15 @@ class MetabolismReceipt:
                         )
                     )
                 )
-                or (proof.device_id is not None and not _OPAQUE_ID_RE.fullmatch(proof.device_id))
+                or (
+                    proof.device_id is not None
+                    and (not isinstance(proof.device_id, str) or not _OPAQUE_ID_RE.fullmatch(proof.device_id))
+                )
                 or (proof.restored_at is not None and not _aware_timestamp(proof.restored_at))
-                or any(not _REMOTE_REF_RE.fullmatch(remote_ref) for remote_ref in proof.remote_refs)
+                or any(
+                    not isinstance(remote_ref, str) or not _REMOTE_REF_RE.fullmatch(remote_ref)
+                    for remote_ref in proof.remote_refs
+                )
                 or (proof.remote_refs and proof.scope != "git-full-manifest")
                 for proof in receipt.restorations
             )

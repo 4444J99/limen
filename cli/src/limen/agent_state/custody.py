@@ -157,10 +157,10 @@ def project_custody_receipt(
     )
 
 
-def _device_identity(path: Path) -> str:
+def _diskutil_info(target: str) -> dict[str, Any]:
     try:
         result = subprocess.run(
-            ["/usr/sbin/diskutil", "info", "-plist", str(path.resolve(strict=True))],
+            ["/usr/sbin/diskutil", "info", "-plist", target],
             capture_output=True,
             check=False,
             timeout=20,
@@ -171,6 +171,20 @@ def _device_identity(path: Path) -> str:
         raise ReceiptError("custody physical-device probe failed")
     try:
         payload = plistlib.loads(result.stdout)
+    except plistlib.InvalidFileException as exc:
+        raise ReceiptError("custody physical-device evidence is invalid") from exc
+    if not isinstance(payload, dict):
+        raise ReceiptError("custody physical-device evidence is invalid")
+    return payload
+
+
+def _device_identity(path: Path) -> str:
+    try:
+        resolved = str(path.resolve(strict=True))
+    except OSError as exc:
+        raise ReceiptError("custody restoration target is unavailable") from exc
+    payload = _diskutil_info(resolved)
+    try:
         stores = payload.get("APFSPhysicalStores")
         if isinstance(stores, list) and len(stores) == 1 and isinstance(stores[0], dict):
             store = str(stores[0]["APFSPhysicalStore"])
@@ -178,11 +192,27 @@ def _device_identity(path: Path) -> str:
             physical = match.group(1) if match else store
         else:
             physical = str(payload["ParentWholeDisk"])
-    except (KeyError, plistlib.InvalidFileException, TypeError) as exc:
+    except (KeyError, TypeError) as exc:
         raise ReceiptError("custody physical-device evidence is invalid") from exc
     if not re.fullmatch(r"disk[0-9]+", physical):
         raise ReceiptError("custody physical-device evidence is invalid")
-    material = f"limen-custody-physical-device-v2:{physical}".encode()
+    physical_info = _diskutil_info(f"/dev/{physical}")
+    if (
+        physical_info.get("DeviceIdentifier") != physical
+        or physical_info.get("ParentWholeDisk") != physical
+        or physical_info.get("WholeDisk") is not True
+        or physical_info.get("VirtualOrPhysical") == "Virtual"
+        or physical_info.get("BusProtocol") == "Disk Image"
+        or physical_info.get("MediaType") == "Disk Image"
+        or physical_info.get("SystemImage") is True
+    ):
+        raise ReceiptError("custody target is not backed by a physical whole disk")
+    material = (
+        "limen-custody-physical-device-v3:"
+        + physical
+        + ":"
+        + str(physical_info.get("MediaUUID") or physical_info.get("DiskUUID") or "")
+    ).encode()
     return "device_" + hashlib.sha256(material).hexdigest()[:32]
 
 
@@ -541,7 +571,7 @@ def _publish_campaign_receipts(
         _validate_existing_custody(
             output,
             projected,
-            persist_permissions=False,
+            persist_permissions=True,
         )
     metabolism_changed = _metabolism_write_required(metabolism_receipt, verified)
     _create_private_parents(output.parent)
@@ -625,7 +655,10 @@ def run_custody_verification_campaign(
     if output.expanduser().resolve(strict=False) == metabolism_receipt.expanduser().resolve(strict=False):
         raise ReceiptError("canonical and private custody receipts require distinct paths")
     receipt = MetabolismReceipt.read(metabolism_receipt)
-    if _target_is_within_source(Path(receipt.source.path), output):
+    source_root = Path(receipt.source.path)
+    if _target_is_within_source(source_root, metabolism_receipt):
+        raise ReceiptError("private metabolism receipt must remain outside the source tree")
+    if _target_is_within_source(source_root, output):
         raise ReceiptError("canonical custody output must remain outside the source tree")
     owner = f"agent-state-custody-proof-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-custody-proof"):
