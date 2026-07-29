@@ -101,6 +101,11 @@ from memory:
 - **`edu-organism` mirrors** (six standalone repos, read-only `--squash`) → drift is
   currently caught only by a manual `verify.sh`. Named follow-up: encode the mirror
   direction as declared data so drift becomes a predicate, per the registry pattern.
+  **Now counted** as the `mirror-drift-detection` vacuum in
+  `institutio/governance/convergence.yaml` (`status: unresolved`, `owner: null`) — a
+  follow-up named only in prose is a vacuum with nowhere to be counted, which is the
+  condition Rule #1 forbids. The registry row is the owner of this item's resolution;
+  this bullet is its rationale, not its record.
 
 ## The subject/cartridge contract
 

@@ -42,21 +42,21 @@ capabilities:
 
   daily-cadence:
     status: converged
-    owner: "~/Workspace/daily-engine"
+    owner: organvm/daily-engine
     doc: docs/convergence/learning-engine.md
     tenants: [fitness, asi-interview, studium-canon]
     duplicates: []
     owner_of_record: consulting
-    note: "The cadence spine (compose→check→render→log→gate). Phase-2 lift of its domain-generic core out of the private store is the named next step — lift, never fork."
+    note: "The cadence spine (compose→check→render→log→gate). Phase-2 lift of its domain-generic core out of the private store is the named next step — lift, never fork. Owner was the local path `~/Workspace/daily-engine`, which went RED on the operator host the moment the laptop-evacuation lane archived the clone: a local-path owner makes reachability depend on whether a working copy happens to be checked out, so an evacuated repo reads as a deleted one. The estate-census reference is stable across evacuation and verifiable in CI."
 
   spaced-repetition:
     status: converged
-    owner: "agon (plugin only)"
+    owner: organvm/vigiles-aeternae--agon-cosmogonicum
     doc: docs/convergence/learning-engine.md
     tenants: [organvm/adaptive-personal-syllabus]
     duplicates: []
     owner_of_record: consulting
-    note: "The one capability nothing else had; everything else in agon was retired to a thin tenant."
+    note: "The one capability nothing else had; everything else in agon was retired to a thin tenant. Scope is the SPACED-REPETITION PLUGIN only — not the whole repo. Owner was the prose string `agon (plugin only)`, which resolved to nothing and could only ever be an advisory; the qualifier now lives here, in the note, where prose belongs, while the owner field carries a reference the predicate can actually verify."
 
   # ── converged in this workstream (the pattern, proven small) ────────────────────────
   corpus-resolution:
@@ -163,3 +163,11 @@ capabilities:
     duplicates: []
     owner_of_record: governance
     note: "Resolved 2026-07-26: CONVENTION, not library — the declared-data-plus-derivation precedent (GATES/SENSORS/PARAMETERS/CORPORA) and the zero-cross-repo-dependency baseline both cut against coupling six release cycles for six struct definitions. The verdict shape + process rules live in the owner doc; the six implementations are tenants conforming to it. Reopens as lifting only if a seventh implementation duplicates non-trivial logic."
+
+  mirror-drift-detection:
+    status: unresolved
+    owner: null
+    doc: docs/convergence/learning-engine.md
+    duplicates: []
+    owner_of_record: governance
+    note: "COUNTED VACUUM (Rule #1). The learning-engine doc states the six read-only `edu-organism` mirrors have their drift 'caught only by a manual verify.sh', and names the follow-up: encode the mirror direction as declared data so drift becomes a predicate. That follow-up has no owner — it lived as a prose sentence inside a doc, which is exactly where a vacuum hides. Recorded here so it is counted loudly instead. The shape it wants is the one that converged corpus-resolution: a mirrors registry of {path, origin_repo, direction, last_synced_sha} plus a check-mirrors.py drift predicate. Deliberately NOT filled in yet: every mirrored repo is currently cold-archived off this host by the laptop-evacuation lane, and a registry whose last_synced_sha values cannot be verified would be declared data that misdescribes ground truth — worse than the vacuum it replaces. Resolve when the repos are reachable."
