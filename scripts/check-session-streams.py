@@ -152,7 +152,7 @@ def launch_command(sid, stream):
     kickstart.sh path the launcher prints.
     """
     return (
-        f"workstream --conduct --runway {stream['runway']} \\\n"
+        f"limen workstream --conduct --runway {stream['runway']} \\\n"
         f"  --workstream {sid} \\\n"
         f"  --prompt-file {stream['intent']} \\\n"
         f"  limen {sid}"
