@@ -369,6 +369,17 @@ if [[ -n "$launch_lane_model" ]]; then
       ;;
   esac
 fi
+if [[ "$launch_profile_values" -eq 3 && -n "$launch_sandbox" ]]; then
+  # STATIC sandbox validation, ordered before EVERY binary probe for the same reason the lane tier
+  # pin above is: an invalid --sandbox value is invalid regardless of what is installed, so CI (no
+  # codex binary) must reach the same verdict as a workstation that has one. Ordered before the
+  # generic probe on the next line, not merely before the codex-specific one further down — that
+  # generic probe is what fires first, and it exits 127 before the bad value is ever looked at.
+  # validate-codex-launch re-runs this same authorization itself, so this strictly ADDS a gate.
+  if ! python3 "$contract_helper" validate-codex-sandbox --sandbox "$launch_sandbox" >/dev/null; then
+    exit 2
+  fi
+fi
 if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry_binary" >/dev/null; then
   echo "native CLI not found for canonical lane $agent" >&2
   exit 127

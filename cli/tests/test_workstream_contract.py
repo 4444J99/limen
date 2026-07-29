@@ -848,9 +848,14 @@ def test_bare_pin_requires_a_launch_and_partial_codex_profile_still_rejected() -
 def test_codex_lane_still_demands_its_triple_and_never_accepts_a_bare_pin() -> None:
     """The Codex launch profile is untouched: exactly one way to launch it explicitly.
 
-    The refusal must be ENVIRONMENT-INDEPENDENT. Argument validation is ordered before the
-    binary-existence probe precisely so this asserts 2 on CI, which has no codex binary and would
-    otherwise exit 127 before ever reaching the pin check.
+    Both refusals must be ENVIRONMENT-INDEPENDENT, and each needed its own ordering fix:
+      * the bare pin is refused before the generic binary probe;
+      * an invalid --sandbox is rejected by the STATIC `validate-codex-sandbox` helper before that
+        same probe, because `validate-codex-launch` needs a resolved --binary and so cannot run
+        until codex is known to exist.
+    An argument is invalid regardless of what happens to be installed, so CI (no codex binary) must
+    reach the same verdict as a workstation that has one. Without either fix this exits 127 on CI
+    and 2 locally — the same assertion passing or failing on environment alone.
     """
     bare = _launcher("--model", "opus", "--agent", "codex")
     assert bare.returncode == 2
