@@ -23,6 +23,11 @@ required together. The exact model and effort must exist in the live local Codex
 and launch time; no substitution is permitted. Omitting --agent records the Codex profile without
 launching immediately, while --agent codex launches the validated capsule.
 
+--model supplied ALONE is a lane tier pin for a non-Codex lane: it is passed to the launched CLI as
+--model <value> and nothing else changes. It requires --agent, and the lane must be one whose
+--model flag form is verified (claude, gemini, agy, opencode); any other lane refuses the pin rather
+than ignoring it. A pin never builds a Codex launch profile, so it needs no effort or sandbox.
+
 --conduct registers the launched direct session with the shared broker as human-protected. Broker
 credentials are read from the environment, never written into the capsule or command line, and
 removed before the native agent process starts.
@@ -71,6 +76,9 @@ workstream=""
 launch_model=""
 launch_reasoning_effort=""
 launch_sandbox=""
+# A bare --model on a non-Codex lane. Kept separate from launch_model because a non-empty
+# launch_model is what builds the v2 Codex contract, which requires an effort and a sandbox.
+launch_lane_model=""
 write_readme=1
 
 while [[ $# -gt 0 ]]; do
@@ -218,9 +226,25 @@ launch_profile_values=0
 [[ -n "$launch_model" ]] && launch_profile_values=$((launch_profile_values + 1))
 [[ -n "$launch_reasoning_effort" ]] && launch_profile_values=$((launch_profile_values + 1))
 [[ -n "$launch_sandbox" ]] && launch_profile_values=$((launch_profile_values + 1))
-if [[ "$launch_profile_values" -ne 0 && "$launch_profile_values" -ne 3 ]]; then
-  echo "--model, --reasoning-effort, and --sandbox must be supplied together" >&2
+if [[ "$launch_profile_values" -eq 1 && -n "$launch_model" ]]; then
+  # --model ALONE is a lane tier pin: it pins the launched lane's model without claiming the
+  # Codex explicit launch profile. Move it out of launch_model so the v2 contract is not built.
+  launch_lane_model="$launch_model"
+  launch_model=""
+  launch_profile_values=0
+elif [[ "$launch_profile_values" -ne 0 && "$launch_profile_values" -ne 3 ]]; then
+  echo "--model alone pins a non-Codex lane's model; otherwise --model, --reasoning-effort, and --sandbox must be supplied together" >&2
   exit 2
+fi
+if [[ -n "$launch_lane_model" ]]; then
+  if [[ "$launch_agent" -ne 1 ]]; then
+    echo "--model alone is a lane tier pin and requires --agent; with no launch nothing would consume it" >&2
+    exit 2
+  fi
+  if [[ "$write_readme" -ne 1 ]]; then
+    echo "a lane tier pin cannot be combined with --no-readme" >&2
+    exit 2
+  fi
 fi
 if [[ "$launch_profile_values" -eq 3 && "$write_readme" -ne 1 ]]; then
   echo "explicit model launch profiles cannot be combined with --no-readme" >&2
@@ -327,6 +351,35 @@ PY
 agent="$(printf '%s\n' "$agent_resolution" | sed -n '1p')"
 registry_binary="$(printf '%s\n' "$agent_resolution" | sed -n '2p')"
 agent_capabilities="$(printf '%s\n' "$agent_resolution" | sed -n '3p')"
+if [[ -n "$launch_lane_model" ]]; then
+  # Ordered BEFORE the binary-existence probe on purpose: a flag combination is invalid
+  # regardless of what happens to be installed, and CI (no codex binary) must reach the same
+  # verdict as a workstation that has one.
+  # Refuse rather than swallow. Verified --model flag forms only; codex keeps its own triple so
+  # there stays exactly one way to launch it explicitly.
+  case "$agent" in
+    claude|gemini|agy|opencode) ;;
+    codex)
+      echo "lane tier pin refused: the codex lane requires the validated --model/--reasoning-effort/--sandbox profile, not a bare pin" >&2
+      exit 2
+      ;;
+    *)
+      echo "lane tier pin refused: lane $agent has no verified --model flag form; remove the pin or extend the verified allowlist" >&2
+      exit 2
+      ;;
+  esac
+fi
+if [[ "$launch_profile_values" -eq 3 && -n "$launch_sandbox" ]]; then
+  # STATIC sandbox validation, ordered before EVERY binary probe for the same reason the lane tier
+  # pin above is: an invalid --sandbox value is invalid regardless of what is installed, so CI (no
+  # codex binary) must reach the same verdict as a workstation that has one. Ordered before the
+  # generic probe on the next line, not merely before the codex-specific one further down — that
+  # generic probe is what fires first, and it exits 127 before the bad value is ever looked at.
+  # validate-codex-launch re-runs this same authorization itself, so this strictly ADDS a gate.
+  if ! python3 "$contract_helper" validate-codex-sandbox --sandbox "$launch_sandbox" >/dev/null; then
+    exit 2
+  fi
+fi
 if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry_binary" >/dev/null; then
   echo "native CLI not found for canonical lane $agent" >&2
   exit 127
@@ -472,7 +525,7 @@ if [[ "$write_readme" -eq 1 ]]; then
     "$wt" "$repo" "$slug" "$branch" "$workstream" "$from_ref" "$autonomous" \
     "$prompt_payload" "$script_dir/../spec/continuation-capsule" "$runway" "$contract_helper" \
     "$agent" "$registry_binary" "$conduct" "$allow_shell_fallback" "$agent_capabilities" \
-    "$launch_model" "$launch_reasoning_effort" "$launch_sandbox"
+    "$launch_model" "$launch_reasoning_effort" "$launch_sandbox" "$launch_lane_model"
 fi
 
 if [[ "$launch_agent" -eq 1 ]]; then

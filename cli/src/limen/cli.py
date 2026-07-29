@@ -576,7 +576,7 @@ def harvest(agent):
     "--model",
     "launch_model",
     default=None,
-    help="Exact human-selected Codex model; requires reasoning effort and sandbox.",
+    help="With --reasoning-effort and --sandbox: the exact human-selected Codex model. Alone: a lane tier pin passed to a non-Codex lane as --model (claude, gemini, agy, opencode); requires --agent.",
 )
 @click.option(
     "--reasoning-effort",
