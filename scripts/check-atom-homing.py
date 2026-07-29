@@ -48,6 +48,10 @@ CEILING = ROOT / "institutio" / "governance" / "atom-residue-baseline.txt"
 HARVEST = SCRIPTS / "brainstorm-harvest.py"
 CONDUCT_CLI = ROOT / "cli" / "src" / "limen" / "conduct" / "cli.py"
 
+sys.path.insert(0, str(SCRIPTS))
+import reference_state
+from reference_state import ReferenceResolver
+
 # The eight-kind schema is fixed by the semantic pass itself; a ninth kind is a schema
 # change, not a registry edit, and must fail loudly here first.
 CANONICAL_KINDS = {
@@ -126,7 +130,7 @@ def _load_convergence_module():
 
 
 def _home_reachable(home: str, home_class: str, conv) -> str:
-    """'ok' | 'missing' | 'unverifiable-here' | 'prose'.
+    """'ok' | 'archived' | 'missing' | 'unverifiable-here' | 'prose'.
 
     Resolution is keyed off home_class, because the three classes carry different burdens
     of proof:
@@ -156,9 +160,14 @@ def _home_reachable(home: str, home_class: str, conv) -> str:
     if home_class == "public":
         return "ok" if (ROOT / home).exists() else "missing"
 
-    # private: an in-repo path still counts if it happens to exist, else host-aware.
+    # private: an in-repo path still counts if it happens to exist; otherwise ask the CUSTODY
+    # axis first (it can prove an evacuated store is archived rather than lost), and fall back
+    # to the convergence resolver for the org/repo census case it owns.
     if (ROOT / home).exists():
         return "ok"
+    res = ReferenceResolver().resolve(home)
+    if res.state in (reference_state.OK, reference_state.ARCHIVED):
+        return "ok" if res.state == reference_state.OK else "archived"
     if conv is not None:
         return conv._owner_reachable(home, conv._census_repos())
     return "unverifiable-here"
@@ -263,10 +272,19 @@ def main() -> int:
         verdict = _home_reachable(home, row.get("home_class", ""), conv)
         if verdict == "missing":
             fail("B", f"{kid}: home {home!r} does not resolve")
+        elif verdict == "archived":
+            # Accounted for by the CUSTODY axis: absent here, but receipts prove two verified
+            # copies on independent devices. Distinct from 'ok' (you cannot write to it right
+            # now) and from 'missing' (it is not lost) — which is the whole point of the state.
+            advise("B", f"{kid}: home {home!r} is archived off-host with verified custody — accounted for, not lost")
         elif verdict == "prose":
             advise("B", f"{kid}: home {home!r} is prose, not a resolvable reference")
         elif verdict == "unverifiable-here":
             advise("B", f"{kid}: home {home!r} unverifiable on this host (evacuated store or CI runner)")
+        elif verdict != "ok":
+            # No silent fall-through: an unrecognised verdict is drift in the resolver contract,
+            # not an implicit pass. Adding a state upstream must never read as 'fine' down here.
+            fail("B", f"{kid}: home {home!r} returned unknown reachability verdict {verdict!r}")
 
         # ── G: anti-fake deferral ────────────────────────────────────────────────
         deferred = row.get("deferred")
@@ -351,8 +369,7 @@ def main() -> int:
     atoms = ((census.get("totals") or {}).get("atoms")) if census else None
     scope = f" of {atoms}" if isinstance(atoms, int) else ""
     print(
-        f"atom-homing registry: OK ({len(kinds)} kinds homed, "
-        f"{residue_total}{scope} atoms residual, checks A-G clean)"
+        f"atom-homing registry: OK ({len(kinds)} kinds homed, {residue_total}{scope} atoms residual, checks A-G clean)"
     )
     return 0
 

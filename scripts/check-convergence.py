@@ -24,6 +24,10 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import reference_state
+from reference_state import ReferenceResolver
+
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "convergence.yaml"
 CENSUS = ROOT / "logs" / "constellation" / "estate-census.json"
@@ -43,7 +47,7 @@ def _census_repos() -> set[str]:
 
 
 def _owner_reachable(owner: str, repos: set[str]) -> str:
-    """'ok', 'missing', 'unverifiable-here', or 'prose'.
+    """'ok', 'archived', 'missing', 'unverifiable-here', or 'prose'.
 
     Host-aware by the same rule as check-corpora: 'missing' is only claimable
     where the evidence to prove existence is actually present. The estate
@@ -53,10 +57,17 @@ def _owner_reachable(owner: str, repos: set[str]) -> str:
     """
     candidate = owner.split("::")[0].strip()
     if candidate.startswith("~"):
-        if Path(candidate).expanduser().exists():
-            return "ok"
-        # only the operator host (which has a Workspace at all) can prove absence
-        return "missing" if (Path.home() / "Workspace").is_dir() else "unverifiable-here"
+        # DELEGATED to the CUSTODY axis (scripts/reference_state.py) — the single resolver
+        # this file used to carry its own copy of. The copy called an ARCHIVED root
+        # 'missing' whenever ~/Workspace existed, so the 2026-07-27 evacuation turned every
+        # local-path owner red on the operator host while CI stayed green; PR #1611 patched
+        # two rows by hand, which fixed the symptom and left the resolver.
+        res = ReferenceResolver().resolve(candidate)
+        return {
+            reference_state.OK: "ok",
+            reference_state.ARCHIVED: "archived",
+            reference_state.UNACCOUNTED: "missing",
+        }.get(res.state, "unverifiable-here")
     if (ROOT / candidate).exists():
         return "ok"
     parts = candidate.split()
@@ -101,6 +112,10 @@ def main() -> int:
             state = _owner_reachable(str(owner), repos)
             if state == "missing":
                 failures.append(f"B: {cid}: owner not found — {owner}")
+            elif state == "archived":
+                advisories.append(
+                    f"B: {cid}: owner archived off-host with verified custody ({owner}) — accounted for, not lost"
+                )
             elif state == "unverifiable-here":
                 advisories.append(f"B: {cid}: owner unverifiable on this host ({owner}) — binds on the operator host")
             elif state == "prose":
