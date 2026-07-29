@@ -351,11 +351,10 @@ PY
 agent="$(printf '%s\n' "$agent_resolution" | sed -n '1p')"
 registry_binary="$(printf '%s\n' "$agent_resolution" | sed -n '2p')"
 agent_capabilities="$(printf '%s\n' "$agent_resolution" | sed -n '3p')"
-if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry_binary" >/dev/null; then
-  echo "native CLI not found for canonical lane $agent" >&2
-  exit 127
-fi
 if [[ -n "$launch_lane_model" ]]; then
+  # Ordered BEFORE the binary-existence probe on purpose: a flag combination is invalid
+  # regardless of what happens to be installed, and CI (no codex binary) must reach the same
+  # verdict as a workstation that has one.
   # Refuse rather than swallow. Verified --model flag forms only; codex keeps its own triple so
   # there stays exactly one way to launch it explicitly.
   case "$agent" in
@@ -369,6 +368,10 @@ if [[ -n "$launch_lane_model" ]]; then
       exit 2
       ;;
   esac
+fi
+if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry_binary" >/dev/null; then
+  echo "native CLI not found for canonical lane $agent" >&2
+  exit 127
 fi
 if [[ "$launch_profile_values" -eq 3 ]]; then
   if [[ "$agent" != "codex" ]]; then

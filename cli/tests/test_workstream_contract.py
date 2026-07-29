@@ -846,7 +846,12 @@ def test_bare_pin_requires_a_launch_and_partial_codex_profile_still_rejected() -
 
 
 def test_codex_lane_still_demands_its_triple_and_never_accepts_a_bare_pin() -> None:
-    """The Codex launch profile is untouched: exactly one way to launch it explicitly."""
+    """The Codex launch profile is untouched: exactly one way to launch it explicitly.
+
+    The refusal must be ENVIRONMENT-INDEPENDENT. Argument validation is ordered before the
+    binary-existence probe precisely so this asserts 2 on CI, which has no codex binary and would
+    otherwise exit 127 before ever reaching the pin check.
+    """
     bare = _launcher("--model", "opus", "--agent", "codex")
     assert bare.returncode == 2
     assert "lane tier pin refused" in bare.stderr, bare.stderr
