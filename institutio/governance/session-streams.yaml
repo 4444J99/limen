@@ -15,6 +15,16 @@
 #   prints, per openable domain, the exact `workstream` command. The question "which streams do I
 #   open?" is a command's output, not a table somebody maintains.
 #
+#   And ACTING on that answer is one command too — the printer alone still left the operator reading
+#   blocks and retyping them into terminal tabs, which is the same hand-loop one level up:
+#
+#       scripts/open-streams.sh              # open every ready domain, each in its own tmux window
+#       scripts/open-streams.sh --dry-run    # show exactly what would open, touch nothing
+#
+#   It consumes `--ready --json` (each row carries the resolved argv, from the SAME builder the text
+#   view renders), bounds concurrency against this machine's real memory, and names every stream it
+#   defers. Re-running opens only what is not already open.
+#
 # THE ENGINE IS NOT NEW (IF-LEARNING-ENGINE, subject/cartridge contract)
 #   `limen workstream <repo> <slug>` (-> scripts/start-worktree-session.sh) is the estate's only
 #   worktree-creating CLI verb and the single owner of lane creation. A stream is a SUBJECT loaded
