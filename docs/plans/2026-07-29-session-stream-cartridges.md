@@ -8,6 +8,22 @@ A *cartridge* is a packet injection: a self-contained block pasted into a **cold
 carries its own measured ground truth, its own branch, its own boundary, and its own executable
 done-predicate. No cartridge assumes the reader saw any prior session, this document, or each other.
 
+> **Status — this document is PROVENANCE, not the operative surface.** It records the measurement
+> and the reasoning that produced the stream set, and `institutio/governance/session-streams.yaml`
+> cites it for exactly that. It is landed so that citation resolves; a registry whose provenance
+> exists only on an unmerged branch cites nothing.
+>
+> Two successors outrank it, both on `main`:
+>
+> * the **dependency graph and ready-set** are declared data in `session-streams.yaml` and DERIVED
+>   by `scripts/check-session-streams.py --ready` — this document's §"Dependency graph" is the
+>   prose it replaced, kept for its measurement, not to be re-read as current;
+> * each domain's operative cartridge is `docs/continuations/<id>/intent.md`.
+>
+> Where a per-stream section here and its `intent.md` differ, **the intent wins** — that is not
+> hypothetical: §S8 below asserted a predicate was unbuilt when it had already shipped, and check C
+> of that registry caught it. Read the intents; read this for how the set was arrived at.
+
 ---
 
 ## What measurement says before any stream opens
@@ -513,17 +529,33 @@ ideal. The unit of a brainstorm is an ATOM in the extract registry (IF-LEARNING-
 subject/cartridge contract, generalized). A repo is minted ONLY when an atom needs what only a repo
 provides: its own deploy surface, its own collaborator grant, or its own visibility boundary.
 
-MISSION: ship scripts/repo-genesis.py — the scaffolding gate this estate has never had. Today
-`gh repo create` appears twice in the entire estate, both one-offs: repos appeared by hand and were
-classified after the fact. THIS TOOL REFUSES FAR MORE OFTEN THAN IT MINTS. All four gates must pass:
-  G1 evidence   — a non-empty demand-evidence reference (extract path, dossier path, or CONST-/IRF
-                  id). "I want it" is not evidence.
-  G2 necessity  — names WHICH repo-only affordance is required (deploy surface / collaborator grant
-                  / visibility boundary). Absent one, the correct output is an atom, not a repo.
-  G3 non-duplication — no existing capability owner covers it. Query convergence.yaml; a mint that
-                  duplicates a converged owner IS the 7th engine.
-  G4 amalgamation — IF-AMALGAMATION: mints must not outpace lifts. Check the ledger; if the fleet is
-                  amalgamating slower than it spawns, the gate REFUSES regardless of G1-G3.
+CORRECTION — this block asserted the gate did not exist, and that was WRONG. It was caught by
+scripts/check-session-streams.py check C on 2026-07-29 (the anti-fake rung: a stream may not claim
+to build a predicate that is already on main). Ground truth: scripts/repo-genesis.py EXISTS on
+origin/main, landed in PR #1535, with four shipped gates — and they are NOT the four this block
+named:
+  G1 evidence  gate_evidence  non-empty demand-evidence ref (extract path, dossier path, CONST-/IRF id)
+  G2 name      gate_name      scripts/nomenclator.py --check <name> clears the naming canon
+  G3 class     gate_class     the name resolves to a declared estate.yaml class by glob (never class J)
+  G4 seed      gate_seed      at least one brainstorm extract or seed doc — an empty repo is a vacuum
+
+MISSION: close the DEMAND half. The shipped four check that a mint is well-FORMED (named right,
+classed right, seeded, with *some* evidence attached). None checks that the repo is WARRANTED — that
+is the gap 149 repos walked through. Add three predicates in the tool's existing gate_* idiom:
+  necessity        — names WHICH repo-only affordance is required (deploy surface / collaborator
+                     grant / visibility boundary), from a closed enum. Absent one, the correct
+                     output is an atom, not a repo, and the gate says so.
+  non-duplication  — query convergence.yaml; if a converged owner already covers the capability,
+                     refuse. A mint that duplicates a converged owner IS the 7th engine.
+  amalgamation     — IF-AMALGAMATION: mints must not outpace lifts. Read the ledger; if the fleet
+                     amalgamates slower than it spawns, REFUSE regardless of every other gate. This
+                     is the one that would have stopped the 149.
+
+Keep the shipped four intact and their NUMBERING STABLE — renumbering gates that already shipped
+breaks every receipt citing them. Add the new checks alongside, named, not renumbered.
+
+The operative, corrected cartridge for this domain is docs/continuations/s8-mint-by-demand/intent.md
+on main; where it and this section differ, the intent wins.
 
 Visibility is NOT a judgment call and must not be asked: institutio/governance/estate.yaml glob
 classes assign every organvm/** repo a class automatically. A genuine exception is a repo_override
