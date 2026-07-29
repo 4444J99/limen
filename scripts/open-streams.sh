@@ -30,8 +30,16 @@
 #   reaches this script; and a stream whose tmux window already exists is skipped here — which
 #   covers the window that outlived its worktree.
 #
+# WHICH LANE OPENS THEM IS THE OPERATOR'S CHOICE, NOT THE REGISTRY'S
+#   The registry emits `--agent auto` and may never pin a provider — the capsule contract declares
+#   `lane_selection: derive_from_live_capabilities`. `auto` resolves through the live census ordered
+#   by $LIMEN_AGENT, so on a stock host census ORDER picks the lane (codex, not claude). `--lane`
+#   puts that choice where it belongs: in the environment, for this run only. Vendor-neutrality
+#   stays in declared data; the operator still gets to say who opens the work.
+#
 # Usage:
 #   scripts/open-streams.sh                  # open the ready set, up to the derived bound
+#   scripts/open-streams.sh --lane claude    # ...on a chosen lane (claude|codex|agy|opencode|…)
 #   scripts/open-streams.sh --dry-run        # print exactly what would open, touch nothing
 #   scripts/open-streams.sh --max-parallel 1 # open one, name the rest
 #   scripts/open-streams.sh --all            # ignore the bound (you accept the jetsam risk)
@@ -45,6 +53,7 @@ session="${LIMEN_STREAMS_TMUX_SESSION:-limen-streams}"
 max_parallel="${LIMEN_STREAMS_MAX_PARALLEL:-}"
 dry_run=0
 unbounded=0
+lane_choice=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -56,10 +65,62 @@ while [[ $# -gt 0 ]]; do
     --session)
       [[ $# -ge 2 ]] || { echo "missing value for --session" >&2; exit 2; }
       session="$2"; shift 2 ;;
+    --lane)
+      # Choose which native lane opens the domains. The REGISTRY stays vendor-neutral — it emits
+      # `--agent auto` because the capsule contract declares `lane_selection:
+      # derive_from_live_capabilities` and may never pin a provider. `auto` then resolves through
+      # the live census, ordered by $LIMEN_AGENT. So the correct place for the operator's choice is
+      # the environment, not declared data, and this flag is exactly that: it sets LIMEN_AGENT for
+      # this run. Without it, census ORDER decides — which on a stock host is codex, not claude.
+      [[ $# -ge 2 ]] || { echo "missing value for --lane" >&2; exit 2; }
+      lane_choice="$2"; shift 2 ;;
     -h|--help) sed -n '2,40p' "${BASH_SOURCE[0]}"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
+
+# Validate the requested lane against the LIVE census before anything opens. A lane that is not
+# live, or whose binary is not on PATH, must be refused here with the real alternatives named —
+# discovering it inside a tmux window means N panes each printing an error nobody is watching.
+# Checked even under --dry-run: a dry run whose lane is invalid would print a plan that cannot run.
+if [[ -n "$lane_choice" ]]; then
+  if ! lane_ok="$(
+    PYTHONPATH="$repo_root/cli/src${PYTHONPATH:+:$PYTHONPATH}" python3 - "$lane_choice" <<'PY'
+import shutil
+import sys
+
+from limen.census import VENDORS, by_name, canonical
+
+
+def native(v):
+    p = getattr(v, "execution", None)
+    return v.local_checkout if p is None else (p.transport == "native-cli" or p.transport.startswith("ianva-"))
+
+
+def binary(v):
+    for cand in dict.fromkeys(x for x in (v.name, getattr(v, "binary", "")) if x):
+        found = shutil.which(cand)
+        if found:
+            return found
+    return None
+
+
+live = [v for v in VENDORS if v.status.available and v.status.state == "live" and native(v) and binary(v)]
+want = canonical(sys.argv[1].strip().lower()) or sys.argv[1].strip().lower()
+if any(v.name == want for v in live):
+    print(want)
+    raise SystemExit(0)
+names = ", ".join(v.name for v in live) or "(none)"
+print(f"lane {sys.argv[1]!r} is not a live native lane on this host; live lanes: {names}", file=sys.stderr)
+raise SystemExit(2)
+PY
+  )"; then
+    echo "open-streams: refusing to open — see above" >&2
+    exit 2
+  fi
+  # `auto` reads this: the registry stays neutral, the operator's choice rides the environment.
+  export LIMEN_AGENT="$lane_ok"
+fi
 
 if [[ "$dry_run" -eq 0 ]] && ! command -v tmux >/dev/null 2>&1; then
   echo "open-streams: tmux not found — install it (brew install tmux) or use --dry-run" >&2
