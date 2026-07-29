@@ -32,55 +32,57 @@ def test_custody_projection_command_is_path_free_and_idempotent(
         restoration_proofs=(object(), object()),
     )
     observed: dict[str, object] = {}
-    monkeypatch.setattr(
-        module,
-        "MetabolismReceipt",
-        SimpleNamespace(read=lambda path: metabolism),
-    )
 
-    def project(receipt, **kwargs):
-        observed["receipt"] = receipt
-        observed["project"] = kwargs
-        return projected
+    def run(name, metabolism_path, vault_root, external_root, output, **kwargs):
+        observed.update(
+            {
+                "name": name,
+                "metabolism_path": metabolism_path,
+                "vault_root": vault_root,
+                "external_root": external_root,
+                "output": output,
+                "kwargs": kwargs,
+            }
+        )
+        return metabolism, projected, True, True
 
-    def write(path, receipt):
-        observed["output"] = path
-        observed["projected"] = receipt
-        return True
-
-    monkeypatch.setattr(module, "project_custody_receipt", project)
-    monkeypatch.setattr(module, "write_custody_receipt", write)
+    monkeypatch.setattr(module, "run_custody_verification_campaign", run)
     metabolism_path = tmp_path / "private-metabolism.json"
     output_path = tmp_path / "private-custody.json"
+    vault_root = tmp_path / "fresh-clone"
+    external_root = tmp_path / "external"
 
     result = module.main(
         [
             "custody-receipt",
+            "codex-sessions",
             "--metabolism-receipt",
             str(metabolism_path),
+            "--vault-root",
+            str(vault_root),
+            "--external-root",
+            str(external_root),
             "--output",
             str(output_path),
-            "--primary-device-id",
-            "githubRemoteDevice0001",
-            "--external-device-id",
-            "t7RecoveryDevice0001",
-            "--restored-at",
-            "2026-07-29T14:30:00Z",
         ]
     )
 
     stdout = capsys.readouterr().out
     payload = json.loads(stdout)
     assert result == 0
-    assert observed["receipt"] is metabolism
+    assert observed["name"] == "codex-sessions"
+    assert observed["metabolism_path"] == metabolism_path
+    assert observed["vault_root"] == vault_root
+    assert observed["external_root"] == external_root
     assert observed["output"] == output_path
-    assert observed["projected"] is projected
-    assert observed["project"]["primary_device_id"] == "githubRemoteDevice0001"
-    assert observed["project"]["external_device_id"] == "t7RecoveryDevice0001"
-    assert observed["project"]["restored_at"].utcoffset() is not None
+    assert observed["kwargs"] == {
+        "repository": "organvm/arca",
+        "key_service": "limen-arca-vault",
+    }
     assert payload == {
         "changed": True,
         "custody_id": projected.custody_id,
+        "metabolism_changed": True,
         "restoration_count": 2,
         "schema": "limen.custody_receipt.v1",
         "source_retired": False,

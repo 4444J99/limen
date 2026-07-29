@@ -13,7 +13,12 @@ from typing import Any
 
 from limen.host_admission import hold_lease
 
-from .crypto import EncryptedAtomPacker, keychain_key, verify_atom_packs
+from .crypto import (
+    EncryptedAtomPacker,
+    encryption_profile_digest,
+    keychain_key,
+    verify_atom_packs,
+)
 from .file_provider import (
     CapturedFile,
     FileProviderResult,
@@ -85,8 +90,17 @@ def _require_custody_targets_outside_source(
         try:
             resolved.relative_to(source)
         except ValueError:
-            continue
-        nested.append(label)
+            for ancestor in (resolved, *resolved.parents):
+                if not ancestor.exists():
+                    continue
+                try:
+                    if os.path.samefile(ancestor, source):
+                        nested.append(label)
+                        break
+                except OSError:
+                    continue
+        else:
+            nested.append(label)
     if nested:
         raise PipelineError("custody targets must remain outside the source tree: " + ", ".join(nested))
 
@@ -125,6 +139,10 @@ def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
                 logical_sha256=value.get("logical_sha256"),
                 source_sha256=value.get("source_sha256"),
                 detail=str(value.get("detail", "")),
+                device_id=value.get("device_id"),
+                restored_at=value.get("restored_at"),
+                encryption_profile_digest=value.get("encryption_profile_digest"),
+                remote_refs=tuple(value.get("remote_refs", ())),
             )
             for value in manifest.get("restorations", [])
         ]
@@ -144,6 +162,7 @@ def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
             source=source,
             atom_count=int(manifest["atom_count"]),
             logical_sha256=str(logical_sha256 or ""),
+            encryption_profile_digest=manifest.get("encryption_profile_digest"),
             packs=packs,
             duplicate_payloads=int(manifest.get("duplicate_chunks", 0)),
             restorations=historical_restorations,
@@ -274,6 +293,7 @@ def capture_cold_tree(
             source=result.source,
             atom_count=result.atom_count,
             logical_sha256=result.logical_sha256,
+            encryption_profile_digest=encryption_profile_digest(),
             packs=packs,
             duplicate_payloads=result.duplicate_chunks,
             external_chunks=external_chunks,
@@ -287,6 +307,7 @@ def capture_cold_tree(
             "file_count": result.file_count,
             "atom_count": result.atom_count,
             "logical_sha256": result.logical_sha256,
+            "encryption_profile_digest": receipt.encryption_profile_digest,
             "duplicate_chunks": result.duplicate_chunks,
             "cold_bytes": plan.cold_bytes,
             "retained_hot_bytes": plan.hot_bytes,
@@ -364,6 +385,9 @@ def resume_cold_tree_capture(
     )
     external_base.mkdir(parents=True, exist_ok=True)
     key = keychain_key(key_service)
+    available_profile = encryption_profile_digest()
+    if receipt.encryption_profile_digest is not None and receipt.encryption_profile_digest != available_profile:
+        raise PipelineError("tree capture encryption profile does not match the available restorer")
     records: list[dict[str, Any]] = []
     sample = verify_atom_packs(
         receipt.packs,
@@ -406,6 +430,8 @@ def resume_cold_tree_capture(
     )
     if not external.passed:
         raise PipelineError(f"{name} resumed external restoration failed")
+    if receipt.encryption_profile_digest is None:
+        receipt.encryption_profile_digest = available_profile
     receipt.external_chunks = [chunk for pack in external_packs for chunk in pack.chunks]
     receipt.restorations = [sample, full, external]
     receipt.git_remote = repository

@@ -6,14 +6,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from datetime import datetime
 from pathlib import Path
 
-from limen.agent_state.custody import (
-    project_custody_receipt,
-    write_custody_receipt,
-)
-from limen.agent_state.models import MetabolismReceipt
+from limen.agent_state.custody import run_custody_verification_campaign
 from limen.agent_state.pipeline import run_opencode_campaign
 from limen.agent_state.tree import plan_cloud_materializations, plan_exact_retention, plan_retention
 from limen.agent_state.tree_pipeline import (
@@ -26,16 +21,6 @@ from limen.agent_state.tree_pipeline import (
 
 HOME = Path.home()
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
-
-
-def aware_datetime(value: str) -> datetime:
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError("timestamp must be ISO 8601") from exc
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
-        raise argparse.ArgumentTypeError("timestamp must include an explicit UTC offset")
-    return parsed
 
 
 def parser() -> argparse.ArgumentParser:
@@ -155,15 +140,15 @@ def parser() -> argparse.ArgumentParser:
     )
     custody = subcommands.add_parser(
         "custody-receipt",
-        help="project verified private custody into the path-free Prima Materia contract",
+        help="independently restore both copies and emit the path-free custody contract",
     )
+    custody.add_argument("name")
     custody.add_argument("--metabolism-receipt", type=Path, required=True)
+    custody.add_argument("--vault-root", type=Path, required=True)
+    custody.add_argument("--external-root", type=Path, required=True)
+    custody.add_argument("--repository", default="organvm/arca")
+    custody.add_argument("--key-service", default="limen-arca-vault")
     custody.add_argument("--output", type=Path, required=True)
-    custody.add_argument("--primary-device-id", required=True)
-    custody.add_argument("--external-device-id", required=True)
-    custody.add_argument("--restored-at", type=aware_datetime, required=True)
-    custody.add_argument("--primary-target-ref", default="encrypted-git")
-    custody.add_argument("--external-target-ref", default="encrypted-external")
     return command
 
 
@@ -227,16 +212,15 @@ def main(argv: list[str] | None = None) -> int:
         if not args.evict and (args.eviction_authorization or args.eviction_signature):
             argument_parser.error("signed eviction inputs require --evict")
     if args.command == "custody-receipt":
-        metabolism = MetabolismReceipt.read(args.metabolism_receipt)
-        projected = project_custody_receipt(
-            metabolism,
-            primary_device_id=args.primary_device_id,
-            external_device_id=args.external_device_id,
-            restored_at=args.restored_at,
-            primary_target_ref=args.primary_target_ref,
-            external_target_ref=args.external_target_ref,
+        metabolism, projected, metabolism_changed, custody_changed = run_custody_verification_campaign(
+            args.name,
+            args.metabolism_receipt,
+            args.vault_root,
+            args.external_root,
+            args.output,
+            repository=args.repository,
+            key_service=args.key_service,
         )
-        changed = write_custody_receipt(args.output, projected)
         print(
             json.dumps(
                 {
@@ -244,7 +228,8 @@ def main(argv: list[str] | None = None) -> int:
                     "custody_id": projected.custody_id,
                     "restoration_count": len(projected.restoration_proofs),
                     "source_retired": metabolism.source_retired,
-                    "changed": changed,
+                    "metabolism_changed": metabolism_changed,
+                    "changed": custody_changed,
                 },
                 sort_keys=True,
             )

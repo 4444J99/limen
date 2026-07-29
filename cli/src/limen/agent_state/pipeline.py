@@ -19,6 +19,7 @@ from .atomize import atomize_opencode, sha256_file, stat_identity
 from .crypto import (
     EncryptedAtomPacker,
     encrypt_file,
+    encryption_profile_digest,
     keychain_key,
     verify_atom_packs,
     verify_encrypted_file,
@@ -400,6 +401,7 @@ def _capture_manifest(receipt: MetabolismReceipt, table_counts: dict[str, int]) 
         "atom_count": receipt.atom_count,
         "duplicate_payloads": receipt.duplicate_payloads,
         "logical_sha256": receipt.logical_sha256,
+        "encryption_profile_digest": receipt.encryption_profile_digest,
         "table_counts": table_counts,
         "packs": [asdict(pack) for pack in receipt.packs],
         "external_chunks": [asdict(chunk) for chunk in receipt.external_chunks],
@@ -476,6 +478,7 @@ def capture_opencode(
             source=result.source,
             atom_count=result.atom_count,
             logical_sha256=result.logical_sha256,
+            encryption_profile_digest=encryption_profile_digest(),
             packs=packs,
             duplicate_payloads=result.duplicate_payloads,
             external_chunks=external_chunks,

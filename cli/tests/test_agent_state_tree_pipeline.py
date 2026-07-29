@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 from limen.agent_state import tree_pipeline
-from limen.agent_state.crypto import EncryptedAtomPacker
+from limen.agent_state.crypto import EncryptedAtomPacker, encryption_profile_digest
 from limen.agent_state.models import MetabolismReceipt, ReceiptError
 from limen.agent_state.pipeline import ARCA_REMOTE_EXACT_ERROR, PipelineError
 from limen.agent_state.tree import RetentionPlan, atomize_file_tree, plan_retention
@@ -191,6 +191,30 @@ def test_capture_rejects_custody_targets_inside_source_before_writes(
     assert not (external / "icloud-drive" / "run").exists()
 
 
+def test_custody_guard_uses_filesystem_identity_for_case_aliases(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "Data"
+    alias = tmp_path / "data"
+    source.mkdir()
+    alias.mkdir()
+    real_samefile = tree_pipeline.os.path.samefile
+
+    def samefile(first, second):
+        if {Path(first), Path(second)} == {source, alias}:
+            return True
+        return real_samefile(first, second)
+
+    monkeypatch.setattr(tree_pipeline.os.path, "samefile", samefile)
+
+    with pytest.raises(PipelineError, match="vault-root"):
+        tree_pipeline._require_custody_targets_outside_source(
+            source,
+            {"vault-root": alias / "vault"},
+        )
+
+
 def test_resume_rejects_private_receipt_inside_source_before_writes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -227,6 +251,7 @@ def test_resume_verifies_then_pushes_existing_ciphertext(
     assert _Vault.resumed
     assert receipt.git_commit == "a" * 40
     assert receipt.git_receipt_commit == "b" * 40
+    assert receipt.encryption_profile_digest == encryption_profile_digest()
     assert (tmp_path / "private-receipt.json").is_file()
     receipt.require_retirement_gate()
 
