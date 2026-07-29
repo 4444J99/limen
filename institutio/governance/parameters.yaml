@@ -3065,6 +3065,26 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for GitHub estate reconciliation and by each delegate/reap adapter it dispatches. The runner kills the full command group on overrun and the beat continues fail-open."
+  # --- IDEAL-FORMS distance (scripts/check-ideal-forms.py, sensors.yaml ideal-forms-distance) ---
+  LIMEN_IDEAL_FORMS:
+    default: 1
+    env: LIMEN_IDEAL_FORMS
+    self_update: none
+    owner: governance
+    note: "Master on/off for the ideal-forms distance sensor. 1 (default) re-derives every named ideal's distance from its declared probe on its cadence; 0 disables it. This is the HEARTBEAT half of IF-LEDGER-OF-IDEALS — pr-gate already runs the predicate on any PR touching the registry or the ledger, but distances measure the SYSTEM, not the diff, so they rot with neither file edited. That is exactly how the ledger sat 34 days with its own entry reading 'not yet wired into a verification/heartbeat lane' while IF-LIVE-TREE-COHERENCE drifted 5x underneath it. Advisory only: a remaining distance is an ideal's normal state, not a build break."
+  LIMEN_BEAT_IDEAL_FORMS:
+    default: 12
+    env: LIMEN_BEAT_IDEAL_FORMS
+    self_update: none
+    owner: governance
+    note: "Cadence (every N beats) of the ideal-forms distance sensor declared in sensors.yaml. Slower than most rungs by design — an ideal form moves on the scale of a workstream, not a beat, and the probes it runs include live host/network measurements. The generic scheduled runner resolves this override; no cadence constant lives in the shell."
+  LIMEN_IDEAL_FORMS_TIMEOUT:
+    default: 300
+    env: LIMEN_IDEAL_FORMS_TIMEOUT
+    self_update: none
+    owner: governance
+    note: "Per-run timeout (seconds) for the ideal-forms distance sweep. Generous because --measure runs every declared probe including the network ones (the estate sweep, the decorum sweep) that pr-gate deliberately skips. The runner kills the group on overrun and the beat continues fail-open."
+
   LIMEN_DECORUM:
     default: 1
     env: LIMEN_DECORUM

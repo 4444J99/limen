@@ -196,11 +196,16 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   this ledger only in a *comment*. That is what a hand-maintained distance does: it decays with
   nothing to notice, and two entries here had. Closed 2026-07-29 for the **verification** half:
   `institutio/governance/ideal-forms.yaml` + `scripts/check-ideal-forms.py` (checks A–E) make
-  every distance a derived number, wired into pr-gate as the seventh VIGILIA axis. Remaining
-  distance: the **heartbeat** half — a `sensors.yaml` rung so the beat re-derives distances
-  continuously, not only per-PR (needs a paired `parameters.yaml` gate token, deliberately a
-  separate change).
-- **Status:** PARTIAL — verified per-PR; not yet per-beat.
+  every distance a derived number, wired into pr-gate as the seventh VIGILIA axis. The
+  **heartbeat** half closed the same day: the `ideal-forms-distance` rung (`sensors.yaml`,
+  cadence 12, advisory) runs `--measure`, which additionally executes the `host` and
+  `network` probes pr-gate cannot — and that is the whole reason a beat rung exists, since
+  a distance measures the SYSTEM, not the diff, and rots with neither file edited. It
+  earned itself within the hour: `IF-LIVE-TREE-COHERENCE` read `at-ideal` at 11:0x and
+  `drift=1` by 12:0x as merges landed and the live checkout fell a commit behind.
+- **Status:** DONE — the self-loop is closed: the ledger is a registry, the registry has a
+  predicate, the predicate runs per-PR *and* per-beat, and the predicate's own row points
+  at itself (environment `self`, declared and never executed — the cycle guard).
 - **Owner:** Claude.
 
 ### IF-DECORUM — no public surface is ever egg-facing

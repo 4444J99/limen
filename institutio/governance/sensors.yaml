@@ -1367,3 +1367,36 @@ sensors:
         command: "python3 scripts/decorum-keeper.py --doctor"
         semantic_inputs:
           - {path: scripts/decorum-keeper.py, normalization: raw}
+
+  ideal-forms-distance:
+    section: "heartbeat"
+    title: "ideal-forms distance — every named ideal's distance is re-derived, not remembered"
+    gate: LIMEN_IDEAL_FORMS
+    default: "1"
+    source: [heartbeat]
+    owner: governance
+    cadence:
+      env: LIMEN_BEAT_IDEAL_FORMS
+      default: 12
+    timeout:
+      env: LIMEN_IDEAL_FORMS_TIMEOUT
+      default: 300
+    # The heartbeat half of IF-LEDGER-OF-IDEALS. pr-gate already runs check-ideal-forms on any
+    # PR that touches the registry or the ledger — but the distances measure the SYSTEM, not the
+    # diff, so they rot without anyone editing either file. That is precisely how the ledger sat
+    # 34 days with its own entry reading "not yet wired into a verification/heartbeat lane" while
+    # IF-LIVE-TREE-COHERENCE drifted 5x underneath it.
+    #
+    # --measure (not the bare gate) is deliberate: it additionally runs the `host` and `network`
+    # probes that pr-gate cannot, which is the entire reason a beat rung exists. The live-checkout
+    # probe is one of them, so the beat is where a frozen fleet checkout finally becomes audible —
+    # the six-day freeze of 2026-07-23 was invisible because sync-release.sh fails OPEN into a log
+    # nothing reads.
+    #
+    # Advisory, never fatal: a distance that remains is the normal state of an ideal (that is what
+    # makes the ledger liquid rather than a checkbox). Only registry INCOHERENCE is drift, and
+    # pr-gate already fails on that.
+    steps:
+      - command: "python3 scripts/check-ideal-forms.py --measure"
+        severity: advisory
+        escalation: "an ideal-form distance changed or a probe went unmeasurable (above) — re-derive with `python3 scripts/check-ideal-forms.py --measure`; do NOT hand-edit a Distance: line in docs/IDEAL-FORMS-LEDGER.md"
