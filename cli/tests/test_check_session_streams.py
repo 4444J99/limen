@@ -143,3 +143,57 @@ def test_the_backfill_is_bounded_and_every_entry_is_real():
             check=False,
         ).stdout.strip()
         assert unreached == "", f"{sid}: settled_by {sha} is not on origin/main"
+
+
+# ── predicate_command: the argv guard ───────────────────────────────────────────────
+# Settlement now RUNS something, so the registry gained a path to executing commands. The guard is
+# what keeps that path from reaching an effector. Every case below is refused STATICALLY — nothing
+# in this section executes any candidate argv.
+
+
+def test_only_a_runner_may_be_argv0():
+    for cmd in ("rm -rf /", "scripts/repo-genesis.py --name x", "gh repo create foo"):
+        assert M.predicate_argv_violation(cmd), f"{cmd!r} must be refused"
+    assert M.predicate_argv_violation("bash scripts/run-pytest-hermetic.sh cli/tests/x.py -q") is None
+
+
+def test_act_tokens_are_refused_anywhere_in_the_argv():
+    for tok in M.PREDICATE_FORBIDDEN_TOKENS:
+        assert M.predicate_argv_violation(f"python3 scripts/x.py {tok}"), f"{tok} must be refused"
+
+
+def test_a_mutate_by_default_effector_is_refused_without_its_neutraliser():
+    """The subtle half. Blocking --apply is BACKWARDS for repo-genesis.py, whose default IS to act:
+    it mints a real GitHub repo and pushes seed material unless --dry-run is passed. An argv with no
+    forbidden token at all is still an effector, and a guard that only blocklists act-flags would
+    wave it through."""
+    assert M.predicate_argv_violation("python3 scripts/repo-genesis.py --name foo --evidence x"), (
+        "an effector that mutates BY DEFAULT slipped past the guard"
+    )
+    assert M.predicate_argv_violation("python3 scripts/repo-genesis.py --name foo --dry-run") is None
+
+
+def test_no_two_streams_may_share_a_predicate_command():
+    """A shared probe cannot say WHICH domain is done — 7 of 11 rows share a `predicate` file today
+    (check-convergence.py -> s3/s6/s7, check-atom-homing.py -> s1/s2, no-tasks-on-me.sh -> s4/s5)."""
+    streams = M.load()
+    seen = {}
+    for sid, s in streams.items():
+        cmd = (s or {}).get("predicate_command")
+        if cmd:
+            assert cmd not in seen, f"{sid} and {seen[cmd]} share predicate_command {cmd!r}"
+            seen[cmd] = sid
+
+
+def test_every_declared_predicate_command_is_statically_safe():
+    for sid, s in M.load().items():
+        cmd = (s or {}).get("predicate_command")
+        if cmd:
+            assert M.predicate_argv_violation(cmd) is None, f"{sid}: {M.predicate_argv_violation(cmd)}"
+
+
+def test_an_unprovable_stream_is_not_settled_by_a_claim_alone():
+    """The AND. A claim without a passing predicate is an assertion, which is what this replaced."""
+    assert M._predicate_proven("fake", {}) is False
+    assert M._predicate_proven("fake", {"predicate_command": "python3 -c 'raise SystemExit(1)'"}) is False
+    assert M._predicate_proven("fake", {"predicate_command": "python3 -c 'pass'"}) is True
