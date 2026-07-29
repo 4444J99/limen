@@ -111,7 +111,10 @@ streams:
       - s3-governance-case-law
       - s4-operator-routing
       - s5-commercial-offerings
-    job_class: governance
+    # `canon` not `governance`: the tier authority has never heard of `governance`, so it derived
+    # the cheapest default tier in silence (check G was a no-op and never said so). This is the same
+    # act as s6 — correcting a registry to describe reality — and s6 is already `canon`.
+    job_class: canon
     predicate: scripts/check-corpora.py
     # Stream-distinguishing on purpose: check-corpora.py green means "the corpus axis is healthy",
     # not "s0 is done". This asserts s0's THREE mission items specifically — the custody record in
@@ -123,10 +126,13 @@ streams:
     owner_of_record: institutio/governance/corpora.yaml
     max_children: 4
     note: >-
-      corpora.yaml declares the conversations-private store at ~/Workspace/_conversations-private;
-      that path does not resolve. The store was evacuated 2026-07-27 by the laptop-evacuation custody
-      lane (#1604). The evacuation is correct; check-corpora.py never asserted a root RESOLVES, so
-      the registry is green over a store nobody can open.
+      RE-MEASURED 2026-07-29: the defect this row was filed over is CLOSED, and this note used to
+      assert the opposite. check-corpora.py:122-131 now resolves every root through
+      reference_state.ReferenceResolver and FAILS on UNACCOUNTED, degrading to an advisory only when
+      the root is declared ARCHIVED with receipts (#1615). The store is addressable as declared data
+      (custody.yaml roots.conversations-private, class archive, vault arca) and reclaimable by verb
+      (arca.sh restore). The path still does not resolve on disk, which is now EXPLAINED rather than
+      merely unnoticed. Settled on its predicate, not on this sentence.
 
   s6-registry-correction:
     title: "Registry correction — make convergence.yaml describe the code it names"
@@ -141,10 +147,15 @@ streams:
     owner_of_record: institutio/governance/convergence.yaml
     max_children: 4
     note: >-
-      Four of twelve capability rows were measured false on 2026-07-26 (worker-toolkit names no seam
-      though organvm/payrail exists; data-export claims near-identical copies that share zero
-      function names; text-quality-scoring names a frontmatter validator as a quality scorer;
-      learning-engine.md claims a mirror-drift control that does not exist). Declared data that
+      RE-COUNTED 2026-07-29: convergence.yaml holds FOURTEEN capability rows (8 converged, 5
+      lifting, 1 unresolved), not twelve — the set moved twice since authoring, so re-count before
+      citing any total. Claim 4 is HALF-addressed: #1611 added mirror-drift-detection as a counted
+      vacuum, but docs/convergence/learning-engine.md:102 still asserts the control it says does not
+      exist, and mirrors.yaml + check-mirrors.py remain unbuilt. Of the four measured false on
+      2026-07-26 (worker-toolkit names no seam though organvm/payrail exists; data-export claims
+      near-identical copies that share zero function names; text-quality-scoring names a frontmatter
+      validator as a quality scorer; learning-engine.md claims a mirror-drift control that does not
+      exist), claims 1-3 stand unchanged. Declared data that
       misdescribes ground truth routes work at the wrong target.
 
   s9-lane-tier-pin:
@@ -181,7 +192,8 @@ streams:
     intent: docs/continuations/s10-axis-coverage/intent.md
     requires: []
     unblocks: []
-    job_class: governance
+    # `canon`: making the axis SET declared data is work on the registries themselves.
+    job_class: canon
     predicate: scripts/check-gates.py
     predicate_status: existing
     runway: 8h
@@ -274,7 +286,9 @@ streams:
     intent: docs/continuations/s4-operator-routing/intent.md
     requires: [s0-corpus-custody, s1-homing-spine]
     unblocks: []
-    job_class: governance
+    # `synthesis`: this domain distills 1,067 atoms into routing WITHOUT enlarging the operator's
+    # burden — its success metric is inverted, which is judgement work, not bookkeeping.
+    job_class: synthesis
     predicate: scripts/no-tasks-on-me.sh
     predicate_status: existing
     runway: 1d
@@ -332,7 +346,10 @@ streams:
     predicate: scripts/repo-genesis.py
     predicate_status: existing
     runway: 8h
-    owner_of_record: institutio/governance/estate.yaml
+    # institutio/GITHUB/estate.yaml — the governance/ path never existed. Its own predicate proves
+    # it (repo-genesis.py reads the github/ one). Nothing checked owner_of_record resolved; check K
+    # does now, and this is the row that motivated it.
+    owner_of_record: institutio/github/estate.yaml
     max_children: 2
     note: >-
       The gate EXISTS — scripts/repo-genesis.py landed in PR #1535 with four gates
