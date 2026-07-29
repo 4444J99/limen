@@ -263,11 +263,13 @@ def test_independent_restore_binds_remote_refs_and_observed_devices(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     receipt = metabolism_receipt(evidence=False)
+    receipt.encryption_profile_digest = None
     vault_root = tmp_path / "fresh-clone"
     git_payload = vault_root / "agent-state" / "codex-sessions" / receipt.run_id
     external_root = tmp_path / "external"
     external_payload = external_root / "codex-sessions" / receipt.run_id
     git_payload.mkdir(parents=True)
+    (git_payload / "atoms-00000.jsonl.gz.enc.part-00000").write_bytes(b"local-only")
     external_payload.mkdir(parents=True)
     remote = receipt.as_dict()
     remote["git_receipt_commit"] = None
@@ -294,22 +296,38 @@ def test_independent_restore_binds_remote_refs_and_observed_devices(
             observed.append("receipt")
             return "1" * 40, "2" * 40, json.dumps(remote)
 
+        def materialize_remote_payload(
+            self,
+            relative: Path,
+            payload_commit: str,
+            expected_paths: list[Path],
+            destination: Path,
+        ) -> Path:
+            assert relative == Path(f"agent-state/codex-sessions/{receipt.run_id}")
+            assert payload_commit == "1" * 40
+            assert expected_paths == [Path("atoms-00000.jsonl.gz.enc.part-00000")]
+            observed.append("materialize")
+            destination.mkdir(parents=True)
+            return destination
+
     monkeypatch.setattr(custody, "GitVault", Vault)
     monkeypatch.setattr(custody, "keychain_key", lambda _service: "key")
-    monkeypatch.setattr(
-        custody,
-        "verify_atom_packs",
-        lambda *_args, **_kwargs: RestoreProof(
+    verified_roots: list[Path] = []
+
+    def verify_packs(_packs, root: Path, *_args, **_kwargs):
+        verified_roots.append(root)
+        return RestoreProof(
             scope="git-full-manifest",
             passed=True,
             atoms_verified=2,
             logical_sha256=LOGICAL_SHA256,
-        ),
-    )
+        )
+
+    monkeypatch.setattr(custody, "verify_atom_packs", verify_packs)
     monkeypatch.setattr(
         custody,
         "_device_identity",
-        lambda path: PRIMARY_DEVICE if path == git_payload else EXTERNAL_DEVICE,
+        lambda path: PRIMARY_DEVICE if path == vault_root else EXTERNAL_DEVICE,
     )
 
     verified = verify_custody_restorations(
@@ -323,13 +341,35 @@ def test_independent_restore_binds_remote_refs_and_observed_devices(
 
     git_proof = next(proof for proof in verified.restorations if proof.scope == "git-full-manifest")
     external_proof = next(proof for proof in verified.restorations if proof.scope == "external-full")
-    assert observed == ["identity", "receipt"]
+    assert observed == ["identity", "receipt", "materialize"]
+    assert verified_roots[0] != git_payload
+    assert verified_roots[1] == external_payload
+    assert verified.encryption_profile_digest == encryption_profile_digest()
     assert git_proof.device_id == PRIMARY_DEVICE
     assert git_proof.remote_refs == REMOTE_REFS
     assert external_proof.device_id == EXTERNAL_DEVICE
     assert external_proof.remote_refs == ()
     assert git_proof.restored_at == RESTORED_AT.isoformat()
     assert external_proof.restored_at == RESTORED_AT.isoformat()
+
+    rerun = verify_custody_restorations(
+        verified,
+        name="codex-sessions",
+        vault_root=vault_root,
+        external_root=external_root,
+        require_external_mount=False,
+        restored_at=datetime(2026, 7, 30, 14, 30, tzinfo=UTC),
+    )
+
+    assert rerun.as_dict() == verified.as_dict()
+    assert observed == [
+        "identity",
+        "receipt",
+        "materialize",
+        "identity",
+        "receipt",
+        "materialize",
+    ]
 
 
 def test_encryption_profile_digest_is_lowercase_sha256() -> None:
@@ -353,9 +393,9 @@ def test_device_identity_collapses_apfs_volumes_to_physical_disk(
     for path in (first, second, external):
         path.mkdir()
     physical_stores = {
-        str(first): "disk0s2",
-        str(second): "disk0s5",
-        str(external): "disk4s1",
+        str(first.resolve()): "disk0s2",
+        str(second.resolve()): "disk0s5",
+        str(external.resolve()): "disk4s1",
     }
 
     def diskutil(args, **_kwargs):
@@ -370,6 +410,11 @@ def test_device_identity_collapses_apfs_volumes_to_physical_disk(
                         "WholeDisk": True,
                         "BusProtocol": "PCI-Express",
                         "SystemImage": False,
+                        "MediaUUID": (
+                            "00000000-0000-0000-0000-000000000001"
+                            if args[-1] == "/dev/disk0"
+                            else "00000000-0000-0000-0000-000000000002"
+                        ),
                     }
                 ),
             )
@@ -424,6 +469,94 @@ def test_device_identity_rejects_virtual_disk_image(
         custody._device_identity(mounted_image)
 
 
+def test_device_identity_is_stable_across_bsd_renumbering(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "external"
+    target.mkdir()
+    physical = "disk4"
+
+    def diskutil(args, **_kwargs):
+        payload = (
+            {
+                "DeviceIdentifier": f"{physical}s1",
+                "APFSPhysicalStores": [{"APFSPhysicalStore": f"{physical}s1"}],
+            }
+            if not args[-1].startswith("/dev/")
+            else {
+                "DeviceIdentifier": physical,
+                "ParentWholeDisk": physical,
+                "VirtualOrPhysical": "Physical",
+                "WholeDisk": True,
+                "BusProtocol": "USB",
+                "SystemImage": False,
+                "MediaUUID": "00000000-0000-0000-0000-000000000004",
+            }
+        )
+        return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
+
+    monkeypatch.setattr(custody.subprocess, "run", diskutil)
+    before = custody._device_identity(target)
+    physical = "disk7"
+
+    assert custody._device_identity(target) == before
+
+
+def test_device_identity_requires_stable_external_media_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "external"
+    target.mkdir()
+
+    def diskutil(args, **_kwargs):
+        payload = (
+            {
+                "DeviceIdentifier": "disk4s1",
+                "APFSPhysicalStores": [{"APFSPhysicalStore": "disk4s1"}],
+            }
+            if not args[-1].startswith("/dev/")
+            else {
+                "DeviceIdentifier": "disk4",
+                "ParentWholeDisk": "disk4",
+                "VirtualOrPhysical": "Physical",
+                "WholeDisk": True,
+                "BusProtocol": "USB",
+                "SystemImage": False,
+            }
+        )
+        return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
+
+    monkeypatch.setattr(custody.subprocess, "run", diskutil)
+
+    with pytest.raises(ReceiptError, match="stable media identity"):
+        custody._device_identity(target)
+
+
+def test_unsupported_source_kind_is_a_receipt_error(tmp_path: Path) -> None:
+    receipt = metabolism_receipt(evidence=False)
+    receipt.source = SourceProof(
+        path=receipt.source.path,
+        kind="unsupported",
+        bytes=receipt.source.bytes,
+        sha256=receipt.source.sha256,
+        stat_before=receipt.source.stat_before,
+        stat_after=receipt.source.stat_after,
+        inventory_before_sha256=receipt.source.inventory_before_sha256,
+        inventory_after_sha256=receipt.source.inventory_after_sha256,
+    )
+
+    with pytest.raises(ReceiptError, match="does not support this source kind"):
+        verify_custody_restorations(
+            receipt,
+            name="codex-sessions",
+            vault_root=tmp_path / "vault",
+            external_root=tmp_path / "external",
+            require_external_mount=False,
+        )
+
+
 def test_campaign_rejects_private_receipt_inside_source_tree(
     tmp_path: Path,
 ) -> None:
@@ -452,6 +585,43 @@ def test_campaign_rejects_private_receipt_inside_source_tree(
             tmp_path / "custody.json",
             require_external_mount=False,
         )
+
+
+@pytest.mark.parametrize("nested_target", ["git", "external"])
+def test_campaign_rejects_custody_payload_inside_source_before_writes(
+    tmp_path: Path,
+    nested_target: str,
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    private_receipt = tmp_path / "private" / "metabolism.json"
+    initial = metabolism_receipt(evidence=False)
+    initial.source = SourceProof(
+        path=str(source),
+        kind=initial.source.kind,
+        bytes=initial.source.bytes,
+        sha256=initial.source.sha256,
+        stat_before=initial.source.stat_before,
+        stat_after=initial.source.stat_after,
+        inventory_before_sha256=initial.source.inventory_before_sha256,
+        inventory_after_sha256=initial.source.inventory_after_sha256,
+    )
+    initial.write(private_receipt)
+    vault_root = source / "vault" if nested_target == "git" else tmp_path / "vault"
+    external_root = source / "external" if nested_target == "external" else tmp_path / "external"
+
+    with pytest.raises(ReceiptError, match=f"{nested_target} custody payload".replace("git", "Git")):
+        run_custody_verification_campaign(
+            "codex-sessions",
+            private_receipt,
+            vault_root,
+            external_root,
+            tmp_path / "custody.json",
+            require_external_mount=False,
+        )
+
+    assert not vault_root.exists()
+    assert not external_root.exists()
 
 
 def test_campaign_conflicting_projection_does_not_replace_private_evidence(
@@ -529,6 +699,48 @@ def test_campaign_projection_failure_does_not_replace_private_evidence(
     assert not output.exists()
 
 
+def test_campaign_publication_recovers_after_crash_before_projection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    private_receipt = tmp_path / "private" / "metabolism.json"
+    output = tmp_path / "projection" / "custody.json"
+    initial = metabolism_receipt(evidence=False)
+    initial.write(private_receipt)
+    verified = metabolism_receipt()
+    projected = project_custody_receipt(verified)
+    original_fsync = custody._fsync_directory
+    crashed = False
+
+    def crash_after_private_receipt(path: Path) -> None:
+        nonlocal crashed
+        if path == private_receipt.parent and not crashed:
+            crashed = True
+            raise SystemExit("simulated termination")
+        original_fsync(path)
+
+    monkeypatch.setattr(custody, "_fsync_directory", crash_after_private_receipt)
+    with pytest.raises(SystemExit, match="simulated termination"):
+        custody._publish_campaign_receipts(
+            metabolism_receipt=private_receipt,
+            verified=verified,
+            output=output,
+            projected=projected,
+        )
+
+    assert MetabolismReceipt.read(private_receipt).as_dict() == verified.as_dict()
+    assert not output.exists()
+
+    monkeypatch.setattr(custody, "_fsync_directory", original_fsync)
+    assert custody._publish_campaign_receipts(
+        metabolism_receipt=private_receipt,
+        verified=verified,
+        output=output,
+        projected=projected,
+    ) == (False, True)
+    assert write_custody_receipt(output, projected) is False
+
+
 def test_campaign_repairs_existing_projection_permissions(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -575,4 +787,12 @@ def test_receipt_rejects_non_string_restoration_identifiers(
     payload["restorations"][1][field] = value
 
     with pytest.raises(ReceiptError, match="failed consistency checks"):
+        MetabolismReceipt.from_dict(payload)
+
+
+def test_receipt_rejects_non_object_restoration_proof() -> None:
+    payload = metabolism_receipt().as_dict()
+    payload["restorations"] = [1]
+
+    with pytest.raises(ReceiptError, match="invalid restoration evidence"):
         MetabolismReceipt.from_dict(payload)

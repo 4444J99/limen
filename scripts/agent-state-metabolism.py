@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 from limen.agent_state.custody import run_custody_verification_campaign
-from limen.agent_state.pipeline import run_opencode_campaign
+from limen.agent_state.pipeline import RETIREMENT_AUTHORIZATION_REQUIRED, run_opencode_campaign
 from limen.agent_state.tree import plan_cloud_materializations, plan_exact_retention, plan_retention
 from limen.agent_state.tree_pipeline import (
     run_cloudkit_materialization_campaign,
@@ -51,7 +51,7 @@ def parser() -> argparse.ArgumentParser:
     opencode.add_argument(
         "--retire",
         action="store_true",
-        help="replace the source only after every custody and restoration gate passes",
+        help="reserved for a separately authorized canonical-custody retirement workflow",
     )
     tree = subcommands.add_parser("cold-tree", help="capture a bounded cold file set")
     tree.add_argument("name")
@@ -85,7 +85,11 @@ def parser() -> argparse.ArgumentParser:
     )
     tree.add_argument("--run-id")
     tree.add_argument("--resume", action="store_true")
-    tree.add_argument("--retire", action="store_true")
+    tree.add_argument(
+        "--retire",
+        action="store_true",
+        help="reserved for a separately authorized canonical-custody retirement workflow",
+    )
     cloudkit = subcommands.add_parser(
         "cloudkit-materialized",
         help="capture only materialized iCloud files and optionally evict them through File Provider",
@@ -157,6 +161,8 @@ def main(argv: list[str] | None = None) -> int:
     args = argument_parser.parse_args(argv)
     if getattr(args, "resume", False) and not args.run_id:
         argument_parser.error("--resume requires --run-id")
+    if args.command in {"opencode", "cold-tree"} and args.retire:
+        argument_parser.error(RETIREMENT_AUTHORIZATION_REQUIRED)
     if (
         args.command == "cold-tree"
         and args.retain_relative

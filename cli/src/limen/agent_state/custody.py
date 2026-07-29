@@ -207,12 +207,24 @@ def _device_identity(path: Path) -> str:
         or physical_info.get("SystemImage") is True
     ):
         raise ReceiptError("custody target is not backed by a physical whole disk")
-    material = (
-        "limen-custody-physical-device-v3:"
-        + physical
-        + ":"
-        + str(physical_info.get("MediaUUID") or physical_info.get("DiskUUID") or "")
-    ).encode()
+    stable_media_id = next(
+        (value for key in ("MediaUUID", "DiskUUID") if isinstance((value := physical_info.get(key)), str) and value),
+        None,
+    )
+    if stable_media_id is None:
+        device_tree_path = physical_info.get("DeviceTreePath")
+        if (
+            physical_info.get("Internal") is True
+            and physical_info.get("BusProtocol") == "Apple Fabric"
+            and isinstance(device_tree_path, str)
+            and device_tree_path
+        ):
+            # Apple Fabric storage is integrated with the machine rather than detachable
+            # media. Its device-tree path is stable across BSD disk re-enumeration.
+            stable_media_id = f"apple-integrated:{device_tree_path}"
+    if stable_media_id is None:
+        raise ReceiptError("custody physical device lacks a stable media identity")
+    material = f"limen-custody-physical-device-v4:{stable_media_id}".encode()
     return "device_" + hashlib.sha256(material).hexdigest()[:32]
 
 
@@ -256,6 +268,7 @@ def _require_remote_receipt(
     vault: GitVault,
     relative: Path,
     receipt_message: str,
+    expected_profile_digest: str,
 ) -> tuple[str, str]:
     vault.verify_identity()
     payload_commit, receipt_commit, receipt_text = vault.completed_receipt_at_remote(
@@ -271,7 +284,15 @@ def _require_remote_receipt(
         remote_value = json.loads(receipt_text)
     except json.JSONDecodeError as exc:
         raise ReceiptError("remote custody receipt is invalid") from exc
-    if remote_value != _capture_receipt_shape(receipt):
+    expected = _capture_receipt_shape(receipt)
+    legacy_expected = dict(expected)
+    recorded_profile = legacy_expected.pop("encryption_profile_digest", None)
+    legacy_profile_match = (
+        recorded_profile == expected_profile_digest
+        and "encryption_profile_digest" not in remote_value
+        and remote_value == legacy_expected
+    )
+    if remote_value != expected and not legacy_profile_match:
         raise ReceiptError("remote custody receipt does not match private capture evidence")
     return payload_commit, receipt_commit
 
@@ -325,10 +346,12 @@ def verify_custody_restorations(
     receipt.require_retirement_gate()
     if receipt.git_remote != repository:
         raise ReceiptError("private custody receipt names a different remote")
-    profile_digest = receipt.encryption_profile_digest
-    if profile_digest is None:
-        raise ReceiptError("capture-time encryption profile is missing")
-    if profile_digest != encryption_profile_digest(receipt.source.kind):
+    try:
+        expected_profile = encryption_profile_digest(receipt.source.kind)
+    except ValueError as exc:
+        raise ReceiptError("custody projection does not support this source kind") from exc
+    profile_digest = receipt.encryption_profile_digest or expected_profile
+    if profile_digest != expected_profile:
         raise ReceiptError("capture-time encryption profile is unavailable to this restorer")
 
     relative = Path("agent-state") / name / receipt.run_id
@@ -343,24 +366,35 @@ def verify_custody_restorations(
         vault,
         relative,
         receipt_message,
+        profile_digest,
     )
-    git_payload_root = vault.root / relative
     external_base = (
         require_mounted_external(external_root)
         if require_external_mount
         else external_root.expanduser().resolve(strict=False)
     )
     external_payload_root = external_base / name / receipt.run_id
-    if not git_payload_root.is_dir() or not external_payload_root.is_dir():
+    if not vault.root.is_dir() or not external_payload_root.is_dir():
         raise ReceiptError("both complete custody targets must be locally available")
 
     key = keychain_key(key_service)
-    git_proof = verify_atom_packs(
-        receipt.packs,
-        git_payload_root,
-        key,
-        logical_sha256=receipt.logical_sha256,
-    )
+    git_chunks = [Path(chunk.path) for pack in receipt.packs for chunk in pack.chunks]
+    with tempfile.TemporaryDirectory(
+        prefix=".limen-arca-restore-",
+        dir=vault.root.parent,
+    ) as temporary:
+        git_payload_root = vault.materialize_remote_payload(
+            relative,
+            payload_commit,
+            git_chunks,
+            Path(temporary) / "payload",
+        )
+        git_proof = verify_atom_packs(
+            receipt.packs,
+            git_payload_root,
+            key,
+            logical_sha256=receipt.logical_sha256,
+        )
     if receipt.source.kind == "file-tree":
         expected_external = [chunk for pack in receipt.packs for chunk in pack.chunks]
         if receipt.external_chunks != expected_external:
@@ -386,7 +420,7 @@ def verify_custody_restorations(
     if not git_proof.passed or not external_proof.passed:
         raise ReceiptError("independent full restoration failed")
 
-    git_device = _device_identity(git_payload_root)
+    git_device = _device_identity(vault.root)
     external_device = _device_identity(external_payload_root)
     if git_device == external_device:
         raise ReceiptError("custody restorations must use physically independent devices")
@@ -396,6 +430,7 @@ def verify_custody_restorations(
         f"github:{repository}@{receipt_commit}",
     )
     verified = MetabolismReceipt.from_dict(receipt.as_dict())
+    verified.encryption_profile_digest = profile_digest
     sample = next(
         (proof for proof in receipt.restorations if proof.scope == "git-sample" and proof.passed),
         None,
@@ -562,7 +597,7 @@ def _publish_campaign_receipts(
     output: Path,
     projected: CustodyReceiptV1,
 ) -> tuple[bool, bool]:
-    """Stage both receipts, then expose the projection before replacing owner evidence."""
+    """Stage both receipts, persist owner evidence, then expose its projection."""
 
     if output.is_symlink():
         raise ReceiptError("canonical custody receipt cannot be a symlink")
@@ -596,6 +631,12 @@ def _publish_campaign_receipts(
                 metabolism_receipt.read_bytes(),
             )
 
+        if metabolism_temporary is not None:
+            os.replace(metabolism_temporary, metabolism_receipt)
+            metabolism_temporary = None
+            metabolism_replaced = True
+            _fsync_directory(metabolism_receipt.parent)
+
         if custody_temporary is not None:
             try:
                 os.link(custody_temporary, output)
@@ -609,13 +650,7 @@ def _publish_campaign_receipts(
                 custody_changed = False
             if custody_created:
                 _fsync_directory(output.parent)
-
-        if metabolism_temporary is not None:
-            os.replace(metabolism_temporary, metabolism_receipt)
-            metabolism_temporary = None
-            metabolism_replaced = True
-            _fsync_directory(metabolism_receipt.parent)
-    except OSError as exc:
+    except (OSError, ReceiptError) as exc:
         try:
             _rollback_campaign_publication(
                 metabolism_receipt=metabolism_receipt,
@@ -627,6 +662,8 @@ def _publish_campaign_receipts(
             )
         except ReceiptError as rollback_error:
             raise rollback_error from exc
+        if isinstance(exc, ReceiptError):
+            raise
         raise ReceiptError("cannot atomically persist verified custody receipts") from exc
     finally:
         for temporary in (
@@ -656,10 +693,16 @@ def run_custody_verification_campaign(
         raise ReceiptError("canonical and private custody receipts require distinct paths")
     receipt = MetabolismReceipt.read(metabolism_receipt)
     source_root = Path(receipt.source.path)
+    git_payload_root = vault_root / "agent-state" / name / receipt.run_id
+    external_payload_root = external_root / name / receipt.run_id
     if _target_is_within_source(source_root, metabolism_receipt):
         raise ReceiptError("private metabolism receipt must remain outside the source tree")
     if _target_is_within_source(source_root, output):
         raise ReceiptError("canonical custody output must remain outside the source tree")
+    if _target_is_within_source(source_root, git_payload_root):
+        raise ReceiptError("Git custody payload must remain outside the source tree")
+    if _target_is_within_source(source_root, external_payload_root):
+        raise ReceiptError("external custody payload must remain outside the source tree")
     owner = f"agent-state-custody-proof-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-custody-proof"):
         verified = verify_custody_restorations(

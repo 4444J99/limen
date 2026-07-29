@@ -114,6 +114,34 @@ def test_resume_requires_explicit_run_id(tmp_path: Path) -> None:
     assert "--resume requires --run-id" in result.stderr
 
 
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["opencode", "--retire"],
+        [
+            "cold-tree",
+            "codex-sessions",
+            "--root",
+            ".",
+            "--private-receipt",
+            "receipt.json",
+            "--retire",
+        ],
+    ],
+)
+def test_retirement_requires_separate_authorized_workflow(arguments: list[str]) -> None:
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), *arguments],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "canonical custody and a separately authorized retirement workflow" in result.stderr
+
+
 def test_cloud_eviction_requires_both_signed_inputs(tmp_path: Path) -> None:
     result = subprocess.run(
         [

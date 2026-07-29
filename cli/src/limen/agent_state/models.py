@@ -96,6 +96,8 @@ class RestoreProof:
 
 
 def _restore_proof(value: dict[str, Any]) -> RestoreProof:
+    if not isinstance(value, dict):
+        raise ReceiptError("agent-state receipt contains invalid restoration evidence")
     remote_refs = value.get("remote_refs", ())
     if not isinstance(remote_refs, (list, tuple)):
         raise ReceiptError("agent-state receipt contains invalid remote restoration evidence")

@@ -33,6 +33,7 @@ from .file_provider import (
 from .models import AtomPack, CipherChunk, MetabolismReceipt, ReceiptError, RestoreProof, SourceProof
 from .pipeline import (
     ARCA_REMOTE_EXACT_ERROR,
+    RETIREMENT_AUTHORIZATION_REQUIRED,
     GitVault,
     PipelineError,
     require_mounted_external,
@@ -42,7 +43,6 @@ from .tree import (
     RetentionPlan,
     atomize_file_tree,
     require_plan_matches_source,
-    retire_cold_files,
 )
 
 
@@ -490,6 +490,8 @@ def run_cold_tree_campaign(
     retire: bool = False,
     run_id: str | None = None,
 ) -> MetabolismReceipt:
+    if retire:
+        raise PipelineError(RETIREMENT_AUTHORIZATION_REQUIRED)
     owner = f"agent-state-metabolism-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-agent-state-custody"):
         receipt = capture_cold_tree(
@@ -500,14 +502,6 @@ def run_cold_tree_campaign(
             private_receipt,
             run_id=run_id,
         )
-        if retire:
-            _require_private_retirement_receipt(receipt, private_receipt)
-            deleted = retire_cold_files(receipt, plan)
-            receipt.source_retired = True
-            receipt.retirement_proof = (
-                f"deleted-files:{deleted};deleted-bytes:{plan.cold_bytes};retained-hot-bytes:{plan.hot_bytes}"
-            )
-            receipt.write(private_receipt)
         return receipt
 
 
@@ -521,6 +515,8 @@ def run_resume_cold_tree_campaign(
     run_id: str,
     retire: bool = False,
 ) -> MetabolismReceipt:
+    if retire:
+        raise PipelineError(RETIREMENT_AUTHORIZATION_REQUIRED)
     owner = f"agent-state-metabolism-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-agent-state-custody-resume"):
         receipt = resume_cold_tree_capture(
@@ -531,14 +527,6 @@ def run_resume_cold_tree_campaign(
             private_receipt,
             run_id=run_id,
         )
-        if retire:
-            _require_private_retirement_receipt(receipt, private_receipt)
-            deleted = retire_cold_files(receipt, plan)
-            receipt.source_retired = True
-            receipt.retirement_proof = (
-                f"deleted-files:{deleted};deleted-bytes:{plan.cold_bytes};retained-hot-bytes:{plan.hot_bytes}"
-            )
-            receipt.write(private_receipt)
         return receipt
 
 
