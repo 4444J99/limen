@@ -21,8 +21,20 @@ Measured 2026-07-29:
   coding grind, no coverage sweeps, no PR babysitting."*
 
 So every Claude umbrella opened by `limen workstream` starts on Fable and does build work there.
-Current headroom is real but is not a defence: `logs/fable-allotment.json` reads `spent_pct: 7.52`
-against `hard_cap: 50`.
+
+> **RE-MEASURED 2026-07-29 — and this domain is now SETTLED.** Two corrections:
+>
+> * The headroom sentence cited `logs/fable-allotment.json` reading `spent_pct: 7.52` against
+>   `hard_cap: 50`. **That file does not exist** (`ls logs/fable-allotment.json` → no such file),
+>   so the figure is uncheckable and must not be repeated. The argument never needed it: headroom
+>   was explicitly *not* the defence — the prohibition is.
+> * The defect itself is **repaired**. `heal/lane-tier-pin` merged as
+>   [#1619](https://github.com/organvm/limen/pull/1619) (`7ba07525`), and this domain reads
+>   `settled` from `scripts/check-session-streams.py --ready`.
+>
+> Retained as provenance. Do not re-open this domain to fix what #1619 already fixed; if a lane is
+> still observed inheriting a prohibited tier, that is a **new** measurement and deserves its own
+> row, not a re-run of this one.
 
 **Re-measure all of the above before changing a line.** These are dated observations, not truths.
 

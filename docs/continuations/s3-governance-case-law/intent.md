@@ -8,8 +8,21 @@ read the registry first and obey it.
 ## Objective
 
 `decisions` = **877 atoms**, `vacuums` = **466 atoms**. Both un-homed as of 2026-07-29.
-`institutio/governance/convergence.yaml` today: 12 capabilities, 7 converged, 5 lifting, **zero
-unresolved rows**. Re-measure before trusting these numbers.
+
+> **RE-MEASURED 2026-07-29 (later same day).** This section read *"12 capabilities, 7 converged,
+> 5 lifting, **zero** unresolved rows"*. Now **14 capabilities — 8 converged, 5 lifting, 1
+> unresolved** (`mirror-drift-detection`, added by #1611 as a counted vacuum under Rule #1).
+> Reproduce:
+>
+> ```bash
+> python3 -c "import yaml,collections; c=yaml.safe_load(open('institutio/governance/convergence.yaml'))['capabilities']; print(len(c), collections.Counter(v.get('status') for v in c.values()))"
+> ```
+>
+> **The mission is unchanged and the argument below still holds** — 1 unresolved row against 466
+> un-homed vacuum atoms is very nearly the same indictment as 0. Only the number moved. Do not read
+> the existence of one counted vacuum as the work being started.
+
+Re-measure before trusting these numbers.
 
 Home both kinds:
 
