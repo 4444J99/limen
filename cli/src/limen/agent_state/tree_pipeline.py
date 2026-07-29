@@ -88,10 +88,7 @@ def _require_custody_targets_outside_source(
             continue
         nested.append(label)
     if nested:
-        raise PipelineError(
-            "custody targets must remain outside the source tree: "
-            + ", ".join(nested)
-        )
+        raise PipelineError("custody targets must remain outside the source tree: " + ", ".join(nested))
 
 
 def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
@@ -222,11 +219,7 @@ def capture_cold_tree(
         },
     )
     vault.verify()
-    external_base = (
-        require_mounted_external(external_root)
-        if require_external_mount
-        else unresolved_external
-    )
+    external_base = require_mounted_external(external_root) if require_external_mount else unresolved_external
     exact_root = external_base / name / run_id
     _require_custody_targets_outside_source(
         plan.root,
@@ -360,11 +353,7 @@ def resume_cold_tree_capture(
             "encrypted-external-output": exact_root,
         },
     )
-    external_base = (
-        require_mounted_external(external_root)
-        if require_external_mount
-        else unresolved_external
-    )
+    external_base = require_mounted_external(external_root) if require_external_mount else unresolved_external
     exact_root = external_base / name / run_id
     _require_custody_targets_outside_source(
         source_root,

@@ -114,12 +114,11 @@ def test_projection_is_path_free_and_binds_both_restorations() -> None:
         "github:organvm/arca@" + "1" * 40,
         "github:organvm/arca@" + "2" * 40,
     )
-    assert {
-        proof.custody_target_ref for proof in projected.restoration_proofs
-    } == {"encrypted-git", "encrypted-external"}
-    assert {
-        proof.restored_output_digest for proof in projected.restoration_proofs
-    } == {LOGICAL_SHA256}
+    assert {proof.custody_target_ref for proof in projected.restoration_proofs} == {
+        "encrypted-git",
+        "encrypted-external",
+    }
+    assert {proof.restored_output_digest for proof in projected.restoration_proofs} == {LOGICAL_SHA256}
 
 
 def test_projection_rejects_non_independent_devices() -> None:

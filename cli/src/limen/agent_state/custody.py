@@ -22,11 +22,7 @@ def _digest(value: object) -> str:
 
 
 def _restoration(receipt: MetabolismReceipt, scope: str) -> RestoreProof:
-    matches = [
-        proof
-        for proof in receipt.restorations
-        if proof.scope == scope and proof.passed
-    ]
+    matches = [proof for proof in receipt.restorations if proof.scope == scope and proof.passed]
     if len(matches) != 1:
         raise ReceiptError(f"verified custody requires one {scope} restoration")
     proof = matches[0]
@@ -52,20 +48,20 @@ def project_custody_receipt(
     if not receipt.git_remote or not receipt.git_commit or not receipt.git_receipt_commit:
         raise ReceiptError("verified custody is missing exact remote references")
 
-    chunk_manifest_digests = tuple(
-        _digest([asdict(chunk) for chunk in pack.chunks])
-        for pack in receipt.packs
+    chunk_manifest_digests = tuple(_digest([asdict(chunk) for chunk in pack.chunks]) for pack in receipt.packs)
+    custody_id = (
+        "custody_"
+        + _digest(
+            {
+                "run_id": receipt.run_id,
+                "logical_sha256": receipt.logical_sha256,
+                "chunk_manifest_digests": list(chunk_manifest_digests),
+                "git_remote": receipt.git_remote,
+                "git_commit": receipt.git_commit,
+                "git_receipt_commit": receipt.git_receipt_commit,
+            }
+        )[:32]
     )
-    custody_id = "custody_" + _digest(
-        {
-            "run_id": receipt.run_id,
-            "logical_sha256": receipt.logical_sha256,
-            "chunk_manifest_digests": list(chunk_manifest_digests),
-            "git_remote": receipt.git_remote,
-            "git_commit": receipt.git_commit,
-            "git_receipt_commit": receipt.git_receipt_commit,
-        }
-    )[:32]
 
     def proof(
         source: RestoreProof,
@@ -119,10 +115,7 @@ def _create_private_parents(parent: Path) -> None:
 def write_custody_receipt(path: Path, receipt: CustodyReceiptV1) -> bool:
     """Write once with private permissions; exact repeats are a no-op."""
 
-    encoded = (
-        json.dumps(receipt.model_dump(mode="json"), indent=2, sort_keys=True)
-        + "\n"
-    ).encode("utf-8")
+    encoded = (json.dumps(receipt.model_dump(mode="json"), indent=2, sort_keys=True) + "\n").encode("utf-8")
     if path.exists():
         try:
             existing = CustodyReceiptV1.model_validate_json(path.read_bytes())

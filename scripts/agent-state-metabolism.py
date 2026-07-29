@@ -181,11 +181,7 @@ def main(argv: list[str] | None = None) -> int:
     if (
         args.command == "cold-tree"
         and args.capture_all
-        and (
-            args.retain_relative
-            or args.hot_days is not None
-            or args.maximum_hot_gib is not None
-        )
+        and (args.retain_relative or args.hot_days is not None or args.maximum_hot_gib is not None)
     ):
         argument_parser.error(
             "--capture-all cannot be combined with --retain-relative, --hot-days, or --maximum-hot-gib"
@@ -220,14 +216,10 @@ def main(argv: list[str] | None = None) -> int:
             argument_parser.error("item restoration cannot be combined with eviction operations")
         if args.prepare_eviction_authorization and args.prepare_eviction_campaign_authorization:
             argument_parser.error("choose one eviction authorization planning mode")
-        if (
-            args.prepare_eviction_authorization
-            or args.prepare_eviction_campaign_authorization
-        ) and args.evict:
+        if (args.prepare_eviction_authorization or args.prepare_eviction_campaign_authorization) and args.evict:
             argument_parser.error("authorization planning and --evict are separate operations")
         if (
-            args.prepare_eviction_authorization
-            or args.prepare_eviction_campaign_authorization
+            args.prepare_eviction_authorization or args.prepare_eviction_campaign_authorization
         ) and not args.eviction_authorizer:
             argument_parser.error("eviction authorization planning requires --eviction-authorizer")
         if args.evict and (not args.eviction_authorization or not args.eviction_signature):
