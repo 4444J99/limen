@@ -1,5 +1,43 @@
 # S0 — Corpus custody: teach the registry where the store actually lives
 
+> ## ⛔ STOP — RE-MEASURED 2026-07-29: ALL THREE MISSION ITEMS ARE ALREADY DELIVERED
+>
+> This cartridge was written to be loaded **cold**, so a false premise here gets *executed*, not
+> caught — and an 8-hour runway would be spent rebuilding shipped work. Re-measured against
+> `origin/main`, every command reproducible:
+>
+> | mission item | status | evidence |
+> |---|---|---|
+> | 1. teach `corpora.yaml` about custody | **delivered, by a better mechanism** | custody is resolved by `scripts/reference_state.py` `ReferenceResolver` from the custody lane's own receipts — not by a field in `corpora.yaml` |
+> | 2. add a check that an unresolvable root is RED | **delivered as check B, not a new check F** | `scripts/check-corpora.py:122-131` — `UNACCOUNTED` ⇒ `fail`, `ARCHIVED` ⇒ advisory |
+> | 3. give it a reclaim verb a cold session can execute | **delivered** | `python3 -m limen.personal_custody {plan,apply,reclaim}` |
+>
+> Reproduce:
+>
+> ```bash
+> ls -d ~/Workspace/_conversations-private        # → No such file (the root still does not resolve)
+> python3 scripts/check-corpora.py                # → exit 0, with: B: store 'conversations-private'
+>                                                 #   root is archived off-host: 2 receipt(s);
+>                                                 #   restoration verified, 2 copies on independent
+>                                                 #   devices (1763 files)
+> PYTHONPATH=cli/src python3 -m limen.personal_custody --help   # → {plan,apply,reclaim}
+> ```
+>
+> **Do NOT add a custody field to `corpora.yaml`.** Item 1 below warned against inventing a second
+> custody schema, and that warning now cuts against item 1's own wording: the receipts are the
+> custody record, and a parallel field in a public registry would be exactly the second source of
+> truth `check-corpora.py`'s check D exists to forbid.
+>
+> **What actually remains: nothing this domain must build.** The store is archived with verified
+> restoration on two independent devices and a reclaim verb that acts on it, which is the declared-data
+> answer item 2 asked for. This domain's correct disposition is **settlement**, and it should be
+> settled by a predicate that proves the above rather than by a commit that merely names it — see
+> `docs/plans/2026-07-29-session-streams-alpha-to-omega.md` §Phase 1/1a. Until that lands, do not
+> open this domain to redo delivered work; if you open it at all, open it to *prove* the table above.
+>
+> Everything below is the original 2026-07-29 authoring, retained as provenance. Where it and this
+> block differ, **this block wins** — it was measured later.
+
 ## Objective
 
 `institutio/governance/corpora.yaml` declares the `conversations-private` store at
