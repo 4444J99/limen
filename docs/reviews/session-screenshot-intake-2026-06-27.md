@@ -62,4 +62,4 @@ worktrees, PRs, tasks, and ledgers.
 ## Next Receipt
 
 The executable queue derived from this intake lives in
-`docs/session-lifecycle-drain-queue-2026-06-27.md`.
+`docs/reviews/session-lifecycle-drain-queue-2026-06-27.md`.

@@ -80,8 +80,8 @@ These are known local app/store adapters with no matched files in this scan. Thi
 
 ## Tracked Intake Receipts
 
-- Screenshot intake: `docs/session-screenshot-intake-2026-06-27.md`.
-- Session lifecycle drain queue: `docs/session-lifecycle-drain-queue-2026-06-27.md`.
+- Screenshot intake: `docs/reviews/session-screenshot-intake-2026-06-27.md`.
+- Session lifecycle drain queue: `docs/reviews/session-lifecycle-drain-queue-2026-06-27.md`.
 - Session lifecycle blockers: `docs/session-lifecycle-blockers.md`.
 - Session attack paths: `docs/session-attack-paths.md`.
 - Prompt priority map: `docs/prompt-priority-map.md`.

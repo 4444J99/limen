@@ -66,7 +66,7 @@ gh api -X POST repos/organvm/<canary-repo>/transfer -f new_owner=<source-owner>
 ```
 
 Only after that single transfer succeeds should the gated bulk `--apply` from
-`docs/CONSOLIDATE-DRYRUN.md §6` be considered (and only after the 15 collisions are
+`docs/reviews/CONSOLIDATE-DRYRUN.md §6` be considered (and only after the 15 collisions are
 resolved and the config-rewrite cutover is planned — see that dossier §5).
 
 > Note — org *third-party access policy*: if any source org restricts OAuth apps,
@@ -251,7 +251,7 @@ with `curl -H "Authorization: Bearer $JWT"`; the JWT line is identical.)
 1. **Now (bridge):** run §1 `gh auth refresh -s admin:org -s workflow`; canary-transfer
    one repo to prove the grant + org OAuth policy.
 2. **Durable:** create + install `limen[bot]` (§2a–2c); store secrets.
-3. **Cutover prep (still gated):** resolve the 15 collisions (`docs/CONSOLIDATE-DRYRUN.md
+3. **Cutover prep (still gated):** resolve the 15 collisions (`docs/reviews/CONSOLIDATE-DRYRUN.md
    §3/§5), re-run the dry-run (expect 287 move / 0 skip).
 4. **Apply in waves** using the **App installation token** (not the personal token):
    archived + low-value first, `limen` LAST.

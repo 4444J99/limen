@@ -37,7 +37,8 @@ expect() {
 }
 
 expect docs-only 'syntax-changed
-diff-hygiene' docs/some-note.md
+diff-hygiene
+check-docs-manifest' docs/some-note.md
 
 expect cli-change 'syntax-changed
 diff-hygiene

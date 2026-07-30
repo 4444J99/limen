@@ -19,10 +19,10 @@ This is the public redacted entry point for the Codex / Claude / Agy / OpenCode 
 | `docs/agent-code-diff-review.md` | Line-level code-diff findings, fixes, rejected branches, and artifact-loss records |
 | `docs/agent-board-log-review.md` | Task-board-only session review and historical `tasks.yaml` churn findings |
 | `docs/agent-reconstruction-review.md` | No-change-ref session reconstruction by root and temporal git windows |
-| `docs/agent-agy-antigravity-review.md` | Agy CLI / Antigravity-specific session and provider-surface review |
+| `docs/reviews/agent-agy-antigravity-review.md` | Agy CLI / Antigravity-specific session and provider-surface review |
 | `docs/agent-opencode-review.md` | OpenCode SQLite/token/diff surface review |
 | `docs/agent-codex-review.md` | Codex session/history review |
-| `docs/agent-claude-review.md` | Claude project/subagent fanout review |
+| `docs/reviews/agent-claude-review.md` | Claude project/subagent fanout review |
 
 ## Current Coverage
 

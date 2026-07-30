@@ -5,7 +5,7 @@ Generated: `2026-07-16` · Window: 30 days (`2026-06-16` → `2026-07-16`)
 ## Scope
 
 This is the estate-wide friction/insights synthesis — the companion to
-`docs/agent-session-audit-rollup.md` (which covers prompt/session *structure*). This
+`docs/reviews/agent-session-audit-rollup.md` (which covers prompt/session *structure*). This
 report covers *friction* across **every** agent surface, not Claude alone: Claude Code,
 Codex, OpenCode, Antigravity (the `agy` CLI), Cline, and Jules — plus GitHub Copilot CLI, added
 2026-07-22 (see the Copilot addendum at the end).

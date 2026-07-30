@@ -96,7 +96,7 @@ The unique work remains preserved on the remote branches and open draft PRs.
   consolidation execution packet under `docs/consolidation/EXECUTION-MANIFEST.md` and
   `scripts/consolidation-*-apply.sh`; current main's scripts retain the explicit
   `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open` hard gate, while the draft branch's copies
-  remove that guard. Main also carries the richer `docs/session-2026-07-03-audit-trail.md`.
+  remove that guard. Main also carries the richer `docs/reviews/session-2026-07-03-audit-trail.md`.
 - Added a `remote-superseded` receipt for `linear-conjuring-bear` in
   `docs/worktree-preservation-receipts.json`. No PR was merged or closed, no branch was deleted,
   no local checkout was removed, and no GitHub consolidation command was run.

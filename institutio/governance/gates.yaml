@@ -416,6 +416,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "ROOT-MANIFEST drift: the repo root is a curated surface, not a landing strip — every tracked top-level entry is declared in root-manifest.yaml (sanctioned, with kind/owner/why) or counted as grandfathered fat carrying its target home (or DELETE with the receipt authority). Asserts schema, exact two-way root↔registry parity via git ls-tree HEAD (committed truth — untracked bloat is the board's, e.g. #1260), and that a rehomed entry takes its row with it: deleting the row IS the receipt. The `*` path implicates the gate on any root-level change so new fat cannot land silently between full-matrix runs. Founded on the measured defect: 85 tracked root entries of which 22 were strays (a Beowulf composition kit, Shahnameh scrapers, dead one-shot patchers, an accidentally committed error.log/.coverage) — accumulated with no predicate watching the surface."
+  check-docs-manifest:
+    command: "python3 scripts/check-root-manifest.py --surface docs"
+    paths: ["docs/*", "institutio/governance/docs-manifest.yaml", "scripts/check-root-manifest.py", "cli/tests/test_root_manifest.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "DOCS-MANIFEST drift: docs/ top level is a curated surface, not a landing strip — same predicate as check-root-manifest, one surface below (`--surface docs` selects docs-manifest.yaml vs `git ls-tree HEAD -- docs/`). Every loose file is declared sanctioned (pinned by an exact-path consumer named in its why) or counted grandfathered fat carrying its target home; a rehomed file takes its row with it. Founded on the measured defect: 177 loose files at docs/ top level beside 17 proper subdirs, accumulated with no predicate watching the surface — the operator had to re-issue the rehoming directive across 3+ sessions because nothing red-checked a misplaced doc."
   check-mail-tiers:
     command: "python3 scripts/check-mail-tiers.py"
     paths: ["institutio/governance/mail-tiers.yaml", "scripts/check-mail-tiers.py"]

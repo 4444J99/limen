@@ -47,7 +47,7 @@ Source session hash: `caeb31d884ab514a4cb1d2a2`
 - Predicate: `python3 -m py_compile scripts/current-session-fanout.py`.
 - Predicate: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout.py -q`.
 - Predicate: `python3 scripts/current-session-fanout.py --session "$LIMEN_CURRENT_SESSION_JSONL" --packet-id "PLAN-03-f0b8bc86" --theme "dynamic-substrate" --write`.
-- Evidence paths: `./cli/tests/test_auto_scale.py`, `./cli/tests/test_claude_workflow_guard.py`, `./cli/tests/test_omni_view.py`, `./docs/CONSOLIDATE-DRYRUN.md`, `./docs/QUICKEN-RESIDUE.md`, `./docs/agent-instruction-standard.md`, `./docs/capability-substrate-ledger.md`, `./docs/conductor-tranche.md`, `./docs/current-session-fanout.md`, `./docs/health-office/CHARTER.md` (+20 more).
+- Evidence paths: `./cli/tests/test_auto_scale.py`, `./cli/tests/test_claude_workflow_guard.py`, `./cli/tests/test_omni_view.py`, `./docs/reviews/CONSOLIDATE-DRYRUN.md`, `./docs/QUICKEN-RESIDUE.md`, `./docs/agent-instruction-standard.md`, `./docs/capability-substrate-ledger.md`, `./docs/conductor-tranche.md`, `./docs/current-session-fanout.md`, `./docs/health-office/CHARTER.md` (+20 more).
 - Evidence markers: `blocked`, `error`, `failed`, `not found`, `passed`, `permission`, `rate limit`, `success`, `warning`.
 - Continuation: blocks global product selection = `False`; continues despite local blockers = `False`.
 

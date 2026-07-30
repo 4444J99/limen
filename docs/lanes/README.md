@@ -6,7 +6,7 @@ worker session draws from, the axis **above** the vendor `target_agent` lane. It
 the converged term is `workstream`).
 
 Model choice inside a vendor lane is a separate concern. See
-[`docs/provider-routing.md`](../provider-routing.md): Limen derives a live capability request and
+[`docs/architecture/provider-routing.md`](../architecture/provider-routing.md): Limen derives a live capability request and
 never keeps a fixed model catalog or closed tier table.
 
 **Why it exists.** Without a purpose axis the backlog was one undifferentiated grab-bag: a session
