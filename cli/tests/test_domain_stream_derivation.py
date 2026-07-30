@@ -105,7 +105,11 @@ def test_priority_head_then_new_pillar_tail_then_on_demand_meta(root):
     never-speak-again property), then the on-demand meta lanes, open_rank 1..N."""
     assert _run("--write", root).returncode == 0
     streams = (root / G.STREAMS_REL).read_text()
-    order = [line.strip().rstrip(":") for line in streams.splitlines() if line.startswith("  ") and line.rstrip().endswith(":") and not line.strip().startswith("#")]
+    order = [
+        line.strip().rstrip(":")
+        for line in streams.splitlines()
+        if line.startswith("  ") and line.rstrip().endswith(":") and not line.strip().startswith("#")
+    ]
     assert order == ["correspondence", "financial", "contributions", "gardening", "conductor", "substrate"]
     for rank, handle in enumerate(order, 1):
         assert f"  {handle}:\n    family: domain\n    open_rank: {rank}\n" in streams
