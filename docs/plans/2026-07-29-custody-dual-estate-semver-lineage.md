@@ -107,3 +107,39 @@ Platform fact the doctrine already respects: GitHub cannot disable forking of a 
 `allow_forking` binds private repos only. The only real fork-protection levers are visibility
 (the private core) and what the split protocol lets out (the form twin). License posture governs
 reuse rights, not the fork button.
+
+## Part VI — v4.0.0 "The Storefront and the Shelves" (2026-07-30, the operator-approved wave)
+
+| Version | Date | Decision |
+|---|---|---|
+| v2.x–v3.0.0 | 2026-07-30 | Iterated in-session (nature-based custody → partner-event triggers → three estates); superseded same day by the storefront fact below — recorded here so the dead ends stay dead |
+| **v4.0.0** | 2026-07-30 | **Two axes + engine room.** STOREFRONT: the personal account is the resume surface (profile map, pins, partner estate — private lanes stay invisible by design). SHELVES: the 8 backbone orgs (organvm-i…vii, meta-organvm) are shelves of ONE library, populated from the registry — the operator's public profile already advertises all 10 org memberships (verified live: memberships public, 23,147 contributions, 0 restricted, pins set) while 9 advertised orgs sat EMPTY; populating them closes the storefront's own promise. ENGINE ROOM: organvm keeps machine + vaults + sauce; leak-set flips live there. VENTURE AXIS unchanged: a NEW org only on external brand/legal standing; a-organvm stays reserve. |
+
+**Decisive doc-verified economics (2026-07-30, docs.github.com):** Team meters outside
+collaborators on private org repos as paid seats (+pending, +dormant); personal accounts meter
+nothing — partner seats free forever; GitHub Pro (~$4/mo flat, L-PERSONAL-PRO #1659) adds the
+review-gating. The org Team upgrade is therefore an ENGINE-ROOM decision, never the partner path.
+
+**Realized this wave (receipts, not claims):**
+- 7 of 8 registry demotes LIVE via the lever's one-shot path (logs/visibility-actions.jsonl):
+  corpvs, in-my-head, sovereign--ground, system-system--system, manumissio,
+  content-engine--asset-amplifier, netmode (post re-class). elevate-align 422s on org
+  seat-metering — flips free after its transfer. L-GITVS-DEMOTE-ARM: discharged.
+- ASSET LEDGER shipped (PR #1653): estate.yaml `product_ledger`, 62 sweep-adjudicated products,
+  owner-independent names; two-axis law in the orgs note; netmode re-classed machine infra.
+- derek register row shipped (PR #1654) — the dangling education engagement homed.
+- Class O custody rung shipped (PR #1657): `custody_drift()` joins ledger ∧ live grants ∧
+  census; drift cites L-CONST-CUSTODY-MIGRATION; repo_custody envisioned→active.
+- Transfers remain his paste (classifier gates the transfer effector to agent sessions — 2×
+  denied 2026-07-30; same class as the 2026-07-29 visibility block): L-CONST-CUSTODY-MIGRATION
+  amended with the 10-lane canary-first runbook + post-transfer elevate-align flip.
+- Gate-estate finding homed: issue #1658 (ruff-lint gate version-unpinned; local 0.16.0 reds
+  clean main).
+
+**Phase 2+ (owned forward work):** shelf tranches T1 ERGON → T2 POIESIS+THEORIA →
+T3 TAXIS+KERYGMA+KOINONIA+LOGOS+meta → T4 plumbing home (each: registry `organ:` rows PR +
+transfer batch + doctor shelf-parity green); Phase 3 reap (ARCHIVE-only — contrib satellites
+−48, pages copies ×8, legacy twins, dead 4444J99.github.io, knowledge-store merge, jtenen role
+normalize, vox pair P1–P5); Phase 4 sauce sweep (PRIVATE/SPLIT/GUARD/CLEAN verdict per public
+repo + LICENSE posture per shelf). Plan of record: .agent-runtime/claude/plans/
+tranquil-spinning-possum.md (approved 2026-07-30).
