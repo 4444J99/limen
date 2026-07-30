@@ -24,9 +24,9 @@ policy:
     - organvm/limen
     - organvm/relationship-pipeline
     - organvm/arca
-    - organvm/conversation-corpus-engine
+    - organvm-i-theoria/conversation-corpus-engine
     - organvm/collaboratory
-    - organvm/portfolio
+    - organvm-vii-kerygma/portfolio
     - organvm/4444J99.github.io
   owner: gitvs
   note: "vault/conductor classes are structurally ungrantable; the repo list covers engine repos sitting in otherwise-grantable classes. The ceiling is push: partners contribute through review-gated branches, never administer."
