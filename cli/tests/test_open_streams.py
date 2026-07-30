@@ -275,3 +275,32 @@ def test_t1_lanes_open_before_t2_under_the_bound(launcher_env):
     opened = [line for line in out.splitlines() if line.lstrip().startswith("WOULD")]
     assert opened, out
     assert "(T1," in opened[0], f"the single opened slot went to a non-T1 lane: {opened[0]}"
+
+
+# ── What the FIRST LIVE LAUNCH surfaced (2026-07-29) ─────────────────────────────────────────────
+# CI never opens a real stream, so two defects survived fifteen green PRs and appeared only when a
+# lane actually opened on a live host. Both contracts are pinned against the shipped source because
+# neither is reachable from a hermetic test: check D runs against the real repo's .worktrees/, and
+# the hydrate line only matters inside a real tmux pane.
+
+
+def test_check_d_accepts_the_receipt_inside_the_worktree():
+    """The receipt is written ON THE STREAM'S BRANCH, inside its worktree — it reaches the main
+    checkout's docs tree only at merge. Check D must accept either home, or every freshly opened
+    stream turns --status into a red drift failure for the whole life of its branch."""
+    src = CHECK.read_text()
+    assert 'os.path.join(wt, "docs", "continuations", slug, "workstream.json")' in src, (
+        "check D no longer looks for the receipt inside the worktree — an open stream will "
+        "break --status until its branch merges"
+    )
+
+
+def test_the_launcher_hydrates_the_credential_env_before_the_agent():
+    """A fresh tmux pane inherits no conduct-broker identity; without sourcing the credential
+    organ's env sink the launched agent dies at birth on BrokerUnavailable. Values are sourced
+    into the pane, never printed."""
+    src = OPEN.read_text()
+    assert '. "$HOME/.limen.env"' in src, "the pane no longer sources ~/.limen.env"
+    hydrate_at = src.index('. "$HOME/.limen.env"')
+    exited_at = src.index("stream %s exited")
+    assert hydrate_at < exited_at, "hydration must precede the workstream command in the pane"

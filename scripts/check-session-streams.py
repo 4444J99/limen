@@ -115,9 +115,7 @@ FAMILY_RANK = {"constellation": 0, "governance": 1}
 # The generator whose output check M holds this registry to. Its --check re-derives every
 # constellation row and cartridge from the register and exits 1 on any byte of drift — so a
 # hand-edit to a derived row is a red pr-gate, same pattern as check-gates.py holds workflows.
-DERIVE_STREAMS = os.path.join(
-    "organs", "consulting", "constellation", "derive-streams.py"
-)
+DERIVE_STREAMS = os.path.join("organs", "consulting", "constellation", "derive-streams.py")
 VALID_PREDICATE_STATUS = {"existing", "to_be_built"}
 # Fields whose presence would let a human hand-write state the graph is supposed to derive.
 FORBIDDEN_STATE_FIELDS = ("status", "state", "settled", "ready", "done", "complete")
@@ -706,8 +704,13 @@ def run_checks(streams):
                 continue
             capsule = os.path.join(wt, ".limen-workstream")
             if slug in streams:
+                # The receipt is written ON THE STREAM'S BRANCH, inside the worktree — it reaches
+                # this checkout's docs tree only when that branch merges. An open stream whose
+                # receipt still lives in its own worktree is compliant, not drifted (first live
+                # launch, 2026-07-29: every opened lane instantly turned --status into a red D).
                 receipt = os.path.join(CONTINUATIONS, slug, "workstream.json")
-                if os.path.isdir(capsule) and not os.path.exists(receipt):
+                wt_receipt = os.path.join(wt, "docs", "continuations", slug, "workstream.json")
+                if os.path.isdir(capsule) and not (os.path.exists(receipt) or os.path.exists(wt_receipt)):
                     fail("D", f"{slug}: worktree has a capsule but no docs/continuations/{slug}/workstream.json")
             elif os.path.isdir(capsule) and re.match(r"^s[0-9]+-", slug):
                 fail("E", f"{slug}: stream-shaped lane exists on disk but is not declared in the registry")
@@ -760,7 +763,9 @@ def print_all(streams):
         key=lambda kv: (FAMILY_RANK.get(kv[1].get("family"), len(FAMILY_RANK)), rank[states[kv[0]]], kv[0]),
     )
 
-    print(f"session streams: {len(openable)} openable ({sum(1 for k in states.values() if k == 'ready')} with every precondition met)\n")
+    print(
+        f"session streams: {len(openable)} openable ({sum(1 for k in states.values() if k == 'ready')} with every precondition met)\n"
+    )
     for n, (sid, s) in enumerate(openable, 1):
         unmet = [r for r in s.get("requires", []) if not settled_cache.get(r)]
         waits = ", ".join(unmet) if unmet else "nothing"
@@ -874,7 +879,9 @@ def print_ready(streams):
     for sid, s in openable:
         mark = "REOPEN" if sid in dormant else ""
         print(f"── {sid} — {s['title']}{('   [' + mark + ']') if mark else ''}")
-        print(f"   family: {s['family']}   owner: {s['owner_of_record']}   class: {s['job_class']}   children ≤ {s['max_children']}")
+        print(
+            f"   family: {s['family']}   owner: {s['owner_of_record']}   class: {s['job_class']}   children ≤ {s['max_children']}"
+        )
         print()
         for line in launch_command(sid, s).splitlines():
             print(f"   {line}")
