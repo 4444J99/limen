@@ -400,6 +400,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: decorum
     note: "DECORVM registry+wiring drift AND the offline egg-face gate: the professionalization keeper's sources are declared data (decorum-surfaces.yaml). Asserts registry schema + department addressability, that the keeper's own --doctor passes, the `decorum` sensor is beat-wired, the voice-judgment register pins every verdict to a content_sha256, and — the prevention — that no vendored misspelling exists in the tracked public prose (a typo cannot merge onto the front door; the network-dependent visual/experience classes stay in the continuous beat, not this gate)."
+  check-root-manifest:
+    command: "python3 scripts/check-root-manifest.py"
+    paths: ["*", "institutio/governance/root-manifest.yaml", "scripts/check-root-manifest.py", "cli/tests/test_root_manifest.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "ROOT-MANIFEST drift: the repo root is a curated surface, not a landing strip — every tracked top-level entry is declared in root-manifest.yaml (sanctioned, with kind/owner/why) or counted as grandfathered fat carrying its target home (or DELETE with the receipt authority). Asserts schema, exact two-way root↔registry parity via git ls-tree HEAD (committed truth — untracked bloat is the board's, e.g. #1260), and that a rehomed entry takes its row with it: deleting the row IS the receipt. The `*` path implicates the gate on any root-level change so new fat cannot land silently between full-matrix runs. Founded on the measured defect: 85 tracked root entries of which 22 were strays (a Beowulf composition kit, Shahnameh scrapers, dead one-shot patchers, an accidentally committed error.log/.coverage) — accumulated with no predicate watching the surface."
   check-mail-tiers:
     command: "python3 scripts/check-mail-tiers.py"
     paths: ["institutio/governance/mail-tiers.yaml", "scripts/check-mail-tiers.py"]
