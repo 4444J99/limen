@@ -1463,6 +1463,12 @@ parameters:
     self_update: "exact runtime installation only"
     owner: dispatch
     note: "Exact merged Git SHA and deployment identity asserted by the installed conduct runtime for a full-mesh canary receipt. The canary hashes deployment identity in its redacted receipt and rejects missing or mismatched runtime evidence."
+  LIMEN_CONDUCT_RUNTIME_GIT_SHA:
+    default: ""
+    env: LIMEN_CONDUCT_RUNTIME_GIT_SHA
+    self_update: "exact runtime deployment only"
+    owner: dispatch
+    note: "Deployment-owned exact Git SHA exposed by the remote conduct keeper. The Worker deploy workflow injects GITHUB_SHA; together with Cloudflare version metadata it forms the authenticated runtime identity and is never a caller-selected canary override."
   LIMEN_CONDUCT_KEEPALIVE_SECONDS:
     default: 180
     env: LIMEN_CONDUCT_KEEPALIVE_SECONDS

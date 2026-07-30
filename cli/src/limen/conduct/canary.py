@@ -9,17 +9,21 @@ receipt carries only credential reference names and SHA-256 evidence.
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
 import re
+import shlex
+import stat
+import subprocess
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from limen.conduct.broker import ConductError
 from limen.conduct.client import HttpConductClient
@@ -27,6 +31,7 @@ from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
     CheckEvidenceV1,
+    ConductPrincipalV1,
     FanoutBoundsV1,
     PredicateEvidenceV1,
     RetryPolicyV1,
@@ -36,7 +41,6 @@ from limen.conduct.models import (
     canonical_hash,
 )
 from limen.work_loan import WorkLoanV1
-
 
 CANARY_SCHEMA = "limen.conduct_full_mesh_canary.v1"
 CREDENTIAL_REFS_ENV = "LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS"
@@ -52,8 +56,8 @@ _EDGE_DEADLINE = timedelta(minutes=15)
 _MAX_DEADLINE_SKEW = timedelta(minutes=5)
 _PATH_LOCK_TIMEOUT_SECONDS = 10.0
 _PATH_LOCK_POLL_SECONDS = 0.01
-_PREDICATE = "limen conduct canary full-mesh --receipt canary.json"
-_PREDICATE_SUMMARY = "bounded authenticated read-effect canary edge"
+_MAX_EDGE_RETRY_GENERATION = 1
+_PREDICATE_SUMMARY = "observed active heartbeat with unchanged runtime head for one authenticated canary edge"
 
 
 class ConductCanaryError(ConductError):
@@ -66,7 +70,7 @@ class _CredentialRef:
     role: str
     token_env: str
     token: str  # allow-secret: process-local value hydrated from a named environment reference
-    token_sha256: str
+    principal: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -99,19 +103,38 @@ def _load_json_env(name: str, environ: Mapping[str, str]) -> dict[str, Any]:
     return value
 
 
-def _runtime_identity(environ: Mapping[str, str]) -> dict[str, str]:
-    value = _load_json_env(RUNTIME_IDENTITY_ENV, environ)
+def _validated_runtime_identity(value: dict[str, Any], label: str) -> dict[str, str]:
     if set(value) != {"schema_version", "git_sha", "deployment_id"}:
-        raise ConductCanaryError(f"{RUNTIME_IDENTITY_ENV} must contain only schema_version, git_sha, and deployment_id")
+        raise ConductCanaryError(f"{label} must contain only schema_version, git_sha, and deployment_id")
     if value.get("schema_version") != _RUNTIME_IDENTITY_SCHEMA:
-        raise ConductCanaryError(f"{RUNTIME_IDENTITY_ENV} has an unsupported schema")
+        raise ConductCanaryError(f"{label} has an unsupported schema")
     git_sha = str(value.get("git_sha") or "")
     deployment_id = str(value.get("deployment_id") or "")
     if not _GIT_OBJECT_RE.fullmatch(git_sha):
-        raise ConductCanaryError("runtime git_sha must be an exact lowercase Git object ID")
+        raise ConductCanaryError(f"{label} git_sha must be an exact lowercase Git object ID")
     if not deployment_id or "\x00" in deployment_id or len(deployment_id) > 512:
-        raise ConductCanaryError("runtime deployment_id must be a non-empty bounded string")
+        raise ConductCanaryError(f"{label} deployment_id must be a non-empty bounded string")
     return {"git_sha": git_sha, "deployment_id": deployment_id}
+
+
+def _runtime_identity(environ: Mapping[str, str]) -> dict[str, str]:
+    return _validated_runtime_identity(
+        _load_json_env(RUNTIME_IDENTITY_ENV, environ),
+        RUNTIME_IDENTITY_ENV,
+    )
+
+
+def _require_remote_runtime_identity(
+    capabilities: dict[str, Any],
+    installed: dict[str, str],
+) -> dict[str, str]:
+    raw = capabilities.get("runtime_identity")
+    if not isinstance(raw, dict):
+        raise ConductCanaryError("remote keeper did not authenticate its runtime identity")
+    remote = _validated_runtime_identity(raw, "remote keeper runtime_identity")
+    if remote != installed:
+        raise ConductCanaryError("installed and remote keeper runtime identities do not match")
+    return remote
 
 
 def _credential_refs(
@@ -129,7 +152,7 @@ def _credential_refs(
     refs: list[_CredentialRef] = []
     seen_bindings: set[tuple[str, str]] = set()
     seen_envs: set[str] = set()
-    seen_hashes: set[str] = set()
+    seen_tokens: set[str] = set()
     for row in rows:
         if not isinstance(row, dict) or set(row) != {"session_id", "role", "token_env"}:
             raise ConductCanaryError("credential references must contain only session_id, role, and token_env")
@@ -148,26 +171,96 @@ def _credential_refs(
         token = environ.get(token_env, "").strip()  # allow-secret: environment reference only
         if not token:
             raise ConductCanaryError(f"credential reference {token_env} is not hydrated")
-        token_sha256 = _sha256_text(token)
-        if token_sha256 in seen_hashes:
+        if token in seen_tokens:
             raise ConductCanaryError("every canary role requires a distinct authenticated credential")
         seen_bindings.add(binding)
         seen_envs.add(token_env)
-        seen_hashes.add(token_sha256)
+        seen_tokens.add(token)
         refs.append(
             _CredentialRef(
                 session_id=session_id,
                 role=role,
                 token_env=token_env,
                 token=token,  # allow-secret: process-local transport credential, never serialized
-                token_sha256=token_sha256,
             )
         )
     return tuple(refs)
 
 
+def _authenticate_credential_refs(
+    capabilities: dict[str, Any],
+    refs: tuple[_CredentialRef, ...],
+    *,
+    installed_runtime: dict[str, str],
+    client_factory: Callable[..., HttpConductClient],
+    endpoint: str,
+    timeout: int,
+) -> tuple[_CredentialRef, ...]:
+    initial_sessions = {
+        str(row.get("session_id") or ""): row for row in capabilities.get("sessions", []) if isinstance(row, dict)
+    }
+    authenticated: list[_CredentialRef] = []
+    seen_principal_ids: set[str] = set()
+    principal_fields = set(ConductPrincipalV1.model_fields)
+    for ref in refs:
+        response = client_factory(endpoint, ref.token, timeout=timeout).capabilities()
+        if response.get("schema_version") != "limen.conduct_capabilities.v1":
+            raise ConductCanaryError("credential authentication returned an unsupported capabilities schema")
+        _require_remote_runtime_identity(response, installed_runtime)
+        raw_principal = response.get("authenticated_principal")
+        if not isinstance(raw_principal, dict) or set(raw_principal) != principal_fields:
+            raise ConductCanaryError("credential did not return exact authenticated principal evidence")
+        try:
+            principal = ConductPrincipalV1.model_validate(raw_principal)
+        except ValueError as exc:
+            raise ConductCanaryError("credential returned malformed authenticated principal evidence") from exc
+        expected_roles = frozenset({"observer", ref.role})
+        if principal.roles != expected_roles:
+            raise ConductCanaryError(f"{ref.role} credential has overprivileged or incomplete principal roles")
+        bound_sessions = response.get("authenticated_session_ids")
+        if (
+            not isinstance(bound_sessions, list)
+            or any(not isinstance(value, str) or not _IDENTIFIER_RE.fullmatch(value) for value in bound_sessions)
+            or bound_sessions != sorted(set(bound_sessions))
+            or ref.session_id not in bound_sessions
+        ):
+            raise ConductCanaryError("credential is not authenticated for its declared canary session")
+        if principal.principal_id in seen_principal_ids:
+            raise ConductCanaryError("every canary role requires a distinct authenticated principal")
+        seen_principal_ids.add(principal.principal_id)
+        response_sessions = response.get("sessions")
+        if not isinstance(response_sessions, list):
+            raise ConductCanaryError("credential authentication returned a malformed session catalog")
+        authenticated_session = next(
+            (row for row in response_sessions if isinstance(row, dict) and row.get("session_id") == ref.session_id),
+            None,
+        )
+        initial_session = initial_sessions.get(ref.session_id)
+        if authenticated_session is None or initial_session is None:
+            raise ConductCanaryError("credential-bound session is absent from remote capabilities")
+        if _stable_session_identity(authenticated_session) != _stable_session_identity(initial_session):
+            raise ConductCanaryError("credential-bound session identity changed across authenticated reads")
+        identity = authenticated_session.get("identity")
+        if not isinstance(identity, dict) or (
+            principal.agent != identity.get("agent") or principal.surface != identity.get("surface")
+        ):
+            raise ConductCanaryError("authenticated principal does not match its bound session identity")
+        authenticated.append(
+            replace(
+                ref,
+                principal={
+                    **principal.model_dump(mode="json"),
+                    "roles": sorted(principal.roles),
+                },
+            )
+        )
+    return tuple(authenticated)
+
+
 def _eligible_session(row: dict[str, Any], capability: str) -> bool:
     capabilities = row.get("capabilities")
+    active_leases = row.get("active_leases")
+    concurrency = row.get("concurrency")
     return bool(
         row.get("healthy") is True
         and row.get("accepting_work") is True
@@ -175,6 +268,13 @@ def _eligible_session(row: dict[str, Any], capability: str) -> bool:
         and isinstance(capabilities, list)
         and capability in capabilities
         and (capability != "execute" or row.get("quota_remaining") != 0)
+        and isinstance(active_leases, int)
+        and not isinstance(active_leases, bool)
+        and active_leases >= 0
+        and isinstance(concurrency, int)
+        and not isinstance(concurrency, bool)
+        and concurrency >= 1
+        and (capability != "execute" or active_leases < concurrency)
     )
 
 
@@ -264,15 +364,42 @@ def _stable_session_identity(session: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _credential_binding_sha256(ref: _CredentialRef, session: dict[str, Any]) -> str:
+    if ref.principal is None:
+        raise ConductCanaryError("credential lacks authenticated principal evidence")
+    return canonical_hash(
+        {
+            "schema_version": "limen.conduct_canary_credential_binding.v1",
+            "credential_ref": ref.token_env,
+            "role": ref.role,
+            "session": _stable_session_identity(session),
+            "principal": ref.principal,
+        }
+    )
+
+
+def _credential_principal_id(ref: _CredentialRef) -> str:
+    principal_id = (ref.principal or {}).get("principal_id")
+    if not isinstance(principal_id, str) or not _IDENTIFIER_RE.fullmatch(principal_id):
+        raise ConductCanaryError("credential lacks a valid authenticated principal identity")
+    return principal_id
+
+
 def _public_lane(lane: _Lane) -> dict[str, Any]:
     return {
         "lane": lane.name,
         "conductor_session_sha256": _sha256_text(lane.conductor_session["session_id"]),
         "executor_session_sha256": _sha256_text(lane.executor_session["session_id"]),
         "conductor_credential_ref": lane.conductor_credential.token_env,
-        "conductor_credential_sha256": lane.conductor_credential.token_sha256,
+        "conductor_credential_binding_sha256": _credential_binding_sha256(
+            lane.conductor_credential,
+            lane.conductor_session,
+        ),
         "executor_credential_ref": lane.executor_credential.token_env,
-        "executor_credential_sha256": lane.executor_credential.token_sha256,
+        "executor_credential_binding_sha256": _credential_binding_sha256(
+            lane.executor_credential,
+            lane.executor_session,
+        ),
     }
 
 
@@ -305,9 +432,15 @@ def _canary_identity(
                 "conductor": _stable_session_identity(lane.conductor_session),
                 "executor": _stable_session_identity(lane.executor_session),
                 "conductor_credential_ref": lane.conductor_credential.token_env,
-                "conductor_credential_sha256": lane.conductor_credential.token_sha256,
+                "conductor_credential_binding_sha256": _credential_binding_sha256(
+                    lane.conductor_credential,
+                    lane.conductor_session,
+                ),
                 "executor_credential_ref": lane.executor_credential.token_env,
-                "executor_credential_sha256": lane.executor_credential.token_sha256,
+                "executor_credential_binding_sha256": _credential_binding_sha256(
+                    lane.executor_credential,
+                    lane.executor_session,
+                ),
             }
             for lane in lanes
         ],
@@ -318,6 +451,12 @@ def _canary_identity(
         "deployment_id_sha256": _sha256_text(runtime["deployment_id"]),
         "endpoint_sha256": _sha256_text(client.endpoint),
         "cli_implementation_sha256": implementation_sha256,
+        "keeper_runtime_identity_sha256": canonical_hash(
+            {
+                "schema_version": _RUNTIME_IDENTITY_SCHEMA,
+                **runtime,
+            }
+        ),
         "identity_sha256": canonical_hash(private_identity),
     }
     return canary_id, public_runtime
@@ -331,16 +470,21 @@ def _packet(
     executor: _Lane,
     runtime_git_sha: str,
     now: datetime,
+    retry_generation: int = 0,
 ) -> WorkPacketV1:
-    work_id = f"canary-{canary_id[:20]}-{edge_id[:20]}"
+    if retry_generation not in range(_MAX_EDGE_RETRY_GENERATION + 1):
+        raise ConductCanaryError("canary edge retry generation exceeds its fixed bound")
+    work_id = f"canary-{canary_id[:20]}-{edge_id[:20]}-r{retry_generation}"
     identity = AgentIdentityV1.model_validate(conductor.conductor_session["identity"])
+    edge_predicate = shlex.join(("/bin/test", runtime_git_sha, "=", runtime_git_sha))
     return WorkPacketV1(
         work_id=work_id,
-        work_key=f"conduct-canary:{canary_id}:{edge_id}",
+        work_key=f"conduct-canary:{canary_id}:{edge_id}:retry:{retry_generation}",
         intent={
             "kind": "conduct-full-mesh-canary",
             "canary_id": canary_id,
             "edge_id": edge_id,
+            "retry_generation": retry_generation,
             "effect": "bounded-read",
         },
         execution={
@@ -352,8 +496,11 @@ def _packet(
         preferred_agent=executor.name,
         required_capabilities=frozenset({"execute"}),
         resource_claims=(),
-        predicate=_PREDICATE,
-        receipt_target=(f"git:organvm/limen:docs/receipts/conduct-full-mesh.json#{canary_id[:20]}-{edge_id[:20]}"),
+        predicate=edge_predicate,
+        receipt_target=(
+            "git:organvm/limen:docs/receipts/conduct-full-mesh.json"
+            f"#{canary_id[:20]}-{edge_id[:20]}-r{retry_generation}"
+        ),
         work_loan=WorkLoanV1(
             source_origin="human_prompt",
             horizon="present",
@@ -378,11 +525,7 @@ def _packet(
 
 def _executor_only_rejection(exc: ConductError) -> bool:
     detail = str(exc).casefold()
-    return (
-        "lacks required executor" in detail
-        or "another executor principal" in detail
-        or ("403" in detail and ("executor" in detail or "principal" in detail))
-    )
+    return "lacks required executor" in detail
 
 
 def _edge_id(canary_id: str, conductor: _Lane, executor: _Lane) -> str:
@@ -414,6 +557,7 @@ def _claim_evidence_sha256(
     run_id: str,
     lease: dict[str, Any],
     executor_session_id: str,
+    executor_principal_id: str,
 ) -> str:
     return canonical_hash(
         {
@@ -423,6 +567,33 @@ def _claim_evidence_sha256(
             "lease_id": lease["lease_id"],
             "lease_generation": lease["generation"],
             "executor_session_id": executor_session_id,
+            "executor_principal_id": executor_principal_id,
+        }
+    )
+
+
+def _conductor_rejection_evidence_sha256(
+    *,
+    edge_id: str,
+    run_id: str,
+    lease: dict[str, Any],
+    conductor_session_id: str,
+    conductor_principal_id: str,
+    executor_session_id: str,
+    executor_principal_id: str,
+) -> str:
+    return canonical_hash(
+        {
+            "schema_version": "limen.conduct_canary_conductor_rejection_evidence.v1",
+            "result": "executor_only_claim_rejected",
+            "edge_id": edge_id,
+            "run_id": run_id,
+            "lease_id": lease["lease_id"],
+            "lease_generation": lease["generation"],
+            "conductor_session_id": conductor_session_id,
+            "conductor_principal_id": conductor_principal_id,
+            "executor_session_id": executor_session_id,
+            "executor_principal_id": executor_principal_id,
         }
     )
 
@@ -433,6 +604,7 @@ def _heartbeat_evidence_sha256(
     run_id: str,
     lease: dict[str, Any],
     executor_session_id: str,
+    executor_principal_id: str,
     runtime_git_sha: str,
 ) -> str:
     return canonical_hash(
@@ -443,6 +615,7 @@ def _heartbeat_evidence_sha256(
             "lease_id": lease["lease_id"],
             "lease_generation": lease["generation"],
             "executor_session_id": executor_session_id,
+            "executor_principal_id": executor_principal_id,
             "observed_heads": {"runtime": runtime_git_sha},
         }
     )
@@ -453,10 +626,26 @@ def _expected_checks(
     edge_id: str,
     run_id: str,
     lease: dict[str, Any],
+    conductor_session_id: str,
+    conductor_principal_id: str,
     executor_session_id: str,
+    executor_principal_id: str,
     runtime_git_sha: str,
 ) -> tuple[CheckEvidenceV1, ...]:
     return (
+        CheckEvidenceV1(
+            name="conduct-canary-conductor-claim-rejected",
+            status="success",
+            head=_conductor_rejection_evidence_sha256(
+                edge_id=edge_id,
+                run_id=run_id,
+                lease=lease,
+                conductor_session_id=conductor_session_id,
+                conductor_principal_id=conductor_principal_id,
+                executor_session_id=executor_session_id,
+                executor_principal_id=executor_principal_id,
+            ),
+        ),
         CheckEvidenceV1(
             name="conduct-canary-executor-claim",
             status="success",
@@ -465,6 +654,7 @@ def _expected_checks(
                 run_id=run_id,
                 lease=lease,
                 executor_session_id=executor_session_id,
+                executor_principal_id=executor_principal_id,
             ),
         ),
         CheckEvidenceV1(
@@ -475,6 +665,7 @@ def _expected_checks(
                 run_id=run_id,
                 lease=lease,
                 executor_session_id=executor_session_id,
+                executor_principal_id=executor_principal_id,
                 runtime_git_sha=runtime_git_sha,
             ),
         ),
@@ -494,13 +685,13 @@ def _parse_timestamp(value: Any, label: str) -> datetime:
 
 
 def _canonical_timestamp(value: Any, label: str) -> str:
-    return _parse_timestamp(value, label).astimezone(timezone.utc).isoformat()
+    return _parse_timestamp(value, label).astimezone(UTC).isoformat()
 
 
 def _canonical_datetime(value: datetime, label: str) -> str:
     if value.tzinfo is None:
         raise ConductCanaryError(f"{label} must include a timezone")
-    return value.astimezone(timezone.utc).isoformat()
+    return value.astimezone(UTC).isoformat()
 
 
 def _validate_packet_contract(
@@ -523,6 +714,17 @@ def _validate_packet_contract(
     if stored.deadline <= created or stored.deadline > created + _EDGE_DEADLINE + _MAX_DEADLINE_SKEW:
         raise ConductCanaryError("harvested canary packet deadline is outside the bounded edge window")
     return stored
+
+
+def _contains_forbidden_lease_material(value: Any) -> bool:
+    forbidden = {"capability_token", "capability_token_hash", "executor_principal_id"}
+    if isinstance(value, dict):
+        return bool(forbidden & set(value)) or any(
+            _contains_forbidden_lease_material(child) for child in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_forbidden_lease_material(child) for child in value)
+    return False
 
 
 def _validate_submit_result(
@@ -555,7 +757,7 @@ def _validate_submit_result(
     lease = result.get("lease")
     if not isinstance(lease, dict):
         raise ConductCanaryError("keeper returned an invalid canary lease")
-    if "capability_token" in result or "capability_token_hash" in lease or "executor_principal_id" in lease:
+    if "capability_token" in result or _contains_forbidden_lease_material(lease):
         raise ConductCanaryError("reservation disclosed executor-only capability material")
     return status, lease
 
@@ -602,7 +804,7 @@ def _validate_harvest_node(
     lease = node.get("lease")
     if not isinstance(lease, dict):
         raise ConductCanaryError("harvested canary run lacks its public lease")
-    if "capability_token_hash" in lease or "executor_principal_id" in lease:
+    if _contains_forbidden_lease_material(lease):
         raise ConductCanaryError("harvested canary lease disclosed capability material")
     if (
         node.get("lease_id") != lease.get("lease_id")
@@ -620,6 +822,7 @@ def _validate_harvest_node(
         ("reserved", "reserved"),
         ("running", "active"),
         ("succeeded", "released"),
+        ("expired", "expired"),
     }:
         raise ConductCanaryError("canary duplicate is not in a recoverable lifecycle state")
     receipts = node.get("receipts")
@@ -627,7 +830,7 @@ def _validate_harvest_node(
         raise ConductCanaryError("harvested canary receipts are malformed")
     terminal = status_pair == ("succeeded", "released")
     expected_receipt_count = 1 if terminal else 0
-    expected_unharvested = [] if terminal else [run_id]
+    expected_unharvested = [run_id] if status_pair in {("reserved", "reserved"), ("running", "active")} else []
     if (
         harvest.get("receipt_count") != expected_receipt_count
         or harvest.get("by_status") != {str(node["status"]): 1}
@@ -644,6 +847,7 @@ def _validate_terminal_receipt(
     *,
     packet: WorkPacketV1,
     edge_id: str,
+    conductor: _Lane,
     executor: _Lane,
     runtime_git_sha: str,
 ) -> dict[str, Any]:
@@ -680,7 +884,10 @@ def _validate_terminal_receipt(
             edge_id=edge_id,
             run_id=run_id,
             lease=lease,
+            conductor_session_id=conductor.conductor_session["session_id"],
+            conductor_principal_id=_credential_principal_id(conductor.conductor_credential),
             executor_session_id=executor.executor_session["session_id"],
+            executor_principal_id=_credential_principal_id(executor.executor_credential),
             runtime_git_sha=runtime_git_sha,
         ),
         spend={"runs": 0},
@@ -693,14 +900,66 @@ def _validate_terminal_receipt(
     return raw_receipt
 
 
-def _conductor_rejection_sha256(client: HttpConductClient, lease: dict[str, Any]) -> str:
+def _prove_conductor_rejection(
+    client: HttpConductClient,
+    *,
+    edge_id: str,
+    run_id: str,
+    lease: dict[str, Any],
+    conductor: _Lane,
+    executor: _Lane,
+) -> str:
     try:
         client.claim(str(lease["lease_id"]), int(lease["generation"]))
     except ConductError as exc:
         if not _executor_only_rejection(exc):
             raise ConductCanaryError("conductor claim failed for an unexpected reason") from exc
-        return _sha256_text(str(exc))
+        return _conductor_rejection_evidence_sha256(
+            edge_id=edge_id,
+            run_id=run_id,
+            lease=lease,
+            conductor_session_id=conductor.conductor_session["session_id"],
+            conductor_principal_id=_credential_principal_id(conductor.conductor_credential),
+            executor_session_id=executor.executor_session["session_id"],
+            executor_principal_id=_credential_principal_id(executor.executor_credential),
+        )
     raise ConductCanaryError("conductor principal claimed an executor-only lease")
+
+
+def _run_edge_predicate(
+    *,
+    packet: WorkPacketV1,
+    heartbeat_lease: dict[str, Any],
+    runtime_git_sha: str,
+    predicate_runner: Callable[..., Any],
+) -> PredicateEvidenceV1:
+    observed_heads = heartbeat_lease.get("observed_heads")
+    observed_runtime = observed_heads.get("runtime") if isinstance(observed_heads, dict) else None
+    if not isinstance(observed_runtime, str):
+        raise ConductCanaryError("executor heartbeat did not provide an observed runtime head")
+    command = ("/bin/test", observed_runtime, "=", runtime_git_sha)
+    if shlex.join(command) != packet.predicate:
+        raise ConductCanaryError("edge-local predicate command does not match the authenticated observation")
+    try:
+        result = predicate_runner(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ConductCanaryError("edge-local predicate could not complete within its bound") from exc
+    exit_code = getattr(result, "returncode", None)
+    if not isinstance(exit_code, int) or isinstance(exit_code, bool):
+        raise ConductCanaryError("edge-local predicate returned no valid exit status")
+    if exit_code != 0:
+        raise ConductCanaryError("edge-local unchanged-runtime predicate failed")
+    return PredicateEvidenceV1(
+        command=packet.predicate,
+        exit_code=exit_code,
+        summary=_PREDICATE_SUMMARY,
+    )
 
 
 def _edge_evidence(
@@ -710,7 +969,6 @@ def _edge_evidence(
     conductor: _Lane,
     executor: _Lane,
     lease: dict[str, Any],
-    rejection_sha256: str,
     accepted_receipt: dict[str, Any],
     runtime_git_sha: str,
     broker_created_at: Any,
@@ -720,13 +978,17 @@ def _edge_evidence(
         edge_id=edge_id,
         run_id=run_id,
         lease=lease,
+        conductor_session_id=conductor.conductor_session["session_id"],
+        conductor_principal_id=_credential_principal_id(conductor.conductor_credential),
         executor_session_id=executor.executor_session["session_id"],
+        executor_principal_id=_credential_principal_id(executor.executor_credential),
         runtime_git_sha=runtime_git_sha,
     )
     return {
         "edge_id": edge_id,
         "conductor_lane": conductor.name,
         "executor_lane": executor.name,
+        "retry_generation": int(packet.intent["retry_generation"]),
         "run_id": run_id,
         "broker_created_at": _canonical_timestamp(broker_created_at, "harvested run created_at"),
         "packet_deadline": _canonical_datetime(packet.deadline, "harvested packet deadline"),
@@ -734,9 +996,9 @@ def _edge_evidence(
         "work_key_sha256": _sha256_text(packet.work_key),
         "intent_sha256": packet.intent_hash,
         "execution_sha256": packet.execution_hash,
-        "conductor_claim_rejection_sha256": rejection_sha256,
-        "executor_claim_sha256": str(checks[0].head),
-        "heartbeat_sha256": str(checks[1].head),
+        "conductor_claim_rejection_sha256": str(checks[0].head),
+        "executor_claim_sha256": str(checks[1].head),
+        "heartbeat_sha256": str(checks[2].head),
         "accepted_receipt_sha256": canonical_hash(accepted_receipt),
         "reservation": True,
         "executor_only_claim": True,
@@ -764,6 +1026,8 @@ def _execute_edge(
     client_factory: Callable[..., HttpConductClient],
     endpoint: str,
     timeout: int,
+    predicate_runner: Callable[..., Any],
+    retry_generation: int = 0,
 ) -> dict[str, Any]:
     edge_id = _edge_id(canary_id, conductor, executor)
     conductor_client = client_factory(
@@ -783,6 +1047,7 @@ def _execute_edge(
         executor=executor,
         runtime_git_sha=runtime_git_sha,
         now=now,
+        retry_generation=retry_generation,
     )
     submitted = conductor_client.submit(packet)
     submit_status, submitted_lease = _validate_submit_result(
@@ -805,8 +1070,25 @@ def _execute_edge(
         or submitted_lease.get("state") != lease.get("state")
     ):
         raise ConductCanaryError("submit and harvest disagree about the canary lease")
-    rejection_digest = _conductor_rejection_sha256(conductor_client, lease)
-    if (node.get("status"), lease.get("state")) == ("succeeded", "released"):
+    status_pair = (node.get("status"), lease.get("state"))
+    if status_pair == ("expired", "expired"):
+        if submit_status != "duplicate":
+            raise ConductCanaryError("fresh canary reservation was already expired")
+        if retry_generation >= _MAX_EDGE_RETRY_GENERATION:
+            raise ConductCanaryError("canary edge exhausted its single bounded retry generation")
+        return _execute_edge(
+            canary_id=canary_id,
+            conductor=conductor,
+            executor=executor,
+            runtime_git_sha=runtime_git_sha,
+            now=now,
+            client_factory=client_factory,
+            endpoint=endpoint,
+            timeout=timeout,
+            predicate_runner=predicate_runner,
+            retry_generation=retry_generation + 1,
+        )
+    if status_pair == ("succeeded", "released"):
         if submit_status != "duplicate":
             raise ConductCanaryError("fresh reservation unexpectedly resolved to a terminal canary run")
         accepted = _validate_terminal_receipt(
@@ -814,6 +1096,7 @@ def _execute_edge(
             lease,
             packet=stored_packet,
             edge_id=edge_id,
+            conductor=conductor,
             executor=executor,
             runtime_git_sha=runtime_git_sha,
         )
@@ -823,11 +1106,31 @@ def _execute_edge(
             conductor=conductor,
             executor=executor,
             lease=lease,
-            rejection_sha256=rejection_digest,
             accepted_receipt=accepted,
             runtime_git_sha=runtime_git_sha,
             broker_created_at=node.get("created_at"),
         )
+
+    rejection_digest = _prove_conductor_rejection(
+        conductor_client,
+        edge_id=edge_id,
+        run_id=run_id,
+        lease=lease,
+        conductor=conductor,
+        executor=executor,
+    )
+    expected_rejection = _expected_checks(
+        edge_id=edge_id,
+        run_id=run_id,
+        lease=lease,
+        conductor_session_id=conductor.conductor_session["session_id"],
+        conductor_principal_id=_credential_principal_id(conductor.conductor_credential),
+        executor_session_id=executor.executor_session["session_id"],
+        executor_principal_id=_credential_principal_id(executor.executor_credential),
+        runtime_git_sha=runtime_git_sha,
+    )[0].head
+    if rejection_digest != expected_rejection:
+        raise ConductCanaryError("conductor rejection proof does not match the authenticated edge")
 
     claim = executor_client.claim(lease["lease_id"], lease["generation"])
     capability_token = str(claim.get("capability_token") or "")
@@ -859,6 +1162,12 @@ def _execute_edge(
     ):
         raise ConductCanaryError("executor heartbeat returned the wrong canary lease")
 
+    predicate = _run_edge_predicate(
+        packet=stored_packet,
+        heartbeat_lease=heartbeat_lease,
+        runtime_git_sha=runtime_git_sha,
+        predicate_runner=predicate_runner,
+    )
     receipt = RunReceiptV1(
         receipt_id=f"receipt-{stored_packet.work_id}",
         run_id=run_id,
@@ -868,16 +1177,15 @@ def _execute_edge(
         observed_heads_before={"runtime": runtime_git_sha},
         observed_heads_after={"runtime": runtime_git_sha},
         changed_paths=(),
-        predicate=PredicateEvidenceV1(
-            command=stored_packet.predicate,
-            exit_code=0,
-            summary=_PREDICATE_SUMMARY,
-        ),
+        predicate=predicate,
         checks=_expected_checks(
             edge_id=edge_id,
             run_id=run_id,
             lease=lease,
+            conductor_session_id=conductor.conductor_session["session_id"],
+            conductor_principal_id=_credential_principal_id(conductor.conductor_credential),
             executor_session_id=executor.executor_session["session_id"],
+            executor_principal_id=_credential_principal_id(executor.executor_credential),
             runtime_git_sha=runtime_git_sha,
         ),
         spend={"runs": 0},
@@ -905,6 +1213,7 @@ def _execute_edge(
         terminal_lease,
         packet=terminal_packet,
         edge_id=edge_id,
+        conductor=conductor,
         executor=executor,
         runtime_git_sha=runtime_git_sha,
     )
@@ -914,36 +1223,60 @@ def _execute_edge(
         conductor=conductor,
         executor=executor,
         lease=terminal_lease,
-        rejection_sha256=rejection_digest,
         accepted_receipt=accepted,
         runtime_git_sha=runtime_git_sha,
         broker_created_at=terminal_node.get("created_at"),
     )
 
 
+def _canonical_receipt_path(path: Path) -> Path:
+    expanded = path.expanduser()
+    expanded.parent.mkdir(parents=True, exist_ok=True)
+    canonical = expanded.resolve(strict=False)
+    canonical.parent.mkdir(parents=True, exist_ok=True)
+    return canonical
+
+
 @contextmanager
-def _receipt_path_lock(path: Path) -> Iterator[None]:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    lock_id = _sha256_text(str(path.absolute()))[:24]
-    lock_path = path.parent / f".limen-conduct-canary-{lock_id}.lock"
+def _receipt_path_lock(path: Path) -> Iterator[Path]:
+    canonical = _canonical_receipt_path(path)
+    lock_id = _sha256_text(str(canonical))[:24]
+    lock_path = canonical.parent / f".limen-conduct-canary-{lock_id}.lock"
+    flags = os.O_RDWR | os.O_CREAT | os.O_CLOEXEC | os.O_NOFOLLOW
+    try:
+        descriptor = os.open(lock_path, flags, 0o600)
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise ConductCanaryError("receipt path lock is not a regular file")
+        os.fchmod(descriptor, 0o600)
+    except (OSError, ConductCanaryError) as exc:
+        if "descriptor" in locals():
+            os.close(descriptor)
+        if isinstance(exc, ConductCanaryError):
+            raise
+        raise ConductCanaryError("cannot open the receipt path lock") from exc
     deadline = time.monotonic() + _PATH_LOCK_TIMEOUT_SECONDS
     while True:
         try:
-            os.mkdir(lock_path, 0o700)
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
             break
-        except FileExistsError as exc:
+        except BlockingIOError as exc:
             if time.monotonic() >= deadline:
+                os.close(descriptor)
                 raise ConductCanaryError("timed out waiting for the bounded receipt path lock") from exc
             time.sleep(_PATH_LOCK_POLL_SECONDS)
         except OSError as exc:
+            os.close(descriptor)
             raise ConductCanaryError("cannot acquire the receipt path lock") from exc
     try:
-        yield
+        yield canonical
     finally:
         try:
-            lock_path.rmdir()
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
         except OSError as exc:
             raise ConductCanaryError("cannot release the receipt path lock") from exc
+        finally:
+            os.close(descriptor)
 
 
 def _write_receipt(path: Path, payload: dict[str, Any]) -> None:
@@ -952,13 +1285,25 @@ def _write_receipt(path: Path, payload: dict[str, Any]) -> None:
     if len(encoded) > _MAX_RECEIPT_BYTES:
         raise ConductCanaryError("canary receipt exceeds its bounded size")
     temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}-{time.monotonic_ns()}")
-    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    descriptor = os.open(
+        temporary,
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW,
+        0o600,
+    )
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             handle.write(rendered)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary, path)
+        directory_descriptor = os.open(
+            path.parent,
+            os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW,
+        )
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
     finally:
         try:
             temporary.unlink()
@@ -967,32 +1312,62 @@ def _write_receipt(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _existing_receipt(path: Path) -> dict[str, Any] | None:
-    if not path.exists():
-        return None
+    flags = os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC | os.O_NOFOLLOW
     try:
-        if path.stat().st_size > _MAX_RECEIPT_BYTES:
-            raise ConductCanaryError("existing canary receipt exceeds its bounded size")
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        descriptor = os.open(path, flags)
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
         raise ConductCanaryError("existing canary receipt is unreadable") from exc
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise ConductCanaryError("existing canary receipt is not a regular file")
+        if before.st_size > _MAX_RECEIPT_BYTES:
+            raise ConductCanaryError("existing canary receipt exceeds its bounded size")
+        chunks: list[bytes] = []
+        consumed = 0
+        while consumed <= _MAX_RECEIPT_BYTES:
+            chunk = os.read(descriptor, min(65_536, _MAX_RECEIPT_BYTES + 1 - consumed))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            consumed += len(chunk)
+        after = os.fstat(descriptor)
+        if consumed > _MAX_RECEIPT_BYTES or after.st_size > _MAX_RECEIPT_BYTES:
+            raise ConductCanaryError("existing canary receipt exceeds its bounded size")
+        if (
+            before.st_dev != after.st_dev
+            or before.st_ino != after.st_ino
+            or before.st_size != after.st_size
+            or consumed != after.st_size
+        ):
+            raise ConductCanaryError("existing canary receipt changed while it was read")
+        value = json.loads(b"".join(chunks).decode("utf-8"))
+    except ConductCanaryError:
+        raise
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ConductCanaryError("existing canary receipt is unreadable") from exc
+    finally:
+        os.close(descriptor)
     if not isinstance(value, dict) or value.get("schema_version") != CANARY_SCHEMA:
         raise ConductCanaryError("existing receipt is not a conduct full-mesh canary receipt")
     return value
 
 
 def _read_existing_receipt(path: Path) -> dict[str, Any] | None:
-    with _receipt_path_lock(path):
-        return _existing_receipt(path)
+    with _receipt_path_lock(path) as canonical:
+        return _existing_receipt(canonical)
 
 
 def _commit_receipt(path: Path, payload: dict[str, Any]) -> tuple[dict[str, Any], bool]:
-    with _receipt_path_lock(path):
-        existing = _existing_receipt(path)
+    with _receipt_path_lock(path) as canonical:
+        existing = _existing_receipt(canonical)
         if existing is not None:
             if existing.get("canary_id") != payload["canary_id"]:
                 raise ConductCanaryError("receipt path already belongs to another canary identity")
             return existing, False
-        _write_receipt(path, payload)
+        _write_receipt(canonical, payload)
         return payload, True
 
 
@@ -1065,6 +1440,13 @@ def _reuse_existing(
             "existing edge packet_deadline",
         ):
             raise ConductCanaryError("existing edge packet_deadline is not canonical")
+        retry_generation = edge.get("retry_generation")
+        if (
+            not isinstance(retry_generation, int)
+            or isinstance(retry_generation, bool)
+            or retry_generation not in range(_MAX_EDGE_RETRY_GENERATION + 1)
+        ):
+            raise ConductCanaryError("existing edge retry generation is invalid")
         edge_id = _edge_id(canary_id, conductor, executor)
         packet = _packet(
             canary_id=canary_id,
@@ -1073,6 +1455,7 @@ def _reuse_existing(
             executor=executor,
             runtime_git_sha=runtime_git_sha,
             now=packet_deadline - _EDGE_DEADLINE,
+            retry_generation=retry_generation,
         )
         client = client_factory(
             endpoint,
@@ -1095,6 +1478,7 @@ def _reuse_existing(
             lease,
             packet=stored_packet,
             edge_id=edge_id,
+            conductor=conductor,
             executor=executor,
             runtime_git_sha=runtime_git_sha,
         )
@@ -1104,7 +1488,6 @@ def _reuse_existing(
             conductor=conductor,
             executor=executor,
             lease=lease,
-            rejection_sha256=_conductor_rejection_sha256(client, lease),
             accepted_receipt=accepted,
             runtime_git_sha=runtime_git_sha,
             broker_created_at=node.get("created_at"),
@@ -1124,6 +1507,7 @@ def run_full_mesh_canary(
     environ: Mapping[str, str] | None = None,
     client_factory: Callable[..., HttpConductClient] = HttpConductClient,
     now: datetime | None = None,
+    predicate_runner: Callable[..., Any] = subprocess.run,
 ) -> dict[str, Any]:
     """Run, or read-only re-verify, one exact authenticated full mesh."""
 
@@ -1135,6 +1519,15 @@ def run_full_mesh_canary(
     runtime = _runtime_identity(environment)
     refs = _credential_refs(environment)
     capabilities = client.capabilities()
+    _require_remote_runtime_identity(capabilities, runtime)
+    refs = _authenticate_credential_refs(
+        capabilities,
+        refs,
+        installed_runtime=runtime,
+        client_factory=client_factory,
+        endpoint=client.endpoint,
+        timeout=client.timeout,
+    )
     lanes = _discover_lanes(capabilities, refs)
     canary_id, public_runtime = _canary_identity(client, runtime, lanes)
     existing = _read_existing_receipt(receipt_path)
@@ -1150,7 +1543,7 @@ def run_full_mesh_canary(
             timeout=client.timeout,
         )
 
-    submission_time = now or datetime.now(timezone.utc)
+    submission_time = now or datetime.now(UTC)
     edges: list[dict[str, Any]] = []
     for conductor in lanes:
         for executor in lanes:
@@ -1164,6 +1557,7 @@ def run_full_mesh_canary(
                     client_factory=client_factory,
                     endpoint=client.endpoint,
                     timeout=client.timeout,
+                    predicate_runner=predicate_runner,
                 )
             )
     required = len(lanes) * len(lanes)

@@ -565,9 +565,29 @@ test("principal-bound executor claims are recoverable and secret from conductors
 
 test("full-mesh canary read edge preserves Worker protocol parity", async () => {
   const runtimeHead = "a".repeat(40);
+  const runtimeIdentity = {
+    schema_version: "limen.conduct_runtime_identity.v1",
+    git_sha: runtimeHead,
+    deployment_id: "worker-version-fixture-17",
+  };
+  const deployedValues = new Map();
+  const deployedKeeper = new ConductKeeperDurableObject({
+    storage: {
+      async get(key) { return structuredClone(deployedValues.get(key)); },
+      async put(key, value) { deployedValues.set(key, structuredClone(value)); },
+    },
+  }, {
+    LIMEN_CONDUCT_RUNTIME_GIT_SHA: runtimeHead,
+    CF_VERSION_METADATA: { id: runtimeIdentity.deployment_id },
+  });
+  assert.deepEqual(
+    (await deployedKeeper.service.call("capabilities")).runtime_identity,
+    runtimeIdentity,
+  );
   const service = new SerializedConductService(new MemoryConductStore(), {
     clock: () => NOW,
     capabilitySecret: "worker-full-mesh-canary-secret",
+    runtimeIdentity,
   });
   const conductorPrincipal = principalMeta(
     "canary-alpha-conductor",
@@ -593,6 +613,30 @@ test("full-mesh canary read edge preserves Worker protocol parity", async () => 
     }),
     principal: executorPrincipal,
   });
+  const conductorCapabilities = await service.call("capabilities", {
+    principal: conductorPrincipal,
+  });
+  assert.deepEqual(conductorCapabilities.runtime_identity, runtimeIdentity);
+  assert.deepEqual(
+    conductorCapabilities.authenticated_principal,
+    conductorPrincipal,
+  );
+  assert.deepEqual(
+    conductorCapabilities.authenticated_session_ids,
+    [conductor.session_id],
+  );
+  const executorCapabilities = await service.call("capabilities", {
+    principal: executorPrincipal,
+  });
+  assert.deepEqual(executorCapabilities.runtime_identity, runtimeIdentity);
+  assert.deepEqual(
+    executorCapabilities.authenticated_principal,
+    executorPrincipal,
+  );
+  assert.deepEqual(
+    executorCapabilities.authenticated_session_ids,
+    [executor.session_id],
+  );
   const template = await packet({
     workId: "full-mesh-canary-alpha-zeta",
     conductor: conductor.identity,
@@ -603,6 +647,7 @@ test("full-mesh canary read edge preserves Worker protocol parity", async () => 
     intent: {
       kind: "conduct-full-mesh-canary",
       edge: "alpha->zeta",
+      retry_generation: 0,
     },
     execution: {
       executor_session_id: executor.session_id,
@@ -613,7 +658,7 @@ test("full-mesh canary read edge preserves Worker protocol parity", async () => 
     preferred_agent: "zeta",
     required_capabilities: ["execute"],
     resource_claims: [],
-    predicate: "limen conduct canary full-mesh --receipt canary.json",
+    predicate: `/bin/test ${runtimeHead} = ${runtimeHead}`,
     receipt_target: "git:organvm/limen:conduct-full-mesh-canary#worker-parity",
     work_loan: {
       schema_version: "limen.work_loan.v1",
@@ -677,7 +722,11 @@ test("full-mesh canary read edge preserves Worker protocol parity", async () => 
       observed_heads_before: { runtime: runtimeHead },
       observed_heads_after: { runtime: runtimeHead },
       changed_paths: [],
-      predicate: { command: work.predicate, exit_code: 0 },
+      predicate: {
+        command: work.predicate,
+        exit_code: 0,
+        summary: "observed edge runtime equals authenticated deployment runtime",
+      },
       spend: { runs: 0 },
       child_runs: [],
       outcome: "succeeded",
@@ -692,6 +741,14 @@ test("full-mesh canary read edge preserves Worker protocol parity", async () => 
   assert.deepEqual(harvested.by_status, { succeeded: 1 });
   assert.deepEqual(harvested.unharvested, []);
   assert.equal(harvested.receipt_count, 1);
+  assert.equal(
+    harvested.nodes[0].receipts[0].predicate.command,
+    `/bin/test ${runtimeHead} = ${runtimeHead}`,
+  );
+  assert.equal(
+    harvested.nodes[0].receipts[0].predicate.summary,
+    "observed edge runtime equals authenticated deployment runtime",
+  );
   const duplicate = await service.call("submit", {
     packet: work,
     principal: conductorPrincipal,

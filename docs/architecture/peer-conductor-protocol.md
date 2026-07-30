@@ -160,6 +160,7 @@ Required production configuration is credential-wall owned:
 - secret Worker `LIMEN_CONDUCT_CAPABILITY_SECRET`;
 - `LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_BRANCH`, and `LIMEN_GITHUB_PATH`;
 - secret `LIMEN_GITHUB_TOKEN`;
+- workflow-injected `LIMEN_CONDUCT_RUNTIME_GIT_SHA` plus the `CF_VERSION_METADATA` binding;
 - the `CONDUCT_KEEPER` Durable Object binding declared in `web/worker/wrangler.toml`.
 
 Do not put token values in commands, capsules, receipts, commits, or PR text. Deployment and secret
@@ -205,27 +206,49 @@ never appear in either JSON contract:
 ```
 
 Set those objects in `LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY` and
-`LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS`. The live capability response defines the denominator:
-every native agent with a healthy, accepting, non-protected conductor session and a healthy,
-accepting, non-protected executor session. The credential references must cover that denominator
-exactly, with distinct conductor and executor sessions and distinct authenticated credentials for
-each lane. No provider or model table participates in discovery.
+`LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS`. The Worker builds its runtime identity from the exact
+workflow-injected Git SHA and `CF_VERSION_METADATA.id`. Its additive capability fields are
+`runtime_identity`, `authenticated_principal`, and `authenticated_session_ids`; the canary requires
+the remote runtime identity to equal the installed contract exactly. Each conductor credential must
+authenticate exactly the `observer` and `conductor` roles, each executor credential exactly the
+`observer` and `executor` roles, and each named session must be among the authenticated principal's
+bound session IDs with the same native identity. Principal IDs and credentials are distinct across
+the manifest.
+
+The live capability response defines the denominator: every native agent with a healthy, accepting,
+non-protected conductor session and an executor session that also satisfies the packet capability,
+quota, and `active_leases < concurrency` bounds. The credential references must cover that
+denominator exactly, with distinct conductor and executor sessions for each lane. No provider or
+model table participates in discovery.
 
 For `N` eligible lanes the canary requires all `N × N` ordered edges, including every self edge.
 Each edge submits one bounded read-effect packet targeted at the exact executor session, proves that
-the conductor receives a reservation without capability material, proves that the conductor
-principal cannot claim the executor-only lease, claims through the executor principal, heartbeats
-the unchanged runtime head, reports an empty-path unchanged-head receipt, and harvests that accepted
-receipt through the conductor route. One failed or missing edge fails the command.
+the conductor receives a reservation without capability material, proves that the conductor-only
+principal receives the exact executor-role denial, claims through the executor principal, and
+heartbeats the runtime head. It then actually executes the bounded edge-local
+`/bin/test OBSERVED_HEAD = AUTHENTICATED_RUNTIME_HEAD` predicate and records its real exit
+status before reporting an empty-path unchanged-head receipt and harvesting it through the conductor
+route. Public reservation and harvest lease objects are rejected if capability tokens, token
+hashes, or executor-principal material appears at any nesting depth. One failed or missing edge
+fails the command.
 
 The `limen.conduct_full_mesh_canary.v1` receipt binds the exact Git object, hashed deployment and
 endpoint identities, CLI implementation digest, capability evidence, live lane denominator, and
-every ordered edge. It exposes credential reference names and SHA-256 evidence only. Repeating the
-same identity against the same receipt path performs read-only harvest verification and returns the
-byte-identical receipt. Deterministic duplicate submissions resume only their exact authenticated
-active lease or validate their exact settled packet and receipt without creating a new run. A
-bounded atomic path lock rechecks identity immediately before the receipt replace, so concurrent
-different identities cannot overwrite one another.
+every ordered edge. Public credential evidence hashes the credential reference's authenticated
+principal/session binding; neither the bearer nor a bearer-derived hash is persisted. An expired
+deterministic edge may advance once, from retry generation zero to one, under the same canary and
+edge identity but a distinct packet/run identity; another expiry fails closed. Deterministic active
+duplicates resume only their exact authenticated lease, while terminal duplicates validate their
+persisted rejection and execution evidence. Repeating the same identity against an existing receipt
+uses capability reads plus harvest only—no negative claim POST—and returns the byte-identical
+receipt after exact validation.
+
+Receipt I/O resolves the canonical path before using a persistent mode-`0600` regular lock file, so
+symlink aliases share one bounded POSIX `flock` and process exit releases ownership. Existing
+receipts must be stable regular files no larger than 4 MiB; nonblocking, no-follow reads reject
+special files, growth, and identity changes. A new receipt is fsynced before atomic replacement,
+then its canonical parent directory is fsynced. The identity is rechecked while holding the same
+lock, so concurrent different identities cannot overwrite one another.
 
 `tasks.yaml` and former cell boards are projections, never independent writers. Legacy task
 add/status/claim tools submit compatibility packets through the same keeper. The direct-writer
