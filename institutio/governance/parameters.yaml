@@ -3309,6 +3309,24 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Cadence (every N beats) of the github-actions-usage sensor. Spend moves daily, not per-beat — a slow cadence is honest; the omega rung re-runs it live on demand."
+  LIMEN_HOTCACHE_CHECK:
+    default: "1"
+    env: LIMEN_HOTCACHE_CHECK
+    self_update: none
+    owner: continuity
+    note: "Gate for the hot-cache beat sensor (scripts/verify-hot-cache.sh): exit 0 ⟺ this machine is disposable — spine connected, config captured, creds valid, toolchain summonable (mise.toml), every clone pushed. The Meeseeks law's court (plan 2026-07-30). Advisory, fail-open. 0 disables the pass."
+  LIMEN_BEAT_HOTCACHE:
+    default: 24
+    env: LIMEN_BEAT_HOTCACHE
+    self_update: none
+    owner: continuity
+    note: "Cadence (every N beats) of the hot-cache disposability sensor. Disposability moves at human speed — repos accumulate un-pushed state over hours, not seconds — so daily is honest; run bash scripts/verify-hot-cache.sh directly for a live answer."
+  LIMEN_HOTCACHE_TIMEOUT:
+    default: 300
+    env: LIMEN_HOTCACHE_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Timeout (seconds) for the hot-cache sensor's predicate run: creds --verify does network probes and R5 walks every clone under $LIMEN_WORKDIR, so it needs headroom a cheap sensor doesn't."
   LIMEN_GH_USAGE_TIMEOUT:
     default: 120
     env: LIMEN_GH_USAGE_TIMEOUT
