@@ -519,6 +519,12 @@ def run_gate_wave(
 
         def execute(gate_id: str) -> tuple[bool, float]:
             started = time.monotonic()
+            # A gate row may declare its own deadline (GATES registry `timeout_seconds`) — heavy
+            # serialized suites like pytest-cli cannot finish inside the wave default (the
+            # 2026-07-30 300s regression made every cli-touching PR unmergeable). The row can
+            # only EXTEND the wave default, never shrink it.
+            row_timeout = (gates[gate_id] or {}).get("timeout_seconds")
+            gate_deadline = max(timeout_seconds, float(row_timeout)) if row_timeout else timeout_seconds
             print(f"WAVE {wave_name}: START gate={gate_id}", flush=True)
             with output_paths[gate_id].open("w+b") as output:
                 try:
@@ -528,7 +534,7 @@ def run_gate_wave(
                         registry,
                         changed,
                         output=output,
-                        deadline=started + timeout_seconds,
+                        deadline=started + gate_deadline,
                         output_limit_bytes=output_limit_bytes,
                         cancel_event=cancel_event,
                     )
