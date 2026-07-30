@@ -270,7 +270,19 @@ def process_group_alive(process: subprocess.Popen[bytes]) -> bool:
         return False
     except PermissionError:
         return True
-    return True
+    try:
+        observed = subprocess.run(
+            ["ps", "-o", "stat=", "-g", str(process.pid)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=0.25,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return True
+    states = [line.strip() for line in observed.stdout.splitlines() if line.strip()]
+    return not (observed.returncode == 0 and states and all(state.startswith("Z") for state in states))
 
 
 def terminate_process_group(process: subprocess.Popen[bytes]) -> bool:
@@ -395,6 +407,15 @@ def run_command(
                 if not cleaned:
                     log_line(output, "gate-command-process-group-cleanup-failed")
                 return 125 if cleaned else 126
+            if exit_code is not None:
+                if process_group_alive(process):
+                    cleaned = terminate_process_group(process)
+                    log_line(output, "gate-command-lingering-process-group")
+                    if not cleaned:
+                        log_line(output, "gate-command-process-group-cleanup-failed")
+                    return 125 if cleaned else 126
+                if stream_eof:
+                    return exit_code
             if cancel_event.is_set():
                 cleaned = terminate_process_group(process)
                 log_line(output, "gate-command-interrupted: verification wave cancelled")
@@ -407,15 +428,6 @@ def run_command(
                 if not cleaned:
                     log_line(output, "gate-command-process-group-cleanup-failed")
                 return 124 if cleaned else 126
-            if exit_code is not None:
-                if process_group_alive(process):
-                    cleaned = terminate_process_group(process)
-                    log_line(output, "gate-command-lingering-process-group")
-                    if not cleaned:
-                        log_line(output, "gate-command-process-group-cleanup-failed")
-                    return 125 if cleaned else 126
-                if stream_eof:
-                    return exit_code
             wait_seconds = max(0.0, min(0.02, deadline - time.monotonic()))
             if wait_seconds:
                 if stream_eof:
@@ -687,19 +699,41 @@ def cmd_changed(
                     os.path.join(os.environ.get("TMPDIR", "/tmp"), "limen-verify-whole.lock"),
                 )
                 with open(lock_path, "w") as lock:
-                    try:
-                        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    except OSError:
-                        print(f"Another verification holds {lock_path} — waiting…")
-                        fcntl.flock(lock, fcntl.LOCK_EX)
-                    for gate_id in tiers["serialized"]:
+                    lock_deadline = time.monotonic() + gate_timeout_seconds
+                    announced_wait = False
+                    while True:
+                        try:
+                            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                            break
+                        except BlockingIOError:
+                            remaining = lock_deadline - time.monotonic()
+                            if remaining <= 0:
+                                print(
+                                    "serialized-lock-timeout: machine-wide verification "
+                                    f"lock remained held for {gate_timeout_seconds:g}s",
+                                    file=sys.stderr,
+                                )
+                                return 1
+                            if not announced_wait:
+                                print(f"Another verification holds {lock_path} — waiting…")
+                                announced_wait = True
+                            time.sleep(min(0.05, remaining))
+                    for index, gate_id in enumerate(tiers["serialized"]):
+                        timeout_seconds = lock_deadline - time.monotonic() if index == 0 else gate_timeout_seconds
+                        if timeout_seconds <= 0:
+                            print(
+                                "serialized-lock-timeout: no gate deadline remained after "
+                                "machine-wide lock acquisition",
+                                file=sys.stderr,
+                            )
+                            return 1
                         if not run_gate_wave(
                             [gate_id],
                             gates,
                             registry,
                             changed,
                             jobs=1,
-                            timeout_seconds=gate_timeout_seconds,
+                            timeout_seconds=timeout_seconds,
                             output_limit_bytes=gate_output_bytes,
                             wave_name=f"serialized:{gate_id}",
                         ):

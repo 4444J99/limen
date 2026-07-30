@@ -84,6 +84,95 @@ import os
 
 os.write(1, b"\xff" * 8192)
 PY
+  cat >"$dir/scripts/completed-before-timeout.py" <<'PY'
+from pathlib import Path
+import importlib.util
+import os
+import tempfile
+import threading
+
+module_path = Path(__file__).with_name("verify.py")
+spec = importlib.util.spec_from_file_location("verify_deadline_fixture", module_path)
+assert spec and spec.loader
+verify = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(verify)
+
+read_descriptor, write_descriptor = os.pipe()
+os.close(write_descriptor)
+
+
+class CompletedProcess:
+    pid = 999_999_999
+
+    def __init__(self) -> None:
+        self.stdout = os.fdopen(read_descriptor, "rb", buffering=0)
+
+    @staticmethod
+    def poll() -> int:
+        return 0
+
+    @staticmethod
+    def wait(timeout: float | None = None) -> int:
+        return 0
+
+
+process = CompletedProcess()
+verify.subprocess.Popen = lambda *args, **kwargs: process
+verify.os.killpg = lambda pid, sig: (_ for _ in ()).throw(ProcessLookupError())
+times = iter([0.0, 2.0])
+verify.time.monotonic = lambda: next(times, 2.0)
+with tempfile.TemporaryFile() as output:
+    result = verify.run_command(
+        ":",
+        output=output,
+        deadline=1.0,
+        output_limit_bytes=1024,
+        cancel_event=threading.Event(),
+    )
+if result != 0:
+    raise SystemExit(f"completed gate was misclassified: {result}")
+print("completed-before-timeout-ok")
+PY
+  cat >"$dir/scripts/zombie-group-fixture.py" <<'PY'
+from pathlib import Path
+from types import SimpleNamespace
+import importlib.util
+
+module_path = Path(__file__).with_name("verify.py")
+spec = importlib.util.spec_from_file_location("verify_zombie_fixture", module_path)
+assert spec and spec.loader
+verify = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(verify)
+
+process = SimpleNamespace(pid=424242)
+verify.os.killpg = lambda pid, sig: None
+verify.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
+    returncode=0,
+    stdout="Z\nZ+\n",
+)
+if verify.process_group_alive(process):
+    raise SystemExit("zombie-only process group was treated as live")
+verify.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
+    returncode=0,
+    stdout="Z\nS+\n",
+)
+if not verify.process_group_alive(process):
+    raise SystemExit("live process-group member was ignored")
+print("zombie-group-ok")
+PY
+  cat >"$dir/scripts/lock-holder.py" <<'PY'
+from pathlib import Path
+import fcntl
+import sys
+import time
+
+lock_path = Path(sys.argv[1])
+ready_path = Path(sys.argv[2])
+with lock_path.open("w") as lock:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    ready_path.write_text("ready\n", encoding="utf-8")
+    time.sleep(30)
+PY
   cat >"$dir/scripts/interrupt-supervisor.py" <<'PY'
 from pathlib import Path
 import os
@@ -136,6 +225,15 @@ for _ in range(20):
     try:
         os.kill(child_pid, 0)
     except ProcessLookupError:
+        child_alive = False
+        break
+    state = subprocess.run(
+        ["ps", "-o", "stat=", "-p", str(child_pid)],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    if state.startswith("Z"):
         child_alive = False
         break
     time.sleep(0.05)
@@ -226,6 +324,13 @@ commit_touch() {
   git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "touch $path"
 }
 
+effectively_alive() {
+  local pid="$1" state
+  kill -0 "$pid" 2>/dev/null || return 1
+  state="$(ps -o stat= -p "$pid" 2>/dev/null | tr -d '[:space:]')"
+  [[ -n "$state" && "$state" != Z* ]]
+}
+
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" parallel/input
@@ -303,7 +408,7 @@ if [[ -f "$sb/timeout-child-pid" ]]; then
   child_pid="$(<"$sb/timeout-child-pid")"
   child_alive=1
   for _ in 1 2 3 4 5; do
-    if ! kill -0 "$child_pid" 2>/dev/null; then
+    if ! effectively_alive "$child_pid"; then
       child_alive=0
       break
     fi
@@ -349,6 +454,39 @@ out="$(python3 "$sb/scripts/interrupt-supervisor.py" "$sb" "$base_sha" 2>&1)" \
   && [[ "$out" == "interruption-ok" ]] \
   && pass parent-interruption \
   || flunk parent-interruption "parent interruption did not reap its gate group: $out"
+
+out="$(python3 "$sb/scripts/completed-before-timeout.py" 2>&1)" \
+  && [[ "$out" == "completed-before-timeout-ok" ]] \
+  && pass completed-before-timeout \
+  || flunk completed-before-timeout "completed gate lost the deadline race: $out"
+
+out="$(python3 "$sb/scripts/zombie-group-fixture.py" 2>&1)" \
+  && [[ "$out" == "zombie-group-ok" ]] \
+  && pass zombie-group \
+  || flunk zombie-group "zombie process-group handling regressed: $out"
+
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+commit_touch "$sb" serialized/input
+python3 "$sb/scripts/lock-holder.py" "$sb/verify.lock" "$sb/lock-ready" &
+holder_pid=$!
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  [[ -f "$sb/lock-ready" ]] && break
+  sleep 0.02
+done
+if [[ -f "$sb/lock-ready" ]]; then
+  out="$(LIMEN_VERIFY_LOCK_FILE="$sb/verify.lock" \
+         python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base \
+         --gate-timeout-seconds 0.2 2>&1)" \
+    && flunk serialized-lock-timeout "held serialized lock unexpectedly passed" \
+    || { grep -q "serialized-lock-timeout" <<<"$out" \
+           && pass serialized-lock-timeout \
+           || flunk serialized-lock-timeout "missing bounded lock receipt: $out"; }
+else
+  flunk serialized-lock-timeout "lock-holder fixture did not become ready"
+fi
+kill "$holder_pid" 2>/dev/null || true
+wait "$holder_pid" 2>/dev/null || true
 
 if ((fails)); then
   printf '\nverify-parallel: %d case(s) FAILED\n' "$fails"
