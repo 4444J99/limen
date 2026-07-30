@@ -32,7 +32,10 @@ Touch-ID/GUI dialog unattended (the app's BiometricsOnly/never-cache policy turn
 into a fresh biometric prompt, and service accounts — the only promptless `op` — are Business-only,
 unavailable on a personal account). The promptless `derive` lanes (gh keyring via `gh auth token`)
 hydrate every time. To (re)hydrate the static op:// creds you run `--apply --op` at a terminal once
-and accept a single touch — a deliberate act, never a surprise storm.
+and accept a single touch — a deliberate act, never a surprise storm. And "a single touch" is now
+literal: all op:// lanes are read in ONE `op inject` pass (op_read_batch), so the whole hydration
+costs exactly one biometric authorization, not one per lane (LIMEN_CREDS_BATCH=0 restores the
+sequential per-lane reads).
 
 Companion pieces (same PR):
   - dispatch._load_limen_env() — loads ~/.limen.env into os.environ so agent subprocesses inherit it.
@@ -487,6 +490,51 @@ def op_read(ref: str, timeout: int = 15) -> str | None:
         return None
     val = (r.stdout or "").strip()
     return val or None
+
+
+# Sentinels deliberately do NOT carry the LIMEN_ prefix — they are template delimiters, not
+# parameters, and the LIMEN_ namespace is reserved for the registered parameter panel (check-params).
+_BATCH_BEGIN = "__OP_BATCH_BEGIN_{i}__"
+_BATCH_END = "__OP_BATCH_END_{i}__"
+
+
+def op_read_batch(refs: list[str], timeout: int = 120) -> dict[str, str] | None:
+    """Read MANY op:// secrets in ONE `op inject` pass — ONE 1Password authorization total, instead
+    of one Touch-ID prompt per ref (the app's BiometricsOnly / never-cache policy makes EVERY op
+    process its own biometric prompt, so a full `--apply --op` used to cost one touch per lane; this
+    makes it exactly one). The template is sentinel-delimited, NOT JSON: `op inject` substitutes
+    plain text, so a JSON template would break on any value containing quotes/newlines (the whole
+    rclone.conf is one such value) — sentinels survive anything. Returns {ref: value} on success
+    (refs only in logs — values never printed), or None on ANY failure: `op inject` is
+    all-or-nothing on an unresolvable ref, so the caller falls back to sequential per-entry op_read
+    (per-entry fail-open preserved). Disable the batch path entirely with LIMEN_CREDS_BATCH=0."""
+    if not refs:
+        return {}
+    template = "\n".join(
+        f"{_BATCH_BEGIN.format(i=i)}\n{{{{ {ref} }}}}\n{_BATCH_END.format(i=i)}" for i, ref in enumerate(refs)
+    )
+    try:
+        r = subprocess.run(
+            ["op", "inject"],
+            input=template,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return None
+    if r.returncode != 0:
+        return None
+    out: dict[str, str] = {}
+    for i, ref in enumerate(refs):
+        m = re.search(
+            re.escape(_BATCH_BEGIN.format(i=i)) + r"\n(.*?)\n" + re.escape(_BATCH_END.format(i=i)),
+            r.stdout or "",
+            re.DOTALL,
+        )
+        if m and m.group(1):
+            out[ref] = m.group(1)
+    return out
 
 
 def derive_value(cmd: list[str], timeout: int = 15) -> str | None:
@@ -1078,6 +1126,39 @@ def main() -> int:
 
     print(f"creds-hydrate {'--apply' if apply else '--dry-run (no reads, no writes — pass --apply to hydrate)'}:")
     hydrated, skipped = 0, 0
+
+    # ── ONE-PROMPT BATCH ───────────────────────────────────────────────────────────────────────────
+    # When several op:// lanes will be read this run, read them ALL in one `op inject` pass — one
+    # 1Password authorization instead of one Touch-ID per lane (BiometricsOnly/never-cache re-prompts
+    # on EVERY op process). Derive-first lanes are not pre-read (their op:// ref is a last-resort
+    # fallback that almost never fires — pre-reading would touch 1Password for a value the keyring
+    # already mints); gh_secret-only lanes that are already landed are excluded exactly as the loop
+    # below skips them (presence answers are cached so `gh secret list` runs once per sink, not
+    # twice). Batch failure degrades to the sequential per-entry reads below — per-entry fail-open
+    # is preserved, at the old one-prompt-per-lane cost. LIMEN_CREDS_BATCH=0 disables the batch.
+    sink_present_cache: dict[str, bool | None] = {}
+
+    def _sink_present_cached(s: dict) -> bool | None:
+        key = _sink_ref(s)
+        if key not in sink_present_cache:
+            sink_present_cache[key] = gh_sink_present(s)
+        return sink_present_cache[key]
+
+    batch_vals: dict[str, str] = {}
+    if apply and op_ok and os.environ.get("LIMEN_CREDS_BATCH") != "0":
+        need: list[str] = []
+        for e in cred_map:
+            ref, envs, fspec = str(e.get("ref", "")), e.get("env", []), e.get("file")
+            sinks = _gh_sinks(e)
+            if not ref.startswith("op://") or e.get("derive"):
+                continue
+            if sinks and not envs and not fspec and all(_sink_present_cached(s) is True for s in sinks):
+                continue
+            if ref not in need:
+                need.append(ref)
+        if len(need) > 1:
+            batch_vals = op_read_batch(need) or {}
+
     for e in cred_map:
         ref, envs, fspec = e["ref"], e.get("env", []), e.get("file")
         dcmd = e.get("derive")
@@ -1092,16 +1173,18 @@ def main() -> int:
         # gh_secret-ONLY entry (no env/file): if the CI secret is already set, skip — no value read, no
         # re-push, and crucially NO 1Password touch. The organ keeps it landed without a per-beat biometric
         # prompt; it only reads+sets when the secret is ABSENT (and op is permitted / the value derivable).
-        if sinks and not envs and not fspec and all(gh_sink_present(s) is True for s in sinks):
+        if sinks and not envs and not fspec and all(_sink_present_cached(s) is True for s in sinks):
             label = ", ".join(_sink_ref(s) for s in sinks)
             print(f"  ✓ {e['lane']:28} -> {label} (already set)")
             hydrated += 1
             continue
         # Prefer a live-minted value (e.g. the gh keyring) over the static op:// secret; fall back to
         # op ONLY when op can read without a prompt (op_ok) — else the op:// fallback is skipped, no GUI.
+        # The one-prompt batch above already holds most op:// values; op_read is the per-entry
+        # fallback for refs the batch didn't cover (batch failed/disabled, or a derive lane fell through).
         val = derive_value(dcmd) if dcmd else None
         if not val and op_ok:
-            val = op_read(ref)
+            val = batch_vals.get(ref) or op_read(ref)
         if not val:
             why = (
                 "unreadable (check op signin / the field name)"

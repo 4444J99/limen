@@ -2733,6 +2733,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether --sweep-all includes 1Password LOGIN-category items. OFF by default: those are personal web logins and a plaintext ~/.limen.env is the wrong home for them; the sweep targets API-credential/password/secret items. Set =1 only to deliberately include logins."
+  CREDS_BATCH:
+    default: "1"               # ON — all op:// lanes read in ONE `op inject` pass (one biometric touch)
+    env: LIMEN_CREDS_BATCH
+    self_update: none
+    owner: limen-daemon
+    note: "Whether creds-hydrate --apply reads its op:// lanes through a single `op inject` batch (op_read_batch) — one 1Password authorization total instead of one Touch-ID prompt per lane (BiometricsOnly/never-cache re-prompts on every op process). =0 restores the sequential per-entry `op read` path (the escape hatch if a template render ever misbehaves). Batch failure already degrades to sequential automatically — per-entry fail-open is preserved either way. See macos-tcc-gatekeeper-dialogs-solved."
 
   # --- credential Wall (scripts/credential-wall.py): the pinned secret/credential index ---
   LIMEN_CRED_WALL_ISSUE:
