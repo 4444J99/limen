@@ -218,6 +218,12 @@ def owners(estate: dict) -> list[str]:
             owner = str(m).split("/", 1)[0]
             if owner and owner not in ("*", "**") and owner not in derived:
                 derived.append(owner)
+    # Shelf orgs are declared registry data (shelf_assignments) — enumerate them too, or the
+    # census never sees shelf repos and class P reads every declared shelf row as absent.
+    for org in (estate.get("shelf_assignments") or {}).get("shelves") or {}:
+        o = str(org)
+        if o and o not in derived:
+            derived.append(o)
     return derived or ["organvm"]
 
 
@@ -905,21 +911,25 @@ def _org_posture(estate: dict, online: bool) -> dict:
     return out
 
 
-def _owner_repos(owner: str, token: str | None) -> list[dict] | None:
+def _owner_repos(
+    owner: str,
+    token: str | None,  # allow-secret (type annotation, no value)
+    user_scoped: bool = False,
+) -> list[dict] | None:
     """Enumerate ALL repos of an owner with per-repo census facts. Tries the org route first —
     /orgs/{owner}/repos?type=all surfaces the private repos the cascade token can see (the /users
     route is structurally public-only, the census blindness this Lens fix removes) — then falls back
-    to /users/{owner}/repos for personal accounts. None ⟺ both routes failed (fail-open)."""
+    to /users/{owner}/repos for personal accounts. `user_scoped` runs the read on the owner's
+    NATIVE gh identity: non-canonical owners (personal estate, shelf orgs) sit outside the App
+    installation, and the App token silently hides their PRIVATE repos. None ⟺ both routes
+    failed (fail-open)."""
     jq = (
         ".[] | {full_name, private, fork, archived, size, description, homepage, "
         "stars: .stargazers_count, topics_count: ((.topics // []) | length), pushed_at}"
     )
     for route in (f"/orgs/{owner}/repos?type=all", f"/users/{owner}/repos"):
-        r = _gh(
-            ["api", route, "--paginate", "-X", "GET", "-F", "per_page=100", "--jq", jq],
-            token,
-            timeout=180,
-        )
+        args = ["api", route, "--paginate", "-X", "GET", "-F", "per_page=100", "--jq", jq]
+        r = _gh_user(args, timeout=180) if user_scoped else _gh(args, token, timeout=180)
         if r.returncode != 0:
             continue
         if not (r.stdout or "").strip():
@@ -962,18 +972,23 @@ def _collaborator_census(estate: dict, access: dict | None, token: str | None, o
     policy = access.get("policy") or {}
     probe = sorted({str(r) for r in grants} | {str(r) for r in (policy.get("never_grant_repos") or [])})
     ok = True
-    org_set = {str(o) for o in owners(estate)}
+
+    def _owner_org_class(repo: str) -> str | None:
+        # The orgs-registry class is the routing truth: 'canonical' rides the App token;
+        # everything else (shelf orgs, and the personal account which matches NO orgs row)
+        # sits outside the App installation and must read user-scoped. NOTE: owners(estate)
+        # is NOT usable here — it includes the personal account via its class glob.
+        cls_name, _row = _org_class(repo.split("/", 1)[0], estate)
+        return cls_name
 
     def _roll(repo: str, path: str, jq: str) -> subprocess.CompletedProcess:
-        # Personal-estate rolls are invisible to the org-installed App identity (dual-estate
-        # custody: partner lanes live on the personal account) — read them user-scoped.
-        if repo.split("/", 1)[0] not in org_set:
-            return _gh_user(["api", path, "--jq", jq], timeout=30)
-        return _gh(["api", path, "--jq", jq], token, timeout=30)
+        if _owner_org_class(repo) == "canonical":
+            return _gh(["api", path, "--jq", jq], token, timeout=30)
+        return _gh_user(["api", path, "--jq", jq], timeout=30)
 
     def _outside_path_jq(repo: str) -> tuple[str, str]:
         owner, _, _name = repo.partition("/")
-        if owner not in org_set:
+        if _owner_org_class(repo) is None:
             # 'outside' is an ORG affiliation — on a personal repo it misses direct invitees
             # (victoroff-os: david reads write in the full roll, absent from the outside roll).
             # The personal-estate lens is every collaborator except the owner.
@@ -1085,7 +1100,10 @@ def observe(estate: dict) -> dict:
         facts_all: list[dict] = []
         complete = True
         for owner in owner_list:
-            rows = _owner_repos(owner, token)
+            # Non-canonical owners (personal estate, shelf orgs) sit outside the App
+            # installation — enumerate them user-scoped or their private repos vanish silently.
+            cls_name, _row = _org_class(owner, estate)
+            rows = _owner_repos(owner, token, user_scoped=(cls_name != "canonical"))
             if rows is None:
                 complete = False
                 continue
@@ -1623,6 +1641,33 @@ def custody_drift(ledger: list, grants: dict, by_repo: dict, org_set: set) -> li
     return out
 
 
+def shelf_drift(shelves: dict, rows: list) -> list[str]:
+    """Class P's pure join (shelf parity, custody v4.0.0 Phase 2): declared shelf membership
+    (estate shelf_assignments, bare names) vs census owner, BOTH directions — a declared repo
+    living elsewhere is drift, and an undeclared repo squatting in a shelf org is drift.
+    Deterministic (sorted); reports remediation, never fires a transfer."""
+    declared: dict[str, set[str]] = {str(o): {str(n) for n in (ns or [])} for o, ns in (shelves or {}).items()}
+    owners_by_name: dict[str, set[str]] = {}
+    for r in rows or []:
+        full = str((r or {}).get("full_name") or "")
+        o, _, n = full.partition("/")
+        if o and n:
+            owners_by_name.setdefault(n, set()).add(o)
+    out: list[str] = []
+    for org, names in sorted(declared.items()):
+        for n in sorted(names):
+            owners_ = owners_by_name.get(n) or set()
+            if not owners_:
+                out.append(f"{org}/{n}: declared on the shelf but absent from the census")
+            elif org not in owners_:
+                out.append(f"{n}: declared shelf {org}, census owner {'/'.join(sorted(owners_))} — transfer owed")
+    for n, owners_ in sorted(owners_by_name.items()):
+        for o in sorted(owners_):
+            if o in declared and n not in declared[o]:
+                out.append(f"{o}/{n}: undeclared repo in a shelf org — declare the row or move it out")
+    return out
+
+
 def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = False) -> int:
     """The Diff operator. Exit 0 ⟺ drift == ∅ (over the rungs that could run). SKIP is never a faked PASS."""
     fails: list[str] = []
@@ -1876,6 +1921,17 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
             (cites if o_atom in homed else fails).append(
                 f"[O custody-drift] {d} → " + (f"{o_atom} (owned, open)" if o_atom in homed else f"{o_atom} (UNHOMED)")
             )
+
+    # P — shelf parity (custody v4.0.0 Phase 2): declared shelf membership vs census owner,
+    # both directions. Real drift is RED with the exact remediation named; the rung never
+    # fires a transfer itself.
+    shelves_reg = ((estate.get("shelf_assignments") or {}).get("shelves")) or {}
+    if shelves_reg:
+        if not rows:
+            skips.append("[P shelf-parity] no census facts (run census online first)")
+        else:
+            for d in shelf_drift(shelves_reg, rows):
+                fails.append(f"[P shelf-parity] {d}")
 
     # A/D are per-repo posture rungs — the census surfaces the inputs; the full per-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.
