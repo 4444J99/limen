@@ -31,6 +31,7 @@ def _ancestor_pids() -> set[int]:
                 text=True,
                 timeout=5,
                 check=False,
+                cwd="/",
             ).stdout.strip()
             parent = int(raw)
         except (OSError, ValueError, subprocess.TimeoutExpired):
@@ -56,12 +57,18 @@ def _process_cwds() -> dict[Path, int]:
                 continue
         return observed
     try:
+        # cwd="/" is load-bearing: the scanner subprocess otherwise inherits the CALLER's cwd,
+        # and the claimant registers from inside the worktree it probes — so lsof would list
+        # ITSELF as a live occupant of that worktree, a descendant the ancestor lineage cannot
+        # exclude, and succession would be refused deterministically (the 2026-07-30 reopen
+        # incident). Launching the observer from / keeps it out of every observed region.
         result = subprocess.run(
             ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
             capture_output=True,
             text=True,
             timeout=20,
             check=False,
+            cwd="/",
         )
     except (OSError, subprocess.TimeoutExpired):
         return {Path("/"): -1}
