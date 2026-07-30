@@ -39,10 +39,24 @@ the physical room. The engine is the work; everything else is a render target.
    fetched, not a constraint the generator has to remember.
 
 2. **`projK` is the film's spine.** One uniform mixes plane-local UVs against projector UVs.
-   `projK = 1` → the stage collapses into the flat 2017 transmutation. `projK = 0` → full 3D
-   collage. **Animating it 1 → 0 → 1 *is* the reveal**: the still was always a room.
-   The three 2017 pieces become *attractors* — measured slat counts stored in the manifest, so the
-   engine can converge onto them and dissolve back out.
+   `projK = 1` → the stage collapses into the flat 2017 composite. `projK = 0` → full 3D room.
+   **Animating it 1 → 0 → 1 *is* the reveal**: the still was always a room. The 2017 pieces are
+   *attractors* — measured geometry in the manifest, so the engine converges onto them and
+   dissolves back out.
+
+   > **The full-resolution 2017 composite (supplied 2026-07-30) is the spec for `projK = 1`.**
+   > It is not vertical slats: it is a **tiled grid — ~7 columns × ~5 bands — of body fragments at
+   > different scales, opacities and saturations, composited over one continuous room.** Multiple
+   > instances of her coexist in a single unbroken space (the *Tango* move). Measured seams:
+   > columns `[0.0537, 0.0742, 0.292, 0.3154, 0.377, 0.5693]`, rows `[0.4622, 0.4857, 0.7695,
+   > 0.8021]`.
+   >
+   > **And the bands land on the room's own architecture.** Rows 0.4622/0.4857 match the
+   > poster-rail transition measured independently from the dancer-free frame (0.4661/0.4886) —
+   > **within 0.4% of frame height.** The hand-cut rule was *cut on the architecture*, so the
+   > engine derives its bands from the measured room lines rather than inventing a grid.
+   > Per-tile **scale, opacity and saturation** are grammar variables, not decoration: the 2017
+   > piece desaturates some tiles and not others (saturation spread 0.162).
 
 3. **The engine is a pure function `f(seed, t)`.** No accumulated state, no `requestAnimationFrame`
    inside the engine. That single property buys: deterministic film renders, O(1) seek to any
@@ -113,13 +127,29 @@ align-tool.html      manual floor/wall line pass — static, local
 **If it fights you, use Photos.app → Export Unmodified Originals.** Two minutes. Do not let the
 export tool become the blocker.
 
-**Crop vocabulary is derived, not detected** — a pure function of the 19 Vision joints:
-16 regions (`head, shoulder, elbow, wrist, hand, spine, torso, hip, thigh, knee, calf, ankle, foot,
-arm, leg, full`), each with a confidence and an **`anchorY`** (the room-space y where that crop's
-ground contact sits). `anchorY` is what makes feet land on the floor at any plane angle.
+> **Corrected by measurement (2026-07-30), after running the Vision pass on all 162 frames.**
+> The original design keyed the crop vocabulary off body-pose joints. That was wrong for this
+> corpus: **161 of 162 frames carry a person matte** (coverage 11–18%, quality 0.987–0.998), but
+> **pose finds joints in only 65 and never reaches 8 confident ones.** The joint histogram says why
+> — knees 40%, ankles 37%, hips 35%, then shoulders 3% and faces 2%. **The shoot frames legs.**
+> There is no upper body for a whole-person model to anchor on. The first classifier reported
+> 0 dancers out of 162.
 
-**Auto-partition:** no pose → `room` (the wall-only frames); pose but <8 confident joints →
-`partial`; else `dancer`. The corpus splits itself into architecture and body for free.
+**The matte is the primary instrument; pose is an optional refinement.** Regions are derived from
+the silhouette — per-row connected components separate the two legs, and the lowest point of each
+component is a ground contact, which is exactly the **`anchorY`** that makes feet land on the floor
+at any plane angle. Where joints *are* available (14 frames), they name the anatomy; elsewhere the
+proportional bands of each leg component carry it. Vocabulary is leg-weighted to match the material:
+`foot, ankle, calf, knee, thigh, leg, contact, full`.
+
+**Auto-partition by coverage, not pose:** matte < 5% → `room`; ≥4 confident joints → `dancer`;
+otherwise `figure`. Both `figure` and `dancer` are the body stratum. Measured result:
+**14 dancer / 147 figure / 1 room.**
+
+**Only one frame (IMG_1570) is dancer-free** — so synthesize the clean room plate instead: median-
+composite all 161 frames with the dancer masked out. The camera is locked off, so every frame
+contributes its non-dancer pixels and the median is a perfect empty room. Conceptually apt, too —
+the room is what's left when you remove her from every frame.
 
 **Registration is the load-bearing step.** Do the manual pass *first*: `align-tool.html` shows each
 photo, you click the floor line and the wall line. 161 × 5s = **15 minutes, zero risk.** Then refine
