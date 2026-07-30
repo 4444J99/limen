@@ -44,8 +44,17 @@
 #   constellation only; governance domains are counted, named as skipped, and reachable via
 #   --family governance (or both via --family all).
 #
+# THE ROUND TRIP (open → exit → reopen)
+#   Exiting the agent (/exit, or however the lane ends) KEEPS the tmux window — it prints
+#   `── stream X exited — window kept ──` and drops to a shell so the closeout stays readable.
+#   `Ctrl-b d` detaches from tmux without stopping anything. An exited stream's worktree remains
+#   and the registry classifies it `dormant`: the next run of this script REOPENS it (labelled
+#   REOPEN), re-entering the same worktree and branch. `--status` shows the whole cycle at a
+#   glance: live (pid) / dormant / ready / blocked / stale / settled.
+#
 # Usage:
-#   scripts/open-streams.sh                  # open the ready constellation lanes, up to the bound
+#   scripts/open-streams.sh                  # open + reopen the constellation lanes, up to the bound
+#   scripts/open-streams.sh --status         # one line per stream with its derived state
 #   scripts/open-streams.sh --family all     # ...plus the governance domains
 #   scripts/open-streams.sh --lane claude    # ...on a chosen lane (claude|codex|agy|opencode|…)
 #   scripts/open-streams.sh --dry-run        # print exactly what would open, touch nothing
@@ -89,6 +98,10 @@ while [[ $# -gt 0 ]]; do
       # Print the lanes this script will accept, one per line, then exit. Exists so nothing has to
       # re-derive the rule: tests and callers ask the script instead of keeping a second copy.
       lane_choice="--list"; list_lanes_only=1; shift ;;
+    --status)
+      # The registry owns state derivation — this is a pure delegate, so the launcher and the
+      # checker can never tell the operator two different stories about the same stream.
+      exec python3 "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/check-session-streams.py" --status ;;
     --lane)
       # Choose which native lane opens the domains. The REGISTRY stays vendor-neutral — it emits
       # `--agent auto` because the capsule contract declares `lane_selection:
@@ -268,7 +281,9 @@ if elided:
     elided_note = f"{len(elided)} {other if other != 'all' else ''} domain(s) not in family '{family}' — open with --family {other}".replace("  ", " ")
 print(f"CAP\t{cap}\t{why}\t{len(rows)}\t{lane}\t{elided_note}")
 for i, row in enumerate(rows):
-    kind = "OPEN" if i < cap else "DEFER"
+    # REOPEN vs OPEN is the registry's word (`reopen`: the worktree exists, the session exited) —
+    # rendered here so the operator can tell resumption from a first open at a glance.
+    kind = ("REOPEN" if row.get("reopen") else "OPEN") if i < cap else "DEFER"
     print(f"{kind}\t{row['id']}\t{row['job_class']}\t{shlex.join(row['argv'])}\t{row['title']}")
 PY
 )"
@@ -314,7 +329,9 @@ while IFS=$'\t' read -r kind sid job_class cmd title; do
   fi
 
   if [[ "$dry_run" -eq 1 ]]; then
-    echo "  WOULD  $sid ($job_class) — $title"
+    # Keep the OPEN/REOPEN distinction visible in the preview too.
+    [[ "$kind" == "REOPEN" ]] && would="WOULD REOPEN" || would="WOULD"
+    echo "  $would  $sid ($job_class) — $title"
     echo "           $cmd"
     opened=$((opened + 1))
     continue
@@ -329,7 +346,7 @@ while IFS=$'\t' read -r kind sid job_class cmd title; do
   else
     tmux new-session -d -s "$session" -n "$sid" -c "$repo_root" "$window_cmd"
   fi
-  echo "  OPEN   $sid ($job_class) — $title"
+  echo "  $kind   $sid ($job_class) — $title"
   opened=$((opened + 1))
 done < <(printf '%s\n' "$plan")
 
