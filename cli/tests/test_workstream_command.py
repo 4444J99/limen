@@ -655,7 +655,7 @@ def test_codex_workstream_denies_provider_when_admitted_receipt_push_fails(tmp_p
     )
 
     assert rejected.returncode != 0
-    assert "could not be published before provider launch" in rejected.stdout + rejected.stderr
+    assert "publication was confirmed absent or mismatched" in rejected.stdout + rejected.stderr
     assert not provider_marker.exists()
 
     pre_receive.unlink()

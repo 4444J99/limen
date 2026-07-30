@@ -417,7 +417,7 @@ class CampaignBlockerV1(ProtocolModel):
 
 
 class CampaignRelayReceiptV1(ProtocolModel):
-    """Unadmitted predecessor-to-successor reservation stored in the Git common dir."""
+    """One finite predecessor-to-successor launch stored in the Git common dir."""
 
     schema_version: Literal["limen.campaign_relay_receipt.v1"] = "limen.campaign_relay_receipt.v1"
     relay_id: str
@@ -429,20 +429,63 @@ class CampaignRelayReceiptV1(ProtocolModel):
     successor_slug: str
     successor_branch: str
     successor_session_id: str
-    state: Literal["reserved"] = "reserved"
-    attempts: Literal[0] = 0
+    state: Literal[
+        "reserved",
+        "launching",
+        "registered",
+        "published",
+        "ready",
+        "failed",
+        "indeterminate",
+    ] = "reserved"
+    attempts: Literal[0, 1] = 0
+    controller_pid: int | None = Field(default=None, ge=1)
+    controller_process_started: str | None = None
+    remote_attempt_commit: str | None = None
+    remote_attempt_token: str | None = None
+    selected_agent: str | None = None
+    selected_capabilities: tuple[str, ...] = ()
+    launch_pid: int | None = Field(default=None, ge=1)
+    launch_process_started: str | None = None
+    registration_response_sha256: str | None = None
+    activation_response_sha256: str | None = None
+    publication_commit: str | None = None
+    publication_parent: str | None = None
+    publication_receipt_blob: str | None = None
+    startup_stdout_sha256: str | None = None
+    startup_stdout_bytes: int | None = Field(default=None, ge=0, le=65_537)
+    startup_stdout_truncated: bool = False
+    startup_stderr_sha256: str | None = None
+    startup_stderr_bytes: int | None = Field(default=None, ge=0, le=65_537)
+    startup_stderr_truncated: bool = False
+    terminal_code: str | None = None
 
-    @field_validator("relay_id", "predecessor_contract_digest")
+    @field_validator(
+        "relay_id",
+        "predecessor_contract_digest",
+        "registration_response_sha256",
+        "activation_response_sha256",
+        "remote_attempt_token",
+        "startup_stdout_sha256",
+        "startup_stderr_sha256",
+    )
     @classmethod
-    def validate_digests(cls, value: str, info) -> str:
-        if not _SHA256_RE.fullmatch(value):
+    def validate_digests(cls, value: str | None, info) -> str | None:
+        if value is not None and not _SHA256_RE.fullmatch(value):
             raise ValueError(f"{info.field_name} must be a lowercase SHA-256 digest")
         return value
 
-    @field_validator("predecessor_receipt_blob", "exact_remote_main")
+    @field_validator(
+        "predecessor_receipt_blob",
+        "exact_remote_main",
+        "remote_attempt_commit",
+        "publication_commit",
+        "publication_parent",
+        "publication_receipt_blob",
+    )
     @classmethod
-    def validate_git_objects(cls, value: str, info) -> str:
-        if not _GIT_OBJECT_RE.fullmatch(value):
+    def validate_git_objects(cls, value: str | None, info) -> str | None:
+        if value is not None and not _GIT_OBJECT_RE.fullmatch(value):
             raise ValueError(f"{info.field_name} must be a lowercase Git object id")
         return value
 
@@ -451,10 +494,103 @@ class CampaignRelayReceiptV1(ProtocolModel):
         "successor_slug",
         "successor_branch",
         "successor_session_id",
+        "selected_agent",
+        "terminal_code",
     )
     @classmethod
-    def validate_identifiers(cls, value: str, info) -> str:
-        return _identifier(value, info.field_name)
+    def validate_identifiers(cls, value: str | None, info) -> str | None:
+        return _identifier(value, info.field_name) if value is not None else None
+
+    @field_validator("selected_capabilities")
+    @classmethod
+    def validate_selected_capabilities(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        normalized = tuple(_identifier(capability, "selected_capability") for capability in value)
+        if normalized != tuple(sorted(set(normalized))):
+            raise ValueError("selected_capabilities must be sorted and unique")
+        return normalized
+
+    @field_validator("controller_process_started", "launch_process_started")
+    @classmethod
+    def validate_process_started(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = " ".join(value.split())
+        if not normalized or len(normalized) > 256 or "\x00" in normalized:
+            raise ValueError("process-start evidence must be bounded identity text")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_lifecycle(self) -> CampaignRelayReceiptV1:
+        proof_fields = (
+            self.selected_agent,
+            self.controller_pid,
+            self.controller_process_started,
+            self.remote_attempt_commit,
+            self.remote_attempt_token,
+            self.launch_pid,
+            self.launch_process_started,
+            self.registration_response_sha256,
+            self.activation_response_sha256,
+            self.publication_commit,
+            self.publication_parent,
+            self.publication_receipt_blob,
+            self.startup_stdout_sha256,
+            self.startup_stdout_bytes,
+            self.startup_stderr_sha256,
+            self.startup_stderr_bytes,
+            self.terminal_code,
+        )
+        if self.state == "reserved":
+            if self.attempts != 0 or self.selected_capabilities or any(value is not None for value in proof_fields):
+                raise ValueError("reserved campaign relays cannot carry launch evidence")
+            if self.startup_stdout_truncated or self.startup_stderr_truncated:
+                raise ValueError("reserved campaign relays cannot carry output evidence")
+            return self
+        if self.attempts != 1:
+            raise ValueError("a launched campaign relay must consume its sole attempt")
+        if self.controller_pid is None or self.controller_process_started is None:
+            raise ValueError("a launched campaign relay requires exact controller identity")
+        if (self.remote_attempt_commit is None) != (self.remote_attempt_token is None):
+            raise ValueError("campaign relay remote attempt evidence must be complete")
+        if (
+            self.launch_pid is not None or self.state in {"registered", "published", "ready"}
+        ) and self.remote_attempt_commit is None:
+            raise ValueError("provider launch evidence requires one durable remote attempt")
+        if self.state in {"registered", "published", "ready"} and (
+            self.selected_agent is None
+            or self.launch_pid is None
+            or self.launch_process_started is None
+            or self.registration_response_sha256 is None
+        ):
+            raise ValueError("registered campaign relays require exact session and process evidence")
+        if self.state in {"published", "ready"} and any(
+            value is None
+            for value in (
+                self.publication_commit,
+                self.publication_parent,
+                self.publication_receipt_blob,
+            )
+        ):
+            raise ValueError("published campaign relays require exact receipt commit evidence")
+        if self.state == "ready" and any(
+            value is None
+            for value in (
+                self.activation_response_sha256,
+                self.startup_stdout_sha256,
+                self.startup_stdout_bytes,
+                self.startup_stderr_sha256,
+                self.startup_stderr_bytes,
+            )
+        ):
+            raise ValueError("ready campaign relays require bounded startup-output evidence")
+        if self.state == "ready" and (self.startup_stdout_truncated or self.startup_stderr_truncated):
+            raise ValueError("ready campaign relays require complete startup-output evidence")
+        if self.state in {"failed", "indeterminate"}:
+            if self.terminal_code is None:
+                raise ValueError("terminal campaign relays require a stable terminal code")
+        elif self.terminal_code is not None:
+            raise ValueError("non-terminal campaign relays cannot carry a terminal code")
+        return self
 
 
 class CampaignReceiptV1(ProtocolModel):

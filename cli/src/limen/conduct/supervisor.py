@@ -10,13 +10,16 @@ import sys
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import rfc8785
 
+from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
 from limen.conduct.campaign_relay import (
+    RelayLaunch,
     RelayReservation,
+    launch_reserved_relay,
     relay_boundary_projection,
     reserve_relay,
 )
@@ -47,7 +50,12 @@ from limen.workstream_contract import (
 
 RESULT_SCHEMA = "limen.campaign_supervisor_result.v1"
 T_MINUS_SECONDS = 30 * 60
-_SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
+_SHA_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+_CAPSULE_BLOB_CEILING = 262_144
+_GIT_TIMEOUT_SECONDS = 10
+_GIT_OUTPUT_CEILING = 65_536
+_RELAY_OUTER_MARGIN_SECONDS = 180
+_RELAY_STARTUP_CEILING_SECONDS = 120
 
 
 class CampaignSupervisorError(RuntimeError):
@@ -108,17 +116,36 @@ def _missing_capability_sets(
 
 
 def _git(root: Path, *args: str) -> str:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = run_bounded_subprocess(
+            ["git", *args],
+            cwd=root,
+            timeout_seconds=_GIT_TIMEOUT_SECONDS,
+            stdout_ceiling=_GIT_OUTPUT_CEILING,
+            stderr_ceiling=_GIT_OUTPUT_CEILING,
+        )
+    except BoundedSubprocessError as exc:
+        raise CampaignSupervisorError("bounded campaign Git probe is unavailable") from exc
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
-        raise CampaignSupervisorError(f"git {' '.join(args)} failed: {detail or result.returncode}")
-    return result.stdout.strip()
+        raise CampaignSupervisorError("bounded campaign Git probe failed")
+    try:
+        return result.stdout.decode("utf-8").strip()
+    except UnicodeDecodeError as exc:
+        raise CampaignSupervisorError("bounded campaign Git probe returned invalid text") from exc
+
+
+def _git_succeeds(root: Path, *args: str) -> bool:
+    try:
+        result = run_bounded_subprocess(
+            ["git", *args],
+            cwd=root,
+            timeout_seconds=_GIT_TIMEOUT_SECONDS,
+            stdout_ceiling=_GIT_OUTPUT_CEILING,
+            stderr_ceiling=_GIT_OUTPUT_CEILING,
+        )
+    except BoundedSubprocessError as exc:
+        raise CampaignSupervisorError("bounded campaign Git probe is unavailable") from exc
+    return result.returncode == 0
 
 
 def exact_remote_main(root: Path) -> dict[str, str]:
@@ -155,27 +182,11 @@ def exact_remote_main(root: Path) -> dict[str, str]:
     }
 
 
-def load_capsule_receipt(
-    path: Path,
+def _validate_capsule_payload(
+    payload: Any,
     *,
-    root: Path,
-    now_epoch: int | None = None,
+    now_epoch: int | None,
 ) -> tuple[dict[str, Any], int]:
-    root = root.resolve()
-    if path.is_symlink():
-        raise CampaignSupervisorError("campaign capsule receipt must not be a symlink")
-    try:
-        resolved = path.resolve(strict=True)
-        relative = resolved.relative_to(root)
-    except (OSError, ValueError) as exc:
-        raise CampaignSupervisorError("campaign capsule receipt must be a real file inside the repository") from exc
-    if not resolved.is_file():
-        raise CampaignSupervisorError("campaign capsule receipt must be a real file")
-    _git(root, "ls-files", "--error-unmatch", "--", relative.as_posix())
-    try:
-        payload = json.loads(resolved.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise CampaignSupervisorError(f"campaign capsule receipt is unreadable: {exc}") from exc
     if not isinstance(payload, dict) or set(payload) != {
         "branch",
         "contract",
@@ -218,6 +229,143 @@ def load_capsule_receipt(
     if remaining <= 0:
         raise CampaignSupervisorError("campaign capsule runway has expired")
     return payload, remaining
+
+
+def load_capsule_receipt(
+    path: Path,
+    *,
+    root: Path,
+    now_epoch: int | None = None,
+) -> tuple[dict[str, Any], int]:
+    root = root.resolve()
+    if path.is_symlink():
+        raise CampaignSupervisorError("campaign capsule receipt must not be a symlink")
+    try:
+        resolved = path.resolve(strict=True)
+        relative = resolved.relative_to(root)
+    except (OSError, ValueError) as exc:
+        raise CampaignSupervisorError("campaign capsule receipt must be a real file inside the repository") from exc
+    if not resolved.is_file():
+        raise CampaignSupervisorError("campaign capsule receipt must be a real file")
+    _git(root, "ls-files", "--error-unmatch", "--", relative.as_posix())
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CampaignSupervisorError(f"campaign capsule receipt is unreadable: {exc}") from exc
+    return _validate_capsule_payload(payload, now_epoch=now_epoch)
+
+
+def load_capsule_receipt_ref(
+    *,
+    root: Path,
+    commit: str,
+    base: str,
+    path: str,
+    branch: str,
+    now_epoch: int | None = None,
+) -> tuple[dict[str, Any], int]:
+    """Read one admitted capsule from an immutable commit without changing the checkout."""
+
+    root = root.resolve()
+    if not _SHA_RE.fullmatch(commit) or not _SHA_RE.fullmatch(base):
+        raise CampaignSupervisorError("campaign capsule commit and base must be exact lowercase Git object ids")
+    relative = PurePosixPath(path)
+    if (
+        len(relative.parts) != 4
+        or relative.parts[:2] != ("docs", "continuations")
+        or relative.name != "workstream.json"
+        or any(part in {"", ".", ".."} for part in relative.parts)
+    ):
+        raise CampaignSupervisorError("campaign capsule Git path is not canonical")
+    if not re.fullmatch(r"work/[a-z0-9][a-z0-9._-]{0,63}", branch):
+        raise CampaignSupervisorError("campaign capsule topic branch is invalid")
+    receipt_ref = f"refs/heads/limen-relay/capsule/{commit}"
+    receipt_rows = _git(root, "ls-remote", "origin", receipt_ref).splitlines()
+    if receipt_rows != [f"{commit}\t{receipt_ref}"]:
+        raise CampaignSupervisorError("campaign capsule commit is not held by its immutable receipt ref")
+    if not _git_succeeds(
+        root,
+        "fetch",
+        "--no-tags",
+        "--quiet",
+        "--no-write-fetch-head",
+        "origin",
+        commit,
+    ):
+        raise CampaignSupervisorError("campaign capsule commit could not be loaded immutably")
+    if (
+        _git(root, "rev-parse", f"{commit}^{{commit}}") != commit
+        or _git(root, "rev-parse", f"{base}^{{commit}}") != base
+    ):
+        raise CampaignSupervisorError("campaign capsule commit did not resolve immutably")
+    parent_row = _git(root, "rev-list", "--parents", "-n", "1", commit).split()
+    if parent_row != [commit, base]:
+        raise CampaignSupervisorError(
+            "campaign capsule commit is not one single-parent publication on its expected base"
+        )
+    changed = _git(
+        root,
+        "diff-tree",
+        "--no-commit-id",
+        "--name-only",
+        "-r",
+        base,
+        commit,
+    ).splitlines()
+    if changed != [relative.as_posix()]:
+        raise CampaignSupervisorError("campaign capsule commit is not an exact receipt-only publication")
+    try:
+        blob = _git(root, "rev-parse", f"{commit}:{relative.as_posix()}")
+        blob_size = int(_git(root, "cat-file", "-s", blob))
+    except ValueError as exc:
+        raise CampaignSupervisorError("campaign capsule Git blob size is invalid") from exc
+    if not _SHA_RE.fullmatch(blob) or not 0 < blob_size <= _CAPSULE_BLOB_CEILING:
+        raise CampaignSupervisorError("campaign capsule Git blob is invalid or oversized")
+    try:
+        result = run_bounded_subprocess(
+            ["git", "cat-file", "blob", blob],
+            cwd=root,
+            timeout_seconds=_GIT_TIMEOUT_SECONDS,
+            stdout_ceiling=_CAPSULE_BLOB_CEILING,
+            stderr_ceiling=_GIT_OUTPUT_CEILING,
+        )
+    except BoundedSubprocessError as exc:
+        raise CampaignSupervisorError("campaign capsule Git blob could not be read within its deadline") from exc
+    if result.returncode != 0 or len(result.stdout) != blob_size:
+        raise CampaignSupervisorError("campaign capsule Git blob could not be read exactly")
+    try:
+        payload = json.loads(result.stdout)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CampaignSupervisorError("campaign capsule Git blob is invalid JSON") from exc
+    receipt, remaining = _validate_capsule_payload(payload, now_epoch=now_epoch)
+    if (
+        receipt.get("branch") != branch
+        or relative.parts[2] != receipt.get("slug")
+        or branch != f"work/{receipt.get('slug')}"
+    ):
+        raise CampaignSupervisorError("campaign capsule immutable ref disagrees with its receipt identity")
+    branch_ref = f"refs/heads/{branch}"
+    branch_rows = _git(root, "ls-remote", "origin", branch_ref).splitlines()
+    if len(branch_rows) != 1:
+        raise CampaignSupervisorError("campaign capsule topic branch is missing or ambiguous")
+    branch_fields = branch_rows[0].split("\t")
+    if len(branch_fields) != 2 or branch_fields[1] != branch_ref or not _SHA_RE.fullmatch(branch_fields[0]):
+        raise CampaignSupervisorError("campaign capsule topic branch identity is malformed")
+    branch_head = branch_fields[0]
+    if branch_head != commit:
+        if not _git_succeeds(
+            root,
+            "fetch",
+            "--no-tags",
+            "--quiet",
+            "--no-write-fetch-head",
+            "origin",
+            branch_head,
+        ):
+            raise CampaignSupervisorError("campaign capsule topic head could not be loaded immutably")
+        if not _git_succeeds(root, "merge-base", "--is-ancestor", commit, branch_head):
+            raise CampaignSupervisorError("campaign capsule commit is not reachable from its topic branch")
+    return receipt, remaining
 
 
 def _fresh_omega_evaluation(root: Path, timeout_seconds: int) -> tuple[int, dict[str, Any]]:
@@ -494,26 +642,95 @@ def run_campaign(
     *,
     client: Any,
     root: Path,
-    capsule: Path,
+    capsule: Path | None,
     identity: AgentIdentityV1,
+    capsule_commit: str | None = None,
+    capsule_base: str | None = None,
+    capsule_path: str | None = None,
+    capsule_branch: str | None = None,
     terminal_predicate: str = "omega",
     now_epoch: int | None = None,
     evaluator: Callable[[Path, int], tuple[int, dict[str, Any]]] = _fresh_omega_evaluation,
     settler: Callable[[Path, int], list[dict[str, Any]]] = _settle_omega,
     relay_reserver: Callable[..., RelayReservation] = reserve_relay,
+    relay_launcher: Callable[..., RelayLaunch] = launch_reserved_relay,
     evaluation_timeout_seconds: int = 1800,
+    wake_deadline_monotonic_ns: int | None = None,
+    monotonic_ns: Callable[[], int] = time.monotonic_ns,
 ) -> dict[str, Any]:
     if terminal_predicate != "omega":
         raise CampaignSupervisorError("only the registry-owned omega terminal predicate is supported")
     if not 1 <= evaluation_timeout_seconds <= 7200:
         raise CampaignSupervisorError("campaign evaluation timeout must be between 1 and 7200 seconds")
+    campaign_started_monotonic_ns = monotonic_ns()
+    if wake_deadline_monotonic_ns is None:
+        campaign_deadline_monotonic_ns = campaign_started_monotonic_ns + evaluation_timeout_seconds * 1_000_000_000
+    else:
+        if isinstance(wake_deadline_monotonic_ns, bool) or not isinstance(wake_deadline_monotonic_ns, int):
+            raise CampaignSupervisorError("campaign wake deadline must be a positive monotonic timestamp")
+        remaining_wake_ns = wake_deadline_monotonic_ns - campaign_started_monotonic_ns
+        if remaining_wake_ns <= 0:
+            raise CampaignSupervisorError("campaign wake deadline has expired")
+        if remaining_wake_ns > (evaluation_timeout_seconds + 1) * 1_000_000_000:
+            raise CampaignSupervisorError("campaign wake deadline exceeds the bounded evaluation timeout")
+        campaign_deadline_monotonic_ns = wake_deadline_monotonic_ns
+
+    def phase_timeout(capsule_ceiling_seconds: int) -> int:
+        outer_remaining = int((campaign_deadline_monotonic_ns - monotonic_ns()) / 1_000_000_000)
+        bounded = min(
+            evaluation_timeout_seconds,
+            capsule_ceiling_seconds,
+            outer_remaining,
+        )
+        if bounded < 1:
+            raise CampaignSupervisorError("campaign wake budget expired before the next bounded phase")
+        return bounded
+
+    local_source = capsule is not None
+    ref_values = (capsule_commit, capsule_base, capsule_path, capsule_branch)
+    if local_source == any(value is not None for value in ref_values) or (
+        not local_source and any(value is None for value in ref_values)
+    ):
+        raise CampaignSupervisorError(
+            "campaign run requires exactly one local capsule or one complete immutable capsule ref"
+        )
     git_state = exact_remote_main(root)
-    receipt, remaining = load_capsule_receipt(capsule, root=root, now_epoch=now_epoch)
+    if capsule is not None:
+        receipt, remaining = load_capsule_receipt(capsule, root=root, now_epoch=now_epoch)
+        predecessor_path = capsule
+        predecessor_commit = None
+    else:
+        assert capsule_commit is not None
+        assert capsule_base is not None
+        assert capsule_path is not None
+        assert capsule_branch is not None
+        receipt, remaining = load_capsule_receipt_ref(
+            root=root,
+            commit=capsule_commit,
+            base=capsule_base,
+            path=capsule_path,
+            branch=capsule_branch,
+            now_epoch=now_epoch,
+        )
+        predecessor_path = Path(capsule_path)
+        predecessor_commit = capsule_commit
     if remaining <= T_MINUS_SECONDS:
-        reservation = relay_reserver(
+        reservation_kwargs: dict[str, Any] = {
+            "exact_remote_main": git_state["head"],
+        }
+        if predecessor_commit is not None:
+            reservation_kwargs["predecessor_commit"] = predecessor_commit
+        reservation = relay_reserver(root, predecessor_path, **reservation_kwargs)
+        relay_timeout = min(
+            float(_RELAY_STARTUP_CEILING_SECONDS),
+            (campaign_deadline_monotonic_ns - monotonic_ns()) / 1_000_000_000 - _RELAY_OUTER_MARGIN_SECONDS,
+        )
+        if relay_timeout < 1:
+            raise CampaignSupervisorError("campaign wake budget leaves no strict margin for a terminal relay receipt")
+        launch = relay_launcher(
             root,
-            capsule,
-            exact_remote_main=git_state["head"],
+            reservation.receipt.relay_id,
+            timeout_seconds=relay_timeout,
         )
         return {
             "schema": RESULT_SCHEMA,
@@ -521,18 +738,18 @@ def run_campaign(
             "campaign_id": receipt["workstream"],
             "exact_head": git_state["head"],
             "reason": (
-                "T-30 reached; one deterministic successor reservation is atomically recorded "
-                "in the worktree-shared Git common directory"
+                "T-30 reached; one deterministic successor launch is bounded below the outer "
+                "wake deadline and recorded through its terminal lifecycle receipt"
             ),
-            "relay": relay_boundary_projection(reservation.receipt),
+            "relay": relay_boundary_projection(launch.receipt),
             "remaining_seconds": remaining,
             "successor_required": True,
             "terminal_predicate": terminal_predicate,
         }
-    exit_code, omega_payload = evaluator(root, min(evaluation_timeout_seconds, remaining - T_MINUS_SECONDS))
+    exit_code, omega_payload = evaluator(root, phase_timeout(remaining - T_MINUS_SECONDS))
     failed_rows, omega_contract_hash = validate_omega_evaluation(exit_code, omega_payload)
     if not failed_rows:
-        settlement = _validate_settlement(settler(root, min(evaluation_timeout_seconds, remaining - T_MINUS_SECONDS)))
+        settlement = _validate_settlement(settler(root, phase_timeout(remaining - T_MINUS_SECONDS)))
         return {
             "schema": RESULT_SCHEMA,
             "boundary": "settled",

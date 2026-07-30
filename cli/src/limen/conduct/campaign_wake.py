@@ -12,6 +12,8 @@ from collections.abc import Callable, Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
+from limen.conduct.campaign_relay import CampaignRelayError, discover_ready_relay
 from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, exact_remote_main
 from limen.workstream_contract import (
     RECEIPT_MODULES,
@@ -34,17 +36,26 @@ class NoActiveCampaign(CampaignWakeError):
 
 
 def _git(root: Path, *args: str) -> str:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = run_bounded_subprocess(
+            ["git", *args],
+            cwd=root,
+            timeout_seconds=10,
+            stdout_ceiling=65_536,
+            stderr_ceiling=65_536,
+        )
+    except BoundedSubprocessError as exc:
+        if exc.kind == "output":
+            raise CampaignWakeError("campaign wake Git output exceeded its bounded ceiling") from exc
+        if exc.kind == "timeout":
+            raise CampaignWakeError("campaign wake Git probe exceeded its deadline") from exc
+        raise CampaignWakeError("campaign wake Git probe is unavailable") from exc
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
-        raise CampaignWakeError(f"git {' '.join(args)} failed: {detail or result.returncode}")
-    return result.stdout
+        raise CampaignWakeError(f"campaign wake Git probe failed with exit {result.returncode}")
+    try:
+        return result.stdout.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise CampaignWakeError("campaign wake Git probe returned invalid text") from exc
 
 
 def _tracked_receipts(root: Path) -> tuple[Path, ...]:
@@ -127,23 +138,52 @@ def wake_campaign(
     timeout_seconds: int = 300,
     environ: Mapping[str, str] | None = None,
     preflight: Callable[[Path], dict[str, str]] = exact_remote_main,
-    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
 ) -> dict[str, Any]:
-    if not 1 <= timeout_seconds <= 7200:
-        raise CampaignWakeError("campaign wake timeout must be between 1 and 7200 seconds")
+    if not 300 <= timeout_seconds <= 7200:
+        raise CampaignWakeError("campaign wake timeout must be between 300 and 7200 seconds")
+    wake_deadline_monotonic_ns = time.monotonic_ns() + timeout_seconds * 1_000_000_000
+    wake_deadline_monotonic = wake_deadline_monotonic_ns / 1_000_000_000
     root = root.resolve()
     env = dict(os.environ if environ is None else environ)
     agent = env.get("LIMEN_AGENT", "").strip()
     session_id = (env.get("LIMEN_SESSION_ID") or env.get("LIMEN_RUN_ID") or "").strip()
     if not agent or not session_id:
         raise CampaignWakeError("campaign wake requires LIMEN_AGENT and LIMEN_SESSION_ID")
-    capsule, remaining = discover_active_capsule(root, workstream=workstream, now_epoch=now_epoch)
+    immutable_commit: str | None = None
+    immutable_base: str | None = None
+    immutable_branch: str | None = None
+    try:
+        capsule, remaining = discover_active_capsule(
+            root,
+            workstream=workstream,
+            now_epoch=now_epoch,
+        )
+        capsule_label = str(capsule.relative_to(root))
+    except NoActiveCampaign as active_error:
+        try:
+            ready = discover_ready_relay(
+                root,
+                workstream=workstream,
+                now_epoch=now_epoch,
+                deadline_monotonic=wake_deadline_monotonic,
+            )
+        except CampaignRelayError as exc:
+            raise NoActiveCampaign(f"{active_error}; ready successor unavailable: {exc.public_reason}") from exc
+        capsule = Path(ready.capsule_path)
+        remaining = ready.remaining_seconds
+        immutable_commit = ready.receipt.publication_commit
+        immutable_base = ready.receipt.publication_parent
+        immutable_branch = ready.receipt.successor_branch
+        if immutable_commit is None or immutable_base is None:
+            raise CampaignWakeError("ready successor has no immutable publication commit and base") from active_error
+        capsule_label = f"git:{immutable_commit}:{ready.capsule_path}"
     try:
         git_state = preflight(root)
     except CampaignSupervisorError as exc:
         raise CampaignWakeError(f"campaign preflight failed: {exc}") from exc
     head = git_state.get("head") if isinstance(git_state, dict) else None
-    if not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head):
+    if not isinstance(head, str) or not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", head):
         raise CampaignWakeError("campaign preflight returned no exact head")
     command = [
         sys.executable,
@@ -152,31 +192,81 @@ def wake_campaign(
         "conduct",
         "campaign",
         "run",
-        "--capsule",
-        str(capsule),
-        "--terminal-predicate",
-        "omega",
-        "--agent",
-        agent,
-        "--session-id",
-        session_id,
-        "--evaluation-timeout",
-        str(timeout_seconds),
     ]
-    try:
-        result = runner(
-            command,
-            cwd=root,
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-            check=False,
+    if immutable_commit is None:
+        command.extend(["--capsule", str(capsule)])
+    else:
+        assert immutable_branch is not None
+        assert immutable_base is not None
+        command.extend(
+            [
+                "--capsule-commit",
+                immutable_commit,
+                "--capsule-base",
+                immutable_base,
+                "--capsule-path",
+                capsule.as_posix(),
+                "--capsule-branch",
+                immutable_branch,
+            ]
         )
-    except subprocess.TimeoutExpired as exc:
-        raise CampaignWakeError("campaign supervisor exceeded the heartbeat wake timeout") from exc
-    except OSError as exc:
-        raise CampaignWakeError(f"campaign supervisor could not start: {exc}") from exc
+    command.extend(
+        [
+            "--terminal-predicate",
+            "omega",
+            "--agent",
+            agent,
+            "--session-id",
+            session_id,
+            "--evaluation-timeout",
+            str(timeout_seconds),
+            "--wake-deadline-monotonic-ns",
+            str(wake_deadline_monotonic_ns),
+        ]
+    )
+    runner_timeout_seconds = (wake_deadline_monotonic_ns - time.monotonic_ns()) / 1_000_000_000
+    if runner_timeout_seconds <= 0:
+        raise CampaignWakeError("campaign wake budget expired before the supervisor could start")
+    if runner is None:
+        try:
+            bounded = run_bounded_subprocess(
+                command,
+                cwd=root,
+                env=env,
+                timeout_seconds=runner_timeout_seconds,
+                stdout_ceiling=65_536,
+                stderr_ceiling=65_536,
+            )
+        except BoundedSubprocessError as exc:
+            if exc.kind == "timeout":
+                raise CampaignWakeError("campaign supervisor exceeded the heartbeat wake timeout") from exc
+            if exc.kind == "output":
+                raise CampaignWakeError("campaign supervisor output exceeded the heartbeat ceiling") from exc
+            raise CampaignWakeError("campaign supervisor could not start") from exc
+        try:
+            result = subprocess.CompletedProcess(
+                command,
+                bounded.returncode,
+                bounded.stdout.decode("utf-8"),
+                bounded.stderr.decode("utf-8"),
+            )
+        except UnicodeDecodeError as exc:
+            raise CampaignWakeError("campaign supervisor returned non-text output") from exc
+    else:
+        try:
+            result = runner(
+                command,
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=runner_timeout_seconds,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise CampaignWakeError("campaign supervisor exceeded the heartbeat wake timeout") from exc
+        except OSError as exc:
+            raise CampaignWakeError(f"campaign supervisor could not start: {exc}") from exc
     if not isinstance(result.stdout, str) or not isinstance(result.stderr, str):
         raise CampaignWakeError("campaign supervisor returned non-text output")
     if len(result.stdout.encode("utf-8")) > 65_536 or len(result.stderr.encode("utf-8")) > 65_536:
@@ -200,7 +290,7 @@ def wake_campaign(
     return {
         "schema": WAKE_SCHEMA,
         "boundary": boundary,
-        "capsule": str(capsule.relative_to(root)),
+        "capsule": capsule_label,
         "exact_head": head,
         "invoked": True,
         "remaining_seconds": remaining,

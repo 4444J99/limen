@@ -1528,6 +1528,54 @@ parameters:
     self_update: "inherited from an admitted successor or generated once at launch"
     owner: continuity
     note: "Optional opaque session override for one workstream successor; blank derives a finite launch identity."
+  LIMEN_CAMPAIGN_RELAY_ID:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_ID
+    self_update: "derived from the committed predecessor receipt and admitted contract"
+    owner: continuity
+    note: "Internal lowercase SHA-256 identity for one finite campaign successor relay; exported only across the relay wrapper boundary."
+  LIMEN_CAMPAIGN_RELAY_BASE:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_BASE
+    self_update: "frozen from the exact remote default commit selected by relay reservation"
+    owner: continuity
+    note: "Internal exact Git base for the successor capsule; never a mutable branch selector."
+  LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES
+    self_update: "derived once from the live capacity census immediately before attempt claim"
+    owner: continuity
+    note: "Internal comma-separated eligible native lane set for one provider-neutral relay launch; scrubbed before provider exec."
+  LIMEN_CAMPAIGN_RELAY_ACK_FD:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_ACK_FD
+    self_update: "assigned as a private inherited descriptor by the finite relay controller"
+    owner: continuity
+    note: "Internal controller-to-wrapper acknowledgement descriptor for dormant registration and final launch authorization; never persisted."
+  LIMEN_CAMPAIGN_RELAY_CONTROL_FD:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_CONTROL_FD
+    self_update: "assigned as a private inherited descriptor by the finite relay controller"
+    owner: continuity
+    note: "Internal wrapper-to-controller proof descriptor for selected-lane, publication, and exec-boundary events; scrubbed before provider exec."
+  LIMEN_CAMPAIGN_RELAY_EXEC_FD:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_EXEC_FD
+    self_update: "assigned as a private inherited descriptor by the finite relay controller"
+    owner: continuity
+    note: "Internal close-on-exec error descriptor; EOF proves exec continuity while an explicit frame reports execve failure."
+  LIMEN_CAMPAIGN_RELAY_FINAL_EXEC:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_FINAL_EXEC
+    self_update: "set only by the relay wrapper for its final provider-exec re-entry"
+    owner: continuity
+    note: "Internal one-hop wrapper sentinel; removed before the selected provider process begins."
+  LIMEN_CAMPAIGN_RELAY_REAL_BINARY:
+    default: null
+    env: LIMEN_CAMPAIGN_RELAY_REAL_BINARY
+    self_update: "resolved from the dynamically selected live native lane"
+    owner: continuity
+    note: "Internal exact provider executable selected by the relay wrapper; never a provider catalog pin and scrubbed before exec."
 
   LIMEN_CONTINUATION:
     default: "1"
@@ -2446,7 +2494,7 @@ parameters:
     env: LIMEN_CAMPAIGN_WAKE_TIMEOUT
     self_update: none
     owner: limen-daemon
-    note: "Seconds allowed for one canonical campaign-supervisor evaluation from the heartbeat. The legacy loop adds a fixed 30-second outer ceiling for capsule discovery and remote-default preflight, fails closed without timeout(1), and never falls back to direct provider launch."
+    note: "Seconds allowed for one canonical campaign-supervisor evaluation from the heartbeat. Public configuration is bounded to 300..7200 so the relay always retains its fixed terminal-receipt margin. The legacy loop adds a fixed 30-second outer ceiling for capsule discovery and remote-default preflight, fails closed without timeout(1), and never falls back to direct provider launch."
   LIMEN_RELEASE_BRANCH:
     default: "main"
     env: LIMEN_RELEASE_BRANCH

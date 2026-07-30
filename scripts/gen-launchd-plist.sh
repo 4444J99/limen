@@ -55,10 +55,10 @@ PYDIR="$(dirname "$PY")"
 PATH_VAL="$PYDIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 CAMPAIGN_WAKE_TIMEOUT="${LIMEN_CAMPAIGN_WAKE_TIMEOUT:-300}"
 case "$CAMPAIGN_WAKE_TIMEOUT" in
-  ''|*[!0-9]*) echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 1 to 7200" >&2; exit 2 ;;
+  ''|*[!0-9]*) echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 300 to 7200" >&2; exit 2 ;;
 esac
-if [ "$CAMPAIGN_WAKE_TIMEOUT" -lt 1 ] || [ "$CAMPAIGN_WAKE_TIMEOUT" -gt 7200 ]; then
-  echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 1 to 7200" >&2
+if [ "$CAMPAIGN_WAKE_TIMEOUT" -lt 300 ] || [ "$CAMPAIGN_WAKE_TIMEOUT" -gt 7200 ]; then
+  echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 300 to 7200" >&2
   exit 2
 fi
 VIGILIA="${LIMEN_VIGILIA:-1}"

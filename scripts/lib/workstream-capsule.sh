@@ -294,6 +294,25 @@ workstream_jules_publish_receipt() {
     git push --set-upstream origin "$publish_commit:refs/heads/$branch"
 }
 
+workstream_exact_remote_ref_head() {
+  local rows="$1"
+  local expected_ref="$2"
+  local observed_head="" observed_ref=""
+
+  if [[ -z "$rows" ]]; then
+    return 0
+  fi
+  if [[ "$rows" == *$'\n'* || "$rows" != *$'\t'* ]]; then
+    return 2
+  fi
+  observed_head="${rows%%$'\t'*}"
+  observed_ref="${rows#*$'\t'}"
+  if [[ ! "$observed_head" =~ ^[0-9a-fA-F]{40,64}$ || "$observed_ref" != "$expected_ref" ]]; then
+    return 2
+  fi
+  printf '%s\n' "$observed_head"
+}
+
 workstream_publish_admitted_receipt() {
   local receipt="$1"
   local expected_branch="$2"
@@ -301,7 +320,7 @@ workstream_publish_admitted_receipt() {
   local contract_helper="${LIMEN_CAPSULE_DIR:-}/workstream-contract.py"
   local timeout_seconds="${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
   local branch="" current_head="" receipt_rel="" dirty="" staged_paths="" publish_commit=""
-  local remote_line="" remote_head=""
+  local topic_ref="" remote_line="" remote_head=""
   local current_subject="" changed_paths="" parent_head=""
 
   # Preserve backward compatibility for local-only fixture and owner-native repositories. A
@@ -311,6 +330,7 @@ workstream_publish_admitted_receipt() {
   fi
 
   branch="$(git branch --show-current 2>/dev/null || true)"
+  topic_ref="refs/heads/$branch"
   current_head="$(git rev-parse HEAD 2>/dev/null || true)"
   receipt_rel="${receipt#"${LIMEN_WORKTREE:-}/"}"
   if [[ -z "$branch" || "$branch" != "$expected_branch" || -z "$current_head"
@@ -330,13 +350,12 @@ workstream_publish_admitted_receipt() {
   if ! remote_line="$(
     GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
       --timeout-seconds "$timeout_seconds" -- \
-      git ls-remote origin "refs/heads/$branch"
+      git ls-remote origin "$topic_ref"
   )"; then
     printf 'workstream launch could not resolve its remote receipt branch\n' >&2
     return 2
   fi
-  remote_head="${remote_line%%[[:space:]]*}"
-  if [[ -n "$remote_head" && ! "$remote_head" =~ ^[0-9a-fA-F]{40,64}$ ]]; then
+  if ! remote_head="$(workstream_exact_remote_ref_head "$remote_line" "$topic_ref")"; then
     printf 'workstream launch received an invalid remote receipt branch head\n' >&2
     return 2
   fi
@@ -385,9 +404,23 @@ workstream_publish_admitted_receipt() {
   fi
   if ! GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
     --timeout-seconds "$timeout_seconds" -- \
-    git push --set-upstream origin "$publish_commit:refs/heads/$branch"; then
-    printf 'workstream admitted receipt could not be published before provider launch\n' >&2
-    return 2
+    git push --set-upstream origin "$publish_commit:$topic_ref"; then
+    if ! remote_line="$(
+      GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+        --timeout-seconds "$timeout_seconds" -- \
+        git ls-remote origin "$topic_ref"
+    )"; then
+      printf 'workstream admitted receipt publication outcome is uncertain; exact topic ref is unreachable\n' >&2
+      return 2
+    fi
+    if ! remote_head="$(workstream_exact_remote_ref_head "$remote_line" "$topic_ref")"; then
+      printf 'workstream admitted receipt publication outcome is uncertain; exact topic ref is malformed\n' >&2
+      return 2
+    fi
+    if [[ "$remote_head" != "$publish_commit" ]]; then
+      printf 'workstream admitted receipt publication was confirmed absent or mismatched\n' >&2
+      return 2
+    fi
   fi
   printf 'admitted workstream receipt published: %s\n' "$receipt_rel"
 }
@@ -1277,6 +1310,7 @@ PY
       workstream_jules_reserve_receipt_branch \
       workstream_jules_sync_receipt \
       workstream_jules_publish_receipt \
+      workstream_exact_remote_ref_head \
       workstream_publish_admitted_receipt \
       workstream_export_context \
       workstream_write_conduct_keepalive_status \

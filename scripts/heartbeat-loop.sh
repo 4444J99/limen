@@ -108,7 +108,7 @@ DISPATCH_TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
 case "$LIMEN_CAMPAIGN_WAKE_TIMEOUT" in
   ''|*[!0-9]*) CAMPAIGN_WAKE_CEILING=330 ;;
   *)
-    if [ "$LIMEN_CAMPAIGN_WAKE_TIMEOUT" -ge 1 ] && [ "$LIMEN_CAMPAIGN_WAKE_TIMEOUT" -le 7200 ]; then
+    if [ "$LIMEN_CAMPAIGN_WAKE_TIMEOUT" -ge 300 ] && [ "$LIMEN_CAMPAIGN_WAKE_TIMEOUT" -le 7200 ]; then
       CAMPAIGN_WAKE_CEILING=$((LIMEN_CAMPAIGN_WAKE_TIMEOUT + 30))
     else
       CAMPAIGN_WAKE_CEILING=330

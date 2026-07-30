@@ -8,8 +8,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-
-from limen.conduct.campaign_relay import CampaignRelayError, campaign_relay_lock, reserve_relay
+from limen.bounded_subprocess import BoundedSubprocessError
+from limen.conduct.campaign_relay import (
+    CampaignRelayError,
+    _primary_checkout,
+    _relay_worktree,
+    campaign_relay_lock,
+    reserve_relay,
+)
 from limen.conduct.models import CampaignRelayReceiptV1
 from limen.workstream_contract import RECEIPT_MODULES, new_contract, new_contract_v2
 
@@ -108,7 +114,7 @@ def test_reservation_identity_uses_the_committed_predecessor_blob(relay_repo) ->
     assert len(list(store.glob("*.json"))) == 1
 
 
-def test_reservation_reuses_the_initial_base_when_main_moves(relay_repo) -> None:
+def test_unconsumed_reservation_tracks_current_main_when_main_moves(relay_repo) -> None:
     root, predecessor = relay_repo
     initial_main = _git(root, "rev-parse", "HEAD")
     first = reserve_relay(root, predecessor, exact_remote_main=initial_main)
@@ -121,11 +127,27 @@ def test_reservation_reuses_the_initial_base_when_main_moves(relay_repo) -> None
 
     assert advanced_main != initial_main
     assert repeated.created is False
-    assert repeated.receipt == first.receipt
-    assert repeated.receipt.exact_remote_main == initial_main
+    assert repeated.receipt.relay_id == first.receipt.relay_id
+    assert repeated.receipt.exact_remote_main == advanced_main
+    assert repeated.receipt.state == "reserved"
+    assert repeated.receipt.attempts == 0
     common = Path(_git(root, "rev-parse", "--path-format=absolute", "--git-common-dir"))
     store = common / "limen" / "campaign-relays"
     assert len(list(store.glob("*.json"))) == 1
+
+
+def test_primary_checkout_and_successor_worktree_derive_from_shared_common_dir(
+    relay_repo,
+) -> None:
+    root, _predecessor = relay_repo
+    successor = root / ".worktrees" / "successor"
+    observer = root.parent / "observer"
+    successor.parent.mkdir()
+    _git(root, "worktree", "add", "--detach", str(successor), "HEAD")
+    _git(root, "worktree", "add", "--detach", str(observer), "HEAD")
+
+    assert _primary_checkout(observer) == root.resolve()
+    assert _relay_worktree(observer, "successor") == successor.resolve()
 
 
 @pytest.mark.parametrize("length", [40, 64])
@@ -280,11 +302,11 @@ def test_lock_open_second_enoent_fails_closed(relay_repo, monkeypatch) -> None:
     ("failure", "code"),
     [
         (
-            subprocess.TimeoutExpired(cmd=["git", "/private/secret"], timeout=10),
+            BoundedSubprocessError("timeout"),
             "relay_git_timeout",
         ),
         (
-            OSError("/private/secret/git"),
+            BoundedSubprocessError("unavailable"),
             "relay_git_unavailable",
         ),
     ],
@@ -300,7 +322,7 @@ def test_git_probe_failure_is_bounded_and_path_free(
     def fail(*_args, **_kwargs):
         raise failure
 
-    monkeypatch.setattr("limen.conduct.campaign_relay.subprocess.run", fail)
+    monkeypatch.setattr("limen.conduct.campaign_relay.run_bounded_subprocess", fail)
     with pytest.raises(CampaignRelayError) as caught:
         reserve_relay(root, predecessor, exact_remote_main="a" * 40)
 
