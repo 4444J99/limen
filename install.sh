@@ -2,7 +2,7 @@
 # limen — universal agent task intake
 # install.sh: idempotent one-liner installer
 #
-#   curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/organvm/limen/main/install.sh | bash
 #
 # Clones the limen repo, creates ~/limen symlink, installs Python CLI,
 # and optionally installs legacy host PATH/wrapper conveniences.
@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-LIMEN_SOURCE="${LIMEN_SOURCE:-https://github.com/4444J99/limen.git}"
+LIMEN_SOURCE="${LIMEN_SOURCE:-https://github.com/organvm/limen.git}"
 LIMEN_TARGET="${LIMEN_TARGET:-$HOME/Workspace/limen}"
 LIMEN_LINK="${LIMEN_LINK:-$HOME/limen}"
 LIMEN_CLI="${LIMEN_TARGET}/cli"

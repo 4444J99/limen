@@ -5,7 +5,7 @@ Universal agent task intake — one file to aim every AI agent across every repo
 ## Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/organvm/limen/main/install.sh | bash
 # restart shell or: source ~/.zshenv
 ```
 
@@ -191,7 +191,7 @@ mutations.
 For a hosted API, prefer GitHub-backed storage so `tasks.yaml` remains the durable source of truth:
 
 ```bash
-export LIMEN_GITHUB_REPO=4444J99/limen
+export LIMEN_GITHUB_REPO=organvm/limen
 export LIMEN_GITHUB_BRANCH=main
 export LIMEN_GITHUB_PATH=tasks.yaml
 export LIMEN_GITHUB_TOKEN=ghp_...
