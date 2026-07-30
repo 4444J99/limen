@@ -37,8 +37,16 @@
 #   puts that choice where it belongs: in the environment, for this run only. Vendor-neutrality
 #   stays in declared data; the operator still gets to say who opens the work.
 #
+# THE DEFAULT FAMILY IS THE OPERATOR'S OWN LANES
+#   Rows carry `family: constellation` (derived from the constellation register — the people ×
+#   project lanes the operator actually means by "streams") or `family: governance` (hand-authored
+#   estate work). "Open my streams" must never answer with internal plumbing, so the default opens
+#   constellation only; governance domains are counted, named as skipped, and reachable via
+#   --family governance (or both via --family all).
+#
 # Usage:
-#   scripts/open-streams.sh                  # open the ready set, up to the derived bound
+#   scripts/open-streams.sh                  # open the ready constellation lanes, up to the bound
+#   scripts/open-streams.sh --family all     # ...plus the governance domains
 #   scripts/open-streams.sh --lane claude    # ...on a chosen lane (claude|codex|agy|opencode|…)
 #   scripts/open-streams.sh --dry-run        # print exactly what would open, touch nothing
 #   scripts/open-streams.sh --max-parallel 1 # open one, name the rest
@@ -55,6 +63,7 @@ dry_run=0
 unbounded=0
 lane_choice=""
 list_lanes_only=0
+family="constellation"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -66,6 +75,16 @@ while [[ $# -gt 0 ]]; do
     --session)
       [[ $# -ge 2 ]] || { echo "missing value for --session" >&2; exit 2; }
       session="$2"; shift 2 ;;
+    --family)
+      # Which row family to open. Default `constellation`: "open my streams" means the operator's
+      # people × project lanes, never the estate's internal governance domains — those are opened
+      # deliberately, by name.
+      [[ $# -ge 2 ]] || { echo "missing value for --family" >&2; exit 2; }
+      case "$2" in
+        constellation|governance|all) family="$2" ;;
+        *) echo "open-streams: unknown family '$2' (constellation|governance|all)" >&2; exit 2 ;;
+      esac
+      shift 2 ;;
     --list-lanes)
       # Print the lanes this script will accept, one per line, then exit. Exists so nothing has to
       # re-derive the rule: tests and callers ask the script instead of keeping a second copy.
@@ -168,14 +187,14 @@ fi
 # exits non-zero on registry drift, and `set -e` makes that fatal here: we never open a set derived
 # from an incoherent graph.
 plan="$(
-  python3 - "$repo_root" "${max_parallel:-}" "$unbounded" <<'PY'
+  python3 - "$repo_root" "${max_parallel:-}" "$unbounded" "$family" <<'PY'
 import json
 import os
 import shlex
 import subprocess
 import sys
 
-root, requested_cap, unbounded = sys.argv[1], sys.argv[2].strip(), sys.argv[3] == "1"
+root, requested_cap, unbounded, family = sys.argv[1], sys.argv[2].strip(), sys.argv[3] == "1", sys.argv[4]
 
 rows = json.loads(
     subprocess.run(
@@ -186,6 +205,12 @@ rows = json.loads(
         text=True,
     ).stdout
 )
+
+# Family selection happens HERE, after the registry derives the full ready set, so the launcher
+# can name what it is not opening — a filtered-out domain the operator cannot see reads as one
+# that does not exist.
+elided = [r for r in rows if family != "all" and r["family"] != family]
+rows = [r for r in rows if family == "all" or r["family"] == family]
 
 # Derived, not magic. An interactive agent session plus its tooling sits around GB_PER_STREAM; the
 # reserve is the OS, the browser, and the heartbeat daemon, which are running regardless. Stated as
@@ -237,7 +262,11 @@ try:
 except Exception:  # noqa: BLE001 — reporting only; the launcher must not fail on a census hiccup
     pass
 
-print(f"CAP\t{cap}\t{why}\t{len(rows)}\t{lane}")
+elided_note = ""
+if elided:
+    other = "all" if family == "governance" else "governance"
+    elided_note = f"{len(elided)} {other if other != 'all' else ''} domain(s) not in family '{family}' — open with --family {other}".replace("  ", " ")
+print(f"CAP\t{cap}\t{why}\t{len(rows)}\t{lane}\t{elided_note}")
 for i, row in enumerate(rows):
     kind = "OPEN" if i < cap else "DEFER"
     print(f"{kind}\t{row['id']}\t{row['job_class']}\t{shlex.join(row['argv'])}\t{row['title']}")
@@ -249,14 +278,17 @@ cap="$(printf '%s' "$cap_line" | cut -f2)"
 cap_why="$(printf '%s' "$cap_line" | cut -f3)"
 ready_n="$(printf '%s' "$cap_line" | cut -f4)"
 lane="$(printf '%s' "$cap_line" | cut -f5)"
+elided_note="$(printf '%s' "$cap_line" | cut -f6)"
 
 if [[ "$ready_n" -eq 0 ]]; then
-  echo "open-streams: NONE READY — nothing to open"
+  echo "open-streams: NONE READY in family '$family' — nothing to open"
+  [[ -n "$elided_note" ]] && echo "  note: $elided_note"
   python3 "$repo_root/scripts/check-session-streams.py" --ready
   exit 0
 fi
 
-echo "open-streams: $ready_n ready, opening up to $cap  [$cap_why]"
+echo "open-streams: $ready_n ready (family: $family), opening up to $cap  [$cap_why]"
+[[ -n "$elided_note" ]] && echo "  elided:       $elided_note"
 echo "  lane:         $lane"
 echo "  tmux session: $session"
 echo

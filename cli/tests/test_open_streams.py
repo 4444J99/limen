@@ -154,14 +154,16 @@ def test_dry_run_touches_nothing_and_needs_no_tmux(launcher_env):
 
 def test_the_bound_is_enforced_and_every_deferred_stream_is_named(launcher_env):
     """A silent cap reads as "all of them opened" when it did not — so deferrals are printed WITH
-    the exact command to open them later, not merely counted."""
+    the exact command to open them later, not merely counted. Measured against the launcher's
+    default family (constellation): family elision is a separate, separately-named subtraction."""
     ready = json.loads(run("--ready", "--json").stdout)
-    if len(ready) < 2:
-        pytest.skip("needs ≥2 ready streams to observe a bound")
+    in_family = [r for r in ready if r["family"] == "constellation"]
+    if len(in_family) < 2:
+        pytest.skip("needs ≥2 ready constellation streams to observe a bound")
     out = _open("--dry-run", "--max-parallel", "1").stdout
     assert out.count("\n  WOULD ") == 1
     deferred = re.findall(r"^  DEFER  (\S+)", out, re.MULTILINE)
-    assert len(deferred) == len(ready) - 1
+    assert len(deferred) == len(in_family) - 1
     for sid in deferred:
         assert f"--workstream {sid}" in out, f"{sid} was dropped without printing how to open it"
 
@@ -232,3 +234,44 @@ def test_the_registry_itself_stays_vendor_neutral(launcher_env):
         if "WOULD" in out:
             assert "--agent auto" in out, f"--lane {lane} pinned a vendor into the emitted command"
             assert f"--agent {lane}" not in out
+
+
+# ── family selection: "open my streams" means the operator's lanes ──────────────────
+
+
+def test_default_family_is_the_operators_constellation(launcher_env):
+    """The word "streams" is the operator's, from the constellation work (#1535). The default
+    open must be his people × project lanes — governance plumbing answering "open my streams"
+    is the exact defect that had the estate quoting a registry invented that morning."""
+    out = _open("--dry-run").stdout
+    assert "family: constellation" in out
+    for sid in ("s0-corpus-custody", "s10-axis-coverage", "s2-public-distillation"):
+        assert sid not in out, f"governance domain {sid} leaked into the default family"
+
+
+def test_elided_governance_domains_are_named_never_silent(launcher_env):
+    """A filtered-out domain the operator cannot see reads as one that does not exist."""
+    out = _open("--dry-run").stdout
+    assert "--family governance" in out, "the elision must say how to reach what it hid"
+
+
+def test_family_all_reunites_both(launcher_env):
+    out = _open("--dry-run", "--family", "all", "--max-parallel", "1").stdout
+    assert "family: all" in out
+    joined = out.replace("\n", " ")
+    assert "spiral" in joined and "s10-axis-coverage" in joined
+
+
+def test_an_unknown_family_is_refused_before_anything_opens(launcher_env):
+    proc = _open("--family", "bogus", "--dry-run")
+    assert proc.returncode == 2
+    assert "constellation|governance|all" in proc.stderr
+
+
+def test_t1_lanes_open_before_t2_under_the_bound(launcher_env):
+    """The RAM bound opens the FIRST N rows, so order is priority: an alphabetical T2 lane
+    (content-cannibalizer) must never preempt a T1 lane the operator marked active-demand."""
+    out = _open("--dry-run", "--max-parallel", "1").stdout
+    opened = [line for line in out.splitlines() if line.lstrip().startswith("WOULD")]
+    assert opened, out
+    assert "(T1," in opened[0], f"the single opened slot went to a non-T1 lane: {opened[0]}"
