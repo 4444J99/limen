@@ -44,7 +44,7 @@ The Pro gate is **production-ready** (`a-organvm/a-i-chat--exporter`: 6-file lic
 accounts (yours), paste `LEMONSQUEEZY_STORE_ID`; the fleet lands `FUNDING.yml` + README + checkout-URL
 runbook. Nothing else blocks dollar #1.
 
-> **→ Literal runbook (the handoff): [`docs/first-dollar-runbook.md`](first-dollar-runbook.md)** —
+> **→ Literal runbook (the handoff): [`docs/runbooks/first-dollar-runbook.md`](../runbooks/first-dollar-runbook.md)** —
 > exact URLs, the required Ko-fi handle (`4444J99`, must match the live FUNDING.yml or the buttons
 > 404), copy-paste field values, the verify command I run after each rail, and a co-drive option where
 > I pre-fill everything except the identity/payout click. Fastest = Ko-fi + existing PayPal (~5 min, no

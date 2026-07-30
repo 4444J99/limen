@@ -13,7 +13,7 @@ Repository contract verified 2026-07-27:
 - At T−30 the supervisor atomically reserves one deterministic successor relay and returns its
   path-free lifecycle projection without evaluating Omega or launching a provider. The common-Git
   reservation boundary and deliberately separate launch/readiness/follow effector are documented
-  in [`campaign-successor-relay.md`](campaign-successor-relay.md).
+  in [`campaign-successor-relay.md`](architecture/campaign-successor-relay.md).
 - The synchronous and asynchronous dispatch engines remain available as historical/manual
   compatibility surfaces and retain their focused tests. They are not heartbeat implementations.
 

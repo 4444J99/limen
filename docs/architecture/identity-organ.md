@@ -1,7 +1,7 @@
 # Core-Identity Organ
 
 The SSOT for the operator's **durable personal atoms** — legal name, date of birth, SSN,
-mailing/home address, phone. Sibling of the [credential organ](../scripts/creds-hydrate.py):
+mailing/home address, phone. Sibling of the [credential organ](../../scripts/creds-hydrate.py):
 credentials *rotate*, identity atoms *don't*, so they get separate homes, not one blob.
 
 Built because a form-fill (`phi.pdf`, a HIPAA records request) surfaced that **the fact we had to
