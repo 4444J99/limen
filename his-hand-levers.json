@@ -634,7 +634,7 @@
     },
     {
       "id": "L-ORG-TEAM-UPGRADE",
-      "label": "Upgrade the `organvm` org to Team (~$4/mo) — the ONE surviving atom of the old enterprise-cancel lever (#1185, closed with receipts). The Enterprise half is DONE by machine (2026-07-17): all 8 shell orgs were removed from the meta-organvm enterprise via scripted same-origin form posts (0 organizations, 0 consumed licenses, every org standalone on the free plan, names kept; gitvs doctor class J green, verified live). Team on organvm arms private-repo rulesets/branch-protection (#257). Optional, unforced: delete the now-empty meta-organvm enterprise container.",
+      "label": "Upgrade the `organvm` org to Team (~$4/mo) — the ONE surviving atom of the old enterprise-cancel lever (#1185, closed with receipts). The Enterprise half is DONE by machine (2026-07-17): all 8 shell orgs were removed from the meta-organvm enterprise via scripted same-origin form posts (0 organizations, 0 consumed licenses, every org standalone on the free plan, names kept; gitvs doctor class J green, verified live). Team on organvm arms private-repo rulesets/branch-protection (#257). Optional, unforced: delete the now-empty meta-organvm enterprise container. SEAT-METERING FACT (doc-verified 2026-07-30, docs.github.com): on Team, OUTSIDE COLLABORATORS on private org repos CONSUME paid per-user licenses (+pending invites, +dormant users) — with partner lanes bound for the personal estate (custody v4.0.0), Team would meter every private-lane partner forever, while GitHub Pro personal (~$4/mo flat, L-PERSONAL-PRO #1659) buys the same review-gating for the lanes that actually carry partners. Weigh THIS lever only for org-side private-repo protection needs (engine room), never as the partner path.",
       "owner": "yours",
       "cost": "$4/mo; ~1 min checkout; REVERSIBLE (downgrade any time)",
       "unlocks": "private-repo rulesets/branch protection (#257); required merge checks on the 105 private repos",
@@ -763,9 +763,9 @@
     },
     {
       "id": "L-CONST-CUSTODY-MIGRATION",
-      "label": "Fire the dual-estate custody migration: transfer the live constellation product repos from organvm to the personal account (doctrine v1.0.0, 2026-07-29 — the org is the SYSTEM, collaboration-born products are personally-owned assets with permanently-free collaborator seats). Candidates + per-repo breakage checklist (org Actions vars/secrets, rulesets, Pages/domains, access.yaml row re-pathing) live in docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md §Migration ledger. Each transfer: `gh api repos/organvm/<repo>/transfer -f new_owner=4444J99` then accept the transfer invitation, verify the redirect, and land the estate/access/constellation row re-path PR the same day. Precedent already live: 4444J99/victoroff-os (rows healed 2026-07-29).",
+      "label": "Fire the dual-estate custody migration (doctrine v4.0.0, 2026-07-30): transfer the TEN partner-lane product repos from organvm to the personal account — canary FIRST: micro-tato-play, verify owner + redirect, then the rest (elevate-align×maddie, peer-audited + styx-theory + styx-art×jessica, hokage-chess + micro-tato×rob, mirror-mirror + your-fit-tailored×charles, content-engine--asset-amplifier×scott). Each: `gh api repos/organvm/<repo>/transfer -f new_owner=4444J99`, verify redirect + collaborator survival. THEN flip elevate-align private on the personal side (`gh repo edit 4444J99/sovereign-systems--elevate-align --visibility private --accept-visibility-change-consequences`) — it 422s org-side on seat-metering, flips free personal-side. Verified 2026-07-30: zero name collisions on 4444J99, zero repo/org Actions secrets on the 10, no Pages custom domains (cname null on both Pages repos), 7 of 10 lanes have NO live partner key yet (grants staged-never-sent) — zero access risk. The transfer effector is classifier-blocked to agent sessions (2× denied 2026-07-30, same class as the 2026-07-29 visibility block) — the paste is yours; the class-O doctor rung (PR B) cites this lever on every live-partnered product still org-side, and the row re-path PR follows the same day. Precedent: 4444J99/victoroff-os (redirect live).",
       "owner": "yours",
-      "cost": "~2 min per repo (7 candidates; hospes excluded until its vault split lands) + one row-repath PR per wave",
+      "cost": "~2 min per repo (10 candidates; hospes excluded until its vault split lands) + one row-repath PR per wave",
       "status": "staged",
       "gate": "Mass cross-account custody moves are outward-facing (collaborator notifications, invitation acceptance on the personal account) and multi-repo — his hand by the standing human-gated-lever classes. Machine never fires a transfer.",
       "unlocks": "dual-estate v1.0.0 realized in ground truth: partner lanes insulated from the org Team upgrade seat economics; the moat estate carries zero partner access; repo_custody resource type can activate (observe + effector) in estate.yaml",
@@ -774,10 +774,10 @@
     },
     {
       "id": "L-GITVS-DEMOTE-ARM",
-      "label": "Arm the GITVS reconcile valve so the SEVEN registry-decided demote-direction repos (desired private on main, observed PUBLIC on 2026-07-29: organvm-corpvs-testamentvm, in-my-head, sovereign--ground, system-system--system, manumissio, content-engine--asset-amplifier, sovereign-systems--elevate-align) actually go private. Demote is the standing leak-posture auto-guard: reversible, protective, no publish-sweep needed. Partner lanes keep collaborator access after the flip (grants persist; free-plan collaborators stay free).",
+      "label": "DISCHARGED 2026-07-30 via this lever's own one-shot path in the operator-authorized wave session: 7 of 8 registry-decided demotes are LIVE (organvm-corpvs-testamentvm, in-my-head, sovereign--ground, system-system--system, manumissio, content-engine--asset-amplifier, + netmode after its machine-infra re-class in PR #1653) — receipts in logs/visibility-actions.jsonl; collaborator access verified surviving on content-engine (LeflerDesign intact). sovereign-systems--elevate-align alone 422s on org private-repo seat-metering (maddie's live lane — the exact economics the dual-estate doctrine names) and flips FREE the moment its transfer lands (L-CONST-CUSTODY-MIGRATION). The durable ~/.limen.env LIMEN_GITVS_APPLY=1 arm stays optional: it makes the BEAT carry this posture continuously instead of per-session one-shots.",
       "owner": "yours",
-      "cost": "one line pasted into ~/.limen.env: LIMEN_GITVS_APPLY=1 (durable, beat fires it) — OR a one-shot `python3 scripts/apply-visibility.py --apply` in an interactive session",
-      "status": "open",
+      "cost": "optional residue: one line pasted into ~/.limen.env: LIMEN_GITVS_APPLY=1 (durable, beat fires it)",
+      "status": "discharged",
       "gate": "writing a persistence-arming LIMEN_*=1 is classifier-gated to the agent (the L-APPLY-FIRE precedent), and the visibility effector itself was classifier-blocked in the 2026-07-29 background session — the paste or the one-shot is yours",
       "unlocks": "the secret-sauce posture the registry already adjudicated becomes ground truth: the 334K-word governance corpus, personal notes, and two partner build lanes stop being world-readable",
       "source_task": "custody dual-estate excavation 2026-07-29 — Part III/IV of docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md",
@@ -793,6 +793,21 @@
       "unlocks": "zero local-only partner records: every constellation record durable as vault ciphertext, satisfying Rule #2 with nothing world-readable",
       "source_task": "custody dual-estate excavation 2026-07-29 — docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md",
       "issue": 1646
+    },
+    {
+      "id": "L-PERSONAL-PRO",
+      "label": "Buy GitHub Pro (~$4/mo, flat) on the personal account 4444J99 — the ONE optional spend of custody v4.0.0. Pro adds protected branches, required reviewers, and code owners on personal PRIVATE repos: the partner estate (victoroff-os + the 10 lanes arriving via L-CONST-CUSTODY-MIGRATION). Doc-verified 2026-07-30: personal collaborator seats are free with or without Pro — this buys ONLY the review-gating, at flat cost, vs Team's per-partner seat metering (see L-ORG-TEAM-UPGRADE note). No regression while unpulled: the lanes are equally unprotected org-side today.",
+      "owner": "yours",
+      "cost": "$4/mo flat; ~1 min checkout; REVERSIBLE (downgrade any time)",
+      "status": "open",
+      "gate": "personal-account billing checkout — a purchase; never automatable",
+      "unlocks": "branch protection + required reviews on every partner lane, at flat cost, forever seat-free",
+      "source_task": "custody v4.0.0 wave 2026-07-30 (plan tranquil-spinning-possum; doc-verification of GitHub pricing 2026-07-30)",
+      "steps": [
+        "github.com → Settings → Billing and plans → Compare plans → Pro (monthly)",
+        "Done when `gh api /user --jq .plan.name` prints 'pro'"
+      ],
+      "issue": 1659
     }
   ]
 }
