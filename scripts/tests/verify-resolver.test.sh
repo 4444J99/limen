@@ -134,6 +134,7 @@ expect registry-change 'syntax-changed
 diff-hygiene
 merge-policy-test
 verify-resolver-test
+verify-parallel-test
 check-gates' institutio/governance/gates.yaml
 
 expect resolver-change 'syntax-changed
@@ -141,9 +142,16 @@ diff-hygiene
 merge-queue-contract-test
 direct-main-writer-contract
 verify-resolver-test
+verify-parallel-test
 verify-ci-hardening-test
 check-params
 check-gates' scripts/verify.py
+
+expect parallel-verifier-change 'syntax-changed
+diff-hygiene
+direct-main-writer-contract
+verify-parallel-test
+check-params' scripts/tests/verify-parallel.test.sh
 
 expect mixed-change 'syntax-changed
 diff-hygiene

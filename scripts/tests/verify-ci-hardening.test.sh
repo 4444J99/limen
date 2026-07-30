@@ -74,7 +74,7 @@ YAML
   touch "$dir/src/.keep" "$dir/web/app/.keep" "$dir/webish/.keep"
   git -C "$dir" init -q -b main
   git -C "$dir" -c user.email=t@t -c user.name=t add -A
-  git -C "$dir" -c user.email=t@t -c user.name=t commit -qm base
+  git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm base
   echo "$dir"
 }
 
@@ -82,7 +82,7 @@ commit_touch() { # sandbox path — commit a one-file change on top of base
   local dir="$1" path="$2"
   echo x >"$dir/$path"
   git -C "$dir" -c user.email=t@t -c user.name=t add "$path"
-  git -C "$dir" -c user.email=t@t -c user.name=t commit -qm "touch $path"
+  git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "touch $path"
 }
 
 # ── 1: unresolvable merge-base fails closed (flag and env forms) ───────────────
@@ -154,7 +154,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --integration 2>&1)" \
 git -C "$sb" switch -qc competing-base "$base_sha"
 echo x >"$sb/src/competing.txt"
 git -C "$sb" -c user.email=t@t -c user.name=t add src/competing.txt
-git -C "$sb" -c user.email=t@t -c user.name=t commit -qm "competing base"
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "competing base"
 competing_sha="$(git -C "$sb" rev-parse HEAD)"
 git -C "$sb" switch -q main
 out="$(python3 "$sb/scripts/verify.py" --changed --base "$competing_sha" --integration 2>&1)" \
