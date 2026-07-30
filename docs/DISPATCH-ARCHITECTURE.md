@@ -5,8 +5,8 @@ Repository contract verified 2026-07-27:
 - `scripts/heartbeat-loop.sh` and `scripts/heartbeat.sh` are wake/monitor surfaces. They do not
   select providers or invoke either legacy dispatch engine.
 - Each active-mode beat invokes `scripts/campaign-heartbeat.py`, which discovers the latest tracked,
-  admitted v2 `institutional-omega` capsule and calls the canonical
-  `limen conduct campaign run --terminal-predicate omega` entrypoint.
+  admitted provider-neutral v1 or human-explicit Codex v2 `institutional-omega` capsule and calls
+  the canonical `limen conduct campaign run --terminal-predicate omega` entrypoint.
 - A wake fails closed unless the checkout is clean at the exact live remote default branch, the
   finite capsule remains valid, a conductor identity is present, and the supervisor returns a
   schema-valid boundary for the same exact head. There is no direct-launch fallback.

@@ -35,7 +35,6 @@ from limen.work_loan import WorkLoanV1
 from limen.workstream_contract import (
     RECEIPT_MODULES,
     RECEIPT_SCHEMA,
-    SCHEMA_V2,
     ContractError,
     validate_contract,
     validate_receipt_metadata,
@@ -192,8 +191,6 @@ def load_capsule_receipt(
         contract = validate_contract(payload.get("contract"))
     except ContractError as exc:
         raise CampaignSupervisorError(f"campaign capsule receipt is invalid: {exc}") from exc
-    if contract.get("schema") != SCHEMA_V2:
-        raise CampaignSupervisorError("campaign capsule requires a v2 launch contract")
     private = payload.get("private_capsule")
     if (
         not isinstance(private, dict)
