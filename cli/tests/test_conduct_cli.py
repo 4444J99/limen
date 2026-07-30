@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
+from limen.conduct.broker import ConductError
 from limen.conduct.cli import conduct_group
 from limen.conduct.supervisor import CampaignSupervisorError
 
@@ -72,6 +73,75 @@ def test_register_explicit_metadata_overrides_profile(monkeypatch) -> None:
     assert client.session.native_session_id == "provider-session"
     assert client.session.identity.native_run_id == "provider-run"
     assert client.session.human_protected is True
+
+
+class OwnedWorktreeClient:
+    """First register 409s naming a dead owner; records every attempt."""
+
+    def __init__(self) -> None:
+        self.attempts = []
+
+    def register(self, session):
+        self.attempts.append(session)
+        if len(self.attempts) == 1:
+            raise ConductError(
+                "conduct broker rejected request (409): "
+                '{"detail": "worktree is already owned by healthy session old-boot-71272"}'
+            )
+        return session.model_dump(mode="json")
+
+
+def _invoke_register(tmp_path):
+    return CliRunner().invoke(
+        conduct_group,
+        ["register", "--agent", "claude", "--session-id", "reopen-boot", "--worktree", str(tmp_path)],
+    )
+
+
+def test_register_supersedes_dead_owner_after_ownership_conflict(monkeypatch, tmp_path) -> None:
+    client = OwnedWorktreeClient()
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    monkeypatch.setattr("limen.conduct.cli.foreign_worktree_occupant", lambda worktree: None)
+    result = _invoke_register(tmp_path)
+    assert result.exit_code == 0, result.output
+    assert len(client.attempts) == 2
+    assert client.attempts[0].supersedes is None
+    assert client.attempts[1].supersedes == "old-boot-71272"
+
+
+def test_register_conflict_reraised_when_worktree_has_live_occupant(monkeypatch, tmp_path) -> None:
+    client = OwnedWorktreeClient()
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    monkeypatch.setattr("limen.conduct.cli.foreign_worktree_occupant", lambda worktree: 4242)
+    result = _invoke_register(tmp_path)
+    assert result.exit_code != 0
+    assert len(client.attempts) == 1
+
+
+def test_register_conflict_reraised_when_probe_unavailable(monkeypatch, tmp_path) -> None:
+    client = OwnedWorktreeClient()
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    monkeypatch.setattr("limen.conduct.cli.foreign_worktree_occupant", lambda worktree: -1)
+    result = _invoke_register(tmp_path)
+    assert result.exit_code != 0
+    assert len(client.attempts) == 1
+
+
+def test_register_non_ownership_conflict_is_not_retried(monkeypatch, tmp_path) -> None:
+    class RejectingClient:
+        def __init__(self) -> None:
+            self.attempts = 0
+
+        def register(self, session):
+            self.attempts += 1
+            raise ConductError("conduct broker rejected request (409): session_id is already bound")
+
+    client = RejectingClient()
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    monkeypatch.setattr("limen.conduct.cli.foreign_worktree_occupant", lambda worktree: None)
+    result = _invoke_register(tmp_path)
+    assert result.exit_code != 0
+    assert client.attempts == 1
 
 
 def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatch, tmp_path) -> None:

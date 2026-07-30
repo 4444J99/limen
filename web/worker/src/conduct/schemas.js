@@ -113,11 +113,13 @@ export function validateSession(payload, now = new Date()) {
     heartbeat_at: timestamp,
     human_protected: false,
     accepting_work: true,
+    supersedes: null,
     ...clone(payload),
   };
   if (candidate.identity) candidate.identity = identityDefaults(candidate.identity);
   const session = validateSchema("session", candidate);
   assertIdentifier(session.session_id, "session_id");
+  if (session.supersedes != null) assertIdentifier(session.supersedes, "supersedes");
   assertIdentity(session.identity);
   if (session.identity.session_id !== session.session_id) fail("identity.session_id must equal session_id");
   for (const capability of session.capabilities) assertIdentifier(capability, "capability");

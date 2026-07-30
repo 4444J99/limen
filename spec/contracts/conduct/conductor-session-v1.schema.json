@@ -194,6 +194,18 @@
       "title": "Session Id",
       "type": "string"
     },
+    "supersedes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersedes"
+    },
     "transport": {
       "default": "native",
       "title": "Transport",

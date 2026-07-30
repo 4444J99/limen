@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -11,6 +12,7 @@ import click
 
 from limen.conduct.broker import ConductError
 from limen.conduct.client import client_from_env
+from limen.conduct.liveness import foreign_worktree_occupant
 from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
 from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, run_campaign
 
@@ -199,7 +201,32 @@ def register(
             receipt_quality=receipt_quality,
             accepting_work=accepting_work,
         )
-    _emit(client_from_env().register(session))
+    client = client_from_env()
+    try:
+        _emit(client.register(session))
+    except ConductError as exc:
+        owner_id = _dead_owner_to_supersede(str(exc), session)
+        if owner_id is None:
+            raise
+        _emit(client.register(session.model_copy(update={"supersedes": owner_id})))
+
+
+_OWNED_BY = re.compile(r"worktree is already owned by healthy session ([A-Za-z0-9._:-]+)")
+
+
+def _dead_owner_to_supersede(detail: str, session: ConductorSessionV1) -> str | None:
+    """The 409's named owner, but only when succession is provably safe: the broker's heartbeat
+    TTL cannot see a crash/exec exit, so the claimant — the only party on the worktree's host —
+    must prove no foreign process is still live there. Fail-closed: an unavailable probe reads
+    as occupied and the original conflict is re-raised."""
+    if not session.worktree:
+        return None
+    match = _OWNED_BY.search(detail)
+    if not match:
+        return None
+    if foreign_worktree_occupant(Path(session.worktree)) is not None:
+        return None
+    return match.group(1)
 
 
 @conduct_group.command("submit")

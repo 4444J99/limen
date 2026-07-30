@@ -1357,6 +1357,55 @@ def test_protected_registration_cannot_be_downgraded_or_share_a_worktree() -> No
         broker.register(other, now=NOW)
 
 
+def test_succession_replaces_named_dead_owner_immediately() -> None:
+    broker = ConductBroker(MemoryStateStore())
+    dead = session("claude", session_id="stream-boot-1").model_copy(update={"worktree": "/tmp/lane"})
+    broker.register(dead, now=NOW)
+    successor = session("claude", session_id="stream-boot-2").model_copy(
+        update={"worktree": "/tmp/lane", "supersedes": "stream-boot-1"}
+    )
+    registered = broker.register(successor, now=NOW)
+    assert registered["worktree"] == "/tmp/lane"
+    assert registered["supersedes"] is None
+    snapshot = broker.store.snapshot()
+    old = snapshot["sessions"]["stream-boot-1"]
+    assert old["worktree"] is None
+    assert old["accepting_work"] is False
+    assert any(
+        event["kind"] == "session.superseded"
+        and event["session_id"] == "stream-boot-1"
+        and event["superseded_by"] == "stream-boot-2"
+        for event in snapshot["events"]
+    )
+
+
+def test_succession_requires_naming_the_actual_owner() -> None:
+    broker = ConductBroker(MemoryStateStore())
+    owner = session("claude", session_id="true-owner").model_copy(update={"worktree": "/tmp/lane"})
+    broker.register(owner, now=NOW)
+    pretender = session("claude", session_id="pretender").model_copy(
+        update={"worktree": "/tmp/lane", "supersedes": "some-other-session"}
+    )
+    with pytest.raises(ConductConflict, match="already owned by healthy session true-owner"):
+        broker.register(pretender, now=NOW)
+    assert broker.store.snapshot()["sessions"]["true-owner"]["worktree"] == "/tmp/lane"
+
+
+def test_unprotected_claimant_cannot_supersede_protected_owner() -> None:
+    broker = ConductBroker(MemoryStateStore())
+    human = session("codex", session_id="human-lane", protected=True).model_copy(update={"worktree": "/tmp/mesh"})
+    broker.register(human, now=NOW)
+    automation = session("claude", session_id="bot-claim").model_copy(
+        update={"worktree": "/tmp/mesh", "supersedes": "human-lane"}
+    )
+    with pytest.raises(ConductConflict, match="already owned"):
+        broker.register(automation, now=NOW)
+    protected_successor = session("claude", session_id="human-reopen", protected=True).model_copy(
+        update={"worktree": "/tmp/mesh", "supersedes": "human-lane"}
+    )
+    assert broker.register(protected_successor, now=NOW)["worktree"] == "/tmp/mesh"
+
+
 def test_dead_parent_does_not_cancel_children_and_graph_is_adoptable() -> None:
     stale = session("codex", heartbeat_at=NOW - timedelta(hours=1), concurrency=4)
     stale = stale.model_copy(update={"heartbeat_at": NOW})
