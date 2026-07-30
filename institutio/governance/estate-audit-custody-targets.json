@@ -7,12 +7,14 @@
     {
       "ref": "archive4t",
       "inventory_name": "Archive4T",
-      "custody_root": "/Volumes/Archive4T/limen-private/estate-audit-git-custody"
+      "custody_root": "/Volumes/Archive4T/limen-private/estate-audit-git-custody",
+      "stable_physical_identity": null
     },
     {
       "ref": "t7recovery",
       "inventory_name": "T7Recovery",
-      "custody_root": "/Volumes/T7Recovery/limen-private/estate-audit-git-custody"
+      "custody_root": "/Volumes/T7Recovery/limen-private/estate-audit-git-custody",
+      "stable_physical_identity": null
     }
   ],
   "proof_status": "registered_not_live_verified"

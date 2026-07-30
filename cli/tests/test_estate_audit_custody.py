@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 import os
+import plistlib
 import stat
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import limen.estate_audit_custody as custody_module
 import pytest
@@ -14,6 +16,7 @@ from limen.estate_audit_custody import (
     CustodyPlan,
     EstateAuditCustodyError,
     apply_plan,
+    assert_custody_target_identity,
     discover_plan,
     preflight_plan,
     public_receipt,
@@ -263,6 +266,7 @@ def test_apply_restores_fresh_receipt_is_private_and_second_apply_is_idempotent(
     assert public["indexed_root_count"] == 0
     assert public["working_payload_count"] == 1
     assert public["working_payload_unique_count"] == 1
+    assert len(public["working_payload_manifest_sha256"]) == 64
     assert stat.S_IMODE(receipt_path.stat().st_mode) == 0o600
     assert str(root) not in encoded
     assert "organvm/example" not in encoded
@@ -380,6 +384,148 @@ def test_receipt_mode_is_part_of_verification(tmp_path: Path) -> None:
     )
 
 
+def test_receipt_read_rejects_limit_plus_one_without_exposing_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    custody = tmp_path / "custody"
+    receipt_directory = custody / "receipts"
+    receipt_directory.mkdir(parents=True)
+    receipt = receipt_directory / f"{'a' * 64}.json"
+    receipt.write_bytes(b"x" * 65)
+    receipt.chmod(0o600)
+    monkeypatch.setattr(custody_module, "MAX_CUSTODY_RECEIPT_BYTES", 64)
+
+    with pytest.raises(EstateAuditCustodyError) as raised:
+        verify_receipt(
+            custody,
+            "a" * 64,
+            max_seconds=60,
+            require_volume=False,
+        )
+    assert raised.value.code == "custody-receipt-size-limit"
+    assert str(tmp_path) not in str(raised.value)
+
+
+def test_expected_volume_and_stable_physical_identity_are_both_required(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected_uuid = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
+    expected_physical = "device_" + "1" * 32
+
+    def fake_run(arguments, **_kwargs):
+        assert arguments[-1] == "/Volumes/Fixture"
+        return SimpleNamespace(
+            returncode=0,
+            stdout=plistlib.dumps(
+                {
+                    "MountPoint": "/Volumes/Fixture",
+                    "VolumeUUID": expected_uuid,
+                }
+            ),
+        )
+
+    monkeypatch.setattr(custody_module.subprocess, "run", fake_run)
+    monkeypatch.setattr(custody_module, "_device_identity", lambda _mount: expected_physical)
+    assert_custody_target_identity(
+        Path("/Volumes/Fixture/limen-private/custody"),
+        expected_volume_uuid=expected_uuid,
+        expected_physical_identity=expected_physical,
+    )
+
+    monkeypatch.setattr(custody_module, "_device_identity", lambda _mount: "device_" + "2" * 32)
+    assert (
+        error_code(
+            lambda: assert_custody_target_identity(
+                Path("/Volumes/Fixture/limen-private/custody"),
+                expected_volume_uuid=expected_uuid,
+                expected_physical_identity=expected_physical,
+            )
+        )
+        == "custody-target-identity-mismatch"
+    )
+
+
+def test_identity_swap_at_apply_mutation_boundary_fails_before_receipt(
+    tmp_path: Path,
+) -> None:
+    remote, _head, _tree = make_remote(tmp_path)
+    _root, target = make_failed_checkout(tmp_path, remote, stamp="20260727010809")
+    plan = discover_plan(tmp_path, targets=[target])
+    custody = tmp_path / "custody"
+    calls = 0
+
+    def identity_guard() -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 4:
+            raise EstateAuditCustodyError("custody-target-identity-mismatch")
+
+    assert (
+        error_code(
+            lambda: apply_plan(
+                plan,
+                custody,
+                expected_plan_sha256=plan.plan_sha256,
+                revalidate=lambda: plan,
+                remote_url_for=lambda _repository: str(remote),
+                max_seconds=60,
+                require_volume=False,
+                identity_guard=identity_guard,
+            )
+        )
+        == "custody-target-identity-mismatch"
+    )
+    assert calls == 4
+    assert custody.is_dir()
+    assert not (custody / "receipts" / f"{plan.plan_sha256}.json").exists()
+
+
+def test_identity_swap_after_full_restore_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    remote, _head, _tree = make_remote(tmp_path)
+    _root, target = make_failed_checkout(tmp_path, remote, stamp="20260727010810")
+    plan = discover_plan(tmp_path, targets=[target])
+    custody = tmp_path / "custody"
+    apply_plan(
+        plan,
+        custody,
+        expected_plan_sha256=plan.plan_sha256,
+        revalidate=lambda: plan,
+        remote_url_for=lambda _repository: str(remote),
+        max_seconds=60,
+        require_volume=False,
+    )
+    swapped = False
+    original_restore = custody_module._restore_repository
+
+    def swapping_restore(*args, **kwargs):
+        nonlocal swapped
+        result = original_restore(*args, **kwargs)
+        swapped = True
+        return result
+
+    def identity_guard() -> None:
+        if swapped:
+            raise EstateAuditCustodyError("custody-target-identity-mismatch")
+
+    monkeypatch.setattr(custody_module, "_restore_repository", swapping_restore)
+    assert (
+        error_code(
+            lambda: verify_receipt(
+                custody,
+                plan.plan_sha256,
+                max_seconds=60,
+                require_volume=False,
+                identity_guard=identity_guard,
+            )
+        )
+        == "custody-target-identity-mismatch"
+    )
+
+
 def test_cli_check_emits_only_public_dynamic_preflight(tmp_path: Path) -> None:
     remote, head, _tree = make_remote(tmp_path)
     root, _target = make_failed_checkout(tmp_path, remote, stamp="20260727010909")
@@ -415,3 +561,27 @@ def test_cli_check_emits_only_public_dynamic_preflight(tmp_path: Path) -> None:
     assert str(root) not in encoded
     assert "organvm/example" not in encoded
     assert head not in encoded
+
+
+def test_cli_rejects_incomplete_expected_device_contract_before_discovery(
+    tmp_path: Path,
+) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--check",
+            "--json",
+            "--limen-root",
+            str(tmp_path),
+            "--expected-volume-uuid",
+            "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 3
+    payload = json.loads(result.stdout)
+    assert payload["error"] == "expected-custody-identity-incomplete"
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)

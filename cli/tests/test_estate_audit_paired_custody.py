@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import stat
+import subprocess
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
 import pytest
+import limen.estate_audit_paired_custody as paired_module
 from limen.estate_audit_custody import CustodyPlan, GeneratedRootRecord
 from limen.estate_audit_paired_custody import (
     PRIVATE_RECEIPT_SCHEMA,
@@ -16,6 +20,7 @@ from limen.estate_audit_paired_custody import (
     RailRequest,
     VolumeIdentity,
     blocked_projection,
+    invoke_single_rail,
     load_target_registry,
     run_paired_custody,
 )
@@ -60,7 +65,7 @@ def make_registration(
     *,
     include_t7_device: bool = True,
     t7_target_relative: str = "limen-private/estate-audit-git-custody",
-    same_physical: bool = False,
+    same_stable_identity: bool = False,
     same_uuid: bool = False,
 ) -> tuple[Path, Path, dict[str, VolumeIdentity]]:
     repository = tmp_path / "repository"
@@ -81,12 +86,14 @@ def make_registration(
         device="/dev/disk41s1",
         physical_device="/dev/disk41",
         volume_uuid="AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA",
+        physical_identity="device_" + "1" * 32,
     )
     recovery = VolumeIdentity(
         mount=str(recovery_mount),
         device="/dev/disk71s1",
-        physical_device=archive.physical_device if same_physical else "/dev/disk71",
+        physical_device="/dev/disk71",
         volume_uuid=archive.volume_uuid if same_uuid else "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB",
+        physical_identity=archive.physical_identity if same_stable_identity else "device_" + "2" * 32,
     )
     devices = [
         {
@@ -119,11 +126,13 @@ def make_registration(
                 "ref": "archive4t",
                 "inventory_name": "Archive4T",
                 "custody_root": str(archive_mount / "limen-private" / "estate-audit-git-custody"),
+                "stable_physical_identity": archive.physical_identity,
             },
             {
                 "ref": "t7recovery",
                 "inventory_name": "T7Recovery",
                 "custody_root": str(recovery_mount / t7_target_relative),
+                "stable_physical_identity": recovery.physical_identity,
             },
         ],
         "proof_status": "registered_not_live_verified",
@@ -149,11 +158,11 @@ class FixtureRail:
         plan: CustodyPlan,
         *,
         fail: tuple[str, str] | None = None,
-        verify_content_mismatch: str | None = None,
+        payload_mismatch: str | None = None,
     ) -> None:
         self.plan = plan
         self.fail = fail
-        self.verify_content_mismatch = verify_content_mismatch
+        self.payload_mismatch = payload_mismatch
         self.requests: list[RailRequest] = []
         self.apply_counts = {ref: 0 for ref in ("archive4t", "t7recovery")}
 
@@ -181,8 +190,7 @@ class FixtureRail:
         else:
             changed = False
         content_marker = "1" if ref == "archive4t" else "2"
-        if request.mode == "verify-receipt" and ref == self.verify_content_mismatch:
-            content_marker = "3"
+        payload_marker = "4" if ref == self.payload_mismatch else "3"
         return {
             "result_schema": "limen.estate_audit_custody_result.v1",
             "schema": "limen.estate_audit_custody_receipt.v1",
@@ -199,6 +207,7 @@ class FixtureRail:
                 )
             },
             "content_sha256": content_marker * 64,
+            "working_payload_manifest_sha256": payload_marker * 64,
             "restoration_passed": True,
             "changed": changed,
         }
@@ -266,9 +275,16 @@ def test_dynamic_denominator_comes_from_fresh_underlying_check(tmp_path: Path) -
     assert [request.mode for request in runner.requests] == [
         "check",
         "apply",
-        "verify-receipt",
         "apply",
-        "verify-receipt",
+    ]
+    applies = [request for request in runner.requests if request.mode == "apply"]
+    assert [request.expected_volume_uuid for request in applies] == [
+        "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA",
+        "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB",
+    ]
+    assert [request.expected_physical_identity for request in applies] == [
+        "device_" + "1" * 32,
+        "device_" + "2" * 32,
     ]
     assert lease.calls == lease.entries == lease.exits == 1
     source = (Path(__file__).parents[1] / "src" / "limen" / "estate_audit_paired_custody.py").read_text(
@@ -364,10 +380,46 @@ def test_registry_cannot_claim_live_proof(tmp_path: Path) -> None:
     assert runner.requests == []
 
 
+def test_registry_requires_owner_recorded_stable_physical_identity(tmp_path: Path) -> None:
+    repository, registry, _identities = make_registration(tmp_path)
+    payload = json.loads(registry.read_text(encoding="utf-8"))
+    payload["targets"][0]["stable_physical_identity"] = None
+    registry.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    assert (
+        error_code(lambda: load_target_registry(registry, repository_root=repository))
+        == "registry-stable-physical-identity-missing"
+    )
+
+
+@pytest.mark.parametrize("missing_from", ["inventory", "registry"])
+def test_inventory_binding_requires_nonempty_identifiers(
+    tmp_path: Path,
+    missing_from: str,
+) -> None:
+    repository, registry, _identities = make_registration(tmp_path)
+    registry_payload = json.loads(registry.read_text(encoding="utf-8"))
+    if missing_from == "inventory":
+        inventory = repository / registry_payload["inventory"]
+        inventory_payload = json.loads(inventory.read_text(encoding="utf-8"))
+        inventory_payload.pop("inventory_id")
+        inventory_bytes = json.dumps(inventory_payload, indent=2, sort_keys=True).encode() + b"\n"
+        inventory.write_bytes(inventory_bytes)
+        registry_payload["inventory_sha256"] = hashlib.sha256(inventory_bytes).hexdigest()
+    else:
+        registry_payload["inventory_id"] = ""
+    registry.write_text(json.dumps(registry_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    assert (
+        error_code(lambda: load_target_registry(registry, repository_root=repository))
+        == "registry-inventory-binding-mismatch"
+    )
+
+
 @pytest.mark.parametrize(
     ("options", "expected"),
     [
-        ({"same_physical": True}, "targets-share-physical-device"),
+        ({"same_stable_identity": True}, "targets-share-physical-device"),
         ({"same_uuid": True}, "targets-share-volume-uuid"),
     ],
 )
@@ -411,7 +463,7 @@ def test_mismatched_live_identity_and_symlink_fail_before_writes(tmp_path: Path)
     limen_root.mkdir()
     t7 = identities[next(path for path in identities if "T7Recovery" in path)]
     mismatched = VolumeIdentity(
-        **{**t7.__dict__, "device": "/dev/disk99s1"},
+        **{**t7.__dict__, "physical_identity": "device_" + "9" * 32},
     )
 
     assert (
@@ -432,6 +484,53 @@ def test_mismatched_live_identity_and_symlink_fail_before_writes(tmp_path: Path)
     )
     assert runner.requests == []
 
+
+def test_identity_swap_after_single_rail_returns_blocks_before_pair_write(tmp_path: Path) -> None:
+    plan = make_plan(tmp_path)
+    repository, registry, identities = make_registration(tmp_path)
+    runner = FixtureRail(plan)
+    lease = LeaseCounter()
+    limen_root = tmp_path / "limen-root"
+    limen_root.mkdir()
+    calls = 0
+
+    def swapping_probe(mount: Path) -> VolumeIdentity:
+        nonlocal calls
+        calls += 1
+        observed = identities[str(mount)]
+        if calls == 4:
+            return VolumeIdentity(**{**observed.__dict__, "physical_identity": "device_" + "9" * 32})
+        return observed
+
+    assert (
+        error_code(
+            lambda: run_paired_custody(
+                repository_root=repository,
+                limen_root=limen_root,
+                registry_path=registry,
+                single_rail_script=repository / "scripts" / "estate-audit-custody.py",
+                runner=runner,
+                volume_probe=swapping_probe,
+                plan_discoverer=lambda _root, _limit: plan,
+                lease_factory=lease.hold,
+                require_mount=False,
+            )
+        )
+        == "archive4t-identity-mismatch"
+    )
+    assert [request.mode for request in runner.requests] == ["check", "apply"]
+    assert not any(path.name == "paired-receipts" for path in tmp_path.rglob("*"))
+
+
+def test_symlink_and_redirected_output_fail_before_writes(tmp_path: Path) -> None:
+    plan = make_plan(tmp_path)
+    path_case = tmp_path / "path-case"
+    repository, registry, identities = make_registration(path_case)
+    runner = FixtureRail(plan)
+    lease = LeaseCounter()
+    limen_root = path_case / "limen-root"
+    limen_root.mkdir()
+    t7 = identities[next(path for path in identities if "T7Recovery" in path)]
     target = Path(t7.mount) / "limen-private" / "estate-audit-git-custody"
     target.parent.mkdir()
     target.symlink_to(tmp_path / "elsewhere", target_is_directory=True)
@@ -570,6 +669,42 @@ def test_existing_pair_receipt_symlink_fails_before_any_apply(tmp_path: Path) ->
     assert [request.mode for request in runner.requests] == ["check"]
 
 
+def test_oversized_prepared_record_fails_before_any_apply(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = make_plan(tmp_path)
+    repository, registry, identities = make_registration(tmp_path)
+    registered = load_target_registry(registry, repository_root=repository)
+    receipt_directory = registered.targets[0].custody_root / "paired-receipts"
+    receipt_directory.mkdir(parents=True)
+    receipt = receipt_directory / f"{plan.plan_sha256}.json"
+    monkeypatch.setattr(paired_module, "MAX_PREPARED_RECORD_BYTES", 64)
+    receipt.write_bytes(b"x" * 65)
+    receipt.chmod(0o600)
+    runner = FixtureRail(plan)
+    lease = LeaseCounter()
+    limen_root = tmp_path / "limen-root"
+    limen_root.mkdir()
+
+    with pytest.raises(PairedCustodyError) as raised:
+        run_paired_custody(
+            repository_root=repository,
+            limen_root=limen_root,
+            registry_path=registry,
+            single_rail_script=repository / "scripts" / "estate-audit-custody.py",
+            runner=runner,
+            volume_probe=lambda mount: identities[str(mount)],
+            plan_discoverer=lambda _root, _limit: plan,
+            lease_factory=lease.hold,
+            require_mount=False,
+        )
+    public = blocked_projection(raised.value)
+    assert public["error"] == "paired-receipt-size-limit"
+    assert str(tmp_path) not in json.dumps(public, sort_keys=True)
+    assert [request.mode for request in runner.requests] == ["check"]
+
+
 def test_admission_denial_is_path_free_and_precedes_every_write(tmp_path: Path) -> None:
     plan = make_plan(tmp_path)
     repository, registry, identities = make_registration(tmp_path)
@@ -616,7 +751,7 @@ def test_admission_denial_is_path_free_and_precedes_every_write(tmp_path: Path) 
         (("archive4t", "apply"), ["check", "apply"]),
         (
             ("t7recovery", "apply"),
-            ["check", "apply", "verify-receipt", "apply"],
+            ["check", "apply", "apply"],
         ),
     ],
 )
@@ -649,9 +784,9 @@ def test_first_or_second_rail_failure_never_projects_terminal(
     assert not any(path.name == "paired-receipts" for path in tmp_path.rglob("*"))
 
 
-def test_apply_and_full_restore_must_identify_the_same_rail_receipt(tmp_path: Path) -> None:
+def test_both_rails_must_restore_the_same_working_payload_manifest(tmp_path: Path) -> None:
     plan = make_plan(tmp_path)
-    runner = FixtureRail(plan, verify_content_mismatch="archive4t")
+    runner = FixtureRail(plan, payload_mismatch="archive4t")
     repository, registry, identities = make_registration(tmp_path)
     lease = LeaseCounter()
     limen_root = tmp_path / "limen-root"
@@ -671,14 +806,82 @@ def test_apply_and_full_restore_must_identify_the_same_rail_receipt(tmp_path: Pa
                 require_mount=False,
             )
         )
-        == "single-rail-receipt-mismatch"
+        == "rail-working-payload-mismatch"
     )
     assert [request.mode for request in runner.requests] == [
         "check",
         "apply",
-        "verify-receipt",
+        "apply",
     ]
     assert not any(path.name == "paired-receipts" for path in tmp_path.rglob("*"))
+
+
+def test_interrupted_pair_write_leaves_only_nonterminal_prepared_evidence(
+    tmp_path: Path,
+) -> None:
+    plan = make_plan(tmp_path)
+    repository, registry, identities = make_registration(tmp_path)
+    runner = FixtureRail(plan)
+    lease = LeaseCounter()
+    limen_root = tmp_path / "limen-root"
+    limen_root.mkdir()
+
+    def interrupt_after_first(_target, index: int) -> None:
+        if index == 0:
+            raise RuntimeError("fixture-crash")
+
+    with pytest.raises(RuntimeError, match="fixture-crash"):
+        run_paired_custody(
+            repository_root=repository,
+            limen_root=limen_root,
+            registry_path=registry,
+            single_rail_script=repository / "scripts" / "estate-audit-custody.py",
+            runner=runner,
+            volume_probe=lambda mount: identities[str(mount)],
+            plan_discoverer=lambda _root, _limit: plan,
+            lease_factory=lease.hold,
+            require_mount=False,
+            prepared_write_hook=interrupt_after_first,
+        )
+
+    registered = load_target_registry(registry, repository_root=repository)
+    receipt_paths = [
+        target.custody_root / "paired-receipts" / f"{plan.plan_sha256}.json" for target in registered.targets
+    ]
+    assert receipt_paths[0].exists()
+    assert not receipt_paths[1].exists()
+    unilateral = json.loads(receipt_paths[0].read_text(encoding="utf-8"))
+    assert unilateral["status"] == "prepared"
+    assert unilateral["requires_peer_match"] is True
+    assert "restoration_passed" not in unilateral
+    assert "copy_count" not in unilateral
+
+    recovered = run_paired_custody(
+        repository_root=repository,
+        limen_root=limen_root,
+        registry_path=registry,
+        single_rail_script=repository / "scripts" / "estate-audit-custody.py",
+        runner=runner,
+        volume_probe=lambda mount: identities[str(mount)],
+        plan_discoverer=lambda _root, _limit: plan,
+        lease_factory=lease.hold,
+        require_mount=False,
+    )
+    fixed_point = run_paired_custody(
+        repository_root=repository,
+        limen_root=limen_root,
+        registry_path=registry,
+        single_rail_script=repository / "scripts" / "estate-audit-custody.py",
+        runner=runner,
+        volume_probe=lambda mount: identities[str(mount)],
+        plan_discoverer=lambda _root, _limit: plan,
+        lease_factory=lease.hold,
+        require_mount=False,
+    )
+    assert recovered["status"] == fixed_point["status"] == "restored"
+    assert recovered["changed"] is True
+    assert fixed_point["changed"] is False
+    assert receipt_paths[0].read_bytes() == receipt_paths[1].read_bytes()
 
 
 def test_both_restores_and_second_complete_pass_are_byte_idempotent(
@@ -721,13 +924,141 @@ def test_both_restores_and_second_complete_pass_are_byte_idempotent(
     assert first_bytes[0] == first_bytes[1] == second_bytes[0] == second_bytes[1]
     private = json.loads(first_bytes[0])
     assert private["schema"] == PRIVATE_RECEIPT_SCHEMA
-    assert private["restoration_passed"] is True
+    assert private["status"] == "prepared"
+    assert private["requires_peer_match"] is True
+    assert "restoration_passed" not in private
+    assert "copy_count" not in private
+    assert all(target["rail_restoration_passed"] is True for target in private["targets"].values())
     assert private["independent_physical_devices"] is True
     assert private["source_retired"] is False
     assert private["reclaim_performed"] is False
     assert all(stat.S_IMODE(path.stat().st_mode) == 0o600 for path in receipt_paths)
-    assert [request.mode for request in runner.requests].count("verify-receipt") == 4
+    assert [request.mode for request in runner.requests] == [
+        "check",
+        "apply",
+        "apply",
+        "check",
+        "apply",
+        "apply",
+    ]
     assert lease.calls == lease.entries == lease.exits == 2
+
+
+@pytest.mark.parametrize(
+    ("stream", "limit_name", "expected"),
+    [
+        ("stdout", "MAX_CHILD_STDOUT_BYTES", "single-rail-check-stdout-limit"),
+        ("stderr", "MAX_CHILD_STDERR_BYTES", "single-rail-check-stderr-limit"),
+    ],
+)
+def test_single_rail_output_is_rejected_at_limit_plus_one(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    stream: str,
+    limit_name: str,
+    expected: str,
+) -> None:
+    monkeypatch.setattr(paired_module, limit_name, 64)
+    limit = 64
+    script = tmp_path / "noisy-child.py"
+    descriptor = 1 if stream == "stdout" else 2
+    prefix = b"" if stream == "stdout" else b"{}"
+    script.write_text(
+        f"import os\nos.write(1, {prefix!r})\nos.write({descriptor}, b'x' * ({limit} + 1))\n",
+        encoding="utf-8",
+    )
+    request = RailRequest(
+        mode="check",
+        limen_root=tmp_path,
+        max_roots=1,
+        max_seconds=5,
+    )
+
+    assert error_code(lambda: invoke_single_rail(script, request)) == expected
+
+
+def test_receipt_directory_parent_is_fsynced_after_mkdir_and_chmod(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    custody_root = tmp_path / "custody"
+    custody_root.mkdir()
+    events: list[str] = []
+    real_open = os.open
+    real_mkdir = os.mkdir
+    real_fchmod = os.fchmod
+    real_fsync = os.fsync
+
+    def tracked_open(path, *args, **kwargs):
+        events.append(f"open:{path}")
+        return real_open(path, *args, **kwargs)
+
+    def tracked_mkdir(path, *args, **kwargs):
+        events.append(f"mkdir:{path}")
+        return real_mkdir(path, *args, **kwargs)
+
+    def tracked_fchmod(descriptor, mode):
+        events.append("fchmod")
+        return real_fchmod(descriptor, mode)
+
+    def tracked_fsync(descriptor):
+        events.append("fsync")
+        return real_fsync(descriptor)
+
+    monkeypatch.setattr(paired_module.os, "open", tracked_open)
+    monkeypatch.setattr(paired_module.os, "mkdir", tracked_mkdir)
+    monkeypatch.setattr(paired_module.os, "fchmod", tracked_fchmod)
+    monkeypatch.setattr(paired_module.os, "fsync", tracked_fsync)
+    directory = paired_module._open_receipt_directory(custody_root)
+    os.close(directory)
+
+    assert events[:5] == [
+        f"open:{custody_root}",
+        "mkdir:paired-receipts",
+        "open:paired-receipts",
+        "fchmod",
+        "fsync",
+    ]
+
+
+def test_frozen_inventory_change_implicates_paired_gate() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repository / "scripts" / "verify.py"),
+            "--explain",
+            "docs/storage-evacuation-inventory-20260727.json",
+        ],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "estate-audit-paired-custody-test" in result.stdout.splitlines()
+
+
+def test_fleet_entrypoint_redacts_missing_dependencies(tmp_path: Path) -> None:
+    repository = Path(__file__).resolve().parents[2]
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    copied = scripts / "estate-audit-paired-custody.py"
+    copied.write_bytes((repository / "scripts" / "estate-audit-paired-custody.py").read_bytes())
+    result = subprocess.run(
+        [sys.executable, "-I", str(copied), "--apply", "--json"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 4
+    payload = json.loads(result.stdout)
+    assert payload == {
+        "schema": PROJECTION_SCHEMA,
+        "status": "blocked",
+        "error": "dependency-unavailable",
+    }
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)
 
 
 def test_projection_is_path_free_and_no_arca_invocation_exists(tmp_path: Path) -> None:

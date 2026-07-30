@@ -13,44 +13,58 @@ The exact target registry is
 - `t7recovery` to
   `/Volumes/T7Recovery/limen-private/estate-audit-git-custody`.
 
-Both registrations are tied to the device, physical-device, and volume-UUID
-identities in `docs/storage-evacuation-inventory-20260727.json`. Registration is
-not a claim that a current live proof exists. Every run revalidates the two
-mounted identities and their physical independence before any custody write.
+Both registrations are tied to the volume UUIDs in
+`docs/storage-evacuation-inventory-20260727.json` and require an owner-recorded
+stable whole-media identity (`device_<digest>`) derived from a physical media
+UUID, integrated-device path, or USB hardware serial. BSD disk numbers remain
+private observational evidence, not durable identity. The tracked target
+registry deliberately leaves both stable identities unset: capacity remains
+red until an authorized owner records them. Registration is not a claim that a
+current live proof exists.
 
 ## Contract
 
 The entrypoint acquires the sole `heavy` lease once. Admission denial is a
 path-free blocker and invokes no custody rail. While the lease is held it:
 
-1. validates both registered mounts, identities, target ancestry, and physical
-   independence;
+1. validates both registered mounts, stable physical identities, volume UUIDs,
+   target ancestry, and physical independence;
 2. runs a fresh underlying `estate-audit-custody --check`, so the generated-root
    denominator is discovered rather than pinned;
 3. independently re-derives that plan in memory and rejects a target that
    overlaps any generated source root;
-4. applies and full-restores the exact plan on `archive4t`, then on
-   `t7recovery`, using only the existing single-rail executable;
-5. re-verifies each receipt through another fresh full restore;
-6. writes one byte-identical mode-`0600` paired receipt into both custody roots
-   and emits a path-free projection.
+4. applies the exact plan on `archive4t`, then on `t7recovery`, using only the
+   existing single-rail executable; each apply already performs one complete
+   restore before returning;
+5. requires both rail receipts to cover the same working-payload manifest;
+6. writes one byte-identical mode-`0600` **prepared** record into both custody
+   roots, reopens both bounded records, and only then emits a terminal path-free
+   projection.
 
-A private paired receipt is terminal only when the same bytes exist at both
-registered roots. A unilateral copy after an interrupted cross-device write is
-recoverable staging evidence, not a completed two-copy proof; an idempotent
-rerun converges the pair before a terminal projection can be emitted.
+Every stored record remains explicitly nonterminal: it has `status: prepared`
+and `requires_peer_match: true`, and it contains neither
+`restoration_passed` nor `copy_count: 2`. A unilateral copy after an interrupted
+cross-device write therefore cannot claim completion. An idempotent rerun
+converges and reopens both exact records before the in-process projection may
+claim two restored copies.
 
-A repeated run still performs the fresh check and both full restore proofs, but
-the underlying applies and paired receipt must report `changed:false`. The
-projection contains only digests, counts, registered target references, and
-boolean proof fields; detailed paths and device identities remain in the two
-private receipts.
+A repeated run still performs the fresh check and one full restore per rail,
+but the underlying applies and prepared records must report `changed:false`.
+The single-rail executable rechecks the expected volume UUID and stable
+physical identity around every target mutation/restore boundary. The paired
+layer repeats that check before and after each child apply and prepared-record
+write. Child output and all receipt/registry reads are fixed-size bounded.
+The projection contains only digests, counts, registered target references,
+and boolean proof fields; detailed paths and device identities remain in the
+two private prepared records.
 
 ## Authorized invocation
 
-The actual run is intentionally not part of ordinary verification. It writes
-to two external devices and must be entered only after the owner authorizes the
-storage operation and host admission allows the sole heavy lease:
+The actual run is intentionally not part of ordinary verification. It is
+currently fail-closed because the stable physical identities are unregistered.
+After the authorized owner records both identities, it writes to two external
+devices and may be entered only with separate storage authorization and a sole
+heavy lease:
 
 ```bash
 python3 scripts/estate-audit-paired-custody.py --apply --json

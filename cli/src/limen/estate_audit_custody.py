@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import plistlib
 import re
 import secrets
 import shlex
@@ -19,6 +20,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from limen.agent_state.custody import _device_identity
+from limen.agent_state.models import ReceiptError
 from limen.agent_state.pipeline import PipelineError, require_mounted_external
 from limen.worktree_roots import WorktreeTarget, iter_worktree_targets
 
@@ -40,6 +43,10 @@ MAX_PAYLOAD_FILES = 10000
 MAX_PAYLOAD_FILE_BYTES = 512 * 1024 * 1024
 MAX_PAYLOAD_TOTAL_BYTES = 4 * 1024 * 1024 * 1024
 PAYLOAD_CHUNK_BYTES = 1024 * 1024
+MAX_CUSTODY_RECEIPT_BYTES = 32 * 1024 * 1024
+VOLUME_UUID_RE = re.compile(r"^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$")
+PHYSICAL_IDENTITY_RE = re.compile(r"^device_[0-9a-f]{32}$")
+IdentityGuard = Callable[[], None]
 
 
 class EstateAuditCustodyError(RuntimeError):
@@ -456,9 +463,17 @@ def _load_receipt(path: Path) -> dict[str, Any]:
         raise EstateAuditCustodyError("custody-receipt-not-regular")
     if stat.S_IMODE(info.st_mode) != 0o600:
         raise EstateAuditCustodyError("custody-receipt-mode-invalid")
+    if info.st_size > MAX_CUSTODY_RECEIPT_BYTES:
+        raise EstateAuditCustodyError("custody-receipt-size-limit")
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        with path.open("rb") as handle:
+            encoded = handle.read(MAX_CUSTODY_RECEIPT_BYTES + 1)
+        if len(encoded) > MAX_CUSTODY_RECEIPT_BYTES:
+            raise EstateAuditCustodyError("custody-receipt-size-limit")
+        payload = json.loads(encoded)
+    except EstateAuditCustodyError:
+        raise
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise EstateAuditCustodyError("custody-receipt-unavailable", type(exc).__name__) from exc
     if not isinstance(payload, dict) or payload.get("schema") != RECEIPT_SCHEMA:
         raise EstateAuditCustodyError("custody-receipt-schema-mismatch")
@@ -466,6 +481,60 @@ def _load_receipt(path: Path) -> dict[str, Any]:
     if payload.get("content_sha256") != _canonical_sha256(content):
         raise EstateAuditCustodyError("custody-receipt-content-mismatch")
     return payload
+
+
+def assert_custody_target_identity(
+    custody_root: Path,
+    *,
+    expected_volume_uuid: str,
+    expected_physical_identity: str,
+) -> None:
+    """Fail closed unless one target remains on the exact registered physical medium."""
+
+    expected_uuid = expected_volume_uuid.upper()
+    if not VOLUME_UUID_RE.fullmatch(expected_uuid):
+        raise EstateAuditCustodyError("expected-volume-uuid-invalid")
+    if not PHYSICAL_IDENTITY_RE.fullmatch(expected_physical_identity):
+        raise EstateAuditCustodyError("expected-physical-identity-invalid")
+    candidate = Path(os.path.abspath(os.path.expanduser(custody_root)))
+    try:
+        volume = Path("/Volumes") / candidate.relative_to("/Volumes").parts[0]
+    except (ValueError, IndexError) as exc:
+        raise EstateAuditCustodyError("custody-target-identity-unavailable") from exc
+    try:
+        result = subprocess.run(
+            ["/usr/sbin/diskutil", "info", "-plist", str(volume)],
+            capture_output=True,
+            check=False,
+            timeout=20,
+            stdin=subprocess.DEVNULL,
+        )
+        if result.returncode:
+            raise EstateAuditCustodyError("custody-target-identity-unavailable")
+        payload = plistlib.loads(result.stdout)
+        observed_mount = Path(os.path.abspath(str(payload["MountPoint"])))
+        observed_uuid = str(payload["VolumeUUID"]).upper()
+        physical_identity = _device_identity(volume)
+    except EstateAuditCustodyError:
+        raise
+    except (
+        KeyError,
+        OSError,
+        ReceiptError,
+        TypeError,
+        subprocess.SubprocessError,
+        plistlib.InvalidFileException,
+    ) as exc:
+        raise EstateAuditCustodyError("custody-target-identity-unavailable") from exc
+    if observed_mount != volume:
+        raise EstateAuditCustodyError("custody-target-identity-mismatch")
+    if observed_uuid != expected_uuid or physical_identity != expected_physical_identity:
+        raise EstateAuditCustodyError("custody-target-identity-mismatch")
+
+
+def _assert_identity(identity_guard: IdentityGuard | None) -> None:
+    if identity_guard is not None:
+        identity_guard()
 
 
 def _payload_relative(payload_sha256: str) -> Path:
@@ -967,10 +1036,13 @@ def verify_receipt(
     full_restore: bool = True,
     max_seconds: int = 900,
     require_volume: bool = True,
+    identity_guard: IdentityGuard | None = None,
 ) -> dict[str, Any]:
     if max_seconds <= 0 or max_seconds > MAX_SECONDS:
         raise EstateAuditCustodyError("invalid-time-limit")
+    _assert_identity(identity_guard)
     root = _external_custody_root(custody_root) if require_volume else custody_root.expanduser().resolve()
+    _assert_identity(identity_guard)
     receipt = _load_receipt(_receipt_path(root, plan_sha256))
     if receipt.get("plan_sha256") != plan_sha256:
         raise EstateAuditCustodyError("custody-receipt-plan-mismatch")
@@ -981,13 +1053,19 @@ def verify_receipt(
                 raise EstateAuditCustodyError("custody-ref-verification-failed")
         _git_bytes(store, "fsck", "--full", "--strict", "--no-progress", timeout=_remaining(deadline))
         if full_restore:
+            _assert_identity(identity_guard)
             _restore_repository(store, heads, root, deadline=deadline)
+            _assert_identity(identity_guard)
+    if full_restore:
+        _assert_identity(identity_guard)
     _validate_failed_checkout_payloads(
         root,
         receipt,
         deadline=deadline,
         full_restore=full_restore,
     )
+    if full_restore:
+        _assert_identity(identity_guard)
     return receipt
 
 
@@ -1000,13 +1078,18 @@ def apply_plan(
     remote_url_for: Callable[[str], str] | None = None,
     max_seconds: int = 900,
     require_volume: bool = True,
+    identity_guard: IdentityGuard | None = None,
 ) -> tuple[dict[str, Any], bool]:
     if expected_plan_sha256 != plan.plan_sha256:
         raise EstateAuditCustodyError("plan-sha-mismatch")
     if max_seconds <= 0 or max_seconds > MAX_SECONDS:
         raise EstateAuditCustodyError("invalid-time-limit")
+    _assert_identity(identity_guard)
     root = _external_custody_root(custody_root) if require_volume else custody_root.expanduser().resolve()
+    _assert_identity(identity_guard)
+    _assert_identity(identity_guard)
     root.mkdir(parents=True, exist_ok=True)
+    _assert_identity(identity_guard)
     existing = _receipt_path(root, plan.plan_sha256)
     if existing.exists():
         return verify_receipt(
@@ -1015,6 +1098,7 @@ def apply_plan(
             full_restore=True,
             max_seconds=max_seconds,
             require_volume=False,
+            identity_guard=identity_guard,
         ), False
 
     deadline = time.monotonic() + max_seconds
@@ -1022,6 +1106,7 @@ def apply_plan(
     repositories: list[dict[str, Any]] = []
     changed = False
     for repository, heads in sorted(_repository_groups(plan).items()):
+        _assert_identity(identity_guard)
         result, repository_changed = _ensure_repository(
             root,
             repository,
@@ -1029,14 +1114,17 @@ def apply_plan(
             deadline=deadline,
             remote_url=resolver(repository),
         )
+        _assert_identity(identity_guard)
         repositories.append(result)
         changed = changed or repository_changed
 
+    _assert_identity(identity_guard)
     failed_checkout_states, payload_changed = _capture_failed_checkout_states(
         plan,
         root,
         deadline=deadline,
     )
+    _assert_identity(identity_guard)
     changed = changed or payload_changed
 
     current = revalidate()
@@ -1059,13 +1147,16 @@ def apply_plan(
         "restoration_passed": True,
     }
     receipt = {**content, "content_sha256": _canonical_sha256(content)}
+    _assert_identity(identity_guard)
     _atomic_private_json(existing, receipt)
+    _assert_identity(identity_guard)
     verified = verify_receipt(
         root,
         plan.plan_sha256,
         full_restore=True,
         max_seconds=max(1, int(_remaining(deadline))),
         require_volume=False,
+        identity_guard=identity_guard,
     )
     return verified, True
 
@@ -1086,6 +1177,7 @@ def public_receipt(receipt: dict[str, Any], *, changed: bool | None = None) -> d
         "working_payload_bytes": int(receipt.get("working_payload_bytes") or 0),
         "working_payload_unique_count": int(receipt.get("working_payload_unique_count") or 0),
         "working_payload_unique_bytes": int(receipt.get("working_payload_unique_bytes") or 0),
+        "working_payload_manifest_sha256": _canonical_sha256(receipt.get("failed_checkout_states") or []),
         "restoration_passed": receipt.get("restoration_passed") is True,
     }
     if changed is not None:
@@ -1235,8 +1327,10 @@ __all__ = [
     "CheckoutContentProof",
     "CustodyPlan",
     "EstateAuditCustodyError",
+    "MAX_CUSTODY_RECEIPT_BYTES",
     "GeneratedRootRecord",
     "apply_plan",
+    "assert_custody_target_identity",
     "discover_plan",
     "preflight_plan",
     "public_receipt",

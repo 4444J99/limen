@@ -13,23 +13,16 @@ CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
-from limen.estate_audit_custody import MAX_ROOTS, MAX_SECONDS
-from limen.estate_audit_paired_custody import (
-    PairedCustodyError,
-    blocked_projection,
-    run_paired_custody,
-)
-
 DEFAULT_REGISTRY = ROOT / "institutio" / "governance" / "estate-audit-custody-targets.json"
 SINGLE_RAIL_SCRIPT = ROOT / "scripts" / "estate-audit-custody.py"
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(*, max_roots: int, max_seconds: int) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", required=True)
     parser.add_argument("--limen-root", type=Path, default=ROOT)
-    parser.add_argument("--max-roots", type=int, default=MAX_ROOTS)
-    parser.add_argument("--max-seconds", type=int, default=MAX_SECONDS)
+    parser.add_argument("--max-roots", type=int, default=max_roots)
+    parser.add_argument("--max-seconds", type=int, default=max_seconds)
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -49,8 +42,27 @@ def _emit(payload: dict[str, object], *, as_json: bool) -> None:
     print("estate-audit-paired-custody: " + " ".join(fields))
 
 
+def _blocked(error: str) -> dict[str, object]:
+    return {
+        "schema": "limen.estate_audit_paired_custody_projection.v1",
+        "status": "blocked",
+        "error": error,
+    }
+
+
 def main() -> int:
-    args = parse_args()
+    try:
+        from limen.estate_audit_custody import MAX_ROOTS, MAX_SECONDS
+        from limen.estate_audit_paired_custody import (
+            PairedCustodyError,
+            blocked_projection,
+            run_paired_custody,
+        )
+    except (ModuleNotFoundError, ImportError):
+        _emit(_blocked("dependency-unavailable"), as_json="--json" in sys.argv[1:])
+        return 4
+
+    args = parse_args(max_roots=MAX_ROOTS, max_seconds=MAX_SECONDS)
     try:
         result = run_paired_custody(
             repository_root=ROOT,
@@ -68,14 +80,7 @@ def main() -> int:
     # This executable is a redaction boundary: no private mount or checkout
     # detail from an unexpected local fault reaches unattended logs.
     except Exception:  # noqa: BLE001
-        _emit(
-            {
-                "schema": "limen.estate_audit_paired_custody_projection.v1",
-                "status": "blocked",
-                "error": "unexpected-error",
-            },
-            as_json=args.json,
-        )
+        _emit(_blocked("unexpected-error"), as_json=args.json)
         return 4
 
 

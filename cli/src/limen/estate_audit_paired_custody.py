@@ -15,15 +15,19 @@ import os
 import plistlib
 import re
 import secrets
+import selectors
 import stat
 import subprocess
 import sys
+import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
+from limen.agent_state.custody import _device_identity
+from limen.agent_state.models import ReceiptError
 from limen.estate_audit_custody import (
     MAX_ROOTS,
     MAX_SECONDS,
@@ -34,12 +38,17 @@ from limen.estate_audit_custody import (
 from limen.host_admission import AdmissionDenied, hold_lease
 
 REGISTRY_SCHEMA = "limen.estate_audit_paired_custody_targets.v1"
-PRIVATE_RECEIPT_SCHEMA = "limen.estate_audit_paired_custody_receipt.v1"
+PRIVATE_RECEIPT_SCHEMA = "limen.estate_audit_paired_custody_prepared.v1"
 PROJECTION_SCHEMA = "limen.estate_audit_paired_custody_projection.v1"
 SINGLE_RAIL_RESULT_SCHEMA = "limen.estate_audit_custody_result.v1"
 SINGLE_RAIL_RECEIPT_SCHEMA = "limen.estate_audit_custody_receipt.v1"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+PHYSICAL_IDENTITY_RE = re.compile(r"^device_[0-9a-f]{32}$")
 ERROR_CODE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,95}$")
+MAX_REGISTRY_BYTES = 1024 * 1024
+MAX_CHILD_STDOUT_BYTES = 1024 * 1024
+MAX_CHILD_STDERR_BYTES = 256 * 1024
+MAX_PREPARED_RECORD_BYTES = 4 * 1024 * 1024
 TARGET_REFS = ("archive4t", "t7recovery")
 TARGET_NAMES = {
     "archive4t": "Archive4T",
@@ -70,6 +79,7 @@ class VolumeIdentity:
     device: str
     physical_device: str
     volume_uuid: str
+    physical_identity: str
 
 
 @dataclass(frozen=True)
@@ -85,9 +95,8 @@ class RegisteredTarget:
             {
                 "name": self.name,
                 "mount": self.identity.mount,
-                "device": self.identity.device,
-                "physical_device": self.identity.physical_device,
                 "volume_uuid": self.identity.volume_uuid,
+                "physical_identity": self.identity.physical_identity,
             }
         )
 
@@ -107,6 +116,8 @@ class RailRequest:
     max_seconds: int
     expected_plan_sha256: str | None = None
     custody_root: Path | None = None
+    expected_volume_uuid: str | None = None
+    expected_physical_identity: str | None = None
 
 
 class RailRunner(Protocol):
@@ -116,6 +127,7 @@ class RailRunner(Protocol):
 VolumeProbe = Callable[[Path], VolumeIdentity]
 PlanDiscoverer = Callable[[Path, int], CustodyPlan]
 LeaseFactory = Callable[..., AbstractContextManager[dict[str, Any]]]
+PreparedWriteHook = Callable[[RegisteredTarget, int], None]
 
 
 def _canonical_bytes(payload: object) -> bytes:
@@ -136,11 +148,16 @@ def _regular_json(path: Path) -> tuple[bytes, dict[str, Any]]:
         info = path.lstat()
         if path.is_symlink() or not stat.S_ISREG(info.st_mode):
             raise PairedCustodyError("registry-not-regular")
-        encoded = path.read_bytes()
+        if info.st_size > MAX_REGISTRY_BYTES:
+            raise PairedCustodyError("registry-size-limit")
+        with path.open("rb") as handle:
+            encoded = handle.read(MAX_REGISTRY_BYTES + 1)
+        if len(encoded) > MAX_REGISTRY_BYTES:
+            raise PairedCustodyError("registry-size-limit")
         payload = json.loads(encoded)
     except PairedCustodyError:
         raise
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise PairedCustodyError("registry-unavailable") from exc
     if not isinstance(payload, dict):
         raise PairedCustodyError("registry-invalid")
@@ -172,9 +189,15 @@ def load_target_registry(path: Path, *, repository_root: Path) -> TargetRegistry
     inventory_path = repository_root / inventory_relative
     inventory_bytes, inventory = _regular_json(inventory_path)
     inventory_sha256 = hashlib.sha256(inventory_bytes).hexdigest()
+    inventory_id = inventory.get("inventory_id")
+    registered_inventory_id = payload.get("inventory_id")
     if (
         inventory.get("schema") != "limen.storage_evacuation_inventory.v1"
-        or inventory.get("inventory_id") != payload.get("inventory_id")
+        or not isinstance(inventory_id, str)
+        or not inventory_id
+        or not isinstance(registered_inventory_id, str)
+        or not registered_inventory_id
+        or inventory_id != registered_inventory_id
         or inventory_sha256 != payload.get("inventory_sha256")
     ):
         raise PairedCustodyError("registry-inventory-binding-mismatch")
@@ -192,6 +215,7 @@ def load_target_registry(path: Path, *, repository_root: Path) -> TargetRegistry
                 device=str(candidate["device"]),
                 physical_device=str(candidate["physical_device"]),
                 volume_uuid=str(candidate["volume_uuid"]).upper(),
+                physical_identity="",
             )
         except (KeyError, TypeError) as exc:
             raise PairedCustodyError("inventory-device-invalid") from exc
@@ -209,6 +233,16 @@ def load_target_registry(path: Path, *, repository_root: Path) -> TargetRegistry
             raise PairedCustodyError("registry-target-invalid")
         custody_root = _absolute_without_links(str(candidate.get("custody_root") or ""))
         identity = devices[name]
+        physical_identity = candidate.get("stable_physical_identity")
+        if not isinstance(physical_identity, str) or not PHYSICAL_IDENTITY_RE.fullmatch(physical_identity):
+            raise PairedCustodyError("registry-stable-physical-identity-missing")
+        identity = VolumeIdentity(
+            mount=identity.mount,
+            device=identity.device,
+            physical_device=identity.physical_device,
+            volume_uuid=identity.volume_uuid,
+            physical_identity=physical_identity,
+        )
         mount = _absolute_without_links(identity.mount)
         try:
             relative = custody_root.relative_to(mount)
@@ -229,7 +263,7 @@ def load_target_registry(path: Path, *, repository_root: Path) -> TargetRegistry
     if len({target.name for target in targets}) != 2:
         raise PairedCustodyError("registry-target-name-duplicate")
     return TargetRegistry(
-        inventory_id=str(inventory["inventory_id"]),
+        inventory_id=inventory_id,
         inventory_sha256=inventory_sha256,
         targets=tuple(targets),
     )
@@ -262,13 +296,15 @@ def diskutil_volume_identity(mount: Path) -> VolumeIdentity:
             physical = str(value["ParentWholeDisk"])
         observed_mount = str(Path(value["MountPoint"]).resolve(strict=True))
         volume_uuid = str(value["VolumeUUID"]).upper()
-    except (KeyError, OSError, TypeError, plistlib.InvalidFileException) as exc:
+        physical_identity = _device_identity(mount)
+    except (KeyError, OSError, ReceiptError, TypeError, plistlib.InvalidFileException) as exc:
         raise PairedCustodyError("volume-identity-invalid") from exc
     return VolumeIdentity(
         mount=observed_mount,
         device=f"/dev/{device}",
         physical_device=f"/dev/{physical}",
         volume_uuid=volume_uuid,
+        physical_identity=physical_identity,
     )
 
 
@@ -351,6 +387,32 @@ def _assert_pair_receipt_path_safe(
         raise PairedCustodyError("paired-receipt-not-regular")
     if stat.S_IMODE(info.st_mode) != 0o600:
         raise PairedCustodyError("paired-receipt-mode-invalid")
+    if info.st_size > MAX_PREPARED_RECORD_BYTES:
+        raise PairedCustodyError("paired-receipt-size-limit")
+
+
+def _assert_live_target(
+    target: RegisteredTarget,
+    *,
+    volume_probe: VolumeProbe,
+    require_mount: bool,
+) -> VolumeIdentity:
+    _assert_no_path_indirection(target, require_mount=require_mount)
+    _assert_target_outputs_safe(target)
+    actual = volume_probe(_absolute_without_links(target.identity.mount))
+    expected = (
+        str(_absolute_without_links(target.identity.mount)),
+        target.identity.volume_uuid,
+        target.identity.physical_identity,
+    )
+    observed = (
+        actual.mount,
+        actual.volume_uuid,
+        actual.physical_identity,
+    )
+    if observed != expected:
+        raise PairedCustodyError(f"{target.ref}-identity-mismatch")
+    return actual
 
 
 def validate_live_targets(
@@ -363,14 +425,14 @@ def validate_live_targets(
 
     observed: list[VolumeIdentity] = []
     for target in registry.targets:
-        _assert_no_path_indirection(target, require_mount=require_mount)
-        _assert_target_outputs_safe(target)
-        mount = _absolute_without_links(target.identity.mount)
-        actual = volume_probe(mount)
-        if asdict(actual) != asdict(target.identity):
-            raise PairedCustodyError(f"{target.ref}-identity-mismatch")
-        observed.append(actual)
-    if observed[0].physical_device == observed[1].physical_device:
+        observed.append(
+            _assert_live_target(
+                target,
+                volume_probe=volume_probe,
+                require_mount=require_mount,
+            )
+        )
+    if observed[0].physical_identity == observed[1].physical_identity:
         raise PairedCustodyError("targets-share-physical-device")
     if observed[0].volume_uuid == observed[1].volume_uuid:
         raise PairedCustodyError("targets-share-volume-uuid")
@@ -458,6 +520,7 @@ def _validated_public(
     if payload.get("schema") == SINGLE_RAIL_RECEIPT_SCHEMA and (
         not SHA256_RE.fullmatch(str(payload.get("content_sha256") or ""))
         or payload.get("restoration_passed") is not True
+        or not SHA256_RE.fullmatch(str(payload.get("working_payload_manifest_sha256") or ""))
     ):
         raise PairedCustodyError("single-rail-restoration-invalid")
     return payload
@@ -512,21 +575,59 @@ def invoke_single_rail(script: Path, request: RailRequest) -> dict[str, Any]:
         arguments.extend(["--custody-root", str(request.custody_root)])
     if request.expected_plan_sha256 is not None:
         arguments.extend(["--expected-plan-sha", request.expected_plan_sha256])
+    if request.expected_volume_uuid is not None:
+        arguments.extend(["--expected-volume-uuid", request.expected_volume_uuid])
+    if request.expected_physical_identity is not None:
+        arguments.extend(["--expected-physical-identity", request.expected_physical_identity])
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             arguments,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=request.max_seconds + 30,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             stdin=subprocess.DEVNULL,
         )
-        payload = json.loads(result.stdout)
-    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        if process.stdout is None or process.stderr is None:
+            raise PairedCustodyError(f"single-rail-{request.mode}-unavailable")
+        selector = selectors.DefaultSelector()
+        selector.register(process.stdout, selectors.EVENT_READ, ("stdout", MAX_CHILD_STDOUT_BYTES))
+        selector.register(process.stderr, selectors.EVENT_READ, ("stderr", MAX_CHILD_STDERR_BYTES))
+        output = {"stdout": bytearray(), "stderr": bytearray()}
+        deadline = time.monotonic() + request.max_seconds + 30
+        try:
+            while selector.get_map():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise subprocess.TimeoutExpired(arguments, request.max_seconds + 30)
+                events = selector.select(remaining)
+                if not events:
+                    raise subprocess.TimeoutExpired(arguments, request.max_seconds + 30)
+                for key, _mask in events:
+                    stream, limit = key.data
+                    chunk = os.read(key.fileobj.fileno(), min(64 * 1024, limit + 1 - len(output[stream])))
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        continue
+                    output[stream].extend(chunk)
+                    if len(output[stream]) > limit:
+                        raise PairedCustodyError(f"single-rail-{request.mode}-{stream}-limit")
+            returncode = process.wait(timeout=max(0.1, deadline - time.monotonic()))
+        except BaseException:
+            process.kill()
+            process.wait()
+            raise
+        finally:
+            selector.close()
+            process.stdout.close()
+            process.stderr.close()
+        encoded_stdout = bytes(output["stdout"])
+        payload = json.loads(encoded_stdout)
+    except PairedCustodyError:
+        raise
+    except (OSError, UnicodeDecodeError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
         raise PairedCustodyError(f"single-rail-{request.mode}-unavailable") from exc
     if not isinstance(payload, dict):
         raise PairedCustodyError(f"single-rail-{request.mode}-invalid")
-    if result.returncode:
+    if returncode:
         error = str(payload.get("error") or "")
         reasons = (error,) if ERROR_CODE_RE.fullmatch(error) else ()
         raise PairedCustodyError(
@@ -549,12 +650,8 @@ def _open_receipt_directory(custody_root: Path) -> int:
         except FileExistsError:
             pass
         directory = os.open(PAIR_RECEIPT_RELATIVE.name, flags, dir_fd=root)
-        os.chmod(
-            PAIR_RECEIPT_RELATIVE.name,
-            0o700,
-            dir_fd=root,
-            follow_symlinks=False,
-        )
+        os.fchmod(directory, 0o700)
+        os.fsync(root)
         return directory
     except OSError as exc:
         if directory is not None:
@@ -573,7 +670,12 @@ def _read_receipt_bytes(custody_root: Path, filename: str) -> bytes:
             dir_fd=directory,
         )
         with os.fdopen(descriptor, "rb") as handle:
-            return handle.read()
+            encoded = handle.read(MAX_PREPARED_RECORD_BYTES + 1)
+        if len(encoded) > MAX_PREPARED_RECORD_BYTES:
+            raise PairedCustodyError("paired-receipt-size-limit")
+        return encoded
+    except PairedCustodyError:
+        raise
     except OSError as exc:
         raise PairedCustodyError("paired-receipt-unavailable") from exc
     finally:
@@ -586,6 +688,8 @@ def _write_exact_private_json(
     payload: dict[str, Any],
 ) -> bool:
     encoded = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+    if len(encoded) > MAX_PREPARED_RECORD_BYTES:
+        raise PairedCustodyError("paired-receipt-size-limit")
     directory = _open_receipt_directory(custody_root)
     temporary: str | None = None
     try:
@@ -601,7 +705,9 @@ def _write_exact_private_json(
                 dir_fd=directory,
             )
             with os.fdopen(descriptor, "rb") as handle:
-                existing = handle.read()
+                existing = handle.read(MAX_PREPARED_RECORD_BYTES + 1)
+            if len(existing) > MAX_PREPARED_RECORD_BYTES:
+                raise PairedCustodyError("paired-receipt-size-limit")
         except FileNotFoundError:
             existing = None
         if existing is not None:
@@ -627,7 +733,16 @@ def _write_exact_private_json(
             dst_dir_fd=directory,
         )
         temporary = None
-        os.chmod(filename, 0o600, dir_fd=directory, follow_symlinks=False)
+        committed = os.open(
+            filename,
+            os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            dir_fd=directory,
+        )
+        try:
+            os.fchmod(committed, 0o600)
+            os.fsync(committed)
+        finally:
+            os.close(committed)
         os.fsync(directory)
         return True
     except PairedCustodyError:
@@ -645,14 +760,15 @@ def _write_exact_private_json(
         os.close(directory)
 
 
-def _private_receipt(
+def _prepared_record(
     registry: TargetRegistry,
     check: dict[str, Any],
     rail_results: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     content: dict[str, Any] = {
         "schema": PRIVATE_RECEIPT_SCHEMA,
-        "status": "restored",
+        "status": "prepared",
+        "requires_peer_match": True,
         "inventory": {
             "id": registry.inventory_id,
             "sha256": registry.inventory_sha256,
@@ -672,42 +788,80 @@ def _private_receipt(
             target.ref: {
                 "name": target.name,
                 "custody_root": str(target.custody_root),
-                "identity": asdict(target.identity),
+                "identity": {
+                    "mount": target.identity.mount,
+                    "volume_uuid": target.identity.volume_uuid,
+                    "physical_identity": target.identity.physical_identity,
+                },
                 "identity_sha256": target.identity_sha256,
                 "single_rail_content_sha256": rail_results[target.ref]["content_sha256"],
-                "restoration_passed": True,
+                "rail_restoration_passed": True,
             }
             for target in registry.targets
         },
-        "copy_count": 2,
+        "working_payload_manifest_sha256": rail_results[TARGET_REFS[0]]["working_payload_manifest_sha256"],
         "independent_physical_devices": True,
-        "restoration_passed": True,
         "source_retired": False,
         "reclaim_performed": False,
     }
-    return {**content, "receipt_sha256": _canonical_sha256(content)}
+    return {**content, "record_sha256": _canonical_sha256(content)}
 
 
-def _write_receipt_pair(
+def _validated_prepared_record(encoded: bytes, expected: dict[str, Any]) -> dict[str, Any]:
+    expected_bytes = json.dumps(expected, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+    if encoded != expected_bytes:
+        raise PairedCustodyError("paired-receipts-diverged")
+    try:
+        payload = json.loads(encoded)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PairedCustodyError("paired-receipt-invalid") from exc
+    if (
+        not isinstance(payload, dict)
+        or payload.get("schema") != PRIVATE_RECEIPT_SCHEMA
+        or payload.get("status") != "prepared"
+        or payload.get("requires_peer_match") is not True
+        or "copy_count" in payload
+        or "restoration_passed" in payload
+    ):
+        raise PairedCustodyError("paired-receipt-invalid")
+    content = {key: value for key, value in payload.items() if key != "record_sha256"}
+    if payload.get("record_sha256") != _canonical_sha256(content):
+        raise PairedCustodyError("paired-receipt-content-mismatch")
+    return payload
+
+
+def _write_prepared_pair(
     registry: TargetRegistry,
-    receipt: dict[str, Any],
-) -> bool:
-    filename = f"{receipt['plan_sha256']}.json"
+    record: dict[str, Any],
+    *,
+    volume_probe: VolumeProbe,
+    require_mount: bool,
+    write_hook: PreparedWriteHook | None,
+) -> tuple[bool, dict[str, Any]]:
+    filename = f"{record['plan_sha256']}.json"
     changed = False
+    for index, target in enumerate(registry.targets):
+        _assert_live_target(target, volume_probe=volume_probe, require_mount=require_mount)
+        changed = _write_exact_private_json(target.custody_root, filename, record) or changed
+        _assert_live_target(target, volume_probe=volume_probe, require_mount=require_mount)
+        if write_hook is not None:
+            write_hook(target, index)
+    reopened: list[bytes] = []
     for target in registry.targets:
-        _assert_no_path_indirection(target, require_mount=False)
-        changed = _write_exact_private_json(target.custody_root, filename, receipt) or changed
-    first, second = (_read_receipt_bytes(target.custody_root, filename) for target in registry.targets)
+        _assert_live_target(target, volume_probe=volume_probe, require_mount=require_mount)
+        reopened.append(_read_receipt_bytes(target.custody_root, filename))
+        _assert_live_target(target, volume_probe=volume_probe, require_mount=require_mount)
+    first, second = reopened
     if first != second:
         raise PairedCustodyError("paired-receipts-diverged")
-    return changed
+    return changed, _validated_prepared_record(first, record)
 
 
 def _projection(
     registry: TargetRegistry,
     check: dict[str, Any],
     rail_results: dict[str, dict[str, Any]],
-    receipt: dict[str, Any],
+    record: dict[str, Any],
     *,
     changed: bool,
 ) -> dict[str, Any]:
@@ -730,7 +884,8 @@ def _projection(
         "target_refs": list(TARGET_REFS),
         "target_identity_sha256": {target.ref: target.identity_sha256 for target in registry.targets},
         "single_rail_content_sha256": {ref: rail_results[ref]["content_sha256"] for ref in TARGET_REFS},
-        "paired_receipt_sha256": receipt["receipt_sha256"],
+        "working_payload_manifest_sha256": record["working_payload_manifest_sha256"],
+        "paired_receipt_sha256": record["record_sha256"],
         "copy_count": 2,
         "independent_physical_devices": True,
         "restoration_passed": True,
@@ -756,6 +911,7 @@ def run_paired_custody(
     plan_discoverer: PlanDiscoverer = _default_discoverer,
     lease_factory: LeaseFactory = hold_lease,
     require_mount: bool = True,
+    prepared_write_hook: PreparedWriteHook | None = None,
 ) -> dict[str, Any]:
     """Run one admission-guarded, two-rail custody proof."""
 
@@ -809,6 +965,11 @@ def run_paired_custody(
             rail_results: dict[str, dict[str, Any]] = {}
             apply_changed = False
             for target in registry.targets:
+                _assert_live_target(
+                    target,
+                    volume_probe=volume_probe,
+                    require_mount=require_mount,
+                )
                 applied = _validated_public(
                     invoke(
                         RailRequest(
@@ -818,33 +979,24 @@ def run_paired_custody(
                             max_seconds=max_seconds,
                             expected_plan_sha256=check["plan_sha256"],
                             custody_root=target.custody_root,
+                            expected_volume_uuid=target.identity.volume_uuid,
+                            expected_physical_identity=target.identity.physical_identity,
                         )
                     ),
                     expected_plan_sha256=check["plan_sha256"],
                     require_changed=True,
+                )
+                _assert_live_target(
+                    target,
+                    volume_probe=volume_probe,
+                    require_mount=require_mount,
                 )
                 _assert_same_logical_inventory(check, applied)
                 apply_changed = bool(applied["changed"]) or apply_changed
-                verified = _validated_public(
-                    invoke(
-                        RailRequest(
-                            mode="verify-receipt",
-                            limen_root=limen_root,
-                            max_roots=max_roots,
-                            max_seconds=max_seconds,
-                            expected_plan_sha256=check["plan_sha256"],
-                            custody_root=target.custody_root,
-                        )
-                    ),
-                    expected_plan_sha256=check["plan_sha256"],
-                    require_changed=True,
-                )
-                _assert_same_logical_inventory(check, verified)
-                if verified["changed"] is not False:
-                    raise PairedCustodyError("single-rail-verify-mutated")
-                if applied["content_sha256"] != verified["content_sha256"]:
-                    raise PairedCustodyError("single-rail-receipt-mismatch")
-                rail_results[target.ref] = verified
+                rail_results[target.ref] = applied
+
+            if len({rail_results[ref]["working_payload_manifest_sha256"] for ref in TARGET_REFS}) != 1:
+                raise PairedCustodyError("rail-working-payload-mismatch")
 
             # Revalidate both exact devices and path topology immediately before
             # the only paired-layer writes.
@@ -863,13 +1015,19 @@ def run_paired_custody(
             _assert_targets_outside_sources(registry, plan)
             for target in registry.targets:
                 _assert_pair_receipt_path_safe(target, check["plan_sha256"])
-            receipt = _private_receipt(registry, check, rail_results)
-            receipt_changed = _write_receipt_pair(registry, receipt)
+            record = _prepared_record(registry, check, rail_results)
+            receipt_changed, reopened_record = _write_prepared_pair(
+                registry,
+                record,
+                volume_probe=volume_probe,
+                require_mount=require_mount,
+                write_hook=prepared_write_hook,
+            )
             return _projection(
                 registry,
                 check,
                 rail_results,
-                receipt,
+                reopened_record,
                 changed=apply_changed or receipt_changed,
             )
     except AdmissionDenied as exc:
