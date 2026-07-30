@@ -4,11 +4,19 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
-from limen.conduct.campaign_wake import CampaignWakeError, discover_active_capsule, wake_campaign
+from limen.bounded_subprocess import BoundedSubprocessError
+from limen.conduct.campaign_wake import (
+    CampaignWakeError,
+    NoActiveCampaign,
+    discover_active_capsule,
+    wake_campaign,
+)
 from limen.conduct.supervisor import CampaignSupervisorError
 from limen.workstream_contract import RECEIPT_MODULES, new_contract, new_contract_v2
 
@@ -178,8 +186,94 @@ def test_wake_invokes_only_the_canonical_supervisor(wake_repo) -> None:
     command = observed["command"]
     assert command[1:6] == ["-m", "limen", "conduct", "campaign", "run"]
     assert "dispatch" not in command
-    assert command[-4:] == ["--session-id", "heartbeat-session", "--evaluation-timeout", "17"]
-    assert observed["kwargs"]["timeout"] == 17
+    assert command[command.index("--session-id") + 1] == "heartbeat-session"
+    assert command[command.index("--evaluation-timeout") + 1] == "17"
+    deadline = int(command[command.index("--wake-deadline-monotonic-ns") + 1])
+    assert deadline > time.monotonic_ns()
+    assert 0 < observed["kwargs"]["timeout"] <= 17
+
+
+def test_ready_successor_routes_its_exact_publication_base_to_supervisor(
+    wake_repo,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, now = wake_repo
+    observed: dict[str, object] = {}
+    commit = "b" * 40
+    base = "a" * 40
+
+    def no_local(*_args, **_kwargs):
+        raise NoActiveCampaign("fixture has no local active capsule")
+
+    def run(command, **_kwargs):
+        observed["command"] = command
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            json.dumps(
+                {
+                    "schema": "limen.campaign_supervisor_result.v1",
+                    "boundary": "continue",
+                    "exact_head": "c" * 40,
+                }
+            ),
+            "",
+        )
+
+    monkeypatch.setattr("limen.conduct.campaign_wake.discover_active_capsule", no_local)
+    monkeypatch.setattr(
+        "limen.conduct.campaign_wake.discover_ready_relay",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            capsule_path="docs/continuations/ready-fixture/workstream.json",
+            remaining_seconds=3600,
+            receipt=SimpleNamespace(
+                publication_commit=commit,
+                publication_parent=base,
+                successor_branch="work/ready-fixture",
+            ),
+        ),
+    )
+    wake_campaign(
+        root,
+        now_epoch=now,
+        environ={"LIMEN_AGENT": "codex", "LIMEN_SESSION_ID": "heartbeat-session"},
+        preflight=lambda _root: {"head": "c" * 40},
+        runner=run,
+    )
+
+    command = observed["command"]
+    assert isinstance(command, list)
+    assert command[command.index("--capsule-commit") + 1] == commit
+    assert command[command.index("--capsule-base") + 1] == base
+    assert int(command[command.index("--wake-deadline-monotonic-ns") + 1]) > 0
+
+
+def test_default_runner_closes_oversized_output_during_execution(
+    wake_repo,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, now = wake_repo
+    selected = root / "docs" / "continuations" / "epoch-new" / "workstream.json"
+
+    monkeypatch.setattr(
+        "limen.conduct.campaign_wake.discover_active_capsule",
+        lambda *_args, **_kwargs: (selected, 7200),
+    )
+
+    def overflow(*_args, **_kwargs):
+        raise BoundedSubprocessError("output")
+
+    monkeypatch.setattr(
+        "limen.conduct.campaign_wake.run_bounded_subprocess",
+        overflow,
+    )
+    with pytest.raises(CampaignWakeError, match="supervisor output exceeded"):
+        wake_campaign(
+            root,
+            now_epoch=now,
+            environ={"LIMEN_AGENT": "codex", "LIMEN_SESSION_ID": "heartbeat-session"},
+            preflight=lambda _root: {"head": "a" * 40},
+        )
 
 
 def test_missing_conductor_identity_never_invokes_a_runner(wake_repo) -> None:

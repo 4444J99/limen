@@ -186,6 +186,7 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
     assert observed["identity"].session_id == "campaign-session"
     assert observed["terminal_predicate"] == "omega"
     assert observed["evaluation_timeout_seconds"] == 17
+    assert observed["wake_deadline_monotonic_ns"] is None
 
 
 @pytest.mark.parametrize(

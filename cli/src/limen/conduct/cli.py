@@ -80,17 +80,27 @@ def campaign_group() -> None:
 
 
 @campaign_group.command("run")
-@click.option("--capsule", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--capsule", type=click.Path(path_type=Path, exists=True))
+@click.option("--capsule-commit", default=None)
+@click.option("--capsule-base", default=None)
+@click.option("--capsule-path", default=None)
+@click.option("--capsule-branch", default=None)
 @click.option("--terminal-predicate", type=click.Choice(["omega"]), default="omega", show_default=True)
 @click.option("--session-id", default=None)
 @click.option("--agent", default=lambda: os.environ.get("LIMEN_AGENT"))
 @click.option("--evaluation-timeout", type=click.IntRange(1, 7200), default=1800, show_default=True)
+@click.option("--wake-deadline-monotonic-ns", type=click.IntRange(min=1), default=None, hidden=True)
 def campaign_run(
-    capsule: Path,
+    capsule: Path | None,
+    capsule_commit: str | None,
+    capsule_base: str | None,
+    capsule_path: str | None,
+    capsule_branch: str | None,
     terminal_predicate: str,
     session_id: str | None,
     agent: str | None,
     evaluation_timeout: int,
+    wake_deadline_monotonic_ns: int | None,
 ) -> None:
     if not agent:
         raise click.ClickException("agent identity is required via --agent or LIMEN_AGENT")
@@ -106,9 +116,14 @@ def campaign_run(
             client=client_from_env(),
             root=Path.cwd(),
             capsule=capsule,
+            capsule_commit=capsule_commit,
+            capsule_base=capsule_base,
+            capsule_path=capsule_path,
+            capsule_branch=capsule_branch,
             identity=identity,
             terminal_predicate=terminal_predicate,
             evaluation_timeout_seconds=evaluation_timeout,
+            wake_deadline_monotonic_ns=wake_deadline_monotonic_ns,
         )
     except CampaignRelayError as exc:
         _emit(
