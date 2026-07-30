@@ -633,6 +633,76 @@ def test_harness_session_writes_are_admitted_everywhere(tmp_path: Path, monkeypa
     assert output["hookSpecificOutput"]["permissionDecisionReason"] == "plan-only-mutation"
 
 
+def test_repo_local_harness_root_is_admitted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # The harness moved its session tree from ~/.claude to a repo-local .agent-runtime/claude.
+    # The original carve-out was pinned to ~/.claude, so it silently stopped matching and every
+    # plan-file write fell through to plan-only-mutation denial — the same "plan mode is broken"
+    # report, six days after it was fixed. Recognition must follow the harness, not a literal.
+    hook = load_hook(CLAUDE_HOOK_PATH)
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    main, first, _second = linked_worktrees(tmp_path)
+
+    # 1. Repo-local plan file, written from a linked worktree in plan mode → admitted.
+    plans = first / ".agent-runtime" / "claude" / "plans"
+    plans.mkdir(parents=True)
+    service = controller(tmp_path / "admission-repo-local-plan")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(plans / "twinkly-wobbling-church.md")},
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+    assert service.status(probe=False)["leases"] == []  # harness metadata takes no writer lease
+
+    # 2. Same layout in the shared checkout, addressed from the shared checkout → admitted.
+    shared_plans = main / ".agent-runtime" / "claude" / "plans"
+    shared_plans.mkdir(parents=True)
+    service = controller(tmp_path / "admission-shared-plan")
+    request = payload(
+        "PreToolUse",
+        cwd=str(main),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(shared_plans / "twinkly-wobbling-church.md")},
+    )
+    assert hook.handle(request, controller=service, owner_pid=101) is None
+
+    # 3. The carve-out is the harness tree, not the repo: an ordinary workspace file named like a
+    #    session dir is still a workspace mutation.
+    decoy = first / "plans"
+    decoy.mkdir()
+    service = controller(tmp_path / "admission-decoy")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(decoy / "not-a-harness-plan.md")},
+    )
+    output = hook.handle(request, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "plan-only-mutation"
+
+    # 4. Symlink laundering through the repo-local tree is still refused: targets arrive
+    #    canonicalized, so the resolved path lands outside the harness tree and is denied.
+    outside = tmp_path / "repo-local-escape.txt"
+    outside.write_text("x")
+    (plans / "sneaky.md").symlink_to(outside)
+    service = controller(tmp_path / "admission-repo-local-symlink")
+    request = payload(
+        "PreToolUse",
+        cwd=str(first),
+        permission_mode="plan",
+        tool_name="Write",
+        tool_input={"file_path": str(plans / "sneaky.md")},
+    )
+    output = hook.handle(request, controller=service, owner_pid=101)
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "plan-only-mutation"
+
+
 def test_codex_and_claude_adapters_share_action_policy(tmp_path: Path) -> None:
     codex = load_hook()
     claude = load_hook(CLAUDE_HOOK_PATH)
