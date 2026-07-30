@@ -146,7 +146,10 @@ def _reconcile_consumed_attempt(
             ):
                 env.pop(key, None)
             try:
-                with _activation_registration_lock(worktree):
+                with _activation_registration_lock(
+                    worktree,
+                    deadline_monotonic=deadline_monotonic,
+                ):
                     _clear_activation_marker(worktree, receipt.relay_id)
                     registration(
                         root=root,

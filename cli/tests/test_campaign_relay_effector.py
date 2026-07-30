@@ -1378,9 +1378,12 @@ def test_capacity_census_consumes_the_entry_time_startup_deadline(
     assert current.attempts == 0
 
 
+@pytest.mark.parametrize("expire_before_lock", [False, True])
 def test_linked_worktree_reconciliation_rolls_back_the_primary_successor_session(
     effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    expire_before_lock: bool,
 ) -> None:
     root, predecessor, _provider, _deadline = effector_repo
     reservation = reserve_relay(
@@ -1418,28 +1421,76 @@ def test_linked_worktree_reconciliation_rolls_back_the_primary_successor_session
             "terminal_code": "relay_ready_publication_uncertain",
         },
     )
-    registrations: list[tuple[Path, bool]] = []
+    registrations: list[tuple[Path, bool, float | None]] = []
+    lock_deadlines: list[float | None] = []
+    original_lock = relay_protocol._activation_registration_lock
+    real_monotonic = time.monotonic
+
+    class ExpiringClock:
+        expired_value: float | None = None
+
+        def monotonic(self) -> float:
+            return real_monotonic() if self.expired_value is None else self.expired_value
+
+    clock = ExpiringClock()
 
     def register(**kwargs):
-        registrations.append((kwargs["worktree"], kwargs["accepting_work"]))
+        registrations.append(
+            (
+                kwargs["worktree"],
+                kwargs["accepting_work"],
+                kwargs["deadline_monotonic"],
+            )
+        )
         return "e" * 64, 1
 
-    reconciled = launch_reserved_relay(
-        observer,
-        uncertain.relay_id,
-        process_identity=lambda _pid: (_ for _ in ()).throw(
-            CampaignRelayError("fixture_absent", "fixture provider is absent")
-        ),
-        lane_selector=lambda _root: pytest.fail("a consumed relay must not reselect capacity"),
-        registration=register,
-    )
+    @contextmanager
+    def observe_lock(worktree, *, deadline_monotonic=None):
+        lock_deadlines.append(deadline_monotonic)
+        if expire_before_lock:
+            assert deadline_monotonic is not None
+            clock.expired_value = deadline_monotonic + 1
+        with original_lock(
+            worktree,
+            deadline_monotonic=deadline_monotonic,
+        ):
+            yield
 
-    assert reconciled.launched is False
-    assert reconciled.receipt.state == "indeterminate"
-    assert reconciled.receipt.terminal_code == "relay_ready_provider_absent"
-    assert reconciled.receipt.activation_response_sha256 is None
-    assert registrations == [(successor.resolve(), False)]
-    assert not marker.exists()
+    monkeypatch.setattr(relay_core, "time", clock)
+    monkeypatch.setattr(relay_protocol, "_activation_registration_lock", observe_lock)
+
+    def launch():
+        return launch_reserved_relay(
+            observer,
+            uncertain.relay_id,
+            process_identity=lambda _pid: (_ for _ in ()).throw(
+                CampaignRelayError("fixture_absent", "fixture provider is absent")
+            ),
+            lane_selector=lambda _root: pytest.fail("a consumed relay must not reselect capacity"),
+            registration=register,
+        )
+
+    if expire_before_lock:
+        with pytest.raises(CampaignRelayError) as raised:
+            launch()
+        assert raised.value.code == "relay_startup_timeout"
+        clock.expired_value = None
+        current = _read_relay(root, uncertain.relay_id)
+        assert current.state == "indeterminate"
+        assert current.activation_response_sha256 == uncertain.activation_response_sha256
+        assert registrations == []
+        assert marker.is_file()
+    else:
+        reconciled = launch()
+        assert reconciled.launched is False
+        assert reconciled.receipt.state == "indeterminate"
+        assert reconciled.receipt.terminal_code == "relay_ready_provider_absent"
+        assert reconciled.receipt.activation_response_sha256 is None
+        assert registrations == [(successor.resolve(), False, lock_deadlines[0])]
+        assert not marker.exists()
+
+    assert len(lock_deadlines) == 1
+    assert lock_deadlines[0] is not None
 
 
 def test_relay_git_probe_closes_oversized_output_during_execution(
