@@ -563,6 +563,143 @@ test("principal-bound executor claims are recoverable and secret from conductors
   assert.equal(first.capability_token, second.capability_token);
 });
 
+test("full-mesh canary read edge preserves Worker protocol parity", async () => {
+  const runtimeHead = "a".repeat(40);
+  const service = new SerializedConductService(new MemoryConductStore(), {
+    clock: () => NOW,
+    capabilitySecret: "worker-full-mesh-canary-secret",
+  });
+  const conductorPrincipal = principalMeta(
+    "canary-alpha-conductor",
+    "alpha",
+    ["observer", "conductor"],
+  );
+  const executorPrincipal = principalMeta(
+    "canary-zeta-executor",
+    "zeta",
+    ["observer", "executor"],
+  );
+  const conductor = await service.call("register", {
+    session: session("alpha", {
+      sessionId: "canary-alpha-conductor-session",
+      capabilities: ["conduct"],
+    }),
+    principal: conductorPrincipal,
+  });
+  const executor = await service.call("register", {
+    session: session("zeta", {
+      sessionId: "canary-zeta-executor-session",
+      capabilities: ["execute"],
+    }),
+    principal: executorPrincipal,
+  });
+  const template = await packet({
+    workId: "full-mesh-canary-alpha-zeta",
+    conductor: conductor.identity,
+    effect: "read",
+  });
+  const work = await validateWorkPacket({
+    ...template,
+    intent: {
+      kind: "conduct-full-mesh-canary",
+      edge: "alpha->zeta",
+    },
+    execution: {
+      executor_session_id: executor.session_id,
+      observed_heads: { runtime: runtimeHead },
+    },
+    intent_hash: "",
+    execution_hash: "",
+    preferred_agent: "zeta",
+    required_capabilities: ["execute"],
+    resource_claims: [],
+    predicate: "limen conduct canary full-mesh --receipt canary.json",
+    receipt_target: "git:organvm/limen:conduct-full-mesh-canary#worker-parity",
+    work_loan: {
+      schema_version: "limen.work_loan.v1",
+      source_origin: "human_prompt",
+      horizon: "present",
+      value_case: "Prove the authenticated conductor/executor protocol edge",
+      budget_cost: 1,
+      owner_surface: "organvm/limen",
+      external_deadline: false,
+      due_at: null,
+    },
+    authority: {
+      actions: ["read"],
+      repositories: [],
+      path_prefixes: [],
+      external_effects: [],
+      may_delegate: false,
+    },
+    spend: { unit: "runs", limit: 1, reserve: 0 },
+    retry: { max_attempts: 1, transient_only: true },
+    fanout: { max_children: 0, max_depth: 0 },
+    effect: "read",
+  });
+  const reserved = await service.call("submit", {
+    packet: work,
+    principal: conductorPrincipal,
+  });
+  assert.equal(reserved.status, "reserved");
+  assert.equal(reserved.lease.executor.session_id, executor.session_id);
+  assert.equal("capability_token" in reserved, false);
+  assert.equal("capability_token_hash" in reserved.lease, false);
+  await assert.rejects(service.call("claim", {
+    lease_id: reserved.lease.lease_id,
+    generation: reserved.lease.generation,
+    principal: conductorPrincipal,
+  }), /executor\/compatibility role/);
+  const claim = await service.call("claim", {
+    lease_id: reserved.lease.lease_id,
+    generation: reserved.lease.generation,
+    principal: executorPrincipal,
+  });
+  const heartbeat = await service.call("heartbeat", {
+    lease_id: reserved.lease.lease_id,
+    capability_token: claim.capability_token,
+    generation: reserved.lease.generation,
+    principal: executorPrincipal,
+    observed_heads: { runtime: runtimeHead },
+  });
+  assert.equal(heartbeat.status, "active");
+  const report = await service.call("report", {
+    lease_id: reserved.lease.lease_id,
+    capability_token: claim.capability_token,
+    generation: reserved.lease.generation,
+    principal: executorPrincipal,
+    receipt: validateReceipt({
+      receipt_id: "receipt-full-mesh-canary-alpha-zeta",
+      run_id: reserved.run_id,
+      lease_id: reserved.lease.lease_id,
+      lease_generation: reserved.lease.generation,
+      executor: executor.identity,
+      observed_heads_before: { runtime: runtimeHead },
+      observed_heads_after: { runtime: runtimeHead },
+      changed_paths: [],
+      predicate: { command: work.predicate, exit_code: 0 },
+      spend: { runs: 0 },
+      child_runs: [],
+      outcome: "succeeded",
+    }, NOW),
+  });
+  assert.equal(report.mutation_authorized, true);
+  assert.equal(report.run_status, "succeeded");
+  const harvested = await service.call("harvest", {
+    run_id: reserved.run_id,
+    principal: conductorPrincipal,
+  });
+  assert.deepEqual(harvested.by_status, { succeeded: 1 });
+  assert.deepEqual(harvested.unharvested, []);
+  assert.equal(harvested.receipt_count, 1);
+  const duplicate = await service.call("submit", {
+    packet: work,
+    principal: conductorPrincipal,
+  });
+  assert.equal(duplicate.status, "duplicate");
+  assert.equal(duplicate.run_id, reserved.run_id);
+});
+
 test("declared conductor identity matches its principal-bound session (#1408)", async () => {
   const store = new MemoryConductStore();
   const service = new SerializedConductService(store, {

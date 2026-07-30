@@ -12,6 +12,7 @@ The CLI and MCP expose the same operations:
 | CLI | MCP |
 | --- | --- |
 | `limen conduct capabilities` | `conduct_capabilities` |
+| `limen conduct canary full-mesh --receipt FILE` | authenticated protocol routes |
 | `limen conduct campaign run --capsule FILE --terminal-predicate omega` | keeper graph registration and harvest |
 | `limen conduct register` | `conduct_register` |
 | `limen conduct submit --packet FILE` | `conduct_submit` |
@@ -165,6 +166,63 @@ Do not put token values in commands, capsules, receipts, commits, or PR text. De
 installation are external effects and require their own authority/lease. Until the authenticated
 remote endpoint is deployed, existing leased work and read-only inspection may continue, but new
 canonical claims and transitions remain unavailable.
+
+### Authenticated full-mesh canary
+
+`limen conduct canary full-mesh --receipt FILE` is the fail-closed production protocol proof. It
+accepts only the authenticated HTTPS client selected by `LIMEN_CONDUCT_URL` and
+`LIMEN_CONDUCT_TOKEN`; the local SQLite adapter is rejected. The command does not launch providers,
+install credentials, or deploy the Worker.
+
+The caller supplies the exact runtime identity and credential reference names as JSON environment
+contracts. Token values are hydrated separately through the named environment variables and must
+never appear in either JSON contract:
+
+```json
+{
+  "schema_version": "limen.conduct_runtime_identity.v1",
+  "git_sha": "0123456789abcdef0123456789abcdef01234567",
+  "deployment_id": "production-deployment-reference"
+}
+```
+
+```json
+{
+  "schema_version": "limen.conduct_canary_credential_refs.v1",
+  "credentials": [
+    {
+      "session_id": "alpha-conductor-session",
+      "role": "conductor",
+      "token_env": "LIMEN_CANARY_ALPHA_CONDUCTOR_TOKEN"
+    },
+    {
+      "session_id": "alpha-executor-session",
+      "role": "executor",
+      "token_env": "LIMEN_CANARY_ALPHA_EXECUTOR_TOKEN"
+    }
+  ]
+}
+```
+
+Set those objects in `LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY` and
+`LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS`. The live capability response defines the denominator:
+every native agent with a healthy, accepting, non-protected conductor session and a healthy,
+accepting, non-protected executor session. The credential references must cover that denominator
+exactly, with distinct conductor and executor sessions and distinct authenticated credentials for
+each lane. No provider or model table participates in discovery.
+
+For `N` eligible lanes the canary requires all `N × N` ordered edges, including every self edge.
+Each edge submits one bounded read-effect packet targeted at the exact executor session, proves that
+the conductor receives a reservation without capability material, proves that the conductor
+principal cannot claim the executor-only lease, claims through the executor principal, heartbeats
+the unchanged runtime head, reports an empty-path unchanged-head receipt, and harvests that accepted
+receipt through the conductor route. One failed or missing edge fails the command.
+
+The `limen.conduct_full_mesh_canary.v1` receipt binds the exact Git object, hashed deployment and
+endpoint identities, CLI implementation digest, capability evidence, live lane denominator, and
+every ordered edge. It exposes credential reference names and SHA-256 evidence only. Repeating the
+same identity against the same receipt path performs read-only harvest verification and returns the
+byte-identical receipt; a different identity cannot overwrite it.
 
 `tasks.yaml` and former cell boards are projections, never independent writers. Legacy task
 add/status/claim tools submit compatibility packets through the same keeper. The direct-writer

@@ -11,6 +11,7 @@ from typing import Any, Literal
 import click
 
 from limen.conduct.broker import ConductError
+from limen.conduct.canary import ConductCanaryError, run_full_mesh_canary
 from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.client import client_from_env
 from limen.conduct.liveness import foreign_worktree_occupant
@@ -72,6 +73,26 @@ def conduct_group() -> None:
 @conduct_group.command("capabilities")
 def capabilities() -> None:
     _emit(client_from_env().capabilities())
+
+
+@conduct_group.group("canary")
+def canary_group() -> None:
+    """Run bounded authenticated conduct canaries."""
+
+
+@canary_group.command("full-mesh")
+@click.option("--receipt", "receipt_path", required=True, type=click.Path(path_type=Path))
+def canary_full_mesh(receipt_path: Path) -> None:
+    """Exercise every ordered edge in the live native conduct mesh."""
+
+    try:
+        result = run_full_mesh_canary(
+            client=client_from_env(),
+            receipt_path=receipt_path,
+        )
+    except ConductCanaryError as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit(result)
 
 
 @conduct_group.group("campaign")

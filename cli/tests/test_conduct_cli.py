@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 from limen.conduct.broker import ConductError
+from limen.conduct.client import HttpConductClient
 from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.cli import conduct_group
 from limen.conduct.supervisor import CampaignSupervisorError
@@ -187,6 +188,30 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
     assert observed["terminal_predicate"] == "omega"
     assert observed["evaluation_timeout_seconds"] == 300
     assert observed["wake_deadline_monotonic_ns"] is None
+
+
+def test_canary_full_mesh_uses_public_receipt_path(monkeypatch, tmp_path) -> None:
+    client = HttpConductClient("https://limen-runtime.example", "fixture-token")
+    observed = {}
+
+    def run(**kwargs):
+        observed.update(kwargs)
+        return {
+            "schema_version": "limen.conduct_full_mesh_canary.v1",
+            "status": "passed",
+        }
+
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    monkeypatch.setattr("limen.conduct.cli.run_full_mesh_canary", run)
+    receipt = tmp_path / "receipt.json"
+    result = CliRunner().invoke(
+        conduct_group,
+        ["canary", "full-mesh", "--receipt", str(receipt)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["status"] == "passed"
+    assert observed == {"client": client, "receipt_path": receipt}
 
 
 @pytest.mark.parametrize(
