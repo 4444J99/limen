@@ -3,7 +3,7 @@
 Each subdirectory is one **organ**: a civilizational pillar (legal, financial, education, …) rebuilt as
 an AI-run institution, so one person carries the institutional weight the ultra-rich take for granted —
 "the prosthesis for human weakness." The conductor drives them from [`../organ-ladder.json`](../organ-ladder.json)
-via `scripts/generate-organ-backlog.py`; see [`../docs/MONSTER-MAP.md`](../docs/MONSTER-MAP.md) for the
+via `scripts/generate-organ-backlog.py`; see [`organvm/portvs governance/records/MONSTER-MAP.md`](https://github.com/organvm/portvs/blob/main/governance/records/MONSTER-MAP.md) for the
 whole body at a glance.
 
 Every organ shares the domain-neutral **5-primitive kernel** — `Member · Mandate · Standing · Standard ·
