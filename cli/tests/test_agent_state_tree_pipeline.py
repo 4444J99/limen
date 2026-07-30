@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import time
 from contextlib import nullcontext
-from dataclasses import asdict
+from dataclasses import asdict, replace
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -141,6 +142,37 @@ def _resume(
         run_id="run",
         require_external_mount=False,
     )
+
+
+def _enriched_custody_receipt(receipt: MetabolismReceipt) -> MetabolismReceipt:
+    enriched = MetabolismReceipt.from_dict(receipt.as_dict())
+    restored_at = datetime(2026, 7, 30, 12, tzinfo=UTC).isoformat()
+    remote_refs = (
+        f"github:{receipt.git_remote}@{receipt.git_commit}",
+        f"github:{receipt.git_remote}@{receipt.git_receipt_commit}",
+    )
+    enriched.restorations = [
+        (
+            replace(
+                proof,
+                device_id="gitRestoreDevice0001",
+                restored_at=restored_at,
+                encryption_profile_digest=receipt.encryption_profile_digest,
+                remote_refs=remote_refs,
+            )
+            if proof.scope == "git-full-manifest"
+            else replace(
+                proof,
+                device_id="externalRestoreDevice0001",
+                restored_at=restored_at,
+                encryption_profile_digest=receipt.encryption_profile_digest,
+            )
+            if proof.scope == "external-full"
+            else proof
+        )
+        for proof in enriched.restorations
+    ]
+    return enriched
 
 
 @pytest.mark.parametrize(
@@ -339,6 +371,52 @@ def test_resume_accepts_completed_exact_receipt_without_another_push(
     )
 
     assert resumed.as_dict() == first.as_dict()
+
+
+def test_resume_accepts_completed_receipt_with_valid_custody_enrichment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    private_receipt = tmp_path / "private-receipt.json"
+    enriched = _enriched_custody_receipt(first)
+    enriched.write(private_receipt)
+    original = private_receipt.read_bytes()
+    monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+
+    resumed = tree_pipeline.resume_cold_tree_capture(
+        "icloud-drive",
+        plan,
+        vault,
+        tmp_path / "external",
+        private_receipt,
+        run_id="run",
+        require_external_mount=False,
+    )
+
+    assert resumed.as_dict() == first.as_dict()
+    assert private_receipt.read_bytes() == original
+
+
+def test_resume_rejects_invalid_custody_enrichment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    private_receipt = tmp_path / "private-receipt.json"
+    enriched = _enriched_custody_receipt(first)
+    git_device = next(proof.device_id for proof in enriched.restorations if proof.scope == "git-full-manifest")
+    enriched.restorations = [
+        (replace(proof, device_id=git_device) if proof.scope == "external-full" else proof)
+        for proof in enriched.restorations
+    ]
+    enriched.write(private_receipt)
+
+    with pytest.raises(PipelineError, match="does not match verified custody"):
+        tree_pipeline._require_private_retirement_receipt(first, private_receipt)
 
 
 def test_resume_rematerializes_missing_private_receipt_from_exact_custody(
