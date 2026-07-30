@@ -584,3 +584,84 @@ def test_custody_drift_ignores_personal_estate_undeclared_and_unreadable() -> No
     }
 
     assert module.custody_drift(ledger, grants, by_repo, {"organvm"}) == []
+
+
+def test_permission_over_grant_flags_unlisted_repo_and_over_rank_only() -> None:
+    module = _load()
+    personal_full = {
+        "4444J99/victoroff-os": [{"login": "dv", "role": "admin"}],  # probed — class N's finding
+        "4444J99/mystery-repo": [{"login": "stranger", "role": "read"}],  # unlisted in ACCESS
+        "4444J99/hokage-chess": [{"login": "jt", "role": "admin"}],  # over declared push
+        "4444J99/micro-tato-play": [{"login": "rb", "role": "write"}],  # equal to declared push
+        "4444J99/unreadable": None,  # caller's SKIP, never a guess
+    }
+    grants = {
+        "4444J99/hokage-chess": [{"login": "jt", "role": "push"}],
+        "4444J99/micro-tato-play": [{"login": "rb", "role": "push"}],
+    }
+
+    drifts = module.permission_over_grant(personal_full, grants, probed={"4444J99/victoroff-os"})
+
+    assert any("mystery-repo" in d and "NO grant row" in d for d in drifts)
+    assert any("hokage-chess" in d and "exceeds declared" in d for d in drifts)
+    assert not any("victoroff-os" in d for d in drifts)
+    assert not any("micro-tato-play" in d for d in drifts)
+    assert len(drifts) == 2
+
+
+def test_posture_window_is_deterministic_and_cycles_full_coverage() -> None:
+    module = _load()
+    eligible = [f"o/r{i}" for i in range(7)]
+
+    assert module.posture_window(eligible, 3, 100) == module.posture_window(eligible, 3, 100)
+    assert module.posture_window(eligible, 10, 5) == sorted(eligible)  # window ≥ n probes all
+    assert module.posture_window([], 3, 1) == []
+    covered: set[str] = set()
+    for ordinal in range(4):  # ceil(7/3) = 3 rotations cover everything; 4 is safety margin
+        covered |= set(module.posture_window(eligible, 3, ordinal))
+    assert covered == set(eligible)
+
+
+def test_visibility_drift_cites_ungated_public_candidate_instead_of_silence() -> None:
+    module = _load()
+    estate = {
+        "classes": {"operation_private": {"match": [], "visibility": "private"}},
+        "repo_overrides": {
+            "4444J99/micro-tato": {"class": "operation_private", "publish_candidate": True},
+            "4444J99/mirror-mirror": {"class": "operation_private", "publish_candidate": True},
+        },
+    }
+    rows = [
+        {"full_name": "4444J99/micro-tato", "private": False},  # candidate riding public un-gated
+        {"full_name": "4444J99/mirror-mirror", "private": True},  # candidate at resting posture
+    ]
+
+    fails, cites = module.visibility_drift(rows, estate)
+
+    assert fails == []
+    assert any("micro-tato" in c and "observed public" in c for c in cites)
+    assert not any("mirror-mirror" in c and "observed public" in c for c in cites)
+
+
+def test_owner_repos_user_scoped_authenticated_owner_sees_private_estate(monkeypatch) -> None:
+    module = _load()
+    routes: list[str] = []
+    lines = "\n".join(
+        json.dumps(r)
+        for r in [
+            {"full_name": "4444J99/mirror-mirror", "private": True},
+            {"full_name": "someorg/not-mine", "private": False},  # affiliation row outside the namespace
+        ]
+    )
+
+    def fake_gh_user(args, timeout=30):
+        routes.append(args[1])
+        return subprocess.CompletedProcess(args, 0, lines, "")
+
+    monkeypatch.setattr(module, "_gh_user", fake_gh_user)
+    monkeypatch.setattr(module, "_gh_login", lambda: "4444J99")
+
+    rows = module._owner_repos("4444J99", None, user_scoped=True)
+
+    assert routes[0] == "/user/repos?affiliation=owner"
+    assert [r["full_name"] for r in rows] == ["4444J99/mirror-mirror"]
