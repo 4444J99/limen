@@ -537,6 +537,42 @@ def test_custody_drift_flags_live_partnered_product_org_side() -> None:
     assert "jt" in drifts[0]
 
 
+def test_owners_enumerates_declared_shelf_orgs() -> None:
+    module = _load()
+    estate = {
+        "classes": {"g": {"match": ["organvm/**"]}},
+        "shelf_assignments": {"shelves": {"organvm-iii-ergon": ["mesh"]}},
+    }
+
+    assert module.owners(estate) == ["organvm", "organvm-iii-ergon"]
+
+
+def test_shelf_drift_reports_both_directions_and_absences() -> None:
+    module = _load()
+    shelves = {"organvm-iii-ergon": ["mesh", "prima", "ghost-repo"]}
+    rows = [
+        {"full_name": "organvm-iii-ergon/mesh"},  # declared + placed — clean
+        {"full_name": "organvm/prima"},  # declared but still org-side — transfer owed
+        {"full_name": "organvm-iii-ergon/squatter"},  # undeclared in the shelf org
+        {"full_name": "organvm/limen"},  # unrelated engine-room repo — silent
+    ]
+
+    drifts = module.shelf_drift(shelves, rows)
+
+    assert any("ghost-repo" in d and "absent" in d for d in drifts)
+    assert any(d.startswith("prima: declared shelf organvm-iii-ergon") for d in drifts)
+    assert any("squatter" in d and "undeclared" in d for d in drifts)
+    assert len(drifts) == 3
+
+
+def test_shelf_drift_clean_when_declared_matches_census() -> None:
+    module = _load()
+    shelves = {"organvm-iii-ergon": ["mesh"]}
+    rows = [{"full_name": "organvm-iii-ergon/mesh"}, {"full_name": "organvm/limen"}]
+
+    assert module.shelf_drift(shelves, rows) == []
+
+
 def test_custody_drift_ignores_personal_estate_undeclared_and_unreadable() -> None:
     module = _load()
     ledger = ["victoroff-os", "mesh", "prima"]
