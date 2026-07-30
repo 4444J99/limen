@@ -192,6 +192,30 @@ sensors:
           - {path: scripts/gitvs.py, normalization: raw}
           - {path: logs/omega-owner-receipts/sensor.github.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
+  github-publish-sweep:
+    section: "heartbeat"
+    title: "keep every publish candidate's pre-publication sweep receipt green and fresh"
+    gate: LIMEN_PUBLISH_SWEEP
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    # The receipt is the ONLY thing that authorizes a private→public flip, and it expires
+    # (LIMEN_SWEEP_FRESH_DAYS, default 7). Until 2026-07-30 nothing re-ran the sweep: receipts were
+    # minted by hand, went stale in a week, and apply-visibility then had no verdict for any
+    # candidate — a predicate with no organ behind it, which is a permanently-un-adjudicated rung
+    # rather than a green one. Bounded per run (LIMEN_SWEEP_MAX), so the candidate set rolls
+    # forward across beats instead of cloning the whole estate every cadence.
+    cadence:
+      env: LIMEN_BEAT_PUBLISH_SWEEP
+      default: 24
+    timeout:
+      env: LIMEN_PUBLISH_SWEEP_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/publish-sweep.py --candidates"
+        severity: advisory
+        escalation: "a publish candidate's sweep is RED or un-run — apply-visibility will hold its flip (and demote it if it is already live public)"
+
   github-actions-usage:
     section: "heartbeat"
     title: "Actions spend telemetry — projected monthly net within budget AND the account-billing canary green"
