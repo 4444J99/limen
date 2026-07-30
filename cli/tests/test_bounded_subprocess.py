@@ -13,6 +13,33 @@ from limen import bounded_subprocess
 from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
 
 
+def test_unsupported_platform_fails_closed_before_process_start(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        bounded_subprocess,
+        "_supports_posix_process_groups",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        bounded_subprocess.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: pytest.fail("unsupported platforms must not spawn"),
+    )
+
+    with pytest.raises(BoundedSubprocessError, match="unavailable") as raised:
+        run_bounded_subprocess(
+            [sys.executable, "-c", "pass"],
+            cwd=tmp_path,
+            timeout_seconds=1,
+            stdout_ceiling=1024,
+            stderr_ceiling=1024,
+        )
+
+    assert raised.value.kind == "unavailable"
+
+
 def test_output_ceiling_terminates_during_execution(tmp_path: Path) -> None:
     with pytest.raises(BoundedSubprocessError, match="output") as raised:
         run_bounded_subprocess(

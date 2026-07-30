@@ -555,7 +555,8 @@ def launch_reserved_relay(
                 break
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                terminal_code = "relay_startup_timeout"
+                if terminal_code is None:
+                    terminal_code = "relay_startup_timeout"
                 break
             events = selector.select(min(0.25, remaining))
             if not events:
@@ -582,19 +583,20 @@ def launch_reserved_relay(
                 exec_buffer.extend(chunk)
                 if len(exec_buffer) > _CONTROL_LINE_CEILING:
                     terminal_code = "relay_exec_status_oversized"
-                    continue
+                    break
                 if b"\n" in exec_buffer:
                     terminal_code = "relay_exec_failed"
                     terminal_state = "failed"
+                    break
                 continue
             control_total += len(chunk)
             if control_total > _CONTROL_TOTAL_CEILING:
                 terminal_code = "relay_control_oversized"
-                continue
+                break
             control_buffer.extend(chunk)
             if len(control_buffer) > _CONTROL_LINE_CEILING and b"\n" not in control_buffer:
                 terminal_code = "relay_control_oversized"
-                continue
+                break
             while b"\n" in control_buffer:
                 line, _, remainder = control_buffer.partition(b"\n")
                 control_buffer = bytearray(remainder)
@@ -771,9 +773,13 @@ def launch_reserved_relay(
         if exec_buffer and terminal_code is None:
             terminal_code = "relay_exec_failed"
             terminal_state = "failed"
-        drains_finished = _finish_drains(
-            (stdout_thread, stderr_thread),
-            deadline=deadline,
+        drains_finished = (
+            _finish_drains(
+                (stdout_thread, stderr_thread),
+                deadline=deadline,
+            )
+            if terminal_code is None
+            else False
         )
         evidence = _startup_evidence(stdout_evidence, stderr_evidence)
         output_truncated = bool(evidence["startup_stdout_truncated"] or evidence["startup_stderr_truncated"])
@@ -949,12 +955,19 @@ def discover_ready_relay(
     *,
     workstream: str = "institutional-omega",
     now_epoch: int | None = None,
+    deadline_monotonic: float | None = None,
 ) -> ReadyRelayCapsule:
     """Load the latest active ready successor without checking out its topic branch."""
 
     now = int(time.time()) if now_epoch is None else now_epoch
     latest_ref = _latest_remote_ref(workstream)
-    rows = _git(root, "ls-remote", "origin", latest_ref).splitlines()
+    rows = _git(
+        root,
+        "ls-remote",
+        "origin",
+        latest_ref,
+        deadline_monotonic=deadline_monotonic,
+    ).splitlines()
     if not rows:
         raise CampaignRelayError(
             "relay_successor_unavailable",
@@ -972,9 +985,16 @@ def discover_ready_relay(
         commit=latest_commit,
         relay_id=None,
         validate_publication=False,
+        deadline_monotonic=deadline_monotonic,
     )
     ready_ref = _ready_remote_ref(receipt.relay_id)
-    ready_rows = _git(root, "ls-remote", "origin", ready_ref).splitlines()
+    ready_rows = _git(
+        root,
+        "ls-remote",
+        "origin",
+        ready_ref,
+        deadline_monotonic=deadline_monotonic,
+    ).splitlines()
     ready_fields = ready_rows[0].split("\t") if len(ready_rows) == 1 else []
     if ready_fields != [latest_commit, ready_ref]:
         raise CampaignRelayError(
@@ -1018,6 +1038,7 @@ def discover_ready_relay(
         publication_commit=receipt.publication_commit,
         publication_parent=receipt.publication_parent,
         publication_receipt_blob=receipt.publication_receipt_blob,
+        deadline_monotonic=deadline_monotonic,
     )
     deadline = int(payload["contract"]["runway"]["deadline_epoch"])
     if deadline <= now:

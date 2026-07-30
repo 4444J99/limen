@@ -1,4 +1,8 @@
-"""Subprocess execution with wall-clock and in-flight output ceilings."""
+"""POSIX-only subprocess execution with wall-clock and output ceilings.
+
+Unsupported platforms fail closed before process startup because cleanup relies
+on POSIX sessions, process groups, and signals.
+"""
 
 from __future__ import annotations
 
@@ -31,6 +35,10 @@ class BoundedCompletedProcess:
     returncode: int
     stdout: bytes
     stderr: bytes
+
+
+def _supports_posix_process_groups() -> bool:
+    return os.name == "posix" and hasattr(os, "killpg") and hasattr(signal, "SIGTERM") and hasattr(signal, "SIGKILL")
 
 
 def _terminate_process_group(process: subprocess.Popen[bytes]) -> bool:
@@ -94,6 +102,8 @@ def run_bounded_subprocess(
         or (input_bytes is not None and not isinstance(input_bytes, bytes))
     ):
         raise BoundedSubprocessError("invalid")
+    if not _supports_posix_process_groups():
+        raise BoundedSubprocessError("unavailable")
     try:
         process = subprocess.Popen(
             list(command),

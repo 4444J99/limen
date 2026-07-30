@@ -602,6 +602,70 @@ def test_exec_failure_channel_prevents_false_readiness(
     assert not provider_pid_path.exists()
 
 
+@pytest.mark.parametrize(
+    ("channel", "payload", "expected_code"),
+    [
+        ("exec", b"failed\n", "relay_exec_failed"),
+        (
+            "control",
+            b"x" * (relay_core._CONTROL_LINE_CEILING + 1),
+            "relay_control_oversized",
+        ),
+    ],
+)
+def test_startup_channel_terminal_errors_are_not_replaced_by_timeout(
+    effector_repo,
+    channel: str,
+    payload: bytes,
+    expected_code: str,
+) -> None:
+    root, predecessor, _provider, _predecessor_deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    spawned: list[subprocess.Popen[bytes]] = []
+
+    def spawn(_command, **kwargs):
+        descriptor = kwargs[f"{channel}_descriptor"]
+        child_source = f"""
+import os
+import time
+
+os.write({descriptor}, {payload!r})
+time.sleep(10)
+"""
+        process = subprocess.Popen(
+            [sys.executable, "-c", child_source],
+            cwd=root,
+            env=kwargs["env"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            pass_fds=(
+                kwargs["ack_descriptor"],
+                kwargs["control_descriptor"],
+                kwargs["exec_descriptor"],
+            ),
+        )
+        spawned.append(process)
+        return process
+
+    launch = launch_reserved_relay(
+        root,
+        reservation.receipt.relay_id,
+        timeout_seconds=5,
+        process_factory=spawn,
+        lane_selector=lambda _root: ("codex",),
+    )
+
+    assert launch.receipt.terminal_code == expected_code
+    assert len(spawned) == 1
+    spawned[0].terminate()
+    spawned[0].wait(timeout=2)
+
+
 def test_startup_stream_read_error_after_partial_bytes_fails_closed(
     effector_repo,
     monkeypatch: pytest.MonkeyPatch,
@@ -998,6 +1062,74 @@ def _ready_publication_fixture() -> CampaignRelayReceiptV1:
             "startup_stderr_bytes": 0,
         }
     )
+
+
+def test_ready_discovery_propagates_one_absolute_deadline(
+    effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, _predecessor, _provider, _predecessor_deadline = effector_repo
+    receipt = _ready_publication_fixture()
+    deadline = time.monotonic() + 5
+    observed_git_deadlines: list[float | None] = []
+    observed_load_deadlines: list[float | None] = []
+    observed_payload_deadlines: list[float | None] = []
+
+    def git_result(_root, *args, deadline_monotonic=None):
+        observed_git_deadlines.append(deadline_monotonic)
+        ref = args[-1]
+        return f"{receipt.publication_commit}\t{ref}"
+
+    def load_ready(*_args, deadline_monotonic=None, **_kwargs):
+        observed_load_deadlines.append(deadline_monotonic)
+        return receipt
+
+    def publication_payload(*_args, deadline_monotonic=None, **_kwargs):
+        observed_payload_deadlines.append(deadline_monotonic)
+        return {
+            "contract": {
+                "runway": {
+                    "deadline_epoch": receipt.predecessor_deadline_epoch + 100,
+                }
+            }
+        }
+
+    monkeypatch.setattr(relay_protocol, "_git", git_result)
+    monkeypatch.setattr(relay_protocol, "_load_remote_ready", load_ready)
+    monkeypatch.setattr(relay_protocol, "_publication_payload", publication_payload)
+
+    discovered = discover_ready_relay(
+        root,
+        now_epoch=receipt.predecessor_deadline_epoch + 1,
+        deadline_monotonic=deadline,
+    )
+
+    assert discovered.receipt == receipt
+    assert observed_git_deadlines == [deadline, deadline]
+    assert observed_load_deadlines == [deadline]
+    assert observed_payload_deadlines == [deadline]
+
+
+def test_ready_discovery_bounds_a_stalled_remote_probe(
+    effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, _predecessor, _provider, _predecessor_deadline = effector_repo
+    observed_timeouts: list[float] = []
+
+    def stalled_remote(*_args, timeout_seconds, **_kwargs):
+        observed_timeouts.append(timeout_seconds)
+        raise BoundedSubprocessError("timeout")
+
+    monkeypatch.setattr(relay_core, "run_bounded_subprocess", stalled_remote)
+    deadline = time.monotonic() + 0.25
+
+    with pytest.raises(CampaignRelayError) as raised:
+        discover_ready_relay(root, deadline_monotonic=deadline)
+
+    assert raised.value.code == "relay_git_timeout"
+    assert len(observed_timeouts) == 1
+    assert 0 < observed_timeouts[0] <= 0.25
 
 
 @pytest.mark.parametrize(

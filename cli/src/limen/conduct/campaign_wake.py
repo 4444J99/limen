@@ -143,6 +143,7 @@ def wake_campaign(
     if not 300 <= timeout_seconds <= 7200:
         raise CampaignWakeError("campaign wake timeout must be between 300 and 7200 seconds")
     wake_deadline_monotonic_ns = time.monotonic_ns() + timeout_seconds * 1_000_000_000
+    wake_deadline_monotonic = wake_deadline_monotonic_ns / 1_000_000_000
     root = root.resolve()
     env = dict(os.environ if environ is None else environ)
     agent = env.get("LIMEN_AGENT", "").strip()
@@ -165,6 +166,7 @@ def wake_campaign(
                 root,
                 workstream=workstream,
                 now_epoch=now_epoch,
+                deadline_monotonic=wake_deadline_monotonic,
             )
         except CampaignRelayError as exc:
             raise NoActiveCampaign(f"{active_error}; ready successor unavailable: {exc.public_reason}") from exc

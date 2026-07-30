@@ -222,6 +222,18 @@ def test_ready_successor_routes_its_exact_publication_base_to_supervisor(
     def no_local(*_args, **_kwargs):
         raise NoActiveCampaign("fixture has no local active capsule")
 
+    def ready_successor(*_args, **kwargs):
+        observed["relay_deadline_monotonic"] = kwargs["deadline_monotonic"]
+        return SimpleNamespace(
+            capsule_path="docs/continuations/ready-fixture/workstream.json",
+            remaining_seconds=3600,
+            receipt=SimpleNamespace(
+                publication_commit=commit,
+                publication_parent=base,
+                successor_branch="work/ready-fixture",
+            ),
+        )
+
     def run(command, **_kwargs):
         observed["command"] = command
         return subprocess.CompletedProcess(
@@ -240,15 +252,7 @@ def test_ready_successor_routes_its_exact_publication_base_to_supervisor(
     monkeypatch.setattr("limen.conduct.campaign_wake.discover_active_capsule", no_local)
     monkeypatch.setattr(
         "limen.conduct.campaign_wake.discover_ready_relay",
-        lambda *_args, **_kwargs: SimpleNamespace(
-            capsule_path="docs/continuations/ready-fixture/workstream.json",
-            remaining_seconds=3600,
-            receipt=SimpleNamespace(
-                publication_commit=commit,
-                publication_parent=base,
-                successor_branch="work/ready-fixture",
-            ),
-        ),
+        ready_successor,
     )
     wake_campaign(
         root,
@@ -262,7 +266,11 @@ def test_ready_successor_routes_its_exact_publication_base_to_supervisor(
     assert isinstance(command, list)
     assert command[command.index("--capsule-commit") + 1] == commit
     assert command[command.index("--capsule-base") + 1] == base
-    assert int(command[command.index("--wake-deadline-monotonic-ns") + 1]) > 0
+    wake_deadline_monotonic_ns = int(command[command.index("--wake-deadline-monotonic-ns") + 1])
+    assert wake_deadline_monotonic_ns > 0
+    relay_deadline_monotonic = observed["relay_deadline_monotonic"]
+    assert isinstance(relay_deadline_monotonic, float)
+    assert abs(wake_deadline_monotonic_ns - int(relay_deadline_monotonic * 1_000_000_000)) <= 1024
 
 
 def test_default_runner_closes_oversized_output_during_execution(

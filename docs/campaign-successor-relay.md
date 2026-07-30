@@ -68,14 +68,15 @@ a parent, so the catalog advances by fast-forward and historical dedicated refs 
 If the admitted topic push exits without a trustworthy response, the launcher rereads that exact
 topic ref and continues only when it names the intended publication commit.
 
-Campaign wake reads only that exact per-workstream latest ref, filters the structural receipt for
-the requested active handoff, and then validates live topic-branch and immutable-ref reachability.
-The supervisor receives the publication commit and its expected base, and accepts it only when it
-is a single-parent, receipt-only commit on that exact base. Expired or damaged historical topic
-branches therefore cannot poison a newer active successor, and the number of retained historical
-dedicated refs does not create a fixed catalog ceiling. Duplicate suppression can still recover
-the dedicated ready mapping if an obsolete topic branch disappears; ordinary wake retains the
-stronger live-topic reachability contract.
+Campaign wake first discovers active capsules from local Git-tracked receipt files. Only when no
+local active receipt remains does its ready-successor fallback read the exact per-workstream latest
+ref, filter the structural receipt for the requested active handoff, and validate live topic-branch
+and immutable-ref reachability. The supervisor receives the publication commit and its expected
+base, and accepts it only when it is a single-parent, receipt-only commit on that exact base. In the
+remote fallback, expired or damaged historical topic branches therefore cannot poison a newer
+active successor, and the number of retained historical dedicated refs does not create a fixed
+catalog ceiling. Duplicate suppression can still recover the dedicated ready mapping if an obsolete
+topic branch disappears; ordinary remote wake retains the stronger live-topic reachability contract.
 
 The launch root is derived from the shared Git common directory and verified as its primary
 non-bare checkout. Successor activation then validates that the generated worktree belongs to the
