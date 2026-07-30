@@ -198,6 +198,25 @@ def _require_private_retirement_receipt(
     for value in (durable, expected):
         value["source_retired"] = False
         value["retirement_proof"] = None
+    if durable == expected:
+        return
+
+    try:
+        enriched = MetabolismReceipt.from_dict(durable)
+        from .custody import project_custody_receipt
+
+        project_custody_receipt(enriched)
+    except (ReceiptError, ValueError) as exc:
+        raise PipelineError("private retirement receipt does not match verified custody") from exc
+    for value in (durable, expected):
+        for proof in value["restorations"]:
+            for key in (
+                "device_id",
+                "restored_at",
+                "encryption_profile_digest",
+                "remote_refs",
+            ):
+                proof.pop(key, None)
     if durable != expected:
         raise PipelineError("private retirement receipt does not match verified custody")
 
