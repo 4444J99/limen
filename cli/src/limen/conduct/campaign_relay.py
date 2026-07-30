@@ -1,4 +1,4 @@
-"""Durable reservation boundary for institutional campaign succession."""
+"""Local common-Git reservation boundary for institutional campaign succession."""
 
 from __future__ import annotations
 
@@ -23,12 +23,24 @@ from limen.workstream_contract import (
 )
 
 _RECEIPT_CEILING = 65_536
+_PREDECESSOR_RECEIPT_CEILING = 262_144
+_GIT_CONTROL_OUTPUT_CEILING = 4096
+_GIT_TIMEOUT_SECONDS = 10.0
 _GIT_OBJECT_LENGTHS = frozenset({40, 64})
 _LOCK_ACQUIRE_TIMEOUT_SECONDS = 2.0
 
 
 class CampaignRelayError(RuntimeError):
-    """One fail-closed relay error safe to record in the campaign owner."""
+    """One fail-closed relay error with a stable, path-free public projection."""
+
+    def __init__(self, code: str, message: str):
+        self.code = code
+        self.public_message = message
+        super().__init__(message)
+
+    @property
+    def public_reason(self) -> str:
+        return f"{self.code}: {self.public_message}"
 
 
 @dataclass(frozen=True)
@@ -37,18 +49,58 @@ class RelayReservation:
     created: bool
 
 
-def _git(root: Path, *args: str) -> str:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+@dataclass(frozen=True)
+class RelayStore:
+    path: Path
+    descriptor: int
+
+
+def _git_bytes(
+    root: Path,
+    *args: str,
+    output_ceiling: int = _GIT_CONTROL_OUTPUT_CEILING,
+) -> bytes:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=_GIT_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise CampaignRelayError(
+            "relay_git_timeout",
+            "campaign relay Git probe exceeded its bounded deadline",
+        ) from exc
+    except OSError as exc:
+        raise CampaignRelayError(
+            "relay_git_unavailable",
+            "campaign relay Git probe is unavailable",
+        ) from exc
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
-        raise CampaignRelayError(f"git {' '.join(args)} failed: {detail or result.returncode}")
-    return result.stdout.strip()
+        raise CampaignRelayError(
+            "relay_git_failed",
+            "campaign relay Git probe failed",
+        )
+    if len(result.stdout) > output_ceiling:
+        raise CampaignRelayError(
+            "relay_git_output_oversized",
+            "campaign relay Git probe exceeded its output ceiling",
+        )
+    return result.stdout
+
+
+def _git(root: Path, *args: str) -> str:
+    raw = _git_bytes(root, *args)
+    try:
+        return raw.decode("utf-8").strip()
+    except UnicodeDecodeError as exc:
+        raise CampaignRelayError(
+            "relay_git_output_invalid",
+            "campaign relay Git probe returned invalid text",
+        ) from exc
 
 
 def _git_common_dir(root: Path) -> Path:
@@ -57,47 +109,94 @@ def _git_common_dir(root: Path) -> Path:
     try:
         resolved = path.resolve(strict=True)
     except OSError as exc:
-        raise CampaignRelayError(f"Git common directory is unavailable: {exc}") from exc
+        raise CampaignRelayError(
+            "relay_store_unavailable",
+            "campaign relay Git common directory is unavailable",
+        ) from exc
     if path.is_symlink() or not resolved.is_dir():
-        raise CampaignRelayError("Git common directory must be a real directory")
+        raise CampaignRelayError(
+            "relay_store_invalid",
+            "campaign relay Git common directory must be a real directory",
+        )
     return resolved
 
 
-def _store_dir(root: Path) -> Path:
+def _verify_store_identity(store: RelayStore) -> None:
+    try:
+        path_metadata = os.stat(store.path, follow_symlinks=False)
+        opened_metadata = os.fstat(store.descriptor)
+    except OSError as exc:
+        raise CampaignRelayError(
+            "relay_store_changed",
+            "campaign relay store identity changed during reservation",
+        ) from exc
+    if (
+        not stat.S_ISDIR(path_metadata.st_mode)
+        or not stat.S_ISDIR(opened_metadata.st_mode)
+        or (path_metadata.st_dev, path_metadata.st_ino) != (opened_metadata.st_dev, opened_metadata.st_ino)
+    ):
+        raise CampaignRelayError(
+            "relay_store_changed",
+            "campaign relay store identity changed during reservation",
+        )
+
+
+@contextmanager
+def _open_store(root: Path) -> Iterator[RelayStore]:
     common = _git_common_dir(root)
-    store = common / "limen" / "campaign-relays"
     if not hasattr(os, "O_DIRECTORY") or not hasattr(os, "O_NOFOLLOW"):
-        raise CampaignRelayError("campaign relay store requires no-follow directory operations")
+        raise CampaignRelayError(
+            "relay_store_unsupported",
+            "campaign relay store requires no-follow directory operations",
+        )
+    store_path = common / "limen" / "campaign-relays"
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
     descriptors: list[int] = []
     try:
         parent = os.open(common, flags)
         descriptors.append(parent)
         for name in ("limen", "campaign-relays"):
+            created = False
             try:
                 os.mkdir(name, mode=0o700, dir_fd=parent)
+                created = True
             except FileExistsError:
                 pass
+            if created:
+                os.fsync(parent)
             child = os.open(name, flags, dir_fd=parent)
             descriptors.append(child)
+            if not stat.S_ISDIR(os.fstat(child).st_mode):
+                raise CampaignRelayError(
+                    "relay_store_invalid",
+                    "campaign relay store must contain only real directories",
+                )
             os.fchmod(child, 0o700)
+            os.fsync(child)
             parent = child
-        resolved = store.resolve(strict=True)
+        store = RelayStore(path=store_path, descriptor=parent)
+        _verify_store_identity(store)
+        yield store
+        _verify_store_identity(store)
+    except CampaignRelayError:
+        raise
     except OSError as exc:
-        raise CampaignRelayError(f"campaign relay store is unavailable: {exc}") from exc
+        raise CampaignRelayError(
+            "relay_store_unavailable",
+            "campaign relay store is unavailable",
+        ) from exc
     finally:
         for descriptor in reversed(descriptors):
             os.close(descriptor)
-    if store.is_symlink() or not resolved.is_relative_to(common) or not resolved.is_dir():
-        raise CampaignRelayError("campaign relay store must remain inside the Git common directory")
-    return resolved
 
 
-def _paths(root: Path, relay_id: str) -> tuple[Path, Path]:
+def _relay_names(relay_id: str) -> tuple[str, str]:
     if len(relay_id) != 64 or any(character not in "0123456789abcdef" for character in relay_id):
-        raise CampaignRelayError("relay identity must be a lowercase SHA-256 digest")
-    store = _store_dir(root)
-    return store / f"{relay_id}.json", store / f"{relay_id}.lock"
+        raise CampaignRelayError(
+            "relay_identity_invalid",
+            "relay identity must be a lowercase SHA-256 digest",
+        )
+    return f"{relay_id}.json", f"{relay_id}.lock"
 
 
 @contextmanager
@@ -106,7 +205,7 @@ def campaign_relay_lock(
     relay_id: str,
     *,
     timeout_seconds: float = _LOCK_ACQUIRE_TIMEOUT_SECONDS,
-) -> Iterator[None]:
+) -> Iterator[RelayStore]:
     """Hold the cross-beat relay lock for one bounded reservation phase."""
 
     if (
@@ -114,104 +213,151 @@ def campaign_relay_lock(
         or not isinstance(timeout_seconds, (int, float))
         or not 0 < timeout_seconds <= 30
     ):
-        raise CampaignRelayError("campaign relay lock timeout must be between 0 and 30 seconds")
-    _receipt_path, lock_path = _paths(root, relay_id)
-    if lock_path.is_symlink():
-        raise CampaignRelayError("campaign relay lock must not be a symlink")
+        raise CampaignRelayError(
+            "relay_lock_timeout_invalid",
+            "campaign relay lock timeout must be between 0 and 30 seconds",
+        )
+    _receipt_name, lock_name = _relay_names(relay_id)
     flags = os.O_RDWR | os.O_CREAT
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
-    try:
-        descriptor = os.open(lock_path, flags, 0o600)
-    except OSError as exc:
-        raise CampaignRelayError(f"campaign relay lock is unavailable: {exc}") from exc
-    locked = False
-    try:
-        os.fchmod(descriptor, 0o600)
-        deadline = time.monotonic() + timeout_seconds
-        while True:
+    with _open_store(root) as store:
+        for attempt in range(2):
             try:
-                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                locked = True
+                descriptor = os.open(lock_name, flags, 0o600, dir_fd=store.descriptor)
                 break
-            except BlockingIOError:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise CampaignRelayError(
-                        "campaign relay lock remained busy past its bounded acquire deadline"
-                    ) from None
-                time.sleep(min(0.01, remaining))
-        yield
-    finally:
+            except FileNotFoundError as exc:
+                if attempt == 0:
+                    _verify_store_identity(store)
+                    continue
+                raise CampaignRelayError(
+                    "relay_lock_unavailable",
+                    "campaign relay lock is unavailable",
+                ) from exc
+            except OSError as exc:
+                raise CampaignRelayError(
+                    "relay_lock_unavailable",
+                    "campaign relay lock is unavailable",
+                ) from exc
+        locked = False
         try:
-            if locked:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
+            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                raise CampaignRelayError(
+                    "relay_lock_invalid",
+                    "campaign relay lock must be a regular file",
+                )
+            os.fchmod(descriptor, 0o600)
+            deadline = time.monotonic() + timeout_seconds
+            while True:
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    locked = True
+                    break
+                except BlockingIOError:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise CampaignRelayError(
+                            "relay_lock_busy",
+                            "campaign relay lock remained busy past its bounded acquire deadline",
+                        ) from None
+                    time.sleep(min(0.01, remaining))
+            yield store
         finally:
-            os.close(descriptor)
+            try:
+                if locked:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+            finally:
+                os.close(descriptor)
 
 
-def _read_receipt(path: Path) -> CampaignRelayReceiptV1 | None:
+def _read_receipt(store: RelayStore, receipt_name: str) -> CampaignRelayReceiptV1 | None:
     flags = os.O_RDONLY
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     try:
-        descriptor = os.open(path, flags)
+        descriptor = os.open(receipt_name, flags, dir_fd=store.descriptor)
     except FileNotFoundError:
         return None
     except OSError as exc:
-        raise CampaignRelayError(f"campaign relay receipt is unavailable: {exc}") from exc
+        raise CampaignRelayError(
+            "relay_receipt_unavailable",
+            "campaign relay receipt is unavailable",
+        ) from exc
     try:
         metadata = os.fstat(descriptor)
         if not stat.S_ISREG(metadata.st_mode) or metadata.st_mode & 0o077:
-            raise CampaignRelayError("campaign relay receipt must be a private regular file")
+            raise CampaignRelayError(
+                "relay_receipt_invalid",
+                "campaign relay receipt must be a private regular file",
+            )
         with os.fdopen(descriptor, "rb") as handle:
             descriptor = -1
             raw = handle.read(_RECEIPT_CEILING + 1)
     except OSError as exc:
-        raise CampaignRelayError(f"campaign relay receipt is unreadable: {exc}") from exc
+        raise CampaignRelayError(
+            "relay_receipt_unreadable",
+            "campaign relay receipt is unreadable",
+        ) from exc
     finally:
         if descriptor >= 0:
             os.close(descriptor)
     if len(raw) > _RECEIPT_CEILING:
-        raise CampaignRelayError("campaign relay receipt exceeds its bounded size")
+        raise CampaignRelayError(
+            "relay_receipt_oversized",
+            "campaign relay receipt exceeds its bounded size",
+        )
     try:
         return CampaignRelayReceiptV1.model_validate_json(raw)
     except ValueError as exc:
-        raise CampaignRelayError(f"campaign relay receipt is invalid: {exc}") from exc
+        raise CampaignRelayError(
+            "relay_receipt_invalid",
+            "campaign relay receipt is invalid",
+        ) from exc
 
 
-def _write_receipt(path: Path, receipt: CampaignRelayReceiptV1) -> None:
+def _write_receipt(
+    store: RelayStore,
+    receipt_name: str,
+    receipt: CampaignRelayReceiptV1,
+) -> None:
     payload = (
         json.dumps(receipt.model_dump(mode="json"), indent=2, sort_keys=True, separators=(",", ": ")) + "\n"
     ).encode("utf-8")
     if len(payload) > _RECEIPT_CEILING:
-        raise CampaignRelayError("campaign relay receipt exceeds its bounded size")
-    temporary = path.with_name(f".{path.name}.tmp.{os.getpid()}.{threading.get_ident()}")
+        raise CampaignRelayError(
+            "relay_receipt_oversized",
+            "campaign relay receipt exceeds its bounded size",
+        )
+    temporary = f".{receipt_name}.tmp.{os.getpid()}.{threading.get_ident()}"
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     descriptor: int | None = None
     try:
-        descriptor = os.open(temporary, flags, 0o600)
+        descriptor = os.open(temporary, flags, 0o600, dir_fd=store.descriptor)
         os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "wb") as handle:
             descriptor = None
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
-        directory = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
+        os.replace(
+            temporary,
+            receipt_name,
+            src_dir_fd=store.descriptor,
+            dst_dir_fd=store.descriptor,
+        )
+        os.fsync(store.descriptor)
     except OSError as exc:
-        raise CampaignRelayError(f"campaign relay receipt could not be persisted: {exc}") from exc
+        raise CampaignRelayError(
+            "relay_receipt_write_failed",
+            "campaign relay receipt could not be recorded",
+        ) from exc
     finally:
         if descriptor is not None:
             os.close(descriptor)
         try:
-            temporary.unlink()
+            os.unlink(temporary, dir_fd=store.descriptor)
         except FileNotFoundError:
             pass
 
@@ -225,28 +371,78 @@ def _tracked_predecessor(
     if len(exact_remote_main) not in _GIT_OBJECT_LENGTHS or any(
         character not in "0123456789abcdef" for character in exact_remote_main
     ):
-        raise CampaignRelayError("exact remote main must be a lowercase Git object id")
+        raise CampaignRelayError(
+            "relay_remote_main_invalid",
+            "exact remote main must be a lowercase Git object id",
+        )
     root = root.resolve()
     try:
         resolved = receipt_path.resolve(strict=True)
         relative = resolved.relative_to(root).as_posix()
     except (OSError, ValueError) as exc:
-        raise CampaignRelayError("predecessor receipt must be a real file inside the checkout") from exc
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "predecessor receipt must be a real file inside the checkout",
+        ) from exc
     if receipt_path.is_symlink() or not resolved.is_file():
-        raise CampaignRelayError("predecessor receipt must be a real file")
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "predecessor receipt must be a real file",
+        )
     blob = _git(root, "rev-parse", f"{exact_remote_main}:{relative}")
+    if len(blob) not in _GIT_OBJECT_LENGTHS or any(character not in "0123456789abcdef" for character in blob):
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "predecessor receipt did not resolve to one Git blob",
+        )
     try:
-        payload = json.loads(_git(root, "show", f"{exact_remote_main}:{relative}"))
-    except json.JSONDecodeError as exc:
-        raise CampaignRelayError(f"committed predecessor receipt is invalid JSON: {exc}") from exc
+        blob_size = int(_git(root, "cat-file", "-s", blob))
+    except ValueError as exc:
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "predecessor receipt Git blob size is invalid",
+        ) from exc
+    if not 0 < blob_size <= _PREDECESSOR_RECEIPT_CEILING:
+        raise CampaignRelayError(
+            "relay_predecessor_oversized",
+            "predecessor receipt exceeds its bounded size",
+        )
+    raw = _git_bytes(
+        root,
+        "cat-file",
+        "blob",
+        blob,
+        output_ceiling=_PREDECESSOR_RECEIPT_CEILING,
+    )
+    if len(raw) != blob_size:
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "predecessor receipt Git blob size changed during capture",
+        )
+    try:
+        payload = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "committed predecessor receipt is invalid JSON",
+        ) from exc
     if not isinstance(payload, dict) or payload.get("schema") != RECEIPT_SCHEMA:
-        raise CampaignRelayError("predecessor receipt schema is unsupported")
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "predecessor receipt schema is unsupported",
+        )
     try:
         contract = validate_contract(payload.get("contract"))
     except ContractError as exc:
-        raise CampaignRelayError(f"predecessor contract is invalid: {exc}") from exc
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "predecessor contract is invalid",
+        ) from exc
     if payload.get("workstream") != "institutional-omega":
-        raise CampaignRelayError("automatic succession is limited to institutional-omega")
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "automatic succession is limited to institutional-omega",
+        )
     return blob, contract
 
 
@@ -265,7 +461,10 @@ def relay_identity(
     )
     deadline = contract["runway"].get("deadline_epoch")
     if isinstance(deadline, bool) or not isinstance(deadline, int) or deadline <= 0:
-        raise CampaignRelayError("predecessor campaign has not been admitted")
+        raise CampaignRelayError(
+            "relay_predecessor_unadmitted",
+            "predecessor campaign has not been admitted",
+        )
     contract_digest = canonical_hash(contract)
     identity = {
         "workstream": "institutional-omega",
@@ -299,9 +498,9 @@ def reserve_relay(
     """Persist the reservation before any worktree creation or provider spawn."""
 
     expected = relay_identity(root, predecessor, exact_remote_main=exact_remote_main)
-    receipt_path, _lock_path = _paths(root, expected.relay_id)
-    with campaign_relay_lock(root, expected.relay_id):
-        existing = _read_receipt(receipt_path)
+    receipt_name, _lock_name = _relay_names(expected.relay_id)
+    with campaign_relay_lock(root, expected.relay_id) as store:
+        existing = _read_receipt(store, receipt_name)
         if existing is not None:
             if existing.relay_id != expected.relay_id or any(
                 getattr(existing, field) != getattr(expected, field)
@@ -316,9 +515,12 @@ def reserve_relay(
                     "successor_session_id",
                 )
             ):
-                raise CampaignRelayError("stored relay identity conflicts with the predecessor")
+                raise CampaignRelayError(
+                    "relay_receipt_conflict",
+                    "stored relay identity conflicts with the predecessor",
+                )
             return RelayReservation(receipt=existing, created=False)
-        _write_receipt(receipt_path, expected)
+        _write_receipt(store, receipt_name, expected)
         return RelayReservation(receipt=expected, created=True)
 
 

@@ -10,13 +10,18 @@ The relay identity binds the workstream, committed predecessor receipt Git blob,
 contract digest, predecessor deadline, and exact remote default-branch commit. Its stable successor
 slug, branch, and broker session ID derive from that digest.
 
-The reservation lives in the repository's Git common directory, not in a worktree. A mode-`0600`
-receipt and lock provide cross-worktree and cross-beat duplicate suppression. Receipt replacement is
-atomic and fsyncs both file and directory. Repeated beats return the same byte-stable `reserved`
-record with `attempts=0`.
+The reservation lives in the repository's Git common directory, not in a worktree. Verified
+directory descriptors keep every lock and receipt operation inside that store even if a parent path
+is swapped concurrently. A mode-`0600` receipt and lock provide cross-worktree and cross-beat
+duplicate suppression. First-use directory entries, receipt bytes, and atomic receipt replacement
+are fsynced. Repeated beats return the same byte-stable `reserved` record with `attempts=0`.
+
+This is local, worktree-shared crash-recovery state. It is not remote custody or a terminal durable
+owner; PR #1664 and Institutional Omega issue #1571 own the delivery lifecycle.
 
 Heartbeat output exposes only the path-free relay ID, state, attempt count, successor session ID,
-workstream, and next lifecycle predicate. Private store paths never enter heartbeat JSON.
+workstream, and next lifecycle predicate. Failures expose only a stable relay error code and
+path-free message. Private store paths and raw Git/OS diagnostics never enter heartbeat JSON.
 
 ## Deliberate split
 

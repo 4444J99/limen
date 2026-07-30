@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import stat
 import subprocess
 from datetime import UTC, datetime
@@ -119,6 +120,50 @@ def test_reservation_rejects_a_symlinked_store_before_external_writes(relay_repo
     assert list(outside.iterdir()) == []
 
 
+def test_verified_store_fd_prevents_parent_swap_from_redirecting_write(
+    relay_repo,
+    monkeypatch,
+) -> None:
+    root, predecessor = relay_repo
+    reserve_relay(root, predecessor, exact_remote_main=_git(root, "rev-parse", "HEAD"))
+    (root / "advance.txt").write_text("new exact main\n", encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "commit", "-qm", "advance exact main")
+
+    common = Path(_git(root, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+    outside = root.parent / "swap-outside"
+    outside.mkdir()
+    original_replace = os.replace
+    swapped = False
+
+    def swap_parent_then_replace(
+        source,
+        destination,
+        *,
+        src_dir_fd=None,
+        dst_dir_fd=None,
+    ):
+        nonlocal swapped
+        if not swapped:
+            (common / "limen").rename(common / "limen-original")
+            (common / "limen").symlink_to(outside, target_is_directory=True)
+            swapped = True
+        return original_replace(
+            source,
+            destination,
+            src_dir_fd=src_dir_fd,
+            dst_dir_fd=dst_dir_fd,
+        )
+
+    monkeypatch.setattr("limen.conduct.campaign_relay.os.replace", swap_parent_then_replace)
+    with pytest.raises(CampaignRelayError, match="identity changed") as caught:
+        reserve_relay(root, predecessor, exact_remote_main=_git(root, "rev-parse", "HEAD"))
+
+    assert caught.value.code == "relay_store_changed"
+    assert swapped is True
+    assert list(outside.iterdir()) == []
+
+
 def test_held_relay_lock_fails_at_a_finite_deadline(relay_repo) -> None:
     root, predecessor = relay_repo
     relay = reserve_relay(
@@ -131,6 +176,110 @@ def test_held_relay_lock_fails_at_a_finite_deadline(relay_repo) -> None:
         with pytest.raises(CampaignRelayError, match="bounded acquire deadline"):
             with campaign_relay_lock(root, relay.relay_id, timeout_seconds=0.02):
                 pytest.fail("a held relay lock must not be re-entered")
+
+
+def test_lock_open_retries_one_verified_enoent(relay_repo, monkeypatch) -> None:
+    root, _predecessor = relay_repo
+    relay_id = "a" * 64
+    lock_name = f"{relay_id}.lock"
+    original_open = os.open
+    attempts = 0
+
+    def fail_first_lock_open(path, flags, mode=0o777, *, dir_fd=None):
+        nonlocal attempts
+        if path == lock_name:
+            attempts += 1
+            if attempts == 1:
+                raise FileNotFoundError(2, "injected bounded retry")
+        return original_open(path, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr("limen.conduct.campaign_relay.os.open", fail_first_lock_open)
+    with campaign_relay_lock(root, relay_id):
+        pass
+
+    assert attempts == 2
+
+
+def test_lock_open_second_enoent_fails_closed(relay_repo, monkeypatch) -> None:
+    root, _predecessor = relay_repo
+    relay_id = "b" * 64
+    lock_name = f"{relay_id}.lock"
+    original_open = os.open
+    attempts = 0
+
+    def fail_both_lock_opens(path, flags, mode=0o777, *, dir_fd=None):
+        nonlocal attempts
+        if path == lock_name:
+            attempts += 1
+            raise FileNotFoundError(2, "injected bounded failure")
+        return original_open(path, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr("limen.conduct.campaign_relay.os.open", fail_both_lock_opens)
+    with pytest.raises(CampaignRelayError) as caught:
+        with campaign_relay_lock(root, relay_id):
+            pytest.fail("a second ENOENT must fail closed")
+
+    assert caught.value.code == "relay_lock_unavailable"
+    assert attempts == 2
+
+
+@pytest.mark.parametrize(
+    ("failure", "code"),
+    [
+        (
+            subprocess.TimeoutExpired(cmd=["git", "/private/secret"], timeout=10),
+            "relay_git_timeout",
+        ),
+        (
+            OSError("/private/secret/git"),
+            "relay_git_unavailable",
+        ),
+    ],
+)
+def test_git_probe_failure_is_bounded_and_path_free(
+    relay_repo,
+    monkeypatch,
+    failure,
+    code,
+) -> None:
+    root, predecessor = relay_repo
+
+    def fail(*_args, **_kwargs):
+        raise failure
+
+    monkeypatch.setattr("limen.conduct.campaign_relay.subprocess.run", fail)
+    with pytest.raises(CampaignRelayError) as caught:
+        reserve_relay(root, predecessor, exact_remote_main="a" * 40)
+
+    assert caught.value.code == code
+    assert "/private/secret" not in caught.value.public_reason
+
+
+def test_non_utf8_committed_predecessor_has_a_path_free_error(relay_repo) -> None:
+    root, predecessor = relay_repo
+    predecessor.write_bytes(b"\xff")
+    _git(root, "add", ".")
+    _git(root, "commit", "-qm", "non-utf8 predecessor")
+
+    with pytest.raises(CampaignRelayError) as caught:
+        reserve_relay(root, predecessor, exact_remote_main=_git(root, "rev-parse", "HEAD"))
+
+    assert caught.value.code == "relay_predecessor_invalid"
+    assert str(predecessor) not in caught.value.public_reason
+
+
+def test_oversized_committed_predecessor_fails_before_blob_capture(relay_repo) -> None:
+    root, predecessor = relay_repo
+    payload = json.loads(predecessor.read_text(encoding="utf-8"))
+    payload["padding"] = "x" * 300_000
+    predecessor.write_text(json.dumps(payload), encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "commit", "-qm", "oversized predecessor")
+
+    with pytest.raises(CampaignRelayError) as caught:
+        reserve_relay(root, predecessor, exact_remote_main=_git(root, "rev-parse", "HEAD"))
+
+    assert caught.value.code == "relay_predecessor_oversized"
 
 
 def test_unadmitted_predecessor_fails_before_reservation(relay_repo) -> None:

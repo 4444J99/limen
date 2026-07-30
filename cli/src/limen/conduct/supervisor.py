@@ -520,7 +520,10 @@ def run_campaign(
             "boundary": "wait_relay",
             "campaign_id": receipt["workstream"],
             "exact_head": git_state["head"],
-            "reason": "T-30 reached; one deterministic successor relay is durably reserved",
+            "reason": (
+                "T-30 reached; one deterministic successor reservation is atomically recorded "
+                "in the worktree-shared Git common directory"
+            ),
             "relay": relay_boundary_projection(reservation.receipt),
             "remaining_seconds": remaining,
             "successor_required": True,

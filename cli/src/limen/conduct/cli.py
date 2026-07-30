@@ -110,7 +110,18 @@ def campaign_run(
             terminal_predicate=terminal_predicate,
             evaluation_timeout_seconds=evaluation_timeout,
         )
-    except (CampaignSupervisorError, CampaignRelayError, ConductError) as exc:
+    except CampaignRelayError as exc:
+        _emit(
+            {
+                "schema": RESULT_SCHEMA,
+                "boundary": "invalid",
+                "reason": exc.public_reason,
+                "successor_required": False,
+                "terminal_predicate": terminal_predicate,
+            }
+        )
+        raise click.exceptions.Exit(1) from exc
+    except (CampaignSupervisorError, ConductError) as exc:
         _emit(
             {
                 "schema": RESULT_SCHEMA,

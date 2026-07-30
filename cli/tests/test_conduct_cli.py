@@ -189,17 +189,36 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
 
 
 @pytest.mark.parametrize(
-    "error",
+    ("error", "reason"),
     [
-        CampaignSupervisorError("exact remote main moved"),
-        CampaignRelayError("campaign relay store is unavailable"),
+        (
+            CampaignSupervisorError("exact remote main moved"),
+            "exact remote main moved",
+        ),
+        (
+            CampaignRelayError(
+                "relay_store_unavailable",
+                "campaign relay store is unavailable",
+            ),
+            "relay_store_unavailable: campaign relay store is unavailable",
+        ),
     ],
 )
-def test_campaign_run_emits_one_structured_invalid_boundary(monkeypatch, tmp_path, error) -> None:
+def test_campaign_run_emits_one_structured_invalid_boundary(
+    monkeypatch,
+    tmp_path,
+    error,
+    reason,
+) -> None:
     capsule = tmp_path / "workstream.json"
     capsule.write_text("{}\n", encoding="utf-8")
 
     def reject(**_kwargs):
+        if isinstance(error, CampaignRelayError):
+            try:
+                raise OSError("/private/secret/campaign-relay")
+            except OSError as cause:
+                raise error from cause
         raise error
 
     monkeypatch.setattr("limen.conduct.cli.client_from_env", object)
@@ -220,8 +239,9 @@ def test_campaign_run_emits_one_structured_invalid_boundary(monkeypatch, tmp_pat
     assert result.exit_code == 1
     assert json.loads(result.output) == {
         "boundary": "invalid",
-        "reason": str(error),
+        "reason": reason,
         "schema": "limen.campaign_supervisor_result.v1",
         "successor_required": False,
         "terminal_predicate": "omega",
     }
+    assert "/private/secret" not in result.output
