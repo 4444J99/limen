@@ -24,7 +24,7 @@ Engagement: `organs/consulting/engagements/maddie.yaml` · Funnel instance: none
 The lane is LIVE — operate and grow it; do not rebuild it. Funnel, contract, and follow-through work only, honoring any register note that closes the build lane.
 
 Repos:
-- `organvm/sovereign-systems--elevate-align`
+- `4444J99/sovereign-systems--elevate-align`
 
 Keywords: spiral, elevate align, hydration, water education, ionfaucet, multipure · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug maddie --project spiral`
