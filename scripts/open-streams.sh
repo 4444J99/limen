@@ -25,10 +25,12 @@
 #   NAMED with its exact command — a silent cap would read as "all four opened" when it did not.
 #
 # IDEMPOTENT
-#   Re-running opens only what is not already open. Two independent reasons, and both must hold:
-#   the checker classifies a stream with a live worktree as `running`, not `ready`, so it never
-#   reaches this script; and a stream whose tmux window already exists is skipped here — which
-#   covers the window that outlived its worktree.
+#   Re-running opens only what is not already open, on ONE authority: the liveness probe. A stream
+#   with a session attached reads `live` and never reaches this script; a dormant stream reaches it
+#   and is REOPENED — respawned into its kept tmux window when one survives, a fresh window
+#   otherwise. Window presence is NOT the test (a kept window is the closeout display, not a
+#   running stream — treating it as one froze every exited lane on SKIP, first live proof
+#   2026-07-29).
 #
 # WHICH LANE OPENS THEM IS THE OPERATOR'S CHOICE, NOT THE REGISTRY'S
 #   The registry emits `--agent auto` and may never pin a provider — the capsule contract declares
@@ -309,7 +311,6 @@ echo "  tmux session: $session"
 echo
 
 opened=0
-skipped=0
 
 while IFS=$'\t' read -r kind sid job_class cmd title; do
   [[ "$kind" == "CAP" ]] && continue
@@ -318,13 +319,6 @@ while IFS=$'\t' read -r kind sid job_class cmd title; do
     # Named, never silent: a dropped stream the operator cannot see reads as one that opened.
     echo "  DEFER  $sid — over the bound; open later with:"
     echo "           $cmd"
-    continue
-  fi
-
-  if [[ "$dry_run" -eq 0 ]] && tmux has-session -t "$session" 2>/dev/null &&
-     tmux list-windows -t "$session" -F '#W' 2>/dev/null | grep -qx "$sid"; then
-    echo "  SKIP   $sid — tmux window already open"
-    skipped=$((skipped + 1))
     continue
   fi
 
@@ -345,7 +339,17 @@ while IFS=$'\t' read -r kind sid job_class cmd title; do
   hydrate='[ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; };'
   window_cmd="$hydrate $cmd; printf '\n── stream %s exited — window kept ──\n' $(printf '%q' "$sid"); exec ${SHELL:-/bin/zsh} -l"
 
-  if tmux has-session -t "$session" 2>/dev/null; then
+  if tmux has-session -t "$session" 2>/dev/null &&
+     tmux list-windows -t "$session" -F '#W' 2>/dev/null | grep -qx "$sid"; then
+    # The window survives exit BY DESIGN (the closeout stays readable) — but a kept window is not
+    # a running stream, and skipping on window presence made the advertised round trip a lie:
+    # exit → rerun hit SKIP forever until someone killed the window by hand (first live proof,
+    # 2026-07-29). This row only reached the plan because liveness read the stream as openable,
+    # so whatever occupies the window is a leftover shell, never the agent — respawn the stream
+    # into it. The probe protects the one dangerous case for free: a human working inside the
+    # worktree makes the stream `live`, and a live stream never enters the plan.
+    tmux respawn-window -k -c "$repo_root" -t "$session:$sid" "$window_cmd"
+  elif tmux has-session -t "$session" 2>/dev/null; then
     tmux new-window -t "$session" -n "$sid" -c "$repo_root" "$window_cmd"
   else
     tmux new-session -d -s "$session" -n "$sid" -c "$repo_root" "$window_cmd"
@@ -360,6 +364,6 @@ if [[ "$dry_run" -eq 1 ]]; then
   exit 0
 fi
 
-echo "open-streams: $opened opened, $skipped already running"
-[[ "$opened" -gt 0 || "$skipped" -gt 0 ]] && echo "  attach: tmux attach -t $session"
+echo "open-streams: $opened opened"
+[[ "$opened" -gt 0 ]] && echo "  attach: tmux attach -t $session"
 exit 0
