@@ -143,3 +143,39 @@ transfer batch + doctor shelf-parity green); Phase 3 reap (ARCHIVE-only — cont
 normalize, vox pair P1–P5); Phase 4 sauce sweep (PRIVATE/SPLIT/GUARD/CLEAN verdict per public
 repo + LICENSE posture per shelf). Plan of record: .agent-runtime/claude/plans/
 tranquil-spinning-possum.md (approved 2026-07-30).
+
+## Part VII — the wave realized (2026-07-30, operator-fired: full-permission grant + finish-the-workstream goal)
+
+**Phase 1 — COMPLETE.** All 10 partner-lane transfers fired and verified the same hour (canary
+micro-tato-play; redirects live; jtenen/LeflerDesign/eauco-mads lanes intact, all reading
+`write` — the transfer itself normalized the old ADMIN-over-ceiling drift). elevate-align
+flipped private personal-side after its org-side 422 seat-metering block dissolved: **8/8
+registry demotes realized**. Books same-hour (PR #1667). Levers L-GITVS-DEMOTE-ARM +
+L-CONST-CUSTODY-MIGRATION discharged; issues #1642/#1643 closed with receipts.
+
+**Phase 2 — COMPLETE on GitHub; books in PRs #1670 (T1) + T2–T4 follow-up.** All eight
+shelves populated (~128 transfers total): THEORIA 12 · POIESIS 18 · ERGON 50 · TAXIS 18 ·
+LOGOS 3 · KOINONIA 11 · KERYGMA 5 · meta-organvm 10. Every `dot-github--X` transferred home
+and renamed `.github` — **all seven shelf faces render**. padavano → the personal estate.
+The storefront predicate passes: zero empty advertised orgs. Engine additions: class P
+shelf-parity (both directions), owners() shelf enumeration + glob-skip, census user-scoped
+routing for every non-canonical owner (collaborator census `complete: true` for the first
+time since dual-estate began).
+
+**Phase 3 — reap COMPLETE (archive-only; content preserved, unarchive is one click).**
+60 repos frozen into the organvm attic: 24 `contrib--*` workspaces + 24 paired fork mirrors
+(hub-parity note: the contrib hub is an archaeology/audit surface, NOT a content mirror —
+archive-not-delete is exactly why nothing is lost), 8 `pages--theoria-copy--*` template
+copies, 2 legacy twins (hokage-chess--4444j99, content-engine legacy), the dead in-org
+`4444J99.github.io`, and `dot-github--4444j99`. Local landed branches reaped under the
+acceptance ledger (2 events, this file's sibling `branch-reap-acceptance.jsonl`); the live
+worktree's own isolation branch stays with the reclaim organ; the historical remote-branch
+backlog stays with L-REMOTE-REAP-APPLY (#1053) — double-dark by design.
+
+**Phase 4 — verdicts.** vox ═ vox--publica adjudicated: **independent siblings, not a split**
+(P1 history-disjoint clean; P3 manifest and P5 registry pairing never claimed — no pair to
+register). The sauce-verdict derivation law and LICENSE posture land as estate policy blocks
+in the Phase-4 books PR. Infrastructure finding healed en route: #1666's parallel verify
+runner capped every gate at 300s, making every cli-touching PR unmergeable — healed same
+hour by registry-declared gate deadlines (PR #1671; pytest-cli 1500s, pytest-api 900s).
+Related standing finding: #1658 (local ruff version-unpinned).
