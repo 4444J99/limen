@@ -89,17 +89,59 @@ def test_discovery_selects_latest_active_tracked_capsule(wake_repo) -> None:
     assert remaining == 7200
 
 
-def test_discovery_rejects_a_legacy_campaign_launch_contract(wake_repo) -> None:
+def test_discovery_accepts_an_admitted_provider_neutral_v1_contract(wake_repo) -> None:
     root, now = wake_repo
     path = root / "docs" / "continuations" / "epoch-new" / "workstream.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
-    legacy = new_contract("8h")
-    legacy["runway"] = payload["contract"]["runway"]
-    payload["contract"] = legacy
+    provider_neutral = new_contract("8h")
+    provider_neutral["runway"] = payload["contract"]["runway"]
+    payload["contract"] = provider_neutral
     path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
 
-    with pytest.raises(CampaignWakeError, match="requires a v2 launch contract"):
-        discover_active_capsule(root, workstream="institutional-omega", now_epoch=now)
+    capsule, remaining = discover_active_capsule(
+        root,
+        workstream="institutional-omega",
+        now_epoch=now,
+    )
+    assert capsule == path
+    assert remaining == 7200
+
+
+def test_wake_rejects_a_drifted_provider_neutral_v1_contract_before_runner(wake_repo) -> None:
+    root, now = wake_repo
+    path = root / "docs" / "continuations" / "epoch-new" / "workstream.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    provider_neutral = new_contract("8h")
+    provider_neutral["runway"] = payload["contract"]["runway"]
+    provider_neutral["conductor"]["provider_and_model"] = "pinned"
+    payload["contract"] = provider_neutral
+    path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CampaignWakeError, match="workstream conductor contract is invalid"):
+        wake_campaign(
+            root,
+            workstream="institutional-omega",
+            now_epoch=now,
+            environ={"LIMEN_AGENT": "codex", "LIMEN_SESSION_ID": "heartbeat-session"},
+            runner=lambda *_args, **_kwargs: pytest.fail("runner must not execute"),
+        )
+
+
+def test_wake_rejects_an_unadmitted_provider_neutral_v1_contract_before_runner(wake_repo) -> None:
+    root, now = wake_repo
+    path = root / "docs" / "continuations" / "epoch-new" / "workstream.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["contract"] = new_contract("8h")
+    path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CampaignWakeError, match="has not been admitted"):
+        wake_campaign(
+            root,
+            workstream="institutional-omega",
+            now_epoch=now,
+            environ={"LIMEN_AGENT": "codex", "LIMEN_SESSION_ID": "heartbeat-session"},
+            runner=lambda *_args, **_kwargs: pytest.fail("runner must not execute"),
+        )
 
 
 def test_wake_invokes_only_the_canonical_supervisor(wake_repo) -> None:
