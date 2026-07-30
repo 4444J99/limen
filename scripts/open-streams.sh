@@ -337,9 +337,13 @@ while IFS=$'\t' read -r kind sid job_class cmd title; do
     continue
   fi
 
-  # Keep the window after the agent exits: the operator needs to read the closeout, and a window
-  # that vanishes on exit destroys exactly the output worth seeing.
-  window_cmd="$cmd; printf '\n── stream %s exited — window kept ──\n' $(printf '%q' "$sid"); exec ${SHELL:-/bin/zsh} -l"
+  # Hydrate the credential organ's env sink FIRST: `limen workstream --conduct` needs the conduct
+  # broker identity (LIMEN_CONDUCT_URL/TOKEN), and a fresh tmux pane inherits none of it — the
+  # first live launch (2026-07-29) died at birth on BrokerUnavailable. Values are sourced, never
+  # printed. Then keep the window after the agent exits: the operator needs to read the closeout,
+  # and a window that vanishes on exit destroys exactly the output worth seeing.
+  hydrate='[ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; };'
+  window_cmd="$hydrate $cmd; printf '\n── stream %s exited — window kept ──\n' $(printf '%q' "$sid"); exec ${SHELL:-/bin/zsh} -l"
 
   if tmux has-session -t "$session" 2>/dev/null; then
     tmux new-window -t "$session" -n "$sid" -c "$repo_root" "$window_cmd"
