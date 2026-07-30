@@ -42,13 +42,7 @@ def campaign_repo(tmp_path: Path) -> tuple[Path, Path, int, int]:
     now = 2_000_000_000
     started = now - 600
     deadline = started + 8 * 60 * 60
-    contract = new_contract_v2(
-        "8h",
-        agent="codex",
-        model="fixture-model",
-        reasoning_effort="fixture-effort",
-        sandbox="danger-full-access",
-    )
+    contract = new_contract("8h")
     contract["runway"].update(
         {
             "started_epoch": started,
@@ -203,15 +197,50 @@ def _identity() -> AgentIdentityV1:
     )
 
 
-def test_campaign_rejects_a_legacy_launch_contract(campaign_repo) -> None:
+def test_campaign_accepts_an_admitted_provider_neutral_v1_contract(campaign_repo) -> None:
+    root, receipt, now, _deadline = campaign_repo
+    loaded, remaining = load_capsule_receipt(receipt, root=root, now_epoch=now)
+    assert loaded["contract"]["schema"] == "limen.workstream.contract.v1"
+    assert remaining == 28_200
+
+
+def test_campaign_accepts_a_human_explicit_v2_contract(campaign_repo) -> None:
     root, receipt, now, _deadline = campaign_repo
     payload = json.loads(receipt.read_text(encoding="utf-8"))
-    legacy = new_contract("8h")
-    legacy["runway"] = payload["contract"]["runway"]
-    payload["contract"] = legacy
+    explicit = new_contract_v2(
+        "8h",
+        agent="codex",
+        model="fixture-model",
+        reasoning_effort="fixture-effort",
+        sandbox="danger-full-access",
+    )
+    explicit["runway"] = payload["contract"]["runway"]
+    payload["contract"] = explicit
     receipt.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
 
-    with pytest.raises(CampaignSupervisorError, match="requires a v2 launch contract"):
+    loaded, remaining = load_capsule_receipt(receipt, root=root, now_epoch=now)
+    assert loaded["contract"]["schema"] == "limen.workstream.contract.v2"
+    assert loaded["contract"]["primary_launch"]["selection"] == "human_explicit"
+    assert remaining == 28_200
+
+
+def test_campaign_rejects_an_unadmitted_provider_neutral_v1_contract(campaign_repo) -> None:
+    root, receipt, now, _deadline = campaign_repo
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    payload["contract"] = new_contract("8h")
+    receipt.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CampaignSupervisorError, match="has not been admitted"):
+        load_capsule_receipt(receipt, root=root, now_epoch=now)
+
+
+def test_campaign_rejects_a_tampered_provider_neutral_v1_contract(campaign_repo) -> None:
+    root, receipt, now, _deadline = campaign_repo
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    payload["contract"]["conductor"]["provider_and_model"] = "pinned"
+    receipt.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CampaignSupervisorError, match="workstream conductor contract is invalid"):
         load_capsule_receipt(receipt, root=root, now_epoch=now)
 
 

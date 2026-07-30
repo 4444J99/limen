@@ -16,7 +16,6 @@ from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, exa
 from limen.workstream_contract import (
     RECEIPT_MODULES,
     RECEIPT_SCHEMA,
-    SCHEMA_V2,
     ContractError,
     validate_contract,
     validate_receipt_metadata,
@@ -93,8 +92,6 @@ def discover_active_capsule(
             contract = validate_contract(payload.get("contract"))
         except ContractError as exc:
             raise CampaignWakeError(f"{path.parent.name}: invalid campaign receipt: {exc}") from exc
-        if contract.get("schema") != SCHEMA_V2:
-            raise CampaignWakeError(f"{path.parent.name}: campaign receipt requires a v2 launch contract")
         private = payload.get("private_capsule")
         if (
             normalized_workstream != workstream
