@@ -962,18 +962,33 @@ def _collaborator_census(estate: dict, access: dict | None, token: str | None, o
     policy = access.get("policy") or {}
     probe = sorted({str(r) for r in grants} | {str(r) for r in (policy.get("never_grant_repos") or [])})
     ok = True
+    org_set = {str(o) for o in owners(estate)}
+
+    def _roll(repo: str, path: str, jq: str) -> subprocess.CompletedProcess:
+        # Personal-estate rolls are invisible to the org-installed App identity (dual-estate
+        # custody: partner lanes live on the personal account) — read them user-scoped.
+        if repo.split("/", 1)[0] not in org_set:
+            return _gh_user(["api", path, "--jq", jq], timeout=30)
+        return _gh(["api", path, "--jq", jq], token, timeout=30)
+
+    def _outside_path_jq(repo: str) -> tuple[str, str]:
+        owner, _, _name = repo.partition("/")
+        if owner not in org_set:
+            # 'outside' is an ORG affiliation — on a personal repo it misses direct invitees
+            # (victoroff-os: david reads write in the full roll, absent from the outside roll).
+            # The personal-estate lens is every collaborator except the owner.
+            return (
+                f"/repos/{repo}/collaborators?per_page=100",
+                f'[.[] | select(.login != "{owner}") | {{login: .login, role: .role_name}}] | sort_by(.login)',
+            )
+        return (
+            f"/repos/{repo}/collaborators?affiliation=outside&per_page=100",
+            "[.[] | {login: .login, role: .role_name}] | sort_by(.login)",
+        )
+
     for repo in probe:
         row: dict = {"outside": None, "invitations": None}
-        r = _gh(
-            [
-                "api",
-                f"/repos/{repo}/collaborators?affiliation=outside&per_page=100",
-                "--jq",
-                "[.[] | {login: .login, role: .role_name}] | sort_by(.login)",
-            ],
-            token,
-            timeout=30,
-        )
+        r = _roll(repo, *_outside_path_jq(repo))
         if r.returncode == 0:
             try:
                 row["outside"] = json.loads(r.stdout or "[]")
@@ -981,15 +996,10 @@ def _collaborator_census(estate: dict, access: dict | None, token: str | None, o
                 ok = False
         else:
             ok = False
-        r = _gh(
-            [
-                "api",
-                f"/repos/{repo}/invitations?per_page=100",
-                "--jq",
-                "[.[] | {id: .id, login: .invitee.login, role: .permissions}] | sort_by(.login)",
-            ],
-            token,
-            timeout=30,
+        r = _roll(
+            repo,
+            f"/repos/{repo}/invitations?per_page=100",
+            "[.[] | {id: .id, login: .invitee.login, role: .permissions}] | sort_by(.login)",
         )
         if r.returncode == 0:
             try:
