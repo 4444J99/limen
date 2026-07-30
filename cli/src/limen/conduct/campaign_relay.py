@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import rfc8785
+
 from limen.conduct.models import CampaignRelayReceiptV1, canonical_hash
 from limen.workstream_contract import (
     RECEIPT_SCHEMA,
@@ -482,7 +484,13 @@ def relay_identity(
             "relay_predecessor_unadmitted",
             "predecessor campaign has not been admitted",
         )
-    contract_digest = canonical_hash(contract)
+    try:
+        contract_digest = canonical_hash(contract)
+    except rfc8785.CanonicalizationError as exc:
+        raise CampaignRelayError(
+            "relay_predecessor_invalid",
+            "committed predecessor contract cannot be canonicalized",
+        ) from exc
     relay_id = _relay_identity_digest(
         workstream="institutional-omega",
         predecessor_receipt_blob=blob,

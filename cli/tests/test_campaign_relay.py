@@ -11,7 +11,7 @@ import pytest
 
 from limen.conduct.campaign_relay import CampaignRelayError, campaign_relay_lock, reserve_relay
 from limen.conduct.models import CampaignRelayReceiptV1
-from limen.workstream_contract import RECEIPT_MODULES, new_contract
+from limen.workstream_contract import RECEIPT_MODULES, new_contract, new_contract_v2
 
 
 def _git(root: Path, *args: str) -> str:
@@ -318,6 +318,32 @@ def test_non_utf8_committed_predecessor_has_a_path_free_error(relay_repo) -> Non
         reserve_relay(root, predecessor, exact_remote_main=_git(root, "rev-parse", "HEAD"))
 
     assert caught.value.code == "relay_predecessor_invalid"
+    assert str(predecessor) not in caught.value.public_reason
+
+
+def test_non_scalar_contract_text_has_a_path_free_relay_error(relay_repo) -> None:
+    root, predecessor = relay_repo
+    payload = json.loads(predecessor.read_text(encoding="utf-8"))
+    contract = new_contract_v2(
+        "8h",
+        agent="codex",
+        model="\ud800",
+        reasoning_effort="fixture-effort",
+        sandbox="workspace-write",
+    )
+    contract["runway"] = payload["contract"]["runway"]
+    payload["contract"] = contract
+    predecessor.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "commit", "-qm", "non-scalar contract text")
+
+    with pytest.raises(CampaignRelayError) as caught:
+        reserve_relay(root, predecessor, exact_remote_main=_git(root, "rev-parse", "HEAD"))
+
+    assert caught.value.code == "relay_predecessor_invalid"
+    assert caught.value.public_reason == (
+        "relay_predecessor_invalid: committed predecessor contract cannot be canonicalized"
+    )
     assert str(predecessor) not in caught.value.public_reason
 
 

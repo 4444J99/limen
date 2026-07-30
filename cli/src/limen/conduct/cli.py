@@ -116,7 +116,7 @@ def campaign_run(
                 "schema": RESULT_SCHEMA,
                 "boundary": "invalid",
                 "reason": exc.public_reason,
-                "successor_required": False,
+                "successor_required": True,
                 "terminal_predicate": terminal_predicate,
             }
         )

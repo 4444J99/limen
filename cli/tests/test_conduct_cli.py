@@ -189,11 +189,12 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
 
 
 @pytest.mark.parametrize(
-    ("error", "reason"),
+    ("error", "reason", "successor_required"),
     [
         (
             CampaignSupervisorError("exact remote main moved"),
             "exact remote main moved",
+            False,
         ),
         (
             CampaignRelayError(
@@ -201,6 +202,7 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
                 "campaign relay store is unavailable",
             ),
             "relay_store_unavailable: campaign relay store is unavailable",
+            True,
         ),
     ],
 )
@@ -209,6 +211,7 @@ def test_campaign_run_emits_one_structured_invalid_boundary(
     tmp_path,
     error,
     reason,
+    successor_required,
 ) -> None:
     capsule = tmp_path / "workstream.json"
     capsule.write_text("{}\n", encoding="utf-8")
@@ -241,7 +244,7 @@ def test_campaign_run_emits_one_structured_invalid_boundary(
         "boundary": "invalid",
         "reason": reason,
         "schema": "limen.campaign_supervisor_result.v1",
-        "successor_required": False,
+        "successor_required": successor_required,
         "terminal_predicate": "omega",
     }
     assert "/private/secret" not in result.output
