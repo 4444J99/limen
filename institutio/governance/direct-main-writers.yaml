@@ -25,6 +25,9 @@ surfaces:
   cli/src/limen/dispatch.py:
     disposition: isolated-task-branch-pr
     expected: {push_literal: 2}
+  cli/src/limen/conduct/campaign_relay_publication.py:
+    disposition: immutable-nondefault-campaign-relay-attempt-and-readiness-refs
+    expected: {push_literal: 2}
   cli/src/limen/fanout_executor.py:
     disposition: isolated-disposable-worktree-topic-branch-pr-default-refused
     expected: {git_push: 1, push_literal: 1}

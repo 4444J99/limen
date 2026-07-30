@@ -174,7 +174,7 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
             "--session-id",
             "campaign-session",
             "--evaluation-timeout",
-            "17",
+            "300",
         ],
     )
     assert result.exit_code == 0, result.output
@@ -185,7 +185,8 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
     assert observed["identity"].agent == "codex"
     assert observed["identity"].session_id == "campaign-session"
     assert observed["terminal_predicate"] == "omega"
-    assert observed["evaluation_timeout_seconds"] == 17
+    assert observed["evaluation_timeout_seconds"] == 300
+    assert observed["wake_deadline_monotonic_ns"] is None
 
 
 @pytest.mark.parametrize(

@@ -67,6 +67,8 @@ USAGE
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=scripts/lib/workstream-capsule.sh
 source "$script_dir/lib/workstream-capsule.sh"
+# shellcheck source=scripts/lib/campaign-relay-capsule.sh
+source "$script_dir/lib/campaign-relay-capsule.sh"
 
 autonomous=0
 launch_agent=0
@@ -94,9 +96,18 @@ branch_prefix="work"
 # prefix is REFUSED, never coerced: silently rewriting it would put the lane on a branch whose name
 # the caller did not choose, and `branch` is bound into the capsule identity digest.
 VALID_BRANCH_PREFIXES="work feat fix heal chore docs refactor"
+campaign_relay=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --campaign-relay)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for internal campaign relay identity" >&2
+        exit 2
+      fi
+      campaign_relay="$2"
+      shift 2
+      ;;
     --autonomous)
       autonomous=1
       shift
@@ -254,7 +265,7 @@ if [[ "$conduct" -eq 1 && "$write_readme" -ne 1 ]]; then
   echo "--conduct cannot be combined with --no-readme" >&2
   exit 2
 fi
-if [[ "$autonomous" -eq 1 && -z "$prompt_text" && -z "$prompt_file" ]]; then
+if [[ "$autonomous" -eq 1 && -z "$prompt_text" && -z "$prompt_file" && -z "$campaign_relay" ]]; then
   echo "--autonomous requires --prompt or --prompt-file" >&2
   exit 2
 fi
@@ -310,6 +321,67 @@ if [[ "$runway_explicit" -eq 1 ]]; then
   fi
   runway="${normalized_runway%%:*}"
 fi
+if [[ -n "$campaign_relay" ]]; then
+  if [[ ! "$campaign_relay" =~ ^[0-9a-f]{64}$ \
+    || "${LIMEN_CAMPAIGN_RELAY_ID:-}" != "$campaign_relay" \
+    || ! "${LIMEN_CAMPAIGN_RELAY_ACK_FD:-}" =~ ^[0-9]+$ \
+    || ! "${LIMEN_CAMPAIGN_RELAY_CONTROL_FD:-}" =~ ^[0-9]+$ \
+    || ! "${LIMEN_CAMPAIGN_RELAY_EXEC_FD:-}" =~ ^[0-9]+$ \
+    || "${LIMEN_CAMPAIGN_RELAY_ACK_FD}" == "${LIMEN_CAMPAIGN_RELAY_CONTROL_FD}" \
+    || "${LIMEN_CAMPAIGN_RELAY_ACK_FD}" == "${LIMEN_CAMPAIGN_RELAY_EXEC_FD}" \
+    || "${LIMEN_CAMPAIGN_RELAY_CONTROL_FD}" == "${LIMEN_CAMPAIGN_RELAY_EXEC_FD}" \
+    || ! "${LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES:-}" =~ ^[a-z0-9][a-z0-9_-]*(,[a-z0-9][a-z0-9_-]*)*$ \
+    || "$autonomous" -ne 1 \
+    || "$launch_agent" -ne 1 \
+    || "$requested_agent" != "auto" \
+    || "$conduct" -ne 1 \
+    || "$runway_explicit" -ne 1 \
+    || "$runway" != "8h" \
+    || "$workstream" != "institutional-omega" \
+    || "$branch_prefix" != "work" \
+    || "$launch_shell" -ne 0 \
+    || "$write_readme" -ne 1 \
+    || -n "$prompt_text" \
+    || -n "$prompt_file" \
+    || -n "$launch_model" \
+    || -n "$launch_reasoning_effort" \
+    || -n "$launch_sandbox" \
+    || -n "$launch_lane_model" \
+    || ! "$from_ref" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ \
+    || "${LIMEN_CAMPAIGN_RELAY_BASE:-}" != "$from_ref" \
+    || "${LIMEN_WORKSTREAM_SESSION_ID:-}" != "relay-${campaign_relay:0:32}" ]]; then
+    echo "invalid internal campaign relay launch shape" >&2
+    exit 2
+  fi
+  if ! python3 - \
+    "${LIMEN_CAMPAIGN_RELAY_ACK_FD}" \
+    "${LIMEN_CAMPAIGN_RELAY_CONTROL_FD}" \
+    "${LIMEN_CAMPAIGN_RELAY_EXEC_FD}" <<'PY'
+import os
+import stat
+import sys
+
+descriptors = []
+for raw in sys.argv[1:]:
+    try:
+        descriptor = int(raw)
+        metadata = os.fstat(descriptor)
+    except (OSError, ValueError):
+        raise SystemExit(1)
+    if descriptor < 3 or descriptor > 255 or not stat.S_ISFIFO(metadata.st_mode):
+        raise SystemExit(1)
+    descriptors.append(descriptor)
+if len(set(descriptors)) != 3:
+    raise SystemExit(1)
+PY
+  then
+    echo "invalid internal campaign relay control or exec-status channel" >&2
+    exit 2
+  fi
+  unset LIMEN_HUMAN_PROTECTED LIMEN_NATIVE_RUN_ID LIMEN_NATIVE_SESSION_ID \
+    LIMEN_PROVIDER_IDENTITY LIMEN_RUN_ID
+  prompt_text="Continue only the institutional Omega workstream from its durable owner receipts. Preserve the predecessor trial and frozen evaluator byte-for-byte. Do not mutate launcher, ARCA, custody, host, credential, signer, service, protected-session, retirement, deletion, or paid-plan state. Re-derive live predicates and proceed only through the bounded provider-neutral workstream contract."
+fi
 
 agent=""
 registry_binary=""
@@ -325,6 +397,7 @@ import os
 import shutil
 import sys
 
+from limen.capacity import select_lanes
 from limen.census import VENDORS, by_name, canonical
 
 
@@ -344,13 +417,30 @@ def direct_native(vendor):
 
 requested = sys.argv[1].strip().lower()
 if requested == "auto":
-    preferred = canonical(os.environ.get("LIMEN_AGENT"))
-    ordered = list(VENDORS)
-    if preferred and by_name(preferred):
-        ordered.sort(key=lambda vendor: vendor.name != preferred)
+    relay_order = [
+        canonical(value)
+        for value in os.environ.get("LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES", "").split(",")
+        if value
+    ]
+    if relay_order:
+        if len(relay_order) != len(set(relay_order)):
+            raise SystemExit("campaign relay eligible lanes are not unique")
+        ordered = [by_name(name) for name in relay_order]
+        if any(vendor is None for vendor in ordered):
+            raise SystemExit("campaign relay eligible lane is not canonical")
+        live = set(select_lanes("auto"))
+        ordered = [vendor for vendor in ordered if vendor.name in live]
+        if not ordered:
+            raise SystemExit("campaign relay has no remaining live provider capacity before launch")
+    else:
+        preferred = canonical(os.environ.get("LIMEN_AGENT"))
+        ordered = list(VENDORS)
+        if preferred and by_name(preferred):
+            ordered.sort(key=lambda vendor: vendor.name != preferred)
     eligible = [
         vendor
         for vendor in ordered
+        if vendor is not None
         if vendor.status.available and vendor.status.state == "live" and direct_native(vendor)
     ]
     selected = next(
@@ -473,6 +563,14 @@ if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "not a git repo: $repo" >&2
   exit 1
 fi
+if [[ -n "$campaign_relay" ]]; then
+  relay_root_head="$(git -C "$repo" rev-parse HEAD 2>/dev/null || true)"
+  relay_root_status="$(git -C "$repo" status --porcelain=v1 --untracked-files=all 2>/dev/null || true)"
+  if [[ "$relay_root_head" != "$from_ref" || -n "$relay_root_status" ]]; then
+    echo "internal campaign relay requires a clean exact-base checkout" >&2
+    exit 2
+  fi
+fi
 
 slug="$(
   printf '%s' "$raw_slug" \
@@ -482,6 +580,10 @@ slug="$(
 if [[ -z "$slug" ]]; then
   echo "slug collapsed to empty: $raw_slug" >&2
   exit 1
+fi
+if [[ -n "$campaign_relay" && "$slug" != "institutional-omega-${campaign_relay:0:16}" ]]; then
+  echo "internal campaign relay slug does not match its stable identity" >&2
+  exit 2
 fi
 
 if [[ -n "$workstream" ]]; then
@@ -494,6 +596,14 @@ fi
 
 branch="$branch_prefix/$slug"
 wt="$repo/.worktrees/$slug"
+
+if [[ -n "$campaign_relay" ]]; then
+  if [[ -e "$wt" || -L "$wt" ]] \
+    || git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+    echo "internal campaign relay requires an absent deterministic target branch and worktree" >&2
+    exit 2
+  fi
+fi
 
 git_info_dir="$(git -C "$repo" rev-parse --path-format=absolute --git-path info)"
 mkdir -p "$git_info_dir"
@@ -543,7 +653,13 @@ echo "$created worktree: $wt"
 echo "branch: $branch"
 [[ -n "$workstream" ]] && echo "workstream: $workstream"
 echo "agent: $agent"
-[[ "$conduct" -eq 1 ]] && echo "conduct: human-protected direct session"
+if [[ "$conduct" -eq 1 ]]; then
+  if [[ -n "$campaign_relay" ]]; then
+    echo "conduct: deterministic relay session"
+  else
+    echo "conduct: human-protected direct session"
+  fi
+fi
 
 if [[ "$write_readme" -eq 1 ]]; then
   capsule_dir="$wt/.limen-workstream"
@@ -562,6 +678,10 @@ if [[ "$write_readme" -eq 1 ]]; then
     "$prompt_payload" "$script_dir/../spec/continuation-capsule" "$runway" "$contract_helper" \
     "$agent" "$registry_binary" "$conduct" "$allow_shell_fallback" "$agent_capabilities" \
     "$launch_model" "$launch_reasoning_effort" "$launch_sandbox" "$launch_lane_model"
+  if [[ -n "$campaign_relay" ]]; then
+    workstream_prepare_campaign_relay_capsule \
+      "$wt" "$slug" "$branch" "$workstream" "$campaign_relay"
+  fi
 fi
 
 if [[ "$launch_agent" -eq 1 ]]; then
