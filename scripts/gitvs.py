@@ -1590,6 +1590,29 @@ def _homed_levers() -> set[str]:
     return out
 
 
+def custody_drift(ledger: list, grants: dict, by_repo: dict, org_set: set) -> list[str]:
+    """The dual-estate custody rung's pure join (class O). A register-marked product
+    (ASSET LEDGER `product_ledger`, owner-independent names) that still lives in an ORG
+    while a DECLARED partner grant is LIVE on it has the wrong custody home — partnered
+    products belong to the personal estate (seats free forever, moat insulated; see the
+    repo_custody resource type). Staged-never-sent grants and undeclared collaborators
+    are class N's jurisdiction, not custody evidence. Deterministic (sorted)."""
+    ledger_set = {str(n) for n in ledger}
+    out: list[str] = []
+    for repo, obs in sorted((by_repo or {}).items()):
+        owner, _, name = str(repo).partition("/")
+        if name not in ledger_set or owner not in org_set:
+            continue
+        outside = (obs or {}).get("outside")
+        if outside is None:
+            continue  # unreadable roll → class N already SKIPs it; custody never guesses
+        declared = {str(g.get("login", "")).lower() for g in (grants.get(repo) or []) if isinstance(g, dict)}
+        live = sorted({str(c.get("login") or "") for c in outside if str(c.get("login") or "").lower() in declared})
+        if live:
+            out.append(f"{repo}: register-marked product with LIVE partner lane ({', '.join(live)}) still org-side")
+    return out
+
+
 def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = False) -> int:
     """The Diff operator. Exit 0 ⟺ drift == ∅ (over the rungs that could run). SKIP is never a faked PASS."""
     fails: list[str] = []
@@ -1822,6 +1845,27 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
                         f"[N collaborator-drift] {repo}: {g.get('login')} declared but absent — staged invite → "
                         + (f"{n_atom} (owned, open)" if n_atom in homed else f"{n_atom} (UNHOMED)")
                     )
+
+    # O — custody drift (the dual-estate rung, v4.0.0): ASSET LEDGER ∧ live declared grant ∧
+    # org owner. A partnered product's custody home is the personal estate; the transfer
+    # effector is outward-facing multi-repo custody movement — his hand — so drift CITES
+    # L-CONST-CUSTODY-MIGRATION while homed and reds only if the atom loses its owner.
+    ledger_rows = ((estate.get("product_ledger") or {}).get("repos")) or []
+    o_atom = "L-CONST-CUSTODY-MIGRATION"
+    org_set = set(((led.get("orgs") or {}).get("by_org")) or {})
+    if not ledger_rows:
+        skips.append("[O custody-drift] no product_ledger in ESTATE")
+    elif access is None or not access:
+        skips.append("[O custody-drift] no ACCESS registry")
+    elif not coll.get("complete"):
+        skips.append("[O custody-drift] census incomplete (gh errors)")
+    elif not org_set:
+        skips.append("[O custody-drift] org roll unavailable (user-scoped read failed)")
+    else:
+        for d in custody_drift(ledger_rows, access.get("grants") or {}, coll.get("by_repo") or {}, org_set):
+            (cites if o_atom in homed else fails).append(
+                f"[O custody-drift] {d} → " + (f"{o_atom} (owned, open)" if o_atom in homed else f"{o_atom} (UNHOMED)")
+            )
 
     # A/D are per-repo posture rungs — the census surfaces the inputs; the full per-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.

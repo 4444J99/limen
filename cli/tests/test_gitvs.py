@@ -516,3 +516,35 @@ def test_tracked_failed_census_exposes_count_without_private_failure_names(monke
         "failure_count": 1,
     }
     assert "private-owner" not in json.dumps(tracked)
+
+
+def test_custody_drift_flags_live_partnered_product_org_side() -> None:
+    module = _load()
+    ledger = ["peer-audited--behavioral-blockchain", "hokage-chess"]
+    grants = {
+        "organvm/peer-audited--behavioral-blockchain": [{"login": "jt", "role": "push"}],
+        "organvm/hokage-chess": [{"login": "rb", "role": "push"}],
+    }
+    by_repo = {
+        "organvm/peer-audited--behavioral-blockchain": {"outside": [{"login": "jt", "role": "push"}]},
+        "organvm/hokage-chess": {"outside": []},  # staged, never sent — class N's cite, not custody drift
+    }
+
+    drifts = module.custody_drift(ledger, grants, by_repo, {"organvm"})
+
+    assert len(drifts) == 1
+    assert "peer-audited--behavioral-blockchain" in drifts[0]
+    assert "jt" in drifts[0]
+
+
+def test_custody_drift_ignores_personal_estate_undeclared_and_unreadable() -> None:
+    module = _load()
+    ledger = ["victoroff-os", "mesh", "prima"]
+    grants = {"4444J99/victoroff-os": [{"login": "dv", "role": "push"}]}
+    by_repo = {
+        "4444J99/victoroff-os": {"outside": [{"login": "dv", "role": "push"}]},  # personal — right home
+        "organvm/mesh": {"outside": [{"login": "stranger", "role": "push"}]},  # undeclared — class N's
+        "organvm/prima": {"outside": None},  # unreadable roll — custody never guesses
+    }
+
+    assert module.custody_drift(ledger, grants, by_repo, {"organvm"}) == []
