@@ -304,8 +304,11 @@ estate = {
     },
 }
 rows = [
-    {"full_name": "o/candidate-private", "private": True},               # desired pub, cand -> CITE
-    {"full_name": "o/candidate-public", "private": False},               # desired pub, cand -> converged
+    {"full_name": "o/candidate-private", "private": True},               # cand, private -> CITE (wave pending)
+    {"full_name": "o/candidate-public", "private": False},               # cand, PUBLIC -> CITE (2026-07-30:
+                                                                         # was read "converged"; candidacy is a
+                                                                         # gated desire, so an un-gated public
+                                                                         # is a posture question, not silence)
     {"full_name": "o/leak", "private": False},                           # desired priv, public -> FAIL
     {"full_name": "o/fork", "private": True, "fork": True},              # any -> exempt
     {"full_name": "o/ok", "private": False, "description": "d", "topics_count": 3, "homepage": "h"},
@@ -314,12 +317,12 @@ rows = [
 fails, cites = g.visibility_drift(rows, estate)
 gaps = g.seo_floor_gaps(rows, estate)
 print(len(fails), len(cites), len(gaps))
-print("leak" in fails[0], "candidate-private" in cites[0])
+print("leak" in fails[0], "candidate-private" in cites[0], "candidate-public" in cites[1])
 print(gaps[0].startswith("o/bare:") and "description" in gaps[0] and "topics<2" in gaps[0] and "homepage" in gaps[0])
 PY
 )"
-if [ "$out" = "1 1 1
-True True
+if [ "$out" = "1 2 1
+True True True
 True" ]; then
   pass=$((pass+1))
 else
