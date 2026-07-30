@@ -420,6 +420,25 @@ sensors:
         severity: silent
         escalation: "prompt atom reconciliation skipped or exceeded its bound"
 
+  harness-root-probe:
+    section: "heartbeat"
+    title: "sense the Claude harness: runtime root still live, plan mode still working"
+    gate: LIMEN_HARNESS_ROOT_PROBE
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    note: "ARMED 2026-07-30. The fleet senses its work product (lint, tests, contracts, deploys) but never sensed the worker. When the harness relocated its runtime tree from ~/.claude to <repo>/.agent-runtime/claude, ten limen surfaces went blind at once and nothing went red: action_admission stopped recognising plan-file writes (plan mode broke, re-breaking PR #1521's fix six days later), continuity globbed an empty dir while still reporting ok, claude-workflow-guard's untiered-fan-out audit silently found no sessions. This probe asserts (1) the resolved root actually holds transcripts — empty-while-a-sibling-is-full is the relocation signature — and (2) three structural plan-mode fault signatures: A ExitPlanMode returned is_error, B a file mutation while permissionMode=plan excluding the session's own plan file (the read-only guarantee), C one plan slug written to both a shared and a .claude/worktrees path (the shadow that serves a stale plan to the approval dialog). Matching is structural, never on error text: substring matching also catches sessions merely discussing the error (3 false positives when prototyped). Baseline at arming, full corpus: A=15 (41% of 37 ExitPlanMode calls; Fable 14 fail/10 ok vs Opus 1 fail/13 ok), B=0, C=3."
+    cadence:
+      env: LIMEN_BEAT_HARNESS_PROBE
+      default: 6
+    timeout:
+      env: LIMEN_HARNESS_PROBE_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/harness-root-probe.py"
+        severity: advisory
+        escalation: "harness root moved or plan-mode faults seen — run scripts/harness-root-probe.py"
+
   bifrons-portal:
     section: "heartbeat"
     title: "metabolize the BIFRONS star<->contribution portal (absorb->map->prepare; never submits)"

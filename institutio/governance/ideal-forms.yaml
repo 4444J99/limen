@@ -256,3 +256,17 @@ ideals:
       derives: "registry<->roster parity for the domain family (rows + cartridges, both directions)"
       environment: repo
       at_ideal_when: exit_zero
+
+  IF-HARNESS-SENSED:
+    ideal: >
+      The Claude harness runtime tree — the external substrate the fleet reads its own session
+      state from — is declared once (PARAMETERS), resolved in exactly one place
+      (limen.harness_paths), and sensed at beat cadence, so relocating it is a red check rather
+      than a silent blinding. The fleet senses its work product; it must also sense the worker.
+      Extending the same shape to the remaining vendor roots is the NEXT form, not this row.
+    owner: "Claude (limen.harness_paths resolver + scripts/harness-root-probe.py + the harness-root-probe sensor)"
+    probe:
+      command: "python3 scripts/harness-root-probe.py --root-only"
+      derives: "the resolved Claude harness root still holds transcripts; empty-while-a-sibling-candidate-is-full is the relocation signature"
+      environment: repo
+      at_ideal_when: exit_zero
