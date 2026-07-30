@@ -52,6 +52,21 @@ limen progress --view workstream --scope financial --all
 limen harvest
 ```
 
+### Session streams — open, exit, reopen
+
+The declared work domains ([`institutio/governance/session-streams.yaml`](institutio/governance/session-streams.yaml),
+with the operator's people × project lanes derived from the constellation register) open as one
+tmux window per stream. The round trip:
+
+```bash
+limen streams                 # open + REOPEN every openable lane, up to the RAM-derived bound
+limen streams --status        # one line per stream: live (pid) / dormant / ready / blocked / …
+tmux attach -t limen-streams  # go to the windows; Ctrl-b d detaches without stopping anything
+# exit the agent in a window (/exit) — the window is kept, the stream turns `dormant`,
+# and the next `limen streams` run reopens it (labelled REOPEN).
+limen streams --lane claude   # choose the native lane; --family all adds governance domains
+```
+
 ### Run API & Dashboard locally
 
 ```bash
@@ -76,6 +91,7 @@ Mounts `./tasks.yaml` into the API container.
 | `limen progress` | `--view`, `--scope`, `--level`, `--all`, `--json-output`, `--report-file`, `--ascii` | Inspect the partial board-progress and source-coverage lens. |
 | `limen harvest` | `--agent` | Check for completed dispatches and update task states. |
 | `limen workstream` | `--from`, `--prompt`, `--prompt-file`, `--agent auto\|LANE`, `--conduct`, `--shell` | Create/reuse a repo worktree plus a private agent-neutral `.limen-workstream/README.md` and `kickstart.sh`; optionally register a protected direct conductor session. |
+| `limen streams` | `--status`, `--family`, `--lane`, `--dry-run`, `--max-parallel`, `--unbounded`, `--session` | Open (and reopen) every openable session stream, one tmux window each; delegates to `scripts/open-streams.sh`. |
 
 The installer also creates a terminal-neutral shortcut in `~/.local/bin`:
 

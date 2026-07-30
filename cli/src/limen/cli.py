@@ -686,6 +686,52 @@ def workstream(
     raise SystemExit(result.returncode)
 
 
+@main.command("streams")
+@click.option(
+    "--status",
+    "show_status",
+    is_flag=True,
+    help="One line per stream with its derived state (live/dormant/ready/blocked/stale/settled); touches nothing.",
+)
+@click.option(
+    "--family",
+    default=None,
+    type=click.Choice(["constellation", "governance", "all"]),
+    help="Which rows to open. Default constellation — the operator's people × project lanes; "
+    "governance domains are named as elided and opened deliberately.",
+)
+@click.option("--lane", default=None, metavar="LANE", help="Native lane to open on (claude|codex|agy|opencode|…).")
+@click.option("--dry-run", "dry_run", is_flag=True, help="Print exactly what would open; touch nothing.")
+@click.option("--max-parallel", "max_parallel", default=None, type=int, help="Override the RAM-derived bound.")
+@click.option("--unbounded", is_flag=True, help="Waive the RAM-derived bound (you accept the jetsam risk).")
+@click.option("--session", "tmux_session", default=None, help="tmux session name (default limen-streams).")
+def streams(show_status, family, lane, dry_run, max_parallel, unbounded, tmux_session):
+    """Open (and REOPEN) the session streams, each in its own tmux window.
+
+    The advertised form of scripts/open-streams.sh — a pure delegate, so the CLI can never tell a
+    different story than the script. The round trip: open → work → exit the agent (the tmux window
+    is kept) → `limen streams` again reopens the dormant stream; `limen streams --status` shows
+    every lane's derived state at a glance.
+    """
+    root = resolve_limen_repo_root()
+    args = ["bash", str(root / "scripts" / "open-streams.sh")]
+    if show_status:
+        args.append("--status")
+    if family:
+        args.extend(["--family", family])
+    if lane:
+        args.extend(["--lane", lane])
+    if dry_run:
+        args.append("--dry-run")
+    if max_parallel is not None:
+        args.extend(["--max-parallel", str(max_parallel)])
+    if unbounded:
+        args.append("--all")
+    if tmux_session:
+        args.extend(["--session", tmux_session])
+    raise SystemExit(subprocess.run(args).returncode)
+
+
 @main.command()
 @click.option(
     "--verify",
