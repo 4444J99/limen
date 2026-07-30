@@ -836,7 +836,7 @@ os.close(exec_fd)
         registration=register,
     )
 
-    assert launch.receipt.state == "failed"
+    assert launch.receipt.state == "indeterminate"
     assert launch.receipt.terminal_code == "relay_startup_output_oversized"
     assert launch.receipt.startup_stdout_truncated is True
     assert launch.receipt.startup_stdout_bytes == relay_process._STARTUP_OUTPUT_CEILING + 1
