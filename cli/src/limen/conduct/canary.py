@@ -498,6 +498,7 @@ def _validate_packet_contract(
     *,
     expected: WorkPacketV1,
     created_at: Any,
+    require_exact_deadline: bool = False,
 ) -> WorkPacketV1:
     try:
         stored = WorkPacketV1.model_validate(raw_packet)
@@ -506,6 +507,8 @@ def _validate_packet_contract(
     compared_fields = tuple(field for field in WorkPacketV1.model_fields if field != "deadline")
     if any(getattr(stored, field) != getattr(expected, field) for field in compared_fields):
         raise ConductCanaryError("harvested canary packet does not match the expected edge contract")
+    if require_exact_deadline and stored.deadline != expected.deadline:
+        raise ConductCanaryError("harvested canary packet deadline does not match the receipt observation")
     created = _parse_timestamp(created_at, "harvested run created_at")
     if stored.deadline <= created or stored.deadline > created + _EDGE_DEADLINE + _MAX_DEADLINE_SKEW:
         raise ConductCanaryError("harvested canary packet deadline is outside the bounded edge window")
@@ -554,6 +557,7 @@ def _validate_harvest_node(
     conductor: _Lane,
     executor: _Lane,
     runtime_git_sha: str,
+    require_exact_deadline: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any], WorkPacketV1]:
     run_id = _expected_run_id(packet)
     if not isinstance(harvest, dict) or harvest.get("schema_version") != "limen.conduct_harvest.v1":
@@ -583,6 +587,7 @@ def _validate_harvest_node(
         node.get("packet"),
         expected=packet,
         created_at=node.get("created_at"),
+        require_exact_deadline=require_exact_deadline,
     )
     lease = node.get("lease")
     if not isinstance(lease, dict):
@@ -1047,6 +1052,7 @@ def _reuse_existing(
             conductor=conductor,
             executor=executor,
             runtime_git_sha=runtime_git_sha,
+            require_exact_deadline=True,
         )
         if (node.get("status"), lease.get("state")) != ("succeeded", "released"):
             raise ConductCanaryError("existing receipt references an unsettled canary edge")

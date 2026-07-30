@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import json
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from threading import Barrier
 
@@ -292,6 +292,29 @@ def test_existing_receipt_tampering_fails_closed(tmp_path: Path, tamper: str) ->
         )
 
 
+def test_existing_receipt_observed_at_tampering_fails_closed(tmp_path: Path) -> None:
+    _broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["observed_at"] = (datetime.fromisoformat(receipt["observed_at"]) + timedelta(seconds=1)).isoformat()
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+
+    with pytest.raises(ConductCanaryError, match="deadline does not match"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+
 @pytest.mark.parametrize("tamper", ["work_key", "intent", "intent_hash", "executor"])
 def test_harvested_edge_tampering_fails_closed(tmp_path: Path, tamper: str) -> None:
     broker, client, factory, environment, receipt_path = _mesh(tmp_path)
@@ -315,6 +338,30 @@ def test_harvested_edge_tampering_fails_closed(tmp_path: Path, tamper: str) -> N
             run["executor_session_id"] = "zeta-canary-executor"
 
     with pytest.raises(ConductCanaryError):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+
+def test_harvested_packet_deadline_tampering_fails_closed(tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    receipt = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+    run_id = receipt["edges"][0]["run_id"]
+    with broker.store.transaction() as state:
+        packet = state["runs"][run_id]["packet"]
+        packet["deadline"] = (datetime.fromisoformat(packet["deadline"]) + timedelta(seconds=1)).isoformat()
+
+    with pytest.raises(ConductCanaryError, match="deadline does not match"):
         run_full_mesh_canary(
             client=client,
             receipt_path=receipt_path,
