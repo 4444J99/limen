@@ -13,6 +13,9 @@ import hashlib
 import json
 import os
 import re
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -23,6 +26,7 @@ from limen.conduct.client import HttpConductClient
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
+    CheckEvidenceV1,
     FanoutBoundsV1,
     PredicateEvidenceV1,
     RetryPolicyV1,
@@ -43,8 +47,13 @@ _TOKEN_ENV_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,127}$")
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _GIT_OBJECT_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 _MAX_LANES = 16
+_MAX_RECEIPT_BYTES = 4 * 1024 * 1024
 _EDGE_DEADLINE = timedelta(minutes=15)
+_MAX_DEADLINE_SKEW = timedelta(minutes=5)
+_PATH_LOCK_TIMEOUT_SECONDS = 10.0
+_PATH_LOCK_POLL_SECONDS = 0.01
 _PREDICATE = "limen conduct canary full-mesh --receipt canary.json"
+_PREDICATE_SUMMARY = "bounded authenticated read-effect canary edge"
 
 
 class ConductCanaryError(ConductError):
@@ -193,12 +202,12 @@ def _discover_lanes(
             raise ConductCanaryError("remote keeper returned a malformed session identity") from exc
         if identity.session_id != session_id or session_id in sessions:
             raise ConductCanaryError("remote keeper returned duplicate or mismatched sessions")
-        session = dict(raw)
-        session["identity"] = identity.model_dump(mode="json")
-        sessions[session_id] = session
-        if _eligible_session(session, "conduct"):
+        normalized_session: dict[str, Any] = dict(raw)
+        normalized_session["identity"] = identity.model_dump(mode="json")
+        sessions[session_id] = normalized_session
+        if _eligible_session(normalized_session, "conduct"):
             conductor_agents.add(identity.agent)
-        if _eligible_session(session, "execute"):
+        if _eligible_session(normalized_session, "execute"):
             executor_agents.add(identity.agent)
 
     denominator = conductor_agents & executor_agents
@@ -265,6 +274,19 @@ def _public_lane(lane: _Lane) -> dict[str, Any]:
         "executor_credential_ref": lane.executor_credential.token_env,
         "executor_credential_sha256": lane.executor_credential.token_sha256,
     }
+
+
+def _capabilities_evidence_sha256(lanes: tuple[_Lane, ...]) -> str:
+    return canonical_hash(
+        [
+            {
+                "lane": lane.name,
+                "conductor": _stable_session_identity(lane.conductor_session),
+                "executor": _stable_session_identity(lane.executor_session),
+            }
+            for lane in lanes
+        ]
+    )
 
 
 def _canary_identity(
@@ -363,31 +385,348 @@ def _executor_only_rejection(exc: ConductError) -> bool:
     )
 
 
-def _verify_harvest(
+def _edge_id(canary_id: str, conductor: _Lane, executor: _Lane) -> str:
+    return canonical_hash(
+        {
+            "canary_id": canary_id,
+            "conductor_lane": conductor.name,
+            "executor_lane": executor.name,
+            "conductor_session": conductor.conductor_session["session_id"],
+            "executor_session": executor.executor_session["session_id"],
+        }
+    )
+
+
+def _expected_run_id(packet: WorkPacketV1) -> str:
+    digest = canonical_hash(
+        {
+            "work_id": packet.work_id,
+            "intent_hash": packet.intent_hash,
+            "execution_hash": packet.execution_hash,
+        }
+    )
+    return f"run-{digest[:32]}"
+
+
+def _claim_evidence_sha256(
+    *,
+    edge_id: str,
+    run_id: str,
+    lease: dict[str, Any],
+    executor_session_id: str,
+) -> str:
+    return canonical_hash(
+        {
+            "schema_version": "limen.conduct_canary_executor_claim_evidence.v1",
+            "edge_id": edge_id,
+            "run_id": run_id,
+            "lease_id": lease["lease_id"],
+            "lease_generation": lease["generation"],
+            "executor_session_id": executor_session_id,
+        }
+    )
+
+
+def _heartbeat_evidence_sha256(
+    *,
+    edge_id: str,
+    run_id: str,
+    lease: dict[str, Any],
+    executor_session_id: str,
+    runtime_git_sha: str,
+) -> str:
+    return canonical_hash(
+        {
+            "schema_version": "limen.conduct_canary_heartbeat_evidence.v1",
+            "edge_id": edge_id,
+            "run_id": run_id,
+            "lease_id": lease["lease_id"],
+            "lease_generation": lease["generation"],
+            "executor_session_id": executor_session_id,
+            "observed_heads": {"runtime": runtime_git_sha},
+        }
+    )
+
+
+def _expected_checks(
+    *,
+    edge_id: str,
+    run_id: str,
+    lease: dict[str, Any],
+    executor_session_id: str,
+    runtime_git_sha: str,
+) -> tuple[CheckEvidenceV1, ...]:
+    return (
+        CheckEvidenceV1(
+            name="conduct-canary-executor-claim",
+            status="success",
+            head=_claim_evidence_sha256(
+                edge_id=edge_id,
+                run_id=run_id,
+                lease=lease,
+                executor_session_id=executor_session_id,
+            ),
+        ),
+        CheckEvidenceV1(
+            name="conduct-canary-heartbeat",
+            status="success",
+            head=_heartbeat_evidence_sha256(
+                edge_id=edge_id,
+                run_id=run_id,
+                lease=lease,
+                executor_session_id=executor_session_id,
+                runtime_git_sha=runtime_git_sha,
+            ),
+        ),
+    )
+
+
+def _parse_timestamp(value: Any, label: str) -> datetime:
+    if not isinstance(value, str):
+        raise ConductCanaryError(f"{label} must be an ISO-8601 timestamp")
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ConductCanaryError(f"{label} must be an ISO-8601 timestamp") from exc
+    if parsed.tzinfo is None:
+        raise ConductCanaryError(f"{label} must include a timezone")
+    return parsed
+
+
+def _validate_packet_contract(
+    raw_packet: Any,
+    *,
+    expected: WorkPacketV1,
+    created_at: Any,
+) -> WorkPacketV1:
+    try:
+        stored = WorkPacketV1.model_validate(raw_packet)
+    except ValueError as exc:
+        raise ConductCanaryError("harvested canary packet is malformed") from exc
+    compared_fields = tuple(field for field in WorkPacketV1.model_fields if field != "deadline")
+    if any(getattr(stored, field) != getattr(expected, field) for field in compared_fields):
+        raise ConductCanaryError("harvested canary packet does not match the expected edge contract")
+    created = _parse_timestamp(created_at, "harvested run created_at")
+    if stored.deadline <= created or stored.deadline > created + _EDGE_DEADLINE + _MAX_DEADLINE_SKEW:
+        raise ConductCanaryError("harvested canary packet deadline is outside the bounded edge window")
+    return stored
+
+
+def _validate_submit_result(
+    result: dict[str, Any],
+    *,
+    packet: WorkPacketV1,
+    executor: _Lane,
+) -> tuple[str, dict[str, Any]]:
+    expected_keys = {
+        "schema_version",
+        "status",
+        "run_id",
+        "root_run_id",
+        "executor_session_id",
+        "lease",
+    }
+    if not isinstance(result, dict) or set(result) != expected_keys:
+        raise ConductCanaryError("keeper returned a malformed canary submit result")
+    if result.get("schema_version") != "limen.conduct_submit_result.v1":
+        raise ConductCanaryError("keeper returned an unsupported canary submit schema")
+    status = str(result.get("status") or "")
+    if status not in {"reserved", "duplicate"}:
+        raise ConductCanaryError("canary edge did not receive a reservation or deterministic duplicate")
+    run_id = _expected_run_id(packet)
+    if result.get("run_id") != run_id or result.get("root_run_id") != run_id:
+        raise ConductCanaryError("keeper returned the wrong deterministic canary run")
+    executor_session_id = executor.executor_session["session_id"]
+    if result.get("executor_session_id") != executor_session_id:
+        raise ConductCanaryError("keeper bound the canary edge to the wrong executor session")
+    lease = result.get("lease")
+    if not isinstance(lease, dict):
+        raise ConductCanaryError("keeper returned an invalid canary lease")
+    if "capability_token" in result or "capability_token_hash" in lease or "executor_principal_id" in lease:
+        raise ConductCanaryError("reservation disclosed executor-only capability material")
+    return status, lease
+
+
+def _validate_harvest_node(
     harvest: dict[str, Any],
     *,
-    run_id: str,
+    packet: WorkPacketV1,
+    conductor: _Lane,
+    executor: _Lane,
     runtime_git_sha: str,
-) -> dict[str, Any]:
-    if harvest.get("root_run_id") != run_id or harvest.get("unharvested"):
-        raise ConductCanaryError("conductor harvest did not return one settled root")
+) -> tuple[dict[str, Any], dict[str, Any], WorkPacketV1]:
+    run_id = _expected_run_id(packet)
+    if not isinstance(harvest, dict) or harvest.get("schema_version") != "limen.conduct_harvest.v1":
+        raise ConductCanaryError("conductor returned an unsupported harvest schema")
+    if harvest.get("root_run_id") != run_id or harvest.get("run_count") != 1:
+        raise ConductCanaryError("conductor harvest did not return the exact canary root")
     nodes = harvest.get("nodes")
     if not isinstance(nodes, list) or len(nodes) != 1:
         raise ConductCanaryError("conductor harvest returned an unexpected graph")
     node = nodes[0]
-    receipts = node.get("receipts") if isinstance(node, dict) else None
-    if node.get("status") != "succeeded" or not isinstance(receipts, list) or len(receipts) != 1:
-        raise ConductCanaryError("conductor harvest did not return one successful receipt")
-    receipt = receipts[0]
+    if not isinstance(node, dict):
+        raise ConductCanaryError("conductor harvest returned a malformed run")
+    executor_session_id = executor.executor_session["session_id"]
     if (
-        receipt.get("mutation_authorized") is not True
-        or receipt.get("changed_paths") != []
-        or receipt.get("observed_heads_before") != {"runtime": runtime_git_sha}
-        or receipt.get("observed_heads_after") != {"runtime": runtime_git_sha}
-        or receipt.get("outcome") != "succeeded"
+        node.get("run_id") != run_id
+        or node.get("root_run_id") != run_id
+        or node.get("parent_run_id") is not None
+        or node.get("conductor_session_id") != conductor.conductor_session["session_id"]
+        or node.get("executor_session_id") != executor_session_id
+        or node.get("children") != []
+        or node.get("attempts") != []
+        or node.get("projection_receipts") != []
+        or node.get("compatibility_projection") is not False
     ):
-        raise ConductCanaryError("harvested read-effect receipt violates the canary contract")
-    return receipt
+        raise ConductCanaryError("harvested canary run does not match the expected edge")
+    stored_packet = _validate_packet_contract(
+        node.get("packet"),
+        expected=packet,
+        created_at=node.get("created_at"),
+    )
+    lease = node.get("lease")
+    if not isinstance(lease, dict):
+        raise ConductCanaryError("harvested canary run lacks its public lease")
+    if "capability_token_hash" in lease or "executor_principal_id" in lease:
+        raise ConductCanaryError("harvested canary lease disclosed capability material")
+    if (
+        node.get("lease_id") != lease.get("lease_id")
+        or lease.get("run_id") != run_id
+        or lease.get("executor") != executor.executor_session["identity"]
+        or lease.get("resources") != []
+        or lease.get("observed_heads") != {"runtime": runtime_git_sha}
+        or not isinstance(lease.get("generation"), int)
+        or isinstance(lease.get("generation"), bool)
+        or int(lease["generation"]) < 1
+    ):
+        raise ConductCanaryError("harvested canary lease does not match the expected executor")
+    status_pair = (node.get("status"), lease.get("state"))
+    if status_pair not in {
+        ("reserved", "reserved"),
+        ("running", "active"),
+        ("succeeded", "released"),
+    }:
+        raise ConductCanaryError("canary duplicate is not in a recoverable lifecycle state")
+    receipts = node.get("receipts")
+    if not isinstance(receipts, list):
+        raise ConductCanaryError("harvested canary receipts are malformed")
+    terminal = status_pair == ("succeeded", "released")
+    expected_receipt_count = 1 if terminal else 0
+    expected_unharvested = [] if terminal else [run_id]
+    if (
+        harvest.get("receipt_count") != expected_receipt_count
+        or harvest.get("by_status") != {str(node["status"]): 1}
+        or harvest.get("unharvested") != expected_unharvested
+        or len(receipts) != expected_receipt_count
+    ):
+        raise ConductCanaryError("canary harvest counts do not match its lifecycle state")
+    return node, lease, stored_packet
+
+
+def _validate_terminal_receipt(
+    node: dict[str, Any],
+    lease: dict[str, Any],
+    *,
+    packet: WorkPacketV1,
+    edge_id: str,
+    executor: _Lane,
+    runtime_git_sha: str,
+) -> dict[str, Any]:
+    raw_receipt = node["receipts"][0]
+    if not isinstance(raw_receipt, dict):
+        raise ConductCanaryError("harvested canary receipt is malformed")
+    receipt_fields = set(RunReceiptV1.model_fields)
+    if set(raw_receipt) != receipt_fields | {"mutation_authorized", "accepted_at"}:
+        raise ConductCanaryError("harvested canary receipt has an unexpected schema")
+    if raw_receipt.get("mutation_authorized") is not True:
+        raise ConductCanaryError("harvested canary receipt was not authorized")
+    _parse_timestamp(raw_receipt.get("accepted_at"), "harvested receipt accepted_at")
+    try:
+        receipt = RunReceiptV1.model_validate({field: raw_receipt[field] for field in receipt_fields})
+    except ValueError as exc:
+        raise ConductCanaryError("harvested canary receipt violates RunReceiptV1") from exc
+    run_id = _expected_run_id(packet)
+    expected = RunReceiptV1(
+        receipt_id=f"receipt-{packet.work_id}",
+        run_id=run_id,
+        lease_id=str(lease["lease_id"]),
+        lease_generation=int(lease["generation"]),
+        executor=AgentIdentityV1.model_validate(executor.executor_session["identity"]),
+        observed_heads_before={"runtime": runtime_git_sha},
+        observed_heads_after={"runtime": runtime_git_sha},
+        changed_paths=(),
+        predicate=PredicateEvidenceV1(
+            command=packet.predicate,
+            exit_code=0,
+            summary=_PREDICATE_SUMMARY,
+            observed_at=receipt.predicate.observed_at,
+        ),
+        checks=_expected_checks(
+            edge_id=edge_id,
+            run_id=run_id,
+            lease=lease,
+            executor_session_id=executor.executor_session["session_id"],
+            runtime_git_sha=runtime_git_sha,
+        ),
+        spend={"runs": 0},
+        child_runs=(),
+        outcome="succeeded",
+        completed_at=receipt.completed_at,
+    )
+    if receipt != expected:
+        raise ConductCanaryError("harvested canary receipt does not match the exact edge proof")
+    return raw_receipt
+
+
+def _conductor_rejection_sha256(client: HttpConductClient, lease: dict[str, Any]) -> str:
+    try:
+        client.claim(str(lease["lease_id"]), int(lease["generation"]))
+    except ConductError as exc:
+        if not _executor_only_rejection(exc):
+            raise ConductCanaryError("conductor claim failed for an unexpected reason") from exc
+        return _sha256_text(str(exc))
+    raise ConductCanaryError("conductor principal claimed an executor-only lease")
+
+
+def _edge_evidence(
+    *,
+    packet: WorkPacketV1,
+    edge_id: str,
+    conductor: _Lane,
+    executor: _Lane,
+    lease: dict[str, Any],
+    rejection_sha256: str,
+    accepted_receipt: dict[str, Any],
+    runtime_git_sha: str,
+) -> dict[str, Any]:
+    run_id = _expected_run_id(packet)
+    checks = _expected_checks(
+        edge_id=edge_id,
+        run_id=run_id,
+        lease=lease,
+        executor_session_id=executor.executor_session["session_id"],
+        runtime_git_sha=runtime_git_sha,
+    )
+    return {
+        "edge_id": edge_id,
+        "conductor_lane": conductor.name,
+        "executor_lane": executor.name,
+        "run_id": run_id,
+        "lease_id_sha256": _sha256_text(str(lease["lease_id"])),
+        "work_key_sha256": _sha256_text(packet.work_key),
+        "intent_sha256": packet.intent_hash,
+        "execution_sha256": packet.execution_hash,
+        "conductor_claim_rejection_sha256": rejection_sha256,
+        "executor_claim_sha256": str(checks[0].head),
+        "heartbeat_sha256": str(checks[1].head),
+        "accepted_receipt_sha256": canonical_hash(accepted_receipt),
+        "reservation": True,
+        "executor_only_claim": True,
+        "heartbeat": True,
+        "unchanged_heads": True,
+        "empty_changed_paths": True,
+        "conductor_harvest": True,
+    }
 
 
 def _execute_edge(
@@ -401,15 +740,7 @@ def _execute_edge(
     endpoint: str,
     timeout: int,
 ) -> dict[str, Any]:
-    edge_id = canonical_hash(
-        {
-            "canary_id": canary_id,
-            "conductor_lane": conductor.name,
-            "executor_lane": executor.name,
-            "conductor_session": conductor.conductor_session["session_id"],
-            "executor_session": executor.executor_session["session_id"],
-        }
-    )
+    edge_id = _edge_id(canary_id, conductor, executor)
     conductor_client = client_factory(
         endpoint,
         conductor.conductor_credential.token,
@@ -428,37 +759,59 @@ def _execute_edge(
         runtime_git_sha=runtime_git_sha,
         now=now,
     )
-    reserved = conductor_client.submit(packet)
-    if reserved.get("status") != "reserved":
-        raise ConductCanaryError("fresh canary edge did not receive a reservation")
-    if reserved.get("executor_session_id") != executor.executor_session["session_id"]:
-        raise ConductCanaryError("keeper reserved the canary edge for the wrong executor session")
-    lease = reserved.get("lease")
-    if not isinstance(lease, dict) or lease.get("state") != "reserved":
-        raise ConductCanaryError("keeper returned an invalid canary lease")
-    if "capability_token" in reserved or "capability_token_hash" in lease:
-        raise ConductCanaryError("reservation disclosed executor-only capability material")
-
-    rejection_digest: str
-    try:
-        conductor_client.claim(lease["lease_id"], lease["generation"])
-    except ConductError as exc:
-        if not _executor_only_rejection(exc):
-            raise ConductCanaryError("conductor claim failed for an unexpected reason") from exc
-        rejection_digest = _sha256_text(str(exc))
-    else:
-        raise ConductCanaryError("conductor principal claimed an executor-only lease")
+    submitted = conductor_client.submit(packet)
+    submit_status, submitted_lease = _validate_submit_result(
+        submitted,
+        packet=packet,
+        executor=executor,
+    )
+    run_id = _expected_run_id(packet)
+    harvested = conductor_client.harvest(run_id)
+    node, lease, _stored_packet = _validate_harvest_node(
+        harvested,
+        packet=packet,
+        conductor=conductor,
+        executor=executor,
+        runtime_git_sha=runtime_git_sha,
+    )
+    if (
+        submitted_lease.get("lease_id") != lease.get("lease_id")
+        or submitted_lease.get("generation") != lease.get("generation")
+        or submitted_lease.get("state") != lease.get("state")
+    ):
+        raise ConductCanaryError("submit and harvest disagree about the canary lease")
+    rejection_digest = _conductor_rejection_sha256(conductor_client, lease)
+    if (node.get("status"), lease.get("state")) == ("succeeded", "released"):
+        if submit_status != "duplicate":
+            raise ConductCanaryError("fresh reservation unexpectedly resolved to a terminal canary run")
+        accepted = _validate_terminal_receipt(
+            node,
+            lease,
+            packet=packet,
+            edge_id=edge_id,
+            executor=executor,
+            runtime_git_sha=runtime_git_sha,
+        )
+        return _edge_evidence(
+            packet=packet,
+            edge_id=edge_id,
+            conductor=conductor,
+            executor=executor,
+            lease=lease,
+            rejection_sha256=rejection_digest,
+            accepted_receipt=accepted,
+            runtime_git_sha=runtime_git_sha,
+        )
 
     claim = executor_client.claim(lease["lease_id"], lease["generation"])
     capability_token = str(claim.get("capability_token") or "")
     if (
         claim.get("lease_id") != lease["lease_id"]
-        or claim.get("run_id") != reserved["run_id"]
+        or claim.get("run_id") != run_id
         or claim.get("generation") != lease["generation"]
         or not capability_token
     ):
         raise ConductCanaryError("executor claim returned an invalid capability")
-    capability_sha256 = _sha256_text(capability_token)
 
     heartbeat = executor_client.heartbeat(
         lease["lease_id"],
@@ -468,10 +821,21 @@ def _execute_edge(
     )
     if heartbeat.get("status") != "active":
         raise ConductCanaryError("executor heartbeat did not activate the lease")
+    heartbeat_lease = heartbeat.get("lease")
+    if (
+        not isinstance(heartbeat_lease, dict)
+        or heartbeat_lease.get("lease_id") != lease["lease_id"]
+        or heartbeat_lease.get("run_id") != run_id
+        or heartbeat_lease.get("generation") != lease["generation"]
+        or heartbeat_lease.get("executor") != executor.executor_session["identity"]
+        or heartbeat_lease.get("observed_heads") != {"runtime": runtime_git_sha}
+        or heartbeat_lease.get("state") != "active"
+    ):
+        raise ConductCanaryError("executor heartbeat returned the wrong canary lease")
 
     receipt = RunReceiptV1(
         receipt_id=f"receipt-{packet.work_id}",
-        run_id=reserved["run_id"],
+        run_id=run_id,
         lease_id=lease["lease_id"],
         lease_generation=lease["generation"],
         executor=AgentIdentityV1.model_validate(lease["executor"]),
@@ -481,7 +845,14 @@ def _execute_edge(
         predicate=PredicateEvidenceV1(
             command=packet.predicate,
             exit_code=0,
-            summary="bounded authenticated read-effect canary edge",
+            summary=_PREDICATE_SUMMARY,
+        ),
+        checks=_expected_checks(
+            edge_id=edge_id,
+            run_id=run_id,
+            lease=lease,
+            executor_session_id=executor.executor_session["session_id"],
+            runtime_git_sha=runtime_git_sha,
         ),
         spend={"runs": 0},
         outcome="succeeded",
@@ -494,34 +865,65 @@ def _execute_edge(
     )
     if report.get("mutation_authorized") is not True or report.get("run_status") != "succeeded":
         raise ConductCanaryError("keeper rejected the unchanged-head read-effect receipt")
-    harvested = conductor_client.harvest(reserved["run_id"])
-    accepted = _verify_harvest(
-        harvested,
-        run_id=reserved["run_id"],
+    terminal_harvest = conductor_client.harvest(run_id)
+    terminal_node, terminal_lease, _terminal_packet = _validate_harvest_node(
+        terminal_harvest,
+        packet=packet,
+        conductor=conductor,
+        executor=executor,
         runtime_git_sha=runtime_git_sha,
     )
-    return {
-        "edge_id": edge_id,
-        "conductor_lane": conductor.name,
-        "executor_lane": executor.name,
-        "run_id": reserved["run_id"],
-        "lease_id_sha256": _sha256_text(lease["lease_id"]),
-        "conductor_claim_rejection_sha256": rejection_digest,
-        "capability_sha256": capability_sha256,
-        "accepted_receipt_sha256": canonical_hash(accepted),
-        "reservation": True,
-        "executor_only_claim": True,
-        "heartbeat": True,
-        "unchanged_heads": True,
-        "empty_changed_paths": True,
-        "conductor_harvest": True,
-    }
+    accepted = _validate_terminal_receipt(
+        terminal_node,
+        terminal_lease,
+        packet=packet,
+        edge_id=edge_id,
+        executor=executor,
+        runtime_git_sha=runtime_git_sha,
+    )
+    return _edge_evidence(
+        packet=packet,
+        edge_id=edge_id,
+        conductor=conductor,
+        executor=executor,
+        lease=terminal_lease,
+        rejection_sha256=rejection_digest,
+        accepted_receipt=accepted,
+        runtime_git_sha=runtime_git_sha,
+    )
+
+
+@contextmanager
+def _receipt_path_lock(path: Path) -> Iterator[None]:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_id = _sha256_text(str(path.absolute()))[:24]
+    lock_path = path.parent / f".limen-conduct-canary-{lock_id}.lock"
+    deadline = time.monotonic() + _PATH_LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            os.mkdir(lock_path, 0o700)
+            break
+        except FileExistsError as exc:
+            if time.monotonic() >= deadline:
+                raise ConductCanaryError("timed out waiting for the bounded receipt path lock") from exc
+            time.sleep(_PATH_LOCK_POLL_SECONDS)
+        except OSError as exc:
+            raise ConductCanaryError("cannot acquire the receipt path lock") from exc
+    try:
+        yield
+    finally:
+        try:
+            lock_path.rmdir()
+        except OSError as exc:
+            raise ConductCanaryError("cannot release the receipt path lock") from exc
 
 
 def _write_receipt(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
-    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    encoded = rendered.encode("utf-8")
+    if len(encoded) > _MAX_RECEIPT_BYTES:
+        raise ConductCanaryError("canary receipt exceeds its bounded size")
+    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}-{time.monotonic_ns()}")
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
@@ -540,6 +942,8 @@ def _existing_receipt(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
+        if path.stat().st_size > _MAX_RECEIPT_BYTES:
+            raise ConductCanaryError("existing canary receipt exceeds its bounded size")
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ConductCanaryError("existing canary receipt is unreadable") from exc
@@ -548,43 +952,124 @@ def _existing_receipt(path: Path) -> dict[str, Any] | None:
     return value
 
 
+def _read_existing_receipt(path: Path) -> dict[str, Any] | None:
+    with _receipt_path_lock(path):
+        return _existing_receipt(path)
+
+
+def _commit_receipt(path: Path, payload: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    with _receipt_path_lock(path):
+        existing = _existing_receipt(path)
+        if existing is not None:
+            if existing.get("canary_id") != payload["canary_id"]:
+                raise ConductCanaryError("receipt path already belongs to another canary identity")
+            return existing, False
+        _write_receipt(path, payload)
+        return payload, True
+
+
 def _reuse_existing(
     existing: dict[str, Any],
     *,
     canary_id: str,
+    public_runtime: dict[str, Any],
     lanes: tuple[_Lane, ...],
     runtime_git_sha: str,
     client_factory: Callable[..., HttpConductClient],
     endpoint: str,
     timeout: int,
 ) -> dict[str, Any]:
+    expected_keys = {
+        "schema_version",
+        "canary_id",
+        "observed_at",
+        "runtime_identity",
+        "capabilities_evidence_sha256",
+        "lane_count",
+        "edge_count_required",
+        "edge_count_succeeded",
+        "all_edges_required",
+        "lanes",
+        "edges",
+        "status",
+    }
+    if set(existing) != expected_keys or existing.get("schema_version") != CANARY_SCHEMA:
+        raise ConductCanaryError("existing canary receipt has an unexpected schema")
     if existing.get("canary_id") != canary_id:
         raise ConductCanaryError("receipt path already belongs to another canary identity")
-    if existing.get("status") != "passed":
-        raise ConductCanaryError("existing receipt is not a passing fixed-point receipt")
-    edges = existing.get("edges")
     required = len(lanes) * len(lanes)
+    if (
+        existing.get("status") != "passed"
+        or existing.get("runtime_identity") != public_runtime
+        or existing.get("capabilities_evidence_sha256") != _capabilities_evidence_sha256(lanes)
+        or existing.get("lane_count") != len(lanes)
+        or existing.get("edge_count_required") != required
+        or existing.get("edge_count_succeeded") != required
+        or existing.get("all_edges_required") is not True
+        or existing.get("lanes") != [_public_lane(lane) for lane in lanes]
+    ):
+        raise ConductCanaryError("existing receipt is not a passing fixed-point receipt")
+    observed_at = _parse_timestamp(existing.get("observed_at"), "existing receipt observed_at")
+    edges = existing.get("edges")
     if not isinstance(edges, list) or len(edges) != required:
         raise ConductCanaryError("existing receipt does not cover the current full mesh")
-    lane_by_name = {lane.name: lane for lane in lanes}
-    expected = {(left.name, right.name) for left in lanes for right in lanes}
-    observed = {
-        (str(edge.get("conductor_lane")), str(edge.get("executor_lane"))) for edge in edges if isinstance(edge, dict)
-    }
-    if observed != expected:
+    expected_edges = [(conductor, executor) for conductor in lanes for executor in lanes]
+    observed_pairs = [
+        (edge.get("conductor_lane"), edge.get("executor_lane")) if isinstance(edge, dict) else (None, None)
+        for edge in edges
+    ]
+    expected_pairs = [(conductor.name, executor.name) for conductor, executor in expected_edges]
+    edge_ids = [edge.get("edge_id") if isinstance(edge, dict) else None for edge in edges]
+    run_ids = [edge.get("run_id") if isinstance(edge, dict) else None for edge in edges]
+    if observed_pairs != expected_pairs:
         raise ConductCanaryError("existing receipt edge denominator does not match live capabilities")
-    for edge in edges:
-        conductor = lane_by_name[str(edge["conductor_lane"])]
+    if len(set(edge_ids)) != required or len(set(run_ids)) != required:
+        raise ConductCanaryError("existing receipt reuses an edge or run identity")
+    for edge, (conductor, executor) in zip(edges, expected_edges, strict=True):
+        edge_id = _edge_id(canary_id, conductor, executor)
+        packet = _packet(
+            canary_id=canary_id,
+            edge_id=edge_id,
+            conductor=conductor,
+            executor=executor,
+            runtime_git_sha=runtime_git_sha,
+            now=observed_at,
+        )
         client = client_factory(
             endpoint,
             conductor.conductor_credential.token,
             timeout=timeout,
         )
-        _verify_harvest(
-            client.harvest(str(edge["run_id"])),
-            run_id=str(edge["run_id"]),
+        run_id = _expected_run_id(packet)
+        node, lease, _stored_packet = _validate_harvest_node(
+            client.harvest(run_id),
+            packet=packet,
+            conductor=conductor,
+            executor=executor,
             runtime_git_sha=runtime_git_sha,
         )
+        if (node.get("status"), lease.get("state")) != ("succeeded", "released"):
+            raise ConductCanaryError("existing receipt references an unsettled canary edge")
+        accepted = _validate_terminal_receipt(
+            node,
+            lease,
+            packet=packet,
+            edge_id=edge_id,
+            executor=executor,
+            runtime_git_sha=runtime_git_sha,
+        )
+        expected_edge = _edge_evidence(
+            packet=packet,
+            edge_id=edge_id,
+            conductor=conductor,
+            executor=executor,
+            lease=lease,
+            rejection_sha256=_conductor_rejection_sha256(client, lease),
+            accepted_receipt=accepted,
+            runtime_git_sha=runtime_git_sha,
+        )
+        if edge != expected_edge:
+            raise ConductCanaryError("existing receipt edge evidence was altered")
     return existing
 
 
@@ -608,11 +1093,12 @@ def run_full_mesh_canary(
     capabilities = client.capabilities()
     lanes = _discover_lanes(capabilities, refs)
     canary_id, public_runtime = _canary_identity(client, runtime, lanes)
-    existing = _existing_receipt(receipt_path)
+    existing = _read_existing_receipt(receipt_path)
     if existing is not None:
         return _reuse_existing(
             existing,
             canary_id=canary_id,
+            public_runtime=public_runtime,
             lanes=lanes,
             runtime_git_sha=runtime["git_sha"],
             client_factory=client_factory,
@@ -644,7 +1130,7 @@ def run_full_mesh_canary(
         "canary_id": canary_id,
         "observed_at": observed_at.isoformat(),
         "runtime_identity": public_runtime,
-        "capabilities_evidence_sha256": canonical_hash(capabilities),
+        "capabilities_evidence_sha256": _capabilities_evidence_sha256(lanes),
         "lane_count": len(lanes),
         "edge_count_required": required,
         "edge_count_succeeded": len(edges),
@@ -653,5 +1139,16 @@ def run_full_mesh_canary(
         "edges": edges,
         "status": "passed",
     }
-    _write_receipt(receipt_path, payload)
-    return payload
+    committed, created = _commit_receipt(receipt_path, payload)
+    if created:
+        return payload
+    return _reuse_existing(
+        committed,
+        canary_id=canary_id,
+        public_runtime=public_runtime,
+        lanes=lanes,
+        runtime_git_sha=runtime["git_sha"],
+        client_factory=client_factory,
+        endpoint=client.endpoint,
+        timeout=client.timeout,
+    )

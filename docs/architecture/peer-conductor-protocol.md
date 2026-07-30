@@ -222,7 +222,10 @@ The `limen.conduct_full_mesh_canary.v1` receipt binds the exact Git object, hash
 endpoint identities, CLI implementation digest, capability evidence, live lane denominator, and
 every ordered edge. It exposes credential reference names and SHA-256 evidence only. Repeating the
 same identity against the same receipt path performs read-only harvest verification and returns the
-byte-identical receipt; a different identity cannot overwrite it.
+byte-identical receipt. Deterministic duplicate submissions resume only their exact authenticated
+active lease or validate their exact settled packet and receipt without creating a new run. A
+bounded atomic path lock rechecks identity immediately before the receipt replace, so concurrent
+different identities cannot overwrite one another.
 
 `tasks.yaml` and former cell boards are projections, never independent writers. Legacy task
 add/status/claim tools submit compatibility packets through the same keeper. The direct-writer

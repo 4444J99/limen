@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import copy
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Barrier
 
 import pytest
 
-from limen.conduct.broker import ConductBroker
+import limen.conduct.canary as canary_module
+from limen.conduct.broker import ConductBroker, ConductError
 from limen.conduct.canary import ConductCanaryError, run_full_mesh_canary
 from limen.conduct.client import HttpConductClient
 from limen.conduct.models import (
@@ -235,6 +239,203 @@ def test_same_canary_identity_is_byte_idempotent_and_creates_no_new_runs(tmp_pat
     assert second == first
     assert receipt_path.read_bytes() == before
     assert len(broker.store.snapshot()["runs"]) == run_count == 4
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        "schema",
+        "runtime",
+        "lanes",
+        "edge_id",
+        "run_id",
+        "pair",
+        "digest",
+        "boolean",
+    ],
+)
+def test_existing_receipt_tampering_fails_closed(tmp_path: Path, tamper: str) -> None:
+    _broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if tamper == "schema":
+        receipt["schema_version"] = "limen.conduct_full_mesh_canary.v0"
+    elif tamper == "runtime":
+        receipt["runtime_identity"]["deployment_id_sha256"] = "0" * 64
+    elif tamper == "lanes":
+        receipt["lanes"][0]["executor_session_sha256"] = "0" * 64
+    elif tamper == "edge_id":
+        receipt["edges"][0]["edge_id"] = "0" * 64
+    elif tamper == "run_id":
+        receipt["edges"][1]["run_id"] = receipt["edges"][0]["run_id"]
+    elif tamper == "pair":
+        receipt["edges"][1]["executor_lane"] = receipt["edges"][0]["executor_lane"]
+    elif tamper == "digest":
+        receipt["edges"][0]["accepted_receipt_sha256"] = "0" * 64
+    else:
+        receipt["edges"][0]["heartbeat"] = False
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+
+    with pytest.raises(ConductCanaryError):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+
+@pytest.mark.parametrize("tamper", ["work_key", "intent", "intent_hash", "executor"])
+def test_harvested_edge_tampering_fails_closed(tmp_path: Path, tamper: str) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    receipt = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+    run_id = receipt["edges"][0]["run_id"]
+    with broker.store.transaction() as state:
+        run = state["runs"][run_id]
+        if tamper == "work_key":
+            run["packet"]["work_key"] = "conduct-canary:altered"
+        elif tamper == "intent":
+            run["packet"]["intent"]["edge_id"] = "0" * 64
+        elif tamper == "intent_hash":
+            run["packet"]["intent_hash"] = "0" * 64
+        else:
+            run["executor_session_id"] = "zeta-canary-executor"
+
+    with pytest.raises(ConductCanaryError):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+
+def test_interrupted_after_submit_recovers_duplicate_without_new_run(monkeypatch, tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    original_submit = BrokerHttpClient.submit
+    interrupted = False
+
+    def lose_first_submit_ack(self, packet):
+        nonlocal interrupted
+        result = original_submit(self, packet)
+        if not interrupted:
+            interrupted = True
+            raise ConductError("simulated lost submit acknowledgement")
+        return result
+
+    monkeypatch.setattr(BrokerHttpClient, "submit", lose_first_submit_ack)
+    with pytest.raises(ConductError, match="lost submit acknowledgement"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+    assert not receipt_path.exists()
+    assert len(broker.store.snapshot()["runs"]) == 1
+
+    monkeypatch.setattr(BrokerHttpClient, "submit", original_submit)
+    receipt = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+
+    assert receipt["status"] == "passed"
+    assert len(broker.store.snapshot()["runs"]) == 4
+
+
+def test_missing_local_receipt_recovers_terminal_duplicates(tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    first = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+    receipt_path.unlink()
+
+    recovered = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+
+    assert recovered == first
+    assert len(broker.store.snapshot()["runs"]) == 4
+
+
+def test_concurrent_different_identities_cannot_overwrite_receipt(monkeypatch, tmp_path: Path) -> None:
+    broker_one, client_one, factory_one, environment_one, receipt_path = _mesh(tmp_path)
+    broker_two, client_two, factory_two, environment_two, _same_path = _mesh(tmp_path)
+    runtime_two = json.loads(environment_two["LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY"])
+    runtime_two["deployment_id"] = "deployment-fixture-99"
+    environment_two = copy.deepcopy(environment_two)
+    environment_two["LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY"] = json.dumps(runtime_two)
+    barrier = Barrier(2)
+    original_commit = canary_module._commit_receipt
+
+    def synchronized_commit(path, payload):
+        barrier.wait(timeout=5)
+        return original_commit(path, payload)
+
+    monkeypatch.setattr(canary_module, "_commit_receipt", synchronized_commit)
+
+    def run_one():
+        return run_full_mesh_canary(
+            client=client_one,
+            receipt_path=receipt_path,
+            environ=environment_one,
+            client_factory=factory_one,
+            now=NOW,
+        )
+
+    def run_two():
+        return run_full_mesh_canary(
+            client=client_two,
+            receipt_path=receipt_path,
+            environ=environment_two,
+            client_factory=factory_two,
+            now=NOW,
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(run_one), pool.submit(run_two)]
+        successes = []
+        failures = []
+        for future in futures:
+            try:
+                successes.append(future.result())
+            except ConductCanaryError as exc:
+                failures.append(exc)
+
+    assert len(successes) == 1
+    assert len(failures) == 1
+    assert "another canary identity" in str(failures[0])
+    assert json.loads(receipt_path.read_text(encoding="utf-8")) == successes[0]
+    assert len(broker_one.store.snapshot()["runs"]) == 4
+    assert len(broker_two.store.snapshot()["runs"]) == 4
+    assert list(tmp_path.glob(".limen-conduct-canary-*.lock")) == []
 
 
 def test_full_mesh_canary_rejects_non_http_clients(tmp_path: Path) -> None:
