@@ -518,6 +518,20 @@ def test_device_identity_is_stable_across_bsd_renumbering(
     physical = "disk4"
 
     def diskutil(args, **_kwargs):
+        if args[0] == "/usr/sbin/ioreg":
+            return SimpleNamespace(
+                returncode=0,
+                stdout=f"""
++-o External <class IOUSBHostDevice, id 0x1>
+  {{
+    "USB Serial Number" = "stable-external-device"
+    +-o Media <class IOMedia, id 0x2>
+      {{
+        "BSD Name" = "{physical}"
+      }}
+  }}
+""".encode(),
+            )
         payload = (
             {
                 "DeviceIdentifier": f"{physical}s1",
@@ -531,7 +545,6 @@ def test_device_identity_is_stable_across_bsd_renumbering(
                 "WholeDisk": True,
                 "BusProtocol": "USB",
                 "SystemImage": False,
-                "MediaUUID": "00000000-0000-0000-0000-000000000004",
             }
         )
         return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
@@ -544,6 +557,119 @@ def test_device_identity_is_stable_across_bsd_renumbering(
     assert custody._device_identity(target) == before
 
 
+def test_device_identity_collapses_usb_volumes_to_hardware_serial(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    first.mkdir()
+    second.mkdir()
+    physical_stores = {
+        str(first.resolve()): "disk4s1",
+        str(second.resolve()): "disk7s1",
+    }
+
+    def diskutil(args, **_kwargs):
+        if args[0] == "/usr/sbin/ioreg":
+            return SimpleNamespace(
+                returncode=0,
+                stdout=b"""
++-o External <class IOUSBHostDevice, id 0x1>
+  {
+    "USB Serial Number" = "shared-physical-device"
+    +-o Media <class IOMedia, id 0x2>
+      {
+        "BSD Name" = "disk4"
+      }
+    +-o Media <class IOMedia, id 0x3>
+      {
+        "BSD Name" = "disk7"
+      }
+  }
+""",
+            )
+        if args[-1].startswith("/dev/"):
+            physical = args[-1].removeprefix("/dev/")
+            return SimpleNamespace(
+                returncode=0,
+                stdout=plistlib.dumps(
+                    {
+                        "DeviceIdentifier": physical,
+                        "ParentWholeDisk": physical,
+                        "VirtualOrPhysical": "Physical",
+                        "WholeDisk": True,
+                        "BusProtocol": "USB",
+                        "SystemImage": False,
+                    }
+                ),
+            )
+        return SimpleNamespace(
+            returncode=0,
+            stdout=plistlib.dumps(
+                {
+                    "APFSPhysicalStores": [
+                        {
+                            "APFSPhysicalStore": physical_stores[args[-1]],
+                        }
+                    ],
+                }
+            ),
+        )
+
+    monkeypatch.setattr(custody.subprocess, "run", diskutil)
+    monkeypatch.setattr(custody, "_volume_mount", lambda path: path.resolve())
+
+    assert custody._device_identity(first) == custody._device_identity(second)
+
+
+def test_device_identity_uses_usb_hardware_serial_when_disk_uuid_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "external"
+    target.mkdir()
+
+    def diskutil(args, **_kwargs):
+        if args[0] == "/usr/sbin/ioreg":
+            return SimpleNamespace(
+                returncode=0,
+                stdout=b"""
++-o External <class IOUSBHostDevice, id 0x1>
+  {
+    "USB Serial Number" = "external-device-serial"
+    +-o Media <class IOMedia, id 0x2>
+      {
+        "BSD Name" = "disk4"
+      }
+  }
+""",
+            )
+        payload = (
+            {
+                "APFSPhysicalStores": [{"APFSPhysicalStore": "disk4s1"}],
+            }
+            if not args[-1].startswith("/dev/")
+            else {
+                "DeviceIdentifier": "disk4",
+                "ParentWholeDisk": "disk4",
+                "VirtualOrPhysical": "Physical",
+                "WholeDisk": True,
+                "BusProtocol": "USB",
+                "SystemImage": False,
+            }
+        )
+        return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
+
+    monkeypatch.setattr(custody.subprocess, "run", diskutil)
+    monkeypatch.setattr(custody, "_volume_mount", lambda path: path.resolve())
+
+    identity = custody._device_identity(target)
+
+    assert identity.startswith("device_")
+    assert len(identity) == len("device_") + 32
+
+
 def test_device_identity_requires_stable_external_media_identity(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -552,6 +678,19 @@ def test_device_identity_requires_stable_external_media_identity(
     target.mkdir()
 
     def diskutil(args, **_kwargs):
+        if args[0] == "/usr/sbin/ioreg":
+            return SimpleNamespace(
+                returncode=0,
+                stdout=b"""
++-o External <class IOUSBHostDevice, id 0x1>
+  {
+    +-o Media <class IOMedia, id 0x2>
+      {
+        "BSD Name" = "disk4"
+      }
+  }
+""",
+            )
         payload = (
             {
                 "DeviceIdentifier": "disk4s1",

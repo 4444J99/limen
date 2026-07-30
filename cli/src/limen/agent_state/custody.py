@@ -193,6 +193,98 @@ def _volume_mount(path: Path) -> Path:
     return candidate
 
 
+def _ioreg_string(value: str) -> str | None:
+    try:
+        decoded = json.loads(value)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(decoded, str):
+        return None
+    decoded = decoded.strip()
+    return decoded or None
+
+
+def _usb_hardware_serial(physical: str) -> str | None:
+    """Return the USB-device serial whose storage subtree owns a whole disk."""
+
+    try:
+        result = subprocess.run(
+            [
+                "/usr/sbin/ioreg",
+                "-r",
+                "-l",
+                "-w",
+                "0",
+                "-c",
+                "IOUSBHostDevice",
+            ],
+            capture_output=True,
+            check=False,
+            timeout=20,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ReceiptError("custody physical-device probe failed") from exc
+    if result.returncode:
+        raise ReceiptError("custody physical-device probe failed")
+    try:
+        output = result.stdout.decode("utf-8") if isinstance(result.stdout, bytes) else str(result.stdout)
+    except UnicodeError as exc:
+        raise ReceiptError("custody physical-device evidence is invalid") from exc
+
+    entry_pattern = re.compile(r"^(.*?)\+-o\s+.+?\s+<class\s+([^,>]+)")
+    property_pattern = re.compile(r'^.*?"([^"]+)"\s*=\s*(.*)$')
+    stack: list[dict[str, Any]] = []
+    candidates: set[str] = set()
+    for line in output.splitlines():
+        entry_match = entry_pattern.match(line)
+        if entry_match:
+            position = line.index("+-o")
+            while stack and int(stack[-1]["position"]) >= position:
+                stack.pop()
+            stack.append(
+                {
+                    "position": position,
+                    "class": entry_match.group(2),
+                    "properties": {},
+                }
+            )
+            continue
+        if not stack:
+            continue
+        property_match = property_pattern.match(line)
+        if not property_match:
+            continue
+        key, raw_value = property_match.groups()
+        properties = stack[-1]["properties"]
+        if not isinstance(properties, dict):
+            raise ReceiptError("custody physical-device evidence is invalid")
+        properties[key] = raw_value.strip()
+        if key != "BSD Name" or _ioreg_string(raw_value) != physical:
+            continue
+        usb_device = next(
+            (node for node in reversed(stack) if node["class"] == "IOUSBHostDevice"),
+            None,
+        )
+        if usb_device is None:
+            continue
+        usb_properties = usb_device["properties"]
+        if not isinstance(usb_properties, dict):
+            raise ReceiptError("custody physical-device evidence is invalid")
+        serial = next(
+            (
+                value
+                for serial_key in ("USB Serial Number", "kUSBSerialNumberString")
+                if (value := _ioreg_string(str(usb_properties.get(serial_key, "")))) is not None
+            ),
+            None,
+        )
+        if serial is not None:
+            candidates.add(serial)
+    if len(candidates) > 1:
+        raise ReceiptError("custody physical-device evidence is ambiguous")
+    return next(iter(candidates), None)
+
+
 def _device_identity(path: Path) -> str:
     payload = _diskutil_info(str(_volume_mount(path)))
     try:
@@ -233,6 +325,10 @@ def _device_identity(path: Path) -> str:
             # Apple Fabric storage is integrated with the machine rather than detachable
             # media. Its device-tree path is stable across BSD disk re-enumeration.
             stable_media_id = f"apple-integrated:{device_tree_path}"
+        elif physical_info.get("BusProtocol") == "USB":
+            usb_serial = _usb_hardware_serial(physical)
+            if usb_serial is not None:
+                stable_media_id = f"usb-device:{usb_serial}"
     if stable_media_id is None:
         raise ReceiptError("custody physical device lacks a stable media identity")
     material = f"limen-custody-physical-device-v4:{stable_media_id}".encode()
