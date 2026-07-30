@@ -138,7 +138,13 @@ jobs:
     needs: [python, worker, web]
     runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
+      # Full history, matching pr-gate/fleet-gate. verify-whole.sh runs
+      # check-session-streams.py, whose settled_by check resolves each claim with
+      # `git cat-file -t <sha>`; under checkout's default depth-1 clone those
+      # commits are absent and every settled stream reports a false DRIFT.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
