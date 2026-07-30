@@ -33,6 +33,12 @@ WRANGLER_CLI="$ROOT/web/worker/node_modules/wrangler/wrangler-dist/cli.js"
 ATTEMPTS="${LIMEN_PROBE_ATTEMPTS:-80}"
 RETRY_DELAY="${LIMEN_PROBE_RETRY_DELAY:-0.25}"
 TERM_GRACE="${LIMEN_PROBE_TERM_GRACE:-2}"
+RUNTIME_GIT_SHA="$(git -C "$ROOT" rev-parse --verify HEAD)"
+
+if [[ ! "$RUNTIME_GIT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+  printf 'local Worker probe could not derive an exact Git runtime identity\n' >&2
+  exit 1
+fi
 
 port_available() {
   python3 - "$1" <<'PY'
@@ -142,6 +148,7 @@ LIMEN_API_TOKEN=$OWNER_TOKEN
 LIMEN_CLIENT_TOKEN=$CLIENT_TOKEN
 LIMEN_CONDUCT_PRINCIPAL_REGISTRY={"schema_version":"limen.conduct_principal_registry.v1","principals":[{"principal_id":"runtime-probe-owner","agent":"api","surface":"worker-probe","roles":["observer","conductor","executor","compatibility"],"bearer":"$OWNER_TOKEN"}]}
 LIMEN_CONDUCT_CAPABILITY_SECRET=$CAPABILITY_SECRET
+LIMEN_CONDUCT_RUNTIME_GIT_SHA=$RUNTIME_GIT_SHA
 LIMEN_CORS_ORIGINS=http://127.0.0.1:$PORT
 EOF
 
