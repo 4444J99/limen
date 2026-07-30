@@ -124,7 +124,7 @@ zsh -lic 'cat ~/.cache/domus/atuin.zsh.cmd 2>/dev/null; bindkey -M emacs | rg "a
 Limen planner predicates:
 
 ```bash
-rg -n "PLAN-09-5aa10d25|domus-preflight-noise|blocked local work|global product selection" docs/current-session-fanout-plan-09-domus-preflight-noise.md
+rg -n "PLAN-09-5aa10d25|domus-preflight-noise|blocked local work|global product selection" docs/current-session-fanout/current-session-fanout-plan-09-domus-preflight-noise.md
 python3 scripts/validate-task-board.py
 ```
 

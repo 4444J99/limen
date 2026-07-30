@@ -20,8 +20,14 @@ Exit 0 ⟺ the registry is well-formed and the tracked root matches it exactly:
                   row's why names the receipt authority), so a row can never launder staying-put
                   as a plan.
 
-  python3 scripts/check-root-manifest.py            # gate (CI): exit 1 on any drift
-  python3 scripts/check-root-manifest.py --fat      # list only the grandfathered rows (the work)
+  python3 scripts/check-root-manifest.py                 # gate (CI): exit 1 on any root drift
+  python3 scripts/check-root-manifest.py --fat           # list only the grandfathered rows (the work)
+  python3 scripts/check-root-manifest.py --surface docs  # same predicate, one surface below:
+                                                         # docs/ top level vs docs-manifest.yaml
+
+One checker, N curated surfaces: `--surface` selects which registry judges which tracked
+listing. docs/ earned its own manifest the same way the root did — 177 loose files beside
+17 proper subdirs, accumulated with no predicate watching the surface.
 """
 
 from __future__ import annotations
@@ -33,7 +39,20 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-REGISTRY = ROOT / "institutio" / "governance" / "root-manifest.yaml"
+SURFACES: dict[str, dict[str, object]] = {
+    "root": {
+        "registry": ROOT / "institutio" / "governance" / "root-manifest.yaml",
+        "ls_args": (),
+        "strip": "",
+        "label": "root",
+    },
+    "docs": {
+        "registry": ROOT / "institutio" / "governance" / "docs-manifest.yaml",
+        "ls_args": ("--", "docs/"),
+        "strip": "docs/",
+        "label": "docs/",
+    },
+}
 SANCTIONED_KINDS = {"doc", "registry", "config", "package", "tooling", "data", "dir"}
 
 _failures: list[str] = []
@@ -44,25 +63,29 @@ def fail(check: str, msg: str) -> None:
     _failures.append(f"[{check}] {msg}")
 
 
-def tracked_root_entries() -> set[str]:
+def tracked_surface_entries(ls_args: tuple[str, ...], strip: str) -> set[str]:
     out = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-tree", "--name-only", "HEAD"],
+        ["git", "-C", str(ROOT), "ls-tree", "--name-only", "HEAD", *ls_args],
         capture_output=True,
         text=True,
         check=True,
     )
-    return {line.strip() for line in out.stdout.splitlines() if line.strip()}
+    return {line.strip().removeprefix(strip) for line in out.stdout.splitlines() if line.strip()}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--fat", action="store_true", help="print grandfathered rows and exit 0")
+    parser.add_argument("--surface", choices=sorted(SURFACES), default="root", help="which curated surface to judge")
     args = parser.parse_args()
+    surface = SURFACES[args.surface]
+    registry: Path = surface["registry"]  # type: ignore[assignment]
+    label: str = surface["label"]  # type: ignore[assignment]
 
-    if not REGISTRY.is_file():
-        print(f"check-root-manifest: FAIL\n  [A] registry missing: {REGISTRY}")
+    if not registry.is_file():
+        print(f"check-root-manifest: FAIL\n  [A] registry missing: {registry}")
         return 1
-    data = yaml.safe_load(REGISTRY.read_text(encoding="utf-8")) or {}
+    data = yaml.safe_load(registry.read_text(encoding="utf-8")) or {}
 
     if "schema_version" not in data:
         fail("A", "schema_version missing")
@@ -109,13 +132,13 @@ def main() -> int:
         print(f"check-root-manifest: {len(grandfathered)} grandfathered row(s) remaining")
         return 0
 
-    actual = tracked_root_entries()
+    actual = tracked_surface_entries(surface["ls_args"], surface["strip"])  # type: ignore[arg-type]
     for entry in sorted(actual - declared.keys()):
-        fail("B", f"undeclared root entry (fat): {entry} — declare it in root-manifest.yaml or rehome it")
+        fail("B", f"undeclared {label} entry (fat): {entry} — declare it in {registry.name} or rehome it")
     for path, block in sorted(declared.items()):
         if path not in actual:
             verb = "deleting the row IS the receipt" if block == "grandfathered" else "remove the stale row"
-            fail("C", f"{path}: declared ({block}) but not in the tracked root — {verb}")
+            fail("C", f"{path}: declared ({block}) but not in the tracked {label} surface — {verb}")
 
     for note in _notes:
         print(f"check-root-manifest: note — {note}")
@@ -125,7 +148,7 @@ def main() -> int:
             print(f"  {f}")
         return 1
     print(
-        f"check-root-manifest: OK — {len([p for p, b in declared.items() if b == 'sanctioned'])} sanctioned, "
+        f"check-root-manifest [{label}]: OK — {len([p for p, b in declared.items() if b == 'sanctioned'])} sanctioned, "
         f"{len(grandfathered)} grandfathered fat remaining (shrink to zero via rehoming PRs)"
     )
     return 0

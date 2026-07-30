@@ -4,7 +4,7 @@ This inventory records the kept-safe roots under `/Users/4jp/Workspace/.limen-wo
 No directory was deleted or removed during this pass.
 
 The live reconciliation surface is
-[`docs/worktree-lifecycle-ledger.md`](worktree-lifecycle-ledger.md). This dated file is the
+[`docs/worktree-lifecycle-ledger.md`](../worktree-lifecycle-ledger.md). This dated file is the
 snapshot from the first audit; use the ledger for current disposition, origin-receipt gaps, and
 drain order.
 

@@ -1,6 +1,6 @@
 # GATES — the verification-gate registry
 
-**Registry:** [`institutio/governance/gates.yaml`](../institutio/governance/gates.yaml) ·
+**Registry:** [`institutio/governance/gates.yaml`](../../institutio/governance/gates.yaml) ·
 **Resolver:** `scripts/verify.py` · **Drift predicate:** `scripts/check-gates.py` ·
 **Precedent:** `PREC-2026-07-09-gates-as-data`
 

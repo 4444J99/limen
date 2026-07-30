@@ -2423,7 +2423,7 @@ Verification:
 ```bash
 python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Volumes-Archive4T/f38f4b2a-5c49-4d13-9b36-24bf31c941cc.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-f38-audit.json
 test -f /Volumes/Archive4T/scripts/generate-backlog.py
-test -f /Volumes/Archive4T/docs/CONSOLIDATE-DRYRUN.md
+test -f /Volumes/Archive4T/docs/reviews/CONSOLIDATE-DRYRUN.md
 test -f /Users/4jp/Workspace/RELAY-HANDOFF.md
 rg -n "^import secrets|def atomic_write_text|generate-backlog|verify-dispatch|heal-dispatch|consolidate-github|watchdog" cli/src/limen scripts docs
 ```
@@ -2991,7 +2991,7 @@ Evidence:
 - Claude session `8a284b0a-d749-4b41-8955-99aff1b51d47` worked VLTIMA institutional-prosthesis artifacts from the deleted `.claude/worktrees/piped-booping-kettle` worktree and Claude job temp worktrees.
 - Local transcript survives at `~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/8a284b0a-d749-4b41-8955-99aff1b51d47`.
 - Structural session count: 538 prompt events, 319 unique prompt/task bodies, 11 changed-file targets in the private queue index, and eight subagent transcript files.
-- The original job temp directories are gone, but the durable Limen surfaces are present: `docs/first-dollar-runbook.md`, `docs/MONSTER-MAP.md`, `organ-ladder.json`, `organs/README.md`, `organs/legal/KERNEL.md`, `organs/legal/CHARTER.md`, `organs/legal/FRAMEWORK-FOR-MICAH.md`, and `scripts/generate-organ-backlog.py`.
+- The original job temp directories are gone, but the durable Limen surfaces are present: `docs/runbooks/first-dollar-runbook.md`, `docs/MONSTER-MAP.md`, `organ-ladder.json`, `organs/README.md`, `organs/legal/KERNEL.md`, `organs/legal/CHARTER.md`, `organs/legal/FRAMEWORK-FOR-MICAH.md`, and `scripts/generate-organ-backlog.py`.
 - Git history shows the session's intended artifacts landed through later public commits, including `65284d9` for the first-dollar runbook, `1fd0c7c` for the organ-backlog generator, `cc1b422` for the legal-organ kernel, and `7482c76` for the legal-organ charter.
 
 Outcome:
@@ -3318,7 +3318,7 @@ Severity: high; conductor identity, autonomous dispatch safety, merge behavior, 
 
 Evidence:
 
-- Queue row `61` points at Claude continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, rooted in deleted worktree `.claude/worktrees/woolly-forging-sedgewick`, with 10 changed paths across `FLAME.md`, `docs/FLAME-ACTIVATION.md`, `_pr_scan.py`, watchdog launchd config, and tests.
+- Queue row `61` points at Claude continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, rooted in deleted worktree `.claude/worktrees/woolly-forging-sedgewick`, with 10 changed paths across `FLAME.md`, `docs/architecture/FLAME-ACTIVATION.md`, `_pr_scan.py`, watchdog launchd config, and tests.
 - The real first-layer prompt is in predecessor session `d051cce2-54b0-478d-afaf-e2ed1429ce41`; the `25d48...` main human prompts are three "Continue from where you left off" turns. The older minimal local prompt record is `.limen-private/session-corpus/full-stack-review/session-61-claude-flame-prompts.jsonl`; the row-124 full prompt extraction is `.limen-private/session-corpus/full-stack-review/session-124-claude-woolly-forging-prompts.jsonl` with 129 prompt-surface records, 119 unique prompt hashes, and 489,595 prompt bytes.
 - First-layer ask, redacted to intent: prove that VLTIMA can run for a month without the human, preserve the conductor "flame" across model substitution, and keep functioning if the active substrate becomes Codex, OpenCode, Ollama, or another lane.
 - Durable commits found in git history:
@@ -3346,7 +3346,7 @@ What was fucked up:
 - The row attribution is misleading if read naively: the session id in the queue is a continuation, while the actual human prompt lives in the predecessor session. Review tooling must link predecessor/continuation sessions before judging prompt compliance.
 - The continuation session failed the budget guard: `4,836,250` billable-ish tokens, `3,872,336` Opus billable-ish tokens, and `75,546,624` cache-read tokens. The initial predecessor session was within guard (`839,147` billable-ish, `157,228` Opus), so the overrun came from keeping the follow-on thread alive.
 - The worktree/live-root boundary was risky. The worktree was deleted, and the session/memory noted that absolute `/Users/4jp/Workspace/limen/...` paths from a worktree hit live main, not the worktree. Read-only exploration was fine; edits under that pattern would have been dangerous.
-- `docs/FLAME-ACTIVATION.md` still reads partly like a staged branch note even though the work is on `main`; this is documentation drift, not a live blocker.
+- `docs/architecture/FLAME-ACTIVATION.md` still reads partly like a staged branch note even though the work is on `main`; this is documentation drift, not a live blocker.
 - The prompt ledger overcounts FLAME scaffolding as fresh prompt mass in older views. The newer review needs to keep separating `flame_scaffold` / `flame_with_task_body` from actual first-layer user intent.
 
 Verification:
@@ -3400,7 +3400,7 @@ Verification:
 python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-woolly-forging-sedgewick/d051cce2-54b0-478d-afaf-e2ed1429ce41.jsonl
 PYTHONPATH=cli/src python3 -m pytest cli/tests/test_flame_kernel.py cli/tests/test_pr_scan.py cli/tests/test_self_heal.py -q
 git branch -a --contains f2fa84485dd51b34869c0eb2edb5e0bfe0dee8e1
-git show --stat --oneline f2fa84485dd51b34869c0eb2edb5e0bfe0dee8e1 84fb2550dafeda8b768bc9845e5e66406df58a1b ed54823fda65b8b37d7175bb07dcfe381240245a -- FLAME.md docs/FLAME-ACTIVATION.md cli/src/limen/dispatch.py cli/src/limen/capacity.py cli/tests/test_flame_kernel.py cli/tests/test_pr_scan.py cli/tests/test_self_heal.py
+git show --stat --oneline f2fa84485dd51b34869c0eb2edb5e0bfe0dee8e1 84fb2550dafeda8b768bc9845e5e66406df58a1b ed54823fda65b8b37d7175bb07dcfe381240245a -- FLAME.md docs/architecture/FLAME-ACTIVATION.md cli/src/limen/dispatch.py cli/src/limen/capacity.py cli/tests/test_flame_kernel.py cli/tests/test_pr_scan.py cli/tests/test_self_heal.py
 python3 - <<'PY'
 import json
 from pathlib import Path
@@ -6956,7 +6956,7 @@ Evidence:
 - Current tracked hook `scripts/hooks/allow-trusted-cd-git.sh` and live hook `/Users/4jp/.claude/hooks/allow-trusted-cd-git.sh` are byte-identical. Focused probes confirmed the intended behavior: `cd ~/Code/...`, `cd cli`, and `cd $CLAUDE_JOB_DIR/...` return a `permissionDecision`, while `cd /etc ...` and `cd ~/Code/... && rm -rf ...` fall through to normal approval.
 - The later closeout/resume prompts repeatedly said "Resume and FINISH your original purpose" and applied a closeout skill requiring zero dangling items, executable predicates, and committed work. The session then expanded into post-moneta branch sync and GitHub consolidation staging.
 - Consolidation commit `21ba3f3` is on `origin/main` and added `docs/consolidation/EXECUTION-MANIFEST.md` plus three wrappers: `scripts/consolidation-renames-apply.sh`, `scripts/consolidation-transfer-apply.sh`, and `scripts/consolidation-owner-rewrite-apply.sh`.
-- Branch-only commit `b35e5ac` duplicated the manifest at root as `CONSOLIDATION-EXECUTION-MANIFEST.md`; it is contained only in `session/post-moneta-durability` / `origin/session/post-moneta-durability`, not `origin/main`. Branch-only commit `df3f209` added `docs/session-2026-07-03-audit-trail.md`; no PR exists for `session/post-moneta-durability`.
+- Branch-only commit `b35e5ac` duplicated the manifest at root as `CONSOLIDATION-EXECUTION-MANIFEST.md`; it is contained only in `session/post-moneta-durability` / `origin/session/post-moneta-durability`, not `origin/main`. Branch-only commit `df3f209` added `docs/reviews/session-2026-07-03-audit-trail.md`; no PR exists for `session/post-moneta-durability`.
 - The manifest claimed "These scripts will not run without the consolidation-gate open," but the scripts as landed in `21ba3f3` only printed warnings and immediately executed `gh repo rename`, `scripts/consolidate-github.py --apply`, or `scripts/rewrite-owners.py --apply`.
 - Review fix `7718eb0` made the wrappers fail closed: each irreversible wrapper now exits `2` unless `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open` is set, and the manifest commands show that explicit gate variable.
 - The session's final closeout language was not reliable. Transcript evidence shows `scripts/verify-whole.sh` had `7` unrelated test failures; the session then declared closeout by treating them as pre-existing and outside scope, while still surfacing them back to the user as an "irreducible human atom." That contradicts the closeout skill's own "file it in its owner, do not recite it" rule.
@@ -7210,7 +7210,7 @@ Evidence:
 - The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-112-claude-governance-prompts.jsonl` (`254` records: `202` user-message prompts, `47` last-prompt records, and `5` queue enqueue prompts). The review queue reported `236`; the broader extraction includes path-scoped last-prompt/queue surfaces.
 - In redacted intent form, the initial prompt asked Claude to implement a bundle of operating-insight suggestions by ideal-form evolution: closeout definition, executable done predicate, no overclaiming, edit policy, closeout skill, PostToolUse lint hook, concise output, parallel recon, CI gate matrix, and PR handoff discipline.
 - The session correctly did read-only recon first and then opened PR #180 (`Codify Claude operating charter + closeout skill + advisory lint hook`).
-- PR #180 merged green on 2026-06-24T13:02:52Z as merge commit `741cf17`. It landed `CLAUDE.md`, `.claude/skills/closeout/SKILL.md`, `scripts/hooks/lint-edited-file.sh`, and `docs/his-hand-registry-claude-governance-45ef3e9f.md`.
+- PR #180 merged green on 2026-06-24T13:02:52Z as merge commit `741cf17`. It landed `CLAUDE.md`, `.claude/skills/closeout/SKILL.md`, `scripts/hooks/lint-edited-file.sh`, and `docs/continuations/his-hand-registry-claude-governance-45ef3e9f.md`.
 - PR #180's branch commits were `0d06ff8`, `5926a07`, and `bd133a8`; its checks `python`, `worker`, and `web` all succeeded.
 - The hook survives and is safe as an advisory hook: `bash -n scripts/hooks/lint-edited-file.sh` passes, and the hook exits `0` for both non-Python and Python payloads.
 - The agent-instruction predicate still passes: `PYTHONPATH=cli/src python3 scripts/check-agent-docs.py` reports the documented task states match the canonical states.
@@ -7234,7 +7234,7 @@ Ideal prompt diff:
 Outcome:
 
 - Row `112` is classified as valuable and mostly durable.
-- Review produced a concrete correction: `docs/his-hand-registry-claude-governance-45ef3e9f.md` no longer points at missing commit `463e28d` or vanished `~/.claude/jobs/.../tmp` settings state.
+- Review produced a concrete correction: `docs/continuations/his-hand-registry-claude-governance-45ef3e9f.md` no longer points at missing commit `463e28d` or vanished `~/.claude/jobs/.../tmp` settings state.
 - Review also corrected issue #190 with the reachable commit IDs.
 - No behavioral code patch was needed; the lint hook and agent-doc predicate still pass.
 
@@ -7252,7 +7252,7 @@ Verification:
 jq '.changed_review[112]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
 wc -l .limen-private/session-corpus/full-stack-review/session-112-claude-governance-prompts.jsonl
 gh pr view 180 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,files,commits,url
-git show --stat --oneline --decorate 741cf178c2f56ba74ae220acd3a57e874e9b222d -- CLAUDE.md .claude/skills/closeout/SKILL.md docs/his-hand-registry-claude-governance-45ef3e9f.md scripts/hooks/lint-edited-file.sh
+git show --stat --oneline --decorate 741cf178c2f56ba74ae220acd3a57e874e9b222d -- CLAUDE.md .claude/skills/closeout/SKILL.md docs/continuations/his-hand-registry-claude-governance-45ef3e9f.md scripts/hooks/lint-edited-file.sh
 for c in 463e28d 0d06ff80f09564edbb14b104d97c3c7c04edc463 741cf178c2f56ba74ae220acd3a57e874e9b222d; do if git cat-file -e "$c^{commit}"; then printf '%s ok\n' "$c"; else printf '%s missing\n' "$c"; fi; done
 bash -n scripts/hooks/lint-edited-file.sh
 printf '{"tool_input":{"file_path":"README.md"}}' | bash scripts/hooks/lint-edited-file.sh

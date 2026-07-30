@@ -169,3 +169,50 @@ grandfathered:
     assert "error.log  →  logs/" in proc.stdout
     assert "old_audit.json  →  docs/audits/" in proc.stdout
     assert "2 grandfathered row(s) remaining" in proc.stdout
+
+
+DOCS_MANIFEST = """\
+schema_version: 0.1
+sanctioned:
+  - {path: plans, kind: dir, owner: docs, why: dated plans}
+  - {path: pinned-ledger.md, kind: doc, owner: fleet, why: consumed at this path by scripts/x.py}
+"""
+
+
+def make_docs_repo(tmp_path: Path, docs_files: dict[str, str], manifest: str) -> Path:
+    tracked = {f"docs/{name}": body for name, body in docs_files.items()}
+    tracked["README.md"] = "hi"
+    repo = make_repo(tmp_path, tracked, BASE_ROWS + "  - {path: docs, kind: dir, owner: docs, why: docs tree}\n")
+    (repo / "institutio" / "governance" / "docs-manifest.yaml").write_text(manifest, encoding="utf-8")
+    _git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "add", "institutio/governance/docs-manifest.yaml")
+    _git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "docs manifest")
+    return repo
+
+
+def test_docs_surface_exact_parity_is_ok(tmp_path):
+    repo = make_docs_repo(tmp_path, {"plans/p.md": "plan", "pinned-ledger.md": "ledger"}, DOCS_MANIFEST)
+    proc = run_checker(repo, "--surface", "docs")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "2 sanctioned" in proc.stdout
+
+
+def test_docs_surface_names_a_loose_file_as_fat(tmp_path):
+    repo = make_docs_repo(tmp_path, {"plans/p.md": "plan", "pinned-ledger.md": "l", "stray.md": "s"}, DOCS_MANIFEST)
+    proc = run_checker(repo, "--surface", "docs")
+    assert proc.returncode == 1
+    assert "[B] undeclared docs/ entry (fat): stray.md" in proc.stdout
+
+
+def test_docs_surface_rehomed_file_takes_its_row(tmp_path):
+    manifest = (
+        DOCS_MANIFEST
+        + """\
+grandfathered:
+  - {path: already-moved.md, target_home: docs/reviews/, why: rehomed last PR}
+"""
+    )
+    repo = make_docs_repo(tmp_path, {"plans/p.md": "plan", "pinned-ledger.md": "l"}, manifest)
+    proc = run_checker(repo, "--surface", "docs")
+    assert proc.returncode == 1
+    assert "[C] already-moved.md" in proc.stdout
+    assert "deleting the row IS the receipt" in proc.stdout
