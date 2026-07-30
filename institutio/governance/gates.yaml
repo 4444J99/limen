@@ -194,7 +194,7 @@ gates:
     command: "bash scripts/tests/verify-parallel.test.sh"
     paths: ["scripts/verify.py", "scripts/tests/verify-parallel.test.sh", "institutio/governance/gates.yaml"]
     owner: verify
-    note: "Independent scoped predicates execute as one concurrent wave; only gates explicitly marked serialize:true remain ordered."
+    note: "Independent scoped predicates overlap within each resource tier; the cheap wave precedes admission-gated heavy work, serialize:true remains ordered, and every gate has bounded time/output plus visible receipts."
   verify-ci-hardening-test:
     command: "bash scripts/tests/verify-ci-hardening.test.sh"
     paths: ["scripts/verify.py", "scripts/tests/verify-ci-hardening.test.sh"]

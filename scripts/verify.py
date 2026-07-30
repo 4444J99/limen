@@ -61,10 +61,12 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
-from typing import TextIO
+from select import select as wait_readable
+from typing import BinaryIO
 
 import yaml
 
@@ -257,6 +259,10 @@ def bounded_output_bytes(value: str) -> int:
     return output_bytes
 
 
+def log_line(output: BinaryIO, message: str = "") -> None:
+    output.write((message + "\n").encode("utf-8"))
+
+
 def process_group_alive(process: subprocess.Popen[bytes]) -> bool:
     try:
         os.killpg(process.pid, 0)
@@ -296,63 +302,131 @@ def terminate_process_group(process: subprocess.Popen[bytes]) -> bool:
     return not process_group_alive(process)
 
 
+@contextmanager
+def wave_interrupt_guard(cancel_event: threading.Event):
+    """Convert parent interruption into cooperative, process-group-safe cancellation."""
+
+    if threading.current_thread() is not threading.main_thread():
+        yield
+        return
+    previous_handlers = {signum: signal.getsignal(signum) for signum in (signal.SIGINT, signal.SIGTERM)}
+
+    def interrupt(signum: int, _frame: object) -> None:
+        cancel_event.set()
+        if signum == signal.SIGINT:
+            raise KeyboardInterrupt
+        raise SystemExit(128 + signum)
+
+    for signum in previous_handlers:
+        signal.signal(signum, interrupt)
+    try:
+        yield
+    finally:
+        for signum, handler in previous_handlers.items():
+            signal.signal(signum, handler)
+
+
 def run_command(
     command: str,
     *,
-    output: TextIO,
+    output: BinaryIO,
     deadline: float,
     output_limit_bytes: int,
+    cancel_event: threading.Event,
 ) -> int:
     """Run one gate command with a shared deadline and bounded process-group output."""
 
+    if cancel_event.is_set():
+        log_line(output, "gate-command-interrupted: verification wave cancelled before spawn")
+        return 130
     if time.monotonic() >= deadline:
-        print("gate-command-timeout: shared gate deadline expired before spawn", file=output)
+        log_line(output, "gate-command-timeout: shared gate deadline expired before spawn")
         return 124
     try:
         process = subprocess.Popen(
             ["bash", "-c", command],
             cwd=ROOT,
             stdin=subprocess.DEVNULL,
-            stdout=output,
+            stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
     except OSError as exc:
-        print(f"gate-command-spawn-failed: errno={exc.errno or 'unknown'}", file=output)
+        log_line(output, f"gate-command-spawn-failed: errno={exc.errno or 'unknown'}")
         return 127
 
-    while True:
-        exit_code = process.poll()
-        try:
-            output_bytes = os.fstat(output.fileno()).st_size
-        except OSError:
-            output_bytes = output_limit_bytes + 1
-        if output_bytes > output_limit_bytes:
-            cleaned = terminate_process_group(process)
-            output.seek(0)
-            output.truncate(0)
-            print(
-                f"gate-command-output-limit: {output_bytes}>{output_limit_bytes} bytes",
-                file=output,
-            )
-            if not cleaned:
-                print("gate-command-process-group-cleanup-failed", file=output)
-            return 125 if cleaned else 126
-        if time.monotonic() >= deadline:
-            cleaned = terminate_process_group(process)
-            print("gate-command-timeout: shared gate deadline expired", file=output)
-            if not cleaned:
-                print("gate-command-process-group-cleanup-failed", file=output)
-            return 124 if cleaned else 126
-        if exit_code is not None:
-            if process_group_alive(process):
+    stream = process.stdout
+    try:
+        assert stream is not None
+        os.set_blocking(stream.fileno(), False)
+        output.flush()
+        retained_bytes = os.fstat(output.fileno()).st_size
+        stream_eof = False
+
+        def drain_available() -> bool:
+            """Drain available raw bytes without retaining beyond the exact ceiling."""
+
+            nonlocal retained_bytes, stream_eof
+            if stream_eof:
+                return True
+            while True:
+                try:
+                    chunk = os.read(stream.fileno(), 64 * 1024)
+                except BlockingIOError:
+                    return True
+                if not chunk:
+                    stream_eof = True
+                    return True
+                remaining = output_limit_bytes - retained_bytes
+                if len(chunk) > remaining:
+                    if remaining > 0:
+                        output.write(chunk[:remaining])
+                        retained_bytes += remaining
+                    return False
+                output.write(chunk)
+                retained_bytes += len(chunk)
+
+        while True:
+            within_output_limit = drain_available()
+            exit_code = process.poll()
+            if not within_output_limit:
                 cleaned = terminate_process_group(process)
-                print("gate-command-lingering-process-group", file=output)
+                log_line(output, f"\ngate-command-output-limit: >{output_limit_bytes} bytes")
                 if not cleaned:
-                    print("gate-command-process-group-cleanup-failed", file=output)
+                    log_line(output, "gate-command-process-group-cleanup-failed")
                 return 125 if cleaned else 126
-            return exit_code
-        time.sleep(0.02)
+            if cancel_event.is_set():
+                cleaned = terminate_process_group(process)
+                log_line(output, "gate-command-interrupted: verification wave cancelled")
+                if not cleaned:
+                    log_line(output, "gate-command-process-group-cleanup-failed")
+                return 130 if cleaned else 126
+            if time.monotonic() >= deadline:
+                cleaned = terminate_process_group(process)
+                log_line(output, "gate-command-timeout: shared gate deadline expired")
+                if not cleaned:
+                    log_line(output, "gate-command-process-group-cleanup-failed")
+                return 124 if cleaned else 126
+            if exit_code is not None:
+                if process_group_alive(process):
+                    cleaned = terminate_process_group(process)
+                    log_line(output, "gate-command-lingering-process-group")
+                    if not cleaned:
+                        log_line(output, "gate-command-process-group-cleanup-failed")
+                    return 125 if cleaned else 126
+                if stream_eof:
+                    return exit_code
+            wait_seconds = max(0.0, min(0.02, deadline - time.monotonic()))
+            if wait_seconds:
+                if stream_eof:
+                    time.sleep(wait_seconds)
+                else:
+                    wait_readable([stream.fileno()], [], [], wait_seconds)
+    finally:
+        if (process.poll() is None or process_group_alive(process)) and not terminate_process_group(process):
+            log_line(output, "gate-command-process-group-cleanup-failed")
+        if stream is not None:
+            stream.close()
 
 
 def run_gate(
@@ -361,11 +435,12 @@ def run_gate(
     registry: dict,
     changed: list[str],
     *,
-    output: TextIO,
+    output: BinaryIO,
     deadline: float,
     output_limit_bytes: int,
+    cancel_event: threading.Event,
 ) -> bool:
-    print(f"\n==> {gate_id}: {gate['note']}", file=output)
+    log_line(output, f"\n==> {gate_id}: {gate['note']}")
     if gate.get("kind") == "per_file":
         for path in changed:
             template = (gate.get("per_file") or {}).get(Path(path).suffix)
@@ -377,10 +452,11 @@ def run_gate(
                     output=output,
                     deadline=deadline,
                     output_limit_bytes=output_limit_bytes,
+                    cancel_event=cancel_event,
                 )
                 != 0
             ):
-                print(f"FAILED: {gate_id} on {path}", file=output)
+                log_line(output, f"FAILED: {gate_id} on {path}")
                 return False
         return True
     if gate.get("kind") == "file_set":
@@ -394,10 +470,11 @@ def run_gate(
             output=output,
             deadline=deadline,
             output_limit_bytes=output_limit_bytes,
+            cancel_event=cancel_event,
         )
         != 0
     ):
-        print(f"FAILED: {gate_id}", file=output)
+        log_line(output, f"FAILED: {gate_id}")
         return False
     return True
 
@@ -423,13 +500,15 @@ def run_gate_wave(
         f"gate_timeout={timeout_seconds:g}s output_limit={output_limit_bytes}B",
         flush=True,
     )
+    cancel_event = threading.Event()
 
     with tempfile.TemporaryDirectory(prefix="limen-verify-wave-") as temporary:
         output_paths = {gate_id: Path(temporary) / f"{index:04d}.log" for index, gate_id in enumerate(gate_ids)}
 
         def execute(gate_id: str) -> tuple[bool, float]:
             started = time.monotonic()
-            with output_paths[gate_id].open("w", encoding="utf-8", errors="replace") as output:
+            print(f"WAVE {wave_name}: START gate={gate_id}", flush=True)
+            with output_paths[gate_id].open("w+b") as output:
                 try:
                     passed = run_gate(
                         gate_id,
@@ -439,34 +518,43 @@ def run_gate_wave(
                         output=output,
                         deadline=started + timeout_seconds,
                         output_limit_bytes=output_limit_bytes,
+                        cancel_event=cancel_event,
                     )
                 except Exception as exc:  # noqa: BLE001 - a gate crash is a failed predicate
-                    print(
-                        f"FAILED: {gate_id} raised {type(exc).__name__}",
-                        file=output,
-                    )
+                    log_line(output, f"FAILED: {gate_id} raised {type(exc).__name__}")
                     passed = False
             return passed, time.monotonic() - started
 
-        with concurrent.futures.ThreadPoolExecutor(
+        executor = concurrent.futures.ThreadPoolExecutor(
             max_workers=worker_count,
             thread_name_prefix="limen-verify",
-        ) as executor:
-            future_gate_ids = {executor.submit(execute, gate_id): gate_id for gate_id in gate_ids}
-            results: dict[str, bool] = {}
-            for future in concurrent.futures.as_completed(future_gate_ids):
-                gate_id = future_gate_ids[future]
-                passed, duration = future.result()
-                results[gate_id] = passed
-                print(
-                    f"WAVE {wave_name}: FINISH gate={gate_id} "
-                    f"status={'PASS' if passed else 'FAIL'} duration={duration:.2f}s",
-                    flush=True,
-                )
+        )
+        future_gate_ids: dict[concurrent.futures.Future[tuple[bool, float]], str] = {}
+        results: dict[str, bool] = {}
+        try:
+            with wave_interrupt_guard(cancel_event):
+                future_gate_ids = {executor.submit(execute, gate_id): gate_id for gate_id in gate_ids}
+                for future in concurrent.futures.as_completed(future_gate_ids):
+                    gate_id = future_gate_ids[future]
+                    passed, duration = future.result()
+                    results[gate_id] = passed
+                    print(
+                        f"WAVE {wave_name}: FINISH gate={gate_id} "
+                        f"status={'PASS' if passed else 'FAIL'} duration={duration:.2f}s",
+                        flush=True,
+                    )
+        except BaseException:
+            cancel_event.set()
+            for future in future_gate_ids:
+                future.cancel()
+            executor.shutdown(wait=True, cancel_futures=True)
+            raise
+        else:
+            executor.shutdown(wait=True)
 
         for gate_id in gate_ids:
-            with output_paths[gate_id].open("r", encoding="utf-8", errors="replace") as output:
-                sys.stdout.write(output.read(output_limit_bytes + 1024))
+            with output_paths[gate_id].open("rb") as output:
+                sys.stdout.write(output.read(output_limit_bytes + 1024).decode("utf-8", errors="replace"))
         passed = all(results.values())
         print(f"WAVE {wave_name}: {'PASS' if passed else 'FAIL'}", flush=True)
         return passed

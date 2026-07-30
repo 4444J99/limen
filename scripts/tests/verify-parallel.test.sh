@@ -20,7 +20,8 @@ make_sandbox() {
   local dir
   dir="$(mktemp -d "${TMPDIR:-/tmp}/verify-parallel.XXXXXX")"
   mkdir -p "$dir/scripts" "$dir/institutio/governance"
-  mkdir -p "$dir/parallel" "$dir/heavy" "$dir/serialized" "$dir/timeout" "$dir/noisy"
+  mkdir -p "$dir/parallel" "$dir/heavy" "$dir/serialized"
+  mkdir -p "$dir/timeout" "$dir/interrupt" "$dir/noisy" "$dir/invalid"
   cp "$ROOT/scripts/verify.py" "$dir/scripts/verify.py"
   cat >"$dir/scripts/parallel-fixture.py" <<'PY'
 from pathlib import Path
@@ -78,6 +79,78 @@ import sys
 sys.stdout.write("x" * 8192)
 sys.stdout.flush()
 PY
+  cat >"$dir/scripts/invalid-fixture.py" <<'PY'
+import os
+
+os.write(1, b"\xff" * 8192)
+PY
+  cat >"$dir/scripts/interrupt-supervisor.py" <<'PY'
+from pathlib import Path
+import os
+import signal
+import subprocess
+import sys
+import time
+
+root = Path(sys.argv[1])
+base = sys.argv[2]
+marker = root / "timeout-child-pid"
+process = subprocess.Popen(
+    [
+        sys.executable,
+        str(root / "scripts" / "verify.py"),
+        "--changed",
+        "--base",
+        base,
+        "--require-base",
+        "--gate-timeout-seconds",
+        "30",
+    ],
+    cwd=root,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+)
+deadline = time.monotonic() + 3
+while not marker.exists() and process.poll() is None and time.monotonic() < deadline:
+    time.sleep(0.02)
+if not marker.exists():
+    process.kill()
+    output, _ = process.communicate()
+    raise SystemExit(f"fixture child never started: {output.decode(errors='replace')}")
+
+child_pid = int(marker.read_text(encoding="utf-8"))
+process.terminate()
+try:
+    output, _ = process.communicate(timeout=6)
+except subprocess.TimeoutExpired:
+    process.kill()
+    output, _ = process.communicate()
+    try:
+        os.kill(child_pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    raise SystemExit(f"verifier ignored parent SIGTERM: {output.decode(errors='replace')}")
+
+child_alive = True
+for _ in range(20):
+    try:
+        os.kill(child_pid, 0)
+    except ProcessLookupError:
+        child_alive = False
+        break
+    time.sleep(0.05)
+if child_alive:
+    try:
+        os.kill(child_pid, signal.SIGKILL)
+    except ProcessLookupError:
+        child_alive = False
+if process.returncode != 143 or child_alive:
+    raise SystemExit(
+        f"unsafe interruption returncode={process.returncode} child_alive={child_alive}: "
+        f"{output.decode(errors='replace')}"
+    )
+print("interruption-ok")
+PY
   cat >"$dir/institutio/governance/gates.yaml" <<'YAML'
 schema_version: 0.1
 gates:
@@ -122,14 +195,24 @@ gates:
     paths: ["timeout/**"]
     owner: verify
     note: "deadline terminates the entire fixture process group"
+  interrupt-gate:
+    command: "python3 scripts/timeout-fixture.py"
+    paths: ["interrupt/**"]
+    owner: verify
+    note: "parent interruption cancels and reaps the active fixture process group"
   noisy-gate:
     command: "python3 scripts/noisy-fixture.py"
     paths: ["noisy/**"]
     owner: verify
     note: "output ceiling terminates a noisy fixture"
+  invalid-byte-gate:
+    command: "python3 scripts/invalid-fixture.py"
+    paths: ["invalid/**"]
+    owner: verify
+    note: "raw invalid UTF-8 bytes cannot expand the retained-byte ceiling"
 YAML
   touch "$dir/parallel/.keep" "$dir/heavy/.keep" "$dir/serialized/.keep"
-  touch "$dir/timeout/.keep" "$dir/noisy/.keep"
+  touch "$dir/timeout/.keep" "$dir/interrupt/.keep" "$dir/noisy/.keep" "$dir/invalid/.keep"
   git -C "$dir" init -q -b main
   git -C "$dir" -c user.email=t@t -c user.name=t add -A
   git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm base
@@ -151,7 +234,10 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
 [[ -f "$sb/parallel-ready-left" && -f "$sb/parallel-ready-right" ]] \
   && [[ "$(sort "$sb/parallel-order")" == $'left\nright' ]] \
   && grep -q "WAVE cheap: START" <<<"$out" \
-  && grep -q "WAVE cheap: FINISH gate=" <<<"$out" \
+  && grep -q "WAVE cheap: START gate=parallel-left" <<<"$out" \
+  && grep -q "WAVE cheap: START gate=parallel-right" <<<"$out" \
+  && grep -q "WAVE cheap: FINISH gate=parallel-left" <<<"$out" \
+  && grep -q "WAVE cheap: FINISH gate=parallel-right" <<<"$out" \
   && pass parallel-wave \
   || flunk parallel-wave "both overlap markers were not produced: $out"
 
@@ -163,7 +249,8 @@ out="$(LIMEN_VERIFY_LOCK_FILE="$sb/verify.lock" \
   || flunk heavy-wave "independent heavy gates did not overlap: $out"
 [[ -f "$sb/heavy-ready-left" && -f "$sb/heavy-ready-right" ]] \
   && [[ "$(sort "$sb/heavy-order")" == $'left\nright' ]] \
-  && grep -q "WAVE heavy: START" <<<"$out" \
+  && grep -q "WAVE heavy: START gate=heavy-left" <<<"$out" \
+  && grep -q "WAVE heavy: START gate=heavy-right" <<<"$out" \
   && pass heavy-wave \
   || flunk heavy-wave "both heavy overlap markers were not produced: $out"
 
@@ -241,6 +328,27 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
 (( ${#out} < 4096 )) \
   && pass bounded-output-replay \
   || flunk bounded-output-replay "output-limit receipt replayed ${#out} bytes"
+
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+commit_touch "$sb" invalid/input
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base \
+       --gate-output-bytes 1024 2>&1)" \
+  && flunk invalid-byte-limit "invalid-byte flood unexpectedly passed" \
+  || { grep -q "gate-command-output-limit" <<<"$out" \
+         && pass invalid-byte-limit \
+         || flunk invalid-byte-limit "missing raw-byte output-limit receipt"; }
+(( ${#out} < 4096 )) \
+  && pass invalid-byte-replay \
+  || flunk invalid-byte-replay "invalid bytes expanded replay to ${#out} characters"
+
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+commit_touch "$sb" interrupt/input
+out="$(python3 "$sb/scripts/interrupt-supervisor.py" "$sb" "$base_sha" 2>&1)" \
+  && [[ "$out" == "interruption-ok" ]] \
+  && pass parent-interruption \
+  || flunk parent-interruption "parent interruption did not reap its gate group: $out"
 
 if ((fails)); then
   printf '\nverify-parallel: %d case(s) FAILED\n' "$fails"
