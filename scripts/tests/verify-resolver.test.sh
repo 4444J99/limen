@@ -81,7 +81,8 @@ check-params' scripts/enactment-audit.py
 expect board-change 'syntax-changed
 diff-hygiene
 task-board
-tasks-parse' tasks.yaml
+tasks-parse
+check-root-manifest' tasks.yaml
 
 expect organs-change 'syntax-changed
 diff-hygiene
@@ -95,7 +96,8 @@ web-build' spec/index-nominum/roll.yaml
 expect charter-change 'syntax-changed
 diff-hygiene
 agent-docs
-check-gates' CLAUDE.md
+check-gates
+check-root-manifest' CLAUDE.md
 
 expect workflow-change 'syntax-changed
 diff-hygiene
