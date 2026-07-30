@@ -1419,3 +1419,27 @@ sensors:
       - command: "python3 scripts/check-ideal-forms.py --measure"
         severity: advisory
         escalation: "an ideal-form distance changed or a probe went unmeasurable (above) — re-derive with `python3 scripts/check-ideal-forms.py --measure`; do NOT hand-edit a Distance: line in docs/IDEAL-FORMS-LEDGER.md"
+
+  hot-cache:
+    section: "heartbeat"
+    title: "hot flash cache — the machine is disposable (every byte re-summonable from upstream)"
+    gate: LIMEN_HOTCACHE_CHECK
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_HOTCACHE
+      default: 24
+    timeout:
+      env: LIMEN_HOTCACHE_TIMEOUT
+      default: 300
+    # The Meeseeks law's court (plan 2026-07-30): summoned surfaces must return their result to
+    # source and self-erase, so the local floor is only ever a hot flash cache. The predicate walks
+    # five rungs — spine (cartridge-connected), capture (chezmoi-drift), creds validity, toolchain
+    # summonability (mise.toml), and every-clone-pushed — and lists each un-summonable state with
+    # its owner. Advisory, never fatal: a red names debt (e.g. domus-genoma#359), it does not
+    # break the beat. Daily cadence — disposability moves at human speed, not per-beat.
+    steps:
+      - command: "bash scripts/verify-hot-cache.sh"
+        severity: advisory
+        escalation: "machine is NOT disposable — un-summonable state above (each red names its owner/fix); run bash scripts/verify-hot-cache.sh"
