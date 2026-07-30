@@ -115,6 +115,27 @@ def render_readme(
     L.append('<img src="./assets/heatmap.svg" alt="Contribution activity, last year" width="100%" />')
     L.append("")
 
+    # --- the estate map (custody v4.0.0: the storefront names its shelves; copy from the seed) ---
+    shelves = fd.get("shelves") or {}
+    shelf_rows = [r for r in shelves.get("rows", []) if isinstance(r, dict) and r.get("org")]
+    if shelf_rows:
+        L.append(f"## {shelves.get('heading', 'The library')}")
+        L.append("")
+        if shelves.get("lead"):
+            L.append(str(shelves["lead"]).strip())
+            L.append("")
+        L.append("| Shelf | What lives there |")
+        L.append("|---|---|")
+        for r in shelf_rows:
+            org = str(r["org"]).strip()
+            label = str(r.get("label", org)).strip()
+            blurb = str(r.get("blurb", "")).strip()
+            L.append(f"| [**{label}**](https://github.com/{org}) | {blurb} |")
+        L.append("")
+        if shelves.get("note"):
+            L.append(f"_{str(shelves['note']).strip()}_")
+            L.append("")
+
     # --- the systems (owner-approved order; numbers are each repo's own CI) ---
     L.append("## The systems")
     L.append("")
