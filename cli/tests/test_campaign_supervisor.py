@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -346,7 +347,34 @@ def test_t_minus_boundary_admits_no_work(campaign_repo) -> None:
     )
     assert result["boundary"] == "wait_relay"
     assert result["successor_required"] is True
+    assert result["relay"]["schema"] == "limen.campaign_relay_boundary.v1"
+    assert result["relay"]["state"] == "reserved"
+    assert result["relay"]["attempts"] == 0
+    assert "path" not in json.dumps(result["relay"])
     assert client.submissions == []
+
+
+def test_concurrent_t_minus_beats_reserve_one_byte_stable_relay(campaign_repo) -> None:
+    root, receipt, _now, deadline = campaign_repo
+
+    def beat(_index: int) -> dict:
+        return run_campaign(
+            client=FakeClient(),
+            root=root,
+            capsule=receipt,
+            identity=_identity(),
+            now_epoch=deadline - 1700,
+            evaluator=lambda _root, _timeout: pytest.fail("evaluator must not run after T-30"),
+        )
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        results = list(pool.map(beat, range(10)))
+
+    projections = [json.dumps(result["relay"], sort_keys=True) for result in results]
+    assert len(set(projections)) == 1
+    assert all(result["boundary"] == "wait_relay" for result in results)
+    store = Path(_git(root, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "limen" / "campaign-relays"
+    assert len(list(store.glob("*.json"))) == 1
 
 
 def test_settled_requires_green_strict_omega_and_three_two_pass_receipts(campaign_repo) -> None:

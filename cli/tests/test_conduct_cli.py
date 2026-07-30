@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 from limen.conduct.broker import ConductError
+from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.cli import conduct_group
 from limen.conduct.supervisor import CampaignSupervisorError
 
@@ -186,12 +188,19 @@ def test_campaign_run_projects_identity_and_bounded_supervisor_result(monkeypatc
     assert observed["evaluation_timeout_seconds"] == 17
 
 
-def test_campaign_run_emits_one_structured_invalid_boundary(monkeypatch, tmp_path) -> None:
+@pytest.mark.parametrize(
+    "error",
+    [
+        CampaignSupervisorError("exact remote main moved"),
+        CampaignRelayError("campaign relay store is unavailable"),
+    ],
+)
+def test_campaign_run_emits_one_structured_invalid_boundary(monkeypatch, tmp_path, error) -> None:
     capsule = tmp_path / "workstream.json"
     capsule.write_text("{}\n", encoding="utf-8")
 
     def reject(**_kwargs):
-        raise CampaignSupervisorError("exact remote main moved")
+        raise error
 
     monkeypatch.setattr("limen.conduct.cli.client_from_env", object)
     monkeypatch.setattr("limen.conduct.cli.run_campaign", reject)
@@ -211,7 +220,7 @@ def test_campaign_run_emits_one_structured_invalid_boundary(monkeypatch, tmp_pat
     assert result.exit_code == 1
     assert json.loads(result.output) == {
         "boundary": "invalid",
-        "reason": "exact remote main moved",
+        "reason": str(error),
         "schema": "limen.campaign_supervisor_result.v1",
         "successor_required": False,
         "terminal_predicate": "omega",

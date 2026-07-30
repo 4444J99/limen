@@ -15,6 +15,11 @@ from typing import Any
 
 import rfc8785
 
+from limen.conduct.campaign_relay import (
+    RelayReservation,
+    relay_boundary_projection,
+    reserve_relay,
+)
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
@@ -495,6 +500,7 @@ def run_campaign(
     now_epoch: int | None = None,
     evaluator: Callable[[Path, int], tuple[int, dict[str, Any]]] = _fresh_omega_evaluation,
     settler: Callable[[Path, int], list[dict[str, Any]]] = _settle_omega,
+    relay_reserver: Callable[..., RelayReservation] = reserve_relay,
     evaluation_timeout_seconds: int = 1800,
 ) -> dict[str, Any]:
     if terminal_predicate != "omega":
@@ -504,12 +510,18 @@ def run_campaign(
     git_state = exact_remote_main(root)
     receipt, remaining = load_capsule_receipt(capsule, root=root, now_epoch=now_epoch)
     if remaining <= T_MINUS_SECONDS:
+        reservation = relay_reserver(
+            root,
+            capsule,
+            exact_remote_main=git_state["head"],
+        )
         return {
             "schema": RESULT_SCHEMA,
             "boundary": "wait_relay",
             "campaign_id": receipt["workstream"],
             "exact_head": git_state["head"],
-            "reason": "T-30 reached; publish and launch the successor capsule before admitting new leaves",
+            "reason": "T-30 reached; one deterministic successor relay is durably reserved",
+            "relay": relay_boundary_projection(reservation.receipt),
             "remaining_seconds": remaining,
             "successor_required": True,
             "terminal_predicate": terminal_predicate,

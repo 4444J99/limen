@@ -7,8 +7,8 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 import rfc8785
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from limen.work_loan import WorkLoanV1
 
@@ -16,6 +16,7 @@ from limen.work_loan import WorkLoanV1
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@*+-]{0,1023}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_GIT_OBJECT_RE = re.compile(r"^[0-9a-f]{40,64}$")
 
 
 def utc_now() -> datetime:
@@ -413,6 +414,47 @@ class CampaignBlockerV1(ProtocolModel):
     @classmethod
     def validate_bounded_text(cls, value: str, info) -> str:
         return _bounded_text(value, info.field_name)
+
+
+class CampaignRelayReceiptV1(ProtocolModel):
+    """Unadmitted predecessor-to-successor reservation stored in the Git common dir."""
+
+    schema_version: Literal["limen.campaign_relay_receipt.v1"] = "limen.campaign_relay_receipt.v1"
+    relay_id: str
+    workstream: str
+    predecessor_receipt_blob: str
+    predecessor_contract_digest: str
+    predecessor_deadline_epoch: int = Field(gt=0)
+    exact_remote_main: str
+    successor_slug: str
+    successor_branch: str
+    successor_session_id: str
+    state: Literal["reserved"] = "reserved"
+    attempts: Literal[0] = 0
+
+    @field_validator("relay_id", "predecessor_contract_digest")
+    @classmethod
+    def validate_digests(cls, value: str, info) -> str:
+        if not _SHA256_RE.fullmatch(value):
+            raise ValueError(f"{info.field_name} must be a lowercase SHA-256 digest")
+        return value
+
+    @field_validator("predecessor_receipt_blob", "exact_remote_main")
+    @classmethod
+    def validate_git_objects(cls, value: str, info) -> str:
+        if not _GIT_OBJECT_RE.fullmatch(value):
+            raise ValueError(f"{info.field_name} must be a lowercase Git object id")
+        return value
+
+    @field_validator(
+        "workstream",
+        "successor_slug",
+        "successor_branch",
+        "successor_session_id",
+    )
+    @classmethod
+    def validate_identifiers(cls, value: str, info) -> str:
+        return _identifier(value, info.field_name)
 
 
 class CampaignReceiptV1(ProtocolModel):
