@@ -24,8 +24,11 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from limen.models import LimenFile, Task
+if TYPE_CHECKING:  # annotation-only (PEP 563) — keeps this module loadable by FILE PATH with no
+    # package deps, which is how institutio/governance/derive-domain-streams.py reads the roster.
+    from limen.models import LimenFile, Task
 
 
 @dataclass(frozen=True)

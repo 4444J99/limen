@@ -39,12 +39,14 @@
 #   puts that choice where it belongs: in the environment, for this run only. Vendor-neutrality
 #   stays in declared data; the operator still gets to say who opens the work.
 #
-# THE DEFAULT FAMILY IS THE OPERATOR'S OWN LANES
-#   Rows carry `family: constellation` (derived from the constellation register — the people ×
-#   project lanes the operator actually means by "streams") or `family: governance` (hand-authored
-#   estate work). "Open my streams" must never answer with internal plumbing, so the default opens
-#   constellation only; governance domains are counted, named as skipped, and reachable via
-#   --family governance (or both via --family all).
+# THE DEFAULT FAMILY IS THE OPERATOR'S LIFE/WORK DOMAINS
+#   Rows carry `family: domain` (derived from the workstream channel roster — the operator's
+#   life/work domains: correspondence, financial, representation, …, the streams he actually
+#   means; 2026-07-30 correction), `family: constellation` (the collaborator person-streams —
+#   the consulting domain's interior), or `family: governance` (hand-authored estate work).
+#   "Open my streams" must never answer with plumbing or with one domain's interior, so the
+#   default opens domain only; the other families are counted, named as skipped, and reachable
+#   via --family constellation / --family governance (or everything via --family all).
 #
 # THE ROUND TRIP (open → exit → reopen)
 #   Exiting the agent (/exit, or however the lane ends) KEEPS the tmux window — it prints
@@ -55,9 +57,9 @@
 #   glance: live (pid) / dormant / ready / blocked / stale / settled.
 #
 # Usage:
-#   scripts/open-streams.sh                  # open + reopen the constellation lanes, up to the bound
+#   scripts/open-streams.sh                  # open + reopen the life/work domains, up to the bound
 #   scripts/open-streams.sh --status         # one line per stream with its derived state
-#   scripts/open-streams.sh --family all     # ...plus the governance domains
+#   scripts/open-streams.sh --family all     # ...plus the constellation + governance rows
 #   scripts/open-streams.sh --lane claude    # ...on a chosen lane (claude|codex|agy|opencode|…)
 #   scripts/open-streams.sh --dry-run        # print exactly what would open, touch nothing
 #   scripts/open-streams.sh --max-parallel 1 # open one, name the rest
@@ -74,7 +76,7 @@ dry_run=0
 unbounded=0
 lane_choice=""
 list_lanes_only=0
-family="constellation"
+family="domain"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -87,13 +89,14 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { echo "missing value for --session" >&2; exit 2; }
       session="$2"; shift 2 ;;
     --family)
-      # Which row family to open. Default `constellation`: "open my streams" means the operator's
-      # people × project lanes, never the estate's internal governance domains — those are opened
+      # Which row family to open. Default `domain`: "open my streams" means the operator's
+      # life/work domains (correspondence, financial, representation, …) — never one domain's
+      # collaborator interior, never the estate's internal governance rows. Those are opened
       # deliberately, by name.
       [[ $# -ge 2 ]] || { echo "missing value for --family" >&2; exit 2; }
       case "$2" in
-        constellation|governance|all) family="$2" ;;
-        *) echo "open-streams: unknown family '$2' (constellation|governance|all)" >&2; exit 2 ;;
+        domain|constellation|governance|all) family="$2" ;;
+        *) echo "open-streams: unknown family '$2' (domain|constellation|governance|all)" >&2; exit 2 ;;
       esac
       shift 2 ;;
     --list-lanes)
@@ -279,8 +282,9 @@ except Exception:  # noqa: BLE001 — reporting only; the launcher must not fail
 
 elided_note = ""
 if elided:
-    other = "all" if family == "governance" else "governance"
-    elided_note = f"{len(elided)} {other if other != 'all' else ''} domain(s) not in family '{family}' — open with --family {other}".replace("  ", " ")
+    fams = sorted({r["family"] for r in elided})
+    reach = " / ".join(f"--family {f}" for f in fams)
+    elided_note = f"{len(elided)} row(s) in other families ({', '.join(fams)}) — open with {reach} or --family all"
 print(f"CAP\t{cap}\t{why}\t{len(rows)}\t{lane}\t{elided_note}")
 for i, row in enumerate(rows):
     # REOPEN vs OPEN is the registry's word (`reopen`: the worktree exists, the session exited) —

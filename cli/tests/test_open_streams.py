@@ -155,11 +155,11 @@ def test_dry_run_touches_nothing_and_needs_no_tmux(launcher_env):
 def test_the_bound_is_enforced_and_every_deferred_stream_is_named(launcher_env):
     """A silent cap reads as "all of them opened" when it did not — so deferrals are printed WITH
     the exact command to open them later, not merely counted. Measured against the launcher's
-    default family (constellation): family elision is a separate, separately-named subtraction."""
+    default family (domain): family elision is a separate, separately-named subtraction."""
     ready = json.loads(run("--ready", "--json").stdout)
-    in_family = [r for r in ready if r["family"] == "constellation"]
+    in_family = [r for r in ready if r["family"] == "domain"]
     if len(in_family) < 2:
-        pytest.skip("needs ≥2 ready constellation streams to observe a bound")
+        pytest.skip("needs ≥2 ready domain streams to observe a bound")
     out = _open("--dry-run", "--max-parallel", "1").stdout
     assert out.count("\n  WOULD ") == 1
     deferred = re.findall(r"^  DEFER  (\S+)", out, re.MULTILINE)
@@ -239,20 +239,31 @@ def test_the_registry_itself_stays_vendor_neutral(launcher_env):
 # ── family selection: "open my streams" means the operator's lanes ──────────────────
 
 
-def test_default_family_is_the_operators_constellation(launcher_env):
-    """The word "streams" is the operator's, from the constellation work (#1535). The default
-    open must be his people × project lanes — governance plumbing answering "open my streams"
-    is the exact defect that had the estate quoting a registry invented that morning."""
+def test_default_family_is_the_operators_life_domains(launcher_env):
+    """The 2026-07-30 correction: "open my streams" means the operator's LIFE/WORK DOMAINS
+    (correspondence, financial, representation, …) — never governance plumbing, and never one
+    domain's collaborator interior opened as siblings. Both prior defects, pinned."""
     out = _open("--dry-run").stdout
-    assert "family: constellation" in out
-    for sid in ("s0-corpus-custody", "s10-axis-coverage", "s2-public-distillation"):
-        assert sid not in out, f"governance domain {sid} leaked into the default family"
+    assert "family: domain" in out
+    ready = json.loads(run("--ready", "--json").stdout)
+    for row in ready:
+        if row["family"] != "domain":
+            assert f"--workstream {row['id']} " not in out.replace("\n", " ") + " ", (
+                f"{row['family']} row {row['id']} leaked into the default family"
+            )
 
 
-def test_elided_governance_domains_are_named_never_silent(launcher_env):
-    """A filtered-out domain the operator cannot see reads as one that does not exist."""
+def test_elided_families_are_named_never_silent(launcher_env):
+    """A filtered-out row the operator cannot see reads as one that does not exist — the elision
+    must name every hidden family and say how to reach it."""
+    ready = json.loads(run("--ready", "--json").stdout)
+    hidden = sorted({r["family"] for r in ready if r["family"] != "domain"})
+    if not hidden:
+        pytest.skip("no non-domain rows ready — nothing to elide")
     out = _open("--dry-run").stdout
-    assert "--family governance" in out, "the elision must say how to reach what it hid"
+    for fam in hidden:
+        assert f"--family {fam}" in out, f"the elision must say how to reach hidden family {fam}"
+    assert "--family all" in out
 
 
 def test_family_all_reunites_both(launcher_env):
@@ -267,16 +278,26 @@ def test_family_all_reunites_both(launcher_env):
 def test_an_unknown_family_is_refused_before_anything_opens(launcher_env):
     proc = _open("--family", "bogus", "--dry-run")
     assert proc.returncode == 2
-    assert "constellation|governance|all" in proc.stderr
+    assert "domain|constellation|governance|all" in proc.stderr
 
 
 def test_t1_lanes_open_before_t2_under_the_bound(launcher_env):
     """The RAM bound opens the FIRST N rows, so order is priority: an alphabetical T2 lane
-    (content-cannibalizer) must never preempt a T1 lane the operator marked active-demand."""
-    out = _open("--dry-run", "--max-parallel", "1").stdout
+    (content-cannibalizer) must never preempt a T1 lane the operator marked active-demand.
+    Measured inside the constellation family, where register_tier is the ordering word."""
+    out = _open("--dry-run", "--family", "constellation", "--max-parallel", "1").stdout
     opened = [line for line in out.splitlines() if line.lstrip().startswith("WOULD")]
     assert opened, out
     assert "(T1," in opened[0], f"the single opened slot went to a non-T1 lane: {opened[0]}"
+
+
+def test_the_ratified_head_opens_first_in_the_default_family(launcher_env):
+    """open_rank is the domain family's ordering word: under a bound of 1, the single slot goes
+    to the roster's rank-1 domain (correspondence — the mail lane), never an alphabetical one."""
+    out = _open("--dry-run", "--max-parallel", "1").stdout
+    opened = [line for line in out.splitlines() if line.lstrip().startswith("WOULD")]
+    assert opened, out
+    assert "correspondence" in opened[0], f"the single opened slot skipped rank 1: {opened[0]}"
 
 
 # ── What the FIRST LIVE LAUNCH surfaced (2026-07-29) ─────────────────────────────────────────────
