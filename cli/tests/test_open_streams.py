@@ -259,7 +259,9 @@ def test_family_all_reunites_both(launcher_env):
     out = _open("--dry-run", "--family", "all", "--max-parallel", "1").stdout
     assert "family: all" in out
     joined = out.replace("\n", " ")
-    assert "spiral" in joined and "s10-axis-coverage" in joined
+    # maddie is a constellation PERSON-domain row (streams are people, never their projects —
+    # the 2026-07-30 granularity correction); s10 is governance. Both visible ⟺ reunited.
+    assert "maddie" in joined and "s10-axis-coverage" in joined
 
 
 def test_an_unknown_family_is_refused_before_anything_opens(launcher_env):
