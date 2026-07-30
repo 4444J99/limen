@@ -7,6 +7,8 @@ import fcntl
 import hashlib
 import json
 import os
+import re
+import select
 import shutil
 import stat
 import subprocess
@@ -19,6 +21,11 @@ from pathlib import Path
 from typing import Any
 
 from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
+from limen.conduct.campaign_relay_admission import (
+    ADMISSION_HANDSHAKE_CEILING,
+    ADMISSION_HANDSHAKE_SECONDS,
+    ADMISSION_SCHEMA,
+)
 from limen.conduct.campaign_relay import (
     _CONTROL_LINE_CEILING,
     _REGISTRATION_OUTPUT_CEILING,
@@ -53,6 +60,15 @@ def _live_relay_lanes(_root: Path) -> tuple[str, ...]:
         if vendor is None:
             continue
         if not workstream_launchable(vendor, autonomous=True):
+            continue
+        profile = getattr(vendor, "execution", None)
+        direct_native = bool(
+            vendor.local_checkout
+            and profile is not None
+            and {"execute", "local-worktree"}.issubset(profile.capabilities)
+            and (profile.transport == "native-cli" or profile.transport.startswith("ianva-"))
+        )
+        if not direct_native:
             continue
         candidates = workstream_binary_candidates(vendor, os.environ)
         if any(shutil.which(candidate) for candidate in candidates):
@@ -376,15 +392,137 @@ def _spawn_relay_process(
     control_descriptor: int,
     exec_descriptor: int,
 ) -> subprocess.Popen[bytes]:
-    return subprocess.Popen(
-        command,
-        cwd=root,
-        env=env,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        pass_fds=(ack_descriptor, control_descriptor, exec_descriptor),
-    )
+    admission_reader, admission_writer = os.pipe()
+    os.set_inheritable(admission_writer, True)
+    wrapper = [
+        sys.executable,
+        str(Path(__file__).with_name("campaign_relay_admission.py")),
+        str(admission_writer),
+        "--",
+        *command,
+    ]
+    try:
+        process = subprocess.Popen(
+            wrapper,
+            cwd=root,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            pass_fds=(
+                ack_descriptor,
+                control_descriptor,
+                exec_descriptor,
+                admission_writer,
+            ),
+        )
+    except BaseException:
+        os.close(admission_reader)
+        os.close(admission_writer)
+        raise
+    os.close(admission_writer)
+    try:
+        handshake = _read_admission_handshake(admission_reader)
+    except (OSError, ValueError):
+        _stop_prelaunch_wrapper(process)
+        _record_admission_denial(
+            root,
+            env,
+            ("admission-handshake-unavailable",),
+        )
+        raise OSError("campaign relay host admission handshake failed") from None
+    finally:
+        os.close(admission_reader)
+    if handshake["allowed"]:
+        return process
+    _stop_prelaunch_wrapper(process)
+    reasons = tuple(handshake["reasons"])
+    _record_admission_denial(root, env, reasons)
+    raise OSError(f"campaign relay host admission denied: {','.join(reasons)}")
+
+
+def _read_admission_handshake(descriptor: int) -> dict[str, Any]:
+    deadline = time.monotonic() + ADMISSION_HANDSHAKE_SECONDS
+    payload = bytearray()
+    while b"\n" not in payload and len(payload) <= ADMISSION_HANDSHAKE_CEILING:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise OSError("campaign relay admission handshake timed out")
+        readable, _writable, _exceptional = select.select([descriptor], [], [], remaining)
+        if not readable:
+            raise OSError("campaign relay admission handshake timed out")
+        chunk = os.read(
+            descriptor,
+            min(512, ADMISSION_HANDSHAKE_CEILING + 1 - len(payload)),
+        )
+        if not chunk:
+            break
+        payload.extend(chunk)
+    if len(payload) > ADMISSION_HANDSHAKE_CEILING or not payload.endswith(b"\n"):
+        raise ValueError("campaign relay admission handshake is invalid")
+    try:
+        value = json.loads(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("campaign relay admission handshake is invalid") from exc
+    reasons = value.get("reasons") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"allowed", "reasons", "schema"}
+        or value.get("schema") != ADMISSION_SCHEMA
+        or not isinstance(value.get("allowed"), bool)
+        or not isinstance(reasons, list)
+        or reasons != sorted(set(reasons))
+        or any(
+            not isinstance(reason, str) or re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", reason) is None
+            for reason in reasons
+        )
+        or (value["allowed"] and reasons)
+        or (not value["allowed"] and not reasons)
+    ):
+        raise ValueError("campaign relay admission handshake is invalid")
+    return value
+
+
+def _stop_prelaunch_wrapper(process: subprocess.Popen[bytes]) -> None:
+    """Reap or stop only this launch attempt's own wrapper before provider admission."""
+
+    if process.poll() is None:
+        process.terminate()
+        try:
+            process.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=1)
+    for stream in (process.stdout, process.stderr):
+        if stream is not None:
+            stream.close()
+
+
+def _admission_terminal_code(reasons: tuple[str, ...]) -> str:
+    reason = reasons[0] if reasons else "admission-denied"
+    return f"relay_host_admission_{reason}"
+
+
+def _record_admission_denial(
+    root: Path,
+    env: dict[str, str],
+    reasons: tuple[str, ...],
+) -> None:
+    relay_id = env.get("LIMEN_CAMPAIGN_RELAY_ID", "")
+    if re.fullmatch(r"[0-9a-f]{64}", relay_id) is None:
+        return
+    try:
+        _terminalize_relay(
+            root,
+            relay_id,
+            state="failed",
+            code=_admission_terminal_code(reasons),
+            stdout=_BoundedStreamDigest(),
+            stderr=_BoundedStreamDigest(),
+        )
+    except (CampaignRelayError, OSError):
+        # The caller's existing spawn-failure path remains the final fail-closed fallback.
+        return
 
 
 def _reap_relay_process(process: subprocess.Popen[bytes]) -> None:
