@@ -200,12 +200,33 @@ class ConductBroker:
                 raise ConductConflict("session_id is already bound to another principal")
             if session.worktree:
                 claimed = str(PurePath(session.worktree))
-                for raw in state["sessions"].values():
+                for raw in list(state["sessions"].values()):
                     owner = ConductorSessionV1.model_validate(raw)
                     if owner.session_id == session.session_id or not owner.worktree:
                         continue
-                    if str(PurePath(owner.worktree)) == claimed and now - owner.heartbeat_at <= self.session_ttl:
+                    if str(PurePath(owner.worktree)) != claimed:
+                        continue
+                    # Succession: the heartbeat TTL cannot see a crash/exec exit, so an exited
+                    # session blocks its own reopen for session_ttl. A claimant that names the
+                    # exact owner of the very worktree it claims — and does not attenuate the
+                    # owner's protection level — replaces it immediately; anything else keeps
+                    # the two-concurrent-sessions guard intact.
+                    if session.supersedes == owner.session_id and (
+                        session.human_protected or not owner.human_protected
+                    ):
+                        released = owner.model_copy(update={"worktree": None, "accepting_work": False})
+                        state["sessions"][owner.session_id] = _dump(released)
+                        _event(
+                            state,
+                            "session.superseded",
+                            session_id=owner.session_id,
+                            superseded_by=session.session_id,
+                            worktree=claimed,
+                        )
+                        continue
+                    if now - owner.heartbeat_at <= self.session_ttl:
                         raise ConductConflict(f"worktree is already owned by healthy session {owner.session_id}")
+            session = session.model_copy(update={"supersedes": None})
             state["sessions"][session.session_id] = _dump(session)
             state["session_principals"][session.session_id] = principal.principal_id
             _event(

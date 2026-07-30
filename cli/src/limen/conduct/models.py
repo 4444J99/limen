@@ -101,6 +101,12 @@ class ConductorSessionV1(ProtocolModel):
     heartbeat_at: datetime = Field(default_factory=utc_now)
     human_protected: bool = False
     accepting_work: bool = True
+    # Registration-time succession hint, never stored: names the exact session_id of a dead
+    # predecessor whose worktree this session claims. The broker honors it only when the named
+    # session currently owns the claimed worktree and the claimant's protection level is at
+    # least the owner's; the client asserts it only after proving no foreign process is live
+    # in the worktree (limen.conduct.liveness, fail-closed).
+    supersedes: str | None = None
 
     @field_validator("session_id", "transport", "harvest_method")
     @classmethod
@@ -113,6 +119,11 @@ class ConductorSessionV1(ProtocolModel):
         for capability in value:
             _identifier(capability, "capability")
         return value
+
+    @field_validator("supersedes")
+    @classmethod
+    def validate_supersedes(cls, value: str | None, info) -> str | None:
+        return None if value is None else _identifier(value, info.field_name)
 
     @model_validator(mode="after")
     def identity_matches_session(self) -> "ConductorSessionV1":

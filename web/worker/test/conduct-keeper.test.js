@@ -46,6 +46,7 @@ function session(agent, {
   heartbeatAt = NOW,
   protectedSession = false,
   worktree = null,
+  supersedes = null,
 } = {}) {
   const ident = identity(agent, sessionId);
   return validateSession({
@@ -58,6 +59,7 @@ function session(agent, {
     registered_at: heartbeatAt.toISOString(),
     heartbeat_at: heartbeatAt.toISOString(),
     human_protected: protectedSession,
+    supersedes,
   }, heartbeatAt);
 }
 
@@ -874,6 +876,80 @@ test("registration timestamps are server-owned while protection and healthy work
     }),
     /worktree is already owned by healthy session sticky-session/,
   );
+});
+
+test("succession replaces the named dead owner immediately and is audited", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => NOW });
+  await service.call("register", {
+    session: session("claude", { sessionId: "stream-boot-1", worktree: "/tmp/lane" }),
+  });
+  const registered = await service.call("register", {
+    session: session("claude", {
+      sessionId: "stream-boot-2",
+      worktree: "/tmp/lane",
+      supersedes: "stream-boot-1",
+    }),
+  });
+  assert.equal(registered.worktree, "/tmp/lane");
+  assert.equal(registered.supersedes, null);
+  const snapshot = store.snapshot();
+  assert.equal(snapshot.sessions["stream-boot-1"].worktree, null);
+  assert.equal(snapshot.sessions["stream-boot-1"].accepting_work, false);
+  assert.ok(snapshot.events.some((event) =>
+    event.kind === "session.superseded"
+    && event.session_id === "stream-boot-1"
+    && event.superseded_by === "stream-boot-2"));
+});
+
+test("succession requires naming the actual owner", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => NOW });
+  await service.call("register", {
+    session: session("claude", { sessionId: "true-owner", worktree: "/tmp/lane" }),
+  });
+  await assert.rejects(
+    service.call("register", {
+      session: session("claude", {
+        sessionId: "pretender",
+        worktree: "/tmp/lane",
+        supersedes: "some-other-session",
+      }),
+    }),
+    /worktree is already owned by healthy session true-owner/,
+  );
+  assert.equal(store.snapshot().sessions["true-owner"].worktree, "/tmp/lane");
+});
+
+test("unprotected claimant cannot supersede a protected owner", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => NOW });
+  await service.call("register", {
+    session: session("codex", {
+      sessionId: "human-lane",
+      worktree: "/tmp/mesh",
+      protectedSession: true,
+    }),
+  });
+  await assert.rejects(
+    service.call("register", {
+      session: session("claude", {
+        sessionId: "bot-claim",
+        worktree: "/tmp/mesh",
+        supersedes: "human-lane",
+      }),
+    }),
+    /worktree is already owned by healthy session human-lane/,
+  );
+  const reopened = await service.call("register", {
+    session: session("claude", {
+      sessionId: "human-reopen",
+      worktree: "/tmp/mesh",
+      protectedSession: true,
+      supersedes: "human-lane",
+    }),
+  });
+  assert.equal(reopened.worktree, "/tmp/mesh");
 });
 
 test("only healthy registered conductors with the adapter-specific capability may submit", async () => {
