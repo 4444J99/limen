@@ -108,7 +108,7 @@
     "lead-scoring"
    ]
   },
-  "organvm/peer-audited--behavioral-blockchain": {
+  "4444J99/peer-audited--behavioral-blockchain": {
    "display_name": "Styx Peer-Audited Behavioral Market",
    "what_it_is": "A production-grade enforcement layer for commitments with real financial stakes: Stripe FBO escrow, a double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.",
    "proof_signals": [
@@ -309,7 +309,7 @@
     "ai-tools"
    ]
   },
-  "organvm/mirror-mirror": {
+  "4444J99/mirror-mirror": {
    "awaiting_publish": true,
    "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/mirror-mirror is currently PRIVATE — flip it public to render this onto the inbound surface (his hand: publishing source is an outward-facing identity change). Proof: ~42,800 lines TS, 152 source files, 60 feature components across a 40-tab app, 158 test files, Stripe + Lemon Squeezy billing, live on Netlify, Docker + Vercel + Netlify + Pages deploy.",
    "display_name": "Virtual Try-On Platform for Beauty & Salons",
