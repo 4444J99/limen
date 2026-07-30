@@ -214,6 +214,25 @@ def test_canary_full_mesh_uses_public_receipt_path(monkeypatch, tmp_path) -> Non
     assert observed == {"client": client, "receipt_path": receipt}
 
 
+def test_canary_full_mesh_bounds_base_conduct_errors(monkeypatch, tmp_path) -> None:
+    client = HttpConductClient("https://limen-runtime.example", "fixture-token")
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+
+    def reject(**_kwargs):
+        raise ConductError(f"remote failure\n{'x' * 4096}")
+
+    monkeypatch.setattr("limen.conduct.cli.run_full_mesh_canary", reject)
+    result = CliRunner().invoke(
+        conduct_group,
+        ["canary", "full-mesh", "--receipt", str(tmp_path / "receipt.json")],
+    )
+
+    assert result.exit_code == 1
+    assert result.output.startswith("Error: remote failure ")
+    assert "\n" not in result.output.rstrip("\n")
+    assert len(result.output.rstrip("\n")) <= len("Error: ") + 1024
+
+
 @pytest.mark.parametrize(
     ("error", "reason", "successor_required"),
     [

@@ -11,7 +11,7 @@ from typing import Any, Literal
 import click
 
 from limen.conduct.broker import ConductError
-from limen.conduct.canary import ConductCanaryError, run_full_mesh_canary
+from limen.conduct.canary import run_full_mesh_canary
 from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.client import client_from_env
 from limen.conduct.liveness import foreign_worktree_occupant
@@ -31,6 +31,12 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 def _emit(payload: dict[str, Any]) -> None:
     click.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _bounded_conduct_error(exc: ConductError) -> str:
+    detail = " ".join(str(exc).split()) or "conduct request failed"
+    limit = 1024
+    return detail if len(detail) <= limit else f"{detail[: limit - 3]}..."
 
 
 def _session_id(explicit: str | None) -> str:
@@ -90,8 +96,8 @@ def canary_full_mesh(receipt_path: Path) -> None:
             client=client_from_env(),
             receipt_path=receipt_path,
         )
-    except ConductCanaryError as exc:
-        raise click.ClickException(str(exc)) from exc
+    except ConductError as exc:
+        raise click.ClickException(_bounded_conduct_error(exc)) from exc
     _emit(result)
 
 

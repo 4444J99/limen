@@ -757,6 +757,24 @@ test("full-mesh canary read edge preserves Worker protocol parity", async () => 
   assert.equal(duplicate.run_id, reserved.run_id);
 });
 
+test("deployed runtime identity degrades to null when either binding is absent", async () => {
+  for (const env of [
+    { LIMEN_CONDUCT_RUNTIME_GIT_SHA: "a".repeat(40) },
+    { CF_VERSION_METADATA: { id: "worker-version-fixture-17" } },
+  ]) {
+    const keeper = new ConductKeeperDurableObject({
+      storage: {
+        async get() { return undefined; },
+        async put() {},
+      },
+    }, env);
+    assert.equal(
+      (await keeper.service.call("capabilities")).runtime_identity,
+      null,
+    );
+  }
+});
+
 test("declared conductor identity matches its principal-bound session (#1408)", async () => {
   const store = new MemoryConductStore();
   const service = new SerializedConductService(store, {

@@ -17,6 +17,7 @@ import re
 import shlex
 import stat
 import subprocess
+import tempfile
 import time
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
@@ -56,6 +57,7 @@ _EDGE_DEADLINE = timedelta(minutes=15)
 _MAX_DEADLINE_SKEW = timedelta(minutes=5)
 _PATH_LOCK_TIMEOUT_SECONDS = 10.0
 _PATH_LOCK_POLL_SECONDS = 0.01
+_LOCK_ROOT_ENV = "LIMEN_CONDUCT_CANARY_LOCK_ROOT"
 _MAX_EDGE_RETRY_GENERATION = 1
 _PREDICATE_SUMMARY = "observed active heartbeat with unchanged runtime head for one authenticated canary edge"
 
@@ -355,8 +357,12 @@ def _discover_lanes(
 
 
 def _stable_session_identity(session: dict[str, Any]) -> dict[str, Any]:
+    native_session_id = session.get("native_session_id")
+    if not isinstance(native_session_id, str) or not _IDENTIFIER_RE.fullmatch(native_session_id):
+        raise ConductCanaryError("live canary session lacks a bounded native_session_id")
     return {
         "session_id": session["session_id"],
+        "native_session_id": native_session_id,
         "identity": session["identity"],
         "capabilities": sorted(session.get("capabilities") or []),
         "transport": session.get("transport"),
@@ -389,7 +395,13 @@ def _public_lane(lane: _Lane) -> dict[str, Any]:
     return {
         "lane": lane.name,
         "conductor_session_sha256": _sha256_text(lane.conductor_session["session_id"]),
+        "conductor_native_session_sha256": _sha256_text(
+            _stable_session_identity(lane.conductor_session)["native_session_id"]
+        ),
         "executor_session_sha256": _sha256_text(lane.executor_session["session_id"]),
+        "executor_native_session_sha256": _sha256_text(
+            _stable_session_identity(lane.executor_session)["native_session_id"]
+        ),
         "conductor_credential_ref": lane.conductor_credential.token_env,
         "conductor_credential_binding_sha256": _credential_binding_sha256(
             lane.conductor_credential,
@@ -1237,11 +1249,35 @@ def _canonical_receipt_path(path: Path) -> Path:
     return canonical
 
 
+def _runtime_lock_root() -> Path:
+    configured = os.environ.get(_LOCK_ROOT_ENV, "").strip()
+    if configured:
+        root = Path(configured).expanduser()
+    else:
+        xdg_runtime = os.environ.get("XDG_RUNTIME_DIR", "").strip()
+        base = Path(xdg_runtime).expanduser() if xdg_runtime else Path(tempfile.gettempdir()) / f"limen-{os.getuid()}"
+        root = base / "conduct-canary-locks"
+    try:
+        root.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if root.is_symlink():
+            raise ConductCanaryError("canary runtime lock root must not be a symlink")
+        canonical = root.resolve(strict=True)
+        metadata = canonical.stat()
+        if not stat.S_ISDIR(metadata.st_mode):
+            raise ConductCanaryError("canary runtime lock root is not a directory")
+        os.chmod(canonical, 0o700)
+    except ConductCanaryError:
+        raise
+    except OSError as exc:
+        raise ConductCanaryError("cannot prepare the canary runtime lock root") from exc
+    return canonical
+
+
 @contextmanager
 def _receipt_path_lock(path: Path) -> Iterator[Path]:
     canonical = _canonical_receipt_path(path)
     lock_id = _sha256_text(str(canonical))[:24]
-    lock_path = canonical.parent / f".limen-conduct-canary-{lock_id}.lock"
+    lock_path = _runtime_lock_root() / f"{lock_id}.lock"
     flags = os.O_RDWR | os.O_CREAT | os.O_CLOEXEC | os.O_NOFOLLOW
     try:
         descriptor = os.open(lock_path, flags, 0o600)

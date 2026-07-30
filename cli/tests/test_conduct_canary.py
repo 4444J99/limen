@@ -115,6 +115,7 @@ def _session(agent: str, role: str) -> ConductorSessionV1:
             session_id=session_id,
         ),
         origin="relay",
+        native_session_id=f"{agent}-provider-{role}-instance",
         capabilities=frozenset({"conduct"} if role == "conductor" else {"execute"}),
         transport="authenticated-canary",
         concurrency=2,
@@ -249,6 +250,45 @@ def test_same_canary_identity_is_byte_idempotent_and_creates_no_new_runs(tmp_pat
     assert second == first
     assert receipt_path.read_bytes() == before
     assert len(broker.store.snapshot()["runs"]) == run_count == 4
+
+
+def test_re_registered_native_session_instance_cannot_reuse_prior_receipt(tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+    with broker.store.transaction() as state:
+        state["sessions"]["alpha-canary-conductor"]["native_session_id"] = "alpha-provider-conductor-reopened"
+
+    with pytest.raises(ConductCanaryError, match="another canary identity"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW + timedelta(minutes=1),
+        )
+
+
+def test_canary_requires_live_native_session_instance_binding(tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    with broker.store.transaction() as state:
+        state["sessions"]["alpha-canary-conductor"]["native_session_id"] = None
+
+    with pytest.raises(ConductCanaryError, match="native_session_id"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+    assert broker.store.snapshot()["runs"] == {}
 
 
 @pytest.mark.parametrize(
@@ -475,6 +515,8 @@ def test_elapsed_retry_recovers_terminal_duplicates_and_third_run_byte_reuses(tm
 
 
 def test_concurrent_different_identities_cannot_overwrite_receipt(monkeypatch, tmp_path: Path) -> None:
+    lock_root = tmp_path / "runtime-locks"
+    monkeypatch.setenv(canary_module._LOCK_ROOT_ENV, str(lock_root))
     broker_one, client_one, factory_one, environment_one, receipt_path = _mesh(tmp_path)
     broker_two, client_two, factory_two, environment_two, _same_path = _mesh(
         tmp_path,
@@ -523,7 +565,8 @@ def test_concurrent_different_identities_cannot_overwrite_receipt(monkeypatch, t
     assert json.loads(receipt_path.read_text(encoding="utf-8")) == successes[0]
     assert len(broker_one.store.snapshot()["runs"]) == 4
     assert len(broker_two.store.snapshot()["runs"]) == 4
-    lock_files = list(tmp_path.glob(".limen-conduct-canary-*.lock"))
+    assert list(tmp_path.glob(".limen-conduct-canary-*.lock")) == []
+    lock_files = list(lock_root.glob("*.lock"))
     assert len(lock_files) == 1
     assert lock_files[0].is_file()
     assert lock_files[0].stat().st_mode & 0o777 == 0o600
@@ -1003,7 +1046,9 @@ def test_existing_receipt_growth_during_read_fails_closed(monkeypatch, tmp_path:
         canary_module._existing_receipt(path)
 
 
-def test_symlink_aliases_share_one_os_released_persistent_lock(tmp_path: Path) -> None:
+def test_symlink_aliases_share_one_os_released_persistent_lock(monkeypatch, tmp_path: Path) -> None:
+    lock_root = tmp_path / "runtime-locks"
+    monkeypatch.setenv(canary_module._LOCK_ROOT_ENV, str(lock_root))
     real_directory = tmp_path / "real"
     real_directory.mkdir()
     alias_directory = tmp_path / "alias"
@@ -1033,7 +1078,8 @@ def test_symlink_aliases_share_one_os_released_persistent_lock(tmp_path: Path) -
         first.result(timeout=5)
         second.result(timeout=5)
 
-    lock_files = list(real_directory.glob(".limen-conduct-canary-*.lock"))
+    assert list(real_directory.glob(".limen-conduct-canary-*.lock")) == []
+    lock_files = list(lock_root.glob("*.lock"))
     assert len(lock_files) == 1
     assert stat.S_ISREG(lock_files[0].stat().st_mode)
     assert lock_files[0].stat().st_mode & 0o777 == 0o600

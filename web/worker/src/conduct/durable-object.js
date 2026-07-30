@@ -54,7 +54,7 @@ function duration(env, name, fallback) {
 function runtimeIdentity(env) {
   const gitSha = String(env.LIMEN_CONDUCT_RUNTIME_GIT_SHA || "").trim();
   const deploymentId = String(env.CF_VERSION_METADATA?.id || "").trim();
-  if (!gitSha && !deploymentId) return null;
+  if (!gitSha || !deploymentId) return null;
   return {
     schema_version: "limen.conduct_runtime_identity.v1",
     git_sha: gitSha,
