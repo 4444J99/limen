@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -26,6 +28,17 @@ from limen.conduct.campaign_relay_state import _read_relay, _replace_relay
 from limen.workstream_contract import RECEIPT_MODULES, new_contract
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _agent_resolution_source() -> str:
+    source = (ROOT / "scripts" / "start-worktree-session.sh").read_text(encoding="utf-8")
+    marker = "    python3 - \"${requested_agent:-auto}\" <<'PY'\n"
+    return source.split(marker, 1)[1].split("\nPY\n)", 1)[0]
+
+
+def _run_agent_resolution() -> None:
+    # Execute the exact tracked heredoc so the fixture cannot drift into testing a duplicate.
+    exec(compile(_agent_resolution_source(), "agent-resolution", "exec"), {})  # noqa: S102
 
 
 def _git(root: Path, *args: str) -> str:
@@ -109,6 +122,48 @@ def effector_repo(tmp_path: Path) -> tuple[Path, Path, Path, int]:
     )
     provider.chmod(0o755)
     return root, predecessor, provider, predecessor_deadline
+
+
+def test_campaign_relay_second_census_retains_remaining_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from limen import capacity
+
+    monkeypatch.setattr(capacity, "select_lanes", lambda _selector: ["claude"])
+    monkeypatch.setattr(
+        shutil,
+        "which",
+        lambda binary: f"/fixture/{binary}" if binary == "claude" else None,
+    )
+    monkeypatch.setattr(sys, "argv", ["agent-resolution", "auto"])
+    monkeypatch.setenv("LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES", "codex,claude")
+    monkeypatch.delenv("LIMEN_CODEX_BIN", raising=False)
+    monkeypatch.delenv("LIMEN_CLAUDE_BIN", raising=False)
+
+    _run_agent_resolution()
+
+    resolved = capsys.readouterr().out.splitlines()
+    assert resolved[:2] == ["claude", "claude"]
+
+
+def test_campaign_relay_second_census_fails_for_empty_intersection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from limen import capacity
+
+    monkeypatch.setattr(capacity, "select_lanes", lambda _selector: ["opencode"])
+    monkeypatch.setattr(shutil, "which", lambda _binary: None)
+    monkeypatch.setattr(sys, "argv", ["agent-resolution", "auto"])
+    monkeypatch.setenv("LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES", "codex,claude")
+    monkeypatch.delenv("LIMEN_CODEX_BIN", raising=False)
+    monkeypatch.delenv("LIMEN_CLAUDE_BIN", raising=False)
+
+    with pytest.raises(
+        SystemExit,
+        match="campaign relay has no remaining live provider capacity before launch",
+    ):
+        _run_agent_resolution()
 
 
 def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
@@ -248,6 +303,18 @@ def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
     )
     assert recovered.receipt == launch.receipt
     assert recovered.payload["contract"]["schema"] == "limen.workstream.contract.v1"
+
+    _git(root.parent / "origin.git", "update-ref", ready_ref, exact_main)
+    with pytest.raises(
+        CampaignRelayError,
+        match="latest-ready ref is not held by its dedicated relay ref",
+    ) as mismatched_ready:
+        discover_ready_relay(
+            root,
+            now_epoch=predecessor_deadline + 1,
+        )
+    assert mismatched_ready.value.code == "relay_ready_invalid"
+    _git(root.parent / "origin.git", "update-ref", ready_ref, ready_commit)
 
     (root / "main-advanced.txt").write_text("advanced\n", encoding="utf-8")
     _git(root, "add", "main-advanced.txt")
@@ -605,6 +672,105 @@ def test_startup_stream_read_error_after_partial_bytes_fails_closed(
     assert launch.receipt.startup_stdout_bytes == 1
     assert launch.receipt.startup_stdout_truncated is False
     assert registrations == [False]
+
+
+def test_startup_output_ceiling_crossed_before_selected_ack_fails_closed(
+    effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    root, predecessor, _provider, _predecessor_deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    observed_digests: list[relay_process._BoundedStreamDigest] = []
+    registrations: list[bool] = []
+    ack_observation = tmp_path / "ack-observation.txt"
+    original_digest = relay_process._BoundedStreamDigest
+
+    class ObservableDigest(original_digest):
+        def __init__(self) -> None:
+            super().__init__()
+            observed_digests.append(self)
+
+    def register(**kwargs):
+        registrations.append(kwargs["accepting_work"])
+        assert observed_digests[0].wait_for_output_ceiling(timeout=2)
+        raw = json.dumps(
+            {
+                "accepting_work": kwargs["accepting_work"],
+                "agent": kwargs["agent"],
+                "session_id": kwargs["session_id"],
+            },
+            sort_keys=True,
+        ).encode()
+        return hashlib.sha256(raw).hexdigest(), len(raw)
+
+    def spawn(_command, **kwargs):
+        child_source = f"""
+import json
+import os
+from pathlib import Path
+
+control_fd = {kwargs["control_descriptor"]}
+exec_fd = {kwargs["exec_descriptor"]}
+ack_fd = {kwargs["ack_descriptor"]}
+event = {{
+    "agent": "codex",
+    "capabilities": ["conduct"],
+    "relay_id": os.environ["LIMEN_CAMPAIGN_RELAY_ID"],
+    "schema": "limen.campaign_relay_control.v1",
+    "session_id": os.environ["LIMEN_WORKSTREAM_SESSION_ID"],
+    "stage": "selected",
+}}
+payload = (json.dumps(event, sort_keys=True, separators=(",", ":")) + "\\n").encode()
+while payload:
+    payload = payload[os.write(control_fd, payload):]
+payload = b"x" * {relay_process._STARTUP_OUTPUT_CEILING + 8192}
+while payload:
+    payload = payload[os.write(1, payload):]
+ack = os.read(ack_fd, 32)
+Path(os.environ["ACK_OBSERVATION"]).write_text(ack.hex() if ack else "closed", encoding="utf-8")
+os.close(control_fd)
+os.close(exec_fd)
+"""
+        env = {**kwargs["env"], "ACK_OBSERVATION": str(ack_observation)}
+        return subprocess.Popen(
+            [sys.executable, "-c", child_source],
+            cwd=root,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            pass_fds=(
+                kwargs["ack_descriptor"],
+                kwargs["control_descriptor"],
+                kwargs["exec_descriptor"],
+            ),
+        )
+
+    monkeypatch.setattr(
+        "limen.conduct.campaign_relay_protocol._BoundedStreamDigest",
+        ObservableDigest,
+    )
+
+    launch = launch_reserved_relay(
+        root,
+        reservation.receipt.relay_id,
+        timeout_seconds=10,
+        process_factory=spawn,
+        lane_selector=lambda _root: ("codex",),
+        registration=register,
+    )
+
+    assert launch.receipt.state == "failed"
+    assert launch.receipt.terminal_code == "relay_startup_output_oversized"
+    assert launch.receipt.startup_stdout_truncated is True
+    assert launch.receipt.startup_stdout_bytes == relay_process._STARTUP_OUTPUT_CEILING + 1
+    assert registrations == [False]
+    assert ack_observation.read_text(encoding="utf-8") == "closed"
 
 
 def test_ready_publication_failure_rolls_broker_back_to_dormant(

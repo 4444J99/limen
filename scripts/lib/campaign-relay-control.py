@@ -272,7 +272,7 @@ workstream_campaign_relay_emit_published() {{
   local contract_helper="${{LIMEN_CAPSULE_DIR:-}}/workstream-contract.py"
   local timeout_seconds="${{LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}}"
   local receipt_rel=""
-  local commit="" parent="" receipt_blob="" receipt_ref=""
+  local commit="" parent="" receipt_blob="" receipt_ref="" remote_row=""
 
   receipt_rel="${{receipt_path#"$LIMEN_WORKTREE/"}}"
   commit="$(git rev-parse HEAD 2>/dev/null || true)"
@@ -282,8 +282,16 @@ workstream_campaign_relay_emit_published() {{
   if ! GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
     --timeout-seconds "$timeout_seconds" -- \
     git push origin "$commit:$receipt_ref" >/dev/null 2>&1; then
-    printf 'campaign relay immutable receipt-ref publication failed\\n' >&2
-    return 2
+    if ! remote_row="$(GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+      --timeout-seconds "$timeout_seconds" -- \
+      git ls-remote --refs origin "$receipt_ref" 2>/dev/null)"; then
+      printf 'campaign relay immutable receipt-ref publication failed\\n' >&2
+      return 2
+    fi
+    if [[ "$remote_row" != "$commit"$'\\t'"$receipt_ref" ]]; then
+      printf 'campaign relay immutable receipt-ref publication failed\\n' >&2
+      return 2
+    fi
   fi
   python3 -c '
 import json

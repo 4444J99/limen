@@ -33,19 +33,39 @@ class BoundedCompletedProcess:
     stderr: bytes
 
 
-def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
-    with suppress(OSError):
+def _terminate_process_group(process: subprocess.Popen[bytes]) -> bool:
+    """Best-effort terminate and reap without replacing the triggering failure."""
+
+    def reaped() -> bool:
+        try:
+            return process.poll() is not None
+        except BaseException:  # noqa: BLE001 - cleanup must preserve the triggering failure
+            return False
+
+    def wait(timeout: float) -> bool:
+        try:
+            process.wait(timeout=timeout)
+        except BaseException:  # noqa: BLE001 - cleanup must preserve the triggering failure
+            return False
+        return True
+
+    was_reaped = reaped()
+    with suppress(BaseException):
         os.killpg(process.pid, signal.SIGTERM)
-    if process.poll() is None:
-        with suppress(subprocess.TimeoutExpired):
-            process.wait(timeout=0.25)
-    with suppress(OSError):
+    if not was_reaped:
+        with suppress(BaseException):
+            process.terminate()
+        was_reaped = wait(0.25)
+
+    # The group kill remains unconditional so a wrapper that exited first
+    # cannot leave a descendant holding either output pipe.
+    with suppress(BaseException):
         os.killpg(process.pid, signal.SIGKILL)
-    if process.poll() is None:
-        with suppress(OSError):
+    if not was_reaped:
+        with suppress(BaseException):
             process.kill()
-        with suppress(subprocess.TimeoutExpired):
-            process.wait(timeout=1.0)
+        was_reaped = wait(1.0)
+    return was_reaped or reaped()
 
 
 def run_bounded_subprocess(
@@ -97,6 +117,9 @@ def run_bounded_subprocess(
     except OSError as exc:
         _terminate_process_group(process)
         raise BoundedSubprocessError("unavailable") from exc
+    except BaseException:
+        _terminate_process_group(process)
+        raise
     stdout_chunks: list[bytes] = []
     stderr_chunks: list[bytes] = []
     stdout_size = 0
@@ -176,10 +199,14 @@ def run_bounded_subprocess(
     except OSError as exc:
         _terminate_process_group(process)
         raise BoundedSubprocessError("unavailable") from exc
+    except BaseException:
+        _terminate_process_group(process)
+        raise
     finally:
-        selector.close()
+        with suppress(BaseException):
+            selector.close()
         for _label, stream in streams.values():
-            with suppress(OSError):
+            with suppress(BaseException):
                 stream.close()  # type: ignore[attr-defined]
 
     return BoundedCompletedProcess(

@@ -25,6 +25,7 @@ from limen.conduct.campaign_relay import (
     _latest_remote_ref,
     _open_store,
     _read_receipt,
+    _ready_remote_ref,
     _relay_names,
 )
 from limen.conduct.campaign_relay_process import (
@@ -458,8 +459,15 @@ def launch_reserved_relay(
     exec_eof = False
     selected_capabilities: tuple[str, ...] = ()
     worktree = root / ".worktrees" / receipt.successor_slug
+
+    def startup_output_ceiling_crossed() -> bool:
+        return stdout_evidence.output_ceiling_crossed() or stderr_evidence.output_ceiling_crossed()
+
     try:
         while not (control_eof and exec_eof):
+            if startup_output_ceiling_crossed():
+                terminal_code = "relay_startup_output_oversized"
+                break
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 terminal_code = "relay_startup_timeout"
@@ -563,7 +571,9 @@ def launch_reserved_relay(
                                 "registration_response_sha256": response_sha,
                             },
                         )
-                        if time.monotonic() >= deadline:
+                        if startup_output_ceiling_crossed():
+                            terminal_code = "relay_startup_output_oversized"
+                        elif time.monotonic() >= deadline:
                             terminal_code = "relay_startup_timeout"
                         else:
                             _acknowledge_relay(ack_writer, b"registered\n")
@@ -614,7 +624,9 @@ def launch_reserved_relay(
                                 "publication_receipt_blob": publication_receipt_blob,
                             },
                         )
-                        if deadline - time.monotonic() < _EXEC_HANDOFF_BUDGET_SECONDS:
+                        if startup_output_ceiling_crossed():
+                            terminal_code = "relay_startup_output_oversized"
+                        elif deadline - time.monotonic() < _EXEC_HANDOFF_BUDGET_SECONDS:
                             terminal_code = "relay_startup_timeout"
                         else:
                             _acknowledge_relay(ack_writer, b"launch\n")
@@ -668,6 +680,8 @@ def launch_reserved_relay(
         evidence = _startup_evidence(stdout_evidence, stderr_evidence)
         output_truncated = bool(evidence["startup_stdout_truncated"] or evidence["startup_stderr_truncated"])
         output_read_failed = stdout_evidence.read_failed() or stderr_evidence.read_failed()
+        if terminal_code is None and startup_output_ceiling_crossed():
+            terminal_code = "relay_startup_output_oversized"
         if (
             control_eof
             and exec_eof
@@ -834,12 +848,21 @@ def discover_ready_relay(
             "relay_ready_invalid",
             "campaign relay latest-ready ref is malformed or ambiguous",
         )
+    latest_commit = fields[0]
     receipt = _load_remote_ready(
         root,
-        commit=fields[0],
+        commit=latest_commit,
         relay_id=None,
         validate_publication=False,
     )
+    ready_ref = _ready_remote_ref(receipt.relay_id)
+    ready_rows = _git(root, "ls-remote", "origin", ready_ref).splitlines()
+    ready_fields = ready_rows[0].split("\t") if len(ready_rows) == 1 else []
+    if ready_fields != [latest_commit, ready_ref]:
+        raise CampaignRelayError(
+            "relay_ready_invalid",
+            "campaign relay latest-ready ref is not held by its dedicated relay ref",
+        )
     if receipt.workstream != workstream:
         raise CampaignRelayError(
             "relay_ready_invalid",

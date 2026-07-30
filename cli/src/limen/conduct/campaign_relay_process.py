@@ -243,6 +243,7 @@ class _BoundedStreamDigest:
         self._truncated = False
         self._read_failed = False
         self._lock = threading.Lock()
+        self._output_ceiling_crossed = threading.Event()
 
     def consume(self, stream: Any) -> None:
         try:
@@ -259,6 +260,7 @@ class _BoundedStreamDigest:
                     if len(chunk) > remaining:
                         self._truncated = True
                         self._bytes = _STARTUP_OUTPUT_CEILING + 1
+                        self._output_ceiling_crossed.set()
         except (OSError, ValueError):
             with self._lock:
                 self._read_failed = True
@@ -276,6 +278,16 @@ class _BoundedStreamDigest:
     def read_failed(self) -> bool:
         with self._lock:
             return self._read_failed
+
+    def output_ceiling_crossed(self) -> bool:
+        """Report an output-cap breach immediately, without waiting for stream EOF."""
+
+        return self._output_ceiling_crossed.is_set()
+
+    def wait_for_output_ceiling(self, timeout: float | None = None) -> bool:
+        """Wait for an output-cap breach without coupling it to stream completion."""
+
+        return self._output_ceiling_crossed.wait(timeout)
 
 
 def _startup_evidence(

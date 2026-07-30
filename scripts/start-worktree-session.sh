@@ -423,12 +423,15 @@ if requested == "auto":
         if value
     ]
     if relay_order:
-        live = set(select_lanes("auto"))
-        if len(relay_order) != len(set(relay_order)) or any(name not in live for name in relay_order):
-            raise SystemExit("campaign relay live provider capacity changed before launch")
+        if len(relay_order) != len(set(relay_order)):
+            raise SystemExit("campaign relay eligible lanes are not unique")
         ordered = [by_name(name) for name in relay_order]
         if any(vendor is None for vendor in ordered):
             raise SystemExit("campaign relay eligible lane is not canonical")
+        live = set(select_lanes("auto"))
+        ordered = [vendor for vendor in ordered if vendor.name in live]
+        if not ordered:
+            raise SystemExit("campaign relay has no remaining live provider capacity before launch")
     else:
         preferred = canonical(os.environ.get("LIMEN_AGENT"))
         ordered = list(VENDORS)
