@@ -10,6 +10,10 @@ Repository contract verified 2026-07-27:
 - A wake fails closed unless the checkout is clean at the exact live remote default branch, the
   finite capsule remains valid, a conductor identity is present, and the supervisor returns a
   schema-valid boundary for the same exact head. There is no direct-launch fallback.
+- At T−30 the supervisor atomically reserves one deterministic successor relay and returns its
+  path-free lifecycle projection without evaluating Omega or launching a provider. The common-Git
+  reservation boundary and deliberately separate launch/readiness/follow effector are documented
+  in [`campaign-successor-relay.md`](campaign-successor-relay.md).
 - The synchronous and asynchronous dispatch engines remain available as historical/manual
   compatibility surfaces and retain their focused tests. They are not heartbeat implementations.
 
