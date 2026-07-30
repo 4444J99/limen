@@ -242,3 +242,17 @@ ideals:
       environment: repo
       extract: "([0-9]+) of [0-9]+ atoms residual"
       ideal_value: 0
+
+  IF-DOMAIN-STREAMS:
+    ideal: >
+      "What session streams do I open?" is answered by the operator's LIFE/WORK DOMAINS —
+      one family: domain row per workstream channel (correspondence, financial,
+      representation, ...), derived from the channel roster and opened by the launcher in
+      open_rank order; the collaborator constellation is the consulting domain's interior,
+      never a sibling answer, and no session ever re-invents the roster.
+    owner: "Claude (generator + checks) + the channel roster (workstream.py / organ-ladder.json)"
+    probe:
+      command: "python3 institutio/governance/derive-domain-streams.py --check"
+      derives: "registry<->roster parity for the domain family (rows + cartridges, both directions)"
+      environment: repo
+      at_ideal_when: exit_zero

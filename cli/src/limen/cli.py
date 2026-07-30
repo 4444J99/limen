@@ -696,9 +696,10 @@ def workstream(
 @click.option(
     "--family",
     default=None,
-    type=click.Choice(["constellation", "governance", "all"]),
-    help="Which rows to open. Default constellation — the operator's people × project lanes; "
-    "governance domains are named as elided and opened deliberately.",
+    type=click.Choice(["domain", "constellation", "governance", "all"]),
+    help="Which rows to open. Default domain — the operator's life/work domains (correspondence, "
+    "financial, representation, …); constellation (the consulting domain's collaborator interior) "
+    "and governance rows are named as elided and opened deliberately.",
 )
 @click.option("--lane", default=None, metavar="LANE", help="Native lane to open on (claude|codex|agy|opencode|…).")
 @click.option("--dry-run", "dry_run", is_flag=True, help="Print exactly what would open; touch nothing.")
