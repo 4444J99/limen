@@ -281,3 +281,21 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   evacuation fence's measured volume.
 - **Status:** PARTIAL — the registry and predicate are live; the homing is the work.
 - **Owner:** Claude (registry + predicate) + the per-kind `owner_of_record`.
+
+### IF-DOMAIN-STREAMS — the operator's streams are life/work domains, derived
+- **Ideal form:** "what session streams do I open? (~6-10)" is a derivation, never a recollection:
+  one `family: domain` row + cartridge per workstream channel (`derive-domain-streams.py`, from
+  `workstream.py` meta lanes + `organ-ladder.json` pillars), ordered by `open_rank` with the
+  operator-ratified head (correspondence, financial, representation, consulting, legal, health,
+  education, governance, contributions — 9, inside his stated 6-10); `limen streams` opens them by
+  default, the constellation family stays the consulting domain's interior, and check N holds the
+  projection to the roster on every pr-gate.
+- **Distance:** shipped 2026-07-30 after the question was answered wrongly three times (governance
+  phases s0-s10; per-project collaborator lanes; per-person lanes still one altitude low). Root
+  cause measured by the full-history excavation (all AI apps, local + external + remote): the
+  roster existed only as derived data — the operator deliberately declined to enumerate (Codex
+  2026-06-26) — so every session that missed `workstream.py` re-invented a list. The lineage is
+  distilled in `organvm/knowledge-corpus` `reduced/session-streams-domain-lineage.md`; the probe
+  is the generator's own `--check`.
+- **Status:** SHIPPED — the family, generator, launcher default, and parity check are live.
+- **Owner:** Claude (generator + checks) + the channel roster (`workstream.py` / `organ-ladder.json`).

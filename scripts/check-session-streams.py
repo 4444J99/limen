@@ -105,17 +105,21 @@ REQUIRED_FIELDS = (
 )
 # The CLAUDE.md branch-cadence table. Restated nowhere else in this file.
 VALID_PREFIXES = {"feat", "fix", "heal", "chore", "docs", "refactor"}
-# Which registry a row is a projection of. `constellation` rows are DERIVED from
-# organs/consulting/constellation/registry.yaml (the operator's people × project lanes — the
-# streams he actually opens); `governance` rows are hand-authored estate work. The word "streams"
-# reached this registry through the constellation work (#1535), so the operator-facing views list
-# constellation first — his lanes are the answer to "what streams do I open?", not the plumbing.
-VALID_FAMILIES = {"constellation", "governance"}
-FAMILY_RANK = {"constellation": 0, "governance": 1}
-# The generator whose output check M holds this registry to. Its --check re-derives every
-# constellation row and cartridge from the register and exits 1 on any byte of drift — so a
-# hand-edit to a derived row is a red pr-gate, same pattern as check-gates.py holds workflows.
+# Which registry a row is a projection of. `domain` rows are DERIVED from the workstream channel
+# roster (cli/src/limen/workstream.py meta lanes + organ-ladder.json pillars) — the operator's
+# LIFE/WORK DOMAINS (2026-07-30 correction: email/comms=correspondence, finance=financial, job
+# applications=representation), the streams he actually opens. `constellation` rows are DERIVED
+# from organs/consulting/constellation/registry.yaml — the collaborator person-streams, which are
+# the consulting DOMAIN's interior. `governance` rows are hand-authored estate work. The
+# operator-facing views list domain first — his life/work domains are the answer to "what streams
+# do I open?"; the collaborator interior and the plumbing follow, never lead.
+VALID_FAMILIES = {"domain", "constellation", "governance"}
+FAMILY_RANK = {"domain": 0, "constellation": 1, "governance": 2}
+# The generators whose output checks M and N hold this registry to. Each one's --check re-derives
+# its own family's rows and cartridges and exits 1 on any byte of drift — so a hand-edit to a
+# derived row is a red pr-gate, same pattern as check-gates.py holds workflows.
 DERIVE_STREAMS = os.path.join("organs", "consulting", "constellation", "derive-streams.py")
+DERIVE_DOMAINS = os.path.join("institutio", "governance", "derive-domain-streams.py")
 VALID_PREDICATE_STATUS = {"existing", "to_be_built"}
 # Fields whose presence would let a human hand-write state the graph is supposed to derive.
 FORBIDDEN_STATE_FIELDS = ("status", "state", "settled", "ready", "done", "complete")
@@ -337,15 +341,17 @@ def _settled(sid, stream=None):
     Fails toward NOT-settled: if git or the remote ref is unavailable we report unsettled, so a
     broken environment can only under-report readiness, never invent it.
 
-    Constellation rows NEVER settle here: a lane is recurring work the operator reopens, and its
-    lifecycle belongs to the register it derives from — a lane leaves the ready set when the
-    operator re-tiers or removes it in the constellation register (derivation then deletes the
-    row), not when one increment lands a trailer. Without this guard a single `Settles: styx`
-    commit would remove a lane from the launcher forever while the register still lists it T1.
+    Constellation and domain rows NEVER settle here: both are recurring work the operator
+    reopens, and their lifecycle belongs to the registry each derives from — a constellation lane
+    leaves the ready set when the operator re-tiers or removes the person in the register, and a
+    domain leaves it when the channel roster changes (an organ pillar removed, or the projection
+    policy deliberately edited); derivation then deletes the row. Not when one increment lands a
+    trailer: without this guard a single `Settles: styx` (or `Settles: correspondence`) commit
+    would remove a recurring lane from the launcher forever while its registry still declares it.
     """
     if stream is None:
         stream = load().get(sid) or {}
-    if stream.get("family") == "constellation":
+    if stream.get("family") in ("constellation", "domain"):
         return False
     if sid in _settled_by_backfill():
         return True
@@ -505,6 +511,16 @@ def run_checks(streams):
                 fail("A", f"{sid}: register_tier is register-derived; only constellation rows carry it")
             elif not re.fullmatch(r"T[0-9]", str(rt)):
                 fail("A", f"{sid}: register_tier {rt!r} is not T<digit>")
+        # open_rank is the domain family's ordering word (the launcher's RAM bound opens the first
+        # N rows, so order IS priority) — roster-derived, so only domain rows may carry it; any
+        # other family declaring one would be hand-written queue-jumping, same rule as
+        # register_tier above.
+        orank = s.get("open_rank")
+        if orank is not None:
+            if s.get("family") != "domain":
+                fail("A", f"{sid}: open_rank is roster-derived; only domain rows carry it")
+            elif not isinstance(orank, int) or isinstance(orank, bool) or orank < 1:
+                fail("A", f"{sid}: open_rank {orank!r} must be a positive int")
         if s.get("predicate_status") not in VALID_PREDICATE_STATUS:
             fail(
                 "A",
@@ -746,6 +762,36 @@ def run_checks(streams):
                     + f" — fix the register, then `python3 {DERIVE_STREAMS} --write`",
                 )
 
+    # N — domain rows and cartridges are PROJECTIONS of the workstream channel roster
+    # (workstream.py meta lanes + organ-ladder.json pillars), held in parity by the domain
+    # generator's own --check — the same one-derivation-rule-one-home shape as check M. The defect
+    # this closes: the operator's actual streams are his LIFE/WORK DOMAINS (2026-07-30 —
+    # email/comms=correspondence, finance=financial, job applications=representation), canonical
+    # in code since 2026-07-02, and this registry twice shipped without a family for them.
+    domain_generator = os.path.join(ROOT, DERIVE_DOMAINS)
+    if not os.path.exists(domain_generator):
+        fail("N", f"{DERIVE_DOMAINS} is missing — domain rows have no derivation authority")
+    else:
+        try:
+            probe = subprocess.run(
+                [sys.executable, domain_generator, "--check"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=ROOT,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            fail("N", f"could not run {DERIVE_DOMAINS} --check: {exc}")
+        else:
+            if probe.returncode != 0:
+                detail = (probe.stdout + probe.stderr).strip().splitlines()
+                fail(
+                    "N",
+                    "domain rows/cartridges have drifted from the channel roster — "
+                    + "; ".join(detail[:4])
+                    + f" — fix the roster/policy, then `python3 {DERIVE_DOMAINS} --write`",
+                )
+
 
 def print_all(streams):
     """Every unsettled domain's launch command, in dependency order.
@@ -780,15 +826,28 @@ def print_all(streams):
     return 0
 
 
+def _within_family_key(s):
+    """The ordering word INSIDE a family, as a string so families never cross-compare types:
+    domain rows order by zero-padded open_rank ("001" < "002"), constellation by register_tier
+    ("T1" < "T2"), governance by nothing ("~" sorts after both)."""
+    if s.get("family") == "domain":
+        try:
+            return f"{int(s.get('open_rank', 999)):03d}"
+        except (TypeError, ValueError):
+            return "999"
+    return str(s.get("register_tier", "~"))  # "~" sorts after any TN, so untiered rows follow
+
+
 def _family_order(rows):
-    """Constellation lanes first (T1 before T2 — the launcher's RAM bound opens the first N rows,
-    so order IS priority), then governance, alphabetical within each rank. The operator's own
-    lanes are the answer to "what streams do I open?" — the plumbing follows them, never leads."""
+    """Domain rows first (by open_rank — the launcher's RAM bound opens the first N rows, so
+    order IS priority), then constellation (T1 before T2 — the consulting domain's interior),
+    then governance, alphabetical within each rank. The operator's life/work domains are the
+    answer to "what streams do I open?" — the interior and the plumbing follow, never lead."""
     return sorted(
         rows,
         key=lambda kv: (
             FAMILY_RANK.get(kv[1].get("family"), len(FAMILY_RANK)),
-            kv[1].get("register_tier", "~"),  # "~" sorts after any TN, so untiered rows follow
+            _within_family_key(kv[1]),
             kv[0],
         ),
     )
