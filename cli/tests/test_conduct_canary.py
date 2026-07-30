@@ -36,10 +36,12 @@ class BrokerHttpClient(HttpConductClient):
         timeout: int = 30,
         broker: ConductBroker,
         principals: dict[str, ConductPrincipalV1],
+        clock: dict[str, datetime],
     ) -> None:
         super().__init__(endpoint, token, timeout=timeout)
         self.broker = broker
         self.principals = principals
+        self.clock = clock
 
     @property
     def principal(self) -> ConductPrincipalV1:
@@ -49,14 +51,15 @@ class BrokerHttpClient(HttpConductClient):
         return self.broker.capabilities(now=NOW)
 
     def submit(self, packet):
-        return self.broker.submit(packet, principal=self.principal, now=NOW)
+        self.clock["now"] = packet.deadline - timedelta(minutes=15)
+        return self.broker.submit(packet, principal=self.principal, now=self.clock["now"])
 
     def claim(self, lease_id, generation):
         return self.broker.claim(
             lease_id,
             generation,
             principal=self.principal,
-            now=NOW,
+            now=self.clock["now"],
         )
 
     def heartbeat(
@@ -75,7 +78,7 @@ class BrokerHttpClient(HttpConductClient):
             principal=self.principal,
             observed_heads=observed_heads,
             attempt=attempt,
-            now=NOW,
+            now=self.clock["now"],
         )
 
     def report(self, lease_id, capability_token, receipt, *, generation):
@@ -85,7 +88,7 @@ class BrokerHttpClient(HttpConductClient):
             receipt,
             generation=generation,
             principal=self.principal,
-            now=NOW,
+            now=self.clock["now"],
         )
 
     def harvest(self, root_run_id):
@@ -125,6 +128,7 @@ def _mesh(tmp_path: Path):
         capability_secret="full-mesh-capability-secret",
     )
     principals: dict[str, ConductPrincipalV1] = {}
+    clock = {"now": NOW}
     credentials = []
     environment = {
         "LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY": json.dumps(
@@ -169,6 +173,7 @@ def _mesh(tmp_path: Path):
             timeout=timeout,
             broker=broker,
             principals=principals,
+            clock=clock,
         )
 
     bootstrap = factory(
@@ -251,6 +256,7 @@ def test_same_canary_identity_is_byte_idempotent_and_creates_no_new_runs(tmp_pat
         "run_id",
         "pair",
         "digest",
+        "packet_deadline",
         "boolean",
     ],
 )
@@ -278,6 +284,9 @@ def test_existing_receipt_tampering_fails_closed(tmp_path: Path, tamper: str) ->
         receipt["edges"][1]["executor_lane"] = receipt["edges"][0]["executor_lane"]
     elif tamper == "digest":
         receipt["edges"][0]["accepted_receipt_sha256"] = "0" * 64
+    elif tamper == "packet_deadline":
+        deadline = datetime.fromisoformat(receipt["edges"][0]["packet_deadline"])
+        receipt["edges"][0]["packet_deadline"] = (deadline + timedelta(seconds=1)).isoformat()
     else:
         receipt["edges"][0]["heartbeat"] = False
     receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
@@ -305,7 +314,7 @@ def test_existing_receipt_observed_at_tampering_fails_closed(tmp_path: Path) -> 
     receipt["observed_at"] = (datetime.fromisoformat(receipt["observed_at"]) + timedelta(seconds=1)).isoformat()
     receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
 
-    with pytest.raises(ConductCanaryError, match="deadline does not match"):
+    with pytest.raises(ConductCanaryError, match="observed_at"):
         run_full_mesh_canary(
             client=client,
             receipt_path=receipt_path,
@@ -371,7 +380,7 @@ def test_harvested_packet_deadline_tampering_fails_closed(tmp_path: Path) -> Non
         )
 
 
-def test_interrupted_after_submit_recovers_duplicate_without_new_run(monkeypatch, tmp_path: Path) -> None:
+def test_elapsed_retry_recovers_live_duplicate_and_third_run_byte_reuses(monkeypatch, tmp_path: Path) -> None:
     broker, client, factory, environment, receipt_path = _mesh(tmp_path)
     original_submit = BrokerHttpClient.submit
     interrupted = False
@@ -402,14 +411,29 @@ def test_interrupted_after_submit_recovers_duplicate_without_new_run(monkeypatch
         receipt_path=receipt_path,
         environ=environment,
         client_factory=factory,
-        now=NOW,
+        now=NOW + timedelta(minutes=1),
+    )
+    before = receipt_path.read_bytes()
+    third = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW + timedelta(minutes=2),
     )
 
     assert receipt["status"] == "passed"
+    assert third == receipt
+    assert receipt_path.read_bytes() == before
+    assert {edge["packet_deadline"] for edge in receipt["edges"]} == {
+        (NOW + timedelta(minutes=15)).isoformat(),
+        (NOW + timedelta(minutes=16)).isoformat(),
+    }
+    assert receipt["observed_at"] == (NOW + timedelta(minutes=1)).isoformat()
     assert len(broker.store.snapshot()["runs"]) == 4
 
 
-def test_missing_local_receipt_recovers_terminal_duplicates(tmp_path: Path) -> None:
+def test_elapsed_retry_recovers_terminal_duplicates_and_third_run_byte_reuses(tmp_path: Path) -> None:
     broker, client, factory, environment, receipt_path = _mesh(tmp_path)
     first = run_full_mesh_canary(
         client=client,
@@ -418,6 +442,7 @@ def test_missing_local_receipt_recovers_terminal_duplicates(tmp_path: Path) -> N
         client_factory=factory,
         now=NOW,
     )
+    first_bytes = receipt_path.read_bytes()
     receipt_path.unlink()
 
     recovered = run_full_mesh_canary(
@@ -425,10 +450,22 @@ def test_missing_local_receipt_recovers_terminal_duplicates(tmp_path: Path) -> N
         receipt_path=receipt_path,
         environ=environment,
         client_factory=factory,
-        now=NOW,
+        now=NOW + timedelta(minutes=1),
+    )
+    recovered_bytes = receipt_path.read_bytes()
+    third = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW + timedelta(minutes=2),
     )
 
     assert recovered == first
+    assert third == recovered
+    assert recovered_bytes == first_bytes
+    assert receipt_path.read_bytes() == recovered_bytes
+    assert {edge["packet_deadline"] for edge in recovered["edges"]} == {(NOW + timedelta(minutes=15)).isoformat()}
     assert len(broker.store.snapshot()["runs"]) == 4
 
 

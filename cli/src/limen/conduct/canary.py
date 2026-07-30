@@ -493,6 +493,16 @@ def _parse_timestamp(value: Any, label: str) -> datetime:
     return parsed
 
 
+def _canonical_timestamp(value: Any, label: str) -> str:
+    return _parse_timestamp(value, label).astimezone(timezone.utc).isoformat()
+
+
+def _canonical_datetime(value: datetime, label: str) -> str:
+    if value.tzinfo is None:
+        raise ConductCanaryError(f"{label} must include a timezone")
+    return value.astimezone(timezone.utc).isoformat()
+
+
 def _validate_packet_contract(
     raw_packet: Any,
     *,
@@ -703,6 +713,7 @@ def _edge_evidence(
     rejection_sha256: str,
     accepted_receipt: dict[str, Any],
     runtime_git_sha: str,
+    broker_created_at: Any,
 ) -> dict[str, Any]:
     run_id = _expected_run_id(packet)
     checks = _expected_checks(
@@ -717,6 +728,8 @@ def _edge_evidence(
         "conductor_lane": conductor.name,
         "executor_lane": executor.name,
         "run_id": run_id,
+        "broker_created_at": _canonical_timestamp(broker_created_at, "harvested run created_at"),
+        "packet_deadline": _canonical_datetime(packet.deadline, "harvested packet deadline"),
         "lease_id_sha256": _sha256_text(str(lease["lease_id"])),
         "work_key_sha256": _sha256_text(packet.work_key),
         "intent_sha256": packet.intent_hash,
@@ -732,6 +745,13 @@ def _edge_evidence(
         "empty_changed_paths": True,
         "conductor_harvest": True,
     }
+
+
+def _aggregate_observed_at(edges: list[dict[str, Any]]) -> str:
+    if not edges:
+        raise ConductCanaryError("canary receipt has no edge observations")
+    observations = [_canonical_timestamp(edge.get("broker_created_at"), "edge broker_created_at") for edge in edges]
+    return max(observations)
 
 
 def _execute_edge(
@@ -772,7 +792,7 @@ def _execute_edge(
     )
     run_id = _expected_run_id(packet)
     harvested = conductor_client.harvest(run_id)
-    node, lease, _stored_packet = _validate_harvest_node(
+    node, lease, stored_packet = _validate_harvest_node(
         harvested,
         packet=packet,
         conductor=conductor,
@@ -792,13 +812,13 @@ def _execute_edge(
         accepted = _validate_terminal_receipt(
             node,
             lease,
-            packet=packet,
+            packet=stored_packet,
             edge_id=edge_id,
             executor=executor,
             runtime_git_sha=runtime_git_sha,
         )
         return _edge_evidence(
-            packet=packet,
+            packet=stored_packet,
             edge_id=edge_id,
             conductor=conductor,
             executor=executor,
@@ -806,6 +826,7 @@ def _execute_edge(
             rejection_sha256=rejection_digest,
             accepted_receipt=accepted,
             runtime_git_sha=runtime_git_sha,
+            broker_created_at=node.get("created_at"),
         )
 
     claim = executor_client.claim(lease["lease_id"], lease["generation"])
@@ -839,7 +860,7 @@ def _execute_edge(
         raise ConductCanaryError("executor heartbeat returned the wrong canary lease")
 
     receipt = RunReceiptV1(
-        receipt_id=f"receipt-{packet.work_id}",
+        receipt_id=f"receipt-{stored_packet.work_id}",
         run_id=run_id,
         lease_id=lease["lease_id"],
         lease_generation=lease["generation"],
@@ -848,7 +869,7 @@ def _execute_edge(
         observed_heads_after={"runtime": runtime_git_sha},
         changed_paths=(),
         predicate=PredicateEvidenceV1(
-            command=packet.predicate,
+            command=stored_packet.predicate,
             exit_code=0,
             summary=_PREDICATE_SUMMARY,
         ),
@@ -871,23 +892,24 @@ def _execute_edge(
     if report.get("mutation_authorized") is not True or report.get("run_status") != "succeeded":
         raise ConductCanaryError("keeper rejected the unchanged-head read-effect receipt")
     terminal_harvest = conductor_client.harvest(run_id)
-    terminal_node, terminal_lease, _terminal_packet = _validate_harvest_node(
+    terminal_node, terminal_lease, terminal_packet = _validate_harvest_node(
         terminal_harvest,
-        packet=packet,
+        packet=stored_packet,
         conductor=conductor,
         executor=executor,
         runtime_git_sha=runtime_git_sha,
+        require_exact_deadline=True,
     )
     accepted = _validate_terminal_receipt(
         terminal_node,
         terminal_lease,
-        packet=packet,
+        packet=terminal_packet,
         edge_id=edge_id,
         executor=executor,
         runtime_git_sha=runtime_git_sha,
     )
     return _edge_evidence(
-        packet=packet,
+        packet=terminal_packet,
         edge_id=edge_id,
         conductor=conductor,
         executor=executor,
@@ -895,6 +917,7 @@ def _execute_edge(
         rejection_sha256=rejection_digest,
         accepted_receipt=accepted,
         runtime_git_sha=runtime_git_sha,
+        broker_created_at=terminal_node.get("created_at"),
     )
 
 
@@ -1014,7 +1037,6 @@ def _reuse_existing(
         or existing.get("lanes") != [_public_lane(lane) for lane in lanes]
     ):
         raise ConductCanaryError("existing receipt is not a passing fixed-point receipt")
-    observed_at = _parse_timestamp(existing.get("observed_at"), "existing receipt observed_at")
     edges = existing.get("edges")
     if not isinstance(edges, list) or len(edges) != required:
         raise ConductCanaryError("existing receipt does not cover the current full mesh")
@@ -1030,7 +1052,19 @@ def _reuse_existing(
         raise ConductCanaryError("existing receipt edge denominator does not match live capabilities")
     if len(set(edge_ids)) != required or len(set(run_ids)) != required:
         raise ConductCanaryError("existing receipt reuses an edge or run identity")
+    verified_edges: list[dict[str, Any]] = []
     for edge, (conductor, executor) in zip(edges, expected_edges, strict=True):
+        if not isinstance(edge, dict):
+            raise ConductCanaryError("existing receipt contains malformed edge evidence")
+        packet_deadline = _parse_timestamp(
+            edge.get("packet_deadline"),
+            "existing edge packet_deadline",
+        )
+        if edge["packet_deadline"] != _canonical_datetime(
+            packet_deadline,
+            "existing edge packet_deadline",
+        ):
+            raise ConductCanaryError("existing edge packet_deadline is not canonical")
         edge_id = _edge_id(canary_id, conductor, executor)
         packet = _packet(
             canary_id=canary_id,
@@ -1038,7 +1072,7 @@ def _reuse_existing(
             conductor=conductor,
             executor=executor,
             runtime_git_sha=runtime_git_sha,
-            now=observed_at,
+            now=packet_deadline - _EDGE_DEADLINE,
         )
         client = client_factory(
             endpoint,
@@ -1046,7 +1080,7 @@ def _reuse_existing(
             timeout=timeout,
         )
         run_id = _expected_run_id(packet)
-        node, lease, _stored_packet = _validate_harvest_node(
+        node, lease, stored_packet = _validate_harvest_node(
             client.harvest(run_id),
             packet=packet,
             conductor=conductor,
@@ -1059,13 +1093,13 @@ def _reuse_existing(
         accepted = _validate_terminal_receipt(
             node,
             lease,
-            packet=packet,
+            packet=stored_packet,
             edge_id=edge_id,
             executor=executor,
             runtime_git_sha=runtime_git_sha,
         )
         expected_edge = _edge_evidence(
-            packet=packet,
+            packet=stored_packet,
             edge_id=edge_id,
             conductor=conductor,
             executor=executor,
@@ -1073,9 +1107,13 @@ def _reuse_existing(
             rejection_sha256=_conductor_rejection_sha256(client, lease),
             accepted_receipt=accepted,
             runtime_git_sha=runtime_git_sha,
+            broker_created_at=node.get("created_at"),
         )
         if edge != expected_edge:
             raise ConductCanaryError("existing receipt edge evidence was altered")
+        verified_edges.append(expected_edge)
+    if existing.get("observed_at") != _aggregate_observed_at(verified_edges):
+        raise ConductCanaryError("existing receipt observed_at does not match immutable edge evidence")
     return existing
 
 
@@ -1112,7 +1150,7 @@ def run_full_mesh_canary(
             timeout=client.timeout,
         )
 
-    observed_at = now or datetime.now(timezone.utc)
+    submission_time = now or datetime.now(timezone.utc)
     edges: list[dict[str, Any]] = []
     for conductor in lanes:
         for executor in lanes:
@@ -1122,7 +1160,7 @@ def run_full_mesh_canary(
                     conductor=conductor,
                     executor=executor,
                     runtime_git_sha=runtime["git_sha"],
-                    now=observed_at,
+                    now=submission_time,
                     client_factory=client_factory,
                     endpoint=client.endpoint,
                     timeout=client.timeout,
@@ -1134,7 +1172,7 @@ def run_full_mesh_canary(
     payload = {
         "schema_version": CANARY_SCHEMA,
         "canary_id": canary_id,
-        "observed_at": observed_at.isoformat(),
+        "observed_at": _aggregate_observed_at(edges),
         "runtime_identity": public_runtime,
         "capabilities_evidence_sha256": _capabilities_evidence_sha256(lanes),
         "lane_count": len(lanes),
