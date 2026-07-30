@@ -216,7 +216,7 @@ def owners(estate: dict) -> list[str]:
     for cls in (estate.get("classes") or {}).values():
         for m in cls.get("match") or []:
             owner = str(m).split("/", 1)[0]
-            if owner and owner not in ("*", "**") and owner not in derived:
+            if owner and "*" not in owner and owner not in derived:
                 derived.append(owner)
     # Shelf orgs are declared registry data (shelf_assignments) — enumerate them too, or the
     # census never sees shelf repos and class P reads every declared shelf row as absent.
@@ -1025,11 +1025,12 @@ def _collaborator_census(estate: dict, access: dict | None, token: str | None, o
             ok = False
         out["by_repo"][repo] = row
     for org in owners(estate):
-        r = _gh(
-            ["api", f"/orgs/{org}/outside_collaborators?per_page=100", "--jq", "[.[].login] | sort"],
-            token,
-            timeout=30,
-        )
+        # Non-canonical org rolls (shelf orgs) sit outside the App installation — user-scoped.
+        org_args = ["api", f"/orgs/{org}/outside_collaborators?per_page=100", "--jq", "[.[].login] | sort"]
+        if _org_class(org, estate)[0] == "canonical":
+            r = _gh(org_args, token, timeout=30)
+        else:
+            r = _gh_user(org_args, timeout=30)
         try:
             # personal accounts 404 here — degrade to None; class N skips that roll, never guesses
             out["org_outside"][org] = json.loads(r.stdout or "[]") if r.returncode == 0 else None
