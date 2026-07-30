@@ -8,6 +8,7 @@ import subprocess
 import threading
 import time
 from collections.abc import Callable
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
@@ -544,6 +545,8 @@ def launch_reserved_relay(
     exec_eof = False
     selected_capabilities: tuple[str, ...] = ()
     worktree: Path | None = None
+    activation_registration_guard = ExitStack()
+    activation_registration_guard_held = False
 
     def startup_output_ceiling_crossed() -> bool:
         return stdout_evidence.output_ceiling_crossed() or stderr_evidence.output_ceiling_crossed()
@@ -725,6 +728,18 @@ def launch_reserved_relay(
                         elif deadline - time.monotonic() < _EXEC_HANDOFF_BUDGET_SECONDS:
                             terminal_code = "relay_startup_timeout"
                         else:
+                            if worktree is None:
+                                raise CampaignRelayError(
+                                    "relay_registration_invalid",
+                                    "campaign relay worktree is unavailable before provider handoff",
+                                )
+                            activation_registration_guard.enter_context(
+                                _activation_registration_lock(
+                                    worktree,
+                                    deadline_monotonic=deadline,
+                                )
+                            )
+                            activation_registration_guard_held = True
                             _acknowledge_relay(ack_writer, b"launch\n")
                             os.close(ack_writer)
                             ack_writer_open = False
@@ -812,48 +827,51 @@ def launch_reserved_relay(
                     activation_applied = False
                     ready_published = False
                     try:
-                        with _activation_registration_lock(
-                            worktree,
+                        if not activation_registration_guard_held:
+                            raise CampaignRelayError(
+                                "relay_activation_lock_failed",
+                                "campaign relay activation lock was not held across provider handoff",
+                            )
+                        activation_applied = True
+                        _write_activation_marker(worktree, relay_id)
+                        activation_sha, _activation_bytes = registration(
+                            root=root,
+                            env=env,
+                            agent=current.selected_agent,
+                            capabilities=selected_capabilities,
+                            session_id=current.successor_session_id,
+                            worktree=worktree,
+                            accepting_work=True,
                             deadline_monotonic=deadline,
-                        ):
-                            activation_applied = True
-                            _write_activation_marker(worktree, relay_id)
-                            activation_sha, _activation_bytes = registration(
-                                root=root,
-                                env=env,
-                                agent=current.selected_agent,
-                                capabilities=selected_capabilities,
-                                session_id=current.successor_session_id,
-                                worktree=worktree,
-                                accepting_work=True,
-                                deadline_monotonic=deadline,
+                        )
+                        activated = _replace_relay(
+                            root,
+                            relay_id,
+                            expected_states=frozenset({"published"}),
+                            updates={
+                                "activation_response_sha256": activation_sha,
+                            },
+                            deadline_monotonic=deadline,
+                        )
+                        if process.poll() is not None:
+                            raise CampaignRelayError(
+                                "relay_exec_identity_changed",
+                                "campaign relay provider exited during activation",
                             )
-                            activated = _replace_relay(
-                                root,
-                                relay_id,
-                                expected_states=frozenset({"published"}),
-                                updates={
-                                    "activation_response_sha256": activation_sha,
-                                },
-                                deadline_monotonic=deadline,
+                        try:
+                            activated_started = process_identity(process.pid)
+                        except CampaignRelayError as exc:
+                            raise CampaignRelayError(
+                                "relay_exec_identity_changed",
+                                "campaign relay provider identity changed during activation",
+                            ) from exc
+                        if activated_started != started:
+                            raise CampaignRelayError(
+                                "relay_exec_identity_changed",
+                                "campaign relay provider identity changed during activation",
                             )
-                            if process.poll() is not None:
-                                raise CampaignRelayError(
-                                    "relay_exec_identity_changed",
-                                    "campaign relay provider exited during activation",
-                                )
-                            try:
-                                activated_started = process_identity(process.pid)
-                            except CampaignRelayError as exc:
-                                raise CampaignRelayError(
-                                    "relay_exec_identity_changed",
-                                    "campaign relay provider identity changed during activation",
-                                ) from exc
-                            if activated_started != started:
-                                raise CampaignRelayError(
-                                    "relay_exec_identity_changed",
-                                    "campaign relay provider identity changed during activation",
-                                )
+                        activation_registration_guard.close()
+                        activation_registration_guard_held = False
                         prospective = CampaignRelayReceiptV1.model_validate(
                             {
                                 **activated.model_dump(mode="json"),
@@ -887,10 +905,7 @@ def launch_reserved_relay(
                         ):
                             rollback_ok = True
                             try:
-                                with _activation_registration_lock(
-                                    worktree,
-                                    deadline_monotonic=deadline,
-                                ):
+                                if activation_registration_guard_held:
                                     _clear_activation_marker(worktree, relay_id)
                                     registration(
                                         root=root,
@@ -902,8 +917,28 @@ def launch_reserved_relay(
                                         accepting_work=False,
                                         deadline_monotonic=deadline,
                                     )
+                                else:
+                                    with _activation_registration_lock(
+                                        worktree,
+                                        deadline_monotonic=deadline,
+                                    ):
+                                        _clear_activation_marker(worktree, relay_id)
+                                        registration(
+                                            root=root,
+                                            env=env,
+                                            agent=current.selected_agent,
+                                            capabilities=selected_capabilities,
+                                            session_id=current.successor_session_id,
+                                            worktree=worktree,
+                                            accepting_work=False,
+                                            deadline_monotonic=deadline,
+                                        )
                             except CampaignRelayError:
                                 rollback_ok = False
+                            finally:
+                                if activation_registration_guard_held:
+                                    activation_registration_guard.close()
+                                    activation_registration_guard_held = False
                             if rollback_ok:
                                 try:
                                     _replace_relay(
@@ -919,6 +954,9 @@ def launch_reserved_relay(
                                 terminal_code = "relay_activation_rollback_failed"
             else:
                 terminal_code = "relay_exec_identity_changed"
+        if activation_registration_guard_held:
+            activation_registration_guard.close()
+            activation_registration_guard_held = False
         if terminal_code is None:
             terminal_code = (
                 "relay_startup_output_oversized"
@@ -942,6 +980,7 @@ def launch_reserved_relay(
         )
         return RelayLaunch(receipt=terminal, launched=True)
     finally:
+        activation_registration_guard.close()
         selector.close()
         os.close(control_reader)
         os.close(exec_reader)
