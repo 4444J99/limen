@@ -88,7 +88,7 @@ def campaign_group() -> None:
 @click.option("--terminal-predicate", type=click.Choice(["omega"]), default="omega", show_default=True)
 @click.option("--session-id", default=None)
 @click.option("--agent", default=lambda: os.environ.get("LIMEN_AGENT"))
-@click.option("--evaluation-timeout", type=click.IntRange(1, 7200), default=1800, show_default=True)
+@click.option("--evaluation-timeout", type=click.IntRange(300, 7200), default=1800, show_default=True)
 @click.option("--wake-deadline-monotonic-ns", type=click.IntRange(min=1), default=None, hidden=True)
 def campaign_run(
     capsule: Path | None,

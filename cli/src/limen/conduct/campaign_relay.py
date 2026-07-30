@@ -69,6 +69,23 @@ class CampaignRelayError(RuntimeError):
         return f"{self.code}: {self.public_message}"
 
 
+def _deadline_timeout(
+    deadline_monotonic: float | None,
+    ceiling_seconds: float,
+) -> float:
+    """Return one phase's budget without ever extending the relay deadline."""
+
+    if deadline_monotonic is None:
+        return ceiling_seconds
+    remaining = deadline_monotonic - time.monotonic()
+    if remaining <= 0:
+        raise CampaignRelayError(
+            "relay_startup_timeout",
+            "campaign relay startup exceeded its absolute deadline",
+        )
+    return min(ceiling_seconds, remaining)
+
+
 @dataclass(frozen=True)
 class RelayReservation:
     receipt: CampaignRelayReceiptV1
@@ -99,12 +116,13 @@ def _git_bytes(
     root: Path,
     *args: str,
     output_ceiling: int = _GIT_CONTROL_OUTPUT_CEILING,
+    deadline_monotonic: float | None = None,
 ) -> bytes:
     try:
         result = run_bounded_subprocess(
             ["git", *args],
             cwd=root,
-            timeout_seconds=_GIT_TIMEOUT_SECONDS,
+            timeout_seconds=_deadline_timeout(deadline_monotonic, _GIT_TIMEOUT_SECONDS),
             stdout_ceiling=output_ceiling,
             stderr_ceiling=_GIT_CONTROL_OUTPUT_CEILING,
         )
@@ -131,8 +149,16 @@ def _git_bytes(
     return result.stdout
 
 
-def _git(root: Path, *args: str) -> str:
-    raw = _git_bytes(root, *args)
+def _git(
+    root: Path,
+    *args: str,
+    deadline_monotonic: float | None = None,
+) -> str:
+    raw = _git_bytes(
+        root,
+        *args,
+        deadline_monotonic=deadline_monotonic,
+    )
     try:
         return raw.decode("utf-8").strip()
     except UnicodeDecodeError as exc:
@@ -142,12 +168,16 @@ def _git(root: Path, *args: str) -> str:
         ) from exc
 
 
-def _git_succeeds(root: Path, *args: str) -> bool:
+def _git_succeeds(
+    root: Path,
+    *args: str,
+    deadline_monotonic: float | None = None,
+) -> bool:
     try:
         result = run_bounded_subprocess(
             ["git", *args],
             cwd=root,
-            timeout_seconds=_GIT_TIMEOUT_SECONDS,
+            timeout_seconds=_deadline_timeout(deadline_monotonic, _GIT_TIMEOUT_SECONDS),
             stdout_ceiling=_GIT_CONTROL_OUTPUT_CEILING,
             stderr_ceiling=_GIT_CONTROL_OUTPUT_CEILING,
         )
@@ -197,8 +227,19 @@ def _latest_remote_ref(workstream: str) -> str:
     return f"refs/heads/limen-relay/latest/{workstream}"
 
 
-def _remote_ref_head(root: Path, ref: str) -> str:
-    rows = _git(root, "ls-remote", "origin", ref).splitlines()
+def _remote_ref_head(
+    root: Path,
+    ref: str,
+    *,
+    deadline_monotonic: float | None = None,
+) -> str:
+    rows = _git(
+        root,
+        "ls-remote",
+        "origin",
+        ref,
+        deadline_monotonic=deadline_monotonic,
+    ).splitlines()
     if len(rows) != 1:
         raise CampaignRelayError(
             "relay_publication_unreachable",
@@ -224,9 +265,14 @@ def _ensure_remote_branch_contains(
     *,
     branch: str,
     commit: str,
+    deadline_monotonic: float | None = None,
 ) -> None:
     remote_ref = f"refs/heads/{branch}"
-    remote_head = _remote_ref_head(root, remote_ref)
+    remote_head = _remote_ref_head(
+        root,
+        remote_ref,
+        deadline_monotonic=deadline_monotonic,
+    )
     if remote_head != commit:
         if not _git_succeeds(
             root,
@@ -236,20 +282,38 @@ def _ensure_remote_branch_contains(
             "--no-write-fetch-head",
             "origin",
             remote_head,
+            deadline_monotonic=deadline_monotonic,
         ):
             raise CampaignRelayError(
                 "relay_publication_unreachable",
                 "campaign relay topic head could not be loaded without checkout mutation",
             )
-        if not _git_succeeds(root, "merge-base", "--is-ancestor", commit, remote_head):
+        if not _git_succeeds(
+            root,
+            "merge-base",
+            "--is-ancestor",
+            commit,
+            remote_head,
+            deadline_monotonic=deadline_monotonic,
+        ):
             raise CampaignRelayError(
                 "relay_publication_unreachable",
                 "campaign relay publication is not reachable from its topic branch",
             )
 
 
-def _git_common_dir(root: Path) -> Path:
-    raw = _git(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+def _git_common_dir(
+    root: Path,
+    *,
+    deadline_monotonic: float | None = None,
+) -> Path:
+    raw = _git(
+        root,
+        "rev-parse",
+        "--path-format=absolute",
+        "--git-common-dir",
+        deadline_monotonic=deadline_monotonic,
+    )
     path = Path(raw)
     try:
         resolved = path.resolve(strict=True)
@@ -262,6 +326,92 @@ def _git_common_dir(root: Path) -> Path:
         raise CampaignRelayError(
             "relay_store_invalid",
             "campaign relay Git common directory must be a real directory",
+        )
+    return resolved
+
+
+def _primary_checkout(
+    root: Path,
+    *,
+    deadline_monotonic: float | None = None,
+) -> Path:
+    """Derive and verify the primary non-bare checkout from the shared Git directory."""
+
+    common = _git_common_dir(root, deadline_monotonic=deadline_monotonic)
+    if common.name != ".git":
+        raise CampaignRelayError(
+            "relay_primary_checkout_invalid",
+            "campaign relay requires a primary non-bare Git checkout",
+        )
+    primary = common.parent
+    try:
+        top_level = Path(
+            _git(
+                primary,
+                "rev-parse",
+                "--path-format=absolute",
+                "--show-toplevel",
+                deadline_monotonic=deadline_monotonic,
+            )
+        ).resolve(strict=True)
+        primary_common = _git_common_dir(
+            primary,
+            deadline_monotonic=deadline_monotonic,
+        )
+    except OSError as exc:
+        raise CampaignRelayError(
+            "relay_primary_checkout_invalid",
+            "campaign relay primary checkout is unavailable",
+        ) from exc
+    if primary.is_symlink() or not primary.is_dir() or top_level != primary or primary_common != common:
+        raise CampaignRelayError(
+            "relay_primary_checkout_invalid",
+            "campaign relay primary checkout does not match its Git common directory",
+        )
+    return primary
+
+
+def _relay_worktree(
+    root: Path,
+    successor_slug: str,
+    *,
+    deadline_monotonic: float | None = None,
+) -> Path:
+    """Resolve the generated successor worktree and bind it to the same repository."""
+
+    primary = _primary_checkout(
+        root,
+        deadline_monotonic=deadline_monotonic,
+    )
+    candidate = primary / ".worktrees" / successor_slug
+    try:
+        resolved = candidate.resolve(strict=True)
+        top_level = Path(
+            _git(
+                resolved,
+                "rev-parse",
+                "--path-format=absolute",
+                "--show-toplevel",
+                deadline_monotonic=deadline_monotonic,
+            )
+        ).resolve(strict=True)
+        worktree_common = _git_common_dir(
+            resolved,
+            deadline_monotonic=deadline_monotonic,
+        )
+        primary_common = _git_common_dir(
+            primary,
+            deadline_monotonic=deadline_monotonic,
+        )
+    except OSError as exc:
+        raise CampaignRelayError(
+            "relay_worktree_invalid",
+            "campaign relay successor worktree is unavailable",
+        ) from exc
+    if candidate.is_symlink() or not resolved.is_dir() or top_level != resolved or worktree_common != primary_common:
+        raise CampaignRelayError(
+            "relay_worktree_invalid",
+            "campaign relay successor worktree does not match the primary checkout",
         )
     return resolved
 
@@ -287,8 +437,15 @@ def _verify_store_identity(store: RelayStore) -> None:
 
 
 @contextmanager
-def _open_store(root: Path) -> Iterator[RelayStore]:
-    common = _git_common_dir(root)
+def _open_store(
+    root: Path,
+    *,
+    deadline_monotonic: float | None = None,
+) -> Iterator[RelayStore]:
+    common = _git_common_dir(
+        root,
+        deadline_monotonic=deadline_monotonic,
+    )
     if not hasattr(os, "O_DIRECTORY") or not hasattr(os, "O_NOFOLLOW"):
         raise CampaignRelayError(
             "relay_store_unsupported",
@@ -350,6 +507,7 @@ def campaign_relay_lock(
     relay_id: str,
     *,
     timeout_seconds: float = _LOCK_ACQUIRE_TIMEOUT_SECONDS,
+    deadline_monotonic: float | None = None,
 ) -> Iterator[RelayStore]:
     """Hold the cross-beat relay lock for one bounded reservation phase."""
 
@@ -366,7 +524,7 @@ def campaign_relay_lock(
     flags = os.O_RDWR | os.O_CREAT
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
-    with _open_store(root) as store:
+    with _open_store(root, deadline_monotonic=deadline_monotonic) as store:
         for attempt in range(2):
             try:
                 descriptor = os.open(lock_name, flags, 0o600, dir_fd=store.descriptor)
@@ -392,7 +550,10 @@ def campaign_relay_lock(
                     "campaign relay lock must be a regular file",
                 )
             os.fchmod(descriptor, 0o600)
-            deadline = time.monotonic() + timeout_seconds
+            deadline = time.monotonic() + _deadline_timeout(
+                deadline_monotonic,
+                timeout_seconds,
+            )
             while True:
                 try:
                     fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)

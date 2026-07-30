@@ -35,7 +35,9 @@ path-free message. Private store paths and raw Git/OS diagnostics never enter he
 Before consuming the attempt, the controller derives eligible native lanes from the live capacity
 census. No eligible lane leaves the relay at `reserved` with `attempts=0`. Once claimed, the relay
 cannot be automatically retried: an interrupted controller reconciles remote readiness or records a
-terminal `indeterminate` receipt.
+terminal `indeterminate` receipt. One absolute monotonic startup deadline begins at controller entry;
+remote recovery, capacity selection, attempt publication, process startup, registration, capsule
+validation, activation, and readiness publication consume only its remaining budget.
 
 The selected lane registers with the conduct keeper as dormant. A two-step control channel
 authorizes receipt publication and then provider launch; deadline expiry or failed publication
@@ -49,8 +51,9 @@ complete bounded output drains, and exact remote publication does the controller
 broker session. The keepalive begins dormant and observes the activation marker; it closes inherited
 proof descriptors immediately and never keeps a false exec proof alive.
 
-An explicitly rejected readiness push rolls activation back to dormant. A timeout, unavailable
-transport, or in-flight output cutoff whose exact remote refs cannot be rechecked is instead
+Every non-success readiness push is reconciled against both exact destination refs. A confirmed
+absent or mismatched mapping rolls activation back to dormant; a push accepted despite a lost
+response remains successful. A result whose exact remote refs cannot be rechecked is instead
 `relay_ready_publication_uncertain`: the controller preserves the activation marker and broker
 acceptance until the immutable refs can be reconciled. It never rolls back and later re-adopts a
 remote ready receipt under contradictory dormant state.
@@ -62,6 +65,8 @@ The admitted receipt-only commit is held by both its topic branch and
 by `refs/heads/limen-relay/ready/<relay-id>`. An atomic push also advances the per-workstream
 `refs/heads/limen-relay/latest/<workstream>` ref. Each new latest commit includes the prior latest as
 a parent, so the catalog advances by fast-forward and historical dedicated refs remain immutable.
+If the admitted topic push exits without a trustworthy response, the launcher rereads that exact
+topic ref and continues only when it names the intended publication commit.
 
 Campaign wake reads only that exact per-workstream latest ref, filters the structural receipt for
 the requested active handoff, and then validates live topic-branch and immutable-ref reachability.
@@ -71,6 +76,12 @@ branches therefore cannot poison a newer active successor, and the number of ret
 dedicated refs does not create a fixed catalog ceiling. Duplicate suppression can still recover
 the dedicated ready mapping if an obsolete topic branch disappears; ordinary wake retains the
 stronger live-topic reachability contract.
+
+The launch root is derived from the shared Git common directory and verified as its primary
+non-bare checkout. Successor activation then validates that the generated worktree belongs to the
+same common directory, so reconciliation from any linked worktree reaches the original session
+without storing a machine-specific path in the public or private relay receipt. Public heartbeat
+wake timeouts are bounded to 300..7200 seconds, preserving the supervisor's fixed closeout margin.
 
 S19 remains immutable historical evidence. The relay always creates a fresh provider-neutral v1
 capsule from the exact remote default-branch head reserved for that identity, with an eight-hour

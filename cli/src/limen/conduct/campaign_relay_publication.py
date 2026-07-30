@@ -8,7 +8,7 @@ import secrets
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import rfc8785
 
@@ -23,6 +23,7 @@ from limen.conduct.campaign_relay import (
     CampaignRelayError,
     _attempt_remote_ref,
     _capsule_remote_ref,
+    _deadline_timeout,
     _ensure_remote_branch_contains,
     _git,
     _git_bytes,
@@ -69,13 +70,22 @@ def _publication_payload(
     publication_parent: str,
     publication_receipt_blob: str,
     require_topic_branch: bool = True,
+    deadline_monotonic: float | None = None,
 ) -> dict[str, Any]:
     if publication_parent != receipt.exact_remote_main:
         raise CampaignRelayError(
             "relay_publication_base_mismatch",
             "successor receipt publication is not based on the reserved exact main",
         )
-    commit_row = _git(root, "rev-list", "--parents", "-n", "1", publication_commit).split()
+    commit_row = _git(
+        root,
+        "rev-list",
+        "--parents",
+        "-n",
+        "1",
+        publication_commit,
+        deadline_monotonic=deadline_monotonic,
+    ).split()
     if commit_row != [publication_commit, publication_parent]:
         raise CampaignRelayError(
             "relay_publication_commit_invalid",
@@ -89,19 +99,32 @@ def _publication_payload(
         "--name-only",
         "-r",
         publication_commit,
+        deadline_monotonic=deadline_monotonic,
     ).splitlines()
     if changed != [receipt_path]:
         raise CampaignRelayError(
             "relay_publication_scope_invalid",
             "successor publication commit is not receipt-only",
         )
-    observed_blob = _git(root, "rev-parse", f"{publication_commit}:{receipt_path}")
+    observed_blob = _git(
+        root,
+        "rev-parse",
+        f"{publication_commit}:{receipt_path}",
+        deadline_monotonic=deadline_monotonic,
+    )
     if observed_blob != publication_receipt_blob:
         raise CampaignRelayError(
             "relay_publication_blob_mismatch",
             "successor publication receipt blob does not match its exact commit",
         )
-    if _remote_ref_head(root, _capsule_remote_ref(publication_commit)) != publication_commit:
+    if (
+        _remote_ref_head(
+            root,
+            _capsule_remote_ref(publication_commit),
+            deadline_monotonic=deadline_monotonic,
+        )
+        != publication_commit
+    ):
         raise CampaignRelayError(
             "relay_publication_unreachable",
             "successor publication commit is not held by its dedicated immutable receipt ref",
@@ -111,9 +134,18 @@ def _publication_payload(
             root,
             branch=receipt.successor_branch,
             commit=publication_commit,
+            deadline_monotonic=deadline_monotonic,
         )
     try:
-        blob_size = int(_git(root, "cat-file", "-s", publication_receipt_blob))
+        blob_size = int(
+            _git(
+                root,
+                "cat-file",
+                "-s",
+                publication_receipt_blob,
+                deadline_monotonic=deadline_monotonic,
+            )
+        )
     except ValueError as exc:
         raise CampaignRelayError(
             "relay_publication_receipt_invalid",
@@ -130,6 +162,7 @@ def _publication_payload(
         "blob",
         publication_receipt_blob,
         output_ceiling=_PREDECESSOR_RECEIPT_CEILING,
+        deadline_monotonic=deadline_monotonic,
     )
     if len(raw) != blob_size:
         raise CampaignRelayError(
@@ -204,6 +237,7 @@ def _git_with_input(
     *,
     stdin: bytes | None = None,
     env: dict[str, str] | None = None,
+    deadline_monotonic: float | None = None,
 ) -> str:
     try:
         result = run_bounded_subprocess(
@@ -211,7 +245,10 @@ def _git_with_input(
             cwd=root,
             env=env,
             input_bytes=stdin,
-            timeout_seconds=_GIT_TIMEOUT_SECONDS,
+            timeout_seconds=_deadline_timeout(
+                deadline_monotonic,
+                _GIT_TIMEOUT_SECONDS,
+            ),
             stdout_ceiling=_GIT_CONTROL_OUTPUT_CEILING,
             stderr_ceiling=_GIT_CONTROL_OUTPUT_CEILING,
         )
@@ -279,9 +316,16 @@ def _load_remote_attempt(
     receipt: CampaignRelayReceiptV1,
     *,
     allow_base_adoption: bool = False,
+    deadline_monotonic: float | None = None,
 ) -> RemoteRelayAttempt | None:
     attempt_ref = _attempt_remote_ref(receipt.relay_id)
-    rows = _git(root, "ls-remote", "origin", attempt_ref).splitlines()
+    rows = _git(
+        root,
+        "ls-remote",
+        "origin",
+        attempt_ref,
+        deadline_monotonic=deadline_monotonic,
+    ).splitlines()
     if not rows:
         return None
     fields = rows[0].split("\t") if len(rows) == 1 else []
@@ -299,12 +343,21 @@ def _load_remote_attempt(
         "--no-write-fetch-head",
         "origin",
         commit,
+        deadline_monotonic=deadline_monotonic,
     ):
         raise CampaignRelayError(
             "relay_attempt_invalid",
             "campaign relay remote attempt could not be loaded immutably",
         )
-    parent_row = _git(root, "rev-list", "--parents", "-n", "1", commit).split()
+    parent_row = _git(
+        root,
+        "rev-list",
+        "--parents",
+        "-n",
+        "1",
+        commit,
+        deadline_monotonic=deadline_monotonic,
+    ).split()
     if len(parent_row) != 2 or parent_row[0] != commit:
         raise CampaignRelayError(
             "relay_attempt_invalid",
@@ -337,15 +390,29 @@ def _load_remote_attempt(
         "-r",
         remote_base,
         commit,
+        deadline_monotonic=deadline_monotonic,
     ).splitlines()
     if changed != [attempt_path]:
         raise CampaignRelayError(
             "relay_attempt_invalid",
             "campaign relay remote attempt is not receipt-only",
         )
-    blob = _git(root, "rev-parse", f"{commit}:{attempt_path}")
+    blob = _git(
+        root,
+        "rev-parse",
+        f"{commit}:{attempt_path}",
+        deadline_monotonic=deadline_monotonic,
+    )
     try:
-        blob_size = int(_git(root, "cat-file", "-s", blob))
+        blob_size = int(
+            _git(
+                root,
+                "cat-file",
+                "-s",
+                blob,
+                deadline_monotonic=deadline_monotonic,
+            )
+        )
     except ValueError as exc:
         raise CampaignRelayError(
             "relay_attempt_invalid",
@@ -362,6 +429,7 @@ def _load_remote_attempt(
         "blob",
         blob,
         output_ceiling=_RECEIPT_CEILING,
+        deadline_monotonic=deadline_monotonic,
     )
     if len(raw) != blob_size:
         raise CampaignRelayError(
@@ -436,6 +504,7 @@ def _publish_remote_attempt(
     *,
     controller_pid: int,
     controller_process_started: str,
+    deadline_monotonic: float | None = None,
 ) -> RemoteRelayAttempt:
     token = secrets.token_hex(32)  # allow-secret: one-time relay claim nonce
     payload = (
@@ -461,19 +530,31 @@ def _publish_remote_attempt(
     git_env = dict(os.environ)
     git_env["GIT_INDEX_FILE"] = index_path
     try:
-        _git_with_input(root, ["read-tree", receipt.exact_remote_main], env=git_env)
+        _git_with_input(
+            root,
+            ["read-tree", receipt.exact_remote_main],
+            env=git_env,
+            deadline_monotonic=deadline_monotonic,
+        )
         blob = _git_with_input(
             root,
             ["hash-object", "-w", "--stdin"],
             stdin=payload,
             env=git_env,
+            deadline_monotonic=deadline_monotonic,
         )
         _git_with_input(
             root,
             ["update-index", "--add", "--cacheinfo", "100644", blob, attempt_path],
             env=git_env,
+            deadline_monotonic=deadline_monotonic,
         )
-        tree = _git_with_input(root, ["write-tree"], env=git_env)
+        tree = _git_with_input(
+            root,
+            ["write-tree"],
+            env=git_env,
+            deadline_monotonic=deadline_monotonic,
+        )
         commit = _git_with_input(
             root,
             [
@@ -485,6 +566,7 @@ def _publish_remote_attempt(
                 f"Claim campaign relay attempt {receipt.relay_id[:16]}",
             ],
             env=git_env,
+            deadline_monotonic=deadline_monotonic,
         )
     except CampaignRelayError as exc:
         raise CampaignRelayError(
@@ -500,11 +582,19 @@ def _publish_remote_attempt(
     attempt_ref = _attempt_remote_ref(receipt.relay_id)
     publication_error: CampaignRelayError | None = None
     try:
-        _git_with_input(root, ["push", "origin", f"{commit}:{attempt_ref}"])
+        _git_with_input(
+            root,
+            ["push", "origin", f"{commit}:{attempt_ref}"],
+            deadline_monotonic=deadline_monotonic,
+        )
     except CampaignRelayError as exc:
         publication_error = exc
     try:
-        observed = _load_remote_attempt(root, receipt)
+        observed = _load_remote_attempt(
+            root,
+            receipt,
+            deadline_monotonic=deadline_monotonic,
+        )
     except CampaignRelayError:
         if publication_error is not None:
             raise CampaignRelayError(
@@ -531,9 +621,44 @@ def _ready_receipt_path(receipt: CampaignRelayReceiptV1) -> str:
     return f"docs/continuations/{receipt.successor_slug}/campaign-relay-ready.json"
 
 
+ReadyPublicationOutcome = Literal["success", "confirmed_failure", "uncertain"]
+
+
+def _ready_publication_outcome(
+    root: Path,
+    *,
+    commit: str,
+    ready_ref: str,
+    latest_ref: str,
+    deadline_monotonic: float | None = None,
+) -> ReadyPublicationOutcome:
+    """Classify one failed push by re-reading only its two exact destination refs."""
+
+    try:
+        ready_head = _remote_ref_head(
+            root,
+            ready_ref,
+            deadline_monotonic=deadline_monotonic,
+        )
+        latest_head = _remote_ref_head(
+            root,
+            latest_ref,
+            deadline_monotonic=deadline_monotonic,
+        )
+    except CampaignRelayError as exc:
+        if exc.code == "relay_publication_unreachable":
+            return "confirmed_failure"
+        return "uncertain"
+    if ready_head == commit and latest_head == commit:
+        return "success"
+    return "confirmed_failure"
+
+
 def _publish_ready_receipt(
     root: Path,
     receipt: CampaignRelayReceiptV1,
+    *,
+    deadline_monotonic: float | None = None,
 ) -> None:
     if receipt.state != "ready" or receipt.publication_commit is None:
         raise CampaignRelayError(
@@ -565,19 +690,27 @@ def _publish_ready_receipt(
             root,
             ["read-tree", receipt.publication_commit],
             env=git_env,
+            deadline_monotonic=deadline_monotonic,
         )
         blob = _git_with_input(
             root,
             ["hash-object", "-w", "--stdin"],
             stdin=payload,
             env=git_env,
+            deadline_monotonic=deadline_monotonic,
         )
         _git_with_input(
             root,
             ["update-index", "--add", "--cacheinfo", "100644", blob, ready_path],
             env=git_env,
+            deadline_monotonic=deadline_monotonic,
         )
-        tree = _git_with_input(root, ["write-tree"], env=git_env)
+        tree = _git_with_input(
+            root,
+            ["write-tree"],
+            env=git_env,
+            deadline_monotonic=deadline_monotonic,
+        )
     finally:
         try:
             os.unlink(index_path)
@@ -588,6 +721,7 @@ def _publish_ready_receipt(
     latest_rows = _git_with_input(
         root,
         ["ls-remote", "origin", latest_ref],
+        deadline_monotonic=deadline_monotonic,
     ).splitlines()
     if len(latest_rows) > 1:
         raise CampaignRelayError(
@@ -618,6 +752,7 @@ def _publish_ready_receipt(
                 "origin",
                 previous_latest,
             ],
+            deadline_monotonic=deadline_monotonic,
         )
     commit_args = [
         "commit-tree",
@@ -628,7 +763,11 @@ def _publish_ready_receipt(
     if previous_latest is not None and previous_latest != receipt.publication_commit:
         commit_args.extend(["-p", previous_latest])
     commit_args.extend(["-m", f"Record campaign relay readiness {receipt.relay_id[:16]}"])
-    commit = _git_with_input(root, commit_args)
+    commit = _git_with_input(
+        root,
+        commit_args,
+        deadline_monotonic=deadline_monotonic,
+    )
     try:
         _git_with_input(
             root,
@@ -639,19 +778,24 @@ def _publish_ready_receipt(
                 f"{commit}:{ready_ref}",
                 f"{commit}:{latest_ref}",
             ],
+            deadline_monotonic=deadline_monotonic,
         )
     except CampaignRelayError as exc:
-        if exc.code not in {
-            "relay_git_output_oversized",
-            "relay_git_timeout",
-            "relay_git_unavailable",
-        }:
-            raise
-        try:
-            committed = _remote_ref_head(root, ready_ref) == commit and _remote_ref_head(root, latest_ref) == commit
-        except CampaignRelayError:
-            committed = False
-        if not committed:
+        outcome = _ready_publication_outcome(
+            root,
+            commit=commit,
+            ready_ref=ready_ref,
+            latest_ref=latest_ref,
+            deadline_monotonic=deadline_monotonic,
+        )
+        if outcome == "success":
+            return
+        if outcome == "confirmed_failure":
+            raise CampaignRelayError(
+                "relay_ready_publication_failed",
+                "campaign relay ready publication was confirmed absent or mismatched",
+            ) from exc
+        if outcome == "uncertain":
             raise CampaignRelayError(
                 "relay_ready_publication_uncertain",
                 "campaign relay ready publication outcome could not be reconciled",
@@ -664,6 +808,7 @@ def _load_remote_ready(
     commit: str,
     relay_id: str | None,
     validate_publication: bool = True,
+    deadline_monotonic: float | None = None,
 ) -> CampaignRelayReceiptV1:
     if not _git_succeeds(
         root,
@@ -673,12 +818,21 @@ def _load_remote_ready(
         "--no-write-fetch-head",
         "origin",
         commit,
+        deadline_monotonic=deadline_monotonic,
     ):
         raise CampaignRelayError(
             "relay_ready_invalid",
             "campaign relay ready commit could not be loaded without checkout mutation",
         )
-    parent_row = _git(root, "rev-list", "--parents", "-n", "1", commit).split()
+    parent_row = _git(
+        root,
+        "rev-list",
+        "--parents",
+        "-n",
+        "1",
+        commit,
+        deadline_monotonic=deadline_monotonic,
+    ).split()
     if len(parent_row) not in {2, 3} or parent_row[0] != commit:
         raise CampaignRelayError(
             "relay_ready_invalid",
@@ -692,6 +846,7 @@ def _load_remote_ready(
         "-r",
         parent_row[1],
         commit,
+        deadline_monotonic=deadline_monotonic,
     ).splitlines()
     if (
         len(changed) != 1
@@ -704,9 +859,22 @@ def _load_remote_ready(
             "campaign relay ready mapping is not receipt-only",
         )
     ready_path = changed[0]
-    blob = _git(root, "rev-parse", f"{commit}:{ready_path}")
+    blob = _git(
+        root,
+        "rev-parse",
+        f"{commit}:{ready_path}",
+        deadline_monotonic=deadline_monotonic,
+    )
     try:
-        blob_size = int(_git(root, "cat-file", "-s", blob))
+        blob_size = int(
+            _git(
+                root,
+                "cat-file",
+                "-s",
+                blob,
+                deadline_monotonic=deadline_monotonic,
+            )
+        )
     except ValueError as exc:
         raise CampaignRelayError(
             "relay_ready_invalid",
@@ -723,6 +891,7 @@ def _load_remote_ready(
         "blob",
         blob,
         output_ceiling=_RECEIPT_CEILING,
+        deadline_monotonic=deadline_monotonic,
     )
     if len(raw) != blob_size:
         raise CampaignRelayError(
@@ -758,6 +927,7 @@ def _load_remote_ready(
             publication_parent=str(receipt.publication_parent or ""),
             publication_receipt_blob=str(receipt.publication_receipt_blob or ""),
             require_topic_branch=False,
+            deadline_monotonic=deadline_monotonic,
         )
     return receipt
 
@@ -767,9 +937,16 @@ def _recover_remote_ready(
     receipt: CampaignRelayReceiptV1,
     *,
     allow_base_adoption: bool = False,
+    deadline_monotonic: float | None = None,
 ) -> CampaignRelayReceiptV1 | None:
     ready_ref = _ready_remote_ref(receipt.relay_id)
-    rows = _git(root, "ls-remote", "origin", ready_ref).splitlines()
+    rows = _git(
+        root,
+        "ls-remote",
+        "origin",
+        ready_ref,
+        deadline_monotonic=deadline_monotonic,
+    ).splitlines()
     if not rows:
         return None
     if len(rows) != 1 or rows[0].split("\t")[1:] != [ready_ref]:
@@ -782,6 +959,7 @@ def _recover_remote_ready(
         root,
         commit=commit,
         relay_id=receipt.relay_id,
+        deadline_monotonic=deadline_monotonic,
     )
     same_identity = _same_relay_identity(receipt, recovered)
     if not same_identity and not (allow_base_adoption and _same_relay_lineage(receipt, recovered)):

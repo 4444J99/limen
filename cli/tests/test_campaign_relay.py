@@ -9,7 +9,13 @@ from pathlib import Path
 
 import pytest
 from limen.bounded_subprocess import BoundedSubprocessError
-from limen.conduct.campaign_relay import CampaignRelayError, campaign_relay_lock, reserve_relay
+from limen.conduct.campaign_relay import (
+    CampaignRelayError,
+    _primary_checkout,
+    _relay_worktree,
+    campaign_relay_lock,
+    reserve_relay,
+)
 from limen.conduct.models import CampaignRelayReceiptV1
 from limen.workstream_contract import RECEIPT_MODULES, new_contract, new_contract_v2
 
@@ -128,6 +134,20 @@ def test_unconsumed_reservation_tracks_current_main_when_main_moves(relay_repo) 
     common = Path(_git(root, "rev-parse", "--path-format=absolute", "--git-common-dir"))
     store = common / "limen" / "campaign-relays"
     assert len(list(store.glob("*.json"))) == 1
+
+
+def test_primary_checkout_and_successor_worktree_derive_from_shared_common_dir(
+    relay_repo,
+) -> None:
+    root, _predecessor = relay_repo
+    successor = root / ".worktrees" / "successor"
+    observer = root.parent / "observer"
+    successor.parent.mkdir()
+    _git(root, "worktree", "add", "--detach", str(successor), "HEAD")
+    _git(root, "worktree", "add", "--detach", str(observer), "HEAD")
+
+    assert _primary_checkout(observer) == root.resolve()
+    assert _relay_worktree(observer, "successor") == successor.resolve()
 
 
 @pytest.mark.parametrize("length", [40, 64])

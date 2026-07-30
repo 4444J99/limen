@@ -18,9 +18,18 @@ from limen.conduct.campaign_relay import (
 from limen.conduct.models import CampaignRelayReceiptV1
 
 
-def _read_relay(root: Path, relay_id: str) -> CampaignRelayReceiptV1:
+def _read_relay(
+    root: Path,
+    relay_id: str,
+    *,
+    deadline_monotonic: float | None = None,
+) -> CampaignRelayReceiptV1:
     receipt_name, _lock_name = _relay_names(relay_id)
-    with campaign_relay_lock(root, relay_id) as store:
+    with campaign_relay_lock(
+        root,
+        relay_id,
+        deadline_monotonic=deadline_monotonic,
+    ) as store:
         receipt = _read_receipt(store, receipt_name)
     if receipt is None:
         raise CampaignRelayError(
@@ -50,9 +59,14 @@ def _adopt_remote_relay(
     *,
     expected_states: frozenset[str],
     remote: CampaignRelayReceiptV1,
+    deadline_monotonic: float | None = None,
 ) -> CampaignRelayReceiptV1:
     receipt_name, _lock_name = _relay_names(relay_id)
-    with campaign_relay_lock(root, relay_id) as store:
+    with campaign_relay_lock(
+        root,
+        relay_id,
+        deadline_monotonic=deadline_monotonic,
+    ) as store:
         current = _read_receipt(store, receipt_name)
         if current is None:
             raise CampaignRelayError(
@@ -78,9 +92,14 @@ def _adopt_remote_base(
     relay_id: str,
     *,
     exact_remote_main: str,
+    deadline_monotonic: float | None = None,
 ) -> CampaignRelayReceiptV1:
     receipt_name, _lock_name = _relay_names(relay_id)
-    with campaign_relay_lock(root, relay_id) as store:
+    with campaign_relay_lock(
+        root,
+        relay_id,
+        deadline_monotonic=deadline_monotonic,
+    ) as store:
         current = _read_receipt(store, receipt_name)
         if current is None:
             raise CampaignRelayError(
@@ -119,9 +138,14 @@ def _replace_relay(
     *,
     expected_states: frozenset[str],
     updates: dict[str, Any],
+    deadline_monotonic: float | None = None,
 ) -> CampaignRelayReceiptV1:
     receipt_name, _lock_name = _relay_names(relay_id)
-    with campaign_relay_lock(root, relay_id) as store:
+    with campaign_relay_lock(
+        root,
+        relay_id,
+        deadline_monotonic=deadline_monotonic,
+    ) as store:
         current = _read_receipt(store, receipt_name)
         if current is None:
             raise CampaignRelayError(
@@ -157,9 +181,14 @@ def _claim_relay_attempt(
     controller_process_started: str,
     remote_attempt_commit: str | None = None,
     remote_attempt_token: str | None = None,
+    deadline_monotonic: float | None = None,
 ) -> RelayLaunch:
     receipt_name, _lock_name = _relay_names(relay_id)
-    with campaign_relay_lock(root, relay_id) as store:
+    with campaign_relay_lock(
+        root,
+        relay_id,
+        deadline_monotonic=deadline_monotonic,
+    ) as store:
         current = _read_receipt(store, receipt_name)
         if current is None:
             raise CampaignRelayError(

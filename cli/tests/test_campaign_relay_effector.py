@@ -25,6 +25,7 @@ from limen.conduct.campaign_relay import (
 )
 from limen.conduct.campaign_relay_process import _bounded_registration, _spawn_relay_process
 from limen.conduct.campaign_relay_state import _read_relay, _replace_relay
+from limen.conduct.models import CampaignRelayReceiptV1
 from limen.workstream_contract import RECEIPT_MODULES, new_contract
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -709,6 +710,9 @@ def test_startup_output_ceiling_crossed_before_selected_ack_fails_closed(
         return hashlib.sha256(raw).hexdigest(), len(raw)
 
     def spawn(_command, **kwargs):
+        successor = root / ".worktrees" / reservation.receipt.successor_slug
+        successor.parent.mkdir(exist_ok=True)
+        _git(root, "worktree", "add", "--detach", str(successor), "HEAD")
         child_source = f"""
 import json
 import os
@@ -861,6 +865,122 @@ def test_ready_publication_failure_rolls_broker_back_to_dormant(
         pytest.fail("rolled-back fixture provider did not exit naturally")
 
 
+def _ready_publication_fixture() -> CampaignRelayReceiptV1:
+    return CampaignRelayReceiptV1.model_validate(
+        {
+            "relay_id": "a" * 64,
+            "workstream": "institutional-omega",
+            "predecessor_receipt_blob": "b" * 40,
+            "predecessor_contract_digest": "c" * 64,
+            "predecessor_deadline_epoch": 2_000_000_000,
+            "exact_remote_main": "d" * 40,
+            "successor_slug": "successor",
+            "successor_branch": "work/successor",
+            "successor_session_id": "relay-successor",
+            "state": "ready",
+            "attempts": 1,
+            "controller_pid": 11,
+            "controller_process_started": "fixture-controller",
+            "remote_attempt_commit": "e" * 40,
+            "remote_attempt_token": "f" * 64,
+            "selected_agent": "codex",
+            "selected_capabilities": ["conduct"],
+            "launch_pid": 12,
+            "launch_process_started": "fixture-provider",
+            "registration_response_sha256": "1" * 64,
+            "activation_response_sha256": "2" * 64,
+            "publication_commit": "3" * 40,
+            "publication_parent": "d" * 40,
+            "publication_receipt_blob": "4" * 40,
+            "startup_stdout_sha256": "5" * 64,
+            "startup_stdout_bytes": 0,
+            "startup_stderr_sha256": "6" * 64,
+            "startup_stderr_bytes": 0,
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("push_code", "outcome", "expected_code"),
+    [
+        ("relay_ready_publication_failed", "success", None),
+        ("relay_git_timeout", "confirmed_failure", "relay_ready_publication_failed"),
+        ("relay_git_unavailable", "uncertain", "relay_ready_publication_uncertain"),
+    ],
+)
+def test_every_ready_push_exception_uses_three_way_exact_ref_reconciliation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    push_code: str,
+    outcome: str,
+    expected_code: str | None,
+) -> None:
+    receipt = _ready_publication_fixture()
+
+    def git_result(_root, args, **_kwargs):
+        if args[:2] == ["push", "--atomic"]:
+            raise CampaignRelayError(push_code, "injected push result")
+        if args[0] == "hash-object":
+            return "7" * 40
+        if args[0] == "write-tree":
+            return "8" * 40
+        if args[0] == "commit-tree":
+            return "9" * 40
+        return ""
+
+    observed: list[str] = []
+
+    def reconcile(*_args, **_kwargs):
+        observed.append(outcome)
+        return outcome
+
+    monkeypatch.setattr(relay_publication, "_git_with_input", git_result)
+    monkeypatch.setattr(relay_publication, "_ready_publication_outcome", reconcile)
+    if expected_code is None:
+        relay_publication._publish_ready_receipt(tmp_path, receipt)
+    else:
+        with pytest.raises(CampaignRelayError) as raised:
+            relay_publication._publish_ready_receipt(tmp_path, receipt)
+        assert raised.value.code == expected_code
+    assert observed == [outcome]
+
+
+@pytest.mark.parametrize(
+    ("ready_head", "latest_head", "error_code", "expected"),
+    [
+        ("a" * 40, "a" * 40, None, "success"),
+        ("a" * 40, "b" * 40, None, "confirmed_failure"),
+        (None, None, "relay_publication_unreachable", "confirmed_failure"),
+        (None, None, "relay_git_unavailable", "uncertain"),
+    ],
+)
+def test_ready_ref_reconciliation_distinguishes_remote_truth(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    ready_head: str | None,
+    latest_head: str | None,
+    error_code: str | None,
+    expected: str,
+) -> None:
+    commit = "a" * 40
+
+    def remote_head(_root, ref, **_kwargs):
+        if error_code is not None:
+            raise CampaignRelayError(error_code, "injected reconciliation result")
+        return ready_head if "/ready/" in ref else latest_head
+
+    monkeypatch.setattr(relay_publication, "_remote_ref_head", remote_head)
+    assert (
+        relay_publication._ready_publication_outcome(
+            tmp_path,
+            commit=commit,
+            ready_ref="refs/heads/limen-relay/ready/" + "c" * 64,
+            latest_ref="refs/heads/limen-relay/latest/institutional-omega",
+        )
+        == expected
+    )
+
+
 def test_uncertain_accepted_ready_push_preserves_activation_until_recovery(
     effector_repo,
     monkeypatch,
@@ -904,13 +1024,13 @@ def test_uncertain_accepted_ready_push_preserves_activation_until_recovery(
             )
         return result
 
-    def unavailable_reconciliation(root, ref):
+    def unavailable_reconciliation(root, ref, **kwargs):
         if atomic_pushed:
             raise CampaignRelayError(
                 "relay_git_unavailable",
                 "injected remote reconciliation outage",
             )
-        return original_remote_ref_head(root, ref)
+        return original_remote_ref_head(root, ref, **kwargs)
 
     monkeypatch.setattr(relay_publication, "_git_with_input", ambiguous_git)
     monkeypatch.setattr(
@@ -1013,13 +1133,13 @@ def test_uncertain_absent_ready_push_is_republished_without_a_second_provider(
             )
         return original_git_with_input(root, args, **kwargs)
 
-    def unavailable_reconciliation(root, ref):
+    def unavailable_reconciliation(root, ref, **kwargs):
         if atomic_attempted:
             raise CampaignRelayError(
                 "relay_git_unavailable",
                 "injected remote reconciliation outage",
             )
-        return original_remote_ref_head(root, ref)
+        return original_remote_ref_head(root, ref, **kwargs)
 
     monkeypatch.setattr(relay_publication, "_git_with_input", drop_atomic_push)
     monkeypatch.setattr(relay_publication, "_remote_ref_head", unavailable_reconciliation)
@@ -1123,6 +1243,103 @@ def test_capacity_denial_keeps_attempt_unconsumed_and_refreshes_its_base(
     )
     assert launch.receipt.state == "failed"
     assert launch.receipt.terminal_code == "relay_spawn_failed"
+
+
+def test_capacity_census_consumes_the_entry_time_startup_deadline(
+    effector_repo,
+) -> None:
+    root, predecessor, _provider, _deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+
+    def slow_capacity(_root):
+        time.sleep(1.05)
+        return ("codex",)
+
+    started = time.monotonic()
+    with pytest.raises(CampaignRelayError) as raised:
+        launch_reserved_relay(
+            root,
+            reservation.receipt.relay_id,
+            timeout_seconds=1,
+            lane_selector=slow_capacity,
+            process_factory=lambda *_args, **_kwargs: pytest.fail(
+                "an expired startup deadline must not spawn a provider"
+            ),
+        )
+
+    assert raised.value.code == "relay_startup_timeout"
+    assert time.monotonic() - started < 1.5
+    current = _read_relay(root, reservation.receipt.relay_id)
+    assert current.state == "reserved"
+    assert current.attempts == 0
+
+
+def test_linked_worktree_reconciliation_rolls_back_the_primary_successor_session(
+    effector_repo,
+    tmp_path: Path,
+) -> None:
+    root, predecessor, _provider, _deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    successor = root / ".worktrees" / reservation.receipt.successor_slug
+    observer = tmp_path / "observer"
+    successor.parent.mkdir(exist_ok=True)
+    _git(root, "worktree", "add", "--detach", str(successor), "HEAD")
+    _git(root, "worktree", "add", "--detach", str(observer), "HEAD")
+    capsule_dir = successor / ".limen-workstream"
+    capsule_dir.mkdir()
+    marker = capsule_dir / "relay-activated"
+    marker.write_text(f"{reservation.receipt.relay_id}\n", encoding="utf-8")
+    marker.chmod(0o600)
+    uncertain = _replace_relay(
+        root,
+        reservation.receipt.relay_id,
+        expected_states=frozenset({"reserved"}),
+        updates={
+            "state": "indeterminate",
+            "attempts": 1,
+            "controller_pid": 11,
+            "controller_process_started": "fixture-controller",
+            "remote_attempt_commit": "a" * 40,
+            "remote_attempt_token": "b" * 64,
+            "selected_agent": "codex",
+            "selected_capabilities": ("conduct",),
+            "launch_pid": 12,
+            "launch_process_started": "fixture-provider",
+            "registration_response_sha256": "c" * 64,
+            "activation_response_sha256": "d" * 64,
+            "terminal_code": "relay_ready_publication_uncertain",
+        },
+    )
+    registrations: list[tuple[Path, bool]] = []
+
+    def register(**kwargs):
+        registrations.append((kwargs["worktree"], kwargs["accepting_work"]))
+        return "e" * 64, 1
+
+    reconciled = launch_reserved_relay(
+        observer,
+        uncertain.relay_id,
+        process_identity=lambda _pid: (_ for _ in ()).throw(
+            CampaignRelayError("fixture_absent", "fixture provider is absent")
+        ),
+        lane_selector=lambda _root: pytest.fail("a consumed relay must not reselect capacity"),
+        registration=register,
+    )
+
+    assert reconciled.launched is False
+    assert reconciled.receipt.state == "indeterminate"
+    assert reconciled.receipt.terminal_code == "relay_ready_provider_absent"
+    assert reconciled.receipt.activation_response_sha256 is None
+    assert registrations == [(successor.resolve(), False)]
+    assert not marker.exists()
 
 
 def test_relay_git_probe_closes_oversized_output_during_execution(

@@ -140,8 +140,8 @@ def wake_campaign(
     preflight: Callable[[Path], dict[str, str]] = exact_remote_main,
     runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
 ) -> dict[str, Any]:
-    if not 1 <= timeout_seconds <= 7200:
-        raise CampaignWakeError("campaign wake timeout must be between 1 and 7200 seconds")
+    if not 300 <= timeout_seconds <= 7200:
+        raise CampaignWakeError("campaign wake timeout must be between 300 and 7200 seconds")
     wake_deadline_monotonic_ns = time.monotonic_ns() + timeout_seconds * 1_000_000_000
     root = root.resolve()
     env = dict(os.environ if environ is None else environ)

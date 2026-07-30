@@ -176,7 +176,7 @@ def test_wake_invokes_only_the_canonical_supervisor(wake_repo) -> None:
     result = wake_campaign(
         root,
         now_epoch=now,
-        timeout_seconds=17,
+        timeout_seconds=300,
         environ={"LIMEN_AGENT": "codex", "LIMEN_SESSION_ID": "heartbeat-session"},
         preflight=lambda _root: {"head": "a" * 40},
         runner=run,
@@ -187,10 +187,27 @@ def test_wake_invokes_only_the_canonical_supervisor(wake_repo) -> None:
     assert command[1:6] == ["-m", "limen", "conduct", "campaign", "run"]
     assert "dispatch" not in command
     assert command[command.index("--session-id") + 1] == "heartbeat-session"
-    assert command[command.index("--evaluation-timeout") + 1] == "17"
+    assert command[command.index("--evaluation-timeout") + 1] == "300"
     deadline = int(command[command.index("--wake-deadline-monotonic-ns") + 1])
     assert deadline > time.monotonic_ns()
-    assert 0 < observed["kwargs"]["timeout"] <= 17
+    assert 0 < observed["kwargs"]["timeout"] <= 300
+
+
+@pytest.mark.parametrize("timeout_seconds", [1, 299, 7201])
+def test_wake_rejects_timeouts_outside_the_public_relay_safe_range(
+    wake_repo,
+    timeout_seconds: int,
+) -> None:
+    root, now = wake_repo
+
+    with pytest.raises(CampaignWakeError, match="between 300 and 7200"):
+        wake_campaign(
+            root,
+            now_epoch=now,
+            timeout_seconds=timeout_seconds,
+            environ={"LIMEN_AGENT": "codex", "LIMEN_SESSION_ID": "heartbeat-session"},
+            runner=lambda *_args, **_kwargs: pytest.fail("runner must not execute"),
+        )
 
 
 def test_ready_successor_routes_its_exact_publication_base_to_supervisor(

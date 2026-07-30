@@ -27,6 +27,7 @@ from limen.conduct.campaign_relay import (
     _STARTUP_OUTPUT_CEILING,
     _TERMINAL_STATES,
     CampaignRelayError,
+    _deadline_timeout,
 )
 from limen.conduct.campaign_relay_state import _read_relay, _replace_relay
 from limen.conduct.models import CampaignRelayReceiptV1
@@ -90,6 +91,7 @@ def _bounded_registration(
     session_id: str,
     worktree: Path,
     accepting_work: bool,
+    deadline_monotonic: float | None = None,
 ) -> tuple[str, int]:
     binary = env.get("LIMEN_CLI_BIN", "").strip() or "limen"
     resolved = shutil.which(binary)
@@ -123,7 +125,10 @@ def _bounded_registration(
             command,
             cwd=root,
             env=env,
-            timeout_seconds=_REGISTRATION_TIMEOUT_SECONDS,
+            timeout_seconds=_deadline_timeout(
+                deadline_monotonic,
+                _REGISTRATION_TIMEOUT_SECONDS,
+            ),
             stdout_ceiling=_REGISTRATION_OUTPUT_CEILING,
             stderr_ceiling=_REGISTRATION_OUTPUT_CEILING,
         )
@@ -477,7 +482,11 @@ def _write_activation_marker(worktree: Path, relay_id: str) -> None:
 
 
 @contextmanager
-def _activation_registration_lock(worktree: Path) -> Iterator[None]:
+def _activation_registration_lock(
+    worktree: Path,
+    *,
+    deadline_monotonic: float | None = None,
+) -> Iterator[None]:
     directory = _open_activation_directory(worktree)
     descriptor = -1
     locked = False
@@ -494,7 +503,10 @@ def _activation_registration_lock(worktree: Path) -> Iterator[None]:
                 "relay_activation_lock_failed",
                 "campaign relay activation lock is not a private regular file",
             )
-        deadline = time.monotonic() + _REGISTRATION_TIMEOUT_SECONDS + 1
+        deadline = time.monotonic() + _deadline_timeout(
+            deadline_monotonic,
+            _REGISTRATION_TIMEOUT_SECONDS + 1,
+        )
         while True:
             try:
                 fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)

@@ -2426,7 +2426,7 @@ parameters:
     env: LIMEN_CAMPAIGN_WAKE_TIMEOUT
     self_update: none
     owner: limen-daemon
-    note: "Seconds allowed for one canonical campaign-supervisor evaluation from the heartbeat. The legacy loop adds a fixed 30-second outer ceiling for capsule discovery and remote-default preflight, fails closed without timeout(1), and never falls back to direct provider launch."
+    note: "Seconds allowed for one canonical campaign-supervisor evaluation from the heartbeat. Public configuration is bounded to 300..7200 so the relay always retains its fixed terminal-receipt margin. The legacy loop adds a fixed 30-second outer ceiling for capsule discovery and remote-default preflight, fails closed without timeout(1), and never falls back to direct provider launch."
   LIMEN_RELEASE_BRANCH:
     default: "main"
     env: LIMEN_RELEASE_BRANCH
