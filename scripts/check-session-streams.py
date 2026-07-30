@@ -76,8 +76,12 @@ import re
 import shlex
 import subprocess
 import sys
+from pathlib import Path
 
 import yaml
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _worktree_liveness  # noqa: E402 — the shared probe reclaim-worktrees.py also trusts
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REGISTRY = os.path.join(ROOT, "institutio", "governance", "session-streams.yaml")
@@ -352,15 +356,58 @@ def _settled(sid, stream=None):
     return _predicate_proven(sid, stream)
 
 
-def _running(sid):
-    return os.path.isdir(os.path.join(WORKTREES, sid))
+# Presence classification per lane, memoized so every view agrees within one run and the pid a
+# view prints is the pid the decision was made on.
+_PRESENCE: dict[str, tuple[str, int | None]] = {}
+
+
+def _lane_presence(sid):
+    """(state, pid) for a lane's on-disk worktree, or (None, None) when there is none.
+
+    This split is what makes the round trip ROUND. The old rule — "a directory exists at
+    .worktrees/<sid>" ⇒ `running` — conflated two states that need opposite handling: an agent
+    actually attached (never double-open) and an exited session whose worktree remains (the
+    whole point of reopening). Under it, a stream opened once could never re-enter the ready
+    set until settled: the one-command reopen the registry promises worked exactly once per
+    stream, then jammed shut, while `--ready` printed `running` about nothing.
+
+      live     a process has its cwd at/under the worktree — or the probe was unavailable
+               (pid -1, fail-closed: a broken probe must under-open, never double-open). The
+               same probe, same direction, keeps reclaim-worktrees.py from deleting these.
+      dormant  a valid worktree, nothing attached. OPENABLE — the launcher labels it REOPEN;
+               start-worktree-session.sh re-enters it (`created="reused"`) with the capsule
+               identity digest still binding the branch.
+      stale    the path exists but is not a valid git worktree. start-worktree-session.sh
+               hard-errors on these (:529-531), so offering one as reopenable would open a
+               tmux window containing an error. Reported; the SPRAWL-RECLAIM organ owns it.
+    """
+    if sid in _PRESENCE:
+        return _PRESENCE[sid]
+    wt = os.path.join(WORKTREES, sid)
+    if not os.path.isdir(wt):
+        state = (None, None)
+    else:
+        probe = subprocess.run(
+            ["git", "-C", wt, "rev-parse", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if probe.returncode != 0:
+            state = ("stale", None)
+        else:
+            pid = _worktree_liveness.process_owner(Path(wt))
+            state = ("live", pid) if pid is not None else ("dormant", None)
+    _PRESENCE[sid] = state
+    return state
 
 
 def state_of(sid, stream, settled_cache):
     if settled_cache[sid]:
         return "settled"
-    if _running(sid):
-        return "running"
+    presence, _pid = _lane_presence(sid)
+    if presence is not None:
+        return presence
     unmet = [r for r in stream.get("requires", []) if not settled_cache.get(r)]
     return "blocked" if unmet else "ready"
 
@@ -706,7 +753,8 @@ def print_all(streams):
     """
     settled_cache = {sid: _settled(sid, s) for sid, s in streams.items()}
     states = {sid: state_of(sid, s, settled_cache) for sid, s in streams.items()}
-    rank = {"ready": 0, "running": 1, "blocked": 2}
+    # dormant ranks WITH ready (it is openable — that is the round trip), live/stale never launch.
+    rank = {"ready": 0, "dormant": 0, "live": 1, "blocked": 2, "stale": 3}
     openable = sorted(
         ((sid, s) for sid, s in streams.items() if states[sid] != "settled"),
         key=lambda kv: (FAMILY_RANK.get(kv[1].get("family"), len(FAMILY_RANK)), rank[states[kv[0]]], kv[0]),
@@ -745,21 +793,31 @@ def _bucket(streams):
     """The ONE state derivation. Both the human view and the machine view read this, so a launcher
     can never open a set the operator was not shown (and vice versa)."""
     settled_cache = {sid: _settled(sid, s) for sid, s in streams.items()}
-    buckets = {"ready": [], "running": [], "blocked": [], "settled": []}
+    buckets = {"ready": [], "live": [], "dormant": [], "stale": [], "blocked": [], "settled": []}
     for sid, s in streams.items():
         buckets[state_of(sid, s, settled_cache)].append((sid, s))
     return buckets, settled_cache
 
 
+def _openable(buckets):
+    """ready ∪ dormant — everything the launcher may open. Dormant IS openable: an exited session
+    whose worktree remains is the reopen case, not an occupied slot."""
+    return _family_order(buckets["ready"] + buckets["dormant"])
+
+
 def print_ready_json(streams):
-    """Machine-readable ready set — what `scripts/open-streams.sh` consumes.
+    """Machine-readable openable set — what `scripts/open-streams.sh` consumes.
 
     Exists because --ready was a PRINTER: its formatted text was for human eyes, so the only way to
     act on the derived set was to read it and retype it. That is the hand-loop this registry exists
     to abolish, displaced one level up. Emitting the resolved argv (not a shell string) keeps the
     launcher from re-deriving — or quietly disagreeing with — the registry's own command.
+
+    Rows carry `reopen`: false = a fresh open, true = re-entry into an existing dormant worktree
+    (the launcher labels it REOPEN so the operator can tell resumption from a first open).
     """
     buckets, _ = _bucket(streams)
+    dormant = {sid for sid, _ in buckets["dormant"]}
     print(
         json.dumps(
             [
@@ -772,10 +830,11 @@ def print_ready_json(streams):
                     "intent": s["intent"],
                     "owner_of_record": s["owner_of_record"],
                     "max_children": s["max_children"],
+                    "reopen": sid in dormant,
                     # The same builder the text view renders — never a second copy.
                     "argv": launch_argv(sid, s),
                 }
-                for sid, s in _family_order(buckets["ready"])
+                for sid, s in _openable(buckets)
             ],
             indent=2,
         )
@@ -783,34 +842,79 @@ def print_ready_json(streams):
     return 0
 
 
+def _print_unopenable(buckets, settled_cache, indent="   "):
+    for sid, s in sorted(buckets["live"]):
+        _, pid = _lane_presence(sid)
+        print(f"{indent}live     {sid} — a session is attached (pid {pid}); never double-opened")
+    for sid, s in sorted(buckets["blocked"]):
+        unmet = [r for r in s.get("requires", []) if not settled_cache.get(r)]
+        print(f"{indent}blocked  {sid} — waiting on {', '.join(unmet)}")
+    for sid, _ in sorted(buckets["stale"]):
+        print(
+            f"{indent}stale    {sid} — .worktrees/{sid} is not a valid git worktree; "
+            "owner: the SPRAWL-RECLAIM organ (scripts/reclaim-worktrees.py)"
+        )
+    for sid, _ in sorted(buckets["settled"]):
+        print(f"{indent}settled  {sid}")
+
+
 def print_ready(streams):
     buckets, settled_cache = _bucket(streams)
+    openable = _openable(buckets)
+    dormant = {sid for sid, _ in buckets["dormant"]}
 
-    if not buckets["ready"]:
-        print("session streams: NONE READY")
-        for sid, s in sorted(buckets["blocked"]):
-            unmet = [r for r in s.get("requires", []) if not settled_cache.get(r)]
-            print(f"  blocked  {sid} — waiting on {', '.join(unmet)}")
-        for sid, _ in sorted(buckets["running"]):
-            print(f"  running  {sid} — worktree open at .worktrees/{sid}")
+    if not openable:
+        print("session streams: NONE OPENABLE")
+        _print_unopenable(buckets, settled_cache, indent="  ")
         return 0
 
-    print(f"session streams: {len(buckets['ready'])} READY to open\n")
-    for sid, s in _family_order(buckets["ready"]):
-        print(f"── {sid} — {s['title']}")
+    reopen_n = len(buckets["dormant"])
+    suffix = f" ({reopen_n} of them REOPEN — exited sessions whose worktree remains)" if reopen_n else ""
+    print(f"session streams: {len(openable)} OPENABLE{suffix}\n")
+    for sid, s in openable:
+        mark = "REOPEN" if sid in dormant else ""
+        print(f"── {sid} — {s['title']}{('   [' + mark + ']') if mark else ''}")
         print(f"   family: {s['family']}   owner: {s['owner_of_record']}   class: {s['job_class']}   children ≤ {s['max_children']}")
         print()
         for line in launch_command(sid, s).splitlines():
             print(f"   {line}")
         print()
 
-    for sid, s in sorted(buckets["blocked"]):
-        unmet = [r for r in s.get("requires", []) if not settled_cache.get(r)]
-        print(f"   blocked  {sid} — waiting on {', '.join(unmet)}")
-    for sid, _ in sorted(buckets["running"]):
-        print(f"   running  {sid} — worktree open at .worktrees/{sid}")
-    for sid, _ in sorted(buckets["settled"]):
-        print(f"   settled  {sid}")
+    _print_unopenable(buckets, settled_cache)
+    return 0
+
+
+def print_status(streams):
+    """One line per stream, every state named — the round trip made visible.
+
+    The reopen cycle was invisible: nothing showed 'you exited styx; it is reopenable', so the
+    operator could not see WHY the one-command open did or did not include a lane. This is the
+    glance view: open → work → exit → `--status` says dormant → open again → it says live.
+    """
+    buckets, settled_cache = _bucket(streams)
+    dorm = {sid for sid, _ in buckets["dormant"]}
+    states = {}
+    for state, rows in buckets.items():
+        for sid, _s in rows:
+            states[sid] = state
+    label = {
+        "live": "live     — session attached (pid {pid})",
+        "dormant": "dormant  — exited; REOPENS on next open-streams run",
+        "ready": "ready    — never opened; opens on next open-streams run",
+        "blocked": "blocked  — waiting on {waits}",
+        "stale": "stale    — invalid worktree; owner: SPRAWL-RECLAIM",
+        "settled": "settled",
+    }
+    for family in sorted({s.get("family") for s in streams.values()}, key=lambda f: FAMILY_RANK.get(f, 9)):
+        rows = _family_order([(sid, s) for sid, s in streams.items() if s.get("family") == family])
+        print(f"{family}:")
+        for sid, s in rows:
+            st = states[sid]
+            _, pid = _lane_presence(sid) if st in ("live",) else (None, None)
+            waits = ", ".join(r for r in s.get("requires", []) if not settled_cache.get(r))
+            print(f"  {sid:24s} {label[st].format(pid=pid, waits=waits)}")
+    openable = len(buckets["ready"]) + len(dorm)
+    print(f"\n{openable} openable ({len(dorm)} reopen) · attach: tmux attach -t limen-streams")
     return 0
 
 
@@ -834,6 +938,12 @@ def main():
         "order — blocked is advisory (the launcher never reads this registry), so the operator "
         "decides which to open",
     )
+    ap.add_argument(
+        "--status",
+        action="store_true",
+        help="one line per stream with its derived state (live/dormant/ready/blocked/stale/settled)"
+        " — the glance view of the open → exit → reopen cycle; touches nothing",
+    )
     args = ap.parse_args()
 
     if args.json and not args.ready:
@@ -841,7 +951,7 @@ def main():
 
     streams = load()
 
-    if args.ready or args.all:
+    if args.ready or args.all or args.status:
         # A launch command is only meaningful over a coherent registry. This guard is what makes it
         # safe for open-streams.sh to run the emitted argv unread: drift is exit 1 with no rows, so
         # a launcher can never open a set derived from an incoherent graph.
@@ -850,6 +960,8 @@ def main():
             print("session-streams registry: DRIFT — refusing to derive launch commands")
             print("\n".join(failures))
             sys.exit(1)
+        if args.status:
+            sys.exit(print_status(streams))
         if args.all:
             sys.exit(print_all(streams))
         sys.exit(print_ready_json(streams) if args.json else print_ready(streams))

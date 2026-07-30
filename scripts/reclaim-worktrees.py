@@ -221,55 +221,16 @@ def active_async_root(d: Path, active_prefixes: set[str]) -> bool:
     return any(name.startswith(prefix) for prefix in active_prefixes)
 
 
-def active_process_cwds() -> dict[Path, int]:
-    """Return observable process cwd roots; an unavailable probe fails closed."""
-    observed: dict[Path, int] = {}
-    proc = Path("/proc")
-    if proc.is_dir():
-        for entry in proc.iterdir():
-            if not entry.name.isdigit():
-                continue
-            try:
-                observed[(entry / "cwd").resolve(strict=True)] = int(entry.name)
-            except (OSError, ValueError):
-                continue
-        return observed
-    try:
-        result = subprocess.run(
-            ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
-            capture_output=True,
-            text=True,
-            timeout=20,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return {Path("/"): -1}
-    pid: int | None = None
-    for line in result.stdout.splitlines():
-        if line.startswith("p"):
-            try:
-                pid = int(line[1:])
-            except ValueError:
-                pid = None
-        elif line.startswith("n/") and pid is not None:
-            try:
-                observed[Path(line[1:]).resolve()] = pid
-            except OSError:
-                continue
-    return observed
+# The probe and its containment rule live in _worktree_liveness (shared with the stream
+# launcher's live/dormant classification — one probe, two consumers with opposite decisions:
+# reclaim must not DELETE a live worktree, the launcher must not REOPEN one). Extracted verbatim;
+# this organ keeps its own refresh cycle (it re-scans mid-apply on purpose), so it consumes
+# `active_process_cwds` + `owner_in` directly rather than the helper's memoized `process_owner`.
+from _worktree_liveness import active_process_cwds, owner_in  # noqa: E402
 
 
 def active_process_owner(d: Path) -> int | None:
-    try:
-        root = d.resolve()
-    except OSError:
-        return -1
-    for cwd, pid in _ACTIVE_PROCESS_CWDS.items():
-        if pid == -1:
-            return -1
-        if cwd == root or root in cwd.parents:
-            return pid
-    return None
+    return owner_in(_ACTIVE_PROCESS_CWDS, d)
 
 
 def has_generated_payload(d: Path) -> bool:
