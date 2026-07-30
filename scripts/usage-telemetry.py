@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """usage-telemetry.py — emit REAL per-vendor usage (not fictional run-counts).
 
-Each vendor exposes a different truth (see BACKLOG.md vendor table); this reads the best
+Each vendor exposes a different truth (see docs/reviews/BACKLOG.md vendor table); this reads the best
 available real signal and writes logs/usage.json for board.py + the portal:
   codex   — sum total_tokens from ~/.codex/sessions/*.jsonl in the 5h rolling window
   claude  — sum usage tokens from ~/.claude/projects/**/*.jsonl in the 5h window
