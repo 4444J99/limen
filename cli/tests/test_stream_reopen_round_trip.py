@@ -226,4 +226,4 @@ def test_the_launcher_delegates_status_to_the_registry():
     """One derivation, one home: the launcher must not grow its own state story."""
     src = OPEN.read_text()
     assert "--status" in src
-    assert "check-session-streams.py\" --status" in src
+    assert 'check-session-streams.py" --status' in src
