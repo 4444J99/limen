@@ -516,7 +516,12 @@ repo_overrides:
   organvm/collaboratory: {class: operation_private, why: "collaboratory constellation — private operation"}
   organvm/commerce--meta: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/composition-1-2: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/content-engine--asset-amplifier: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant; was falling to protection-exempt private_unreviewed)"}
+  4444J99/content-engine--asset-amplifier: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant); personal estate 2026-07-30 (custody v4.0.0 transfer, redirect live)"}
+  4444J99/hokage-chess: {class: portal_public, why: "partner product face (rob lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public product, Pages re-homes under the personal domain"}
+  4444J99/micro-tato-play: {class: portal_public, why: "partner product face (rob lane, canary of the 2026-07-30 wave); personal estate — public play surface of micro-tato"}
+  4444J99/styx-behavioral-art: {class: portal_public, why: "styx venture face (jessica lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public"}
+  4444J99/styx-behavioral-economics-theory: {class: portal_public, why: "styx venture face (jessica lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public"}
+  4444J99/your-fit-tailored: {class: portal_public, why: "partner product face (charles lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public, spec-complete pilot kit"}
   organvm/content-engine--asset-amplifier--a-organvm-legacy: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/contrib: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
   organvm/contrib--anthropic-skills: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
@@ -552,8 +557,8 @@ repo_overrides:
   organvm/md-summoning: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/mesh: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/meta-organvm--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/micro-tato: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/mirror-mirror: {class: operation_private, why: "seeded value product — wave candidate (sweep decides)", publish_candidate: true}
+  4444J99/micro-tato: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated); personal estate 2026-07-30 (custody v4.0.0 transfer)", publish_candidate: true}
+  4444J99/mirror-mirror: {class: operation_private, why: "seeded value product — wave candidate (sweep decides); personal estate 2026-07-30 (custody v4.0.0 transfer)", publish_candidate: true}
   organvm/my-knowledge-base: {class: operation_private, why: "value-tier knowledge operation; secret-shaped paths — sweep before any form twin"}
   organvm/narratological-algorithmic-lenses: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/netmode: {class: operation_private, why: "machine infra, not a product (sweep 2026-07-30): network-health receipts, session-blockers, conductor-tranche dependencies ride it — engine room, no publish wave"}
@@ -570,7 +575,7 @@ repo_overrides:
   organvm/organvm-vii-kerygma--superproject: {class: vault_private, why: "superproject state mirror — private state"}
   organvm/palimpsest: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/payrail: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/peer-audited--behavioral-blockchain: {class: portal_public, why: "traction/value lure — portal tier"}
+  4444J99/peer-audited--behavioral-blockchain: {class: portal_public, why: "traction/value lure — portal tier; personal estate 2026-07-30 (custody v4.0.0 transfer, jtenen lane intact)"}
   organvm/persona-fleet: {class: vault_private, why: "persona corpus — private data"}
   organvm/personal: {class: vault_private, why: "personal memory store — private data"}
   organvm/portfolio: {class: portal_public, why: "traction/value lure — portal tier"}
@@ -589,7 +594,7 @@ repo_overrides:
   organvm/sign-signal--voice-synth: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/sovereign--ground: {class: vault_private, why: "ground corpus — internal strategy"}
   organvm/sovereign--ground--4444j99: {class: vault_private, why: "ground corpus — internal strategy"}
-  organvm/sovereign-systems--elevate-align: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant; was falling to protection-exempt private_unreviewed)"}
+  4444J99/sovereign-systems--elevate-align: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant); personal estate 2026-07-30 (custody v4.0.0 transfer; flipped private personal-side — the org-side 422 seat-metering block dissolved exactly as doctrine predicted)"}
   organvm/speculum-opencode: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/speech-score-engine: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/studium-generale: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
