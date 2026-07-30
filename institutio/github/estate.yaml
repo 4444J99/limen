@@ -239,6 +239,14 @@ resource_types:
     status: envisioned
     owner: gitvs
     note: "Deployment-environment governance — owed."
+  repo_custody:
+    identity: derived
+    desired: ["owner_matches_custody_home"]
+    observe: ""
+    effector: []
+    status: envisioned
+    owner: gitvs
+    note: "DUAL-ESTATE custody (operator directive 2026-07-29; lineage: docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md). The org is the SYSTEM (organs, engine, moat, governance): custody organvm. A collaboration-born product is a personally-owned asset: custody the personal account — its private-repo collaborator seats stay free permanently, insulated from the org Team upgrade (L-ORG-TEAM-UPGRADE), and partner access never touches the org that holds the moat. Candidates DERIVE from the constellation register's project repos (organs/consulting/constellation/registry.yaml) — never a second list here. Access stays grants-not-transfers (access.yaml) in BOTH estates: partitioning governs access, dual-estate governs custody. Activation = wire observe (census owner vs derived custody home) + the transfer effector behind L-CONST-CUSTODY-MIGRATION (transfers are outward-facing multi-repo custody moves — his hand). Precedent: 4444J99/victoroff-os, transferred 2026-07 (redirect from organvm/victoroff-os live), rows healed 2026-07-29."
   dependabot:
     identity: derived
     desired: ["security_updates_on"]
@@ -275,7 +283,7 @@ orgs:
     repos: sole_owner
     actions_spending_limit_usd: 25
     owner: gitvs
-    note: "The one repo-holding org (307 repos). Spending limit + plan are account-level his-hand acts (GitHub billing UI, cited via L-CARD-FRAUD-HOLD / the runbook) — the doctor observes, never mutates billing."
+    note: "The one repo-holding org (307 repos) — sole owner of the SYSTEM estate. Dual-estate custody (2026-07-29): collaboration-born products are personally-owned assets whose custody home is the personal account (see the repo_custody resource type; membership derives from the constellation register) — sole_owner reads 'all SYSTEM code lives here', not 'no repo may live on the personal estate'. Spending limit + plan are account-level his-hand acts (GitHub billing UI, cited via L-CARD-FRAUD-HOLD / the runbook) — the doctor observes, never mutates billing."
   reserved:
     match: ["organvm-*", "meta-organvm", "a-organvm"]
     plan_ok: ["free"]
@@ -405,6 +413,7 @@ classes:
 # (history-asset review owed). Sensitive rationale → estate.private.yaml (gitignored overlay).
 # Rows land by PR from `gitvs.py classify --emit-overrides` output — never auto-written.
 repo_overrides:
+  4444J99/victoroff-os: {class: operation_private, why: "collaboration product on the personal estate (transferred from organvm 2026-07, redirect live; dual-estate custody 2026-07-29) — partner build lane, private operation; any public face is a split, never a flip (CONST-VICTOROFF-FACE). Without this row the 4444J99/** portal glob classed it desired-PUBLIC — a latent flip hazard."}
   organvm/4444J99.github.io: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/_agent: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/_agent-health: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}

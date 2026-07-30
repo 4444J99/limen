@@ -167,7 +167,7 @@ people:
     funnel_instance_ref: null
     projects:
       - name: victoroff-os
-        repo: organvm/victoroff-os
+        repo: 4444J99/victoroff-os
         keywords: [victoroff, victoroff-os]
         stage: building
         public_face_state: none
