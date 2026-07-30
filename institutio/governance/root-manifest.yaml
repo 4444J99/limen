@@ -53,6 +53,7 @@ sanctioned:
   - {path: institutio, kind: dir, owner: governance, why: "the registry estate (GATES/SENSORS/PARAMETERS/...)"}
   - {path: integrations, kind: dir, owner: conduct, why: "cross-agent integration surfaces (AGENTS.md names it)"}
   - {path: limen.rb, kind: tooling, owner: fleet, why: "Homebrew formula"}
+  - {path: mise.toml, kind: config, owner: continuity, why: "toolchain declaration — ranges not pins; verify-hot-cache.sh R4 + the jack-in summon from it"}
   - {path: link-surfaces.json, kind: registry, owner: observation, why: "link surface registry (sensors.yaml consumes)"}
   - {path: logs, kind: dir, owner: fleet, why: "beat + autonomy logs with tracked receipts"}
   - {path: marketing, kind: dir, owner: launch, why: "outgrown seed of the launch organ (CHARTER cites it)"}
