@@ -187,6 +187,13 @@ For any search or recon whose scope spans multiple domains, **fan out parallel r
 
 Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.md` for the swarm protocol). Then verify before pushing — **scoped to the diff, never the whole world by default**:
 
+**Session streams** (the operator's declared work domains) have their own launcher: `limen streams`
+(→ `scripts/open-streams.sh`) opens and **reopens** every openable domain, one tmux window each;
+`limen streams --status` shows each stream's derived state. The rows and cartridges are owned by
+[`institutio/governance/session-streams.yaml`](institutio/governance/session-streams.yaml) — the
+constellation lanes in it are DERIVED from the constellation register (check M holds parity; edit
+the register and rerun `organs/consulting/constellation/derive-streams.py --write`, never the rows).
+
 - **`scripts/verify-scoped.sh` is the default push gate.** It maps the changed paths (branch diff vs `origin/main` plus uncommitted/untracked work) to only the gates they implicate, runs those, and names every gate it skipped. A docs append must never pay for a Next.js build, a wrangler boot, and 1,200+ tests.
 - **The full matrix below is a pre-merge event, not a per-session tax.** Run it — or let CI run it — only when the diff touches deploy-trigger paths (the website guardrail `merge-policy.sh` enforces at merge time), when scoping cannot attribute the change, or on explicit request.
 - **`verify-whole.sh` is machine-serialized** via a lock file (`LIMEN_VERIFY_LOCK_FILE`; opt-out `LIMEN_VERIFY_NO_LOCK=1` for single-purpose CI runners): concurrent runs from parallel sessions wait instead of stampeding the host with simultaneous npm installs, workerd boots, and production builds.
