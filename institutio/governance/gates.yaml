@@ -542,7 +542,7 @@ gates:
   # ── STREAMS registry drift net (the work-domain graph) ──────────────────────
   session-streams-drift:
     command: "python3 scripts/check-session-streams.py"
-    paths: ["institutio/governance/session-streams.yaml", "docs/continuations/*/intent.md", "scripts/check-session-streams.py"]
+    paths: ["institutio/governance/session-streams.yaml", "docs/continuations/*/intent.md", "scripts/check-session-streams.py", "organs/consulting/constellation/registry.yaml", "organs/consulting/constellation/derive-streams.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "Work-domain graph self-coherence: acyclic requires/unblocks, intent files exist, predicate_status matches reality BOTH ways, no hand-written state (the ready-set is derived from git, so there is no field to lie in). Caught the plans doc claiming repo-genesis.py was still to-be-built when PR #1535 had already shipped it."

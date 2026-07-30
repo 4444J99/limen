@@ -85,6 +85,7 @@ CONTINUATIONS = os.path.join(ROOT, "docs", "continuations")
 WORKTREES = os.path.join(ROOT, ".worktrees")
 
 REQUIRED_FIELDS = (
+    "family",
     "title",
     "branch_prefix",
     "intent",
@@ -100,6 +101,19 @@ REQUIRED_FIELDS = (
 )
 # The CLAUDE.md branch-cadence table. Restated nowhere else in this file.
 VALID_PREFIXES = {"feat", "fix", "heal", "chore", "docs", "refactor"}
+# Which registry a row is a projection of. `constellation` rows are DERIVED from
+# organs/consulting/constellation/registry.yaml (the operator's people × project lanes — the
+# streams he actually opens); `governance` rows are hand-authored estate work. The word "streams"
+# reached this registry through the constellation work (#1535), so the operator-facing views list
+# constellation first — his lanes are the answer to "what streams do I open?", not the plumbing.
+VALID_FAMILIES = {"constellation", "governance"}
+FAMILY_RANK = {"constellation": 0, "governance": 1}
+# The generator whose output check M holds this registry to. Its --check re-derives every
+# constellation row and cartridge from the register and exits 1 on any byte of drift — so a
+# hand-edit to a derived row is a red pr-gate, same pattern as check-gates.py holds workflows.
+DERIVE_STREAMS = os.path.join(
+    "organs", "consulting", "constellation", "derive-streams.py"
+)
 VALID_PREDICATE_STATUS = {"existing", "to_be_built"}
 # Fields whose presence would let a human hand-write state the graph is supposed to derive.
 FORBIDDEN_STATE_FIELDS = ("status", "state", "settled", "ready", "done", "complete")
@@ -320,13 +334,21 @@ def _settled(sid, stream=None):
 
     Fails toward NOT-settled: if git or the remote ref is unavailable we report unsettled, so a
     broken environment can only under-report readiness, never invent it.
+
+    Constellation rows NEVER settle here: a lane is recurring work the operator reopens, and its
+    lifecycle belongs to the register it derives from — a lane leaves the ready set when the
+    operator re-tiers or removes it in the constellation register (derivation then deletes the
+    row), not when one increment lands a trailer. Without this guard a single `Settles: styx`
+    commit would remove a lane from the launcher forever while the register still lists it T1.
     """
+    if stream is None:
+        stream = load().get(sid) or {}
+    if stream.get("family") == "constellation":
+        return False
     if sid in _settled_by_backfill():
         return True
     if not any(_does_real_work(sha) for sha in _settling_commits(sid)):
         return False
-    if stream is None:
-        stream = load().get(sid) or {}
     return _predicate_proven(sid, stream)
 
 
@@ -427,6 +449,17 @@ def run_checks(streams):
                 fail("A", f"{sid}: missing `{field}`")
         if s.get("branch_prefix") not in VALID_PREFIXES:
             fail("A", f"{sid}: branch_prefix {s.get('branch_prefix')!r} not in {sorted(VALID_PREFIXES)}")
+        if s.get("family") not in VALID_FAMILIES:
+            fail("A", f"{sid}: family {s.get('family')!r} not in {sorted(VALID_FAMILIES)}")
+        # register_tier orders the ready set (T1 opens before T2 under the launcher's bound). It is
+        # the register's word, so only derived rows may carry it — a governance row declaring one
+        # would be hand-written queue-jumping.
+        rt = s.get("register_tier")
+        if rt is not None:
+            if s.get("family") != "constellation":
+                fail("A", f"{sid}: register_tier is register-derived; only constellation rows carry it")
+            elif not re.fullmatch(r"T[0-9]", str(rt)):
+                fail("A", f"{sid}: register_tier {rt!r} is not T<digit>")
         if s.get("predicate_status") not in VALID_PREDICATE_STATUS:
             fail(
                 "A",
@@ -632,6 +665,37 @@ def run_checks(streams):
             elif os.path.isdir(capsule) and re.match(r"^s[0-9]+-", slug):
                 fail("E", f"{slug}: stream-shaped lane exists on disk but is not declared in the registry")
 
+    # M — constellation rows and cartridges are PROJECTIONS of the constellation register, held in
+    # parity by the generator's own --check (one derivation rule, one home — this checker never
+    # re-implements it). The defect this closes: the operator's actual workstreams (people ×
+    # project lanes, tiers operator-accepted 2026-07-22) lived one registry over, and this file was
+    # authored fresh without them — so "what streams do I open?" answered with governance plumbing
+    # while spiral/styx/hokage-chess were unopenable. Drift in EITHER direction (register edited
+    # without rerunning --write, or a derived row/cartridge hand-edited) is a red pr-gate.
+    generator = os.path.join(ROOT, DERIVE_STREAMS)
+    if not os.path.exists(generator):
+        fail("M", f"{DERIVE_STREAMS} is missing — constellation rows have no derivation authority")
+    else:
+        try:
+            probe = subprocess.run(
+                [sys.executable, generator, "--check"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=ROOT,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            fail("M", f"could not run {DERIVE_STREAMS} --check: {exc}")
+        else:
+            if probe.returncode != 0:
+                detail = (probe.stdout + probe.stderr).strip().splitlines()
+                fail(
+                    "M",
+                    "constellation rows/cartridges have drifted from the register — "
+                    + "; ".join(detail[:4])
+                    + f" — fix the register, then `python3 {DERIVE_STREAMS} --write`",
+                )
+
 
 def print_all(streams):
     """Every unsettled domain's launch command, in dependency order.
@@ -645,7 +709,7 @@ def print_all(streams):
     rank = {"ready": 0, "running": 1, "blocked": 2}
     openable = sorted(
         ((sid, s) for sid, s in streams.items() if states[sid] != "settled"),
-        key=lambda kv: (rank[states[kv[0]]], kv[0]),
+        key=lambda kv: (FAMILY_RANK.get(kv[1].get("family"), len(FAMILY_RANK)), rank[states[kv[0]]], kv[0]),
     )
 
     print(f"session streams: {len(openable)} openable ({sum(1 for k in states.values() if k == 'ready')} with every precondition met)\n")
@@ -661,6 +725,20 @@ def print_all(streams):
     if settled:
         print("# settled (do not open): " + ", ".join(settled))
     return 0
+
+
+def _family_order(rows):
+    """Constellation lanes first (T1 before T2 — the launcher's RAM bound opens the first N rows,
+    so order IS priority), then governance, alphabetical within each rank. The operator's own
+    lanes are the answer to "what streams do I open?" — the plumbing follows them, never leads."""
+    return sorted(
+        rows,
+        key=lambda kv: (
+            FAMILY_RANK.get(kv[1].get("family"), len(FAMILY_RANK)),
+            kv[1].get("register_tier", "~"),  # "~" sorts after any TN, so untiered rows follow
+            kv[0],
+        ),
+    )
 
 
 def _bucket(streams):
@@ -687,6 +765,7 @@ def print_ready_json(streams):
             [
                 {
                     "id": sid,
+                    "family": s["family"],
                     "title": s["title"],
                     "job_class": s["job_class"],
                     "runway": s["runway"],
@@ -696,7 +775,7 @@ def print_ready_json(streams):
                     # The same builder the text view renders — never a second copy.
                     "argv": launch_argv(sid, s),
                 }
-                for sid, s in sorted(buckets["ready"])
+                for sid, s in _family_order(buckets["ready"])
             ],
             indent=2,
         )
@@ -717,9 +796,9 @@ def print_ready(streams):
         return 0
 
     print(f"session streams: {len(buckets['ready'])} READY to open\n")
-    for sid, s in sorted(buckets["ready"]):
+    for sid, s in _family_order(buckets["ready"]):
         print(f"── {sid} — {s['title']}")
-        print(f"   owner: {s['owner_of_record']}   class: {s['job_class']}   children ≤ {s['max_children']}")
+        print(f"   family: {s['family']}   owner: {s['owner_of_record']}   class: {s['job_class']}   children ≤ {s['max_children']}")
         print()
         for line in launch_command(sid, s).splitlines():
             print(f"   {line}")
