@@ -38,3 +38,5 @@ grants:
     - {login: LeflerDesign, person: scott, role: push, granted: 2026-07-23, why: "content-cannibalizer build lane (pre-existing grant, documented at audit)"}
   organvm/sovereign-systems--elevate-align:
     - {login: eauco-mads, person: maddie, role: push, granted: 2026-07-23, why: "spiral funnel/content lane (pre-existing grant, confirmed at audit: this is the one repo the login holds)"}
+  4444J99/victoroff-os:
+    - {login: davidvictoroff85-collab, person: david, role: push, granted: 2026-07-29, why: "victoroff-os build lane on the personal estate — pre-existing access documented at the dual-estate custody audit (live role verified write 2026-07-29); undeclared, it sat exposed to the undeclared-removal direction"}
