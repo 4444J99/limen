@@ -29,6 +29,9 @@ from limen.conduct.campaign_relay import (
     reserve_relay,
 )
 from limen.conduct.campaign_relay_process import _bounded_registration
+=======
+from limen.conduct.campaign_relay_protocol import _spawn_relay_process_group
+>>>>>>> f2b8c0146 (fix(conduct): close relay lifecycle cleanup gaps)
 from limen.conduct.campaign_relay_state import _read_relay, _replace_relay
 from limen.conduct.models import CampaignRelayReceiptV1
 from limen.workstream_contract import RECEIPT_MODULES, new_contract
@@ -89,6 +92,17 @@ def _git(root: Path, *args: str) -> str:
     if result.returncode != 0:
         raise AssertionError(f"fixture Git command failed: {result.stderr}")
     return result.stdout.strip()
+
+
+def _assert_process_gone(pid: int, *, timeout: float = 2.0) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.02)
+    pytest.fail(f"fixture process {pid} remained alive after bounded cleanup")
 
 
 @pytest.fixture
@@ -255,6 +269,7 @@ def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
 
     def spawn(command, **kwargs):
         command = [str(ROOT / "scripts" / "start-worktree-session.sh"), *command[1:]]
+<<<<<<< HEAD
         return _spawn_fixture_relay_process(command, **kwargs)
 
     monkeypatch.setenv("LIMEN_AGENT", "codex")
@@ -287,6 +302,7 @@ def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
     assert not provider_env_leaks.exists()
     assert launch.receipt.launch_pid == int(provider_pid_path.read_text(encoding="utf-8"))
     os.kill(launch.receipt.launch_pid, 0)
+    assert os.getpgid(launch.receipt.launch_pid) == launch.receipt.launch_pid
     status = json.loads(
         (
             root / ".worktrees" / launch.receipt.successor_slug / ".limen-workstream" / "conduct-keepalive.json"
@@ -707,6 +723,7 @@ time.sleep(10)
                 kwargs["control_descriptor"],
                 kwargs["exec_descriptor"],
             ),
+            start_new_session=True,
         )
         spawned.append(process)
         return process
@@ -721,8 +738,126 @@ time.sleep(10)
 
     assert launch.receipt.terminal_code == expected_code
     assert len(spawned) == 1
-    spawned[0].terminate()
-    spawned[0].wait(timeout=2)
+    assert spawned[0].poll() is not None
+
+
+def test_selector_setup_failure_terminates_the_owned_process_group_and_terminalizes(
+    effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    root, predecessor, _provider, _predecessor_deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    child_pid_path = tmp_path / "selector-child.pid"
+    spawned: list[subprocess.Popen[bytes]] = []
+
+    def spawn(_command, **kwargs):
+        child_source = """
+import os
+import subprocess
+import sys
+import time
+
+child = subprocess.Popen(
+    [sys.executable, "-c", "import time; time.sleep(30)"],
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+)
+open(os.environ["SELECTOR_CHILD_PID"], "w", encoding="utf-8").write(str(child.pid))
+time.sleep(30)
+"""
+        process = subprocess.Popen(
+            [sys.executable, "-c", child_source],
+            cwd=root,
+            env={**kwargs["env"], "SELECTOR_CHILD_PID": str(child_pid_path)},
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            pass_fds=(
+                kwargs["ack_descriptor"],
+                kwargs["control_descriptor"],
+                kwargs["exec_descriptor"],
+            ),
+            start_new_session=True,
+        )
+        spawned.append(process)
+        deadline = time.monotonic() + 2
+        while time.monotonic() < deadline and not child_pid_path.is_file():
+            time.sleep(0.01)
+        assert child_pid_path.is_file()
+        return process
+
+    def fail_selector():
+        raise OSError("injected selector exhaustion")
+
+    class FailingSelectors:
+        EVENT_READ = relay_protocol.selectors.EVENT_READ
+        DefaultSelector = staticmethod(fail_selector)
+
+    monkeypatch.setattr(relay_protocol, "selectors", FailingSelectors)
+
+    launch = launch_reserved_relay(
+        root,
+        reservation.receipt.relay_id,
+        timeout_seconds=5,
+        process_factory=spawn,
+        lane_selector=lambda _root: ("codex",),
+    )
+
+    assert launch.receipt.state == "failed"
+    assert launch.receipt.terminal_code == "relay_controller_setup_failed"
+    assert len(spawned) == 1
+    assert spawned[0].poll() is not None
+    _assert_process_gone(int(child_pid_path.read_text(encoding="utf-8")))
+
+
+def test_startup_timeout_uses_the_entry_reserved_cleanup_deadline_for_terminal_receipt(
+    effector_repo,
+) -> None:
+    root, predecessor, _provider, _predecessor_deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    spawned: list[subprocess.Popen[bytes]] = []
+
+    def spawn(_command, **kwargs):
+        process = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(30)"],
+            cwd=root,
+            env=kwargs["env"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            pass_fds=(
+                kwargs["ack_descriptor"],
+                kwargs["control_descriptor"],
+                kwargs["exec_descriptor"],
+            ),
+            start_new_session=True,
+        )
+        spawned.append(process)
+        return process
+
+    launch = launch_reserved_relay(
+        root,
+        reservation.receipt.relay_id,
+        timeout_seconds=1,
+        process_factory=spawn,
+        lane_selector=lambda _root: ("codex",),
+    )
+
+    assert launch.receipt.state == "indeterminate"
+    assert launch.receipt.terminal_code == "relay_startup_timeout"
+    assert len(spawned) == 1
+    assert spawned[0].poll() is not None
+    assert _read_relay(root, launch.receipt.relay_id) == launch.receipt
 
 
 def test_startup_stream_read_error_after_partial_bytes_fails_closed(
@@ -816,6 +951,7 @@ def test_startup_output_ceiling_crossed_before_selected_ack_fails_closed(
     registrations: list[bool] = []
     ack_observation = tmp_path / "ack-observation.txt"
     registration_started = tmp_path / "registration-started.txt"
+    spawned: list[subprocess.Popen[bytes]] = []
     original_digest = relay_process._BoundedStreamDigest
 
     class ObservableDigest(original_digest):
@@ -880,7 +1016,7 @@ os.close(exec_fd)
             "ACK_OBSERVATION": str(ack_observation),
             "REGISTRATION_STARTED": str(registration_started),
         }
-        return subprocess.Popen(
+        process = subprocess.Popen(
             [sys.executable, "-c", child_source],
             cwd=root,
             env=env,
@@ -892,7 +1028,10 @@ os.close(exec_fd)
                 kwargs["control_descriptor"],
                 kwargs["exec_descriptor"],
             ),
+            start_new_session=True,
         )
+        spawned.append(process)
+        return process
 
     monkeypatch.setattr(
         "limen.conduct.campaign_relay_protocol._BoundedStreamDigest",
@@ -913,7 +1052,10 @@ os.close(exec_fd)
     assert launch.receipt.startup_stdout_truncated is True
     assert launch.receipt.startup_stdout_bytes == relay_process._STARTUP_OUTPUT_CEILING + 1
     assert registrations == [False]
-    assert ack_observation.read_text(encoding="utf-8") == "closed"
+    assert len(spawned) == 1
+    assert spawned[0].poll() is not None
+    if ack_observation.is_file():
+        assert ack_observation.read_text(encoding="utf-8") in {"", "closed"}
 
 
 def test_ready_publication_failure_rolls_broker_back_to_dormant(
@@ -963,7 +1105,7 @@ def test_ready_publication_failure_rolls_broker_back_to_dormant(
     monkeypatch.setenv("LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS", "1")
     monkeypatch.setenv("PROVIDER_ENV_LEAKS", str(tmp_path / "provider-env-leaks.txt"))
     monkeypatch.setenv("PROVIDER_PID", str(provider_pid_path))
-    monkeypatch.setenv("PROVIDER_SLEEP", "3")
+    monkeypatch.setenv("PROVIDER_SLEEP", "30")
 
     launch = launch_reserved_relay(
         root,
@@ -992,16 +1134,14 @@ def test_ready_publication_failure_rolls_broker_back_to_dormant(
         "origin",
         "refs/heads/limen-relay/latest/institutional-omega",
     )
-
-    deadline = time.monotonic() + 6
-    while time.monotonic() < deadline:
-        try:
-            os.kill(launch.receipt.launch_pid, 0)
-        except ProcessLookupError:
-            break
-        time.sleep(0.05)
-    else:
-        pytest.fail("rolled-back fixture provider did not exit naturally")
+    status = json.loads(
+        (
+            root / ".worktrees" / launch.receipt.successor_slug / ".limen-workstream" / "conduct-keepalive.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert launch.receipt.launch_pid is not None
+    _assert_process_gone(launch.receipt.launch_pid)
+    _assert_process_gone(int(status["keepalive_pid"]))
 
 
 def test_expired_startup_deadline_bounds_activation_rollback_and_terminalization(
@@ -1083,22 +1223,28 @@ def test_expired_startup_deadline_bounds_activation_rollback_and_terminalization
     monkeypatch.setenv("PROVIDER_PID", str(tmp_path / "provider.pid"))
     monkeypatch.setenv("PROVIDER_SLEEP", "1")
 
-    with pytest.raises(CampaignRelayError) as raised:
-        launch_reserved_relay(
-            root,
-            reservation.receipt.relay_id,
-            timeout_seconds=20,
-            process_factory=spawn,
-            lane_selector=lambda _root: ("codex",),
-            registration=register,
-        )
+    launch = launch_reserved_relay(
+        root,
+        reservation.receipt.relay_id,
+        timeout_seconds=20,
+        process_factory=spawn,
+        lane_selector=lambda _root: ("codex",),
+        registration=register,
+    )
 
-    assert raised.value.code == "relay_startup_timeout"
+    assert launch.receipt.state == "indeterminate"
+    assert launch.receipt.terminal_code == "relay_ready_publication_failed"
     assert len(lock_deadlines) == 2
     assert len(registration_deadlines) == 3
     assert len(rollback_state_deadlines) == 1
-    assert len(set(lock_deadlines + registration_deadlines + rollback_state_deadlines)) == 1
-    assert lock_deadlines[0] is not None
+    startup_deadline = lock_deadlines[0]
+    cleanup_deadline = lock_deadlines[1]
+    assert startup_deadline is not None
+    assert cleanup_deadline is not None
+    assert cleanup_deadline > startup_deadline
+    assert registration_deadlines[:2] == [startup_deadline, startup_deadline]
+    assert registration_deadlines[2] == cleanup_deadline
+    assert rollback_state_deadlines == [cleanup_deadline]
 
 
 def _ready_publication_fixture() -> CampaignRelayReceiptV1:
@@ -1145,7 +1291,9 @@ def test_ready_discovery_propagates_one_absolute_deadline(
     deadline = time.monotonic() + 5
     observed_git_deadlines: list[float | None] = []
     observed_load_deadlines: list[float | None] = []
+    observed_store_deadlines: list[float | None] = []
     observed_payload_deadlines: list[float | None] = []
+    original_open_store = relay_protocol._open_store
 
     def git_result(_root, *args, deadline_monotonic=None):
         observed_git_deadlines.append(deadline_monotonic)
@@ -1166,8 +1314,19 @@ def test_ready_discovery_propagates_one_absolute_deadline(
             }
         }
 
+    @contextmanager
+    def open_store(*args, deadline_monotonic=None, **kwargs):
+        observed_store_deadlines.append(deadline_monotonic)
+        with original_open_store(
+            *args,
+            deadline_monotonic=deadline_monotonic,
+            **kwargs,
+        ) as store:
+            yield store
+
     monkeypatch.setattr(relay_protocol, "_git", git_result)
     monkeypatch.setattr(relay_protocol, "_load_remote_ready", load_ready)
+    monkeypatch.setattr(relay_protocol, "_open_store", open_store)
     monkeypatch.setattr(relay_protocol, "_publication_payload", publication_payload)
 
     discovered = discover_ready_relay(
@@ -1179,6 +1338,7 @@ def test_ready_discovery_propagates_one_absolute_deadline(
     assert discovered.receipt == receipt
     assert observed_git_deadlines == [deadline, deadline]
     assert observed_load_deadlines == [deadline]
+    assert observed_store_deadlines == [deadline]
     assert observed_payload_deadlines == [deadline]
 
 
@@ -1285,7 +1445,7 @@ def test_ready_ref_reconciliation_distinguishes_remote_truth(
     )
 
 
-def test_uncertain_accepted_ready_push_preserves_activation_until_recovery(
+def test_uncertain_accepted_ready_push_refuses_to_adopt_a_terminated_provider(
     effector_repo,
     monkeypatch,
     tmp_path: Path,
@@ -1386,16 +1546,17 @@ def test_uncertain_accepted_ready_push_preserves_activation_until_recovery(
         root,
         reservation.receipt.relay_id,
         lane_selector=lambda _root: pytest.fail("durable ready ref must not reselect a lane"),
-        registration=lambda **_kwargs: pytest.fail("durable ready ref must not rewrite broker activation"),
+        registration=register,
     )
     assert recovered.launched is False
-    assert recovered.receipt.state == "ready"
-    assert recovered.receipt.activation_response_sha256 == uncertain.receipt.activation_response_sha256
-    assert registrations == [False, True]
-    assert marker.is_file()
+    assert recovered.receipt.state == "indeterminate"
+    assert recovered.receipt.terminal_code == "relay_ready_provider_absent"
+    assert recovered.receipt.activation_response_sha256 is None
+    assert registrations == [False, True, False]
+    assert not marker.exists()
 
 
-def test_uncertain_absent_ready_push_is_republished_without_a_second_provider(
+def test_uncertain_absent_ready_push_rolls_back_after_owned_provider_termination(
     effector_repo,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -1488,10 +1649,11 @@ def test_uncertain_absent_ready_push_is_republished_without_a_second_provider(
     )
 
     assert recovered.launched is False
-    assert recovered.receipt.state == "ready"
-    assert recovered.receipt.terminal_code is None
-    assert registrations == [False, True]
-    assert _git(
+    assert recovered.receipt.state == "indeterminate"
+    assert recovered.receipt.terminal_code == "relay_ready_provider_absent"
+    assert recovered.receipt.activation_response_sha256 is None
+    assert registrations == [False, True, False]
+    assert not _git(
         root,
         "ls-remote",
         "origin",
@@ -1798,6 +1960,80 @@ def test_dead_controller_reconciles_to_indeterminate_without_respawn(
     assert reconciled.receipt.state == "indeterminate"
     assert reconciled.receipt.terminal_code == "relay_controller_interrupted"
     assert reconciled.receipt.attempts == 1
+
+
+@pytest.mark.parametrize("marker_matches", [True, False])
+def test_dead_controller_rolls_back_only_the_exact_activation_identity(
+    effector_repo,
+    marker_matches: bool,
+) -> None:
+    root, predecessor, _provider, _deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    successor = root / ".worktrees" / reservation.receipt.successor_slug
+    successor.parent.mkdir(exist_ok=True)
+    _git(root, "worktree", "add", "--detach", str(successor), "HEAD")
+    capsule_dir = successor / ".limen-workstream"
+    capsule_dir.mkdir()
+    marker = capsule_dir / "relay-activated"
+    marker.write_text(
+        f"{reservation.receipt.relay_id if marker_matches else 'f' * 64}\n",
+        encoding="utf-8",
+    )
+    marker.chmod(0o600)
+    activated = _replace_relay(
+        root,
+        reservation.receipt.relay_id,
+        expected_states=frozenset({"reserved"}),
+        updates={
+            "state": "published",
+            "attempts": 1,
+            "controller_pid": 999_999_999,
+            "controller_process_started": "fixture-controller",
+            "remote_attempt_commit": "a" * 40,
+            "remote_attempt_token": "b" * 64,
+            "selected_agent": "codex",
+            "selected_capabilities": ("conduct",),
+            "launch_pid": 999_999_998,
+            "launch_process_started": "fixture-provider",
+            "registration_response_sha256": "c" * 64,
+            "activation_response_sha256": "d" * 64,
+            "publication_commit": "e" * 40,
+            "publication_parent": "a" * 40,
+            "publication_receipt_blob": "f" * 40,
+        },
+    )
+    registrations: list[bool] = []
+
+    def register(**kwargs):
+        registrations.append(kwargs["accepting_work"])
+        return "e" * 64, 1
+
+    reconciled = launch_reserved_relay(
+        root,
+        activated.relay_id,
+        process_identity=lambda _pid: (_ for _ in ()).throw(
+            CampaignRelayError("fixture_absent", "fixture process is absent")
+        ),
+        lane_selector=lambda _root: pytest.fail("consumed relay must not reselect a lane"),
+        registration=register,
+    )
+
+    assert reconciled.launched is False
+    assert reconciled.receipt.state == "indeterminate"
+    if marker_matches:
+        assert reconciled.receipt.terminal_code == "relay_controller_interrupted"
+        assert reconciled.receipt.activation_response_sha256 is None
+        assert registrations == [False]
+        assert not marker.exists()
+    else:
+        assert reconciled.receipt.terminal_code == "relay_activation_rollback_failed"
+        assert reconciled.receipt.activation_response_sha256 == activated.activation_response_sha256
+        assert registrations == []
+        assert marker.is_file()
 
 
 def test_terminalization_does_not_open_a_fresh_bound_after_startup_expiry(
