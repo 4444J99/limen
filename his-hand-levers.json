@@ -782,6 +782,17 @@
       "unlocks": "the secret-sauce posture the registry already adjudicated becomes ground truth: the 334K-word governance corpus, personal notes, and two partner build lanes stop being world-readable",
       "source_task": "custody dual-estate excavation 2026-07-29 — Part III/IV of docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md",
       "issue": 1643
+    },
+    {
+      "id": "L-PEOPLE-ROOM-CONSTELLATION-SEED",
+      "label": "Seed the people-room constellation overlay directory (~/Workspace/_people-private/constellation/ — the private-overlay location the public register header already declares; materialized 0700 on 2026-07-29) by moving the local-only constellation scope-memory records (e.g. the victoroff-os project scope under .agent-runtime/claude/projects/) into it. Rule #2 closes itself from there: the beat's arca.sh backup sweep turns the store into durable, versioned ciphertext in the vault automatically — no public exposure, no extra step.",
+      "owner": "yours",
+      "cost": "~1 min: mv the relevant *.md into ~/Workspace/_people-private/constellation/ — the next beat seals it",
+      "status": "open",
+      "gate": "person-scoped writes into the private stores are classifier-gated to agents in background sessions (verified 2026-07-29, repeated denials including content-neutral rewrites) — the move is yours",
+      "unlocks": "zero local-only partner records: every constellation record durable as vault ciphertext, satisfying Rule #2 with nothing world-readable",
+      "source_task": "custody dual-estate excavation 2026-07-29 — docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md",
+      "issue": 1646
     }
   ]
 }
