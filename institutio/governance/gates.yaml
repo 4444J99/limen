@@ -463,17 +463,17 @@ gates:
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:
-    command: "python3 -m ruff check cli/src cli/tests web/api mcp ianva"
+    command: "python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva"
     paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Lint the whole Python estate whenever any Python surface changes."
+    note: "Lint the whole Python estate whenever any Python surface changes. Version-locked to the ONE ruff pin in cli/pyproject.toml (issue #1658) — a mismatched host ruff fails loud instead of red-noising 1,300 findings."
   ruff-format:
-    command: "python3 -m ruff format --check cli/src cli/tests web/api mcp ianva"
+    command: "python3 scripts/check-ruff-pin.py && python3 -m ruff format --check cli/src cli/tests web/api mcp ianva"
     paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048)."
+    note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint."
   pytest-cli:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
     paths: ["cli/**"]
