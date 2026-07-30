@@ -176,7 +176,7 @@ gates:
     owner: lifecycle
     note: "Generated estate-audit custody dynamically covers every exact HEAD, preserves non-HEAD working payloads content-addressably, proves fresh Git and payload restoration, rejects drift and ambient Git configuration, and emits only redacted bounded receipts."
   estate-audit-paired-custody-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_estate_audit_custody.py cli/tests/test_estate_audit_paired_custody.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_estate_audit_paired_custody.py -q"
     paths: ["cli/src/limen/estate_audit_custody.py", "cli/src/limen/estate_audit_paired_custody.py", "cli/tests/test_estate_audit_custody.py", "cli/tests/test_estate_audit_paired_custody.py", "scripts/estate-audit-custody.py", "scripts/estate-audit-paired-custody.py", "institutio/governance/estate-audit-custody-targets.json", "docs/storage-evacuation-inventory-20260727.json", "docs/estate-audit-paired-custody.md"]
     owner: lifecycle
     note: "The generated-root denominator is derived from a fresh single-rail check, then the exact plan and working payload manifest are full-restored on two stable-media-bound devices under one heavy lease; stored pair records remain explicitly nonterminal until both bounded copies are reopened, and the terminal projection is path-free."

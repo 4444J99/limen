@@ -783,6 +783,27 @@ def _capture_failed_checkout_states(
     return captured, changed
 
 
+def _verify_failed_checkout_state(
+    root_record: dict[str, Any],
+    expected_state: dict[str, Any],
+    *,
+    deadline: float,
+) -> str:
+    try:
+        record = GeneratedRootRecord(**root_record)
+    except TypeError as exc:
+        raise EstateAuditCustodyError("custody-root-record-invalid") from exc
+    current, _changed = _failed_checkout_state(
+        record,
+        Path("."),
+        deadline=deadline,
+        capture=False,
+    )
+    if current != expected_state:
+        raise EstateAuditCustodyError("failed-checkout-content-drift")
+    return str(current["content_sha256"])
+
+
 def verify_failed_checkout_state(
     root_record: dict[str, Any],
     expected_state: dict[str, Any],
@@ -793,19 +814,40 @@ def verify_failed_checkout_state(
 
     if max_seconds <= 0 or max_seconds > MAX_SECONDS:
         raise EstateAuditCustodyError("invalid-time-limit")
-    try:
-        record = GeneratedRootRecord(**root_record)
-    except TypeError as exc:
-        raise EstateAuditCustodyError("custody-root-record-invalid") from exc
-    current, _changed = _failed_checkout_state(
-        record,
-        Path("."),
+    return _verify_failed_checkout_state(
+        root_record,
+        expected_state,
         deadline=time.monotonic() + max_seconds,
-        capture=False,
     )
-    if current != expected_state:
-        raise EstateAuditCustodyError("failed-checkout-content-drift")
-    return str(current["content_sha256"])
+
+
+def _verify_live_failed_checkout_states(
+    receipt: dict[str, Any],
+    *,
+    deadline: float,
+) -> None:
+    roots = receipt.get("roots")
+    states = receipt.get("failed_checkout_states")
+    if not isinstance(roots, list) or not isinstance(states, list):
+        raise EstateAuditCustodyError("custody-receipt-shape-invalid")
+    empty_roots = {
+        str(value.get("path_sha256") or ""): value
+        for value in roots
+        if isinstance(value, dict) and int(value.get("index_entry_count", -1)) == 0
+    }
+    if len(states) != len(empty_roots):
+        raise EstateAuditCustodyError("failed-checkout-state-count-mismatch")
+    for expected_state in states:
+        if not isinstance(expected_state, dict):
+            raise EstateAuditCustodyError("failed-checkout-state-invalid")
+        root_record = empty_roots.get(str(expected_state.get("path_sha256") or ""))
+        if root_record is None:
+            raise EstateAuditCustodyError("failed-checkout-state-coverage-mismatch")
+        _verify_failed_checkout_state(
+            root_record,
+            expected_state,
+            deadline=deadline,
+        )
 
 
 def _payload_stats(states: list[dict[str, Any]]) -> dict[str, int]:
@@ -1091,17 +1133,21 @@ def apply_plan(
     root.mkdir(parents=True, exist_ok=True)
     _assert_identity(identity_guard)
     existing = _receipt_path(root, plan.plan_sha256)
+    deadline = time.monotonic() + max_seconds
     if existing.exists():
-        return verify_receipt(
+        verified = verify_receipt(
             root,
             plan.plan_sha256,
             full_restore=True,
-            max_seconds=max_seconds,
+            max_seconds=max(1, int(_remaining(deadline))),
             require_volume=False,
             identity_guard=identity_guard,
-        ), False
+        )
+        _assert_identity(identity_guard)
+        _verify_live_failed_checkout_states(verified, deadline=deadline)
+        _assert_identity(identity_guard)
+        return verified, False
 
-    deadline = time.monotonic() + max_seconds
     resolver = remote_url_for or (lambda repository: f"https://github.com/{repository}.git")
     repositories: list[dict[str, Any]] = []
     changed = False
@@ -1322,12 +1368,12 @@ def verify_failed_checkout_content(path: Path, *, expected_head: str, expected_t
 __all__ = [
     "DEFAULT_CUSTODY_ROOT",
     "GENERATED_ROOT_RE",
+    "MAX_CUSTODY_RECEIPT_BYTES",
     "MAX_ROOTS",
     "MAX_SECONDS",
     "CheckoutContentProof",
     "CustodyPlan",
     "EstateAuditCustodyError",
-    "MAX_CUSTODY_RECEIPT_BYTES",
     "GeneratedRootRecord",
     "apply_plan",
     "assert_custody_target_identity",

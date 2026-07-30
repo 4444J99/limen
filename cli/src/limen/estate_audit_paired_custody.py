@@ -603,7 +603,7 @@ def invoke_single_rail(script: Path, request: RailRequest) -> dict[str, Any]:
                     raise subprocess.TimeoutExpired(arguments, request.max_seconds + 30)
                 for key, _mask in events:
                     stream, limit = key.data
-                    chunk = os.read(key.fileobj.fileno(), min(64 * 1024, limit + 1 - len(output[stream])))
+                    chunk = os.read(key.fd, min(64 * 1024, limit + 1 - len(output[stream])))
                     if not chunk:
                         selector.unregister(key.fileobj)
                         continue

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import plistlib
@@ -311,6 +312,59 @@ def test_apply_restores_fresh_receipt_is_private_and_second_apply_is_idempotent(
         )
         == "payload-store-content-mismatch"
     )
+
+
+def test_existing_receipt_rehashes_live_failed_checkout_before_reuse(tmp_path: Path) -> None:
+    remote, head, _tree = make_remote(tmp_path)
+    root, target = make_failed_checkout(tmp_path, remote, stamp="20260727010506")
+    (root / "README.md").write_text("captured state\n", encoding="utf-8")
+    plan = discover_plan(tmp_path, targets=[target])
+    custody = tmp_path / "custody"
+
+    receipt, _changed = apply_plan(
+        plan,
+        custody,
+        expected_plan_sha256=plan.plan_sha256,
+        revalidate=lambda: discover_plan(tmp_path, targets=[target]),
+        remote_url_for=lambda _repository: str(remote),
+        max_seconds=60,
+        require_volume=False,
+    )
+    receipt_path = custody / "receipts" / f"{plan.plan_sha256}.json"
+    original = receipt_path.read_bytes()
+    root_identity = root.stat()
+    index = git(root, "ls-files", "-s")
+
+    (root / "README.md").write_text("stale payload!\n", encoding="utf-8")
+
+    current = root.stat()
+    assert git(root, "rev-parse", "HEAD") == head
+    assert git(root, "ls-files", "-s") == index
+    assert (current.st_dev, current.st_ino, current.st_mtime_ns) == (
+        root_identity.st_dev,
+        root_identity.st_ino,
+        root_identity.st_mtime_ns,
+    )
+    assert discover_plan(tmp_path, targets=[target]).plan_sha256 == plan.plan_sha256
+    assert (
+        receipt["failed_checkout_states"][0]["payloads"][0]["payload_sha256"]
+        != hashlib.sha256((root / "README.md").read_bytes()).hexdigest()
+    )
+    assert (
+        error_code(
+            lambda: apply_plan(
+                plan,
+                custody,
+                expected_plan_sha256=plan.plan_sha256,
+                revalidate=lambda: pytest.fail("existing receipt must not re-discover the plan"),
+                remote_url_for=lambda _repository: pytest.fail("existing receipt must not re-hydrate"),
+                max_seconds=60,
+                require_volume=False,
+            )
+        )
+        == "failed-checkout-content-drift"
+    )
+    assert receipt_path.read_bytes() == original
 
 
 def test_apply_requires_exact_plan_and_revalidation_before_receipt(tmp_path: Path) -> None:
