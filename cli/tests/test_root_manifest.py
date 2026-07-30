@@ -126,6 +126,19 @@ grandfathered:
     assert "[D] error.log" in proc.stdout
 
 
+def test_cross_repo_target_home_is_a_sanctioned_disposition(tmp_path):
+    manifest = (
+        BASE_ROWS
+        + """\
+grandfathered:
+  - {path: error.log, target_home: "organvm/portvs:governance/records/", why: subject lives in the governance graph}
+"""
+    )
+    repo = make_repo(tmp_path, {"README.md": "hi", "error.log": "boom"}, manifest)
+    proc = run_checker(repo)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
 def test_delete_is_a_sanctioned_disposition(tmp_path):
     manifest = (
         BASE_ROWS

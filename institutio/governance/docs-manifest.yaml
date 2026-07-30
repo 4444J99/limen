@@ -6,6 +6,10 @@
 # `sanctioned` loose files are pinned by exact-path consumers (scripts/tests/registries/board);
 # `grandfathered` rows are ADMITTED FAT carrying their target home — rehoming PRs delete the
 # row together with the move (deleting the row IS the receipt) and this block only shrinks.
+# Docs belong with their SUBJECT: a target_home may be cross-repo ("<org>/<repo>:<path>/") —
+# limen keeps only limen-subject docs + machinery-consumed surfaces; whole-estate governance
+# records live in organvm/portvs governance/records/, personal-office material in organvm/domus
+# (private). Export receipts: docs/receipts/docs-estate-exports-*.jsonl.
 # Founded on the measured defect: 177 loose files at docs/ top level beside 17 proper subdirs,
 # accumulated with no predicate watching the surface (operator directive, repeated 3+ sessions).
 
@@ -18,11 +22,9 @@ sanctioned:
   - {path: convergence, kind: dir, owner: docs, why: "convergence lineage"}
   - {path: current-session-fanout, kind: dir, owner: docs, why: "fanout plans + packets"}
   - {path: every-ask, kind: dir, owner: docs, why: "ask-ledger snapshots"}
-  - {path: health-office, kind: dir, owner: docs, why: "health-office records"}
   - {path: keys, kind: dir, owner: docs, why: "key ceremony docs"}
   - {path: lane-checkups, kind: dir, owner: docs, why: "per-lane checkup records"}
   - {path: lanes, kind: dir, owner: docs, why: "per-lane docs"}
-  - {path: life-office, kind: dir, owner: docs, why: "life-office records"}
   - {path: moneta, kind: dir, owner: docs, why: "MONETA docs"}
   - {path: needs-human-prep, kind: dir, owner: docs, why: "needs-human prep packets"}
   - {path: plans, kind: dir, owner: docs, why: "dated plans (plan-discipline)"}
@@ -144,10 +146,8 @@ sanctioned:
   - {path: work-loan-journal.json, kind: data, owner: fleet, why: "consumed at this exact path by config/progress-history-sources/work-loan.json (progress-history source config)"}
 
 grandfathered:
-  - {path: MONSTER-MAP.md, target_home: docs/architecture/, why: "prose referrers only (organs/README.md) — patch and move"}
-  - {path: agent-opencode-review.md, target_home: docs/reviews/, why: "prose referrers only (censor/whole-estate-insights-proposals.json) — patch and move"}
-  - {path: agent-whole-estate-insights-review.md, target_home: docs/reviews/, why: "prose referrers only (censor/whole-estate-insights-proposals.json) — patch and move"}
+  - {path: health-office, target_home: "organvm/domus:docs/health-office/", why: "personal-office records in a public repo — bound to scripts/health-organ.py + his-hand-levers.json; moves when the organ relocates"}
+  - {path: life-office, target_home: "organvm/domus:docs/life-office/", why: "personal-office records in a public repo — bound to scripts/life-organ.py; moves when the organ relocates"}
   - {path: concurrent-integration.md, target_home: docs/architecture/, why: "prose referrers only (AGENTS.md) — patch and move"}
   - {path: host-work-admission.md, target_home: docs/architecture/, why: "prose referrers only (AGENTS.md) — patch and move"}
-  - {path: progress-source-registry.md, target_home: docs/architecture/, why: "prose referrers only (config/progress-sources/README.md) — patch and move"}
-  - {path: student-email-reply-grounding.md, target_home: docs/architecture/, why: "prose referrers only (CLAUDE.md, censor/insights-suggestions.jsonl) — patch and move"}
+  - {path: student-email-reply-grounding.md, target_home: "organvm/domus:docs/", why: "personal teaching-workflow doc in a public repo — bound by scripts/check-student-email-grounding.py + CLAUDE.md citation; export = patch predicate + charter in the same change"}

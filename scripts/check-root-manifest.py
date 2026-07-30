@@ -16,9 +16,10 @@ Exit 0 ⟺ the registry is well-formed and the tracked root matches it exactly:
                   must take its row with it (grandfathered rows: deleting the row IS the receipt
                   that the fat was sucked out).
   D homes       — every grandfathered target_home is a relative directory destination ("<dir>/",
-                  trailing slash required) or the literal DELETE (git history is the archive; the
-                  row's why names the receipt authority), so a row can never launder staying-put
-                  as a plan.
+                  trailing slash required), a cross-repo destination ("<org>/<repo>:<path>/" —
+                  the doc's subject lives in another repository of the estate), or the literal
+                  DELETE (git history is the archive; the row's why names the receipt authority),
+                  so a row can never launder staying-put as a plan.
 
   python3 scripts/check-root-manifest.py                 # gate (CI): exit 1 on any root drift
   python3 scripts/check-root-manifest.py --fat           # list only the grandfathered rows (the work)
@@ -33,6 +34,7 @@ listing. docs/ earned its own manifest the same way the root did — 177 loose f
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 from pathlib import Path
 
@@ -122,8 +124,17 @@ def main() -> int:
             )
         declared[path] = "grandfathered"
         home = row["target_home"].strip()
-        if home != "DELETE" and (not home.endswith("/") or home.startswith("/") or not home.strip("/")):
-            fail("D", f"{path}: target_home {home!r} is not a relative directory destination (want '<dir>/' or DELETE)")
+        cross_repo = re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+:[^:\s]+/", home) is not None
+        if (
+            home != "DELETE"
+            and not cross_repo
+            and (not home.endswith("/") or home.startswith("/") or not home.strip("/"))
+        ):
+            fail(
+                "D",
+                f"{path}: target_home {home!r} is not a directory destination "
+                "(want '<dir>/', '<org>/<repo>:<path>/', or DELETE)",
+            )
 
     if args.fat:
         for row in grandfathered:
