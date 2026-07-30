@@ -10,7 +10,7 @@ Limen is a cross-agent, cross-repo, budget-capped task intake system. Every AI a
 
 ```bash
 #One-liner (clones repo, installs CLI to venv, sets up PATH)
-curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/organvm/limen/main/install.sh | bash
 source ~/.zshenv
 ```
 
@@ -265,7 +265,7 @@ nothing here is paywalled.
 - [Quickstart](QUICKSTART.md)
 - [Schema](SCHEMA.md)
 - [Agent Protocol](AGENTS.md)
-- [GitHub](https://github.com/4444J99/limen)
+- [GitHub](https://github.com/organvm/limen)
 
 ## Contact
 
