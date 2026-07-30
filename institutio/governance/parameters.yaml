@@ -1469,6 +1469,24 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Optional non-secret, host-local runtime directory for persistent full-mesh canary flock inodes. Blank derives the private per-UID XDG or temporary runtime root; an override changes only lock placement, never receipt identity or tracked output."
+  LIMEN_CONDUCT_CANARY_CREDENTIAL_REF:
+    default: ""
+    env: LIMEN_CONDUCT_CANARY_CREDENTIAL_REF
+    self_update: "native executor callback only"
+    owner: dispatch
+    note: "Non-secret name of the exact executor credential environment variable bound into one native full-mesh canary callback request and acknowledgement. The callback rejects a missing named credential and never falls back to LIMEN_CONDUCT_TOKEN."
+  LIMEN_CONDUCT_CANARY_WAKE_BIN:
+    default: ""
+    env: LIMEN_CONDUCT_CANARY_WAKE_BIN
+    self_update: none
+    owner: dispatch
+    note: "Executable bridge that routes one bounded, non-secret full-mesh canary edge request to its exact already-running native executor session. Blank fails closed before graph writes; the bridge never receives bearer values."
+  LIMEN_CONDUCT_CANARY_WAKE_TIMEOUT_SECONDS:
+    default: 60
+    env: LIMEN_CONDUCT_CANARY_WAKE_TIMEOUT_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Finite timeout for one native full-mesh canary bridge invocation. Values are constrained to 1..300 seconds and never extend the packet deadline."
   LIMEN_CONDUCT_RUNTIME_GIT_SHA:
     default: ""
     env: LIMEN_CONDUCT_RUNTIME_GIT_SHA

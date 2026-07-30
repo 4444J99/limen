@@ -214,12 +214,20 @@ def test_canary_full_mesh_uses_public_receipt_path(monkeypatch, tmp_path) -> Non
     assert observed == {"client": client, "receipt_path": receipt}
 
 
-def test_canary_full_mesh_bounds_base_conduct_errors(monkeypatch, tmp_path) -> None:
+@pytest.mark.parametrize(
+    "error",
+    [
+        ConductError(f"remote failure\n{'x' * 4096}"),
+        ValueError(f"invalid receipt\n{'x' * 4096}"),
+        OSError(f"filesystem failure\n{'x' * 4096}"),
+    ],
+)
+def test_canary_full_mesh_bounds_expected_errors(monkeypatch, tmp_path, error) -> None:
     client = HttpConductClient("https://limen-runtime.example", "fixture-token")
     monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
 
     def reject(**_kwargs):
-        raise ConductError(f"remote failure\n{'x' * 4096}")
+        raise error
 
     monkeypatch.setattr("limen.conduct.cli.run_full_mesh_canary", reject)
     result = CliRunner().invoke(
@@ -228,9 +236,52 @@ def test_canary_full_mesh_bounds_base_conduct_errors(monkeypatch, tmp_path) -> N
     )
 
     assert result.exit_code == 1
-    assert result.output.startswith("Error: remote failure ")
+    assert result.output.startswith(f"Error: {str(error).splitlines()[0]} ")
     assert "\n" not in result.output.rstrip("\n")
     assert len(result.output.rstrip("\n")) <= len("Error: ") + 1024
+
+
+def test_hidden_canary_executor_edge_uses_its_own_client_and_process_environment(
+    monkeypatch,
+) -> None:
+    request = object()
+    client = HttpConductClient("https://limen-runtime.example", "executor-token")
+    observed = {}
+
+    class Acknowledgement:
+        @staticmethod
+        def to_payload():
+            return {
+                "schema_version": "limen.conduct_canary_native_edge_ack.v1",
+                "edge_id": "edge",
+            }
+
+    monkeypatch.setattr(
+        "limen.conduct.cli.read_native_canary_request",
+        lambda _stream: request,
+    )
+    monkeypatch.setattr(
+        "limen.conduct.cli.executor_client_from_environ",
+        lambda observed_request, _environment: client if observed_request is request else None,
+    )
+
+    def execute(observed_request, **kwargs):
+        observed["request"] = observed_request
+        observed.update(kwargs)
+        return Acknowledgement()
+
+    monkeypatch.setattr("limen.conduct.cli.execute_native_canary_edge", execute)
+    result = CliRunner().invoke(
+        conduct_group,
+        ["canary", "executor-edge"],
+        input="{}\n",
+    )
+
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["edge_id"] == "edge"
+    assert observed["request"] is request
+    assert observed["client"] is client
+    assert observed["environ"] is not None
 
 
 @pytest.mark.parametrize(

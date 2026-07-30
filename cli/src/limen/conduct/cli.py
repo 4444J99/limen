@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Any, Literal
 
@@ -12,6 +13,11 @@ import click
 
 from limen.conduct.broker import ConductError
 from limen.conduct.canary import run_full_mesh_canary
+from limen.conduct.canary_executor import (
+    executor_client_from_environ,
+    execute_native_canary_edge,
+    read_native_canary_request,
+)
 from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.client import client_from_env
 from limen.conduct.liveness import foreign_worktree_occupant
@@ -33,8 +39,8 @@ def _emit(payload: dict[str, Any]) -> None:
     click.echo(json.dumps(payload, indent=2, sort_keys=True))
 
 
-def _bounded_conduct_error(exc: ConductError) -> str:
-    detail = " ".join(str(exc).split()) or "conduct request failed"
+def _bounded_canary_error(exc: ConductError | ValueError | OSError) -> str:
+    detail = " ".join(str(exc).split()) or "conduct canary failed"
     limit = 1024
     return detail if len(detail) <= limit else f"{detail[: limit - 3]}..."
 
@@ -96,9 +102,25 @@ def canary_full_mesh(receipt_path: Path) -> None:
             client=client_from_env(),
             receipt_path=receipt_path,
         )
-    except ConductError as exc:
-        raise click.ClickException(_bounded_conduct_error(exc)) from exc
+    except (ConductError, ValueError, OSError) as exc:
+        raise click.ClickException(_bounded_canary_error(exc)) from exc
     _emit(result)
+
+
+@canary_group.command("executor-edge", hidden=True)
+def canary_executor_edge() -> None:
+    """Execute one canary edge inside its already-running native session."""
+
+    try:
+        request = read_native_canary_request(sys.stdin.buffer)
+        acknowledgement = execute_native_canary_edge(
+            request,
+            client=executor_client_from_environ(request, os.environ),
+            environ=os.environ,
+        )
+    except (ConductError, ValueError, OSError) as exc:
+        raise click.ClickException(_bounded_canary_error(exc)) from exc
+    _emit(acknowledgement.to_payload())
 
 
 @conduct_group.group("campaign")

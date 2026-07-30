@@ -6,14 +6,22 @@ import os
 import stat
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from threading import Barrier, Event
+from threading import Barrier, Event, local
 
 import limen.conduct.canary as canary_module
 import pytest
 from limen.conduct.broker import ConductBroker, ConductError
-from limen.conduct.canary import ConductCanaryError, run_full_mesh_canary
+from limen.conduct.canary import (
+    ConductCanaryError,
+    run_full_mesh_canary as _run_full_mesh_canary,
+)
+from limen.conduct.canary_executor import (
+    NativeCanaryEdgeAck,
+    execute_native_canary_edge,
+)
 from limen.conduct.client import HttpConductClient
 from limen.conduct.models import (
     AgentIdentityV1,
@@ -24,6 +32,79 @@ from limen.conduct.store import MemoryStateStore
 
 NOW = datetime(2026, 7, 30, 16, 0, tzinfo=UTC)
 RUNTIME_SHA = "a" * 40
+REAL_REPO_RECEIPT_TARGET = canary_module._repo_receipt_target
+REAL_RESOLVE_NATIVE_CANARY_BRIDGE = canary_module.resolve_native_canary_bridge
+_CALLBACK_CONTEXT = local()
+
+
+def run_full_mesh_canary(**kwargs):
+    """Route executor effects through the same isolated callback contract as production."""
+
+    environment = kwargs.get("environ", os.environ)
+    client = kwargs["client"]
+    client_factory = kwargs.get("client_factory", HttpConductClient)
+    predicate_runner = kwargs.pop("predicate_runner", subprocess.run)
+    override = kwargs.pop("executor_waker", None)
+    prior = getattr(_CALLBACK_CONTEXT, "value", None)
+    _CALLBACK_CONTEXT.value = {
+        "environment": environment,
+        "client": client,
+        "client_factory": client_factory,
+        "predicate_runner": predicate_runner,
+        "override": override,
+    }
+    try:
+        return _run_full_mesh_canary(**kwargs)
+    finally:
+        _CALLBACK_CONTEXT.value = prior
+
+
+@pytest.fixture(autouse=True)
+def _repo_owned_receipt_paths(monkeypatch, tmp_path: Path) -> None:
+    """Keep unit receipts isolated while preserving the production Git target shape."""
+
+    def resolve(path: Path) -> tuple[Path, str]:
+        canonical = path.expanduser().resolve(strict=False)
+        try:
+            relative = canonical.relative_to(tmp_path)
+        except ValueError as exc:
+            raise ConductCanaryError("canary receipt must remain inside its Git repository") from exc
+        return canonical, f"git:organvm/limen:{relative.as_posix()}"
+
+    monkeypatch.setattr(canary_module, "_repo_receipt_target", resolve)
+    monkeypatch.setattr(
+        canary_module,
+        "resolve_native_canary_bridge",
+        lambda _environment: ("test-native-canary-bridge", 1),
+    )
+
+    def wake(request, *, environ, resolved_bridge):
+        assert resolved_bridge == ("test-native-canary-bridge", 1)
+        context = _CALLBACK_CONTEXT.value
+        if context["override"] is not None:
+            return context["override"](request)
+        callback_environment = dict(context["environment"])
+        callback_environment.update(
+            {
+                "LIMEN_SESSION_ID": request.executor_session_id,
+                "LIMEN_NATIVE_SESSION_ID": request.executor_native_session_id,
+                "LIMEN_NATIVE_RUN_ID": request.executor_native_run_id,
+                "LIMEN_CONDUCT_CANARY_CREDENTIAL_REF": request.executor_credential_ref,
+            }
+        )
+        callback_client = context["client_factory"](
+            context["client"].endpoint,
+            context["environment"][request.executor_credential_ref],
+            timeout=context["client"].timeout,
+        )
+        return execute_native_canary_edge(
+            request,
+            client=callback_client,
+            environ=callback_environment,
+            predicate_runner=context["predicate_runner"],
+        )
+
+    monkeypatch.setattr(canary_module, "wake_native_canary_edge", wake)
 
 
 class BrokerHttpClient(HttpConductClient):
@@ -113,9 +194,11 @@ def _session(agent: str, role: str) -> ConductorSessionV1:
             agent=agent,
             surface=f"canary-{role}",
             session_id=session_id,
+            native_run_id=f"{agent}-{role}-native-run",
         ),
         origin="relay",
         native_session_id=f"{agent}-provider-{role}-instance",
+        native_run_id=f"{agent}-{role}-native-run",
         capabilities=frozenset({"conduct"} if role == "conductor" else {"execute"}),
         transport="authenticated-canary",
         concurrency=2,
@@ -206,6 +289,7 @@ def test_full_mesh_canary_covers_every_ordered_edge_and_redacts_credentials(tmp_
     assert receipt["lane_count"] == 2
     assert receipt["edge_count_required"] == 4
     assert receipt["edge_count_succeeded"] == 4
+    assert receipt["receipt_target"] == "git:organvm/limen:mesh-receipt.json"
     assert {(edge["conductor_lane"], edge["executor_lane"]) for edge in receipt["edges"]} == {
         ("alpha", "alpha"),
         ("alpha", "zeta"),
@@ -216,15 +300,146 @@ def test_full_mesh_canary_covers_every_ordered_edge_and_redacts_credentials(tmp_
         edge["reservation"]
         and edge["executor_only_claim"]
         and edge["heartbeat"]
+        and edge["native_executor_callback"]
         and edge["unchanged_heads"]
         and edge["empty_changed_paths"]
         and edge["conductor_harvest"]
         for edge in receipt["edges"]
     )
+    assert all(
+        run["packet"]["receipt_target"].startswith(f"{receipt['receipt_target']}#")
+        for run in _broker.store.snapshot()["runs"].values()
+    )
     rendered = receipt_path.read_text(encoding="utf-8")
     assert all(value not in rendered for key, value in environment.items() if key.startswith("LIMEN_FIXTURE_"))
     assert "LIMEN_FIXTURE_ALPHA_CONDUCTOR" in rendered
     assert "deployment-fixture-42" not in rendered
+
+
+def test_missing_native_wake_bridge_fails_before_graph_writes(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    monkeypatch.setattr(
+        canary_module,
+        "resolve_native_canary_bridge",
+        REAL_RESOLVE_NATIVE_CANARY_BRIDGE,
+    )
+
+    with pytest.raises(ConductCanaryError, match="session-owned wake bridge"):
+        _run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+    assert broker.store.snapshot()["runs"] == {}
+
+
+def test_callback_ack_for_another_edge_is_rejected(tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+
+    def wrong_edge(request):
+        return replace(
+            NativeCanaryEdgeAck.expected(request),
+            edge_id="wrong-edge",
+        )
+
+    with pytest.raises(ConductCanaryError, match="acknowledged a different"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            executor_waker=wrong_edge,
+            now=NOW,
+        )
+
+    assert not receipt_path.exists()
+    assert all(run["status"] != "succeeded" for run in broker.store.snapshot()["runs"].values())
+
+
+def test_callback_ack_without_terminal_report_is_rejected(tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+
+    with pytest.raises(ConductCanaryError, match="without a terminal accepted receipt"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            executor_waker=NativeCanaryEdgeAck.expected,
+            now=NOW,
+        )
+
+    assert not receipt_path.exists()
+    assert all(run["status"] != "succeeded" for run in broker.store.snapshot()["runs"].values())
+
+
+def test_executor_mutations_occur_only_inside_the_native_callback(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    _broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    callback_active = False
+    calls: list[tuple[str, str, bool]] = []
+
+    for method_name in ("capabilities", "claim", "heartbeat", "report"):
+        original = getattr(BrokerHttpClient, method_name)
+
+        def record(self, *args, __method=method_name, __original=original, **kwargs):
+            role = "executor" if "executor" in self.principal.roles else "conductor"
+            calls.append((role, __method, callback_active))
+            return __original(self, *args, **kwargs)
+
+        monkeypatch.setattr(BrokerHttpClient, method_name, record)
+
+    def native_callback(request):
+        nonlocal callback_active
+        callback_environment = dict(environment)
+        callback_environment.update(
+            {
+                "LIMEN_SESSION_ID": request.executor_session_id,
+                "LIMEN_NATIVE_SESSION_ID": request.executor_native_session_id,
+                "LIMEN_NATIVE_RUN_ID": request.executor_native_run_id,
+                "LIMEN_CONDUCT_CANARY_CREDENTIAL_REF": request.executor_credential_ref,
+            }
+        )
+        callback_client = factory(
+            client.endpoint,
+            environment[request.executor_credential_ref],
+            timeout=client.timeout,
+        )
+        callback_active = True
+        try:
+            return execute_native_canary_edge(
+                request,
+                client=callback_client,
+                environ=callback_environment,
+            )
+        finally:
+            callback_active = False
+
+    run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        executor_waker=native_callback,
+        now=NOW,
+    )
+
+    executor_mutations = [
+        callback
+        for role, method, callback in calls
+        if role == "executor" and method in {"claim", "heartbeat", "report"}
+    ]
+    assert executor_mutations
+    assert all(executor_mutations)
+    assert ("executor", "capabilities", False) in calls
 
 
 def test_same_canary_identity_is_byte_idempotent_and_creates_no_new_runs(tmp_path: Path) -> None:
@@ -239,17 +454,63 @@ def test_same_canary_identity_is_byte_idempotent_and_creates_no_new_runs(tmp_pat
     before = receipt_path.read_bytes()
     run_count = len(broker.store.snapshot()["runs"])
 
+    def unexpected_wake(_request):
+        raise AssertionError("fixed-point reuse must not wake native executors")
+
     second = run_full_mesh_canary(
         client=client,
         receipt_path=receipt_path,
         environ=environment,
         client_factory=factory,
+        executor_waker=unexpected_wake,
         now=NOW,
     )
 
     assert second == first
     assert receipt_path.read_bytes() == before
     assert len(broker.store.snapshot()["runs"]) == run_count == 4
+
+
+def test_each_edge_gets_a_fresh_injected_deadline(tmp_path: Path) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    instants = iter(NOW + timedelta(seconds=offset) for offset in range(4))
+
+    receipt = run_full_mesh_canary(
+        client=client,
+        receipt_path=receipt_path,
+        environ=environment,
+        client_factory=factory,
+        clock=lambda: next(instants),
+    )
+
+    assert [edge["packet_deadline"] for edge in receipt["edges"]] == [
+        (NOW + timedelta(minutes=15, seconds=offset)).isoformat() for offset in range(4)
+    ]
+    assert len(broker.store.snapshot()["runs"]) == 4
+
+
+def test_receipt_target_changes_canary_and_packet_identity(tmp_path: Path) -> None:
+    broker, client, factory, environment, first_path = _mesh(tmp_path)
+    first = run_full_mesh_canary(
+        client=client,
+        receipt_path=first_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+    second_path = tmp_path / "other-receipt.json"
+    second = run_full_mesh_canary(
+        client=client,
+        receipt_path=second_path,
+        environ=environment,
+        client_factory=factory,
+        now=NOW,
+    )
+
+    assert first["receipt_target"] != second["receipt_target"]
+    assert first["canary_id"] != second["canary_id"]
+    assert {edge["run_id"] for edge in first["edges"]}.isdisjoint(edge["run_id"] for edge in second["edges"])
+    assert len(broker.store.snapshot()["runs"]) == 8
 
 
 def test_re_registered_native_session_instance_cannot_reuse_prior_receipt(tmp_path: Path) -> None:
@@ -274,12 +535,16 @@ def test_re_registered_native_session_instance_cannot_reuse_prior_receipt(tmp_pa
         )
 
 
-def test_canary_requires_live_native_session_instance_binding(tmp_path: Path) -> None:
+@pytest.mark.parametrize("field", ["native_session_id", "native_run_id"])
+def test_canary_requires_live_native_session_instance_binding(
+    tmp_path: Path,
+    field: str,
+) -> None:
     broker, client, factory, environment, receipt_path = _mesh(tmp_path)
     with broker.store.transaction() as state:
-        state["sessions"]["alpha-canary-conductor"]["native_session_id"] = None
+        state["sessions"]["alpha-canary-conductor"][field] = None
 
-    with pytest.raises(ConductCanaryError, match="native_session_id"):
+    with pytest.raises(ConductCanaryError, match=field):
         run_full_mesh_canary(
             client=client,
             receipt_path=receipt_path,
@@ -606,6 +871,30 @@ def test_canary_rejects_overprivileged_authenticated_principals(
     assert broker.store.snapshot()["runs"] == {}
 
 
+@pytest.mark.parametrize("credential_ref", ["LIMEN_CONDUCT_TOKEN", "HOME", "PATH"])
+def test_canary_rejects_reserved_executor_credential_references_before_graph_writes(
+    tmp_path: Path,
+    credential_ref: str,
+) -> None:
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
+    manifest = json.loads(environment["LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS"])
+    executor = next(row for row in manifest["credentials"] if row["role"] == "executor")
+    environment[credential_ref] = environment[executor["token_env"]]
+    executor["token_env"] = credential_ref
+    environment["LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS"] = json.dumps(manifest)
+
+    with pytest.raises(ConductCanaryError, match="executor credential reference token_env is reserved"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=receipt_path,
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+    assert broker.store.snapshot()["runs"] == {}
+
+
 def test_principal_mismatch_is_not_accepted_as_executor_role_rejection() -> None:
     assert canary_module._executor_only_rejection(
         ConductError("authenticated principal lacks required executor/compatibility role")
@@ -704,9 +993,10 @@ def test_each_edge_executes_and_persists_its_observed_predicate(tmp_path: Path) 
         kwargs
         == {
             "check": False,
-            "capture_output": True,
-            "text": True,
-            "timeout": 5,
+            "stdin": subprocess.DEVNULL,
+            "stdout": subprocess.DEVNULL,
+            "stderr": subprocess.DEVNULL,
+            "timeout": 10,
         }
         for _command, kwargs in calls
     )
@@ -1108,3 +1398,95 @@ def test_full_mesh_canary_rejects_non_http_clients(tmp_path: Path) -> None:
             receipt_path=tmp_path / "receipt.json",
             environ={},
         )
+
+
+@pytest.mark.parametrize(
+    ("origin", "repository"),
+    [
+        ("git@github.com:organvm/limen.git", "organvm/limen"),
+        ("https://github.com/fork-owner/renamed-limen.git", "fork-owner/renamed-limen"),
+    ],
+)
+def test_repo_receipt_target_derives_exact_git_owner_path(
+    tmp_path: Path,
+    origin: str,
+    repository: str,
+) -> None:
+    root = tmp_path / "limen"
+    root.mkdir()
+    receipt = root / "docs" / "receipts" / "conduct-canary" / f"{RUNTIME_SHA}.json"
+
+    def git_runner(command, **kwargs):
+        assert kwargs == {
+            "check": False,
+            "capture_output": True,
+            "text": True,
+            "timeout": 5,
+        }
+        if command[-2:] == ("rev-parse", "--show-toplevel"):
+            return subprocess.CompletedProcess(command, 0, f"{root}\n", "")
+        if command[-3:] == ("remote", "get-url", "origin"):
+            return subprocess.CompletedProcess(command, 0, f"{origin}\n", "")
+        raise AssertionError(command)
+
+    canonical, target = REAL_REPO_RECEIPT_TARGET(receipt, git_runner=git_runner)
+
+    assert canonical == receipt
+    assert target == f"git:{repository}:docs/receipts/conduct-canary/{RUNTIME_SHA}.json"
+
+
+def test_repo_receipt_target_rejects_non_github_origin(tmp_path: Path) -> None:
+    root = tmp_path / "limen"
+    root.mkdir()
+
+    def git_runner(command, **_kwargs):
+        if command[-2:] == ("rev-parse", "--show-toplevel"):
+            return subprocess.CompletedProcess(command, 0, f"{root}\n", "")
+        return subprocess.CompletedProcess(command, 0, "file:///private/other/limen.git\n", "")
+
+    with pytest.raises(ConductCanaryError, match="exact GitHub origin"):
+        REAL_REPO_RECEIPT_TARGET(root / "receipt.json", git_runner=git_runner)
+
+
+@pytest.mark.parametrize(
+    "receipt_name",
+    ["receipt.txt", ".git/receipt.json", "receipt#other.json"],
+)
+def test_repo_receipt_target_rejects_invalid_repo_paths(tmp_path: Path, receipt_name: str) -> None:
+    root = tmp_path / "limen"
+    root.mkdir()
+
+    def git_runner(command, **_kwargs):
+        if command[-2:] == ("rev-parse", "--show-toplevel"):
+            return subprocess.CompletedProcess(command, 0, f"{root}\n", "")
+        return subprocess.CompletedProcess(command, 0, "https://github.com/organvm/limen.git\n", "")
+
+    with pytest.raises(ConductCanaryError, match="repository-owned JSON target"):
+        REAL_REPO_RECEIPT_TARGET(root / receipt_name, git_runner=git_runner)
+
+
+def test_repo_receipt_target_rejects_outside_path_before_remote_read(monkeypatch, tmp_path: Path) -> None:
+    _broker, client, factory, environment, _receipt_path = _mesh(tmp_path)
+    reads = 0
+
+    def capabilities():
+        nonlocal reads
+        reads += 1
+        return {}
+
+    monkeypatch.setattr(client, "capabilities", capabilities)
+
+    def reject(_path: Path):
+        raise ConductCanaryError("canary receipt must remain inside its Git repository")
+
+    monkeypatch.setattr(canary_module, "_repo_receipt_target", reject)
+    with pytest.raises(ConductCanaryError, match="inside"):
+        run_full_mesh_canary(
+            client=client,
+            receipt_path=tmp_path.parent / "outside.json",
+            environ=environment,
+            client_factory=factory,
+            now=NOW,
+        )
+
+    assert reads == 0

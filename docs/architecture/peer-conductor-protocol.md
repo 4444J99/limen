@@ -215,6 +215,21 @@ authenticate exactly the `observer` and `conductor` roles, each executor credent
 bound session IDs with the same native identity. Principal IDs and credentials are distinct across
 the manifest.
 
+Fresh execution also requires a session-owned bridge named by
+`LIMEN_CONDUCT_CANARY_WAKE_BIN`. The control process resolves that executable before its first graph
+write. For each edge it sends one bounded, nonsecret JSON request containing the exact
+run/lease/generation, packet deadline and predicate, runtime Git object, executor session,
+`native_session_id`, `native_run_id`, and credential-reference name. The bridge routes the request
+to that already-running native session; it receives a sanitized environment containing the
+credential-reference name, never a bearer. Inside the session, the hidden
+`limen conduct canary executor-edge` callback independently requires matching
+`LIMEN_SESSION_ID`, `LIMEN_NATIVE_SESSION_ID`, and `LIMEN_NATIVE_RUN_ID`, hydrates its own remote
+client only from the exact requested credential-reference environment variable (a generic conduct
+token is not accepted), rechecks its registered session and exact installed/keeper runtime, then claims,
+heartbeats, executes, and reports. A missing bridge, identity mismatch, stale runtime, timeout,
+output overflow, malformed acknowledgement, or acknowledgement without the exact terminal receipt
+fails closed. There is no coordinator-side or local-adapter execution fallback.
+
 The live capability response defines the denominator: every native agent with a healthy, accepting,
 non-protected conductor session and an executor session that also satisfies the packet capability,
 quota, and `active_leases < concurrency` bounds. The credential references must cover that
@@ -224,7 +239,8 @@ model table participates in discovery.
 For `N` eligible lanes the canary requires all `N × N` ordered edges, including every self edge.
 Each edge submits one bounded read-effect packet targeted at the exact executor session, proves that
 the conductor receives a reservation without capability material, proves that the conductor-only
-principal receives the exact executor-role denial, claims through the executor principal, and
+principal receives the exact executor-role denial, and delegates all executor effects to the
+credential-isolated native callback. That callback claims through the executor principal and
 heartbeats the runtime head. It then actually executes the bounded edge-local
 `/bin/test OBSERVED_HEAD = AUTHENTICATED_RUNTIME_HEAD` predicate and records its real exit
 status before reporting an empty-path unchanged-head receipt and harvesting it through the conductor
@@ -233,8 +249,9 @@ hashes, or executor-principal material appears at any nesting depth. One failed 
 fails the command.
 
 The `limen.conduct_full_mesh_canary.v1` receipt binds the exact Git object, hashed deployment and
-endpoint identities, CLI implementation digest, capability evidence, live lane denominator, and
-every ordered edge. Public credential evidence hashes the credential reference's authenticated
+endpoint identities, control/callback implementation digests, capability evidence, live lane
+denominator, and every ordered edge, including a hash of the exact callback acknowledgement. Public
+credential evidence hashes the credential reference's authenticated
 principal/session binding; neither the bearer nor a bearer-derived hash is persisted. An expired
 deterministic edge may advance once, from retry generation zero to one, under the same canary and
 edge identity but a distinct packet/run identity; another expiry fails closed. Deterministic active
