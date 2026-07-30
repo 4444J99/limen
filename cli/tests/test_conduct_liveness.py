@@ -40,3 +40,28 @@ def test_real_probe_sees_this_test_process_as_own_lineage(tmp_path) -> None:
     # nothing foreign lives there, so a fresh temporary directory reads unoccupied — unless the
     # host probe itself is unavailable, in which case fail-closed (-1) is the correct answer.
     assert foreign_worktree_occupant(tmp_path) in (None, -1)
+
+
+def test_probe_from_inside_the_worktree_does_not_see_its_own_scanner(tmp_path) -> None:
+    # The 2026-07-30 reopen incident, pinned end-to-end: the claimant registers from INSIDE the
+    # worktree it claims, and the probe's lsof child inherits that cwd — so on macOS the scanner
+    # listed ITSELF as a live foreign occupant and succession was refused deterministically.
+    # A real subprocess (not a mock) with cwd inside the worktree must read it as unoccupied.
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from pathlib import Path\n"
+            "from limen.conduct.liveness import foreign_worktree_occupant\n"
+            "print(foreign_worktree_occupant(Path('.')))",
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=True,
+    )
+    assert result.stdout.strip() in {"None", "-1"}
