@@ -11,6 +11,7 @@ from typing import Any, Literal
 import click
 
 from limen.conduct.broker import ConductError
+from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.client import client_from_env
 from limen.conduct.liveness import foreign_worktree_occupant
 from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
@@ -109,6 +110,17 @@ def campaign_run(
             terminal_predicate=terminal_predicate,
             evaluation_timeout_seconds=evaluation_timeout,
         )
+    except CampaignRelayError as exc:
+        _emit(
+            {
+                "schema": RESULT_SCHEMA,
+                "boundary": "invalid",
+                "reason": exc.public_reason,
+                "successor_required": True,
+                "terminal_predicate": terminal_predicate,
+            }
+        )
+        raise click.exceptions.Exit(1) from exc
     except (CampaignSupervisorError, ConductError) as exc:
         _emit(
             {
