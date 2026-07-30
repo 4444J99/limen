@@ -246,7 +246,7 @@ resource_types:
     effector: []
     status: envisioned
     owner: gitvs
-    note: "DUAL-ESTATE custody (operator directive 2026-07-29; lineage: docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md). The org is the SYSTEM (organs, engine, moat, governance): custody organvm. A collaboration-born product is a personally-owned asset: custody the personal account — its private-repo collaborator seats stay free permanently, insulated from the org Team upgrade (L-ORG-TEAM-UPGRADE), and partner access never touches the org that holds the moat. Candidates DERIVE from the constellation register's project repos (organs/consulting/constellation/registry.yaml) — never a second list here. Access stays grants-not-transfers (access.yaml) in BOTH estates: partitioning governs access, dual-estate governs custody. Activation = wire observe (census owner vs derived custody home) + the transfer effector behind L-CONST-CUSTODY-MIGRATION (transfers are outward-facing multi-repo custody moves — his hand). Precedent: 4444J99/victoroff-os, transferred 2026-07 (redirect from organvm/victoroff-os live), rows healed 2026-07-29."
+    note: "DUAL-ESTATE custody (operator directive 2026-07-29; lineage: docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md). The org is the SYSTEM (organs, engine, moat, governance): custody organvm. A collaboration-born product is a personally-owned asset: custody the personal account — its private-repo collaborator seats stay free permanently, insulated from the org Team upgrade (L-ORG-TEAM-UPGRADE), and partner access never touches the org that holds the moat. Candidates DERIVE from the constellation register's project repos (organs/consulting/constellation/registry.yaml) — never a second list here. Access stays grants-not-transfers (access.yaml) in BOTH estates: partitioning governs access, dual-estate governs custody. Activation = wire observe (census owner vs derived custody home) + the transfer effector behind L-CONST-CUSTODY-MIGRATION (transfers are outward-facing multi-repo custody moves — his hand). Precedent: 4444J99/victoroff-os, transferred 2026-07 (redirect from organvm/victoroff-os live), rows healed 2026-07-29. v4.0.0 (2026-07-30): the product_ledger block below is the ASSET axis — it marks WHAT is a product; partner-wave membership still derives from the constellation register. The rung joins ledger ∧ access.yaml live grants ∧ census owner: product ∧ live outside grant on a private lane ⇒ custody home 4444J99."
   dependabot:
     identity: derived
     desired: ["security_updates_on"]
@@ -290,7 +290,82 @@ orgs:
     repos: 0
     enterprise_subscription: none
     owner: gitvs
-    note: "Name-reservation shells: keep the names at $0, hold ZERO repos. The 2026-07-17 plan=enterprise drift on 8 of these was CLEARED by machine the same day (all removed from the meta-organvm enterprise, #1185); recurrence cites L-ORG-TEAM-UPGRADE. Consolidation history: scripts/consolidate-github.py; deletion stays an optional future lever (names are brand)."
+    note: "Name-reservation shells: keep the names at $0, hold ZERO repos. The 2026-07-17 plan=enterprise drift on 8 of these was CLEARED by machine the same day (all removed from the meta-organvm enterprise, #1185); recurrence cites L-ORG-TEAM-UPGRADE. Consolidation history: scripts/consolidate-github.py; deletion stays an optional future lever (names are brand). VENTURE TRIGGER (v4.0.0, 2026-07-30): a NEW org is created only when an external party gains independent brand/legal standing — client-required org (victoroffgroup shape), equity partner, incorporation, or sale; internal proliferation never earns one. SHELF AXIS (v4.0.0): the 8 backbone orgs (organvm-i…vii, meta-organvm) are SHELVES of the one library — the operator's public profile already advertises them; the Phase-2 shelf tranches populate them from the registry (organ-assignment rows + transfer batches + doctor shelf-parity), at which point this repos: 0 invariant is superseded per tranche by shelf-parity (census owner == declared organ). a-organvm stays reserve until the venture trigger fires."
+
+# ── the ASSET LEDGER (custody axis, doctrine v4.0.0 — 2026-07-30) ────────────────────────────
+# What the organism BUILT: every register-marked product (its own contained system/venture),
+# adjudicated by the 308-repo sweep 2026-07-30 (38 agents, two-lens adversarial verify; lineage
+# docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md). Names are OWNER-INDEPENDENT (bare)
+# so partner-event transfers never invalidate the books: the repo_custody doctor rung joins THIS
+# ledger ∧ access.yaml live grants ∧ census owner to derive each product's custody home. Partner-
+# lane MEMBERSHIP still derives from the constellation register — this ledger never re-lists it;
+# it marks WHAT is a product, not WHO its partner is. The ERGON shelf tranche (Phase 2) reads this
+# ledger as its move-list. Adding a product = adding ONE name here.
+product_ledger:
+  provenance: "sweep 2026-07-30; doctrine v4.0.0 (storefront/shelves/engine-room; venture axis unchanged)"
+  repos:
+    - a-i-chat--exporter
+    - a-i-council--coliseum
+    - advocata
+    - agent--claude-smith
+    - agent-runtime
+    - agentic-titan
+    - anon-hookup-now
+    - atomic-substrata
+    - bountyscope
+    - card-trade-social
+    - carrier-wave--zeitgeist-thesis
+    - classroom-rpg-aetheria
+    - content-engine--asset-amplifier
+    - content-engine--asset-amplifier--a-organvm-legacy
+    - cve-watch
+    - edgarflash
+    - enterprise-plugin
+    - etceter4
+    - fetch-familiar-friends
+    - gens
+    - glyph-cascade
+    - growth-auditor
+    - hokage-chess
+    - hokage-chess--4444j99
+    - hospes
+    - life-my--midst--in
+    - materia-collider
+    - mesh
+    - micro-tato
+    - micro-tato-play
+    - mirror-mirror
+    - multi-camera--livestream--framework
+    - my-block-warfare
+    - object-lessons
+    - palimpsest
+    - parlor-games--ephemera-engine
+    - peer-audited--behavioral-blockchain
+    - prima
+    - promptscope
+    - public-record-data-scrapper
+    - search-local--happy-hour
+    - select-or-left-or-right-or
+    - shared-remembrance-gateway
+    - sign-signal--voice-synth
+    - sovereign-ecosystem--real-estate-luxury
+    - sovereign-systems--elevate-align
+    - sovereign-systems--layer-above-hokage
+    - specvla-ergon--avditor-mvndi
+    - speech-score-engine
+    - styx-behavioral-art
+    - styx-behavioral-economics-theory
+    - surface-engine
+    - tab-bookmark-manager
+    - the-actual-news
+    - trade-perpetual-future
+    - trendpulse
+    - universal-waveform-explorer
+    - vox
+    - vox--publica
+    - vulnpulse
+    - writelens
+    - your-fit-tailored
 
 # ── per-repo-CLASS governance posture ────────────────────────────────────────────────────────
 # The desired-state of the `repo` / `branch_protection` types, bucketed by owner/repo glob. `required_checks`
@@ -480,7 +555,7 @@ repo_overrides:
   organvm/mirror-mirror: {class: operation_private, why: "seeded value product — wave candidate (sweep decides)", publish_candidate: true}
   organvm/my-knowledge-base: {class: operation_private, why: "value-tier knowledge operation; secret-shaped paths — sweep before any form twin"}
   organvm/narratological-algorithmic-lenses: {class: portal_public, why: "traction/value lure — portal tier"}
-  organvm/netmode: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/netmode: {class: operation_private, why: "machine infra, not a product (sweep 2026-07-30): network-health receipts, session-blockers, conductor-tranche dependencies ride it — engine room, no publish wave"}
   organvm/object-lessons: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/opencode-plans: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/organvm-corpvs-testamentvm: {class: vault_private, why: "testament corpus — internal strategy"}
