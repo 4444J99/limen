@@ -10,8 +10,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-import pytest
 import limen.estate_audit_paired_custody as paired_module
+import pytest
 from limen.estate_audit_custody import CustodyPlan, GeneratedRootRecord
 from limen.estate_audit_paired_custody import (
     PRIVATE_RECEIPT_SCHEMA,
@@ -1046,7 +1046,7 @@ def test_fleet_entrypoint_redacts_missing_dependencies(tmp_path: Path) -> None:
     copied = scripts / "estate-audit-paired-custody.py"
     copied.write_bytes((repository / "scripts" / "estate-audit-paired-custody.py").read_bytes())
     result = subprocess.run(
-        [sys.executable, "-I", str(copied), "--apply", "--json"],
+        [sys.executable, "-I", "-S", str(copied), "--apply", "--json"],
         capture_output=True,
         text=True,
         check=False,
