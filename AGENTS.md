@@ -136,6 +136,13 @@ masks genuine failures. Once an implicated predicate passes for an unchanged exa
 reuse that receipt; do not rerun suites merely to accumulate reassurance. A changed head or a
 specific observed failure is required before another test.
 
+Treat one exact tree as one verification wave, not a per-finding waterfall. Batch independent
+corrections, then let the scoped resolver run all eligible cheap and nonserialized-heavy gates
+concurrently; only gates explicitly marked `serialize: true` may form a local chain. Focused
+developer probes may precede that wave, but static checks and sibling predicates must not be
+manually replayed one at a time after every edit. A new review observation invalidates only the
+implicated shard; unchanged green shard receipts remain evidence.
+
 **3. Durable homing — all state in git-tracked homes; no local orphan files.**
 Every work product, task, blocker, and human-gated atom must land in a git-tracked durable home
 before the session ends: a merged PR, an open PR with a named owner, a pushed plan/task, or an

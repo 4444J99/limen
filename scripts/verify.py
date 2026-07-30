@@ -8,9 +8,10 @@ being two scripts and become two selections over the same data:
   verify.py --changed [--base REF]   the scoped push gate: compute the changed set
                                      (merge-base vs origin/main + staged + unstaged +
                                      untracked), run exactly the implicated gates —
-                                     cheap tier first (no lock), heavy unserialized next,
-                                     then the serialized tail under the machine-wide
-                                     flock verify-whole.sh also holds. Skips are named.
+                                     each independent cheap/heavy tier runs as one
+                                     parallel wave, then the explicitly serialized tail
+                                     runs under the machine-wide flock verify-whole.sh
+                                     also holds. Skips are named.
                                      Exit 0 ⟺ every implicated gate passed.
                                      CI hardening (issue #1048): --require-base (or env
                                      LIMEN_VERIFY_REQUIRE_BASE=1) fails CLOSED — an
@@ -48,6 +49,7 @@ holds the registry to the workflows and consumers; this resolver trusts a green 
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import fcntl
 import json
 import os
@@ -55,8 +57,10 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
+from typing import TextIO
 
 import yaml
 
@@ -219,35 +223,114 @@ def deploy_regex(registry: dict) -> str:
     return "(" + "|".join(parts) + ")" if parts else ""
 
 
-def run_command(command: str) -> int:
-    return subprocess.run(["bash", "-c", command], cwd=ROOT).returncode
+def positive_jobs(value: str) -> int:
+    try:
+        jobs = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("jobs must be an integer") from exc
+    if not 1 <= jobs <= 32:
+        raise argparse.ArgumentTypeError("jobs must be between 1 and 32")
+    return jobs
 
 
-def run_gate(gate_id: str, gate: dict, registry: dict, changed: list[str]) -> bool:
-    print(f"\n==> {gate_id}: {gate['note']}")
+def run_command(command: str, *, output: TextIO = sys.stdout) -> int:
+    return subprocess.run(
+        ["bash", "-c", command],
+        cwd=ROOT,
+        stdout=output,
+        stderr=subprocess.STDOUT,
+        check=False,
+    ).returncode
+
+
+def run_gate(
+    gate_id: str,
+    gate: dict,
+    registry: dict,
+    changed: list[str],
+    *,
+    output: TextIO = sys.stdout,
+) -> bool:
+    print(f"\n==> {gate_id}: {gate['note']}", file=output)
     if gate.get("kind") == "per_file":
         for path in changed:
             template = (gate.get("per_file") or {}).get(Path(path).suffix)
-            if template and (ROOT / path).is_file():
-                if run_command(template.format(file=shlex.quote(path))) != 0:
-                    print(f"FAILED: {gate_id} on {path}", file=sys.stderr)
-                    return False
+            if (
+                template
+                and (ROOT / path).is_file()
+                and run_command(
+                    template.format(file=shlex.quote(path)),
+                    output=output,
+                )
+                != 0
+            ):
+                print(f"FAILED: {gate_id} on {path}", file=output)
+                return False
         return True
     if gate.get("kind") == "file_set":
         files = expand_file_set(registry, gate["file_set"])
         command = gate["command_template"].format(files=" ".join(map(shlex.quote, files)))
     else:
         command = gate["command"]
-    if run_command(command) != 0:
-        print(f"FAILED: {gate_id}", file=sys.stderr)
+    if run_command(command, output=output) != 0:
+        print(f"FAILED: {gate_id}", file=output)
         return False
     return True
+
+
+def run_gate_wave(
+    gate_ids: list[str],
+    gates: dict,
+    registry: dict,
+    changed: list[str],
+    *,
+    jobs: int,
+) -> bool:
+    """Run one independent gate tier concurrently and replay bounded-order logs."""
+
+    if not gate_ids:
+        return True
+    worker_count = min(jobs, len(gate_ids))
+    if worker_count == 1:
+        return all(run_gate(gate_id, gates[gate_id], registry, changed) for gate_id in gate_ids)
+
+    with tempfile.TemporaryDirectory(prefix="limen-verify-wave-") as temporary:
+        output_paths = {gate_id: Path(temporary) / f"{index:04d}.log" for index, gate_id in enumerate(gate_ids)}
+
+        def execute(gate_id: str) -> bool:
+            with output_paths[gate_id].open("w", encoding="utf-8", errors="replace") as output:
+                try:
+                    return run_gate(
+                        gate_id,
+                        gates[gate_id],
+                        registry,
+                        changed,
+                        output=output,
+                    )
+                except Exception as exc:  # noqa: BLE001 - a gate crash is a failed predicate
+                    print(
+                        f"FAILED: {gate_id} raised {type(exc).__name__}",
+                        file=output,
+                    )
+                    return False
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=worker_count,
+            thread_name_prefix="limen-verify",
+        ) as executor:
+            futures = {gate_id: executor.submit(execute, gate_id) for gate_id in gate_ids}
+            results = {gate_id: futures[gate_id].result() for gate_id in gate_ids}
+
+        for gate_id in gate_ids:
+            sys.stdout.write(output_paths[gate_id].read_text(encoding="utf-8", errors="replace"))
+        return all(results.values())
 
 
 def cmd_changed(
     registry: dict,
     base: str | None,
     *,
+    jobs: int,
     require_base: bool = False,
     skip_ci_covered: str | None = None,
     integration: bool = False,
@@ -329,9 +412,14 @@ def cmd_changed(
     os.environ["PYTHONPATH"] = f"{ROOT / 'cli' / 'src'}" + (
         os.pathsep + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else ""
     )
-    for gate_id in tiers["cheap"]:
-        if not run_gate(gate_id, gates[gate_id], registry, changed):
-            return 1
+    if not run_gate_wave(
+        tiers["cheap"],
+        gates,
+        registry,
+        changed,
+        jobs=jobs,
+    ):
+        return 1
     needs_heavy = bool(tiers["heavy"] or tiers["serialized"])
     admission = (
         heavy_admission(
@@ -343,9 +431,14 @@ def cmd_changed(
     )
     try:
         with admission:
-            for gate_id in tiers["heavy"]:
-                if not run_gate(gate_id, gates[gate_id], registry, changed):
-                    return 1
+            if not run_gate_wave(
+                tiers["heavy"],
+                gates,
+                registry,
+                changed,
+                jobs=jobs,
+            ):
+                return 1
             if tiers["serialized"]:
                 lock_path = os.environ.get(
                     "LIMEN_VERIFY_LOCK_FILE",
@@ -395,6 +488,15 @@ def main() -> int:
     parser.add_argument("--base", default=None)
     parser.add_argument("--json", action="store_true")
     parser.add_argument(
+        "--jobs",
+        type=positive_jobs,
+        default=os.environ.get(
+            "LIMEN_VERIFY_JOBS",
+            str(min(4, max(1, os.cpu_count() or 1))),
+        ),
+        help="maximum independent gates per verification wave (default: min(4, CPUs); also via LIMEN_VERIFY_JOBS)",
+    )
+    parser.add_argument(
         "--require-base",
         action="store_true",
         help="fail closed: merge-base must resolve and the changed set must be non-empty "
@@ -427,6 +529,7 @@ def main() -> int:
         return cmd_changed(
             registry,
             args.base,
+            jobs=args.jobs,
             require_base=args.integration or args.require_base or os.environ.get("LIMEN_VERIFY_REQUIRE_BASE") == "1",
             skip_ci_covered=args.skip_ci_covered,
             integration=args.integration,

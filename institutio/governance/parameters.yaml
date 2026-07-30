@@ -858,6 +858,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Machine-wide lock file serializing verify-whole.sh runs so parallel sessions queue instead of stampeding the host with concurrent npm installs, workerd boots, and production builds."
+  LIMEN_VERIFY_JOBS:
+    default: 4
+    env: LIMEN_VERIFY_JOBS
+    self_update: none
+    owner: continuity
+    note: "Maximum independent predicates in each verify.py scoped wave (1–32). The runtime default is the smaller of 4 and the detected CPU count; gates marked serialize:true remain ordered regardless of this value."
   LIMEN_VERIFY_NO_DEPLOY_ESCALATION:
     default: "0"
     env: LIMEN_VERIFY_NO_DEPLOY_ESCALATION

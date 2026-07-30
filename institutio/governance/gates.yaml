@@ -190,6 +190,11 @@ gates:
     paths: ["scripts/verify.py", "scripts/tests/verify-resolver.test.sh", "institutio/governance/gates.yaml"]
     owner: verify
     note: "Selection-equivalence fixtures — the resolver must implicate exactly the registered gates."
+  verify-parallel-test:
+    command: "bash scripts/tests/verify-parallel.test.sh"
+    paths: ["scripts/verify.py", "scripts/tests/verify-parallel.test.sh", "institutio/governance/gates.yaml"]
+    owner: verify
+    note: "Independent scoped predicates execute as one concurrent wave; only gates explicitly marked serialize:true remain ordered."
   verify-ci-hardening-test:
     command: "bash scripts/tests/verify-ci-hardening.test.sh"
     paths: ["scripts/verify.py", "scripts/tests/verify-ci-hardening.test.sh"]
