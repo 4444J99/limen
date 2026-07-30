@@ -304,3 +304,15 @@ def test_the_launcher_hydrates_the_credential_env_before_the_agent():
     hydrate_at = src.index('. "$HOME/.limen.env"')
     exited_at = src.index("stream %s exited")
     assert hydrate_at < exited_at, "hydration must precede the workstream command in the pane"
+
+
+def test_a_kept_window_is_respawned_into_not_skipped():
+    """The window survives exit by design (the closeout stays readable), so window presence must
+    never be read as 'stream running' — that froze every exited lane on SKIP and broke the
+    advertised exit → one command → reopen round trip. The launcher respawns the stream into its
+    kept window; liveness (not window existence) is the sole idempotency authority."""
+    src = OPEN.read_text()
+    assert "tmux respawn-window -k" in src, "the kept-window reopen path is gone"
+    assert "tmux window already open" not in src, (
+        "the window-presence SKIP is back — a kept closeout window will freeze reopen forever"
+    )
