@@ -22,7 +22,7 @@ Engagement: none on record · Funnel instance: none
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
 Repos:
-- `organvm/mirror-mirror`
+- `4444J99/mirror-mirror`
 
 Keywords: mirror mirror, virtual try-on, beauty tech, salon, ar makeup · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug charles --project mirror-mirror`
@@ -34,7 +34,7 @@ Keywords: mirror mirror, virtual try-on, beauty tech, salon, ar makeup · Corpus
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
 Repos:
-- `organvm/your-fit-tailored`
+- `4444J99/your-fit-tailored`
 
 Keywords: your-fit-tailored, circular apparel, weekly subscription, fit intelligence, tism · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug charles --project your-fit-tailored`

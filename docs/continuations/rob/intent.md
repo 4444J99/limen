@@ -22,7 +22,7 @@ Engagement: `organs/consulting/engagements/rob.yaml` · Funnel instance: `organs
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
 Repos:
-- `organvm/hokage-chess`
+- `4444J99/hokage-chess`
 
 Keywords: hokage, chess, legion command center, gamified coach · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug rob --project hokage-chess`
@@ -44,8 +44,8 @@ Keywords: bodi, beachbody, fitness funnel, affiliate, coach · Corpus evidence:
 Harden the MVP toward live: close the gap between 'runs for me' and 'runs for rob' — deploy path, onboarding, and the first real-use feedback loop.
 
 Repos:
-- `organvm/micro-tato`
-- `organvm/micro-tato-play`
+- `4444J99/micro-tato`
+- `4444J99/micro-tato-play`
 
 Keywords: micro tato, brotato, bullet hell, godot, potato · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug rob --project micro-tato`

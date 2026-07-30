@@ -22,9 +22,9 @@ Engagement: `organs/consulting/engagements/jessica.yaml` · Funnel instance: non
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
 Repos:
-- `organvm/peer-audited--behavioral-blockchain`
-- `organvm/styx-behavioral-art`
-- `organvm/styx-behavioral-economics-theory`
+- `4444J99/peer-audited--behavioral-blockchain`
+- `4444J99/styx-behavioral-art`
+- `4444J99/styx-behavioral-economics-theory`
 
 Keywords: styx, ask-styx, behavioral blockchain, peer-audited, behavioral economics · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug jessica --project styx`
