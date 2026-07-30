@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from limen.conduct.campaign_relay import CampaignRelayError, reserve_relay
+from limen.conduct.campaign_relay import CampaignRelayError, campaign_relay_lock, reserve_relay
 from limen.workstream_contract import RECEIPT_MODULES, new_contract
 
 
@@ -117,6 +117,20 @@ def test_reservation_rejects_a_symlinked_store_before_external_writes(relay_repo
         reserve_relay(root, predecessor, exact_remote_main=_git(root, "rev-parse", "HEAD"))
 
     assert list(outside.iterdir()) == []
+
+
+def test_held_relay_lock_fails_at_a_finite_deadline(relay_repo) -> None:
+    root, predecessor = relay_repo
+    relay = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    ).receipt
+
+    with campaign_relay_lock(root, relay.relay_id):
+        with pytest.raises(CampaignRelayError, match="bounded acquire deadline"):
+            with campaign_relay_lock(root, relay.relay_id, timeout_seconds=0.02):
+                pytest.fail("a held relay lock must not be re-entered")
 
 
 def test_unadmitted_predecessor_fails_before_reservation(relay_repo) -> None:

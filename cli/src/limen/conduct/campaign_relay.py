@@ -8,6 +8,7 @@ import os
 import stat
 import subprocess
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -23,6 +24,7 @@ from limen.workstream_contract import (
 
 _RECEIPT_CEILING = 65_536
 _GIT_OBJECT_LENGTHS = frozenset({40, 64})
+_LOCK_ACQUIRE_TIMEOUT_SECONDS = 2.0
 
 
 class CampaignRelayError(RuntimeError):
@@ -99,9 +101,20 @@ def _paths(root: Path, relay_id: str) -> tuple[Path, Path]:
 
 
 @contextmanager
-def campaign_relay_lock(root: Path, relay_id: str) -> Iterator[None]:
+def campaign_relay_lock(
+    root: Path,
+    relay_id: str,
+    *,
+    timeout_seconds: float = _LOCK_ACQUIRE_TIMEOUT_SECONDS,
+) -> Iterator[None]:
     """Hold the cross-beat relay lock for one bounded reservation phase."""
 
+    if (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, (int, float))
+        or not 0 < timeout_seconds <= 30
+    ):
+        raise CampaignRelayError("campaign relay lock timeout must be between 0 and 30 seconds")
     _receipt_path, lock_path = _paths(root, relay_id)
     if lock_path.is_symlink():
         raise CampaignRelayError("campaign relay lock must not be a symlink")
@@ -112,13 +125,27 @@ def campaign_relay_lock(root: Path, relay_id: str) -> Iterator[None]:
         descriptor = os.open(lock_path, flags, 0o600)
     except OSError as exc:
         raise CampaignRelayError(f"campaign relay lock is unavailable: {exc}") from exc
+    locked = False
     try:
         os.fchmod(descriptor, 0o600)
-        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        deadline = time.monotonic() + timeout_seconds
+        while True:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                locked = True
+                break
+            except BlockingIOError:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise CampaignRelayError(
+                        "campaign relay lock remained busy past its bounded acquire deadline"
+                    ) from None
+                time.sleep(min(0.01, remaining))
         yield
     finally:
         try:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
+            if locked:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
         finally:
             os.close(descriptor)
 
@@ -239,10 +266,11 @@ def relay_identity(
     deadline = contract["runway"].get("deadline_epoch")
     if isinstance(deadline, bool) or not isinstance(deadline, int) or deadline <= 0:
         raise CampaignRelayError("predecessor campaign has not been admitted")
+    contract_digest = canonical_hash(contract)
     identity = {
         "workstream": "institutional-omega",
         "predecessor_receipt_blob": blob,
-        "predecessor_contract_digest": canonical_hash(contract),
+        "predecessor_contract_digest": contract_digest,
         "predecessor_deadline_epoch": deadline,
         "exact_remote_main": exact_remote_main,
     }
@@ -252,7 +280,7 @@ def relay_identity(
         relay_id=relay_id,
         workstream="institutional-omega",
         predecessor_receipt_blob=blob,
-        predecessor_contract_digest=identity["predecessor_contract_digest"],
+        predecessor_contract_digest=contract_digest,
         predecessor_deadline_epoch=deadline,
         exact_remote_main=exact_remote_main,
         successor_slug=slug,
