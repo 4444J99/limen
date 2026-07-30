@@ -17,8 +17,13 @@ pipeline's people.json (private), never here.
 Rule #4 — Cross-Refs: a non-null engagement_ref / funnel_instance_ref /
 dossier must point at a path that exists (run from the repo root).
 
-Rule #5 — Single Org: every repo and related_repos entry lives under
-`organvm/` — the estate registry's one canonical org.
+Rule #5 — Estate Placement: every repo and related_repos entry lives under
+`organvm/` (the canonical SYSTEM org) or carries an explicit repo_overrides
+row in institutio/github/estate.yaml — the per-repo human judgment that
+sanctions a personal-estate custody home (dual-estate doctrine v1.0.0,
+docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md). estate.yaml
+owns placement; when it is unreadable this rule falls back to canonical-org
+only (fail toward caution).
 
 Rule #6 — Overlay Parity (only when the private store is reachable): the
 private overlay carries the same slug set, and every private row declares
@@ -61,6 +66,7 @@ DEFAULT_OVERLAY = Path(
 # One knob per fact: the access-registry path is owned by LIMEN_GITVS_ACCESS (gitvs is the
 # registry's owner) — a second env name here would shadow it.
 DEFAULT_ACCESS = Path(os.environ.get("LIMEN_GITVS_ACCESS", "institutio/github/access.yaml"))
+DEFAULT_ESTATE = Path(os.environ.get("LIMEN_GITVS_ESTATE", "institutio/github/estate.yaml"))
 
 TIERS = {"T1", "T2", "T3"}
 STAGES = {"idea", "dossier", "building", "mvp", "live", "funnelized"}
@@ -171,7 +177,16 @@ def _validate_registry(path: Path) -> tuple[list[str], dict[str, Any] | None]:
             if isinstance(dossier, str) and dossier.strip() and not Path(dossier).exists():
                 v.append(f"Rule #4 violation: {label}/{project.get('name')} dossier {dossier!r} does not exist")
 
-    # Rule #5 — Single Org
+    # Rule #5 — Estate Placement (dual-estate: canonical org, or an explicit estate override row)
+    estate_overrides: dict[str, Any] = {}
+    try:
+        estate_doc = yaml.safe_load(DEFAULT_ESTATE.read_text(encoding="utf-8")) or {}
+        if isinstance(estate_doc, dict):
+            overrides = estate_doc.get("repo_overrides")
+            if isinstance(overrides, dict):
+                estate_overrides = overrides
+    except (OSError, yaml.YAMLError):
+        estate_overrides = {}  # unreadable estate → canonical-org-only (fail toward caution)
     for person in people:
         if not isinstance(person, dict):
             continue
@@ -181,11 +196,15 @@ def _validate_registry(path: Path) -> tuple[list[str], dict[str, Any] | None]:
                 continue
             repos = [project.get("repo")] + list(project.get("related_repos") or [])
             for repo in repos:
-                if isinstance(repo, str) and repo and not repo.startswith("organvm/"):
-                    v.append(
-                        f"Rule #5 violation: {label}/{project.get('name')} repo {repo!r} "
-                        "is outside the canonical org (estate.yaml owns placement)"
-                    )
+                if not (isinstance(repo, str) and repo):
+                    continue
+                if repo.startswith("organvm/") or repo in estate_overrides:
+                    continue
+                v.append(
+                    f"Rule #5 violation: {label}/{project.get('name')} repo {repo!r} "
+                    "is outside the canonical org and carries no estate.yaml repo_overrides "
+                    "row (estate.yaml owns placement)"
+                )
 
     return v, doc
 
@@ -202,9 +221,7 @@ def _validate_overlay(overlay_path: Path, registry: dict[str, Any]) -> list[str]
     if not isinstance(overlay, dict):
         return ["Rule #6 violation: overlay is not a YAML mapping"]
 
-    public_slugs = {
-        str(p.get("slug")) for p in registry.get("people") or [] if isinstance(p, dict) and p.get("slug")
-    }
+    public_slugs = {str(p.get("slug")) for p in registry.get("people") or [] if isinstance(p, dict) and p.get("slug")}
     rows = overlay.get("people")
     if not isinstance(rows, list):
         return ["Rule #6 violation: overlay people must be a list"]
