@@ -11,7 +11,9 @@ being two scripts and become two selections over the same data:
                                      each independent cheap/heavy tier runs as one
                                      parallel wave, then the explicitly serialized tail
                                      runs under the machine-wide flock verify-whole.sh
-                                     also holds. Skips are named.
+                                     also holds. Every gate has a finite process-group
+                                     deadline, bounded output, and visible receipt.
+                                     Skips are named.
                                      Exit 0 ⟺ every implicated gate passed.
                                      CI hardening (issue #1048): --require-base (or env
                                      LIMEN_VERIFY_REQUIRE_BASE=1) fails CLOSED — an
@@ -55,9 +57,11 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import TextIO
@@ -233,14 +237,122 @@ def positive_jobs(value: str) -> int:
     return jobs
 
 
-def run_command(command: str, *, output: TextIO = sys.stdout) -> int:
-    return subprocess.run(
-        ["bash", "-c", command],
-        cwd=ROOT,
-        stdout=output,
-        stderr=subprocess.STDOUT,
-        check=False,
-    ).returncode
+def bounded_seconds(value: str) -> float:
+    try:
+        seconds = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("gate timeout must be a number") from exc
+    if not 0.1 <= seconds <= 1800:
+        raise argparse.ArgumentTypeError("gate timeout must be between 0.1 and 1800 seconds")
+    return seconds
+
+
+def bounded_output_bytes(value: str) -> int:
+    try:
+        output_bytes = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("gate output limit must be an integer") from exc
+    if not 1024 <= output_bytes <= 16 * 1024 * 1024:
+        raise argparse.ArgumentTypeError("gate output limit must be between 1024 and 16777216 bytes")
+    return output_bytes
+
+
+def process_group_alive(process: subprocess.Popen[bytes]) -> bool:
+    try:
+        os.killpg(process.pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def terminate_process_group(process: subprocess.Popen[bytes]) -> bool:
+    """Terminate and reap a gate's complete process group before returning."""
+
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    try:
+        process.wait(timeout=1)
+    except subprocess.TimeoutExpired:
+        pass
+    deadline = time.monotonic() + 1
+    while process_group_alive(process) and time.monotonic() < deadline:
+        time.sleep(0.02)
+    if process_group_alive(process):
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        deadline = time.monotonic() + 1
+        while process_group_alive(process) and time.monotonic() < deadline:
+            time.sleep(0.02)
+    try:
+        process.wait(timeout=1)
+    except subprocess.TimeoutExpired:
+        pass
+    return not process_group_alive(process)
+
+
+def run_command(
+    command: str,
+    *,
+    output: TextIO,
+    deadline: float,
+    output_limit_bytes: int,
+) -> int:
+    """Run one gate command with a shared deadline and bounded process-group output."""
+
+    if time.monotonic() >= deadline:
+        print("gate-command-timeout: shared gate deadline expired before spawn", file=output)
+        return 124
+    try:
+        process = subprocess.Popen(
+            ["bash", "-c", command],
+            cwd=ROOT,
+            stdin=subprocess.DEVNULL,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+    except OSError as exc:
+        print(f"gate-command-spawn-failed: errno={exc.errno or 'unknown'}", file=output)
+        return 127
+
+    while True:
+        exit_code = process.poll()
+        try:
+            output_bytes = os.fstat(output.fileno()).st_size
+        except OSError:
+            output_bytes = output_limit_bytes + 1
+        if output_bytes > output_limit_bytes:
+            cleaned = terminate_process_group(process)
+            output.seek(0)
+            output.truncate(0)
+            print(
+                f"gate-command-output-limit: {output_bytes}>{output_limit_bytes} bytes",
+                file=output,
+            )
+            if not cleaned:
+                print("gate-command-process-group-cleanup-failed", file=output)
+            return 125 if cleaned else 126
+        if time.monotonic() >= deadline:
+            cleaned = terminate_process_group(process)
+            print("gate-command-timeout: shared gate deadline expired", file=output)
+            if not cleaned:
+                print("gate-command-process-group-cleanup-failed", file=output)
+            return 124 if cleaned else 126
+        if exit_code is not None:
+            if process_group_alive(process):
+                cleaned = terminate_process_group(process)
+                print("gate-command-lingering-process-group", file=output)
+                if not cleaned:
+                    print("gate-command-process-group-cleanup-failed", file=output)
+                return 125 if cleaned else 126
+            return exit_code
+        time.sleep(0.02)
 
 
 def run_gate(
@@ -249,7 +361,9 @@ def run_gate(
     registry: dict,
     changed: list[str],
     *,
-    output: TextIO = sys.stdout,
+    output: TextIO,
+    deadline: float,
+    output_limit_bytes: int,
 ) -> bool:
     print(f"\n==> {gate_id}: {gate['note']}", file=output)
     if gate.get("kind") == "per_file":
@@ -261,6 +375,8 @@ def run_gate(
                 and run_command(
                     template.format(file=shlex.quote(path)),
                     output=output,
+                    deadline=deadline,
+                    output_limit_bytes=output_limit_bytes,
                 )
                 != 0
             ):
@@ -272,7 +388,15 @@ def run_gate(
         command = gate["command_template"].format(files=" ".join(map(shlex.quote, files)))
     else:
         command = gate["command"]
-    if run_command(command, output=output) != 0:
+    if (
+        run_command(
+            command,
+            output=output,
+            deadline=deadline,
+            output_limit_bytes=output_limit_bytes,
+        )
+        != 0
+    ):
         print(f"FAILED: {gate_id}", file=output)
         return False
     return True
@@ -285,45 +409,67 @@ def run_gate_wave(
     changed: list[str],
     *,
     jobs: int,
+    timeout_seconds: float,
+    output_limit_bytes: int,
+    wave_name: str,
 ) -> bool:
-    """Run one independent gate tier concurrently and replay bounded-order logs."""
+    """Run one independent gate tier concurrently with finite per-gate receipts."""
 
     if not gate_ids:
         return True
     worker_count = min(jobs, len(gate_ids))
-    if worker_count == 1:
-        return all(run_gate(gate_id, gates[gate_id], registry, changed) for gate_id in gate_ids)
+    print(
+        f"\nWAVE {wave_name}: START gates={len(gate_ids)} jobs={worker_count} "
+        f"gate_timeout={timeout_seconds:g}s output_limit={output_limit_bytes}B",
+        flush=True,
+    )
 
     with tempfile.TemporaryDirectory(prefix="limen-verify-wave-") as temporary:
         output_paths = {gate_id: Path(temporary) / f"{index:04d}.log" for index, gate_id in enumerate(gate_ids)}
 
-        def execute(gate_id: str) -> bool:
+        def execute(gate_id: str) -> tuple[bool, float]:
+            started = time.monotonic()
             with output_paths[gate_id].open("w", encoding="utf-8", errors="replace") as output:
                 try:
-                    return run_gate(
+                    passed = run_gate(
                         gate_id,
                         gates[gate_id],
                         registry,
                         changed,
                         output=output,
+                        deadline=started + timeout_seconds,
+                        output_limit_bytes=output_limit_bytes,
                     )
                 except Exception as exc:  # noqa: BLE001 - a gate crash is a failed predicate
                     print(
                         f"FAILED: {gate_id} raised {type(exc).__name__}",
                         file=output,
                     )
-                    return False
+                    passed = False
+            return passed, time.monotonic() - started
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=worker_count,
             thread_name_prefix="limen-verify",
         ) as executor:
-            futures = {gate_id: executor.submit(execute, gate_id) for gate_id in gate_ids}
-            results = {gate_id: futures[gate_id].result() for gate_id in gate_ids}
+            future_gate_ids = {executor.submit(execute, gate_id): gate_id for gate_id in gate_ids}
+            results: dict[str, bool] = {}
+            for future in concurrent.futures.as_completed(future_gate_ids):
+                gate_id = future_gate_ids[future]
+                passed, duration = future.result()
+                results[gate_id] = passed
+                print(
+                    f"WAVE {wave_name}: FINISH gate={gate_id} "
+                    f"status={'PASS' if passed else 'FAIL'} duration={duration:.2f}s",
+                    flush=True,
+                )
 
         for gate_id in gate_ids:
-            sys.stdout.write(output_paths[gate_id].read_text(encoding="utf-8", errors="replace"))
-        return all(results.values())
+            with output_paths[gate_id].open("r", encoding="utf-8", errors="replace") as output:
+                sys.stdout.write(output.read(output_limit_bytes + 1024))
+        passed = all(results.values())
+        print(f"WAVE {wave_name}: {'PASS' if passed else 'FAIL'}", flush=True)
+        return passed
 
 
 def cmd_changed(
@@ -331,6 +477,8 @@ def cmd_changed(
     base: str | None,
     *,
     jobs: int,
+    gate_timeout_seconds: float,
+    gate_output_bytes: int,
     require_base: bool = False,
     skip_ci_covered: str | None = None,
     integration: bool = False,
@@ -418,6 +566,9 @@ def cmd_changed(
         registry,
         changed,
         jobs=jobs,
+        timeout_seconds=gate_timeout_seconds,
+        output_limit_bytes=gate_output_bytes,
+        wave_name="cheap",
     ):
         return 1
     needs_heavy = bool(tiers["heavy"] or tiers["serialized"])
@@ -437,6 +588,9 @@ def cmd_changed(
                 registry,
                 changed,
                 jobs=jobs,
+                timeout_seconds=gate_timeout_seconds,
+                output_limit_bytes=gate_output_bytes,
+                wave_name="heavy",
             ):
                 return 1
             if tiers["serialized"]:
@@ -451,7 +605,16 @@ def cmd_changed(
                         print(f"Another verification holds {lock_path} — waiting…")
                         fcntl.flock(lock, fcntl.LOCK_EX)
                     for gate_id in tiers["serialized"]:
-                        if not run_gate(gate_id, gates[gate_id], registry, changed):
+                        if not run_gate_wave(
+                            [gate_id],
+                            gates,
+                            registry,
+                            changed,
+                            jobs=1,
+                            timeout_seconds=gate_timeout_seconds,
+                            output_limit_bytes=gate_output_bytes,
+                            wave_name=f"serialized:{gate_id}",
+                        ):
                             return 1
     except HostAdmissionFailure as exc:
         print(f"Host admission denied scoped heavy verification: {exc}", file=sys.stderr)
@@ -497,6 +660,18 @@ def main() -> int:
         help="maximum independent gates per verification wave (default: min(4, CPUs); also via LIMEN_VERIFY_JOBS)",
     )
     parser.add_argument(
+        "--gate-timeout-seconds",
+        type=bounded_seconds,
+        default=os.environ.get("LIMEN_VERIFY_GATE_TIMEOUT_SECONDS", "300"),
+        help="deadline for each gate in a wave (default: 300; also via LIMEN_VERIFY_GATE_TIMEOUT_SECONDS)",
+    )
+    parser.add_argument(
+        "--gate-output-bytes",
+        type=bounded_output_bytes,
+        default=os.environ.get("LIMEN_VERIFY_GATE_OUTPUT_BYTES", str(1024 * 1024)),
+        help="maximum combined output retained per gate (default: 1048576; also via LIMEN_VERIFY_GATE_OUTPUT_BYTES)",
+    )
+    parser.add_argument(
         "--require-base",
         action="store_true",
         help="fail closed: merge-base must resolve and the changed set must be non-empty "
@@ -530,6 +705,8 @@ def main() -> int:
             registry,
             args.base,
             jobs=args.jobs,
+            gate_timeout_seconds=args.gate_timeout_seconds,
+            gate_output_bytes=args.gate_output_bytes,
             require_base=args.integration or args.require_base or os.environ.get("LIMEN_VERIFY_REQUIRE_BASE") == "1",
             skip_ci_covered=args.skip_ci_covered,
             integration=args.integration,

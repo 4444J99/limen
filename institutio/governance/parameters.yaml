@@ -864,6 +864,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Maximum independent predicates in each verify.py scoped wave (1–32). The runtime default is the smaller of 4 and the detected CPU count; gates marked serialize:true remain ordered regardless of this value."
+  LIMEN_VERIFY_GATE_OUTPUT_BYTES:
+    default: 1048576
+    env: LIMEN_VERIFY_GATE_OUTPUT_BYTES
+    self_update: none
+    owner: continuity
+    note: "Maximum combined stdout/stderr retained for one scoped gate (1024–16777216 bytes). Exceeding the cap terminates the gate's complete process group and fails the predicate before a wave can exhaust disk or memory."
+  LIMEN_VERIFY_GATE_TIMEOUT_SECONDS:
+    default: 300
+    env: LIMEN_VERIFY_GATE_TIMEOUT_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Per-gate wall-clock deadline for scoped verification (0.1–1800 seconds). All commands in a per-file gate share this one deadline; expiry terminates the complete process group and fails closed."
   LIMEN_VERIFY_NO_DEPLOY_ESCALATION:
     default: "0"
     env: LIMEN_VERIFY_NO_DEPLOY_ESCALATION
