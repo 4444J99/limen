@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from . import harness_paths
+
 _HEAVY_COMMAND = re.compile(
     r"""(?ix)
     \b(
@@ -627,24 +629,25 @@ def path_within(path: Path, root: Path) -> bool:
 
 
 def _harness_session_dirs() -> tuple[Path, ...]:
-    """Claude-harness session-metadata roots, resolved live so tests can retarget HOME."""
+    """Claude-harness session-metadata roots, resolved live so tests can retarget HOME.
 
-    home = Path.home()
-    return (
-        (home / ".claude" / "plans").resolve(strict=False),
-        (home / ".claude" / "jobs").resolve(strict=False),
-        # per-project harness memory + session TLDRs (~/.claude/projects/<scope>/…) — the
-        # system prompt itself directs these writes ("write to it directly with the Write
-        # tool"); blocking them silently drops session memory.
-        (home / ".claude" / "projects").resolve(strict=False),
-    )
+    Covers *every* harness layout, not just ``~/.claude``: the harness relocated this tree to a
+    repo-local ``.agent-runtime/claude`` and the original carve-out silently stopped matching, so
+    plan-file writes fell back through to plan-only-mutation denial and plan mode broke again six
+    days after it was fixed.  ``harness_paths.session_dirs`` enumerates the candidates —
+    ``plans`` (plan mode's own file), ``jobs`` (background-job scratch), and ``projects``
+    (per-project harness memory + session TLDRs, whose writes the system prompt itself directs;
+    blocking them silently drops session memory).
+    """
+
+    return harness_paths.session_dirs()
 
 
 def harness_session_write(targets: list[Path]) -> bool:
     """True when EVERY write target is Claude-harness session metadata.
 
-    Plan-mode's own plan file (~/.claude/plans/<slug>.md) and background-job scratch
-    (~/.claude/jobs/<id>/tmp) are harness state, not workspace mutations — the harness
+    Plan-mode's own plan file (<harness-root>/plans/<slug>.md) and background-job scratch
+    (<harness-root>/jobs/<id>/tmp) are harness state, not workspace mutations — the harness
     *instructs* the model to write them. Before this carve-out they were denied three
     ways (plan-only-mutation in plan mode, shared-checkout-write outside a worktree,
     write-target-outside-worktree inside one), which broke every plan-mode session on
@@ -652,12 +655,17 @@ def harness_session_write(targets: list[Path]) -> bool:
     worktrees. Targets arrive canonicalized (target_paths resolves), so a symlink
     planted under a session dir resolves outside it and falls through to the normal
     workspace machinery.
+
+    The harness root is resolved, never hard-coded — see :mod:`limen.harness_paths`.  Pinning
+    this to ``~/.claude`` is what let the same bug recur once the harness moved its tree.
     """
 
     if not targets:
         return False
     roots = _harness_session_dirs()
-    return all(any(path_within(path, root) for root in roots) for path in targets)
+    return all(
+        any(path_within(path, root) for root in roots) or harness_paths.is_session_path(path) for path in targets
+    )
 
 
 __all__ = [

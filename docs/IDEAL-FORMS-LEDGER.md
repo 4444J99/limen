@@ -87,6 +87,24 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Status:** OPEN.
 - **Owner:** Claude (worktree allocation / harness convention).
 
+### IF-HARNESS-SENSED — the Claude harness root is declared, resolved once, and sensed
+- **Ideal form:** the Claude harness runtime tree — the external substrate the fleet reads its own
+  session state from — is declared once (PARAMETERS: `LIMEN_CLAUDE_HARNESS_ROOT`), resolved in
+  exactly one place (`cli/src/limen/harness_paths.py`), and sensed at beat cadence
+  (`scripts/harness-root-probe.py`), so relocating it is a red check rather than a silent blinding.
+  The fleet senses its work product (lint, tests, contracts, deploys); it must also sense the worker.
+- **Distance:** none — probe green. Reached 2026-07-30 after the harness moved its tree from
+  `~/.claude` to `<repo>/.agent-runtime/claude` and the location, hard-coded in **ten** places,
+  blinded every consumer at once with nothing going red: `action_admission` stopped recognising
+  plan-file writes (breaking plan mode, and re-breaking PR #1521's fix six days after it landed),
+  CONTINUITY globbed an empty directory while still reporting `"status": "ok"`, and
+  `claude-workflow-guard`'s untiered-fan-out audit silently found no sessions. Detected only because
+  the operator got angry. Precedent: `PREC-2026-07-30-external-substrate-undeclared`.
+- **Status:** DONE (2026-07-30).
+- **Owner:** Claude (`limen.harness_paths` + `harness-root-probe` sensor).
+- **Next form:** the same shape for the remaining vendor roots (`~/.codex`, `~/.copilot`,
+  `~/.gemini`, opencode's sqlite) — each is undeclared today and is the same bug waiting.
+
 ### IF-SENSOR-REGISTRY — the beat sensors are declared data, all consumers derive
 - **Ideal form:** the beat's continuous-runtime sensors live in one registry
   (`institutio/governance/sensors.yaml`, VIGILIA's third axis beside GATES + PARAMETERS); the beat loop

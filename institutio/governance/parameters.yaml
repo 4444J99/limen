@@ -410,10 +410,60 @@ parameters:
     owner: continuity
     note: "A handoff summary shorter than this is degenerate (this session got 200). Trigger transcript reconstruction."
   CONTINUITY_TRANSCRIPT_GLOB:
-    default: "~/.claude/projects/*/*.jsonl"
+    # "auto" = derive from limen.harness_paths. A hard-coded ~/.claude literal silently matched
+    # zero files once the harness relocated its tree to <repo>/.agent-runtime/claude, and the
+    # organ kept reporting ok. Set an explicit glob only to pin a non-standard layout.
+    default: "auto"
     env: LIMEN_CONTINUITY_TRANSCRIPTS
     self_update: none
     owner: continuity
+
+  # --- HARNESS ROOT: declare the external dependency the fleet reads from --------
+  # The Claude harness keeps its session tree (transcripts, plan files, job scratch) outside the
+  # workspace, and it moved once already: ~/.claude -> <repo>/.agent-runtime/claude. That location
+  # was hard-coded in ten places, so the move blinded every consumer at once with nothing going
+  # red. Declared here, resolved in limen.harness_paths, sensed by scripts/harness-root-probe.py.
+  LIMEN_CLAUDE_HARNESS_ROOT:
+    default: ""
+    env: LIMEN_CLAUDE_HARNESS_ROOT
+    self_update: none
+    owner: continuity
+    note: "Operator override for the harness runtime root. Empty (default) = resolve automatically: env -> <repo>/.agent-runtime/claude -> the shared checkout's copy when running in a worktree -> ~/.claude. Set only to pin a non-standard layout."
+
+  LIMEN_HARNESS_ROOT_PROBE:
+    default: "1"
+    env: LIMEN_HARNESS_ROOT_PROBE
+    self_update: none
+    owner: continuity
+    note: "ARMED 2026-07-30. Gates the harness-root-probe sensor: asserts the resolved root still holds transcripts (empty-while-a-sibling-is-full = the harness relocated) and scans for the three structural plan-mode fault signatures. Probe: python3 scripts/harness-root-probe.py."
+
+  LIMEN_BEAT_HARNESS_PROBE:
+    default: 6
+    env: LIMEN_BEAT_HARNESS_PROBE
+    self_update: none
+    owner: continuity
+    note: "Heartbeat cadence for the harness-root probe. A relocation is rare but total, so a slow cadence is enough; the cost is a bounded transcript scan."
+
+  LIMEN_HARNESS_PROBE_TIMEOUT:
+    default: 120
+    env: LIMEN_HARNESS_PROBE_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Wall-clock ceiling for the harness-root probe. The corpus is ~200MB; the scan is bounded by LIMEN_HARNESS_PROBE_DAYS and LIMEN_HARNESS_PROBE_MAX_FILES so it never walks all of it."
+
+  LIMEN_HARNESS_PROBE_DAYS:
+    default: 7
+    env: LIMEN_HARNESS_PROBE_DAYS
+    self_update: none
+    owner: continuity
+    note: "Age bound for the harness-root probe's transcript scan. Bounds cost on a 16GB host; the fault signatures are recent-session properties, so a week is ample."
+
+  LIMEN_HARNESS_PROBE_MAX_FILES:
+    default: 60
+    env: LIMEN_HARNESS_PROBE_MAX_FILES
+    self_update: none
+    owner: continuity
+    note: "File-count bound for the harness-root probe, newest first. Caps peak RSS on the beta machine's logged-jetsam host."
 
   # --- INTEGRITY: govern the autoupdater lever (build order #1) ------------------
   INTEGRITY_AUTOUPDATER:
