@@ -179,6 +179,19 @@ people:
         public_face_state: none
         dossier: null
 
+  - slug: derek
+    tier: T3
+    engagement_ref: organs/education/engagements/derek.yaml
+    funnel_instance_ref: null
+    projects:
+      - name: narrative-workshop
+        repo: null
+        keywords: [narrative workshop, narrative coaching, writing mentorship, quest arc]
+        stage: live
+        public_face_state: none
+        dossier: null
+        notes: education-organ engagement (ACTIVE 2026-07-03) — register gap healed 2026-07-30; one-to-one mentorship lane, no build, no outreach
+
   - slug: john-m
     tier: T3
     engagement_ref: null
