@@ -16,7 +16,7 @@ from limen.work_loan import WorkLoanV1
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@*+-]{0,1023}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
-_GIT_OBJECT_RE = re.compile(r"^[0-9a-f]{40,64}$")
+_GIT_OBJECT_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
 
 def utc_now() -> datetime:

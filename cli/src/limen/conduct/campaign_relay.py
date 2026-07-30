@@ -446,6 +446,23 @@ def _tracked_predecessor(
     return blob, contract
 
 
+def _relay_identity_digest(
+    *,
+    workstream: str,
+    predecessor_receipt_blob: str,
+    predecessor_contract_digest: str,
+    predecessor_deadline_epoch: int,
+) -> str:
+    return canonical_hash(
+        {
+            "workstream": workstream,
+            "predecessor_receipt_blob": predecessor_receipt_blob,
+            "predecessor_contract_digest": predecessor_contract_digest,
+            "predecessor_deadline_epoch": predecessor_deadline_epoch,
+        }
+    )
+
+
 def relay_identity(
     root: Path,
     predecessor: Path,
@@ -466,14 +483,12 @@ def relay_identity(
             "predecessor campaign has not been admitted",
         )
     contract_digest = canonical_hash(contract)
-    identity = {
-        "workstream": "institutional-omega",
-        "predecessor_receipt_blob": blob,
-        "predecessor_contract_digest": contract_digest,
-        "predecessor_deadline_epoch": deadline,
-        "exact_remote_main": exact_remote_main,
-    }
-    relay_id = canonical_hash(identity)
+    relay_id = _relay_identity_digest(
+        workstream="institutional-omega",
+        predecessor_receipt_blob=blob,
+        predecessor_contract_digest=contract_digest,
+        predecessor_deadline_epoch=deadline,
+    )
     slug = f"institutional-omega-{relay_id[:16]}"
     return CampaignRelayReceiptV1(
         relay_id=relay_id,
@@ -502,17 +517,26 @@ def reserve_relay(
     with campaign_relay_lock(root, expected.relay_id) as store:
         existing = _read_receipt(store, receipt_name)
         if existing is not None:
-            if existing.relay_id != expected.relay_id or any(
-                getattr(existing, field) != getattr(expected, field)
-                for field in (
-                    "workstream",
-                    "predecessor_receipt_blob",
-                    "predecessor_contract_digest",
-                    "predecessor_deadline_epoch",
-                    "exact_remote_main",
-                    "successor_slug",
-                    "successor_branch",
-                    "successor_session_id",
+            if (
+                _relay_identity_digest(
+                    workstream=existing.workstream,
+                    predecessor_receipt_blob=existing.predecessor_receipt_blob,
+                    predecessor_contract_digest=existing.predecessor_contract_digest,
+                    predecessor_deadline_epoch=existing.predecessor_deadline_epoch,
+                )
+                != existing.relay_id
+                or existing.relay_id != expected.relay_id
+                or any(
+                    getattr(existing, field) != getattr(expected, field)
+                    for field in (
+                        "workstream",
+                        "predecessor_receipt_blob",
+                        "predecessor_contract_digest",
+                        "predecessor_deadline_epoch",
+                        "successor_slug",
+                        "successor_branch",
+                        "successor_session_id",
+                    )
                 )
             ):
                 raise CampaignRelayError(

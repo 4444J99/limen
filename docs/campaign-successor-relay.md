@@ -7,8 +7,10 @@ worktree, register a session, or launch a provider.
 ## Reservation contract
 
 The relay identity binds the workstream, committed predecessor receipt Git blob, validated committed
-contract digest, predecessor deadline, and exact remote default-branch commit. Its stable successor
-slug, branch, and broker session ID derive from that digest.
+contract digest, and predecessor deadline. Its stable successor slug, branch, and broker session ID
+derive from that digest. The first reservation separately preserves its exact remote default-branch
+commit as the successor base. If that branch later advances while the committed predecessor remains
+unchanged, repeated beats validate the stable relay identity and reuse the first selected base.
 
 The reservation lives in the repository's Git common directory, not in a worktree. Verified
 directory descriptors keep every lock and receipt operation inside that store even if a parent path
