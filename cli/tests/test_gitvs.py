@@ -643,6 +643,35 @@ def test_visibility_drift_cites_ungated_public_candidate_instead_of_silence() ->
     assert not any("mirror-mirror" in c and "observed public" in c for c in cites)
 
 
+def test_visibility_drift_receipt_lens_clears_a_swept_public_candidate() -> None:
+    """A green+fresh sweep receipt legitimately OWNS the public posture, so the rung must fall
+    silent on that repo. Without the lens class G cites all 32 swept-clean publics on every run,
+    and a rung that always cites is a rung nobody reads."""
+    module = _load()
+    estate = {
+        "classes": {"operation_private": {"match": [], "visibility": "private"}},
+        "repo_overrides": {
+            "organvm/swept": {"class": "operation_private", "publish_candidate": True},
+            "organvm/unswept": {"class": "operation_private", "publish_candidate": True},
+        },
+    }
+    rows = [
+        {"full_name": "organvm/swept", "private": False},
+        {"full_name": "organvm/unswept", "private": False},
+    ]
+    lens = lambda repo: (True, "green+fresh") if repo == "organvm/swept" else (False, "no receipt")  # noqa: E731
+
+    fails, cites = module.visibility_drift(rows, estate, receipt_ok=lens)
+
+    assert fails == []
+    assert not any("swept" in c and "unswept" not in c for c in cites), "a receipt-owned public must not be cited"
+    assert any("unswept" in c and "no receipt" in c for c in cites)
+
+    # Omitting the lens must stay the over-citing (safe) direction, not silently pass everything.
+    _, unlensed = module.visibility_drift(rows, estate)
+    assert len(unlensed) == 2
+
+
 def test_owner_repos_user_scoped_authenticated_owner_sees_private_estate(monkeypatch) -> None:
     module = _load()
     routes: list[str] = []

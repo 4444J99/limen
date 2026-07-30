@@ -1602,12 +1602,38 @@ def _facts_rows() -> list[dict] | None:
         return None
 
 
-def visibility_drift(rows: list[dict], estate: dict) -> tuple[list[str], list[str]]:
+def _sweep_receipt_lens():
+    """publish-sweep.py's ``receipt_fresh_green``, or None when it cannot be loaded.
+
+    Fail-open by construction: class G is a REPORTING rung, so a missing/broken sweep script must
+    degrade it to the pure read (cite every public candidate) rather than break the whole doctor.
+    Returning None — not a stub that answers True — keeps the failure legible: the un-lensed path
+    over-cites, and over-citing is the safe direction for a posture rung."""
+    try:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("publish_sweep", str(SCRIPT_DIR / "publish-sweep.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["publish_sweep"] = mod
+        spec.loader.exec_module(mod)
+        return mod.receipt_fresh_green
+    except Exception:
+        return None
+
+
+def visibility_drift(rows: list[dict], estate: dict, receipt_ok=None) -> tuple[list[str], list[str]]:
     """Class G, pure: desired visibility − observed. ``publish_candidate`` is desired-public,
     matching apply-visibility.py: its nominal operation-private class preserves the pre-publication
     posture while a green history sweep gates the actual flip. A candidate still private is CITED
-    (homed with the publish-wave owner); an already-public candidate is converged. ``any`` is
-    exempt. Every other mismatch, including desired-private observed-public, is drift."""
+    (homed with the publish-wave owner). ``any`` is exempt. Every other mismatch, including
+    desired-private observed-public, is drift.
+
+    ``receipt_ok(repo) -> (bool, why)`` is the optional live sweep-receipt lens. Omitted (the pure
+    fixture path) every already-public candidate is cited, because purity cannot tell an adjudicated
+    public from an un-adjudicated one. Supplied (the live doctor), a green+fresh receipt legitimately
+    OWNS the public posture and the repo is genuinely converged — so it is not cited at all. Without
+    that distinction the rung cites all 32 swept-clean publics forever, and a rung that always cites
+    is a rung nobody reads."""
     fails: list[str] = []
     cites: list[str] = []
     classes = estate.get("classes") or {}
@@ -1627,9 +1653,12 @@ def visibility_drift(rows: list[dict], estate: dict) -> tuple[list[str], list[st
                 # The old silent "converged" read let an un-gated public ride (micro-tato /
                 # mirror-mirror, 2026-07-30): candidacy is a GATED desire — public without a
                 # released wave receipt is a posture question, not a convergence.
+                ok, why = receipt_ok(full) if receipt_ok else (False, "no receipt lens")
+                if ok:
+                    continue  # the receipt owns the flip — genuinely converged
                 cites.append(
-                    f"[G visibility-drift] {full}: publish candidate observed public — verify a released "
-                    f"publish-wave receipt owns the flip, else demote to the pre-publication posture"
+                    f"[G visibility-drift] {full}: publish candidate observed public with no receipt "
+                    f"owning the flip ({why}) — publish-sweep.py adjudicates; RED demotes it"
                 )
             continue
         if desired == "public" and publish_candidate:
@@ -1910,7 +1939,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
     elif rows is None:
         skips.append("[G visibility-drift] no census facts (run census online first)")
     else:
-        g_fails, g_cites = visibility_drift(rows, estate)
+        g_fails, g_cites = visibility_drift(rows, estate, receipt_ok=_sweep_receipt_lens())
         fails += g_fails
         cites += g_cites
 
