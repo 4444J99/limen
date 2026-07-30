@@ -16,6 +16,7 @@ import plistlib
 import re
 import secrets
 import selectors
+import signal
 import stat
 import subprocess
 import sys
@@ -49,6 +50,8 @@ MAX_REGISTRY_BYTES = 1024 * 1024
 MAX_CHILD_STDOUT_BYTES = 1024 * 1024
 MAX_CHILD_STDERR_BYTES = 256 * 1024
 MAX_PREPARED_RECORD_BYTES = 4 * 1024 * 1024
+PROCESS_GROUP_TERM_SECONDS = 0.25
+PROCESS_GROUP_KILL_SECONDS = 2.0
 TARGET_REFS = ("archive4t", "t7recovery")
 TARGET_NAMES = {
     "archive4t": "Archive4T",
@@ -118,6 +121,7 @@ class RailRequest:
     custody_root: Path | None = None
     expected_volume_uuid: str | None = None
     expected_physical_identity: str | None = None
+    deadline: float | None = None
 
 
 class RailRunner(Protocol):
@@ -125,7 +129,7 @@ class RailRunner(Protocol):
 
 
 VolumeProbe = Callable[[Path], VolumeIdentity]
-PlanDiscoverer = Callable[[Path, int], CustodyPlan]
+PlanDiscoverer = Callable[[Path, int, float], CustodyPlan]
 LeaseFactory = Callable[..., AbstractContextManager[dict[str, Any]]]
 PreparedWriteHook = Callable[[RegisteredTarget, int], None]
 
@@ -363,9 +367,11 @@ def _assert_target_outputs_safe(target: RegisteredTarget) -> None:
 def _assert_pair_receipt_path_safe(
     target: RegisteredTarget,
     plan_sha256: str,
+    record_sha256: str | None = None,
 ) -> None:
-    if not SHA256_RE.fullmatch(plan_sha256):
-        raise PairedCustodyError("paired-receipt-name-invalid")
+    filenames = [_paired_receipt_filename(plan_sha256)]
+    if record_sha256 is not None:
+        filenames.append(_paired_receipt_filename(plan_sha256, record_sha256))
     directory = target.custody_root / PAIR_RECEIPT_RELATIVE
     try:
         info = directory.lstat()
@@ -376,19 +382,20 @@ def _assert_pair_receipt_path_safe(
     if directory.is_symlink() or not stat.S_ISDIR(info.st_mode):
         raise PairedCustodyError("paired-receipt-root-invalid")
 
-    receipt = directory / f"{plan_sha256}.json"
-    try:
-        info = receipt.lstat()
-    except FileNotFoundError:
-        return
-    except OSError as exc:
-        raise PairedCustodyError("paired-receipt-unavailable") from exc
-    if receipt.is_symlink() or not stat.S_ISREG(info.st_mode):
-        raise PairedCustodyError("paired-receipt-not-regular")
-    if stat.S_IMODE(info.st_mode) != 0o600:
-        raise PairedCustodyError("paired-receipt-mode-invalid")
-    if info.st_size > MAX_PREPARED_RECORD_BYTES:
-        raise PairedCustodyError("paired-receipt-size-limit")
+    for filename in filenames:
+        receipt = directory / filename
+        try:
+            info = receipt.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise PairedCustodyError("paired-receipt-unavailable") from exc
+        if receipt.is_symlink() or not stat.S_ISREG(info.st_mode):
+            raise PairedCustodyError("paired-receipt-not-regular")
+        if stat.S_IMODE(info.st_mode) != 0o600:
+            raise PairedCustodyError("paired-receipt-mode-invalid")
+        if info.st_size > MAX_PREPARED_RECORD_BYTES:
+            raise PairedCustodyError("paired-receipt-size-limit")
 
 
 def _assert_live_target(
@@ -556,9 +563,77 @@ def _assert_same_logical_inventory(
             raise PairedCustodyError("rail-logical-inventory-mismatch")
 
 
+def _remaining_seconds(deadline: float) -> int:
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise PairedCustodyError("paired-custody-time-limit-exceeded")
+    return max(1, min(MAX_SECONDS, int(remaining)))
+
+
+def _process_group_exists(process_group: int) -> bool:
+    try:
+        os.killpg(process_group, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _wait_for_process_group_exit(
+    process: subprocess.Popen[bytes],
+    process_group: int,
+    *,
+    deadline: float,
+) -> bool:
+    while time.monotonic() < deadline:
+        process.poll()
+        if not _process_group_exists(process_group):
+            return True
+        time.sleep(0.01)
+    process.poll()
+    return not _process_group_exists(process_group)
+
+
+def _terminate_process_group(process: subprocess.Popen[bytes], *, mode: str) -> None:
+    process_group = process.pid
+    try:
+        os.killpg(process_group, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    except OSError as exc:
+        raise PairedCustodyError(f"single-rail-{mode}-termination-failed") from exc
+
+    if not _wait_for_process_group_exit(
+        process,
+        process_group,
+        deadline=time.monotonic() + PROCESS_GROUP_TERM_SECONDS,
+    ):
+        try:
+            os.killpg(process_group, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        except OSError as exc:
+            raise PairedCustodyError(f"single-rail-{mode}-termination-failed") from exc
+
+    try:
+        process.wait(timeout=PROCESS_GROUP_KILL_SECONDS)
+    except subprocess.TimeoutExpired as exc:
+        raise PairedCustodyError(f"single-rail-{mode}-termination-failed") from exc
+    if not _wait_for_process_group_exit(
+        process,
+        process_group,
+        deadline=time.monotonic() + PROCESS_GROUP_KILL_SECONDS,
+    ):
+        raise PairedCustodyError(f"single-rail-{mode}-termination-failed")
+
+
 def invoke_single_rail(script: Path, request: RailRequest) -> dict[str, Any]:
     """Invoke only the existing public single-rail executable."""
 
+    child_seconds = request.max_seconds
+    if request.deadline is not None:
+        child_seconds = min(child_seconds, _remaining_seconds(request.deadline))
     arguments = [
         sys.executable,
         str(script),
@@ -567,7 +642,7 @@ def invoke_single_rail(script: Path, request: RailRequest) -> dict[str, Any]:
         "--max-roots",
         str(request.max_roots),
         "--max-seconds",
-        str(request.max_seconds),
+        str(child_seconds),
     ]
     if request.mode in {"check", "apply"}:
         arguments.extend(["--limen-root", str(request.limen_root)])
@@ -579,28 +654,35 @@ def invoke_single_rail(script: Path, request: RailRequest) -> dict[str, Any]:
         arguments.extend(["--expected-volume-uuid", request.expected_volume_uuid])
     if request.expected_physical_identity is not None:
         arguments.extend(["--expected-physical-identity", request.expected_physical_identity])
+    process: subprocess.Popen[bytes] | None = None
+    selector: selectors.BaseSelector | None = None
+    stdout = None
+    stderr = None
     try:
-        process = subprocess.Popen(
-            arguments,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
-        )
-        if process.stdout is None or process.stderr is None:
-            raise PairedCustodyError(f"single-rail-{request.mode}-unavailable")
-        selector = selectors.DefaultSelector()
-        selector.register(process.stdout, selectors.EVENT_READ, ("stdout", MAX_CHILD_STDOUT_BYTES))
-        selector.register(process.stderr, selectors.EVENT_READ, ("stderr", MAX_CHILD_STDERR_BYTES))
-        output = {"stdout": bytearray(), "stderr": bytearray()}
-        deadline = time.monotonic() + request.max_seconds + 30
         try:
+            process = subprocess.Popen(
+                arguments,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            stdout = process.stdout
+            stderr = process.stderr
+            if stdout is None or stderr is None:
+                raise PairedCustodyError(f"single-rail-{request.mode}-unavailable")
+            selector = selectors.DefaultSelector()
+            selector.register(stdout, selectors.EVENT_READ, ("stdout", MAX_CHILD_STDOUT_BYTES))
+            selector.register(stderr, selectors.EVENT_READ, ("stderr", MAX_CHILD_STDERR_BYTES))
+            output = {"stdout": bytearray(), "stderr": bytearray()}
+            deadline = request.deadline or time.monotonic() + child_seconds + 30
             while selector.get_map():
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise subprocess.TimeoutExpired(arguments, request.max_seconds + 30)
+                    raise subprocess.TimeoutExpired(arguments, child_seconds)
                 events = selector.select(remaining)
                 if not events:
-                    raise subprocess.TimeoutExpired(arguments, request.max_seconds + 30)
+                    raise subprocess.TimeoutExpired(arguments, child_seconds)
                 for key, _mask in events:
                     stream, limit = key.data
                     chunk = os.read(key.fd, min(64 * 1024, limit + 1 - len(output[stream])))
@@ -611,29 +693,31 @@ def invoke_single_rail(script: Path, request: RailRequest) -> dict[str, Any]:
                     if len(output[stream]) > limit:
                         raise PairedCustodyError(f"single-rail-{request.mode}-{stream}-limit")
             returncode = process.wait(timeout=max(0.1, deadline - time.monotonic()))
+            payload = json.loads(bytes(output["stdout"]))
+            if not isinstance(payload, dict):
+                raise PairedCustodyError(f"single-rail-{request.mode}-invalid")
+            if returncode:
+                error = str(payload.get("error") or "")
+                reasons = (error,) if ERROR_CODE_RE.fullmatch(error) else ()
+                raise PairedCustodyError(
+                    f"single-rail-{request.mode}-blocked",
+                    reasons=reasons,
+                )
         except BaseException:
-            process.kill()
-            process.wait()
+            if process is not None:
+                _terminate_process_group(process, mode=request.mode)
             raise
         finally:
-            selector.close()
-            process.stdout.close()
-            process.stderr.close()
-        encoded_stdout = bytes(output["stdout"])
-        payload = json.loads(encoded_stdout)
+            if selector is not None:
+                selector.close()
+            if stdout is not None:
+                stdout.close()
+            if stderr is not None:
+                stderr.close()
     except PairedCustodyError:
         raise
     except (OSError, UnicodeDecodeError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
         raise PairedCustodyError(f"single-rail-{request.mode}-unavailable") from exc
-    if not isinstance(payload, dict):
-        raise PairedCustodyError(f"single-rail-{request.mode}-invalid")
-    if returncode:
-        error = str(payload.get("error") or "")
-        reasons = (error,) if ERROR_CODE_RE.fullmatch(error) else ()
-        raise PairedCustodyError(
-            f"single-rail-{request.mode}-blocked",
-            reasons=reasons,
-        )
     return payload
 
 
@@ -661,15 +745,23 @@ def _open_receipt_directory(custody_root: Path) -> int:
         os.close(root)
 
 
-def _read_receipt_bytes(custody_root: Path, filename: str) -> bytes:
+def _read_optional_receipt_bytes(custody_root: Path, filename: str) -> bytes | None:
     directory = _open_receipt_directory(custody_root)
     try:
-        descriptor = os.open(
-            filename,
-            os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
-            dir_fd=directory,
-        )
+        try:
+            descriptor = os.open(
+                filename,
+                os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=directory,
+            )
+        except FileNotFoundError:
+            return None
         with os.fdopen(descriptor, "rb") as handle:
+            info = os.fstat(handle.fileno())
+            if not stat.S_ISREG(info.st_mode):
+                raise PairedCustodyError("paired-receipt-not-regular")
+            if stat.S_IMODE(info.st_mode) != 0o600:
+                raise PairedCustodyError("paired-receipt-mode-invalid")
             encoded = handle.read(MAX_PREPARED_RECORD_BYTES + 1)
         if len(encoded) > MAX_PREPARED_RECORD_BYTES:
             raise PairedCustodyError("paired-receipt-size-limit")
@@ -682,12 +774,23 @@ def _read_receipt_bytes(custody_root: Path, filename: str) -> bytes:
         os.close(directory)
 
 
+def _read_receipt_bytes(custody_root: Path, filename: str) -> bytes:
+    encoded = _read_optional_receipt_bytes(custody_root, filename)
+    if encoded is None:
+        raise PairedCustodyError("paired-receipt-unavailable")
+    return encoded
+
+
+def _private_json_bytes(payload: dict[str, Any]) -> bytes:
+    return json.dumps(payload, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+
+
 def _write_exact_private_json(
     custody_root: Path,
     filename: str,
     payload: dict[str, Any],
 ) -> bool:
-    encoded = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+    encoded = _private_json_bytes(payload)
     if len(encoded) > MAX_PREPARED_RECORD_BYTES:
         raise PairedCustodyError("paired-receipt-size-limit")
     directory = _open_receipt_directory(custody_root)
@@ -807,8 +910,21 @@ def _prepared_record(
     return {**content, "record_sha256": _canonical_sha256(content)}
 
 
+def _paired_receipt_filename(
+    plan_sha256: str,
+    record_sha256: str | None = None,
+) -> str:
+    if not SHA256_RE.fullmatch(plan_sha256):
+        raise PairedCustodyError("paired-receipt-name-invalid")
+    if record_sha256 is None:
+        return f"{plan_sha256}.json"
+    if not SHA256_RE.fullmatch(record_sha256):
+        raise PairedCustodyError("paired-receipt-name-invalid")
+    return f"{plan_sha256}.{record_sha256}.json"
+
+
 def _validated_prepared_record(encoded: bytes, expected: dict[str, Any]) -> dict[str, Any]:
-    expected_bytes = json.dumps(expected, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+    expected_bytes = _private_json_bytes(expected)
     if encoded != expected_bytes:
         raise PairedCustodyError("paired-receipts-diverged")
     try:
@@ -830,6 +946,28 @@ def _validated_prepared_record(encoded: bytes, expected: dict[str, Any]) -> dict
     return payload
 
 
+def _select_prepared_filename(
+    registry: TargetRegistry,
+    record: dict[str, Any],
+    *,
+    volume_probe: VolumeProbe,
+    require_mount: bool,
+) -> str:
+    legacy = _paired_receipt_filename(str(record["plan_sha256"]))
+    expected = _private_json_bytes(record)
+    existing: list[bytes | None] = []
+    for target in registry.targets:
+        _assert_live_target(target, volume_probe=volume_probe, require_mount=require_mount)
+        existing.append(_read_optional_receipt_bytes(target.custody_root, legacy))
+        _assert_live_target(target, volume_probe=volume_probe, require_mount=require_mount)
+    if all(value is None or value == expected for value in existing):
+        return legacy
+    return _paired_receipt_filename(
+        str(record["plan_sha256"]),
+        str(record["record_sha256"]),
+    )
+
+
 def _write_prepared_pair(
     registry: TargetRegistry,
     record: dict[str, Any],
@@ -838,7 +976,12 @@ def _write_prepared_pair(
     require_mount: bool,
     write_hook: PreparedWriteHook | None,
 ) -> tuple[bool, dict[str, Any]]:
-    filename = f"{record['plan_sha256']}.json"
+    filename = _select_prepared_filename(
+        registry,
+        record,
+        volume_probe=volume_probe,
+        require_mount=require_mount,
+    )
     changed = False
     for index, target in enumerate(registry.targets):
         _assert_live_target(target, volume_probe=volume_probe, require_mount=require_mount)
@@ -894,8 +1037,16 @@ def _projection(
     }
 
 
-def _default_discoverer(limen_root: Path, max_roots: int) -> CustodyPlan:
-    return discover_plan(limen_root, max_roots=max_roots)
+def _default_discoverer(
+    limen_root: Path,
+    max_roots: int,
+    deadline: float,
+) -> CustodyPlan:
+    return discover_plan(
+        limen_root,
+        max_roots=max_roots,
+        deadline=deadline,
+    )
 
 
 def run_paired_custody(
@@ -928,6 +1079,7 @@ def run_paired_custody(
             surface="estate-audit-paired-custody",
         )
         with lease:
+            deadline = time.monotonic() + max_seconds
             registry = load_target_registry(
                 registry_path,
                 repository_root=repository_root,
@@ -951,12 +1103,14 @@ def run_paired_custody(
                         limen_root=limen_root,
                         max_roots=max_roots,
                         max_seconds=max_seconds,
+                        deadline=deadline,
                     )
                 ),
                 expected_plan_sha256=None,
                 require_changed=False,
             )
-            plan = plan_discoverer(limen_root, max_roots)
+            plan = plan_discoverer(limen_root, max_roots, deadline)
+            _remaining_seconds(deadline)
             _assert_check_matches_plan(check, plan)
             _assert_targets_outside_sources(registry, plan)
             for target in registry.targets:
@@ -981,6 +1135,7 @@ def run_paired_custody(
                             custody_root=target.custody_root,
                             expected_volume_uuid=target.identity.volume_uuid,
                             expected_physical_identity=target.identity.physical_identity,
+                            deadline=deadline,
                         )
                     ),
                     expected_plan_sha256=check["plan_sha256"],
@@ -1000,6 +1155,7 @@ def run_paired_custody(
 
             # Revalidate both exact devices and path topology immediately before
             # the only paired-layer writes.
+            _remaining_seconds(deadline)
             validate_live_targets(
                 registry,
                 volume_probe=volume_probe,
@@ -1013,9 +1169,13 @@ def run_paired_custody(
                 single_rail_script=single_rail_script,
             )
             _assert_targets_outside_sources(registry, plan)
-            for target in registry.targets:
-                _assert_pair_receipt_path_safe(target, check["plan_sha256"])
             record = _prepared_record(registry, check, rail_results)
+            for target in registry.targets:
+                _assert_pair_receipt_path_safe(
+                    target,
+                    check["plan_sha256"],
+                    record["record_sha256"],
+                )
             receipt_changed, reopened_record = _write_prepared_pair(
                 registry,
                 record,

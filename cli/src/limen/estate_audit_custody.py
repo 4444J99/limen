@@ -46,7 +46,7 @@ PAYLOAD_CHUNK_BYTES = 1024 * 1024
 MAX_CUSTODY_RECEIPT_BYTES = 32 * 1024 * 1024
 VOLUME_UUID_RE = re.compile(r"^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$")
 PHYSICAL_IDENTITY_RE = re.compile(r"^device_[0-9a-f]{32}$")
-IdentityGuard = Callable[[], None]
+IdentityGuard = Callable[[Path], None]
 
 
 class EstateAuditCustodyError(RuntimeError):
@@ -167,6 +167,8 @@ def _run_git(
     stdin: Any = None,
     github_auth: bool = False,
 ) -> subprocess.CompletedProcess[bytes]:
+    if timeout <= 0:
+        raise EstateAuditCustodyError("campaign-time-limit-exceeded")
     try:
         return subprocess.run(
             [GIT, "-c", "protocol.file.allow=always", *arguments],
@@ -175,7 +177,7 @@ def _run_git(
             input=input_bytes,
             stdin=stdin,
             capture_output=True,
-            timeout=max(1.0, timeout),
+            timeout=timeout,
             check=False,
         )
     except (OSError, subprocess.SubprocessError) as exc:
@@ -210,7 +212,20 @@ def _object_id(value: str, *, label: str) -> str:
     return normalized
 
 
-def _root_record(target: WorktreeTarget) -> GeneratedRootRecord:
+def _scan_timeout(deadline: float | None) -> float:
+    if deadline is None:
+        return 120
+    remaining = _remaining(deadline)
+    if remaining < 1:
+        raise EstateAuditCustodyError("campaign-time-limit-exceeded")
+    return min(120, remaining)
+
+
+def _root_record(
+    target: WorktreeTarget,
+    *,
+    deadline: float | None = None,
+) -> GeneratedRootRecord:
     try:
         path = target.path.expanduser().resolve(strict=True)
         before = path.lstat()
@@ -218,15 +233,31 @@ def _root_record(target: WorktreeTarget) -> GeneratedRootRecord:
         raise EstateAuditCustodyError("root-unavailable", type(exc).__name__) from exc
     if path.is_symlink() or not stat.S_ISDIR(before.st_mode):
         raise EstateAuditCustodyError("root-not-directory")
-    if _git_text(path, "rev-parse", "--is-inside-work-tree") != "true":
+    if _git_text(path, "rev-parse", "--is-inside-work-tree", timeout=_scan_timeout(deadline)) != "true":
         raise EstateAuditCustodyError("root-not-git-checkout")
-    index = _git_bytes(path, "ls-files", "-s", "-z")
+    index = _git_bytes(path, "ls-files", "-s", "-z", timeout=_scan_timeout(deadline))
     index_entries = [value for value in index.split(b"\0") if value]
-    repository = _github_repository(_git_text(path, "remote", "get-url", "origin"))
-    head = _object_id(_git_text(path, "rev-parse", "HEAD"), label="head")
-    tree = _object_id(_git_text(path, "rev-parse", "HEAD^{tree}"), label="tree")
+    repository = _github_repository(_git_text(path, "remote", "get-url", "origin", timeout=_scan_timeout(deadline)))
+    head = _object_id(
+        _git_text(path, "rev-parse", "HEAD", timeout=_scan_timeout(deadline)),
+        label="head",
+    )
+    tree = _object_id(
+        _git_text(path, "rev-parse", "HEAD^{tree}", timeout=_scan_timeout(deadline)),
+        label="tree",
+    )
     tree_entries = [
-        value for value in _git_bytes(path, "ls-tree", "-r", "--name-only", "-z", "HEAD").split(b"\0") if value
+        value
+        for value in _git_bytes(
+            path,
+            "ls-tree",
+            "-r",
+            "--name-only",
+            "-z",
+            "HEAD",
+            timeout=_scan_timeout(deadline),
+        ).split(b"\0")
+        if value
     ]
     try:
         after = path.lstat()
@@ -255,10 +286,15 @@ def discover_plan(
     *,
     targets: Iterable[WorktreeTarget] | None = None,
     max_roots: int = 1000,
+    deadline: float | None = None,
 ) -> CustodyPlan:
     if max_roots <= 0 or max_roots > MAX_ROOTS:
         raise EstateAuditCustodyError("invalid-root-limit")
+    if deadline is not None:
+        _remaining(deadline)
     candidates = list(targets) if targets is not None else iter_worktree_targets(limen_root, strict=True)
+    if deadline is not None:
+        _remaining(deadline)
     selected = [target for target in candidates if GENERATED_ROOT_RE.fullmatch(target.path.name)]
     if len(selected) > max_roots:
         raise EstateAuditCustodyError("root-limit-exceeded")
@@ -267,7 +303,9 @@ def discover_plan(
     records: list[GeneratedRootRecord] = []
     seen: set[str] = set()
     for target in sorted(selected, key=lambda value: str(value.path)):
-        record = _root_record(target)
+        if deadline is not None:
+            _remaining(deadline)
+        record = _root_record(target, deadline=deadline)
         if record.path in seen:
             continue
         seen.add(record.path)
@@ -441,17 +479,163 @@ def _atomic_private_json(path: Path, payload: dict[str, Any]) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _receipt_json_bytes(payload: dict[str, Any]) -> bytes:
+    return json.dumps(payload, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+
+
+def _read_receipt_entry(directory: int, filename: str) -> bytes | None:
+    try:
+        descriptor = os.open(
+            filename,
+            os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            dir_fd=directory,
+        )
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        raise EstateAuditCustodyError("custody-receipt-version-unavailable") from exc
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode):
+            raise EstateAuditCustodyError("custody-receipt-version-not-regular")
+        if stat.S_IMODE(info.st_mode) != 0o600:
+            raise EstateAuditCustodyError("custody-receipt-version-mode-invalid")
+        if info.st_size > MAX_CUSTODY_RECEIPT_BYTES:
+            raise EstateAuditCustodyError("custody-receipt-version-size-limit")
+        with os.fdopen(descriptor, "rb") as handle:
+            descriptor = -1
+            encoded = handle.read(MAX_CUSTODY_RECEIPT_BYTES + 1)
+        if len(encoded) > MAX_CUSTODY_RECEIPT_BYTES:
+            raise EstateAuditCustodyError("custody-receipt-version-size-limit")
+        return encoded
+    except EstateAuditCustodyError:
+        raise
+    except OSError as exc:
+        raise EstateAuditCustodyError("custody-receipt-version-unavailable") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+
+
+def _preserve_canonical_receipt(
+    custody_root: Path,
+    plan_sha256: str,
+    receipt: dict[str, Any],
+    *,
+    deadline: float,
+) -> bool:
+    _remaining(deadline)
+    content_sha256 = str(receipt.get("content_sha256") or "")
+    if not re.fullmatch(r"[0-9a-f]{64}", content_sha256):
+        raise EstateAuditCustodyError("custody-receipt-content-mismatch")
+    canonical_name = f"{plan_sha256}.json"
+    version_name = f"{plan_sha256}.{content_sha256}.json"
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        directory = os.open(custody_root / "receipts", flags)
+    except OSError as exc:
+        raise EstateAuditCustodyError("custody-receipt-version-unavailable") from exc
+    temporary: str | None = None
+    try:
+        _remaining(deadline)
+        canonical = _read_receipt_entry(directory, canonical_name)
+        if canonical is None or canonical != _receipt_json_bytes(receipt):
+            raise EstateAuditCustodyError("custody-receipt-changed-before-rotation")
+        _remaining(deadline)
+        version = _read_receipt_entry(directory, version_name)
+        if version is not None:
+            if version != canonical:
+                raise EstateAuditCustodyError("custody-receipt-version-conflict")
+            return False
+
+        _remaining(deadline)
+        temporary = f".{version_name}.{os.getpid()}.{secrets.token_hex(4)}.tmp"
+        descriptor = os.open(
+            temporary,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=directory,
+        )
+        with os.fdopen(descriptor, "wb") as handle:
+            os.fchmod(handle.fileno(), 0o600)
+            handle.write(canonical)
+            handle.flush()
+            os.fsync(handle.fileno())
+        _remaining(deadline)
+        try:
+            os.link(
+                temporary,
+                version_name,
+                src_dir_fd=directory,
+                dst_dir_fd=directory,
+                follow_symlinks=False,
+            )
+        except FileExistsError:
+            version = _read_receipt_entry(directory, version_name)
+            if version != canonical:
+                raise EstateAuditCustodyError("custody-receipt-version-conflict")
+            return False
+        _remaining(deadline)
+        version = _read_receipt_entry(directory, version_name)
+        if version != canonical:
+            raise EstateAuditCustodyError("custody-receipt-version-conflict")
+        os.fsync(directory)
+        return True
+    except EstateAuditCustodyError:
+        raise
+    except OSError as exc:
+        raise EstateAuditCustodyError("custody-receipt-version-write-failed") from exc
+    finally:
+        if temporary is not None:
+            try:
+                os.unlink(temporary, dir_fd=directory)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                pass
+        os.close(directory)
+
+
 def _receipt_path(custody_root: Path, plan_sha256: str) -> Path:
     if not re.fullmatch(r"[0-9a-f]{64}", plan_sha256):
         raise EstateAuditCustodyError("invalid-plan-sha")
     return custody_root / "receipts" / f"{plan_sha256}.json"
 
 
-def _external_custody_root(custody_root: Path) -> Path:
+def _resolved_custody_root(custody_root: Path) -> Path:
+    expanded = Path(os.path.expanduser(custody_root))
+    if ".." in expanded.parts:
+        raise EstateAuditCustodyError("custody-target-path-indirection")
+    candidate = Path(os.path.abspath(expanded))
+    current = Path(candidate.anchor)
+    for part in candidate.parts[1:]:
+        current /= part
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            break
+        except OSError as exc:
+            raise EstateAuditCustodyError("custody-target-identity-unavailable") from exc
+        if stat.S_ISLNK(info.st_mode):
+            raise EstateAuditCustodyError("custody-target-path-indirection")
     try:
-        return require_mounted_external(custody_root)
+        resolved = candidate.resolve(strict=False)
+    except (OSError, RuntimeError) as exc:
+        raise EstateAuditCustodyError("custody-target-identity-unavailable") from exc
+    if resolved != candidate:
+        raise EstateAuditCustodyError("custody-target-path-indirection")
+    return resolved
+
+
+def _external_custody_root(custody_root: Path) -> Path:
+    candidate = _resolved_custody_root(custody_root)
+    try:
+        resolved = require_mounted_external(candidate)
     except PipelineError as exc:
         raise EstateAuditCustodyError("external-custody-unavailable") from exc
+    if resolved != candidate:
+        raise EstateAuditCustodyError("custody-target-path-indirection")
+    return resolved
 
 
 def _load_receipt(path: Path) -> dict[str, Any]:
@@ -496,14 +680,13 @@ def assert_custody_target_identity(
         raise EstateAuditCustodyError("expected-volume-uuid-invalid")
     if not PHYSICAL_IDENTITY_RE.fullmatch(expected_physical_identity):
         raise EstateAuditCustodyError("expected-physical-identity-invalid")
-    candidate = Path(os.path.abspath(os.path.expanduser(custody_root)))
-    try:
-        volume = Path("/Volumes") / candidate.relative_to("/Volumes").parts[0]
-    except (ValueError, IndexError) as exc:
-        raise EstateAuditCustodyError("custody-target-identity-unavailable") from exc
+    candidate = _resolved_custody_root(custody_root)
+    probe = candidate
+    while not probe.exists() and probe != probe.parent:
+        probe = probe.parent
     try:
         result = subprocess.run(
-            ["/usr/sbin/diskutil", "info", "-plist", str(volume)],
+            ["/usr/sbin/diskutil", "info", "-plist", str(probe)],
             capture_output=True,
             check=False,
             timeout=20,
@@ -514,7 +697,11 @@ def assert_custody_target_identity(
         payload = plistlib.loads(result.stdout)
         observed_mount = Path(os.path.abspath(str(payload["MountPoint"])))
         observed_uuid = str(payload["VolumeUUID"]).upper()
-        physical_identity = _device_identity(volume)
+        try:
+            candidate.relative_to(observed_mount)
+        except ValueError as exc:
+            raise EstateAuditCustodyError("custody-target-identity-mismatch") from exc
+        physical_identity = _device_identity(observed_mount)
     except EstateAuditCustodyError:
         raise
     except (
@@ -526,15 +713,13 @@ def assert_custody_target_identity(
         plistlib.InvalidFileException,
     ) as exc:
         raise EstateAuditCustodyError("custody-target-identity-unavailable") from exc
-    if observed_mount != volume:
-        raise EstateAuditCustodyError("custody-target-identity-mismatch")
     if observed_uuid != expected_uuid or physical_identity != expected_physical_identity:
         raise EstateAuditCustodyError("custody-target-identity-mismatch")
 
 
-def _assert_identity(identity_guard: IdentityGuard | None) -> None:
+def _assert_identity(identity_guard: IdentityGuard | None, custody_root: Path) -> None:
     if identity_guard is not None:
-        identity_guard()
+        identity_guard(custody_root)
 
 
 def _payload_relative(payload_sha256: str) -> Path:
@@ -862,12 +1047,41 @@ def _payload_stats(states: list[dict[str, Any]]) -> dict[str, int]:
     }
 
 
-def preflight_plan(plan: CustodyPlan, *, max_seconds: int = MAX_SECONDS) -> dict[str, Any]:
+def _receipt_for_plan(
+    plan: CustodyPlan,
+    repositories: list[dict[str, Any]],
+    failed_checkout_states: list[dict[str, Any]],
+) -> dict[str, Any]:
+    content: dict[str, Any] = {
+        "schema": RECEIPT_SCHEMA,
+        "created_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "plan_sha256": plan.plan_sha256,
+        "root_count": len(plan.roots),
+        "repository_count": plan.repository_count,
+        "head_count": plan.head_count,
+        "empty_index_root_count": plan.empty_index_root_count,
+        "indexed_root_count": plan.indexed_root_count,
+        **_payload_stats(failed_checkout_states),
+        "roots": [asdict(root_record) for root_record in plan.roots],
+        "repositories": repositories,
+        "failed_checkout_states": failed_checkout_states,
+        "restoration_passed": True,
+    }
+    return {**content, "content_sha256": _canonical_sha256(content)}
+
+
+def preflight_plan(
+    plan: CustodyPlan,
+    *,
+    max_seconds: int = MAX_SECONDS,
+    deadline: float | None = None,
+) -> dict[str, Any]:
     if max_seconds <= 0 or max_seconds > MAX_SECONDS:
         raise EstateAuditCustodyError("invalid-time-limit")
-    deadline = time.monotonic() + max_seconds
+    effective_deadline = deadline or time.monotonic() + max_seconds
+    _remaining(effective_deadline)
     states = [
-        _failed_checkout_state(root, Path("."), deadline=deadline, capture=False)[0]
+        _failed_checkout_state(root, Path("."), deadline=effective_deadline, capture=False)[0]
         for root in plan.roots
         if root.index_entry_count == 0
     ]
@@ -1079,35 +1293,45 @@ def verify_receipt(
     max_seconds: int = 900,
     require_volume: bool = True,
     identity_guard: IdentityGuard | None = None,
+    deadline: float | None = None,
 ) -> dict[str, Any]:
     if max_seconds <= 0 or max_seconds > MAX_SECONDS:
         raise EstateAuditCustodyError("invalid-time-limit")
-    _assert_identity(identity_guard)
-    root = _external_custody_root(custody_root) if require_volume else custody_root.expanduser().resolve()
-    _assert_identity(identity_guard)
+    candidate = _resolved_custody_root(custody_root)
+    _assert_identity(identity_guard, candidate)
+    root = _external_custody_root(candidate) if require_volume else candidate
+    _assert_identity(identity_guard, root)
     receipt = _load_receipt(_receipt_path(root, plan_sha256))
     if receipt.get("plan_sha256") != plan_sha256:
         raise EstateAuditCustodyError("custody-receipt-plan-mismatch")
-    deadline = time.monotonic() + max_seconds
+    effective_deadline = deadline or time.monotonic() + max_seconds
+    _remaining(effective_deadline)
     for store, heads in _validated_receipt_repositories(root, receipt):
         for head, tree in heads.items():
-            if not _has_exact_ref(store, head, tree, timeout=_remaining(deadline)):
+            if not _has_exact_ref(store, head, tree, timeout=_remaining(effective_deadline)):
                 raise EstateAuditCustodyError("custody-ref-verification-failed")
-        _git_bytes(store, "fsck", "--full", "--strict", "--no-progress", timeout=_remaining(deadline))
+        _git_bytes(
+            store,
+            "fsck",
+            "--full",
+            "--strict",
+            "--no-progress",
+            timeout=_remaining(effective_deadline),
+        )
         if full_restore:
-            _assert_identity(identity_guard)
-            _restore_repository(store, heads, root, deadline=deadline)
-            _assert_identity(identity_guard)
+            _assert_identity(identity_guard, root)
+            _restore_repository(store, heads, root, deadline=effective_deadline)
+            _assert_identity(identity_guard, root)
     if full_restore:
-        _assert_identity(identity_guard)
+        _assert_identity(identity_guard, root)
     _validate_failed_checkout_payloads(
         root,
         receipt,
-        deadline=deadline,
+        deadline=effective_deadline,
         full_restore=full_restore,
     )
     if full_restore:
-        _assert_identity(identity_guard)
+        _assert_identity(identity_guard, root)
     return receipt
 
 
@@ -1121,88 +1345,120 @@ def apply_plan(
     max_seconds: int = 900,
     require_volume: bool = True,
     identity_guard: IdentityGuard | None = None,
+    deadline: float | None = None,
 ) -> tuple[dict[str, Any], bool]:
     if expected_plan_sha256 != plan.plan_sha256:
         raise EstateAuditCustodyError("plan-sha-mismatch")
     if max_seconds <= 0 or max_seconds > MAX_SECONDS:
         raise EstateAuditCustodyError("invalid-time-limit")
-    _assert_identity(identity_guard)
-    root = _external_custody_root(custody_root) if require_volume else custody_root.expanduser().resolve()
-    _assert_identity(identity_guard)
-    _assert_identity(identity_guard)
+    candidate = _resolved_custody_root(custody_root)
+    _assert_identity(identity_guard, candidate)
+    root = _external_custody_root(candidate) if require_volume else candidate
+    _assert_identity(identity_guard, root)
     root.mkdir(parents=True, exist_ok=True)
-    _assert_identity(identity_guard)
+    _assert_identity(identity_guard, root)
     existing = _receipt_path(root, plan.plan_sha256)
-    deadline = time.monotonic() + max_seconds
+    effective_deadline = deadline or time.monotonic() + max_seconds
+    _remaining(effective_deadline)
     if existing.exists():
         verified = verify_receipt(
             root,
             plan.plan_sha256,
             full_restore=True,
-            max_seconds=max(1, int(_remaining(deadline))),
+            max_seconds=max(1, int(_remaining(effective_deadline))),
             require_volume=False,
             identity_guard=identity_guard,
+            deadline=effective_deadline,
         )
-        _assert_identity(identity_guard)
-        _verify_live_failed_checkout_states(verified, deadline=deadline)
-        _assert_identity(identity_guard)
+        _assert_identity(identity_guard, root)
+        try:
+            _verify_live_failed_checkout_states(verified, deadline=effective_deadline)
+        except EstateAuditCustodyError as exc:
+            if exc.code != "failed-checkout-content-drift":
+                raise
+            _remaining(effective_deadline)
+            _assert_identity(identity_guard, root)
+            _preserve_canonical_receipt(
+                root,
+                plan.plan_sha256,
+                verified,
+                deadline=effective_deadline,
+            )
+            _remaining(effective_deadline)
+            _assert_identity(identity_guard, root)
+            failed_checkout_states, _payload_changed = _capture_failed_checkout_states(
+                plan,
+                root,
+                deadline=effective_deadline,
+            )
+            _assert_identity(identity_guard, root)
+            current = revalidate()
+            _remaining(effective_deadline)
+            if current.plan_sha256 != plan.plan_sha256:
+                raise EstateAuditCustodyError("plan-changed-before-receipt")
+            receipt = _receipt_for_plan(
+                plan,
+                list(verified["repositories"]),
+                failed_checkout_states,
+            )
+            _remaining(effective_deadline)
+            _assert_identity(identity_guard, root)
+            _atomic_private_json(existing, receipt)
+            _assert_identity(identity_guard, root)
+            rotated = verify_receipt(
+                root,
+                plan.plan_sha256,
+                full_restore=True,
+                max_seconds=max(1, int(_remaining(effective_deadline))),
+                require_volume=False,
+                identity_guard=identity_guard,
+                deadline=effective_deadline,
+            )
+            return rotated, True
+        _assert_identity(identity_guard, root)
         return verified, False
 
     resolver = remote_url_for or (lambda repository: f"https://github.com/{repository}.git")
     repositories: list[dict[str, Any]] = []
     changed = False
     for repository, heads in sorted(_repository_groups(plan).items()):
-        _assert_identity(identity_guard)
+        _assert_identity(identity_guard, root)
         result, repository_changed = _ensure_repository(
             root,
             repository,
             heads,
-            deadline=deadline,
+            deadline=effective_deadline,
             remote_url=resolver(repository),
         )
-        _assert_identity(identity_guard)
+        _assert_identity(identity_guard, root)
         repositories.append(result)
         changed = changed or repository_changed
 
-    _assert_identity(identity_guard)
+    _assert_identity(identity_guard, root)
     failed_checkout_states, payload_changed = _capture_failed_checkout_states(
         plan,
         root,
-        deadline=deadline,
+        deadline=effective_deadline,
     )
-    _assert_identity(identity_guard)
+    _assert_identity(identity_guard, root)
     changed = changed or payload_changed
 
     current = revalidate()
+    _remaining(effective_deadline)
     if current.plan_sha256 != plan.plan_sha256:
         raise EstateAuditCustodyError("plan-changed-before-receipt")
-    payload_stats = _payload_stats(failed_checkout_states)
-    content: dict[str, Any] = {
-        "schema": RECEIPT_SCHEMA,
-        "created_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
-        "plan_sha256": plan.plan_sha256,
-        "root_count": len(plan.roots),
-        "repository_count": plan.repository_count,
-        "head_count": plan.head_count,
-        "empty_index_root_count": plan.empty_index_root_count,
-        "indexed_root_count": plan.indexed_root_count,
-        **payload_stats,
-        "roots": [asdict(root_record) for root_record in plan.roots],
-        "repositories": repositories,
-        "failed_checkout_states": failed_checkout_states,
-        "restoration_passed": True,
-    }
-    receipt = {**content, "content_sha256": _canonical_sha256(content)}
-    _assert_identity(identity_guard)
+    receipt = _receipt_for_plan(plan, repositories, failed_checkout_states)
+    _assert_identity(identity_guard, root)
     _atomic_private_json(existing, receipt)
-    _assert_identity(identity_guard)
+    _assert_identity(identity_guard, root)
     verified = verify_receipt(
         root,
         plan.plan_sha256,
         full_restore=True,
-        max_seconds=max(1, int(_remaining(deadline))),
+        max_seconds=max(1, int(_remaining(effective_deadline))),
         require_volume=False,
         identity_guard=identity_guard,
+        deadline=effective_deadline,
     )
     return verified, True
 

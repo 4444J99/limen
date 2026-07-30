@@ -41,6 +41,13 @@ path-free blocker and invokes no custody rail. While the lease is held it:
    roots, reopens both bounded records, and only then emits a terminal path-free
    projection.
 
+One monotonic deadline is created after the lease is acquired and is shared by
+the public check, the independent in-memory plan scan, both applies, and the
+paired receipt write. A later phase cannot reset that budget. Each public rail
+runs in its own process group; timeout, output-limit, setup, and malformed-result
+failures terminate and reap the complete group before control returns through
+the heavy lease.
+
 Every stored record remains explicitly nonterminal: it has `status: prepared`
 and `requires_peer_match: true`, and it contains neither
 `restoration_passed` nor `copy_count: 2`. A unilateral copy after an interrupted
@@ -48,12 +55,30 @@ cross-device write therefore cannot claim completion. An idempotent rerun
 converges and reopens both exact records before the in-process projection may
 claim two restored copies.
 
+A first prepared record retains the legacy `<plan>.json` name. If a later valid
+proof for the same plan contains repaired rail or device evidence, the prior
+bytes remain immutable and the new pair is written as
+`<plan>.<record_sha256>.json`. Repeating either exact proof reuses the same file
+and creates no new bytes.
+
+The underlying single-rail receipt has the same convergence property for a
+working-payload change that leaves HEAD, index, and the plan digest unchanged.
+After the old receipt fully verifies and live-content drift is proven, its exact
+mode-`0600` bytes are preserved once as
+`<plan>.<old_content_sha256>.json`; the canonical `<plan>.json` is then rebuilt
+from current bytes under the original deadline and identity guards. A late
+deadline, conflicting historical name, or changed canonical source stops before
+replacement.
+
 A repeated run still performs the fresh check and one full restore per rail,
 but the underlying applies and prepared records must report `changed:false`.
 The single-rail executable rechecks the expected volume UUID and stable
 physical identity around every target mutation/restore boundary. The paired
 layer repeats that check before and after each child apply and prepared-record
-write. Child output and all receipt/registry reads are fixed-size bounded.
+write. Identity checks receive the exact resolved writer root, reject lexical
+traversal and symlink indirection before writing, and derive media identity from
+the filesystem actually containing that root. Child output and all
+receipt/registry reads are fixed-size bounded.
 The projection contains only digests, counts, registered target references,
 and boolean proof fields; detailed paths and device identities remain in the
 two private prepared records.

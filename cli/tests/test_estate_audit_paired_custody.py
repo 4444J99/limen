@@ -165,6 +165,7 @@ class FixtureRail:
         self.payload_mismatch = payload_mismatch
         self.requests: list[RailRequest] = []
         self.apply_counts = {ref: 0 for ref in ("archive4t", "t7recovery")}
+        self.content_markers = {"archive4t": "1", "t7recovery": "2"}
 
     def _ref(self, request: RailRequest) -> str:
         assert request.custody_root is not None
@@ -189,7 +190,7 @@ class FixtureRail:
             self.apply_counts[ref] += 1
         else:
             changed = False
-        content_marker = "1" if ref == "archive4t" else "2"
+        content_marker = self.content_markers[ref]
         payload_marker = "4" if ref == self.payload_mismatch else "3"
         return {
             "result_schema": "limen.estate_audit_custody_result.v1",
@@ -256,7 +257,7 @@ def run_fixture(
         max_seconds=60,
         runner=runner,
         volume_probe=lambda mount: identities[str(mount)],
-        plan_discoverer=lambda _root, _limit: plan,
+        plan_discoverer=lambda _root, _limit, _deadline: plan,
         lease_factory=lease.hold,
         require_mount=False,
     )
@@ -295,6 +296,50 @@ def test_dynamic_denominator_comes_from_fresh_underlying_check(tmp_path: Path) -
     assert "root_count=50" not in source
 
 
+def test_fresh_plan_scan_cannot_reset_the_shared_deadline(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = make_plan(tmp_path)
+    repository, registry, identities = make_registration(tmp_path)
+    runner = FixtureRail(plan)
+    lease = LeaseCounter()
+    limen_root = tmp_path / "limen-root"
+    limen_root.mkdir()
+    now = [100.0]
+    observed_deadlines: list[float] = []
+
+    monkeypatch.setattr(paired_module.time, "monotonic", lambda: now[0])
+
+    def expired_discovery(_root: Path, _limit: int, deadline: float) -> CustodyPlan:
+        observed_deadlines.append(deadline)
+        now[0] = deadline
+        return plan
+
+    assert (
+        error_code(
+            lambda: run_paired_custody(
+                repository_root=repository,
+                limen_root=limen_root,
+                registry_path=registry,
+                single_rail_script=repository / "scripts" / "estate-audit-custody.py",
+                max_seconds=60,
+                runner=runner,
+                volume_probe=lambda mount: identities[str(mount)],
+                plan_discoverer=expired_discovery,
+                lease_factory=lease.hold,
+                require_mount=False,
+            )
+        )
+        == "paired-custody-time-limit-exceeded"
+    )
+    assert observed_deadlines == [160.0]
+    assert [request.mode for request in runner.requests] == ["check"]
+    assert runner.requests[0].deadline == observed_deadlines[0]
+    assert lease.calls == lease.entries == lease.exits == 1
+    assert not any(path.name == "paired-receipts" for path in tmp_path.rglob("*"))
+
+
 def test_missing_or_unregistered_t7_target_fails_before_any_rail(tmp_path: Path) -> None:
     plan = make_plan(tmp_path)
     repository, registry, identities = make_registration(
@@ -315,7 +360,7 @@ def test_missing_or_unregistered_t7_target_fails_before_any_rail(tmp_path: Path)
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -339,7 +384,7 @@ def test_missing_or_unregistered_t7_target_fails_before_any_rail(tmp_path: Path)
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -370,7 +415,7 @@ def test_registry_cannot_claim_live_proof(tmp_path: Path) -> None:
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -444,7 +489,7 @@ def test_identical_device_identity_fails_before_writes(
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -475,7 +520,7 @@ def test_mismatched_live_identity_and_symlink_fail_before_writes(tmp_path: Path)
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: mismatched if "T7Recovery" in str(mount) else identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -511,7 +556,7 @@ def test_identity_swap_after_single_rail_returns_blocks_before_pair_write(tmp_pa
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=swapping_probe,
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -543,7 +588,7 @@ def test_symlink_and_redirected_output_fail_before_writes(tmp_path: Path) -> Non
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -573,7 +618,7 @@ def test_symlink_and_redirected_output_fail_before_writes(tmp_path: Path) -> Non
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -607,7 +652,7 @@ def test_source_target_and_control_output_overlap_fail_before_apply(tmp_path: Pa
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: overlapping,
+                plan_discoverer=lambda _root, _limit, _deadline: overlapping,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -626,7 +671,7 @@ def test_source_target_and_control_output_overlap_fail_before_apply(tmp_path: Pa
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -659,7 +704,7 @@ def test_existing_pair_receipt_symlink_fails_before_any_apply(tmp_path: Path) ->
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -695,7 +740,7 @@ def test_oversized_prepared_record_fails_before_any_apply(
             single_rail_script=repository / "scripts" / "estate-audit-custody.py",
             runner=runner,
             volume_probe=lambda mount: identities[str(mount)],
-            plan_discoverer=lambda _root, _limit: plan,
+            plan_discoverer=lambda _root, _limit, _deadline: plan,
             lease_factory=lease.hold,
             require_mount=False,
         )
@@ -728,7 +773,7 @@ def test_admission_denial_is_path_free_and_precedes_every_write(tmp_path: Path) 
             single_rail_script=repository / "scripts" / "estate-audit-custody.py",
             runner=runner,
             volume_probe=lambda mount: identities[str(mount)],
-            plan_discoverer=lambda _root, _limit: plan,
+            plan_discoverer=lambda _root, _limit, _deadline: plan,
             lease_factory=denied,
             require_mount=False,
         )
@@ -775,7 +820,7 @@ def test_first_or_second_rail_failure_never_projects_terminal(
             single_rail_script=repository / "scripts" / "estate-audit-custody.py",
             runner=runner,
             volume_probe=lambda mount: identities[str(mount)],
-            plan_discoverer=lambda _root, _limit: plan,
+            plan_discoverer=lambda _root, _limit, _deadline: plan,
             lease_factory=lease.hold,
             require_mount=False,
         )
@@ -801,7 +846,7 @@ def test_both_rails_must_restore_the_same_working_payload_manifest(tmp_path: Pat
                 single_rail_script=repository / "scripts" / "estate-audit-custody.py",
                 runner=runner,
                 volume_probe=lambda mount: identities[str(mount)],
-                plan_discoverer=lambda _root, _limit: plan,
+                plan_discoverer=lambda _root, _limit, _deadline: plan,
                 lease_factory=lease.hold,
                 require_mount=False,
             )
@@ -838,7 +883,7 @@ def test_interrupted_pair_write_leaves_only_nonterminal_prepared_evidence(
             single_rail_script=repository / "scripts" / "estate-audit-custody.py",
             runner=runner,
             volume_probe=lambda mount: identities[str(mount)],
-            plan_discoverer=lambda _root, _limit: plan,
+            plan_discoverer=lambda _root, _limit, _deadline: plan,
             lease_factory=lease.hold,
             require_mount=False,
             prepared_write_hook=interrupt_after_first,
@@ -863,7 +908,7 @@ def test_interrupted_pair_write_leaves_only_nonterminal_prepared_evidence(
         single_rail_script=repository / "scripts" / "estate-audit-custody.py",
         runner=runner,
         volume_probe=lambda mount: identities[str(mount)],
-        plan_discoverer=lambda _root, _limit: plan,
+        plan_discoverer=lambda _root, _limit, _deadline: plan,
         lease_factory=lease.hold,
         require_mount=False,
     )
@@ -874,7 +919,7 @@ def test_interrupted_pair_write_leaves_only_nonterminal_prepared_evidence(
         single_rail_script=repository / "scripts" / "estate-audit-custody.py",
         runner=runner,
         volume_probe=lambda mount: identities[str(mount)],
-        plan_discoverer=lambda _root, _limit: plan,
+        plan_discoverer=lambda _root, _limit, _deadline: plan,
         lease_factory=lease.hold,
         require_mount=False,
     )
@@ -904,7 +949,7 @@ def test_both_restores_and_second_complete_pass_are_byte_idempotent(
             max_seconds=60,
             runner=runner,
             volume_probe=lambda mount: identities[str(mount)],
-            plan_discoverer=lambda _root, _limit: plan,
+            plan_discoverer=lambda _root, _limit, _deadline: plan,
             lease_factory=lease.hold,
             require_mount=False,
         )
@@ -944,6 +989,60 @@ def test_both_restores_and_second_complete_pass_are_byte_idempotent(
     assert lease.calls == lease.entries == lease.exits == 2
 
 
+def test_repaired_rail_evidence_appends_one_content_addressed_pair(
+    tmp_path: Path,
+) -> None:
+    plan = make_plan(tmp_path)
+    repository, registry, identities = make_registration(tmp_path)
+    runner = FixtureRail(plan)
+    lease = LeaseCounter()
+    limen_root = tmp_path / "limen-root"
+    limen_root.mkdir()
+
+    def execute() -> dict[str, Any]:
+        return run_paired_custody(
+            repository_root=repository,
+            limen_root=limen_root,
+            registry_path=registry,
+            single_rail_script=repository / "scripts" / "estate-audit-custody.py",
+            runner=runner,
+            volume_probe=lambda mount: identities[str(mount)],
+            plan_discoverer=lambda _root, _limit, _deadline: plan,
+            lease_factory=lease.hold,
+            require_mount=False,
+        )
+
+    first = execute()
+    registered = load_target_registry(registry, repository_root=repository)
+    legacy_paths = [
+        target.custody_root / "paired-receipts" / f"{plan.plan_sha256}.json" for target in registered.targets
+    ]
+    legacy_bytes = [path.read_bytes() for path in legacy_paths]
+
+    runner.content_markers = {"archive4t": "5", "t7recovery": "6"}
+    repaired = execute()
+    repaired_paths = [
+        target.custody_root / "paired-receipts" / f"{plan.plan_sha256}.{repaired['paired_receipt_sha256']}.json"
+        for target in registered.targets
+    ]
+    repaired_bytes = [path.read_bytes() for path in repaired_paths]
+    fixed_point = execute()
+
+    assert first["changed"] is True
+    assert repaired["changed"] is True
+    assert fixed_point["changed"] is False
+    assert [path.read_bytes() for path in legacy_paths] == legacy_bytes
+    assert repaired_bytes[0] == repaired_bytes[1]
+    assert all(path.exists() for path in repaired_paths)
+    assert [
+        sorted(path.name for path in (target.custody_root / "paired-receipts").iterdir())
+        for target in registered.targets
+    ] == [
+        sorted([legacy_paths[0].name, repaired_paths[0].name]),
+        sorted([legacy_paths[1].name, repaired_paths[1].name]),
+    ]
+
+
 @pytest.mark.parametrize(
     ("stream", "limit_name", "expected"),
     [
@@ -975,6 +1074,59 @@ def test_single_rail_output_is_rejected_at_limit_plus_one(
     )
 
     assert error_code(lambda: invoke_single_rail(script, request)) == expected
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected"),
+    [
+        ("output", "single-rail-check-stdout-limit"),
+        ("timeout", "single-rail-check-unavailable"),
+    ],
+)
+def test_single_rail_failure_reaps_term_ignoring_descendant_group(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure: str,
+    expected: str,
+) -> None:
+    monkeypatch.setattr(paired_module, "MAX_CHILD_STDOUT_BYTES", 64)
+    pid_path = tmp_path / "descendant.pid"
+    script = tmp_path / "process-group-child.py"
+    output = "os.write(1, b'x' * 65)" if failure == "output" else "None"
+    script.write_text(
+        "\n".join(
+            [
+                "import os",
+                "import signal",
+                "import subprocess",
+                "import sys",
+                "import time",
+                "from pathlib import Path",
+                "child = subprocess.Popen([",
+                "    sys.executable,",
+                "    '-c',",
+                "    'import signal,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(60)',",
+                "])",
+                f"Path({str(pid_path)!r}).write_text(str(child.pid), encoding='utf-8')",
+                output,
+                "time.sleep(60)",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    request = RailRequest(
+        mode="check",
+        limen_root=tmp_path,
+        max_roots=1,
+        max_seconds=5,
+        deadline=(paired_module.time.monotonic() + 0.5 if failure == "timeout" else None),
+    )
+
+    assert error_code(lambda: invoke_single_rail(script, request)) == expected
+    descendant_pid = int(pid_path.read_text(encoding="utf-8"))
+    with pytest.raises(ProcessLookupError):
+        os.kill(descendant_pid, 0)
 
 
 def test_receipt_directory_parent_is_fsynced_after_mkdir_and_chmod(
