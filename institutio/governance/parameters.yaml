@@ -1463,6 +1463,12 @@ parameters:
     self_update: "exact runtime installation only"
     owner: dispatch
     note: "Exact merged Git SHA and deployment identity asserted by the installed conduct runtime for a full-mesh canary receipt. The canary hashes deployment identity in its redacted receipt and rejects missing or mismatched runtime evidence."
+  LIMEN_CONDUCT_CANARY_LOCK_ROOT:
+    default: ""
+    env: LIMEN_CONDUCT_CANARY_LOCK_ROOT
+    self_update: none
+    owner: dispatch
+    note: "Optional non-secret, host-local runtime directory for persistent full-mesh canary flock inodes. Blank derives the private per-UID XDG or temporary runtime root; an override changes only lock placement, never receipt identity or tracked output."
   LIMEN_CONDUCT_RUNTIME_GIT_SHA:
     default: ""
     env: LIMEN_CONDUCT_RUNTIME_GIT_SHA
