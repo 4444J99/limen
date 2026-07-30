@@ -178,12 +178,23 @@ def _diskutil_info(target: str) -> dict[str, Any]:
     return payload
 
 
-def _device_identity(path: Path) -> str:
+def _volume_mount(path: Path) -> Path:
+    """Return the mounted volume that contains one restoration target."""
+
     try:
-        resolved = str(path.resolve(strict=True))
+        candidate = path.resolve(strict=True)
     except OSError as exc:
         raise ReceiptError("custody restoration target is unavailable") from exc
-    payload = _diskutil_info(resolved)
+    while not os.path.ismount(candidate):
+        parent = candidate.parent
+        if parent == candidate:
+            raise ReceiptError("custody restoration volume is unavailable")
+        candidate = parent
+    return candidate
+
+
+def _device_identity(path: Path) -> str:
+    payload = _diskutil_info(str(_volume_mount(path)))
     try:
         stores = payload.get("APFSPhysicalStores")
         if isinstance(stores, list) and len(stores) == 1 and isinstance(stores[0], dict):

@@ -433,9 +433,48 @@ def test_device_identity_collapses_apfs_volumes_to_physical_disk(
         )
 
     monkeypatch.setattr(custody.subprocess, "run", diskutil)
+    monkeypatch.setattr(custody, "_volume_mount", lambda path: path.resolve())
 
     assert custody._device_identity(first) == custody._device_identity(second)
     assert custody._device_identity(first) != custody._device_identity(external)
+
+
+def test_device_identity_queries_containing_volume(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    volume = tmp_path / "volume"
+    target = volume / "nested" / "custody"
+    target.mkdir(parents=True)
+    observed: list[str] = []
+
+    monkeypatch.setattr(custody.os.path, "ismount", lambda path: Path(path) == volume)
+
+    def diskutil(args, **_kwargs):
+        observed.append(args[-1])
+        payload = (
+            {
+                "DeviceIdentifier": "disk4s1",
+                "APFSPhysicalStores": [{"APFSPhysicalStore": "disk4s1"}],
+            }
+            if not args[-1].startswith("/dev/")
+            else {
+                "DeviceIdentifier": "disk4",
+                "ParentWholeDisk": "disk4",
+                "VirtualOrPhysical": "Physical",
+                "WholeDisk": True,
+                "BusProtocol": "USB",
+                "SystemImage": False,
+                "MediaUUID": "00000000-0000-0000-0000-000000000004",
+            }
+        )
+        return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
+
+    monkeypatch.setattr(custody.subprocess, "run", diskutil)
+
+    custody._device_identity(target)
+
+    assert observed == [str(volume), "/dev/disk4"]
 
 
 def test_device_identity_rejects_virtual_disk_image(
@@ -464,6 +503,7 @@ def test_device_identity_rejects_virtual_disk_image(
         return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
 
     monkeypatch.setattr(custody.subprocess, "run", diskutil)
+    monkeypatch.setattr(custody, "_volume_mount", lambda path: path.resolve())
 
     with pytest.raises(ReceiptError, match="not backed by a physical"):
         custody._device_identity(mounted_image)
@@ -497,6 +537,7 @@ def test_device_identity_is_stable_across_bsd_renumbering(
         return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
 
     monkeypatch.setattr(custody.subprocess, "run", diskutil)
+    monkeypatch.setattr(custody, "_volume_mount", lambda path: path.resolve())
     before = custody._device_identity(target)
     physical = "disk7"
 
@@ -529,6 +570,7 @@ def test_device_identity_requires_stable_external_media_identity(
         return SimpleNamespace(returncode=0, stdout=plistlib.dumps(payload))
 
     monkeypatch.setattr(custody.subprocess, "run", diskutil)
+    monkeypatch.setattr(custody, "_volume_mount", lambda path: path.resolve())
 
     with pytest.raises(ReceiptError, match="stable media identity"):
         custody._device_identity(target)
