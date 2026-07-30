@@ -9,10 +9,13 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
+import limen.conduct.campaign_relay as relay_core
 import limen.conduct.campaign_relay_process as relay_process
+import limen.conduct.campaign_relay_protocol as relay_protocol
 import limen.conduct.campaign_relay_publication as relay_publication
 import pytest
 from limen.bounded_subprocess import BoundedSubprocessError
@@ -865,6 +868,103 @@ def test_ready_publication_failure_rolls_broker_back_to_dormant(
         pytest.fail("rolled-back fixture provider did not exit naturally")
 
 
+def test_expired_startup_deadline_bounds_activation_rollback_and_terminalization(
+    effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    root, predecessor, provider, _predecessor_deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    registration_deadlines: list[float | None] = []
+    lock_deadlines: list[float | None] = []
+    rollback_state_deadlines: list[float | None] = []
+    original_lock = relay_protocol._activation_registration_lock
+    original_replace = relay_protocol._replace_relay
+    real_monotonic = time.monotonic
+
+    class ExpiringClock:
+        expired_value: float | None = None
+
+        def monotonic(self) -> float:
+            return real_monotonic() if self.expired_value is None else self.expired_value
+
+    clock = ExpiringClock()
+
+    def register(**kwargs):
+        registration_deadlines.append(kwargs["deadline_monotonic"])
+        raw = json.dumps(
+            {
+                "accepting_work": kwargs["accepting_work"],
+                "agent": kwargs["agent"],
+                "session_id": kwargs["session_id"],
+            },
+            sort_keys=True,
+        ).encode()
+        return hashlib.sha256(raw).hexdigest(), len(raw)
+
+    @contextmanager
+    def observe_lock(worktree, *, deadline_monotonic=None):
+        lock_deadlines.append(deadline_monotonic)
+        if len(lock_deadlines) == 1:
+            with original_lock(
+                worktree,
+                deadline_monotonic=deadline_monotonic,
+            ):
+                yield
+        else:
+            yield
+
+    def spawn(command, **kwargs):
+        command = [str(ROOT / "scripts" / "start-worktree-session.sh"), *command[1:]]
+        return _spawn_relay_process(command, **kwargs)
+
+    def expire_then_fail(*_args, deadline_monotonic=None, **_kwargs):
+        assert deadline_monotonic is not None
+        clock.expired_value = deadline_monotonic + 1
+        raise CampaignRelayError(
+            "relay_ready_publication_failed",
+            "injected publication failure after startup expiry",
+        )
+
+    def observe_replace(*args, **kwargs):
+        if kwargs.get("updates") == {"activation_response_sha256": None}:
+            rollback_state_deadlines.append(kwargs.get("deadline_monotonic"))
+        return original_replace(*args, **kwargs)
+
+    monkeypatch.setattr(relay_core, "time", clock)
+    monkeypatch.setattr(relay_protocol, "_activation_registration_lock", observe_lock)
+    monkeypatch.setattr(relay_protocol, "_publish_ready_receipt", expire_then_fail)
+    monkeypatch.setattr(relay_protocol, "_replace_relay", observe_replace)
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("LIMEN_CLI_BIN", "/usr/bin/true")
+    monkeypatch.setenv("LIMEN_CODEX_BIN", str(provider))
+    monkeypatch.setenv("LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS", "1")
+    monkeypatch.setenv("PROVIDER_ENV_LEAKS", str(tmp_path / "provider-env-leaks.txt"))
+    monkeypatch.setenv("PROVIDER_PID", str(tmp_path / "provider.pid"))
+    monkeypatch.setenv("PROVIDER_SLEEP", "1")
+
+    with pytest.raises(CampaignRelayError) as raised:
+        launch_reserved_relay(
+            root,
+            reservation.receipt.relay_id,
+            timeout_seconds=20,
+            process_factory=spawn,
+            lane_selector=lambda _root: ("codex",),
+            registration=register,
+        )
+
+    assert raised.value.code == "relay_startup_timeout"
+    assert len(lock_deadlines) == 2
+    assert len(registration_deadlines) == 3
+    assert len(rollback_state_deadlines) == 1
+    assert len(set(lock_deadlines + registration_deadlines + rollback_state_deadlines)) == 1
+    assert lock_deadlines[0] is not None
+
+
 def _ready_publication_fixture() -> CampaignRelayReceiptV1:
     return CampaignRelayReceiptV1.model_validate(
         {
@@ -1443,3 +1543,42 @@ def test_dead_controller_reconciles_to_indeterminate_without_respawn(
     assert reconciled.receipt.state == "indeterminate"
     assert reconciled.receipt.terminal_code == "relay_controller_interrupted"
     assert reconciled.receipt.attempts == 1
+
+
+def test_terminalization_does_not_open_a_fresh_bound_after_startup_expiry(
+    effector_repo,
+) -> None:
+    root, predecessor, _provider, _deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+    _replace_relay(
+        root,
+        reservation.receipt.relay_id,
+        expected_states=frozenset({"reserved"}),
+        updates={
+            "attempts": 1,
+            "controller_pid": 999_999_999,
+            "controller_process_started": "fixture-controller",
+            "state": "launching",
+        },
+    )
+    expired = time.monotonic() - 1
+    started = time.monotonic()
+
+    with pytest.raises(CampaignRelayError) as raised:
+        relay_process._terminalize_relay(
+            root,
+            reservation.receipt.relay_id,
+            state="indeterminate",
+            code="fixture_expired",
+            stdout=relay_process._BoundedStreamDigest(),
+            stderr=relay_process._BoundedStreamDigest(),
+            deadline_monotonic=expired,
+        )
+
+    assert raised.value.code == "relay_startup_timeout"
+    assert time.monotonic() - started < 0.2
+    assert _read_relay(root, reservation.receipt.relay_id).state == "launching"

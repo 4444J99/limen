@@ -191,6 +191,7 @@ def _reconcile_consumed_attempt(
         code="relay_controller_interrupted",
         stdout=empty_stdout,
         stderr=empty_stderr,
+        deadline_monotonic=deadline_monotonic,
     )
     return RelayLaunch(receipt=terminal, launched=False)
 
@@ -346,6 +347,7 @@ def launch_reserved_relay(
             code=exc.code,
             stdout=_BoundedStreamDigest(),
             stderr=_BoundedStreamDigest(),
+            deadline_monotonic=deadline,
         )
         return RelayLaunch(receipt=terminal, launched=False)
     if not published_attempt.won:
@@ -366,6 +368,7 @@ def launch_reserved_relay(
             code=exc.code,
             stdout=_BoundedStreamDigest(),
             stderr=_BoundedStreamDigest(),
+            deadline_monotonic=deadline,
         )
         return RelayLaunch(receipt=terminal, launched=False)
     control_reader, control_writer = os.pipe()
@@ -438,6 +441,7 @@ def launch_reserved_relay(
             code="relay_spawn_failed",
             stdout=stdout_evidence,
             stderr=stderr_evidence,
+            deadline_monotonic=deadline,
         )
         return RelayLaunch(receipt=terminal, launched=True)
     finally:
@@ -458,6 +462,7 @@ def launch_reserved_relay(
             code="relay_startup_streams_missing",
             stdout=stdout_evidence,
             stderr=stderr_evidence,
+            deadline_monotonic=deadline,
         )
         _reap_relay_process(process)
         return RelayLaunch(receipt=terminal, launched=True)
@@ -476,6 +481,7 @@ def launch_reserved_relay(
             code="relay_process_identity_unavailable",
             stdout=stdout_evidence,
             stderr=stderr_evidence,
+            deadline_monotonic=deadline,
         )
         _reap_relay_process(process)
         return RelayLaunch(receipt=terminal, launched=True)
@@ -503,6 +509,7 @@ def launch_reserved_relay(
             code=exc.code,
             stdout=stdout_evidence,
             stderr=stderr_evidence,
+            deadline_monotonic=deadline,
         )
         _reap_relay_process(process)
         return RelayLaunch(receipt=terminal, launched=True)
@@ -871,7 +878,10 @@ def launch_reserved_relay(
                         ):
                             rollback_ok = True
                             try:
-                                with _activation_registration_lock(worktree):
+                                with _activation_registration_lock(
+                                    worktree,
+                                    deadline_monotonic=deadline,
+                                ):
                                     _clear_activation_marker(worktree, relay_id)
                                     registration(
                                         root=root,
@@ -881,6 +891,7 @@ def launch_reserved_relay(
                                         session_id=current.successor_session_id,
                                         worktree=worktree,
                                         accepting_work=False,
+                                        deadline_monotonic=deadline,
                                     )
                             except CampaignRelayError:
                                 rollback_ok = False
@@ -891,6 +902,7 @@ def launch_reserved_relay(
                                         relay_id,
                                         expected_states=frozenset({"published"}),
                                         updates={"activation_response_sha256": None},
+                                        deadline_monotonic=deadline,
                                     )
                                 except CampaignRelayError:
                                     rollback_ok = False
@@ -917,6 +929,7 @@ def launch_reserved_relay(
             code=terminal_code,
             stdout=stdout_evidence,
             stderr=stderr_evidence,
+            deadline_monotonic=deadline,
         )
         return RelayLaunch(receipt=terminal, launched=True)
     finally:

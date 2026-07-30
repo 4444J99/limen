@@ -319,8 +319,13 @@ def _terminalize_relay(
     code: str,
     stdout: _BoundedStreamDigest,
     stderr: _BoundedStreamDigest,
+    deadline_monotonic: float | None = None,
 ) -> CampaignRelayReceiptV1:
-    current = _read_relay(root, relay_id)
+    current = _read_relay(
+        root,
+        relay_id,
+        deadline_monotonic=deadline_monotonic,
+    )
     if current.state == "ready" or current.state in _TERMINAL_STATES:
         return current
     return _replace_relay(
@@ -332,6 +337,7 @@ def _terminalize_relay(
             "terminal_code": code,
             **_startup_evidence(stdout, stderr),
         },
+        deadline_monotonic=deadline_monotonic,
     )
 
 
