@@ -122,7 +122,7 @@ def _mesh(tmp_path: Path):
     )
     principals: dict[str, ConductPrincipalV1] = {}
     credentials = []
-    environ = {
+    environment = {
         "LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY": json.dumps(
             {
                 "schema_version": "limen.conduct_runtime_identity.v1",
@@ -137,7 +137,7 @@ def _mesh(tmp_path: Path):
             token = f"{agent}-{role}-credential-at-least-24-characters"  # allow-secret: inert fixture
             principal = _principal(f"{agent}-{role}-principal", agent, role)
             principals[token] = principal
-            environ[token_env] = token
+            environment[token_env] = token
             session = _session(agent, role)
             broker.register(session, principal=principal, now=NOW)
             credentials.append(
@@ -147,10 +147,14 @@ def _mesh(tmp_path: Path):
                     "token_env": token_env,
                 }
             )
-    environ["LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS"] = json.dumps(
+    environment.update(
         {
-            "schema_version": "limen.conduct_canary_credential_refs.v1",
-            "credentials": credentials,
+            "LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS": json.dumps(
+                {
+                    "schema_version": "limen.conduct_canary_credential_refs.v1",
+                    "credentials": credentials,
+                }
+            )
         }
     )
 
@@ -165,19 +169,19 @@ def _mesh(tmp_path: Path):
 
     bootstrap = factory(
         "https://limen-runtime.example",
-        environ["LIMEN_FIXTURE_ALPHA_CONDUCTOR"],
+        environment["LIMEN_FIXTURE_ALPHA_CONDUCTOR"],
         timeout=17,
     )
-    return broker, bootstrap, factory, environ, tmp_path / "mesh-receipt.json"
+    return broker, bootstrap, factory, environment, tmp_path / "mesh-receipt.json"
 
 
 def test_full_mesh_canary_covers_every_ordered_edge_and_redacts_credentials(tmp_path: Path) -> None:
-    _broker, client, factory, environ, receipt_path = _mesh(tmp_path)
+    _broker, client, factory, environment, receipt_path = _mesh(tmp_path)
 
     receipt = run_full_mesh_canary(
         client=client,
         receipt_path=receipt_path,
-        environ=environ,
+        environ=environment,
         client_factory=factory,
         now=NOW,
     )
@@ -187,10 +191,7 @@ def test_full_mesh_canary_covers_every_ordered_edge_and_redacts_credentials(tmp_
     assert receipt["lane_count"] == 2
     assert receipt["edge_count_required"] == 4
     assert receipt["edge_count_succeeded"] == 4
-    assert {
-        (edge["conductor_lane"], edge["executor_lane"])
-        for edge in receipt["edges"]
-    } == {
+    assert {(edge["conductor_lane"], edge["executor_lane"]) for edge in receipt["edges"]} == {
         ("alpha", "alpha"),
         ("alpha", "zeta"),
         ("zeta", "alpha"),
@@ -206,17 +207,17 @@ def test_full_mesh_canary_covers_every_ordered_edge_and_redacts_credentials(tmp_
         for edge in receipt["edges"]
     )
     rendered = receipt_path.read_text(encoding="utf-8")
-    assert all(value not in rendered for key, value in environ.items() if key.startswith("LIMEN_FIXTURE_"))
+    assert all(value not in rendered for key, value in environment.items() if key.startswith("LIMEN_FIXTURE_"))
     assert "LIMEN_FIXTURE_ALPHA_CONDUCTOR" in rendered
     assert "deployment-fixture-42" not in rendered
 
 
 def test_same_canary_identity_is_byte_idempotent_and_creates_no_new_runs(tmp_path: Path) -> None:
-    broker, client, factory, environ, receipt_path = _mesh(tmp_path)
+    broker, client, factory, environment, receipt_path = _mesh(tmp_path)
     first = run_full_mesh_canary(
         client=client,
         receipt_path=receipt_path,
-        environ=environ,
+        environ=environment,
         client_factory=factory,
         now=NOW,
     )
@@ -226,7 +227,7 @@ def test_same_canary_identity_is_byte_idempotent_and_creates_no_new_runs(tmp_pat
     second = run_full_mesh_canary(
         client=client,
         receipt_path=receipt_path,
-        environ=environ,
+        environ=environment,
         client_factory=factory,
         now=NOW,
     )

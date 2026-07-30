@@ -93,9 +93,7 @@ def _load_json_env(name: str, environ: Mapping[str, str]) -> dict[str, Any]:
 def _runtime_identity(environ: Mapping[str, str]) -> dict[str, str]:
     value = _load_json_env(RUNTIME_IDENTITY_ENV, environ)
     if set(value) != {"schema_version", "git_sha", "deployment_id"}:
-        raise ConductCanaryError(
-            f"{RUNTIME_IDENTITY_ENV} must contain only schema_version, git_sha, and deployment_id"
-        )
+        raise ConductCanaryError(f"{RUNTIME_IDENTITY_ENV} must contain only schema_version, git_sha, and deployment_id")
     if value.get("schema_version") != _RUNTIME_IDENTITY_SCHEMA:
         raise ConductCanaryError(f"{RUNTIME_IDENTITY_ENV} has an unsupported schema")
     git_sha = str(value.get("git_sha") or "")
@@ -112,9 +110,7 @@ def _credential_refs(
 ) -> tuple[_CredentialRef, ...]:
     value = _load_json_env(CREDENTIAL_REFS_ENV, environ)
     if set(value) != {"schema_version", "credentials"}:
-        raise ConductCanaryError(
-            f"{CREDENTIAL_REFS_ENV} must contain only schema_version and credentials"
-        )
+        raise ConductCanaryError(f"{CREDENTIAL_REFS_ENV} must contain only schema_version and credentials")
     if value.get("schema_version") != _CREDENTIAL_REFS_SCHEMA:
         raise ConductCanaryError(f"{CREDENTIAL_REFS_ENV} has an unsupported schema")
     rows = value.get("credentials")
@@ -127,9 +123,7 @@ def _credential_refs(
     seen_hashes: set[str] = set()
     for row in rows:
         if not isinstance(row, dict) or set(row) != {"session_id", "role", "token_env"}:
-            raise ConductCanaryError(
-                "credential references must contain only session_id, role, and token_env"
-            )
+            raise ConductCanaryError("credential references must contain only session_id, role, and token_env")
         session_id = str(row.get("session_id") or "")
         role = str(row.get("role") or "")
         token_env = str(row.get("token_env") or "")
@@ -220,9 +214,7 @@ def _discover_lanes(
             raise ConductCanaryError("credential reference names a session absent from live capabilities")
         capability = "conduct" if ref.role == "conductor" else "execute"
         if not _eligible_session(session, capability):
-            raise ConductCanaryError(
-                f"credential reference names a session ineligible for the {ref.role} role"
-            )
+            raise ConductCanaryError(f"credential reference names a session ineligible for the {ref.role} role")
         agent = str(session["identity"]["agent"])
         key = (agent, ref.role)
         if key in selected:
@@ -231,9 +223,7 @@ def _discover_lanes(
 
     configured_agents = {agent for agent, _role in selected}
     if configured_agents != denominator:
-        raise ConductCanaryError(
-            "credential references must cover every complete live native lane and no others"
-        )
+        raise ConductCanaryError("credential references must cover every complete live native lane and no others")
 
     lanes: list[_Lane] = []
     for agent in sorted(denominator):
@@ -341,10 +331,7 @@ def _packet(
         required_capabilities=frozenset({"execute"}),
         resource_claims=(),
         predicate=_PREDICATE,
-        receipt_target=(
-            "git:organvm/limen:docs/receipts/conduct-full-mesh.json"
-            f"#{canary_id[:20]}-{edge_id[:20]}"
-        ),
+        receipt_target=(f"git:organvm/limen:docs/receipts/conduct-full-mesh.json#{canary_id[:20]}-{edge_id[:20]}"),
         work_loan=WorkLoanV1(
             source_origin="human_prompt",
             horizon="present",
@@ -582,9 +569,7 @@ def _reuse_existing(
     lane_by_name = {lane.name: lane for lane in lanes}
     expected = {(left.name, right.name) for left in lanes for right in lanes}
     observed = {
-        (str(edge.get("conductor_lane")), str(edge.get("executor_lane")))
-        for edge in edges
-        if isinstance(edge, dict)
+        (str(edge.get("conductor_lane")), str(edge.get("executor_lane"))) for edge in edges if isinstance(edge, dict)
     }
     if observed != expected:
         raise ConductCanaryError("existing receipt edge denominator does not match live capabilities")
