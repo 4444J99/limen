@@ -22,16 +22,22 @@ pass=0; fail=0
 ok()   { pass=$((pass+1)); }
 bad()  { echo "  MISMATCH ($1)"; shift; for l in "$@"; do echo "    $l"; done; fail=$((fail+1)); }
 
+# Fixture commits MUST bypass hooks: this suite deliberately plants a synthetic secret, and a
+# developer with a global secret-scan hook (core.hooksPath) would have it blocked — the "dirty"
+# repo would then carry no history secret and assertion 1 would false-fail locally while passing
+# in CI. The fixture owns its own git config; it never inherits the operator's.
+fixture_git() { git -c core.hooksPath=/dev/null -c user.email=t@t -c user.name=t "$@"; }
+
 mkrepo() { # $1=dir  $2=dirty|clean
   git init -q "$1" && cd "$1"
-  git -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+  fixture_git commit -q --allow-empty -m init
   if [ "$2" = dirty ]; then
     echo 'token: gho_Km3Xp9Qw2Zt6Bn8Vr4Ly7Hd1Fc5Js0Gg' > config.txt   # planted high-entropy live-shape (synthetic)
-    git add config.txt && git -c user.email=t@t -c user.name=t commit -q -m "add config"
-    git rm -q config.txt && git -c user.email=t@t -c user.name=t commit -q -m "remove config"
+    git add config.txt && fixture_git commit -q -m "add config"
+    git rm -q config.txt && fixture_git commit -q -m "remove config"
   fi
   echo "# hello" > README.md
-  git add README.md && git -c user.email=t@t -c user.name=t commit -q -m docs
+  git add README.md && fixture_git commit -q -m docs
   cd - >/dev/null
 }
 
@@ -97,6 +103,54 @@ echo "$out" | grep -q "held  publish test/clean — dark" && ok || bad "dark gat
 # 3c. green receipt + ARMED (double-dark) → proceeds to the flip WITHOUT any lever (offline → skipped)
 out="$(LIMEN_VISIBILITY_APPLY=1 LIMEN_GITVS_ESTATE="$FIX" python3 "$APPLY" --apply --facts "$FACTS" 2>&1)"
 echo "$out" | grep -q "publish test/clean → public" && ok || bad "armed+green must proceed to flip (no lever)" "$out"
+rm -f "$ROOT/logs/publish-sweeps/test__clean.json" "$ROOT/logs/publish-sweeps/test__dirty.json"
+
+# ── 4. a LIVE-PUBLIC publish candidate resolves three ways, never by absence alone ──
+# The 2026-07-30 blind spot: "desired == observed == public" was read as converged, so 32
+# operation-private repos sat world-readable with nothing having authorized the flip. The fix must
+# distinguish a sweep that LOOKED AND FOUND (leak → demote) from one that never ran (unknown →
+# sweep, not a blind flip — mass-demoting the unknown would fight the build-in-public directive).
+CANDFIX="$work/estate-candidate.yaml"
+sed 's|    visibility: public|    visibility: private|' "$FIX" > "$CANDFIX"
+cat >> "$CANDFIX" <<'YAML'
+repo_overrides:
+  test/clean:
+    publish_candidate: true
+  test/dirty:
+    publish_candidate: true
+YAML
+CANDFACTS="$work/facts-public.json"
+cat > "$CANDFACTS" <<'JSON'
+{"repos": [{"full_name": "test/clean", "private": false}]}
+JSON
+DIRTYFACTS="$work/facts-public-dirty.json"
+cat > "$DIRTYFACTS" <<'JSON'
+{"repos": [{"full_name": "test/dirty", "private": false}]}
+JSON
+rm -f "$ROOT/logs/publish-sweeps/test__clean.json" "$ROOT/logs/publish-sweeps/test__dirty.json"
+
+# 4a. NO receipt → reported for sweep, and explicitly NOT demoted (unknown ≠ unsafe)
+out="$(LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --facts "$CANDFACTS" 2>&1)"
+if echo "$out" | grep -q "sweep  test/clean" && ! echo "$out" | grep -q "demote test/clean"; then
+  ok
+else
+  bad "unswept public candidate must route to the sweep, never a blind demote" "$out"
+fi
+
+# 4b. --check must RED on it (the beat has to carry an un-adjudicated live-public candidate)
+LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --check --facts "$CANDFACTS" >/dev/null 2>&1
+[ $? -eq 1 ] && ok || bad "--check must red on an un-adjudicated live-public candidate"
+
+# 4c. sweep RED on a live-public candidate → a real leak → demote on the auto-guard
+python3 "$SWEEP" --repo test/dirty --clone-from "$work/dirty" >/dev/null 2>&1
+out="$(LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --facts "$DIRTYFACTS" 2>&1)"
+echo "$out" | grep -q "would demote test/dirty → private" && echo "$out" | grep -q "RED" \
+  && ok || bad "a RED sweep on a live-public candidate must demote" "$out"
+
+# 4d. green+fresh receipt → genuinely converged, no action (the receipt owns the public posture)
+python3 "$SWEEP" --repo test/clean --clone-from "$work/clean" >/dev/null 2>&1
+out="$(LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --facts "$CANDFACTS" 2>&1)"
+echo "$out" | grep -q "drift == ∅" && ok || bad "swept-green public candidate must be converged" "$out"
 rm -f "$ROOT/logs/publish-sweeps/test__clean.json" "$ROOT/logs/publish-sweeps/test__dirty.json"
 
 echo

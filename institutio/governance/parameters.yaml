@@ -3199,6 +3199,31 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for GitHub estate reconciliation and by each delegate/reap adapter it dispatches. The runner kills the full command group on overrun and the beat continues fail-open."
+  LIMEN_GITVS_POSTURE_WINDOW:
+    default: 15
+    env: LIMEN_GITVS_POSTURE_WINDOW
+    self_update: none
+    owner: gitvs
+    note: "Repos per run that doctor rung A (protection-missing) probes live. Branch protection cannot be joined from the census — it costs one API call per repo — so the rung walks a deterministic rotating window instead of the whole estate every beat: posture_window() slices by day ordinal, so successive runs cover disjoint slices and the full eligible set cycles with no stored cursor. The rung reports the window it probed (`n/m eligible probed this run`), never a silent partial PASS."
+  # --- Pre-publication sweep (scripts/publish-sweep.py, sensors.yaml github-publish-sweep) ---
+  LIMEN_PUBLISH_SWEEP:
+    default: 1
+    env: LIMEN_PUBLISH_SWEEP
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the publish-candidate sweep sensor. A sweep receipt is the only thing that authorizes a private→public flip, and it expires (LIMEN_SWEEP_FRESH_DAYS) — so without this sensor the receipts rot and apply-visibility has no verdict for any candidate. Read-only: it clones and scans, never flips. Visibility mutation stays behind LIMEN_VISIBILITY_APPLY."
+  LIMEN_BEAT_PUBLISH_SWEEP:
+    default: 24
+    env: LIMEN_BEAT_PUBLISH_SWEEP
+    self_update: none
+    owner: gitvs
+    note: "Cadence (beats) for the publish-candidate sweep. Defaults slower than most sensors because each candidate is a full-history clone; LIMEN_SWEEP_MAX bounds how many run per pass, so the candidate set rolls forward across beats rather than re-cloning the whole estate each cadence."
+  LIMEN_PUBLISH_SWEEP_TIMEOUT:
+    default: 900
+    env: LIMEN_PUBLISH_SWEEP_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Per-run timeout (seconds) for the publish-candidate sweep. Generous relative to other sensors: the unit of work is a full-history clone plus a blob scan per candidate. The runner kills the command group on overrun and the beat continues fail-open — a timed-out sweep leaves the prior receipt in place, which correctly ages into staleness rather than faking a green."
   # --- IDEAL-FORMS distance (scripts/check-ideal-forms.py, sensors.yaml ideal-forms-distance) ---
   LIMEN_IDEAL_FORMS:
     default: 1

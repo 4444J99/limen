@@ -157,6 +157,19 @@ def _gh_user(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
         return subprocess.CompletedProcess(args, 1, "", str(e))
 
 
+_GH_LOGIN_CACHE: dict[str, str | None] = {}
+
+
+def _gh_login() -> str | None:
+    """The keyring gh identity's login, cached per process. None ⟺ unauthenticated/offline.
+    Routing predicate for the personal-estate lenses: /user/* routes are only truthful when the
+    owner under census IS the authenticated user."""
+    if "login" not in _GH_LOGIN_CACHE:
+        r = _gh_user(["api", "user", "--jq", ".login"], timeout=15)
+        _GH_LOGIN_CACHE["login"] = ((r.stdout or "").strip() or None) if r.returncode == 0 else None
+    return _GH_LOGIN_CACHE["login"]
+
+
 def _token_path() -> str:
     """Which cascade path resolves (app|pat|gh|none) — prints NO secret."""
     try:
@@ -927,7 +940,14 @@ def _owner_repos(
         ".[] | {full_name, private, fork, archived, size, description, homepage, "
         "stars: .stargazers_count, topics_count: ((.topics // []) | length), pushed_at}"
     )
-    for route in (f"/orgs/{owner}/repos?type=all", f"/users/{owner}/repos"):
+    routes = [f"/orgs/{owner}/repos?type=all", f"/users/{owner}/repos"]
+    if user_scoped and _gh_login() == owner:
+        # The authenticated user's own estate: /user/repos?affiliation=owner is the ONLY route
+        # that surfaces their PRIVATE repos (/users/{owner}/repos is structurally public-only —
+        # the personal-estate half of the census blindness, PR B). The owner filter below drops
+        # any affiliation row outside the {owner}/ namespace.
+        routes.insert(0, "/user/repos?affiliation=owner")
+    for route in routes:
         args = ["api", route, "--paginate", "-X", "GET", "-F", "per_page=100", "--jq", jq]
         r = _gh_user(args, timeout=180) if user_scoped else _gh(args, token, timeout=180)
         if r.returncode != 0:
@@ -945,6 +965,8 @@ def _owner_repos(
                 return None
             if not isinstance(row, dict) or not row.get("full_name"):
                 return None
+            if str(row["full_name"]).split("/", 1)[0] != owner:
+                continue
             rows.append(row)
         return rows
     return None
@@ -1036,6 +1058,40 @@ def _collaborator_census(estate: dict, access: dict | None, token: str | None, o
             out["org_outside"][org] = json.loads(r.stdout or "[]") if r.returncode == 0 else None
         except ValueError:
             out["org_outside"][org] = None
+    # ── The personal-estate FULL-ROLL lens (rungs D + N, PR B). A personal account has no org
+    # outside-collaborator roll (the 404 above), so derive the equivalent: enumerate the
+    # authenticated owner's repos user-scoped (the only route that sees their privates) and take
+    # each repo's every-collaborator-except-owner roll. personal_full feeds class D beyond N's
+    # bounded probe set; the unioned logins become the synthesized org_outside roll, so class N
+    # stops skipping the personal owner. Unreadable stays None — a SKIP, never a guess.
+    out["personal_full"] = None
+    for owner in owners(estate):
+        if _org_class(owner, estate)[0] is not None or _gh_login() != owner:
+            continue
+        inventory = _owner_repos(owner, token, user_scoped=True)
+        if inventory is None:
+            out["org_outside"][owner] = None
+            continue
+        full_rolls: dict[str, list | None] = {}
+        roll_logins: set[str] = set()
+        for inv_row in inventory:
+            repo = str(inv_row["full_name"])
+            roll_path, roll_jq = _outside_path_jq(repo)
+            r = _gh_user(["api", roll_path, "--jq", roll_jq], timeout=30)
+            if r.returncode != 0:
+                ok = False
+                full_rolls[repo] = None
+                continue
+            try:
+                outside = json.loads(r.stdout or "[]")
+            except ValueError:
+                ok = False
+                full_rolls[repo] = None
+                continue
+            full_rolls[repo] = outside
+            roll_logins |= {str(c.get("login") or "") for c in outside if isinstance(c, dict)}
+        out["personal_full"] = full_rolls
+        out["org_outside"][owner] = sorted(roll_logins)
     out["complete"] = ok
     return out
 
@@ -1546,12 +1602,38 @@ def _facts_rows() -> list[dict] | None:
         return None
 
 
-def visibility_drift(rows: list[dict], estate: dict) -> tuple[list[str], list[str]]:
+def _sweep_receipt_lens():
+    """publish-sweep.py's ``receipt_fresh_green``, or None when it cannot be loaded.
+
+    Fail-open by construction: class G is a REPORTING rung, so a missing/broken sweep script must
+    degrade it to the pure read (cite every public candidate) rather than break the whole doctor.
+    Returning None — not a stub that answers True — keeps the failure legible: the un-lensed path
+    over-cites, and over-citing is the safe direction for a posture rung."""
+    try:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("publish_sweep", str(SCRIPT_DIR / "publish-sweep.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["publish_sweep"] = mod
+        spec.loader.exec_module(mod)
+        return mod.receipt_fresh_green
+    except Exception:
+        return None
+
+
+def visibility_drift(rows: list[dict], estate: dict, receipt_ok=None) -> tuple[list[str], list[str]]:
     """Class G, pure: desired visibility − observed. ``publish_candidate`` is desired-public,
     matching apply-visibility.py: its nominal operation-private class preserves the pre-publication
     posture while a green history sweep gates the actual flip. A candidate still private is CITED
-    (homed with the publish-wave owner); an already-public candidate is converged. ``any`` is
-    exempt. Every other mismatch, including desired-private observed-public, is drift."""
+    (homed with the publish-wave owner). ``any`` is exempt. Every other mismatch, including
+    desired-private observed-public, is drift.
+
+    ``receipt_ok(repo) -> (bool, why)`` is the optional live sweep-receipt lens. Omitted (the pure
+    fixture path) every already-public candidate is cited, because purity cannot tell an adjudicated
+    public from an un-adjudicated one. Supplied (the live doctor), a green+fresh receipt legitimately
+    OWNS the public posture and the repo is genuinely converged — so it is not cited at all. Without
+    that distinction the rung cites all 32 swept-clean publics forever, and a rung that always cites
+    is a rung nobody reads."""
     fails: list[str] = []
     cites: list[str] = []
     classes = estate.get("classes") or {}
@@ -1567,6 +1649,17 @@ def visibility_drift(rows: list[dict], estate: dict) -> tuple[list[str], list[st
             continue  # 'any' is exempt; unclassed is rung J's finding
         observed = "private" if row.get("private") else "public"
         if desired == observed:
+            if publish_candidate and observed == "public":
+                # The old silent "converged" read let an un-gated public ride (micro-tato /
+                # mirror-mirror, 2026-07-30): candidacy is a GATED desire — public without a
+                # released wave receipt is a posture question, not a convergence.
+                ok, why = receipt_ok(full) if receipt_ok else (False, "no receipt lens")
+                if ok:
+                    continue  # the receipt owns the flip — genuinely converged
+                cites.append(
+                    f"[G visibility-drift] {full}: publish candidate observed public with no receipt "
+                    f"owning the flip ({why}) — publish-sweep.py adjudicates; RED demotes it"
+                )
             continue
         if desired == "public" and publish_candidate:
             cites.append(
@@ -1666,6 +1759,76 @@ def shelf_drift(shelves: dict, rows: list) -> list[str]:
         for o in sorted(owners_):
             if o in declared and n not in declared[o]:
                 out.append(f"{o}/{n}: undeclared repo in a shelf org — declare the row or move it out")
+    return out
+
+
+def permission_over_grant(personal_full: dict, grants: dict, probed: set[str]) -> list[str]:
+    """Class D, pure: the personal estate's FULL collaborator roll vs the ACCESS registry — the
+    lens beyond class N's bounded probe set (granted ∪ never-grant). A collaborator on an
+    UNLISTED personal repo, or any live role above the declared grant, is drift. Probed repos
+    are class N's finding, never double-reported here; unreadable rolls (None) are the caller's
+    SKIP. The rung only ever reports — permission changes stay with collab-sync / his hand."""
+    drifts: list[str] = []
+    for repo, outside in sorted((personal_full or {}).items()):
+        if repo in probed or outside is None:
+            continue
+        declared = {str(g.get("login", "")).lower(): g for g in (grants.get(repo) or []) if isinstance(g, dict)}
+        for c in outside:
+            if not isinstance(c, dict):
+                continue
+            login = str(c.get("login") or "")
+            role = ROLE_NAME_TO_GRANT.get(str(c.get("role")), str(c.get("role")))
+            g = declared.get(login.lower())
+            if g is None:
+                drifts.append(f"{repo}: {login} ({role}) has live access with NO grant row (repo unlisted in ACCESS)")
+            elif GRANT_ROLE_RANK.get(role, 99) > GRANT_ROLE_RANK.get(str(g.get("role")), -1):
+                drifts.append(f"{repo}: {login} live role {role} exceeds declared {g.get('role')}")
+    return drifts
+
+
+def posture_window(eligible: list[str], size: int, ordinal: int) -> list[str]:
+    """Class A's bounded rotating window, pure and stateless: a deterministic size-`size` slice of
+    the sorted eligible set, rotated by day ordinal — full coverage every ceil(n/size) days with
+    zero persisted cursor. Same ordinal ⇒ same slice (a doctor re-run probes identical repos)."""
+    if not eligible or size <= 0:
+        return []
+    ordered = sorted(eligible)
+    if size >= len(ordered):
+        return ordered
+    start = (ordinal * size) % len(ordered)
+    return (ordered + ordered)[start : start + size]
+
+
+def _protection_probe(
+    repos: list[str],
+    estate: dict,
+    token: str | None,  # allow-secret (type annotation, no value)
+) -> dict[str, str]:
+    """Class A's Lens: live branch-protection state per repo → 'protected' | 'missing' |
+    'plan-gated' | 'unreadable'. Canonical-org repos ride the App token; personal/shelf owners
+    sit outside the installation and read user-scoped. plan-gated = GitHub refuses protection on
+    a free-plan private repo (the billing levers own the fix, not the rung)."""
+    out: dict[str, str] = {}
+    for repo in repos:
+        canonical = _org_class(repo.split("/", 1)[0], estate)[0] == "canonical"
+        args = ["api", f"/repos/{repo}", "--jq", ".default_branch"]
+        r = _gh(args, token, timeout=30) if canonical else _gh_user(args, timeout=30)
+        if r.returncode != 0 or not (r.stdout or "").strip():
+            out[repo] = "unreadable"
+            continue
+        branch = r.stdout.strip().splitlines()[0]
+        args = ["api", f"/repos/{repo}/branches/{branch}/protection", "--jq", ".url"]
+        r = _gh(args, token, timeout=30) if canonical else _gh_user(args, timeout=30)
+        if r.returncode == 0:
+            out[repo] = "protected"
+            continue
+        blob = f"{r.stdout or ''}\n{r.stderr or ''}"
+        if "Upgrade to GitHub" in blob:
+            out[repo] = "plan-gated"
+        elif "Branch not protected" in blob or "Not Found" in blob or "HTTP 404" in blob:
+            out[repo] = "missing"
+        else:
+            out[repo] = "unreadable"
     return out
 
 
@@ -1776,7 +1939,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
     elif rows is None:
         skips.append("[G visibility-drift] no census facts (run census online first)")
     else:
-        g_fails, g_cites = visibility_drift(rows, estate)
+        g_fails, g_cites = visibility_drift(rows, estate, receipt_ok=_sweep_receipt_lens())
         fails += g_fails
         cites += g_cites
 
@@ -1934,10 +2097,74 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
             for d in shelf_drift(shelves_reg, rows):
                 fails.append(f"[P shelf-parity] {d}")
 
-    # A/D are per-repo posture rungs — the census surfaces the inputs; the full per-repo
-    # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.
-    for tag in ("A protection-missing", "D permission-over-grant"):
-        skips.append(f"[{tag}] per-repo posture rung — arms with the reconcile layer (PR B)")
+    # D — permission-over-grant (PR B, armed): the personal estate's FULL roll vs ACCESS — the
+    # lens beyond N's bounded probe set. A collaborator on an unlisted personal repo was
+    # structurally invisible before this rung. Report-only; remediation is named, never fired.
+    personal_full = coll.get("personal_full")
+    if access is None or not access:
+        skips.append("[D permission-over-grant] no ACCESS registry")
+    elif personal_full is None:
+        skips.append("[D permission-over-grant] personal full-roll unavailable (user-scoped read failed)")
+    else:
+        for repo_ in sorted(r_ for r_, v_ in personal_full.items() if v_ is None):
+            skips.append(f"[D permission-over-grant] {repo_}: collaborator roll unreadable")
+        for d in permission_over_grant(personal_full, access.get("grants") or {}, set(coll.get("by_repo") or {})):
+            fails.append(
+                f"[D permission-over-grant] {d} — remediation: declare the grant row in ACCESS "
+                f"(or remove the access via collab-sync); the rung never edits"
+            )
+
+    # A — protection-missing (PR B, armed): declared class posture (branch_protection: required)
+    # vs live branch protection, over a bounded stateless rotating window (full coverage cycles
+    # by day ordinal). plan-gated repos cite their billing lever (Pro/Team); missing protection
+    # cites L-BRANCH-PROTECTION while homed — posture writes stay with the levers, never the rung.
+    a_atom = "L-BRANCH-PROTECTION"
+    if not rows:
+        skips.append("[A protection-missing] no census facts (run census online first)")
+    else:
+        classes_ = estate.get("classes") or {}
+        eligible = [
+            str(row.get("full_name"))
+            for row in rows
+            if (classes_.get(classify_repo(str(row.get("full_name")), estate, facts=row) or "") or {}).get(
+                "branch_protection"
+            )
+            == "required"
+        ]
+        try:
+            win_size = int(os.environ.get("LIMEN_GITVS_POSTURE_WINDOW", "15"))
+        except ValueError:
+            win_size = 15
+        window = posture_window(eligible, win_size, datetime.now(timezone.utc).toordinal())
+        if len(window) < len(eligible):
+            skips.append(
+                f"[A protection-missing] rotating window: {len(window)}/{len(eligible)} eligible probed this run"
+            )
+        probe = _protection_probe(window, estate, _token())
+        by_owner_private = {str(r_.get("full_name")): bool(r_.get("private")) for r_ in rows}
+        for repo_, state in sorted(probe.items()):
+            if state == "protected":
+                continue
+            if state == "unreadable":
+                skips.append(f"[A protection-missing] {repo_}: protection state unreadable")
+                continue
+            if state == "plan-gated":
+                owner_ = repo_.split("/", 1)[0]
+                lever = "L-PERSONAL-PRO" if _org_class(owner_, estate)[0] is None else "L-ORG-TEAM-UPGRADE"
+                (cites if lever in homed else fails).append(
+                    f"[A protection-missing] {repo_}: private repo protection is plan-gated → "
+                    + (f"{lever} (owned, open)" if lever in homed else f"{lever} (UNHOMED)")
+                )
+                continue
+            suffix = (
+                " (private repo — free-plan personal protection may also need L-PERSONAL-PRO)"
+                if by_owner_private.get(repo_)
+                else ""
+            )
+            (cites if a_atom in homed else fails).append(
+                f"[A protection-missing] {repo_}: class demands branch_protection, none live{suffix} → "
+                + (f"{a_atom} (owned, open)" if a_atom in homed else f"{a_atom} (UNHOMED)")
+            )
 
     return _verdict(fails, cites, skips, "live", strict=strict)
 
