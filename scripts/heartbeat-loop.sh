@@ -255,6 +255,29 @@ run_monitoring() {
   # by LIMEN_MAIL_SEND inside mail-beat.sh). Safe while paused for the same reason.
   play "$C_MAIL" && { bash "$LIMEN_ROOT/scripts/mail-beat.sh" 2>&1 | tail -3 || true; stamp mail; }
 }
+# SUBSTRATE COHERENCE — re-converge this checkout to the release. Extracted for the same reason
+# run_monitoring was: it must run from the live body AND from the paused branch above it.
+#
+# A pause withdraws the authority to act ON THE WORLD — dispatch, spend, send, merge. Fast-forwarding
+# the daemon's own checkout to already-merged trunk is not that; it is the machine keeping its own
+# body coherent, the same category as sensing. Leaving it below the paused `continue` created a
+# deadlock that ate its own tail: the 2026-07-21 maintenance blocker's resume_predicate requires
+# "live root exact origin/main and clean", and the ONLY rung that produces that state ran solely
+# when NOT paused. The halt could therefore never self-clear. Measured on 2026-07-31: a hand-run
+# sync brought the tree to exact-origin at 12:04; twenty-five minutes later origin had moved and
+# check-live-checkout.py was back to exit 1, naming this very script as its owner.
+#
+# Safe by sync-release.sh's own contract: fast-forward ONLY (never force/reset/merge-commit), fails
+# open always, never exits or re-execs the daemon, and untracked runtime state — including the
+# governor gate that holds the pause itself — is untouched, because a ff only advances committed
+# history. A paused fleet running stale code is strictly worse: that is the state which ran a broken
+# mail organ 27 commits behind origin for four days.
+#
+# The tradeoff this accepts: if a pause was armed BECAUSE trunk is bad, syncing while paused pulls
+# that code in. Set LIMEN_PAUSED_SYNC=0 to freeze code for the duration of such a pause.
+run_release_sync() {
+  play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
+}
 planning_lanes() {
   python3 - "$1" <<'PY'
 import os
@@ -318,6 +341,10 @@ while true; do
     if [ "${LIMEN_PAUSED_SENSING:-1}" = "1" ] && net_up; then
       echo "  paused — acting withdrawn, sensing continues"
       run_monitoring
+      # And the machine keeps its own body coherent — see run_release_sync's header. Without this the
+      # maintenance blocker's resume_predicate ("live root exact origin/main and clean") is
+      # unsatisfiable by construction, because the only rung that satisfies it sat below this branch.
+      [ "${LIMEN_PAUSED_SYNC:-1}" = "1" ] && run_release_sync
     fi
     python3 "$LIMEN_ROOT/scripts/heartbeat-paused-receipt.py" \
       --write --cadence-seconds "$PAUSED_BEAT" >/dev/null 2>&1 || true
@@ -363,7 +390,8 @@ while true; do
     # SUBSTRATE SELF-HEAL — re-converge this checkout to the release (origin/main) before doing
     # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
     # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
-    play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
+    # The block itself now lives in run_release_sync() so the paused branch above can call it too.
+    run_release_sync
     # BOARD-INTEGRITY self-heal — if the SSOT queue is unloadable or collapsed (a clobber that
     # slipped past the save-time guard, or external corruption), restore it from HEAD BEFORE the
     # body tries to load it, so a dead board self-recovers instead of idling the fleet for hours
