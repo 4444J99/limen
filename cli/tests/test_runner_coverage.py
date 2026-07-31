@@ -165,11 +165,135 @@ def test_a_new_finding_fails_even_with_a_populated_baseline(rc, monkeypatch, tmp
     assert "metabolize.sh" in out, "the live defect must be what fails an empty baseline"
 
 
-def test_baselined_findings_are_the_three_known_ones(rc):
-    """Named explicitly so silently widening the baseline shows up in review as a test edit."""
+def test_baselined_findings_are_the_two_known_ones(rc):
+    """Named explicitly so silently widening the baseline shows up in review as a test edit.
+
+    Was three. `scripts/preflight-thread-state.py` — the `github.comment` predicate — now exists, so
+    finding C stopped reproducing and the ratchet tightened. Editing this assertion is the intended
+    review signal in BOTH directions: a baseline that grows must be argued for in a diff.
+    """
     baselined = rc.read_baseline()
-    assert len(baselined) == 3
+    assert len(baselined) == 2
     joined = "\n".join(baselined)
     assert "scripts/metabolize.sh" in joined
-    assert "scripts/preflight-thread-state.py" in joined
     assert "scripts/trunk-ci-health.py" in joined
+    assert "preflight-thread-state" not in joined, "the predicate exists; its finding must be gone"
+
+
+# ── F: a declared gate must have something that RUNS it ──────────────────────────────────────
+
+
+def _gates_fixture(tmp_path, gates: dict) -> Path:
+    import yaml
+
+    path = tmp_path / "gates.yaml"
+    path.write_text(yaml.safe_dump({"gates": gates}, sort_keys=False))
+    return path
+
+
+def test_gate_runner_check_is_green_on_the_live_registry(rc):
+    findings: list[str] = []
+    rc.check_gate_runners(findings)
+    assert findings == [], f"a declared gate runs nowhere: {findings}"
+
+
+def test_the_outbound_gate_is_actually_wired_into_verify_whole(rc):
+    """The fix itself, asserted against the real file rather than a fixture.
+
+    `outbound-preflight-test` shipped `scoped: false` with no ci_job and was named by verify-whole.sh
+    nowhere, so its deny matrix never ran. Both rungs must appear here or the gate is decorative.
+    """
+    whole = (ROOT / "scripts" / "verify-whole.sh").read_text()
+    assert "scripts/tests/outbound-preflight-guard.test.sh" in whole
+    assert "scripts/tests/preflight-thread-state.test.sh" in whole
+
+
+def test_a_whole_only_gate_absent_from_verify_whole_is_a_finding(rc, monkeypatch, tmp_path):
+    """NEGATIVE CONTROL — reproduce the exact defect. Without this the check could be vacuous."""
+    gates = _gates_fixture(
+        tmp_path,
+        {"orphan-gate": {"command": "bash scripts/tests/nobody-runs-me.test.sh", "scoped": False}},
+    )
+    whole = tmp_path / "verify-whole.sh"
+    whole.write_text("#!/usr/bin/env bash\nbash scripts/tests/something-else.test.sh\n")
+    monkeypatch.setattr(rc, "GATES", gates)
+    monkeypatch.setattr(rc, "VERIFY_WHOLE", whole)
+    findings: list[str] = []
+    rc.check_gate_runners(findings)
+    assert len(findings) == 1
+    assert "gate-unrun" in findings[0]
+    assert "orphan-gate" in findings[0]
+
+
+def test_naming_the_command_in_verify_whole_clears_the_finding(rc, monkeypatch, tmp_path):
+    """The other half of the control: the same gate passes once something runs it."""
+    gates = _gates_fixture(
+        tmp_path,
+        {"orphan-gate": {"command": "bash scripts/tests/nobody-runs-me.test.sh", "scoped": False}},
+    )
+    whole = tmp_path / "verify-whole.sh"
+    whole.write_text("#!/usr/bin/env bash\nbash scripts/tests/nobody-runs-me.test.sh\n")
+    monkeypatch.setattr(rc, "GATES", gates)
+    monkeypatch.setattr(rc, "VERIFY_WHOLE", whole)
+    findings: list[str] = []
+    rc.check_gate_runners(findings)
+    assert findings == []
+
+
+@pytest.mark.parametrize(
+    ("gate", "why"),
+    [
+        (
+            {"command": "bash scripts/tests/x.test.sh", "paths": ["scripts/x.sh"]},
+            "a scoped gate is selected by verify.py --changed; verify-whole.sh need not name it",
+        ),
+        (
+            {"command": "bash scripts/tests/x.test.sh", "scoped": False, "ci_job": "pr-gate.yml:pr-gate"},
+            "a declared ci_job is a runner",
+        ),
+        (
+            {"command": "", "scoped": False},
+            "a commandless gate is a file_set provider consumed via --print-files; nothing to run",
+        ),
+    ],
+)
+def test_legitimately_reachable_gates_are_not_flagged(rc, monkeypatch, tmp_path, gate, why):
+    gates = _gates_fixture(tmp_path, {"g": gate})
+    whole = tmp_path / "verify-whole.sh"
+    whole.write_text("#!/usr/bin/env bash\n")
+    monkeypatch.setattr(rc, "GATES", gates)
+    monkeypatch.setattr(rc, "VERIFY_WHOLE", whole)
+    findings: list[str] = []
+    rc.check_gate_runners(findings)
+    assert findings == [], why
+
+
+def test_a_non_script_literal_confers_reachability(rc, monkeypatch, tmp_path):
+    """`plist-lint` runs `plutil -lint container/launchd/*.plist` and names no script at all.
+
+    A scripts-only pattern would report it unreachable while verify-whole.sh runs those exact lines —
+    a false positive that would push an author to delete a correct gate.
+    """
+    gates = _gates_fixture(
+        tmp_path,
+        {"plist-lint": {"command": "plutil -lint container/launchd/com.user.netmeter.plist", "scoped": False}},
+    )
+    whole = tmp_path / "verify-whole.sh"
+    whole.write_text("plutil -lint container/launchd/com.user.netmeter.plist\n")
+    monkeypatch.setattr(rc, "GATES", gates)
+    monkeypatch.setattr(rc, "VERIFY_WHOLE", whole)
+    findings: list[str] = []
+    rc.check_gate_runners(findings)
+    assert findings == []
+
+
+def test_a_scoped_gate_with_no_paths_can_never_be_selected(rc, monkeypatch, tmp_path):
+    """verify.py select() matches changed paths against gate_paths(); an empty list matches nothing,
+    so the gate is declared and permanently inert. Zero gates are in this state today."""
+    gates = _gates_fixture(tmp_path, {"pathless": {"command": "bash scripts/tests/x.test.sh"}})
+    monkeypatch.setattr(rc, "GATES", gates)
+    monkeypatch.setattr(rc, "VERIFY_WHOLE", tmp_path / "absent.sh")
+    findings: list[str] = []
+    rc.check_gate_runners(findings)
+    assert len(findings) == 1
+    assert "gate-unselectable" in findings[0]
