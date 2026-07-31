@@ -372,6 +372,105 @@ def test_blocks_land_in_chronological_order_whatever_the_write_order(mod, root):
     assert positions == sorted(positions), "phases must read morning → midday → evening"
 
 
+# ── durability: an emission nobody commits is an emission that never happened ──────
+#
+# The organ's first live page landed UNTRACKED inside a tracked directory, and the beat's only
+# committing rung refuses in-place commits on the live default branch. These cover the predicate
+# that decides what to publish and the two gates that decide whether to publish at all.
+
+
+def _fake_git(mod, monkeypatch, porcelain: str, rc: int = 0):
+    """Stub the ONE shell-out unshipped_pages makes, so no test touches a real repo."""
+    calls: list[str] = []
+
+    def fake_run(cmd, root, timeout=120):
+        calls.append(cmd)
+        return rc, porcelain
+
+    monkeypatch.setattr(mod, "_run", fake_run)
+    return calls
+
+
+def test_unshipped_pages_finds_untracked_and_modified_but_not_readme(mod, tmp_path, monkeypatch):
+    for name in ("2026-07-31.md", "2026-08-01.md", "README.md"):
+        p = tmp_path / "docs" / "diurnal" / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("x", encoding="utf-8")
+    _fake_git(
+        mod,
+        monkeypatch,
+        "?? docs/diurnal/2026-07-31.md\n M docs/diurnal/2026-08-01.md\n M docs/diurnal/README.md\n",
+    )
+    assert mod.unshipped_pages(tmp_path) == ["docs/diurnal/2026-07-31.md", "docs/diurnal/2026-08-01.md"]
+
+
+def test_unshipped_pages_skips_a_page_that_is_gone(mod, tmp_path, monkeypatch):
+    """A staged deletion is not an emission to publish — ship-docs requires the file to exist."""
+    _fake_git(mod, monkeypatch, " D docs/diurnal/2026-07-30.md\n")
+    assert mod.unshipped_pages(tmp_path) == []
+
+
+def test_unshipped_pages_fails_closed_when_git_errors(mod, tmp_path, monkeypatch):
+    _fake_git(mod, monkeypatch, "fatal: not a git repository\n", rc=128)
+    assert mod.unshipped_pages(tmp_path) == []
+
+
+def test_a_pause_marker_prohibiting_merge_holds_publication(mod, tmp_path, monkeypatch):
+    (tmp_path / "logs").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "logs" / "AUTONOMY_PAUSED").write_text("owner: operator\nprohibitions: merge, send\n", encoding="utf-8")
+    assert "merge" in (mod._merge_prohibited(tmp_path) or "")
+
+    shipped: list[str] = []
+    monkeypatch.setattr(mod, "unshipped_pages", lambda root: shipped.append("asked") or [])
+    assert mod.ship_pages(tmp_path) == 0
+    assert shipped == [], "a merge-prohibiting marker must short-circuit BEFORE any shipping work"
+
+
+def test_a_pause_marker_that_does_not_prohibit_merge_does_not_hold_publication(mod, tmp_path):
+    (tmp_path / "logs").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "logs" / "AUTONOMY_PAUSED").write_text("prohibitions: send, spend\n", encoding="utf-8")
+    assert mod._merge_prohibited(tmp_path) is None
+
+
+def test_no_marker_at_all_does_not_hold_publication(mod, tmp_path):
+    assert mod._merge_prohibited(tmp_path) is None
+
+
+def test_ship_is_gated_by_its_declared_parameter(mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_DIURNAL_SHIP", "0")
+    monkeypatch.setattr(mod, "unshipped_pages", lambda root: pytest.fail("must not look when gated off"))
+    assert mod.ship_pages(tmp_path) == 0
+
+
+def test_ship_never_fails_the_beat_when_the_shipper_is_absent(mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_DIURNAL_SHIP", "1")
+    monkeypatch.setattr(mod, "unshipped_pages", lambda root: ["docs/diurnal/2026-07-31.md"])
+    assert mod.ship_pages(tmp_path) == 0, "a missing ship-docs.sh is advisory, never a beat failure"
+
+
+def test_a_shipped_page_is_not_reshipped_while_its_pr_is_still_open(mod, tmp_path, monkeypatch):
+    """The defect driving this live exposed: after a successful ship the page is STILL `??`,
+    because it becomes tracked only when the PR merges and the beat pulls. Git state alone
+    re-ships it every emission — three duplicate PRs a day for one file."""
+    page = tmp_path / "docs" / "diurnal" / "2026-07-31.md"
+    page.parent.mkdir(parents=True, exist_ok=True)
+    page.write_text("morning\n", encoding="utf-8")
+    _fake_git(mod, monkeypatch, "?? docs/diurnal/2026-07-31.md\n")
+
+    assert mod.unshipped_pages(tmp_path) == ["docs/diurnal/2026-07-31.md"]
+
+    (tmp_path / "logs" / "diurnal").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "logs" / "diurnal" / "shipped.json").write_text(
+        json.dumps({"docs/diurnal/2026-07-31.md": mod._digest(page)}), encoding="utf-8"
+    )
+    assert mod.unshipped_pages(tmp_path) == [], "git still says `??` — the receipt must carry the gap"
+
+    page.write_text("morning\nmidday\n", encoding="utf-8")
+    assert mod.unshipped_pages(tmp_path) == ["docs/diurnal/2026-07-31.md"], (
+        "keying on the digest, not the path, is what lets a later phase re-ship what it rewrote"
+    )
+
+
 # ── CLI edges found by driving the organ, not by reading it ───────────────────────
 
 
