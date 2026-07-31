@@ -148,10 +148,35 @@ def test_fixture_path_helper():
         ("PUBLIC", "secret", "REMOVE_ROTATE", "his_lever"),
         ("PUBLIC", "public_safe", "PUBLISH", "his_lever"),
         ("PUBLIC", "personal_pii", "REDACT_IDENTIFIERS", "auto"),
+        # the collab audience (2026-07-30) — the middle tier the estate enforced before it could
+        # name it. internal_strategy is the ONLY row where it differs from private, and that
+        # difference is the whole reason the column exists.
+        ("collab", "internal_strategy", "KEEP_OFF_SHARED_HEAD", "auto"),
+        ("collab", "personal_pii", "REDACT_OWNER_ONLY", "auto"),
+        ("collab", "secret", "REMOVE_ROTATE", "his_lever"),
+        ("collab", "public_safe", "PUBLISH", "his_lever"),
+        ("collab", "product_content", "LEAVE", "noop"),
+        # his spellings and the shipped persona spellings are the same axis
+        ("world", "internal_strategy", "KEEP_OFF_PUBLIC_HEAD", "auto"),
+        ("self", "internal_strategy", "RESTORE_REDACT", "auto"),
+        ("owner", "internal_strategy", "RESTORE_REDACT", "auto"),
+        ("client", "internal_strategy", "KEEP_OFF_SHARED_HEAD", "auto"),
+        # `any` (contrib_fork / frozen / archived) resolves to the STRICTEST column, not the loosest
+        ("any", "internal_strategy", "KEEP_OFF_PUBLIC_HEAD", "auto"),
     ],
 )
 def test_disposition(vis, cls, disp, auto):
     assert pp.disposition(vis, cls) == (disp, auto)
+
+
+def test_unknown_audience_fails_closed():
+    """The pre-2026-07-30 normalizer collapsed anything not starting with "pub" into the PRIVATE
+    column, so a typo silently bought RESTORE_REDACT ("a private repo is a safe home") on a
+    world-readable tree — the most permissive cell, reached by a misspelling. It must raise."""
+    with pytest.raises(SystemExit):
+        pp.disposition("wrold", "internal_strategy")
+    with pytest.raises(SystemExit):
+        pp.disposition("", "secret")
 
 
 def test_self_test_passes():
@@ -168,7 +193,7 @@ def test_census_is_counts_only():
     encoded = json.dumps(census, sort_keys=True)
 
     assert census["classes"] == len(pp.CLASSES)
-    assert census["disposition_rows"] == 10
+    assert census["disposition_rows"] == 15  # 5 classes x 3 audiences (world/collab/self)
     assert census["convergence_gates"] == len(pp._CONVERGENCE_GATES)
     assert "Anthony" not in encoded
     assert "padavano" not in encoded.lower()

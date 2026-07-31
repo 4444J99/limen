@@ -24,13 +24,43 @@ path-first then by content:
 
 ### The disposition matrix
 
-| content ↓ / repo → | **PUBLIC** | **PRIVATE** |
+Three audiences, not two. Every surface faces the world, an invited collaborator, or nobody — and
+the three columns are **one axis under three spellings**, normalized by `audience_column()`:
+
+| operator's word | this table | persona contract (`surface-manifest.schema.json`) |
 |---|---|---|
-| `secret` | `REMOVE_ROTATE` | `REMOVE_ROTATE` |
-| `personal_pii` | `REDACT_IDENTIFIERS` | `REDACT_IDENTIFIERS` |
-| `internal_strategy` | **`KEEP_OFF_PUBLIC_HEAD`** | `RESTORE_REDACT` |
-| `product_content` | **`LEAVE`** | `LEAVE` |
-| `public_safe` | `PUBLISH` *(his click)* | `PUBLISH` *(his click)* |
+| `world` | `PUBLIC` | `public` |
+| `collab` | `COLLAB` | `client` |
+| `self` | `PRIVATE` | `owner` |
+
+| content ↓ / audience → | **PUBLIC** *(world)* | **COLLAB** *(client)* | **PRIVATE** *(self)* |
+|---|---|---|---|
+| `secret` | `REMOVE_ROTATE` | `REMOVE_ROTATE` | `REMOVE_ROTATE` |
+| `personal_pii` | `REDACT_IDENTIFIERS` | **`REDACT_OWNER_ONLY`** | `REDACT_IDENTIFIERS` |
+| `internal_strategy` | **`KEEP_OFF_PUBLIC_HEAD`** | **`KEEP_OFF_SHARED_HEAD`** | `RESTORE_REDACT` |
+| `product_content` | **`LEAVE`** | `LEAVE` | `LEAVE` |
+| `public_safe` | `PUBLISH` *(his click)* | `PUBLISH` *(his click)* | `PUBLISH` *(his click)* |
+
+The `COLLAB` column differs from `PRIVATE` in exactly one content cell, and that cell is why the
+column exists: **a private repo is a safe home; a tree an invited collaborator can read is not.**
+Internal strategy is premortems, positioning and raw session dumps — material that routinely
+discusses the very collaborator who was invited in, so it stays off a shared head the same way it
+stays off a public one.
+
+Two honesty notes the table cannot carry on its own:
+
+- `REDACT_OWNER_ONLY` is the same *action* as `REDACT_IDENTIFIERS`, under a name that admits its
+  scope. The redactor is owner-scoped by construction. On a shared tree the collaborator's own
+  identifiers are a legitimate resident, but a **third party's are not covered by any redactor**
+  and stay unadjudicated. Reporting plain `REDACT_IDENTIFIERS` there would be a false assurance.
+- `public_safe` stays `his_lever` on `COLLAB`. Autonomy derives from the reversibility of the
+  action the disposition *names*, and `PUBLISH` names the visibility flip — irreversible and
+  outbound whether or not a collaborator is already inside.
+
+An unknown audience **raises**; it does not fall back. (Before 2026-07-30 anything not starting
+with `pub` collapsed into `PRIVATE`, so a typo silently bought `RESTORE_REDACT` — "a private repo
+is a safe home" — on a world-readable tree.) The estate's `visibility: any` classes resolve to the
+strictest column, never the loosest.
 
 ## The doctrine it encodes
 
@@ -65,7 +95,7 @@ new gate:
 |---|---|---|---|---|
 | `_SECRET_RX` | `scripts/creds-hydrate.py:455` | Secret-shaped strings in credential output + content | `secret` × any vis → `REMOVE_ROTATE` | `his_lever` (rotation is a vendor mint) |
 | `SENSITIVE_PATTERNS` | `scripts/scan-legacy-session-batch.py:37` | Keyword-based session-content classification for legacy review batch | `internal_strategy` (path-first classifier in engine supersedes keyword classification) | `auto` (classification, not action) |
-| `persona contracts` | `spec/contracts/surface-manifest.schema.json` | WHO may see WHAT on WHICH surface (persona-based surface gating) | Complementary: disposition matrix decides CONTENT safety; persona contracts decide AUDIENCE access. Both must agree before content reaches a surface. | mixed |
+| `persona contracts` | `spec/contracts/surface-manifest.schema.json` | WHO may see WHAT on WHICH surface (persona-based surface gating) | Complementary, and since 2026-07-30 **one axis under two spellings**: `owner/client/public` ≡ `self/collab/world` ≡ this table's `PRIVATE/COLLAB/PUBLIC`. `audience_column()` normalizes every spelling, so the estate never runs two vocabularies through one engine. The disposition matrix decides CONTENT safety; persona contracts decide AUDIENCE access. Both must agree before content reaches a surface. | mixed |
 | `awaiting_publish` | `scripts/generate-positioning.py:93` | Repo-level publish gate: banked + tested positioning seeds kept OFF all public surfaces | `public_safe` × `PUBLIC` → `PUBLISH` (his_lever). The `awaiting_publish` flag IS the `his_lever` manifestation: he flips the repo public and clears the flag, then disposition allows `PUBLISH`. | `his_lever` (the publish click is his) |
 
 **Protocol:** every new content-safety concern enters the engine (classifier + disposition)
