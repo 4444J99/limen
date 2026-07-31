@@ -4920,6 +4920,12 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Maximum falsifiable claims the morning emits. A claim is 'section X's metric will fall below N today' — scoring a claim and scoring a section are ONE measurement, which is what makes the cut loop evidence-based rather than aesthetic."
+  LIMEN_ROOT_VOICE_FLOOR:
+    default: 5
+    env: LIMEN_ROOT_VOICE_FLOOR
+    self_update: none
+    owner: tabularius
+    note: "Voice stamps a PRIMARY checkout must carry before scripts/_root.py calls it the live organism. Defence in depth behind the exact test (a linked worktree's .git is a gitdir-pointer FILE, a checkout's is a DIRECTORY), covering the root that is a real checkout but not the body: a second clone, a fresh CI checkout, a restored backup. Measured 2026-07-31 — the live body carries 61 stamps, a worktree touched by one scheduled sensor carries 1 — so this sits deliberately nowhere near either edge. Raising it cannot make a worktree pass; only the .git test decides that."
   LIMEN_DIURNAL_CUT_THRESHOLD:
     default: 5
     env: LIMEN_DIURNAL_CUT_THRESHOLD
