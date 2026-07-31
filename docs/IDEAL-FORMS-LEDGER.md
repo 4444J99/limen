@@ -205,6 +205,35 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Status:** PARTIAL — landed-not-activated.
 - **Owner:** domus-genoma CI (parity) + lever `L-CARTRIDGE-REPOINT` (activation) + Claude (proof run).
 
+### IF-NO-MODAL — no approval question for non-destructive work, with the gauge left alive
+- **Ideal form:** zero approval questions for non-destructive work in every lane, with the
+  remaining destructive boundary *derived and measurable* rather than switched off: the trust
+  hook wired from the cartridge source, `permissions.ask` carrying its five-rule fail-safe
+  backstop, and `permissions.autoMode.allow` teaching the classifier the same boundary the hook
+  enforces — so `defaultMode` stays `"auto"`. `bypassPermissions` is explicitly **not** the
+  ideal: it does not close the distance, it deletes the instrument (you cannot measure "does it
+  ask?" where nothing can ask), and it silently un-gates the `rm` class that once wiped the live
+  checkout. `never-hang-permission-spec.md` R1/R4/R5 + §Design-consequences-2.
+- **Distance:** the estate was **measured but unregistered** — `dialogs-silenced.sh` has printed
+  the classes since 2026-07-09 across 25 recorded raisings, while this ledger carried no row, so
+  nothing held the measurement to an owner. Two defects found 2026-07-31 and closed here:
+  **(a)** the hook's standalone branch was far stricter than its own `cd`-chain branch — `cd $W
+  && npm run build` was silent while `npm run build` *from inside `$W`* prompted; closed by a
+  cwd-gated fallback reusing `analyze_clause`, matrix 77 → 99 cases with the boundary asserted
+  (sudo, force-push, non-disposable `rm`, primary-checkout `reset --hard`, `$(`, pipes,
+  redirections, background forks, and a bad clause inside a good chain all still fall through).
+  **(b)** class 1d detected the unwired hook but carried only a printed cure string while its
+  neighbour 1b carried an organ (`heal-hook-drift.sh`) — closed by `scripts/heal-hook-wiring.py`,
+  which asserts hook + `ask` + `autoMode` in the **cartridge source** (never the rendered file —
+  the old cure text instructed a Rule #6 violation) and then `chezmoi apply`s.
+  Remaining distance is exactly one operator act: arming that effector.
+- **Status:** PARTIAL — hook + effector + matrix + registry landed; wiring not yet armed.
+- **Owner:** Anthony (arm the effector) + Claude (hook, effector, matrix). The arming is
+  genuinely his: the auto-mode classifier blocks the **act** of an agent widening its own gate,
+  not merely the path — verified 2026-07-31 to cover the chezmoi source and even a read-only
+  dry-run. That is a correct guardrail. The effector is deliberately **not** beat-wired for the
+  same reason: an auto-armed valve here would let the system widen its own gate unattended.
+
 ### IF-HOST-PRESSURE — exogenous load never stacks unseen
 - **Ideal form:** every host-pressure axis — memory, CPU load, the backup crawler, test fan-out —
   has an executable gauge and a mechanical valve; no stack of individually-legitimate loads can

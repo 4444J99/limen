@@ -165,5 +165,33 @@ assert_allowed "gh repo view organvm/limen"
 assert_allowed "gh repo clone organvm/limen /tmp/clone-target"
 assert_falls_through "gh repo delete organvm/limen --yes"
 
+# ── trusted-cwd fallback: standalone parity with the cd-branch (2026-07-31) ──
+# `cd $W && npm run build` was already silent; `npm run build` from inside $W
+# prompted. Same trust, same analyzer — the leading `cd` was the only difference.
+assert_allowed "npm run build" "$W"
+assert_allowed "npx tsc --noEmit" "$W"
+assert_allowed "sqlite3 corpus.db .tables" "$W"
+assert_allowed "gh api repos/organvm/limen/pulls" "$W"
+assert_allowed "gh pr create --fill" "$W"
+assert_allowed "git restore ." "$W"
+assert_allowed "git commit -F .git/COMMIT_BODY" "$W"
+assert_allowed "python3 scripts/thing.py --flag" "$W"
+assert_allowed "npm ci && npm run build" "$W"
+assert_allowed "make test" "$HOME/Code"
+
+# the boundary must survive the widening
+assert_falls_through "npm run build"                       # no cwd -> no trust
+assert_falls_through "npm run build" "/etc"                # untrusted cwd
+assert_falls_through "sudo npm i -g pkg" "$W"              # HARD_RE
+assert_falls_through "git push --force origin main" "$W"   # HARD_RE
+assert_falls_through "rm -rf $HOME/Documents" "$W"         # non-disposable path
+assert_falls_through "git reset --hard HEAD" "$W"          # primary checkout
+assert_allowed      "git reset --hard HEAD" "$WT/agent-x"  # disposable root
+assert_falls_through 'git commit -m "$(cat body.txt)"' "$W" # substitution boundary
+assert_falls_through "npm run build | tee log" "$W"        # pipe
+assert_falls_through "npm run build & disown" "$W"         # background fork
+assert_falls_through "npm run build > out.log" "$W"        # redirection
+assert_falls_through "npm ci && rm -rf $HOME/Documents" "$W" # bad clause in chain
+
 printf '\nallow-trusted-cd-git.test: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ] || exit 1

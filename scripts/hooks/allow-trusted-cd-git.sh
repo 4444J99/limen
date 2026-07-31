@@ -464,9 +464,18 @@ case "$cmd" in
 esac
 
 # ── Standalone branch (no leading cd) ────────────────────────────────────────
+# Newlines, `;`, pipes, redirections, backticks and `$(` stay unjudgeable — a
+# substituted command is invisible to this analyzer, so it is a deliberate
+# boundary, not an oversight. (Practical consequence: write long commit bodies
+# to a file and use `git commit -F <file>`, never `-m "$(cat <<EOF …)"`.)
 case "$cmd" in
-  *$'\n'*|*';'*|*'|'*|*'&'*|*'<'*|*'>'*|*'`'*|*'$('*) exit 0 ;;
+  *$'\n'*|*';'*|*'|'*|*'<'*|*'>'*|*'`'*|*'$('*) exit 0 ;;
 esac
+# `&&` chains ARE judgeable clause-by-clause (the cd-branch already does this);
+# a bare `&` background fork is not.
+case "${cmd//&&/}" in *'&'*) exit 0 ;; esac
+
+if [ "$cmd" = "${cmd//&&/}" ]; then
 tokenize "$cmd" || exit 0
 
 case "${TOKENS[0]}" in
@@ -499,5 +508,24 @@ case "${TOKENS[0]}" in
       esac
     fi ;;
 esac
+fi
 
-exit 0
+# ── Trusted-cwd fallback (2026-07-31) ────────────────────────────────────────
+# R4 "broaden to the whole command class, never re-approve one literal string".
+# The cd-branch approves ANY non-destructive tail after `cd <trusted dir>`, but a
+# bare command ALREADY RUNNING in that same directory fell through to the
+# classifier: `cd ~/Workspace/limen && npm run build` was silent while
+# `npm run build` prompted. Identical trust, identical risk, identical analyzer —
+# only a leading `cd` differed. The standalone allowlist above stays because it is
+# cwd-INDEPENDENT (read-only diagnostics + path-gated destructive forms approved
+# from anywhere); this fallback is cwd-GATED and covers everything else.
+#
+# Nothing is widened: HARD_RE already exited above, and every clause still runs
+# through analyze_clause, so rm/rmdir/worktree-remove/branch/reset/clean remain
+# path-gated to disposable roots exactly as in the cd-branch.
+[ -n "$cwd" ] || exit 0
+trusted_dir "$cwd" || exit 0
+while IFS= read -r clause; do
+  analyze_clause "$clause" "$cwd" || exit 0
+done < <(printf '%s\n' "$cmd" | sed 's/&&/\n/g')
+emit_allow "Non-destructive command in a trusted cwd; destructive forms path-gated to disposable roots"

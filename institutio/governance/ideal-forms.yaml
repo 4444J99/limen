@@ -183,6 +183,22 @@ ideals:
       too. This row is measurable only by a cross-repo call, which is the ecosystem-layer
       promotion already tracked as IF-SENSOR-REGISTRY's follow-up.
 
+  IF-NO-MODAL:
+    ideal: >
+      No approval question is ever asked for non-destructive work, in any lane, and the
+      destructive boundary that remains is DERIVED and MEASURABLE rather than switched off.
+      The trust hook is wired from the cartridge source, permissions.ask carries its five-rule
+      fail-safe backstop, and permissions.autoMode.allow teaches the classifier the same trust
+      boundary the hook enforces — so defaultMode stays "auto" and the gauge stays alive.
+      bypassPermissions is explicitly NOT the ideal: it does not close the distance, it deletes
+      the instrument (never-hang-permission-spec.md, R1/R4/R5 + Design-consequences-2).
+    owner: "Anthony (arm the effector — classifier-gated) + Claude (hook, effector, matrix)"
+    probe:
+      command: "python3 scripts/heal-hook-wiring.py"
+      derives: "the effector in dry-run: exit 0 iff the cartridge source carries hook + ask + autoMode"
+      environment: host
+      at_ideal_when: exit_zero
+
   IF-HOST-PRESSURE:
     ideal: >
       Every host-pressure axis — memory, CPU load, the backup crawler, test fan-out — has an

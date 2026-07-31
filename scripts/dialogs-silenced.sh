@@ -85,10 +85,15 @@ if [ "$mode" = "bypassPermissions" ]; then
   green "Claude prompts: permissions.defaultMode = bypassPermissions (no in-app prompts)"
 else
   red "Claude prompts: defaultMode is '${mode:-unset}' — Claude still asks for off-allowlist tools"
-  cure "Simplest total cure — edit $SETTINGS, inside \"permissions\": { … } add:  \"defaultMode\": \"bypassPermissions\","
+  cure "PREFER the surgical path (class 1d below): python3 scripts/heal-hook-wiring.py --apply"
   note "An AI cannot set this for you: disabling one's own approval gate is guard-railed by design."
   note "acceptEdits is NOT enough — it still prompts for Bash. bypassPermissions = truly zero prompts."
-  note "Surgical alternative, already homed as L-AGENT-BASH-PROMPT (#183): generalize the trust hook instead of full bypass."
+  note "But bypassPermissions is NOT recommended and is NOT this repo's contract (never-hang-permission-spec"
+  note "  §Design-consequences-2): it does not close the distance to the ideal, it DELETES the instrument —"
+  note "  you cannot measure 'does it ask?' where nothing can ask, and it silently un-gates the rm class that"
+  note "  once wiped the live checkout. Keep defaultMode 'auto'; make the hook good enough that auto never asks."
+  note "If you still want it: edit the CARTRIDGE SOURCE (domus-genoma private_dot_claude/settings.json.tmpl),"
+  note "  NOT $SETTINGS — that file is rendered and the next \`chezmoi apply\` overwrites a hand edit (Rule #6)."
 fi
 
 # ── 1b. Live-hook drift — deployed hooks must match the repo canonical sources. ──
@@ -133,7 +138,9 @@ if [ -z "$askdelta" ]; then
   green "Ask-list policy: the five destructive ask rules are exactly in place (fail-safe backstop)"
 else
   red "Ask-list policy drift: $askdelta"
-  cure "Restore permissions.ask in $SETTINGS to exactly the five rules: Bash(git push* --force*), Bash(git push* -f*), Bash(rm:*), Bash(rmdir:*), Bash(shred:*)."
+  cure "python3 scripts/heal-hook-wiring.py --apply   # same effector asserts these five in the CARTRIDGE SOURCE"
+  note "Exactly: Bash(git push* --force*), Bash(git push* -f*), Bash(rm:*), Bash(rmdir:*), Bash(shred:*)."
+  note "Assert them in domus-genoma private_dot_claude/settings.json.tmpl — $SETTINGS is rendered (Rule #6)."
 fi
 
 # ── 1d. Hook wiring — settings must actually run the trust hook on Bash PreToolUse. ──
@@ -153,8 +160,15 @@ PY
 if [ "$wired" = "yes" ]; then
   green "Hook wired: hooks.PreToolUse runs ~/.claude/hooks/allow-trusted-cd-git.sh"
 else
+  # `red`, NOT `redx`: the effector below exists, but the auto-mode classifier blocks the AGENT
+  # from running it (verified 2026-07-31 — the block covers the chezmoi SOURCE, not just the
+  # rendered target). So this class has a shipped cure but no agent-executable path; counting it
+  # curable would wedge --agent-curable-only and the omega fixed point forever.
   red "Trust hook NOT wired in $SETTINGS hooks.PreToolUse — the compound-cd guard floods every fleet job"
-  cure "Add hooks.PreToolUse matcher \"Bash\" -> command \$HOME/.claude/hooks/allow-trusted-cd-git.sh to $SETTINGS (one paste; agent self-edit of permission files is classifier-blocked)."
+  cure "python3 scripts/heal-hook-wiring.py --apply   # effector: asserts hook + ask + autoMode in the CARTRIDGE SOURCE, then chezmoi apply"
+  note "$SETTINGS is RENDERED (owner: cartridge, mechanism: template — config-ownership.json)."
+  note "Editing it by hand is futile: the next \`chezmoi apply\` overwrites it. Fix the base, never the output (Rule #6)."
+  note "The effector is OPERATOR-ARMED and deliberately NOT beat-wired: an agent must never be the actor that widens its own gate."
 fi
 echo
 
