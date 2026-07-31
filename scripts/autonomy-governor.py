@@ -68,9 +68,7 @@ def _parse_timestamp(value: Any) -> datetime.datetime | None:
     return parsed.astimezone(datetime.timezone.utc)
 
 
-def maintenance_blocker(
-    policy: dict[str, Any], *, now: datetime.datetime | None = None
-) -> dict[str, Any] | None:
+def maintenance_blocker(policy: dict[str, Any], *, now: datetime.datetime | None = None) -> dict[str, Any] | None:
     """Return a stable blocker when a finite observe window expired or is malformed.
 
     A maintenance window is an executable lifecycle boundary, not decoration. Before its
@@ -159,7 +157,24 @@ def _marker_fields(marker: Path) -> dict[str, str]:
             "",
         )
 
-    return {name: field(name) for name in ("owner", "pr", "repo", "prohibitions", "release_predicate")}
+    # `expires_at`/`source_of_intent`/`authorised_by`/`class` joined this set with the pause-authority
+    # work: the parser dropped every field it did not name, so an `expires_at:` line was written by
+    # pause.py and then silently discarded here — the expiry read as absent and the marker bound
+    # forever. Consumers index by name, so widening the set is additive.
+    return {
+        name: field(name)
+        for name in (
+            "class",
+            "owner",
+            "pr",
+            "repo",
+            "prohibitions",
+            "release_predicate",
+            "expires_at",
+            "source_of_intent",
+            "authorised_by",
+        )
+    }
 
 
 def _pr_owned_pause(fields: dict[str, str]) -> bool:
@@ -354,9 +369,35 @@ def _marker_owner_merged(marker: Path) -> bool:
     return _try_complete_release(fields)
 
 
+def _marker_expired(marker: Path) -> bool:
+    """An expired marker is an ABSENT marker.
+
+    A halt nobody renews is a halt nobody is still choosing. The 2026-07-27 marker stood for four
+    days because standing cost nothing — no TTL, no renewal, no one asked. Markers authored by
+    scripts/pause.py now carry `expires_at`; this is the reader. Fails toward caution: a marker with
+    no expiry, or an unparseable one, is NOT expired and still pauses.
+    """
+    try:
+        fields = _marker_fields(marker)
+    except OSError:
+        return False
+    raw = (fields.get("expires_at") or "").strip()
+    if not raw:
+        return False
+    try:
+        expiry = datetime.datetime.strptime(raw, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return False
+    return datetime.datetime.now(datetime.timezone.utc) >= expiry
+
+
 def current_mode() -> str:
     if PAUSE_MARKER.exists() and os.environ.get("LIMEN_FORCE_AUTONOMY") != "1":
-        if _marker_owner_merged(PAUSE_MARKER):
+        if _marker_expired(PAUSE_MARKER):
+            # Leave the file in place — removing it is scripts/pause.py release's job, which writes
+            # a receipt. Expiry only stops it from BINDING; the artifact stays for the audit trail.
+            pass
+        elif _marker_owner_merged(PAUSE_MARKER):
             try:
                 PAUSE_MARKER.unlink()
             except OSError:
