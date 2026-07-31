@@ -320,3 +320,36 @@ def test_blocks_land_in_chronological_order_whatever_the_write_order(mod, root):
     text = page.read_text()
     positions = [text.index(f"{p} body") for p in ("morning", "midday", "evening")]
     assert positions == sorted(positions), "phases must read morning → midday → evening"
+
+
+# ── the emission needs a reader, or it is a log file with better prose ────────────
+
+
+def test_index_is_derived_from_the_directory_not_appended(mod, root):
+    """A hand-maintained index is the same failure one surface over. Rebuilding from the files
+    means deleting a page removes its row and no bookkeeping is owed."""
+    pages = root / "docs" / "diurnal"
+    pages.mkdir(parents=True)
+    for day in ("2026-07-29", "2026-07-30", "2026-07-31"):
+        (pages / f"{day}.md").write_text(
+            f"<!-- diurnal:morning:start -->\n\n## {day} · morning\n\n- next: ship it [ABC-1]\n"
+            "<!-- diurnal:morning:end -->\n",
+            encoding="utf-8",
+        )
+    (pages / "README.md").write_text("not a dated page", encoding="utf-8")
+
+    assert mod.write_index(root) == pages / "INDEX.md"
+    body = (pages / "INDEX.md").read_text(encoding="utf-8")
+    assert body.index("2026-07-31") < body.index("2026-07-29"), "newest first"
+    assert "README" not in body, "only dated pages are days"
+    assert "morning" in body
+
+    (pages / "2026-07-30.md").unlink()
+    mod.write_index(root)
+    assert "2026-07-30" not in (pages / "INDEX.md").read_text(encoding="utf-8")
+
+
+def test_index_is_absent_rather_than_empty_when_nothing_has_emitted(mod, root):
+    (root / "docs" / "diurnal").mkdir(parents=True)
+    assert mod.write_index(root) is None
+    assert not (root / "docs" / "diurnal" / "INDEX.md").exists()
