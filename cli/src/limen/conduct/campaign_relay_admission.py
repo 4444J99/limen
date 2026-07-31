@@ -228,6 +228,12 @@ def _start_lease_monitor(
     return monitor_pid
 
 
+def _exec_provider(file: str, args: Sequence[str], environ: dict[str, str]) -> NoReturn:
+    """Adapt os.execvpe to the wrapper's deliberately narrow injectable type."""
+
+    os.execvpe(file, list(args), environ)
+
+
 def run_admission_wrapper(
     command: Sequence[str],
     *,
@@ -235,7 +241,7 @@ def run_admission_wrapper(
     controller: AdmissionController | None = None,
     provider_pid: int | None = None,
     start_monitor: Callable[..., int] = _start_lease_monitor,
-    execvpe: Callable[[str, Sequence[str], dict[str, str]], Any] = os.execvpe,
+    execvpe: Callable[[str, Sequence[str], dict[str, str]], Any] = _exec_provider,
 ) -> int:
     """Acquire and retain heavy admission before executing any provider command."""
 
