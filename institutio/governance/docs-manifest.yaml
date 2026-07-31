@@ -19,6 +19,7 @@ sanctioned:
   - {path: architecture, kind: dir, owner: docs, why: "living subsystem/protocol design docs"}
   - {path: consolidation, kind: dir, owner: docs, why: "consolidation lineage"}
   - {path: continuations, kind: dir, owner: docs, why: "session continuation records"}
+  - {path: diurnal, kind: dir, owner: diurnal, why: "dated three-phase daily emissions (morning/midday/evening); registry institutio/governance/diurnal.yaml"}
   - {path: convergence, kind: dir, owner: docs, why: "convergence lineage"}
   - {path: current-session-fanout, kind: dir, owner: docs, why: "fanout plans + packets"}
   - {path: every-ask, kind: dir, owner: docs, why: "ask-ledger snapshots"}
