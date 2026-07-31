@@ -10,9 +10,11 @@ one impossible room. Then it sat for nine years.
 
 You want it to move: *"a space that is constantly changing, constantly new, always different,
 always selecting different parts of the ballerina, always selecting different photographs."*
-Chris's contribution is the missing dimension — **screens at different angles and depths with
-different transparencies, projected upon**, the way that museum room worked. He named the path
-exactly right: *"ideally in a real space, but can be built digitally first to prove the concept."*
+Writing to Chris — a peer you share work with, not a client or a director — you named the missing
+dimension yourself: **screens at different angles and depths with different transparencies,
+projected upon**, the way that museum room worked. And you named the path in the same message:
+*"ideally in a real space, but can be built digitally first to prove the concept."* That message is
+the brief; this plan is its execution.
 
 **The intended outcome is one engine with five faces:** a film for ScreenDance Miami, a living web
 page, an Instagram presence, something strangers can put themselves into, and a costed pitch for

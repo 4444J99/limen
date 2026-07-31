@@ -37,9 +37,15 @@ different depths and angles therefore place the floor line and the poster line o
 *same screen-space lines* — the continuity is a property of how pixels are fetched, not
 a rule the generator has to remember.
 
-**`projK` is the spine.** One uniform mixes plane-local UVs against projector UVs. At
-`1.0` the stage collapses into the flat 2017 composite; at `0.0` it opens into a room.
-Animating it *is* the reveal: the still was always a room.
+**Two independent axes, not one.** The still opens into a room along *geometry* — planes
+leaving the picture plane for angles and depths — and along `projK`, one uniform mixing
+plane-local UVs against projector UVs. `projK = 0` makes a plane a **window**: it shows
+whatever the room casts onto wherever it now is, so its content changes as it moves.
+`projK = 1` makes it a **carried picture**: it holds its assigned crop and takes it
+along. At the home position the two are *numerically identical*, which is why the 2017
+composite is ambiguous between collage and room — and why the flattening is really the
+**camera**, not `projK`. Stand where the camera stood and the composite returns no matter
+what the planes are doing.
 
 **The engine is a pure `f(seed, t)`.** No accumulated state, no `requestAnimationFrame`
 inside `engine/`. That single property buys deterministic film renders, O(1) seek,
@@ -112,6 +118,39 @@ What the solve found:
 of that afternoon each region was drawn from. It is also the fastest correctness check
 available: a real solve reads as flat contiguous plates, a failed one reads as noise.*
 
+## The projection holds — go/no-go
+
+One claim carries the design: that photographs hung on planes at unrelated angles and
+depths still read as **one room**, because every fragment fetches pixels through a single
+shared projector matrix instead of through its own surface. If it were false, the piece
+would be a pile of floating cutouts and the architecture would have to change before
+anything else was built — so [`probe.html`](probe.html) tests it first, against the real
+256-rectangle score rather than a toy.
+
+The projector stands where the camera stood on 20 June 2017, and casts a stand-in plate
+carrying the room's measured horizontals (0.489 and 0.802). Those two lines *are* the
+experiment: if they stay straight across 256 tumbling rectangles, the claim holds.
+
+![projection probe](reference/projection-probe.png)
+
+Three results:
+
+- **The self-test is exact.** A tile's rect is precisely its share of the projector
+  frustum, so at the home position the window path and the carried-picture path must
+  resolve to the same texel. Sweeping `projK` across all 256 tiles changes **max Δ 0/255**
+  — bit-identical, not merely within tolerance. The home state is the 2017 composite by
+  construction, not by tuning.
+- **Continuity survives arbitrary geometry.** At `spread = 0.85` the planes tumble through
+  depth and rotation, and the poster rail is still one straight line crossing every one of
+  them, verticals still plumb, posters still at true scale and registration.
+- **The flattening is the camera.** With the arrangement fully exploded, standing at the
+  projector still returns the flat composite — projective texturing looks painted-on from
+  the projector's own viewpoint. So the reveal needs no geometry animation at all: *walking
+  away from where the photograph was taken is what un-flattens it.*
+
+That third result is the piece. It also fixes the film's dramaturgy: the arrangement can be
+built up invisibly while the camera is on-axis, and revealed by a move rather than a cut.
+
 ## Three grammars, one operation
 
 The transmutation practice this engine generalises is older and wider than the ballet
@@ -139,8 +178,9 @@ animating it toward `0` is literally its undoing.
 apps/danse/
   index.html   the living page          film.html    render harness (no UI, no rAF)
   studio.html  seed browser             join.html    visitor upload
-  engine/      gl · rng · room · grammar · renderer · corpus · clock · profile
-  corpus/      manifest.json · plates/ · masks/ · transmutations/
+  probe.html   the projection go/no-go, with its self-test
+  engine/      gl · mat4 · rng · room · grammar · renderer · corpus · clock · profile
+  corpus/      score-2017.json · manifest.json · plates/ · masks/
   pipeline/    corpus preparation (local only, never deployed)
   render/      deterministic offline renderer (local only, never deployed)
 ```
