@@ -1,0 +1,21 @@
+name: Deploy Danse
+
+on:
+  push:
+    paths:
+      - "apps/danse/**"
+      - ".github/workflows/deploy-danse.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: danse
+          directory: apps/danse
+          # Note: Pipeline and render are excluded via .assetsignore or explicitly

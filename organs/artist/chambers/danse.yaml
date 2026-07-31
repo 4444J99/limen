@@ -1,0 +1,9 @@
+schema_version: 0.1
+governance:
+  artist_gate: true
+human_gates:
+  - id: artist_review
+standard:
+  evidence: "Cloudflare Pages deployment"
+artifacts:
+  next_reviewable_output: "https://danse.artist.domain/"

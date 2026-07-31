@@ -54,6 +54,11 @@ deploy_triggers:
   runtime_worker:
     workflow: .github/workflows/deploy-worker.yml
     paths: []
+  danse:
+    workflow: .github/workflows/deploy-danse.yml
+    paths:
+      - "apps/danse/**"
+      - ".github/workflows/deploy-danse.yml"
 
 # Derived file sets — what verify-whole.sh's hardcoded py_compile and bash -n argv lines
 # become (PR4). PR1 transcribes today's curated lists EXACTLY; widening py-syntax to all of
