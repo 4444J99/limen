@@ -51,12 +51,22 @@ WHAT IT ASSERTS (idempotent; re-running a healed tree is a no-op)
 USAGE
     python3 scripts/heal-hook-wiring.py              # dry-run: print the diff, exit 1 if unwired
     python3 scripts/heal-hook-wiring.py --apply      # write the source, then chezmoi apply
+    python3 scripts/heal-hook-wiring.py --apply --allow-drop
+                                                    # deploy even though the apply discards live
+                                                    # keys the template does not declare; the
+                                                    # refusal names them first, so pass this only
+                                                    # after reading exactly what is lost
+    python3 scripts/heal-hook-wiring.py --help       # this text
     LIMEN_HOOK_WIRING_HEAL=1 python3 scripts/heal-hook-wiring.py    # env arm, same as --apply
 
+    Unrecognised flags are refused, never ignored — see main().
+
 EXIT
-    0 ⟺ the source already carries all three assertions (or they were applied and verified).
+    0 ⟺ the source already carries all three assertions (or they were applied and verified),
+        or --help was requested.
     1 ⟺ drift found on a dry-run, or the render check failed and the backup was restored.
-    2 ⟺ the cartridge source could not be read, or an anchor was missing/ambiguous.
+    2 ⟺ the cartridge source could not be read, an anchor was missing/ambiguous, or an
+        unknown argument was passed.
 """
 
 from __future__ import annotations
@@ -123,6 +133,9 @@ ANCHOR_DEFAULTMODE = '"defaultMode": "auto"'
 HOOK_MARKER = "allow-trusted-cd-git.sh"
 ASK_MARKER = '"ask": ['
 AUTOMODE_MARKER = '"autoMode": {'
+
+# The complete argv surface. Anything else is a usage error, not an ignorable token.
+KNOWN_FLAGS = {"--apply", "--allow-drop", "-h", "--help"}
 
 
 def fail(msg: str, code: int = 2) -> None:
@@ -309,7 +322,23 @@ def deploy(target: Path, armed: bool, backup: Path | None = None) -> int:
 
 
 def main() -> int:
-    armed = "--apply" in sys.argv or os.environ.get("LIMEN_HOOK_WIRING_HEAL") == "1"
+    # Argv is membership-tested, not parsed, so an unrecognised flag used to be discarded in
+    # silence: `--aply` ran a dry-run the operator read as a deploy, and `--allow-drops` hit a
+    # guard they believed they had waived. Both fail toward doing less, which is the right
+    # direction — but an effector that widens a permission gate must never leave the operator
+    # guessing which run actually happened. Name the flags, refuse the unknown ones.
+    argv = sys.argv[1:]
+    if "-h" in argv or "--help" in argv:
+        print((__doc__ or "").strip())
+        return 0
+    unknown = [a for a in argv if a not in KNOWN_FLAGS]
+    if unknown:
+        print(f"hook-wiring-heal: unknown argument(s): {' '.join(unknown)}", file=sys.stderr)
+        print(f"  known flags: {' '.join(sorted(KNOWN_FLAGS))}", file=sys.stderr)
+        print("  usage: python3 scripts/heal-hook-wiring.py --help", file=sys.stderr)
+        return 2
+
+    armed = "--apply" in argv or os.environ.get("LIMEN_HOOK_WIRING_HEAL") == "1"
     fixture = DOMUS != DEFAULT_DOMUS
 
     # LIMEN_HOOK_WIRING_TARGET exists so the regression matrix can point the deployed-state
