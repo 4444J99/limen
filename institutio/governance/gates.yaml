@@ -428,6 +428,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "DOCS-MANIFEST drift: docs/ top level is a curated surface, not a landing strip — same predicate as check-root-manifest, one surface below (`--surface docs` selects docs-manifest.yaml vs `git ls-tree HEAD -- docs/`). Every loose file is declared sanctioned (pinned by an exact-path consumer named in its why) or counted grandfathered fat carrying its target home; a rehomed file takes its row with it. Founded on the measured defect: 177 loose files at docs/ top level beside 17 proper subdirs, accumulated with no predicate watching the surface — the operator had to re-issue the rehoming directive across 3+ sessions because nothing red-checked a misplaced doc."
+  check-docs-exports:
+    command: "python3 scripts/check-docs-exports.py"
+    paths: ["docs/**", "institutio/governance/docs-exports.yaml", "scripts/check-docs-exports.py", "cli/tests/test_docs_exports.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "DOCS-EXPORTS drift: the cross-repo export program is a shrinking work-list, not a parity claim — every row names a limen doc whose SUBJECT another repo owns, and shipping the move DELETES the row. Without a predicate the two halves drift silently: the file leaves and the row lingers (a phantom work item an agent re-executes), or the row retires and the file stays (a claimed export that never happened). Checks every row's path is still tracked, every target is a real cross-repo destination or DELETE, and every declared patch-consumer is a real path. Scoped to docs/** because deleting a doc that still carries a row is exactly the drift this catches."
   check-mail-tiers:
     command: "python3 scripts/check-mail-tiers.py"
     paths: ["institutio/governance/mail-tiers.yaml", "scripts/check-mail-tiers.py"]
