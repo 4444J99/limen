@@ -1493,3 +1493,25 @@ sensors:
       - command: "python3 scripts/residue-census.py"
         severity: advisory
         escalation: "residue caps breached — this machine is holding state it should be able to re-summon; each breach names its owner (run python3 scripts/residue-census.py)"
+
+  diurnal:
+    section: "0h"
+    title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"
+    gate: LIMEN_DIURNAL
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: diurnal
+    # Cadence is beat-modulo ONLY. True time-of-day gating is wall-clock inside the script
+    # (logs/diurnal/state.json, one emission per phase per calendar day) — the
+    # scripts/insight-cadence.py precedent. Visiting often is cheap: a phase that is not yet
+    # due exits before doing any work.
+    cadence:
+      env: LIMEN_BEAT_DIURNAL
+      default: 2
+    timeout:
+      env: LIMEN_DIURNAL_TIMEOUT
+      default: 240
+    steps:
+      - command: "python3 scripts/diurnal.py --phase auto"
+        severity: advisory
+        escalation: "diurnal emission failed — the day has no briefing; check that LIMEN_ROOT resolves to the LIVE organism (a worktree's logs/ is empty and the organ refuses to emit a false 'all quiet') and inspect logs/diurnal/state.json"
