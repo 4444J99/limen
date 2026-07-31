@@ -141,4 +141,5 @@ jobs:
           python scripts/check-decorum.py
           python scripts/check-root-manifest.py
           python scripts/check-root-manifest.py --surface docs
+          python scripts/check-docs-exports.py
           python -m pytest web/api/tests cli/tests -q -n auto
