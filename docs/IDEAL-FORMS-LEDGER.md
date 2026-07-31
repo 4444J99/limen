@@ -397,3 +397,32 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   is the generator's own `--check`.
 - **Status:** SHIPPED — the family, generator, launcher default, and parity check are live.
 - **Owner:** Claude (generator + checks) + the channel roster (`workstream.py` / `organ-ladder.json`).
+
+### IF-DIURNAL — the day is a loop that scores its own claims and prunes itself
+- **Ideal form:** the briefing is not a report, it is a falsifiable loop. Morning emits a
+  dashboard PLUS claims of the form "section X's metric falls below N today"; midday re-probes
+  each claim mid-flight and pushes only on drift; evening scores every claim held/missed/noop,
+  carries the remainder forward, and CUTS sections that scored noop for
+  `LIMEN_DIURNAL_CUT_THRESHOLD` consecutive ENGAGED days. Every line probes or wears its own
+  staleness — a stale cache is withheld, a frozen registry is annotated, neither is ever printed
+  as current. Sections are declared data (`institutio/governance/diurnal.yaml`) because an
+  auto-cut cannot edit Python source, and `cuttable: true` implies both a `metric` and an
+  `acted_when` because you cannot prune what you cannot score.
+- **Distance:** the loop is built and closes — driven end to end 2026-07-31 in a sandbox: claims
+  emitted, re-probed, scored, one cut fired at threshold, receipted to `cuts.jsonl`, reversed by
+  `--uncut`. **It has never run against the live organism.** `docs/diurnal/` holds no dated page,
+  so the 5-engaged-day cut runway has not started and no scoring rule has yet been tested against
+  a real day. Two defects found by driving it are fixed (#1740 the liveness guard, #1742 three CLI
+  edges); two residuals remain declared in `institutio/registry/organs.yaml` (fleet-wide cuts are
+  proposals only; `calendar` is `render: absent` because no calendar state exists on disk anywhere
+  in the estate). The emitted page also has no reader yet — no route, no index, no nav — so it is
+  write-only until something reads it back.
+- **Status:** PARTIAL — the organ, registry, predicate, sensor and parameters are live and merged
+  (#1732); the loop's evidence is entirely synthetic until a live day runs.
+- **Owner:** Claude (organ + predicate) · the beat's `diurnal` sensor (execution) · the operator
+  (the `calendar` lever, which is a real gap and not a render bug).
+- **Next form:** the claim/score/cut loop is not specific to a day. Every registry in the estate —
+  GATES, SENSORS, PARAMETERS, STREAMS, ORGANS, IDEAL-FORMS — has a `check-*.py` proving structural
+  consistency and NONE that scores whether the declared thing is doing anything. This ledger's own
+  **Distance** field is hand-maintained prose; DIVRNAL's evening pass is its executable form. Do
+  not start that generalization until a live day has proven the scoring rule on one registry.
