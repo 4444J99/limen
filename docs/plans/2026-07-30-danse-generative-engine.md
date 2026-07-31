@@ -24,8 +24,7 @@ the physical room. The engine is the work; everything else is a render target.
 
 | Fact | Source |
 |---|---|
-| **ScreenDance Miami 2027 deadline: Mon 31 Aug 2026, 11:00pm EST** — 32 days | Submittable |
-| Requires a **final** film, **password-protected + downloadable** link, all rights held | call text |
+| **Every fact about the call** — deadline, specs, what the call never states | [`apps/danse/submission/screendance-2027.yaml`](../../apps/danse/submission/screendance-2027.yaml), checked by `check.py` |
 | Panel convenes end Sept · notification end Oct · **festival 20–24 Jan 2027** | call text |
 | Venues include **New World Center's 7,000 sq ft projection wall at Soundscape Park** and **PAMM** | 2024–26 programs |
 | Pioneer Winter weights *"choreography, performance, cinematography, editing"* | interview |
@@ -572,6 +571,12 @@ signals the film is a means rather than an end, and puts a request in front of a
 authority to grant it.
 
 ### Package
+
+The package *specification* is not prose — it is
+[`apps/danse/submission/screendance-2027.yaml`](../../apps/danse/submission/screendance-2027.yaml),
+and `submission/check.py --package <dir>` is the predicate that says whether a staged package can
+be filed. What follows is the reasoning behind those numbers; the numbers themselves live there.
+
 Vimeo password-protected + **download enabled** · ProRes master, 1080p or 4K screener, 24 or 30fps,
 **16:9** · rights declaration · ~50-word synopsis (program copy, read aloud) · ~200-word long
 synopsis carrying the 2017→2026 arc · artist statement · **six stills ≥3840×2160, each a different
