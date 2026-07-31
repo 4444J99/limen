@@ -9,13 +9,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CF_PAGES_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: danse
-          directory: apps/danse
-          # Note: Pipeline and render are excluded via .assetsignore or explicitly
+        if: env.CF_PAGES_TOKEN_SET == 'true'
+        run: npx wrangler@4 pages deploy apps/danse --project-name danse --branch main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
