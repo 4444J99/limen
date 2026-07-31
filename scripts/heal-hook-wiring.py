@@ -224,65 +224,27 @@ def verify_render(text: str) -> list[str]:
     return problems
 
 
-def main() -> int:
-    armed = "--apply" in sys.argv or os.environ.get("LIMEN_HOOK_WIRING_HEAL") == "1"
-    fixture = DOMUS != DEFAULT_DOMUS
+def deploy(target: Path, armed: bool, backup: Path | None = None) -> int:
+    """Render, verify, guard the live target's app atoms, then apply.
 
-    raw = read_source()
-    new, changes = splice(raw)
-
-    if not changes:
-        print("hook-wiring-heal: clean (cartridge source already carries hook + ask + autoMode)")
-        return 0
-
-    for line in changes:
-        print(f"hook-wiring-heal: {'applying' if armed else 'would apply'} — {line}")
-
-    if not armed:
-        print()
-        print(
-            "".join(
-                difflib.unified_diff(
-                    raw.splitlines(keepends=True),
-                    new.splitlines(keepends=True),
-                    fromfile=f"a/{TMPL.name}",
-                    tofile=f"b/{TMPL.name}",
-                    n=3,
-                )
-            )
-        )
-        print("hook-wiring-heal: DRY RUN. Re-run with --apply to write the cartridge source.")
-        print("  python3 scripts/heal-hook-wiring.py --apply")
-        return 1
-
-    backup = TMPL.with_suffix(TMPL.suffix + ".bak")
-    shutil.copy2(TMPL, backup)
-    TMPL.write_text(new)
-    print(f"hook-wiring-heal: wrote {TMPL} (backup at {backup})")
-
-    # Idempotence: a second splice over our own output must find nothing to do.
-    if splice(read_source())[1]:
-        shutil.copy2(backup, TMPL)
-        fail("splice is not idempotent — backup restored, source unchanged", code=1)
-
-    target = Path.home() / ".claude" / "settings.json"
-    if fixture:
-        print("hook-wiring-heal: DOMUS_ROOT overridden — splice asserted; render check + deploy skipped")
-        return 0
-
+    Shared by both paths into deployment: a source we just spliced, and a source that was
+    already correct but never reached the target (the false-green defect, 2026-07-31).
+    `backup` is restored on a failed render check when we wrote the source this run.
+    """
     rendered = render(target)
     if rendered is None:
-        print("hook-wiring-heal: chezmoi not on PATH — source written, but UNVERIFIED.")
+        print("hook-wiring-heal: chezmoi not on PATH — source correct, but UNDEPLOYED.")
         print(f"  verify: chezmoi cat {target} | python3 -m json.tool >/dev/null")
-        print(f"  deploy: chezmoi apply {target}")
+        print(f"  deploy: chezmoi apply --force {target}")
         return 1
 
     problems = verify_render(rendered)
     if problems:
-        shutil.copy2(backup, TMPL)
+        if backup is not None:
+            shutil.copy2(backup, TMPL)
         for p in problems:
             print(f"hook-wiring-heal: RENDER CHECK FAILED — {p}", file=sys.stderr)
-        fail("backup restored; source is exactly as it was", code=1)
+        fail("backup restored; source is exactly as it was" if backup else "source unchanged", code=1)
 
     print("hook-wiring-heal: render check PASSED (valid JSON; hook + ask + autoMode present; defaultMode 'auto')")
 
@@ -344,6 +306,78 @@ def main() -> int:
     print("hook-wiring-heal: deployed. Hooks load at session start — restart Claude Code.")
     print("hook-wiring-heal: verify with `bash scripts/dialogs-silenced.sh`")
     return 0
+
+
+def main() -> int:
+    armed = "--apply" in sys.argv or os.environ.get("LIMEN_HOOK_WIRING_HEAL") == "1"
+    fixture = DOMUS != DEFAULT_DOMUS
+
+    # LIMEN_HOOK_WIRING_TARGET exists so the regression matrix can point the deployed-state
+    # check at a fixture. It never changes behaviour on a real host.
+    target = Path(os.environ.get("LIMEN_HOOK_WIRING_TARGET", Path.home() / ".claude" / "settings.json"))
+    raw = read_source()
+    new, changes = splice(raw)
+
+    if not changes:
+        # THE SOURCE IS THE BASE, BUT THE TARGET IS THE GATE (measured 2026-07-31).
+        # v3 returned 0 right here, and that was a FALSE GREEN: the previous run had already
+        # written the source and then failed at deploy (no TTY), so the next run saw a correct
+        # source, printed "clean", and exited 0 — while the live settings.json still had the
+        # hook unwired, ask empty and autoMode empty. "Fix bases, not outputs" says where to
+        # WRITE; it does not say the deployed state stops mattering. Clean therefore requires
+        # BOTH: the source carries the assertions AND the target already reflects them.
+        print("hook-wiring-heal: cartridge source already carries hook + ask + autoMode")
+        live_problems = verify_render(target.read_text()) if target.is_file() else ["target missing"]
+        if not live_problems:
+            print("hook-wiring-heal: clean (deployed target matches — nothing to do)")
+            return 0
+        print("hook-wiring-heal: but the DEPLOYED target is out of sync:")
+        for problem in live_problems:
+            print(f"    - {problem}")
+        if not armed:
+            print("hook-wiring-heal: DRY RUN. Re-run with --apply to deploy the existing source.")
+            print("  python3 scripts/heal-hook-wiring.py --apply")
+            return 1
+        if fixture:
+            print("hook-wiring-heal: DOMUS_ROOT overridden — out-of-sync detected; deploy skipped")
+            return 1
+        return deploy(target, armed)
+
+    for line in changes:
+        print(f"hook-wiring-heal: {'applying' if armed else 'would apply'} — {line}")
+
+    if not armed:
+        print()
+        print(
+            "".join(
+                difflib.unified_diff(
+                    raw.splitlines(keepends=True),
+                    new.splitlines(keepends=True),
+                    fromfile=f"a/{TMPL.name}",
+                    tofile=f"b/{TMPL.name}",
+                    n=3,
+                )
+            )
+        )
+        print("hook-wiring-heal: DRY RUN. Re-run with --apply to write the cartridge source.")
+        print("  python3 scripts/heal-hook-wiring.py --apply")
+        return 1
+
+    backup = TMPL.with_suffix(TMPL.suffix + ".bak")
+    shutil.copy2(TMPL, backup)
+    TMPL.write_text(new)
+    print(f"hook-wiring-heal: wrote {TMPL} (backup at {backup})")
+
+    # Idempotence: a second splice over our own output must find nothing to do.
+    if splice(read_source())[1]:
+        shutil.copy2(backup, TMPL)
+        fail("splice is not idempotent — backup restored, source unchanged", code=1)
+
+    if fixture:
+        print("hook-wiring-heal: DOMUS_ROOT overridden — splice asserted; render check + deploy skipped")
+        return 0
+
+    return deploy(target, armed, backup=backup)
 
 
 if __name__ == "__main__":

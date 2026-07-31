@@ -3922,6 +3922,13 @@ parameters:
     owner: anthony
     note: "The effector for the UNWIRED trust hook (scripts/heal-hook-wiring.py, sensed by dialogs-silenced.sh class 1d). Sibling of LIMEN_HOOK_DRIFT_HEAL, which keeps the hook FILE in parity; this one asserts the WIRING — the hooks.PreToolUse group, the five permissions.ask fail-safe rules, and permissions.autoMode.allow (leading with the literal \"$defaults\", else the built-in classifier rules are replaced wholesale) — in the CARTRIDGE SOURCE (domus-genoma private_dot_claude/settings.json.tmpl), then chezmoi apply. Never the rendered ~/.claude/settings.json: that file is owner=cartridge/mechanism=template per config-ownership.json, so a hand edit is discarded by the next apply (Rule #6). Dry-run by default; backs up the source and prints the full diff before writing; idempotent. defaultMode is deliberately left at 'auto' — bypassPermissions does not close the distance to the ideal, it deletes the instrument. CRITICAL DIFFERENCE FROM ITS SIBLINGS: owner is anthony, not tabularius, and this MUST NOT be beat-wired or added to sensors.yaml. The auto-mode classifier blocks an agent from widening its own permission gate — verified 2026-07-31 that the block is on the ACT not the path, covering the chezmoi source and even a read-only dry-run — and an auto-armed valve here would let the system widen its own gate unattended, which is precisely what that guardrail exists to prevent. Arm by hand, once, then set back to 0. Tracked as IF-NO-MODAL and lever L-AGENT-BASH-PROMPT (#183)."
 
+  LIMEN_HOOK_WIRING_TARGET:
+    default: "~/.claude/settings.json"
+    env: LIMEN_HOOK_WIRING_TARGET
+    self_update: none
+    owner: tabularius
+    note: "TEST SEAM ONLY — the deployed-settings path scripts/heal-hook-wiring.py checks when deciding whether the wiring actually reached the target. Exists because the effector's 'clean' verdict requires BOTH a correct cartridge source AND a target that reflects it (the false-green defect, 2026-07-31: a run wrote the source, died at deploy with no TTY, and the next run reported clean while the live gate was still unwired). scripts/tests/heal-hook-wiring.test.sh pins this to a fixture for EVERY case — unpinned, the suite reads the operator's real ~/.claude/settings.json and its verdict depends on whether that host happens to be wired, which is a hermeticity leak, not a test. Never set on a real host."
+
   LIMEN_CASK_DUPLICATE_HEAL:
     default: "0"               # OFF — the effector. Arm once to auto-uninstall a duplicate claude-code cask.
     env: LIMEN_CASK_DUPLICATE_HEAL
