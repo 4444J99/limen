@@ -84,7 +84,8 @@ VALID_PUBLISH_ELIGIBLE = {"never", "form_twin"}
 VALID_SEO_KEYS = {"description", "topics_min", "homepage", "readme"}
 VALID_SEO_REQ = {"required", "optional"}
 # The ONE sanctioned per-repo block: each row is a durable human judgment (class + why required).
-VALID_OVERRIDE_KEYS = {"class", "why", "publish_candidate", "split", "oversize"}
+VALID_OVERRIDE_KEYS = {"class", "why", "publish_candidate", "split", "oversize", "audience"}
+VALID_AUDIENCES = {"world", "collab", "self"}
 # ACCESS — the partner-partition registry (institutio/github/access.yaml): per-repo collaborator
 # grants. Role rank is total-ordered so the policy ceiling composes; `admin` is deliberately
 # absent — an admin partner is structurally impossible to declare, not merely drift.
@@ -1517,6 +1518,22 @@ def parity(estate: dict) -> list[str]:
                 if row.get("publish_candidate") and isinstance(target_cls, dict):
                     if target_cls.get("visibility") != "private":
                         fails.append(f"{where}: publish_candidate requires a private-visibility class")
+                # `audience` is declared INTENT, present only where it disagrees with the
+                # derivation (public → world; private+grant → collab; else self). Parity checks the
+                # value and the one combination that is structurally impossible rather than merely
+                # unmet: a publish candidate is by definition on its way to `world`, so declaring
+                # it `collab` asks for two contradictory futures at once. Everything softer —
+                # "declared collab, nobody invited yet" — is an OWED judgment for check-audience
+                # and rung Q, never a parity failure.
+                aud = row.get("audience")
+                if aud is not None:
+                    if aud not in VALID_AUDIENCES:
+                        fails.append(f"{where}: audience '{aud}' is not one of {sorted(VALID_AUDIENCES)}")
+                    elif aud == "collab" and row.get("publish_candidate"):
+                        fails.append(
+                            f"{where}: audience 'collab' with publish_candidate — a shared operation "
+                            "and a solo publication are contradictory futures; pick one"
+                        )
                 split = row.get("split")
                 if split is not None:
                     into = split.get("into") if isinstance(split, dict) else None
