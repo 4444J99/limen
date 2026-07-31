@@ -81,8 +81,38 @@ except Exception:
 print((d.get("permissions") or {}).get("defaultMode", ""))
 PY
 )"
+# THE SURGICAL PATH IS A GREEN, NOT A CONSOLATION PRIZE (fixed 2026-07-31).
+# This class used to demand bypassPermissions for green, so the estate could NEVER reach
+# ALL CLEAR while holding the configuration the spec and IF-NO-MODAL actually recommend —
+# the predicate contradicted its own doctrine and manufactured a permanent red. `auto` with
+# the trust hook wired, the five ask rules in place, and autoMode.allow teaching the
+# classifier IS the ideal (never-hang-permission-spec §Design-consequences-2): it reaches
+# zero prompts on non-destructive work while KEEPING the instrument that measures it.
+surgical="$(python3 - "$SETTINGS" <<'PY' 2>/dev/null
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    print("no"); raise SystemExit
+perms = d.get("permissions") or {}
+want = {"Bash(git push* --force*)", "Bash(git push* -f*)", "Bash(rm:*)", "Bash(rmdir:*)", "Bash(shred:*)"}
+hooks = (d.get("hooks") or {}).get("PreToolUse") or []
+wired = any("allow-trusted-cd-git.sh" in str(h.get("command", ""))
+            for g in hooks for h in (g.get("hooks") or []))
+allow = ((perms.get("autoMode") or {}).get("allow") or [])
+ok = (perms.get("defaultMode") == "auto" and wired
+      and set(perms.get("ask") or []) == want
+      and bool(allow) and allow[0] == "$defaults")
+print("yes" if ok else "no")
+PY
+)"
 if [ "$mode" = "bypassPermissions" ]; then
   green "Claude prompts: permissions.defaultMode = bypassPermissions (no in-app prompts)"
+elif [ "$surgical" = "yes" ]; then
+  green "Claude prompts: the surgical estate is complete — defaultMode 'auto' + trust hook wired + five ask rules + autoMode.allow"
+  note "This is the RECOMMENDED terminal state, not a partial one: zero prompts on non-destructive"
+  note "  work, while destruction outside disposable paths, force-push and sudo still gate — and the"
+  note "  gauge that measures 'does it ask?' stays alive. bypassPermissions would delete that gauge."
 else
   red "Claude prompts: defaultMode is '${mode:-unset}' — Claude still asks for off-allowlist tools"
   cure "PREFER the surgical path (class 1d below): python3 scripts/heal-hook-wiring.py --apply"
@@ -150,9 +180,15 @@ try:
     d = json.load(open(sys.argv[1]))
 except Exception:
     print("no"); raise SystemExit
+# SUBSTRING, never endswith (fixed 2026-07-31). The wiring is a GUARDED invocation —
+#   H=$HOME/.claude/hooks/allow-trusted-cd-git.sh; [ -x "$H" ] && "$H" || true
+# so a machine without the hook deployed cannot error. That command ends in `|| true`, so
+# the old endswith test reported NOT WIRED against a correctly wired, live, working gate —
+# measured on the first successful arming. A sensor that only recognises one spelling of a
+# correct state manufactures phantom work; match the hook's identity, not its call syntax.
 for m in (d.get("hooks") or {}).get("PreToolUse") or []:
     for h in m.get("hooks") or []:
-        if str(h.get("command", "")).endswith("/.claude/hooks/allow-trusted-cd-git.sh"):
+        if "allow-trusted-cd-git.sh" in str(h.get("command", "")):
             print("yes"); raise SystemExit
 print("no")
 PY
