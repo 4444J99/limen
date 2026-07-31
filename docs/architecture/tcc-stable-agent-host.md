@@ -82,11 +82,23 @@ create the client this design removes. The supported order is:
 3. Run `tcc-identity-audit --json --strict` beneath the now-authorized host.
    Proceed only when automatic updates remain enabled, the host is valid, and
    `versioned_leak` is zero.
-4. Use that audit's exact `legacy_stale` inventory to remove only dead/versioned
-   Claude and Python clients through System Settings. Preserve all `unrelated`
-   applications and grants.
+4. Treat the audit's exact `legacy_stale` inventory as an engineering cleanup
+   input, not an instruction to keep asking the operator to click. Remove a
+   client only when macOS exposes a working per-client removal surface. Preserve
+   all `unrelated` applications and grants.
+
+The operator transaction ends when the fixed host has the requested grants and
+the inventory is readable. On the observed Tahoe host, path-based clients whose
+executables no longer exist remain visible in Automation, but their switches do
+not change. Their alternate row UI exposes only **Show in Finder**, and
+`tccutil reset <service> <client-path>` rejects the path because the optional
+argument is a bundle identifier. That state is an implementation/acceptance
+blocker, not another human consent step. Record it on the owning issue and stop
+opening or foregrounding System Settings.
 
 Never use `tccutil reset All` and never write to `TCC.db`.
+Never widen an exact path-client cleanup into a whole-service reset merely to
+make the inventory count reach zero.
 
 ## Live acceptance
 

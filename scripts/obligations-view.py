@@ -28,6 +28,7 @@ LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-led
 # builder regenerates obligations-ledger.json every sweep, so any lever placed there is wiped.
 # These are unioned in below and survive regen. A his-hand task never hangs on him or in memory.
 HIS_HAND = Path(os.environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "his-hand-levers.json"))
+TERMINAL_LEVER_STATUSES = {"discharged", "retired", "done", "closed"}
 
 
 def _load_json(path, default):
@@ -35,6 +36,11 @@ def _load_json(path, default):
         return json.loads(Path(path).read_text())
     except (OSError, ValueError):
         return default
+
+
+def _lever_is_closed(lever):
+    """Read both the legacy flag and the normalized free-text lifecycle field."""
+    return bool(lever.get("discharged")) or str(lever.get("status", "")).strip().lower() in TERMINAL_LEVER_STATUSES
 
 
 def _union_levers(ledger):
@@ -51,7 +57,7 @@ def _union_levers(ledger):
     for lev in list(his) + list(ledger_levers):
         if not isinstance(lev, dict):
             continue
-        if lev.get("discharged"):
+        if _lever_is_closed(lev):
             continue
         lid = lev.get("id")
         if lid in seen:

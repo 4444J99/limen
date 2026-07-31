@@ -52,3 +52,42 @@ def test_build_view_filters_scalar_entries(tmp_path, monkeypatch):
     assert [n["name"] for n in view["noise_killers"]] == ["Noise"]
     assert [lev["id"] for lev in view["levers"]] == ["LEV-1"]
     assert "Reply" in html
+
+
+def test_union_levers_filters_terminal_rows_before_deduplication(tmp_path, monkeypatch):
+    terminal_statuses = ("discharged", "retired", "done", "closed")
+    registry_levers = [
+        {"id": "REGISTRY-OPEN"},
+        {"id": "SHARED-OPEN", "label": "registry copy"},
+        {"id": "REGISTRY-NONTERMINAL", "status": "waiting on engineering"},
+        {"id": "CLOSED-THEN-LEDGER-OPEN", "status": "discharged"},
+        {"id": "LEGACY-CLOSED-THEN-LEDGER-OPEN", "discharged": True},
+    ]
+    registry_levers.extend({"id": f"REGISTRY-{status.upper()}", "status": status} for status in terminal_statuses)
+    ledger_levers = [
+        {"id": "LEDGER-OPEN"},
+        {"id": "SHARED-OPEN", "label": "ledger copy"},
+        {"id": "LEDGER-NONTERMINAL", "status": "open — preserve this free text"},
+        {"id": "CLOSED-THEN-LEDGER-OPEN", "label": "open ledger copy"},
+        {"id": "LEGACY-CLOSED-THEN-LEDGER-OPEN", "label": "open ledger copy"},
+        {"id": "LEDGER-LEGACY-DISCHARGED", "discharged": "yes"},
+    ]
+    ledger_levers.extend(
+        {"id": f"LEDGER-{status.upper()}", "status": f"  {status.upper()}  "} for status in terminal_statuses
+    )
+    (tmp_path / "his-hand-levers.json").write_text(json.dumps({"levers": registry_levers}))
+    (tmp_path / "obligations-ledger.json").write_text(json.dumps({"levers": ledger_levers}))
+
+    module = _load(monkeypatch, tmp_path)
+    levers = module.build_view()["levers"]
+
+    assert [lever["id"] for lever in levers] == [
+        "REGISTRY-OPEN",
+        "SHARED-OPEN",
+        "REGISTRY-NONTERMINAL",
+        "LEDGER-OPEN",
+        "LEDGER-NONTERMINAL",
+        "CLOSED-THEN-LEDGER-OPEN",
+        "LEGACY-CLOSED-THEN-LEDGER-OPEN",
+    ]
+    assert next(lever for lever in levers if lever["id"] == "SHARED-OPEN")["label"] == "registry copy"
