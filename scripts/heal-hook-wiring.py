@@ -114,8 +114,6 @@ AUTOMODE_ALLOW = [
 ]
 
 
-
-
 # ── Anchors ──────────────────────────────────────────────────────────────────
 # Each must appear EXACTLY once in the source. A missing or duplicated anchor is a hard
 # stop (exit 2), never a guess: this file governs the permission gate.
@@ -158,9 +156,7 @@ def indent_of(raw: str, idx: int) -> str:
 def block(obj, indent: str) -> str:
     """json.dumps a fragment and re-indent every line to sit at `indent`."""
     text = json.dumps(obj, indent=2)
-    return "\n".join(
-        (indent + line) if i else line for i, line in enumerate(text.splitlines())
-    )
+    return "\n".join((indent + line) if i else line for i, line in enumerate(text.splitlines()))
 
 
 def splice(raw: str) -> tuple[str, list[str]]:
@@ -216,11 +212,7 @@ def verify_render(text: str) -> list[str]:
     perms = doc.get("permissions") or {}
     hooks = (doc.get("hooks") or {}).get("PreToolUse") or []
 
-    if not any(
-        HOOK_MARKER in str(h.get("command", ""))
-        for g in hooks
-        for h in (g.get("hooks") or [])
-    ):
+    if not any(HOOK_MARKER in str(h.get("command", "")) for g in hooks for h in (g.get("hooks") or [])):
         problems.append("rendered hooks.PreToolUse does not invoke the trust hook")
     if sorted(perms.get("ask") or []) != sorted(ASK_RULES):
         problems.append("rendered permissions.ask is not the five destructive rules")
@@ -294,8 +286,55 @@ def main() -> int:
 
     print("hook-wiring-heal: render check PASSED (valid JSON; hook + ask + autoMode present; defaultMode 'auto')")
 
+    # ── App-atom guard (2026-07-31) ──────────────────────────────────────────
+    # `.claude/settings.json` is declared owner:cartridge/mechanism:template with NO
+    # app_managed carve-out, so every key Claude Code writes into the RENDERED file —
+    # `model`, and anything set via /config — is silently discarded on each apply. Measured
+    # on the first real arming: the deploy would have dropped "model": "claude-fable-5[1m]".
+    # That is IF-CONFIG-OWNERSHIP's failure class running in reverse (the constitution was
+    # built after an APP clobbered an OWNER atom; here the cartridge clobbers an app atom).
+    # Widening the permission gate must never cost an unrelated setting, so: refuse, name
+    # exactly what would be lost, and leave the verified source in place undeployed.
+    dropped = {}
+    if target.is_file():
+        try:
+            live = json.loads(target.read_text())
+            new_doc = json.loads(rendered)
+            dropped = {k: live[k] for k in live if k not in new_doc}
+        except json.JSONDecodeError:
+            pass  # an unparseable live target is not this script's problem to adjudicate
+
+    if dropped and "--allow-drop" not in sys.argv:
+        print()
+        print("hook-wiring-heal: REFUSING TO DEPLOY — the apply would DROP live setting(s):")
+        for key, value in dropped.items():
+            print(f"    {key} = {json.dumps(value)}")
+        print()
+        print("  The cartridge source is written and VERIFIED; only the deploy is held.")
+        print("  These keys exist in the rendered file but not in the template, so chezmoi")
+        print("  discards them. Pick one:")
+        print("    1. Deploy anyway, then restore by hand (e.g. /model in Claude Code):")
+        print("         python3 scripts/heal-hook-wiring.py --apply --allow-drop")
+        print("    2. Declare them in the template so the cartridge owns them (they will then")
+        print("       be reset to the declared value on every apply).")
+        print("    3. The real fix — promote .claude/settings.json from `template` to")
+        print("       `split` + `modify_` in domus-genoma .chezmoidata/config-ownership.json,")
+        print("       owner_managed = env/permissions/hooks, app_managed = model/theme/etc.")
+        print("       IF-CONFIG-OWNERSHIP already names this successor pattern.")
+        return 1
+
+    if dropped:
+        print(f"hook-wiring-heal: --allow-drop — deploying; these will be lost: {sorted(dropped)}")
+
     chezmoi = shutil.which("chezmoi")
-    proc = subprocess.run([chezmoi, "apply", str(target)], capture_output=True, text=True)
+    # --force is REQUIRED, not a convenience: the target always carries out-of-band drift
+    # (Claude Code rewrites its own settings.json), so a bare apply opens an interactive
+    # confirm and dies with "could not open a new TTY" under any non-interactive caller —
+    # measured on the first real arming. Forcing is safe here and only here, because by this
+    # line the drift has been explicitly adjudicated: the render check proved the output is
+    # valid JSON with all three assertions, and the app-atom guard above proved the apply
+    # drops nothing (or the operator passed --allow-drop knowing exactly what is lost).
+    proc = subprocess.run([chezmoi, "apply", "--force", str(target)], capture_output=True, text=True)
     if proc.returncode != 0:
         print(f"hook-wiring-heal: chezmoi apply failed:\n{proc.stderr}", file=sys.stderr)
         print("hook-wiring-heal: the SOURCE is correct and verified — deploy by hand:")

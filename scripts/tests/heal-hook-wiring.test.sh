@@ -100,5 +100,21 @@ grep -q 'allow-trusted' "$F4/private_dot_claude/settings.json.tmpl" \
 echo "── a missing source is exit 2, not a traceback ──"
 expect_exit "absent cartridge source -> exit 2" 2 "$WORK/nope" --apply
 
+echo "── app-atom guard: --allow-drop is a real flag, and the refusal names the key ──"
+# The guard only runs on the real deploy path (fixtures skip render+deploy), so assert the
+# contract statically: the flag exists, the refusal is wired, and it is opt-in not default.
+HW="$ROOT/scripts/heal-hook-wiring.py"
+grep -q '"--allow-drop" not in sys.argv' "$HW" && ok "guard is opt-out via --allow-drop" \
+                                              || bad "guard is opt-out via --allow-drop"
+grep -q 'REFUSING TO DEPLOY' "$HW"            && ok "refusal path present" \
+                                              || bad "refusal path present"
+grep -q '"apply", "--force"' "$HW"            && ok "apply forces (no TTY prompt)" \
+                                              || bad "apply forces (no TTY prompt)"
+# The force must come AFTER the guard, never before it.
+gline=$(grep -n 'REFUSING TO DEPLOY' "$HW" | head -1 | cut -d: -f1)
+aline=$(grep -n '"apply", "--force"' "$HW" | head -1 | cut -d: -f1)
+[ "$gline" -lt "$aline" ] && ok "guard precedes the forced apply" \
+                          || bad "guard precedes the forced apply ($gline vs $aline)"
+
 printf '\nheal-hook-wiring.test: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ] || exit 1
