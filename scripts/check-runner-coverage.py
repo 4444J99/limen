@@ -30,6 +30,15 @@ Exit 0 ⟺ every declared enforcement artifact has a runner:
   E cited scripts       — a `censor/precedents.jsonl` record that cites a script cites a real one.
                           (`PREC-2026-07-10-declared-but-unwired-is-a-defect` cited
                           `scripts/trunk-ci-health.py`, which never existed in any commit.)
+  F gate runners        — every `gates.yaml` gate is reachable by SOME runner. A gate marked
+                          `scoped: false` is excluded from `verify.py --changed` (verify.py:193
+                          labels it "whole-matrix only"), so unless it carries a `ci_job` it must be
+                          named by `scripts/verify-whole.sh` — otherwise its command runs NOWHERE.
+                          Found live on 2026-07-31: `outbound-preflight-test` was `scoped: false`,
+                          had no `ci_job`, and was absent from verify-whole.sh, so the deny matrix
+                          proving the outbound gate actually denies had never executed. Its three
+                          siblings (armed-valve-test, ship-gate-test, worktree-guard-test) were all
+                          correctly wired — which is exactly why a hand audit missed it.
 
 Reachability is deliberately proven from **repo-tracked** artifacts only. The operator's live
 `~/Library/LaunchAgents` is a host fact and cannot be observed in CI (the environment split
@@ -59,6 +68,8 @@ SENSORS = GOV / "sensors.yaml"
 IDEALS = GOV / "ideal-forms.yaml"
 EFFECTORS = GOV / "outbound-effectors.yaml"
 PRECEDENTS = ROOT / "censor" / "precedents.jsonl"
+GATES = GOV / "gates.yaml"
+VERIFY_WHOLE = ROOT / "scripts" / "verify-whole.sh"
 HOOKS_DIR = ROOT / "scripts" / "hooks"
 BASELINE = GOV / "unreachable-runners-baseline.txt"
 
@@ -288,6 +299,65 @@ def check_precedents(findings: list[str]) -> None:
                 findings.append(f"E citation-missing: precedent '{pid}' cites {script}, which does not exist")
 
 
+# A gate command's distinctive literals: any token that looks like a repo path with an extension.
+# Deliberately extension-agnostic — `plist-lint` runs `plutil -lint container/launchd/*.plist` and
+# names no script at all, so a scripts-only pattern would read it as unreachable when verify-whole.sh
+# runs those exact plutil lines.
+GATE_PATH_RE = re.compile(r"\b(?:[\w.-]+/)+[\w.-]+\.[A-Za-z0-9]+\b")
+
+
+def check_gate_runners(findings: list[str]) -> None:
+    """F — a declared gate must have something that runs it.
+
+    Three legitimate runners, checked in order:
+      · `scoped` (the default)  -> `verify.py --changed` selects it when its paths change
+      · `ci_job`                -> a named CI job runs it
+      · whole-only              -> `scripts/verify-whole.sh` must name a literal from its command
+
+    A gate with no `command` is skipped: `bash-syntax-set` and its kin are file-set providers
+    consumed via `verify.py --print-files`, not runnable commands. There is nothing to run, so there
+    is nothing to be unreachable.
+    """
+    if not GATES.is_file():
+        return
+    try:
+        registry = yaml.safe_load(GATES.read_text()) or {}
+    except yaml.YAMLError:
+        findings.append("F gates-unparseable: institutio/governance/gates.yaml is not valid YAML")
+        return
+    whole = VERIFY_WHOLE.read_text(errors="replace") if VERIFY_WHOLE.is_file() else ""
+
+    for gid, row in sorted((registry.get("gates") or {}).items()):
+        if not isinstance(row, dict):
+            continue
+        command = str(row.get("command") or "").strip()
+
+        if row.get("scoped", True) is not False:
+            # Scoped gates are selected by changed-path match. With no paths (and no file_set to
+            # derive them from) the match set is empty, so the gate is never selected — declared,
+            # and silently inert. Currently zero gates are in this state; this keeps it that way.
+            if not row.get("paths") and not row.get("file_set") and row.get("kind") != "file_set":
+                findings.append(
+                    f"F gate-unselectable: gate '{gid}' is scoped but declares no paths, so "
+                    f"verify.py --changed can never select it"
+                )
+            continue
+
+        if row.get("ci_job"):
+            continue
+        if not command:
+            continue
+
+        literals = sorted(set(GATE_PATH_RE.findall(command)))
+        if literals and any(literal in whole for literal in literals):
+            continue
+        named = f"names {', '.join(literals)}" if literals else "names no path literal"
+        findings.append(
+            f"F gate-unrun: gate '{gid}' is whole-only (scoped: false) with no ci_job, and "
+            f"scripts/verify-whole.sh does not invoke it — its command {named} and runs nowhere"
+        )
+
+
 def read_baseline() -> set[str]:
     if not BASELINE.is_file():
         return set()
@@ -316,6 +386,7 @@ def main(argv: list[str] | None = None) -> int:
     check_predicates(findings)
     check_hooks(findings)
     check_precedents(findings)
+    check_gate_runners(findings)
 
     if args.update:
         write_baseline(findings)
