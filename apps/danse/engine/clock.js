@@ -67,9 +67,17 @@ export function state(seed, t, program = null) {
  *  movement restarts the engine with entirely different photographs while the
  *  structural moves stay the same. */
 function programState(seed, t, program) {
-  const { movement, index, u } = movementAt(program, t);
+  const { movement, index, u, passage } = movementAt(program, seed, t);
   const epoch = epochAt(movement, u);
   const divergence = channel(movement, "divergence", u);
+
+  // Every passage draws from its own seed, so the phrase recurs and the material
+  // never does. The passage ORDINAL goes into the derivation too: a 32-bit seed
+  // has a birthday bound around 65,000 passages — roughly nine months of
+  // continuous running — and without the ordinal a gallery could, eventually,
+  // show the same passage twice. Including it makes recurrence impossible rather
+  // than merely unlikely, which is the whole claim the piece makes.
+  const material = hash(passage.seed, passage.index, epoch, index);
 
   // Seeded drift on top of the programmed arc, so two seeds trace different paths
   // through the same dramaturgy rather than the same path twice.
@@ -91,7 +99,14 @@ function programState(seed, t, program) {
     turnover: channel(movement, "turnover", u),
     movement: movement.id,
     epoch,
-    material: epoch ? hash(seed, "reseed", epoch, index) : seed,
+    material,
+    // Which passage of the river this is, and its name. The signature frame
+    // prints both: a passage is identified by its seed AND its ordinal, so the
+    // receipt is unique for as long as the piece runs.
+    passage: passage.index,
+    passageSeed: passage.seed,
+    passageSeconds: passage.seconds,
+    passageT0: passage.t0,
   };
 }
 
@@ -132,6 +147,13 @@ function freeState(seed, t) {
     movement: null,
     epoch: 0,
     material: seed,
+    // Free-running there are no passages — the piece departs and returns on one
+    // continuous breath rather than in phrases. Declared anyway, so a consumer
+    // never has to ask which kind of clock it is holding.
+    passage: 0,
+    passageSeed: seed,
+    passageSeconds: PERIOD,
+    passageT0: Math.floor(t / PERIOD) * PERIOD,
   };
 }
 
