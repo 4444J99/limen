@@ -62,9 +62,23 @@
 
 **Irreducible human atoms (accepted as legitimate guardrails, not bugs):**
 
-- Widening the agent's own live permission files (`~/.claude/settings.json`,
-  `~/.claude/hooks/*`) is classifier-blocked — the agent lands the canonical repo
-  source + hands ONE `install -m 755` paste; `dialogs-silenced.sh` 1b prints it on drift.
+- Widening the agent's own permission gate is classifier-blocked. **The boundary is the ACT,
+  not the path** (measured 2026-07-31): the block covers `~/.claude/settings.json`,
+  `~/.claude/hooks/*`, *and* the chezmoi **source** `domus-genoma
+  private_dot_claude/settings.json.tmpl` — including a read-only dry-run of an effector that
+  would touch it. An earlier reading of `.chezmoidata/config-ownership.json` (which declares
+  that target `owner: cartridge, mechanism: template`) suggested the source was agent-writable.
+  It is not: **ownership and classifier permission are separate layers**, and only the operator
+  may be the actor that widens the gate. This is a better-founded guardrail than "the agent
+  doesn't own the file", and it is not to be routed around.
+  The compliant reroute is to ship the **effector** and let the operator arm it —
+  `scripts/heal-hook-wiring.py --apply` (hook wiring + `ask` + `autoMode`, asserted in the
+  cartridge source, then `chezmoi apply`), beside `heal-hook-drift.sh` for the hook FILE.
+  Both are **operator-armed and deliberately never beat-wired**: an auto-armed valve here would
+  make the system widen its own gate unattended, which is precisely what the classifier exists
+  to prevent. `dialogs-silenced.sh` 1b/1c/1d print them.
+  **Never cure any of this by editing `~/.claude/settings.json` directly** — it is rendered, and
+  the next `chezmoi apply` discards the edit (Rule #6, fix bases not outputs).
 - `sudo`-gated OS changes (Application Firewall — lever L-FIREWALL-PROMPT/#289).
 
 ## Design consequences (the real no-modal boundary)
