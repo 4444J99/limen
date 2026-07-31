@@ -74,12 +74,6 @@ exports:
     leak_risk: high
     patch: []
     why: "Only 1 file in this group, split out separately because its leak profile is categorically worse than the rest of the directory. This is personal ident"
-  - path: docs/consolidation/SESSION-2026-06-28.md
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: "1 of 6 files. Unlike its five siblings, no script/registry/tasks.yaml reference to this exact path was found (git grep on 'SESSION-2026-06-28' outside"
   - path: docs/estate-closeout-audit.md
     target: "organvm/portvs:governance/records/"
     tranche: T3
@@ -278,54 +272,6 @@ exports:
     leak_risk: low
     patch: [scripts/prompt-priority-map.py, scripts/vltima-prior-excavations.py]
     why: "Explicitly a cross-repo/cross-source (whole workspace) prompt-corpus triage artifact; matches the 'estate-wide sweep -> portvs' rule even though scrip"
-  - path: docs/receipts/pr-lifecycle-estate-blocked-receipt-20260724.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
-  - path: docs/receipts/pr-lifecycle-estate-blocked-receipt-20260725.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
-  - path: docs/receipts/pr-lifecycle-estate-fixed-point-receipt-20260724.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
-  - path: docs/receipts/pr-lifecycle-estate-second-fixed-point-receipt-20260724.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
-  - path: docs/receipts/pr-lifecycle-estate-second-zero-receipt-20260724.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
-  - path: docs/receipts/pr-lifecycle-estate-zero-receipt-20260724.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
-  - path: docs/receipts/pr-lifecycle-estate-zero-receipt-20260725.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
-  - path: docs/receipts/seo-live-facts-receipt-20260725.json
-    target: "organvm/portvs:governance/records/"
-    tranche: T3
-    leak_risk: none
-    patch: []
-    why: ""
   - path: docs/repo-surface-ledger.md
     target: "DELETE"
     tranche: T6
@@ -338,36 +284,6 @@ exports:
     leak_risk: none
     patch: [institutio/governance/custody.yaml]
     why: "Subject is whole-workspace local-root/device custody during a laptop evacuation event, matching the estate-wide governance/census destination. Bound a"
-  - path: docs/reviews/EXCAVATION-MAP-2026-06-25.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/agent-agy-antigravity-review.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/agent-claude-review.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/agent-opencode-review.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/agent-session-audit-rollup.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
   - path: docs/reviews/deep-history-2022-2026.md
     target: "organvm/domus:docs/"
     tranche: T1
@@ -375,36 +291,6 @@ exports:
     patch: []
     why: ""
   - path: docs/reviews/retro-2026-06-24--2026-07-08.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/session-lifecycle-drain-queue-2026-06-27.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/session-screenshot-intake-2026-06-27.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/storage-pulse-2026-07-06.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/worktree-lifecycle-2026-06-27.md
-    target: "organvm/portvs:governance/records/reviews/"
-    tranche: T3
-    leak_risk: low
-    patch: []
-    why: ""
-  - path: docs/reviews/worktree-reduction-2026-06-30.md
     target: "organvm/portvs:governance/records/reviews/"
     tranche: T3
     leak_risk: low
