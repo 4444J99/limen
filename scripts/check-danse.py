@@ -56,10 +56,20 @@ PROGRAM = APP / "render" / "program.json"
 
 FAIL: list[str] = []
 NOTE: list[str] = []
+RUN: list[str] = []
+
+# How many invariants must still be here. A gate that can be quietly hollowed out
+# is not a gate: delete half these checks and the remainder still exits 0, and the
+# next agent to touch the engine is verified by nothing. So the count ratchets —
+# ADDING invariants is free, and removing one is red until someone lowers this
+# number in a diff a reviewer can see. Raise it when you add checks; the only
+# legitimate way it falls is a deliberate, argued removal.
+FLOOR = 42
 
 
 def check(name: str, ok: bool, detail: str = "") -> None:
     print(f"  [{'ok  ' if ok else 'FAIL'}] {name}" + (f" — {detail}" if detail else ""))
+    RUN.append(name)
     if not ok:
         FAIL.append(name)
 
@@ -843,6 +853,17 @@ def main() -> int:
     check_delivery(score, manifest)
     print("\n the sound is the same film")
     check_sound()
+
+    # Counted BEFORE this check runs, so the floor never counts itself and the
+    # number below stays the number of real invariants.
+    ran = len(RUN)
+    print("\n the net is still the net")
+    check(
+        f"no invariant has been deleted (floor {FLOOR})",
+        ran >= FLOOR,
+        f"{ran} ran"
+        + ("" if ran >= FLOOR else f" — {FLOOR - ran} missing; restore them or argue the removal in the diff"),
+    )
 
     for n in NOTE:
         print(f"\n  note: {n}")

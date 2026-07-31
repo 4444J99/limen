@@ -143,6 +143,13 @@ gates:
     owner: social
     note: "Koinonia relationship-posture briefs stay schema-clean."
 
+  # ── apps (the work itself, not the fleet that keeps it) ─────────────────────
+  danse-invariants:
+    command: "python3 scripts/check-danse.py"
+    paths: ["apps/danse/**", "scripts/check-danse.py"]
+    owner: artist
+    note: "The arithmetic invariants under the generative engine — the 2017 score partitions the frame, the clock is a pure f(seed, t) that returns to flat, every passage partitions its own time and never recurs, entropy lives in exactly one file, the corpus is deliverable at every shipped tier, and sound/rng.py matches engine/rng.js value for value. Python + node, ~0.2s, no GPU: deliberately the half of danse's verification ANY machine and any agent can run (the other half, apps/danse/render/browser.py --verify, asserts Apple Metal and so can never be a gate). Registered because it was unreachable: before this entry `verify.py --explain apps/danse/engine/clock.js` selected only syntax-changed and diff-hygiene, so an agent could rewrite the engine, run the repo's own push gate, get exit 0, and ship a broken piece. No ci_job — apps/** is outside ci.yml's path filters, which makes the always-on registry-driven pr-gate this gate's only CI mirror."
+
   # ── predicate regression tests (scoped where verify-scoped.sh runs them today) ──
   merge-policy-test:
     command: "bash scripts/tests/merge-policy.test.sh"
