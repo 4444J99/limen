@@ -20,6 +20,18 @@ WHY THIS IS OPERATOR-ARMED AND NEVER BEAT-WIRED
     ``sensors.yaml`` or ``metabolize.sh``; an auto-armed valve here would make the system
     widen its own gate unattended, which is the precise thing the classifier exists to stop.
 
+THE SOURCE IS A TEMPLATE, NOT JSON (measured 2026-07-31)
+    The first version of this script parsed the source with ``json.loads`` on the assumption
+    that every chezmoi ``{{ … }}`` action lived inside a JSON string value. It does not — the
+    statusLine block carries ``"command": {{ printf … | toJson }}``, an action that PRODUCES a
+    JSON value at the structural level, so the source is not parseable and never will be.
+
+    The correctness predicate was wrong, not just the parser. "Is the source valid JSON?" is
+    not the property that matters; **"does the source RENDER to valid JSON carrying all three
+    assertions?"** is. So this script now splices text at uniquely-anchored insertion points,
+    then proves the result through ``chezmoi cat`` — the real renderer — and restores the
+    backup on any failure. It never has to understand the template language.
+
 WHAT IT ASSERTS (idempotent; re-running a healed tree is a no-op)
     1. ``hooks.PreToolUse``  — one Bash group invoking allow-trusted-cd-git.sh, guarded so a
        machine without the hook deployed cannot error.
@@ -43,8 +55,8 @@ USAGE
 
 EXIT
     0 ⟺ the source already carries all three assertions (or they were applied and verified).
-    1 ⟺ drift found on a dry-run, or drift remains after apply.
-    2 ⟺ the cartridge source could not be read/parsed.
+    1 ⟺ drift found on a dry-run, or the render check failed and the backup was restored.
+    2 ⟺ the cartridge source could not be read, or an anchor was missing/ambiguous.
 """
 
 from __future__ import annotations
@@ -102,94 +114,151 @@ AUTOMODE_ALLOW = [
 ]
 
 
+
+
+# ── Anchors ──────────────────────────────────────────────────────────────────
+# Each must appear EXACTLY once in the source. A missing or duplicated anchor is a hard
+# stop (exit 2), never a guess: this file governs the permission gate.
+ANCHOR_PRETOOLUSE = '"PreToolUse": ['
+ANCHOR_DEFAULTMODE = '"defaultMode": "auto"'
+
+HOOK_MARKER = "allow-trusted-cd-git.sh"
+ASK_MARKER = '"ask": ['
+AUTOMODE_MARKER = '"autoMode": {'
+
+
 def fail(msg: str, code: int = 2) -> None:
     print(f"hook-wiring-heal: {msg}", file=sys.stderr)
     sys.exit(code)
 
 
-def load_source() -> tuple[str, dict]:
+def read_source() -> str:
     if not TMPL.is_file():
         fail(f"cartridge source not found: {TMPL}")
-    raw = TMPL.read_text()
+    return TMPL.read_text()
+
+
+def anchor_at(raw: str, anchor: str) -> int:
+    """Index of a must-be-unique anchor. Hard-stops on absent or ambiguous."""
+    n = raw.count(anchor)
+    if n != 1:
+        fail(
+            f"anchor {anchor!r} appears {n} times in {TMPL.name} (need exactly 1); "
+            "refusing to guess an insertion point in a permission file"
+        )
+    return raw.index(anchor)
+
+
+def indent_of(raw: str, idx: int) -> str:
+    """Leading whitespace of the line containing idx."""
+    line_start = raw.rfind("\n", 0, idx) + 1
+    return raw[line_start : idx - len(raw[line_start:idx].lstrip())] or ""
+
+
+def block(obj, indent: str) -> str:
+    """json.dumps a fragment and re-indent every line to sit at `indent`."""
+    text = json.dumps(obj, indent=2)
+    return "\n".join(
+        (indent + line) if i else line for i, line in enumerate(text.splitlines())
+    )
+
+
+def splice(raw: str) -> tuple[str, list[str]]:
+    """Return (new_source, changes). Purely textual — never parses the template."""
+    changes: list[str] = []
+    out = raw
+
+    if HOOK_MARKER not in out:
+        idx = anchor_at(out, ANCHOR_PRETOOLUSE) + len(ANCHOR_PRETOOLUSE)
+        ind = indent_of(out, out.index(ANCHOR_PRETOOLUSE)) + "  "
+        out = out[:idx] + "\n" + ind + block(HOOK_GROUP, ind) + "," + out[idx:]
+        changes.append("wired allow-trusted-cd-git.sh into hooks.PreToolUse (matcher Bash)")
+
+    # `ask` and `autoMode` are siblings of defaultMode inside `permissions`.
+    need_ask = ASK_MARKER not in out
+    need_automode = AUTOMODE_MARKER not in out
+    if need_ask or need_automode:
+        idx = anchor_at(out, ANCHOR_DEFAULTMODE)
+        ind = indent_of(out, idx)
+        tail = idx + len(ANCHOR_DEFAULTMODE)
+        additions = []
+        if need_ask:
+            additions.append(f'"ask": {block(ASK_RULES, ind)}')
+            changes.append("restored the five destructive permissions.ask rules (fail-safe backstop)")
+        if need_automode:
+            additions.append(f'"autoMode": {block({"allow": AUTOMODE_ALLOW}, ind)}')
+            changes.append('set permissions.autoMode.allow (leads with "$defaults")')
+        joined = "".join(f",\n{ind}{a}" for a in additions)
+        out = out[:tail] + joined + out[tail:]
+
+    return out, changes
+
+
+def render(target: Path) -> str | None:
+    """Render the target through chezmoi itself. None if chezmoi is unavailable."""
+    chezmoi = shutil.which("chezmoi")
+    if not chezmoi:
+        return None
+    proc = subprocess.run([chezmoi, "cat", str(target)], capture_output=True, text=True)
+    if proc.returncode != 0:
+        fail(f"`chezmoi cat {target}` failed:\n{proc.stderr}", code=1)
+    return proc.stdout
+
+
+def verify_render(text: str) -> list[str]:
+    """The real predicate: the RENDER must be valid JSON carrying all three assertions."""
+    problems: list[str] = []
     try:
-        # chezmoi's {{ … }} actions live inside JSON string values here, so the template is
-        # itself valid JSON. If a future edit puts an action outside a string this breaks
-        # loudly rather than silently text-munging a config that governs permissions.
-        return raw, json.loads(raw)
+        doc = json.loads(text)
     except json.JSONDecodeError as exc:
-        fail(f"{TMPL} is not parseable as JSON ({exc}); refusing to text-munge a permission file")
-        raise  # unreachable, keeps type-checkers happy
+        return [f"render is not valid JSON: {exc}"]
 
+    perms = doc.get("permissions") or {}
+    hooks = (doc.get("hooks") or {}).get("PreToolUse") or []
 
-def already_wired(doc: dict) -> bool:
-    for group in (doc.get("hooks") or {}).get("PreToolUse") or []:
-        for hook in group.get("hooks") or []:
-            if "allow-trusted-cd-git.sh" in str(hook.get("command", "")):
-                return True
-    return False
-
-
-def assert_all(doc: dict) -> list[str]:
-    """Mutate doc in place. Return the list of human-readable changes made."""
-    changed: list[str] = []
-
-    hooks = doc.setdefault("hooks", {})
-    pre = hooks.setdefault("PreToolUse", [])
-    if not already_wired(doc):
-        # Insert directly after the host-admission group so the fast path runs early; if that
-        # group is absent (a fresh cartridge), lead the list.
-        idx = 0
-        for i, group in enumerate(pre):
-            for hook in group.get("hooks") or []:
-                if "domus-claude-host-hook" in str(hook.get("command", "")):
-                    idx = i + 1
-        pre.insert(idx, HOOK_GROUP)
-        changed.append("wired allow-trusted-cd-git.sh into hooks.PreToolUse (matcher Bash)")
-
-    perms = doc.setdefault("permissions", {})
-
+    if not any(
+        HOOK_MARKER in str(h.get("command", ""))
+        for g in hooks
+        for h in (g.get("hooks") or [])
+    ):
+        problems.append("rendered hooks.PreToolUse does not invoke the trust hook")
     if sorted(perms.get("ask") or []) != sorted(ASK_RULES):
-        perms["ask"] = list(ASK_RULES)
-        changed.append("restored the five destructive permissions.ask rules (fail-safe backstop)")
-
-    automode = perms.setdefault("autoMode", {})
-    if automode.get("allow") != AUTOMODE_ALLOW:
-        automode["allow"] = list(AUTOMODE_ALLOW)
-        changed.append('set permissions.autoMode.allow (leads with "$defaults")')
-
-    # Never touched — see the module docstring.
-    perms.setdefault("defaultMode", "auto")
-
-    return changed
+        problems.append("rendered permissions.ask is not the five destructive rules")
+    allow = (perms.get("autoMode") or {}).get("allow") or []
+    if not allow or allow[0] != "$defaults":
+        problems.append('rendered permissions.autoMode.allow does not lead with "$defaults"')
+    if perms.get("defaultMode") != "auto":
+        problems.append(f"defaultMode changed to {perms.get('defaultMode')!r} — must stay 'auto'")
+    return problems
 
 
 def main() -> int:
     armed = "--apply" in sys.argv or os.environ.get("LIMEN_HOOK_WIRING_HEAL") == "1"
+    fixture = DOMUS != DEFAULT_DOMUS
 
-    raw, doc = load_source()
-    changed = assert_all(doc)
+    raw = read_source()
+    new, changes = splice(raw)
 
-    if not changed:
+    if not changes:
         print("hook-wiring-heal: clean (cartridge source already carries hook + ask + autoMode)")
         return 0
 
-    new = json.dumps(doc, indent=2) + "\n"
-    diff = "".join(
-        difflib.unified_diff(
-            raw.splitlines(keepends=True),
-            new.splitlines(keepends=True),
-            fromfile=f"a/{TMPL.name}",
-            tofile=f"b/{TMPL.name}",
-            n=3,
-        )
-    )
-
-    for line in changed:
-        print(f"hook-wiring-heal: {'applied' if armed else 'would apply'} — {line}")
+    for line in changes:
+        print(f"hook-wiring-heal: {'applying' if armed else 'would apply'} — {line}")
 
     if not armed:
         print()
-        print(diff)
+        print(
+            "".join(
+                difflib.unified_diff(
+                    raw.splitlines(keepends=True),
+                    new.splitlines(keepends=True),
+                    fromfile=f"a/{TMPL.name}",
+                    tofile=f"b/{TMPL.name}",
+                    n=3,
+                )
+            )
+        )
         print("hook-wiring-heal: DRY RUN. Re-run with --apply to write the cartridge source.")
         print("  python3 scripts/heal-hook-wiring.py --apply")
         return 1
@@ -199,31 +268,38 @@ def main() -> int:
     TMPL.write_text(new)
     print(f"hook-wiring-heal: wrote {TMPL} (backup at {backup})")
 
-    # Re-read and re-assert: proves idempotence rather than trusting the write.
-    _, verify = load_source()
-    if assert_all(verify):
-        print("hook-wiring-heal: source still drifted after write", file=sys.stderr)
+    # Idempotence: a second splice over our own output must find nothing to do.
+    if splice(read_source())[1]:
+        shutil.copy2(backup, TMPL)
+        fail("splice is not idempotent — backup restored, source unchanged", code=1)
+
+    target = Path.home() / ".claude" / "settings.json"
+    if fixture:
+        print("hook-wiring-heal: DOMUS_ROOT overridden — splice asserted; render check + deploy skipped")
+        return 0
+
+    rendered = render(target)
+    if rendered is None:
+        print("hook-wiring-heal: chezmoi not on PATH — source written, but UNVERIFIED.")
+        print(f"  verify: chezmoi cat {target} | python3 -m json.tool >/dev/null")
+        print(f"  deploy: chezmoi apply {target}")
         return 1
 
-    if DOMUS is not DEFAULT_DOMUS and DOMUS != DEFAULT_DOMUS:
-        # DOMUS_ROOT was overridden (a fixture, a scratch clone). Deploying the REAL target
-        # from a non-canonical source is incoherent, so assert-only and stop.
-        print("hook-wiring-heal: DOMUS_ROOT overridden — source asserted, deploy skipped")
-        return 0
+    problems = verify_render(rendered)
+    if problems:
+        shutil.copy2(backup, TMPL)
+        for p in problems:
+            print(f"hook-wiring-heal: RENDER CHECK FAILED — {p}", file=sys.stderr)
+        fail("backup restored; source is exactly as it was", code=1)
+
+    print("hook-wiring-heal: render check PASSED (valid JSON; hook + ask + autoMode present; defaultMode 'auto')")
 
     chezmoi = shutil.which("chezmoi")
-    if not chezmoi:
-        print("hook-wiring-heal: chezmoi not on PATH — run `chezmoi apply ~/.claude/settings.json`")
-        return 0
-    proc = subprocess.run(
-        [chezmoi, "apply", str(Path.home() / ".claude" / "settings.json")],
-        capture_output=True,
-        text=True,
-    )
+    proc = subprocess.run([chezmoi, "apply", str(target)], capture_output=True, text=True)
     if proc.returncode != 0:
         print(f"hook-wiring-heal: chezmoi apply failed:\n{proc.stderr}", file=sys.stderr)
-        print("hook-wiring-heal: source is correct; deploy by hand with:")
-        print("  chezmoi apply ~/.claude/settings.json   # add --force on out-of-band drift")
+        print("hook-wiring-heal: the SOURCE is correct and verified — deploy by hand:")
+        print(f"  chezmoi apply {target}        # add --force on out-of-band drift")
         return 1
 
     print("hook-wiring-heal: deployed. Hooks load at session start — restart Claude Code.")

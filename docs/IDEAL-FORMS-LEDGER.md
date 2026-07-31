@@ -226,6 +226,16 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   neighbour 1b carried an organ (`heal-hook-drift.sh`) — closed by `scripts/heal-hook-wiring.py`,
   which asserts hook + `ask` + `autoMode` in the **cartridge source** (never the rendered file —
   the old cure text instructed a Rule #6 violation) and then `chezmoi apply`s.
+  **(c)** the effector's first arming failed closed: it parsed the source with `json.loads`, but
+  the live template's statusLine carries `"command": {{ printf … | toJson }}` — an action
+  producing a JSON value at the *structural* level — so the source is not parseable and never
+  will be. The wrong thing was the predicate, not the parser: "is the source valid JSON?" is not
+  the property that matters, **"does the source render to valid JSON carrying all three
+  assertions?"** is. Rebuilt as a uniquely-anchored textual splice proven through `chezmoi cat`,
+  restoring the backup on any failure, with `scripts/tests/heal-hook-wiring.test.sh` (16 cases)
+  pinning the non-JSON shape, idempotence, backup, verbatim action preservation, and hard-stop
+  exit 2 on an absent or ambiguous anchor. It refused rather than corrupting a permission file —
+  the fail-closed half was already right.
   Remaining distance is exactly one operator act: arming that effector.
 - **Status:** PARTIAL — hook + effector + matrix + registry landed; wiring not yet armed.
 - **Owner:** Anthony (arm the effector) + Claude (hook, effector, matrix). The arming is
