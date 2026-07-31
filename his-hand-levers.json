@@ -243,21 +243,19 @@
     },
     {
       "id": "L-DOMUS-AGENT-HOST-TCC",
-      "label": "Complete the one supported macOS privacy transaction after containment is green: grant only the required protected-resource categories to the fixed Domus Agent Host, then remove the audit's exact dead/versioned Claude and Python entries in System Settings. This is the sole human interaction in the stable-host cutover; subsequent Claude, Homebrew, and Python updates remain automatic and must not create another client.",
+      "label": "DISCHARGED 2026-07-31: the fixed Domus Agent Host is installed and the one supported macOS privacy grant is complete. The protected-read rotation matrix passed twice. No stale-client cleanup remains assigned to the human: live inspection proved that Tahoe displays path-based clients whose executables no longer exist but will not toggle them, exposes no Remove action, and rejects an exact tccutil reset because the client is not a bundle identifier. Residual cleanup and acceptance correction are engineering-owned by issue #1703 and its finite successor capsule.",
       "owner": "yours",
-      "cost": "~3 minutes once in System Settings; no recurring cleanup",
+      "cost": "spent: one System Settings authentication/consent transaction; no remaining human action",
       "unlocks": "foreground agents, background PTYs/spares, MCP descendants, and Python control-plane commands retain protected access across executable version rotation with no repeated privacy prompts",
       "source_task": "Auto-Updates Without TCC Permission Sprawl · docs/architecture/tcc-stable-agent-host.md",
-      "gate": "macOS System Settings authentication/consent is human-owned; the agent may prepare and verify the exact inventory but may not grant privacy access or remove entries",
+      "gate": "none remaining for the human; exact path-client cleanup has no supported per-client System Settings or tccutil surface on the observed host and must remain engineering-owned without a global reset or direct TCC database write",
       "steps": [
-        "Install/apply DomusAgentHost and verify `domus-agent-host status --json` without opening TCC",
-        "Trigger the harmless protected-folder acceptance fixture through DomusAgentHost, then grant only its requested categories, including Full Disk Access for the inventory, to Domus Agent Host in System Settings -> Privacy & Security",
-        "Run `tcc-identity-audit --json --strict` beneath the now-authorized host; proceed only when automatic updates are enabled, DomusAgentHost is validly signed, and versioned_leak is zero",
-        "Remove only the clients listed as legacy_stale by the audit; preserve every unrelated application and grant",
-        "Repeat foreground Claude, background child, Homebrew Python, and Python.org Python access after fixture-version rotation; close only when there is no prompt and the TCC delta contains zero versioned clients",
-        "When the vendor offers an actual Claude update, require `claude --version` to advance while the relevant TCC inventory remains unchanged"
+        "Completed: install/apply DomusAgentHost, authenticate the fixed host once, and grant only the requested protected-resource categories",
+        "Completed: run the protected-resource matrix twice through foreground, background, Homebrew Python, Python.org Python, and renamed fixtures without another prompt",
+        "Do not reopen System Settings for legacy path rows, repeat consent attempts, reset a whole TCC service, write TCC.db, or remove unrelated grants",
+        "Engineering owner #1703 must correct the exact-removal/acceptance contract and retain the real vendor Claude update proof as a finite external wait"
       ],
-      "status": "open — perform once after both stable-host implementation PRs are merged and applied",
+      "status": "discharged",
       "issue": 1703
     },
     {
@@ -847,6 +845,18 @@
         "Done when a matched command with no receipt is refused: printf '%s' '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"scripts/mail-send --to someone@example.com\"}}' | python3 scripts/hooks/outbound-preflight-guard.py   # must print permissionDecision: deny"
       ],
       "issue": 1736
+    },
+    {
+      "id": "L-HEARTBEAT-WORKTREE-VOLUME-GONE",
+      "label": "The running heartbeat daemon is configured with LIMEN_WORKTREES=/Volumes/Scratch/limen-worktrees, and /Volumes/Scratch is NOT MOUNTED. Every worktree the fleet creates targets a path on a volume that no longer exists. The installed plist was generated while the volume was present; gen-launchd-plist.sh falls back to $WORKDIR/.limen-worktrees only when the scratch root is absent AND writable at generation time, so the daemon kept the dead path. Two ways out, and only you can pick: (a) remount /Volumes/Scratch, which restores the intent that worktrees live off the main disk — relevant on a 16GB machine that logs jetsam kills; or (b) accept the derived path by regenerating and reinstalling the plist, which moves worktrees under ~/Workspace. Either resolves it; doing neither leaves the fleet writing to a phantom mountpoint.",
+      "owner": "yours",
+      "cost": "~2 min — remount the volume, or `scripts/gen-launchd-plist.sh --install` then relaunch the agent",
+      "status": "open (surfaced 2026-07-31 by scripts/check-heartbeat-env.py on its first run)",
+      "gate": "a physical volume decision + a LaunchAgent write (hook-blocked for agents by design)",
+      "unlocks": "clause 3 of the autonomy maintenance resume predicate, which is one of the three conditions holding the estate paused since 2026-07-22",
+      "source_task": "PR #1741 — heal(autonomy): a resume predicate written as prose is a pause with no exit",
+      "note": "Verify with `python3 scripts/check-heartbeat-env.py --diff`: exit 0 means the root the daemon names still generates it byte-for-byte. This lever exists because a merged organ that never ran led back through a nine-day pause to a daemon whose environment nobody had checked against the repo.",
+      "issue": null
     }
   ]
 }

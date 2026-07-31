@@ -19,6 +19,11 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "diurnal.py"
 REGISTRY = ROOT / "institutio" / "governance" / "diurnal.yaml"
 
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+
+import _root  # noqa: E402  — the shared root predicate the organ's guard now delegates to
+
 
 def _load():
     spec = importlib.util.spec_from_file_location("diurnal", SCRIPT)
@@ -38,7 +43,12 @@ def mod():
 
 @pytest.fixture()
 def root(tmp_path: Path) -> Path:
-    """A synthetic organism: has logs/.voice, so the organ agrees it is alive."""
+    """A synthetic root for the rendering/scoring tests below.
+
+    Deliberately NOT organism-shaped — none of these tests go through main()'s liveness guard,
+    they call the render and score functions directly. The guard's own cases build their roots
+    explicitly via _organism() above, so this fixture never has to lie about being alive.
+    """
     (tmp_path / "logs" / ".voice").mkdir(parents=True)
     (tmp_path / "logs" / ".voice" / "drain").write_text("")
     (tmp_path / "institutio" / "governance").mkdir(parents=True)
@@ -49,17 +59,57 @@ def root(tmp_path: Path) -> Path:
 
 
 # ── the root guard: the single most dangerous failure mode ────────────────────────
+#
+# These two tests replace a pair that encoded the defect rather than catching it. The old
+# `test_has_body_true_for_synthetic_organism` asserted that a tmp_path carrying ONE voice stamp
+# IS a live organism — which is exactly the false positive that let a worktree emit a briefing
+# where five live-present sections read ABSENT. Its sibling's second assertion was
+# `assert mod.has_body(mod.resolve_root()) or True`, a tautology that could never fail.
 
 
-def test_refuses_a_root_with_no_body(mod, tmp_path, capsys):
-    """A worktree's logs/ holds 2 files; the live root's holds ~198. Reading the wrong one
-    and reporting 'all quiet' is worse than emitting nothing."""
-    assert mod.has_body(tmp_path) is False
-    assert mod.has_body(mod.resolve_root()) or True  # live root may vary in CI
+def _organism(path: Path, voices: int) -> Path:
+    """A root shaped like the real body: a primary checkout (.git is a DIR) that has beaten."""
+    (path / ".git").mkdir(parents=True, exist_ok=True)
+    (path / "institutio" / "governance").mkdir(parents=True, exist_ok=True)
+    (path / "institutio" / "governance" / "sensors.yaml").write_text("", encoding="utf-8")
+    voice = path / "logs" / ".voice"
+    voice.mkdir(parents=True, exist_ok=True)
+    for i in range(voices):
+        (voice / f"sensor{i}").write_text("", encoding="utf-8")
+    return path
 
 
-def test_has_body_true_for_synthetic_organism(mod, root):
-    assert mod.has_body(root) is True
+def test_a_worktree_is_never_the_organism(tmp_path):
+    """THE REGRESSION. A linked worktree's .git is a gitdir-pointer FILE, and a single scheduled
+    sensor stamping it is enough to populate logs/.voice — which is all the guard this replaced
+    ever checked. Voices present, body absent."""
+    wt = _organism(tmp_path / "wt", voices=9)
+    (wt / ".git").rmdir()
+    (wt / ".git").write_text("gitdir: /elsewhere/.git/worktrees/wt\n", encoding="utf-8")
+
+    assert _root.is_worktree(wt) is True
+    live, why = _root.has_body(wt)
+    assert live is False
+    assert "worktree" in why  # the reason must name the real cause, not "no logs/.voice"
+
+
+def test_a_checkout_that_never_beat_is_not_the_organism(tmp_path):
+    """A second clone, a fresh CI checkout, a restored backup: .git is a directory, so the exact
+    worktree test passes it. The voice floor is what separates it from the living body."""
+    cold = _organism(tmp_path / "cold", voices=1)
+    assert _root.is_worktree(cold) is False
+    assert _root.has_body(cold)[0] is False
+
+    beaten = _organism(tmp_path / "beaten", voices=_root.DEFAULT_VOICE_FLOOR)
+    assert _root.has_body(beaten)[0] is True
+
+
+def test_an_explicitly_wrong_LIMEN_ROOT_is_an_error_not_a_fallback(tmp_path, monkeypatch):
+    """Silently correcting bad config is what makes config errors invisible (_uma_root's lesson)."""
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "nowhere"))
+    resolved, why = _root.resolve()
+    assert resolved is None
+    assert "not a limen checkout" in why
 
 
 # ── freshness: the doctrine that a stale value is never reported as current ───────
@@ -325,23 +375,24 @@ def test_blocks_land_in_chronological_order_whatever_the_write_order(mod, root):
 # ── CLI edges found by driving the organ, not by reading it ───────────────────────
 
 
-def test_uncut_rejects_a_name_the_registry_does_not_know(mod, root, capsys):
+def test_uncut_rejects_a_name_the_registry_does_not_know(mod, tmp_path, monkeypatch, capsys):
     """A typo must not be answerable with the same sentence as a real, uncut section. Someone
     restoring a genuinely cut section who fumbles the name would otherwise read 'is not cut' and
-    conclude nothing was ever cut — the reassuring answer being the wrong one."""
-    import sys as _sys
+    conclude nothing was ever cut — the reassuring answer being the wrong one.
 
-    argv = _sys.argv
-    _sys.argv = ["diurnal.py", "--uncut", "levrs"]
-    try:
-        import os as _os
+    This one goes through main(), so its root must be organism-shaped: _root's guard now demands a
+    primary checkout that has actually beaten, and the render-level `root` fixture deliberately is
+    not one. monkeypatch, not os.environ — the first draft set LIMEN_ROOT and never restored it,
+    leaking a dead tmp path into every test that ran after it.
+    """
+    body = _organism(tmp_path / "body", voices=_root.DEFAULT_VOICE_FLOOR)
+    (body / "institutio" / "governance" / "diurnal.yaml").write_text(
+        REGISTRY.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    monkeypatch.setenv("LIMEN_ROOT", str(body))
+    monkeypatch.setattr(sys, "argv", ["diurnal.py", "--uncut", "levrs"])
 
-        _os.environ["LIMEN_ROOT"] = str(root)
-        (root / "logs" / ".voice").mkdir(parents=True, exist_ok=True)
-        (root / "logs" / ".voice" / "drain").write_text("")
-        assert mod.main() == 2
-    finally:
-        _sys.argv = argv
+    assert mod.main() == 2
     err = capsys.readouterr().err
     assert "no section named 'levrs'" in err
     assert "Did you mean: levers?" in err
@@ -368,3 +419,36 @@ def test_dry_run_creates_no_state_directory(mod, root):
     mod.load_state(root)
     mod.load_scores(root)
     assert not (root / "logs" / "diurnal").exists()
+
+
+# ── the emission needs a reader, or it is a log file with better prose ────────────
+
+
+def test_index_is_derived_from_the_directory_not_appended(mod, root):
+    """A hand-maintained index is the same failure one surface over. Rebuilding from the files
+    means deleting a page removes its row and no bookkeeping is owed."""
+    pages = root / "docs" / "diurnal"
+    pages.mkdir(parents=True)
+    for day in ("2026-07-29", "2026-07-30", "2026-07-31"):
+        (pages / f"{day}.md").write_text(
+            f"<!-- diurnal:morning:start -->\n\n## {day} · morning\n\n- next: ship it [ABC-1]\n"
+            "<!-- diurnal:morning:end -->\n",
+            encoding="utf-8",
+        )
+    (pages / "README.md").write_text("not a dated page", encoding="utf-8")
+
+    assert mod.write_index(root) == pages / "INDEX.md"
+    body = (pages / "INDEX.md").read_text(encoding="utf-8")
+    assert body.index("2026-07-31") < body.index("2026-07-29"), "newest first"
+    assert "README" not in body, "only dated pages are days"
+    assert "morning" in body
+
+    (pages / "2026-07-30.md").unlink()
+    mod.write_index(root)
+    assert "2026-07-30" not in (pages / "INDEX.md").read_text(encoding="utf-8")
+
+
+def test_index_is_absent_rather_than_empty_when_nothing_has_emitted(mod, root):
+    (root / "docs" / "diurnal").mkdir(parents=True)
+    assert mod.write_index(root) is None
+    assert not (root / "docs" / "diurnal" / "INDEX.md").exists()
