@@ -28,7 +28,13 @@ export function step(corpus, seed, t, program = null, { quantise = 0 } = {}) {
 export function frameAt(renderer, corpus, seed, t, program = null, opts = {}) {
   const { quantise = 0, ...draw } = opts;
   const { state: s, cast } = step(corpus, seed, t, program, { quantise });
-  return { ...renderer.draw(cast, s, { seed, ...draw }), state: s, cells: cast.length };
+  // The signature is not an overlay added afterwards — it is the last movement,
+  // and it comes through the same canvas as every frame before it.
+  const closing =
+    s.cut === "black" && program?.signature
+      ? { signature: signature(program, seed), signatureStyle: program.signature }
+      : {};
+  return { ...renderer.draw(cast, s, { seed, ...closing, ...draw }), state: s, cells: cast.length };
 }
 
 /** The seed as it appears in the film's last frame, in a post caption, and in a

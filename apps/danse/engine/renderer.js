@@ -21,7 +21,7 @@
  * planes separate and the gaps show the empty apartment rather than black.
  */
 
-import { context, program, resize, unitQuad, uniforms } from "./gl.js";
+import { context, program, resize, texture, unitQuad, uniforms } from "./gl.js";
 import { compose, multiply, perspective } from "./mat4.js";
 import { camera, homePlacement, projector, rectUV, scatter } from "./room.js";
 
@@ -149,7 +149,7 @@ export class Renderer {
   /** One frame. `cells` comes from the grammar, `state` from the clock. */
   draw(cells, state, opts = {}) {
     const { gl, u, corpus } = this;
-    const { seed = 0, tier = "screen", treat = 1, matteK = 0, showRoom = true, pixelRatio = 2, edge = null } = opts;
+    const { seed = 0, tier = "screen", treat = 1, matteK = 0, showRoom = true, pixelRatio = 2, edge = null, fit = "contain" } = opts;
 
     // The edge fade tracks the departure, and must be EXACTLY zero at home. The
     // tiles tile the frame — at spread 0 they abut with no gaps, so any fade lets
@@ -161,11 +161,29 @@ export class Renderer {
     // pixelRatio is a cap, not a request. A measurement pins it to 1 so the drawing
     // buffer is exactly the composite's 1024x768 and neither side is resampled.
     resize(gl, this.canvas, pixelRatio);
+
+    // The closing movement. Its cut is `black`, so there is nothing to arrange —
+    // just the one line that names what was watched.
+    if (state.cut === "black") {
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      if (opts.signature) {
+        gl.useProgram(this.program);
+        gl.bindVertexArray(this.vao);
+        gl.uniformMatrix4fv(u.uViewProj, false, multiply(perspectiveFor(this.canvas, fit), camera(0, 0, 0).view));
+        gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(false);
+        this.drawText(opts.signature, opts.signatureStyle);
+      }
+      this.stats = { planes: 0, missing: 0 };
+      return this.stats;
+    }
+
     gl.clearColor(0.055, 0.055, 0.06, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const view = camera(state.divergence, state.azimuth, state.elevation);
-    const proj = perspectiveFor(this.canvas);
+    const proj = perspectiveFor(this.canvas, fit);
     const viewProj = multiply(proj, view.view);
 
     gl.useProgram(this.program);
@@ -224,6 +242,62 @@ export class Renderer {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
+  /** The closing frame: one line, white on black, held four seconds.
+   *
+   * It goes through the same GL canvas as everything else rather than being
+   * burned in later by ffmpeg, because the capture path reads pixels off this
+   * context — a DOM overlay would be invisible to it, and a separately-generated
+   * tail would be a second code path for four seconds of film.
+   */
+  drawText(text, { color = "#f2f2f4", background = "#000000", size = 0.055 } = {}) {
+    const { gl, u } = this;
+    const w = gl.drawingBufferWidth;
+    const h = gl.drawingBufferHeight;
+    const key = `${text}/${w}x${h}/${color}/${background}/${size}`;
+    if (this._textKey !== key) {
+      const c = this._textCanvas ?? (this._textCanvas = document.createElement("canvas"));
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = color;
+      const px = Math.round(h * size);
+      ctx.font = `300 ${px}px ui-monospace, "SF Mono", Menlo, monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const tracking = Math.round(px * 0.18);
+      ctx.letterSpacing = `${tracking}px`;
+      // Canvas adds the tracking AFTER the last glyph too, which drags a centred
+      // string half a letter-space to the left. Give it back.
+      ctx.fillText(text, w / 2 + tracking / 2, h / 2);
+      if (this._textTex) gl.deleteTexture(this._textTex);
+      this._textTex = texture(gl, c, { mipmap: false });
+      this._textKey = key;
+    }
+
+    const place = homePlacement([0, 0, 1, 1]);
+    gl.uniformMatrix4fv(u.uModel, false, compose(place.position, place.rotation, place.scale));
+    gl.uniform4fv(u.uRectUV, rectUV([0, 0, 1, 1]));
+    gl.uniform3f(u.uGainA, 1, 1, 1);
+    gl.uniform3f(u.uGainB, 0, 0, 0);
+    gl.uniform3f(u.uLift, 0, 0, 0);
+    gl.uniform1f(u.uMix, 0);
+    gl.uniform1f(u.uAdditive, 0);
+    // Local UVs, not projected: the text is a picture the plane carries, which
+    // is exactly what projK = 1 means.
+    gl.uniform1f(u.uProjK, 1);
+    gl.uniform1f(u.uTreat, 0);
+    gl.uniform1f(u.uMatteK, 0);
+    gl.uniform1f(u.uOpacity, 1);
+    gl.uniform1f(u.uHasB, 0);
+    gl.uniform1f(u.uEdge, 0);
+    gl.uniform1f(u.uClamp, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._textTex);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
   /** Returns false if the cell could not be drawn because its plate has not
    *  arrived yet — counted rather than logged, so a slow network shows up as a
    *  number instead of a console flood. */
@@ -271,12 +345,24 @@ export class Renderer {
 
 /** The viewing frustum, letterboxed to the room's 4:3 so the composite is never
  *  cropped by the shape of someone's window. */
-function perspectiveFor(canvas) {
+/** How the 4:3 room meets a frame that is not 4:3.
+ *
+ *   contain — show all of the room, accept empty frame around it. Right for a
+ *             browser window, which can be any shape and did not choose to be.
+ *   cover   — fill the frame, accept losing what falls outside it. Right for
+ *             every delivery format, because a 16:9 master that letterboxes a
+ *             4:3 source is a 4:3 film in a 16:9 container, and a vertical Reel
+ *             that does it is unwatchable on a phone.
+ *
+ * Both are the same arithmetic — the field that exactly fits the room's width,
+ * against the field that exactly fits its height. Contain takes the larger,
+ * cover takes the smaller.
+ */
+function perspectiveFor(canvas, fit = "contain") {
   const { fovy, aspect } = projector();
   const view = canvas.clientWidth / canvas.clientHeight;
-  // Widen the vertical field when the window is narrower than the room, so the
-  // full picture stays inside the frame instead of being cut off at the sides.
-  const fov = view < aspect ? 2 * Math.atan(Math.tan(fovy / 2) * (aspect / view)) : fovy;
+  const toWidth = 2 * Math.atan(Math.tan(fovy / 2) * (aspect / view));
+  const fov = fit === "cover" ? Math.min(fovy, toWidth) : Math.max(fovy, toWidth);
   return perspective(fov, view, 0.05, 100);
 }
 

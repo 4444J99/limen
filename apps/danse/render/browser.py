@@ -69,17 +69,45 @@ GPU_ARGS = [
 
 
 class _Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, *_args):  # noqa: D102 - a render log is not an access log
+    """Serves the app, and — when a sink is attached — swallows frames.
+
+    The capture path posts raw RGBA back to the same origin it loaded from. A
+    3840×2160 frame is 33 MB; routing it over CDP as base64 instead would cost
+    more than rendering it. Keeping the sink here means the whole render is one
+    Python process with an ffmpeg on the end, and no second runtime to supervise.
+    """
+
+    sink = None
+
+    def log_message(self, *_args):  # a render log is not an access log
         pass
+
+    def do_POST(self):  # noqa: N802 - BaseHTTPRequestHandler's spelling
+        if self.sink is None:
+            self.send_error(404)
+            return
+        body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        try:
+            self.sink(self.path, body)
+        except Exception as exc:  # a broken ffmpeg must fail the render, loudly
+            self.send_error(500, str(exc))
+            return
+        self.send_response(204)
+        self.end_headers()
 
 
 @contextlib.contextmanager
-def serve(root: Path = APP, port: int = 0):
+def serve(root: Path = APP, port: int = 0, sink=None):
     """A static server over the app directory. Port 0 picks a free one, so two
-    renders running side by side never collide."""
+    renders running side by side never collide. `sink(path, body)` receives POSTs.
+
+    Threaded: a 33 MB frame upload must not block the page's next module fetch.
+    """
     handler = functools.partial(_Quiet, directory=str(root))
+    if sink is not None:
+        handler = functools.partial(type("_Sinking", (_Quiet,), {"sink": staticmethod(sink)}), directory=str(root))
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("127.0.0.1", port), handler) as httpd:
+    with http.server.ThreadingHTTPServer(("127.0.0.1", port), handler) as httpd:
         actual = httpd.socket.getsockname()[1]
         thread = threading.Thread(target=httpd.serve_forever, daemon=True)
         thread.start()
