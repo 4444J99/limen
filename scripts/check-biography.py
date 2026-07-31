@@ -23,7 +23,9 @@ The checks, and the defect each one answers:
                 distinction check-corpora.py draws for store roots.
   F retrieval   every `cited` row presupposes reachable corpora. If corpus_resolve reports
                 no populated home, citations cannot be verified and that is stated — "I
-                found nothing" and "I read nothing" must not read the same.
+                found nothing" and "I read nothing" must not read the same. Custody-gated
+                like E: the corpora are a local-only gitignored store, so an unreachable
+                corpus is drift only where this host could have held one.
 """
 
 from __future__ import annotations
@@ -163,10 +165,18 @@ def check_f_retrieval(facts: dict) -> None:
     home = corpus_resolve.corpus_home()
     populated = corpus_resolve.populated_corpora_including_undeclared(home)
     if not populated:
-        fail(
+        # The CUSTODY distinction check E already draws, applied here too. The session
+        # corpora are a local-only, gitignored store: a CI runner has never held one and
+        # never will, so "no populated corpus" there is a HOST fact, not registry drift.
+        # Without this the gate is red on every runner by construction — which is how a
+        # guard gets trained into background noise. check-corpora.py resolves the same
+        # store the same way ("absence is not provable here").
+        report = fail if _absence_is_provable() else advise
+        report(
             "F",
             f"{len(cited)} cited row(s) but no populated corpus under {home} — citations are "
-            "unverifiable, and an unreachable corpus reads exactly like an empty one",
+            "unverifiable, and an unreachable corpus reads exactly like an empty one"
+            + ("" if _absence_is_provable() else " (no estate root on this host — unverifiable, not drift)"),
         )
     else:
         advise("F", f"{len(cited)} cited row(s); {len(populated)} corpus/corpora reachable at {home}")
