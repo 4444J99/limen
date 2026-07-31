@@ -59,8 +59,10 @@ surfaces:
     disposition: main-to-preservation-pr-topic-branches-explicit
     expected: {git_push: 2, push_literal: 1}
   scripts/dialogs-silenced.sh:
+    # All matches are the literal TEXT of the force-push `permissions.ask` rules this sensor
+    # asserts (1a's surgical-estate check and 1c's ask-list check both name them). No git.
     disposition: permission-policy-string-only
-    expected: {git_push: 2}
+    expected: {git_push: 3}
   scripts/heal-hook-wiring.py:
     # Same disposition as its sensor above: the matches are the literal TEXT of the two
     # force-push `permissions.ask` rules this effector asserts, plus the classifier rule that

@@ -237,7 +237,21 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   exit 2 on an absent or ambiguous anchor. It refused rather than corrupting a permission file —
   the fail-closed half was already right.
   Remaining distance is exactly one operator act: arming that effector.
-- **Status:** PARTIAL — hook + effector + matrix + registry landed; wiring not yet armed.
+  Armed 2026-07-31; three further defects surfaced only by running it against the real host,
+  each now pinned by a case: the source is a **template, not JSON** (statusLine carries an
+  action producing a JSON value, so the predicate became "does it RENDER to valid JSON?");
+  the deploy would have **silently dropped `model`** (IF-CONFIG-OWNERSHIP in reverse — the
+  cartridge clobbering an app atom, since the entry declares no `app_managed`); and a **false
+  green**, where a correct-but-undeployed source reported clean while the live gate was still
+  open. Two sensor defects went with them: 1d used `endswith` and so reported NOT WIRED
+  against a correctly wired gate (the wiring is a *guarded* invocation ending `|| true`), and
+  1a demanded `bypassPermissions` for green — so the estate could never reach ALL CLEAR while
+  holding the configuration this very ledger recommends.
+- **Status:** SHIPPED — probe exits 0; every permission class in `dialogs-silenced.sh` green
+  (`defaultMode` 'auto' + hook wired + five ask rules + `autoMode.allow`). The only residue is
+  the **`split` + `modify_` promotion** of `.claude/settings.json`, which retires `--allow-drop`
+  by making `model`/`theme` app-owned instead of discarded — tracked on IF-CONFIG-OWNERSHIP,
+  whose successor list already names this exact pattern.
 - **Owner:** Anthony (arm the effector) + Claude (hook, effector, matrix). The arming is
   genuinely his: the auto-mode classifier blocks the **act** of an agent widening its own gate,
   not merely the path — verified 2026-07-31 to cover the chezmoi source and even a read-only
