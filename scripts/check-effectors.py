@@ -36,9 +36,15 @@ Three finding classes, in ascending order of how much they cost to learn the har
     where a charter-reading model is already in the loop, and misses all the sharp ones.
 
     This class enumerates those sites mechanically and ratchets them. It does not pretend the
-    17 known sites can be fixed at once; it pins them in a baseline so the surface is VISIBLE
-    and CANNOT GROW. A newly-added ungated sender is a red check, not an archaeology session
-    six months later.
+    known sites can be fixed at once; it pins them in a baseline so the surface is VISIBLE and
+    CANNOT GROW. A newly-added ungated sender is a red check, not an archaeology session six
+    months later. How many there are is stated in the baseline file and NOWHERE ELSE — this
+    sentence used to restate the count and had already gone stale by the time it shipped: it
+    said 17, the number a hand grep of `subprocess.run(["gh"` found, while the AST walk that
+    actually runs here is invariant to how the argv reaches the process (call argument, prior
+    name binding, local `sh()` wrapper) and so pins materially more. A count in prose is a
+    second copy of a fact the registry owns, which is the same defect class this panel exists
+    to gate.
 
     Deliberately NOT flagged: `osascript -e 'display notification ...'`
     (scripts/conducting-report.py, scripts/notify-events.py, scripts/_notify.py). That is a
