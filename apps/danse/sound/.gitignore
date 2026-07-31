@@ -8,3 +8,4 @@ sources.json
 
 # Extracted grains, likewise derived.
 bank/
+out/

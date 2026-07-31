@@ -51,11 +51,32 @@ NEAR_DAYS = 120
 # floor with `Creature from the Black Lagoon` at the left end.
 #
 # A date near the shoot only makes a recording a CANDIDATE. Of eleven within a
-# fortnight, four are that room and seven are a television, a baseball field and
-# a dropped frame — and the nearest by filename (IMG_1568, two numbers before the
-# corpus's first still) is someone filming a TV. Adjacency is not provenance;
-# recognising the wall is.
-CONFIRMED_ROOM = ("IMG_0226", "IMG_0227", "IMG_1802", "IMG_1920")
+# fortnight, TWO are that room and the rest are a television, a baseball field, a
+# backyard fence and a face — and the nearest by filename (IMG_1568, two numbers
+# before the corpus's first still) is someone filming a TV. Adjacency is not
+# provenance; recognising the wall is.
+#
+# FULL FILENAMES, not stems. Photos appends " (1)" when two DIFFERENT assets share
+# an original filename, so matching on a stripped stem lets an unrelated asset
+# inherit a confirmation: `IMG_1920 (1).MOV` is a backyard, and it was licensed
+# into the bed by `IMG_1920.mov`'s name. Exact match, or nothing.
+CONFIRMED_ROOM = ("IMG_0226.MOV", "IMG_0227.MOV")
+
+# Looked at, and NOT confirmed — recorded here so the judgement survives instead
+# of being re-litigated every run. These stay out of the bed.
+#
+#   IMG_1920.mov      the same corkboard, the same light-wood furniture, the same
+#                     berber carpet, a guitar-shaped outline behind the backpack —
+#                     but the frame never shows the poster wall. Resemblance is
+#                     not recognition. Promote it if he says it is that apartment.
+#   IMG_1920 (1).MOV  a backyard fence. Not the room, not even indoors.
+#   IMG_1802.MOV      a face, filling the frame for all 12 seconds. Nothing to
+#                     recognise.
+UNCONFIRMED_ROOM = {
+    "IMG_1920.mov": "resembles it — same corkboard and carpet — but no poster wall in frame",
+    "IMG_1920 (1).MOV": "a backyard fence, not the apartment",
+    "IMG_1802.MOV": "a face close-up for its whole length; no room visible",
+}
 
 AUDIO = {".wav", ".aif", ".aiff", ".m4a", ".mp3", ".caf", ".flac", ".ogg"}
 VIDEO = {".mov", ".mp4", ".m4v"}
@@ -285,7 +306,8 @@ def main() -> int:
     ap.add_argument(
         "--room",
         default=",".join(CONFIRMED_ROOM),
-        help="comma-separated stems confirmed BY EYE to show the apartment. A date near the shoot only "
+        help="comma-separated FILENAMES (with extension) confirmed BY EYE to show the apartment. A date near "
+        "the shoot only "
         "makes a recording a candidate; the room is confirmed by looking at a frame and seeing the wall.",
     )
     args = ap.parse_args()
@@ -354,9 +376,11 @@ def main() -> int:
         tier, why = provenance(path, when)
         # `room` is the only field that licenses a recording into the bed. It is
         # set by having LOOKED at the footage, not by arithmetic on a filename.
-        in_room = path.stem.split(" (")[0] in confirmed
+        in_room = path.name in confirmed
         if in_room:
             tier, why = "room", "the apartment itself — confirmed by frame"
+        elif path.name in UNCONFIRMED_ROOM:
+            tier, why = "unconfirmed-room", UNCONFIRMED_ROOM[path.name]
         seen[key] = {
             "id": key,
             "path": str(path),
@@ -389,7 +413,7 @@ def main() -> int:
     print(
         f"{len(rows)} distinct recordings · {total / 60:.1f} minutes · {args.out.relative_to(Path.cwd()) if args.out.is_relative_to(Path.cwd()) else args.out}"
     )
-    for tier in ("room", "shoot-day", "near-shoot", "other", "unknown"):
+    for tier in ("room", "unconfirmed-room", "shoot-day", "near-shoot", "other", "unknown"):
         group = by_tier.get(tier, [])
         if not group:
             continue

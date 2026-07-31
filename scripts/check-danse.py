@@ -280,6 +280,109 @@ def node() -> str:
     return "node"
 
 
+# ── 6. the sound is the same film ──────────────────────────────────────────────
+
+SOUND = APP / "sound"
+
+# Chosen to cross the places the two languages could disagree: zero, a short
+# word list, the film's real seed, a value above 2^31 (where JavaScript's `|0`
+# makes a number negative and Python's does not), and the 32-bit ceiling.
+HASH_CASES = [[0], [1, 2], [20170620, 7, 401], [3735928559, 3, 1, 901], [4294967295, 1], [123, 456, 789, 101112]]
+
+HASH_PROBE = """
+import { hash } from "%(rng)s";
+console.log(JSON.stringify(%(cases)s.map((c) => hash(...c))));
+"""
+
+
+def check_sound() -> None:
+    """The sound selects from the same seed as the picture, out of that room only."""
+    if not (SOUND / "score.py").is_file():
+        NOTE.append("no score yet — the film is silent")
+        return
+
+    # The one that would silently desync sound from picture: the Python port of
+    # engine/rng.js must agree with it exactly, or `hash(seed, cell, 401)` picks
+    # a different photograph than it picks a grain and nothing lands together.
+    sys.path.insert(0, str(SOUND))
+    try:
+        from rng import hash32
+    except ImportError as exc:  # pragma: no cover - a missing file is a real failure
+        check("the sound hashes like the picture", False, f"cannot import sound/rng.py — {exc}")
+        return
+    with tempfile.NamedTemporaryFile("w", suffix=".mjs", delete=False) as fh:
+        fh.write(HASH_PROBE % {"rng": ENGINE / "rng.js", "cases": json.dumps(HASH_CASES)})
+        probe = Path(fh.name)
+    try:
+        out = subprocess.run([node(), probe], capture_output=True, text=True, check=False)
+        js = json.loads(out.stdout) if out.returncode == 0 else None
+    finally:
+        probe.unlink(missing_ok=True)
+    if js is None:
+        check("the sound hashes like the picture", False, "the JavaScript hash would not evaluate")
+    else:
+        mine = [hash32(*c) for c in HASH_CASES]
+        bad = [c for c, a, b in zip(HASH_CASES, js, mine) if a != b]
+        check(
+            "the sound hashes like the picture",
+            not bad,
+            f"{len(bad)} of {len(HASH_CASES)} disagree — {bad[0]}"
+            if bad
+            else f"{len(HASH_CASES)} cases, rng.js == rng.py",
+        )
+
+    check_bank()
+
+
+def check_bank() -> None:
+    """The grain bank, when one has been cut on this machine.
+
+    Gitignored, like the `film` tier and for the same reason — it is derived from
+    2.8 GB of originals that never enter git. Absent is not a failure; wrong is.
+    """
+    index = SOUND / "bank" / "bank.json"
+    if not index.is_file():
+        NOTE.append("no grain bank on this machine — build it with apps/danse/sound/1_bank.py")
+        return
+    bank = load(index)
+    grains = bank["grains"]
+
+    # Every grain must trace to a recording someone LOOKED at and recognised.
+    # This is the whole provenance claim of the sound: three of the first five
+    # `room: true` flags were wrong, inherited from a duplicate filename.
+    licensed = {s["name"] for s in bank.get("sources", [])}
+    strays = sorted({g["source"] for g in grains} - licensed)
+    check(
+        "every grain comes from a confirmed room recording",
+        not strays,
+        f"{', '.join(strays)} is in the bank but not in its source list"
+        if strays
+        else f"{len(grains)} grains from {len(licensed)} recording(s)",
+    )
+
+    # An index axis with no spread indexes nothing, and it fails SILENTLY: every
+    # weighted draw along it returns an effectively arbitrary grain and nothing
+    # crashes. `flatness` shipped once with 4 distinct values across 265 grains.
+    axes = ("centroid", "brightness", "flatness", "decay", "attack", "zcr")
+    flat = []
+    for axis in axes:
+        distinct = len({g[axis] for g in grains if axis in g})
+        if distinct < max(8, len(grains) // 10):
+            flat.append(f"{axis} has {distinct}")
+    check(
+        "every descriptor axis actually discriminates",
+        not flat,
+        "; ".join(flat) if flat else f"{len(axes)} axes over {len(grains)} grains",
+    )
+
+    missing = [g["id"] for g in grains if not (SOUND / "bank" / f"{g['id']}.wav").is_file()][:3]
+    check(
+        "every grain the index names exists",
+        not missing,
+        f"{', '.join(missing)} …" if missing else f"{len(grains)} files",
+    )
+
+
 # The three things that would make f(seed, t) a lie. `performance.now` and
 # `Date.now` make the render depend on when it ran; `requestAnimationFrame` inside
 # engine/ would put a loop where a function belongs.
@@ -372,6 +475,8 @@ def main() -> int:
         NOTE.append(f"no film program at {PROGRAM.relative_to(ROOT)} — the piece runs free, nothing is cut")
     print("\n the corpus is deliverable")
     check_delivery(score, manifest)
+    print("\n the sound is the same film")
+    check_sound()
 
     for n in NOTE:
         print(f"\n  note: {n}")

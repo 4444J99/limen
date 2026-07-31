@@ -57,6 +57,19 @@ export async function load(base = "corpus/") {
   const score = manifest.score
     ? await fetch(`${base}${manifest.score}`).then((r) => (r.ok ? r.json() : null))
     : null;
+  return fromData(base, manifest, score);
+}
+
+/** The same corpus, from data already in hand.
+ *
+ * `load()` is the browser's path and needs `fetch`. Everything the GRAMMAR asks
+ * of a corpus is pure index — `usable`, `candidates`, `choose`, `byId`, `score` —
+ * so node can build one from disk and run the real engine without a browser or a
+ * GL context. That is what lets the sound derive its control track from the same
+ * `step()` the film renders: one implementation, so the score cannot drift out of
+ * sync with the picture by being a second guess at what the picture is doing.
+ */
+export function fromData(base, manifest, score = null) {
   return new Corpus(base, manifest, score);
 }
 
