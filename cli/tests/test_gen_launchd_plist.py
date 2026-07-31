@@ -55,6 +55,9 @@ def test_generator_routes_heartbeat_through_stable_host(tmp_path: Path) -> None:
         "/bin/bash",
         str(ROOT / "scripts/heartbeat-loop.sh"),
     ]
+    assert plist["EnvironmentVariables"]["LIMEN_AGENT_HOST_BIN"] == (
+        str(tmp_path / "home/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost")
+    )
 
 
 def test_generator_expands_configured_host_home_path(tmp_path: Path) -> None:
@@ -68,6 +71,9 @@ def test_generator_expands_configured_host_home_path(tmp_path: Path) -> None:
     )
 
     assert plist["ProgramArguments"][0] == str(
+        tmp_path / "home/Applications/ConfiguredHost.app/Contents/MacOS/DomusAgentHost"
+    )
+    assert plist["EnvironmentVariables"]["LIMEN_AGENT_HOST_BIN"] == str(
         tmp_path / "home/Applications/ConfiguredHost.app/Contents/MacOS/DomusAgentHost"
     )
 

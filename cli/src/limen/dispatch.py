@@ -2550,6 +2550,67 @@ def _stable_agent_host_lifetime_fds(
     return (lifetime_fd,)
 
 
+def _validate_stable_agent_host_contract(host_path: Path) -> None:
+    try:
+        completed = subprocess.run(
+            [str(host_path), "status", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        payload = json.loads(completed.stdout or "")
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}") from exc
+    if (
+        completed.returncode != 0
+        or not isinstance(payload, dict)
+        or payload.get("schema") != "domus.agent_host_status.v1"
+        or payload.get("ok") is not True
+        or payload.get("bundle_id") != "org.organvm.domus.agent-host"
+        or payload.get("stable_path") is not True
+        or payload.get("signature_valid") is not True
+        or not str(payload.get("designated_requirement", "")).strip()
+        or not re.fullmatch(r"[0-9a-fA-F]{40,128}", str(payload.get("cdhash", "")))
+    ):
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}")
+
+
+def _stable_agent_host_path(values: Mapping[str, str]) -> Path:
+    configured = values.get("LIMEN_AGENT_HOST_BIN") or values.get("DOMUS_AGENT_HOST_BIN")
+    host = configured or shutil.which("domus-agent-host", path=values.get("PATH"))
+    if not host:
+        host = str(
+            Path(values.get("HOME", str(Path.home()))) / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
+        )
+    if host == "~":
+        return Path(values.get("HOME", str(Path.home())))
+    if host.startswith("~/"):
+        return Path(values.get("HOME", str(Path.home()))) / host[2:]
+    return Path(host).expanduser()
+
+
+def _validate_stable_agent_host_lifetime(
+    host_path: Path,
+    env: Mapping[str, str],
+    lifetime_fds: tuple[int, ...],
+) -> None:
+    try:
+        completed = subprocess.run(
+            [str(host_path), "verify-lifetime"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+            env=dict(env),
+            pass_fds=lifetime_fds,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid") from exc
+    if completed.returncode != 0:
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid")
+
+
 def _stable_agent_host_command(
     command: list[str],
     env: Mapping[str, str] | None = None,
@@ -2567,23 +2628,17 @@ def _stable_agent_host_command(
     observed_platform = sys.platform if platform_name is None else platform_name
     if observed_platform != "darwin":
         return list(command)
+    host_path = _stable_agent_host_path(values)
     if values.get("DOMUS_AGENT_HOST_ACTIVE") == "1":
-        _stable_agent_host_lifetime_fds(values, required=True)
+        lifetime_fds = _stable_agent_host_lifetime_fds(values, required=True)
+        if not host_path.is_file() or not os.access(host_path, os.X_OK):
+            raise StableAgentHostError(f"stable Domus agent host is unavailable: {host_path}")
+        _validate_stable_agent_host_contract(host_path)
+        _validate_stable_agent_host_lifetime(host_path, values, lifetime_fds)
         return list(command)
-    configured = values.get("LIMEN_AGENT_HOST_BIN") or values.get("DOMUS_AGENT_HOST_BIN")
-    host = configured or shutil.which("domus-agent-host", path=values.get("PATH"))
-    if not host:
-        host = str(
-            Path(values.get("HOME", str(Path.home()))) / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
-        )
-    if host == "~":
-        host_path = Path(values.get("HOME", str(Path.home())))
-    elif host.startswith("~/"):
-        host_path = Path(values.get("HOME", str(Path.home()))) / host[2:]
-    else:
-        host_path = Path(host).expanduser()
     if not host_path.is_file() or not os.access(host_path, os.X_OK):
         raise StableAgentHostError(f"stable Domus agent host is unavailable: {host_path}")
+    _validate_stable_agent_host_contract(host_path)
     return [str(host_path), "run", "--", *command]
 
 

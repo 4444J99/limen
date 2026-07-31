@@ -25,9 +25,31 @@ fi
 if [ "$(uname -s)" != "Darwin" ]; then
   exec "$python" "$implementation" "$@"
 fi
-host="${LIMEN_AGENT_HOST_BIN:-${DOMUS_AGENT_HOST_BIN:-$HOME/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}}"
+home="${HOME:?HOME is unset}"
+host="${LIMEN_AGENT_HOST_BIN:-${DOMUS_AGENT_HOST_BIN:-$home/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}}"
+case "$host" in
+  "~") host="$home" ;;
+  "~/"*) host="$home/${host#\~/}" ;;
+esac
 if [ ! -x "$host" ]; then
   printf 'tcc-identity-audit: stable Domus agent host is unavailable: %s\n' "$host" >&2
+  exit 69
+fi
+host_status="$("$host" status --json 2>/dev/null)" || {
+  printf 'tcc-identity-audit: stable Domus agent host contract is invalid: %s\n' "$host" >&2
+  exit 69
+}
+if ! printf '%s\n' "$host_status" |
+  /usr/bin/grep -Eq '"schema"[[:space:]]*:[[:space:]]*"domus\.agent_host_status\.v1"' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"bundle_id"[[:space:]]*:[[:space:]]*"org\.organvm\.domus\.agent-host"' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"stable_path"[[:space:]]*:[[:space:]]*true' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"signature_valid"[[:space:]]*:[[:space:]]*true' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"ok"[[:space:]]*:[[:space:]]*true'; then
+  printf 'tcc-identity-audit: stable Domus agent host contract is invalid: %s\n' "$host" >&2
   exit 69
 fi
 if "$host" verify-lifetime >/dev/null 2>&1; then

@@ -10,6 +10,7 @@ cases). Snapshotting and restoring the environment per test makes the suite
 order-independent without rewriting every direct writer.
 """
 
+import json
 import os
 
 import pytest
@@ -27,9 +28,38 @@ def _restore_os_environ(tmp_path):
     # the rest of the suite must not depend on a machine-global app installation.
     read_fd, write_fd = os.pipe()
     lifetime = os.fstat(write_fd)
+    identity = f"{'0' * 16}:{lifetime.st_dev}:{lifetime.st_ino}"
+    status = json.dumps(
+        {
+            "schema": "domus.agent_host_status.v1",
+            "ok": True,
+            "bundle_id": "org.organvm.domus.agent-host",
+            "stable_path": True,
+            "signature_valid": True,
+            "designated_requirement": 'cdhash H"' + "a" * 40 + '"',
+            "cdhash": "a" * 40,
+        }
+    )
+    host = tmp_path / "DomusAgentHost"
+    host.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = status ] && [ "$2" = --json ]; then\n'
+        f"  printf '%s\\n' '{status}'\n"
+        "  exit 0\n"
+        "fi\n"
+        'if [ "$1" = verify-lifetime ]; then\n'
+        f'  [ "${{DOMUS_AGENT_HOST_LIFETIME_ID:-}}" = "{identity}" ] &&\n'
+        '    [ -p "/dev/fd/${DOMUS_AGENT_HOST_LIFETIME_FD:?}" ]\n'
+        "  exit\n"
+        "fi\n"
+        "exit 64\n"
+    )
+    host.chmod(0o755)
     os.environ["DOMUS_AGENT_HOST_ACTIVE"] = "1"
     os.environ["DOMUS_AGENT_HOST_LIFETIME_FD"] = str(write_fd)
-    os.environ["DOMUS_AGENT_HOST_LIFETIME_ID"] = f"{'0' * 16}:{lifetime.st_dev}:{lifetime.st_ino}"
+    os.environ["DOMUS_AGENT_HOST_LIFETIME_ID"] = identity
+    os.environ.pop("LIMEN_AGENT_HOST_BIN", None)
+    os.environ["DOMUS_AGENT_HOST_BIN"] = str(host)
     try:
         yield
     finally:

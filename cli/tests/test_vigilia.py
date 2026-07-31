@@ -392,6 +392,7 @@ def test_integrity_check_flags_active_update_disabling_control(monkeypatch):
 
 def test_integrity_check_flags_missing_required_host(monkeypatch):
     host = str(Path("~/Applications/DomusAgentHost.app").expanduser())
+    monkeypatch.delenv("LIMEN_AGENT_HOST_BIN", raising=False)
     monkeypatch.setattr(
         params,
         "_load_panel",
@@ -424,11 +425,54 @@ def test_integrity_check_flags_missing_required_host(monkeypatch):
     ):
         monkeypatch.delenv(key, raising=False)
 
-    result = integrity.check()
+    result = integrity.check(platform_name="Darwin")
 
     assert result["drift"] is True
     assert result["status"] == "drift"
     assert next(item for item in result["targets"] if item["target"] == host)["required"] is True
+
+
+def test_integrity_check_does_not_require_macos_host_on_linux(monkeypatch):
+    host = str(Path("~/Applications/DomusAgentHost.app").expanduser())
+    monkeypatch.delenv("LIMEN_AGENT_HOST_BIN", raising=False)
+    monkeypatch.setattr(
+        params,
+        "_load_panel",
+        lambda: {
+            "INTEGRITY_VERIFY_TARGETS": {
+                "default": [
+                    "~/Applications/DomusAgentHost.app",
+                    "/Applications/Claude.app",
+                ]
+            },
+            "INTEGRITY_AUTOUPDATER": {
+                "default": "enabled",
+                "env": "LIMEN_INTEGRITY_AUTOUPDATER",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        integrity,
+        "verify_target",
+        lambda target: {
+            "target": str(Path(target).expanduser()),
+            "exists": str(Path(target).expanduser()) != host,
+            "valid": None if str(Path(target).expanduser()) == host else True,
+        },
+    )
+    for key in (
+        "DISABLE_AUTOUPDATER",
+        "DISABLE_UPDATES",
+        "HOMEBREW_NO_AUTO_UPDATE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    result = integrity.check(platform_name="Linux")
+
+    assert result["platform"] == "Linux"
+    assert result["drift"] is False
+    assert result["status"] == "ok"
+    assert next(item for item in result["targets"] if item["target"] == host)["required"] is False
 
 
 # ---------------------------------------------------------------- executive

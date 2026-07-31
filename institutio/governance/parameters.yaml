@@ -486,7 +486,7 @@ parameters:
     env: LIMEN_AGENT_HOST_BIN
     self_update: none
     owner: integrity
-    note: "Explicit stable-host executable override for local Limen dispatch. The Darwin lane fails closed when this fixed native responsibility identity is absent or not executable."
+    note: "Explicit stable-host executable override for local Limen dispatch. The Darwin lane expands user-relative paths and fails closed unless status --json proves the fixed bundle, stable path, signature, and signing requirement."
   LIMEN_TCC_DB:
     default: "~/Library/Application Support/com.apple.TCC/TCC.db"
     env: LIMEN_TCC_DB

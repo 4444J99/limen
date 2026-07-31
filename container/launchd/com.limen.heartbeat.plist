@@ -25,6 +25,7 @@
         <key>LIMEN_WORKTREES</key><string>/Volumes/Scratch/limen-worktrees</string>
         <key>LIMEN_WORKTREE_ROOT</key><string>/Volumes/Scratch/limen-worktrees</string>
         <key>LIMEN_PYTHON</key><string>/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin/python3.14</string>
+        <key>LIMEN_AGENT_HOST_BIN</key><string>/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost</string>
         <key>LIMEN_CAMPAIGN_WAKE_TIMEOUT</key><string>300</string>
         <key>LIMEN_VIGILIA</key><string>1</string>
         <key>PATH</key><string>/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>

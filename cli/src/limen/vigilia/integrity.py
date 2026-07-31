@@ -9,6 +9,7 @@ signatures and fails when an update-disabling control reappears. Read-only.
 from __future__ import annotations
 
 import os
+import platform
 import subprocess
 from pathlib import Path
 
@@ -77,7 +78,9 @@ def assess(
     return bool(sig_drift or required_drift or update_drift)
 
 
-def check() -> dict:
+def check(*, platform_name: str | None = None) -> dict:
+    observed_platform = platform.system() if platform_name is None else platform_name
+    require_agent_host = observed_platform == "Darwin"
     targets = params.get(
         "INTEGRITY_VERIFY_TARGETS",
         ["/Applications/Claude.app", "~/.local/bin/claude"],
@@ -96,16 +99,17 @@ def check() -> dict:
         required_host = host_executable
     required_path = str(required_host)
     target_values = _as_list(targets)
-    if required_path not in {str(Path(target).expanduser()) for target in target_values}:
+    if require_agent_host and required_path not in {str(Path(target).expanduser()) for target in target_values}:
         target_values.append(required_path)
     results = [verify_target(target) for target in target_values]
     for result in results:
-        result["required"] = result.get("target") == required_path
+        result["required"] = require_agent_host and result.get("target") == required_path
     intended = str(params.get("INTEGRITY_AUTOUPDATER", "enabled")).lower() == "enabled"
     disabled = disabled_update_controls()
     drift = assess(results, intended, disabled)
     return {
         "organ": "integrity",
+        "platform": observed_platform,
         "targets": results,
         "autoupdater_intended": "enabled" if intended else "disabled",
         "autoupdater_actual": "disabled" if disabled else "enabled",

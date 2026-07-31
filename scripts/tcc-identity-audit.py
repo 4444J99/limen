@@ -558,6 +558,8 @@ def audit(
     counts["unrelated"] = unrelated
     if counts["versioned_leak"]:
         failures.append("versioned_tcc_client_after_host_deployment")
+    if strict and not counts["stable_host"] and database_error is None:
+        failures.append("stable_host_tcc_identity_missing")
 
     try:
         malformed = _registered_claude_helpers(values, runner, strict=strict)
