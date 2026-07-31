@@ -39,11 +39,24 @@ the physical room. The engine is the work; everything else is a render target.
    automatically. The continuity rule your hand-cuts obey becomes a property of how pixels are
    fetched, not a constraint the generator has to remember.
 
-2. **`projK` is the film's spine.** One uniform mixes plane-local UVs against projector UVs.
-   `projK = 1` → the stage collapses into the flat 2017 composite. `projK = 0` → full 3D room.
-   **Animating it 1 → 0 → 1 *is* the reveal**: the still was always a room. The 2017 pieces are
-   *attractors* — measured geometry in the manifest, so the engine converges onto them and
-   dissolves back out.
+   *Binds:* `check-danse.py` asserts the arithmetic half — the score partitions the frame with no
+   gaps, no overlaps, nothing outside the frustum, since a hole in the partition is a hole in the
+   room. The GPU half is [`probe.html`](../../apps/danse/probe.html), whose self-test sweeps `projK`
+   across all 256 tiles at the home position and requires **max Δ 0/255**.
+
+2. **The flattening is the CAMERA, not `projK`.** *Corrected 2026-07-30 — this decision originally
+   read "`projK` is the film's spine", and the probe disproved it.* `projK` is real: `0` makes a
+   plane a **window** onto whatever the room casts where it now is, `1` makes it a **carried
+   picture** holding its assigned crop. But it is not the reveal. With the arrangement fully
+   exploded, standing at the projector *still* returns the flat composite — projective texturing
+   looks painted-on from the light's own viewpoint. So the reveal is a **move**, not a uniform
+   sweep, and the arrangement can be built up invisibly while the camera is on-axis.
+
+   *Binds:* `check-danse.py` asserts `divergence(seed, 0) === 0` exactly across seeds, and that the
+   same holds again one `PERIOD` later — the 2017 composite is a recurring event in the animation,
+   not its first frame. [`verify.html`](../../apps/danse/verify.html) measures the consequence:
+   the flat state scores **31.60 dB** against `T-2017-full.png`, matching a GPU-free numpy
+   reconstruction from the same plates to 0.01 dB.
 
    > **The full-resolution 2017 composite (supplied 2026-07-30) is the spec for `projK = 1`.**
    > It is not vertical slats: it is a **tiled grid — ~7 columns × ~5 bands — of body fragments at
@@ -63,6 +76,12 @@ the physical room. The engine is the work; everything else is a render target.
    inside the engine. That single property buys: deterministic film renders, O(1) seek to any
    moment, addressable permalinks, trivial multi-projector sync, and the honest claim that every
    state has a number.
+
+   *Binds:* `check-danse.py` evaluates the clock **out of order** — late, then early, then late
+   again — and requires the two late evaluations to be bit-identical, because a stateful clock
+   answers differently the second time and a t-ascending test would hide exactly that. It also
+   fails the build if `requestAnimationFrame`, `Date.now`, `performance.now`, or `Math.random`
+   appears anywhere under `apps/danse/engine/`.
 
 ---
 
