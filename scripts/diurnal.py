@@ -433,14 +433,21 @@ RENDERERS = {
 # ── state ──────────────────────────────────────────────────────────────────────────
 
 
-def state_dir(root: Path) -> Path:
+def state_dir(root: Path, *, create: bool = True) -> Path:
+    """The organ's state directory. `create=False` for read paths, so --dry-run writes NOTHING.
+
+    The unconditional mkdir meant a --dry-run left an empty logs/diurnal/ behind — harmless, but
+    "write nothing" was not literally true, and a dry run whose only side effect is small is still
+    a dry run that lies.
+    """
     d = root / "logs" / "diurnal"
-    d.mkdir(parents=True, exist_ok=True)
+    if create:
+        d.mkdir(parents=True, exist_ok=True)
     return d
 
 
 def load_state(root: Path) -> dict:
-    return _load_json(state_dir(root) / "state.json") or {"last_run": {}}
+    return _load_json(state_dir(root, create=False) / "state.json") or {"last_run": {}}
 
 
 def save_state(root: Path, state: dict) -> None:
@@ -448,7 +455,7 @@ def save_state(root: Path, state: dict) -> None:
 
 
 def load_scores(root: Path) -> dict:
-    return _load_json(state_dir(root) / "section-scores.json") or {}
+    return _load_json(state_dir(root, create=False) / "section-scores.json") or {}
 
 
 def save_scores(root: Path, scores: dict) -> None:
@@ -670,13 +677,33 @@ def write_block(page: Path, phase: str, block: str) -> None:
     page.write_text(new, encoding="utf-8")
 
 
+def _clip(text: str, limit: int = 90) -> str:
+    """Shorten for a push notification without guillotining the actionable part.
+
+    The raw `[:90]` this replaces cut mid-identifier, and what it cut was the bracketed task id —
+    observed live: "…for the whole PR estate [GITVS-UNCAPPED-". The id is the one token a reader
+    can act on, so it is preserved even when the prose around it has to go, and the cut lands on a
+    word boundary with an ellipsis so a truncated line reads as truncated.
+    """
+    if len(text) <= limit:
+        return text
+    tag = re.search(r"\[[A-Z][A-Z0-9-]{2,}\]\s*$", text.strip())
+    if tag:
+        ident = tag.group(0).strip()
+        room = limit - len(ident) - 2
+        if room > 12:
+            head = text[:room].rsplit(" ", 1)[0].rstrip(" ·-—")
+            return f"{head}… {ident}"
+    return text[:limit].rsplit(" ", 1)[0].rstrip(" ·-—") + "…"
+
+
 def headline(phase: str, rendered: list[Rendered], ctx: dict) -> str:
     bits = []
     by = {r.key: r for r in rendered}
     if phase == "morning":
         nxt = by.get("next")
         if nxt and nxt.lines:
-            bits.append(nxt.lines[0][:90])
+            bits.append(_clip(nxt.lines[0]))
         ov = by.get("overnight")
         if ov and ov.metric:
             bits.append(f"{ov.metric} overnight alert(s)")
@@ -724,7 +751,7 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
             rc, out = _run(spec["refresh"], root, timeout=_int("LIMEN_DIURNAL_TIMEOUT", 240))
             ctx["refresh_output"][key] = out
 
-    prev_morning = _load_json(state_dir(root) / f"{today}-morning.json") or {}
+    prev_morning = _load_json(state_dir(root, create=False) / f"{today}-morning.json") or {}
 
     if phase in ("midday", "evening"):
         claims = prev_morning.get("claims") or []
@@ -1034,10 +1061,25 @@ def main() -> int:
         return 0
 
     if args.uncut:
+        # A name the registry does not know is a TYPO, and must not be answerable with the same
+        # sentence as a real section that simply isn't cut. Someone restoring a genuinely cut
+        # section who fumbles the name would otherwise read "is not cut" and conclude nothing was
+        # ever cut — the reassuring answer being the wrong one. The registry is already loaded two
+        # branches down for --list; membership costs one lookup.
+        sections = load_registry(root)
+        if args.uncut not in sections:
+            near = [k for k in sections if k.startswith(args.uncut[:3])] if len(args.uncut) >= 3 else []
+            hint = f" Did you mean: {', '.join(sorted(near))}?" if near else ""
+            print(
+                f"diurnal: no section named {args.uncut!r} in the registry ({len(sections)} declared)."
+                f"{hint} Run --list to see them.",
+                file=sys.stderr,
+            )
+            return 2
         scores = load_scores(root)
         rec = scores.get(args.uncut)
         if not rec or not rec.get("cut"):
-            print(f"diurnal: {args.uncut} is not cut")
+            print(f"diurnal: {args.uncut} is declared but not cut — nothing to restore")
             return 0
         rec["cut"], rec["noop_streak"] = False, 0
         save_scores(root, scores)
