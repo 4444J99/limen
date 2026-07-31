@@ -207,9 +207,28 @@ export class Renderer {
     drawn.sort((a, b) => a.z - b.z);
 
     let missing = 0;
-    for (const { cell, place } of drawn) {
-      if (!this.drawCell(cell, place, state, { tier, treat, matteK, edge: edgeWidth })) missing++;
+    const now = new Map();
+    for (const { cell, place, z } of drawn) {
+      if (!this.drawCell(cell, place, state, { tier, treat, matteK, edge: edgeWidth })) {
+        missing++;
+      } else {
+        // Record what is on screen for recast detection
+        now.set(cell.id, { frame: cell.layers?.[0]?.frame ?? null, z, x: (cell.rect[0] + cell.rect[2]) - 1, area: (cell.rect[2] - cell.rect[0]) * (cell.rect[3] - cell.rect[1]) });
+      }
     }
+    
+    // Emit spatial sound triggers (recasts) for the live web environment
+    if (this._previous && state.cut === this._previousCut) {
+      for (const [id, current] of now) {
+        const prev = this._previous.get(id);
+        if (prev && prev.frame !== current.frame) {
+          globalThis.dispatchEvent?.(new CustomEvent("danse:recast", { detail: current }));
+        }
+      }
+    }
+    this._previous = now;
+    this._previousCut = state.cut;
+
     this.stats = { planes: drawn.length, missing };
     return this.stats;
   }

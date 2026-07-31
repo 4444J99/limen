@@ -13,7 +13,7 @@ always selecting different parts of the ballerina, always selecting different ph
 Writing to Chris — a peer you share work with, not a client or a director — you named the missing
 dimension yourself: **screens at different angles and depths with different transparencies,
 projected upon**, the way that museum room worked. And you named the path in the same message:
-*"ideally in a real space, but can be built digitally first to prove the concept."* That message is
+*"ideally in a real space, but can be built digitally first to prove the concept."* In follow-up dialogue with Chris, you declared the final evolution: (a) user interaction, and (b) sound from the space that each generation of panel/slice will trigger between the XY axes of the background. That message is
 the brief; this plan is its execution.
 
 **The intended outcome is one engine with five faces:** a film for ScreenDance Miami, a living web
