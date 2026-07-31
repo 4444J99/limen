@@ -77,6 +77,28 @@ def _target_digest(value: str) -> str:
     return hashlib.sha256(value.strip().lower().encode("utf-8")).hexdigest()[:16]
 
 
+def _targets(command: str, target_spec: dict) -> list[str]:
+    """EVERY target in the command, deduped, in order of appearance.
+
+    Addresses are lower-cased so the receipt file (_target_digest already lower-cases) and the
+    predicate string agree on one identity. Before this, `--to Someone@x.com` found the receipt
+    minted for `someone@x.com` and then rejected it on predicate_digest mismatch — safe, but it
+    forced a pointless re-run on a difference no mail system observes.
+    """
+    pattern = target_spec.get("pattern") or ""
+    if not pattern:
+        return []
+    normalize = target_spec.get("kind") == "email"
+    found: list[str] = []
+    for match in re.finditer(pattern, command):
+        value = (match.group(1) if match.groups() else match.group(0)).strip()
+        if normalize:
+            value = value.lower()
+        if value and value not in found:
+            found.append(value)
+    return found
+
+
 def main() -> int:
     # Consume stdin FIRST, unconditionally — an early exit leaving the payload writer on a closed
     # pipe becomes a BrokenPipeError upstream.
@@ -118,8 +140,8 @@ def main() -> int:
             continue
 
         target_spec = spec.get("target") or {}
-        match = re.search(target_spec.get("pattern") or "", command)
-        if match is None:
+        targets = _targets(command, target_spec)
+        if not targets:
             _deny(
                 f"outbound-preflight [{action_id}]: this command performs an outward-facing action "
                 f"but its target could not be read from the command text, so no proof of "
@@ -128,13 +150,8 @@ def main() -> int:
                 f"hand: {spec.get('predicate', '')}"
             )
             return 0
-        target = (match.group(1) if match.groups() else match.group(0)).strip()
 
-        predicate = str(spec.get("predicate") or "").replace("{target}", target)
-        rung_id = f"{action_id}.{_target_digest(target)}".lower()
-        receipt_path = receipts_dir / f"{rung_id}.json"
         max_age = int(spec.get("max_age_seconds") or 900)
-        produce = f"python3 scripts/preflight-receipt.py --action {action_id} --target {target}"
 
         sys.path.insert(0, str(ROOT / "cli" / "src"))
         try:
@@ -149,26 +166,36 @@ def main() -> int:
             )
             return 0
 
-        try:
-            load_owner_receipt(
-                receipt_path,
-                rung_id=rung_id,
-                predicate=predicate,
-                max_age_seconds=max_age,
-                require_pass=True,
-            )
-        except OmegaOwnerReceiptError as exc:
-            _deny(
-                f"outbound-preflight [{action_id}] BLOCKED for target {target}.\n"
-                f"{str(spec.get('reason') or '').strip()}\n\n"
-                f"Reason: {exc}\n\n"
-                f"Run this first — it queries the real state and mints the receipt:\n"
-                f"    {produce}\n\n"
-                f"If it reports a prior send you had not read, READ IT before deciding. The "
-                f"receipt is bound to this exact target and predicate and expires in "
-                f"{max_age}s, so it cannot be reused, forged, or self-certified."
-            )
-            return 0
+        # EVERY target must be proven, not just the first one the regex found. A single-match gate
+        # is walked around by `--to <proven> --cc <unproven>`: the command still reaches the second
+        # human, and the first address alone opened the door. Verified as a live bypass on
+        # 2026-07-31 before this loop existed.
+        for target in targets:
+            predicate = str(spec.get("predicate") or "").replace("{target}", target)
+            rung_id = f"{action_id}.{_target_digest(target)}".lower()
+            try:
+                load_owner_receipt(
+                    receipts_dir / f"{rung_id}.json",
+                    rung_id=rung_id,
+                    predicate=predicate,
+                    max_age_seconds=max_age,
+                    require_pass=True,
+                )
+            except OmegaOwnerReceiptError as exc:
+                others = [other for other in targets if other != target]
+                also = f"\n(this command also addresses: {', '.join(others)})\n" if others else ""
+                _deny(
+                    f"outbound-preflight [{action_id}] BLOCKED for target {target}.\n"
+                    f"{str(spec.get('reason') or '').strip()}\n{also}\n"
+                    f"Reason: {exc}\n\n"
+                    f"Run this first — it queries the real state and mints the receipt:\n"
+                    f"    python3 scripts/preflight-receipt.py --action {action_id} --target {target}\n\n"
+                    f"If it reports a prior send you had not read, READ IT before deciding. The "
+                    f"receipt is bound to this exact target and predicate and expires in "
+                    f"{max_age}s, so it cannot be reused, forged, or self-certified. Every "
+                    f"addressee needs its own receipt."
+                )
+                return 0
         return 0
 
     return 0

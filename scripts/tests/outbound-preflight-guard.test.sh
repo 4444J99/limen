@@ -85,6 +85,18 @@ assert_passes 'scripts/mail-send --to someone@example.com' \
 assert_denied 'scripts/mail-send --to other@example.com' \
   "denies a different target despite a valid receipt for the first (predicate_digest binding)"
 
+# ── DENY: EVERY addressee needs its own receipt, not just the first one matched ───────────────
+# Live bypass found by /verify on 2026-07-31: re.search binds one target, so a proven --to
+# escorted an unproven --cc straight through to a second human.
+assert_denied 'scripts/mail-send --to someone@example.com --cc unproven@example.com' \
+  "denies a second addressee that has no receipt, despite a valid receipt for the first"
+assert_denied 'scripts/mail-send --to unproven@example.com --cc someone@example.com' \
+  "denies an unproven addressee in first position too (order-independent)"
+
+# ── PASS: an address differing only in case is the same address ───────────────────────────────
+assert_passes 'scripts/mail-send --to SOMEONE@Example.COM' \
+  "passes a case-variant of a receipted address (one identity, no pointless re-run)"
+
 # ── DENY: a FAILING predicate must not open the gate ─────────────────────────────────────────
 mk_registry false
 LIMEN_ROOT="$ROOT" LIMEN_OUTBOUND_REGISTRY="$TMP/live.yaml" \
