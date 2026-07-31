@@ -23,6 +23,26 @@ pass=0 fail=0
 ok()   { pass=$((pass+1)); printf '  ok   %s\n' "$1"; }
 bad()  { fail=$((fail+1)); printf '  FAIL %s\n' "$1"; }
 
+# HERMETIC TARGET. Every case must be pinned to a fixture target: unpinned, the
+# deployed-state check reads the real ~/.claude/settings.json and the suite's verdict depends
+# on whether THIS host happens to be wired. The default is a fully-synced target so
+# source-level cases see "nothing to deploy"; cases about deployment override it explicitly.
+SYNCED="$WORK/target-synced.json"
+python3 - "$SYNCED" <<'PY'
+import json, sys
+json.dump({
+    "permissions": {
+        "defaultMode": "auto",
+        "ask": ["Bash(git push* --force*)", "Bash(git push* -f*)",
+                "Bash(rm:*)", "Bash(rmdir:*)", "Bash(shred:*)"],
+        "autoMode": {"allow": ["$defaults"]},
+    },
+    "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [
+        {"type": "command", "command": "x/allow-trusted-cd-git.sh"}]}]},
+}, open(sys.argv[1], "w"))
+PY
+export LIMEN_HOOK_WIRING_TARGET="$SYNCED"
+
 # $1 = fixture name, $2 = body
 mkfixture() {
   local d="$WORK/$1"
@@ -99,6 +119,27 @@ grep -q 'allow-trusted' "$F4/private_dot_claude/settings.json.tmpl" \
 
 echo "── a missing source is exit 2, not a traceback ──"
 expect_exit "absent cartridge source -> exit 2" 2 "$WORK/nope" --apply
+
+echo "── FALSE GREEN: a correct source with an UNDEPLOYED target must not report clean ──"
+# v3's early return checked only the source. A prior run had written the source then died at
+# deploy (no TTY), so the next run printed "clean" and exited 0 while the live settings.json
+# still had the hook unwired, ask empty and autoMode empty. F1 is already spliced-clean above.
+UNSYNCED="$WORK/target-unsynced.json"
+printf '%s\n' '{"permissions":{"defaultMode":"auto"},"hooks":{"PreToolUse":[]}}' > "$UNSYNCED"
+out="$(DOMUS_ROOT="$F1" LIMEN_HOOK_WIRING_TARGET="$UNSYNCED" python3 "$HEAL" 2>&1)"; got=$?
+[ "$got" = 1 ] && ok "clean source + unsynced target -> exit 1" \
+               || bad "clean source + unsynced target -> exit 1 (got $got)"
+printf '%s' "$out" | grep -q 'DEPLOYED target is out of sync' \
+  && ok "names the deployed target as the gap" || bad "names the deployed target as the gap"
+printf '%s' "$out" | grep -q 'clean (deployed target matches' \
+  && bad "must not claim clean" || ok "does not claim clean"
+
+# The converse: a target that already carries all three IS clean, exit 0.
+out="$(DOMUS_ROOT="$F1" LIMEN_HOOK_WIRING_TARGET="$SYNCED" python3 "$HEAL" 2>&1)"; got=$?
+[ "$got" = 0 ] && ok "clean source + synced target -> exit 0" \
+               || bad "clean source + synced target -> exit 0 (got $got)"
+printf '%s' "$out" | grep -q 'clean (deployed target matches' \
+  && ok "reports clean only when the target matches" || bad "reports clean only when the target matches"
 
 echo "── app-atom guard: --allow-drop is a real flag, and the refusal names the key ──"
 # The guard only runs on the real deploy path (fixtures skip render+deploy), so assert the
