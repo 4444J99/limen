@@ -117,6 +117,14 @@ organs:
     role: "The inbound mail voice: sweep → obligations ledger → tiered draft (headless via keyed IMAP APPEND) → fail-closed SAFE-tier send. Answers reply-owed mail so the operator is never the default send button."
     residual: "Sender ships DISARMED (LIMEN_MAIL_SEND=0); SAFE tier is opt-in and currently empty (grows on trust) — arming is the operator's valve. The keyed headless draft path is BUILT (UMA #168 + creds-hydrate gmail lanes, 2026-07-14): it designs out the macOS TCC grant for Gmail drafts, downgrading lever L-MAIL-AUTOMATION-GRANT #960 to an optional fallback (non-Gmail accounts only). status→full once a SAFE intent is deliberately opted in and armed."
 
+  - name: diurnal
+    layer: somatic
+    home: "limen (institutio/governance/diurnal.yaml = the section registry; scripts/diurnal.py = the organ; scripts/check-diurnal.py = the drift predicate; sensor `diurnal` on the beat; docs/diurnal/<date>.md = the dated emission; logs/diurnal/ = claims, scores, cuts)"
+    status: built
+    role: "The day's three phases as ONE organ reaching forward and backward: morning emits a full dashboard plus falsifiable claims; midday re-probes them mid-flight and pushes only on drift; evening scores every claim held/missed/noop, carries the remainder to tomorrow, and CUTS sections that scored noop for LIMEN_DIURNAL_CUT_THRESHOLD consecutive engaged days. Every line probes or wears its own staleness — a stale cache is withheld, a frozen registry is annotated, and neither is ever reported as current."
+    evidence: "Built against the measured defect (2026-07-31): ~198 runtime artifacts with no freshness index — organ-health.json 10d stale, omega.json 9d, money-view.json 10d, fleet-status.json 27d — while session-orientation.md reported 'Autonomy — PAUSED' after the marker was already gone. First dry-run withheld 5 of 15 sections as STALE and caught its own 6x board over-count (702 vs the true 109) by cross-checking handoff.json."
+    residual: "Fleet-wide cuts are proposals only — the evening names a stale producer but opening the retire-PR is still a hand step (scripts/ship-docs.sh). The `calendar` section is declared ABSENT: no calendar state exists on disk anywhere in the estate, only session-scoped MCP tools no beat is wired to; closing that is a real lever, not a render bug."
+
   # ----------------------------------------------------------------- FACE
   - name: face
     layer: face

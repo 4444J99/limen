@@ -387,6 +387,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-diurnal:
+    command: "python3 scripts/check-diurnal.py"
+    paths: ["institutio/governance/diurnal.yaml", "scripts/check-diurnal.py", "scripts/diurnal.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: diurnal
+    note: "DIVRNAL registry drift: the daily emission's sections are declared data (diurnal.yaml), because the evening phase has authority to CUT one of its own sections and an auto-cut cannot edit Python source. Asserts every `render:` key resolves to a real renderer, and — the load-bearing rule — that `cuttable: true` implies both a `metric` and an `acted_when`. A cuttable section with no metric would accrue an unfalsifiable noop streak and eventually delete itself on no evidence at all, which is precisely the failure a self-pruning artifact must be unable to commit. Also holds protected ⟹ not cuttable (the cut loop must never be able to blind itself), and that `render: absent` carries a substantive reason — a declared gap beats a silent omission."
   check-runner-coverage:
     command: "python3 scripts/check-runner-coverage.py"
     paths: ["institutio/governance/sensors.yaml", "institutio/governance/ideal-forms.yaml", "institutio/governance/outbound-effectors.yaml", "institutio/governance/unreachable-runners-baseline.txt", "censor/precedents.jsonl", "scripts/check-runner-coverage.py", "scripts/hooks/**", "container/launchd/**", ".github/workflows/**"]

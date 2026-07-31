@@ -4876,3 +4876,65 @@ parameters:
     self_update: none
     owner: mail
     note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Hardcoded default so a zero-env beat still reaches him; override only to redirect the brief to a different self address. Never a third party."
+
+  # --- DIVRNAL: the three-phase daily organ that cuts itself --------------------
+  LIMEN_DIURNAL:
+    default: "1"
+    env: LIMEN_DIURNAL
+    self_update: none
+    owner: diurnal
+    note: "Master gate for the DIVRNAL sensor (morning/midday/evening emission). 0 = the day gets no briefing. The organ is read-mostly: it renders declared sections from institutio/governance/diurnal.yaml, writes docs/diurnal/<date>.md, and (evening only) may cut one of its OWN noop sections. It never sends, spends, or deletes."
+  LIMEN_BEAT_DIURNAL:
+    default: 2
+    env: LIMEN_BEAT_DIURNAL
+    self_update: none
+    owner: diurnal
+    note: "Cadence (every N beats) at which the DIVRNAL sensor is visited. The registry cadence is beat-modulo only; the actual time-of-day gating is wall-clock inside scripts/diurnal.py (logs/diurnal/state.json, one emission per phase per calendar day), following the scripts/insight-cadence.py precedent. A tight cadence is cheap because a not-yet-due phase exits immediately."
+  LIMEN_DIURNAL_TIMEOUT:
+    default: 240
+    env: LIMEN_DIURNAL_TIMEOUT
+    self_update: none
+    owner: diurnal
+    note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_DIURNAL_MORNING_HOUR:
+    default: 6
+    env: LIMEN_DIURNAL_MORNING_HOUR
+    self_update: none
+    owner: diurnal
+    note: "Local hour (0-23) at or after which the morning emission becomes due. Morning is the FULL dashboard and emits the day's falsifiable claims, which the evening scores."
+  LIMEN_DIURNAL_MIDDAY_HOUR:
+    default: 12
+    env: LIMEN_DIURNAL_MIDDAY_HOUR
+    self_update: none
+    owner: diurnal
+    note: "Local hour (0-23) at or after which the midday check-in becomes due. Midday re-probes the morning's claims mid-flight and pushes ONLY when something drifted — a silent noon means the morning still holds."
+  LIMEN_DIURNAL_EVENING_HOUR:
+    default: 21
+    env: LIMEN_DIURNAL_EVENING_HOUR
+    self_update: none
+    owner: diurnal
+    note: "Local hour (0-23) at or after which the evening close becomes due. Evening scores every claim held/missed/noop, writes the carry for tomorrow, and is the ONLY phase with cut authority."
+  LIMEN_DIURNAL_CLAIM_MAX:
+    default: 5
+    env: LIMEN_DIURNAL_CLAIM_MAX
+    self_update: none
+    owner: diurnal
+    note: "Maximum falsifiable claims the morning emits. A claim is 'section X's metric will fall below N today' — scoring a claim and scoring a section are ONE measurement, which is what makes the cut loop evidence-based rather than aesthetic."
+  LIMEN_DIURNAL_CUT_THRESHOLD:
+    default: 5
+    env: LIMEN_DIURNAL_CUT_THRESHOLD
+    self_update: none
+    owner: diurnal
+    note: "Consecutive ENGAGED days a cuttable section must score noop before the evening may cut it. Days with no commits are UNSCORED, not noop, so a week away cannot prune the dashboard. This threshold is also the organ's built-in observation runway: no cut can physically fire in its first 5 engaged days."
+  LIMEN_DIURNAL_CUT_MAX_PER_DAY:
+    default: 1
+    env: LIMEN_DIURNAL_CUT_MAX_PER_DAY
+    self_update: none
+    owner: diurnal
+    note: "Maximum auto-cuts per evening. Bounds a cascade: a quiet stretch cannot silently strip the whole briefing in one night. Cut sections keep probing and auto-restore if they raise an exception, so cutting is demotion, never blindness."
+  LIMEN_DIURNAL_PUSH:
+    default: "1"
+    env: LIMEN_DIURNAL_PUSH
+    self_update: none
+    owner: diurnal
+    note: "Whether morning/midday emit a push notification (scripts/_notify.py, onset-deduped on a date-keyed condition so each day fires once). 0 = the dated page is written but nothing reaches the phone. The evening never pushes — it persists."
