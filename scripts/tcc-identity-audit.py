@@ -130,9 +130,14 @@ def _limen_runtime_roots(env: Mapping[str, str]) -> tuple[Path, ...]:
         env.get("LIMEN_ROOT", str(home / "Workspace/limen")),
         env,
     )
+    workdir = _expand_user_path(
+        env.get("LIMEN_WORKDIR", str(home / "Workspace")),
+        env,
+    )
     roots = [
         live_root,
         live_root / ".worktrees",
+        workdir / ".limen-worktrees",
         home / "Workspace/.limen-worktrees",
         Path("/Volumes/Scratch/limen-worktrees"),
     ]
@@ -268,7 +273,7 @@ def _read_clients(
         item["last_modified"] = max(int(item["last_modified"]), modified)
         item["services"].add(str(service_raw))
 
-    relevant: list[dict[str, Any]] = []
+    inventory: list[dict[str, Any]] = []
     for item in grouped.values():
         classification, pattern, exists = classify_client(
             str(item["client"]),
@@ -279,8 +284,7 @@ def _read_clients(
         )
         if classification == "unrelated":
             unrelated += 1
-            continue
-        relevant.append(
+        inventory.append(
             {
                 **item,
                 "classification": classification,
@@ -289,18 +293,22 @@ def _read_clients(
                 "services": sorted(item["services"]),
             }
         )
-    relevant.sort(key=lambda value: (value["classification"], value["client"]))
-    return relevant, unrelated
+    inventory.sort(key=lambda value: (value["classification"], value["client"]))
+    return inventory, unrelated
 
 
 def _settings_paths(env: Mapping[str, str]) -> list[Path]:
     home = _home(env)
+    limen_root = _expand_user_path(
+        env.get("LIMEN_ROOT", str(home / "Workspace/limen")),
+        env,
+    )
     candidates = [
         home / ".claude/settings.json",
-        home / "Workspace/limen/.agent-runtime/claude/settings.json",
+        limen_root / ".agent-runtime/claude/settings.json",
     ]
     if config := env.get("CLAUDE_CONFIG_DIR"):
-        candidates.append(Path(config).expanduser() / "settings.json")
+        candidates.append(_expand_user_path(config, env) / "settings.json")
     seen: set[Path] = set()
     result: list[Path] = []
     for path in candidates:
@@ -404,8 +412,15 @@ def _host_status(
     return payload
 
 
-def _registered_claude_helpers(env: Mapping[str, str], runner: Runner) -> list[dict[str, str]]:
+def _registered_claude_helpers(
+    env: Mapping[str, str],
+    runner: Runner,
+    *,
+    strict: bool,
+) -> list[dict[str, str]]:
     if dump_file := env.get("LIMEN_TCC_LSREGISTER_DUMP"):
+        if strict:
+            raise AuditError("strict audit rejects fixture-backed LaunchServices inventory")
         try:
             dump = Path(dump_file).read_text(encoding="utf-8")
         except OSError as exc:
@@ -500,7 +515,14 @@ def audit(
     except AuditError as exc:
         application = _default_stable_application(values)
         application_error = str(exc)
-    deployment_epoch = _deployment_epoch(values, application)
+    try:
+        deployment_epoch = _deployment_epoch(values, application)
+    except AuditError as exc:
+        deployment_epoch = None
+        deployment_error = str(exc)
+        failures.append("deployment_epoch_invalid")
+    else:
+        deployment_error = None
     if application_error:
         host = {"ok": False, "error": application_error}
     else:
@@ -538,7 +560,7 @@ def audit(
         failures.append("versioned_tcc_client_after_host_deployment")
 
     try:
-        malformed = _registered_claude_helpers(values, runner)
+        malformed = _registered_claude_helpers(values, runner, strict=strict)
     except AuditError as exc:
         malformed = [{"path": "", "detail": str(exc)}]
         failures.append("claude_helper_registration_unreadable")
@@ -553,6 +575,7 @@ def audit(
         "platform": observed_platform,
         "platform_supported": True,
         "host_deployed_at": deployment_epoch,
+        "host_deployment_error": deployment_error,
         "automatic_updates": {
             "enabled": not update_blockers,
             "blockers": update_blockers,

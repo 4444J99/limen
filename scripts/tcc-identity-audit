@@ -1,7 +1,10 @@
 #!/bin/sh
 set -eu
 
-root="$(unset CDPATH; cd -- "$(dirname "$0")/.." && pwd -P)"
+root="$(
+  unset CDPATH
+  cd -- "$(dirname "$0")/.." && pwd -P
+)"
 implementation="$root/scripts/tcc-identity-audit.py"
 strict=0
 for argument in "$@"; do
@@ -33,7 +36,7 @@ esac
 if [ "${DOMUS_AGENT_HOST_ACTIVE:-}" = "1" ] && [ "$host_active" -eq 1 ]; then
   exec "$python" "$implementation" "$@"
 fi
-host="${DOMUS_AGENT_HOST_BIN:-$HOME/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}"
+host="${LIMEN_AGENT_HOST_BIN:-${DOMUS_AGENT_HOST_BIN:-$HOME/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}}"
 if [ ! -x "$host" ]; then
   printf 'tcc-identity-audit: stable Domus agent host is unavailable: %s\n' "$host" >&2
   exit 69

@@ -70,8 +70,11 @@ def assess(
 ) -> bool:
     """Drift is an invalid signature, disabled update path, or stale policy."""
     sig_drift = any(r.get("valid") is False for r in results)
+    required_drift = any(
+        r.get("required") is True and (r.get("exists") is not True or r.get("valid") is not True) for r in results
+    )
     update_drift = not intended_enabled or bool(disabled_controls)
-    return bool(sig_drift or update_drift)
+    return bool(sig_drift or required_drift or update_drift)
 
 
 def check() -> dict:
@@ -79,7 +82,25 @@ def check() -> dict:
         "INTEGRITY_VERIFY_TARGETS",
         ["/Applications/Claude.app", "~/.local/bin/claude"],
     )
-    results = [verify_target(t) for t in _as_list(targets)]
+    host_executable = Path(
+        str(
+            params.get(
+                "LIMEN_AGENT_HOST_BIN",
+                "~/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost",
+            )
+        )
+    ).expanduser()
+    if host_executable.parent.name == "MacOS" and host_executable.parent.parent.name == "Contents":
+        required_host = host_executable.parents[2]
+    else:
+        required_host = host_executable
+    required_path = str(required_host)
+    target_values = _as_list(targets)
+    if required_path not in {str(Path(target).expanduser()) for target in target_values}:
+        target_values.append(required_path)
+    results = [verify_target(target) for target in target_values]
+    for result in results:
+        result["required"] = result.get("target") == required_path
     intended = str(params.get("INTEGRITY_AUTOUPDATER", "enabled")).lower() == "enabled"
     disabled = disabled_update_controls()
     drift = assess(results, intended, disabled)
