@@ -816,7 +816,15 @@ repo_overrides:
   organvm/md-summoning: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm-iii-ergon/mesh: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   meta-organvm/meta-organvm--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  4444J99/micro-tato: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated); personal estate 2026-07-30 (custody v4.0.0 transfer)", publish_candidate: true}
+  # AUDIENCE 2026-07-30: the operation half of an operation/form pair that already exists in
+  # practice — 4444J99/micro-tato-play is declared "public play surface of micro-tato" below. Under
+  # the split doctrine the operation stays private and the form twin carries the public face, so
+  # `publish_candidate` here was a leftover from before that twin existed: it would have published
+  # the operation alongside its own form. Declared `collab` (rob's lane) rather than left to derive
+  # `self`, because the derivation cannot see intent — an uninvited lane derives `self` and passes
+  # green while the partner cannot open their own work. The INVITE itself is outbound and stays
+  # with L-PARTNER-GRANTS; the rung now cites it as a staged invite instead of certifying silence.
+  4444J99/micro-tato: {class: operation_private, audience: collab, why: "product operation (rob lane); path-sample clean. Operation half — 4444J99/micro-tato-play is the public form twin, so this stays private; publish candidacy dropped 2026-07-30 as a pre-twin leftover. Personal estate 2026-07-30 (custody v4.0.0 transfer)"}
   4444J99/mirror-mirror: {class: operation_private, why: "seeded value product — wave candidate (sweep decides); personal estate 2026-07-30 (custody v4.0.0 transfer)", publish_candidate: true}
   organvm/my-knowledge-base: {class: operation_private, why: "value-tier knowledge operation; secret-shaped paths — sweep before any form twin"}
   organvm-ii-poiesis/narratological-algorithmic-lenses: {class: portal_public, why: "traction/value lure — portal tier"}
