@@ -15,8 +15,8 @@ from pathlib import Path
 
 from . import params
 
-_TRUE = ("1", "true", "yes", "on")
-_UPDATE_DISABLE_KEYS = (
+TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
+UPDATE_DISABLE_KEYS = (
     "DISABLE_AUTOUPDATER",
     "DISABLE_UPDATES",
     "HOMEBREW_NO_AUTO_UPDATE",
@@ -60,7 +60,7 @@ def verify_target(target: str) -> dict:
 
 def disabled_update_controls() -> list[str]:
     """Return update-disabling environment controls that are currently active."""
-    return [key for key in _UPDATE_DISABLE_KEYS if str(os.environ.get(key, "")).lower() in _TRUE]
+    return [key for key in UPDATE_DISABLE_KEYS if str(os.environ.get(key, "")).strip().lower() in TRUE_VALUES]
 
 
 def assess(

@@ -346,6 +346,34 @@ def test_integrity_check_no_drift_when_signed_and_updates_enabled(monkeypatch):
     assert res["drift"] is False and res["status"] == "ok"
 
 
+def test_integrity_check_flags_active_update_disabling_control(monkeypatch):
+    monkeypatch.setattr(
+        params,
+        "_load_panel",
+        lambda: {
+            "INTEGRITY_VERIFY_TARGETS": {"default": ["/Applications/Claude.app"]},
+            "INTEGRITY_AUTOUPDATER": {
+                "default": "enabled",
+                "env": "LIMEN_INTEGRITY_AUTOUPDATER",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        integrity,
+        "verify_target",
+        lambda target: {"target": target, "exists": True, "valid": True},
+    )
+    monkeypatch.delenv("DISABLE_AUTOUPDATER", raising=False)
+    monkeypatch.delenv("DISABLE_UPDATES", raising=False)
+    monkeypatch.setenv("HOMEBREW_NO_AUTO_UPDATE", " true ")
+
+    result = integrity.check()
+
+    assert result["autoupdater_actual"] == "disabled"
+    assert result["update_disable_controls"] == ["HOMEBREW_NO_AUTO_UPDATE"]
+    assert result["drift"] is True
+
+
 # ---------------------------------------------------------------- executive
 def test_executive_run_beat_aggregates_and_writes(tmp_path, monkeypatch):
     monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)

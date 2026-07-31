@@ -3,10 +3,7 @@ set -eu
 
 root="$(unset CDPATH; cd -- "$(dirname "$0")/.." && pwd -P)"
 implementation="$root/scripts/tcc-identity-audit.py"
-python="${LIMEN_TCC_AUDIT_PYTHON:-}"
-if [ -z "$python" ]; then
-  python="$(command -v python3 2>/dev/null || true)"
-fi
+python="$(command -v python3 2>/dev/null || true)"
 if [ -z "$python" ]; then
   printf 'tcc-identity-audit: Python 3 is unavailable\n' >&2
   exit 69

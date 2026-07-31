@@ -165,6 +165,20 @@ def test_stable_host_contract_rejects_a_wrong_bundle_identity(tmp_path: Path):
     assert "stable_host_invalid" in payload["failures"]
 
 
+def test_stable_host_contract_rejects_non_object_json(tmp_path: Path):
+    env = _environment(tmp_path, [])
+    Path(env["LIMEN_TCC_HOST_STATUS_JSON"]).write_text("[]")
+
+    payload = AUDIT.audit(env, platform_name="Darwin")
+
+    assert payload["ok"] is False
+    assert payload["stable_host"] == {
+        "ok": False,
+        "error": "stable-host status fixture is malformed",
+    }
+    assert "stable_host_invalid" in payload["failures"]
+
+
 def test_malformed_registered_claude_helper_is_blocking(tmp_path: Path):
     env = _environment(tmp_path, [])
     helper = Path(env["HOME"]) / ".local/share/claude/ClaudeCode.app"
@@ -186,3 +200,36 @@ def test_non_macos_is_explicitly_not_applicable():
     assert payload["ok"] is True
     assert payload["status"] == "not_applicable"
     assert payload["platform_supported"] is False
+
+
+def test_strict_cli_returns_failure_and_emits_json(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+):
+    home = tmp_path / "home"
+    rows = [
+        (
+            str(home / ".local/share/claude/versions/release-omega"),
+            1,
+            "kTCCServiceSystemPolicyDownloadsFolder",
+            1002,
+        )
+    ]
+    env = _environment(tmp_path, rows)
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+
+    status = AUDIT.main(
+        [
+            "--json",
+            "--strict",
+            "--db",
+            env["LIMEN_TCC_DB"],
+        ]
+    )
+
+    assert status == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["summary"]["versioned_leak"] == 1

@@ -1503,7 +1503,10 @@ def test_stable_agent_host_wraps_macos_provider_with_arbitrary_binary_path(
     assert wrapped == [str(host), "run", "--", *command]
 
 
-def test_stable_agent_host_does_not_nest_or_affect_non_macos(tmp_path: Path):
+def test_stable_agent_host_does_not_nest_or_affect_non_macos(
+    tmp_path: Path,
+    monkeypatch,
+):
     command = ["/vendor/python-release-omega", "task.py"]
     assert (
         D._stable_agent_host_command(
@@ -1513,6 +1516,7 @@ def test_stable_agent_host_does_not_nest_or_affect_non_macos(tmp_path: Path):
         )
         == command
     )
+    monkeypatch.delenv("DOMUS_AGENT_HOST_ACTIVE", raising=False)
     assert (
         D._stable_agent_host_command(
             command,

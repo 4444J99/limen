@@ -49,8 +49,13 @@ echo
 # Claude/Python/Homebrew/uv/Limen path becomes a TCC client, or a malformed Claude helper is
 # registered. Existing pre-containment rows remain an exact legacy_stale cleanup inventory.
 TCC_AUDIT="$ROOT/scripts/tcc-identity-audit"
-tcc_output="$("$TCC_AUDIT" --strict 2>&1)"
-tcc_status=$?
+if [ ! -f "$TCC_AUDIT" ] || [ ! -r "$TCC_AUDIT" ] || [ ! -x "$TCC_AUDIT" ]; then
+  tcc_output="tcc-identity-audit wrapper is missing, unreadable, or not executable: $TCC_AUDIT"
+  tcc_status=69
+else
+  tcc_output="$("$TCC_AUDIT" --strict 2>&1)"
+  tcc_status=$?
+fi
 if [ "$tcc_status" -eq 0 ]; then
   green "TCC identity: automatic updates enabled; stable DomusAgentHost valid; zero post-deploy versioned clients"
 else

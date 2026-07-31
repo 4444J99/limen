@@ -263,6 +263,8 @@ def _host_status(env: Mapping[str, str], runner: Runner) -> dict[str, Any]:
             payload = json.loads(Path(fixture).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise AuditError("stable-host status fixture is unreadable") from exc
+        if not isinstance(payload, dict):
+            raise AuditError("stable-host status fixture is malformed")
     else:
         executable = _stable_application(env) / "Contents/MacOS/DomusAgentHost"
         try:
@@ -279,6 +281,8 @@ def _host_status(env: Mapping[str, str], runner: Runner) -> dict[str, Any]:
             payload = json.loads(completed.stdout or "")
         except json.JSONDecodeError as exc:
             raise AuditError("stable-host status is malformed") from exc
+        if not isinstance(payload, dict):
+            raise AuditError("stable-host status is malformed")
         if completed.returncode != 0:
             payload["ok"] = False
     if payload.get("schema") != HOST_SCHEMA:
