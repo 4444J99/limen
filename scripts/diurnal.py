@@ -35,9 +35,11 @@ State:     logs/diurnal/{state,section-scores}.json, ledger.jsonl, cuts.jsonl
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -883,6 +885,132 @@ def _prune_notify_keys(root: Path) -> None:
             _notify.clear_condition(root, key)
 
 
+# ── durability ─────────────────────────────────────────────────────────────────────
+#
+# The organ wrote its first live page and the page was UNTRACKED. `docs/diurnal/` is a tracked
+# directory registered in docs-manifest.yaml, the emission lands inside it as `??`, and the beat's
+# only committing rung — capture.sh — explicitly refuses an in-place commit on the live default
+# branch and diverts dirt to a side ref instead. So the page was preserved in custody and never
+# published: local-only, against Rule #2, rediscovered every day. An organ owns the durability of
+# its own emission.
+
+
+def _merge_prohibited(root: Path) -> str | None:
+    """The pause that binds publication is the MARKER, not the governor's mode.
+
+    Mirrors await-pr.sh's guard verbatim in intent: a marker whose `prohibitions:` line names
+    merge binds every actor, the beat included. The governor's *window* pause is a different
+    thing — it withdraws DISPATCH, the authority to spend other agents' capacity. Recording what
+    the machine already observed spends nothing, sends nothing, deletes nothing. Conflating the
+    two is precisely how a four-hour window that expired nine days ago also stopped the fleet
+    from keeping its own record; the whole point of `heal(beat)` #1723 is that a pause withdraws
+    acting on the world, not the machine's own coherence.
+    """
+    try:
+        text = (root / "logs" / "AUTONOMY_PAUSED").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    for line in text.splitlines():
+        if line.lower().startswith("prohibitions:") and "merge" in line.lower():
+            return line.strip()
+    return None
+
+
+def _digest(path: Path) -> str:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+    except OSError:
+        return ""
+
+
+def shipped_receipts(root: Path) -> dict:
+    return _load_json(root / "logs" / "diurnal" / "shipped.json") or {}
+
+
+def unshipped_pages(root: Path) -> list[str]:
+    """Repo-relative diurnal pages on disk but neither committed nor already handed to a PR.
+
+    `git status --porcelain` alone is NOT the predicate, and driving this live is what proved it:
+    after a successful ship the page is still `??` in the live checkout, because it becomes
+    tracked only once the PR merges AND the beat pulls. Git state alone would therefore re-ship
+    the same page on every emission — three duplicate PRs a day for one file. So a content-keyed
+    receipt (`logs/diurnal/shipped.json`) carries the gap, exactly as _notify.notify_once dedupes
+    on onset rather than on the condition clearing. Keying on the DIGEST, not the path, is what
+    makes a later phase re-ship the page it genuinely rewrote.
+
+    Read-only against the daemon-contended live checkout: ship-docs.sh copies into its own
+    worktree and never touches this tree. A staged deletion is skipped rather than shipped —
+    ship-docs requires the file to exist, and a page deleted on purpose is not an emission.
+    """
+    rc, out = _run("git status --porcelain --untracked-files=all -- docs/diurnal", root, timeout=60)
+    if rc != 0:
+        return []
+    receipts = shipped_receipts(root)
+    pages = []
+    for line in out.splitlines():
+        rel = line[3:].strip()
+        if not rel.endswith(".md") or rel.endswith("/README.md"):
+            continue
+        path = root / rel
+        if path.is_file() and receipts.get(rel) != _digest(path):
+            pages.append(rel)
+    return sorted(set(pages))
+
+
+def ship_pages(root: Path) -> int:
+    """Land emitted pages on main through the sanctioned docs path. Never fails the beat.
+
+    ship-docs.sh is the charter's answer to this exact class (it calls itself the side-door
+    closer): named files only — never `git add -A` — onto a fresh branch cut from origin/main in
+    an isolated worktree, PR opened, self-merged the moment merge-policy.sh clears. It refuses
+    deploy-trigger paths outright, so a diurnal page can never blind-deploy the live site. On
+    timeout the PR still exists and its owner is the beat's merge rung, per the charter — this
+    hands off rather than babysitting.
+    """
+    if not _on("LIMEN_DIURNAL_SHIP"):
+        return 0
+    prohibition = _merge_prohibited(root)
+    if prohibition:
+        print(f"diurnal: pages held local — pause marker {prohibition}", file=sys.stderr)
+        return 0
+    pages = unshipped_pages(root)
+    if not pages:
+        return 0
+    script = root / "scripts" / "ship-docs.sh"
+    if not script.is_file():
+        print(f"diurnal: {len(pages)} page(s) unshipped — {script} absent", file=sys.stderr)
+        return 0
+    days = " ".join(Path(p).stem for p in pages)
+    cmd = " ".join(
+        [
+            "bash",
+            shlex.quote(str(script)),
+            "diurnal",
+            shlex.quote(f"docs(diurnal): {days}"),
+            *(shlex.quote(p) for p in pages),
+        ]
+    )
+    rc, out = _run(cmd, root, timeout=_int("LIMEN_DIURNAL_TIMEOUT", 240))
+    verdict = {0: "merged", 2: "PR open — merge rung owns it", 124: "timed out; the PR owns itself"}
+    print(f"diurnal: shipped {len(pages)} page(s) [{days}] — {verdict.get(rc, f'refused (exit {rc})')}")
+    if rc not in (0, 2):
+        print(out.strip()[-800:], file=sys.stderr)
+    # Receipt on every outcome EXCEPT 1. ship-docs' exit 1 is its pre-flight `die` — bad slug,
+    # deploy-trigger path, missing file — which happens before the branch or PR exist, so there
+    # is nothing to dedupe against and a retry is correct. Every other exit means the PR was
+    # created (0 merged it, 2 handed it to the merge rung, 124 timed out waiting on one), and
+    # re-shipping would open a duplicate. A dropped page still surfaces: `--ship` is a manual
+    # drain and `git status` never stops reporting it.
+    if rc != 1:
+        receipts = shipped_receipts(root)
+        receipts.update({rel: _digest(root / rel) for rel in pages})
+        # Date-keyed records accrete forever otherwise — the same reason _prune_notify_keys exists.
+        cutoff = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        receipts = {k: v for k, v in receipts.items() if Path(k).stem >= cutoff}
+        (state_dir(root) / "shipped.json").write_text(json.dumps(receipts, indent=2), encoding="utf-8")
+    return 0
+
+
 # ── cli ────────────────────────────────────────────────────────────────────────────
 
 
@@ -893,6 +1021,7 @@ def main() -> int:
     ap.add_argument("--force", action="store_true", help="emit even if this phase already ran today")
     ap.add_argument("--uncut", metavar="SECTION", help="restore a cut section")
     ap.add_argument("--list", action="store_true", help="print the section registry with cut state")
+    ap.add_argument("--ship", action="store_true", help="land any unshipped pages on main; emit nothing")
     args = ap.parse_args()
 
     resolved, why = _root.resolve()
@@ -909,6 +1038,12 @@ def main() -> int:
         # the message this replaced — described only the case that never actually fired.
         print(f"diurnal: refusing to emit a false 'all quiet' — {why}", file=sys.stderr)
         return 0  # advisory: never fail the beat
+
+    if args.ship:
+        # A standalone drain, so the capability is observable and re-runnable without forcing a
+        # re-emission. Idempotent via the shipped receipt, NOT via git state — a shipped page
+        # stays untracked until its PR merges and the beat pulls.
+        return ship_pages(root)
 
     if args.list:
         sections, scores = load_registry(root), load_scores(root)
@@ -973,7 +1108,12 @@ def main() -> int:
         and state.get("last_run", {}).get(phase) == datetime.now().strftime("%Y-%m-%d")
     ):
         return 0
-    return emit(root, phase, args.dry_run)
+    rc = emit(root, phase, args.dry_run)
+    # Shipping sits in main(), not in emit(): rendering a day and publishing it are different
+    # concerns, and --dry-run must never reach the world. A failed emission ships nothing.
+    if rc == 0 and not args.dry_run:
+        ship_pages(root)
+    return rc
 
 
 if __name__ == "__main__":
