@@ -215,16 +215,20 @@
     },
     {
       "id": "L-AGENT-BASH-PROMPT",
-      "label": "Apply the agent bash-prompt fix — ONE reversible paste. Plan/auto/fleet agents get prompted on nearly every `cd ~/Workspace/<repo> && <cmd>` because the PreToolUse hook allow-trusted-cd-git.sh only auto-approves the `git` form, and Claude Code v2.1.x prompts on every compound-cd (upstream #32985). This floods autonomous agents and holds the fleet back. It is YOUR hand because the auto-mode classifier hard-denies an agent widening its own hook / settings.json allow array.",
+      "label": "Arm the trust hook — ONE command, not a paste. Every lane is prompted on nearly every Bash call because allow-trusted-cd-git.sh, though deployed and byte-identical to the repo canonical, is NOT WIRED into hooks.PreToolUse — and Claude Code v2.1.x prompts on every compound `cd <dir> && <cmd>` (upstream #32985), which no settings allow rule can suppress. It is YOUR hand because the auto-mode classifier blocks the AGENT from widening its own gate — and that block is on the ACT, not the path: verified 2026-07-31 it covers the chezmoi SOURCE too, including a read-only dry-run of the effector. Correct guardrail; not routed around.",
       "owner": "yours",
-      "cost": "one reversible paste (~1 min)",
-      "unlocks": "the fleet stops drowning in compound-cd permission prompts — autonomous lanes run unblocked",
-      "source_task": "fleet-permission-prompt-fix (memory carries the exact block + rationale)",
-      "gate": "the classifier denies an agent editing its own hook/settings.json — opens only from your side",
+      "cost": "one command (~10s), reversible — the effector backs up the source and prints the full diff before writing",
+      "unlocks": "the compound-cd prompt flood ends for every lane; permissions.ask regains its five-rule fail-safe backstop; the auto-mode classifier finally learns the trust boundary via autoMode.allow",
+      "source_task": "fleet-permission-prompt-fix; effector shipped 2026-07-31 as scripts/heal-hook-wiring.py",
+      "gate": "the classifier denies an agent widening its own permission gate, wherever that file lives (rendered target AND cartridge source) — opens only from your side",
+      "effector": "scripts/heal-hook-wiring.py",
       "steps": [
-        "Paste the prepared block from memory/fleet-permission-prompt-fix.md — backs up settings.json, overwrites the hook with the directory-trust version (trust the directory + any inner command inside ~/Workspace / *.claude/worktrees/* / ~/.claude/jobs/* / /tmp), idempotently merges the missing allow families",
-        "Closes when the hook is generalized (no longer git-only). Full detail in issue #183."
+        "cd ~/Workspace/limen && python3 scripts/heal-hook-wiring.py            # dry-run: prints the exact diff, writes nothing",
+        "cd ~/Workspace/limen && python3 scripts/heal-hook-wiring.py --apply    # asserts hook + ask + autoMode in the cartridge source, then chezmoi apply",
+        "Restart Claude Code (hooks load at session start), then verify: bash scripts/dialogs-silenced.sh",
+        "Closes when class 1d prints green. The hook itself is generalized as of 2026-07-31 — standalone commands now earn the same trust as cd-chains (matrix 77 -> 99 cases). Only the WIRING remains. Detail in issue #183."
       ],
+      "note_do_not": "Do NOT cure this by editing ~/.claude/settings.json — it is rendered from the cartridge template and the next `chezmoi apply` discards the edit (Rule #6). Do NOT beat-wire the effector: an auto-armed valve here would let the system widen its own gate unattended, which is exactly what the classifier exists to prevent.",
       "issue": 183
     },
     {
