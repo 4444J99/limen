@@ -29,9 +29,10 @@ tcc-identity-audit [--json] [--strict]
 Every committed `com.limen.*` control-plane LaunchAgent, including the
 generated heartbeat, enters `DomusAgentHost.app` before Bash, Python, dispatch,
 or provider work. An inherited `DOMUS_AGENT_HOST_ACTIVE=1` marker is trusted
-only while its native lifetime descriptor remains open. Strict audits always
-query the installed host live; fixture-backed status is test-only and rejected
-by `--strict`.
+only after the native host verifies that its lifetime descriptor is the
+expected pipe identity; a reused descriptor cannot bypass wrapping. Strict
+audits always query the installed host and LaunchServices live; fixture-backed
+status/inventories are test-only and rejected by `--strict`.
 
 `status --json` uses macOS Security APIs and reports the installed bundle path,
 bundle identifier, signature validity, designated requirement, CDHash, and
@@ -47,7 +48,8 @@ configuration may update without replacing the host.
 - `legacy_stale`: a managed, versioned client last changed before host deployment.
 - `versioned_leak`: a Claude version, Homebrew Cellar, Python framework, uv
   interpreter, or Limen runtime client changed after host deployment.
-- `unrelated`: counted but omitted from the client inventory.
+- `unrelated`: preserved explicitly in the inventory so before/after acceptance
+  deltas cannot hide a differently named new principal.
 
 Strict mode fails if managed automatic updates are disabled, the host is absent
 or invalidly signed, a post-deployment versioned client exists, TCC cannot be

@@ -6,6 +6,7 @@ import re
 import secrets
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import threading
@@ -2523,11 +2524,29 @@ def _stable_agent_host_lifetime_fds(
         if required:
             raise StableAgentHostError("Domus agent host marker has no lifetime descriptor")
         return ()
+    identity = env.get("DOMUS_AGENT_HOST_LIFETIME_ID")
+    if not identity:
+        raise StableAgentHostError("Domus agent host marker has no lifetime identity")
     try:
         lifetime_fd = int(lifetime_raw)
-        os.fstat(lifetime_fd)
+        metadata = os.fstat(lifetime_fd)
     except (OSError, TypeError, ValueError) as exc:
         raise StableAgentHostError("Domus agent host lifetime descriptor is invalid") from exc
+    identity_parts = identity.rsplit(":", 2)
+    try:
+        handle, device_raw, inode_raw = identity_parts
+        device = int(device_raw)
+        inode = int(inode_raw)
+    except (TypeError, ValueError) as exc:
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid") from exc
+    if (
+        len(identity_parts) != 3
+        or not re.fullmatch(r"[0-9a-fA-F]{16}", handle)
+        or not stat.S_ISFIFO(metadata.st_mode)
+        or metadata.st_dev != device
+        or metadata.st_ino != inode
+    ):
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid")
     return (lifetime_fd,)
 
 

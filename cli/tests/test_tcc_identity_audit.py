@@ -278,7 +278,13 @@ def test_wrapper_requires_live_host_lifetime_descriptor(tmp_path: Path):
     host = tmp_path / "DomusAgentHost"
     host.write_text("#!/bin/sh\nprintf host\n")
     primary_host = tmp_path / "PrimaryDomusAgentHost"
-    primary_host.write_text("#!/bin/sh\nprintf primary-host\n")
+    primary_host.write_text(
+        "#!/bin/sh\n"
+        'case "$1" in\n'
+        '  verify-lifetime) [ "${DOMUS_AGENT_HOST_LIFETIME_ID:-}" = expected ] ;;\n'
+        "  run) printf primary-host ;;\n"
+        "esac\n"
+    )
     for executable in (
         bin_dir / "uname",
         bin_dir / "python3",
@@ -310,6 +316,7 @@ def test_wrapper_requires_live_host_lifetime_descriptor(tmp_path: Path):
             env={
                 **env,
                 "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+                "DOMUS_AGENT_HOST_LIFETIME_ID": "expected",
             },
             pass_fds=(write_fd,),
             text=True,

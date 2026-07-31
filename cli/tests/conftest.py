@@ -26,8 +26,10 @@ def _restore_os_environ(tmp_path):
     # tests pass explicit environment mappings to exercise first-entry behavior;
     # the rest of the suite must not depend on a machine-global app installation.
     read_fd, write_fd = os.pipe()
+    lifetime = os.fstat(write_fd)
     os.environ["DOMUS_AGENT_HOST_ACTIVE"] = "1"
     os.environ["DOMUS_AGENT_HOST_LIFETIME_FD"] = str(write_fd)
+    os.environ["DOMUS_AGENT_HOST_LIFETIME_ID"] = f"{'0' * 16}:{lifetime.st_dev}:{lifetime.st_ino}"
     try:
         yield
     finally:

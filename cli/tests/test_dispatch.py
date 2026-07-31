@@ -114,6 +114,7 @@ def force_broker_unavailable(monkeypatch) -> None:
 
 def test_run_capture_propagates_native_host_lifetime_fd(monkeypatch) -> None:
     read_fd, write_fd = os.pipe()
+    lifetime = os.fstat(write_fd)
     captured: dict[str, object] = {}
 
     class Process:
@@ -134,7 +135,10 @@ def test_run_capture_propagates_native_host_lifetime_fd(monkeypatch) -> None:
         result = D._run_capture(
             ["/usr/bin/true"],
             timeout=7,
-            env={"DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd)},
+            env={
+                "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+                "DOMUS_AGENT_HOST_LIFETIME_ID": (f"{'0' * 16}:{lifetime.st_dev}:{lifetime.st_ino}"),
+            },
         )
     finally:
         os.close(read_fd)
@@ -1509,6 +1513,7 @@ def test_stable_agent_host_does_not_nest_or_affect_non_macos(
 ):
     command = ["/vendor/python-release-omega", "task.py"]
     read_fd, write_fd = os.pipe()
+    lifetime = os.fstat(write_fd)
     try:
         assert (
             D._stable_agent_host_command(
@@ -1516,6 +1521,7 @@ def test_stable_agent_host_does_not_nest_or_affect_non_macos(
                 {
                     "DOMUS_AGENT_HOST_ACTIVE": "1",
                     "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+                    "DOMUS_AGENT_HOST_LIFETIME_ID": (f"{'0' * 16}:{lifetime.st_dev}:{lifetime.st_ino}"),
                 },
                 platform_name="darwin",
             )
@@ -1533,6 +1539,31 @@ def test_stable_agent_host_does_not_nest_or_affect_non_macos(
         )
         == command
     )
+
+
+def test_stable_agent_host_rejects_reused_lifetime_descriptor():
+    first_read, first_write = os.pipe()
+    first_lifetime = os.fstat(first_write)
+    os.close(first_read)
+    os.close(first_write)
+    second_read, second_write = os.pipe()
+    try:
+        with pytest.raises(
+            D.StableAgentHostError,
+            match="lifetime identity is invalid",
+        ):
+            D._stable_agent_host_command(
+                ["claude"],
+                {
+                    "DOMUS_AGENT_HOST_ACTIVE": "1",
+                    "DOMUS_AGENT_HOST_LIFETIME_FD": str(second_write),
+                    "DOMUS_AGENT_HOST_LIFETIME_ID": (f"{'0' * 16}:{first_lifetime.st_dev}:{first_lifetime.st_ino}"),
+                },
+                platform_name="darwin",
+            )
+    finally:
+        os.close(second_read)
+        os.close(second_write)
 
 
 def test_stable_agent_host_rejects_marker_without_live_lifetime_descriptor():
