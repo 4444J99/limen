@@ -68,11 +68,14 @@ def _home(env: Mapping[str, str]) -> Path:
     return Path(env.get("HOME", str(Path.home()))).expanduser()
 
 
-def _tcc_database(env: Mapping[str, str]) -> Path:
+def _tcc_databases(env: Mapping[str, str]) -> tuple[Path, ...]:
     override = env.get("LIMEN_TCC_DB")
     if override:
-        return Path(override).expanduser()
-    return _home(env) / "Library/Application Support/com.apple.TCC/TCC.db"
+        return (Path(override).expanduser(),)
+    return (
+        _home(env) / "Library/Application Support/com.apple.TCC/TCC.db",
+        Path("/Library/Application Support/com.apple.TCC/TCC.db"),
+    )
 
 
 def _expand_user_path(value: str, env: Mapping[str, str]) -> Path:
@@ -237,27 +240,31 @@ def classify_client(
 
 
 def _read_clients(
-    database: Path,
+    databases: Sequence[Path],
     *,
     deployment_epoch: int | None,
     application: Path,
     env: Mapping[str, str],
 ) -> tuple[list[dict[str, Any]], int]:
-    try:
-        connection = sqlite3.connect(
-            f"{database.resolve().as_uri()}?mode=ro",
-            uri=True,
-        )
-    except (OSError, sqlite3.Error) as exc:
-        raise AuditError(f"TCC database is unavailable: {database}") from exc
-    try:
-        rows = connection.execute(
-            "SELECT client, client_type, service, last_modified FROM access ORDER BY client, service"
-        ).fetchall()
-    except sqlite3.Error as exc:
-        raise AuditError("TCC access schema is unreadable") from exc
-    finally:
-        connection.close()
+    rows: list[tuple[Any, ...]] = []
+    for database in databases:
+        try:
+            connection = sqlite3.connect(
+                f"{database.resolve().as_uri()}?mode=ro",
+                uri=True,
+            )
+        except (OSError, sqlite3.Error) as exc:
+            raise AuditError(f"TCC database is unavailable: {database}") from exc
+        try:
+            rows.extend(
+                connection.execute(
+                    "SELECT client, client_type, service, last_modified FROM access ORDER BY client, service"
+                ).fetchall()
+            )
+        except sqlite3.Error as exc:
+            raise AuditError(f"TCC access schema is unreadable: {database}") from exc
+        finally:
+            connection.close()
 
     grouped: dict[tuple[str, int], dict[str, Any]] = {}
     unrelated = 0
@@ -561,7 +568,7 @@ def audit(
 
     try:
         clients, unrelated = _read_clients(
-            _tcc_database(values),
+            _tcc_databases(values),
             deployment_epoch=deployment_epoch,
             application=application,
             env=values,
