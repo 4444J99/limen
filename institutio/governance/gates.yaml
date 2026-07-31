@@ -474,7 +474,11 @@ gates:
 
   check-effectors:
     command: "python3 scripts/check-effectors.py"
-    paths: ["institutio/governance/outbound-effectors.yaml", "institutio/governance/ungated-effectors-baseline.txt", "scripts/check-effectors.py", "scripts/hooks/outbound-preflight-guard.py", "scripts/*.py", "cli/src/limen/**", "mcp/**", "ianva/**", "organs/**"]
+    # Both `dir/*.py` AND `dir/**/*.py` for every scanned root: in this glob dialect `**` requires
+    # at least one intervening segment, so `cli/src/limen/**/*.py` alone does NOT match
+    # cli/src/limen/dispatch.py — a direct child, and a live `gh pr merge` site. Scoping to .py
+    # (rather than `organs/**`) keeps an AST scan off markdown-only diffs.
+    paths: ["institutio/governance/outbound-effectors.yaml", "institutio/governance/ungated-effectors-baseline.txt", "scripts/check-effectors.py", "scripts/hooks/outbound-preflight-guard.py", "scripts/*.py", "cli/src/limen/*.py", "cli/src/limen/**/*.py", "mcp/*.py", "mcp/**/*.py", "ianva/*.py", "ianva/**/*.py", "organs/*.py", "organs/**/*.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: lifecycle
     note: "OUTBOUND-EFFECTORS registry drift, the fifth VIGILIA-shaped panel's predicate. Class A holds declaration↔disk parity (a `predicate:` naming a file that does not exist would, because the guard fails CLOSED inside its match, deny EVERY matching action the moment the hook is armed — the live 2026-07-31 state of github.comment). Class B holds the single-capture-group bound the registry states in prose: the guard reads group(1) only, so a two-group target pattern silently discards the second half and runs the predicate against a PARTIAL target — checking the ambient repo's #N while the command addresses another repo's #N. Class C is the structural one: a PreToolUse(Bash) hook sees a COMMAND STRING, so it can never see subprocess.run([\"gh\",\"pr\",\"comment\",...]) inside a Python module — which is the form every dangerous outward action in this estate actually takes, unattended, on the beat. 24 such sites are baselined; the surface is now visible and cannot grow. A hand grep found only 17 of them (argv bound to a name, argv through a local sh() wrapper), which is why this is an AST walk and not a pattern."
