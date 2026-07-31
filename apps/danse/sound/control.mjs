@@ -26,7 +26,7 @@ import { fileURLToPath } from "node:url";
 
 import { fromData } from "../engine/corpus.js";
 import { step } from "../engine/engine.js";
-import { validate, windowOf } from "../engine/program.js";
+import { captureOf, passageAt, validate } from "../engine/program.js";
 import { scatter } from "../engine/room.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -47,7 +47,7 @@ function readJSON(p) {
 }
 
 function args(argv) {
-  const out = { window: "master", rate: 30, seed: null, out: null };
+  const out = { window: "passage", rate: 30, seed: null, out: null, from: 0 };
   for (let i = 0; i < argv.length; i += 2) {
     const key = argv[i].replace(/^--/, "");
     if (!(key in out)) throw new Error(`unknown option ${argv[i]}`);
@@ -61,7 +61,7 @@ const opt = args(process.argv.slice(2));
 
 const program = readJSON(path.join(DANSE, "render/program.json"));
 validate(program);
-const win = windowOf(program, opt.window);
+
 
 const corpusDir = path.join(DANSE, "corpus");
 const manifest = readJSON(path.join(corpusDir, "manifest.json"));
@@ -71,8 +71,25 @@ const solved = manifest.score ? readJSON(path.join(corpusDir, manifest.score)) :
 const corpus = fromData(`${corpusDir}/`, manifest, solved);
 
 const seed = opt.seed === null ? (program.seed ?? 0) : Number(opt.seed);
-const t0 = win.t0 ?? 0;
-const t1 = win.t1 ?? program.duration;
+
+// The same span resolution film.html uses: a `seconds` capture starts exactly
+// where it is told, a `passages` capture snaps to a passage boundary so the
+// sound begins where the phrase begins.
+const cap = captureOf(program, opt.window);
+const from = Number(opt.from) || 0;
+let t0, t1;
+if (cap.seconds > 0) {
+  t0 = from;
+  t1 = from + cap.seconds;
+} else {
+  let at = passageAt(program, seed, from);
+  t0 = at.t0;
+  t1 = at.t0;
+  for (let k = 0; k < cap.passages; k++) {
+    at = passageAt(program, seed, t1 + 1e-6);
+    t1 = at.t0 + at.seconds;
+  }
+}
 const dt = 1 / opt.rate;
 
 const frames = [];
@@ -146,7 +163,7 @@ function round(x, places) {
 const payload = {
   schema: "danse.sound.control.v1",
   title: program.title,
-  window: win.name,
+  capture: cap.name,
   seed,
   rate: opt.rate,
   t0,

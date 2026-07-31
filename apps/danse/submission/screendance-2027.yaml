@@ -87,10 +87,16 @@ requirements:
 unstated:
   - id: runtime-cap
     resolve: "Call 305.576.4350 — ask the maximum accepted runtime."
-    assume_max_seconds: 390        # the 6:30 cut we are building
+    assume_max_seconds: 480        # the ceiling of the declared passage range
+    # Raised from 390 on 2026-07-31. 390 was the duration of a fixed cut, and the
+    # work no longer has one: it is a river with no end, and a capture of one
+    # whole passage runs 5:07–7:56 depending on which passage it caught. 480 is
+    # the top of the range `check-danse.py` holds the program to, so the number
+    # here and the number the engine can produce cannot drift apart.
+    #
     # De-blocked by evidence, not by assumption: the 2026 festival programmed
     # "17 short films and three feature-length films". A festival that seats
-    # features does not reject 6:30 on length.
+    # features does not reject eight minutes on length.
     evidence: "2026 program: 17 shorts + 3 feature-length, 24 films / 6 countries"
     evidence_source: https://miamilightproject.com/program/screendance-miami-festival-2026/
     checked: 2026-07-30

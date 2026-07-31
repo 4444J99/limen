@@ -32,7 +32,7 @@ export function frameAt(renderer, corpus, seed, t, program = null, opts = {}) {
   // and it comes through the same canvas as every frame before it.
   const closing =
     s.cut === "black" && program?.signature
-      ? { signature: signature(program, seed), signatureStyle: program.signature }
+      ? { signature: signature(program, s), signatureStyle: program.signature }
       : {};
   return { ...renderer.draw(cast, s, { seed, ...closing, ...draw }), state: s, cells: cast.length };
 }
@@ -44,9 +44,20 @@ export function hex(seed) {
   return `0x${(seed >>> 0).toString(16).toUpperCase().padStart(6, "0")}`;
 }
 
-/** Fill a program's signature line with the seed that rendered it. */
-export function signature(program, seed) {
+/** The closing line of a passage: what it was, and which one it was.
+ *
+ * A passage is named by its seed AND its ordinal. The seed alone is 32 bits and
+ * would eventually repeat — around 65,000 passages, which a gallery reaches in
+ * about nine months — and a receipt that can be issued twice for two different
+ * things is not a receipt. The ordinal also says something the seed cannot: that
+ * this is the 1,552nd time the phrase has been through, and it will not be that
+ * one again.
+ */
+export function signature(program, state) {
   const sig = program?.signature;
+  const seed = state?.passageSeed ?? 0;
   if (!sig) return hex(seed);
-  return sig.format.replace("%SEED%", hex(seed).replace(/^0x/, ""));
+  return sig.format
+    .replace("%SEED%", hex(seed).replace(/^0x/, ""))
+    .replace("%PASSAGE%", String(state?.passage ?? 0));
 }

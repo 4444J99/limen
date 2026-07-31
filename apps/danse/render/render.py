@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Render the film — deterministically, in restartable segments.
+"""Record the river — deterministically, in restartable segments.
+
+This does not make the work; it makes a RECORDING of the work. The piece is the
+engine running, unbounded, never the same passage twice. What comes out of here
+is one stretch of it, named by the passage it caught.
 
 The engine is a pure f(seed, t). This is the thing that exploits that: segment
 *k* renders t ∈ [k·N/fps, (k+1)·N/fps) from the same function, so segments can be
@@ -19,9 +23,9 @@ Segmenting is not an optimisation. Sustained per-frame blob churn in one browser
 process eventually raises net::ERR_BLOB_OUT_OF_MEMORY; a fresh process per segment
 caps memory by construction.
 
-    render.py --window master --tier film --segment 0
+    render.py --capture passage --tier film --segment 0
     render.py --determinism --segment 3          # render twice, require equal hashes
-    render.py --concat out/master                # stitch the segments into one master
+    render.py --concat out/passage               # stitch the segments into one recording
 """
 
 from __future__ import annotations
@@ -126,7 +130,7 @@ def render_segment(args, segment: int, dest: Path) -> dict:
         # The window's format unless overridden; the page is asked for exactly
         # this size so the drawing buffer IS the delivery format.
         page_url = (
-            f"{base}/film.html?s={args.seed or ''}&window={args.window}"
+            f"{base}/film.html?s={args.seed or ''}&capture={args.window}&from={args.start}"
             f"&tier={args.tier}&width={args.width or ''}&height={args.height or ''}"
         )
         with browser(headless=not args.headed, width=320, height=240) as page:
@@ -135,7 +139,8 @@ def render_segment(args, segment: int, dest: Path) -> dict:
             film = page.evaluate(
                 "() => ({ t0: window.danseFilm.window.t0, t1: window.danseFilm.window.t1,"
                 " fps: window.danseFilm.window.fps, w: window.danseFilm.width, h: window.danseFilm.height,"
-                " sig: window.danseFilm.signature, seed: window.danseFilm.seed })"
+                " sig: window.danseFilm.signature, seed: window.danseFilm.seed,"
+                " passage: window.danseFilm.passage, passageHex: window.danseFilm.passageHex })"
             )
 
             fps = args.fps or film["fps"]
@@ -194,6 +199,42 @@ def render_segment(args, segment: int, dest: Path) -> dict:
             }
 
 
+def expected_frames(segment: int, total: int, per_segment: int) -> int:
+    return max(0, min(per_segment, total - segment * per_segment))
+
+
+def complete(dest: Path, want: int) -> bool:
+    """Does this segment already hold every frame it is supposed to?
+
+    Segmenting was built so a FAILURE costs one segment rather than one film, but
+    without this a RE-RUN costs the whole film anyway — and a 4K master is 39
+    segments and half an hour. Frame count, not file existence: a segment killed
+    mid-write leaves a perfectly plausible file with half the frames in it.
+    """
+    if want <= 0 or not dest.is_file() or dest.stat().st_size == 0:
+        return False
+    out = subprocess.run(
+        # fmt: off
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-count_frames",
+            "-show_entries",
+            "stream=nb_read_frames",
+            "-of",
+            "default=nw=1:nk=1",
+            str(dest),
+        ],
+        # fmt: on
+        capture_output=True,
+        text=True,
+    )
+    return out.returncode == 0 and out.stdout.strip().isdigit() and int(out.stdout.strip()) == want
+
+
 def concat(stem: Path, codec: str) -> Path:
     """Stitch the segments without re-encoding. They are the same stream."""
     parts = sorted(stem.parent.glob(f"{stem.name}-seg-*{SUFFIX[codec]}"))
@@ -213,7 +254,11 @@ def concat(stem: Path, codec: str) -> Path:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--window", default="master", help="a named window from render/program.json")
+    ap.add_argument("--window", "--capture", dest="window", default="passage",
+                    help="a named capture preset from render/program.json")
+    ap.add_argument("--start", type=float, default=0.0,
+                    help="where in the river to begin recording, in seconds. A `passages` capture snaps "
+                         "forward to the next passage boundary; a `seconds` capture starts exactly here.")
     ap.add_argument("--tier", default="screen", help="corpus tier (`film` for the 4K master)")
     ap.add_argument("--seed", type=int, help="override the program's seed")
     ap.add_argument("--codec", default="prores", choices=sorted(CODECS))
@@ -226,6 +271,12 @@ def main() -> int:
     ap.add_argument("--headed", action="store_true")
     ap.add_argument("--quiet", dest="progress", action="store_false")
     ap.add_argument("--concat", action="store_true", help="stitch existing segments and exit")
+    ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="keep segments that already hold their full frame count. Safe because the engine is a "
+        "pure f(seed, t): a segment rendered yesterday is the same file it would be rendered now.",
+    )
     ap.add_argument(
         "--determinism",
         action="store_true",
@@ -257,12 +308,13 @@ def main() -> int:
         return 0
 
     segments = [args.segment] if args.segment is not None else None
+    total = None
     if segments is None:
         # Ask the page for the window length rather than assuming it here.
         with serve() as base, browser(headless=True, width=320, height=240) as page:
-            page.goto(f"{base}/film.html?window={args.window}&tier={args.tier}", wait_until="load")
+            page.goto(f"{base}/film.html?capture={args.window}&tier={args.tier}&from={args.start}", wait_until="load")
             page.wait_for_function("() => window.danseFilmReady === true", timeout=300_000)
-            w = page.evaluate("() => window.danseFilm.window")
+            w = page.evaluate("() => ({ ...window.danseFilm.window, passage: window.danseFilm.passage })")
         fps = args.fps or w["fps"]
         total = int(round((w["t1"] - w["t0"]) * fps))
         segments = list(range(math.ceil(total / args.segment_frames)))
@@ -270,6 +322,9 @@ def main() -> int:
 
     for seg in segments:
         dest = stem.parent / f"{stem.name}-seg-{seg:03d}{SUFFIX[args.codec]}"
+        if args.resume and total is not None and complete(dest, expected_frames(seg, total, args.segment_frames)):
+            print(f"  {dest.name} · already complete, kept")
+            continue
         r = render_segment(args, seg, dest)
         if r.get("skipped"):
             continue

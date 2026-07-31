@@ -37,11 +37,33 @@ import { frameAt, hex, signature, step } from "./engine/engine.js";
 
 const q = new URLSearchParams(location.search);
 const program = await Program.load(q.get("program") ?? "render/program.json");
-const win = Program.windowOf(program, q.get("window") ?? "master");
+const cap = Program.captureOf(program, q.get("capture") ?? q.get("window") ?? "passage");
 const seed = Number(q.get("s")) || program.seed;
 const tier = q.get("tier") ?? "screen";
-const width = Number(q.get("width")) || win.w;
-const height = Number(q.get("height")) || win.h;
+const width = Number(q.get("width")) || cap.w;
+const height = Number(q.get("height")) || cap.h;
+
+/** Where in the river to record, and for how long.
+ *
+ * A capture asks for one of two genuinely different things. `seconds` is a fixed
+ * length — Times Square wants exactly 170 and does not care where it starts.
+ * `passages` is a whole number of passages, which has NO fixed length: it snaps
+ * to a passage boundary and runs to the end of the last one, so the recording
+ * begins where a passage begins and carries its closing signature.
+ */
+const from = Number(q.get("from")) || 0;
+const span = (() => {
+  const fps = Number(q.get("fps")) || cap.fps;
+  if (cap.seconds > 0) return { t0: from, t1: from + cap.seconds, fps };
+  let at = Program.passageAt(program, seed, from);
+  const t0 = at.t0;
+  let t1 = at.t0;
+  for (let k = 0; k < cap.passages; k++) {
+    at = Program.passageAt(program, seed, t1 + 1e-6);
+    t1 = at.t0 + at.seconds;
+  }
+  return { t0, t1, fps };
+})();
 
 const canvas = document.getElementById("stage");
 canvas.style.width = `${width}px`;
@@ -79,12 +101,21 @@ async function renderAt(t) {
   return { t, movement: r.state.movement, cut: r.state.cut, planes: r.planes, missing: r.missing };
 }
 
+// What this recording caught. The river has no name; a PASSAGE of it does, and
+// that is what a capture is named by — so a file on disk can be traced back to
+// the exact stretch of the piece it recorded and to nothing else.
+const opening = Program.passageAt(program, seed, span.t0);
+
 window.danseFilm = {
   program,
-  window: win,
+  capture: cap.name,
+  window: span,
   seed,
   seedHex: hex(seed),
-  signature: signature(program, seed),
+  passage: opening.index,
+  passageSeed: opening.seed,
+  passageHex: hex(opening.seed),
+  signature: signature(program, { passageSeed: opening.seed, passage: opening.index }),
   tier,
   width,
   height,

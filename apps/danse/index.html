@@ -88,12 +88,17 @@ function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   if (!held) t += dt;
-  if (program && t >= program.duration) t = 0;
+  // Time is not wrapped. The piece has no duration to reach and nothing to
+  // restart: each passage of the phrase draws its own length and its own
+  // material, so running longer means seeing further, never seeing again.
 
   const r = frameAt(renderer, corpus, seed, t, program, { quantise: RECAST, matteK });
 
-  el("clock").textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-  el("seed").textContent = hex(seed);
+  // Elapsed within the current passage, so the readout says where you are in
+  // this one rather than counting up forever into a number nobody can hold.
+  const local = t - (r.state.passageT0 ?? 0);
+  el("clock").textContent = `${Math.floor(local / 60)}:${String(Math.floor(local % 60)).padStart(2, "0")}`;
+  el("seed").textContent = program ? `${hex(r.state.passageSeed)} · ${r.state.passage}` : hex(seed);
   el("cut").textContent = program
     ? `${r.state.movement} · ${r.state.cut}${r.state.epoch ? ` · reseed ${r.state.epoch}` : ""}`
     : cutAt(seed, t, r.state.reveal) + (r.state.reveal < 0.02 ? " · 2017" : "");
