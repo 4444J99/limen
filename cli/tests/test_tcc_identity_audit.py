@@ -126,6 +126,59 @@ def test_predeployment_versions_are_legacy_and_do_not_fail(tmp_path: Path):
     )
 
 
+def test_live_inventory_merges_user_and_system_tcc_databases(tmp_path: Path):
+    home = tmp_path / "home"
+    application = home / "Applications/DomusAgentHost.app"
+    user_database = _database(
+        tmp_path / "user-TCC.db",
+        [
+            (
+                str(home / ".local/share/claude/versions/release-alpha"),
+                1,
+                "kTCCServiceSystemPolicyDocumentsFolder",
+                900,
+            ),
+            ("com.example.shared", 0, "kTCCServiceMicrophone", 800),
+        ],
+    )
+    system_database = _database(
+        tmp_path / "system-TCC.db",
+        [
+            (
+                "org.organvm.domus.agent-host",
+                0,
+                "kTCCServiceSystemPolicyAllFiles",
+                1001,
+            ),
+            ("com.example.shared", 0, "kTCCServiceSystemPolicyAllFiles", 1002),
+        ],
+    )
+
+    clients, unrelated = AUDIT._read_clients(
+        (user_database, system_database),
+        deployment_epoch=1000,
+        application=application,
+        env={"HOME": str(home)},
+    )
+
+    assert sum(item["classification"] == "stable_host" for item in clients) == 1
+    assert sum(item["classification"] == "legacy_stale" for item in clients) == 1
+    assert unrelated == 1
+    shared = next(item for item in clients if item["client"] == "com.example.shared")
+    assert shared["last_modified"] == 1002
+    assert shared["services"] == [
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyAllFiles",
+    ]
+
+
+def test_live_tcc_databases_include_user_and_system_stores(tmp_path: Path):
+    assert AUDIT._tcc_databases({"HOME": str(tmp_path)}) == (
+        tmp_path / "Library/Application Support/com.apple.TCC/TCC.db",
+        Path("/Library/Application Support/com.apple.TCC/TCC.db"),
+    )
+
+
 def test_arbitrary_rotated_claude_and_python_paths_are_versioned_leaks(
     tmp_path: Path,
 ):
