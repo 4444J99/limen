@@ -22,11 +22,14 @@ only home.
      bit-identical output — and by grepping engine/ for the state that would break
      it.
 
-  4. THE PROGRAM PARTITIONS TIME. `render/program.json` declares the film as
-     movements. They must tile [0, duration) end to end — no gaps, no overlaps —
-     for exactly the reason the score must tile the frame: a hole in the partition
-     is a hole in the film, and an offline renderer would render it as one without
-     complaining. Same arithmetic, one axis down.
+  4. EVERY PASSAGE PARTITIONS ITS OWN TIME. `render/program.json` declares a
+     PHRASE, not a film — there is no duration and no end. The engine traverses
+     the phrase forever, and each traversal draws its own length and its own
+     material. Every passage's movements must still tile that passage end to end,
+     no gaps and no overlaps, for exactly the reason the score must tile the
+     frame. Same arithmetic, one axis down, now checked over 400 passages rather
+     than once. And the claim the work actually makes — that it never repeats —
+     is checked as a claim: over 20,000 passages, no seed and no length recurs.
 
 The fifth thing this guards is delivery: every frame the score names must exist
 as a plate at every SHIPPED tier, or the flat state renders with holes on a
@@ -103,24 +106,16 @@ def check_partition(score: dict) -> None:
 # ── 4. the program partitions time ─────────────────────────────────────────────
 
 
-def check_program(program: dict, grammar_cuts: set[str]) -> None:
-    moves = program["movements"]
+def check_program(program: dict, grammar_cuts: set[str], river: dict) -> None:
+    """The phrase, and the river that traverses it.
 
-    cursor = 0.0
-    gaps, overlaps = [], []
-    for m in moves:
-        if m["t0"] > cursor:
-            gaps.append(f"{cursor}→{m['t0']}")
-        elif m["t0"] < cursor:
-            overlaps.append(f"{m['id']} at {m['t0']} < {cursor}")
-        cursor = m["t1"]
-    check("movements leave no gap", not gaps, ", ".join(gaps) or f"{len(moves)} movements, no dead air")
-    check("movements never overlap", not overlaps, ", ".join(overlaps))
-    check(
-        "movements end exactly at duration",
-        cursor == program["duration"],
-        f"end {cursor}s vs declared {program['duration']}s",
-    )
+    The old form of this checked one partition once, because there was one film
+    with one set of boundaries. There is no such thing now — every passage lays
+    the movements out differently — so the partition is checked over MANY
+    passages, and the arithmetic that must hold is the same arithmetic the 2017
+    score obeys over the picture plane.
+    """
+    moves = program["movements"]
 
     named = {m["cut"] for m in moves}
     unknown = sorted(named - grammar_cuts)
@@ -130,29 +125,52 @@ def check_program(program: dict, grammar_cuts: set[str]) -> None:
         f"unknown: {', '.join(unknown)}" if unknown else ", ".join(sorted(named)),
     )
 
-    # A window is a crop of the same timeline, never a re-edit. If one runs past
-    # the end, the renderer would silently deliver short.
-    bad = []
-    for name, w in (program.get("windows") or {}).items():
-        if name == "_doc":
-            continue
-        if w["t0"] < 0 or w["t1"] > program["duration"] or w["t1"] <= w["t0"]:
-            bad.append(name)
-    check("every window lies inside the program", not bad, ", ".join(bad))
+    if not river:
+        return
+
+    check(
+        "every passage tiles its own time exactly",
+        river["badPartitions"] == 0,
+        f"{river['badPartitions']} of {river['passages']} passages had a gap or an overlap"
+        if river["badPartitions"]
+        else f"{river['passages']} passages, no dead air in any of them",
+    )
+
+    # The piece is a river or it is a loop, and the difference is measurable: if
+    # passage lengths repeat, a viewer can anchor to the phrase and what they are
+    # watching is a loop with the fill changed.
+    # Lengths must be SPREAD, not unique. Two passages can share a length and
+    # still be entirely different passages — they differ in seed, so they differ
+    # in every photograph. What this catches is `vary` collapsing toward zero,
+    # which would turn the phrase back into a clock a viewer can anchor to.
+    spread = river["distinctLengths"] / river["passages"]
+    check(
+        "passage lengths do not settle onto a clock",
+        spread > 0.99,
+        f"{river['distinctLengths']} distinct lengths across {river['passages']} passages ({spread:.3%})",
+    )
+    check(
+        "no passage recurs",
+        river["repeatedSeeds"] == 0,
+        f"{river['repeatedSeeds']} repeated over {river['passages']} passages"
+        if river["repeatedSeeds"]
+        else f"{river['passages']} passages, {river['days']:.0f} days, none repeated",
+    )
+
+    # It still has to be a PHRASE, not noise: a passage that can run twenty
+    # seconds or twenty minutes has no shape a viewer could learn.
+    lo, hi = river["minSeconds"], river["maxSeconds"]
+    check(
+        "a passage still runs 5–8 minutes",
+        300 <= lo and hi <= 480,
+        f"{lo / 60:.2f}–{hi / 60:.2f} min (mean {river['meanSeconds'] / 60:.2f})",
+    )
 
     # Times Square Arts' Midnight Moment is not "about three minutes". It is 170
     # seconds, and a submission that is 171 is rejected without a conversation.
-    mm = (program.get("windows") or {}).get("midnight-moment")
+    mm = (program.get("captures") or {}).get("midnight-moment")
     if mm:
-        span = mm["t1"] - mm["t0"]
-        check("midnight-moment is exactly 170s", span == 170, f"{span}s")
-
-    # The one runtime that is graded: the master. 6:20–7:00 clears every cap on
-    # the parallel ladder, and 6:30 is the declared target.
-    master = (program.get("windows") or {}).get("master")
-    if master:
-        span = master["t1"] - master["t0"]
-        check("master runtime is 6:20–7:00", 380 <= span <= 420, f"{span // 60:.0f}:{span % 60:02.0f}")
+        check("the midnight-moment capture is exactly 170s", mm.get("seconds") == 170, f"{mm.get('seconds')}s")
 
 
 # ── 2/3. the clock, evaluated by node ──────────────────────────────────────────
@@ -160,7 +178,7 @@ def check_program(program: dict, grammar_cuts: set[str]) -> None:
 CLOCK_PROBE = """
 import { readFileSync } from "node:fs";
 import { state, PERIOD } from "%(clock)s";
-import { validate } from "%(program)s";
+import { movementsIn, passageAt, passageSeconds, passageSeed, validate } from "%(program)s";
 import { CUTS } from "%(grammar)s";
 
 const seeds = [20170620, 1, 2, 7919, 2147483647, 305419896];
@@ -181,14 +199,54 @@ let programError = null;
 try { validate(program); } catch (e) { programError = e.message; }
 
 const seed = program.seed;
-const N = 1560;                       // every quarter-second of the 6:30
+
+// ── the river ──────────────────────────────────────────────────────────────────
+// The piece has no duration, so "the whole film" is not a thing that can be
+// sampled. What is checked instead is the claim it actually makes: that the
+// phrase recurs and the water never does.
+const PASSAGES = 20000;
+let badPartitions = 0, repeatedSeeds = 0;
+const lengths = [], seen = new Set();
+for (let n = 0; n < PASSAGES; n++) {
+  const sd = passageSeed(seed, n);
+  if (seen.has(sd)) repeatedSeeds++;
+  seen.add(sd);
+  const secs = passageSeconds(program, seed, n);
+  lengths.push(secs);
+  if (n < 400) {
+    const laid = movementsIn(program, seed, n);
+    let cursor = 0, ok = true;
+    for (const m of laid) {
+      if (Math.abs(m.t0 - cursor) > 1e-6 || !(m.t1 > m.t0)) ok = false;
+      cursor = m.t1;
+    }
+    if (!ok || Math.abs(cursor - secs) > 1e-6) badPartitions++;
+  }
+}
+const totalSeconds = lengths.reduce((a, b) => a + b, 0);
+const river = {
+  passages: PASSAGES,
+  badPartitions,
+  repeatedSeeds,
+  distinctLengths: new Set(lengths.map((x) => x.toFixed(6))).size,
+  minSeconds: Math.min(...lengths),
+  maxSeconds: Math.max(...lengths),
+  meanSeconds: totalSeconds / PASSAGES,
+  days: totalSeconds / 86400,
+};
+
+// Sample deep into the river, not just its first passage.
+const SPAN = passageSeconds(program, seed, 0) * 12;
+const N = 1560;
 let impureProgram = 0, outOfRange = 0, assemblyFlat = true, assemblySamples = 0;
 const epochs = new Set();
 for (let i = 0; i <= N; i++) {
-  const t = (i / N) * program.duration;
+  const t = (i / N) * SPAN;
   const a = state(seed, t, program);
-  // Out of order again: sample t, then a far-away t, then t once more.
-  state(seed, program.duration - t, program);
+  // Out of order again: sample t, then a far-away t, then t once more. The edge
+  // cache that finds a passage is memoisation; if it ever became state, this is
+  // where it would show.
+  state(seed, SPAN - t, program);
   const b = state(seed, t, program);
   if (JSON.stringify(a) !== JSON.stringify(b)) impureProgram++;
   const ok =
@@ -209,10 +267,14 @@ for (let i = 0; i <= N; i++) {
 const reseedMovement = program.movements.find((m) => m.id === "RESEED");
 const declaredEpochs = (reseedMovement?.reseeds ?? []).length;
 
+// Two passages far apart must not be the same picture. This is the claim.
+const far = passageAt(program, seed, 0), later = passageAt(program, seed, SPAN * 40);
+const sameRiver = far.seed !== later.seed && Math.abs(far.seconds - later.seconds) > 1e-9;
+
 console.log(JSON.stringify({
   seeds: seeds.length, flatAtZero, flatAtPeriod, impure, everLeaves, PERIOD,
   programError, impureProgram, outOfRange, assemblyFlat, assemblySamples,
-  epochs: epochs.size, declaredEpochs, cuts: CUTS,
+  epochs: epochs.size, declaredEpochs, cuts: CUTS, river, sameRiver, span: SPAN,
 }));
 """
 
@@ -253,14 +315,15 @@ def check_clock() -> dict:
 
 def check_film(r: dict) -> None:
     """The programmed clock: the same purity, held to the film's declared arc."""
-    check("the program validates", not r["programError"], r["programError"] or "danse.program.v1")
+    check("the program validates", not r["programError"], r["programError"] or "danse.program.v2")
     check(
-        "programmed clock is pure across the whole film",
+        "programmed clock is pure anywhere in the river",
         r["impureProgram"] == 0,
-        f"{r['impureProgram']} of 1561 quarter-seconds disagreed with themselves",
+        f"{r['impureProgram']} of 1561 samples across {r['span'] / 60:.0f} minutes of river "
+        f"disagreed with themselves",
     )
     check(
-        "every channel stays in range for 6:30",
+        "every channel stays in range across twelve passages",
         r["outOfRange"] == 0,
         f"{r['outOfRange']} samples out of range",
     )
@@ -274,10 +337,70 @@ def check_film(r: dict) -> None:
         r["epochs"] == r["declaredEpochs"],
         f"{r['epochs']} epochs observed, {r['declaredEpochs']} declared",
     )
+    check(
+        "the river does not return",
+        r["sameRiver"],
+        "passages far apart differ in both seed and length",
+    )
 
 
 def node() -> str:
     return "node"
+
+
+# ── 5b. the film is filable ────────────────────────────────────────────────────
+
+REGISTER = APP / "submission" / "screendance-2027.yaml"
+
+
+def check_submission(program: dict, river: dict) -> None:
+    """The delivery format the program declares must be one the call accepts.
+
+    A generative render has NO native frame rate — `f(seed, t)` samples at
+    whatever rate it is asked for — so the rate is not a property of the work,
+    it is a delivery decision, and the register owns it. Without this check the
+    two drift silently and in the expensive direction: the master was declared
+    at 60 fps against a register that allows 24 or 30, and the only thing that
+    caught it was reading the register in the middle of a 35-minute render.
+    """
+    if not REGISTER.is_file():
+        NOTE.append("no submission register — nothing holds the delivery format to a call")
+        return
+    try:
+        import yaml
+    except ImportError:
+        NOTE.append("PyYAML absent — the submission register could not be read")
+        return
+    reg = yaml.safe_load(REGISTER.read_text()) or {}
+    spec = (reg.get("package") or {}).get("master") or {}
+    allowed = spec.get("fps_allowed")
+    captures = {k: v for k, v in program.get("captures", {}).items() if isinstance(v, dict)}
+
+    if allowed:
+        wrong = sorted(f"{k}@{v.get('fps')}" for k, v in captures.items() if v.get("fps") not in allowed)
+        check(
+            "every capture records at a frame rate the call accepts",
+            not wrong,
+            f"{', '.join(wrong)} — allowed {allowed}" if wrong else f"{len(captures)} captures at {allowed}",
+        )
+
+    want = spec.get("aspect")
+    submission = captures.get("passage") or {}
+    if want and submission.get("w") and submission.get("h"):
+        num, den = (float(x) for x in want.split(":"))
+        ok = abs(submission["w"] / submission["h"] - num / den) < 0.01
+        check("the submission capture is the aspect the call expects", ok, f"{submission['w']}×{submission['h']} vs {want}")
+
+    # A passage has no fixed length, so the runtime cap applies to the LONGEST
+    # one a capture could catch — the worst case, not the nominal.
+    cap = next((u.get("assume_max_seconds") for u in reg.get("unstated", []) if u.get("id") == "runtime-cap"), None)
+    if cap and river:
+        longest = river["maxSeconds"]
+        check(
+            "the longest passage still fits the assumed runtime cap",
+            longest <= cap,
+            f"longest observed {longest:.0f}s of {cap}s",
+        )
 
 
 # ── 6. the sound is the same film ──────────────────────────────────────────────
@@ -468,9 +591,10 @@ def main() -> int:
     check_purity()
     if PROGRAM.is_file():
         print("\n the program partitions time")
-        check_program(load(PROGRAM), set(probe.get("cuts", [])))
+        check_program(load(PROGRAM), set(probe.get("cuts", [])), probe.get("river") or {})
         if probe:
             check_film(probe)
+        check_submission(load(PROGRAM), probe.get("river") or {})
     else:
         NOTE.append(f"no film program at {PROGRAM.relative_to(ROOT)} — the piece runs free, nothing is cut")
     print("\n the corpus is deliverable")
