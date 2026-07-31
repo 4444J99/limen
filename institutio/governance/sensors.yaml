@@ -1467,3 +1467,29 @@ sensors:
       - command: "bash scripts/verify-hot-cache.sh"
         severity: advisory
         escalation: "machine is NOT disposable — un-summonable state above (each red names its owner/fix); run bash scripts/verify-hot-cache.sh"
+
+  residue-census:
+    section: "heartbeat"
+    title: "residue census — what this machine holds that it should be able to re-summon"
+    gate: LIMEN_RESIDUE_CENSUS
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_RESIDUE_CENSUS
+      default: 24
+    timeout:
+      env: LIMEN_RESIDUE_CENSUS_TIMEOUT
+      default: 180
+    # The other half of the Meeseeks law. The hot-cache court (above) is honest about its own blind
+    # spot — its R5 excludes worktrees and quarantines "by marker … never silent", because those
+    # have their own reap organs — which left nothing measuring whether those organs KEEP UP. They
+    # did not: 10 GiB of .agent-runtime whose reaper is written and wired to nothing, a 571 MiB
+    # append-only ledger snapshot with no reaper at all, 1,616 remote branches behind an acceptance
+    # ledger never once written to. This counts the pressure and names the owner of each class.
+    # READ-ONLY: it deletes nothing and arms nothing. Deleting is the reapers' job (human-gated
+    # where destructive); knowing was nobody's, which is why none of it was known.
+    steps:
+      - command: "python3 scripts/residue-census.py"
+        severity: advisory
+        escalation: "residue caps breached — this machine is holding state it should be able to re-summon; each breach names its owner (run python3 scripts/residue-census.py)"
