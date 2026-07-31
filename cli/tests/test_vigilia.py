@@ -313,28 +313,166 @@ def test_integrity_as_list_handles_string_and_list():
 def test_integrity_assess_flags_signature_drift():
     bad = [{"valid": False}]
     good = [{"valid": True}]
-    assert integrity.assess(bad, intended_disabled=True, actually_disabled=True) is True
-    assert integrity.assess(good, intended_disabled=True, actually_disabled=True) is False
-    # lever drift: intended disabled but actually enabled
-    assert integrity.assess(good, intended_disabled=True, actually_disabled=False) is True
+    assert integrity.assess(bad, intended_enabled=True, disabled_controls=[]) is True
+    assert integrity.assess(good, intended_enabled=True, disabled_controls=[]) is False
+    assert (
+        integrity.assess(
+            good,
+            intended_enabled=True,
+            disabled_controls=["DISABLE_UPDATES"],
+        )
+        is True
+    )
+    assert integrity.assess(good, intended_enabled=False, disabled_controls=[]) is True
+    assert (
+        integrity.assess(
+            [{"exists": False, "valid": None, "required": True}],
+            intended_enabled=True,
+            disabled_controls=[],
+        )
+        is True
+    )
+    assert (
+        integrity.assess(
+            [{"exists": False, "valid": None, "required": False}],
+            intended_enabled=True,
+            disabled_controls=[],
+        )
+        is False
+    )
 
 
-def test_integrity_check_no_drift_when_signed_and_lever_set(monkeypatch):
+def test_integrity_check_no_drift_when_signed_and_updates_enabled(monkeypatch):
     monkeypatch.setattr(
         params,
         "_load_panel",
         lambda: {
             "INTEGRITY_VERIFY_TARGETS": {"default": ["/Applications/Claude.app"]},
-            "INTEGRITY_AUTOUPDATER": {"default": "disabled", "env": "LIMEN_INTEGRITY_AUTOUPDATER"},
+            "INTEGRITY_AUTOUPDATER": {"default": "enabled", "env": "LIMEN_INTEGRITY_AUTOUPDATER"},
         },
     )
     monkeypatch.setattr(integrity, "verify_target", lambda t: {"target": t, "exists": True, "valid": True})
-    monkeypatch.setenv("DISABLE_AUTOUPDATER", "1")
+    for key in ("DISABLE_AUTOUPDATER", "DISABLE_UPDATES", "HOMEBREW_NO_AUTO_UPDATE"):
+        monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("LIMEN_INTEGRITY_AUTOUPDATER", raising=False)
     res = integrity.check()
-    assert res["autoupdater_intended"] == "disabled"
-    assert res["autoupdater_actual"] == "disabled"
+    assert res["autoupdater_intended"] == "enabled"
+    assert res["autoupdater_actual"] == "enabled"
+    assert res["update_disable_controls"] == []
     assert res["drift"] is False and res["status"] == "ok"
+
+
+def test_integrity_check_flags_active_update_disabling_control(monkeypatch):
+    monkeypatch.setattr(
+        params,
+        "_load_panel",
+        lambda: {
+            "INTEGRITY_VERIFY_TARGETS": {"default": ["/Applications/Claude.app"]},
+            "INTEGRITY_AUTOUPDATER": {
+                "default": "enabled",
+                "env": "LIMEN_INTEGRITY_AUTOUPDATER",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        integrity,
+        "verify_target",
+        lambda target: {"target": target, "exists": True, "valid": True},
+    )
+    monkeypatch.delenv("DISABLE_AUTOUPDATER", raising=False)
+    monkeypatch.delenv("DISABLE_UPDATES", raising=False)
+    monkeypatch.setenv("HOMEBREW_NO_AUTO_UPDATE", " true ")
+
+    result = integrity.check()
+
+    assert result["autoupdater_actual"] == "disabled"
+    assert result["update_disable_controls"] == ["HOMEBREW_NO_AUTO_UPDATE"]
+    assert result["drift"] is True
+
+
+def test_integrity_check_flags_missing_required_host(monkeypatch):
+    host = str(Path("~/Applications/DomusAgentHost.app").expanduser())
+    monkeypatch.delenv("LIMEN_AGENT_HOST_BIN", raising=False)
+    monkeypatch.setattr(
+        params,
+        "_load_panel",
+        lambda: {
+            "INTEGRITY_VERIFY_TARGETS": {
+                "default": [
+                    "~/Applications/DomusAgentHost.app",
+                    "/Applications/Claude.app",
+                ]
+            },
+            "INTEGRITY_AUTOUPDATER": {
+                "default": "enabled",
+                "env": "LIMEN_INTEGRITY_AUTOUPDATER",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        integrity,
+        "verify_target",
+        lambda target: {
+            "target": str(Path(target).expanduser()),
+            "exists": str(Path(target).expanduser()) != host,
+            "valid": None if str(Path(target).expanduser()) == host else True,
+        },
+    )
+    for key in (
+        "DISABLE_AUTOUPDATER",
+        "DISABLE_UPDATES",
+        "HOMEBREW_NO_AUTO_UPDATE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    result = integrity.check(platform_name="Darwin")
+
+    assert result["drift"] is True
+    assert result["status"] == "drift"
+    assert next(item for item in result["targets"] if item["target"] == host)["required"] is True
+
+
+def test_integrity_check_does_not_require_macos_host_on_linux(monkeypatch):
+    host = str(Path("~/Applications/DomusAgentHost.app").expanduser())
+    monkeypatch.delenv("LIMEN_AGENT_HOST_BIN", raising=False)
+    monkeypatch.setattr(
+        params,
+        "_load_panel",
+        lambda: {
+            "INTEGRITY_VERIFY_TARGETS": {
+                "default": [
+                    "~/Applications/DomusAgentHost.app",
+                    "/Applications/Claude.app",
+                ]
+            },
+            "INTEGRITY_AUTOUPDATER": {
+                "default": "enabled",
+                "env": "LIMEN_INTEGRITY_AUTOUPDATER",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        integrity,
+        "verify_target",
+        lambda target: {
+            "target": str(Path(target).expanduser()),
+            "exists": str(Path(target).expanduser()) != host,
+            "valid": None if str(Path(target).expanduser()) == host else True,
+        },
+    )
+    for key in (
+        "DISABLE_AUTOUPDATER",
+        "DISABLE_UPDATES",
+        "HOMEBREW_NO_AUTO_UPDATE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    result = integrity.check(platform_name="Linux")
+
+    assert result["platform"] == "Linux"
+    assert result["drift"] is False
+    assert result["status"] == "ok"
+    assert next(item for item in result["targets"] if item["target"] == host)["required"] is False
 
 
 # ---------------------------------------------------------------- executive

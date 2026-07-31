@@ -6,9 +6,9 @@
   any agent runs) and INTERACTIVE/worktree sessions (which aren't the daemon). RunAtLoad fires it at
   login; StartInterval re-runs every 30 min.
 
-  This launchd path is promptless by design: it runs --apply without --op, so it can refresh derived
+  This launchd path is promptless by design: it applies without interactive op mode, so it can refresh derived
   lanes (for example, the gh keyring) and already-materialized floors without raising 1Password
-  Touch-ID. Static op:// reads require an explicit interactive run with --apply --op, or a promptless
+  Touch-ID. Static op:// reads require an explicit interactive apply with op enabled, or a promptless
   service-account/Connect setup. Loading is his-hand (one launchctl bootstrap):
 
     cp container/launchd/com.limen.creds-hydrate.plist ~/Library/LaunchAgents/
@@ -20,10 +20,13 @@
     <string>com.limen.creds-hydrate</string>
     <key>ProgramArguments</key>
     <array>
+        <string>/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost</string>
+        <string>run</string>
+        <string>--</string>
         <string>/bin/bash</string>
         <string>-c</string>
-        <!-- Mirror the heartbeat's PATH + pinned-venv interpreter so the SAME python3 resolves
-             (avoids the macOS TCC python prompt + import drift). `op` lives on the homebrew PATH. -->
+        <!-- The versioned interpreter remains updateable, but protected I/O is attributed to
+             DomusAgentHost. `op` lives on the Homebrew PATH. -->
         <string>export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"; PY="$LIMEN_ROOT/.venv/bin/python3"; [ -x "$PY" ] || PY="$(command -v python3 || echo python3)"; exec "$PY" "$LIMEN_ROOT/scripts/creds-hydrate.py" --apply</string>
     </array>
     <key>EnvironmentVariables</key>

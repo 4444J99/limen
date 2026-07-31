@@ -9,10 +9,10 @@
   indicates they must be present"). The every-8-beats hygiene sensor (dialogs-silenced 0g8b)
   cures it, but the updater re-drops it FASTER than that cadence — observed live 2026-07-18,
   the dialog reappeared within minutes of a one-time heal. This WatchPaths agent closes that
-  window: it runs heal-claude-lsregister.sh --apply the INSTANT the stub lands, so Gatekeeper
+  window: it runs heal-claude-lsregister.sh in apply mode the INSTANT the stub lands, so Gatekeeper
   (and the human) never see the dialog.
 
-  --apply self-arms the heal (scripts/heal-claude-lsregister.sh:48), so this cures with NO
+  Apply mode self-arms the heal (scripts/heal-claude-lsregister.sh:48), so this cures with NO
   ~/.limen.env change required. Idempotent + self-settling: the heal removes the stub, which
   re-fires WatchPaths once, finds nothing malformed, exits clean, and quiesces. Darwin-only;
   the script fails OPEN off-darwin. Registered as load-bearing in spec/critical-launch-agents.json
@@ -24,6 +24,9 @@
     <string>com.limen.claude-stub-heal</string>
     <key>ProgramArguments</key>
     <array>
+        <string>/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost</string>
+        <string>run</string>
+        <string>--</string>
         <string>/bin/bash</string>
         <string>/Users/4jp/Workspace/limen/scripts/heal-claude-lsregister.sh</string>
         <string>--apply</string>

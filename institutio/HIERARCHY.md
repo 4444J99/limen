@@ -63,7 +63,7 @@ actions, alerts).
 |---|---|---|---|---|
 | **CEO — Heartbeat** | run the beat | `heartbeat-loop.sh`, `metabolize.sh`, launchd `com.limen.heartbeat` | the tick (timer); connectivity gate (#224); autonomy mode | convenes officers each beat; voice-stamps |
 | **CFO — Vitals & Budget** | don't crash | `_diagnostics` sensors; VITALS executive ⛔; `usage-telemetry.py`; `autonomy-governor.py` | `kern.memorystatus_vm_pressure_level`, `vm_stat`, per-vendor usage, the beat | throttle dispatch ceiling; shed load (pause lanes / stop ollama); `logs/usage.json` |
-| **CISO — Identity·Authority·Integrity** | don't break / stop asking / don't self-corrupt | `creds-hydrate.py` + `~/.limen.env`; `~/.claude/settings.json` + hooks; signature/autoupdater governance | 1Password (`op://`), launchd login, Gatekeeper/TCC events, `codesign --verify` | hydrated env → all tools; auto-approved permissions; pinned/verified binaries; drift alerts |
+| **CISO — Identity·Authority·Integrity** | don't break / stop asking / don't self-corrupt | `creds-hydrate.py` + `~/.limen.env`; `~/.claude/settings.json` + hooks; stable-host signature/update governance | 1Password (`op://`), launchd login, Gatekeeper/TCC events, `codesign --verify` | hydrated env → all tools; auto-approved permissions; fixed responsibility host; auto-updating managed binaries; drift alerts |
 | **CKO — Continuity & Memory** ⚠ | don't forget | `session-meta`; corpus feed `claude_projects.py`; `~/.claude/projects` transcripts; `memory/` | session `*.jsonl`, `/compact` summaries, subagent outputs, queued/interrupt prompts | reconstructed thread on degenerate handoff (`CONTINUITY_MIN_SUMMARY_CHARS`); corpus atoms; memory writes |
 | **CTO — Architecture & Genome** | every name/path/threshold = a param | `governance/parameters.yaml`; `nomenclator.py`; `registry/organs.yaml`; no-hardcodes gate ⛔ | declared params; name-gate checks; PR CI | one config surface; build-fail on hardcode/bad-name; the legible registry |
 | **COO — Operations / Arms** | get the work done | `dispatch.py` lanes; vendor fleet; `merge-policy.sh` | `tasks.yaml` queue; PR queue; vendor reset cadences | PRs, merges, deploys, shipped product |
@@ -80,6 +80,6 @@ These never delegate to an officer — they stay with the operator:
 
 - **CFO** had the diagnosis (FIND-005) but no executive → **08:47 kernel panic**.
 - **CKO** had no auto-reconstruction → **~13:42 the session thread was lost** (200-char stub).
-- **CISO** had the lever (`DISABLE_AUTOUPDATER`) but didn't govern it → **the corrupt-app dialog**.
+- **CISO** treated updater suppression as the lever instead of stabilizing responsibility identity → **the corrupt-app/TCC dialog loop**.
 
 Three officers with a mandate and no hand. Building #1 gives the autonomic officers their hands.

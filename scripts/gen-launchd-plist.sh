@@ -32,6 +32,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # plist whose paths drift from the committed copy.
 ROOT="$(cd "$(resolve "${LIMEN_ROOT:-$SCRIPT_DIR/..}")" && pwd -P)"
 HOME_DIR="${HOME:?HOME is unset}"
+AGENT_HOST="${LIMEN_AGENT_HOST_BIN:-${DOMUS_AGENT_HOST_BIN:-$HOME_DIR/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}}"
+case "$AGENT_HOST" in
+  \~) AGENT_HOST="$HOME_DIR" ;;
+  \~/*) AGENT_HOST="$HOME_DIR/${AGENT_HOST#\~/}" ;;
+esac
+AGENT_HOST="$(resolve "$AGENT_HOST")"
 WORKDIR="${LIMEN_WORKDIR:-$(cd "$ROOT/.." && pwd)}"        # parent of the repo
 SCRATCH_ROOT="${LIMEN_SCRATCH_ROOT:-/Volumes/Scratch}"
 if [ -n "${LIMEN_WORKTREES:-}" ]; then
@@ -65,6 +71,7 @@ VIGILIA="${LIMEN_VIGILIA:-1}"
 
 render() {
   sed -e "s|@@HOME@@|$HOME_DIR|g" \
+      -e "s|@@DOMUS_AGENT_HOST_BIN@@|$AGENT_HOST|g" \
       -e "s|@@LIMEN_ROOT@@|$ROOT|g" \
       -e "s|@@LIMEN_WORKDIR@@|$WORKDIR|g" \
       -e "s|@@LIMEN_WORKTREES@@|$WORKTREES|g" \

@@ -465,21 +465,52 @@ parameters:
     owner: continuity
     note: "File-count bound for the harness-root probe, newest first. Caps peak RSS on the beta machine's logged-jetsam host."
 
-  # --- INTEGRITY: govern the autoupdater lever (build order #1) ------------------
+  # --- INTEGRITY: keep updates enabled beneath the stable responsibility host ----
   INTEGRITY_AUTOUPDATER:
-    default: "disabled"        # the institution's POLICY: keep the autoupdater off
+    default: "enabled"
     env: LIMEN_INTEGRITY_AUTOUPDATER
     self_update: none
     owner: integrity
-    note: "Intended policy state ('disabled'|'enabled'). The MECHANISM is the DISABLE_AUTOUPDATER=1 env lever, checked separately as 'actual' (don't conflate the two value spaces). Version-path churn is the root of the corrupt-app dialog + TCC re-prompts."
+    note: "Managed-tool updates stay enabled. Version-path churn is contained by DomusAgentHost.app; DISABLE_AUTOUPDATER, DISABLE_UPDATES, and HOMEBREW_NO_AUTO_UPDATE are drift, never remediation."
   INTEGRITY_VERIFY_TARGETS:
     default:
+      - "~/Applications/DomusAgentHost.app"
       - "/Applications/Claude.app"
       - "~/.local/bin/claude"
     env: LIMEN_INTEGRITY_TARGETS
     self_update: none
     owner: integrity
-    note: "codesign --verify on the heartbeat; alert on signature/version drift."
+    note: "codesign --verify on the heartbeat; includes the fixed Domus host and alerts on signature drift without pinning rotating vendor executables."
+  LIMEN_AGENT_HOST_BIN:
+    default: "~/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
+    env: LIMEN_AGENT_HOST_BIN
+    self_update: none
+    owner: integrity
+    note: "Explicit stable-host executable override for local Limen dispatch. The Darwin lane expands user-relative paths and fails closed unless status --json proves the fixed bundle, stable path, signature, and signing requirement."
+  LIMEN_TCC_DB:
+    default: "~/Library/Application Support/com.apple.TCC/TCC.db"
+    env: LIMEN_TCC_DB
+    self_update: none
+    owner: integrity
+    note: "Read-only TCC database source for tcc-identity-audit. The default is the current user's supported database location; tests may point at an isolated fixture."
+  LIMEN_TCC_HOST_DEPLOYED_AT:
+    default: ""
+    env: LIMEN_TCC_HOST_DEPLOYED_AT
+    self_update: none
+    owner: integrity
+    note: "Optional integer deployment epoch for deterministic audit fixtures. Production leaves it empty and derives the containment boundary from DomusAgentHost.app birth time."
+  LIMEN_TCC_HOST_STATUS_JSON:
+    default: ""
+    env: LIMEN_TCC_HOST_STATUS_JSON
+    self_update: none
+    owner: integrity
+    note: "Test-only stable-host status fixture. Production leaves it empty and invokes the installed native host's Security-backed status interface."
+  LIMEN_TCC_LSREGISTER_DUMP:
+    default: ""
+    env: LIMEN_TCC_LSREGISTER_DUMP
+    self_update: none
+    owner: integrity
+    note: "Test-only LaunchServices inventory fixture. Production leaves it empty and performs the bounded read-only lsregister probe."
 
   # --- EVOCATOR: the summoner (keep canonical truths present in every channel) ---
   LIMEN_EVOCATOR:
@@ -3877,7 +3908,7 @@ parameters:
     env: LIMEN_CASK_DUPLICATE_HEAL
     self_update: none
     owner: tabularius
-    note: "The effector for the recurring Gatekeeper 'claude is an app downloaded from the Internet' dialog (scripts/heal-claude-cask.sh, sensed by dialogs-silenced.sh class 4, beat-wired on the heartbeat hygiene cadence). A duplicate Homebrew *cask* install of claude-code is re-quarantined on every brew upgrade (casks stamp com.apple.quarantine), silently defeating DISABLE_AUTOUPDATER (which only stops the native updater). Dry-run by default. When 1, the beat runs 'brew uninstall --cask claude-code' ONLY when the cask is present and verifies the native ~/.local/bin/claude (the one sanctioned install) survives; it never touches the native install. macOS-only; fails OPEN off-darwin or without brew. Arm once in ~/.limen.env. Set 0 to silence."
+    note: "The effector for the recurring Gatekeeper 'claude is an app downloaded from the Internet' dialog (scripts/heal-claude-cask.sh, sensed by dialogs-silenced.sh class 4, beat-wired on the heartbeat hygiene cadence). A duplicate Homebrew *cask* install of claude-code is re-quarantined on every brew upgrade (casks stamp com.apple.quarantine), creating an independent rotating Gatekeeper principal beside the sanctioned native updater-managed install. Dry-run by default. When 1, the beat runs 'brew uninstall --cask claude-code' ONLY when the cask is present and verifies the native ~/.local/bin/claude (the one sanctioned install) survives; it never touches the native install. macOS-only; fails OPEN off-darwin or without brew. Arm once in ~/.limen.env. Set 0 to silence."
 
   # --- dialogs-silenced sensor (0g8b): the agent-curable dialog estate, self-healed + verified on the beat ---
   LIMEN_DIALOGS_SILENCED:
