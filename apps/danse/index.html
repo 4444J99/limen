@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>danse</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #0e0e10; overflow: hidden; }
+  body { font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: #b9b9c4; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+
+  #veil {
+    position: fixed; inset: 0; display: grid; place-content: center; gap: 14px;
+    background: #0e0e10; text-align: center; transition: opacity .8s ease;
+  }
+  #veil.gone { opacity: 0; pointer-events: none; }
+  #veil h1 { font: 300 34px/1 ui-serif, Georgia, serif; letter-spacing: .32em; color: #e8e8ee; }
+  #veil p { color: #6a6a78; letter-spacing: .12em; }
+  #bar { width: 260px; height: 1px; background: #26262e; margin: 0 auto; }
+  #bar i { display: block; height: 100%; width: 0; background: #cfcfe0; transition: width .2s; }
+
+  #hud {
+    position: fixed; left: 14px; bottom: 12px; display: flex; gap: 16px; align-items: baseline;
+    color: #55555f; letter-spacing: .06em; user-select: none;
+  }
+  #hud b { font-weight: 400; color: #9a9aa8; }
+  #hud kbd { color: #3c3c46; }
+  #hud.hide { opacity: 0; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="veil">
+  <h1>danse</h1>
+  <p>20 june 2017 &middot; 162 photographs</p>
+  <div id="bar"><i></i></div>
+</div>
+
+<div id="hud">
+  <span><b id="seed">—</b> seed</span>
+  <span><b id="clock">0:00</b></span>
+  <span><b id="cut">—</b></span>
+  <span><b id="planes">0</b> planes</span>
+  <span><kbd>space</kbd> hold &middot; <kbd>n</kbd> new seed &middot; <kbd>m</kbd> matte &middot; <kbd>h</kbd> hud</span>
+</div>
+
+<script type="module">
+import * as Corpus from "./engine/corpus.js";
+import { cells, cutAt } from "./engine/grammar.js";
+import { state } from "./engine/clock.js";
+import { Renderer } from "./engine/renderer.js";
+
+// ── address bar is the state. #s=<seed>&t=<seconds> returns exactly this moment.
+const params = new URLSearchParams(location.hash.slice(1));
+let seed = Number(params.get("s")) || 20170620;
+let t0 = Number(params.get("t")) || 0;
+
+const canvas = document.getElementById("stage");
+const el = (id) => document.getElementById(id);
+
+const corpus = await Corpus.load();
+const renderer = new Renderer(canvas, corpus);
+await corpus.prime(renderer.gl, {
+  onProgress: (p) => { el("bar").firstElementChild.style.width = `${p * 100}%`; },
+});
+el("veil").classList.add("gone");
+
+let held = false;
+let matteK = 0;
+let t = t0;
+let last = performance.now();
+
+// The grammar is rebuilt a few times a second, not every frame: casting cells
+// walks 162 index entries per cell, and at 60fps that is work nobody can see.
+// Geometry and camera still move every frame — only the CHOICE is quantised.
+let cast = null;
+let castAt = -1e9;
+const RECAST = 1 / 8;
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  if (!held) t += dt;
+
+  const s = state(seed, t);
+  if (t - castAt >= RECAST || cast === null) {
+    cast = cells(corpus, seed, t, { reveal: s.reveal });
+    castAt = t;
+  }
+  const stats = renderer.draw(cast, s, { seed, matteK });
+
+  el("clock").textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  el("seed").textContent = seed;
+  el("cut").textContent = cutAt(seed, t, s.reveal) + (s.reveal < 0.02 ? " · 2017" : "");
+  el("planes").textContent = stats.missing ? `${stats.planes}−${stats.missing}` : stats.planes;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// Keep the address bar honest without thrashing history.
+setInterval(() => {
+  history.replaceState(null, "", `#s=${seed}&t=${t.toFixed(1)}`);
+}, 1000);
+
+addEventListener("keydown", (e) => {
+  if (e.key === " ") { held = !held; e.preventDefault(); }
+  if (e.key === "n") { seed = (Math.random() * 2 ** 31) | 0; t = 0; cast = null; }
+  if (e.key === "m") { matteK = matteK > 0 ? 0 : 1; }
+  if (e.key === "h") { el("hud").classList.toggle("hide"); }
+});
+
+// For the probe, the film renderer, and anyone reading the console.
+window.danse = { corpus, renderer, state, cells, get t() { return t; }, set t(v) { t = v; cast = null; }, get seed() { return seed; } };
+</script>
+</body>
+</html>
