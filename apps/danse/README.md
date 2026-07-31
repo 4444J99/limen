@@ -29,6 +29,11 @@ Five faces, one engine:
 | **The visitor** | Their own river, minted on arrival, kept, and shareable. |
 | **The room** | The same engine driving real projectors onto real hanging scrim. |
 
+### Final Evolution
+
+1. **User Interaction**: Direct interaction (via MediaPipe pose querying, body input, and visitor modulation in the space).
+2. **Spatial Sound Triggering**: Sound derived from the room/space that each generation of panel/slice triggers between the background's XY axes as material assembles and moves.
+
 ## Arriving is the seed
 
 The piece has no duration and no end. It traverses a declared **phrase** forever, and each

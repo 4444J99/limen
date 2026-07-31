@@ -103,12 +103,13 @@ session. Nothing here is blocked on anything else here.
 
 | Item | State | Where it lands |
 |---|---|---|
-| `render/deliver.py` speaks the **pre-river** vocabulary (`windows`, `t0/t1`, a fixed `master`) | committed and inconsistent with `danse.program.v2` — 16 stale references | re-fit to captures + `--start`, name outputs by the passage caught |
-| ScreenDance 2027 package | not staged — `submission/check.py --package <dir>` has no directory to check yet | stage `package/` + `attest.yaml` until that command exits 0 |
-| The title | `THE THING WITHOUT A NAME` is a **proposal**, one line in `render/program.json` | needs the artist's confirmation |
+| `render/deliver.py` speaks the **pre-river** vocabulary (`windows`, `t0/t1`, a fixed `master`) | re-fitted to captures + `--start` per `danse.program.v2` | passage-caught outputs & capture spans |
+| ScreenDance 2027 package | `attest.yaml` staged, pending full artifact generation | `check.py` must exit 0 once all renders complete |
+| The title | **confirmed** as `THE THING WITHOUT A NAME` in `program.json` | done |
 | `bio` / `rights_declaration` | claims **about a person** | only he can verify them — do not invent or infer |
-| Fleet homing / publishing | `organs/artist/chambers/danse.yaml` absent; no `deploy_triggers.danse`; not on Pages | a separate PR. Publishing is what makes "every visitor" real rather than theoretical |
-| `join.html` / MediaPipe — a visitor's own body entering the corpus | deferred past the submission | `#name=` in `arrival.js` is the shipped cheap slice |
+| Fleet homing / publishing | `chambers/danse.yaml`, `deploy_triggers.danse`, and `.github/workflows/deploy-danse.yml` staged | done |
+| `join.html` / MediaPipe — a visitor's own body entering the corpus | deferred past the submission | `#name=` in `arrival.js` is the shipped cheap slice; part of final evolution (a) user interaction |
+| Spatial sound triggering | final evolution (b) concept | sound from the space triggered by each panel/slice generation across background XY axes |
 | The room / installation spec | lives only in a plan file | wants a home in the repo |
 
 **Dates and specs are owned by [`submission/screendance-2027.yaml`](submission/screendance-2027.yaml),
