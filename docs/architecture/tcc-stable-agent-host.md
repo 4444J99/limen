@@ -38,10 +38,14 @@ status/inventories are test-only and rejected by `--strict`.
 
 `status --json` uses macOS Security APIs and reports the installed bundle path,
 bundle identifier, signature validity, designated requirement, CDHash, and
-supervision policy. A host replacement is not an ordinary update: the Domus
-installer refuses to replace the fixed ad-hoc identity unless a persistent
-signing identity is explicitly supplied for a deliberate migration. Routing
-configuration may update without replacing the host.
+supervision policy. Strict audit compares that requirement with the
+installer-owned sibling receipt
+`~/Applications/.DomusAgentHost.designated-requirement`; a newly signed
+replacement cannot certify itself by merely occupying the stable path. A host
+replacement is not an ordinary update: the Domus installer refuses to replace
+the fixed ad-hoc identity unless a persistent signing identity is explicitly
+supplied for a deliberate migration, and updates the receipt transactionally
+with rollback. Routing configuration may update without replacing the host.
 
 `tcc-identity-audit` opens the user TCC database read-only and emits schema
 `limen.tcc_identity_audit.v1`. Relevant clients are classified as:

@@ -124,6 +124,11 @@ def _stable_application(env: Mapping[str, str]) -> Path:
     )
 
 
+def _deployment_identity_receipt(application: Path) -> Path:
+    name = application.name.removesuffix(".app")
+    return application.parent / f".{name}.designated-requirement"
+
+
 def _limen_runtime_roots(env: Mapping[str, str]) -> tuple[Path, ...]:
     home = _home(env)
     live_root = _expand_user_path(
@@ -395,6 +400,23 @@ def _host_status(
     if payload.get("schema") != HOST_SCHEMA:
         raise AuditError("stable-host status schema is incompatible")
     contract_failures: list[str] = []
+    if strict:
+        receipt = _deployment_identity_receipt(_stable_application(env))
+        payload["deployment_identity_receipt"] = str(receipt)
+        try:
+            receipt_lines = receipt.read_text(encoding="utf-8").splitlines()
+        except OSError as exc:
+            receipt_lines = []
+            payload["deployment_identity_error"] = str(exc)
+        if (
+            len(receipt_lines) != 1
+            or not receipt_lines[0].strip()
+            or receipt_lines[0].strip() != str(payload.get("designated_requirement", "")).strip()
+        ):
+            contract_failures.append("deployment_identity")
+            payload["deployment_identity_matches"] = False
+        else:
+            payload["deployment_identity_matches"] = True
     if payload.get("bundle_id") != HOST_BUNDLE_ID:
         contract_failures.append("bundle_id")
     if payload.get("stable_path") is not True:

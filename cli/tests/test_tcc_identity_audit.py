@@ -488,6 +488,42 @@ def test_strict_audit_rejects_fixture_backed_host_status(tmp_path: Path):
     assert "stable_host_invalid" in payload["failures"]
 
 
+def test_strict_host_contract_binds_deployment_identity_receipt(tmp_path: Path):
+    home = tmp_path / "home"
+    application = home / "Applications/DomusAgentHost.app"
+    receipt = home / "Applications/.DomusAgentHost.designated-requirement"
+    receipt.parent.mkdir(parents=True)
+    requirement = 'cdhash H"' + "a" * 40 + '"'
+    receipt.write_text(requirement + "\n")
+    payload = _host_status_json()
+
+    def runner(command, **kwargs):
+        assert command == [
+            str(application / "Contents/MacOS/DomusAgentHost"),
+            "status",
+            "--json",
+        ]
+        return subprocess.CompletedProcess(command, 0, payload, "")
+
+    matched = AUDIT._host_status(
+        {"HOME": str(home)},
+        runner,
+        strict=True,
+    )
+    receipt.write_text('cdhash H"' + "b" * 40 + '"\n')
+    replaced = AUDIT._host_status(
+        {"HOME": str(home)},
+        runner,
+        strict=True,
+    )
+
+    assert matched["ok"] is True
+    assert matched["deployment_identity_matches"] is True
+    assert replaced["ok"] is False
+    assert replaced["deployment_identity_matches"] is False
+    assert "deployment_identity" in replaced["contract_failures"]
+
+
 def test_strict_audit_requires_stable_host_tcc_identity(tmp_path: Path):
     env = _environment(tmp_path, [])
 
