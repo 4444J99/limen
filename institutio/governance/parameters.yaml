@@ -4076,6 +4076,13 @@ parameters:
     owner: governance
     note: "A pause withdraws the fleet's authority to ACT; it was never a decision to stop LOOKING. Before this, heartbeat-loop.sh's `paused` branch `continue`d ~80 lines above the monitoring block, so arming any marker silently switched off drift monitors, the scheduled sensor pass, and the inbox sweep. Measured cost: an agent-armed marker on 2026-07-27 (no authorization, no provenance, no TTL, gitignored) blinded the fleet for four days — the live checkout drifted to 27 commits behind origin/main while check-live-checkout.py sat at exit 1 with nothing asking it, and the mail sweep that would have reported an already-answered thread never ran, which is how a redundant reply reached a live recruiter on 2026-07-31. The 2026-07-21 hoist fixed this exact shape one split down (observe), which is why it read as already-fixed. run_monitoring() is called from both the paused branch and the live body; the paused call is additionally gated on net_up() because every sensor in it talks to a remote. Set 0 only to restore the old blind-pause behaviour."
 
+  LIMEN_PAUSED_SYNC:
+    default: "1"               # ON — a paused beat still re-converges its checkout to the release; 0 = freeze code for this pause
+    env: LIMEN_PAUSED_SYNC
+    self_update: none
+    owner: governance
+    note: "The companion to LIMEN_PAUSED_SENSING, one category over: a pause withdraws the authority to act ON THE WORLD (dispatch, spend, send, merge), not the machine's ability to keep its own body coherent. sync-release.sh — the rung that fast-forwards the live checkout to origin/main — sat below the paused `continue`, which created a deadlock that ate its own tail: the 2026-07-21 maintenance blocker's resume_predicate requires 'live root exact origin/main and clean', and the ONLY rung producing that state ran solely when NOT paused, so the halt could never self-clear. Measured 2026-07-31: a hand-run sync reached exact-origin at 12:04 and twenty-five minutes later check-live-checkout.py was back at exit 1, naming sync-release.sh as its owner. Safe by that script's own contract — fast-forward ONLY (never force/reset/merge-commit), fails open always, never exits or re-execs the daemon, and untracked runtime state (including the governor gate holding the pause) is untouched because a ff only advances committed history. A paused fleet on stale code is strictly worse: that is the state which ran a broken mail organ 27 commits behind for four days. Set 0 when a pause was armed BECAUSE trunk is bad and code must be frozen for its duration."
+
   LIMEN_SENSOR_CANARY:
     default: "1"
     env: LIMEN_SENSOR_CANARY
