@@ -1508,14 +1508,22 @@ def test_stable_agent_host_does_not_nest_or_affect_non_macos(
     monkeypatch,
 ):
     command = ["/vendor/python-release-omega", "task.py"]
-    assert (
-        D._stable_agent_host_command(
-            command,
-            {"DOMUS_AGENT_HOST_ACTIVE": "1"},
-            platform_name="darwin",
+    read_fd, write_fd = os.pipe()
+    try:
+        assert (
+            D._stable_agent_host_command(
+                command,
+                {
+                    "DOMUS_AGENT_HOST_ACTIVE": "1",
+                    "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+                },
+                platform_name="darwin",
+            )
+            == command
         )
-        == command
-    )
+    finally:
+        os.close(read_fd)
+        os.close(write_fd)
     monkeypatch.delenv("DOMUS_AGENT_HOST_ACTIVE", raising=False)
     assert (
         D._stable_agent_host_command(
@@ -1525,6 +1533,18 @@ def test_stable_agent_host_does_not_nest_or_affect_non_macos(
         )
         == command
     )
+
+
+def test_stable_agent_host_rejects_marker_without_live_lifetime_descriptor():
+    with pytest.raises(
+        D.StableAgentHostError,
+        match="marker has no lifetime descriptor",
+    ):
+        D._stable_agent_host_command(
+            ["claude"],
+            {"DOMUS_AGENT_HOST_ACTIVE": "1"},
+            platform_name="darwin",
+        )
 
 
 def test_stable_agent_host_fails_closed_when_macos_host_is_missing(

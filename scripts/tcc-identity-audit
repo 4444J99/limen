@@ -22,7 +22,15 @@ fi
 if [ "$(uname -s)" != "Darwin" ]; then
   exec "$python" "$implementation" "$@"
 fi
-if [ "${DOMUS_AGENT_HOST_ACTIVE:-}" = "1" ]; then
+host_lifetime_fd="${DOMUS_AGENT_HOST_LIFETIME_FD:-}"
+host_active=0
+case "$host_lifetime_fd" in
+  "" | *[!0-9]*) ;;
+  *)
+    [ -e "/dev/fd/$host_lifetime_fd" ] && host_active=1
+    ;;
+esac
+if [ "${DOMUS_AGENT_HOST_ACTIVE:-}" = "1" ] && [ "$host_active" -eq 1 ]; then
   exec "$python" "$implementation" "$@"
 fi
 host="${DOMUS_AGENT_HOST_BIN:-$HOME/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}"

@@ -240,6 +240,55 @@ def test_wrapper_skips_missing_python_only_when_not_strict(tmp_path: Path):
     assert "Python 3 is unavailable" in strict.stderr
 
 
+def test_wrapper_requires_live_host_lifetime_descriptor(tmp_path: Path):
+    dirname = shutil.which("dirname")
+    assert dirname is not None
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "dirname").symlink_to(dirname)
+    (bin_dir / "uname").write_text("#!/bin/sh\nprintf Darwin\n")
+    (bin_dir / "python3").write_text("#!/bin/sh\nprintf python\n")
+    host = tmp_path / "DomusAgentHost"
+    host.write_text("#!/bin/sh\nprintf host\n")
+    for executable in (bin_dir / "uname", bin_dir / "python3", host):
+        executable.chmod(0o755)
+    env = {
+        "DOMUS_AGENT_HOST_ACTIVE": "1",
+        "DOMUS_AGENT_HOST_BIN": str(host),
+        "HOME": str(tmp_path),
+        "PATH": str(bin_dir),
+    }
+
+    stale = subprocess.run(
+        ["/bin/sh", str(WRAPPER)],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+    read_fd, write_fd = os.pipe()
+    try:
+        live = subprocess.run(
+            ["/bin/sh", str(WRAPPER)],
+            capture_output=True,
+            check=False,
+            env={
+                **env,
+                "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+            },
+            pass_fds=(write_fd,),
+            text=True,
+        )
+    finally:
+        os.close(read_fd)
+        os.close(write_fd)
+
+    assert stale.returncode == 0
+    assert stale.stdout == "host"
+    assert live.returncode == 0
+    assert live.stdout == "python"
+
+
 def test_update_disabling_controls_fail_the_same_strict_predicate(tmp_path: Path):
     env = _environment(tmp_path, [])
     env["DISABLE_UPDATES"] = "1"
@@ -273,6 +322,23 @@ def test_stable_host_contract_rejects_non_object_json(tmp_path: Path):
     assert payload["stable_host"] == {
         "ok": False,
         "error": "stable-host status fixture is malformed",
+    }
+    assert "stable_host_invalid" in payload["failures"]
+
+
+def test_strict_audit_rejects_fixture_backed_host_status(tmp_path: Path):
+    env = _environment(tmp_path, [])
+
+    payload = AUDIT.audit(
+        env,
+        platform_name="Darwin",
+        strict=True,
+    )
+
+    assert payload["ok"] is False
+    assert payload["stable_host"] == {
+        "ok": False,
+        "error": "strict audit rejects fixture-backed stable-host status",
     }
     assert "stable_host_invalid" in payload["failures"]
 

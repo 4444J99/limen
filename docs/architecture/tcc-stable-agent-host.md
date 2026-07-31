@@ -26,6 +26,13 @@ domus-agent-host status --json
 tcc-identity-audit [--json] [--strict]
 ```
 
+Every committed `com.limen.*` control-plane LaunchAgent, including the
+generated heartbeat, enters `DomusAgentHost.app` before Bash, Python, dispatch,
+or provider work. An inherited `DOMUS_AGENT_HOST_ACTIVE=1` marker is trusted
+only while its native lifetime descriptor remains open. Strict audits always
+query the installed host live; fixture-backed status is test-only and rejected
+by `--strict`.
+
 `status --json` uses macOS Security APIs and reports the installed bundle path,
 bundle identifier, signature validity, designated requirement, CDHash, and
 supervision policy. A host replacement is not an ordinary update: the Domus

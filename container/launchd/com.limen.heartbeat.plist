@@ -11,6 +11,9 @@
     <string>com.limen.heartbeat</string>
     <key>ProgramArguments</key>
     <array>
+        <string>/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost</string>
+        <string>run</string>
+        <string>--</string>
         <string>/bin/bash</string>
         <string>/Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh</string>
     </array>

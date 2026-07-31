@@ -358,15 +358,9 @@ def _run_capture(
     pipes so the timeout actually fires. Still raises TimeoutExpired so callers' handlers run."""
     import signal
 
-    lifetime_fds: tuple[int, ...] = ()
-    lifetime_raw = (os.environ if env is None else env).get("DOMUS_AGENT_HOST_LIFETIME_FD")
-    if lifetime_raw:
-        try:
-            lifetime_fd = int(lifetime_raw)
-            os.fstat(lifetime_fd)
-        except (OSError, TypeError, ValueError) as exc:
-            raise StableAgentHostError("Domus agent host lifetime descriptor is invalid") from exc
-        lifetime_fds = (lifetime_fd,)
+    lifetime_fds = _stable_agent_host_lifetime_fds(
+        os.environ if env is None else env,
+    )
 
     proc = subprocess.Popen(
         cmd,
@@ -2519,6 +2513,24 @@ class StableAgentHostError(RuntimeError):
     """A macOS local lane cannot enter the fixed responsibility identity."""
 
 
+def _stable_agent_host_lifetime_fds(
+    env: Mapping[str, str],
+    *,
+    required: bool = False,
+) -> tuple[int, ...]:
+    lifetime_raw = env.get("DOMUS_AGENT_HOST_LIFETIME_FD")
+    if not lifetime_raw:
+        if required:
+            raise StableAgentHostError("Domus agent host marker has no lifetime descriptor")
+        return ()
+    try:
+        lifetime_fd = int(lifetime_raw)
+        os.fstat(lifetime_fd)
+    except (OSError, TypeError, ValueError) as exc:
+        raise StableAgentHostError("Domus agent host lifetime descriptor is invalid") from exc
+    return (lifetime_fd,)
+
+
 def _stable_agent_host_command(
     command: list[str],
     env: Mapping[str, str] | None = None,
@@ -2533,10 +2545,11 @@ def _stable_agent_host_command(
     """
 
     values = os.environ if env is None else env
-    if os.environ.get("DOMUS_AGENT_HOST_ACTIVE") == "1" or values.get("DOMUS_AGENT_HOST_ACTIVE") == "1":
-        return list(command)
     observed_platform = sys.platform if platform_name is None else platform_name
     if observed_platform != "darwin":
+        return list(command)
+    if values.get("DOMUS_AGENT_HOST_ACTIVE") == "1":
+        _stable_agent_host_lifetime_fds(values, required=True)
         return list(command)
     configured = values.get("LIMEN_AGENT_HOST_BIN") or values.get("DOMUS_AGENT_HOST_BIN")
     host = configured or shutil.which("domus-agent-host", path=values.get("PATH"))

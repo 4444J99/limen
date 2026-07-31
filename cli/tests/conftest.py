@@ -25,9 +25,16 @@ def _restore_os_environ(tmp_path):
     # Test processes model the already-supervised runtime. Dedicated stable-host
     # tests pass explicit environment mappings to exercise first-entry behavior;
     # the rest of the suite must not depend on a machine-global app installation.
+    read_fd, write_fd = os.pipe()
     os.environ["DOMUS_AGENT_HOST_ACTIVE"] = "1"
+    os.environ["DOMUS_AGENT_HOST_LIFETIME_FD"] = str(write_fd)
     try:
         yield
     finally:
+        for descriptor in (read_fd, write_fd):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
         os.environ.clear()
         os.environ.update(saved)

@@ -349,8 +349,15 @@ def _disabled_updates(env: Mapping[str, str]) -> list[dict[str, str]]:
     return [unique[key] for key in sorted(unique)]
 
 
-def _host_status(env: Mapping[str, str], runner: Runner) -> dict[str, Any]:
+def _host_status(
+    env: Mapping[str, str],
+    runner: Runner,
+    *,
+    strict: bool,
+) -> dict[str, Any]:
     if fixture := env.get("LIMEN_TCC_HOST_STATUS_JSON"):
+        if strict:
+            raise AuditError("strict audit rejects fixture-backed stable-host status")
         try:
             payload = json.loads(Path(fixture).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -462,6 +469,7 @@ def audit(
     *,
     platform_name: str | None = None,
     runner: Runner = subprocess.run,
+    strict: bool = False,
 ) -> dict[str, Any]:
     values = dict(os.environ if env is None else env)
     observed_platform = platform_name or platform.system()
@@ -497,7 +505,7 @@ def audit(
         host = {"ok": False, "error": application_error}
     else:
         try:
-            host = _host_status(values, runner)
+            host = _host_status(values, runner, strict=strict)
         except AuditError as exc:
             host = {"ok": False, "error": str(exc)}
     if not host.get("ok"):
@@ -587,7 +595,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     env = dict(os.environ)
     if args.db:
         env["LIMEN_TCC_DB"] = args.db
-    payload = audit(env)
+    payload = audit(env, strict=args.strict)
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
