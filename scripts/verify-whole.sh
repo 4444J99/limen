@@ -136,6 +136,16 @@ bash scripts/tests/worktree-commit-guard.test.sh
 step "Verify the pytest-scope-guard hook (full-suite pytest deny matrix, hermetic fixture)"
 bash scripts/tests/pytest-scope-guard.test.sh
 
+# The outbound estate. These two rungs shipped registered to gates.yaml as `scoped: false` with no
+# ci_job and were named HERE by nothing, so neither ran anywhere — the deny matrix proving the
+# outbound gate denies had never once executed. check-runner-coverage.py class F is the predicate
+# that now makes that state impossible to reach again.
+step "Verify the outbound-preflight guard (send/comment deny matrix, hermetic fixture registry)"
+bash scripts/tests/outbound-preflight-guard.test.sh
+
+step "Verify the github.comment ground-truth predicate (exit contract: SKIP still denies)"
+bash scripts/tests/preflight-thread-state.test.sh
+
 step "Verify the ask-gate predicate (intake asks are predicate-shaped, bounded, owned)"
 bash scripts/tests/ask-gate.test.sh
 # Fixture rung only (--task-file cases — deterministic); the live intake-window audit

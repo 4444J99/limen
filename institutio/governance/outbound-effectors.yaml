@@ -87,7 +87,16 @@ effectors:
       - '\bgh\s+issue\s+comment\b'
     target:
       kind: gh_ref
-      pattern: '\bgh\s+(?:pr|issue)\s+comment\s+(?:--repo\s+\S+\s+)?([0-9]+)'
+      # The number, and ONLY when no repo flag is in play. `{target}` is a single string
+      # substitution and this can capture one group, so a repo cannot be folded into the target —
+      # which means a naive `(?:--repo\s+\S+\s+)?([0-9]+)` would check the AMBIENT repo's #N while
+      # the command addresses another repo's #N. Silently checking the wrong thread is worse than
+      # refusing: the trailing lookahead rejects `gh pr comment 5 -R o/r`, and requiring digits
+      # immediately after `comment` rejects `gh pr comment --repo o/r 5`. Both then reach the
+      # guard's "matched but no extractable target" branch and are DENIED — the safe direction.
+      # `-R` is the form actually used in this estate (.github/workflows/pr-review-fanout.yml:38),
+      # so omitting the alias was not a hypothetical gap.
+      pattern: '\bgh\s+(?:pr|issue)\s+comment\s+([0-9]+)(?![^;&|]*(?:--repo\b|-R\b))'
     predicate: "python3 scripts/preflight-thread-state.py --number {target}"
     max_age_seconds: 900
     reason: >-
