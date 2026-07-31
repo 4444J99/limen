@@ -2064,6 +2064,10 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
     except FileNotFoundError:
         print(f"  dispatch command not found: {cmd[0]}")
         return False
+    except StableAgentHostError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+        return _blocked_result(reason)
     except subprocess.TimeoutExpired:
         print(f"  timed out: {task.id}")
         return False
@@ -2540,9 +2544,15 @@ def _stable_agent_host_command(
         host = str(
             Path(values.get("HOME", str(Path.home()))) / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
         )
-    if not Path(host).is_file() or not os.access(host, os.X_OK):
-        raise StableAgentHostError(f"stable Domus agent host is unavailable: {host}")
-    return [host, "run", "--", *command]
+    if host == "~":
+        host_path = Path(values.get("HOME", str(Path.home())))
+    elif host.startswith("~/"):
+        host_path = Path(values.get("HOME", str(Path.home()))) / host[2:]
+    else:
+        host_path = Path(host).expanduser()
+    if not host_path.is_file() or not os.access(host_path, os.X_OK):
+        raise StableAgentHostError(f"stable Domus agent host is unavailable: {host_path}")
+    return [str(host_path), "run", "--", *command]
 
 
 def _option_values(argv: list[str], *names: str) -> list[str]:
@@ -4450,6 +4460,10 @@ def _run_isolated_agent(
                     timeout=lane_timeout,
                     env=run_env,
                 )
+        except StableAgentHostError as exc:
+            reason = str(exc)
+            print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+            return _blocked_result(reason)
         except subprocess.TimeoutExpired:
             if agent == "opencode":
                 _record_opencode_outcome(
@@ -5026,6 +5040,13 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | Pla
         print(f"  BLOCKED {task.id}: {reason}")
         return False
     cmd = [binary, *agent_args, _build_prompt(task)]
+    if not dry_run:
+        try:
+            cmd = _stable_agent_host_command(cmd)
+        except StableAgentHostError as exc:
+            reason = str(exc)
+            print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+            return _blocked_result(reason)
     return _run_cmd(cmd, task, dry_run, cwd=str(cwd))
 
 

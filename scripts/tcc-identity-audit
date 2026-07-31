@@ -3,10 +3,21 @@ set -eu
 
 root="$(unset CDPATH; cd -- "$(dirname "$0")/.." && pwd -P)"
 implementation="$root/scripts/tcc-identity-audit.py"
+strict=0
+for argument in "$@"; do
+  if [ "$argument" = "--strict" ]; then
+    strict=1
+    break
+  fi
+done
 python="$(command -v python3 2>/dev/null || true)"
 if [ -z "$python" ]; then
-  printf 'tcc-identity-audit: Python 3 is unavailable\n' >&2
-  exit 69
+  if [ "$strict" -eq 1 ]; then
+    printf 'tcc-identity-audit: Python 3 is unavailable\n' >&2
+    exit 69
+  fi
+  printf 'tcc-identity-audit: SKIP: Python 3 is unavailable\n' >&2
+  exit 0
 fi
 if [ "$(uname -s)" != "Darwin" ]; then
   exec "$python" "$implementation" "$@"

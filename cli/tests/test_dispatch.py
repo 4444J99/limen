@@ -1544,6 +1544,112 @@ def test_stable_agent_host_fails_closed_when_macos_host_is_missing(
         )
 
 
+def test_stable_agent_host_expands_configured_home_path(
+    tmp_path: Path,
+    monkeypatch,
+):
+    monkeypatch.delenv("DOMUS_AGENT_HOST_ACTIVE", raising=False)
+    host = tmp_path / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
+    host.parent.mkdir(parents=True)
+    host.write_text("#!/bin/sh\n")
+    host.chmod(0o755)
+
+    wrapped = D._stable_agent_host_command(
+        ["claude"],
+        {
+            "HOME": str(tmp_path),
+            "LIMEN_AGENT_HOST_BIN": ("~/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"),
+        },
+        platform_name="darwin",
+    )
+
+    assert wrapped == [str(host), "run", "--", "claude"]
+
+
+def test_isolated_agent_turns_stale_host_lifetime_fd_into_blocked_result(
+    tmp_path: Path,
+    monkeypatch,
+):
+    task = Task(
+        id="STALE-HOST-FD",
+        title="stale host fd",
+        target_agent="claude",
+        created=date(2026, 7, 30),
+    )
+    monkeypatch.setattr(
+        D,
+        "_stable_agent_host_command",
+        lambda command, env: command,
+    )
+    monkeypatch.setattr(
+        D,
+        "_run_capture",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            D.StableAgentHostError("Domus agent host lifetime descriptor is invalid")
+        ),
+    )
+
+    result = D._run_isolated_agent(
+        "claude",
+        task,
+        tmp_path,
+        ["claude"],
+        3,
+    )
+
+    assert D._is_blocked_result(result)
+    assert "lifetime descriptor is invalid" in D._blocked_reason(result)
+
+
+def test_in_place_local_agent_runs_through_stable_host(
+    tmp_path: Path,
+    monkeypatch,
+):
+    task = Task(
+        id="IN-PLACE-HOST",
+        title="in-place host",
+        repo="organvm/limen",
+        target_agent="claude",
+        created=date(2026, 7, 30),
+    )
+    observed: dict[str, object] = {}
+    monkeypatch.setenv("LIMEN_ISOLATION", "off")
+    monkeypatch.setattr(D, "agent_can_run_task", lambda agent, task: True)
+    monkeypatch.setattr(D, "_agent_argv", lambda agent, task: ["-p"])
+    monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: "/vendor/claude")
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda task: tmp_path)
+    monkeypatch.setattr(D, "_workstream_packet_for", lambda task: None)
+    monkeypatch.setattr(D, "_build_prompt", lambda task: "task prompt")
+
+    def host_command(command, env=None, **kwargs):
+        observed["unwrapped"] = command
+        return ["/stable/host", "run", "--", *command]
+
+    def run_cmd(command, task, dry_run, cwd=None):
+        observed["command"] = command
+        observed["cwd"] = cwd
+        return True
+
+    monkeypatch.setattr(D, "_stable_agent_host_command", host_command)
+    monkeypatch.setattr(D, "_run_cmd", run_cmd)
+
+    assert D._call_local_agent("claude", task, dry_run=False) is True
+    assert observed["unwrapped"] == [
+        "/vendor/claude",
+        "-p",
+        "task prompt",
+    ]
+    assert observed["command"] == [
+        "/stable/host",
+        "run",
+        "--",
+        "/vendor/claude",
+        "-p",
+        "task prompt",
+    ]
+    assert observed["cwd"] == str(tmp_path)
+
+
 def test_dispatch_numeric_env_knobs_fail_open_when_malformed(tmp_path: Path, monkeypatch) -> None:
     import datetime
     import socket

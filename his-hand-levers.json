@@ -246,8 +246,9 @@
       "source_task": "Auto-Updates Without TCC Permission Sprawl · docs/architecture/tcc-stable-agent-host.md",
       "gate": "macOS System Settings authentication/consent is human-owned; the agent may prepare and verify the exact inventory but may not grant privacy access or remove entries",
       "steps": [
-        "Run `tcc-identity-audit --json --strict`; proceed only when automatic updates are enabled, DomusAgentHost is validly signed, and versioned_leak is zero",
-        "Trigger the harmless protected-folder acceptance fixture through DomusAgentHost, then grant only its requested categories to Domus Agent Host in System Settings -> Privacy & Security",
+        "Install/apply DomusAgentHost and verify `domus-agent-host status --json` without opening TCC",
+        "Trigger the harmless protected-folder acceptance fixture through DomusAgentHost, then grant only its requested categories, including Full Disk Access for the inventory, to Domus Agent Host in System Settings -> Privacy & Security",
+        "Run `tcc-identity-audit --json --strict` beneath the now-authorized host; proceed only when automatic updates are enabled, DomusAgentHost is validly signed, and versioned_leak is zero",
         "Remove only the clients listed as legacy_stale by the audit; preserve every unrelated application and grant",
         "Repeat foreground Claude, background child, Homebrew Python, and Python.org Python access after fixture-version rotation; close only when there is no prompt and the TCC delta contains zero versioned clients",
         "When the vendor offers an actual Claude update, require `claude --version` to advance while the relevant TCC inventory remains unchanged"

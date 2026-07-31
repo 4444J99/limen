@@ -47,8 +47,7 @@ MANAGED_CLIENT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "limen_venv",
         re.compile(
-            r"/(?:Workspace/limen/(?:\.venv|\.agent-runtime)|"
-            r"\.local/share/limen/(?:current|runtimes/[^/]+))/"
+            r"/\.local/share/limen/(?:current|runtimes/[^/]+)/"
             r".*/(?:python(?:[0-9.]*)?)(?:/|$)"
         ),
     ),
@@ -76,13 +75,95 @@ def _tcc_database(env: Mapping[str, str]) -> Path:
     return _home(env) / "Library/Application Support/com.apple.TCC/TCC.db"
 
 
-def _stable_application(env: Mapping[str, str]) -> Path:
-    return Path(
+def _expand_user_path(value: str, env: Mapping[str, str]) -> Path:
+    if value == "~":
+        return _home(env)
+    if value.startswith("~/"):
+        return _home(env) / value[2:]
+    return Path(value).expanduser()
+
+
+def _default_stable_application(env: Mapping[str, str]) -> Path:
+    return _home(env) / "Applications/DomusAgentHost.app"
+
+
+def _stable_host_executable(env: Mapping[str, str]) -> Path:
+    configured = env.get("LIMEN_AGENT_HOST_BIN") or env.get("DOMUS_AGENT_HOST_BIN")
+    if configured:
+        return _expand_user_path(configured, env)
+    application = _expand_user_path(
         env.get(
             "DOMUS_AGENT_HOST_APP",
-            str(_home(env) / "Applications/DomusAgentHost.app"),
-        )
-    ).expanduser()
+            str(_default_stable_application(env)),
+        ),
+        env,
+    )
+    return application / "Contents/MacOS/DomusAgentHost"
+
+
+def _stable_application(env: Mapping[str, str]) -> Path:
+    configured = env.get("LIMEN_AGENT_HOST_BIN") or env.get("DOMUS_AGENT_HOST_BIN")
+    application_override = env.get("DOMUS_AGENT_HOST_APP")
+    if configured:
+        executable = _expand_user_path(configured, env)
+        if (
+            len(executable.parts) < 4
+            or executable.parent.name != "MacOS"
+            or executable.parent.parent.name != "Contents"
+        ):
+            raise AuditError("configured stable-host executable is not inside an application bundle")
+        application = executable.parents[2]
+        if application_override:
+            expected = _expand_user_path(application_override, env)
+            if application.resolve(strict=False) != expected.resolve(strict=False):
+                raise AuditError("configured stable-host executable and application disagree")
+        return application
+    return _expand_user_path(
+        application_override or str(_default_stable_application(env)),
+        env,
+    )
+
+
+def _limen_runtime_roots(env: Mapping[str, str]) -> tuple[Path, ...]:
+    home = _home(env)
+    live_root = _expand_user_path(
+        env.get("LIMEN_ROOT", str(home / "Workspace/limen")),
+        env,
+    )
+    roots = [
+        live_root,
+        live_root / ".worktrees",
+        home / "Workspace/.limen-worktrees",
+        Path("/Volumes/Scratch/limen-worktrees"),
+    ]
+    for name in ("LIMEN_WORKTREE_ROOT", "LIMEN_WORKTREES"):
+        if value := env.get(name):
+            roots.append(_expand_user_path(value, env))
+    unique: dict[str, Path] = {}
+    for root in roots:
+        unique[str(root.resolve(strict=False))] = root
+    return tuple(unique.values())
+
+
+def _is_limen_runtime_client(
+    client: str,
+    env: Mapping[str, str],
+) -> bool:
+    path = Path(client)
+    if not path.is_absolute() or not re.fullmatch(
+        r"python(?:[0-9.]*)?",
+        path.name,
+    ):
+        return False
+    if not ({".venv", ".agent-runtime"} & set(path.parts)):
+        return False
+    for root in _limen_runtime_roots(env):
+        try:
+            path.relative_to(root)
+        except ValueError:
+            continue
+        return True
+    return False
 
 
 def _deployment_epoch(env: Mapping[str, str], application: Path) -> int | None:
@@ -99,10 +180,15 @@ def _deployment_epoch(env: Mapping[str, str], application: Path) -> int | None:
         return None
 
 
-def _managed_pattern(client: str) -> str | None:
+def _managed_pattern(
+    client: str,
+    env: Mapping[str, str],
+) -> str | None:
     for name, pattern in MANAGED_CLIENT_PATTERNS:
         if pattern.search(client):
             return name
+    if _is_limen_runtime_client(client, env):
+        return "limen_venv"
     return None
 
 
@@ -121,6 +207,7 @@ def classify_client(
     last_modified: int,
     deployment_epoch: int | None,
     application: Path,
+    env: Mapping[str, str],
 ) -> tuple[str, str | None, bool | None]:
     stable_executable = application / "Contents/MacOS/DomusAgentHost"
     if client == HOST_BUNDLE_ID or client in {
@@ -128,7 +215,7 @@ def classify_client(
         str(stable_executable),
     }:
         return "stable_host", None, _client_exists(client)
-    pattern = _managed_pattern(client)
+    pattern = _managed_pattern(client, env)
     exists = _client_exists(client)
     if pattern is None:
         return "unrelated", None, exists
@@ -144,9 +231,13 @@ def _read_clients(
     *,
     deployment_epoch: int | None,
     application: Path,
+    env: Mapping[str, str],
 ) -> tuple[list[dict[str, Any]], int]:
     try:
-        connection = sqlite3.connect(f"{database.resolve().as_uri()}?mode=ro", uri=True)
+        connection = sqlite3.connect(
+            f"{database.resolve().as_uri()}?mode=ro",
+            uri=True,
+        )
     except (OSError, sqlite3.Error) as exc:
         raise AuditError(f"TCC database is unavailable: {database}") from exc
     try:
@@ -184,6 +275,7 @@ def _read_clients(
             last_modified=int(item["last_modified"]),
             deployment_epoch=deployment_epoch,
             application=application,
+            env=env,
         )
         if classification == "unrelated":
             unrelated += 1
@@ -266,7 +358,7 @@ def _host_status(env: Mapping[str, str], runner: Runner) -> dict[str, Any]:
         if not isinstance(payload, dict):
             raise AuditError("stable-host status fixture is malformed")
     else:
-        executable = _stable_application(env) / "Contents/MacOS/DomusAgentHost"
+        executable = _stable_host_executable(env)
         try:
             completed = runner(
                 [str(executable), "status", "--json"],
@@ -394,12 +486,20 @@ def audit(
         }
 
     failures: list[str] = []
-    application = _stable_application(values)
-    deployment_epoch = _deployment_epoch(values, application)
+    application_error: str | None = None
     try:
-        host = _host_status(values, runner)
+        application = _stable_application(values)
     except AuditError as exc:
-        host = {"ok": False, "error": str(exc)}
+        application = _default_stable_application(values)
+        application_error = str(exc)
+    deployment_epoch = _deployment_epoch(values, application)
+    if application_error:
+        host = {"ok": False, "error": application_error}
+    else:
+        try:
+            host = _host_status(values, runner)
+        except AuditError as exc:
+            host = {"ok": False, "error": str(exc)}
     if not host.get("ok"):
         failures.append("stable_host_invalid")
 
@@ -412,6 +512,7 @@ def audit(
             _tcc_database(values),
             deployment_epoch=deployment_epoch,
             application=application,
+            env=values,
         )
     except AuditError as exc:
         clients = []

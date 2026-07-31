@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import shutil
 import sqlite3
 import subprocess
 from pathlib import Path
@@ -11,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/tcc-identity-audit.py"
+WRAPPER = ROOT / "scripts/tcc-identity-audit"
 SPEC = importlib.util.spec_from_file_location("tcc_identity_audit", SCRIPT)
 assert SPEC and SPEC.loader
 AUDIT = importlib.util.module_from_spec(SPEC)
@@ -140,6 +143,101 @@ def test_arbitrary_rotated_claude_and_python_paths_are_versioned_leaks(
         "limen_venv",
         "homebrew_cellar",
     }
+
+
+def test_configured_dispatch_worktree_python_is_a_versioned_leak(
+    tmp_path: Path,
+):
+    worktrees = tmp_path / "dispatch-worktrees"
+    rows = [
+        (
+            str(worktrees / "lane-omega/.agent-runtime/bin/python3.14"),
+            1,
+            "kTCCServiceSystemPolicyDownloadsFolder",
+            1004,
+        )
+    ]
+    env = _environment(tmp_path, rows)
+    env["LIMEN_WORKTREE_ROOT"] = str(worktrees)
+
+    payload = AUDIT.audit(env, platform_name="Darwin")
+
+    assert payload["ok"] is False
+    assert payload["summary"]["versioned_leak"] == 1
+    assert payload["clients"][0]["pattern"] == "limen_venv"
+
+
+def test_default_dispatch_worktree_roots_are_versioned_leaks(
+    tmp_path: Path,
+):
+    home = tmp_path / "home"
+    rows = [
+        (
+            str(home / "Workspace/.limen-worktrees/lane-alpha/.venv/bin/python3.15"),
+            1,
+            "kTCCServiceSystemPolicyDownloadsFolder",
+            1004,
+        ),
+        (
+            "/Volumes/Scratch/limen-worktrees/lane-beta/.agent-runtime/bin/python4",
+            1,
+            "kTCCServiceSystemPolicyDocumentsFolder",
+            1005,
+        ),
+    ]
+    env = _environment(tmp_path, rows)
+
+    payload = AUDIT.audit(env, platform_name="Darwin")
+
+    assert payload["ok"] is False
+    assert payload["summary"]["versioned_leak"] == 2
+    assert {item["pattern"] for item in payload["clients"]} == {"limen_venv"}
+
+
+def test_stable_application_follows_dispatch_host_configuration(
+    tmp_path: Path,
+):
+    home = tmp_path / "home"
+    executable = home / "Applications/ConfiguredHost.app/Contents/MacOS/DomusAgentHost"
+    env = {
+        "HOME": str(home),
+        "LIMEN_AGENT_HOST_BIN": ("~/Applications/ConfiguredHost.app/Contents/MacOS/DomusAgentHost"),
+    }
+
+    assert AUDIT._stable_host_executable(env) == executable
+    assert AUDIT._stable_application(env) == (home / "Applications/ConfiguredHost.app")
+
+
+def test_wrapper_skips_missing_python_only_when_not_strict(tmp_path: Path):
+    dirname = shutil.which("dirname")
+    assert dirname is not None
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "dirname").symlink_to(dirname)
+    env = {
+        "HOME": str(tmp_path),
+        "PATH": str(bin_dir),
+    }
+
+    non_strict = subprocess.run(
+        ["/bin/sh", str(WRAPPER), "--json"],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+    strict = subprocess.run(
+        ["/bin/sh", str(WRAPPER), "--json", "--strict"],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+
+    assert non_strict.returncode == 0
+    assert "SKIP: Python 3 is unavailable" in non_strict.stderr
+    assert strict.returncode == os.EX_UNAVAILABLE
+    assert "Python 3 is unavailable" in strict.stderr
 
 
 def test_update_disabling_controls_fail_the_same_strict_predicate(tmp_path: Path):

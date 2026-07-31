@@ -49,16 +49,22 @@ TCC, unregisters an application, pins a tool, or changes an updater.
 
 ## One supported System Settings transaction
 
-After `tcc-identity-audit --strict` reports a valid host and zero
-`versioned_leak` rows:
+The initial TCC database inventory itself requires Full Disk Access. Do not run
+that read through a rotating interpreter to bootstrap the host; doing so would
+create the client this design removes. The supported order is:
 
-1. Trigger the required protected-resource operation through
-   `domus-agent-host run -- ...`.
-2. In System Settings → Privacy & Security, grant only the requested categories
-   to **Domus Agent Host** (`~/Applications/DomusAgentHost.app`).
-3. Use the audit's exact `legacy_stale` inventory to remove only dead/versioned
-   Claude and Python clients through System Settings.
-4. Preserve all `unrelated` applications and grants.
+1. Install the host and verify `domus-agent-host status --json` without opening
+   TCC.
+2. Trigger the harmless protected-resource fixture through
+   `domus-agent-host run -- ...`, then in System Settings → Privacy & Security
+   grant only the requested categories, including Full Disk Access for the
+   inventory, to **Domus Agent Host** (`~/Applications/DomusAgentHost.app`).
+3. Run `tcc-identity-audit --json --strict` beneath the now-authorized host.
+   Proceed only when automatic updates remain enabled, the host is valid, and
+   `versioned_leak` is zero.
+4. Use that audit's exact `legacy_stale` inventory to remove only dead/versioned
+   Claude and Python clients through System Settings. Preserve all `unrelated`
+   applications and grants.
 
 Never use `tccutil reset All` and never write to `TCC.db`.
 
