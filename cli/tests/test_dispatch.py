@@ -112,6 +112,38 @@ def force_broker_unavailable(monkeypatch) -> None:
     monkeypatch.setattr(T, "client_from_env", unavailable)
 
 
+def test_run_capture_propagates_native_host_lifetime_fd(monkeypatch) -> None:
+    read_fd, write_fd = os.pipe()
+    captured: dict[str, object] = {}
+
+    class Process:
+        returncode = 0
+
+        @staticmethod
+        def communicate(timeout):
+            assert timeout == 7
+            return ("out", "err")
+
+    def fake_popen(command, **kwargs):
+        captured["command"] = command
+        captured.update(kwargs)
+        return Process()
+
+    monkeypatch.setattr(D.subprocess, "Popen", fake_popen)
+    try:
+        result = D._run_capture(
+            ["/usr/bin/true"],
+            timeout=7,
+            env={"DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd)},
+        )
+    finally:
+        os.close(read_fd)
+        os.close(write_fd)
+
+    assert result.returncode == 0
+    assert captured["pass_fds"] == (write_fd,)
+
+
 def test_always_working_timeout_fails_open_by_default(tmp_path: Path, monkeypatch, capsys) -> None:
     root = tmp_path / "root"
     script = root / "scripts" / "always-working.py"
@@ -1443,10 +1475,69 @@ def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, m
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.setattr(D, "_run_capture", fake_run_capture)
+    monkeypatch.setattr(D, "_stable_agent_host_command", lambda command, env: command)
     task = Task(id="AUTH-BLIP", title="retry", target_agent="claude", created=date(2026, 6, 27))
 
     assert D._run_isolated_agent("claude", task, tmp_path, ["claude"], 3) is True
     assert len(calls) == 2
+
+
+def test_stable_agent_host_wraps_macos_provider_with_arbitrary_binary_path(
+    tmp_path: Path,
+    monkeypatch,
+):
+    monkeypatch.delenv("DOMUS_AGENT_HOST_ACTIVE", raising=False)
+    host = tmp_path / "DomusAgentHost"
+    host.write_text("#!/bin/sh\n")
+    host.chmod(0o755)
+    command = ["/vendor/versions/release-omega/claude", "-p", "task"]
+    wrapped = D._stable_agent_host_command(
+        command,
+        {
+            "LIMEN_AGENT_HOST_BIN": str(host),
+            "PATH": "/usr/bin:/bin",
+            "HOME": str(tmp_path),
+        },
+        platform_name="darwin",
+    )
+    assert wrapped == [str(host), "run", "--", *command]
+
+
+def test_stable_agent_host_does_not_nest_or_affect_non_macos(tmp_path: Path):
+    command = ["/vendor/python-release-omega", "task.py"]
+    assert (
+        D._stable_agent_host_command(
+            command,
+            {"DOMUS_AGENT_HOST_ACTIVE": "1"},
+            platform_name="darwin",
+        )
+        == command
+    )
+    assert (
+        D._stable_agent_host_command(
+            command,
+            {},
+            platform_name="linux",
+        )
+        == command
+    )
+
+
+def test_stable_agent_host_fails_closed_when_macos_host_is_missing(
+    tmp_path: Path,
+    monkeypatch,
+):
+    monkeypatch.delenv("DOMUS_AGENT_HOST_ACTIVE", raising=False)
+    with pytest.raises(D.StableAgentHostError, match="stable Domus agent host"):
+        D._stable_agent_host_command(
+            ["claude"],
+            {
+                "LIMEN_AGENT_HOST_BIN": str(tmp_path / "missing"),
+                "PATH": "/usr/bin:/bin",
+                "HOME": str(tmp_path),
+            },
+            platform_name="darwin",
+        )
 
 
 def test_dispatch_numeric_env_knobs_fail_open_when_malformed(tmp_path: Path, monkeypatch) -> None:

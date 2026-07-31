@@ -14,8 +14,9 @@
 # Exit 0  ⟺  every recurring dialog class is silenced (the done-predicate).
 set -uo pipefail
 
-# --agent-curable-only: count ONLY the classes that have a shipped beat effector (1b hook-drift,
-# 4 gatekeeper-cask, 4b lsregister-stub) toward the exit status. Human-gated classes (defaultMode /
+# --agent-curable-only: count the classes that have a shipped beat effector (1b hook-drift,
+# 4 gatekeeper-cask, 4b lsregister-stub) plus the stable-host identity invariant toward the exit
+# status. Human-gated classes (defaultMode /
 # ask-list / hook-wiring self-mod, 1Password, firewall) and the effectorless quarantined-binary case
 # still PRINT as advisory but do not fail this mode. This is the form the omega fixed point
 # (scripts/omega.sh) holds against: the bare predicate can never reach exit 0 while a self-mod class
@@ -33,10 +34,35 @@ curable_gaps=0    # subset with a shipped beat effector (drives the omega rung +
 green(){ printf '  \033[32m✓\033[0m %s\n' "$1"; }
 red(){   printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); }
 redx(){  printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); curable_gaps=$((curable_gaps+1)); }
+redb(){  printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); curable_gaps=$((curable_gaps+1)); }
 cure(){  printf '      ↳ %s\n' "$1"; }
 note(){  printf '      · %s\n' "$1"; }
+ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 
-echo "== dialogs-silenced — the four recurring permission classes =="
+echo "== dialogs-silenced — recurring permission classes + stable TCC identity =="
+echo
+
+# ── 0. macOS responsibility identity — updates rotate below one fixed native host. ──
+# This is the structural cure for version-path TCC churn. The audit is read-only and itself enters
+# through DomusAgentHost before opening TCC.db, so Python cannot become the new permission client.
+# It fails when update-disabling variables reappear, the fixed app/signature drifts, a post-deploy
+# Claude/Python/Homebrew/uv/Limen path becomes a TCC client, or a malformed Claude helper is
+# registered. Existing pre-containment rows remain an exact legacy_stale cleanup inventory.
+TCC_AUDIT="$ROOT/scripts/tcc-identity-audit"
+tcc_output="$("$TCC_AUDIT" --strict 2>&1)"
+tcc_status=$?
+if [ "$tcc_status" -eq 0 ]; then
+  green "TCC identity: automatic updates enabled; stable DomusAgentHost valid; zero post-deploy versioned clients"
+else
+  redb "TCC identity invariant is not contained (audit exit $tcc_status)"
+  while IFS= read -r audit_line; do
+    [ -n "$audit_line" ] && note "$audit_line"
+  done <<EOF
+$tcc_output
+EOF
+  cure "Install/apply DomusAgentHost, route the named launch seam through it, then run: tcc-identity-audit --strict"
+  note "Never cure this by setting DISABLE_AUTOUPDATER, DISABLE_UPDATES, HOMEBREW_NO_AUTO_UPDATE, pinning a tool, resetting all TCC, or editing TCC.db."
+fi
 echo
 
 # ── 1. Claude Code in-app permission prompts — the highest-volume "asking permission". ──
@@ -66,7 +92,6 @@ fi
 # suppress the compound-cd guard, and only a hook `allow` preempts the destructive
 # ask rules for path-gated reap work — docs/never-hang-permission-spec.md). A stale
 # live copy silently reintroduces the prompt flood, so parity is a checked class.
-ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 for hf in allow-trusted-cd-git.sh insights-capture.sh; do
   canon="$ROOT/scripts/hooks/$hf"; live="$HOME/.claude/hooks/$hf"
   [ -f "$canon" ] || continue
@@ -180,9 +205,8 @@ echo
 # ── 4. Gatekeeper — "'claude' is an app downloaded from the Internet" (Dialog 6, 2026-07-04). ──
 # ROOT: a DUPLICATE install of Claude Code via a Homebrew cask. Casks (unlike bottled formulae)
 # stamp com.apple.quarantine on every download, so each cask upgrade = a fresh quarantined binary
-# at a new Caskroom path = a Gatekeeper first-open prompt — and `brew upgrade --greedy-auto-updates`
-# re-seeds it forever, silently defeating DISABLE_AUTOUPDATER (which only stops the native updater).
-# The sanctioned install is the native ~/.local/bin/claude (deliberate updates). Agent-curable.
+# at a new Caskroom path = a Gatekeeper first-open prompt. It is an independent rotating install,
+# not the sanctioned updater-managed native ~/.local/bin/claude. Agent-curable.
 if command -v brew >/dev/null 2>&1 && brew list --cask 2>/dev/null | grep -qx 'claude-code'; then
   redx "Gatekeeper: duplicate Homebrew cask 'claude-code' installed → quarantined per upgrade, prompts on first exec"
   cure "LIMEN_CASK_DUPLICATE_HEAL=1 bash scripts/heal-claude-cask.sh   # effector; or by hand: brew uninstall --cask claude-code (native ~/.local/bin/claude is the sanctioned install)"

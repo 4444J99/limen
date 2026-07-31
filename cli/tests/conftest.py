@@ -22,6 +22,10 @@ def _restore_os_environ(tmp_path):
     os.environ.pop("LIMEN_CONDUCT_URL", None)
     os.environ.pop("LIMEN_CONDUCT_TOKEN", None)
     os.environ["LIMEN_CONDUCT_STATE"] = str(tmp_path / "conduct.sqlite3")
+    # Test processes model the already-supervised runtime. Dedicated stable-host
+    # tests pass explicit environment mappings to exercise first-entry behavior;
+    # the rest of the suite must not depend on a machine-global app installation.
+    os.environ["DOMUS_AGENT_HOST_ACTIVE"] = "1"
     try:
         yield
     finally:

@@ -1,10 +1,9 @@
 """INTEGRITY — don't self-corrupt (CISO, integrity wing).
 
-The autoupdater flips the version-path of Claude.app / the ``claude`` CLI; that
-churn is the root of the "Claude app is corrupt" dialog and recurring TCC/Gatekeeper
-prompts. The lever (``DISABLE_AUTOUPDATER=1``) existed but was ungoverned. This
-organ governs it: verify the operating binaries' signatures each beat and alert on
-drift instead of letting Gatekeeper interrupt. Read-only + fail-open.
+Managed executables are expected to update. Protected access is routed through
+the fixed native Domus responsibility host so a Claude, Python, Homebrew, uv, or
+Limen version rotation does not become a new TCC principal. This organ verifies
+signatures and fails when an update-disabling control reappears. Read-only.
 """
 
 from __future__ import annotations
@@ -17,6 +16,11 @@ from pathlib import Path
 from . import params
 
 _TRUE = ("1", "true", "yes", "on")
+_UPDATE_DISABLE_KEYS = (
+    "DISABLE_AUTOUPDATER",
+    "DISABLE_UPDATES",
+    "HOMEBREW_NO_AUTO_UPDATE",
+)
 
 
 def _as_list(value: object) -> list[str]:
@@ -54,16 +58,20 @@ def verify_target(target: str) -> dict:
         return {"target": str(p), "exists": True, "valid": None, "detail": str(exc)[:200]}
 
 
-def autoupdater_disabled() -> bool:
-    """True if the documented lever (DISABLE_AUTOUPDATER) is set truthy."""
-    return str(os.environ.get("DISABLE_AUTOUPDATER", "")).lower() in _TRUE
+def disabled_update_controls() -> list[str]:
+    """Return update-disabling environment controls that are currently active."""
+    return [key for key in _UPDATE_DISABLE_KEYS if str(os.environ.get(key, "")).lower() in _TRUE]
 
 
-def assess(results: list[dict], intended_disabled: bool, actually_disabled: bool) -> bool:
-    """drift = any verified-invalid signature, or the autoupdater isn't in its intended state."""
+def assess(
+    results: list[dict],
+    intended_enabled: bool,
+    disabled_controls: list[str],
+) -> bool:
+    """Drift is an invalid signature, disabled update path, or stale policy."""
     sig_drift = any(r.get("valid") is False for r in results)
-    lever_drift = intended_disabled and not actually_disabled
-    return bool(sig_drift or lever_drift)
+    update_drift = not intended_enabled or bool(disabled_controls)
+    return bool(sig_drift or update_drift)
 
 
 def check() -> dict:
@@ -72,14 +80,15 @@ def check() -> dict:
         ["/Applications/Claude.app", "~/.local/bin/claude"],
     )
     results = [verify_target(t) for t in _as_list(targets)]
-    intended = str(params.get("INTEGRITY_AUTOUPDATER", "disabled")).lower() == "disabled"
-    actual = autoupdater_disabled()
-    drift = assess(results, intended, actual)
+    intended = str(params.get("INTEGRITY_AUTOUPDATER", "enabled")).lower() == "enabled"
+    disabled = disabled_update_controls()
+    drift = assess(results, intended, disabled)
     return {
         "organ": "integrity",
         "targets": results,
-        "autoupdater_intended": "disabled" if intended else "enabled",
-        "autoupdater_actual": "disabled" if actual else "enabled",
+        "autoupdater_intended": "enabled" if intended else "disabled",
+        "autoupdater_actual": "disabled" if disabled else "enabled",
+        "update_disable_controls": disabled,
         "drift": drift,
         "status": "drift" if drift else "ok",
     }

@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Mapping
 from contextlib import ExitStack, contextmanager
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
@@ -357,6 +358,16 @@ def _run_capture(
     pipes so the timeout actually fires. Still raises TimeoutExpired so callers' handlers run."""
     import signal
 
+    lifetime_fds: tuple[int, ...] = ()
+    lifetime_raw = (os.environ if env is None else env).get("DOMUS_AGENT_HOST_LIFETIME_FD")
+    if lifetime_raw:
+        try:
+            lifetime_fd = int(lifetime_raw)
+            os.fstat(lifetime_fd)
+        except (OSError, TypeError, ValueError) as exc:
+            raise StableAgentHostError("Domus agent host lifetime descriptor is invalid") from exc
+        lifetime_fds = (lifetime_fd,)
+
     proc = subprocess.Popen(
         cmd,
         cwd=cwd,
@@ -366,6 +377,7 @@ def _run_capture(
         stderr=subprocess.PIPE,
         stdin=subprocess.DEVNULL,
         start_new_session=True,
+        pass_fds=lifetime_fds,
     )
     try:
         out, err = proc.communicate(timeout=timeout)
@@ -2499,6 +2511,40 @@ class ProviderSelectionError(RuntimeError):
     """A provider override cannot be validated against live provider metadata."""
 
 
+class StableAgentHostError(RuntimeError):
+    """A macOS local lane cannot enter the fixed responsibility identity."""
+
+
+def _stable_agent_host_command(
+    command: list[str],
+    env: Mapping[str, str] | None = None,
+    *,
+    platform_name: str | None = None,
+) -> list[str]:
+    """Wrap one local provider launch in the stable macOS responsibility host.
+
+    The native host inherits Limen's process group, so ``_run_capture`` retains
+    its existing whole-group timeout semantics. A process already below the
+    host is returned unchanged; nested hosts would obscure lifecycle receipts.
+    """
+
+    values = os.environ if env is None else env
+    if os.environ.get("DOMUS_AGENT_HOST_ACTIVE") == "1" or values.get("DOMUS_AGENT_HOST_ACTIVE") == "1":
+        return list(command)
+    observed_platform = sys.platform if platform_name is None else platform_name
+    if observed_platform != "darwin":
+        return list(command)
+    configured = values.get("LIMEN_AGENT_HOST_BIN") or values.get("DOMUS_AGENT_HOST_BIN")
+    host = configured or shutil.which("domus-agent-host", path=values.get("PATH"))
+    if not host:
+        host = str(
+            Path(values.get("HOME", str(Path.home()))) / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
+        )
+    if not Path(host).is_file() or not os.access(host, os.X_OK):
+        raise StableAgentHostError(f"stable Domus agent host is unavailable: {host}")
+    return [host, "run", "--", *command]
+
+
 def _option_values(argv: list[str], *names: str) -> list[str]:
     """Return values supplied as either ``--flag value`` or ``--flag=value``."""
 
@@ -4360,6 +4406,11 @@ def _run_isolated_agent(
             run_env["LIMEN_OPENCODE_CLOCK"] = "1"
             run_env["LIMEN_TASK_ID"] = task.id
         _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
+        supervised_cmd = _stable_agent_host_command(agent_cmd, run_env)
+    except StableAgentHostError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+        return _blocked_result(reason)
     except WorkstreamLaunchContractError as exc:
         reason = str(exc)
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
@@ -4368,7 +4419,12 @@ def _run_isolated_agent(
     max_retries = provider_health_policy().same_model_retries if agent == "opencode" else retry_count
     while True:
         try:
-            run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
+            run = _run_capture(
+                supervised_cmd,
+                cwd=str(wt),
+                timeout=lane_timeout,
+                env=run_env,
+            )
             # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
             # a fresh process re-reads the now-rotated token. ONE retry only.
             if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
@@ -4376,11 +4432,24 @@ def _run_isolated_agent(
                 try:
                     run_env = _lane_run_env(agent, wt, task)
                     _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
+                    supervised_cmd = _stable_agent_host_command(
+                        agent_cmd,
+                        run_env,
+                    )
+                except StableAgentHostError as exc:
+                    reason = str(exc)
+                    print(f"  BLOCKED {task.id}: {reason}; refusing an unstable auth-retry TCC principal")
+                    return _blocked_result(reason)
                 except WorkstreamLaunchContractError as exc:
                     reason = str(exc)
                     print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
                     return _workstream_successor_result(reason)
-                run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
+                run = _run_capture(
+                    supervised_cmd,
+                    cwd=str(wt),
+                    timeout=lane_timeout,
+                    env=run_env,
+                )
         except subprocess.TimeoutExpired:
             if agent == "opencode":
                 _record_opencode_outcome(

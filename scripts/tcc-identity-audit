@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+root="$(unset CDPATH; cd -- "$(dirname "$0")/.." && pwd -P)"
+implementation="$root/scripts/tcc-identity-audit.py"
+python="${LIMEN_TCC_AUDIT_PYTHON:-}"
+if [ -z "$python" ]; then
+  python="$(command -v python3 2>/dev/null || true)"
+fi
+if [ -z "$python" ]; then
+  printf 'tcc-identity-audit: Python 3 is unavailable\n' >&2
+  exit 69
+fi
+if [ "$(uname -s)" != "Darwin" ]; then
+  exec "$python" "$implementation" "$@"
+fi
+if [ "${DOMUS_AGENT_HOST_ACTIVE:-}" = "1" ]; then
+  exec "$python" "$implementation" "$@"
+fi
+host="${DOMUS_AGENT_HOST_BIN:-$HOME/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}"
+if [ ! -x "$host" ]; then
+  printf 'tcc-identity-audit: stable Domus agent host is unavailable: %s\n' "$host" >&2
+  exit 69
+fi
+exec "$host" run -- "$python" "$implementation" "$@"

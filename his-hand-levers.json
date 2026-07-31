@@ -10,10 +10,10 @@
       "owner": "yours",
       "cost": "~1 min once, durable — OR skip entirely (keyed path covers Gmail headlessly)",
       "status": "optional-fallback (keyed IMAP path designs the grant out for Gmail)",
-      "gate": "macOS TCC Automation (GUI approval) + one env flag — only for non-Gmail accounts' drafts",
+      "gate": "macOS TCC Automation (GUI approval for the fixed Domus Agent Host) + one env flag — only for non-Gmail accounts' drafts",
       "unlocks": "autonomic per-beat draft creation on non-Gmail accounts (draft-only; never auto-sent). Gmail drafts already work headlessly once creds-hydrate lands GMAIL_APP_PASSWORD + GMAIL_USER in ~/.limen.env.",
       "source_task": "mail organ · C_MAIL draft effector (limen PR #958); designed out for Gmail by the keyed path (UMA #168 + creds lane)",
-      "note": "No longer on your critical path. The keyed path: creds-hydrate hydrates op://Private/gmail-app-pw-2026-06-06 (password → GMAIL_APP_PASSWORD, username → GMAIL_USER) into ~/.limen.env each beat; UMA draft_writer._select_saver then APPENDs Gmail drafts via IMAP, no AppleScript, no grant. If you ever want headless drafts for a NON-Gmail account too: System Settings -> Privacy & Security -> Automation -> allow the limen heartbeat (or osascript/Terminal) to control Mail, run `bash scripts/mail-beat.sh` once in Terminal and click Allow, recreate the pinned interpreter (`python3 -m venv --copies ~/Workspace/limen/.venv`), and set LIMEN_MAIL_DRAFTS=1. Send stays draft-only / disarmed regardless.",
+      "note": "No longer on your critical path. The keyed path: creds-hydrate hydrates op://Private/gmail-app-pw-2026-06-06 (password → GMAIL_APP_PASSWORD, username → GMAIL_USER) into ~/.limen.env each beat; UMA draft_writer._select_saver then APPENDs Gmail drafts via IMAP, no AppleScript, no grant. If you ever want headless drafts for a NON-Gmail account too: run `scripts/mail-beat.sh` through `domus-agent-host run -- ...`, then in System Settings -> Privacy & Security -> Automation allow Domus Agent Host to control Mail and set LIMEN_MAIL_DRAFTS=1. Never grant or pin a Limen venv interpreter. Send stays draft-only / disarmed regardless.",
       "issue": 960
     },
     {
@@ -231,11 +231,29 @@
       "id": "L-BACKUP-FDA",
       "label": "OPTIONAL enhancements — nothing is blocked without these; filed only so they have a permanent home, never nagged. (1) Time Machine destination: no completed TM backup, but data already has 3 copies (iCloud + Archive4T + Backblaze) so TM is convenience, not a durability gap. (2) Full Disk Access for Mail/Messages preservation: the 'python3 wants data from other apps' dialog is already neutralized (library-preserve.py skips FDA-gated stores when it lacks FDA, 7ad100f) — act only if you want Mail+Messages added to the offsite sliver.",
       "owner": "yours",
-      "cost": "TM: a staging drive + `tmutil setdestination`. FDA: grant Full Disk Access to ~/Workspace/limen/.venv/bin/python3 in System Settings",
+      "cost": "TM: a staging drive + `tmutil setdestination`. FDA: grant the fixed Domus Agent Host once through L-DOMUS-AGENT-HOST-TCC; never grant a Limen venv interpreter",
       "unlocks": "(optional) a 4th backup tier (Time Machine); Mail+Messages added to offsite preservation",
       "source_task": "needs_human digest (optional tier)",
-      "gate": "both are local-machine settings only you can grant — never automatable; neither blocks anything",
+      "gate": "both are local-machine settings only you can grant — never automatable; neither blocks anything. Any protected Limen read must run beneath the fixed Domus host.",
       "issue": 184
+    },
+    {
+      "id": "L-DOMUS-AGENT-HOST-TCC",
+      "label": "Complete the one supported macOS privacy transaction after containment is green: grant only the required protected-resource categories to the fixed Domus Agent Host, then remove the audit's exact dead/versioned Claude and Python entries in System Settings. This is the sole human interaction in the stable-host cutover; subsequent Claude, Homebrew, and Python updates remain automatic and must not create another client.",
+      "owner": "yours",
+      "cost": "~3 minutes once in System Settings; no recurring cleanup",
+      "unlocks": "foreground agents, background PTYs/spares, MCP descendants, and Python control-plane commands retain protected access across executable version rotation with no repeated privacy prompts",
+      "source_task": "Auto-Updates Without TCC Permission Sprawl · docs/architecture/tcc-stable-agent-host.md",
+      "gate": "macOS System Settings authentication/consent is human-owned; the agent may prepare and verify the exact inventory but may not grant privacy access or remove entries",
+      "steps": [
+        "Run `tcc-identity-audit --json --strict`; proceed only when automatic updates are enabled, DomusAgentHost is validly signed, and versioned_leak is zero",
+        "Trigger the harmless protected-folder acceptance fixture through DomusAgentHost, then grant only its requested categories to Domus Agent Host in System Settings -> Privacy & Security",
+        "Remove only the clients listed as legacy_stale by the audit; preserve every unrelated application and grant",
+        "Repeat foreground Claude, background child, Homebrew Python, and Python.org Python access after fixture-version rotation; close only when there is no prompt and the TCC delta contains zero versioned clients",
+        "When the vendor offers an actual Claude update, require `claude --version` to advance while the relevant TCC inventory remains unchanged"
+      ],
+      "status": "open — perform once after both stable-host implementation PRs are merged and applied",
+      "issue": 1703
     },
     {
       "id": "L-LINT-HOOK",
@@ -285,13 +303,13 @@
     },
     {
       "id": "L-TCC-RECORDER",
-      "label": "Grant Screen Recording + Microphone permission to the media-recorder binary (organs/media/tools/recorder) on first capture — the one human step for native system-audio recording.",
+      "label": "Grant Screen Recording + Microphone permission to the fixed Domus Agent Host on first hosted media-recorder capture — the one human step for native system-audio recording without creating a versioned recorder client.",
       "owner": "yours",
       "cost": "~1 min once, durable",
       "gate": "macOS TCC (GUI approval)",
       "unlocks": "native screen + SYSTEM-AUDIO recording (no BlackHole needed)",
-      "source_task": "media organ · recorder",
-      "note": "System Settings -> Privacy & Security -> Screen Recording (and Microphone) -> enable media-recorder. Route via the macOS-TCC auto-updater lever if the binary path churns.",
+      "source_task": "media organ · recorder · L-DOMUS-AGENT-HOST-TCC",
+      "note": "Run the recorder through `domus-agent-host run -- ...`, then in System Settings -> Privacy & Security -> Screen Recording (and Microphone) enable Domus Agent Host. Never grant a rotating recorder or interpreter path.",
       "issue": 529
     },
     {
@@ -307,13 +325,13 @@
     },
     {
       "id": "L-TCC-PHOTOS-AUTOMATION",
-      "label": "Grant Automation permission to control Photos.app for the screen-capture importer — fixes its on-record exit-1 (AppleScript error -4960).",
+      "label": "Grant Automation permission to the fixed Domus Agent Host to control Photos.app for the hosted screen-capture importer — fixes its on-record exit-1 (AppleScript error -4960) without creating a rotating importer client.",
       "owner": "yours",
       "cost": "~1 min once, durable",
       "gate": "macOS TCC Automation (GUI approval)",
       "unlocks": "auto-import of screengrabs/recordings into Photos.app",
-      "source_task": "media organ · screen-capture-importer",
-      "note": "System Settings -> Privacy & Security -> Automation -> allow the importer (or its parent) to control Photos. Or run the importer once from Terminal to trigger the prompt, then reload the LaunchAgent.",
+      "source_task": "media organ · screen-capture-importer · L-DOMUS-AGENT-HOST-TCC",
+      "note": "Run the importer once through `domus-agent-host run -- ...` to trigger the request, then in System Settings -> Privacy & Security -> Automation allow Domus Agent Host to control Photos. The importer remains on-demand; do not register or grant a rotating interpreter.",
       "issue": 531
     },
     {
