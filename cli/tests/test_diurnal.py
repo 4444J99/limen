@@ -310,3 +310,15 @@ def test_cuttable_implies_measurable(mod):
     sections = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))["sections"]
     bad = [k for k, s in sections.items() if s.get("cuttable") and s.get("metric") is None]
     assert not bad, f"cuttable sections with no metric would prune themselves on no evidence: {bad}"
+
+
+def test_blocks_land_in_chronological_order_whatever_the_write_order(mod, root):
+    """A phase re-run out of sequence must not leave the day reading scrambled."""
+    page = root / "docs" / "diurnal" / "2026-07-31.md"
+    for phase in ("evening", "morning", "midday"):  # deliberately out of order
+        mod.write_block(
+            page, phase, f"<!-- diurnal:{phase}:start -->\n{phase} body\n<!-- diurnal:{phase}:end -->"
+        )
+    text = page.read_text()
+    positions = [text.index(f"{p} body") for p in ("morning", "midday", "evening")]
+    assert positions == sorted(positions), "phases must read morning → midday → evening"

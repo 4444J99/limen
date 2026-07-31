@@ -662,7 +662,15 @@ def write_block(page: Path, phase: str, block: str) -> None:
         new = head + block + tail
     else:
         header = "" if existing else f"# diurnal · {page.stem}\n\n"
-        new = (existing or header) + ("\n" if existing and not existing.endswith("\n") else "") + block + "\n"
+        base = existing or header
+        # Insert in CHRONOLOGICAL order, not write order. A phase re-run out of sequence
+        # (or a backfilled midday) must not leave the day reading scrambled.
+        later = [MARKER_RX.format(phase=p) for p in PHASES[PHASES.index(phase) + 1 :]]
+        cut_at = min((base.index(m) for m in later if m in base), default=-1)
+        if cut_at >= 0:
+            new = base[:cut_at] + block + "\n" + base[cut_at:]
+        else:
+            new = base + ("\n" if base and not base.endswith("\n") else "") + block + "\n"
     page.write_text(new, encoding="utf-8")
 
 
