@@ -127,10 +127,14 @@ diff-hygiene
 nomenclator
 web-build' spec/contracts/readiness.schema.json
 
+# paused-beat-test is implicated because its fixtures assert that each paused-branch escape hatch
+# (LIMEN_PAUSED_SENSING, LIMEN_PAUSED_SYNC) is DECLARED in the panel — deleting a declaration there
+# is exactly the drift those checks exist to catch, so a params change must run them.
 expect params-change 'syntax-changed
 diff-hygiene
 sync-release-test
-check-params' institutio/governance/parameters.yaml
+check-params
+paused-beat-test' institutio/governance/parameters.yaml
 
 expect registry-change 'syntax-changed
 diff-hygiene
