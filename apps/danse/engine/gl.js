@@ -74,13 +74,17 @@ export function unitQuad(gl) {
  * arrive from clip space with +y up, while every image format stores row 0 at the
  * top. Flipping at upload makes one convention true everywhere downstream.
  */
-export function texture(gl, source, { flipY = true, wrap = null } = {}) {
+export function texture(gl, source, { flipY = true, wrap = null, mipmap = true } = {}) {
   const t = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, t);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
-  gl.generateMipmap(gl.TEXTURE_2D);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  // Mipmaps are for planes that have receded. A plane at the picture plane is
+  // sampled at roughly 1:1, and projective texturing's derivatives can still push
+  // the sampler down a level and blur the flat state below the score it is meant
+  // to reproduce — so this is switchable and the measurement turns it off.
+  if (mipmap) gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mipmap ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   // Clamp by default: a fragment sampling past a photograph's edge must go
   // transparent, never wrap the far side of the room into view.

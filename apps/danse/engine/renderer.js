@@ -1,0 +1,254 @@
+/** Draw the room at (seed, t).
+ *
+ * One shader does everything, because everything IS one thing: a fragment finds
+ * its pixel by projecting its world position through the matrix that stands where
+ * the camera stood on 20 June 2017. Planes at unrelated angles and depths land the
+ * poster rail on the same screen-space line, and — since all 162 exposures came
+ * from one locked-off camera — a plane showing IMG_1611 and a plane showing
+ * IMG_1588 register to each other too. That registration was done in 2017, by not
+ * moving the tripod.
+ *
+ * The two texture units are not a crossfade feature. The 2017 composite needed two
+ * layers for 77 of its 256 tiles, because roughly a third of its area is two
+ * photographs superimposed. The same pair carries turnover over time. One
+ * mechanism, two readings:
+ *
+ *   additive    C = gainA·A + gainB·B + lift     the 2017 solve, reproduced
+ *   crossfade   C = gain·mix(A, B, w) + lift     one cell changing its mind
+ *
+ * The recovered room plate is drawn first, at home, as the ground everything else
+ * hangs in front of. That is what the arrangement opens INTO: at high spread the
+ * planes separate and the gaps show the empty apartment rather than black.
+ */
+
+import { context, program, resize, unitQuad, uniforms } from "./gl.js";
+import { compose, multiply, perspective } from "./mat4.js";
+import { camera, homePlacement, projector, rectUV, scatter } from "./room.js";
+
+const VERT = `#version 300 es
+layout(location = 0) in vec2 aPos;
+
+uniform mat4 uModel;
+uniform mat4 uViewProj;
+uniform mat4 uProjectorVP;
+uniform vec4 uRectUV;
+
+out vec4 vProjClip;
+out vec2 vLocalUV;
+
+void main() {
+  vec4 world  = uModel * vec4(aPos, 0.0, 1.0);
+  gl_Position = uViewProj * world;
+  vProjClip   = uProjectorVP * world;                       // the shared address space
+  vLocalUV    = mix(uRectUV.xy, uRectUV.zw, aPos * 0.5 + 0.5);
+}`;
+
+const FRAG = `#version 300 es
+precision highp float;
+
+in vec4 vProjClip;
+in vec2 vLocalUV;
+
+uniform sampler2D uPlateA;
+uniform sampler2D uPlateB;
+uniform sampler2D uMatte;
+
+uniform vec3  uGainA;
+uniform vec3  uGainB;
+uniform vec3  uLift;
+uniform float uMix;        // crossfade weight toward B
+uniform float uAdditive;   // 1 = the 2017 two-layer solve, 0 = turnover
+uniform float uProjK;      // 0 window onto the room, 1 carried picture
+uniform float uTreat;      // 0 raw photograph, 1 recovered hand-treatment
+uniform float uMatteK;     // cut to the figure rather than to the rectangle
+uniform float uOpacity;
+uniform float uHasB;
+uniform float uEdge;       // half-width of the edge fade, in UV; 0 = hard abutment
+
+out vec4 fragColor;
+
+void main() {
+  if (vProjClip.w <= 0.0) discard;                          // behind the projector
+  vec2 projUV = (vProjClip.xy / vProjClip.w) * 0.5 + 0.5;
+  vec2 uv     = mix(projUV, vLocalUV, uProjK);
+
+  // A soft edge keeps a scattered plane from tearing along a pixel boundary. But
+  // in the FLAT state the tiles abut exactly and any fade lets what is behind
+  // them bleed through 256 seams, which is a real error against the composite —
+  // so the width is a uniform the flat path sets to zero.
+  float mask;
+  if (uEdge <= 0.0) {
+    mask = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? 0.0 : 1.0;
+  } else {
+    vec2 e = smoothstep(0.0, uEdge, uv) * smoothstep(0.0, uEdge, 1.0 - uv);
+    mask = e.x * e.y;
+  }
+  if (mask <= 0.0) discard;
+
+  vec3 a = texture(uPlateA, uv).rgb;
+  vec3 b = uHasB > 0.5 ? texture(uPlateB, uv).rgb : a;
+
+  vec3 raw     = mix(a, b, uHasB > 0.5 ? uMix : 0.0);
+  vec3 treated = uAdditive > 0.5
+    ? uGainA * a + uGainB * b + uLift
+    : uGainA * raw + uLift;
+
+  vec3 c = mix(raw, treated, uTreat);
+  float alpha = uOpacity * mask;
+  if (uMatteK > 0.0) {
+    alpha *= mix(1.0, texture(uMatte, uv).r, uMatteK);
+  }
+  fragColor = vec4(c, alpha);
+}`;
+
+export class Renderer {
+  constructor(canvas, corpus) {
+    const gl = context(canvas);
+    this.gl = gl;
+    this.canvas = canvas;
+    this.corpus = corpus;
+    this.program = program(gl, VERT, FRAG);
+    this.u = uniforms(gl, this.program);
+    this.vao = unitQuad(gl);
+    this.projector = projector();
+    this.stats = { planes: 0, missing: 0 };
+
+    gl.useProgram(this.program);
+    gl.uniform1i(this.u.uPlateA, 0);
+    gl.uniform1i(this.u.uPlateB, 1);
+    gl.uniform1i(this.u.uMatte, 2);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  }
+
+  /** One frame. `cells` comes from the grammar, `state` from the clock. */
+  draw(cells, state, opts = {}) {
+    const { gl, u, corpus } = this;
+    const { seed = 0, tier = "screen", treat = 1, matteK = 0, showRoom = true, pixelRatio = 2, edge = null } = opts;
+
+    // The edge fade tracks the departure, and must be EXACTLY zero at home. The
+    // tiles tile the frame — at spread 0 they abut with no gaps, so any fade lets
+    // what is behind them bleed through 256 seams. Measured: leaving it on costs
+    // 1.5 dB against the 2017 composite (30.11 vs 31.60), which is most of the gap
+    // between "close" and "the same picture".
+    const edgeWidth = edge ?? (state.spread > 0 ? 0.004 * Math.min(1, state.spread * 4) : 0);
+
+    // pixelRatio is a cap, not a request. A measurement pins it to 1 so the drawing
+    // buffer is exactly the composite's 1024x768 and neither side is resampled.
+    resize(gl, this.canvas, pixelRatio);
+    gl.clearColor(0.055, 0.055, 0.06, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const view = camera(state.divergence, state.azimuth, state.elevation);
+    const proj = perspectiveFor(this.canvas);
+    const viewProj = multiply(proj, view.view);
+
+    gl.useProgram(this.program);
+    gl.bindVertexArray(this.vao);
+    gl.uniformMatrix4fv(u.uViewProj, false, viewProj);
+    gl.uniformMatrix4fv(u.uProjectorVP, false, this.projector.viewProj);
+    // Transparent geometry is sorted, not depth-tested — writing depth would let
+    // a near plane occlude the far ones it is meant to veil.
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+
+    if (showRoom && corpus.room) this.drawRoom();
+
+    // Back to front, by view-space depth. The whole point of the arrangement is
+    // that a near plane veils the far ones, and alpha blending is order-dependent.
+    const drawn = [];
+    for (const cell of cells) {
+      const place = scatter(cell.rect, cell.id, seed, state.spread);
+      drawn.push({ cell, place, z: viewZ(view.view, place.position) });
+    }
+    drawn.sort((a, b) => a.z - b.z);
+
+    let missing = 0;
+    for (const { cell, place } of drawn) {
+      if (!this.drawCell(cell, place, state, { tier, treat, matteK, edge: edgeWidth })) missing++;
+    }
+    this.stats = { planes: drawn.length, missing };
+    return this.stats;
+  }
+
+  drawRoom() {
+    const { gl, u, corpus } = this;
+    const place = homePlacement([0, 0, 1, 1]);
+    gl.uniformMatrix4fv(u.uModel, false, compose(place.position, place.rotation, place.scale));
+    gl.uniform4fv(u.uRectUV, rectUV([0, 0, 1, 1]));
+    gl.uniform3f(u.uGainA, 1, 1, 1);
+    gl.uniform3f(u.uGainB, 0, 0, 0);
+    gl.uniform3f(u.uLift, 0, 0, 0);
+    gl.uniform1f(u.uMix, 0);
+    gl.uniform1f(u.uAdditive, 0);
+    gl.uniform1f(u.uProjK, 0);
+    gl.uniform1f(u.uTreat, 0);
+    gl.uniform1f(u.uMatteK, 0);
+    gl.uniform1f(u.uOpacity, 1);
+    gl.uniform1f(u.uHasB, 0);
+    gl.uniform1f(u.uEdge, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, corpus.room);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /** Returns false if the cell could not be drawn because its plate has not
+   *  arrived yet — counted rather than logged, so a slow network shows up as a
+   *  number instead of a console flood. */
+  drawCell(cell, place, state, { tier, treat, matteK, edge }) {
+    const { gl, u, corpus } = this;
+    const [a, b] = cell.layers;
+    const texA = corpus.plate(gl, a.frame, tier);
+    if (!texA) return false;
+    const texB = b ? corpus.plate(gl, b.frame, tier) : null;
+
+    const additive = cell.solved ? 1 : 0;
+    const gainA = a.gain ?? cell.gain ?? [1, 1, 1];
+    const gainB = b?.gain ?? [0, 0, 0];
+
+    gl.uniformMatrix4fv(u.uModel, false, compose(place.position, place.rotation, place.scale));
+    gl.uniform4fv(u.uRectUV, rectUV(cell.rect));
+    gl.uniform3fv(u.uGainA, gainA);
+    gl.uniform3fv(u.uGainB, gainB);
+    gl.uniform3fv(u.uLift, cell.lift ?? [0, 0, 0]);
+    gl.uniform1f(u.uMix, b ? b.weight : 0);
+    gl.uniform1f(u.uAdditive, additive);
+    gl.uniform1f(u.uProjK, state.projK);
+    gl.uniform1f(u.uTreat, treat);
+    gl.uniform1f(u.uOpacity, place.opacity ?? 1);
+    gl.uniform1f(u.uHasB, texB ? 1 : 0);
+    gl.uniform1f(u.uEdge, edge);
+
+    let matte = null;
+    if (matteK > 0) matte = corpus.matte(gl, a.frame, tier);
+    gl.uniform1f(u.uMatteK, matte ? matteK : 0);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texA);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texB ?? texA);
+    if (matte) {
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, matte);
+    }
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    return true;
+  }
+}
+
+/** The viewing frustum, letterboxed to the room's 4:3 so the composite is never
+ *  cropped by the shape of someone's window. */
+function perspectiveFor(canvas) {
+  const { fovy, aspect } = projector();
+  const view = canvas.clientWidth / canvas.clientHeight;
+  // Widen the vertical field when the window is narrower than the room, so the
+  // full picture stays inside the frame instead of being cut off at the sides.
+  const fov = view < aspect ? 2 * Math.atan(Math.tan(fovy / 2) * (aspect / view)) : fovy;
+  return perspective(fov, view, 0.05, 100);
+}
+
+/** Depth along the camera's forward axis. Column-major, so row 2 of the view
+ *  matrix is strided by 4. */
+function viewZ(view, p) {
+  return view[2] * p[0] + view[6] * p[1] + view[10] * p[2] + view[14];
+}
