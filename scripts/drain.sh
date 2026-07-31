@@ -139,42 +139,24 @@ if [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
   if [ "${LIMEN_QUEUE_LOCK_HELD:-0}" = "1" ]; then
     echo "[drain] reclaim skipped under queue lock; heartbeat runs it after release"
   else
-    # TWO-PHASE, because --apply REFUSES without --expected-plan-sha (reclaim-worktrees.py:1260-1262,
-    # unconditional). This block used to pass --apply alone and pipe to `| tail -4 || true`, so every
-    # beat the organ ran, printed `[APPLY-BLOCKED]: expected-plan-sha-required`, and the `|| true`
-    # swallowed it. The SPRAWL-RECLAIM organ has therefore been a NO-OP since that guard landed —
-    # measured 2026-07-29 with 64 worktrees accumulated and 7 provably dead. A silent skip reads as
-    # "nothing to reclaim", which is the failure mode this estate has a rule against.
-    #
-    # The guard itself is right: apply must remove only the plan that was probed, never a set that
-    # shifted underneath it. So derive the sha and hand it straight back.
-    reclaim_one() {  # reclaim_one <label> [extra-args…]
-      local label="$1"; shift
-      if [ "${LIMEN_RECLAIM_APPLY:-1}" != "1" ]; then
-        PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "$@" 2>&1 | tail -4 || true
-        return 0
+    # One controller owns both the exact-plan transaction and its total deadline. The full pass
+    # checks JSON, validates plan_sha256, and applies only that SHA; generated-only remains a valid
+    # one-pass cleanup. Any failure is visible and leaves the next beat free to derive a fresh plan.
+    reclaim_cycle() {  # reclaim_cycle <label> <timeout-seconds> [controller-args…]
+      local label="$1" timeout_seconds="$2" rc
+      shift 2
+      local apply_args=()
+      [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && apply_args+=(--apply)
+      PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+        --timeout "$timeout_seconds" "${apply_args[@]}" "$@"
+      rc=$?
+      if [ "$rc" -ne 0 ]; then
+        echo "[drain] reclaim($label): cycle failed (rc=$rc) — next beat retries" >&2
       fi
-      local plan sha rc
-      plan="$(PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" --check --json "$@" 2>/dev/null)" || plan=""
-      sha="$(printf '%s' "$plan" | PYTHONPATH="$PY" python3 -c 'import json,sys
-try:
-    print((json.load(sys.stdin) or {}).get("plan_sha256") or "")
-except Exception:
-    print("")' 2>/dev/null)"
-      if [ -z "$sha" ]; then
-        echo "[drain] reclaim($label): could not derive a plan sha — NOT applying" >&2
-        return 0
-      fi
-      PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" --apply --expected-plan-sha "$sha" "$@" 2>&1 | tail -4
-      rc=${PIPESTATUS[0]}
-      # LOUD on failure. A plan-sha-mismatch means the estate moved between probe and apply, which is
-      # normal on a busy host — the next beat retries. But it must be VISIBLE, because "blocked every
-      # beat forever" and "raced once" look identical when the output is discarded.
-      [ "$rc" -ne 0 ] && echo "[drain] reclaim($label): APPLY did not complete (rc=$rc) — next beat retries" >&2
       return 0
     }
-    reclaim_one generated --generated-only
-    reclaim_one full
+    reclaim_cycle generated "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" --generated-only
+    reclaim_cycle full "${LIMEN_RECLAIM_TIMEOUT:-300}"
   fi
 fi
 

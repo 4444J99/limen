@@ -168,6 +168,111 @@ def test_reclaim_remote_reachability_uses_live_advertised_refs(
     )
 
 
+def test_planning_cache_shares_one_remote_advertisement_across_linked_worktrees(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    common = tmp_path / "owner" / ".git"
+    first_git_dir = common / "worktrees" / "first"
+    second_git_dir = common / "worktrees" / "second"
+    first_git_dir.mkdir(parents=True)
+    second_git_dir.mkdir(parents=True)
+    (first_git_dir / "commondir").write_text("../..\n", encoding="utf-8")
+    (second_git_dir / "commondir").write_text("../..\n", encoding="utf-8")
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    first.mkdir()
+    second.mkdir()
+    (first / ".git").write_text(f"gitdir: {first_git_dir}\n", encoding="utf-8")
+    (second / ".git").write_text(f"gitdir: {second_git_dir}\n", encoding="utf-8")
+    calls: list[Path] = []
+
+    def fake_git(args, cwd, timeout=30):
+        assert args == ["ls-remote", "--refs", "origin"]
+        assert timeout == 120
+        calls.append(cwd)
+        return subprocess.CompletedProcess(
+            ["git", *args],
+            0,
+            "abc123\trefs/heads/main\n",
+            "",
+        )
+
+    monkeypatch.setattr(reclaim, "git", fake_git)
+    monkeypatch.setattr(reclaim, "_REMOTE_ADVERTISEMENT_CACHE", {})
+
+    assert reclaim.remote_refs_containing_head(first, "abc123") == ("refs/heads/main",)
+    assert reclaim.remote_refs_containing_head(second, "abc123") == ("refs/heads/main",)
+    assert calls == [first]
+
+
+def test_remote_ancestry_is_batched_and_intersected_with_live_advertisement(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    calls: list[list[str]] = []
+
+    def fake_git(args, cwd, timeout=30):
+        assert cwd == tmp_path
+        calls.append(args)
+        if args == ["ls-remote", "--refs", "origin"]:
+            assert timeout == 120
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                0,
+                "tip123\trefs/heads/main\nstale123\trefs/heads/stale\n",
+                "",
+            )
+        if args[0] == "for-each-ref":
+            assert timeout == 60
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                0,
+                "refs/remotes/origin/main\0tip123\nrefs/remotes/origin/stale\0different-local-tip\n",
+                "",
+            )
+        raise AssertionError(f"unexpected per-ref ancestry process: {args}")
+
+    monkeypatch.setattr(reclaim, "git", fake_git)
+    monkeypatch.setattr(reclaim, "remote_default_ref", lambda _cwd: None)
+
+    assert reclaim.remote_refs_containing_head(tmp_path, "ancestor") == ("refs/heads/main",)
+    assert len(calls) == 2
+    assert calls[1][0] == "for-each-ref"
+
+
+def test_remote_ancestry_prefers_live_exact_default_tip_proof(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    calls: list[list[str]] = []
+
+    def fake_git(args, cwd, timeout=30):
+        assert cwd == tmp_path
+        calls.append(args)
+        if args == ["ls-remote", "--refs", "origin"]:
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                0,
+                "tip123\trefs/heads/main\n",
+                "",
+            )
+        if args == ["rev-parse", "origin/main"]:
+            return subprocess.CompletedProcess(["git", *args], 0, "tip123\n", "")
+        if args == ["merge-base", "--is-ancestor", "ancestor", "origin/main"]:
+            return subprocess.CompletedProcess(["git", *args], 0, "", "")
+        raise AssertionError(f"unexpected fallback ancestry process: {args}")
+
+    monkeypatch.setattr(reclaim, "git", fake_git)
+    monkeypatch.setattr(reclaim, "remote_default_ref", lambda _cwd: "origin/main")
+
+    assert reclaim.remote_refs_containing_head(tmp_path, "ancestor") == ("refs/heads/main",)
+    assert not any(call[0] == "for-each-ref" for call in calls)
+
+
 def test_detached_head_cached_only_in_stale_remote_ref_is_not_preserved(
     tmp_path: Path,
 ) -> None:
@@ -852,6 +957,43 @@ def test_reclaim_reaps_pushed_unmerged_when_pushed_ok(tmp_path: Path, monkeypatc
     ok, grant = reclaim.reclaim_accepted(repo, action, reason, [])
     assert ok is True
     assert grant == "standing-grant-2026-07-09"
+
+
+def test_pushed_registered_worktree_does_not_require_clone_ref_store_proof(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reclaim = load_reclaim_worktrees()
+    worktree = tmp_path / "linked-worktree"
+    worktree.mkdir()
+    (worktree / ".git").write_text("gitdir: /owner/.git/worktrees/linked-worktree\n", encoding="utf-8")
+    monkeypatch.setattr(reclaim, "PUSHED_OK", True)
+    monkeypatch.setattr(reclaim, "_SELF_GUARD", set())
+    monkeypatch.setattr(reclaim, "_ACTIVE_PROCESS_CWDS", {})
+    monkeypatch.setattr(reclaim, "worktree_lock_reason", lambda _path: None)
+    monkeypatch.setattr(reclaim, "receipt_remote_merged", lambda _path, _receipts: False)
+    monkeypatch.setattr(reclaim, "patch_equivalent_to_default", lambda _path: False)
+    monkeypatch.setattr(reclaim, "reachable_from_remote", lambda _path, _head: True)
+    monkeypatch.setattr(reclaim, "merged_into_default", lambda _path, _head: False)
+    monkeypatch.setattr(
+        reclaim,
+        "all_local_refs_remote_proof",
+        lambda _path: (_ for _ in ()).throw(AssertionError("linked detach must not inspect clone ref custody")),
+    )
+
+    def fake_git(args, _cwd, timeout=30):
+        if args == ["status", "--porcelain"]:
+            return subprocess.CompletedProcess(["git", *args], 0, "", "")
+        if args == ["rev-parse", "HEAD"]:
+            return subprocess.CompletedProcess(["git", *args], 0, "abc123\n", "")
+        return subprocess.CompletedProcess(["git", *args], 0, "true\n", "")
+
+    monkeypatch.setattr(reclaim, "git", fake_git)
+
+    action, reason = reclaim.classify(worktree, time.time(), 0)
+
+    assert action == "remove-worktree"
+    assert reason == "clean+pushed+idle"
 
 
 def test_reclaim_defaults_to_pushed_remote_custody(monkeypatch) -> None:
