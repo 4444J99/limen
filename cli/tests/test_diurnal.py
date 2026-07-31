@@ -320,3 +320,51 @@ def test_blocks_land_in_chronological_order_whatever_the_write_order(mod, root):
     text = page.read_text()
     positions = [text.index(f"{p} body") for p in ("morning", "midday", "evening")]
     assert positions == sorted(positions), "phases must read morning → midday → evening"
+
+
+# ── CLI edges found by driving the organ, not by reading it ───────────────────────
+
+
+def test_uncut_rejects_a_name_the_registry_does_not_know(mod, root, capsys):
+    """A typo must not be answerable with the same sentence as a real, uncut section. Someone
+    restoring a genuinely cut section who fumbles the name would otherwise read 'is not cut' and
+    conclude nothing was ever cut — the reassuring answer being the wrong one."""
+    import sys as _sys
+
+    argv = _sys.argv
+    _sys.argv = ["diurnal.py", "--uncut", "levrs"]
+    try:
+        import os as _os
+
+        _os.environ["LIMEN_ROOT"] = str(root)
+        (root / "logs" / ".voice").mkdir(parents=True, exist_ok=True)
+        (root / "logs" / ".voice" / "drain").write_text("")
+        assert mod.main() == 2
+    finally:
+        _sys.argv = argv
+    err = capsys.readouterr().err
+    assert "no section named 'levrs'" in err
+    assert "Did you mean: levers?" in err
+
+
+def test_headline_keeps_the_task_id_it_used_to_guillotine(mod):
+    """Observed live in a push: '…for the whole PR estate [GITVS-UNCAPPED-'. The bracketed id is
+    the one token a reader can act on, and a raw [:90] cut it in half."""
+    line = "Add an uncapped exact owner-route predicate for the whole PR estate and its successors [GITVS-UNCAPPED-PR]"
+    out = mod._clip(line)
+    assert out.endswith("[GITVS-UNCAPPED-PR]"), "the actionable id must survive truncation"
+    assert len(out) <= 90
+    assert "…" in out, "a truncated line must read as truncated"
+    assert not out.rstrip("… [GITVS-UNCAPPED-PR]").endswith(" "), "cut on a word boundary"
+
+
+def test_a_short_headline_is_left_alone(mod):
+    assert mod._clip("short one [ABC-1]") == "short one [ABC-1]"
+
+
+def test_dry_run_creates_no_state_directory(mod, root):
+    """'Write nothing' has to be literally true — state_dir's unconditional mkdir meant a dry run
+    left an empty logs/diurnal/ behind."""
+    mod.load_state(root)
+    mod.load_scores(root)
+    assert not (root / "logs" / "diurnal").exists()
