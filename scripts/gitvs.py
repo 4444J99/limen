@@ -1602,6 +1602,26 @@ def _facts_rows() -> list[dict] | None:
         return None
 
 
+def _audience_lens():
+    """check-audience.py's (derive, assess) pair, or None when it cannot be loaded.
+
+    Same fail-open contract as the sweep lens below, and the same reason for IMPORTING rather than
+    re-deriving: the audience law (public → world; private+grant → collab; else self) already lives
+    in one place, and a second copy inside the doctor is precisely the drift every registry in this
+    estate exists to prevent. If the module is missing, rung Q skips — it never guesses.
+    """
+    try:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("check_audience", str(SCRIPT_DIR / "check-audience.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["check_audience"] = mod
+        spec.loader.exec_module(mod)
+        return mod.derive, mod.assess
+    except Exception:
+        return None
+
+
 def _sweep_receipt_lens():
     """publish-sweep.py's ``receipt_fresh_green``, or None when it cannot be loaded.
 
@@ -1870,6 +1890,51 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
         skips.append("[C orphaned-branch] reap-branches.py unavailable")
     elif not c:
         fails.append("[C orphaned-branch] a provably-landed local branch lingers past the grace window")
+
+    # Q — audience intent (2026-07-30, decision 4): who each repo actually faces vs who it was
+    # meant to. The audience is DERIVED, never stored (public → world; private+grant → collab;
+    # else self) — and the derivation alone has a blind spot big enough to hide the defect: a
+    # partner lane with nobody invited derives `self`, `self` is self-consistent, and a repo the
+    # partner CANNOT SEE certifies green. So intent comes from the estate's declared `audience:`
+    # rows and, as a hint only, the constellation register.
+    #
+    # CITES ONLY, and never a flip demand. Two hard constraints the first draft of this rung got
+    # wrong and would have made permanent:
+    #   · `world` is defined as "public, SOLO", so a public repo carrying a live grant is a FOURTH
+    #     state the enum cannot express — not drift. Reading it as drift would demand a
+    #     public→private flip of a traction repo and put Q permanently at war with class G.
+    #   · the register may SUGGEST a lane and never decide one. Its rows are people-data; if an
+    #     editorial removal could flip a repo to `self`, a live human-decided grant would read as
+    #     "undeclared exposure" whose machine-runnable direction (L-PARTNER-GRANTS) is REMOVAL.
+    # Behind ratchets.audience_parity_armed, per the house observable-before-autonomous pattern.
+    q_atom = "L-PARTNER-GRANTS"
+    q_armed = bool(((estate.get("ratchets") or {}).get("audience_parity_armed")))
+    q_lens = _audience_lens()
+    # Loaded here rather than reused from the live section below: Q runs BEFORE the offline
+    # early-return (it is a pure registry join — estate + access + register, zero gh calls), so it
+    # must not depend on a binding that only exists on the online path.
+    q_access = load_access()
+    if not q_armed:
+        skips.append("[Q audience-intent] ratchets.audience_parity_armed is false (observable-before-autonomous)")
+    elif q_lens is None:
+        skips.append("[Q audience-intent] scripts/check-audience.py unavailable — the rung never re-derives the law")
+    elif not q_access:
+        skips.append("[Q audience-intent] no ACCESS registry")
+    else:
+        q_derive, q_assess = q_lens
+        try:
+            q_reg_path = SCRIPT_DIR.parent / "organs" / "consulting" / "constellation" / "registry.yaml"
+            q_reg = yaml.safe_load(q_reg_path.read_text(encoding="utf-8")) or {}
+        except Exception:
+            q_reg = {}  # no register ⇒ no lane HINTS; declared `audience:` rows still evaluate
+        q_breaks, q_owed = q_assess(q_derive(estate, q_access, q_reg))
+        for b in q_breaks:
+            fails.append(f"[Q audience-intent] {b} — the estate contradicts itself; check-audience.py --check")
+        for o in q_owed:
+            (cites if q_atom in homed else fails).append(
+                f"[Q audience-intent] {o} → "
+                + (f"{q_atom} (owned, open)" if q_atom in homed else f"{q_atom} (UNHOMED)")
+            )
 
     # ── Live classes (A/D/E/F/G/J/K/M) — need gh; SKIP offline, cite a homed atom instead of failing. ──
     if offline:
