@@ -28,6 +28,12 @@ parameters:
     self_update: none
     owner: vigilia
     note: "When 1 (default), autonomy-governor.current_mode() auto-clears an AUTONOMY_PAUSED 'integration drain' marker once its owner: branch has a MERGED PR (fail-closed via gh). Prevents the 2026-07-10 21h respawn-spin freeze (owner codex/dynamic-routing-closeout-20260710, PR #921 merged, marker never cleaned up). 0 = never auto-clear (a marker outlives its owner PR)."
+  LIMEN_AUTONOMY_CLAUSE_RECHECK_SECS:
+    default: 300
+    env: LIMEN_AUTONOMY_CLAUSE_RECHECK_SECS
+    self_update: none
+    owner: vigilia
+    note: "Throttle window for an EXPIRED maintenance window's resume-predicate clauses — at most one full clause evaluation per this many seconds. current_mode() is the chokepoint both the heartbeat and every dispatch admission read, so it runs many times a minute, and the clauses are real work (a git fetch-state read, a bash plist render, a host-pressure probe). Unthrottled, a status query becomes sustained load on a 16GB host that already logs jetsam kills. Same bound, same reason, as LIMEN_AUTONOMY_MARKER_RECHECK_SECS."
   LIMEN_AUTONOMY_MARKER_RECHECK_SECS:
     default: 120
     env: LIMEN_AUTONOMY_MARKER_RECHECK_SECS
