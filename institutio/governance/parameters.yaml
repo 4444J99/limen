@@ -3406,6 +3406,64 @@ parameters:
     self_update: none
     owner: continuity
     note: "Timeout (seconds) for the hot-cache sensor's predicate run: creds --verify does network probes and R5 walks every clone under $LIMEN_WORKDIR, so it needs headroom a cheap sensor doesn't."
+  # ── residue caps (the Meeseeks law's measurable half — scripts/residue-census.py) ──────────
+  # A cap is the DISPOSABLE-MACHINE IDEAL, not a promise about today. Distance from it is exactly
+  # what IF-HOT-CACHE tracks, and the ideal-forms registry is built to hold a row honestly far from
+  # its ideal. They live here so tightening one is a registry edit, never a code edit.
+  LIMEN_RESIDUE_CENSUS:
+    default: "1"
+    env: LIMEN_RESIDUE_CENSUS
+    self_update: none
+    owner: continuity
+    note: "Gate for the residue-census beat sensor (scripts/residue-census.py): what this machine holds that it should be able to re-summon. Read-only — it deletes nothing and arms nothing; each breach names the organ or lever that relieves it. Advisory. 0 disables the pass."
+  LIMEN_BEAT_RESIDUE_CENSUS:
+    default: 24
+    env: LIMEN_BEAT_RESIDUE_CENSUS
+    self_update: none
+    owner: continuity
+    note: "Cadence (every N beats) of the residue census. Sprawl accumulates over days, not seconds; daily is honest. Run python3 scripts/residue-census.py for a live answer."
+  LIMEN_RESIDUE_CENSUS_TIMEOUT:
+    default: 180
+    env: LIMEN_RESIDUE_CENSUS_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Timeout (seconds) for the residue census: du walks .agent-runtime (~10 GiB, ~1.2s measured) and logs/, plus three git ref counts — cheap, but it needs more headroom than a pure-registry check."
+  LIMEN_RESIDUE_WORKTREES:
+    default: 8
+    env: LIMEN_RESIDUE_WORKTREES
+    self_update: none
+    owner: continuity
+    note: "Cap on git worktrees beyond the live checkout. Ideal is the live set — the operator's open domains plus in-flight sessions. Owner of the relief is scripts/reclaim-worktrees.py (beat-wired via drain.sh; it was a silent no-op until 3e0d1692 gave it the plan sha)."
+  LIMEN_RESIDUE_LOCAL_BRANCHES:
+    default: 40
+    env: LIMEN_RESIDUE_LOCAL_BRANCHES
+    self_update: none
+    owner: continuity
+    note: "Cap on local branch refs. Owner is scripts/reap-branches.py (beat-wired via clone-maintenance.sh, armed, acceptance-gated per branch)."
+  LIMEN_RESIDUE_REMOTE_BRANCHES:
+    default: 100
+    env: LIMEN_RESIDUE_REMOTE_BRANCHES
+    self_update: none
+    owner: continuity
+    note: "Cap on remote-tracking branch refs. REPORT-ONLY in the census: relief is scripts/reap-remote-branches.py, double-dark behind a filed lever whose acceptance ledger has never been written to. Counting it is useful; calling it a breach every run would make the census permanently red on something it may not act on."
+  LIMEN_RESIDUE_AGENT_RUNTIME_MIB:
+    default: 2048
+    env: LIMEN_RESIDUE_AGENT_RUNTIME_MIB
+    self_update: none
+    owner: continuity
+    note: "Cap on .agent-runtime (harness state: opencode/codex/claude/gemini). Relief is scripts/agent-state-metabolism.py, which is WRITTEN AND WIRED TO NOTHING — and cannot simply be beat-wired: it needs the Archive4T vault mounted, dual-restoration verification and private receipts, and carries its own RETIREMENT_AUTHORIZATION_REQUIRED gate. Retiring it is the human-gated archive-then-delete step, so the census measures and names it rather than arming it."
+  LIMEN_RESIDUE_LOGS_MIB:
+    default: 256
+    env: LIMEN_RESIDUE_LOGS_MIB
+    self_update: none
+    owner: continuity
+    note: "Cap on logs/ (gitignored receipt tree). scripts/disk-capacity.py is beat-wired and armed but only reaps gitignored probes and truncates one error log; the rest has no rotation."
+  LIMEN_RESIDUE_ATOM_LEDGER_MIB:
+    default: 128
+    env: LIMEN_RESIDUE_ATOM_LEDGER_MIB
+    self_update: none
+    owner: continuity
+    note: "Cap on docs/prompt-atom-ledger.json — the largest single residue on the machine and the only class with NO reaper at all. It is a regenerable snapshot of the private corpus (cli/src/limen/prompt_corpus.py writes both halves), i.e. precisely what the Meeseeks law calls a hot cache: re-summonable, therefore not owed a permanent home on disk."
   LIMEN_GH_USAGE_TIMEOUT:
     default: 120
     env: LIMEN_GH_USAGE_TIMEOUT

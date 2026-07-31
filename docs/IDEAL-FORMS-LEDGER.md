@@ -59,6 +59,33 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Status:** SHIPPED (engine) / OPEN (enactment).
 - **Owner:** GITVS + publication-policy organs; his hand for the three levers.
 
+### IF-HOT-CACHE — the machine holds nothing it cannot re-summon
+
+- **Ideal form:** the local floor is a hot flash cache. Every summoned surface — worktree, agent
+  runtime, scratch clone, session branch, fan-out agent — is born for one purpose, returns its
+  result to source, and self-erases; losing the disk loses zero state. Residue is a defect caught
+  by predicates, never a periodic cleanup chore. (The operator's Meeseeks law, decision 5 of the
+  2026-07-30 PORTVS/ASTRA plan.)
+- **Distance (measured 2026-07-30 by `scripts/residue-census.py`):** four caps breached. Worktrees
+  **38/8**; local branches **520/40**; `.agent-runtime` **10,663 MiB / 2,048**;
+  `docs/prompt-atom-ledger.json` **571 MiB / 128**. Remote branches sit at **1,620** against a
+  cap of 100 but are counted report-only, because their relief is double-dark behind a filed lever
+  whose acceptance ledger has never once been written to. `logs/` is the one class **within** cap
+  (127/256).
+- **Why the distance went unseen:** `verify-hot-cache.sh` (PR #1681) shipped the court and is
+  honest about its own blind spot — R5 excludes worktrees and quarantines "by marker … never
+  silent" because those carry their own reap organs. Nothing then asked whether those organs were
+  **keeping up**. Two of the six classes have no working relief at all:
+  `scripts/agent-state-metabolism.py` is written and wired to nothing (and cannot simply be
+  beat-wired — it needs the Archive4T vault mounted, dual-restoration verification, private
+  receipts, and carries its own `RETIREMENT_AUTHORIZATION_REQUIRED` gate), and the atom ledger —
+  the single largest artifact on the machine — has **no reaper whatsoever**, despite being a
+  regenerable snapshot of the private corpus, i.e. precisely what this ideal calls a hot cache.
+- **Status:** PARTIAL — the court and the census are shipped and beat-wired; the reaping is not.
+  Measuring was the missing half, and it was missing entirely.
+- **Owner:** Claude (the census + the court) · the reap organs for relief · his hand only where
+  relief is destructive (the archive-then-delete step, the remote-reap lever).
+
 ### IF-LIVE-TREE-COHERENCE — the live checkout never drifts
 - **Ideal form:** the live daemon checkout is always `≡ origin/main`; capture/sync keeps it
   fast-forwarded; no ahead/behind divergence, no stranded local commits.
