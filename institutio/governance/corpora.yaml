@@ -48,6 +48,23 @@ stores:
       minted specifically to hold chat corpora that had been sitting in the public limen tree.
       Sibling of the live checkout, NOT inside it; assuming otherwise is the original defect.
 
+  limen-private-session-corpus:
+    root: "~/Workspace/limen/.limen-private/session-corpus/local-memory"
+    remote: none
+    git: false
+    owner: cce
+    note: >
+      Where the session-memory corpora ACTUALLY live as of 2026-07-31. Inside the live
+      checkout but under `.limen-private/`, which .gitignore excludes (line 51) — so it is
+      remote-less by construction, the same property that makes `conversations-private` safe
+      to hold unredacted content. Declared because the store had moved twice and no
+      candidate list knew: `corpus_resolve.corpus_home()` searched only
+      `_conversations-private` (absent) and `<repo>/source-drop` (absent), then fell back to
+      the repo root and reported `docs`, `scripts` and `web` as conversation corpora. That
+      is the SECOND occurrence of the defect this registry's header describes — same shape,
+      new path — which is why the resolver now derives its ids from this file rather than
+      from CCE alone. Adding a store here is what makes a relocation a one-line change.
+
   session-meta:
     root: "~/Workspace/session-meta"
     remote: "github.com/organvm/session-meta"
@@ -67,7 +84,7 @@ stores:
 #              name on disk — a real, load-bearing drift, not a nicety.
 corpora:
   chatgpt-local-session-memory:
-    store: conversations-private
+    store: limen-private-session-corpus
     provider: chatgpt
     kind: session-memory
     cce_declared: true
@@ -83,7 +100,7 @@ corpora:
       filed as organvm/limen#1545, indexed on the Wall (#320).
 
   claude-local-session-memory:
-    store: conversations-private
+    store: limen-private-session-corpus
     provider: claude
     kind: session-memory
     cce_declared: true
