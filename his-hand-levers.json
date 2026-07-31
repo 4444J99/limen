@@ -831,6 +831,22 @@
         "Done when `gh api /user --jq .plan.name` prints 'pro'"
       ],
       "issue": 1659
+    },
+    {
+      "id": "L-OUTBOUND-PREFLIGHT-ARM",
+      "label": "Arm the outbound preflight gate: paste ONE hook entry into `.claude/settings.json` → hooks.PreToolUse[0].hooks (the existing \"matcher\": \"Bash\" block that already holds worktree-commit-guard.sh and pytest-scope-guard.sh). The exact snippet, byte-identical in shape to the two guards already there, is in docs/runbooks/outbound-preflight-arming.md § The one edit. Everything else is DONE and on main — registry (institutio/governance/outbound-effectors.yaml), enforcer (scripts/hooks/outbound-preflight-guard.py), receipt producer (scripts/preflight-receipt.py), both ground-truth predicates, 13/13 hermetic tests, and the panel's own drift gate (scripts/check-effectors.py, wired into pr-gate). Shipped unarmed on purpose: .claude/settings.json is the self-modification boundary, so a model may not arm its own hook.",
+      "owner": "yours",
+      "cost": "~2 min, one paste, REVERSIBLE (delete the entry); escape hatch LIMEN_ALLOW_UNVERIFIED_OUTBOUND=1 is a declared parameter",
+      "status": "open",
+      "gate": "`.claude/settings.json` is the self-modification boundary (CLAUDE.md § Standing Autonomy & Compliant Gate Reroute) — the model stages the validated snippet and may not arm it",
+      "unlocks": "the gate goes from built-and-tested to ENFORCING. An outbound email or public GitHub comment with no fresh digest-bound receipt is DENIED, not reminded about. This is the consequence half of the 2026-07-31 escape: ten prose rules were written for the act-on-an-artifact-instead-of-reality class and all ten were followed by a recurrence, because a checklist the model self-certifies is a mirror. This one is os.stat() plus a SHA-256 compare — not a question the model gets to answer about itself.",
+      "source_task": "closeout 2026-07-31 (OUTBOUND-EFFECTORS, the fifth VIGILIA panel — PRs #1727, #1729, #1735)",
+      "steps": [
+        "Paste the snippet from docs/runbooks/outbound-preflight-arming.md § The one edit",
+        "bash scripts/tests/outbound-preflight-guard.test.sh   # expect 13/13, hermetic, no network",
+        "Done when a matched command with no receipt is refused: printf '%s' '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"scripts/mail-send --to someone@example.com\"}}' | python3 scripts/hooks/outbound-preflight-guard.py   # must print permissionDecision: deny"
+      ],
+      "issue": 1736
     }
   ]
 }
