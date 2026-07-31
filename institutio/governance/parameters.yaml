@@ -2465,6 +2465,18 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Break-glass for scripts/hooks/worktree-commit-guard.sh: 1 disables the PreToolUse deny of git commit in the live checkout on main. Mirrors the LIMEN_ALLOW_OPUS_FANOUT escape-hatch precedent; leave 0 — the deny is the charter's no-direct-main-commit rule made mechanical."
+  LIMEN_OUTBOUND_REGISTRY:
+    default: "institutio/governance/outbound-effectors.yaml"
+    env: LIMEN_OUTBOUND_REGISTRY
+    self_update: none
+    owner: limen-daemon
+    note: "Override for the OUTBOUND-EFFECTORS registry path read by scripts/hooks/outbound-preflight-guard.py and scripts/preflight-receipt.py. Exists so scripts/tests/outbound-preflight-guard.test.sh can run its deny matrix against a hermetic fixture registry (predicates `true`/`false`, temp receipts dir) with no network and no real mailbox — the LIMEN_LIVE_ROOT precedent from worktree-commit-guard.test.sh. Never set in production."
+  LIMEN_ALLOW_UNVERIFIED_OUTBOUND:
+    default: "0"
+    env: LIMEN_ALLOW_UNVERIFIED_OUTBOUND
+    self_update: none
+    owner: limen-daemon
+    note: "Break-glass for scripts/hooks/outbound-preflight-guard.py: 1 disables the PreToolUse deny of an outward-facing action (email send, public GitHub comment) that carries no fresh proof-of-observation receipt. Leave 0. The deny exists because 10 PROSE rules were written for the act-on-an-artifact-instead-of-reality class between 2026-03 and 2026-07 and all 10 recurred (100% failure rate); on 2026-07-31 it produced the first completed outward escape — a redundant reply to a live recruiter whose thread the operator had already answered. Registry: institutio/governance/outbound-effectors.yaml."
   LIMEN_ALLOW_FULL_PYTEST:
     default: "0"
     env: LIMEN_ALLOW_FULL_PYTEST
