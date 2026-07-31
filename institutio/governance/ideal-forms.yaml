@@ -115,6 +115,25 @@ ideals:
       # prose overstates, never when it lags — until a beat sensor keeps the reading continuous.
       instantaneous: true
 
+  IF-HOT-CACHE:
+    ideal: >
+      The local floor holds nothing that is not re-summonable from upstream. Every summoned
+      surface — worktree, agent runtime, scratch clone, session branch, fan-out agent — is born
+      for one purpose, returns its result to source, and self-erases; losing the disk loses zero
+      state. Residue is a defect caught by predicates, never a periodic cleanup chore.
+    owner: "Claude + the reap organs (reclaim-worktrees / reap-branches / disk-capacity)"
+    probe:
+      command: "python3 scripts/residue-census.py"
+      derives: "residue classes over their declared caps, each naming the organ or lever that relieves it"
+      environment: host
+      extract: "breaches=([0-9]+)"
+      ideal_value: 0
+      # Same caveat as IF-LIVE-TREE-COHERENCE, for the same reason: a snapshot proves DISTANCE,
+      # never ACHIEVEMENT. "Nothing sprawls" is a claim about every moment; one green reading says
+      # only that nothing sprawled at this instant. The daily residue-census sensor keeps the
+      # reading current, but the rung stays instantaneous until it is continuous.
+      instantaneous: true
+
   IF-SESSION-NON-CONTENTION:
     ideal: >
       An interactive session's cwd is an isolated, non-recycled worktree; the fleet never

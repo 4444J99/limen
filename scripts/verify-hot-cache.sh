@@ -12,6 +12,12 @@
 #   R3 creds     — every materialized credential still authenticates (creds-hydrate --verify)
 #   R4 toolchain — the declared toolchain is summonable (mise.toml resolves via `mise current`)
 #   R5 repos     — every clone under $LIMEN_WORKDIR is clean, pushed, and stash-free
+#   R6 residue   — the residue R5 steps over is within its declared caps (scripts/residue-census.py)
+#
+# R5 and R6 divide the same territory deliberately. R5 asks whether state is UN-SUMMONABLE (dirty,
+# unpushed, stashed) and excludes worktrees/quarantines because they carry their own reap organs.
+# R6 asks whether those organs are KEEPING UP — 39 worktrees, 517 branches, 10 GiB of runtime and a
+# 571 MiB ledger are all perfectly summonable and still residue. Neither rung reaps anything.
 #
 # Fail-open where an ORGAN is absent (mise not installed → named advisory skip); loud where STATE
 # is un-summonable (dirty tree, unpushed commits, credential drift). Read-only — never mutates.
@@ -83,6 +89,25 @@ while IFS= read -r gitdir; do
 done < <(find "$WS" -maxdepth 3 -name .git \( -type d -o -type f \) 2>/dev/null | grep -Ev "$R5_EXCLUDE" | sort)
 if [ "$r5_bad" -eq 0 ]; then
   ok "R5 repos — $r5_seen clone(s) clean, pushed, stash-free (worktree/quarantine roots excluded by marker)"
+fi
+
+# R6 — the residue R5 deliberately steps over. R5 excludes worktrees and quarantines because they
+# have their OWN reap organs; that exclusion is correct and stays. What was missing is anyone
+# asking whether those organs KEEP UP. The census counts each residue class against its declared
+# cap and names the organ or lever that relieves it — read-only, deletes nothing. Absent or
+# unrunnable => advisory skip: a missing census is a gap in the court, not un-summonable state.
+if [ -x "$ROOT/scripts/residue-census.py" ] || [ -f "$ROOT/scripts/residue-census.py" ]; then
+  if r6_out="$(python3 "$ROOT/scripts/residue-census.py" --check 2>&1)"; then
+    ok "R6 residue — every declared cap holds (nothing sprawling)"
+  else
+    while IFS= read -r line; do
+      case "$line" in
+        *BREACH*) fail "R6 residue —${line#*BREACH}" ;;
+      esac
+    done <<<"$r6_out"
+  fi
+else
+  skip "R6 residue — scripts/residue-census.py absent (advisory)"
 fi
 
 if [ "$red" -eq 0 ]; then
