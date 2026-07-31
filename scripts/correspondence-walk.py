@@ -71,7 +71,16 @@ MAX_AGE_HOURS = float(os.environ.get("LIMEN_MAIL_LEDGER_MAX_AGE_HOURS", "12"))
 
 # The UMA checkout supplies the ONE tier truth (tier_of / _ob_key / load_tiers) and the send
 # audit (audit/drafts_sent.json). Overridable for alt hosts; absent ⇒ fail-open to needs-human.
-UMA_ROOT = Path(os.environ.get("UMA_ROOT", HOME / "Workspace" / "universal-mail--automation"))
+#
+# That fail-open is why this had to be fixed at the resolver: the old default pointed one directory
+# above the real checkout, so UMA was ALWAYS absent, so EVERY reply-owed row disposed to needs-human
+# — silently, forever. Nothing was broken enough to report; the walk just quietly owed everything to
+# a human who was never told.
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _uma_root
+from _uma_root import resolve as _resolve_uma  # noqa: E402 — the one resolver
+
+_UMA_ROOT, UMA_REASON = _resolve_uma()
+UMA_ROOT = _UMA_ROOT if _UMA_ROOT is not None else Path("/nonexistent/uma-checkout")
 APPLICATION_PIPELINE = HOME / "Workspace" / "application-pipeline"
 
 # The sealed private correspondence estate (ARCA-sealed, never committed, never public).
@@ -103,11 +112,16 @@ def _import_uma():
     """Import the UMA send_drafts module (which pulls draft_writer). Returns the module or None.
     Fail-open: any import failure ⇒ None ⇒ every reply-owed row disposes to needs-human."""
     if not UMA_ROOT.exists():
+        # Say WHY. The silent `return None` here is what made a one-segment path error look like a
+        # mailbox with nothing owed in it: every row fell through to needs-human with no reason
+        # anywhere in the log.
+        _log_clean(f"UMA unresolved ({UMA_REASON}) — every reply-owed row → needs-human")
         return None
     try:
         if str(UMA_ROOT) not in sys.path:
             sys.path.insert(0, str(UMA_ROOT))
         import send_drafts  # noqa: PLC0415 — deliberate runtime import from the UMA checkout
+
         return send_drafts
     except Exception as exc:  # noqa: BLE001 — beat safety: a broken UMA never crashes the walk
         _log_clean(f"UMA import failed ({type(exc).__name__}) — every reply-owed row → needs-human")
@@ -154,7 +168,7 @@ def _recipient_addr(ob: dict) -> str:
     """Bare email to search Sent by: reply_to preferred, else sender. Strips 'Name <addr>'."""
     raw = (ob.get("reply_to") or ob.get("sender") or "").strip()
     if "<" in raw and ">" in raw:
-        raw = raw[raw.find("<") + 1:raw.find(">")].strip()
+        raw = raw[raw.find("<") + 1 : raw.find(">")].strip()
     return raw if "@" in raw else ""
 
 
@@ -166,7 +180,7 @@ def _norm_subject(subject: str) -> str:
         m = re.match(r"^\s*(re|fwd|fw)\s*:\s*", s, re.IGNORECASE)
         if not m:
             break
-        s = s[m.end():]
+        s = s[m.end() :]
     return s.strip()
 
 
@@ -217,6 +231,7 @@ def _make_answered_checker(sd):
     sent_mbx = os.environ.get("LIMEN_MAIL_SENT_MAILBOX", "[Gmail]/Sent Mail")
     try:
         from providers.imap import IMAPProvider  # UMA checkout already on sys.path via _import_uma
+
         prov = IMAPProvider(user=user, password=pw, use_gmail_extensions=True)
         prov.connect()
         # QUOTED mailbox — Python 3.14's imaplib no longer auto-quotes names with spaces/brackets,
@@ -255,8 +270,9 @@ def _make_answered_checker(sd):
     return _answered, prov
 
 
-def _disposition(ob: dict, tiers, sent_keys: set, sd, answered_fn=None,
-                 now: datetime | None = None, stale_days: int = 0) -> tuple[str, str, bool]:
+def _disposition(
+    ob: dict, tiers, sent_keys: set, sd, answered_fn=None, now: datetime | None = None, stale_days: int = 0
+) -> tuple[str, str, bool]:
     """Pure-ish disposition for one reply-owed obligation. Returns (disposition, reason, draft_missing).
 
     draft_missing marks a HOLD row that still lacks a composed draft — the one non-terminal
@@ -284,9 +300,11 @@ def _disposition(ob: dict, tiers, sent_keys: set, sd, answered_fn=None,
             ref = now or datetime.now(timezone.utc)
             age_days = (ref - sent_at).days
             if stale_days and age_days > stale_days:
-                return ("needs-human",
-                        f"{STALE_NUDGE_PREFIX}{age_days}d — we replied {sent_at:%Y-%m-%d}, no response; follow up or drop",
-                        False)
+                return (
+                    "needs-human",
+                    f"{STALE_NUDGE_PREFIX}{age_days}d — we replied {sent_at:%Y-%m-%d}, no response; follow up or drop",
+                    False,
+                )
             return "awaiting-them", "reply already in [Gmail]/Sent — thread answered out-of-band", False
 
     cls = ob.get("cls", "")
@@ -325,7 +343,9 @@ def _draft_writer_pass() -> str | None:
     try:
         proc = subprocess.run(
             [sys.executable, str(dw), "--ledger", str(LEDGER)],
-            capture_output=True, timeout=120, cwd=str(UMA_ROOT),
+            capture_output=True,
+            timeout=120,
+            cwd=str(UMA_ROOT),
         )
         return None if proc.returncode == 0 else f"draft_writer exited {proc.returncode} (fail-open)"
     except (OSError, subprocess.SubprocessError):
@@ -343,7 +363,9 @@ def _contact_discovery(entry_slug: str) -> str | None:
             try:
                 subprocess.run(
                     [sys.executable, str(cand), "--entry", entry_slug, "--json"],
-                    capture_output=True, timeout=120, cwd=str(APPLICATION_PIPELINE),
+                    capture_output=True,
+                    timeout=120,
+                    cwd=str(APPLICATION_PIPELINE),
                 )
                 return "contact_discovery ran (result in sealed sidecar)"
             except (OSError, subprocess.SubprocessError):
@@ -445,8 +467,7 @@ def _emit_notify(title: str, msg: str) -> None:
     the same effector opportunity-review-delta uses. Fail-open: unimportable/erroring ⇒ skip silently,
     never crash the beat, never a click-list."""
     try:
-        spec = importlib.util.spec_from_file_location(
-            "_notify_events_probe", ROOT / "scripts" / "notify-events.py")
+        spec = importlib.util.spec_from_file_location("_notify_events_probe", ROOT / "scripts" / "notify-events.py")
         if spec is None or spec.loader is None:
             return
         module = importlib.util.module_from_spec(spec)
@@ -461,8 +482,11 @@ def _emit_notify(title: str, msg: str) -> None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Correspondence walk-to-terminal driver (count-only, PII-clean).")
     ap.add_argument("--drain", action="store_true", help="compose held drafts + run linkedin contact discovery")
-    ap.add_argument("--notify", action="store_true",
-                    help="push a count-only macOS/ntfy line when items need a human (never a click-list)")
+    ap.add_argument(
+        "--notify",
+        action="store_true",
+        help="push a count-only macOS/ntfy line when items need a human (never a click-list)",
+    )
     ap.add_argument("--json", action="store_true", help="print a machine-readable (count-only) summary")
     args = ap.parse_args(argv)
 
@@ -495,21 +519,22 @@ def main(argv: list[str] | None = None) -> int:
             ledger = _load_ledger()  # re-read: draft_writer enriched draft_text in place
             reply_owed = _reply_owed(ledger)
 
-        rows: list[dict] = []          # PII-CLEAN — safe for the committed-ish logs face
-        rows_pii: list[dict] = []      # sealed sidecar only
+        rows: list[dict] = []  # PII-CLEAN — safe for the committed-ish logs face
+        rows_pii: list[dict] = []  # sealed sidecar only
         by_disposition = {d: 0 for d in DISPOSITIONS}
         draft_missing = 0
         needs_human = 0
-        answered_this_run: set[str] = set()   # drain signal → audit/answered_keys.json
-        stale_awaiting = 0                     # awaiting-them rows aged past the stale threshold → nudge
+        answered_this_run: set[str] = set()  # drain signal → audit/answered_keys.json
+        stale_awaiting = 0  # awaiting-them rows aged past the stale threshold → nudge
         # Age a thread where the ball has sat on them too long. 0 (or an unparseable value) disables
         # the nudge — awaiting-them then behaves exactly as before. Same clock for every row this walk.
         stale_days = _int_env("LIMEN_CORRESPONDENCE_AWAIT_STALE_DAYS", 14)
         walk_now = datetime.now(timezone.utc)
 
         for ob in reply_owed:
-            disp, reason, missing = _disposition(ob, tiers, sent_keys, sd, answered_fn,
-                                                 now=walk_now, stale_days=stale_days)
+            disp, reason, missing = _disposition(
+                ob, tiers, sent_keys, sd, answered_fn, now=walk_now, stale_days=stale_days
+            )
             key = sd._ob_key(ob) if sd is not None else f"?|?|{(ob.get('sample_subjects') or [''])[0][:40]}"
             by_disposition[disp] += 1
             if disp == "needs-human" and reason.startswith(STALE_NUDGE_PREFIX):
@@ -524,29 +549,33 @@ def main(argv: list[str] | None = None) -> int:
             if disp == "needs-human":
                 needs_human += 1
             channel = "linkedin" if ob.get("cls") == LINKEDIN_CLASS else "email"
-            rows.append({
-                "ob_key": key,
-                "cls": ob.get("cls", ""),
-                "tier": (sd.tier_of(ob, tiers) if sd is not None else "hold"),
-                "disposition": disp,
-                "reason": reason,
-                "has_draft": _has_draft(ob),
-                "channel": channel,
-                "draft_missing": missing,
-            })
+            rows.append(
+                {
+                    "ob_key": key,
+                    "cls": ob.get("cls", ""),
+                    "tier": (sd.tier_of(ob, tiers) if sd is not None else "hold"),
+                    "disposition": disp,
+                    "reason": reason,
+                    "has_draft": _has_draft(ob),
+                    "channel": channel,
+                    "draft_missing": missing,
+                }
+            )
             # Sidecar: only rows that need an action carry PII (recipient, subject, ready command).
             if disp in ("held", "steered-to-email", "needs-human"):
                 # Propose a keyed-fire command only for actionable rows, bounded by fire_cap so a
                 # large ledger never emits an unbounded fire list. needs-human never gets a command.
                 propose = disp in ("held", "steered-to-email") and fires_proposed < fire_cap
-                rows_pii.append({
-                    "ob_key": key,
-                    "disposition": disp,
-                    "recipient": ob.get("reply_to") or ob.get("sender") or "",
-                    "subject": (ob.get("sample_subjects") or [""])[0],
-                    "fire_command": (f'send_drafts.py --fire-obligation "{key}" --fire' if propose else ""),
-                    "fire_capped": disp in ("held", "steered-to-email") and not propose,
-                })
+                rows_pii.append(
+                    {
+                        "ob_key": key,
+                        "disposition": disp,
+                        "recipient": ob.get("reply_to") or ob.get("sender") or "",
+                        "subject": (ob.get("sample_subjects") or [""])[0],
+                        "fire_command": (f'send_drafts.py --fire-obligation "{key}" --fire' if propose else ""),
+                        "fire_capped": disp in ("held", "steered-to-email") and not propose,
+                    }
+                )
                 if propose:
                     fires_proposed += 1
             # --drain effector for a LinkedIn no-path row: DEFER to the opportunity lane's own
@@ -557,7 +586,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.drain and disp == "needs-human" and ob.get("cls") == LINKEDIN_CLASS:
                 if APPLICATION_PIPELINE.exists():
                     if "discovery deferred" not in " ".join(drain_notes):
-                        drain_notes.append("linkedin no-path — discovery deferred to opportunity_sync (application-pipeline owns it)")
+                        drain_notes.append(
+                            "linkedin no-path — discovery deferred to opportunity_sync (application-pipeline owns it)"
+                        )
                 else:
                     cnote = _contact_discovery("linkedin-com--inbound")
                     if cnote:
@@ -569,13 +600,15 @@ def main(argv: list[str] | None = None) -> int:
         if answered_this_run:
             _record_answered_keys(answered_this_run)
             drain_notes.append(
-                f"drain: recorded {len(answered_this_run)} answered key(s) → obligations_build retires them next build")
+                f"drain: recorded {len(answered_this_run)} answered key(s) → obligations_build retires them next build"
+            )
 
         if args.drain and fire_armed:
             drain_notes.append(
                 f"LIMEN_CORRESPONDENCE_FIRE armed — SAFE-tier fires delegated to the beat sender "
                 f"(send_drafts.py, LIMEN_MAIL_SEND); HOLD stays operator-keyed. "
-                f"{fires_proposed}/{fire_cap} fires proposed this run.")
+                f"{fires_proposed}/{fire_cap} fires proposed this run."
+            )
 
         terminal = len(reply_owed) - draft_missing
         fixed_point = (draft_missing == 0) and (sd is not None)
@@ -588,7 +621,7 @@ def main(argv: list[str] | None = None) -> int:
             "terminal": terminal,
             "non_terminal": draft_missing,
             "needs_human": needs_human,
-            "stale_awaiting": stale_awaiting,   # awaiting-them threads aged past the nudge threshold
+            "stale_awaiting": stale_awaiting,  # awaiting-them threads aged past the nudge threshold
             "by_disposition": by_disposition,
             "fixed_point": fixed_point,
             "uma_available": sd is not None,
@@ -600,7 +633,7 @@ def main(argv: list[str] | None = None) -> int:
             "drain_notes": drain_notes,
         }
         _write_status(status)
-        _append_trend(status)   # append one drain-trend point per ledger rebuild (convergence memory)
+        _append_trend(status)  # append one drain-trend point per ledger rebuild (convergence memory)
         _write_sidecar(rows_pii)
 
         if answered_prov is not None:
@@ -625,14 +658,18 @@ def main(argv: list[str] | None = None) -> int:
             + (" · fixed_point" if fixed_point else " · NOT fixed_point")
         )
         if args.json:
-            print(json.dumps({
-                "reply_owed": len(reply_owed),
-                "by_disposition": by_disposition,
-                "non_terminal": draft_missing,
-                "needs_human": needs_human,
-                "fixed_point": fixed_point,
-                "uma_available": sd is not None,
-            }))
+            print(
+                json.dumps(
+                    {
+                        "reply_owed": len(reply_owed),
+                        "by_disposition": by_disposition,
+                        "non_terminal": draft_missing,
+                        "needs_human": needs_human,
+                        "fixed_point": fixed_point,
+                        "uma_available": sd is not None,
+                    }
+                )
+            )
         else:
             print(summary)
         return 0

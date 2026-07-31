@@ -22,7 +22,20 @@ set -uo pipefail
 
 export HOME="${HOME:-/Users/4jp}"
 LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
-UMA_ROOT="${UMA_ROOT:-$HOME/Workspace/universal-mail--automation}"
+# The resolver is located from THIS FILE, never from $LIMEN_ROOT. LIMEN_ROOT is the runtime data
+# root and a caller may legitimately point it at a directory with no scripts/ (the census tests do
+# exactly that) — resolving a sibling script through it silently yields nothing.
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+
+# The checkout is resolved by the ONE resolver, not by a default written out a fifth time. The old
+# default here (and in four Python rungs) was $HOME/Workspace/universal-mail--automation — a path
+# that does not exist; the real checkout sits one directory deeper. Every `[ -f "$UMA_ROOT/x.py" ]`
+# guard below was therefore silently false, and the beat skipped the whole mail organ without a
+# word. The resolver still honours an explicit $UMA_ROOT — and rejects it loudly when it is wrong.
+UMA_ROOT="$("${LIMEN_PY:-python3}" "$SELF_DIR/_uma_root.py" --path 2>/dev/null || true)"
+if [ -z "$UMA_ROOT" ]; then
+  echo "  mail-beat: UMA checkout unresolved — $("${LIMEN_PY:-python3}" "$SELF_DIR/_uma_root.py" --explain 2>&1)" >&2
+fi
 LEDGER="${LIMEN_OBLIGATIONS_LEDGER:-$LIMEN_ROOT/obligations-ledger.json}"
 PY="${LIMEN_PY:-python3}"
 STATUS_OUT="${LIMEN_MAIL_STATUS_OUT:-$LIMEN_ROOT/logs/uma-mail-status.json}"
@@ -47,23 +60,21 @@ run_tmp() {  # run_tmp <secs> <cmd...>  — run with cwd=/tmp (avoids the platfo
   bounded "$secs" bash -c 'cd /tmp && exec "$@"' _ "$@" 2>&1 | tail -1 || true
 }
 
+# Same resolver as the Python rungs, so shell and Python can never disagree about which checkout is
+# live. Emits `[]` when unresolved — never `["umail"]`, a binary installed nowhere, which is how a
+# missing checkout used to reach subprocess.run and raise FileNotFoundError out of a fail-open rung.
 uma_cmd_json() {
-  if [ -n "${UMA_BIN:-}" ]; then
-    printf '%s\n' "[\"$UMA_BIN\"]"
-  elif [ -f "$UMA_ROOT/cli.py" ]; then
-    "$PY" - "$PY" "$UMA_ROOT/cli.py" <<'PY'
-import json
-import sys
-
-print(json.dumps([sys.argv[1], sys.argv[2]]))
-PY
-  else
-    printf '%s\n' '["umail"]'
-  fi
+  "$PY" "$SELF_DIR/_uma_root.py" --command 2>/dev/null || printf '%s\n' '[]'
 }
 
 run_status() {
-  "$PY" - "$STATUS_OUT" "$OPS_REPORT" "$HISTORY_REPORT" "$MAX_AGE_HOURS" "$STATUS_TIMEOUT" "$(uma_cmd_json)" <<'PY'
+  local cmd_json
+  cmd_json="$(uma_cmd_json)"
+  if [ "$cmd_json" = "[]" ]; then
+    echo "  mail-status: skipped — $("$PY" "$SELF_DIR/_uma_root.py" --explain 2>&1)" >&2
+    return 0
+  fi
+  "$PY" - "$STATUS_OUT" "$OPS_REPORT" "$HISTORY_REPORT" "$MAX_AGE_HOURS" "$STATUS_TIMEOUT" "$cmd_json" <<'PY'
 import json
 import subprocess
 import sys
