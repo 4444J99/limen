@@ -13,7 +13,7 @@ lives in one agent's session.
 ## 1. The one command
 
 ```bash
-python3 scripts/check-danse.py        # 42 invariants · ~0.2 s · python3 + node · no GPU
+python3 scripts/check-danse.py        # 39 portable invariants · ~0.2 s · python3 + node · no GPU
 ```
 
 Exit `0` ⟺ the engine still is what it claims to be. It is registered in
@@ -25,8 +25,17 @@ so you get it for free two ways and do not have to remember it:
 
 That registration is load-bearing. Before it existed, `verify.py --explain apps/danse/engine/clock.js`
 selected exactly two gates — file syntax and whitespace — so an agent could rewrite the engine, run
-the repo's own gate, get a green exit, and ship a broken piece. If you add invariants, raise `FLOOR`
-in `scripts/check-danse.py`; the count ratchets so the net cannot be quietly hollowed out.
+the repo's own gate, get a green exit, and ship a broken piece.
+
+**The count ratchets, and it is split on purpose.** `FLOOR = 39` in `scripts/check-danse.py` counts
+the **portable** invariants — the ones that run anywhere. `CONDITIONAL = {"grain bank": 3}` counts
+invariants needing a local artifact derived from originals that never enter git.
+
+> **You will see 39 here and 42 on the artist's machine. That is correct, and it is stated by the
+> run.** Before the floor existed the total silently shrank from 42 to 39 on CI with nothing said —
+> a number that quietly means less depending on where it ran is exactly what an agent should not
+> trust. Now an absent group is *named* in the output. **Never lower a floor to make two machines
+> agree.** Add a portable check → raise `FLOOR`. Add a conditional one → raise its group's count.
 
 ## 2. What is checkable, and where
 
@@ -35,7 +44,7 @@ saves you from concluding a check is broken when it is merely refusing to lie.
 
 | What it proves | Command | Runs on |
 |---|---|---|
-| The 42 arithmetic invariants | `python3 scripts/check-danse.py` | **anything** with python3 + node |
+| The 39 portable arithmetic invariants (+3 with a local grain bank) | `python3 scripts/check-danse.py` | **anything** with python3 + node |
 | The flat state is still the 2017 composite (**31.60 dB**) | `apps/danse/render/browser.py --verify` | macOS + Google Chrome + Apple Metal **only** |
 | Every visitor gets their own river | `apps/danse/render/browser.py --arrival` | same |
 | Planes at unrelated angles still read as one room | open `probe.html` | any WebGL2 browser — by eye |

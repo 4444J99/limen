@@ -41,6 +41,7 @@ camera must be withheld from generated cuts.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import subprocess
@@ -56,20 +57,50 @@ PROGRAM = APP / "render" / "program.json"
 
 FAIL: list[str] = []
 NOTE: list[str] = []
-RUN: list[str] = []
+RUN: list[tuple[str, str | None]] = []
 
 # How many invariants must still be here. A gate that can be quietly hollowed out
 # is not a gate: delete half these checks and the remainder still exits 0, and the
 # next agent to touch the engine is verified by nothing. So the count ratchets —
 # ADDING invariants is free, and removing one is red until someone lowers this
-# number in a diff a reviewer can see. Raise it when you add checks; the only
-# legitimate way it falls is a deliberate, argued removal.
-FLOOR = 42
+# number in a diff a reviewer can see.
+#
+# The floor counts only the PORTABLE invariants: the ones that run on any machine
+# with python3 and node. That distinction is not bookkeeping, it is the whole point.
+# Some checks need a local artifact derived from 2.8 GB of originals that never
+# enter git, so on CI they cannot run — and before this floor existed they did not
+# merely skip, they SHRANK THE TOTAL SILENTLY. The first CI run of this gate
+# reported 39 where this machine reported 42, which is precisely the shape of thing
+# an agent trusts and should not: a number that quietly means less depending on
+# where it ran.
+#
+# So conditional checks are declared, counted separately, and named when they are
+# absent. Raise FLOOR when you add a portable check; raise the group's count when
+# you add a conditional one. Never lower either to make a machine agree.
+FLOOR = 39
+CONDITIONAL = {"grain bank": 3}
+
+GROUP: str | None = None
+
+
+@contextlib.contextmanager
+def conditional(name: str):
+    """Tag every check inside as needing a local artifact CI cannot have.
+
+    Absent is not a failure — but it must be VISIBLE, and it must never be
+    mistaken for the portable floor having been met.
+    """
+    global GROUP
+    GROUP, prev = name, GROUP
+    try:
+        yield
+    finally:
+        GROUP = prev
 
 
 def check(name: str, ok: bool, detail: str = "") -> None:
     print(f"  [{'ok  ' if ok else 'FAIL'}] {name}" + (f" — {detail}" if detail else ""))
-    RUN.append(name)
+    RUN.append((name, GROUP))
     if not ok:
         FAIL.append(name)
 
@@ -667,7 +698,8 @@ def check_sound() -> None:
             else f"{len(HASH_CASES)} cases, rng.js == rng.py",
         )
 
-    check_bank()
+    with conditional("grain bank"):
+        check_bank()
 
 
 def check_bank() -> None:
@@ -854,16 +886,38 @@ def main() -> int:
     print("\n the sound is the same film")
     check_sound()
 
-    # Counted BEFORE this check runs, so the floor never counts itself and the
-    # number below stays the number of real invariants.
-    ran = len(RUN)
+    # Counted BEFORE these checks run, so the floor never counts itself and the
+    # numbers below stay the number of real invariants.
+    portable = sum(1 for _, group in RUN if group is None)
+    ran_in = {name: sum(1 for _, g in RUN if g == name) for name in CONDITIONAL}
+
     print("\n the net is still the net")
     check(
-        f"no invariant has been deleted (floor {FLOOR})",
-        ran >= FLOOR,
-        f"{ran} ran"
-        + ("" if ran >= FLOOR else f" — {FLOOR - ran} missing; restore them or argue the removal in the diff"),
+        f"no portable invariant has been deleted (floor {FLOOR})",
+        portable >= FLOOR,
+        f"{portable} ran on this machine"
+        + (
+            "" if portable >= FLOOR else f" — {FLOOR - portable} missing; restore them or argue the removal in the diff"
+        ),
     )
+    # A conditional group is allowed to be absent — this is the machine without the
+    # artifact, not a broken net. It is NOT allowed to be present and short, and it
+    # is never allowed to be silent: an unstated skip is how 42 became 39 without
+    # anyone noticing.
+    for name, want in CONDITIONAL.items():
+        got = ran_in[name]
+        if got == 0:
+            NOTE.append(
+                f"{want} invariant(s) need the {name}, which this machine does not have — "
+                f"expected on CI and on any checkout without it. The portable floor above is "
+                f"unaffected; do not lower it to make the totals agree."
+            )
+            continue
+        check(
+            f"the {name} invariants are all still here (floor {want})",
+            got >= want,
+            f"{got} ran" + ("" if got >= want else f" — {want - got} missing"),
+        )
 
     for n in NOTE:
         print(f"\n  note: {n}")
