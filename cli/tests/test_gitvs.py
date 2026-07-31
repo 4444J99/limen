@@ -694,3 +694,50 @@ def test_owner_repos_user_scoped_authenticated_owner_sees_private_estate(monkeyp
 
     assert routes[0] == "/user/repos?affiliation=owner"
     assert [r["full_name"] for r in rows] == ["4444J99/mirror-mirror"]
+
+
+def test_audience_lens_imports_the_law_instead_of_recopying_it() -> None:
+    """Rung Q must DERIVE from check-audience.py, never carry its own copy of the audience law.
+
+    A second copy inside the doctor is exactly the drift every registry in this estate exists to
+    prevent — and it would rot in the direction that matters, since the doctor is the thing people
+    read. The lens returns the (derive, assess) pair or None; it never stubs an answer.
+    """
+    module = _load()
+    lens = module._audience_lens()
+    assert lens is not None, "check-audience.py should be importable from the doctor"
+    derive, assess = lens
+    assert callable(derive) and callable(assess)
+
+
+def test_audience_rung_ships_disarmed() -> None:
+    """Observable before autonomous: the ratchet stays false until the rung has been quiet."""
+    import yaml
+
+    estate = yaml.safe_load(
+        (SCRIPT.parent.parent / "institutio" / "github" / "estate.yaml").read_text(encoding="utf-8")
+    )
+    assert estate["ratchets"]["audience_parity_armed"] is False
+
+
+def test_audience_rung_never_demands_a_visibility_flip() -> None:
+    """`world` is "public, SOLO", so public-AND-granted is a fourth state the enum cannot express —
+    NOT drift. If the rung ever read it as drift it would demand a public→private flip of a
+    traction repo and sit permanently at war with class G, which reads portal_public and demands
+    public. The finding must name the state and stop.
+    """
+    module = _load()
+    derive, assess = module._audience_lens()
+    estate = {
+        "classes": {"portal_public": {"visibility": "public"}},
+        "repo_overrides": {"o/traction": {"class": "portal_public"}},
+    }
+    access = {"grants": {"o/traction": [{"login": "someone", "role": "push"}]}, "policy": {}}
+    breaks, owed = assess(derive(estate, access, {}))
+
+    assert breaks == [], "a deliberate public collaboration is not a structural break"
+    assert len(owed) == 1 and "world+guest" in owed[0]
+    # Suggesting a private TWIN is the split doctrine and is fine; demanding this repo be flipped
+    # or demoted is the thing that would put Q at war with class G forever.
+    for verb in ("flip", "demote", "make it private", "should be private"):
+        assert verb not in owed[0].lower(), f"the rung must not demand a visibility change ({verb!r})"
