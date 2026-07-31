@@ -319,8 +319,7 @@ def check_film(r: dict) -> None:
     check(
         "programmed clock is pure anywhere in the river",
         r["impureProgram"] == 0,
-        f"{r['impureProgram']} of 1561 samples across {r['span'] / 60:.0f} minutes of river "
-        f"disagreed with themselves",
+        f"{r['impureProgram']} of 1561 samples across {r['span'] / 60:.0f} minutes of river disagreed with themselves",
     )
     check(
         "every channel stays in range across twelve passages",
@@ -346,6 +345,206 @@ def check_film(r: dict) -> None:
 
 def node() -> str:
     return "node"
+
+
+# ── 2b. arrival: the one impure boundary ───────────────────────────────────────
+
+ARRIVAL = APP / "arrival.js"
+
+# A visitor's river is (seed, epoch): a draw made when they show up, and the
+# millisecond it was drawn. `arrival.js` is the only place in the app allowed to
+# touch a clock or an entropy source, and it exposes `platform` precisely so this
+# probe can replace both — with them fixed, arrival is an ordinary pure function
+# and can be held to the same standard as the engine.
+ARRIVAL_PROBE = """
+import { readFileSync } from "node:fs";
+import { arrive, mint, now, platform, riverOf } from "%(arrival)s";
+import { passageAt } from "%(program)s";
+import { state } from "%(clock)s";
+
+const program = JSON.parse(readFileSync("%(programJson)s", "utf8"));
+
+let CLOCK = 1780000000000;
+let NEXT = 0;
+platform.now = () => CLOCK;
+platform.draw = () => NEXT;
+
+// ── the precedence table, exactly as arrival.js documents it ──────────────────
+NEXT = 0xabcdef01;
+const shared = arrive("#s=42&e=99");
+const cited = arrive("#s=42&t=10");
+const bare = arrive("#s=42");
+const fresh = arrive("");
+const links =
+  shared.seed === 42 && shared.epoch === 99 && !shared.shifted &&
+  cited.seed === 42 && Math.abs(now(cited) - 10) < 1e-9 && cited.shifted &&
+  bare.seed === 42 && Math.abs(now(bare)) < 1e-9 &&
+  fresh.minted && fresh.seed === riverOf(0xabcdef01, CLOCK);
+
+// ── a named river ─────────────────────────────────────────────────────────────
+// `#name=` is the cheap slice of "put yourself into it": the seed comes from
+// what you typed rather than from a coin. It must still be YOURS — two people
+// typing the same word a millisecond apart cannot be handed the same river —
+// while staying reproducible within one instant, which is what makes it a name
+// and not just more entropy.
+CLOCK = 1780000000000;
+const nameA = arrive("#name=madison");
+const nameSame = arrive("#name=madison");
+CLOCK += 1;
+const nameLater = arrive("#name=madison");
+CLOCK -= 1;
+const nameOther = arrive("#name=chris");
+const named =
+  nameA.seed === nameSame.seed &&
+  nameA.seed !== nameLater.seed &&
+  nameA.seed !== nameOther.seed &&
+  nameA.minted;
+
+// ── deterministic in its inputs ───────────────────────────────────────────────
+const a = mint(), b = mint();
+const deterministic = a.seed === b.seed && a.epoch === b.epoch;
+
+// ── both inputs are actually mixed ────────────────────────────────────────────
+// The failure this catches is specific: drop the draw and everyone arriving in
+// the same millisecond shares a river; drop the epoch and two visitors who type
+// the same name into mint() share one.
+const N = 4096;
+const byDraw = new Set(), byEpoch = new Set();
+CLOCK = 1780000000000;
+for (let i = 0; i < N; i++) { NEXT = i; byDraw.add(mint().seed); }
+NEXT = 0x12345678;
+for (let i = 0; i < N; i++) { CLOCK = 1780000000000 + i; byEpoch.add(mint().seed); }
+
+// ── the adversarial arrival: ten thousand people click in the SAME millisecond ─
+// Identical epoch means identical t, so every pair occupies the same moment and
+// the only thing separating them is the seed. This is the tightest form of the
+// claim — a link goes round and everyone opens it at once.
+const V = 10000;
+CLOCK = 1780000000000;
+const seeds = [];
+for (let i = 0; i < V; i++) { NEXT = (0x51ed0000 ^ i) >>> 0; seeds.push(mint().seed); }
+const distinct = new Set(seeds).size;
+
+// ── time only moves forward ───────────────────────────────────────────────────
+// The regression this guards is the one that was there until now: a page that
+// writes `t` into the address bar and resumes from it is a loop wearing a river's
+// clothes. Over a year of wall clocks, t must strictly rise and the passage
+// ordinal must never go back.
+const river = { seed: 0x1234abcd, epoch: 1780000000000 };
+let backwards = 0, rewound = 0, lastT = -Infinity, lastP = -1;
+for (let i = 0; i <= 2000; i++) {
+  CLOCK = river.epoch + Math.round((i / 2000) * 365 * 86400 * 1000);
+  const t = now(river);
+  const p = passageAt(program, river.seed, t).index;
+  if (t <= lastT) backwards++;
+  if (p < lastP) rewound++;
+  lastT = t; lastP = p;
+}
+
+// ── a shared link is the same water ───────────────────────────────────────────
+// Two clients resolving the same link at the same instant must be in the same
+// frame, having exchanged nothing. This is the multi-projector claim clock.js
+// has asserted in a comment since the beginning; here it is measured.
+CLOCK = 1780000000000 + 987654321;
+const one = arrive("#s=305419896&e=1780000000000");
+const two = arrive("#s=305419896&e=1780000000000");
+const synced =
+  JSON.stringify(state(one.seed, now(one), program)) ===
+  JSON.stringify(state(two.seed, now(two), program));
+
+// ── an aged river still resolves ──────────────────────────────────────────────
+// Passage starts cannot be divided out in closed form, so `edgesTo` walks. A
+// visitor returning to a river seeded years ago pays that walk once at load, and
+// this pins the cost so a change that makes it quadratic fails here rather than
+// as a hung tab in a gallery.
+const decade = { seed: 0xdecade >>> 0, epoch: 1780000000000 };
+CLOCK = decade.epoch + 10 * 365 * 86400 * 1000;
+const started = process.hrtime.bigint();
+const aged = passageAt(program, decade.seed, now(decade));
+const agedMs = Number(process.hrtime.bigint() - started) / 1e6;
+
+console.log(JSON.stringify({
+  links, named, deterministic, byDraw: byDraw.size, byEpoch: byEpoch.size, N,
+  visitors: V, distinct, backwards, rewound, synced, agedMs,
+  agedPassage: aged.index, samples: 2001,
+}));
+"""
+
+# The walk for a decade-old river was measured at ~6 ms. The budget is generous
+# on purpose: it is a shape check, not a benchmark — linear passes with room to
+# spare, quadratic cannot.
+AGED_BUDGET_MS = 500.0
+
+
+def check_arrival() -> None:
+    """The visitor's river: minted on arrival, never rejoined at the source."""
+    if not ARRIVAL.is_file():
+        check("arrival exists", False, f"no {ARRIVAL.relative_to(ROOT)}")
+        return
+
+    with tempfile.NamedTemporaryFile("w", suffix=".mjs", delete=False) as fh:
+        fh.write(
+            ARRIVAL_PROBE
+            % {
+                "arrival": ARRIVAL,
+                "program": ENGINE / "program.js",
+                "clock": ENGINE / "clock.js",
+                "programJson": PROGRAM,
+            }
+        )
+        probe = Path(fh.name)
+    try:
+        out = subprocess.run([node(), probe], capture_output=True, text=True, check=False)
+        if out.returncode != 0:
+            check("arrival evaluates", False, out.stderr.strip().splitlines()[-1] if out.stderr else "node failed")
+            return
+        r = json.loads(out.stdout)
+    finally:
+        probe.unlink(missing_ok=True)
+
+    check("a link resolves to the river it names", r["links"], "#s&e joins · #s&t cites · #s starts · bare mints")
+    check("arrival is deterministic in its inputs", r["deterministic"], "same draw and epoch, same river")
+    check(
+        "a named river is yours, not the name's",
+        r["named"],
+        "same word one millisecond apart is a different river; same instant reproduces",
+    )
+
+    n = r["N"]
+    check(
+        "the draw and the epoch are both mixed into the river",
+        r["byDraw"] >= n - 2 and r["byEpoch"] >= n - 2,
+        f"{r['byDraw']}/{n} rivers varying only the draw, {r['byEpoch']}/{n} varying only the epoch",
+    )
+
+    # Birthday: with V visitors on a 32-bit seed the expected number of colliding
+    # pairs is V²/2^33. Stating it here is the point — the bound is real and the
+    # piece survives it, rather than being quietly hoped away.
+    v = r["visitors"]
+    expected = v * v / 2**33
+    collisions = v - r["distinct"]
+    check(
+        "ten thousand arrivals in one millisecond are ten thousand rivers",
+        collisions == 0,
+        f"{r['distinct']}/{v} distinct — birthday expectation {expected:.3f} collisions",
+    )
+    NOTE.append(
+        "the river seed is 32 bits, so distinct rivers cap at 4.3e9 and one collision is expected "
+        "around 65,000 visitors. Two visitors who DO collide still never see the same passage: their "
+        "epochs differ, and clock.js folds the passage ordinal into the material hash."
+    )
+
+    check(
+        "time only moves forward",
+        r["backwards"] == 0 and r["rewound"] == 0,
+        f"{r['samples']} wall clocks across a year — {r['backwards']} went back, {r['rewound']} rewound a passage",
+    )
+    check("a shared link is the same water", r["synced"], "two clients, one frame, nothing exchanged")
+    check(
+        "a river a decade old still resolves",
+        r["agedMs"] < AGED_BUDGET_MS,
+        f"passage {r['agedPassage']:,} found in {r['agedMs']:.0f}ms (budget {AGED_BUDGET_MS:.0f}ms)",
+    )
 
 
 # ── 5b. the film is filable ────────────────────────────────────────────────────
@@ -389,7 +588,11 @@ def check_submission(program: dict, river: dict) -> None:
     if want and submission.get("w") and submission.get("h"):
         num, den = (float(x) for x in want.split(":"))
         ok = abs(submission["w"] / submission["h"] - num / den) < 0.01
-        check("the submission capture is the aspect the call expects", ok, f"{submission['w']}×{submission['h']} vs {want}")
+        check(
+            "the submission capture is the aspect the call expects",
+            ok,
+            f"{submission['w']}×{submission['h']} vs {want}",
+        )
 
     # A passage has no fixed length, so the runtime cap applies to the LONGEST
     # one a capture could catch — the worst case, not the nominal.
@@ -517,6 +720,20 @@ FORBIDDEN = (
 )
 
 
+# The same sources, minus `requestAnimationFrame` — a render loop is exactly what
+# a page is supposed to have. These four are what make a result depend on WHEN it
+# ran, and outside engine/ they are permitted in precisely one file.
+ENTROPY = (
+    (re.compile(r"\bDate\.now\b"), "Date.now"),
+    (re.compile(r"\bperformance\.now\b"), "performance.now"),
+    (re.compile(r"\bMath\.random\b"), "Math.random"),
+    (re.compile(r"\bgetRandomValues\b"), "crypto.getRandomValues"),
+)
+
+# The one file allowed to know what time it is.
+IMPURE = "arrival.js"
+
+
 def check_purity() -> None:
     hits = []
     for js in sorted(ENGINE.glob("*.js")):
@@ -525,6 +742,29 @@ def check_purity() -> None:
             if rx.search(text):
                 hits.append(f"{js.name}:{label}")
     check("no wall-clock or entropy inside engine/", not hits, ", ".join(hits))
+
+    # The converse, and it is the half that makes uniqueness cheap: the engine is
+    # pure BECAUSE the impurity has exactly one home. A visitor's river is a clock
+    # reading and a coin toss, and if either leaks into a second file there are two
+    # answers to "what time is it" and the piece can drift against itself.
+    found: dict[str, list[str]] = {}
+    for path in sorted([*APP.rglob("*.js"), *APP.rglob("*.mjs"), *APP.rglob("*.html")]):
+        if ENGINE in path.parents or "node_modules" in path.parts:
+            continue
+        text = path.read_text(errors="ignore")
+        for rx, label in ENTROPY:
+            if rx.search(text):
+                found.setdefault(str(path.relative_to(APP)), []).append(label)
+    strays = {name: labels for name, labels in found.items() if name != IMPURE}
+    check(
+        "entropy lives in exactly one file",
+        set(found) == {IMPURE},
+        ", ".join(f"{n} ({'/'.join(v)})" for n, v in strays.items())
+        if strays
+        else f"{IMPURE} — {'/'.join(found.get(IMPURE, []))}"
+        if found
+        else f"nothing reads a clock, so no visitor can be given a river ({IMPURE} missing)",
+    )
 
 
 # ── 4. every frame the score names is deliverable ──────────────────────────────
@@ -595,6 +835,8 @@ def main() -> int:
         if probe:
             check_film(probe)
         check_submission(load(PROGRAM), probe.get("river") or {})
+        print("\n every visitor gets their own river")
+        check_arrival()
     else:
         NOTE.append(f"no film program at {PROGRAM.relative_to(ROOT)} — the piece runs free, nothing is cut")
     print("\n the corpus is deliverable")

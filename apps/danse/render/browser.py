@@ -16,6 +16,7 @@ Two facts this encodes, both measured rather than assumed:
 
     apps/danse/render/browser.py --check          # print the GL renderer and exit
     apps/danse/render/browser.py --verify         # run verify.html, print the verdict
+    apps/danse/render/browser.py --arrival        # two visitors, two rivers, in a real browser
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ import socket
 import socketserver
 import sys
 import threading
+import time
 from pathlib import Path
 
 APP = Path(__file__).resolve().parent.parent
@@ -172,16 +174,106 @@ def run_verify(page, base: str) -> int:
     return 1
 
 
+SNAP = """() => ({
+  seed: danse.river.seed,
+  t: danse.t,
+  hash: location.hash,
+  stored: localStorage.getItem('danse.river'),
+  program: !!danse.program,
+  passage: document.getElementById('passage').textContent.trim(),
+})"""
+
+
+def run_arrival(page, base: str) -> int:
+    """Each visitor gets their own river — checked in a real browser.
+
+    `check-danse.py` holds arrival to arithmetic with the clock and the entropy
+    replaced. What it cannot see is the part that actually faces a visitor: real
+    `crypto`, real `localStorage`, a real address bar, and the fact that changing
+    only a fragment is a SAME-DOCUMENT navigation. That last one is why this
+    exists — a pasted river link that silently does nothing is the one way a
+    shared river fails while looking like it worked.
+    """
+    failures: list[str] = []
+
+    def want(ok: bool, msg: str) -> None:
+        if not ok:
+            failures.append(msg)
+
+    def visit(frag: str = "", fresh: bool = True) -> dict:
+        # A bare fragment change would not reload, and would skip arrive().
+        if fresh:
+            page.goto("about:blank", wait_until="load")
+        page.goto(f"{base}/index.html{frag}", wait_until="load")
+        page.wait_for_function("() => !!(window.danse && window.danse.river)", timeout=180_000)
+        page.wait_for_timeout(1600)  # let the address bar tick at least once
+        return page.evaluate(SNAP)
+
+    forget = lambda: page.evaluate("() => localStorage.clear()")  # noqa: E731
+
+    page.goto(f"{base}/index.html", wait_until="load")
+    forget()
+    a = visit()
+    forget()
+    b = visit()
+    print(f"\n  visitor A   river {a['seed']:#010x}   {a['passage']}")
+    print(f"  visitor B   river {b['seed']:#010x}   {b['passage']}")
+    print(f"  address bar {a['hash']}")
+    want(a["seed"] != b["seed"], "two cold arrivals were given the same river")
+    want(a["program"] and b["program"], "the river is not what a bare URL runs")
+    want("s=" in a["hash"] and "e=" in a["hash"], "the address bar does not name the river")
+    want("t=" not in a["hash"], "the address bar writes t — a reload would resume, not flow on")
+    want(bool(a["stored"]), "the river was not kept for the next visit")
+
+    before = visit()
+    time.sleep(3.0)
+    after = visit()
+    print(f"  return      river {after['seed']:#010x}   t {before['t']:.1f}s → {after['t']:.1f}s")
+    want(before["seed"] == after["seed"], "a returning visitor was given a different river")
+    want(after["t"] > before["t"] + 2.0, "a returning visitor rejoined upstream")
+
+    forget()
+    guest = visit(after["hash"])
+    print(f"  guest       river {guest['seed']:#010x}   t {guest['t']:.1f}s against host {after['t']:.1f}s")
+    want(guest["seed"] == after["seed"], "a shared link did not carry the river")
+    want(abs(guest["t"] - after["t"]) < 30, "a shared link landed in different water")
+
+    cited = visit(f"#s={after['seed']}&t=1234.5")
+    print(f"  citation    river {cited['seed']:#010x}   t {cited['t']:.1f}s for 1234.5   held {cited['hash']}")
+    want(abs(cited["t"] - 1234.5) < 5, "a cited moment did not resolve")
+    want("t=1234.5" in cited["hash"], "a debugging position overwrote the address bar")
+
+    arch = visit("#s=20170620")
+    print(f"  archival    river {arch['seed']:#010x}   t {arch['t']:.1f}s   {arch['passage']}")
+    want(arch["seed"] == 20170620 and arch["t"] < 5, "the 2017 seed no longer starts at its source")
+
+    page.evaluate("() => { location.hash = '#s=20170620&t=777'; }")
+    page.wait_for_timeout(900)
+    pasted = page.evaluate(SNAP)
+    print(f"  pasted      river {pasted['seed']:#010x}   t {pasted['t']:.1f}s for 777   same-document")
+    want(pasted["seed"] == 20170620 and abs(pasted["t"] - 777) < 5, "a river pasted into an open page was ignored")
+
+    print()
+    if failures:
+        for f in failures:
+            print(f"  BROKEN — {f}")
+        print("\nARRIVAL BROKEN — a visitor is not being given their own river")
+        return 1
+    print("ARRIVAL HOLDS — each visitor gets their own river, and it only flows forward")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="print the GL renderer and exit")
     ap.add_argument("--verify", action="store_true", help="run verify.html and report the verdict")
+    ap.add_argument("--arrival", action="store_true", help="run the live page and check every visitor's river")
     ap.add_argument("--headed", action="store_true", help="show the window (debugging)")
     ap.add_argument("--base", help="use an already-running server instead of starting one")
     args = ap.parse_args()
 
-    if not args.check and not args.verify:
-        ap.error("nothing to do — pass --check or --verify")
+    if not args.check and not args.verify and not args.arrival:
+        ap.error("nothing to do — pass --check, --verify or --arrival")
 
     with contextlib.ExitStack() as stack:
         if args.base and reachable(args.base):
@@ -193,9 +285,12 @@ def main() -> int:
         if args.check:
             gpu = page.evaluate(READ_RENDERER)
             print(json.dumps({**gpu, "serving": base}, indent=1))
-            if not args.verify:
+            if not args.verify and not args.arrival:
                 return 0
-        return run_verify(page, base)
+        rc = run_verify(page, base) if args.verify else 0
+        if args.arrival:
+            rc = run_arrival(page, base) or rc
+        return rc
 
 
 if __name__ == "__main__":
