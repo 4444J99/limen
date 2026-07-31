@@ -25,6 +25,16 @@ import { context, program, resize, unitQuad, uniforms } from "./gl.js";
 import { compose, multiply, perspective } from "./mat4.js";
 import { camera, homePlacement, projector, rectUV, scatter } from "./room.js";
 
+/** How far past the picture plane the backdrop reaches, as a multiple of it.
+ *
+ *  The camera departing the projector's eye is the whole reveal, and a backdrop
+ *  exactly the size of the frame runs out the moment it does — leaving a ragged
+ *  black margin that says "rectangle of image" when the piece is claiming
+ *  "space". At home the surplus falls outside the frustum entirely and changes
+ *  nothing: the flat state measures 31.60 dB with the room behind it and 31.60 dB
+ *  with the room switched off. */
+const ROOM_REACH = 4;
+
 const VERT = `#version 300 es
 layout(location = 0) in vec2 aPos;
 
@@ -64,6 +74,7 @@ uniform float uMatteK;     // cut to the figure rather than to the rectangle
 uniform float uOpacity;
 uniform float uHasB;
 uniform float uEdge;       // half-width of the edge fade, in UV; 0 = hard abutment
+uniform float uClamp;      // 1 = backdrop: extend the edge texel instead of discarding
 
 out vec4 fragColor;
 
@@ -77,7 +88,21 @@ void main() {
   // them bleed through 256 seams, which is a real error against the composite —
   // so the width is a uniform the flat path sets to zero.
   float mask;
-  if (uEdge <= 0.0) {
+  if (uClamp > 0.5) {
+    // The backdrop. Its quad reaches well past the picture plane so that when the
+    // camera leaves the projector's eye there is still a room out there — without
+    // this the frame ends in a ragged black margin and the piece reads as a
+    // rectangle of image floating in a void rather than as a space. Clamping the
+    // sample extends the wall and the carpet outward, which is what is actually
+    // out there.
+    vec2 over = max(-uv, uv - 1.0);
+    uv = clamp(uv, 0.0, 1.0);
+    // Extending the edge texel forever smears a single column across half the
+    // frame. Dissolving instead gives the room a soft outer limit — which is also
+    // what the installation this is a study for actually looks like: lit surfaces
+    // with unlit room around them.
+    mask = 1.0 - smoothstep(0.0, 0.34, max(over.x, over.y));
+  } else if (uEdge <= 0.0) {
     mask = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? 0.0 : 1.0;
   } else {
     vec2 e = smoothstep(0.0, uEdge, uv) * smoothstep(0.0, uEdge, 1.0 - uv);
@@ -171,9 +196,15 @@ export class Renderer {
     return this.stats;
   }
 
+  /** The recovered room, drawn behind everything at home and reaching past the
+   *  frame on every side. `ROOM_REACH` is a multiple of the picture plane: at
+   *  home the surplus is outside the frustum and costs nothing (the measurement
+   *  confirms it — "no room behind" scores identically at 31.60 dB), and once the
+   *  camera departs it is the difference between a space and a cut-out. */
   drawRoom() {
     const { gl, u, corpus } = this;
-    const place = homePlacement([0, 0, 1, 1]);
+    const r = (ROOM_REACH - 1) / 2;
+    const place = homePlacement([-r, -r, 1 + r, 1 + r]);
     gl.uniformMatrix4fv(u.uModel, false, compose(place.position, place.rotation, place.scale));
     gl.uniform4fv(u.uRectUV, rectUV([0, 0, 1, 1]));
     gl.uniform3f(u.uGainA, 1, 1, 1);
@@ -187,6 +218,7 @@ export class Renderer {
     gl.uniform1f(u.uOpacity, 1);
     gl.uniform1f(u.uHasB, 0);
     gl.uniform1f(u.uEdge, 0);
+    gl.uniform1f(u.uClamp, 1);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, corpus.room);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -218,6 +250,7 @@ export class Renderer {
     gl.uniform1f(u.uOpacity, place.opacity ?? 1);
     gl.uniform1f(u.uHasB, texB ? 1 : 0);
     gl.uniform1f(u.uEdge, edge);
+    gl.uniform1f(u.uClamp, 0);
 
     let matte = null;
     if (matteK > 0) matte = corpus.matte(gl, a.frame, tier);

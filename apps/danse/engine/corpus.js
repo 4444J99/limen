@@ -21,6 +21,9 @@ import { hash } from "./rng.js";
  *  already registered to each other and to the room. That is what lets a plane
  *  showing IMG_1611 and a plane showing IMG_1588 sample through one projector
  *  matrix and still line up: the registration was done in 2017, by not moving. */
+/** The tiers the web bundle ships. The manifest is authoritative and may declare
+ *  more — the offline renderer builds a `film` tier at full camera resolution
+ *  (~250 MB, local-only, never in git), and asks for it by name. */
 export const TIERS = ["browse", "screen"];
 
 /** A tile whose short side is one pixel is solver tail-noise, not composition.
@@ -53,6 +56,11 @@ class Corpus {
     this.base = base;
     this.mipmap = true;   // measurement turns this off; see gl.texture
     this.manifest = manifest;
+    // Ordered small → large, from the manifest rather than from this module, so
+    // a corpus built with a `film` tier is usable without an engine change.
+    this.tiers = Object.entries(manifest.tiers)
+      .sort((a, b) => a[1].width - b[1].width)
+      .map(([name]) => name);
     this.frames = manifest.frames;
     this.byId = new Map(this.frames.map((f) => [f.id, f]));
     this.index = new Map(this.frames.map((f, i) => [f.id, i]));
@@ -82,7 +90,7 @@ class Corpus {
   async prime(gl, { onProgress } = {}) {
     this.room = texture(gl, await image(`${this.base}${this.manifest.room.file}`), { mipmap: this.mipmap });
 
-    const eager = TIERS.filter((t) => this.manifest.tiers[t]?.eager);
+    const eager = this.tiers.filter((t) => this.manifest.tiers[t]?.eager);
     const jobs = [];
     for (const tier of eager) {
       for (const f of this.frames) {
@@ -115,7 +123,8 @@ class Corpus {
   /** The best texture that exists RIGHT NOW, upgrading in the background.
    *  Returns null only before the eager tier has landed for this frame. */
   get(gl, kind, id, want = "screen") {
-    const order = TIERS.slice(0, TIERS.indexOf(want) + 1).reverse();
+    const at = this.tiers.indexOf(want);
+    const order = this.tiers.slice(0, at < 0 ? this.tiers.length : at + 1).reverse();
     for (const tier of order) {
       const key = `${kind}/${tier}/${id}`;
       const cached = this.textures.get(key);
@@ -186,9 +195,21 @@ class Corpus {
    *
    * `rect` is [x0, y0, x1, y1] in [0,1], y down — the score's convention.
    */
+  /** Frames a GENERATED cut may draw on.
+   *
+   * Projective texturing addresses every fragment through one shared matrix, and
+   * that matrix is the camera that stood in the room on 20 June 2017. A frame
+   * that did not come from it is not registered to anything, so it may appear in
+   * the solved score — the 2017 cut genuinely used one — but the engine must
+   * never reach for it on its own.
+   */
+  usable() {
+    return this.frames.filter((f) => f.registered !== false);
+  }
+
   candidates(rect, { minOverlap = 0.02, weightScore = 0.35 } = {}) {
     const out = [];
-    for (const f of this.frames) {
+    for (const f of this.usable()) {
       const box = f.figure?.bbox;
       if (!box) continue;
       const w = Math.min(rect[2], box[2]) - Math.max(rect[0], box[0]);

@@ -40,6 +40,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -52,9 +53,15 @@ OUT = HERE.parent / "corpus"
 # Measured, not guessed — see the size table in the commit that added this file.
 # WebP at these widths is ~25% under JPEG at matched visual quality.
 TIERS = {
-    "browse": {"width": 512, "quality": 80, "eager": True},
-    "screen": {"width": 1024, "quality": 82, "eager": False},
+    "browse": {"width": 512, "quality": 80, "eager": True, "ship": True},
+    "screen": {"width": 1024, "quality": 82, "eager": False, "ship": True},
+    # Local-only, for the 4K master. At `screen` a tile covering a sixteenth of
+    # the frame is a 256px crop stretched to 960px — soft, and visibly so on a
+    # cinema wall. This tier is ~250 MB, gitignored, and rebuilt on whatever
+    # machine renders the film from the originals already in .work/raw.
+    "film": {"width": 3264, "quality": 92, "eager": False, "ship": False},
 }
+SHIPPED = [name for name, spec in TIERS.items() if spec["ship"]]
 MATTE_QUALITY = 70  # a matte is a soft-edged blob; it survives hard compression
 ROOM_WIDTH = 2048
 ROOM_QUALITY = 86
@@ -201,7 +208,19 @@ def main() -> int:
     ap.add_argument("--limit", type=int, help="build only the first N frames (smoke test)")
     ap.add_argument("--room-only", action="store_true")
     ap.add_argument("--skip-room", action="store_true")
+    ap.add_argument(
+        "--tiers",
+        default=",".join(SHIPPED),
+        help=f"comma-separated subset of {','.join(TIERS)} to encode (default: the shipped web tiers). "
+        "`film` is the local-only full-camera tier the 4K master needs.",
+    )
     args = ap.parse_args()
+
+    build = [t.strip() for t in args.tiers.split(",") if t.strip()]
+    unknown = [t for t in build if t not in TIERS]
+    if unknown:
+        print(f"unknown tier(s): {', '.join(unknown)} — known: {', '.join(TIERS)}", file=sys.stderr)
+        return 1
 
     if not (args.work / "raw").is_dir():
         print(f"no corpus at {args.work}/raw — run 0_export.sh first", file=sys.stderr)
@@ -239,18 +258,33 @@ def main() -> int:
                 stem = Path(layer["src"]).stem
                 in_score[stem] = round(in_score.get(stem, 0.0) + tile.get("area", 0.0), 5)
 
-    entries, totals = [], {name: 0 for name in TIERS}
+    # Projective texturing addresses every fragment through ONE matrix — the
+    # camera that stood in the room on 20 June 2017. A frame shot on something
+    # else is registered to nothing, so the engine must not reach for it. The
+    # modal native size IS that camera; anything else is an import.
+    native = {}
+    for fid, raw, _, _ in items:
+        with Image.open(raw) as im:
+            native[fid] = im.size
+    camera = Counter(native.values()).most_common(1)[0][0]
+    strangers = sorted(fid for fid, size in native.items() if size != camera)
+
+    entries = []
     for i, (fid, raw, mask, pose) in enumerate(items, 1):
         geom = figure_geometry(mask)
-        for tier, spec in TIERS.items():
-            totals[tier] += encode(raw, args.out / "plates" / tier / f"{fid}.webp", spec["width"], spec["quality"])
-            totals[tier] += encode(
-                mask, args.out / "mattes" / tier / f"{fid}.webp", spec["width"], MATTE_QUALITY, grey=True
-            )
+        for tier in build:
+            spec = TIERS[tier]
+            encode(raw, args.out / "plates" / tier / f"{fid}.webp", spec["width"], spec["quality"])
+            encode(mask, args.out / "mattes" / tier / f"{fid}.webp", spec["width"], MATTE_QUALITY, grey=True)
         entries.append(
             {
                 "id": fid,
                 "source": raw.name,
+                "native": list(native[fid]),
+                # The 2017 solve used one stranger, so it stays in the corpus and
+                # in the score; `registered: false` is what keeps generated cuts
+                # from reaching for it. See Corpus.usable() in engine/corpus.js.
+                "registered": native[fid] == camera,
                 "figure": geom,
                 "joints": joints_of(pose),
                 "score_area": in_score.get(fid, 0.0),
@@ -258,6 +292,18 @@ def main() -> int:
         )
         print(f"\r  plates · {i}/{len(items)}", end="", flush=True)
     print()
+
+    # Measured from disk, not accumulated during encode, so a run that builds one
+    # tier still writes a manifest telling the truth about all of them.
+    def tier_bytes(name: str) -> int:
+        total = 0
+        for kind in ("plates", "mattes"):
+            d = args.out / kind / name
+            if d.is_dir():
+                total += sum(p.stat().st_size for p in d.glob("*.webp"))
+        return total
+
+    present = {name: tier_bytes(name) for name in TIERS if (args.out / "plates" / name).is_dir()}
 
     manifest = {
         "schema": "danse.corpus.v1",
@@ -269,28 +315,40 @@ def main() -> int:
             "height": round(ROOM_WIDTH * 3 / 4),
             "derived": "masked per-pixel median over all frames",
         },
+        "camera": list(camera),
         "tiers": {
             name: {
-                "width": spec["width"],
-                "height": round(spec["width"] * 3 / 4),
-                "eager": spec["eager"],
+                "width": TIERS[name]["width"],
+                "height": round(TIERS[name]["width"] * 3 / 4),
+                "eager": TIERS[name]["eager"],
+                # `local` tiers exist only on the machine that built them. The web
+                # bundle must never try to fetch one.
+                "local": not TIERS[name]["ship"],
                 "plates": f"plates/{name}/<id>.webp",
                 "mattes": f"mattes/{name}/<id>.webp",
-                "bytes": totals[name],
+                "bytes": nbytes,
             }
-            for name, spec in TIERS.items()
+            for name, nbytes in present.items()
         },
         "score": "score-2017.json" if score_path.exists() else None,
         "frames": entries,
     }
     (args.out / "manifest.json").write_text(json.dumps(manifest, indent=1) + "\n")
 
-    print(f"\nmanifest.json · {len(entries)} frames")
-    for name in TIERS:
-        eager = "eager" if TIERS[name]["eager"] else "lazy"
-        print(f"  {name:<7} {TIERS[name]['width']:>5}px  {totals[name] / 1e6:>6.1f} MB  {eager}")
+    print(f"\nmanifest.json · {len(entries)} frames · camera {camera[0]}×{camera[1]}")
+    for name, nbytes in present.items():
+        flags = "eager" if TIERS[name]["eager"] else "lazy"
+        if not TIERS[name]["ship"]:
+            flags += ", local-only"
+        built = "" if name in build else "  (kept from a previous run)"
+        print(f"  {name:<7} {TIERS[name]['width']:>5}px  {nbytes / 1e6:>6.1f} MB  {flags}{built}")
     with_joints = sum(1 for e in entries if e["joints"])
     print(f"  {with_joints}/{len(entries)} frames carry at least one confident joint")
+    if strangers:
+        print(
+            f"  {len(strangers)} frame(s) not from the 2017 camera: {', '.join(strangers)}"
+            f" — registered:false, kept for the score, withheld from generated cuts"
+        )
     return 0
 
 
