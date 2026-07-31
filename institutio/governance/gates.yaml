@@ -380,6 +380,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-runner-coverage:
+    command: "python3 scripts/check-runner-coverage.py"
+    paths: ["institutio/governance/sensors.yaml", "institutio/governance/ideal-forms.yaml", "institutio/governance/outbound-effectors.yaml", "institutio/governance/unreachable-runners-baseline.txt", "censor/precedents.jsonl", "scripts/check-runner-coverage.py", "scripts/hooks/**", "container/launchd/**", ".github/workflows/**"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "RUNNER COVERAGE: the rest of the check-* family asks 'does the registry match the code?' — every member verifies declaration↔file parity and none asks who EXECUTES that file. metabolize.sh passes every existing check (it exists, its gate literals are present, check-sensors' F reachability check is scoped `if heartbeat in source`) while being invoked by no tracked plist, workflow, or script — so 43 sensors are declared, gated on, and have never run, and verify-whole.sh skips three rungs believing that beat covers them. This gate answers 'who runs you?' for every declared enforcement artifact: beat runners reachable from a repo-tracked entrypoint, ideal probes and effector predicates naming real scripts, hooks that claim to block actually emitting permissionDecision, and censor precedents citing scripts that exist. Reachability is proven from tracked artifacts only — the operator's live LaunchAgents are a host fact CI cannot observe. Known-open findings sit in unreachable-runners-baseline.txt; the gate fails on any NEW one."
   check-audience:
     command: "python3 scripts/check-audience.py --check"
     paths: ["institutio/github/estate.yaml", "institutio/github/access.yaml", "organs/consulting/constellation/registry.yaml", "scripts/check-audience.py"]

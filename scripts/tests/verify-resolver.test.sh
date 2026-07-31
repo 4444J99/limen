@@ -101,11 +101,15 @@ agent-docs
 check-gates
 check-root-manifest' CLAUDE.md
 
+# check-runner-coverage is implicated because a workflow is a REACHABILITY ROOT: adding a
+# `run: bash scripts/metabolize.sh` step is exactly what would make an orphaned runner reachable,
+# so the verdict genuinely changes when a workflow does.
 expect workflow-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 workflow-yaml
-check-gates' .github/workflows/ci.yml
+check-gates
+check-runner-coverage' .github/workflows/ci.yml
 
 expect dashboard-change 'syntax-changed
 diff-hygiene
