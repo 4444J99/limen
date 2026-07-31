@@ -12,11 +12,12 @@ The host is native Objective-C code owned by `domus-genoma`, installed at:
 ```
 
 Its bundle identifier is `org.organvm.domus.agent-host`. It uses inherited
-standard streams and terminal state, forwards signals, returns the foreground
-leader's exit status, and remains alive while recursively tracked descendants
-or inherited lifetime-pipe holders remain alive. Same-process-group pipeline
-siblings are deliberately excluded. It is an on-demand CLI; no LaunchAgent is
-installed.
+standard streams and terminal state, places the supervised command in a
+dedicated child process group, forwards signals, returns the foreground
+leader's exit status, and remains alive while group members, recursively tracked
+descendants, or inherited lifetime-pipe holders remain alive. Pipeline siblings
+outside that child group are deliberately excluded. It is an on-demand CLI; no
+LaunchAgent is installed.
 
 ## Interfaces
 
@@ -41,11 +42,14 @@ bundle identifier, signature validity, designated requirement, CDHash, and
 supervision policy. Strict audit compares that requirement with the
 installer-owned sibling receipt
 `~/Applications/.DomusAgentHost.designated-requirement`; a newly signed
-replacement cannot certify itself by merely occupying the stable path. A host
-replacement is not an ordinary update: the Domus installer refuses to replace
-the fixed ad-hoc identity unless a persistent signing identity is explicitly
-supplied for a deliberate migration, and updates the receipt transactionally
-with rollback. Routing configuration may update without replacing the host.
+replacement cannot certify itself by merely occupying the stable path. Every
+dispatch boundary validates the same receipt before launching a provider, so an
+identity replacement is blocked before protected work starts rather than only
+at the next audit. A host replacement is not an ordinary update: the Domus
+installer refuses to replace the fixed ad-hoc identity unless a persistent
+signing identity is explicitly supplied for a deliberate migration, and updates
+the receipt transactionally with rollback. Routing configuration may update
+without replacing the host.
 
 `tcc-identity-audit` opens the user TCC database read-only and emits schema
 `limen.tcc_identity_audit.v1`. Relevant clients are classified as:

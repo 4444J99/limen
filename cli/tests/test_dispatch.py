@@ -46,19 +46,28 @@ def load_route_module():
 
 
 def _write_valid_stable_agent_host(path: Path) -> None:
+    if path.parent.name == "MacOS" and path.parent.parent.name == "Contents":
+        application = path.parents[2]
+        executable = path
+    else:
+        application = path.parent / "DomusAgentHost.app"
+        executable = application / "Contents/MacOS/DomusAgentHost"
+    requirement = 'cdhash H"' + "a" * 40 + '"'
     payload = json.dumps(
         {
             "schema": "domus.agent_host_status.v1",
             "ok": True,
             "bundle_id": "org.organvm.domus.agent-host",
+            "bundle_path": str(application),
+            "executable_path": str(executable),
             "stable_path": True,
             "signature_valid": True,
-            "designated_requirement": 'cdhash H"' + "a" * 40 + '"',
+            "designated_requirement": requirement,
             "cdhash": "a" * 40,
         }
     )
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    executable.parent.mkdir(parents=True, exist_ok=True)
+    executable.write_text(
         "#!/bin/sh\n"
         'if [ "$1" = status ] && [ "$2" = --json ]; then\n'
         f"  printf '%s\\n' '{payload}'\n"
@@ -71,7 +80,11 @@ def _write_valid_stable_agent_host(path: Path) -> None:
         "fi\n"
         "exit 64\n"
     )
-    path.chmod(0o755)
+    executable.chmod(0o755)
+    receipt = application.parent / ".DomusAgentHost.designated-requirement"
+    receipt.write_text(requirement + "\n")
+    if path != executable:
+        path.symlink_to(executable)
 
 
 @pytest.fixture(autouse=True)
@@ -1543,6 +1556,30 @@ def test_stable_agent_host_rejects_executable_without_host_contract(
     host = tmp_path / "not-domus-agent-host"
     host.write_text("#!/bin/sh\nexit 0\n")
     host.chmod(0o755)
+
+    with pytest.raises(
+        D.StableAgentHostError,
+        match="host contract is invalid",
+    ):
+        D._stable_agent_host_command(
+            ["claude"],
+            {
+                "LIMEN_AGENT_HOST_BIN": str(host),
+                "HOME": str(tmp_path),
+            },
+            platform_name="darwin",
+        )
+
+
+def test_stable_agent_host_rejects_deployment_identity_replacement(
+    tmp_path: Path,
+    monkeypatch,
+):
+    monkeypatch.delenv("DOMUS_AGENT_HOST_ACTIVE", raising=False)
+    host = tmp_path / "DomusAgentHost"
+    _write_valid_stable_agent_host(host)
+    receipt = tmp_path / ".DomusAgentHost.designated-requirement"
+    receipt.write_text('cdhash H"' + "b" * 40 + '"\n')
 
     with pytest.raises(
         D.StableAgentHostError,

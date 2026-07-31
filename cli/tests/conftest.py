@@ -19,15 +19,20 @@ import pytest
 @pytest.fixture(scope="session")
 def _stable_agent_host_fixture(tmp_path_factory) -> str:
     root = tmp_path_factory.mktemp("stable-agent-host")
-    host = root / "DomusAgentHost"
+    application = root / "Applications/DomusAgentHost.app"
+    host = application / "Contents/MacOS/DomusAgentHost"
+    host.parent.mkdir(parents=True)
+    requirement = 'cdhash H"' + "a" * 40 + '"'
     status = json.dumps(
         {
             "schema": "domus.agent_host_status.v1",
             "ok": True,
             "bundle_id": "org.organvm.domus.agent-host",
+            "bundle_path": str(application),
+            "executable_path": str(host),
             "stable_path": True,
             "signature_valid": True,
-            "designated_requirement": 'cdhash H"' + "a" * 40 + '"',
+            "designated_requirement": requirement,
             "cdhash": "a" * 40,
         }
     )
@@ -44,6 +49,8 @@ def _stable_agent_host_fixture(tmp_path_factory) -> str:
         "exit 64\n"
     )
     host.chmod(0o755)
+    receipt = application.parent / ".DomusAgentHost.designated-requirement"
+    receipt.write_text(requirement + "\n")
     return str(host)
 
 

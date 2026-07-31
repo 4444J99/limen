@@ -47,5 +47,5 @@
   },
   "schema": "limen.workstream.receipt.v1",
   "slug": "tcc-stable-agent-host",
-  "workstream": null
+  "workstream": "governance"
 }

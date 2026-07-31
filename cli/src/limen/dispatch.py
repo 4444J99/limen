@@ -2562,15 +2562,35 @@ def _validate_stable_agent_host_contract(host_path: Path) -> None:
         payload = json.loads(completed.stdout or "")
     except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
         raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}") from exc
+    if not isinstance(payload, dict):
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}")
+    try:
+        resolved_host = host_path.resolve(strict=True)
+        reported_executable = Path(str(payload.get("executable_path", ""))).resolve(strict=True)
+        application = Path(str(payload.get("bundle_path", ""))).resolve(strict=True)
+        if (
+            resolved_host != reported_executable
+            or resolved_host.parent.name != "MacOS"
+            or resolved_host.parent.parent.name != "Contents"
+            or resolved_host.parents[2] != application
+            or application.suffix != ".app"
+        ):
+            raise OSError("stable-host status paths disagree")
+        receipt = application.parent / f".{application.stem}.designated-requirement"
+        receipt_lines = receipt.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}") from exc
+    designated_requirement = str(payload.get("designated_requirement", "")).strip()
     if (
         completed.returncode != 0
-        or not isinstance(payload, dict)
         or payload.get("schema") != "domus.agent_host_status.v1"
         or payload.get("ok") is not True
         or payload.get("bundle_id") != "org.organvm.domus.agent-host"
         or payload.get("stable_path") is not True
         or payload.get("signature_valid") is not True
-        or not str(payload.get("designated_requirement", "")).strip()
+        or not designated_requirement
+        or len(receipt_lines) != 1
+        or receipt_lines[0].strip() != designated_requirement
         or not re.fullmatch(r"[0-9a-fA-F]{40,128}", str(payload.get("cdhash", "")))
     ):
         raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}")
@@ -2619,9 +2639,10 @@ def _stable_agent_host_command(
 ) -> list[str]:
     """Wrap one local provider launch in the stable macOS responsibility host.
 
-    The native host inherits Limen's process group, so ``_run_capture`` retains
-    its existing whole-group timeout semantics. A process already below the
-    host is returned unchanged; nested hosts would obscure lifecycle receipts.
+    The native host inherits Limen's process group and supervises providers in
+    its own child group, so ``_run_capture`` retains whole-tree timeout semantics
+    through native signal forwarding. A process already below the host is
+    returned unchanged; nested hosts would obscure lifecycle receipts.
     """
 
     values = os.environ if env is None else env
