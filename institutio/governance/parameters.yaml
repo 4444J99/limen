@@ -4055,6 +4055,13 @@ parameters:
     owner: governance
     note: "The continuous metabolize sensor loop is registry-derived and default-on after #935; the deleted hand-wired blocks are not a fallback, so 0 skips that pass as an escape hatch. The same generic runner now owns scheduled heartbeat cadence, timeout, conditional argv, voice stamps, Omega eligibility, and armed-valve metadata from sensors.yaml. The heartbeat's scheduled lane is live-wired too (heartbeat-loop.sh fallback 1, held equal to this default by test_derive_fallback_matches_panel_default): the post-#921 integration drain was released by the 2026-07-13 dry + live-parity canary receipts (PR #1013 body)."
 
+  LIMEN_PAUSED_SENSING:
+    default: "1"               # ON — a paused beat still runs read-only monitoring; 0 = the old blind pause (escape hatch)
+    env: LIMEN_PAUSED_SENSING
+    self_update: none
+    owner: governance
+    note: "A pause withdraws the fleet's authority to ACT; it was never a decision to stop LOOKING. Before this, heartbeat-loop.sh's `paused` branch `continue`d ~80 lines above the monitoring block, so arming any marker silently switched off drift monitors, the scheduled sensor pass, and the inbox sweep. Measured cost: an agent-armed marker on 2026-07-27 (no authorization, no provenance, no TTL, gitignored) blinded the fleet for four days — the live checkout drifted to 27 commits behind origin/main while check-live-checkout.py sat at exit 1 with nothing asking it, and the mail sweep that would have reported an already-answered thread never ran, which is how a redundant reply reached a live recruiter on 2026-07-31. The 2026-07-21 hoist fixed this exact shape one split down (observe), which is why it read as already-fixed. run_monitoring() is called from both the paused branch and the live body; the paused call is additionally gated on net_up() because every sensor in it talks to a remote. Set 0 only to restore the old blind-pause behaviour."
+
   LIMEN_SENSOR_CANARY:
     default: "1"
     env: LIMEN_SENSOR_CANARY
