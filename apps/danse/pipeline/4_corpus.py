@@ -305,6 +305,32 @@ def main() -> int:
 
     present = {name: tier_bytes(name) for name in TIERS if (args.out / "plates" / name).is_dir()}
 
+    def tier_entry(name: str, nbytes: int) -> dict:
+        return {
+            "width": TIERS[name]["width"],
+            "height": round(TIERS[name]["width"] * 3 / 4),
+            "eager": TIERS[name]["eager"],
+            "local": not TIERS[name]["ship"],
+            "plates": f"plates/{name}/<id>.webp",
+            "mattes": f"mattes/{name}/<id>.webp",
+            "bytes": nbytes,
+        }
+
+    # Local-only tiers go in a SEPARATE, gitignored manifest that the engine merges
+    # when it is there. A committed manifest advertising 245 MB of plates that are
+    # not in the repo would send every fresh checkout looking for 404s.
+    local = {n: b for n, b in present.items() if not TIERS[n]["ship"]}
+    local_path = args.out / "manifest.local.json"
+    if local:
+        local_path.write_text(
+            json.dumps(
+                {"schema": "danse.corpus.local.v1", "tiers": {n: tier_entry(n, b) for n, b in local.items()}}, indent=1
+            )
+            + "\n"
+        )
+    else:
+        local_path.unlink(missing_ok=True)
+
     manifest = {
         "schema": "danse.corpus.v1",
         "shot": "2017-06-20",
@@ -316,20 +342,8 @@ def main() -> int:
             "derived": "masked per-pixel median over all frames",
         },
         "camera": list(camera),
-        "tiers": {
-            name: {
-                "width": TIERS[name]["width"],
-                "height": round(TIERS[name]["width"] * 3 / 4),
-                "eager": TIERS[name]["eager"],
-                # `local` tiers exist only on the machine that built them. The web
-                # bundle must never try to fetch one.
-                "local": not TIERS[name]["ship"],
-                "plates": f"plates/{name}/<id>.webp",
-                "mattes": f"mattes/{name}/<id>.webp",
-                "bytes": nbytes,
-            }
-            for name, nbytes in present.items()
-        },
+        # Shipped tiers only. A local tier's entry lives in manifest.local.json.
+        "tiers": {name: tier_entry(name, nbytes) for name, nbytes in present.items() if TIERS[name]["ship"]},
         "score": "score-2017.json" if score_path.exists() else None,
         "frames": entries,
     }

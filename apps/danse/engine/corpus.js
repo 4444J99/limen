@@ -45,6 +45,15 @@ export async function load(base = "corpus/") {
     if (!r.ok) throw new Error(`corpus manifest ${r.status} at ${base}manifest.json`);
     return r.json();
   });
+  // Tiers built locally and never committed — the 245 MB `film` tier the 4K
+  // master needs. Absent on every fresh checkout, and that is correct: a shipped
+  // manifest advertising plates that are not in the repo would send every visitor
+  // looking for 404s. Present only on the machine that built them.
+  const local = await fetch(`${base}manifest.local.json`)
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  if (local?.tiers) Object.assign(manifest.tiers, local.tiers);
+
   const score = manifest.score
     ? await fetch(`${base}${manifest.score}`).then((r) => (r.ok ? r.json() : null))
     : null;
