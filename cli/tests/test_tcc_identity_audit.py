@@ -25,7 +25,8 @@ def _database(path: Path, rows: list[tuple[str, int, str, int]]) -> Path:
     connection.execute(
         "CREATE TABLE access ("
         "service TEXT NOT NULL, client TEXT NOT NULL, "
-        "client_type INTEGER NOT NULL, last_modified INTEGER NOT NULL)"
+        "client_type INTEGER NOT NULL, auth_value INTEGER NOT NULL DEFAULT 2, "
+        "last_modified INTEGER NOT NULL)"
     )
     connection.executemany(
         "INSERT INTO access(client, client_type, service, last_modified) VALUES (?, ?, ?, ?)",
@@ -177,6 +178,44 @@ def test_live_tcc_databases_include_user_and_system_stores(tmp_path: Path):
         tmp_path / "Library/Application Support/com.apple.TCC/TCC.db",
         Path("/Library/Application Support/com.apple.TCC/TCC.db"),
     )
+
+
+def test_revoked_decisions_are_not_live_tcc_clients(tmp_path: Path):
+    home = tmp_path / "home"
+    application = home / "Applications/DomusAgentHost.app"
+    database = _database(
+        tmp_path / "TCC.db",
+        [
+            (
+                str(home / ".local/share/claude/versions/revoked-release"),
+                1,
+                "kTCCServicePhotos",
+                1002,
+            ),
+            (
+                str(home / ".local/share/claude/versions/active-release"),
+                1,
+                "kTCCServiceMicrophone",
+                1003,
+            ),
+            ("com.example.revoked", 0, "kTCCServicePhotos", 1004),
+        ],
+    )
+    connection = sqlite3.connect(database)
+    connection.execute("UPDATE access SET auth_value = 0 WHERE service = 'kTCCServicePhotos'")
+    connection.commit()
+    connection.close()
+
+    clients, unrelated = AUDIT._read_clients(
+        (database,),
+        deployment_epoch=1000,
+        application=application,
+        env={"HOME": str(home)},
+    )
+
+    assert [item["client"] for item in clients] == [str(home / ".local/share/claude/versions/active-release")]
+    assert clients[0]["classification"] == "versioned_leak"
+    assert unrelated == 0
 
 
 def test_arbitrary_rotated_claude_and_python_paths_are_versioned_leaks(
