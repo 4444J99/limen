@@ -4896,6 +4896,12 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_DIURNAL_SHIP:
+    default: "1"
+    env: LIMEN_DIURNAL_SHIP
+    self_update: none
+    owner: diurnal
+    note: "Whether the organ lands its own emission on main via scripts/ship-docs.sh. 0 = pages stay on disk. docs/diurnal/ is a tracked directory but the emission arrives untracked, and capture.sh — the beat's only committing rung — refuses in-place commits on the live default branch and diverts to a side ref, so without this the organ's whole output is local-only (Rule #2) and re-lost daily. ship-docs refuses deploy-trigger paths, so a page can never blind-deploy the site; publication is additionally held whenever logs/AUTONOMY_PAUSED prohibits merge, the same marker await-pr.sh reads."
   LIMEN_DIURNAL_MORNING_HOUR:
     default: 6
     env: LIMEN_DIURNAL_MORNING_HOUR
