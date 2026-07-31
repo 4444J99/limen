@@ -537,6 +537,42 @@ sauce_policy:
   owner: gitvs
   note: "Enforcement is the composition of shipped predicates: class G + publish triple-gate (PRIVATE), moat-audit (GUARD), check-split-hygiene (SPLIT). Coverage expansion = adding moat-guard rows or split registrations — never editing this block."
 
+# ── AUDIENCE (2026-07-30, decision 4 — the middle tier the estate enforced without naming) ───
+# Every surface faces the world, an invited collaborator, or nobody. The estate already ENFORCED
+# the middle tier in one place — moat-audit's "a partner's eyes make the tree exposed", which
+# applies a zero-Actions-secrets rule to granted repos that world-public repos never face — but
+# had no word for it, so `operation_private` covers both a zero-collaborator engine repo and a
+# partner's shared lane with the same value.
+#
+# DERIVED, never stored. A third copy of a fact `classes[].visibility` and access.yaml already
+# carry would rot on contact (this very file proves the failure mode: sauce_policy.private_classes
+# lists `conductor`, whose class visibility is `public`). So:
+#     world  = the class says public          "me and the world"
+#     collab = private AND >=1 access.yaml grant row     "me and collab"
+#     self   = private, nobody invited        the engine-room default
+#
+# `audience:` appears on a repo_overrides row ONLY as declared INTENT where intent and derivation
+# disagree — the same shape as the `publish_candidate:` flag beside it. It is not a column on the
+# classes and not a row on all 144 overrides.
+#
+# PRECEDENCE, once: observed GitHub state > per-repo judgment row > constellation-register hint.
+# The register SUGGESTS a lane and never decides. That restraint is load-bearing: a wrong stream
+# row is regenerable prose, but a wrong audience row is access posture — drop a project from the
+# register, the derived `collab` vanishes, the repo derives `self`, and a deliberate grant reads as
+# "undeclared exposure" whose machine-runnable direction (L-PARTNER-GRANTS) is REMOVAL. An
+# editorial edit to a people file must never stage revocation of a partner's access to their work.
+#
+# `world` is "public, SOLO" — so public+granted is a FOURTH state the enum cannot express. It is
+# an owed decision, never drift, and never a demand to flip a traction repo private.
+audience_policy:
+  provenance: "2026-07-30 decision 4 (PORTVS/ASTRA plan, PR #1682) — the content half is publication-policy.py's 3-column matrix"
+  derivation: {public_class: world, private_with_grant: collab, private_no_grant: self, source_of_grants: access.yaml}
+  declared_key: "repo_overrides.<repo>.audience — intent only, where it disagrees with the derivation"
+  precedence: [observed_github_state, per_repo_judgment_row, constellation_register_hint]
+  owner: gitvs
+  predicate: scripts/check-audience.py
+  note: "Coverage expansion = declaring intent on the rows that need it or landing an access.yaml grant — never editing this block."
+
 # ── LICENSE POSTURE (Phase 4 — the doctrine gap the 2026-07-29 excavation named, now owned) ─
 license_policy:
   provenance: "Phase 4 2026-07-30 — first written license doctrine for the estate"

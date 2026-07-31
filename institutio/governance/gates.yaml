@@ -374,6 +374,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-audience:
+    command: "python3 scripts/check-audience.py --check"
+    paths: ["institutio/github/estate.yaml", "institutio/github/access.yaml", "organs/consulting/constellation/registry.yaml", "scripts/check-audience.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: gitvs
+    note: "AUDIENCE drift: every surface faces the world, an invited collaborator, or nobody (2026-07-30 decision 4). The audience is DERIVED (public → world; private+grant → collab; else self), never stored as a third copy. --check exits 1 only on a structural BREAK — a bad enum value, or `collab` declared on a class access.yaml can never grant. Open judgments (a declared collab nobody was invited to; a partner lane also marked publish_candidate; the public-AND-granted fourth state the enum cannot express) are reported with named owners but do NOT halt the estate: holding every PR hostage to an open partner question is a worse failure than the question. --strict exits 1 on those too."
   check-corpora:
     command: "python3 scripts/check-corpora.py"
     paths: ["institutio/governance/corpora.yaml", "institutio/governance/corpus-root-literals-baseline.txt", "scripts/check-corpora.py", "scripts/corpus_resolve.py", "scripts/constellation-dossier.py", "organs/consulting/constellation/check.py"]
