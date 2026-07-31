@@ -1,22 +1,27 @@
 """INTEGRITY — don't self-corrupt (CISO, integrity wing).
 
-The autoupdater flips the version-path of Claude.app / the ``claude`` CLI; that
-churn is the root of the "Claude app is corrupt" dialog and recurring TCC/Gatekeeper
-prompts. The lever (``DISABLE_AUTOUPDATER=1``) existed but was ungoverned. This
-organ governs it: verify the operating binaries' signatures each beat and alert on
-drift instead of letting Gatekeeper interrupt. Read-only + fail-open.
+Managed executables are expected to update. Protected access is routed through
+the fixed native Domus responsibility host so a Claude, Python, Homebrew, uv, or
+Limen version rotation does not become a new TCC principal. This organ verifies
+signatures and fails when an update-disabling control reappears. Read-only.
 """
 
 from __future__ import annotations
 
 import os
+import platform
 import subprocess
 from pathlib import Path
 
 
 from . import params
 
-_TRUE = ("1", "true", "yes", "on")
+TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
+UPDATE_DISABLE_KEYS = (
+    "DISABLE_AUTOUPDATER",
+    "DISABLE_UPDATES",
+    "HOMEBREW_NO_AUTO_UPDATE",
+)
 
 
 def _as_list(value: object) -> list[str]:
@@ -54,32 +59,61 @@ def verify_target(target: str) -> dict:
         return {"target": str(p), "exists": True, "valid": None, "detail": str(exc)[:200]}
 
 
-def autoupdater_disabled() -> bool:
-    """True if the documented lever (DISABLE_AUTOUPDATER) is set truthy."""
-    return str(os.environ.get("DISABLE_AUTOUPDATER", "")).lower() in _TRUE
+def disabled_update_controls() -> list[str]:
+    """Return update-disabling environment controls that are currently active."""
+    return [key for key in UPDATE_DISABLE_KEYS if str(os.environ.get(key, "")).strip().lower() in TRUE_VALUES]
 
 
-def assess(results: list[dict], intended_disabled: bool, actually_disabled: bool) -> bool:
-    """drift = any verified-invalid signature, or the autoupdater isn't in its intended state."""
+def assess(
+    results: list[dict],
+    intended_enabled: bool,
+    disabled_controls: list[str],
+) -> bool:
+    """Drift is an invalid signature, disabled update path, or stale policy."""
     sig_drift = any(r.get("valid") is False for r in results)
-    lever_drift = intended_disabled and not actually_disabled
-    return bool(sig_drift or lever_drift)
+    required_drift = any(
+        r.get("required") is True and (r.get("exists") is not True or r.get("valid") is not True) for r in results
+    )
+    update_drift = not intended_enabled or bool(disabled_controls)
+    return bool(sig_drift or required_drift or update_drift)
 
 
-def check() -> dict:
+def check(*, platform_name: str | None = None) -> dict:
+    observed_platform = platform.system() if platform_name is None else platform_name
+    require_agent_host = observed_platform == "Darwin"
     targets = params.get(
         "INTEGRITY_VERIFY_TARGETS",
         ["/Applications/Claude.app", "~/.local/bin/claude"],
     )
-    results = [verify_target(t) for t in _as_list(targets)]
-    intended = str(params.get("INTEGRITY_AUTOUPDATER", "disabled")).lower() == "disabled"
-    actual = autoupdater_disabled()
-    drift = assess(results, intended, actual)
+    host_executable = Path(
+        str(
+            params.get(
+                "LIMEN_AGENT_HOST_BIN",
+                "~/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost",
+            )
+        )
+    ).expanduser()
+    if host_executable.parent.name == "MacOS" and host_executable.parent.parent.name == "Contents":
+        required_host = host_executable.parents[2]
+    else:
+        required_host = host_executable
+    required_path = str(required_host)
+    target_values = _as_list(targets)
+    if require_agent_host and required_path not in {str(Path(target).expanduser()) for target in target_values}:
+        target_values.append(required_path)
+    results = [verify_target(target) for target in target_values]
+    for result in results:
+        result["required"] = require_agent_host and result.get("target") == required_path
+    intended = str(params.get("INTEGRITY_AUTOUPDATER", "enabled")).lower() == "enabled"
+    disabled = disabled_update_controls()
+    drift = assess(results, intended, disabled)
     return {
         "organ": "integrity",
+        "platform": observed_platform,
         "targets": results,
-        "autoupdater_intended": "disabled" if intended else "enabled",
-        "autoupdater_actual": "disabled" if actual else "enabled",
+        "autoupdater_intended": "enabled" if intended else "disabled",
+        "autoupdater_actual": "disabled" if disabled else "enabled",
+        "update_disable_controls": disabled,
         "drift": drift,
         "status": "drift" if drift else "ok",
     }

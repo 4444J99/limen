@@ -753,7 +753,7 @@ sensors:
 
   dialogs-silenced:
     section: "0g8b"
-    title: "dialogs silenced — the agent-curable macOS dialog estate self-heals (hook-drift + cask + lsregister-stub) then verifies"
+    title: "dialogs silenced — stable TCC identity + the agent-curable macOS dialog estate hold while managed tools auto-update"
     # Replaces the three hand-wired hygiene hooks in heartbeat-loop.sh with ONE registry-derived sensor:
     # each armed LIMEN_*_HEAL effector runs on the hygiene cadence, then --agent-curable-only verifies
     # the beat-healable estate is silent. The human-gated classes (settings.json self-mod, firewall)
@@ -799,7 +799,7 @@ sensors:
         escalation: "malformed ClaudeCode.app stub registered (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat unregisters + removes it, else 'damaged, move to Trash' recurs every launch"
       - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         severity: advisory
-        escalation: "an agent-curable dialog class still prompts after the heal pass — arm the matching LIMEN_*_HEAL valve (lever L-DIALOGS-HEAL) so it self-cures"
+        escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"
     omega_eligible:
       - label: "dialogs silenced (agent-curable)"
         rung_id: sensor.dialogs.agent-curable
