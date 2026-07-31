@@ -154,14 +154,19 @@ def check_deadline(reg: dict, rep: Report) -> None:
 
 
 def check_unknowns(reg: dict, rep: Report) -> None:
+    """The call is silent on these. Blocking ones exit non-zero; the rest report
+    what stands in for the missing answer — evidence where we found some, a bare
+    assumption where we did not — so the two never read alike."""
     for item in reg.get("unstated", []):
-        blocking = item.get("blocking", False)
-        rep.add(
-            "unpublished by the call",
-            item["id"],
-            OPEN if blocking else SKIP,
-            item["resolve"] if blocking else f"assuming {item.get('assume', item.get('assume_master', 'default'))}",
+        if item.get("blocking", False):
+            rep.add("unpublished by the call", item["id"], OPEN, item["resolve"])
+            continue
+        detail = (
+            f"de-blocked by evidence — {item['evidence']}"
+            if "evidence" in item
+            else f"assuming {item.get('assume', item.get('assume_master', 'default'))}"
         )
+        rep.add("unpublished by the call", item["id"], SKIP, detail)
 
 
 # ── package checks ─────────────────────────────────────────────────────────────

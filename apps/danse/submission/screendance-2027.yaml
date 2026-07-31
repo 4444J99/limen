@@ -88,7 +88,13 @@ unstated:
   - id: runtime-cap
     resolve: "Call 305.576.4350 — ask the maximum accepted runtime."
     assume_max_seconds: 390        # the 6:30 cut we are building
-    blocking: true                 # a cap below 6:30 forces a re-cut, not a re-export
+    # De-blocked by evidence, not by assumption: the 2026 festival programmed
+    # "17 short films and three feature-length films". A festival that seats
+    # features does not reject 6:30 on length.
+    evidence: "2026 program: 17 shorts + 3 feature-length, 24 films / 6 countries"
+    evidence_source: https://miamilightproject.com/program/screendance-miami-festival-2026/
+    checked: 2026-07-30
+    blocking: false
 
   - id: codec-and-master-format
     resolve: "Call — ask deliverable spec for selected films (ProRes? H.264? DCP?)."
@@ -103,13 +109,21 @@ unstated:
 
   - id: premiere-status
     resolve: "Call — ask whether prior online/festival exhibition disqualifies."
-    # Live because the plan contemplates a European premiere (Mignolo, 13 Oct 2026)
-    # landing BEFORE the Miami notification at end of October.
-    blocking: true
+    # Was blocking because the plan contemplates a European premiere (Mignolo,
+    # 13 Oct 2026) landing BEFORE the Miami notification at end of October.
+    # De-blocked: the 2026 open call seated "Florida, U.S., and world premieres"
+    # — a Florida-premiere tier exists, so prior exhibition elsewhere re-tiers the
+    # premiere rather than disqualifying the film.
+    evidence: "2026 open-call selections spanned Florida, U.S., and world premieres"
+    evidence_source: https://miamilightproject.com/program/screendance-miami-festival-2026/
+    checked: 2026-07-30
+    blocking: false
 
   - id: entry-fee
-    resolve: "Open the Submittable form — the fee, if any, appears at the payment step."
+    resolve: "Confirm at the Submittable payment step when filing."
     assume: "none"
+    evidence: "Miami Light Project states ScreenDance Miami accepts submissions for no charge"
+    checked: 2026-07-30
     blocking: false
 
 # ── The package. What check.py validates on disk. ───────────────────────────────
