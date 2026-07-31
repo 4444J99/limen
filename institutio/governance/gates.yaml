@@ -252,6 +252,12 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Live-main commit deny matrix (hermetic fixture); transcribed when the hook landed on main in parallel with PR1."
+  outbound-preflight-test:
+    command: "bash scripts/tests/outbound-preflight-guard.test.sh"
+    paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "institutio/governance/outbound-effectors.yaml"]
+    scoped: false
+    owner: lifecycle
+    note: "Outward-action deny matrix (hermetic fixture): no send/comment without a fresh, target-bound proof-of-observation receipt. Negative cases are the deliverable — a guard with only happy-path tests is the 'HARD BLOCK' hook that blocks nothing. Landed after the 2026-07-31 duplicate-recruiter-reply escape, instance 33 of the act-on-an-artifact class."
   pytest-scope-guard-test:
     command: "bash scripts/tests/pytest-scope-guard.test.sh"
     paths: ["scripts/hooks/pytest-scope-guard.sh", "scripts/tests/pytest-scope-guard.test.sh"]
