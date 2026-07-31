@@ -137,6 +137,13 @@ Reading the curve: the piece is *about a hundred rectangles* — past that, fide
 bought a fifth of a dB at a time. Which is a statement about how much grammar the engine
 actually needs.
 
+![reconstruction](reference/reconstruction-comparison.png)
+
+*Left, the 2017 composite as it was cut by hand. Centre, the same picture re-derived from
+the 162 originals by the solver at 256 rectangles — 32.3 dB. Right, where each region came
+from. The middle panel is not a filter applied to the left one: every pixel in it was
+fetched from a photograph and placed by a number.*
+
 What the solve found:
 
 - **77 of 256 rectangles need two source layers**, at a 15% error-reduction threshold.
