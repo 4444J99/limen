@@ -45,19 +45,23 @@
   <span><b id="clock">0:00</b></span>
   <span><b id="cut">—</b></span>
   <span><b id="planes">0</b> planes</span>
-  <span><kbd>space</kbd> hold &middot; <kbd>n</kbd> new seed &middot; <kbd>m</kbd> matte &middot; <kbd>h</kbd> hud</span>
+  <span><kbd>space</kbd> hold &middot; <kbd>n</kbd> new seed &middot; <kbd>f</kbd> film &middot; <kbd>1-7</kbd> movement &middot; <kbd>m</kbd> matte &middot; <kbd>h</kbd> hud</span>
 </div>
 
 <script type="module">
 import * as Corpus from "./engine/corpus.js";
-import { cells, cutAt } from "./engine/grammar.js";
-import { state } from "./engine/clock.js";
+import * as Program from "./engine/program.js";
+import { frameAt, hex } from "./engine/engine.js";
+import { cutAt } from "./engine/grammar.js";
 import { Renderer } from "./engine/renderer.js";
 
 // ── address bar is the state. #s=<seed>&t=<seconds> returns exactly this moment.
+// #p=film runs the declared program instead of letting the piece roam, so the
+// 6:30 cut can be watched and scrubbed here before a frame is ever rendered.
 const params = new URLSearchParams(location.hash.slice(1));
 let seed = Number(params.get("s")) || 20170620;
 let t0 = Number(params.get("t")) || 0;
+let program = params.get("p") === "film" ? await Program.load() : null;
 
 const canvas = document.getElementById("stage");
 const el = (id) => document.getElementById(id);
@@ -74,47 +78,56 @@ let matteK = 0;
 let t = t0;
 let last = performance.now();
 
-// The grammar is rebuilt a few times a second, not every frame: casting cells
-// walks 162 index entries per cell, and at 60fps that is work nobody can see.
-// Geometry and camera still move every frame — only the CHOICE is quantised.
-let cast = null;
-let castAt = -1e9;
+// The cast is held for an eighth of a second rather than rebuilt every frame:
+// casting cells walks 162 index entries per cell, and at 60fps that is work
+// nobody can see. Geometry and camera still move every frame — only the CHOICE
+// is quantised. The film passes 0 here and pays for exactness.
 const RECAST = 1 / 8;
 
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   if (!held) t += dt;
+  if (program && t >= program.duration) t = 0;
 
-  const s = state(seed, t);
-  if (t - castAt >= RECAST || cast === null) {
-    cast = cells(corpus, seed, t, { reveal: s.reveal });
-    castAt = t;
-  }
-  const stats = renderer.draw(cast, s, { seed, matteK });
+  const r = frameAt(renderer, corpus, seed, t, program, { quantise: RECAST, matteK });
 
   el("clock").textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-  el("seed").textContent = seed;
-  el("cut").textContent = cutAt(seed, t, s.reveal) + (s.reveal < 0.02 ? " · 2017" : "");
-  el("planes").textContent = stats.missing ? `${stats.planes}−${stats.missing}` : stats.planes;
+  el("seed").textContent = hex(seed);
+  el("cut").textContent = program
+    ? `${r.state.movement} · ${r.state.cut}${r.state.epoch ? ` · reseed ${r.state.epoch}` : ""}`
+    : cutAt(seed, t, r.state.reveal) + (r.state.reveal < 0.02 ? " · 2017" : "");
+  el("planes").textContent = r.missing ? `${r.planes}−${r.missing}` : r.planes;
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
 // Keep the address bar honest without thrashing history.
 setInterval(() => {
-  history.replaceState(null, "", `#s=${seed}&t=${t.toFixed(1)}`);
+  history.replaceState(null, "", `#s=${seed}&t=${t.toFixed(1)}${program ? "&p=film" : ""}`);
 }, 1000);
 
-addEventListener("keydown", (e) => {
+addEventListener("keydown", async (e) => {
   if (e.key === " ") { held = !held; e.preventDefault(); }
-  if (e.key === "n") { seed = (Math.random() * 2 ** 31) | 0; t = 0; cast = null; }
+  if (e.key === "n") { seed = (Math.random() * 2 ** 31) | 0; t = 0; }
   if (e.key === "m") { matteK = matteK > 0 ? 0 : 1; }
   if (e.key === "h") { el("hud").classList.toggle("hide"); }
+  // Watch the declared 6:30 against the same engine that will render it.
+  if (e.key === "f") { program = program ? null : await Program.load(); t = 0; }
+  // Jump to the head of each movement — the fastest way to judge a program edit.
+  if (program && /^[1-9]$/.test(e.key)) {
+    const m = program.movements[Number(e.key) - 1];
+    if (m) t = m.t0;
+  }
 });
 
 // For the probe, the film renderer, and anyone reading the console.
-window.danse = { corpus, renderer, state, cells, get t() { return t; }, set t(v) { t = v; cast = null; }, get seed() { return seed; } };
+window.danse = {
+  corpus, renderer, frameAt, hex,
+  get program() { return program; },
+  get t() { return t; }, set t(v) { t = v; },
+  get seed() { return seed; }, set seed(v) { seed = v; },
+};
 </script>
 </body>
 </html>

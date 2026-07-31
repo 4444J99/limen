@@ -25,13 +25,42 @@ import { turnover } from "./clock.js";
 import { POSTER_BOTTOM, POSTER_TOP } from "./room.js";
 import { hash, pick, rand, range } from "./rng.js";
 
-export const CUTS = ["score", "grid", "bands"];
+/** The whole vocabulary. `score` is the 2017 composite; `solo` and `figure` are
+ *  the film's two ends — one undivided photograph, and one body assembled out of
+ *  many; `black` renders nothing and exists so the closing signature is part of
+ *  the declared partition rather than a special case in the renderer. */
+export const CUTS = ["score", "solo", "grid", "bands", "figure", "black"];
+
+/** What the free-running piece roams between when no program names a cut. */
+const ROAMING = ["grid", "bands"];
 
 /** The room's own horizontals. The 2017 cuts landed on these to within 0.4% of
  *  frame height, so a generated cut derives its bands from the room rather than
  *  inventing a rhythm. The recovered room plate put the lower rail at 0.7988
  *  against 0.802 measured and 0.799 solved — three methods, one architecture. */
 const ARCHITECTURE = [0, POSTER_TOP, POSTER_BOTTOM, 1];
+
+/** The skeleton, as the corpus actually knows it. Pairs are only used when BOTH
+ *  ends were detected, so this list can name more than any one frame carries.
+ *
+ *  Vision found her legs: knees, ankles and hips appear in 57–65 of 162 frames,
+ *  elbows and wrists in 25–43, shoulders and head in 3–7 — the camera is low and
+ *  the frame is cropped to the body. The lower body is therefore what `figure`
+ *  can actually assemble, which for a dancer is also where the line is. */
+const SEGMENTS = [
+  ["left_hip", "left_knee"],
+  ["left_knee", "left_ankle"],
+  ["right_hip", "right_knee"],
+  ["right_knee", "right_ankle"],
+  ["left_hip", "right_hip"],
+  ["root", "left_hip"],
+  ["root", "right_hip"],
+  ["left_shoulder", "left_elbow"],
+  ["left_elbow", "left_wrist"],
+  ["right_shoulder", "right_elbow"],
+  ["right_elbow", "right_wrist"],
+  ["neck", "root"],
+];
 
 /** Treatment recovered from the 2017 solve: several tiles came back at
  *  gain ≈ 0.64, lift ≈ 0.36 — pairs summing to 1.0. The solver was never told
@@ -52,15 +81,15 @@ function treatment(seed, id) {
  * The choice is made from the manifest index — who was standing in this part of
  * the room — so nothing is downloaded to decide anything.
  */
-function cast(cells, corpus, seed, t) {
+function cast(cells, corpus, seed, t, rate = 1) {
   return cells.map((cell) => {
     const cands = corpus.candidates(cell.rect);
-    const { epoch, next, mix } = turnover(cell.id, seed, t);
+    const { epoch, next, mix } = turnover(cell.id, seed, t, rate);
 
     // Falling back to the whole corpus keeps a cell that she never entered from
     // going empty — it shows the room, which is the correct answer for a cell
     // containing only wall.
-    const pool = cands.length ? cands : corpus.frames.map((f) => ({ id: f.id, weight: 1 }));
+    const pool = cands.length ? cands : corpus.usable().map((f) => ({ id: f.id, weight: 1 }));
     const a = corpus.choose(pool, seed, cell.id, epoch, 401);
     const b = mix > 0 ? corpus.choose(pool, seed, cell.id, next, 401) : null;
 
@@ -95,6 +124,126 @@ function score(corpus) {
   }));
 }
 
+/** One plane, one photograph, whole, untreated.
+ *
+ * The film opens here, and the point is what is NOT done: no cut, no gain, no
+ * lift, no crossfade. Before the machine touches anything the viewer sees what
+ * was actually photographed on 20 June 2017. Provenance is an argument you make
+ * by showing the source first, not by captioning it afterwards.
+ */
+function solo(corpus, seed, t) {
+  const pool = corpus
+    .usable()
+    .filter((f) => (f.figure?.coverage ?? 0) > 0.08)
+    .map((f) => ({ id: f.id, weight: f.figure.coverage }));
+  const frame = corpus.choose(pool.length ? pool : corpus.usable().map((f) => ({ id: f.id, weight: 1 })), seed, 801);
+  if (!frame) return [];
+  return [
+    {
+      id: 0,
+      rect: [0, 0, 1, 1],
+      layers: [{ frame, weight: 1 }],
+      gain: [1, 1, 1],
+      lift: [0, 0, 0],
+      untreated: true,
+    },
+  ];
+}
+
+/** A body assembled out of many photographs — the cut that answers the skeptic.
+ *
+ * A host frame supplies the POSE; every limb is then re-cast from a different
+ * photograph whose same joint lands in the same place. It does not crop for
+ * composition, it reaches for a forearm. What holds still at 3:45 is a body that
+ * never existed, standing in a room that never existed.
+ *
+ * The corpus knows legs. Knees, ankles and hips are detected in 57–65 of 162
+ * frames; shoulders and head in 3–7, because the camera is low and the frame is
+ * cropped to the body. So this cut builds what the material actually supports
+ * rather than reaching for a face that was never in evidence.
+ */
+function figure(corpus, seed, t, { minConfidence = 0.1, rate = 1 } = {}) {
+  const articulate = (n) => corpus.usable().filter((f) => Object.keys(f.joints ?? {}).length >= n);
+  const hosts = articulate(8).length ? articulate(8) : articulate(6);
+  if (!hosts.length) return [];
+  const hostId = corpus.choose(
+    hosts.map((f) => ({ id: f.id, weight: Object.keys(f.joints).length })),
+    seed,
+    Math.floor(t / 23),
+    901,
+  );
+  const host = corpus.byId.get(hostId);
+
+  const joints = Object.entries(host.joints).filter(([, j]) => j[2] >= minConfidence);
+  if (!joints.length) return [];
+  const at = new Map(joints);
+
+  // A plate per anchor: every joint the host has, plus the SEGMENT between each
+  // connected pair. Both matter, and the segments matter more — a body is not a
+  // scatter of joints, it is the bone between two of them, and "it reaches for a
+  // forearm" means elbow-to-wrist, not elbow.
+  const anchors = joints.map(([name, j]) => ({ key: name, parts: [name], box: [j[0], j[1], j[0], j[1]] }));
+  for (const [a, b] of SEGMENTS) {
+    const ja = at.get(a);
+    const jb = at.get(b);
+    if (!ja || !jb) continue;
+    anchors.push({
+      key: `${a}~${b}`,
+      parts: [a, b],
+      box: [Math.min(ja[0], jb[0]), Math.min(ja[1], jb[1]), Math.max(ja[0], jb[0]), Math.max(ja[1], jb[1])],
+    });
+  }
+
+  const cells = [];
+  anchors.forEach((anchor, i) => {
+    // Plate size follows the body: a margin around whatever the anchor spans, so
+    // an ankle gets an ankle-sized plate and a thigh gets a thigh-sized one.
+    const span = Math.max(anchor.box[2] - anchor.box[0], anchor.box[3] - anchor.box[1]);
+    const pad = Math.min(0.1, Math.max(0.035, span * 0.34));
+    const rect = [
+      Math.max(0, anchor.box[0] - pad),
+      Math.max(0, anchor.box[1] - pad),
+      Math.min(1, anchor.box[2] + pad),
+      Math.min(1, anchor.box[3] + pad),
+    ];
+    const tol = Math.max(0.08, span + pad);
+
+    // The reach: frames whose SAME anatomy sits near the host's, so what arrives
+    // is another photograph's version of this limb — not another photograph.
+    const reach = [];
+    for (const f of corpus.usable()) {
+      let d = 0;
+      let conf = 1;
+      let ok = true;
+      for (const part of anchor.parts) {
+        const k = f.joints?.[part];
+        if (!k || k[2] < minConfidence) {
+          ok = false;
+          break;
+        }
+        d = Math.max(d, Math.hypot(k[0] - at.get(part)[0], k[1] - at.get(part)[1]));
+        conf = Math.min(conf, k[2]);
+      }
+      if (!ok || d > tol) continue;
+      reach.push({ id: f.id, weight: (1 - d / tol) * conf });
+    }
+    if (!reach.length) return;
+
+    const { epoch, next, mix } = turnover(i, seed, t, rate);
+    const a = corpus.choose(reach, seed, i, epoch, 902);
+    const b = mix > 0 ? corpus.choose(reach, seed, i, next, 902) : null;
+    cells.push({
+      id: i,
+      rect,
+      anatomy: anchor.key,
+      sources: reach.length,
+      layers: b && b !== a ? [{ frame: a, weight: 1 - mix }, { frame: b, weight: mix }] : [{ frame: a, weight: 1 }],
+      ...treatment(seed, i),
+    });
+  });
+  return cells;
+}
+
 /** danse's own scissors, generalised: a kd-subdivision rooted on the room.
  *
  * Not a lattice. The 2017 composite was RECOVERED as a kd-partition — recursive
@@ -106,7 +255,7 @@ function score(corpus) {
  * composition (its other 110 leaves are 1px solver tail carrying 0.5% of the
  * picture).
  */
-function grid(corpus, seed, t, { target = 130, minSide = 0.028 } = {}) {
+function grid(corpus, seed, t, { target = 130, minSide = 0.028, rate = 1 } = {}) {
   let cells = [];
   for (let b = 0; b < ARCHITECTURE.length - 1; b++) {
     cells.push([0, ARCHITECTURE[b], 1, ARCHITECTURE[b + 1]]);
@@ -138,17 +287,17 @@ function grid(corpus, seed, t, { target = 130, minSide = 0.028 } = {}) {
     }
     cells = next;
   }
-  return cast(cells.map((rect, id) => ({ id, rect })), corpus, seed, t);
+  return cast(cells.map((rect, id) => ({ id, rect })), corpus, seed, t, rate);
 }
 
 /** Staggered horizontal bands keyed to anatomy — the b/w remix's scissors. Band
  *  edges are placed at the joint heights the corpus actually found, which for
  *  this shoot means knees, ankles and hips: the cut lands on the body, not on a
  *  ruler. */
-function bands(corpus, seed, t, { count = 14 } = {}) {
+function bands(corpus, seed, t, { count = 14, rate = 1 } = {}) {
   // Joint heights across the whole corpus, as a distribution to cut against.
   const heights = [];
-  for (const f of corpus.frames) {
+  for (const f of corpus.usable()) {
     for (const j of Object.values(f.joints ?? {})) heights.push(j[1]);
   }
   heights.sort((a, b) => a - b);
@@ -181,7 +330,7 @@ function bands(corpus, seed, t, { count = 14 } = {}) {
       if (x1 - x0 > 0.02) cells.push({ id: id++, rect: [x0, y0, x1, y1] });
     }
   }
-  return cast(cells, corpus, seed, t);
+  return cast(cells, corpus, seed, t, rate);
 }
 
 // ── selection ──────────────────────────────────────────────────────────────────
@@ -192,19 +341,26 @@ function bands(corpus, seed, t, { count = 14 } = {}) {
  * BE the composite, not a generated approximation of it, so the score is served
  * whenever the room is folded shut.
  */
-export function cells(corpus, seed, t, { reveal = 0, cut = null } = {}) {
-  if (cut === "score" || (cut === null && reveal < 0.02)) {
+export function cells(corpus, seed, t, { reveal = 0, cut = null, rate = 1 } = {}) {
+  const chosen = cut ?? cutAt(seed, t, reveal);
+  if (chosen === "black") return [];
+  if (chosen === "score") {
     const solved = score(corpus);
+    // A corpus shipped without the solved score still has to render something,
+    // so fall through to the generated cut rather than showing an empty room.
     if (solved.length) return solved;
+    return grid(corpus, seed, t, { rate });
   }
-  const chosen = cut ?? pick(CUTS.slice(1), seed, Math.floor(t / 137), 701);
-  return chosen === "bands" ? bands(corpus, seed, t) : grid(corpus, seed, t);
+  if (chosen === "solo") return solo(corpus, seed, t);
+  if (chosen === "figure") return figure(corpus, seed, t, { rate });
+  if (chosen === "bands") return bands(corpus, seed, t, { rate });
+  return grid(corpus, seed, t, { rate });
 }
 
-/** Which cut `cells()` would serve, without building it — for the UI. */
+/** Which cut `cells()` would serve, without building it — for the UI and the HUD. */
 export function cutAt(seed, t, reveal) {
   if (reveal < 0.02) return "score";
-  return pick(CUTS.slice(1), seed, Math.floor(t / 137), 701);
+  return pick(ROAMING, seed, Math.floor(t / 137), 701);
 }
 
 export { hash };

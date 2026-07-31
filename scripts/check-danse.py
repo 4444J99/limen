@@ -22,11 +22,18 @@ only home.
      bit-identical output — and by grepping engine/ for the state that would break
      it.
 
-The fourth thing this guards is delivery: every frame the score names must exist
-as a plate at every tier, or the flat state renders with holes on a machine that
-is not this one.
+  4. THE PROGRAM PARTITIONS TIME. `render/program.json` declares the film as
+     movements. They must tile [0, duration) end to end — no gaps, no overlaps —
+     for exactly the reason the score must tile the frame: a hole in the partition
+     is a hole in the film, and an offline renderer would render it as one without
+     complaining. Same arithmetic, one axis down.
 
-    scripts/check-danse.py            # exit 0 iff all four hold
+The fifth thing this guards is delivery: every frame the score names must exist
+as a plate at every SHIPPED tier, or the flat state renders with holes on a
+machine that is not this one — and every frame that is not registered to the 2017
+camera must be withheld from generated cuts.
+
+    scripts/check-danse.py            # exit 0 iff all five hold
 """
 
 from __future__ import annotations
@@ -42,6 +49,7 @@ ROOT = Path(__file__).resolve().parent.parent
 APP = ROOT / "apps" / "danse"
 CORPUS = APP / "corpus"
 ENGINE = APP / "engine"
+PROGRAM = APP / "render" / "program.json"
 
 FAIL: list[str] = []
 NOTE: list[str] = []
@@ -92,10 +100,69 @@ def check_partition(score: dict) -> None:
     check("rect agrees with px", worst < 1e-3, f"worst disagreement {worst:.2e}")
 
 
+# ── 4. the program partitions time ─────────────────────────────────────────────
+
+
+def check_program(program: dict, grammar_cuts: set[str]) -> None:
+    moves = program["movements"]
+
+    cursor = 0.0
+    gaps, overlaps = [], []
+    for m in moves:
+        if m["t0"] > cursor:
+            gaps.append(f"{cursor}→{m['t0']}")
+        elif m["t0"] < cursor:
+            overlaps.append(f"{m['id']} at {m['t0']} < {cursor}")
+        cursor = m["t1"]
+    check("movements leave no gap", not gaps, ", ".join(gaps) or f"{len(moves)} movements, no dead air")
+    check("movements never overlap", not overlaps, ", ".join(overlaps))
+    check(
+        "movements end exactly at duration",
+        cursor == program["duration"],
+        f"end {cursor}s vs declared {program['duration']}s",
+    )
+
+    named = {m["cut"] for m in moves}
+    unknown = sorted(named - grammar_cuts)
+    check(
+        "every movement names a cut the grammar serves",
+        not unknown,
+        f"unknown: {', '.join(unknown)}" if unknown else ", ".join(sorted(named)),
+    )
+
+    # A window is a crop of the same timeline, never a re-edit. If one runs past
+    # the end, the renderer would silently deliver short.
+    bad = []
+    for name, w in (program.get("windows") or {}).items():
+        if name == "_doc":
+            continue
+        if w["t0"] < 0 or w["t1"] > program["duration"] or w["t1"] <= w["t0"]:
+            bad.append(name)
+    check("every window lies inside the program", not bad, ", ".join(bad))
+
+    # Times Square Arts' Midnight Moment is not "about three minutes". It is 170
+    # seconds, and a submission that is 171 is rejected without a conversation.
+    mm = (program.get("windows") or {}).get("midnight-moment")
+    if mm:
+        span = mm["t1"] - mm["t0"]
+        check("midnight-moment is exactly 170s", span == 170, f"{span}s")
+
+    # The one runtime that is graded: the master. 6:20–7:00 clears every cap on
+    # the parallel ladder, and 6:30 is the declared target.
+    master = (program.get("windows") or {}).get("master")
+    if master:
+        span = master["t1"] - master["t0"]
+        check("master runtime is 6:20–7:00", 380 <= span <= 420, f"{span // 60:.0f}:{span % 60:02.0f}")
+
+
 # ── 2/3. the clock, evaluated by node ──────────────────────────────────────────
 
 CLOCK_PROBE = """
-import { state, PERIOD } from "%s";
+import { readFileSync } from "node:fs";
+import { state, PERIOD } from "%(clock)s";
+import { validate } from "%(program)s";
+import { CUTS } from "%(grammar)s";
+
 const seeds = [20170620, 1, 2, 7919, 2147483647, 305419896];
 let flatAtZero = 0, flatAtPeriod = 0, impure = 0, everLeaves = 0;
 for (const s of seeds) {
@@ -107,21 +174,68 @@ for (const s of seeds) {
   if (JSON.stringify(late) !== JSON.stringify(lateAgain)) impure++;
   if (early.divergence >= 0 && late.divergence > 0) everLeaves++;
 }
-console.log(JSON.stringify({ seeds: seeds.length, flatAtZero, flatAtPeriod, impure, everLeaves, PERIOD }));
+
+// ── the programmed clock ───────────────────────────────────────────────────────
+const program = JSON.parse(readFileSync("%(programJson)s", "utf8"));
+let programError = null;
+try { validate(program); } catch (e) { programError = e.message; }
+
+const seed = program.seed;
+const N = 1560;                       // every quarter-second of the 6:30
+let impureProgram = 0, outOfRange = 0, assemblyFlat = true, assemblySamples = 0;
+const epochs = new Set();
+for (let i = 0; i <= N; i++) {
+  const t = (i / N) * program.duration;
+  const a = state(seed, t, program);
+  // Out of order again: sample t, then a far-away t, then t once more.
+  state(seed, program.duration - t, program);
+  const b = state(seed, t, program);
+  if (JSON.stringify(a) !== JSON.stringify(b)) impureProgram++;
+  const ok =
+    a.divergence >= -1e-9 && a.divergence <= 1 &&
+    a.spread >= -1e-9 && a.spread <= 1 &&
+    a.projK >= -1e-9 && a.projK <= 1 &&
+    a.turnover >= -1e-9 &&
+    Math.abs(a.azimuth) <= 1.5 && Math.abs(a.elevation) <= 1;
+  if (!ok) outOfRange++;
+  // The 2017 composite is only a reproduction while the camera is exactly on
+  // axis. If ASSEMBLY drifts off zero at all, what the film shows is a homage.
+  if (a.movement === "ASSEMBLY") {
+    assemblySamples++;
+    if (a.divergence !== 0 || a.spread !== 0) assemblyFlat = false;
+  }
+  if (a.movement === "RESEED") epochs.add(a.epoch);
+}
+const reseedMovement = program.movements.find((m) => m.id === "RESEED");
+const declaredEpochs = (reseedMovement?.reseeds ?? []).length;
+
+console.log(JSON.stringify({
+  seeds: seeds.length, flatAtZero, flatAtPeriod, impure, everLeaves, PERIOD,
+  programError, impureProgram, outOfRange, assemblyFlat, assemblySamples,
+  epochs: epochs.size, declaredEpochs, cuts: CUTS,
+}));
 """
 
 
-def check_clock() -> None:
+def check_clock() -> dict:
     # A real file, not stdin: node resolves the module's relative imports against
     # the script's own path. In a worktree `.git` is a file, so it cannot go there.
     with tempfile.NamedTemporaryFile("w", suffix=".mjs", delete=False) as fh:
-        fh.write(CLOCK_PROBE % (ENGINE / "clock.js"))
+        fh.write(
+            CLOCK_PROBE
+            % {
+                "clock": ENGINE / "clock.js",
+                "program": ENGINE / "program.js",
+                "grammar": ENGINE / "grammar.js",
+                "programJson": PROGRAM,
+            }
+        )
         probe = Path(fh.name)
     try:
         out = subprocess.run([node(), probe], capture_output=True, text=True, check=False)
         if out.returncode != 0:
             check("clock evaluates", False, out.stderr.strip().splitlines()[-1] if out.stderr else "node failed")
-            return
+            return {}
         r = json.loads(out.stdout)
     finally:
         probe.unlink(missing_ok=True)
@@ -134,10 +248,139 @@ def check_clock() -> None:
     )
     check("the room does open", r["everLeaves"] == r["seeds"], f"{r['everLeaves']}/{r['seeds']}")
     check("clock is pure — same t, same state", r["impure"] == 0, f"{r['impure']} seeds disagreed with themselves")
+    return r
+
+
+def check_film(r: dict) -> None:
+    """The programmed clock: the same purity, held to the film's declared arc."""
+    check("the program validates", not r["programError"], r["programError"] or "danse.program.v1")
+    check(
+        "programmed clock is pure across the whole film",
+        r["impureProgram"] == 0,
+        f"{r['impureProgram']} of 1561 quarter-seconds disagreed with themselves",
+    )
+    check(
+        "every channel stays in range for 6:30",
+        r["outOfRange"] == 0,
+        f"{r['outOfRange']} samples out of range",
+    )
+    check(
+        "ASSEMBLY holds the camera exactly on axis",
+        r["assemblyFlat"] and r["assemblySamples"] > 0,
+        f"{r['assemblySamples']} samples at divergence 0 — the composite is reproduced, not evoked",
+    )
+    check(
+        "RESEED restarts as many times as it declares",
+        r["epochs"] == r["declaredEpochs"],
+        f"{r['epochs']} epochs observed, {r['declaredEpochs']} declared",
+    )
 
 
 def node() -> str:
     return "node"
+
+
+# ── 6. the sound is the same film ──────────────────────────────────────────────
+
+SOUND = APP / "sound"
+
+# Chosen to cross the places the two languages could disagree: zero, a short
+# word list, the film's real seed, a value above 2^31 (where JavaScript's `|0`
+# makes a number negative and Python's does not), and the 32-bit ceiling.
+HASH_CASES = [[0], [1, 2], [20170620, 7, 401], [3735928559, 3, 1, 901], [4294967295, 1], [123, 456, 789, 101112]]
+
+HASH_PROBE = """
+import { hash } from "%(rng)s";
+console.log(JSON.stringify(%(cases)s.map((c) => hash(...c))));
+"""
+
+
+def check_sound() -> None:
+    """The sound selects from the same seed as the picture, out of that room only."""
+    if not (SOUND / "score.py").is_file():
+        NOTE.append("no score yet — the film is silent")
+        return
+
+    # The one that would silently desync sound from picture: the Python port of
+    # engine/rng.js must agree with it exactly, or `hash(seed, cell, 401)` picks
+    # a different photograph than it picks a grain and nothing lands together.
+    sys.path.insert(0, str(SOUND))
+    try:
+        from rng import hash32
+    except ImportError as exc:  # pragma: no cover - a missing file is a real failure
+        check("the sound hashes like the picture", False, f"cannot import sound/rng.py — {exc}")
+        return
+    with tempfile.NamedTemporaryFile("w", suffix=".mjs", delete=False) as fh:
+        fh.write(HASH_PROBE % {"rng": ENGINE / "rng.js", "cases": json.dumps(HASH_CASES)})
+        probe = Path(fh.name)
+    try:
+        out = subprocess.run([node(), probe], capture_output=True, text=True, check=False)
+        js = json.loads(out.stdout) if out.returncode == 0 else None
+    finally:
+        probe.unlink(missing_ok=True)
+    if js is None:
+        check("the sound hashes like the picture", False, "the JavaScript hash would not evaluate")
+    else:
+        mine = [hash32(*c) for c in HASH_CASES]
+        bad = [c for c, a, b in zip(HASH_CASES, js, mine) if a != b]
+        check(
+            "the sound hashes like the picture",
+            not bad,
+            f"{len(bad)} of {len(HASH_CASES)} disagree — {bad[0]}"
+            if bad
+            else f"{len(HASH_CASES)} cases, rng.js == rng.py",
+        )
+
+    check_bank()
+
+
+def check_bank() -> None:
+    """The grain bank, when one has been cut on this machine.
+
+    Gitignored, like the `film` tier and for the same reason — it is derived from
+    2.8 GB of originals that never enter git. Absent is not a failure; wrong is.
+    """
+    index = SOUND / "bank" / "bank.json"
+    if not index.is_file():
+        NOTE.append("no grain bank on this machine — build it with apps/danse/sound/1_bank.py")
+        return
+    bank = load(index)
+    grains = bank["grains"]
+
+    # Every grain must trace to a recording someone LOOKED at and recognised.
+    # This is the whole provenance claim of the sound: three of the first five
+    # `room: true` flags were wrong, inherited from a duplicate filename.
+    licensed = {s["name"] for s in bank.get("sources", [])}
+    strays = sorted({g["source"] for g in grains} - licensed)
+    check(
+        "every grain comes from a confirmed room recording",
+        not strays,
+        f"{', '.join(strays)} is in the bank but not in its source list"
+        if strays
+        else f"{len(grains)} grains from {len(licensed)} recording(s)",
+    )
+
+    # An index axis with no spread indexes nothing, and it fails SILENTLY: every
+    # weighted draw along it returns an effectively arbitrary grain and nothing
+    # crashes. `flatness` shipped once with 4 distinct values across 265 grains.
+    axes = ("centroid", "brightness", "flatness", "decay", "attack", "zcr")
+    flat = []
+    for axis in axes:
+        distinct = len({g[axis] for g in grains if axis in g})
+        if distinct < max(8, len(grains) // 10):
+            flat.append(f"{axis} has {distinct}")
+    check(
+        "every descriptor axis actually discriminates",
+        not flat,
+        "; ".join(flat) if flat else f"{len(axes)} axes over {len(grains)} grains",
+    )
+
+    missing = [g["id"] for g in grains if not (SOUND / "bank" / f"{g['id']}.wav").is_file()][:3]
+    check(
+        "every grain the index names exists",
+        not missing,
+        f"{', '.join(missing)} …" if missing else f"{len(grains)} files",
+    )
 
 
 # The three things that would make f(seed, t) a lie. `performance.now` and
@@ -169,25 +412,45 @@ def check_delivery(score: dict, manifest: dict) -> None:
     named = {Path(layer["src"]).stem for tile in score["tiles"] for layer in tile["layers"]}
     check("every scored frame is in the manifest", named <= ids, f"missing {sorted(named - ids)[:4]}")
 
+    # A `local` tier (the 3264px film plates) exists only on the machine that
+    # built it and is gitignored on purpose. Requiring it here would fail every
+    # checkout that has not rendered a film.
+    shipped = [name for name, spec in manifest["tiers"].items() if not spec.get("local")]
     missing = []
-    for tier in manifest["tiers"]:
+    for tier in shipped:
         for fid in sorted(named):
             if not (CORPUS / "plates" / tier / f"{fid}.webp").is_file():
                 missing.append(f"{tier}/{fid}")
-    check("every scored frame has a plate at every tier", not missing, f"{len(missing)} missing, e.g. {missing[:3]}")
+    check(
+        "every scored frame has a plate at every shipped tier",
+        not missing,
+        f"{len(missing)} missing, e.g. {missing[:3]}" if missing else f"tiers: {', '.join(shipped)}",
+    )
 
     room = CORPUS / manifest["room"]["file"]
     check("the recovered room plate ships", room.is_file(), str(room.relative_to(ROOT)))
 
-    # Frames that are not from the locked-off camera break the shared-projector
-    # premise. Reported, not failed: one is in the corpus and the 2017 solve used
-    # it, so failing here would only make the check unrunnable.
-    odd = [f["id"] for f in manifest["frames"] if not f["source"].lower().endswith((".jpg", ".jpeg"))]
-    if odd:
-        NOTE.append(
-            f"{len(odd)} frame(s) not from the camera roll: {', '.join(odd)} "
-            f"— projective texturing assumes one 2017 camera; these are not registered to it"
-        )
+    # Projective texturing addresses every fragment through the 2017 camera's
+    # matrix. A frame shot on anything else is registered to nothing — it may
+    # appear in the solved score, because the 2017 cut genuinely used one, but a
+    # generated cut reaching for it would sample a photograph of a phone screen
+    # as though it were the room.
+    declared = [f for f in manifest["frames"] if "registered" in f]
+    total = len(manifest["frames"])
+    check(
+        "every frame declares whether it is registered to the 2017 camera",
+        len(declared) == total,
+        f"{len(declared)}/{total}" + ("" if len(declared) == total else " — rebuild with pipeline/4_corpus.py"),
+    )
+    strangers = [f["id"] for f in manifest["frames"] if f.get("registered") is False]
+    orphans = [fid for fid in strangers if fid not in named]
+    check(
+        "unregistered frames are only ever there because the 2017 cut used them",
+        not orphans,
+        f"{', '.join(orphans)} is unregistered AND unused — drop it"
+        if orphans
+        else (f"{', '.join(strangers)} — in the score, withheld from generated cuts" if strangers else "none"),
+    )
 
 
 def main() -> int:
@@ -201,10 +464,19 @@ def main() -> int:
     print(" the score partitions the frame")
     check_partition(score)
     print("\n the clock is a pure f(seed, t) that returns to flat")
-    check_clock()
+    probe = check_clock()
     check_purity()
+    if PROGRAM.is_file():
+        print("\n the program partitions time")
+        check_program(load(PROGRAM), set(probe.get("cuts", [])))
+        if probe:
+            check_film(probe)
+    else:
+        NOTE.append(f"no film program at {PROGRAM.relative_to(ROOT)} — the piece runs free, nothing is cut")
     print("\n the corpus is deliverable")
     check_delivery(score, manifest)
+    print("\n the sound is the same film")
+    check_sound()
 
     for n in NOTE:
         print(f"\n  note: {n}")
