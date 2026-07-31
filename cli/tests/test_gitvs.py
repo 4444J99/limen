@@ -741,3 +741,38 @@ def test_audience_rung_never_demands_a_visibility_flip() -> None:
     # or demoted is the thing that would put Q at war with class G forever.
     for verb in ("flip", "demote", "make it private", "should be private"):
         assert verb not in owed[0].lower(), f"the rung must not demand a visibility change ({verb!r})"
+
+
+def test_parity_accepts_declared_audience_and_rejects_a_bad_value() -> None:
+    """`audience` is declared INTENT on the rows where it disagrees with the derivation. Parity
+    owns the value; check-audience owns the softer judgments."""
+    module = _load()
+    base = {
+        "classes": {"operation_private": {"visibility": "private"}},
+        "resource_types": {},
+    }
+    ok = module.parity(
+        {**base, "repo_overrides": {"o/lane": {"class": "operation_private", "audience": "collab", "why": "w"}}}
+    )
+    assert not [f for f in ok if "audience" in f]
+
+    bad = module.parity(
+        {**base, "repo_overrides": {"o/lane": {"class": "operation_private", "audience": "wrold", "why": "w"}}}
+    )
+    assert any("audience 'wrold' is not one of" in f for f in bad)
+
+
+def test_parity_rejects_collab_that_is_also_a_publish_candidate() -> None:
+    """A shared operation and a solo publication are contradictory FUTURES, not a soft judgment —
+    the one audience combination that is structurally impossible rather than merely unmet."""
+    module = _load()
+    fails = module.parity(
+        {
+            "classes": {"operation_private": {"visibility": "private"}},
+            "resource_types": {},
+            "repo_overrides": {
+                "o/lane": {"class": "operation_private", "audience": "collab", "publish_candidate": True, "why": "w"}
+            },
+        }
+    )
+    assert any("contradictory futures" in f for f in fails)
