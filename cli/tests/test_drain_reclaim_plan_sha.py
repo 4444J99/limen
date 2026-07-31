@@ -31,6 +31,9 @@ def test_drain_delegates_both_passes_to_the_shared_bounded_controller():
     assert 'reclaim_cycle full "${LIMEN_RECLAIM_TIMEOUT:-300}"' in block
     assert "reclaim-worktrees.py" not in block
     assert "cycle failed" in block
+    assert 'LIMEN_RECLAIM_REPO_LOCAL_WT="${LIMEN_RECLAIM_REPO_LOCAL_WT:-1}"' in block
+    assert 'LIMEN_RECLAIM_REGISTERED_WT="${LIMEN_RECLAIM_REGISTERED_WT:-1}"' in block
+    assert "direct library callers retain worktree_roots.py's auto semantics" in block
 
 
 def test_heartbeat_uses_controller_and_explicitly_arms_live_broad_discovery():

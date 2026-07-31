@@ -147,8 +147,15 @@ if [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
       shift 2
       local apply_args=()
       [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && apply_args+=(--apply)
-      PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
-        --timeout "$timeout_seconds" "${apply_args[@]}" "$@"
+      # drain.sh is a fleet-wide lifecycle entrypoint, including when an already-running
+      # heartbeat reloads it after sync-release.  Its LaunchAgent carries an explicit scratch
+      # LIMEN_WORKTREE_ROOT, which intentionally narrows the library's "auto" inventory.  Opt
+      # this entrypoint back into the two live estate inventories while preserving an explicit
+      # operator 0; direct library callers retain worktree_roots.py's auto semantics.
+      LIMEN_RECLAIM_REPO_LOCAL_WT="${LIMEN_RECLAIM_REPO_LOCAL_WT:-1}" \
+        LIMEN_RECLAIM_REGISTERED_WT="${LIMEN_RECLAIM_REGISTERED_WT:-1}" \
+        PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+          --timeout "$timeout_seconds" "${apply_args[@]}" "$@"
       rc=$?
       if [ "$rc" -ne 0 ]; then
         echo "[drain] reclaim($label): cycle failed (rc=$rc) — next beat retries" >&2
