@@ -258,7 +258,8 @@ def _read_clients(
         try:
             rows.extend(
                 connection.execute(
-                    "SELECT client, client_type, service, last_modified FROM access ORDER BY client, service"
+                    "SELECT client, client_type, service, auth_value, last_modified "
+                    "FROM access ORDER BY client, service"
                 ).fetchall()
             )
         except sqlite3.Error as exc:
@@ -268,7 +269,9 @@ def _read_clients(
 
     grouped: dict[tuple[str, int], dict[str, Any]] = {}
     unrelated = 0
-    for client_raw, client_type_raw, service_raw, modified_raw in rows:
+    for client_raw, client_type_raw, service_raw, auth_raw, modified_raw in rows:
+        if int(auth_raw) == 0:
+            continue
         client = str(client_raw)
         client_type = int(client_type_raw)
         modified = int(modified_raw)
