@@ -61,6 +61,13 @@ surfaces:
   scripts/dialogs-silenced.sh:
     disposition: permission-policy-string-only
     expected: {git_push: 2}
+  scripts/heal-hook-wiring.py:
+    # Same disposition as its sensor above: the matches are the literal TEXT of the two
+    # force-push `permissions.ask` rules this effector asserts, plus the classifier rule that
+    # names them. It writes exactly one file — the chezmoi cartridge source — and shells out
+    # only to `chezmoi apply`. There is no git invocation of any kind in it.
+    disposition: permission-policy-string-only
+    expected: {git_push: 3}
   scripts/link-health.py:
     disposition: generated-topic-branch-pr
     expected: {contents_put: 1}
