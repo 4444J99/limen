@@ -372,6 +372,55 @@ def test_blocks_land_in_chronological_order_whatever_the_write_order(mod, root):
     assert positions == sorted(positions), "phases must read morning → midday → evening"
 
 
+# ── CLI edges found by driving the organ, not by reading it ───────────────────────
+
+
+def test_uncut_rejects_a_name_the_registry_does_not_know(mod, tmp_path, monkeypatch, capsys):
+    """A typo must not be answerable with the same sentence as a real, uncut section. Someone
+    restoring a genuinely cut section who fumbles the name would otherwise read 'is not cut' and
+    conclude nothing was ever cut — the reassuring answer being the wrong one.
+
+    This one goes through main(), so its root must be organism-shaped: _root's guard now demands a
+    primary checkout that has actually beaten, and the render-level `root` fixture deliberately is
+    not one. monkeypatch, not os.environ — the first draft set LIMEN_ROOT and never restored it,
+    leaking a dead tmp path into every test that ran after it.
+    """
+    body = _organism(tmp_path / "body", voices=_root.DEFAULT_VOICE_FLOOR)
+    (body / "institutio" / "governance" / "diurnal.yaml").write_text(
+        REGISTRY.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    monkeypatch.setenv("LIMEN_ROOT", str(body))
+    monkeypatch.setattr(sys, "argv", ["diurnal.py", "--uncut", "levrs"])
+
+    assert mod.main() == 2
+    err = capsys.readouterr().err
+    assert "no section named 'levrs'" in err
+    assert "Did you mean: levers?" in err
+
+
+def test_headline_keeps_the_task_id_it_used_to_guillotine(mod):
+    """Observed live in a push: '…for the whole PR estate [GITVS-UNCAPPED-'. The bracketed id is
+    the one token a reader can act on, and a raw [:90] cut it in half."""
+    line = "Add an uncapped exact owner-route predicate for the whole PR estate and its successors [GITVS-UNCAPPED-PR]"
+    out = mod._clip(line)
+    assert out.endswith("[GITVS-UNCAPPED-PR]"), "the actionable id must survive truncation"
+    assert len(out) <= 90
+    assert "…" in out, "a truncated line must read as truncated"
+    assert not out.rstrip("… [GITVS-UNCAPPED-PR]").endswith(" "), "cut on a word boundary"
+
+
+def test_a_short_headline_is_left_alone(mod):
+    assert mod._clip("short one [ABC-1]") == "short one [ABC-1]"
+
+
+def test_dry_run_creates_no_state_directory(mod, root):
+    """'Write nothing' has to be literally true — state_dir's unconditional mkdir meant a dry run
+    left an empty logs/diurnal/ behind."""
+    mod.load_state(root)
+    mod.load_scores(root)
+    assert not (root / "logs" / "diurnal").exists()
+
+
 # ── the emission needs a reader, or it is a log file with better prose ────────────
 
 
