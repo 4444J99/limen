@@ -157,5 +157,32 @@ aline=$(grep -n '"apply", "--force"' "$HW" | head -1 | cut -d: -f1)
 [ "$gline" -lt "$aline" ] && ok "guard precedes the forced apply" \
                           || bad "guard precedes the forced apply ($gline vs $aline)"
 
+echo "── argv is refused, never ignored (a silently-dropped flag misreports which run happened) ──"
+# Every case here is env-pinned to a fixture: argv is adjudicated before any source or target
+# is touched, so a usage error must never depend on the host being wired.
+expect_exit "--help exits 0"                    0 "$F1" --help
+expect_exit "-h exits 0"                        0 "$F1" -h
+expect_exit "--help wins over a missing source" 0 "$WORK/nope" --help
+expect_exit "typo'd --apply is refused"         2 "$F1" --aply
+expect_exit "typo'd --allow-drop is refused"    2 "$F1" --apply --allow-drops
+expect_exit "bare positional is refused"        2 "$F1" settings.json
+expect_exit "--allow-drop is a known flag"      0 "$F1" --apply --allow-drop
+
+out="$(DOMUS_ROOT="$F1" python3 "$HEAL" --help 2>&1)"
+printf '%s' "$out" | grep -q 'USAGE' && ok "--help prints the usage block" \
+                                     || bad "--help prints the usage block"
+printf '%s' "$out" | grep -q 'chezmoi' && ok "--help prints the docstring, not a stub" \
+                                       || bad "--help prints the docstring, not a stub"
+
+out="$(DOMUS_ROOT="$F1" python3 "$HEAL" --aply 2>&1)"
+printf '%s' "$out" | grep -q 'unknown argument' && ok "refusal names the offending token" \
+                                                || bad "refusal names the offending token"
+printf '%s' "$out" | grep -q -- '--allow-drop'  && ok "refusal lists the known flags" \
+                                                || bad "refusal lists the known flags"
+# A refused argv must not have reached the deploy path.
+printf '%s' "$out" | grep -q 'cartridge source already carries' \
+  && bad "refusal short-circuits before touching the source" \
+  || ok "refusal short-circuits before touching the source"
+
 printf '\nheal-hook-wiring.test: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ] || exit 1
