@@ -33,6 +33,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
 # The auto-memory index lives outside the repo (per-user projects dir); resolve it from
 # this repo's identity so the lookup is derived, never pinned to a machine path.
 MEMORY_INDEX = Path.home() / ".claude" / "projects" / "-Users-4jp-Workspace-limen" / "memory" / "MEMORY.md"
+TERMINAL_LEVER_STATUSES = {"discharged", "retired", "done", "closed"}
 
 
 def _read_text(path, limit_bytes=None):
@@ -58,6 +59,11 @@ def _trunc(s, n):
     return s if len(s) <= n else s[: n - 1].rstrip() + "…"
 
 
+def _lever_is_closed(lever):
+    """Read both the legacy flag and the normalized free-text lifecycle field."""
+    return bool(lever.get("discharged")) or str(lever.get("status", "")).strip().lower() in TERMINAL_LEVER_STATUSES
+
+
 # ── sections ──────────────────────────────────────────────────────────────────
 
 
@@ -81,7 +87,7 @@ def section_levers():
     levers = d.get("levers") if isinstance(d, dict) else (d if isinstance(d, list) else [])
     if not isinstance(levers, list):
         return ""
-    levers = [lev for lev in levers if isinstance(lev, dict) and not lev.get("discharged")]
+    levers = [lev for lev in levers if isinstance(lev, dict) and not _lever_is_closed(lev)]
     if not levers:
         return ""
     ids = [str(lev.get("id") or lev.get("label", "?")) for lev in levers]
