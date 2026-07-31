@@ -66,6 +66,19 @@ effectors:
       - '\bmail_send\.py\b'
       - 'send_drafts\.py[^|;]*--fire\b'
       - 'osascript[^|;]*\bMail\b[^|;]*\bsend\b'
+    # DECLARED GAP (measured 2026-07-31, not assumed): the MTA/CLI transports — `sendmail`,
+    # `msmtp`, `mutt`, `curl smtp[s]://` — have no pattern here. A grep of the whole estate finds
+    # ZERO occurrences of any of them, so this is a ratchet gap, not a live hole. It is left open
+    # rather than guessed shut because a `match:` regex is evaluated against EVERY command an agent
+    # runs, and the naive form is actively harmful: `\bsendmail\b` also matches
+    # `grep -rn sendmail .`, which — fail-closed inside the match, with no extractable recipient —
+    # would be DENIED. A gate that refuses to let you read about email is the noisy-gate failure
+    # the class-C docstring warns about, one step from being reclassified as advisory. Closing this
+    # needs separator-anchored patterns (`(?:^|[;&|]\s*)sendmail\s`) plus fixtures in
+    # scripts/tests/outbound-preflight-guard.test.sh proving the read forms still pass — the test is
+    # the deliverable, the regex is the easy half. Owner: organvm/limen#1737.
+    # Contrast SMTP_MODULES in scripts/check-effectors.py,
+    # which CAN be widened before first use — an AST import check has no false-positive surface.
     target:
       kind: email
       # The FIRST recipient address found in the command text. A send whose recipient cannot be

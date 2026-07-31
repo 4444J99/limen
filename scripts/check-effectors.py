@@ -125,7 +125,15 @@ GH_API_WRITE_FLAGS = ("-X", "--method")
 GH_API_WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
 # Modules that put a message on the wire by themselves, with no subprocess in between.
-SMTP_MODULES = frozenset({"smtplib", "yagmail"})
+#
+# `aiosmtplib` is a drop-in async replacement for smtplib and imports cleanly past a two-name
+# allowlist — it is listed here BEFORE anything uses it, on purpose. This is a ratchet, and a
+# ratchet only works if the tooth is cut before the load arrives: adding the name the day someone
+# reaches for it means class C is silent for exactly the commit that opens the hole. A name here
+# that nothing imports costs nothing (the AST walk simply never matches it) and carries no
+# false-positive surface, unlike a `match:` regex, which is evaluated against every command an
+# agent runs and so cannot be widened speculatively.
+SMTP_MODULES = frozenset({"smtplib", "yagmail", "aiosmtplib"})
 
 
 def _iter_python_files() -> list[Path]:
