@@ -21,6 +21,9 @@ import { hash } from "./rng.js";
  *  already registered to each other and to the room. That is what lets a plane
  *  showing IMG_1611 and a plane showing IMG_1588 sample through one projector
  *  matrix and still line up: the registration was done in 2017, by not moving. */
+/** The tiers the web bundle ships. The manifest is authoritative and may declare
+ *  more — the offline renderer builds a `film` tier at full camera resolution
+ *  (~250 MB, local-only, never in git), and asks for it by name. */
 export const TIERS = ["browse", "screen"];
 
 /** A tile whose short side is one pixel is solver tail-noise, not composition.
@@ -42,9 +45,31 @@ export async function load(base = "corpus/") {
     if (!r.ok) throw new Error(`corpus manifest ${r.status} at ${base}manifest.json`);
     return r.json();
   });
+  // Tiers built locally and never committed — the 245 MB `film` tier the 4K
+  // master needs. Absent on every fresh checkout, and that is correct: a shipped
+  // manifest advertising plates that are not in the repo would send every visitor
+  // looking for 404s. Present only on the machine that built them.
+  const local = await fetch(`${base}manifest.local.json`)
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  if (local?.tiers) Object.assign(manifest.tiers, local.tiers);
+
   const score = manifest.score
     ? await fetch(`${base}${manifest.score}`).then((r) => (r.ok ? r.json() : null))
     : null;
+  return fromData(base, manifest, score);
+}
+
+/** The same corpus, from data already in hand.
+ *
+ * `load()` is the browser's path and needs `fetch`. Everything the GRAMMAR asks
+ * of a corpus is pure index — `usable`, `candidates`, `choose`, `byId`, `score` —
+ * so node can build one from disk and run the real engine without a browser or a
+ * GL context. That is what lets the sound derive its control track from the same
+ * `step()` the film renders: one implementation, so the score cannot drift out of
+ * sync with the picture by being a second guess at what the picture is doing.
+ */
+export function fromData(base, manifest, score = null) {
   return new Corpus(base, manifest, score);
 }
 
@@ -53,6 +78,11 @@ class Corpus {
     this.base = base;
     this.mipmap = true;   // measurement turns this off; see gl.texture
     this.manifest = manifest;
+    // Ordered small → large, from the manifest rather than from this module, so
+    // a corpus built with a `film` tier is usable without an engine change.
+    this.tiers = Object.entries(manifest.tiers)
+      .sort((a, b) => a[1].width - b[1].width)
+      .map(([name]) => name);
     this.frames = manifest.frames;
     this.byId = new Map(this.frames.map((f) => [f.id, f]));
     this.index = new Map(this.frames.map((f, i) => [f.id, i]));
@@ -82,7 +112,7 @@ class Corpus {
   async prime(gl, { onProgress } = {}) {
     this.room = texture(gl, await image(`${this.base}${this.manifest.room.file}`), { mipmap: this.mipmap });
 
-    const eager = TIERS.filter((t) => this.manifest.tiers[t]?.eager);
+    const eager = this.tiers.filter((t) => this.manifest.tiers[t]?.eager);
     const jobs = [];
     for (const tier of eager) {
       for (const f of this.frames) {
@@ -115,7 +145,8 @@ class Corpus {
   /** The best texture that exists RIGHT NOW, upgrading in the background.
    *  Returns null only before the eager tier has landed for this frame. */
   get(gl, kind, id, want = "screen") {
-    const order = TIERS.slice(0, TIERS.indexOf(want) + 1).reverse();
+    const at = this.tiers.indexOf(want);
+    const order = this.tiers.slice(0, at < 0 ? this.tiers.length : at + 1).reverse();
     for (const tier of order) {
       const key = `${kind}/${tier}/${id}`;
       const cached = this.textures.get(key);
@@ -186,9 +217,21 @@ class Corpus {
    *
    * `rect` is [x0, y0, x1, y1] in [0,1], y down — the score's convention.
    */
+  /** Frames a GENERATED cut may draw on.
+   *
+   * Projective texturing addresses every fragment through one shared matrix, and
+   * that matrix is the camera that stood in the room on 20 June 2017. A frame
+   * that did not come from it is not registered to anything, so it may appear in
+   * the solved score — the 2017 cut genuinely used one — but the engine must
+   * never reach for it on its own.
+   */
+  usable() {
+    return this.frames.filter((f) => f.registered !== false);
+  }
+
   candidates(rect, { minOverlap = 0.02, weightScore = 0.35 } = {}) {
     const out = [];
-    for (const f of this.frames) {
+    for (const f of this.usable()) {
       const box = f.figure?.bbox;
       if (!box) continue;
       const w = Math.min(rect[2], box[2]) - Math.max(rect[0], box[0]);

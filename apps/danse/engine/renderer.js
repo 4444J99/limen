@@ -21,9 +21,19 @@
  * planes separate and the gaps show the empty apartment rather than black.
  */
 
-import { context, program, resize, unitQuad, uniforms } from "./gl.js";
+import { context, program, resize, texture, unitQuad, uniforms } from "./gl.js";
 import { compose, multiply, perspective } from "./mat4.js";
 import { camera, homePlacement, projector, rectUV, scatter } from "./room.js";
+
+/** How far past the picture plane the backdrop reaches, as a multiple of it.
+ *
+ *  The camera departing the projector's eye is the whole reveal, and a backdrop
+ *  exactly the size of the frame runs out the moment it does — leaving a ragged
+ *  black margin that says "rectangle of image" when the piece is claiming
+ *  "space". At home the surplus falls outside the frustum entirely and changes
+ *  nothing: the flat state measures 31.60 dB with the room behind it and 31.60 dB
+ *  with the room switched off. */
+const ROOM_REACH = 4;
 
 const VERT = `#version 300 es
 layout(location = 0) in vec2 aPos;
@@ -64,6 +74,7 @@ uniform float uMatteK;     // cut to the figure rather than to the rectangle
 uniform float uOpacity;
 uniform float uHasB;
 uniform float uEdge;       // half-width of the edge fade, in UV; 0 = hard abutment
+uniform float uClamp;      // 1 = backdrop: extend the edge texel instead of discarding
 
 out vec4 fragColor;
 
@@ -77,7 +88,21 @@ void main() {
   // them bleed through 256 seams, which is a real error against the composite —
   // so the width is a uniform the flat path sets to zero.
   float mask;
-  if (uEdge <= 0.0) {
+  if (uClamp > 0.5) {
+    // The backdrop. Its quad reaches well past the picture plane so that when the
+    // camera leaves the projector's eye there is still a room out there — without
+    // this the frame ends in a ragged black margin and the piece reads as a
+    // rectangle of image floating in a void rather than as a space. Clamping the
+    // sample extends the wall and the carpet outward, which is what is actually
+    // out there.
+    vec2 over = max(-uv, uv - 1.0);
+    uv = clamp(uv, 0.0, 1.0);
+    // Extending the edge texel forever smears a single column across half the
+    // frame. Dissolving instead gives the room a soft outer limit — which is also
+    // what the installation this is a study for actually looks like: lit surfaces
+    // with unlit room around them.
+    mask = 1.0 - smoothstep(0.0, 0.34, max(over.x, over.y));
+  } else if (uEdge <= 0.0) {
     mask = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? 0.0 : 1.0;
   } else {
     vec2 e = smoothstep(0.0, uEdge, uv) * smoothstep(0.0, uEdge, 1.0 - uv);
@@ -124,7 +149,7 @@ export class Renderer {
   /** One frame. `cells` comes from the grammar, `state` from the clock. */
   draw(cells, state, opts = {}) {
     const { gl, u, corpus } = this;
-    const { seed = 0, tier = "screen", treat = 1, matteK = 0, showRoom = true, pixelRatio = 2, edge = null } = opts;
+    const { seed = 0, tier = "screen", treat = 1, matteK = 0, showRoom = true, pixelRatio = 2, edge = null, fit = "contain" } = opts;
 
     // The edge fade tracks the departure, and must be EXACTLY zero at home. The
     // tiles tile the frame — at spread 0 they abut with no gaps, so any fade lets
@@ -136,11 +161,29 @@ export class Renderer {
     // pixelRatio is a cap, not a request. A measurement pins it to 1 so the drawing
     // buffer is exactly the composite's 1024x768 and neither side is resampled.
     resize(gl, this.canvas, pixelRatio);
+
+    // The closing movement. Its cut is `black`, so there is nothing to arrange —
+    // just the one line that names what was watched.
+    if (state.cut === "black") {
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      if (opts.signature) {
+        gl.useProgram(this.program);
+        gl.bindVertexArray(this.vao);
+        gl.uniformMatrix4fv(u.uViewProj, false, multiply(perspectiveFor(this.canvas, fit), camera(0, 0, 0).view));
+        gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(false);
+        this.drawText(opts.signature, opts.signatureStyle);
+      }
+      this.stats = { planes: 0, missing: 0 };
+      return this.stats;
+    }
+
     gl.clearColor(0.055, 0.055, 0.06, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const view = camera(state.divergence, state.azimuth, state.elevation);
-    const proj = perspectiveFor(this.canvas);
+    const proj = perspectiveFor(this.canvas, fit);
     const viewProj = multiply(proj, view.view);
 
     gl.useProgram(this.program);
@@ -171,9 +214,15 @@ export class Renderer {
     return this.stats;
   }
 
+  /** The recovered room, drawn behind everything at home and reaching past the
+   *  frame on every side. `ROOM_REACH` is a multiple of the picture plane: at
+   *  home the surplus is outside the frustum and costs nothing (the measurement
+   *  confirms it — "no room behind" scores identically at 31.60 dB), and once the
+   *  camera departs it is the difference between a space and a cut-out. */
   drawRoom() {
     const { gl, u, corpus } = this;
-    const place = homePlacement([0, 0, 1, 1]);
+    const r = (ROOM_REACH - 1) / 2;
+    const place = homePlacement([-r, -r, 1 + r, 1 + r]);
     gl.uniformMatrix4fv(u.uModel, false, compose(place.position, place.rotation, place.scale));
     gl.uniform4fv(u.uRectUV, rectUV([0, 0, 1, 1]));
     gl.uniform3f(u.uGainA, 1, 1, 1);
@@ -187,8 +236,65 @@ export class Renderer {
     gl.uniform1f(u.uOpacity, 1);
     gl.uniform1f(u.uHasB, 0);
     gl.uniform1f(u.uEdge, 0);
+    gl.uniform1f(u.uClamp, 1);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, corpus.room);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /** The closing frame: one line, white on black, held four seconds.
+   *
+   * It goes through the same GL canvas as everything else rather than being
+   * burned in later by ffmpeg, because the capture path reads pixels off this
+   * context — a DOM overlay would be invisible to it, and a separately-generated
+   * tail would be a second code path for four seconds of film.
+   */
+  drawText(text, { color = "#f2f2f4", background = "#000000", size = 0.055 } = {}) {
+    const { gl, u } = this;
+    const w = gl.drawingBufferWidth;
+    const h = gl.drawingBufferHeight;
+    const key = `${text}/${w}x${h}/${color}/${background}/${size}`;
+    if (this._textKey !== key) {
+      const c = this._textCanvas ?? (this._textCanvas = document.createElement("canvas"));
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = color;
+      const px = Math.round(h * size);
+      ctx.font = `300 ${px}px ui-monospace, "SF Mono", Menlo, monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const tracking = Math.round(px * 0.18);
+      ctx.letterSpacing = `${tracking}px`;
+      // Canvas adds the tracking AFTER the last glyph too, which drags a centred
+      // string half a letter-space to the left. Give it back.
+      ctx.fillText(text, w / 2 + tracking / 2, h / 2);
+      if (this._textTex) gl.deleteTexture(this._textTex);
+      this._textTex = texture(gl, c, { mipmap: false });
+      this._textKey = key;
+    }
+
+    const place = homePlacement([0, 0, 1, 1]);
+    gl.uniformMatrix4fv(u.uModel, false, compose(place.position, place.rotation, place.scale));
+    gl.uniform4fv(u.uRectUV, rectUV([0, 0, 1, 1]));
+    gl.uniform3f(u.uGainA, 1, 1, 1);
+    gl.uniform3f(u.uGainB, 0, 0, 0);
+    gl.uniform3f(u.uLift, 0, 0, 0);
+    gl.uniform1f(u.uMix, 0);
+    gl.uniform1f(u.uAdditive, 0);
+    // Local UVs, not projected: the text is a picture the plane carries, which
+    // is exactly what projK = 1 means.
+    gl.uniform1f(u.uProjK, 1);
+    gl.uniform1f(u.uTreat, 0);
+    gl.uniform1f(u.uMatteK, 0);
+    gl.uniform1f(u.uOpacity, 1);
+    gl.uniform1f(u.uHasB, 0);
+    gl.uniform1f(u.uEdge, 0);
+    gl.uniform1f(u.uClamp, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._textTex);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
@@ -218,6 +324,7 @@ export class Renderer {
     gl.uniform1f(u.uOpacity, place.opacity ?? 1);
     gl.uniform1f(u.uHasB, texB ? 1 : 0);
     gl.uniform1f(u.uEdge, edge);
+    gl.uniform1f(u.uClamp, 0);
 
     let matte = null;
     if (matteK > 0) matte = corpus.matte(gl, a.frame, tier);
@@ -238,12 +345,24 @@ export class Renderer {
 
 /** The viewing frustum, letterboxed to the room's 4:3 so the composite is never
  *  cropped by the shape of someone's window. */
-function perspectiveFor(canvas) {
+/** How the 4:3 room meets a frame that is not 4:3.
+ *
+ *   contain — show all of the room, accept empty frame around it. Right for a
+ *             browser window, which can be any shape and did not choose to be.
+ *   cover   — fill the frame, accept losing what falls outside it. Right for
+ *             every delivery format, because a 16:9 master that letterboxes a
+ *             4:3 source is a 4:3 film in a 16:9 container, and a vertical Reel
+ *             that does it is unwatchable on a phone.
+ *
+ * Both are the same arithmetic — the field that exactly fits the room's width,
+ * against the field that exactly fits its height. Contain takes the larger,
+ * cover takes the smaller.
+ */
+function perspectiveFor(canvas, fit = "contain") {
   const { fovy, aspect } = projector();
   const view = canvas.clientWidth / canvas.clientHeight;
-  // Widen the vertical field when the window is narrower than the room, so the
-  // full picture stays inside the frame instead of being cut off at the sides.
-  const fov = view < aspect ? 2 * Math.atan(Math.tan(fovy / 2) * (aspect / view)) : fovy;
+  const toWidth = 2 * Math.atan(Math.tan(fovy / 2) * (aspect / view));
+  const fov = fit === "cover" ? Math.min(fovy, toWidth) : Math.max(fovy, toWidth);
   return perspective(fov, view, 0.05, 100);
 }
 

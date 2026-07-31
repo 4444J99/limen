@@ -8,11 +8,16 @@
   "height": 1536,
   "derived": "masked per-pixel median over all frames"
  },
+ "camera": [
+  3264,
+  2448
+ ],
  "tiers": {
   "browse": {
    "width": 512,
    "height": 384,
    "eager": true,
+   "local": false,
    "plates": "plates/browse/<id>.webp",
    "mattes": "mattes/browse/<id>.webp",
    "bytes": 5435258
@@ -21,6 +26,7 @@
    "width": 1024,
    "height": 768,
    "eager": false,
+   "local": false,
    "plates": "plates/screen/<id>.webp",
    "mattes": "mattes/screen/<id>.webp",
    "bytes": 21765986
@@ -31,6 +37,11 @@
   {
    "id": "IMG_1570",
    "source": "IMG_1570.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.0,
     "bbox": null,
@@ -42,6 +53,11 @@
   {
    "id": "IMG_1571",
    "source": "IMG_1571.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12955,
     "bbox": [
@@ -61,6 +77,11 @@
   {
    "id": "IMG_1572",
    "source": "IMG_1572.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13022,
     "bbox": [
@@ -80,6 +101,11 @@
   {
    "id": "IMG_1573",
    "source": "IMG_1573.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13299,
     "bbox": [
@@ -125,6 +151,11 @@
   {
    "id": "IMG_1574",
    "source": "IMG_1574.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12692,
     "bbox": [
@@ -180,6 +211,11 @@
   {
    "id": "IMG_1575",
    "source": "IMG_1575.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12533,
     "bbox": [
@@ -235,6 +271,11 @@
   {
    "id": "IMG_1576",
    "source": "IMG_1576.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11666,
     "bbox": [
@@ -254,6 +295,11 @@
   {
    "id": "IMG_1577",
    "source": "IMG_1577.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12566,
     "bbox": [
@@ -273,6 +319,11 @@
   {
    "id": "IMG_1578",
    "source": "IMG_1578.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13385,
     "bbox": [
@@ -292,6 +343,11 @@
   {
    "id": "IMG_1579",
    "source": "IMG_1579.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12558,
     "bbox": [
@@ -311,6 +367,11 @@
   {
    "id": "IMG_1580",
    "source": "IMG_1580.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14715,
     "bbox": [
@@ -376,6 +437,11 @@
   {
    "id": "IMG_1581",
    "source": "IMG_1581.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14713,
     "bbox": [
@@ -395,6 +461,11 @@
   {
    "id": "IMG_1582",
    "source": "IMG_1582.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14713,
     "bbox": [
@@ -450,6 +521,11 @@
   {
    "id": "IMG_1583",
    "source": "IMG_1583.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12415,
     "bbox": [
@@ -469,6 +545,11 @@
   {
    "id": "IMG_1584",
    "source": "IMG_1584.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11666,
     "bbox": [
@@ -534,6 +615,11 @@
   {
    "id": "IMG_1585",
    "source": "IMG_1585.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12811,
     "bbox": [
@@ -599,6 +685,11 @@
   {
    "id": "IMG_1586",
    "source": "IMG_1586.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14317,
     "bbox": [
@@ -659,6 +750,11 @@
   {
    "id": "IMG_1587",
    "source": "IMG_1587.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14579,
     "bbox": [
@@ -724,6 +820,11 @@
   {
    "id": "IMG_1588",
    "source": "IMG_1588.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11358,
     "bbox": [
@@ -743,6 +844,11 @@
   {
    "id": "IMG_1589",
    "source": "IMG_1589.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.10875,
     "bbox": [
@@ -762,6 +868,11 @@
   {
    "id": "IMG_1590",
    "source": "IMG_1590.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13501,
     "bbox": [
@@ -822,6 +933,11 @@
   {
    "id": "IMG_1591",
    "source": "IMG_1591.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17599,
     "bbox": [
@@ -897,6 +1013,11 @@
   {
    "id": "IMG_1592",
    "source": "IMG_1592.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17355,
     "bbox": [
@@ -962,6 +1083,11 @@
   {
    "id": "IMG_1593",
    "source": "IMG_1593.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16473,
     "bbox": [
@@ -1037,6 +1163,11 @@
   {
    "id": "IMG_1594",
    "source": "IMG_1594.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13962,
     "bbox": [
@@ -1056,6 +1187,11 @@
   {
    "id": "IMG_1595",
    "source": "IMG_1595.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14189,
     "bbox": [
@@ -1075,6 +1211,11 @@
   {
    "id": "IMG_1596",
    "source": "IMG_1596.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1258,
     "bbox": [
@@ -1125,6 +1266,11 @@
   {
    "id": "IMG_1597",
    "source": "IMG_1597.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.09946,
     "bbox": [
@@ -1144,6 +1290,11 @@
   {
    "id": "IMG_1598",
    "source": "IMG_1598.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1675,
     "bbox": [
@@ -1163,6 +1314,11 @@
   {
    "id": "IMG_1599",
    "source": "IMG_1599.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14557,
     "bbox": [
@@ -1182,6 +1338,11 @@
   {
    "id": "IMG_1600",
    "source": "IMG_1600.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12701,
     "bbox": [
@@ -1237,6 +1398,11 @@
   {
    "id": "IMG_1601",
    "source": "IMG_1601.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15872,
     "bbox": [
@@ -1302,6 +1468,11 @@
   {
    "id": "IMG_1602",
    "source": "IMG_1602.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15411,
     "bbox": [
@@ -1372,6 +1543,11 @@
   {
    "id": "IMG_1603",
    "source": "IMG_1603.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15041,
     "bbox": [
@@ -1462,6 +1638,11 @@
   {
    "id": "IMG_1604",
    "source": "IMG_1604.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14378,
     "bbox": [
@@ -1527,6 +1708,11 @@
   {
    "id": "IMG_1605",
    "source": "IMG_1605.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12758,
     "bbox": [
@@ -1546,6 +1732,11 @@
   {
    "id": "IMG_1606",
    "source": "IMG_1606.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14962,
     "bbox": [
@@ -1565,6 +1756,11 @@
   {
    "id": "IMG_1607",
    "source": "IMG_1607.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15487,
     "bbox": [
@@ -1584,6 +1780,11 @@
   {
    "id": "IMG_1608",
    "source": "IMG_1608.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12305,
     "bbox": [
@@ -1603,6 +1804,11 @@
   {
    "id": "IMG_1609",
    "source": "IMG_1609.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12283,
     "bbox": [
@@ -1622,6 +1828,11 @@
   {
    "id": "IMG_1610",
    "source": "IMG_1610.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15018,
     "bbox": [
@@ -1641,6 +1852,11 @@
   {
    "id": "IMG_1611",
    "source": "IMG_1611.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13166,
     "bbox": [
@@ -1660,6 +1876,11 @@
   {
    "id": "IMG_1612",
    "source": "IMG_1612.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12607,
     "bbox": [
@@ -1679,6 +1900,11 @@
   {
    "id": "IMG_1613",
    "source": "IMG_1613.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.10976,
     "bbox": [
@@ -1698,6 +1924,11 @@
   {
    "id": "IMG_1614",
    "source": "IMG_1614.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1211,
     "bbox": [
@@ -1717,6 +1948,11 @@
   {
    "id": "IMG_1615",
    "source": "IMG_1615.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16712,
     "bbox": [
@@ -1782,6 +2018,11 @@
   {
    "id": "IMG_1616",
    "source": "IMG_1616.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1881,
     "bbox": [
@@ -1801,6 +2042,11 @@
   {
    "id": "IMG_1617",
    "source": "IMG_1617.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16827,
     "bbox": [
@@ -1820,6 +2066,11 @@
   {
    "id": "IMG_1618",
    "source": "IMG_1618.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12657,
     "bbox": [
@@ -1839,6 +2090,11 @@
   {
    "id": "IMG_1619",
    "source": "IMG_1619.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12772,
     "bbox": [
@@ -1858,6 +2114,11 @@
   {
    "id": "IMG_1620",
    "source": "IMG_1620.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1535,
     "bbox": [
@@ -1877,6 +2138,11 @@
   {
    "id": "IMG_1621",
    "source": "IMG_1621.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15035,
     "bbox": [
@@ -1896,6 +2162,11 @@
   {
    "id": "IMG_1622",
    "source": "IMG_1622.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1532,
     "bbox": [
@@ -1915,6 +2186,11 @@
   {
    "id": "IMG_1623",
    "source": "IMG_1623.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13958,
     "bbox": [
@@ -1934,6 +2210,11 @@
   {
    "id": "IMG_1624",
    "source": "IMG_1624.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12884,
     "bbox": [
@@ -1953,6 +2234,11 @@
   {
    "id": "IMG_1625",
    "source": "IMG_1625.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14153,
     "bbox": [
@@ -1972,6 +2258,11 @@
   {
    "id": "IMG_1626",
    "source": "IMG_1626.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14111,
     "bbox": [
@@ -2017,6 +2308,11 @@
   {
    "id": "IMG_1627",
    "source": "IMG_1627.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16037,
     "bbox": [
@@ -2087,6 +2383,11 @@
   {
    "id": "IMG_1628",
    "source": "IMG_1628.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17481,
     "bbox": [
@@ -2162,6 +2463,11 @@
   {
    "id": "IMG_1629",
    "source": "IMG_1629.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15998,
     "bbox": [
@@ -2237,6 +2543,11 @@
   {
    "id": "IMG_1630",
    "source": "IMG_1630.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15025,
     "bbox": [
@@ -2312,6 +2623,11 @@
   {
    "id": "IMG_1631",
    "source": "IMG_1631.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14372,
     "bbox": [
@@ -2377,6 +2693,11 @@
   {
    "id": "IMG_1632",
    "source": "IMG_1632.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15096,
     "bbox": [
@@ -2447,6 +2768,11 @@
   {
    "id": "IMG_1633",
    "source": "IMG_1633.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15366,
     "bbox": [
@@ -2466,6 +2792,11 @@
   {
    "id": "IMG_1634",
    "source": "IMG_1634.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16055,
     "bbox": [
@@ -2485,6 +2816,11 @@
   {
    "id": "IMG_1635",
    "source": "IMG_1635.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17545,
     "bbox": [
@@ -2504,6 +2840,11 @@
   {
    "id": "IMG_1636",
    "source": "IMG_1636.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1717,
     "bbox": [
@@ -2523,6 +2864,11 @@
   {
    "id": "IMG_1637",
    "source": "IMG_1637.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17115,
     "bbox": [
@@ -2542,6 +2888,11 @@
   {
    "id": "IMG_1638",
    "source": "IMG_1638.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17196,
     "bbox": [
@@ -2561,6 +2912,11 @@
   {
    "id": "IMG_1639",
    "source": "IMG_1639.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.22224,
     "bbox": [
@@ -2580,6 +2936,11 @@
   {
    "id": "IMG_1640",
    "source": "IMG_1640.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.21076,
     "bbox": [
@@ -2645,6 +3006,11 @@
   {
    "id": "IMG_1641",
    "source": "IMG_1641.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17743,
     "bbox": [
@@ -2664,6 +3030,11 @@
   {
    "id": "IMG_1642",
    "source": "IMG_1642.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17841,
     "bbox": [
@@ -2739,6 +3110,11 @@
   {
    "id": "IMG_1643",
    "source": "IMG_1643.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16987,
     "bbox": [
@@ -2809,6 +3185,11 @@
   {
    "id": "IMG_1644",
    "source": "IMG_1644.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15698,
     "bbox": [
@@ -2828,6 +3209,11 @@
   {
    "id": "IMG_1645",
    "source": "IMG_1645.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16456,
     "bbox": [
@@ -2847,6 +3233,11 @@
   {
    "id": "IMG_1646",
    "source": "IMG_1646.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16632,
     "bbox": [
@@ -2866,6 +3257,11 @@
   {
    "id": "IMG_1647",
    "source": "IMG_1647.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1465,
     "bbox": [
@@ -2885,6 +3281,11 @@
   {
    "id": "IMG_1648",
    "source": "IMG_1648.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14555,
     "bbox": [
@@ -2940,6 +3341,11 @@
   {
    "id": "IMG_1649",
    "source": "IMG_1649.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11783,
     "bbox": [
@@ -2959,6 +3365,11 @@
   {
    "id": "IMG_1650",
    "source": "IMG_1650.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.20586,
     "bbox": [
@@ -2978,6 +3389,11 @@
   {
    "id": "IMG_1651",
    "source": "IMG_1651.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.25443,
     "bbox": [
@@ -2997,6 +3413,11 @@
   {
    "id": "IMG_1652",
    "source": "IMG_1652.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.19288,
     "bbox": [
@@ -3052,6 +3473,11 @@
   {
    "id": "IMG_1653",
    "source": "IMG_1653.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12037,
     "bbox": [
@@ -3097,6 +3523,11 @@
   {
    "id": "IMG_1654",
    "source": "IMG_1654.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12114,
     "bbox": [
@@ -3152,6 +3583,11 @@
   {
    "id": "IMG_1655",
    "source": "IMG_1655.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12116,
     "bbox": [
@@ -3171,6 +3607,11 @@
   {
    "id": "IMG_1656",
    "source": "IMG_1656.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1209,
     "bbox": [
@@ -3190,6 +3631,11 @@
   {
    "id": "IMG_1657",
    "source": "IMG_1657.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15261,
     "bbox": [
@@ -3250,6 +3696,11 @@
   {
    "id": "IMG_1658",
    "source": "IMG_1658.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1692,
     "bbox": [
@@ -3269,6 +3720,11 @@
   {
    "id": "IMG_1659",
    "source": "IMG_1659.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.10939,
     "bbox": [
@@ -3288,6 +3744,11 @@
   {
    "id": "IMG_1660",
    "source": "IMG_1660.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.09344,
     "bbox": [
@@ -3307,6 +3768,11 @@
   {
    "id": "IMG_1661",
    "source": "IMG_1661.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12519,
     "bbox": [
@@ -3362,6 +3828,11 @@
   {
    "id": "IMG_1662",
    "source": "IMG_1662.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13167,
     "bbox": [
@@ -3432,6 +3903,11 @@
   {
    "id": "IMG_1663",
    "source": "IMG_1663.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13041,
     "bbox": [
@@ -3512,6 +3988,11 @@
   {
    "id": "IMG_1664",
    "source": "IMG_1664.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12932,
     "bbox": [
@@ -3587,6 +4068,11 @@
   {
    "id": "IMG_1665",
    "source": "IMG_1665.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16697,
     "bbox": [
@@ -3606,6 +4092,11 @@
   {
    "id": "IMG_1666",
    "source": "IMG_1666.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1267,
     "bbox": [
@@ -3625,6 +4116,11 @@
   {
    "id": "IMG_1667",
    "source": "IMG_1667.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11359,
     "bbox": [
@@ -3644,6 +4140,11 @@
   {
    "id": "IMG_1668",
    "source": "IMG_1668.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17887,
     "bbox": [
@@ -3663,6 +4164,11 @@
   {
    "id": "IMG_1669",
    "source": "IMG_1669.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17092,
     "bbox": [
@@ -3682,6 +4188,11 @@
   {
    "id": "IMG_1670",
    "source": "IMG_1670.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17352,
     "bbox": [
@@ -3701,6 +4212,11 @@
   {
    "id": "IMG_1671",
    "source": "IMG_1671.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12469,
     "bbox": [
@@ -3720,6 +4236,11 @@
   {
    "id": "IMG_1672",
    "source": "IMG_1672.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12892,
     "bbox": [
@@ -3780,6 +4301,11 @@
   {
    "id": "IMG_1673",
    "source": "IMG_1673.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13986,
     "bbox": [
@@ -3799,6 +4325,11 @@
   {
    "id": "IMG_1674",
    "source": "IMG_1674.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13712,
     "bbox": [
@@ -3818,6 +4349,11 @@
   {
    "id": "IMG_1675",
    "source": "IMG_1675.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13318,
     "bbox": [
@@ -3837,6 +4373,11 @@
   {
    "id": "IMG_1676",
    "source": "IMG_1676.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13927,
     "bbox": [
@@ -3856,6 +4397,11 @@
   {
    "id": "IMG_1677",
    "source": "IMG_1677.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1429,
     "bbox": [
@@ -3875,6 +4421,11 @@
   {
    "id": "IMG_1678",
    "source": "IMG_1678.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13543,
     "bbox": [
@@ -3894,6 +4445,11 @@
   {
    "id": "IMG_1679",
    "source": "IMG_1679.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15731,
     "bbox": [
@@ -3913,6 +4469,11 @@
   {
    "id": "IMG_1680",
    "source": "IMG_1680.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13766,
     "bbox": [
@@ -3932,6 +4493,11 @@
   {
    "id": "IMG_1681",
    "source": "IMG_1681.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12588,
     "bbox": [
@@ -3951,6 +4517,11 @@
   {
    "id": "IMG_1682",
    "source": "IMG_1682.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15111,
     "bbox": [
@@ -3970,6 +4541,11 @@
   {
    "id": "IMG_1683",
    "source": "IMG_1683.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15229,
     "bbox": [
@@ -3989,6 +4565,11 @@
   {
    "id": "IMG_1684",
    "source": "IMG_1684.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1349,
     "bbox": [
@@ -4008,6 +4589,11 @@
   {
    "id": "IMG_1685",
    "source": "IMG_1685.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13716,
     "bbox": [
@@ -4073,6 +4659,11 @@
   {
    "id": "IMG_1686",
    "source": "IMG_1686.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12415,
     "bbox": [
@@ -4092,6 +4683,11 @@
   {
    "id": "IMG_1687",
    "source": "IMG_1687.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11462,
     "bbox": [
@@ -4111,6 +4707,11 @@
   {
    "id": "IMG_1688",
    "source": "IMG_1688.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12078,
     "bbox": [
@@ -4156,6 +4757,11 @@
   {
    "id": "IMG_1689",
    "source": "IMG_1689.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14407,
     "bbox": [
@@ -4175,6 +4781,11 @@
   {
    "id": "IMG_1690",
    "source": "IMG_1690.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14813,
     "bbox": [
@@ -4194,6 +4805,11 @@
   {
    "id": "IMG_1691",
    "source": "IMG_1691.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14828,
     "bbox": [
@@ -4213,6 +4829,11 @@
   {
    "id": "IMG_1692",
    "source": "IMG_1692.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15087,
     "bbox": [
@@ -4232,6 +4853,11 @@
   {
    "id": "IMG_1693",
    "source": "IMG_1693.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14172,
     "bbox": [
@@ -4251,6 +4877,11 @@
   {
    "id": "IMG_1694",
    "source": "IMG_1694.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14524,
     "bbox": [
@@ -4311,6 +4942,11 @@
   {
    "id": "IMG_1695",
    "source": "IMG_1695.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17218,
     "bbox": [
@@ -4371,6 +5007,11 @@
   {
    "id": "IMG_1696",
    "source": "IMG_1696.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16265,
     "bbox": [
@@ -4431,6 +5072,11 @@
   {
    "id": "IMG_1697",
    "source": "IMG_1697.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14307,
     "bbox": [
@@ -4491,6 +5137,11 @@
   {
    "id": "IMG_1698",
    "source": "IMG_1698.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17217,
     "bbox": [
@@ -4541,6 +5192,11 @@
   {
    "id": "IMG_1699",
    "source": "IMG_1699.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15489,
     "bbox": [
@@ -4560,6 +5216,11 @@
   {
    "id": "IMG_1700",
    "source": "IMG_1700.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15909,
     "bbox": [
@@ -4579,6 +5240,11 @@
   {
    "id": "IMG_1701",
    "source": "IMG_1701.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17929,
     "bbox": [
@@ -4634,6 +5300,11 @@
   {
    "id": "IMG_1702",
    "source": "IMG_1702.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.17536,
     "bbox": [
@@ -4749,6 +5420,11 @@
   {
    "id": "IMG_1703",
    "source": "IMG_1703.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1713,
     "bbox": [
@@ -4809,6 +5485,11 @@
   {
    "id": "IMG_1704",
    "source": "IMG_1704.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16919,
     "bbox": [
@@ -4869,6 +5550,11 @@
   {
    "id": "IMG_1705",
    "source": "IMG_1705.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.16427,
     "bbox": [
@@ -4924,6 +5610,11 @@
   {
    "id": "IMG_1706",
    "source": "IMG_1706.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14671,
     "bbox": [
@@ -4979,6 +5670,11 @@
   {
    "id": "IMG_1707",
    "source": "IMG_1707.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11305,
     "bbox": [
@@ -4998,6 +5694,11 @@
   {
    "id": "IMG_1708",
    "source": "IMG_1708.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11604,
     "bbox": [
@@ -5017,6 +5718,11 @@
   {
    "id": "IMG_1709",
    "source": "IMG_1709.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11665,
     "bbox": [
@@ -5036,6 +5742,11 @@
   {
    "id": "IMG_1710",
    "source": "IMG_1710.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11732,
     "bbox": [
@@ -5141,6 +5852,11 @@
   {
    "id": "IMG_1711",
    "source": "IMG_1711.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11725,
     "bbox": [
@@ -5160,6 +5876,11 @@
   {
    "id": "IMG_1712",
    "source": "IMG_1712.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1183,
     "bbox": [
@@ -5275,6 +5996,11 @@
   {
    "id": "IMG_1713",
    "source": "IMG_1713.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11613,
     "bbox": [
@@ -5294,6 +6020,11 @@
   {
    "id": "IMG_1714",
    "source": "IMG_1714.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12741,
     "bbox": [
@@ -5313,6 +6044,11 @@
   {
    "id": "IMG_1715",
    "source": "IMG_1715.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15949,
     "bbox": [
@@ -5373,6 +6109,11 @@
   {
    "id": "IMG_1716",
    "source": "IMG_1716.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13388,
     "bbox": [
@@ -5433,6 +6174,11 @@
   {
    "id": "IMG_1717",
    "source": "IMG_1717.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13179,
     "bbox": [
@@ -5498,6 +6244,11 @@
   {
    "id": "IMG_1718",
    "source": "IMG_1718.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.1225,
     "bbox": [
@@ -5517,6 +6268,11 @@
   {
    "id": "IMG_1719",
    "source": "IMG_1719.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13721,
     "bbox": [
@@ -5536,6 +6292,11 @@
   {
    "id": "IMG_1720",
    "source": "IMG_1720.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13383,
     "bbox": [
@@ -5601,6 +6362,11 @@
   {
    "id": "IMG_1721",
    "source": "IMG_1721.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13796,
     "bbox": [
@@ -5671,6 +6437,11 @@
   {
    "id": "IMG_1722",
    "source": "IMG_1722.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.13824,
     "bbox": [
@@ -5736,6 +6507,11 @@
   {
    "id": "IMG_1723",
    "source": "IMG_1723.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12858,
     "bbox": [
@@ -5796,6 +6572,11 @@
   {
    "id": "IMG_1724",
    "source": "IMG_1724.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12604,
     "bbox": [
@@ -5851,6 +6632,11 @@
   {
    "id": "IMG_1725",
    "source": "IMG_1725.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12421,
     "bbox": [
@@ -5911,6 +6697,11 @@
   {
    "id": "IMG_1726",
    "source": "IMG_1726.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.12525,
     "bbox": [
@@ -5966,6 +6757,11 @@
   {
    "id": "IMG_1727",
    "source": "IMG_1727.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11643,
     "bbox": [
@@ -5985,6 +6781,11 @@
   {
    "id": "IMG_1728",
    "source": "IMG_1728.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.11927,
     "bbox": [
@@ -6004,6 +6805,11 @@
   {
    "id": "IMG_1729",
    "source": "IMG_1729.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.14541,
     "bbox": [
@@ -6023,6 +6829,11 @@
   {
    "id": "IMG_1730",
    "source": "IMG_1730.JPG",
+   "native": [
+    3264,
+    2448
+   ],
+   "registered": true,
    "figure": {
     "coverage": 0.15869,
     "bbox": [
@@ -6042,6 +6853,11 @@
   {
    "id": "IMG_1926",
    "source": "IMG_1926.PNG",
+   "native": [
+    750,
+    1334
+   ],
+   "registered": false,
    "figure": {
     "coverage": 0.18566,
     "bbox": [
