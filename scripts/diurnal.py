@@ -57,6 +57,11 @@ try:
 except ImportError:
     _notify = None
 
+# Imported HARD, unlike the two above. yaml and _notify degrade to less output; _root IS the guard
+# that decides whether this root may be reported on at all. A soft `_root = None` fallback would
+# reopen the exact hole it closes — emitting a confident briefing from a body that isn't there.
+import _root
+
 PHASES = ("morning", "midday", "evening")
 REGISTRY_REL = "institutio/governance/diurnal.yaml"
 MARKER_RX = "<!-- diurnal:{phase}:start -->"
@@ -77,22 +82,11 @@ def _on(name: str, default: str = "1") -> bool:
     return os.environ.get(name, default) == "1"
 
 
-def resolve_root() -> Path:
-    """Resolve the LIVE organism root, never a worktree projection.
-
-    A worktree's logs/ holds 2 files; the live root's holds ~198. A script that resolves
-    the worktree reads an empty body and cheerfully reports "all quiet" — the single
-    most dangerous failure mode this organ has.
-    """
-    env = os.environ.get("LIMEN_ROOT")
-    if env:
-        return Path(env).expanduser().resolve()
-    return Path(__file__).resolve().parent.parent
-
-
-def has_body(root: Path) -> bool:
-    """True iff this root is a live organism (has beat voice stamps), not a bare projection."""
-    return (root / "logs" / ".voice").is_dir()
+# Root resolution and the liveness guard are shared, not local. The local pair this replaced
+# claimed "True iff this root is a live organism, not a bare projection" while testing only that
+# `logs/.voice/` was a directory — which ONE stray sensor stamp satisfies. It opened in a worktree
+# holding a single stamp and emitted a briefing in which five live-present sections read ABSENT.
+# See scripts/_root.py for the measurement and for why the fix could not stay in this file.
 
 
 # ── section rendering ──────────────────────────────────────────────────────────────
@@ -823,13 +817,19 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="print the section registry with cut state")
     args = ap.parse_args()
 
-    root = resolve_root()
-    if not has_body(root):
-        print(
-            f"diurnal: {root} has no logs/.voice — refusing to emit a false 'all quiet'. "
-            "Set LIMEN_ROOT to the live organism.",
-            file=sys.stderr,
-        )
+    resolved, why = _root.resolve()
+    if resolved is None:
+        print(f"diurnal: {why}", file=sys.stderr)
+        return 0  # advisory: never fail the beat
+    root = resolved
+
+    live, why = _root.has_body(root)
+    if not live:
+        # The reason is printed verbatim rather than summarised, because the three ways to fail
+        # this guard need different fixes: a worktree needs LIMEN_ROOT, a cold checkout needs the
+        # beat to have run, and a non-checkout needs the path corrected. "has no logs/.voice" —
+        # the message this replaced — described only the case that never actually fired.
+        print(f"diurnal: refusing to emit a false 'all quiet' — {why}", file=sys.stderr)
         return 0  # advisory: never fail the beat
 
     if args.list:
