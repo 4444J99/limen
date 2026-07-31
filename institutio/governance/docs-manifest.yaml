@@ -148,6 +148,4 @@ sanctioned:
 grandfathered:
   - {path: health-office, target_home: "organvm/domus:docs/health-office/", why: "personal-office records in a public repo — bound to scripts/health-organ.py + his-hand-levers.json; moves when the organ relocates"}
   - {path: life-office, target_home: "organvm/domus:docs/life-office/", why: "personal-office records in a public repo — bound to scripts/life-organ.py; moves when the organ relocates"}
-  - {path: concurrent-integration.md, target_home: docs/architecture/, why: "prose referrers only (AGENTS.md) — patch and move"}
-  - {path: host-work-admission.md, target_home: docs/architecture/, why: "prose referrers only (AGENTS.md) — patch and move"}
   - {path: student-email-reply-grounding.md, target_home: "organvm/domus:docs/", why: "personal teaching-workflow doc in a public repo — bound by scripts/check-student-email-grounding.py + CLAUDE.md citation; export = patch predicate + charter in the same change"}

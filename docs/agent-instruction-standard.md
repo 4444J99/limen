@@ -70,7 +70,7 @@ back to `AGENTS.md` instead.
     isolated worktree and immutable PR head; moving `main` is integrated by the repository merge
     queue and its synthetic `merge_group`, not by repeatedly rewriting every branch and rerunning
     successful head CI. Direct `main` writers yield to active integration. The executable contract
-    is `AGENTS.md` → Session Discipline rule 5 plus `docs/concurrent-integration.md`.
+    is `AGENTS.md` → Session Discipline rule 5 plus `docs/architecture/concurrent-integration.md`.
 
 ## Home-scope generated surfaces
 

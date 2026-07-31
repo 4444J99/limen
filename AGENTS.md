@@ -169,7 +169,7 @@ the live queue rail is proven active; without that proof it remains fail-closed.
 `main` writes are forbidden, including board snapshots: Tabularius coalesces the local projection
 and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
 `pull_request` rule makes that boundary remote-enforced. The full executable contract is
-[`docs/concurrent-integration.md`](docs/concurrent-integration.md).
+[`docs/architecture/concurrent-integration.md`](docs/architecture/concurrent-integration.md).
 
 ### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
 
@@ -452,7 +452,7 @@ is a valid verification strategy.
 ## Machine-Wide Host Admission
 
 Every heavy local Codex, Claude, OpenCode, Agy, or Limen surface must enter through the shared host
-admission boundary documented in [`docs/host-work-admission.md`](docs/host-work-admission.md).
+admission boundary documented in [`docs/architecture/host-work-admission.md`](docs/architecture/host-work-admission.md).
 Codex conversation roots may always open concurrently: `UserPromptSubmit` never acquires a global
 execution lease, even when stable action denial is unavailable. Source mutations require a linked
 worktree and one scoped writer lease per worktree; distinct worktrees may have concurrent writers.
