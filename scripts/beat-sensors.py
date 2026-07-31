@@ -34,6 +34,10 @@ REGISTRY = ROOT / "institutio" / "governance" / "sensors.yaml"
 CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import _root
 
 from limen.omega_owner_receipt import (
     MAX_FRESHNESS_SECONDS,
@@ -160,6 +164,19 @@ def _due(sensor_id: str, sensor: dict, *, beat: int, loop_max: int, voice_dir: P
 
 
 def _stamp(sensor_id: str, voice_dir: Path) -> None:
+    """Record that this sensor ran — but never into a worktree.
+
+    A voice stamp is read fleet-wide as proof that a root is a living organism: diurnal's liveness
+    guard, organ-health, governance-organ, financial-organ, life-organ and cvstos-organ all treat
+    `logs/.voice/<x>` as ground truth. Stamping a worktree therefore does not merely record a fact
+    about that tree — it MANUFACTURES a body, and the readers cannot tell the difference. Measured
+    2026-07-31: one scheduled sensor run in a worktree was enough to open diurnal's guard and
+    produce a briefing reporting `3/65 green` against the live body's `27/64 green · 34 down`.
+
+    Sensing from a worktree stays entirely fine. Claiming to BE the organism is what stops here.
+    """
+    if _root.is_worktree(voice_dir.parent.parent):
+        return
     try:
         voice_dir.mkdir(parents=True, exist_ok=True)
         (voice_dir / sensor_id).write_text(
