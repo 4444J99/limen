@@ -500,16 +500,26 @@ while true; do
       # RECLAIM is intentionally outside the queue lock. It can spend minutes scanning
       # worktrees with git status/cherry; holding the board mutex there starves harvest/refill.
       if [ "${DRAIN_VOICE_DUE:-0}" = "1" ] && [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
-        reclaim_args=()
-        [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
+        reclaim_apply_args=()
+        [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_apply_args+=(--apply)
         # The cheap generated-only pass (just-finished lanes) ALWAYS runs — it closes this beat's own
         # worktree debt at negligible cost. The FULL estate census (git status/cherry across every
         # worktree — the git storm over ~71 roots) is deferred while VITALS is SHEDDING (memory/swap
         # ≥ critical), so the beat never thrashes an already-starved host to relieve worktree debt.
-        # It resumes the next unpressured beat. Under mere throttle/warn it still runs (LIMEN_RECLAIM_TIMEOUT-bounded).
-        PYTHONPATH="$PYTHONPATH" timeout "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" --generated-only "${reclaim_args[@]}" 2>&1 | tail -4 || true
+        # It resumes the next unpressured beat. The shared controller bounds each whole cycle and
+        # makes the full pass an exact check(JSON)+SHA-validated apply transaction. This live loop
+        # explicitly scans repo-local and registered worktrees even though LIMEN_WORKTREE_ROOT is
+        # set; library callers and isolated tests retain worktree_roots.py's "auto" semantics.
+        LIMEN_RECLAIM_REPO_LOCAL_WT=1 LIMEN_RECLAIM_REGISTERED_WT=1 \
+          PYTHONPATH="$PYTHONPATH" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+            --timeout "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" \
+            "${reclaim_apply_args[@]}" --generated-only || \
+          echo "  reclaim: generated-only cycle failed — next beat retries"
         if [ "$VITALS_PRESSURE" != "1" ]; then
-          PYTHONPATH="$PYTHONPATH" timeout "${LIMEN_RECLAIM_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+          LIMEN_RECLAIM_REPO_LOCAL_WT=1 LIMEN_RECLAIM_REGISTERED_WT=1 \
+            PYTHONPATH="$PYTHONPATH" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+              --timeout "${LIMEN_RECLAIM_TIMEOUT:-300}" "${reclaim_apply_args[@]}" || \
+            echo "  reclaim: full cycle failed — next beat retries"
         else
           echo "  reclaim: full estate census deferred — vitals shedding (memory/swap critical)"
         fi
