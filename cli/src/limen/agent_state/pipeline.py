@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -19,6 +20,7 @@ from .atomize import atomize_opencode, sha256_file, stat_identity
 from .crypto import (
     EncryptedAtomPacker,
     encrypt_file,
+    encryption_profile_digest,
     keychain_key,
     verify_atom_packs,
     verify_encrypted_file,
@@ -31,6 +33,9 @@ class PipelineError(RuntimeError):
 
 
 ARCA_REMOTE_EXACT_ERROR = "ARCA completed receipt is not exact on the remote"
+RETIREMENT_AUTHORIZATION_REQUIRED = (
+    "source retirement requires canonical custody and a separately authorized retirement workflow"
+)
 GITHUB_PUSH_LIMIT_BYTES = 2 * 1024 * 1024 * 1024
 DEFAULT_GIT_BATCH_LIMIT_BYTES = 1024 * 1024 * 1024
 
@@ -64,6 +69,14 @@ def _run(arguments: list[str], *, cwd: Path | None = None) -> str:
         detail = result.stderr.strip() or result.stdout.strip() or f"exit {result.returncode}"
         raise PipelineError(f"command failed: {arguments[0]}: {detail}")
     return result.stdout.strip()
+
+
+def _run_bytes(arguments: list[str], *, cwd: Path | None = None) -> bytes:
+    result = subprocess.run(arguments, cwd=cwd, check=False, capture_output=True)
+    if result.returncode:
+        detail = result.stderr.decode(errors="replace").strip() or f"exit {result.returncode}"
+        raise PipelineError(f"command failed: {arguments[0]}: {detail}")
+    return result.stdout
 
 
 def partition_git_paths(
@@ -286,6 +299,80 @@ class GitVault:
             )
             return history[1], receipt_commit, receipt
 
+    def materialize_remote_payload(
+        self,
+        relative: Path,
+        payload_commit: str,
+        expected_paths: Iterable[Path],
+        destination: Path,
+    ) -> Path:
+        """Materialize every expected ciphertext blob from one remote-reachable commit."""
+
+        self.verify_identity()
+        relative = Path(relative)
+        requested = [Path(path) for path in expected_paths]
+        normalized = sorted(set(requested), key=Path.as_posix)
+        if (
+            relative.is_absolute()
+            or ".." in relative.parts
+            or not normalized
+            or any(path.is_absolute() or ".." in path.parts or len(path.parts) != 1 for path in normalized)
+            or len(normalized) != len(requested)
+        ):
+            raise PipelineError("ARCA remote payload manifest is unsafe")
+        if not re.fullmatch(r"[0-9a-f]{40}", payload_commit):
+            raise PipelineError("ARCA remote payload commit is invalid")
+        if destination.exists():
+            raise PipelineError("ARCA remote restoration target already exists")
+
+        remote_output = _run(["git", "ls-remote", "origin", "refs/heads/main"], cwd=self.root).split()
+        if len(remote_output) != 2 or remote_output[1] != "refs/heads/main":
+            raise PipelineError("ARCA remote main ref is unavailable")
+        origin = _run(["git", "config", "--get", "remote.origin.url"], cwd=self.root)
+        common_dir = Path(_run(["git", "rev-parse", "--git-common-dir"], cwd=self.root))
+        if not common_dir.is_absolute():
+            common_dir = (self.root / common_dir).resolve()
+
+        with tempfile.TemporaryDirectory(prefix="limen-arca-remote-") as temporary:
+            snapshot = Path(temporary) / "snapshot.git"
+            _run(["git", "init", "--bare", "--quiet", str(snapshot)], cwd=self.root)
+            alternates = snapshot / "objects" / "info" / "alternates"
+            alternates.parent.mkdir(parents=True, exist_ok=True)
+            alternates.write_text(f"{(common_dir / 'objects').resolve()}\n", encoding="utf-8")
+            remote_ref = "refs/limen/remote-main"
+            _run(
+                [
+                    "git",
+                    "fetch",
+                    "--quiet",
+                    "--no-tags",
+                    "--no-write-fetch-head",
+                    origin,
+                    f"+refs/heads/main:{remote_ref}",
+                ],
+                cwd=snapshot,
+            )
+            if _run(["git", "rev-parse", remote_ref], cwd=snapshot) != remote_output[0]:
+                raise PipelineError("ARCA remote main changed during payload restoration")
+            _run(["git", "merge-base", "--is-ancestor", payload_commit, remote_ref], cwd=snapshot)
+
+            destination.mkdir(parents=True)
+            try:
+                for path in normalized:
+                    git_path = (relative / path).as_posix()
+                    restored = destination / path
+                    restored.write_bytes(
+                        _run_bytes(
+                            ["git", "show", f"{payload_commit}:{git_path}"],
+                            cwd=snapshot,
+                        )
+                    )
+                    restored.chmod(0o600)
+            except BaseException:
+                shutil.rmtree(destination, ignore_errors=True)
+                raise
+        return destination
+
     def resume_and_push_payload(
         self,
         relative: Path,
@@ -400,6 +487,7 @@ def _capture_manifest(receipt: MetabolismReceipt, table_counts: dict[str, int]) 
         "atom_count": receipt.atom_count,
         "duplicate_payloads": receipt.duplicate_payloads,
         "logical_sha256": receipt.logical_sha256,
+        "encryption_profile_digest": receipt.encryption_profile_digest,
         "table_counts": table_counts,
         "packs": [asdict(pack) for pack in receipt.packs],
         "external_chunks": [asdict(chunk) for chunk in receipt.external_chunks],
@@ -476,6 +564,7 @@ def capture_opencode(
             source=result.source,
             atom_count=result.atom_count,
             logical_sha256=result.logical_sha256,
+            encryption_profile_digest=encryption_profile_digest("opencode-sqlite"),
             packs=packs,
             duplicate_payloads=result.duplicate_payloads,
             external_chunks=external_chunks,
@@ -575,8 +664,10 @@ def run_opencode_campaign(
     retire: bool = False,
     run_id: str | None = None,
 ) -> MetabolismReceipt:
-    """Hold the sole heavy lease across capture, verification, and optional retirement."""
+    """Hold the sole heavy lease across a preservation-only capture."""
 
+    if retire:
+        raise PipelineError(RETIREMENT_AUTHORIZATION_REQUIRED)
     owner = f"agent-state-metabolism-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface="opencode-agent-state-custody"):
         receipt = capture_opencode(
@@ -586,7 +677,4 @@ def run_opencode_campaign(
             private_receipt,
             run_id=run_id,
         )
-        if retire:
-            retire_opencode(receipt)
-            receipt.write(private_receipt)
         return receipt

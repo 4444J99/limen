@@ -655,7 +655,7 @@ def test_codex_workstream_denies_provider_when_admitted_receipt_push_fails(tmp_p
     )
 
     assert rejected.returncode != 0
-    assert "could not be published before provider launch" in rejected.stdout + rejected.stderr
+    assert "publication was confirmed absent or mismatched" in rejected.stdout + rejected.stderr
     assert not provider_marker.exists()
 
     pre_receive.unlink()
@@ -923,7 +923,11 @@ def test_autonomous_workstream_requires_prompt_and_launches_with_dynamic_readme(
     assert "workstream_export_context" in kickstart_text
     assert "workstream_launch_native_agent" in kickstart_text
     assert "if [[ -t 0 && -t 1 ]]; then" in kickstart_text
-    assert 'exec "$binary" "$capsule_prompt"' in kickstart_text
+    # The generic lane exec now carries the lane tier pin expansion (s9-lane-tier-pin). With no pin
+    # the array is empty and bash expands it to NOTHING, so an unpinned launch is argv-identical to
+    # what it was before the pin existed.
+    assert 'exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" "$capsule_prompt"' in kickstart_text
+    assert "launch_lane_model=" in kickstart_text
     assert "IFS= read -r -d '' capsule_prompt" in kickstart_text
     assert '"$agent" "$registry_binary" "1" "$readme" "$allow_shell_fallback"' in kickstart_text
     assert "run-bounded" in kickstart_text

@@ -348,7 +348,26 @@ export class ConductKernel {
       for (const owner of Object.values(this.state.sessions)) {
         if (owner.session_id === session.session_id || !owner.worktree) continue;
         const owned = parseResource(`worktree/${owner.worktree}`).identity[0];
-        if (owned === claimed && this.now - asDate(owner.heartbeat_at) <= this.sessionTtlMs) {
+        if (owned !== claimed) continue;
+        // Succession: the heartbeat TTL cannot see a crash/exec exit, so an exited session
+        // blocks its own reopen for the TTL. A claimant that names the exact owner of the
+        // very worktree it claims — and does not attenuate the owner's protection level —
+        // replaces it immediately; anything else keeps the two-concurrent-sessions guard.
+        if (session.supersedes === owner.session_id
+          && (session.human_protected || !owner.human_protected)) {
+          this.state.sessions[owner.session_id] = {
+            ...clone(owner),
+            worktree: null,
+            accepting_work: false,
+          };
+          this.recordEvent("session.superseded", {
+            session_id: owner.session_id,
+            superseded_by: session.session_id,
+            worktree: claimed,
+          });
+          continue;
+        }
+        if (this.now - asDate(owner.heartbeat_at) <= this.sessionTtlMs) {
           throw new ConductError(`worktree is already owned by healthy session ${owner.session_id}`);
         }
       }
@@ -358,6 +377,7 @@ export class ConductKernel {
       registered_at: current?.registered_at || this.timestamp,
       heartbeat_at: this.timestamp,
       human_protected: Boolean(current?.human_protected || session.human_protected),
+      supersedes: null,
     };
     const priorPrincipal = this.state.session_principals[session.session_id];
     if (priorPrincipal && priorPrincipal !== principal.principal_id) {

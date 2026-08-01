@@ -37,7 +37,7 @@ people:
     funnel_instance_ref: null
     projects:
       - name: spiral
-        repo: organvm/sovereign-systems--elevate-align
+        repo: 4444J99/sovereign-systems--elevate-align
         keywords: [spiral, elevate align, hydration, water education, ionfaucet, multipure]
         stage: live
         public_face_state: readme
@@ -50,10 +50,10 @@ people:
     funnel_instance_ref: null
     projects:
       - name: styx
-        repo: organvm/peer-audited--behavioral-blockchain
+        repo: 4444J99/peer-audited--behavioral-blockchain
         related_repos:
-          - organvm/styx-behavioral-art
-          - organvm/styx-behavioral-economics-theory
+          - 4444J99/styx-behavioral-art
+          - 4444J99/styx-behavioral-economics-theory
         keywords: [styx, ask-styx, behavioral blockchain, peer-audited, behavioral economics]
         stage: building
         public_face_state: readme
@@ -65,7 +65,7 @@ people:
     funnel_instance_ref: organs/consulting/funnel/instances/rob-fitness.yaml
     projects:
       - name: hokage-chess
-        repo: organvm/hokage-chess
+        repo: 4444J99/hokage-chess
         keywords: [hokage, chess, legion command center, gamified coach]
         stage: building
         public_face_state: readme
@@ -78,9 +78,9 @@ people:
         dossier: null
         notes: daily-engine instance lane; the proven funnel shape (EXECUTION)
       - name: micro-tato
-        repo: organvm/micro-tato
+        repo: 4444J99/micro-tato
         related_repos:
-          - organvm/micro-tato-play
+          - 4444J99/micro-tato-play
         keywords: [micro tato, brotato, bullet hell, godot, potato]
         stage: mvp
         public_face_state: readme
@@ -99,13 +99,13 @@ people:
     funnel_instance_ref: null
     projects:
       - name: mirror-mirror
-        repo: organvm/mirror-mirror
+        repo: 4444J99/mirror-mirror
         keywords: [mirror mirror, virtual try-on, beauty tech, salon, ar makeup]
         stage: building
         public_face_state: readme
         dossier: null
       - name: your-fit-tailored
-        repo: organvm/your-fit-tailored
+        repo: 4444J99/your-fit-tailored
         keywords: [your-fit-tailored, circular apparel, weekly subscription, fit intelligence, tism]
         stage: building
         public_face_state: readme
@@ -124,7 +124,7 @@ people:
     funnel_instance_ref: null
     projects:
       - name: content-cannibalizer
-        repo: organvm/content-engine--asset-amplifier
+        repo: 4444J99/content-engine--asset-amplifier
         keywords: [cronus metabolus, content cannibalizer, content yield, asset amplifier]
         stage: building
         public_face_state: pending-split
@@ -167,7 +167,7 @@ people:
     funnel_instance_ref: null
     projects:
       - name: victoroff-os
-        repo: organvm/victoroff-os
+        repo: 4444J99/victoroff-os
         keywords: [victoroff, victoroff-os]
         stage: building
         public_face_state: none
@@ -178,6 +178,19 @@ people:
         stage: idea
         public_face_state: none
         dossier: null
+
+  - slug: derek
+    tier: T3
+    engagement_ref: organs/education/engagements/derek.yaml
+    funnel_instance_ref: null
+    projects:
+      - name: narrative-workshop
+        repo: null
+        keywords: [narrative workshop, narrative coaching, writing mentorship, quest arc]
+        stage: live
+        public_face_state: none
+        dossier: null
+        notes: education-organ engagement (ACTIVE 2026-07-03) — register gap healed 2026-07-30; one-to-one mentorship lane, no build, no outreach
 
   - slug: john-m
     tier: T3

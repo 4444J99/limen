@@ -12,6 +12,9 @@
     <string>com.limen.overnight-watch</string>
     <key>ProgramArguments</key>
     <array>
+        <string>/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost</string>
+        <string>run</string>
+        <string>--</string>
         <string>/Users/4jp/.local/share/limen/current/venv/bin/python</string>
         <string>/Users/4jp/.local/share/limen/current/source/scripts/overnight-watch.py</string>
     </array>

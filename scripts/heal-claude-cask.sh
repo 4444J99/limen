@@ -4,9 +4,8 @@
 # (dialogs-silenced.sh class 4).
 #
 # Casks (unlike bottled formulae) stamp com.apple.quarantine on every download, so each cask upgrade
-# is a fresh quarantined Mach-O at a new Caskroom path = a Gatekeeper first-open prompt, and
-# `brew upgrade --greedy-auto-updates` re-seeds it forever — silently defeating DISABLE_AUTOUPDATER
-# (which only stops the NATIVE updater). The one sanctioned install is the native ~/.local/bin/claude.
+# is a fresh quarantined Mach-O at a new Caskroom path = a Gatekeeper first-open prompt. It is an
+# independent rotating install beside the sanctioned updater-managed native ~/.local/bin/claude.
 #
 # This effector detects the cask duplicate and uninstalls it. It uninstalls ONLY the cask
 # (`brew uninstall --cask claude-code`); the native ~/.local/bin/claude is a separate install and is

@@ -1079,7 +1079,7 @@ Normalized task-body payload covered `153.4 MiB` after stripping recognized scaf
 
 ## Drain Queue
 
-- Session lifecycle drain queue: `docs/session-lifecycle-drain-queue-2026-06-27.md`.
+- Session lifecycle drain queue: `docs/reviews/session-lifecycle-drain-queue-2026-06-27.md`.
 
 ## Private Outputs
 

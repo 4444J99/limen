@@ -1,0 +1,122 @@
+# CUSTODY registry — for a reference that is ABSENT from this host, is that absence
+# CUSTODIED or UNACCOUNTED?
+#
+# The eighth axis of the VIGILIA spine (GATES · PARAMETERS · SENSORS · CORPORA ·
+# CONVERGENCE · ATOM-HOMING · IDEAL-FORMS · CUSTODY), and deliberately the narrowest.
+# It does NOT answer "does this repo exist on GitHub" — the estate census owns that. It
+# answers the one question nothing answered, which the 2026-07-27 laptop evacuation made
+# load-bearing overnight by archiving 34 roots off the machine.
+#
+# THE MEASURED DEFECT. Three predicates each carried their own copy of "is this reference
+# alive", and each was wrong in a different direction once the roots went away:
+#
+#   check-corpora.py     an absent store root degrades to an ADVISORY when no declared
+#                        store is on disk — so a store safely archived with two verified
+#                        copies and a store someone deleted read IDENTICALLY, and the
+#                        check stayed green. Green through absence.
+#   check-convergence.py `_owner_reachable` returns 'missing' for a `~/…` owner whenever
+#                        ~/Workspace exists, so an ARCHIVED repo reads as a DELETED one and
+#                        went red on the operator host (PR #1611 patched two rows BY HAND —
+#                        the resolver was untouched).
+#   check-atom-homing.py a third copy again, in `_home_reachable`.
+#
+# This is exactly the `corpus-resolution` row already in convergence.yaml — "two consumers
+# each carried their own wrong copy of where the corpora live; both were wrong the same
+# way" — one axis over, with three consumers. So the fix is the same shape: ONE importable
+# module (scripts/reference_state.py, sibling of scripts/corpus_resolve.py) that every
+# consumer derives from, plus a converged registry row.
+#
+# THE EVIDENCE WAS ALREADY COMMITTED AND UNREAD (Rule #7 — a producer with no consumer).
+# docs/storage-evacuation-custody-receipts-20260727.jsonl carries 87 receipts across 47
+# root labels, each with restoration_passed / copy_count / independent_physical_devices /
+# content_sha256. Nothing consumed it. This registry is the consumer.
+#
+# CLASSES. The two are not interchangeable, and conflating them is how a `remote: none`
+# store gets treated as casually recoverable:
+#   remote   — the root has a git remote. Its absence from this host is BY DESIGN after
+#              evacuation (the lane's own success predicate is
+#              `all_local_repository_roots_remaining: 0` with
+#              `all_local_refs_remotely_recoverable: true`). Recovery is a clone.
+#   archive  — the root has NO remote (corpora.yaml `remote: none`, which is what makes it
+#              safe to hold unredacted conversation content). Receipts are the ONLY proof
+#              it still exists anywhere. An `archive` row without passing receipts is a
+#              hard failure: that is the shape of real data loss.
+#
+# A row NEVER pins state. Whether a root is present, archived or unaccounted is DERIVED at
+# read time by scripts/reference_state.py from disk + these receipts — the derive-never-pin
+# rule (storage-roles.yaml: "STATUS IS NEVER PINNED HERE").
+
+schema_version: 0.1
+
+receipts_ledger: docs/storage-evacuation-custody-receipts-20260727.jsonl
+inventory: docs/repository-evacuation-inventory-20260727.json
+
+# An `archive`-class root is only proven custodied when ALL of these hold on its receipts.
+# Two copies on ONE physical device is not custody: the inventory declares
+# `same_physical_device_volumes_count_as_one: true`, so independence is asserted separately.
+custody_predicate:
+  restoration_passed: true
+  min_copy_count: 2
+  independent_physical_devices: true
+
+vaults:
+  arca:
+    repo: organvm/arca
+    private: true
+    restore_command: "scripts/arca.sh restore <store> [dest]"
+    key_location: "macOS Keychain, service limen-arca-vault"
+    escrow_lever: L-ARCA-KEY-ESCROW
+    # MEASURED 2026-07-29 — read this BEFORE running the restore command above.
+    # `cmd_restore` calls `ensure_vault`, which clones the WHOLE vault repo to
+    # ARCA_VAULT_DIR (default ~/.arca-vault) when it is absent. organvm/arca is ~45 GB and
+    # holds every sealed store, so restoring one 390 MB store pulls 45 GB onto the INTERNAL
+    # disk — the exact volume the laptop-evacuation fence measures. Free space today is
+    # 159.3 GiB against a 200 GiB release predicate, so a naive restore moves that predicate
+    # ~45 GiB the WRONG way while the fence is up.
+    restore_cost:
+      vault_repo_gib: 45
+      clones_to: "~/.arca-vault (ARCA_VAULT_DIR), on the internal disk"
+      fence_interaction: "consumes the volume the evacuation fence's release predicate measures"
+      cheaper_path: >
+        The ciphertext is ALSO on Archive4T (limen-private/…/<store>.tar.enc.part.*), already
+        local and already counted by the custody receipts. arca.sh's own header documents the
+        format — "alphabetic split suffixes glob back in order, so restore is just
+        `cat parts | decrypt`" — so a single store can be decrypted straight from the mounted
+        archive to an external destination with no vault clone and zero internal-disk cost.
+        Same key, same cipher, same result; it simply skips downloading 44.6 GB that is not
+        wanted. Prefer this while the fence is up.
+    note: >
+      ARCA seals every ~/Workspace/_*-private store AES-256 into a private GitHub repo, so an
+      archive-class root has a THIRD copy beyond the two physical devices — offsite, versioned,
+      and restorable without mounting anything. `restore` takes an explicit destination, which
+      is what lets a restore land somewhere that does not recreate a ~/Workspace root and does
+      not touch the volume the evacuation fence measures. Until L-ARCA-KEY-ESCROW is pulled,
+      restore requires this Mac's Keychain — that is the one uncovered failure mode, and it is
+      filed as a lever, not recited.
+
+roots:
+
+  conversations-private:
+    ref: "~/Workspace/_conversations-private"
+    class: archive
+    custody_label: repo_conversations-private
+    vault: arca
+    referenced_by:
+      - "institutio/governance/corpora.yaml::stores.conversations-private"
+    note: >
+      The CCE corpus store — 541 brainstorm extracts and the 4,099 semantic atoms drained
+      from them. `remote: none` by design, so before the evacuation its only copy was this
+      disk. It is the reason this registry exists: when it vanished from ~/Workspace, no
+      predicate could distinguish "archived with two verified copies" from "gone".
+
+  session-meta:
+    ref: "~/Workspace/session-meta"
+    class: remote
+    remote: "github.com/organvm/session-meta"
+    custody_label: session-meta-repository
+    referenced_by:
+      - "institutio/governance/corpora.yaml::stores.session-meta"
+    note: >
+      The raw-transcript archive. Has a remote, so recovery is a clone and its local absence
+      is ordinary. The custody receipt is still declared because the local copy carried
+      working state (6,501 files) that the remote does not hold verbatim.

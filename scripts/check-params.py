@@ -53,7 +53,7 @@ TOKEN = re.compile(r"LIMEN_[A-Z0-9_]+")
 # Env names the body legitimately uses that we do NOT own as LIMEN_ params
 # (external mechanisms / third-party levers). The gate never chases these.
 EXTERNAL_ALLOW = {
-    "DISABLE_AUTOUPDATER",  # the autoupdater mechanism, governed by the INTEGRITY organ
+    "DISABLE_AUTOUPDATER",  # forbidden third-party control, audited by the INTEGRITY organ
 }
 
 

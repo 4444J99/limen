@@ -510,7 +510,7 @@ def test_heartbeat_produces_lifecycle_pressure_off_dispatch_hot_path():
     assert 'if [ "${DRAIN_VOICE_DUE:-0}" = "1" ]; then' in heartbeat
     assert 'scripts/session-lifecycle-pressure.py" --write' in heartbeat
     assert '--throttle "${LIMEN_LIFECYCLE_PRESSURE_THROTTLE:-1800}"' in heartbeat
-    assert heartbeat.index('scripts/reclaim-worktrees.py" "${reclaim_args[@]}"') < heartbeat.index(
+    assert heartbeat.index('scripts/reclaim-cycle.py"') < heartbeat.index(
         'scripts/session-lifecycle-pressure.py" --write'
     )
 

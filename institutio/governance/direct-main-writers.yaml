@@ -25,12 +25,15 @@ surfaces:
   cli/src/limen/dispatch.py:
     disposition: isolated-task-branch-pr
     expected: {push_literal: 2}
+  cli/src/limen/conduct/campaign_relay_publication.py:
+    disposition: immutable-nondefault-campaign-relay-attempt-and-readiness-refs
+    expected: {push_literal: 2}
   cli/src/limen/fanout_executor.py:
     disposition: isolated-disposable-worktree-topic-branch-pr-default-refused
     expected: {git_push: 1, push_literal: 1}
   cli/src/limen/agent_state/pipeline.py:
     disposition: bounded-encrypted-private-arca-upstream-exact-head-verified
-    expected: {git_push: 3, push_literal: 3, default_ref_literal: 9}
+    expected: {git_push: 3, push_literal: 3, default_ref_literal: 12}
   cli/src/limen/jules_landing_custody.py:
     disposition: isolated-jules-branch-pr
     expected: {push_literal: 1}
@@ -56,8 +59,17 @@ surfaces:
     disposition: main-to-preservation-pr-topic-branches-explicit
     expected: {git_push: 2, push_literal: 1}
   scripts/dialogs-silenced.sh:
+    # All matches are the literal TEXT of the force-push `permissions.ask` rules this sensor
+    # asserts (1a's surgical-estate check and 1c's ask-list check both name them). No git.
     disposition: permission-policy-string-only
-    expected: {git_push: 2}
+    expected: {git_push: 3}
+  scripts/heal-hook-wiring.py:
+    # Same disposition as its sensor above: the matches are the literal TEXT of the two
+    # force-push `permissions.ask` rules this effector asserts, plus the classifier rule that
+    # names them. It writes exactly one file — the chezmoi cartridge source — and shells out
+    # only to `chezmoi apply`. There is no git invocation of any kind in it.
+    disposition: permission-policy-string-only
+    expected: {git_push: 3}
   scripts/link-health.py:
     disposition: generated-topic-branch-pr
     expected: {contents_put: 1}

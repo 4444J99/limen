@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,7 @@ from limen.estate_audit_custody import (
     MAX_SECONDS,
     EstateAuditCustodyError,
     apply_plan,
+    assert_custody_target_identity,
     discover_plan,
     preflight_plan,
     public_receipt,
@@ -42,6 +44,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limen-root", type=Path, default=ROOT)
     parser.add_argument("--custody-root", type=Path, default=DEFAULT_CUSTODY_ROOT)
     parser.add_argument("--expected-plan-sha")
+    parser.add_argument("--expected-volume-uuid")
+    parser.add_argument("--expected-physical-identity")
     parser.add_argument("--max-roots", type=int, default=MAX_ROOTS)
     parser.add_argument("--max-seconds", type=int, default=MAX_SECONDS)
     parser.add_argument("--json", action="store_true")
@@ -72,9 +76,25 @@ def _require_expected(args: argparse.Namespace) -> str:
     return value
 
 
+def _identity_guard(args: argparse.Namespace):
+    expected_uuid = str(args.expected_volume_uuid or "")
+    expected_physical = str(args.expected_physical_identity or "")
+    if bool(expected_uuid) != bool(expected_physical):
+        raise EstateAuditCustodyError("expected-custody-identity-incomplete")
+    if not expected_uuid:
+        return None
+    return lambda resolved_root: assert_custody_target_identity(
+        resolved_root,
+        expected_volume_uuid=expected_uuid,
+        expected_physical_identity=expected_physical,
+    )
+
+
 def main() -> int:
     args = parse_args()
     try:
+        deadline = time.monotonic() + args.max_seconds
+        identity_guard = _identity_guard(args)
         if args.verify_receipt:
             expected = _require_expected(args)
             receipt = verify_receipt(
@@ -82,16 +102,29 @@ def main() -> int:
                 expected,
                 full_restore=True,
                 max_seconds=args.max_seconds,
+                identity_guard=identity_guard,
+                deadline=deadline,
             )
             _emit(public_receipt(receipt, changed=False), as_json=args.json)
             return 0
 
-        plan = discover_plan(args.limen_root, max_roots=args.max_roots)
+        plan = discover_plan(
+            args.limen_root,
+            max_roots=args.max_roots,
+            deadline=deadline,
+        )
         if args.expected_plan_sha and args.expected_plan_sha != plan.plan_sha256:
             raise EstateAuditCustodyError("plan-sha-mismatch")
         if args.check:
             _emit(
-                {**plan.public_payload(), **preflight_plan(plan, max_seconds=args.max_seconds)},
+                {
+                    **plan.public_payload(),
+                    **preflight_plan(
+                        plan,
+                        max_seconds=args.max_seconds,
+                        deadline=deadline,
+                    ),
+                },
                 as_json=args.json,
             )
             return 0
@@ -101,8 +134,14 @@ def main() -> int:
             plan,
             args.custody_root,
             expected_plan_sha256=expected,
-            revalidate=lambda: discover_plan(args.limen_root, max_roots=args.max_roots),
+            revalidate=lambda: discover_plan(
+                args.limen_root,
+                max_roots=args.max_roots,
+                deadline=deadline,
+            ),
             max_seconds=args.max_seconds,
+            identity_guard=identity_guard,
+            deadline=deadline,
         )
         _emit(public_receipt(receipt, changed=changed), as_json=args.json)
         return 0

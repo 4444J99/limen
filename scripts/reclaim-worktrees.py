@@ -184,6 +184,11 @@ GENERATED_CLEAN_PATHS = (
     "__pycache__",
 )
 _ACTIVE_PROCESS_CWDS: dict[Path, int] = {}
+# A planning pass may inspect dozens of registered worktrees backed by one repository. Querying the
+# same origin separately for every sibling made the canonical check exceed the heartbeat's bound.
+# ``main`` enables this cache only while building one manifest; apply reclassification runs with it
+# disabled so each accepted removal still gets a fresh remote proof immediately before detach.
+_REMOTE_ADVERTISEMENT_CACHE: dict[Path, tuple[tuple[str, str], ...] | None] | None = None
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -221,55 +226,16 @@ def active_async_root(d: Path, active_prefixes: set[str]) -> bool:
     return any(name.startswith(prefix) for prefix in active_prefixes)
 
 
-def active_process_cwds() -> dict[Path, int]:
-    """Return observable process cwd roots; an unavailable probe fails closed."""
-    observed: dict[Path, int] = {}
-    proc = Path("/proc")
-    if proc.is_dir():
-        for entry in proc.iterdir():
-            if not entry.name.isdigit():
-                continue
-            try:
-                observed[(entry / "cwd").resolve(strict=True)] = int(entry.name)
-            except (OSError, ValueError):
-                continue
-        return observed
-    try:
-        result = subprocess.run(
-            ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
-            capture_output=True,
-            text=True,
-            timeout=20,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return {Path("/"): -1}
-    pid: int | None = None
-    for line in result.stdout.splitlines():
-        if line.startswith("p"):
-            try:
-                pid = int(line[1:])
-            except ValueError:
-                pid = None
-        elif line.startswith("n/") and pid is not None:
-            try:
-                observed[Path(line[1:]).resolve()] = pid
-            except OSError:
-                continue
-    return observed
+# The probe and its containment rule live in _worktree_liveness (shared with the stream
+# launcher's live/dormant classification — one probe, two consumers with opposite decisions:
+# reclaim must not DELETE a live worktree, the launcher must not REOPEN one). Extracted verbatim;
+# this organ keeps its own refresh cycle (it re-scans mid-apply on purpose), so it consumes
+# `active_process_cwds` + `owner_in` directly rather than the helper's memoized `process_owner`.
+from _worktree_liveness import active_process_cwds, owner_in  # noqa: E402
 
 
 def active_process_owner(d: Path) -> int | None:
-    try:
-        root = d.resolve()
-    except OSError:
-        return -1
-    for cwd, pid in _ACTIVE_PROCESS_CWDS.items():
-        if pid == -1:
-            return -1
-        if cwd == root or root in cwd.parents:
-            return pid
-    return None
+    return owner_in(_ACTIVE_PROCESS_CWDS, d)
 
 
 def has_generated_payload(d: Path) -> bool:
@@ -366,31 +332,132 @@ def reachable_from_remote(cwd, head) -> bool:
     return bool(remote_refs_containing_head(cwd, head))
 
 
+def _git_common_dir(cwd: Path) -> Path:
+    """Resolve the repository identity shared by linked worktrees without another Git process."""
+    checkout = Path(cwd)
+    dot_git = checkout / ".git"
+    try:
+        if dot_git.is_dir():
+            return dot_git.resolve()
+        marker = dot_git.read_text(encoding="utf-8", errors="replace").splitlines()[0]
+        prefix = "gitdir: "
+        if not marker.startswith(prefix):
+            return checkout.resolve()
+        git_dir = Path(marker[len(prefix) :])
+        if not git_dir.is_absolute():
+            git_dir = dot_git.parent / git_dir
+        git_dir = git_dir.resolve()
+        common_marker = git_dir / "commondir"
+        if common_marker.is_file():
+            common = Path(common_marker.read_text(encoding="utf-8", errors="replace").strip())
+            if not common.is_absolute():
+                common = git_dir / common
+            return common.resolve()
+        return git_dir
+    except (IndexError, OSError):
+        try:
+            return checkout.resolve()
+        except OSError:
+            return checkout
+
+
+def _advertised_remote_refs(cwd: Path) -> tuple[tuple[str, str], ...] | None:
+    cache_key = _git_common_dir(cwd)
+    if _REMOTE_ADVERTISEMENT_CACHE is not None and cache_key in _REMOTE_ADVERTISEMENT_CACHE:
+        return _REMOTE_ADVERTISEMENT_CACHE[cache_key]
+
+    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
+    parsed: tuple[tuple[str, str], ...] | None = None
+    if advertised.returncode == 0:
+        rows: list[tuple[str, str]] = []
+        valid = True
+        for line in advertised.stdout.splitlines():
+            try:
+                remote_object, remote_ref = line.split("\t", 1)
+            except ValueError:
+                valid = False
+                break
+            if not remote_object or not remote_ref.startswith("refs/"):
+                valid = False
+                break
+            rows.append((remote_ref, remote_object))
+        if valid:
+            parsed = tuple(rows)
+
+    if _REMOTE_ADVERTISEMENT_CACHE is not None:
+        _REMOTE_ADVERTISEMENT_CACHE[cache_key] = parsed
+    return parsed
+
+
 def remote_refs_containing_head(cwd: Path, head: str) -> tuple[str, ...]:
     """Return only provider-advertised refs that currently preserve ``head``.
 
     Local ``refs/remotes/*`` are caches and can outlive a deleted server
     branch. Reclaim proof therefore queries the live remote on every planning
-    and apply pass.
+    and apply pass. One planning manifest shares the resulting advertisement
+    across linked worktrees from the same repository.
     """
 
     if not head:
         return ()
-    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
-    if advertised.returncode != 0:
+    advertised = _advertised_remote_refs(cwd)
+    if advertised is None:
         return ()
+    exact = sorted(remote_ref for remote_ref, remote_object in advertised if remote_object == head)
+    if exact:
+        return tuple(exact)
+
+    # The dominant merged-worktree case needs no all-ref walk. Prove that the locally fetched
+    # default tip is byte-for-byte the tip currently advertised by origin, then ask Git whether it
+    # contains HEAD. A stale origin/main cannot pass the object-ID equality check.
+    default_ref = remote_default_ref(cwd)
+    if default_ref and default_ref.startswith("origin/"):
+        advertised_default = f"refs/heads/{default_ref.removeprefix('origin/')}"
+        advertised_object = dict(advertised).get(advertised_default)
+        if advertised_object:
+            local_default = git(["rev-parse", default_ref], cwd)
+            if (
+                local_default.returncode == 0
+                and local_default.stdout.strip() == advertised_object
+                and git(["merge-base", "--is-ancestor", head, default_ref], cwd).returncode == 0
+            ):
+                return (advertised_default,)
+
+    # GitHub can advertise thousands of refs. Spawning one ``merge-base`` process per ref made a
+    # single Limen planning pass exceed five minutes. Ask Git once for locally known refs containing
+    # HEAD, then accept only entries whose ref name *and object ID* still match the live advertisement.
+    # A stale or unfetched remote-tracking ref cannot pass that intersection, so this is a conservative
+    # fail-closed replacement for the per-ref process storm.
+    local = git(
+        [
+            "for-each-ref",
+            f"--contains={head}",
+            "--format=%(refname)%00%(objectname)",
+            "refs/remotes/origin",
+            "refs/tags",
+        ],
+        cwd,
+        timeout=60,
+    )
+    if local.returncode != 0:
+        return ()
+    local_containing: dict[str, str] = {}
+    remote_prefix = "refs/remotes/origin/"
+    for line in local.stdout.splitlines():
+        parts = line.split("\0")
+        if len(parts) != 2:
+            return ()
+        local_ref, object_id = parts
+        if local_ref.startswith(remote_prefix):
+            suffix = local_ref[len(remote_prefix) :]
+            if suffix != "HEAD":
+                local_containing[f"refs/heads/{suffix}"] = object_id
+        elif local_ref.startswith("refs/tags/"):
+            local_containing[local_ref] = object_id
+
     containing: list[str] = []
-    for line in advertised.stdout.splitlines():
-        try:
-            remote_object, remote_ref = line.split("\t", 1)
-        except ValueError:
-            return ()
-        if not remote_object or not remote_ref.startswith("refs/"):
-            return ()
-        if remote_object == head or git(
-            ["merge-base", "--is-ancestor", head, remote_object],
-            cwd,
-        ).returncode == 0:
+    for remote_ref, remote_object in advertised:
+        if local_containing.get(remote_ref) == remote_object:
             containing.append(remote_ref)
     return tuple(sorted(containing))
 
@@ -416,18 +483,10 @@ def all_local_refs_remote_proof(cwd: Path) -> tuple[dict[str, object], ...] | No
         cwd,
         timeout=60,
     )
-    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
-    if local.returncode != 0 or advertised.returncode != 0:
+    advertised = _advertised_remote_refs(cwd)
+    if local.returncode != 0 or advertised is None:
         return None
-    remote: list[tuple[str, str]] = []
-    for line in advertised.stdout.splitlines():
-        try:
-            object_id, ref = line.split("\t", 1)
-        except ValueError:
-            return None
-        if not object_id or not ref.startswith("refs/"):
-            return None
-        remote.append((ref, object_id))
+    remote = list(advertised)
     if not remote:
         return None
     proof: list[dict[str, object]] = []
@@ -436,11 +495,7 @@ def all_local_refs_remote_proof(cwd: Path) -> tuple[dict[str, object], ...] | No
         if len(parts) != 3:
             return None
         local_ref, object_id, peeled = parts
-        containing: list[str] = [
-            remote_ref
-            for remote_ref, remote_object in remote
-            if object_id == remote_object
-        ]
+        containing: list[str] = [remote_ref for remote_ref, remote_object in remote if object_id == remote_object]
         object_type = git(["cat-file", "-t", object_id], cwd)
         if object_type.returncode != 0:
             return None
@@ -1003,7 +1058,9 @@ def classify(
         # operator's push-first rule this LOCAL checkout is loss-free to remove — the branch stays
         # on origin, resumable. Without PUSHED_OK, keep the conservative merged-only gate.
         if PUSHED_OK:
-            if all_local_refs_remote_proof(d) is None:
+            # Removing one linked worktree leaves the common repository and every local ref intact.
+            # A standalone clone purge deletes that ref store, so only the clone needs all-ref proof.
+            if not is_wt and all_local_refs_remote_proof(d) is None:
                 return "skip", "unpreserved-local-refs"
             return ("remove-worktree" if is_wt else "remove-clone"), "clean+pushed+idle"
         return "skip", "not-merged-to-default"
@@ -1177,7 +1234,7 @@ def _print_json_result(
 
 
 def main():
-    global _ACTIVE_PROCESS_CWDS
+    global _ACTIVE_PROCESS_CWDS, _REMOTE_ADVERTISEMENT_CACHE
     if HELP:
         print(
             "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] "
@@ -1246,13 +1303,20 @@ def main():
     preservation_receipts = load_preservation_receipts()
     reclaim_acceptance = load_reclaim_acceptance()
     dirs = [(target.path, target.min_age_h, target.source) for target in targets]
-    manifest, plan_sha256, skipped, deferred = build_candidate_manifest(
-        dirs,
-        now,
-        preservation_receipts,
-        reclaim_acceptance,
-        estate_custody_context,
-    )
+    previous_advertisement_cache = _REMOTE_ADVERTISEMENT_CACHE
+    _REMOTE_ADVERTISEMENT_CACHE = {}
+    try:
+        manifest, plan_sha256, skipped, deferred = build_candidate_manifest(
+            dirs,
+            now,
+            preservation_receipts,
+            reclaim_acceptance,
+            estate_custody_context,
+        )
+    finally:
+        # The exact manifest gets one coherent remote advertisement per repository. Disable the
+        # cache before apply's candidate reclassification so remote deletion/drift still blocks.
+        _REMOTE_ADVERTISEMENT_CACHE = previous_advertisement_cache
     generated_reclaim = {"enabled": False, "cleaned": [], "failed": []}
     removed: list[tuple[str, str]] = []
     failed: list[tuple[str, str]] = []
@@ -1347,11 +1411,7 @@ def main():
                     except (KeyError, TypeError, ValueError):
                         failed.append((directory.name, "custody-purge-identity-invalid"))
                         continue
-                    content_states = (
-                        estate_custody_context.get("content_states", {})
-                        if estate_custody_context
-                        else {}
-                    )
+                    content_states = estate_custody_context.get("content_states", {}) if estate_custody_context else {}
                     content_state = (
                         content_states.get(str(directory.resolve(strict=True)))
                         if isinstance(content_states, dict)

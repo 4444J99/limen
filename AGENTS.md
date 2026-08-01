@@ -58,6 +58,18 @@ TABVLARIVS is authoritative for *state* and `tasks.yaml` is its cache/projection
 authoritative for *protocol*. Where a tool charter restates a rule from this file, this file is the
 source of truth.
 
+**Directory-scoped `AGENTS.md`.** A component may carry its own — e.g.
+[`apps/danse/AGENTS.md`](apps/danse/AGENTS.md). It sits at rung 4 beside this file and is *more
+specific*, not higher: it adds what only that component knows and may never contradict this file or
+a tool charter. **Read the closest one to the files you are editing.** Keep it to what is not
+derivable from the code — a component's verification belongs in a `gates.yaml` entry, where every
+agent and CI get it without reading anything.
+
+Harnesses that do not read `AGENTS.md` natively are met at their own conventional path with a thin
+**pointer** back here — [`.github/copilot-instructions.md`](.github/copilot-instructions.md) is the
+only one today. A pointer names where the rules are; it never restates them, so it cannot drift into
+a competing rulebook.
+
 ## Peer Conductor Contract
 
 Conductor is a temporary capability, never a rank. There is no master agent or model hierarchy:
@@ -136,6 +148,15 @@ masks genuine failures. Once an implicated predicate passes for an unchanged exa
 reuse that receipt; do not rerun suites merely to accumulate reassurance. A changed head or a
 specific observed failure is required before another test.
 
+Treat one exact tree as one verification batch, not a per-finding waterfall. Batch independent
+corrections, then let the scoped resolver run eligible gates concurrently within each resource
+tier: the cheap wave precedes the admission-gated heavy wave, and only gates explicitly marked
+`serialize: true` may form the heavy tail's local chain. Every gate has a finite deadline, bounded
+output, and visible start/finish receipt. Focused developer probes may precede the batch, but static
+checks and sibling predicates must not be manually replayed one at a time after every edit. A new
+review observation invalidates only the implicated shard; unchanged green shard receipts remain
+evidence.
+
 **3. Durable homing — all state in git-tracked homes; no local orphan files.**
 Every work product, task, blocker, and human-gated atom must land in a git-tracked durable home
 before the session ends: a merged PR, an open PR with a named owner, a pushed plan/task, or an
@@ -160,7 +181,7 @@ the live queue rail is proven active; without that proof it remains fail-closed.
 `main` writes are forbidden, including board snapshots: Tabularius coalesces the local projection
 and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
 `pull_request` rule makes that boundary remote-enforced. The full executable contract is
-[`docs/concurrent-integration.md`](docs/concurrent-integration.md).
+[`docs/architecture/concurrent-integration.md`](docs/architecture/concurrent-integration.md).
 
 ### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
 
@@ -443,7 +464,7 @@ is a valid verification strategy.
 ## Machine-Wide Host Admission
 
 Every heavy local Codex, Claude, OpenCode, Agy, or Limen surface must enter through the shared host
-admission boundary documented in [`docs/host-work-admission.md`](docs/host-work-admission.md).
+admission boundary documented in [`docs/architecture/host-work-admission.md`](docs/architecture/host-work-admission.md).
 Codex conversation roots may always open concurrently: `UserPromptSubmit` never acquires a global
 execution lease, even when stable action denial is unavailable. Source mutations require a linked
 worktree and one scoped writer lease per worktree; distinct worktrees may have concurrent writers.

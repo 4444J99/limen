@@ -192,6 +192,30 @@ sensors:
           - {path: scripts/gitvs.py, normalization: raw}
           - {path: logs/omega-owner-receipts/sensor.github.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
+  github-publish-sweep:
+    section: "heartbeat"
+    title: "keep every publish candidate's pre-publication sweep receipt green and fresh"
+    gate: LIMEN_PUBLISH_SWEEP
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    # The receipt is the ONLY thing that authorizes a private→public flip, and it expires
+    # (LIMEN_SWEEP_FRESH_DAYS, default 7). Until 2026-07-30 nothing re-ran the sweep: receipts were
+    # minted by hand, went stale in a week, and apply-visibility then had no verdict for any
+    # candidate — a predicate with no organ behind it, which is a permanently-un-adjudicated rung
+    # rather than a green one. Bounded per run (LIMEN_SWEEP_MAX), so the candidate set rolls
+    # forward across beats instead of cloning the whole estate every cadence.
+    cadence:
+      env: LIMEN_BEAT_PUBLISH_SWEEP
+      default: 24
+    timeout:
+      env: LIMEN_PUBLISH_SWEEP_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/publish-sweep.py --candidates"
+        severity: advisory
+        escalation: "a publish candidate's sweep is RED or un-run — apply-visibility will hold its flip (and demote it if it is already live public)"
+
   github-actions-usage:
     section: "heartbeat"
     title: "Actions spend telemetry — projected monthly net within budget AND the account-billing canary green"
@@ -419,6 +443,25 @@ sensors:
         quiet_output: true
         severity: silent
         escalation: "prompt atom reconciliation skipped or exceeded its bound"
+
+  harness-root-probe:
+    section: "heartbeat"
+    title: "sense the Claude harness: runtime root still live, plan mode still working"
+    gate: LIMEN_HARNESS_ROOT_PROBE
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    note: "ARMED 2026-07-30. The fleet senses its work product (lint, tests, contracts, deploys) but never sensed the worker. When the harness relocated its runtime tree from ~/.claude to <repo>/.agent-runtime/claude, ten limen surfaces went blind at once and nothing went red: action_admission stopped recognising plan-file writes (plan mode broke, re-breaking PR #1521's fix six days later), continuity globbed an empty dir while still reporting ok, claude-workflow-guard's untiered-fan-out audit silently found no sessions. This probe asserts (1) the resolved root actually holds transcripts — empty-while-a-sibling-is-full is the relocation signature — and (2) three structural plan-mode fault signatures: A ExitPlanMode returned is_error, B a file mutation while permissionMode=plan excluding the session's own plan file (the read-only guarantee), C one plan slug written to both a shared and a .claude/worktrees path (the shadow that serves a stale plan to the approval dialog). Matching is structural, never on error text: substring matching also catches sessions merely discussing the error (3 false positives when prototyped). Baseline at arming, full corpus: A=15 (41% of 37 ExitPlanMode calls; Fable 14 fail/10 ok vs Opus 1 fail/13 ok), B=0, C=3."
+    cadence:
+      env: LIMEN_BEAT_HARNESS_PROBE
+      default: 6
+    timeout:
+      env: LIMEN_HARNESS_PROBE_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/harness-root-probe.py"
+        severity: advisory
+        escalation: "harness root moved or plan-mode faults seen — run scripts/harness-root-probe.py"
 
   bifrons-portal:
     section: "heartbeat"
@@ -710,7 +753,7 @@ sensors:
 
   dialogs-silenced:
     section: "0g8b"
-    title: "dialogs silenced — the agent-curable macOS dialog estate self-heals (hook-drift + cask + lsregister-stub) then verifies"
+    title: "dialogs silenced — stable TCC identity + the agent-curable macOS dialog estate hold while managed tools auto-update"
     # Replaces the three hand-wired hygiene hooks in heartbeat-loop.sh with ONE registry-derived sensor:
     # each armed LIMEN_*_HEAL effector runs on the hygiene cadence, then --agent-curable-only verifies
     # the beat-healable estate is silent. The human-gated classes (settings.json self-mod, firewall)
@@ -756,7 +799,7 @@ sensors:
         escalation: "malformed ClaudeCode.app stub registered (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat unregisters + removes it, else 'damaged, move to Trash' recurs every launch"
       - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         severity: advisory
-        escalation: "an agent-curable dialog class still prompts after the heal pass — arm the matching LIMEN_*_HEAL valve (lever L-DIALOGS-HEAL) so it self-cures"
+        escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"
     omega_eligible:
       - label: "dialogs silenced (agent-curable)"
         rung_id: sensor.dialogs.agent-curable
@@ -1367,3 +1410,108 @@ sensors:
         command: "python3 scripts/decorum-keeper.py --doctor"
         semantic_inputs:
           - {path: scripts/decorum-keeper.py, normalization: raw}
+
+  ideal-forms-distance:
+    section: "heartbeat"
+    title: "ideal-forms distance — every named ideal's distance is re-derived, not remembered"
+    gate: LIMEN_IDEAL_FORMS
+    default: "1"
+    source: [heartbeat]
+    owner: governance
+    cadence:
+      env: LIMEN_BEAT_IDEAL_FORMS
+      default: 12
+    timeout:
+      env: LIMEN_IDEAL_FORMS_TIMEOUT
+      default: 300
+    # The heartbeat half of IF-LEDGER-OF-IDEALS. pr-gate already runs check-ideal-forms on any
+    # PR that touches the registry or the ledger — but the distances measure the SYSTEM, not the
+    # diff, so they rot without anyone editing either file. That is precisely how the ledger sat
+    # 34 days with its own entry reading "not yet wired into a verification/heartbeat lane" while
+    # IF-LIVE-TREE-COHERENCE drifted 5x underneath it.
+    #
+    # --measure (not the bare gate) is deliberate: it additionally runs the `host` and `network`
+    # probes that pr-gate cannot, which is the entire reason a beat rung exists. The live-checkout
+    # probe is one of them, so the beat is where a frozen fleet checkout finally becomes audible —
+    # the six-day freeze of 2026-07-23 was invisible because sync-release.sh fails OPEN into a log
+    # nothing reads.
+    #
+    # Advisory, never fatal: a distance that remains is the normal state of an ideal (that is what
+    # makes the ledger liquid rather than a checkbox). Only registry INCOHERENCE is drift, and
+    # pr-gate already fails on that.
+    steps:
+      - command: "python3 scripts/check-ideal-forms.py --measure"
+        severity: advisory
+        escalation: "an ideal-form distance changed or a probe went unmeasurable (above) — re-derive with `python3 scripts/check-ideal-forms.py --measure`; do NOT hand-edit a Distance: line in docs/IDEAL-FORMS-LEDGER.md"
+
+  hot-cache:
+    section: "heartbeat"
+    title: "hot flash cache — the machine is disposable (every byte re-summonable from upstream)"
+    gate: LIMEN_HOTCACHE_CHECK
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_HOTCACHE
+      default: 24
+    timeout:
+      env: LIMEN_HOTCACHE_TIMEOUT
+      default: 300
+    # The Meeseeks law's court (plan 2026-07-30): summoned surfaces must return their result to
+    # source and self-erase, so the local floor is only ever a hot flash cache. The predicate walks
+    # five rungs — spine (cartridge-connected), capture (chezmoi-drift), creds validity, toolchain
+    # summonability (mise.toml), and every-clone-pushed — and lists each un-summonable state with
+    # its owner. Advisory, never fatal: a red names debt (e.g. domus-genoma#359), it does not
+    # break the beat. Daily cadence — disposability moves at human speed, not per-beat.
+    steps:
+      - command: "bash scripts/verify-hot-cache.sh"
+        severity: advisory
+        escalation: "machine is NOT disposable — un-summonable state above (each red names its owner/fix); run bash scripts/verify-hot-cache.sh"
+
+  residue-census:
+    section: "heartbeat"
+    title: "residue census — what this machine holds that it should be able to re-summon"
+    gate: LIMEN_RESIDUE_CENSUS
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_RESIDUE_CENSUS
+      default: 24
+    timeout:
+      env: LIMEN_RESIDUE_CENSUS_TIMEOUT
+      default: 180
+    # The other half of the Meeseeks law. The hot-cache court (above) is honest about its own blind
+    # spot — its R5 excludes worktrees and quarantines "by marker … never silent", because those
+    # have their own reap organs — which left nothing measuring whether those organs KEEP UP. They
+    # did not: 10 GiB of .agent-runtime whose reaper is written and wired to nothing, a 571 MiB
+    # append-only ledger snapshot with no reaper at all, 1,616 remote branches behind an acceptance
+    # ledger never once written to. This counts the pressure and names the owner of each class.
+    # READ-ONLY: it deletes nothing and arms nothing. Deleting is the reapers' job (human-gated
+    # where destructive); knowing was nobody's, which is why none of it was known.
+    steps:
+      - command: "python3 scripts/residue-census.py"
+        severity: advisory
+        escalation: "residue caps breached — this machine is holding state it should be able to re-summon; each breach names its owner (run python3 scripts/residue-census.py)"
+
+  diurnal:
+    section: "0h"
+    title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"
+    gate: LIMEN_DIURNAL
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: diurnal
+    # Cadence is beat-modulo ONLY. True time-of-day gating is wall-clock inside the script
+    # (logs/diurnal/state.json, one emission per phase per calendar day) — the
+    # scripts/insight-cadence.py precedent. Visiting often is cheap: a phase that is not yet
+    # due exits before doing any work.
+    cadence:
+      env: LIMEN_BEAT_DIURNAL
+      default: 2
+    timeout:
+      env: LIMEN_DIURNAL_TIMEOUT
+      default: 240
+    steps:
+      - command: "python3 scripts/diurnal.py --phase auto"
+        severity: advisory
+        escalation: "diurnal emission failed — the day has no briefing; check that LIMEN_ROOT resolves to the LIVE organism (a worktree's logs/ is empty and the organ refuses to emit a false 'all quiet') and inspect logs/diurnal/state.json"

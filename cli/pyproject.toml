@@ -20,6 +20,9 @@ test = [
     "pytest>=8.0",
     "pytest-xdist>=3.6",
     "requests>=2.31",
+    # The estate's ONE ruff pin (issue #1658). CI installs it via `-e "cli[test]"`; local gate
+    # runs assert against it via scripts/check-ruff-pin.py. Bump it here and nowhere else.
+    "ruff==0.15.8",
 ]
 # The experience-audit organ's browser (tier A) probe. Optional: without it the sweep degrades to the
 # http tier (requests only) and the beat never breaks — so this is not a hard runtime dependency.

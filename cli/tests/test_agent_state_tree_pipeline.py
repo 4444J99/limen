@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import time
 from contextlib import nullcontext
-from dataclasses import asdict
+from dataclasses import asdict, replace
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from limen.agent_state import tree_pipeline
-from limen.agent_state.crypto import EncryptedAtomPacker
+from limen.agent_state.crypto import EncryptedAtomPacker, encryption_profile_digest
 from limen.agent_state.models import MetabolismReceipt, ReceiptError
 from limen.agent_state.pipeline import ARCA_REMOTE_EXACT_ERROR, PipelineError
 from limen.agent_state.tree import RetentionPlan, atomize_file_tree, plan_retention
@@ -143,6 +144,133 @@ def _resume(
     )
 
 
+def _enriched_custody_receipt(receipt: MetabolismReceipt) -> MetabolismReceipt:
+    enriched = MetabolismReceipt.from_dict(receipt.as_dict())
+    restored_at = datetime(2026, 7, 30, 12, tzinfo=UTC).isoformat()
+    remote_refs = (
+        f"github:{receipt.git_remote}@{receipt.git_commit}",
+        f"github:{receipt.git_remote}@{receipt.git_receipt_commit}",
+    )
+    enriched.restorations = [
+        (
+            replace(
+                proof,
+                device_id="gitRestoreDevice0001",
+                restored_at=restored_at,
+                encryption_profile_digest=receipt.encryption_profile_digest,
+                remote_refs=remote_refs,
+            )
+            if proof.scope == "git-full-manifest"
+            else replace(
+                proof,
+                device_id="externalRestoreDevice0001",
+                restored_at=restored_at,
+                encryption_profile_digest=receipt.encryption_profile_digest,
+            )
+            if proof.scope == "external-full"
+            else proof
+        )
+        for proof in enriched.restorations
+    ]
+    return enriched
+
+
+@pytest.mark.parametrize(
+    "nested_target",
+    [
+        "vault-root",
+        "external-root",
+        "private-receipt",
+        "encrypted-git-output",
+        "encrypted-external-output",
+    ],
+)
+def test_capture_rejects_custody_targets_inside_source_before_writes(
+    tmp_path: Path,
+    nested_target: str,
+) -> None:
+    source = tmp_path / "source"
+    vault = tmp_path / "vault"
+    external = tmp_path / "external"
+    private_receipt = tmp_path / "private" / "receipt.json"
+    if nested_target == "vault-root":
+        vault = source / "vault"
+    elif nested_target == "external-root":
+        external = source / "external"
+    elif nested_target == "private-receipt":
+        private_receipt = source / "receipts" / "receipt.json"
+    elif nested_target == "encrypted-git-output":
+        source = vault / "agent-state"
+    elif nested_target == "encrypted-external-output":
+        source = external / "icloud-drive"
+    source.mkdir(parents=True)
+    (source / "history.json").write_text("protected")
+    plan = plan_retention(source, now=time.time() + 1, hot_days=0)
+
+    with pytest.raises(PipelineError, match=nested_target):
+        tree_pipeline.capture_cold_tree(
+            "icloud-drive",
+            plan,
+            vault,
+            external,
+            private_receipt,
+            run_id="run",
+            require_external_mount=False,
+        )
+
+    assert not private_receipt.exists()
+    assert not (vault / "agent-state" / "icloud-drive" / "run").exists()
+    assert not (external / "icloud-drive" / "run").exists()
+
+
+def test_custody_guard_uses_filesystem_identity_for_case_aliases(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "Data"
+    alias = tmp_path / "data"
+    source.mkdir()
+    alias.mkdir()
+    real_samefile = tree_pipeline.os.path.samefile
+
+    def samefile(first, second):
+        if {Path(first), Path(second)} == {source, alias}:
+            return True
+        return real_samefile(first, second)
+
+    monkeypatch.setattr(tree_pipeline.os.path, "samefile", samefile)
+
+    with pytest.raises(PipelineError, match="vault-root"):
+        tree_pipeline._require_custody_targets_outside_source(
+            source,
+            {"vault-root": alias / "vault"},
+        )
+
+
+def test_resume_rejects_private_receipt_inside_source_before_writes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    external = tmp_path / "external"
+    private_receipt = source / "receipt.json"
+    monkeypatch.setattr(tree_pipeline, "GitVault", _Vault)
+
+    with pytest.raises(PipelineError, match="private-receipt"):
+        tree_pipeline.resume_cold_tree_capture(
+            "icloud-drive",
+            plan,
+            vault,
+            external,
+            private_receipt,
+            run_id="run",
+            require_external_mount=False,
+        )
+
+    assert not private_receipt.exists()
+    assert not external.exists()
+
+
 def test_resume_verifies_then_pushes_existing_ciphertext(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -155,6 +283,7 @@ def test_resume_verifies_then_pushes_existing_ciphertext(
     assert _Vault.resumed
     assert receipt.git_commit == "a" * 40
     assert receipt.git_receipt_commit == "b" * 40
+    assert receipt.encryption_profile_digest == encryption_profile_digest()
     assert (tmp_path / "private-receipt.json").is_file()
     receipt.require_retirement_gate()
 
@@ -242,6 +371,52 @@ def test_resume_accepts_completed_exact_receipt_without_another_push(
     )
 
     assert resumed.as_dict() == first.as_dict()
+
+
+def test_resume_accepts_completed_receipt_with_valid_custody_enrichment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    private_receipt = tmp_path / "private-receipt.json"
+    enriched = _enriched_custody_receipt(first)
+    enriched.write(private_receipt)
+    original = private_receipt.read_bytes()
+    monkeypatch.setattr(tree_pipeline, "GitVault", _CompletedVault)
+    monkeypatch.setattr(tree_pipeline, "keychain_key", lambda _service: KEY)
+
+    resumed = tree_pipeline.resume_cold_tree_capture(
+        "icloud-drive",
+        plan,
+        vault,
+        tmp_path / "external",
+        private_receipt,
+        run_id="run",
+        require_external_mount=False,
+    )
+
+    assert resumed.as_dict() == first.as_dict()
+    assert private_receipt.read_bytes() == original
+
+
+def test_resume_rejects_invalid_custody_enrichment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _source, vault, _payload, plan = _interrupted_tree(tmp_path)
+    first = _resume(monkeypatch, tmp_path, plan, vault)
+    private_receipt = tmp_path / "private-receipt.json"
+    enriched = _enriched_custody_receipt(first)
+    git_device = next(proof.device_id for proof in enriched.restorations if proof.scope == "git-full-manifest")
+    enriched.restorations = [
+        (replace(proof, device_id=git_device) if proof.scope == "external-full" else proof)
+        for proof in enriched.restorations
+    ]
+    enriched.write(private_receipt)
+
+    with pytest.raises(PipelineError, match="does not match verified custody"):
+        tree_pipeline._require_private_retirement_receipt(first, private_receipt)
 
 
 def test_resume_rematerializes_missing_private_receipt_from_exact_custody(

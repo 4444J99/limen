@@ -948,6 +948,15 @@ def main(argv: list[str] | None = None) -> int:
     configure.add_argument("--reasoning-effort")
     configure.add_argument("--sandbox")
 
+    # The STATIC half of validate-codex-launch, split out so a caller can reject an invalid sandbox
+    # WITHOUT first resolving a codex binary. Argument validity is a property of the arguments, not
+    # of what happens to be installed: CI (no codex) must reach the same verdict as a workstation
+    # that has one. Deliberately takes no --binary, so it cannot regress into a binary-dependent
+    # check. validate-codex-launch still runs this same authorization itself — this adds an earlier
+    # gate, it never replaces one.
+    codex_sandbox = subparsers.add_parser("validate-codex-sandbox")
+    codex_sandbox.add_argument("--sandbox", required=True)
+
     codex_launch = subparsers.add_parser("validate-codex-launch")
     codex_launch.add_argument("--binary", required=True)
     codex_launch.add_argument("--model", required=True)
@@ -1004,6 +1013,10 @@ def main(argv: list[str] | None = None) -> int:
                 sandbox=args.sandbox,
             )
             print("changed" if changed else "unchanged")
+        elif args.command == "validate-codex-sandbox":
+            # Raises ContractError on an unknown value; echo the accepted one, mirroring
+            # validate-codex-launch printing its selected slug.
+            print(_authorization_for_sandbox(args.sandbox)["sandbox"])
         elif args.command == "validate-codex-launch":
             _authorization_for_sandbox(args.sandbox)
             selected = validate_codex_launch(

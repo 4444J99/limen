@@ -1,0 +1,324 @@
+# IDEAL-FORMS registry — every named ideal form, with the COMMAND that measures its distance.
+#
+# The seventh axis of the VIGILIA spine: pre-merge is GATES (gates.yaml), configuration is
+# PARAMETERS (parameters.yaml), continuous-runtime is SENSORS (sensors.yaml), corpora is
+# CORPORA (corpora.yaml), capability-ownership is CONVERGENCE (convergence.yaml), atom
+# landing is ATOM-HOMING (atom-homing.yaml) — and the ideals themselves are HERE.
+#
+# THE MEASURED DEFECT THIS CLOSES. docs/IDEAL-FORMS-LEDGER.md has carried 13 ideal forms
+# since 2026-06-25, each with a hand-written "Distance:" paragraph, and its own self-entry
+# (IF-LEDGER-OF-IDEALS) recorded the gap: "not yet wired into a verification/heartbeat lane."
+# Thirty-four days later that was still true — scripts/metabolize.sh referenced the ledger
+# only in a COMMENT. Hand-written distances decay silently, and two had:
+#   IF-LIVE-TREE-COHERENCE  wrote "ahead 6 / behind 24"; measured 2026-07-29: ahead 1,
+#                           BEHIND 120, frozen since 2026-07-23 — stale by 5x, and the
+#                           freeze it describes went six days unseen because nothing looked.
+#   IF-SHARED-SUBSTRATE     wrote "12 capabilities (6 converged, 4 lifting, 2 vacuums)";
+#                           the registry holds 13 (7 converged, 5 lifting, 1 vacuum).
+#
+# THE RULE THAT PREVENTS THE RECURRENCE (the session-streams precedent, check-session-streams
+# check F): **NO ROW MAY CARRY A DISTANCE OR A STATUS.** There is no field to lie in. A row
+# carries the IDEAL and the PROBE; the distance is DERIVED at read time by running the probe,
+# and `check-ideal-forms.py --measure` prints the live table. Updating a distance is a
+# command, never an act of memory.
+#
+# PROBE CONTRACT. `probe: null` is legal and honest — but it REQUIRES `probe_absent_reason`,
+# and check E counts those rows loudly (Rule #1: a vacuum is never a resting state). A probe
+# declares:
+#   command      the exact argv, run from the repo root
+#   derives      what the number/exit means, in one phrase
+#   environment  repo    — runnable anywhere the repo is (pr-gate runs these)
+#                host    — needs the operator host (creds, ~/Workspace, live daemons)
+#                network — needs GitHub/live services
+#                self    — this predicate itself; declared to close the self-loop, NEVER
+#                          executed (the cycle guard in check C)
+#   and EXACTLY ONE of:
+#     at_ideal_when: exit_zero        the probe's exit code IS the verdict
+#     extract + ideal_value           a regex whose group 1 is the measurement, and the
+#                                     value that measurement reaches at the ideal
+#
+# DERIVED STATUS (never written here; see check-ideal-forms.py --measure):
+#   at-ideal          the probe reached ideal_value / exited 0
+#   distance-remains  the probe ran and did not
+#   unmeasured        probe: null, or environment unavailable here
+#
+# Prose lives in docs/IDEAL-FORMS-LEDGER.md, one `### <id>` heading per row (check B holds
+# them in exact parity, both directions). Check D is the loop closing: a ledger heading whose
+# prose **Status:** contradicts the derived measurement is DRIFT, not a stale note.
+
+schema_version: 0.1
+
+# Prose statuses the ledger is allowed to write. The doc's own field table listed
+# OPEN/PARTIAL/BLOCKED(human)/SEEDED/CLOSED while its entries already used DONE and SHIPPED —
+# the vocabulary had drifted from its own key. Declared here as the machine form.
+prose_status_vocabulary:
+  at_ideal: [DONE, SHIPPED, CLOSED]
+  distance_remains: [OPEN, PARTIAL, SEEDED, "BLOCKED(human)"]
+
+ideals:
+
+  IF-FIRST-DOLLAR:
+    ideal: >
+      An executable first-dollar predicate that is green only when a real payment has cleared;
+      the Exporter faucet open.
+    owner: "Anthony (account mint + KYC) -> Claude (wire)"
+    probe: null
+    probe_absent_reason: >
+      A cleared payment is not a repo fact. The Exporter (a-i-chat--exporter) and the payment
+      rails (Ko-fi, Lemon Squeezy) are outside this tree, and no in-repo command can observe a
+      settled transaction. MONETA's order ledger is the candidate measurement surface: when it
+      records a confirmed on-chain receipt, that becomes this row's probe.
+
+  IF-AMALGAMATION:
+    ideal: >
+      The fleet amalgamates portals faster than it spawns them; a predicate measures open-PR
+      plus unmerged-branch debt and the merge daemon drives it monotonically down.
+    owner: "Claude (predicate) + merge daemon"
+    probe: null
+    probe_absent_reason: >
+      The ideal is a monotonic TREND, not a level, and a level is the only thing measurable in
+      one shot: `gh pr list` returns today's count with nothing to compare it against. The
+      entry's own recorded distance already names the gap ("No debt-trend predicate"). A real
+      probe needs a committed series, so the debt-trend recorder is this row's next form.
+
+  IF-PUBLICATION-ESTATE:
+    ideal: >
+      The whole GitHub estate carries its publication policy as declared data — every repo
+      classified with a why, visibility drift a red predicate, private->public flips
+      history-swept and lever-gated, the public tail converging to an SEO standard. Zero
+      unclassified, zero unswept flips, zero hand-maintained lists.
+    owner: "GITVS + publication-policy organs; his hand for the three levers"
+    probe: null
+    probe_absent_reason: >
+      The ideal has two halves and no single number spans them. The ENGINE half is already
+      green and measurable (`publication-policy.py --census` reports convergence_failures: 0,
+      `--verify` reports the matrix and classifier sound). The open half is ENACTMENT — armed
+      valves (LIMEN_SEO_BACKLOG_APPLY), human levers (L-SEO-METADATA, L-PORTAL-PUBLISH-WAVE-1)
+      and the owed repo splits — which is a state of the world, not a repo fact. A first draft
+      of this row probed `--check`; that is a stamp-PRESENCE test which fails on a gitignored
+      local artifact, so it reported distance for a reason unrelated to the ideal. Measuring
+      the wrong question is worse than declaring the vacuum.
+
+  IF-LIVE-TREE-COHERENCE:
+    ideal: >
+      The live daemon checkout is always identical to origin/main; capture/sync keeps it
+      fast-forwarded; no ahead/behind divergence, no stranded local commits.
+    owner: "Claude + the sync organ"
+    probe:
+      command: "python3 scripts/check-live-checkout.py"
+      derives: "commits the live checkout is behind origin/main, plus unpushed and dirty state"
+      environment: host
+      extract: "drift=([0-9]+)"
+      ideal_value: 0
+      # A snapshot can prove DISTANCE but never ACHIEVEMENT: the ideal is "never drifts", and
+      # one green reading says only "not drifted at this instant". So check D may fire when the
+      # prose overstates, never when it lags — until a beat sensor keeps the reading continuous.
+      instantaneous: true
+
+  IF-HOT-CACHE:
+    ideal: >
+      The local floor holds nothing that is not re-summonable from upstream. Every summoned
+      surface — worktree, agent runtime, scratch clone, session branch, fan-out agent — is born
+      for one purpose, returns its result to source, and self-erases; losing the disk loses zero
+      state. Residue is a defect caught by predicates, never a periodic cleanup chore.
+    owner: "Claude + the reap organs (reclaim-worktrees / reap-branches / disk-capacity)"
+    probe:
+      command: "python3 scripts/residue-census.py"
+      derives: "residue classes over their declared caps, each naming the organ or lever that relieves it"
+      environment: host
+      extract: "breaches=([0-9]+)"
+      ideal_value: 0
+      # Same caveat as IF-LIVE-TREE-COHERENCE, for the same reason: a snapshot proves DISTANCE,
+      # never ACHIEVEMENT. "Nothing sprawls" is a claim about every moment; one green reading says
+      # only that nothing sprawled at this instant. The daily residue-census sensor keeps the
+      # reading current, but the rung stays instantaneous until it is continuous.
+      instantaneous: true
+
+  IF-SESSION-NON-CONTENTION:
+    ideal: >
+      An interactive session's cwd is an isolated, non-recycled worktree; the fleet never
+      rebases or cleans the tree a live session is working in.
+    owner: "Claude (worktree allocation / harness convention)"
+    probe: null
+    probe_absent_reason: >
+      Contention is an event, not a state: it is only observable while a session holds a tree
+      the daemon then rewrites. Nothing on disk afterwards distinguishes "was rebased under a
+      live session" from "was rebased." The measurable form is a recorded incident count, which
+      needs the daemon to emit a receipt when it rewrites an occupied worktree.
+
+  IF-SENSOR-REGISTRY:
+    ideal: >
+      The beat's continuous-runtime sensors live in one registry and every consumer derives
+      from it; adding a sensor is one registry entry, never a hand-wired shell block.
+    owner: "Claude + tabularius"
+    probe:
+      command: "python3 scripts/check-sensors.py"
+      derives: "registry<->beat<->consumer parity across the whole sensor estate"
+      environment: repo
+      at_ideal_when: exit_zero
+
+  IF-MAIL:
+    ideal: >
+      Every reply-owed email is driven to answered autonomically — drafted, tiered, and (for
+      the narrow SAFE tier, when armed) sent — with the tier decision as declared data. Legal,
+      money and personal mail never auto-send.
+    owner: "Claude + mail"
+    probe:
+      command: "python3 scripts/check-mail-answered.py"
+      derives: "reply-owed mail still unanswered"
+      environment: host
+      at_ideal_when: exit_zero
+
+  IF-CONFIG-OWNERSHIP:
+    ideal: >
+      A config-ownership constitution declares app/cartridge/SPLIT/operator per host config
+      path; every abdication carries a declared owner; a parity predicate holds it in CI. An
+      app can never silently destroy an owner atom, and a dead template can never hide behind
+      its own ignore line.
+    owner: "domus-genoma CI (parity) + lever L-CARTRIDGE-REPOINT (activation) + Claude (proof run)"
+    probe: null
+    probe_absent_reason: >
+      The parity predicate (check-config-ownership.py, predicates A-F) lives in the OWNER repo
+      organvm/domus-genoma, not here — correctly, since the constitution it checks lives there
+      too. This row is measurable only by a cross-repo call, which is the ecosystem-layer
+      promotion already tracked as IF-SENSOR-REGISTRY's follow-up.
+
+  IF-NO-MODAL:
+    ideal: >
+      No approval question is ever asked for non-destructive work, in any lane, and the
+      destructive boundary that remains is DERIVED and MEASURABLE rather than switched off.
+      The trust hook is wired from the cartridge source, permissions.ask carries its five-rule
+      fail-safe backstop, and permissions.autoMode.allow teaches the classifier the same trust
+      boundary the hook enforces — so defaultMode stays "auto" and the gauge stays alive.
+      bypassPermissions is explicitly NOT the ideal: it does not close the distance, it deletes
+      the instrument (never-hang-permission-spec.md, R1/R4/R5 + Design-consequences-2).
+    owner: "Anthony (arm the effector — classifier-gated) + Claude (hook, effector, matrix)"
+    probe:
+      command: "python3 scripts/heal-hook-wiring.py"
+      derives: "the effector in dry-run: exit 0 iff the cartridge source carries hook + ask + autoMode"
+      environment: host
+      at_ideal_when: exit_zero
+
+  IF-HOST-PRESSURE:
+    ideal: >
+      Every host-pressure axis — memory, CPU load, the backup crawler, test fan-out — has an
+      executable gauge and a mechanical valve; no stack of individually-legitimate loads can
+      thrash the host, because each is gated where it starts and the gauges are watched.
+    owner: "Claude (all four forms)"
+    probe: null
+    probe_absent_reason: >
+      Host pressure is a live condition, not a repo fact, and it is already measured
+      continuously by the VITALS axes declared in sensors.yaml — the beat IS its measurement
+      surface. A one-shot repo probe would report the pressure of whatever machine happened to
+      run pr-gate, which is not the ideal's subject.
+
+  IF-LEDGER-OF-IDEALS:
+    ideal: >
+      Every Claude-originated ideal is a tracked named param here; the ledger is wired into a
+      verification lane so its distances are derived rather than remembered, closing the
+      self-loop.
+    owner: Claude
+    probe:
+      command: "python3 scripts/check-ideal-forms.py"
+      derives: "this registry's own coherence — the self-loop the entry asked for"
+      environment: self
+      at_ideal_when: exit_zero
+
+  IF-DECORUM:
+    ideal: >
+      DECORVM federates the estate's quality organs into one verdict, with departments and the
+      severity floor as declared data; fully alive when a sweep is green at a fixed point —
+      nothing on any public surface is currently embarrassing.
+    owner: "Claude + the decorum organ (beat) + his-hand-levers.json for off-platform capture"
+    probe:
+      # NOT check-decorum.py — that proves the REGISTRY is coherent, which it is, while the
+      # estate it watches is red. Measuring the wrong question would have reported this ideal
+      # at its form while 4 broken public frontends stood; check D caught exactly that.
+      command: "python3 scripts/decorum-keeper.py --sweep"
+      derives: "public surfaces currently failing the severity floor (the sweep IS the ideal)"
+      environment: network
+      at_ideal_when: exit_zero
+
+  IF-LEARNING-ENGINE:
+    ideal: >
+      The Adaptive Personal Syllabus is the sole curriculum engine, daily-engine the cadence
+      spine, and every new study need is a SUBJECT in the aps schema — never a new engine.
+      Pedagogy primitives are load-bearing and preserved.
+    owner: "Claude + the Adaptive Personal Syllabus (aps)"
+    probe: null
+    probe_absent_reason: >
+      Owner-uniqueness for these capabilities is already measured by IF-SHARED-SUBSTRATE's
+      probe (the same convergence registry holds the learning-engine rows). What is left in
+      THIS row is the Phase-2 lift — daily-engine's core extracted into a shared substrate —
+      and a lift that has not started has nothing to measure but its own absence.
+
+  IF-SHARED-SUBSTRATE:
+    ideal: >
+      Every capability in the estate has exactly one owner; everything else is a tenant or
+      retired. The convergence registry is the machine form and its predicate makes "never
+      build the 7th" a red check instead of a memory.
+    owner: "Claude (registry + predicate) + the per-row owner_of_record"
+    probe:
+      command: "python3 scripts/check-convergence.py"
+      derives: "capabilities with NO chosen owner (counted vacuums)"
+      environment: repo
+      extract: "([0-9]+) unresolved vacuum"
+      ideal_value: 0
+
+  IF-ATOM-HOMING:
+    ideal: >
+      Every harvested semantic atom is either homed in a git-tracked owner or dispositioned
+      with a cited reason; residue and deferral both reach their floor; and no atom STATEMENT
+      ever crosses into the public tree — homing is distillation, never transfer.
+    owner: "Claude (registry + predicate) + the per-kind owner_of_record"
+    probe:
+      command: "python3 scripts/check-atom-homing.py"
+      derives: "atoms still residual — not yet homed and not yet dispositioned"
+      environment: repo
+      extract: "([0-9]+) of [0-9]+ atoms residual"
+      ideal_value: 0
+
+  IF-DOMAIN-STREAMS:
+    ideal: >
+      "What session streams do I open?" is answered by the operator's LIFE/WORK DOMAINS —
+      one family: domain row per workstream channel (correspondence, financial,
+      representation, ...), derived from the channel roster and opened by the launcher in
+      open_rank order; the collaborator constellation is the consulting domain's interior,
+      never a sibling answer, and no session ever re-invents the roster.
+    owner: "Claude (generator + checks) + the channel roster (workstream.py / organ-ladder.json)"
+    probe:
+      command: "python3 institutio/governance/derive-domain-streams.py --check"
+      derives: "registry<->roster parity for the domain family (rows + cartridges, both directions)"
+      environment: repo
+      at_ideal_when: exit_zero
+
+  IF-HARNESS-SENSED:
+    ideal: >
+      The Claude harness runtime tree — the external substrate the fleet reads its own session
+      state from — is declared once (PARAMETERS), resolved in exactly one place
+      (limen.harness_paths), and sensed at beat cadence, so relocating it is a red check rather
+      than a silent blinding. The fleet senses its work product; it must also sense the worker.
+      Extending the same shape to the remaining vendor roots is the NEXT form, not this row.
+    owner: "Claude (limen.harness_paths resolver + scripts/harness-root-probe.py + the harness-root-probe sensor)"
+    probe:
+      command: "python3 scripts/harness-root-probe.py --root-only"
+      derives: "the resolved Claude harness root still holds transcripts; empty-while-a-sibling-candidate-is-full is the relocation signature"
+      environment: repo
+      at_ideal_when: exit_zero
+  IF-DIURNAL:
+    ideal: "The day is a falsifiable loop, not a report. Morning emits a dashboard PLUS claims of\
+      \ the form 'section X's metric falls below N today'; midday re-probes them mid-flight and\
+      \ pushes only on drift; evening scores every claim held/missed/noop and CUTS sections that\
+      \ scored noop for the threshold in consecutive ENGAGED days. Sections are declared data\
+      \ because an auto-cut cannot edit Python source, and cuttable implies a metric because you\
+      \ cannot prune what you cannot score. The loop is only real once it has run against the LIVE\
+      \ organism for enough days that a cut could fire on evidence rather than on a fixture.\n"
+    owner: Claude (scripts/diurnal.py + scripts/check-diurnal.py + institutio/governance/diurnal.yaml)
+      · the beat's `diurnal` sensor (execution) · the operator (the `calendar` lever)
+    probe:
+      command: bash scripts/done-diurnal.sh --quiet
+      derives: the organ is reaching the organism and scoring real days — a dated page exists in
+        the live root today, the shared root predicate is the only liveness guard, and the cut
+        threshold has an actual observation runway behind it
+      environment: host
+      at_ideal_when: exit_zero

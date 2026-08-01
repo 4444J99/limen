@@ -4,7 +4,7 @@
 ruleset, classic protection, auto-merge, and branch-retention settings are active and verified.
 Actions-created pull requests remain blocked by the owning organization policy; the exact live
 evidence and owner-routed gate are recorded in
-[`concurrency-rail-live-receipt.json`](concurrency-rail-live-receipt.json).
+[`concurrency-rail-live-receipt.json`](receipts/concurrency-rail-live-receipt.json).
 
 ## Limen's concurrency rail
 

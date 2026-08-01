@@ -58,7 +58,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "mypy>=2.0" "ruff==0.15.8" -r web/api/requirements.txt -e "cli[test]"
+          python -m pip install "mypy>=2.0" -r web/api/requirements.txt -e "cli[test]"  # ruff pin rides cli[test] (#1658)
 
       - name: Lint Python with ruff
         run: python -m ruff check cli/src cli/tests web/api mcp ianva
@@ -138,7 +138,13 @@ jobs:
     needs: [python, worker, web]
     runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
+      # Full history, matching pr-gate/fleet-gate. verify-whole.sh runs
+      # check-session-streams.py, whose settled_by check resolves each claim with
+      # `git cat-file -t <sha>`; under checkout's default depth-1 clone those
+      # commits are absent and every settled stream reports a false DRIFT.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:

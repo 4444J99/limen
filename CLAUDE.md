@@ -187,6 +187,13 @@ For any search or recon whose scope spans multiple domains, **fan out parallel r
 
 Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.md` for the swarm protocol). Then verify before pushing — **scoped to the diff, never the whole world by default**:
 
+**Session streams** (the operator's declared work domains) have their own launcher: `limen streams`
+(→ `scripts/open-streams.sh`) opens and **reopens** every openable domain, one tmux window each;
+`limen streams --status` shows each stream's derived state. The rows and cartridges are owned by
+[`institutio/governance/session-streams.yaml`](institutio/governance/session-streams.yaml) — the
+constellation lanes in it are DERIVED from the constellation register (check M holds parity; edit
+the register and rerun `organs/consulting/constellation/derive-streams.py --write`, never the rows).
+
 - **`scripts/verify-scoped.sh` is the default push gate.** It maps the changed paths (branch diff vs `origin/main` plus uncommitted/untracked work) to only the gates they implicate, runs those, and names every gate it skipped. A docs append must never pay for a Next.js build, a wrangler boot, and 1,200+ tests.
 - **The full matrix below is a pre-merge event, not a per-session tax.** Run it — or let CI run it — only when the diff touches deploy-trigger paths (the website guardrail `merge-policy.sh` enforces at merge time), when scoping cannot attribute the change, or on explicit request.
 - **`verify-whole.sh` is machine-serialized** via a lock file (`LIMEN_VERIFY_LOCK_FILE`; opt-out `LIMEN_VERIFY_NO_LOCK=1` for single-purpose CI runners): concurrent runs from parallel sessions wait instead of stampeding the host with simultaneous npm installs, workerd boots, and production builds.
@@ -258,6 +265,15 @@ One PR per branch → `main`. Squash-merge; branch cleanup is a separate receipt
 automatic delete. `main` is the trunk **and** the live deploy source.
 
 **Chunking.** A branch is **one concern, not one session.** When a session produces multiple concerns, cut a fresh branch per concern off `origin/main` — finish → push → PR → next branch — never accumulate heterogeneous commits on a single session branch. And the **live checkout rests on `main`**: parking it on a work branch pins the running fleet to stale code and entangles every autonomic capture into that branch (the 2026-06-29 jules-capfill park: 5 days, 65 behind, a feature slice + daemon receipts fused onto one ref). `scripts/sync-release.sh` auto-unparks a fully-pushed, clean park each beat and fails open loudly otherwise — do session work in a worktree, never in the live checkout.
+
+**Settling a session stream.** If a PR completes a domain declared in
+[`institutio/governance/session-streams.yaml`](institutio/governance/session-streams.yaml), claim it
+with an anchored trailer at **column 0** of the merge commit message — `Settles: <stream-id>` (comma-separated
+for several). That claim is the *only* thing that marks a domain settled, and the claiming commit must
+change something outside the registry and `docs/{plans,continuations}/`: bookkeeping records an outcome,
+it cannot produce one. A passing mention no longer counts — the old unanchored `git log --grep=<id>` rule
+settled `s10-axis-coverage` off a docs commit whose whole subject was that s10 owns work a plan should
+*not* do. `scripts/check-session-streams.py` is the predicate.
 
 **No side doors — docs included.** The branch cadence applies to *every* tracked change, including
 one-file docs appends (the `docs: review … run` class, which was landing as direct `main` commits —

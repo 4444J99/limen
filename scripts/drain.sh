@@ -139,10 +139,31 @@ if [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
   if [ "${LIMEN_QUEUE_LOCK_HELD:-0}" = "1" ]; then
     echo "[drain] reclaim skipped under queue lock; heartbeat runs it after release"
   else
-    reclaim_args=()
-    [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
-    PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" --generated-only "${reclaim_args[@]}" 2>&1 | tail -4 || true
-    PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+    # One controller owns both the exact-plan transaction and its total deadline. The full pass
+    # checks JSON, validates plan_sha256, and applies only that SHA; generated-only remains a valid
+    # one-pass cleanup. Any failure is visible and leaves the next beat free to derive a fresh plan.
+    reclaim_cycle() {  # reclaim_cycle <label> <timeout-seconds> [controller-args…]
+      local label="$1" timeout_seconds="$2" rc
+      shift 2
+      local apply_args=()
+      [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && apply_args+=(--apply)
+      # drain.sh is a fleet-wide lifecycle entrypoint, including when an already-running
+      # heartbeat reloads it after sync-release.  Its LaunchAgent carries an explicit scratch
+      # LIMEN_WORKTREE_ROOT, which intentionally narrows the library's "auto" inventory.  Opt
+      # this entrypoint back into the two live estate inventories while preserving an explicit
+      # operator 0; direct library callers retain worktree_roots.py's auto semantics.
+      LIMEN_RECLAIM_REPO_LOCAL_WT="${LIMEN_RECLAIM_REPO_LOCAL_WT:-1}" \
+        LIMEN_RECLAIM_REGISTERED_WT="${LIMEN_RECLAIM_REGISTERED_WT:-1}" \
+        PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+          --timeout "$timeout_seconds" "${apply_args[@]}" "$@"
+      rc=$?
+      if [ "$rc" -ne 0 ]; then
+        echo "[drain] reclaim($label): cycle failed (rc=$rc) — next beat retries" >&2
+      fi
+      return 0
+    }
+    reclaim_cycle generated "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" --generated-only
+    reclaim_cycle full "${LIMEN_RECLAIM_TIMEOUT:-300}"
   fi
 fi
 

@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import json
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from limen.conduct.campaign_relay import RelayLaunch
+from limen.conduct.campaign_relay_protocol import _read_relay
 from limen.conduct.models import AgentIdentityV1, AuthorityEnvelopeV1
 from limen.conduct.supervisor import (
     CampaignSupervisorError,
     compile_omega_packets,
     load_capsule_receipt,
+    load_capsule_receipt_ref,
     run_campaign,
     validate_omega_evaluation,
 )
@@ -42,13 +46,7 @@ def campaign_repo(tmp_path: Path) -> tuple[Path, Path, int, int]:
     now = 2_000_000_000
     started = now - 600
     deadline = started + 8 * 60 * 60
-    contract = new_contract_v2(
-        "8h",
-        agent="codex",
-        model="fixture-model",
-        reasoning_effort="fixture-effort",
-        sandbox="danger-full-access",
-    )
+    contract = new_contract("8h")
     contract["runway"].update(
         {
             "started_epoch": started,
@@ -203,15 +201,180 @@ def _identity() -> AgentIdentityV1:
     )
 
 
-def test_campaign_rejects_a_legacy_launch_contract(campaign_repo) -> None:
+def _publish_immutable_capsule(
+    root: Path,
+    source_receipt: Path,
+    *,
+    extra_path: bool = False,
+    merge_commit: bool = False,
+) -> tuple[str, str, str, str]:
+    base = _git(root, "rev-parse", "HEAD")
+    slug = "immutable-fixture"
+    branch = f"work/{slug}"
+    relative = f"docs/continuations/{slug}/workstream.json"
+    payload = json.loads(source_receipt.read_text(encoding="utf-8"))
+    payload.update({"branch": branch, "slug": slug})
+    destination = root / relative
+    destination.parent.mkdir(parents=True)
+    destination.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    if extra_path:
+        (root / "unexpected.txt").write_text("unexpected\n", encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "commit", "-qm", "publish immutable capsule")
+    commit = _git(root, "rev-parse", "HEAD")
+    if merge_commit:
+        second_parent = _git(
+            root,
+            "commit-tree",
+            f"{base}^{{tree}}",
+            "-p",
+            base,
+            "-m",
+            "second parent",
+        )
+        commit = _git(
+            root,
+            "commit-tree",
+            f"{commit}^{{tree}}",
+            "-p",
+            base,
+            "-p",
+            second_parent,
+            "-m",
+            "merge-shaped capsule",
+        )
+    _git(root, "push", "origin", f"{commit}:refs/heads/{branch}")
+    _git(
+        root,
+        "push",
+        "origin",
+        f"{commit}:refs/heads/limen-relay/capsule/{commit}",
+    )
+    return commit, base, relative, branch
+
+
+def test_campaign_accepts_an_admitted_provider_neutral_v1_contract(campaign_repo) -> None:
+    root, receipt, now, _deadline = campaign_repo
+    loaded, remaining = load_capsule_receipt(receipt, root=root, now_epoch=now)
+    assert loaded["contract"]["schema"] == "limen.workstream.contract.v1"
+    assert remaining == 28_200
+
+
+def test_immutable_capsule_ref_is_one_receipt_only_commit_on_its_expected_base(
+    campaign_repo,
+) -> None:
+    root, source, now, _deadline = campaign_repo
+    commit, base, path, branch = _publish_immutable_capsule(root, source)
+
+    loaded, remaining = load_capsule_receipt_ref(
+        root=root,
+        commit=commit,
+        base=base,
+        path=path,
+        branch=branch,
+        now_epoch=now,
+    )
+
+    assert loaded["slug"] == "immutable-fixture"
+    assert remaining == 28_200
+
+
+def test_immutable_capsule_ref_rejects_a_mismatched_expected_base(
+    campaign_repo,
+) -> None:
+    root, source, now, _deadline = campaign_repo
+    commit, _base, path, branch = _publish_immutable_capsule(root, source)
+
+    with pytest.raises(CampaignSupervisorError, match="expected base"):
+        load_capsule_receipt_ref(
+            root=root,
+            commit=commit,
+            base=commit,
+            path=path,
+            branch=branch,
+            now_epoch=now,
+        )
+
+
+def test_immutable_capsule_ref_rejects_a_multifile_publication(
+    campaign_repo,
+) -> None:
+    root, source, now, _deadline = campaign_repo
+    commit, base, path, branch = _publish_immutable_capsule(
+        root,
+        source,
+        extra_path=True,
+    )
+
+    with pytest.raises(CampaignSupervisorError, match="receipt-only"):
+        load_capsule_receipt_ref(
+            root=root,
+            commit=commit,
+            base=base,
+            path=path,
+            branch=branch,
+            now_epoch=now,
+        )
+
+
+def test_immutable_capsule_ref_rejects_a_multiparent_publication(
+    campaign_repo,
+) -> None:
+    root, source, now, _deadline = campaign_repo
+    commit, base, path, branch = _publish_immutable_capsule(
+        root,
+        source,
+        merge_commit=True,
+    )
+
+    with pytest.raises(CampaignSupervisorError, match="single-parent"):
+        load_capsule_receipt_ref(
+            root=root,
+            commit=commit,
+            base=base,
+            path=path,
+            branch=branch,
+            now_epoch=now,
+        )
+
+
+def test_campaign_accepts_a_human_explicit_v2_contract(campaign_repo) -> None:
     root, receipt, now, _deadline = campaign_repo
     payload = json.loads(receipt.read_text(encoding="utf-8"))
-    legacy = new_contract("8h")
-    legacy["runway"] = payload["contract"]["runway"]
-    payload["contract"] = legacy
+    explicit = new_contract_v2(
+        "8h",
+        agent="codex",
+        model="fixture-model",
+        reasoning_effort="fixture-effort",
+        sandbox="danger-full-access",
+    )
+    explicit["runway"] = payload["contract"]["runway"]
+    payload["contract"] = explicit
     receipt.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
 
-    with pytest.raises(CampaignSupervisorError, match="requires a v2 launch contract"):
+    loaded, remaining = load_capsule_receipt(receipt, root=root, now_epoch=now)
+    assert loaded["contract"]["schema"] == "limen.workstream.contract.v2"
+    assert loaded["contract"]["primary_launch"]["selection"] == "human_explicit"
+    assert remaining == 28_200
+
+
+def test_campaign_rejects_an_unadmitted_provider_neutral_v1_contract(campaign_repo) -> None:
+    root, receipt, now, _deadline = campaign_repo
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    payload["contract"] = new_contract("8h")
+    receipt.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CampaignSupervisorError, match="has not been admitted"):
+        load_capsule_receipt(receipt, root=root, now_epoch=now)
+
+
+def test_campaign_rejects_a_tampered_provider_neutral_v1_contract(campaign_repo) -> None:
+    root, receipt, now, _deadline = campaign_repo
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    payload["contract"]["conductor"]["provider_and_model"] = "pinned"
+    receipt.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CampaignSupervisorError, match="workstream conductor contract is invalid"):
         load_capsule_receipt(receipt, root=root, now_epoch=now)
 
 
@@ -314,10 +477,73 @@ def test_t_minus_boundary_admits_no_work(campaign_repo) -> None:
         identity=_identity(),
         now_epoch=deadline - 1700,
         evaluator=lambda _root, _timeout: pytest.fail("evaluator must not run after T-30"),
+        relay_launcher=lambda root, relay_id, **_kwargs: RelayLaunch(
+            receipt=_read_relay(root, relay_id),
+            launched=False,
+        ),
     )
     assert result["boundary"] == "wait_relay"
     assert result["successor_required"] is True
+    assert result["relay"]["schema"] == "limen.campaign_relay_boundary.v1"
+    assert result["relay"]["state"] == "reserved"
+    assert result["relay"]["attempts"] == 0
+    assert "path" not in json.dumps(result["relay"])
     assert client.submissions == []
+
+
+def test_t_minus_relay_budget_includes_elapsed_wake_preflight(campaign_repo) -> None:
+    root, receipt, _now, deadline = campaign_repo
+    observed: dict[str, float] = {}
+
+    def launch(root, relay_id, *, timeout_seconds):
+        observed["timeout_seconds"] = timeout_seconds
+        return RelayLaunch(
+            receipt=_read_relay(root, relay_id),
+            launched=False,
+        )
+
+    result = run_campaign(
+        client=FakeClient(),
+        root=root,
+        capsule=receipt,
+        identity=_identity(),
+        now_epoch=deadline - 1700,
+        evaluator=lambda _root, _timeout: pytest.fail("evaluator must not run after T-30"),
+        relay_launcher=launch,
+        evaluation_timeout_seconds=300,
+        wake_deadline_monotonic_ns=300_000_000_000,
+        monotonic_ns=lambda: 50_000_000_000,
+    )
+
+    assert result["boundary"] == "wait_relay"
+    assert observed["timeout_seconds"] == pytest.approx(70)
+
+
+def test_concurrent_t_minus_beats_reserve_one_byte_stable_relay(campaign_repo) -> None:
+    root, receipt, _now, deadline = campaign_repo
+
+    def beat(_index: int) -> dict:
+        return run_campaign(
+            client=FakeClient(),
+            root=root,
+            capsule=receipt,
+            identity=_identity(),
+            now_epoch=deadline - 1700,
+            evaluator=lambda _root, _timeout: pytest.fail("evaluator must not run after T-30"),
+            relay_launcher=lambda root, relay_id, **_kwargs: RelayLaunch(
+                receipt=_read_relay(root, relay_id),
+                launched=False,
+            ),
+        )
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        results = list(pool.map(beat, range(10)))
+
+    projections = [json.dumps(result["relay"], sort_keys=True) for result in results]
+    assert len(set(projections)) == 1
+    assert all(result["boundary"] == "wait_relay" for result in results)
+    store = Path(_git(root, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "limen" / "campaign-relays"
+    assert len(list(store.glob("*.json"))) == 1
 
 
 def test_settled_requires_green_strict_omega_and_three_two_pass_receipts(campaign_repo) -> None:

@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 
 class ReceiptError(RuntimeError):
     """A custody or restoration predicate is unsatisfied."""
+
+
+_OPAQUE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{16,128}$")
+_REMOTE_REF_RE = re.compile(r"^github:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[0-9a-f]{40}$")
 
 
 def _stat_identity(value: object) -> tuple[int, int, int]:
@@ -83,6 +89,40 @@ class RestoreProof:
     logical_sha256: str | None = None
     source_sha256: str | None = None
     detail: str = ""
+    device_id: str | None = None
+    restored_at: str | None = None
+    encryption_profile_digest: str | None = None
+    remote_refs: tuple[str, ...] = ()
+
+
+def _restore_proof(value: dict[str, Any]) -> RestoreProof:
+    if not isinstance(value, dict):
+        raise ReceiptError("agent-state receipt contains invalid restoration evidence")
+    remote_refs = value.get("remote_refs", ())
+    if not isinstance(remote_refs, (list, tuple)):
+        raise ReceiptError("agent-state receipt contains invalid remote restoration evidence")
+    return RestoreProof(
+        scope=value["scope"],
+        passed=value["passed"],
+        atoms_verified=value.get("atoms_verified", 0),
+        logical_sha256=value.get("logical_sha256"),
+        source_sha256=value.get("source_sha256"),
+        detail=value.get("detail", ""),
+        device_id=value.get("device_id"),
+        restored_at=value.get("restored_at"),
+        encryption_profile_digest=value.get("encryption_profile_digest"),
+        remote_refs=tuple(remote_refs),
+    )
+
+
+def _aware_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None and parsed.utcoffset() is not None
 
 
 @dataclass
@@ -92,6 +132,7 @@ class MetabolismReceipt:
     source: SourceProof
     atom_count: int
     logical_sha256: str
+    encryption_profile_digest: str | None = None
     packs: list[AtomPack] = field(default_factory=list)
     duplicate_payloads: int = 0
     git_remote: str | None = None
@@ -135,13 +176,14 @@ class MetabolismReceipt:
                 source=source,
                 atom_count=value["atom_count"],
                 logical_sha256=value["logical_sha256"],
+                encryption_profile_digest=value.get("encryption_profile_digest"),
                 packs=packs,
                 duplicate_payloads=value["duplicate_payloads"],
                 git_remote=value["git_remote"],
                 git_commit=value["git_commit"],
                 git_receipt_commit=value["git_receipt_commit"],
                 external_chunks=[CipherChunk(**chunk) for chunk in value["external_chunks"]],
-                restorations=[RestoreProof(**proof) for proof in value["restorations"]],
+                restorations=[_restore_proof(proof) for proof in value["restorations"]],
                 retained_hot_bytes=value["retained_hot_bytes"],
                 source_retired=value["source_retired"],
                 retirement_proof=value["retirement_proof"],
@@ -175,8 +217,10 @@ class MetabolismReceipt:
                 for digest in (
                     receipt.source.inventory_before_sha256,
                     receipt.source.inventory_after_sha256,
+                    receipt.encryption_profile_digest,
                     *(proof.logical_sha256 for proof in receipt.restorations),
                     *(proof.source_sha256 for proof in receipt.restorations),
+                    *(proof.encryption_profile_digest for proof in receipt.restorations),
                 )
                 if digest is not None
             ),
@@ -207,6 +251,34 @@ class MetabolismReceipt:
                 or not proof.scope
                 or not isinstance(proof.passed, bool)
                 or not isinstance(proof.detail, str)
+                or (
+                    any(
+                        value is not None
+                        for value in (
+                            proof.device_id,
+                            proof.restored_at,
+                            proof.encryption_profile_digest,
+                        )
+                    )
+                    and not all(
+                        value is not None
+                        for value in (
+                            proof.device_id,
+                            proof.restored_at,
+                            proof.encryption_profile_digest,
+                        )
+                    )
+                )
+                or (
+                    proof.device_id is not None
+                    and (not isinstance(proof.device_id, str) or not _OPAQUE_ID_RE.fullmatch(proof.device_id))
+                )
+                or (proof.restored_at is not None and not _aware_timestamp(proof.restored_at))
+                or any(
+                    not isinstance(remote_ref, str) or not _REMOTE_REF_RE.fullmatch(remote_ref)
+                    for remote_ref in proof.remote_refs
+                )
+                or (proof.remote_refs and proof.scope != "git-full-manifest")
                 for proof in receipt.restorations
             )
             or any(commit is not None and not _is_lower_hex(commit, 40) for commit in commits)
@@ -236,7 +308,22 @@ class MetabolismReceipt:
         return cls.from_dict(value)
 
     def as_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        payload["source"]["stat_before"] = list(payload["source"]["stat_before"])
+        payload["source"]["stat_after"] = list(payload["source"]["stat_after"])
+        for pack in payload["packs"]:
+            pack["chunks"] = list(pack["chunks"])
+        if self.encryption_profile_digest is None:
+            payload.pop("encryption_profile_digest")
+        for proof in payload["restorations"]:
+            for key in ("device_id", "restored_at", "encryption_profile_digest"):
+                if proof[key] is None:
+                    proof.pop(key)
+            if proof["remote_refs"]:
+                proof["remote_refs"] = list(proof["remote_refs"])
+            else:
+                proof.pop("remote_refs")
+        return payload
 
     def write(self, path: Path) -> None:
         _create_private_parents(path.parent)

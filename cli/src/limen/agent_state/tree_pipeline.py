@@ -13,7 +13,12 @@ from typing import Any
 
 from limen.host_admission import hold_lease
 
-from .crypto import EncryptedAtomPacker, keychain_key, verify_atom_packs
+from .crypto import (
+    EncryptedAtomPacker,
+    encryption_profile_digest,
+    keychain_key,
+    verify_atom_packs,
+)
 from .file_provider import (
     CapturedFile,
     FileProviderResult,
@@ -28,6 +33,7 @@ from .file_provider import (
 from .models import AtomPack, CipherChunk, MetabolismReceipt, ReceiptError, RestoreProof, SourceProof
 from .pipeline import (
     ARCA_REMOTE_EXACT_ERROR,
+    RETIREMENT_AUTHORIZATION_REQUIRED,
     GitVault,
     PipelineError,
     require_mounted_external,
@@ -37,7 +43,6 @@ from .tree import (
     RetentionPlan,
     atomize_file_tree,
     require_plan_matches_source,
-    retire_cold_files,
 )
 
 
@@ -70,6 +75,34 @@ def _manifest_stat(value: object) -> tuple[int, int, int]:
     if not isinstance(value, list) or len(value) != 3:
         raise PipelineError("tree manifest contains an invalid source identity")
     return (int(value[0]), int(value[1]), int(value[2]))
+
+
+def _require_custody_targets_outside_source(
+    source_root: Path,
+    targets: Mapping[str, Path],
+) -> None:
+    """Fail before writes when a custody target could capture itself."""
+
+    source = source_root.expanduser().resolve(strict=False)
+    nested: list[str] = []
+    for label, target in targets.items():
+        resolved = target.expanduser().resolve(strict=False)
+        try:
+            resolved.relative_to(source)
+        except ValueError:
+            for ancestor in (resolved, *resolved.parents):
+                if not ancestor.exists():
+                    continue
+                try:
+                    if os.path.samefile(ancestor, source):
+                        nested.append(label)
+                        break
+                except OSError:
+                    continue
+        else:
+            nested.append(label)
+    if nested:
+        raise PipelineError("custody targets must remain outside the source tree: " + ", ".join(nested))
 
 
 def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
@@ -106,6 +139,10 @@ def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
                 logical_sha256=value.get("logical_sha256"),
                 source_sha256=value.get("source_sha256"),
                 detail=str(value.get("detail", "")),
+                device_id=value.get("device_id"),
+                restored_at=value.get("restored_at"),
+                encryption_profile_digest=value.get("encryption_profile_digest"),
+                remote_refs=tuple(value.get("remote_refs", ())),
             )
             for value in manifest.get("restorations", [])
         ]
@@ -125,6 +162,7 @@ def load_tree_manifest(payload_root: Path) -> MetabolismReceipt:
             source=source,
             atom_count=int(manifest["atom_count"]),
             logical_sha256=str(logical_sha256 or ""),
+            encryption_profile_digest=manifest.get("encryption_profile_digest"),
             packs=packs,
             duplicate_payloads=int(manifest.get("duplicate_chunks", 0)),
             restorations=historical_restorations,
@@ -160,6 +198,25 @@ def _require_private_retirement_receipt(
     for value in (durable, expected):
         value["source_retired"] = False
         value["retirement_proof"] = None
+    if durable == expected:
+        return
+
+    try:
+        enriched = MetabolismReceipt.from_dict(durable)
+        from .custody import project_custody_receipt
+
+        project_custody_receipt(enriched)
+    except (ReceiptError, ValueError) as exc:
+        raise PipelineError("private retirement receipt does not match verified custody") from exc
+    for value in (durable, expected):
+        for proof in value["restorations"]:
+            for key in (
+                "device_id",
+                "restored_at",
+                "encryption_profile_digest",
+                "remote_refs",
+            ):
+                proof.pop(key, None)
     if durable != expected:
         raise PipelineError("private retirement receipt does not match verified custody")
 
@@ -183,14 +240,33 @@ def capture_cold_tree(
         raise ValueError("tree custody name must be lowercase alphanumeric with hyphens")
     if not plan.cold_paths:
         raise PipelineError(f"no cold files selected for {name}")
-    external_base = require_mounted_external(external_root) if require_external_mount else external_root.resolve()
-    external_base.mkdir(parents=True, exist_ok=True)
     run_id = run_id or run_id_now()
     vault = GitVault(vault_root, repository=repository)
-    vault.verify()
     relative = Path("agent-state") / name / run_id
     payload_root = vault.root / relative
+    unresolved_external = external_root.expanduser().resolve(strict=False)
+    exact_root = unresolved_external / name / run_id
+    _require_custody_targets_outside_source(
+        plan.root,
+        {
+            "vault-root": vault.root,
+            "external-root": unresolved_external,
+            "private-receipt": private_receipt,
+            "encrypted-git-output": payload_root,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    vault.verify()
+    external_base = require_mounted_external(external_root) if require_external_mount else unresolved_external
     exact_root = external_base / name / run_id
+    _require_custody_targets_outside_source(
+        plan.root,
+        {
+            "external-root": external_base,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    external_base.mkdir(parents=True, exist_ok=True)
     if payload_root.exists() or exact_root.exists():
         raise PipelineError(f"custody run already exists: {run_id}")
     payload_root.mkdir(parents=True, mode=0o700)
@@ -236,6 +312,7 @@ def capture_cold_tree(
             source=result.source,
             atom_count=result.atom_count,
             logical_sha256=result.logical_sha256,
+            encryption_profile_digest=encryption_profile_digest("file-tree"),
             packs=packs,
             duplicate_payloads=result.duplicate_chunks,
             external_chunks=external_chunks,
@@ -249,6 +326,7 @@ def capture_cold_tree(
             "file_count": result.file_count,
             "atom_count": result.atom_count,
             "logical_sha256": result.logical_sha256,
+            "encryption_profile_digest": receipt.encryption_profile_digest,
             "duplicate_chunks": result.duplicate_chunks,
             "cold_bytes": plan.cold_bytes,
             "retained_hot_bytes": plan.hot_bytes,
@@ -288,8 +366,6 @@ def resume_cold_tree_capture(
 ) -> MetabolismReceipt:
     """Resume after encrypted atoms reached Git but final custody did not close."""
 
-    external_base = require_mounted_external(external_root) if require_external_mount else external_root.resolve()
-    external_base.mkdir(parents=True, exist_ok=True)
     vault = GitVault(vault_root, repository=repository)
     vault.verify_identity()
     relative = Path("agent-state") / name / run_id
@@ -299,7 +375,38 @@ def resume_cold_tree_capture(
     receipt = load_tree_manifest(payload_root)
     if receipt.run_id != run_id:
         raise PipelineError("tree capture run identity does not match resume request")
+    if reconstruct_root is not None:
+        source_root = reconstruct_root
+    elif plan is not None:
+        source_root = plan.root
+    else:
+        source_root = Path(receipt.source.path)
+    unresolved_external = external_root.expanduser().resolve(strict=False)
+    exact_root = unresolved_external / name / run_id
+    _require_custody_targets_outside_source(
+        source_root,
+        {
+            "vault-root": vault.root,
+            "external-root": unresolved_external,
+            "private-receipt": private_receipt,
+            "encrypted-git-output": payload_root,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    external_base = require_mounted_external(external_root) if require_external_mount else unresolved_external
+    exact_root = external_base / name / run_id
+    _require_custody_targets_outside_source(
+        source_root,
+        {
+            "external-root": external_base,
+            "encrypted-external-output": exact_root,
+        },
+    )
+    external_base.mkdir(parents=True, exist_ok=True)
     key = keychain_key(key_service)
+    available_profile = encryption_profile_digest("file-tree")
+    if receipt.encryption_profile_digest is not None and receipt.encryption_profile_digest != available_profile:
+        raise PipelineError("tree capture encryption profile does not match the available restorer")
     records: list[dict[str, Any]] = []
     sample = verify_atom_packs(
         receipt.packs,
@@ -329,7 +436,6 @@ def resume_cold_tree_capture(
             raise PipelineError("current cold total does not match interrupted capture")
         require_plan_matches_source(plan, receipt.source)
     receipt.retained_hot_bytes = plan.hot_bytes
-    exact_root = external_base / name / run_id
     exact_root.mkdir(parents=True, mode=0o700, exist_ok=True)
     external_packs = _copy_packs(receipt.packs, payload_root, exact_root)
     external = replace(
@@ -343,6 +449,8 @@ def resume_cold_tree_capture(
     )
     if not external.passed:
         raise PipelineError(f"{name} resumed external restoration failed")
+    if receipt.encryption_profile_digest is None:
+        receipt.encryption_profile_digest = available_profile
     receipt.external_chunks = [chunk for pack in external_packs for chunk in pack.chunks]
     receipt.restorations = [sample, full, external]
     receipt.git_remote = repository
@@ -401,6 +509,8 @@ def run_cold_tree_campaign(
     retire: bool = False,
     run_id: str | None = None,
 ) -> MetabolismReceipt:
+    if retire:
+        raise PipelineError(RETIREMENT_AUTHORIZATION_REQUIRED)
     owner = f"agent-state-metabolism-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-agent-state-custody"):
         receipt = capture_cold_tree(
@@ -411,14 +521,6 @@ def run_cold_tree_campaign(
             private_receipt,
             run_id=run_id,
         )
-        if retire:
-            _require_private_retirement_receipt(receipt, private_receipt)
-            deleted = retire_cold_files(receipt, plan)
-            receipt.source_retired = True
-            receipt.retirement_proof = (
-                f"deleted-files:{deleted};deleted-bytes:{plan.cold_bytes};retained-hot-bytes:{plan.hot_bytes}"
-            )
-            receipt.write(private_receipt)
         return receipt
 
 
@@ -432,6 +534,8 @@ def run_resume_cold_tree_campaign(
     run_id: str,
     retire: bool = False,
 ) -> MetabolismReceipt:
+    if retire:
+        raise PipelineError(RETIREMENT_AUTHORIZATION_REQUIRED)
     owner = f"agent-state-metabolism-{os.getpid()}"
     with hold_lease("heavy", owner=owner, surface=f"{name}-agent-state-custody-resume"):
         receipt = resume_cold_tree_capture(
@@ -442,14 +546,6 @@ def run_resume_cold_tree_campaign(
             private_receipt,
             run_id=run_id,
         )
-        if retire:
-            _require_private_retirement_receipt(receipt, private_receipt)
-            deleted = retire_cold_files(receipt, plan)
-            receipt.source_retired = True
-            receipt.retirement_proof = (
-                f"deleted-files:{deleted};deleted-bytes:{plan.cold_bytes};retained-hot-bytes:{plan.hot_bytes}"
-            )
-            receipt.write(private_receipt)
         return receipt
 
 
