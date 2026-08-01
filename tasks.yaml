@@ -160786,3 +160786,43 @@ tasks:
     conduct_lease_id: 'lease-443-6cb439154dc6139a'
     conduct_generation: 443
   updated: '2026-07-29T02:23:46.958Z'
+- id: 'VIC-REPOSITORY-CANON-001'
+  title: 'Canonical repository v1.0.0 integration'
+  description: 'Reorganize governed human documentation and held BBNC materials into the canonical taxonomy, add deterministic content projections and release controls, and establish the repository-only v1.0.0 release without deployment, outreach, custody changes, or implied BBNC approval.'
+  repo: 'organvm/victoroff-os'
+  type: 'integration'
+  target_agent: 'codex'
+  workstream: 'governance'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'integration'
+  - 'owner:victoroff-governance'
+  urls:
+  - 'https://github.com/organvm/victoroff-os/commit/de4c14b9f25ba8e61c771b1dac9241bf104fed62'
+  context: 'Complete only VIC-REPOSITORY-CANON-001 as one integration packet. Exact base: de4c14b9f25ba8e61c771b1dac9241bf104fed62. Dependencies: none; remote main was inspected and had no open pull requests, but its pre-change pnpm verify:control baseline failed because the newly tracked file `automation ai` had no path owner. Allowed paths: VERSION; CHANGELOG.md; RELEASE.md; README.md; AGENTS.md; CONTRIBUTING.md; SECURITY.md; LICENSE; design-qa.md; package.json; pnpm-lock.yaml; pnpm-workspace.yaml; vercel.json; .github/**; artifacts/**; assets/**; apps/site/**; apps/stewardship-demo/**; briefs/**; decks/**; docs/**; emails/**; packages/**; products/**; program/**; publications/**; scripts/**; tests/**; website/**; automation ai. Required behavior: implement the canonical v1.0.0 taxonomy, governed metadata and registry migration, BBNC canonical-source package, deterministic generated projections, preserved signed publications, website copy compilation, source-hash manifests, and validation/tests described in the human-approved implementation plan. Authority boundary: repository-only, public/synthetic, no deployment, DNS, outreach delivery, production promotion, custody transfer, real BBNC identity or records, commercial repository, or implied BBNC approval. The BBNC artifacts remain Review with authority held. Predicate: pnpm verify. Durable receipt: github:organvm/victoroff-os:pull-request:VIC-REPOSITORY-CANON-001.'
+  predicate: 'pnpm verify'
+  receipt_target: 'github:organvm/victoroff-os:pull-request:VIC-REPOSITORY-CANON-001'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Creates one stable, inspectable repository release whose governed narrative and generated BBNC projections cannot drift while preserving all authority and custody holds.'
+  owner_surface: 'victoroff-governance'
+  external_deadline: false
+  depends_on: []
+  created: '2026-07-31'
+  dispatch_log:
+  - timestamp: '2026-08-01T00:34:54.887Z'
+    agent: 'codex'
+    session_id: '019fbaba-57cf-73c3-a6ee-66a7244fd65c'
+    logical_agent: 'codex'
+    logical_session_id: '019fbaba-57cf-73c3-a6ee-66a7244fd65c'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6f44a8f9fd47e87a63e1bd97d7b80afc:447:compatibility'
+    conduct_run_id: 'run-6f44a8f9fd47e87a63e1bd97d7b80afc'
+    conduct_lease_id: 'lease-447-6f44a8f9fd47e87a'
+    conduct_generation: 447
+  updated: '2026-08-01T00:34:54.887Z'
