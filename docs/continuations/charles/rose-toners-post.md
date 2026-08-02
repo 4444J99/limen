@@ -2,9 +2,9 @@
 
 ## Page settings
 
-- **Title:** Rose in Skincare: 5 Toners and Face Mists Compared
+- **Title:** Rosewater and the Benefits Behind Our Favorite Flower
 - **Existing URL:** https://www.downsstyle.com/skincare/2026/8/1/rose-toners-and-the-benefits-behind-our-favorite-scent
-- **SEO description:** Rose as a skincare ingredient across five toners and mists, with honest notes on formula, texture, fragrance, and what sets each one apart.
+- **SEO description:** An ingredient-aware look at rosewater across five toners and face mists, with honest notes on formula, texture, fragrance, and what sets each one apart.
 - **Keywords/tags:** rose skincare ingredient, rose in skincare, rose toner, face mist, summer skincare, Mario Badescu, Whamisa, Santa Maria Novella, Chantecaille, Sisley-Paris
 
 ## Squarespace body copy
@@ -54,3 +54,10 @@ So, which formula is for you? Each one uses rose differently. Mario Badescu is t
 - Center each linked product heading in its own Squarespace text block.
 - Remove the visible image-placement markers after the image blocks are in place.
 - Keep the existing URL unchanged.
+
+## Newer transcript decisions
+
+- Use **Rosewater and the Benefits Behind Our Favorite Flower** as the visible title.
+- Keep the rosewater explanation before the first product and qualify laboratory findings rather than promising finished-product results.
+- Keep the current five-product proposed sequence. Thayers was discussed as a familiar toner brand but was not selected for this article.
+- Preserve the approved Chantecaille and Sisley framing.
