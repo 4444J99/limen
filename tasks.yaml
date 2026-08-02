@@ -160231,55 +160231,74 @@ tasks:
     conduct_lease_id: lease-31-3c0bb6c6335ccc07
     conduct_generation: 31
   updated: 2026-07-23T17:25:36.493Z
-- id: VIC-CLIENT-STORY-001-SCOPE
-  title: Classify client narrative sources in scoped verification
-  description: Extend the checked-in scope planner so docs/client sources implicate code, browser, and release shards, with one exact control regression test.
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: codex
-  workstream: governance
-  priority: high
+- id: 'VIC-CLIENT-STORY-001-SCOPE'
+  title: 'Classify client narrative sources in scoped verification'
+  description: 'Extend the checked-in scope planner so docs/client sources implicate code, browser, and release shards, with one exact control regression test.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'codex'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - control-plane
-  - owner:victoroff-control-integrator
+  - 'victoroff'
+  - 'control-plane'
+  - 'owner:victoroff-control-integrator'
   urls:
-  - https://github.com/organvm/victoroff-os/issues/16
-  context: |-
-    Do not ask for feedback or approval. Complete only this support packet for VIC-CLIENT-STORY-001.
+  - 'https://github.com/organvm/victoroff-os/issues/16'
+  context: 'Do not ask for feedback or approval. Complete only this support packet for VIC-CLIENT-STORY-001.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-control-integrator
+
     Allowed paths: scripts/control/ci-plan.mjs, tests/control/ci-plan.test.mjs
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml, program/**
+
     Required behavior: classify docs/client/** under code, browser, and release so required narrative and evidence sources cannot bypass or break pnpm verify:scoped.
+
     Authority boundary: no deployment, DNS, custody, BBNC representation, or real data.
+
     Predicate: node --test tests/control/ci-plan.test.mjs
-    Receipt: github:organvm/victoroff-os:pull-request:VIC-CLIENT-STORY-001-SCOPE
-  predicate: node --test tests/control/ci-plan.test.mjs
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CLIENT-STORY-001-SCOPE
-  origin: human_prompt
-  horizon: present
-  value_case: Makes the required docs/client source of truth executable under the repository scoped gate.
-  owner_surface: victoroff-control-integrator
+
+    Receipt: github:organvm/victoroff-os:pull-request:VIC-CLIENT-STORY-001-SCOPE'
+  predicate: 'node --test tests/control/ci-plan.test.mjs'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/29'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Makes the required docs/client source of truth executable under the repository scoped gate.'
+  owner_surface: 'victoroff-control-integrator'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T17:29:44.354Z
-    agent: codex
-    session_id: codex-vic-client-story-001-scope-20260723
-    logical_agent: codex
-    logical_session_id: vic-client-story-001-scope-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-7f189064a53ebc04e729906072821ffc:32:compatibility
-    conduct_run_id: run-7f189064a53ebc04e729906072821ffc
-    conduct_lease_id: lease-32-7f189064a53ebc04
+  - timestamp: '2026-07-23T17:29:44.354Z'
+    agent: 'codex'
+    session_id: 'codex-vic-client-story-001-scope-20260723'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-client-story-001-scope-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-7f189064a53ebc04e729906072821ffc:32:compatibility'
+    conduct_run_id: 'run-7f189064a53ebc04e729906072821ffc'
+    conduct_lease_id: 'lease-32-7f189064a53ebc04'
     conduct_generation: 32
-  updated: 2026-07-23T17:29:44.354Z
+  - timestamp: '2026-08-02T14:30:15.994Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 broker reconciliation claim; implementation receipt PR #29; control issue 4444J99/victoroff-os#127.'
+    conduct_event_id: 'conduct:run-2659ce3b4fca88963228520c6ade4d94:455:compatibility'
+    conduct_run_id: 'run-2659ce3b4fca88963228520c6ade4d94'
+    conduct_lease_id: 'lease-455-2659ce3b4fca8896'
+    conduct_generation: 455
+  updated: '2026-08-02T14:30:15.994Z'
 - id: 'TABVLARIVS-YAML-STRING-TYPES-20260726'
   title: 'Preserve YAML string types in the TABVLARIVS projection'
   description: 'Quote keeper-generated string scalars so YAML 1.1-compatible consumers cannot coerce dates or timestamps into non-string schema values.'
