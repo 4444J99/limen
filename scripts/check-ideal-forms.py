@@ -18,6 +18,14 @@ contradicts a live measurement:
                    24" sitting in the doc while the real number was 120.
   E  vacuums     — `probe: null` REQUIRES `probe_absent_reason`, and the unmeasured rows are
                    counted loudly (Rule #1: a vacuum is never a resting state).
+  F  no hand-written distance — a row WITH a probe may not carry a hand-written `**Distance:**`
+                   in the ledger prose; it must point at the command. Check A forbids the field
+                   in the REGISTRY and never looked at the doc, so the doc is where the field
+                   survived: IF-AMALGAMATION's Distance read "75 open PRs, 157 unmerged branches
+                   (2026-06-25)" for 38 days while the real figure passed 1,100 — off by 15x, in
+                   a registry whose header says there is no field to lie in. There was one.
+                   Narrative is not the problem and keeps its place on an `**Evidence:**` line;
+                   only the NUMBER has to be derived.
 
 Only `environment: repo` probes run inside this check — they are the ones that bind anywhere.
 `host` / `network` probes cannot be proven here (the check-corpora/check-convergence rule:
@@ -51,6 +59,11 @@ FORBIDDEN_FIELDS = ("status", "distance", "distance_pinned", "state", "measured_
 
 HEADING_RE = re.compile(r"^### (IF-[A-Z0-9-]+)\b", re.MULTILINE)
 STATUS_RE = re.compile(r"^- \*\*Status:\*\*\s*(.+)$", re.MULTILINE)
+DISTANCE_RE = re.compile(r"^- \*\*Distance[^:]*:\*\*\s*(.+)$", re.MULTILINE)
+# The one phrase a probed row's Distance line is allowed to be. Not a format preference: any
+# other content is a number a human typed, and a number a human typed is the thing check F exists
+# to make impossible. `--measure` is how the real one is obtained.
+DERIVED_MARK = "DERIVED"
 
 failures: list[str] = []
 notes: list[str] = []
@@ -107,6 +120,18 @@ def ledger_sections() -> dict[str, str]:
     return out
 
 
+def ledger_distances() -> dict[str, list[str]]:
+    """Map IF-id -> every `**Distance:**` line its ledger entry writes down.
+
+    A list, not a single value: two Distance lines in one entry is the same defect twice, and
+    reading only the first is how the compound-claim bug in check D happened.
+    """
+    text = LEDGER.read_text(encoding="utf-8")
+    ids = HEADING_RE.findall(text)
+    spans = [m.start() for m in HEADING_RE.finditer(text)] + [len(text)]
+    return {ident: DISTANCE_RE.findall(text[spans[i] : spans[i + 1]]) for i, ident in enumerate(ids)}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--measure", action="store_true", help="run every runnable probe and print derived distances")
@@ -124,6 +149,7 @@ def main() -> int:
         fail("A", "registry has no `ideals` block")
 
     prose = ledger_sections()
+    distances = ledger_distances()
 
     # B: parity, both directions.
     for ident in sorted(set(ideals) - set(prose)):
@@ -151,6 +177,28 @@ def main() -> int:
                 )
 
         probe = row.get("probe")
+
+        # F: a probed row's distance is a COMMAND's output, never a sentence someone wrote.
+        #
+        # Deliberately scoped to probed rows. A `probe: null` row has no derivation, so prose is
+        # all it has — check E already counts those loudly, and forbidding their Distance too
+        # would delete information without replacing it. This forbids the number exactly where a
+        # command can supply it, which is the only place a written one can silently go stale.
+        if probe is not None:
+            for line in distances.get(ident, []):
+                if DERIVED_MARK not in line:
+                    fail(
+                        "F",
+                        f"{ident}: ledger writes a Distance by hand — {line[:60]!r}… — while the row "
+                        f"HAS a probe. Replace with `- **Distance:** {DERIVED_MARK} — "
+                        "`python3 scripts/check-ideal-forms.py --measure`.` and move the narrative "
+                        "to an `**Evidence:**` line.",
+                    )
+            if not distances.get(ident):
+                fail(
+                    "F",
+                    f"{ident}: probed row has no `**Distance:**` line — a reader cannot tell where the number comes from",
+                )
 
         # E: an absent probe is legal but must name why, and is counted.
         if probe is None:
@@ -201,7 +249,9 @@ def main() -> int:
         # test C4; a guard that reports a violation while still performing it is not a guard.
         if SELF_NAME in command:
             if env != "self":
-                fail("C", f"{ident}: names {SELF_NAME} with environment {env!r} — only `self` may, and it never executes")
+                fail(
+                    "C", f"{ident}: names {SELF_NAME} with environment {env!r} — only `self` may, and it never executes"
+                )
             unmeasured.append(ident)
             continue
 
@@ -256,7 +306,7 @@ def main() -> int:
     at_ideal = sum(1 for _, v, _, _ in measured_rows if v == "at-ideal")
     print(
         f"ideal-forms registry: OK ({len(ideals)} ideals; {len(measured_rows)} measured, "
-        f"{at_ideal} at ideal, {len(unmeasured)} unmeasured vacuum(s), checks A-E clean)"
+        f"{at_ideal} at ideal, {len(unmeasured)} unmeasured vacuum(s), checks A-F clean)"
     )
     return 0
 
