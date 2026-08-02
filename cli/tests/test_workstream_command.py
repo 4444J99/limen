@@ -1383,18 +1383,30 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
     events = tmp_path / "events.txt"
     fake_limen = fake_bin / "limen"
     fake_limen.write_text(
-        '#!/usr/bin/env bash\nprintf "register\\n" >> "$EVENTS_CAPTURE"\nexit "${REGISTER_RC:-0}"\n',
+        "#!/usr/bin/env bash\n"
+        'printf "register\\n" >> "$EVENTS_CAPTURE"\n'
+        'if [[ "${REGISTER_CONFLICT:-}" == "1" ]]; then\n'
+        '  printf "worktree is already owned by healthy session fixture-session\\n" >&2\n'
+        "  exit 75\n"
+        "fi\n"
+        'exit "${REGISTER_RC:-0}"\n',
         encoding="utf-8",
     )
     fake_limen.chmod(0o755)
     fake_codex = fake_bin / "codex"
     fake_codex.write_text(
-        '#!/usr/bin/env bash\nprintf "provider\\n" >> "$EVENTS_CAPTURE"\n',
+        '#!/usr/bin/env bash\nprintf "provider\\n" >> "$EVENTS_CAPTURE"\nsleep 1\n',
         encoding="utf-8",
     )
     fake_codex.chmod(0o755)
+    fake_ps = fake_bin / "ps"
+    fake_ps.write_text('#!/usr/bin/env bash\nprintf "Sat Aug  2 00:00:00 2026\\n"\n', encoding="utf-8")
+    fake_ps.chmod(0o755)
     monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
     monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(tmp_path / "missing-limen.env"))
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
 
     rendered = CliRunner().invoke(
@@ -1457,6 +1469,22 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
 
     events.write_text("", encoding="utf-8")
     launch_env["REGISTER_RC"] = "0"
+    launch_env["REGISTER_CONFLICT"] = "1"
+    already_running = subprocess.run(
+        ["bash", str(kickstart)],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert already_running.returncode == 0, already_running.stderr
+    assert "This workstream is already running." in already_running.stdout
+    assert events.read_text(encoding="utf-8").splitlines() == ["register"]
+    assert {path: path.read_bytes() for path in protected} == bytes_before
+
+    events.write_text("", encoding="utf-8")
+    launch_env.pop("REGISTER_CONFLICT")
     launched = subprocess.run(
         ["bash", str(kickstart)],
         cwd=wt,
@@ -1496,7 +1524,7 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     fake_limen = fake_bin / "limen"
     fake_limen.write_text(
         "#!/usr/bin/env bash\n"
-        'if [[ -z "${LIMEN_CONDUCT_TOKEN:-}" ]]; then exit 41; fi\n'
+        'if [[ -z "${LIMEN_CONDUCT_URL:-}" || -z "${LIMEN_CONDUCT_TOKEN:-}" ]]; then exit 41; fi\n'
         'attempts="$(cat "$REGISTRATION_ATTEMPTS_CAPTURE" 2>/dev/null || printf 0)"\n'
         "attempts=$((attempts + 1))\n"
         'printf "%s\\n" "$attempts" > "$REGISTRATION_ATTEMPTS_CAPTURE"\n'
@@ -1509,15 +1537,27 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     fake_codex.write_text(
         "#!/usr/bin/env bash\n"
         'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
-        'printf "credential=%s\\nkeepalive=%s\\n" '
-        '"${LIMEN_CONDUCT_TOKEN-unset}" "${LIMEN_CONDUCT_KEEPALIVE_PID:-}" > "$PROVIDER_ENV_CAPTURE"\n'
+        'printf "credential=%s\\nkeepalive=%s\\nunrelated=%s\\n" '
+        '"${LIMEN_CONDUCT_TOKEN-unset}" "${LIMEN_CONDUCT_KEEPALIVE_PID:-}" '
+        '"${UNRELATED_PRIVATE_VALUE-unset}" > "$PROVIDER_ENV_CAPTURE"\n'
         "sleep 5\n",
         encoding="utf-8",
     )
     fake_codex.chmod(0o755)
+    private_cache = tmp_path / "limen.env"
+    private_cache.write_text(
+        "export LIMEN_CONDUCT_URL=https://broker.example.invalid\n"
+        "export LIMEN_CONDUCT_TOKEN=fixture-only\n"
+        "export UNRELATED_PRIVATE_VALUE=must-not-be-imported\n",
+        encoding="utf-8",
+    )
+    private_cache.chmod(0o600)
     monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
     monkeypatch.setenv("LIMEN_AGENT", "codex")
-    monkeypatch.setenv("LIMEN_CONDUCT_TOKEN", "fixture-only")
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(private_cache))
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
+    monkeypatch.delenv("UNRELATED_PRIVATE_VALUE", raising=False)
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
 
     rendered = CliRunner().invoke(
@@ -1562,6 +1602,7 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     provider_values = dict(line.split("=", 1) for line in provider_env.read_text(encoding="utf-8").splitlines())
     assert provider_values["credential"] == "unset"
     assert provider_values["keepalive"].isdigit()
+    assert provider_values["unrelated"] == "unset"
 
     status_path = capsule / "conduct-keepalive.json"
     deadline = time.monotonic() + 5
@@ -1596,6 +1637,126 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     assert "keepalive did not acknowledge" in denied.stderr
     assert events.read_text(encoding="utf-8").splitlines().count("provider") == 1
     assert not outside_status.exists()
+
+
+def test_kickstart_wrapper_imports_only_the_broker_pair(tmp_path: Path) -> None:
+    cache = tmp_path / "limen.env"
+    cache.write_text(
+        "export LIMEN_CONDUCT_URL=https://broker.example.invalid\n"
+        "export LIMEN_CONDUCT_TOKEN=fixture-only\n"  # allow-secret: inert regression fixture
+        "export UNRELATED_PRIVATE_VALUE=must-not-be-imported\n",
+        encoding="utf-8",
+    )
+    cache.chmod(0o600)
+    capture = tmp_path / "capture.txt"
+    kickstart = tmp_path / "kickstart.sh"
+    kickstart.write_text(
+        "#!/usr/bin/env bash\n"
+        'printf "url=%s\\ntoken=%s\\nunrelated=%s\\n" '
+        '"${LIMEN_CONDUCT_URL-unset}" "${LIMEN_CONDUCT_TOKEN-unset}" '
+        '"${UNRELATED_PRIVATE_VALUE-unset}" > "$CAPTURE"\n',
+        encoding="utf-8",
+    )
+    env = {
+        **os.environ,
+        "CAPTURE": str(capture),
+        "LIMEN_CONDUCT_ENV_FILE": str(cache),
+    }
+    env.pop("LIMEN_CONDUCT_URL", None)
+    env.pop("LIMEN_CONDUCT_TOKEN", None)
+    env.pop("UNRELATED_PRIVATE_VALUE", None)
+
+    launched = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "run-workstream-kickstart.sh"), str(kickstart)],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stderr
+    assert capture.read_text(encoding="utf-8").splitlines() == [
+        "url=https://broker.example.invalid",
+        "token=fixture-only",  # allow-secret: inert regression fixture
+        "unrelated=unset",
+    ]
+
+
+def test_kickstart_wrapper_noops_for_a_fresh_live_capsule_session(tmp_path: Path) -> None:
+    capsule = tmp_path / ".limen-workstream"
+    capsule.mkdir()
+    capture = tmp_path / "provider-started"
+    now = int(time.time())
+    holder = subprocess.Popen(["sleep", "30"])
+    try:
+        (capsule / "conduct-keepalive.json").write_text(
+            json.dumps(
+                {
+                    "schema": "limen.workstream.conduct-keepalive.v1",
+                    "session_id": "fixture-active-session",
+                    "state": "active",
+                    "target_pid": holder.pid,
+                    "keepalive_pid": holder.pid,
+                    "deadline_epoch": now + 600,
+                    "observed_epoch": now,
+                }
+            ),
+            encoding="utf-8",
+        )
+        kickstart = capsule / "kickstart.sh"
+        kickstart.write_text('#!/usr/bin/env bash\n: > "$CAPTURE"\n', encoding="utf-8")
+
+        launched = subprocess.run(
+            ["bash", str(ROOT / "scripts" / "run-workstream-kickstart.sh"), str(kickstart)],
+            env={**os.environ, "CAPTURE": str(capture)},
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        assert launched.returncode == 0, launched.stderr
+        assert launched.stdout.strip() == (
+            "This workstream is already running. Continue in its existing session; no second process was started."
+        )
+        assert not capture.exists()
+    finally:
+        holder.terminate()
+        holder.wait(timeout=2)
+
+
+def test_kickstart_wrapper_does_not_mask_a_stale_keepalive_receipt(tmp_path: Path) -> None:
+    capsule = tmp_path / ".limen-workstream"
+    capsule.mkdir()
+    capture = tmp_path / "provider-started"
+    now = int(time.time())
+    (capsule / "conduct-keepalive.json").write_text(
+        json.dumps(
+            {
+                "schema": "limen.workstream.conduct-keepalive.v1",
+                "session_id": "fixture-stale-session",
+                "state": "active",
+                "target_pid": os.getpid(),
+                "keepalive_pid": os.getppid(),
+                "deadline_epoch": now + 600,
+                "observed_epoch": now - 361,
+            }
+        ),
+        encoding="utf-8",
+    )
+    kickstart = capsule / "kickstart.sh"
+    kickstart.write_text('#!/usr/bin/env bash\n: > "$CAPTURE"\n', encoding="utf-8")
+
+    launched = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "run-workstream-kickstart.sh"), str(kickstart)],
+        env={**os.environ, "CAPTURE": str(capture)},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stderr
+    assert launched.stdout == ""
+    assert capture.exists()
 
 
 def test_workstream_refuses_an_ignored_tracked_receipt_path(tmp_path: Path, monkeypatch) -> None:
