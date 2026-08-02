@@ -2049,7 +2049,13 @@ parameters:
     env: LIMEN_MAIL_SWEEP_LIMIT
     self_update: none
     owner: mail
-    note: "Max most-recent messages inbox_sweep.py reads per account each C_MAIL beat — bounds the AppleScript reads so the sweep is a couple of paged reads, not the whole inbox."
+    note: "Max messages inbox_sweep.py KEEPS per account each C_MAIL beat. It bounds the Python slice, NOT Mail.app's work — `messages of targetMailbox` materializes a scripting object for every message in the store before anything is sliced. LIMEN_MAIL_SWEEP_SINCE_DAYS is the bound that reaches Mail; this one only caps what comes back."
+  LIMEN_MAIL_SWEEP_SINCE_DAYS:
+    default: 14
+    env: LIMEN_MAIL_SWEEP_SINCE_DAYS
+    self_update: none
+    owner: mail
+    note: "Recency window (days) inbox_sweep.py enumerates per account each C_MAIL beat — the ONLY bound that reaches Mail.app, via the AppleScript `whose date received > cutoff` predicate, so Mail materializes just the in-window slice. Unset/0 restores the unbounded selector that hung Mail's main thread for 421s (Mail_2026-08-02-101334.hang), escalating 1/day to 4/day as the inbox grew; `timeout` does not cover it, because killing the osascript client cannot cancel an Apple Event already executing inside Mail. 14 days covers new arrivals — the backlog was already swept. Requires inbox_sweep.py --since-days (organvm/universal-mail--automation#189)."
   LIMEN_MAIL_GMAIL_ARCHIVE:
     default: 1
     env: LIMEN_MAIL_GMAIL_ARCHIVE
@@ -4685,6 +4691,12 @@ parameters:
     self_update: none
     owner: verify
     note: "Poll interval (seconds) between merge-policy.sh runs inside scripts/await-pr.sh. 45 s keeps a full 20-min wait under ~30 GitHub reads while every poll prints a loud one-liner."
+  LIMEN_AWAIT_PR_MAX_OBS_FAILURES:
+    default: 3
+    env: LIMEN_AWAIT_PR_MAX_OBS_FAILURES
+    self_update: none
+    owner: verify
+    note: "Consecutive FAILED queue observations scripts/await-pr.sh tolerates before QUEUE-FAILED becomes terminal. A poll that could not be completed is not evidence about the queue — the mirror of pr-debt-trend.py's 'silence is not improvement'. One `dial tcp …: i/o timeout` was terminal here until 2026-08-02, and because the waiter never re-enqueues after a terminal verdict it stranded #1775 and #1777 at queue positions 3 and 2; both merged untouched minutes later. 3 rides out a blip; LIMEN_AWAIT_PR_TIMEOUT still bounds the wait, so this can never become an unbounded retry."
   LIMEN_MERGE_POLICY_BIN:
     default: ""                # empty = scripts/merge-policy.sh; set only in tests
     env: LIMEN_MERGE_POLICY_BIN
@@ -4896,6 +4908,18 @@ parameters:
     note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Hardcoded default so a zero-env beat still reaches him; override only to redirect the brief to a different self address. Never a third party."
 
   # --- DIVRNAL: the three-phase daily organ that cuts itself --------------------
+  LIMEN_PR_DEBT_WINDOW_DAYS:
+    default: 14
+    env: LIMEN_PR_DEBT_WINDOW_DAYS
+    self_update: none
+    owner: gitvs
+    note: "Days of the committed observation series scripts/pr-debt-trend.py compares across. IF-AMALGAMATION's ideal is a monotonic TREND, not a level, so the probe needs a span; the window is a slice of the SERIES rather than of the calendar, because observations are irregular and comparing two arbitrary points is not a trend."
+  LIMEN_PR_DEBT_MAX_AGE_DAYS:
+    default: 3
+    env: LIMEN_PR_DEBT_MAX_AGE_DAYS
+    self_update: none
+    owner: gitvs
+    note: "How stale the newest open-PR observation may be before scripts/pr-debt-trend.py fails on the SILENCE itself. The half a naive trend predicate gets wrong: a debt series nobody records is not a debt trend that improved. Measured 2026-08-02 the newest observation was 8 days old because the producer (`gitvs.py pr-debt`) is wired to nothing — owner of record GITVS-UNCAPPED-PR-DEBT-0715, which the diurnal morning page names as the board's critical next action."
   LIMEN_DIURNAL:
     default: "1"
     env: LIMEN_DIURNAL
@@ -4914,6 +4938,18 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_DIURNAL_REAP_MAX:
+    default: 3
+    env: LIMEN_DIURNAL_REAP_MAX
+    self_update: none
+    owner: diurnal
+    note: "How many of the organ's own still-open page PRs it merges per run. ship-docs.sh exits 2 when merge-policy has not cleared within its wait, handing the PR to the beat's merge rung (drain.sh) — which sits below the pause gate in heartbeat-loop.sh and had not run since 2026-07-22, so five CLEARED non-deploy PRs accumulated across three days. The organ now closes its own loop; this caps the work so a backlog cannot stall the beat, and the remainder is retried next phase."
+  LIMEN_DIURNAL_REAP_TIMEOUT:
+    default: 600
+    env: LIMEN_DIURNAL_REAP_TIMEOUT
+    self_update: none
+    owner: diurnal
+    note: "Timeout (seconds) for each scripts/await-pr.sh --merge invocation during the reap. Separate from LIMEN_DIURNAL_TIMEOUT because a merge-queue round-trip is minutes, not seconds, while an emission is seconds. await-pr.sh is the one sanctioned waiter and carries its own hard deadline; this bounds the subprocess around it. Past the deadline the PR simply stays open and is retried."
   LIMEN_DIURNAL_SHIP:
     default: "1"
     env: LIMEN_DIURNAL_SHIP
@@ -4938,18 +4974,36 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Local hour (0-23) at or after which the evening close becomes due. Evening scores every claim held/missed/noop, writes the carry for tomorrow, and is the ONLY phase with cut authority."
-  LIMEN_DIURNAL_CLAIM_MAX:
+  LIMEN_DIURNAL_CLAIM_RENDER_MAX:
     default: 5
-    env: LIMEN_DIURNAL_CLAIM_MAX
+    env: LIMEN_DIURNAL_CLAIM_RENDER_MAX
     self_update: none
     owner: diurnal
-    note: "Maximum falsifiable claims the morning emits. A claim is 'section X's metric will fall below N today' — scoring a claim and scoring a section are ONE measurement, which is what makes the cut loop evidence-based rather than aesthetic."
+    note: "Maximum claims the PAGE lists; the organ scores every eligible section regardless, and an elision always says how many it hid. Replaces the retired CLAIM_MAX parameter, which capped build_claims() itself — and because the claim list is also the score list, that display bound was silently bounding governance: diurnal.yaml declared cuttable on 11 sections while section-scores.json held 4, so the other 7 could never accrue a noop streak and could never be cut. Rendering is a rendering concern; a parameter that shortens a briefing must not decide what the organ is allowed to measure."
+  LIMEN_DIURNAL_BLIND_THRESHOLD:
+    default: 5
+    env: LIMEN_DIURNAL_BLIND_THRESHOLD
+    self_update: none
+    owner: diurnal
+    note: "Consecutive ENGAGED days a cuttable section may render STALE before the evening proposes it. Sibling of LIMEN_DIURNAL_DORMANT_THRESHOLD — same question (how long may a section tell you nothing?), different cause, kept separate so neither counter's name drifts from what it counts. A stale section is skipped by build_claims(), so it never scores and its noop_streak never moves — staleness was a shield that made the sections most worth examining the only ones the cut could not reach. This counter is the missing measurement, and it PROPOSES rather than cuts: 'the producer is dead' and 'the section is worthless' are different findings, and cutting would silence the only evidence the producer died."
   LIMEN_ROOT_VOICE_FLOOR:
     default: 5
     env: LIMEN_ROOT_VOICE_FLOOR
     self_update: none
     owner: tabularius
     note: "Voice stamps a PRIMARY checkout must carry before scripts/_root.py calls it the live organism. Defence in depth behind the exact test (a linked worktree's .git is a gitdir-pointer FILE, a checkout's is a DIRECTORY), covering the root that is a real checkout but not the body: a second clone, a fresh CI checkout, a restored backup. Measured 2026-07-31 — the live body carries 61 stamps, a worktree touched by one scheduled sensor carries 1 — so this sits deliberately nowhere near either edge. Raising it cannot make a worktree pass; only the .git test decides that."
+  LIMEN_DIURNAL_DORMANT_THRESHOLD:
+    default: 5
+    env: LIMEN_DIURNAL_DORMANT_THRESHOLD
+    self_update: none
+    owner: diurnal
+    note: "Consecutive ENGAGED days a cuttable section may sit at its metric floor — fresh source, but nothing falsifiable to claim, so it is neither scored nor blind — before the evening proposes it. Found by driving the blind-streak fix rather than by reading it: such a section carried a record with zero counters and read as reachable while remaining uncuttable forever. It PROPOSES rather than cuts because a zero can mean the section is dead OR that its subject is healthy (mail.owed == 0 is good news), and a cut section auto-restores only on an exception, never on a value change — so cutting a healthy zero would hide the row the day it finally matters."
+  LIMEN_DIURNAL_PROPOSAL_MAX_AGE_DAYS:
+    default: 14
+    env: LIMEN_DIURNAL_PROPOSAL_MAX_AGE_DAYS
+    self_update: none
+    owner: diurnal
+    note: "Days a proposal the evening raised may sit in logs/diurnal/proposals.json with a null `disposition` before done-diurnal.sh goes red. Bounds the gap this window was measured at on 2026-08-02: the organ had printed the same three retire-or-repair proposals on every evening page since 2026-07-31 while their sources aged to 10, 22 and 36 days — narration, not a loop, because nothing read the list back. The clock does NOT grant deletion authority; the retire-PR stays the hand step organs.yaml declares. It only makes the judgment owed on a date. A proposal that stops recurring auto-resolves, so this can never stay red on a condition already fixed."
   LIMEN_DIURNAL_CUT_THRESHOLD:
     default: 5
     env: LIMEN_DIURNAL_CUT_THRESHOLD

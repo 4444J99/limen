@@ -156,6 +156,29 @@ check "queue wait is bounded"         2 "QUEUE" --timeout 2 --merge
 if [ "$(grep -c -- "pr merge 7 .*--auto --match-head-commit deadbeefcafe" "$GHLOG" 2>/dev/null || true)" != "1" ]; then
   echo "  FAIL bounded queue wait re-enqueued instead of waiting once"; fail=$((fail+1))
 fi
+
+# An UNREADABLE poll is not a verdict about the queue. `BLIP` hits the stub's unknown-token arm and
+# exits 1 — the shape of a real `dial tcp …: i/o timeout`. Before this, one such miss was terminal,
+# and since the waiter never re-enqueues after a terminal verdict it stranded two healthy queued
+# PRs (#1775 at position 3, #1777 at position 2) that merged untouched minutes later.
+export GH_TOKENS="QUEUED BLIP MERGED"
+check "a single unreadable poll is retried, not fatal" 0 "QUEUE" --interval 1 --merge
+case "$out" in
+  (*OBSERVATION-MISSED*MERGED*) : ;;
+  (*) echo "  FAIL a transient observation miss must be named, then survived to MERGED"; fail=$((fail+1)) ;;
+esac
+if [ "$(grep -c -- "pr merge 7 .*--auto --match-head-commit deadbeefcafe" "$GHLOG" 2>/dev/null || true)" != "1" ]; then
+  echo "  FAIL retrying an observation re-enqueued the PR"; fail=$((fail+1))
+fi
+
+# Tolerance is bounded: a sustained outage is still terminal, so the waiter can never mask a
+# genuinely unobservable queue by retrying forever.
+export GH_TOKENS="QUEUED BLIP BLIP BLIP"
+check "sustained unreadability is still terminal" 1 "QUEUE" --interval 1 --merge
+case "$out" in
+  (*QUEUE-FAILED*consecutive*) : ;;
+  (*) echo "  FAIL exhausted observation retries must report QUEUE-FAILED with the miss count"; fail=$((fail+1)) ;;
+esac
 unset GH_TOKENS
 
 # pause marker: prohibitions mentioning merge refuse BEFORE the first poll

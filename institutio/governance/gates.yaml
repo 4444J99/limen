@@ -489,6 +489,20 @@ gates:
     owner: mail
     note: "MAIL-TIERS registry drift: the correspondence organ's send-tier decision is declared data (mail-tiers.yaml), the fourth VIGILIA-shaped panel. Asserts schema, well-formed no_reply suppressors, the hold-covers-{legal,money,verify_first} safety invariant that makes auto-send safe by construction, and bracket-free SAFE templates; when the UMA checkout is present it cross-checks every dangerous protocol class is held."
 
+  check-board-partition:
+    command: "python3 scripts/check-board-partition.py --check"
+    paths:
+      - "tasks.yaml"
+      - "institutio/github/estate.yaml"
+      - "organs/consulting/constellation/registry.yaml"
+      - "value-repos.json"
+      - "institutio/governance/board-partition-baseline.txt"
+      - "scripts/check-board-partition.py"
+      - "cli/src/limen/partition_lanes.py"
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: gitvs
+    note: "BOARD-PARTITION: tasks.yaml is 5.8MB, tracked, and in a PUBLIC repo — the largest published artifact in the estate and, until this gate, a consumer of no publication policy, while publication-policy.py's own doctrine already said named third parties stay off a public head. A partner lane is DERIVED (constellation register attaches a person AND estate classes it private), never a fourth list. Three finding classes: `row` (a task attributed to a partner lane), `content` (a row elsewhere naming one), and `slug` — the root cause, where the board still spells a lane with the owner it had before its 2026-07 transfer, so estate.yaml's private override misses and the organvm/** glob classes it governed_public. One repository, two names, opposite verdicts; estate.yaml:750 had written that hazard down in prose a month before it fired. Findings are baselined because agents never write the board (TABVLARIVS is its only logical writer) — the gate cannot fix what it finds, so it pins the known leak and fails on anything new. The baseline may only shrink."
+
   check-effectors:
     command: "python3 scripts/check-effectors.py"
     # Both `dir/*.py` AND `dir/**/*.py` for every scanned root: in this glob dialect `**` requires

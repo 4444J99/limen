@@ -23,13 +23,26 @@ TWO DOCTRINES, both inherited from institutio/governance/ideal-forms.yaml:
      cuttable: false, enforced by scripts/check-diurnal.py.
 
 CLAIMS AND SECTION SCORES ARE THE SAME MEASUREMENT. A claim is "section X's metric will
-decrease today." Evening re-reads the metric: decreased = held, unchanged = noop,
-increased = missed. A noop claim IS a noop section — which is what accrues toward a cut.
+decrease today" (or, where `acted_when: metric_changed`, "will move at all"). Evening
+re-reads the metric: decreased = held, unchanged = noop, increased = missed. A noop claim
+IS a noop section — which is what accrues toward a cut.
+
+BUT A SECTION CAN FAIL TO EARN ITS PLACE WITHOUT EVER EMITTING A CLAIM, and that gap is
+what let `cuttable: true` sit on 11 sections while only 3 could ever be cut. So every
+cuttable section advances exactly ONE counter per engaged evening:
+
+  noop_streak     it was claimed and did not move        → the evening may CUT it
+  blind_streak    its source was stale, so no claim      → PROPOSE: repair or retire
+  dormant_streak  fresh, but its metric sat at the floor → PROPOSE: confirm or retire
+
+Only the first auto-cuts. The other two describe conditions the organ can observe but not
+adjudicate — a dead producer and a healthy zero look identical from here — so they become
+proposals that need a PR.
 
 Registry:  institutio/governance/diurnal.yaml
 Predicate: scripts/check-diurnal.py
 Emissions: docs/diurnal/YYYY-MM-DD.md (marker-delimited; human text outside survives)
-State:     logs/diurnal/{state,section-scores}.json, ledger.jsonl, cuts.jsonl
+State:     logs/diurnal/{state,section-scores,proposals}.json, ledger.jsonl, cuts.jsonl
 """
 
 from __future__ import annotations
@@ -334,20 +347,40 @@ def r_absent(root: Path, spec: dict, ctx: dict) -> Rendered:
 # ── loop renderers: claims, scoring, cuts, carry ───────────────────────────────────
 
 
+def _render_cap(rows: list, lines: list[str]) -> list[str]:
+    """Bound what the PAGE shows without bounding what the ORGAN scores.
+
+    Every elision says how much it elided. A briefing that silently shows 5 of 11 is how the
+    render cap passed for a score cap in the first place — the page looked complete.
+    """
+    cap = _int("LIMEN_DIURNAL_CLAIM_RENDER_MAX", 5)
+    if len(rows) <= cap:
+        return lines
+    return lines[:cap] + [f"… and {len(rows) - cap} more scored, not shown (all {len(rows)} accrue streaks)"]
+
+
 def r_claims(root: Path, spec: dict, ctx: dict) -> Rendered:
     claims = ctx.get("claims") or []
     if not claims:
         return Rendered("claims", spec["title"], ["no falsifiable claim available today"])
-    lines = [f"{c['id']}. {c['text']}" for c in claims]
-    return Rendered("claims", spec["title"], lines)
+    return Rendered("claims", spec["title"], _render_cap(claims, [f"{c['id']}. {c['text']}" for c in claims]))
+
+
+# What MOVED is the news; a noop is the absence of news. When the render cap elides, it must
+# elide noops — the reverse would hide the day's only real signal behind sections that did nothing.
+_VERDICT_ORDER = {"missed": 0, "held": 1, "noop": 2}
+
+
+def _by_news(scored: list[dict]) -> list[dict]:
+    return sorted(scored, key=lambda s: (_VERDICT_ORDER.get(s["verdict"], 3), s["id"]))
 
 
 def r_claim_midflight(root: Path, spec: dict, ctx: dict) -> Rendered:
     scored = ctx.get("midflight") or []
     if not scored:
         return Rendered("claims_midflight", spec["title"], ["no morning emission to test"])
-    lines = [f"{s['id']}. [{s['verdict']}] {s['text']}" for s in scored]
-    return Rendered("claims_midflight", spec["title"], lines)
+    lines = [f"{s['id']}. [{s['verdict']}] {s['text']}" for s in _by_news(scored)]
+    return Rendered("claims_midflight", spec["title"], _render_cap(scored, lines))
 
 
 def r_drift(root: Path, spec: dict, ctx: dict) -> Rendered:
@@ -362,9 +395,12 @@ def r_claim_scores(root: Path, spec: dict, ctx: dict) -> Rendered:
         return Rendered("score", spec["title"], ["no morning emission to score"])
     tally = {"held": 0, "missed": 0, "noop": 0}
     lines = []
-    for s in scored:
+    for s in _by_news(scored):
         tally[s["verdict"]] = tally.get(s["verdict"], 0) + 1
         lines.append(f"{s['id']}. [{s['verdict']}] {s['text']} ({s['was']} → {s['now']})")
+    # The tally counts EVERY scored section; only the per-claim listing is capped. A summary
+    # derived from the visible rows would understate the day and mis-denominate the streaks.
+    lines = _render_cap(scored, lines)
     lines.append(f"— held {tally['held']} · missed {tally['missed']} · noop {tally['noop']}")
     return Rendered("score", spec["title"], lines)
 
@@ -394,8 +430,13 @@ def r_cuts(root: Path, spec: dict, ctx: dict) -> Rendered:
         lines.append(f"CUT {c['section']} — {c['reason']} (reverse: diurnal.py --uncut {c['section']})")
     for c in restored:
         lines.append(f"RESTORED {c} — it raised an exception while cut")
+    # The AGE is the whole point of the proposal book: an undated "needs a PR" reads the same on
+    # day 1 and day 40, which is how three of these accumulated to 10, 22 and 36 days unread.
+    book = ctx.get("proposal_book") or {}
     for p in proposed:
-        lines.append(f"PROPOSE {p['what']} — {p['reason']} (needs a PR)")
+        first = (book.get(p["what"]) or {}).get("first_seen")
+        since = f" — open since {first}" if first else ""
+        lines.append(f"PROPOSE {p['what']} — {p['reason']} (needs a PR{since})")
     return Rendered("cuts", spec["title"], lines or ["nothing earned a cut today"])
 
 
@@ -551,28 +592,49 @@ def render_phase(root: Path, sections: dict, phase: str, ctx: dict) -> list[Rend
     return out
 
 
-def build_claims(root: Path, sections: dict, rendered: list[Rendered], limit: int) -> list[dict]:
+def build_claims(root: Path, sections: dict, rendered: list[Rendered]) -> list[dict]:
     """A claim is 'section X's metric will decrease today' — falsifiable, and identical to
-    the section score, so scoring a claim and scoring a section are one measurement."""
+    the section score, so scoring a claim and scoring a section are one measurement.
+
+    EVERY eligible section is claimed. There is deliberately no cap here, and that is the fix
+    for a defect this function shipped with: it used to `break` at a now-retired CLAIM_MAX
+    parameter (5), written to keep the briefing short. But the claim list is also the score
+    list, and the score list is what accrues noop streaks, and noop streaks are the only thing
+    that fires a cut. A parameter meant to bound the PAGE was silently bounding the ORGAN'S
+    GOVERNANCE: `diurnal.yaml` declared `cuttable: true` on 11 sections, section-scores.json
+    held 4, and the other 7 could never accrue a streak, so they could never be cut — forever,
+    invisibly. Length is a rendering concern; see LIMEN_DIURNAL_CLAIM_RENDER_MAX in r_claims().
+
+    BOTH declared `acted_when` rules are honoured. check-diurnal.py's check C — "THE LOAD-BEARING
+    RULE: cuttable: true ⟹ metric AND acted_when present" — admits `metric_changed`, and two
+    sections use it (`budget.runs_remaining`, `revenue.received_count`) precisely because a FALL
+    is bad news there, not progress. This function only ever implemented `metric_decreased`, so
+    both passed the load-bearing rule, declared themselves cuttable, and were unclaimable. Note
+    the floor differs by rule on purpose: you cannot claim a decrease below zero, but "changes
+    from 0" is the most consequential claim the organ can make — it is IF-FIRST-DOLLAR.
+    """
     claims = []
     by_key = {r.key: r for r in rendered}
     for key, spec in sections.items():
-        if spec.get("acted_when") != "metric_decreased" or spec.get("metric") is None:
+        kind = spec.get("acted_when")
+        if kind not in ("metric_decreased", "metric_changed") or spec.get("metric") is None:
             continue
         r = by_key.get(key)
-        if r is None or r.metric is None or r.metric <= 0 or r.stale:
+        if r is None or r.metric is None or r.stale:
             continue
+        if r.metric < 0 or (kind == "metric_decreased" and r.metric <= 0):
+            continue
+        verb = "falls below" if kind == "metric_decreased" else "changes from"
         claims.append(
             {
                 "id": len(claims) + 1,
                 "section": key,
                 "metric": spec["metric"],
+                "acted_when": kind,
                 "was": r.metric,
-                "text": f"{spec['title']}: {spec['metric']} falls below {r.metric}",
+                "text": f"{spec['title']}: {spec['metric']} {verb} {r.metric}",
             }
         )
-        if len(claims) >= limit:
-            break
     return claims
 
 
@@ -582,8 +644,14 @@ def score_claims(claims: list[dict], rendered: list[Rendered]) -> list[dict]:
     for c in claims:
         r = by_key.get(c["section"])
         now = r.metric if r is not None else None
+        # Claims written before `acted_when` rode on the claim default to the original rule, so a
+        # morning emitted by the previous version still scores correctly in tonight's evening.
         if now is None:
             verdict = "noop"
+        elif c.get("acted_when", "metric_decreased") == "metric_changed":
+            # No direction is declared for this rule, so there is no wrong way to move: the only
+            # failure it can express is not moving at all. Never emits `missed` — by design.
+            verdict = "held" if now != c["was"] else "noop"
         elif now < c["was"]:
             verdict = "held"
         elif now > c["was"]:
@@ -595,10 +663,22 @@ def score_claims(claims: list[dict], rendered: list[Rendered]) -> list[dict]:
 
 
 def apply_cuts(
-    root: Path, sections: dict, scored: list[dict], scores: dict, threshold: int, max_per_day: int, engaged: bool
+    root: Path,
+    sections: dict,
+    scored: list[dict],
+    scores: dict,
+    threshold: int,
+    max_per_day: int,
+    engaged: bool,
+    rendered: list[Rendered] | None = None,
 ) -> tuple[list, list]:
     """Evening authority. Auto-cuts only this organ's OWN sections; fleet-wide changes
-    become proposals that need a PR."""
+    become proposals that need a PR.
+
+    `rendered` is the evening's re-probe of the morning sections — the SAME objects the page is
+    built from, so a section counted blind below is a section the reader saw rendered as STALE.
+    Deriving staleness a second time here would let the counter and the page disagree.
+    """
     applied, proposed = [], []
     if not engaged:
         return applied, proposed  # unscored day — no streak moves, no cut
@@ -623,6 +703,62 @@ def apply_cuts(
             append_jsonl(
                 state_dir(root) / "cuts.jsonl", {"ts": rec["cut_at"], "action": "cut", "section": key, "reason": reason}
             )
+    # A cuttable section reading a dead source is telling you nothing, every day — and the noop
+    # machinery above cannot see it. build_claims() skips a stale section, so it is never claimed,
+    # never scored, and its noop_streak never moves. Staleness was therefore a SHIELD: the sections
+    # most worth examining were the only ones the cut could never reach, while the handful that
+    # actually worked were the only candidates. `blind_streak` is the missing counter.
+    #
+    # It PROPOSES and never cuts. "The producer is dead" and "the section is worthless" are
+    # different findings with different repairs, and nothing here can tell them apart — cutting
+    # the section would silence the only evidence that the producer died.
+    # DORMANT is the third way a section escapes the cut, and it was found by driving the fix
+    # rather than by reading it: a fresh, cuttable section whose metric sits at its floor emits no
+    # claim ("falls below 0" is not falsifiable), so it is neither scored nor blind. It would carry
+    # a record with two zero counters and read as reachable while remaining uncuttable forever.
+    #
+    # It is PROPOSED, never cut, for a reason the blind case does not share: a zero can mean the
+    # section is dead OR that its subject is in a healthy state (mail.owed == 0 is good news).
+    # Nothing here can tell those apart, and a cut section only auto-restores on an exception —
+    # not on a value change — so cutting a healthy zero would hide the row the day it matters.
+    blind_threshold = _int("LIMEN_DIURNAL_BLIND_THRESHOLD", 5)
+    dormant_threshold = _int("LIMEN_DIURNAL_DORMANT_THRESHOLD", 5)
+    claimed = {s["section"] for s in scored}
+    for r in rendered or []:
+        spec = sections.get(r.key) or {}
+        if not spec.get("cuttable"):
+            continue
+        rec = scores.setdefault(r.key, {"noop_streak": 0, "cut": False})
+        # Exactly one of the three counters advances per engaged evening, so a cuttable section
+        # can never again sit in a gap between them — which is what check 7b now asserts.
+        if r.stale:
+            rec["blind_streak"], rec["dormant_streak"] = int(rec.get("blind_streak", 0)) + 1, 0
+            if rec["blind_streak"] >= blind_threshold:
+                proposed.append(
+                    {
+                        "what": f"section:{r.key}",
+                        "reason": (
+                            f"blind {rec['blind_streak']} consecutive engaged days — "
+                            f"{spec.get('source') or 'its source'} never went fresh; "
+                            "repair the producer or retire the section"
+                        ),
+                    }
+                )
+        elif r.key in claimed:
+            rec["blind_streak"] = rec["dormant_streak"] = 0
+        else:
+            rec["blind_streak"], rec["dormant_streak"] = 0, int(rec.get("dormant_streak", 0)) + 1
+            if rec["dormant_streak"] >= dormant_threshold:
+                proposed.append(
+                    {
+                        "what": f"section:{r.key}",
+                        "reason": (
+                            f"dormant {rec['dormant_streak']} consecutive engaged days — fresh source, "
+                            f"but {spec.get('metric')} sat at its floor and made no falsifiable claim; "
+                            "confirm the quiet is real or retire the section"
+                        ),
+                    }
+                )
     # Fleet-wide: a source stale past a week is a fleet problem, not a briefing problem.
     for key, spec in sections.items():
         src = spec.get("source")
@@ -635,6 +771,46 @@ def apply_cuts(
 
 
 # ── markdown ───────────────────────────────────────────────────────────────────────
+
+
+def record_proposals(root: Path, proposed: list[dict], today: str) -> dict:
+    """Give the evening's proposals a durable home, an AGE, and a disposition.
+
+    Before this they existed for the length of one render: apply_cuts() built the list, emit()
+    put it on ctx, r_cuts() printed it into the page, and nothing read it again — no file, no
+    dedup, no age, no owner. The organ had been printing "retire or repair logs/omega.json" on
+    every evening page since 2026-07-31 while that file aged from 8 days stale to 10, and
+    printing it is all that ever happened. Same species as the defects this arc opened with, one
+    level up: a value is computed and consumed by nothing.
+
+    A keyed map rather than an append-only log, because a proposal has STATE — open until
+    someone disposes of it — and `disposition` is a field a human edits by hand. The history
+    still lands, as `action: "propose"` rows in the cuts.jsonl the organ already writes, so
+    nothing forks a new substrate to hold it.
+
+    A proposal that stops recurring is auto-resolved. The condition went away — the producer was
+    repaired, the section was retired — and a gate that stayed red on a solved problem would be
+    the same defect wearing the opposite sign. Only ENGAGED evenings call this, so a week away
+    cannot resolve every open proposal by simply not observing them.
+    """
+    path = state_dir(root) / "proposals.json"
+    book = _load_json(path)
+    book = book if isinstance(book, dict) else {}
+    seen = {p["what"] for p in proposed}
+    for p in proposed:
+        rec = book.get(p["what"])
+        if not isinstance(rec, dict):
+            rec = book[p["what"]] = {"first_seen": today, "disposition": None}
+            append_jsonl(
+                state_dir(root) / "cuts.jsonl",
+                {"ts": today, "action": "propose", "what": p["what"], "reason": p["reason"]},
+            )
+        rec["last_seen"], rec["reason"] = today, p["reason"]
+    for what, rec in book.items():
+        if what not in seen and isinstance(rec, dict) and rec.get("disposition") is None:
+            rec["disposition"] = f"resolved {today} — the condition stopped recurring"
+    path.write_text(json.dumps(book, indent=2, sort_keys=True), encoding="utf-8")
+    return book
 
 
 def render_markdown(phase: str, rendered: list[Rendered], stamp: str) -> str:
@@ -763,7 +939,13 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
                 f"{s['text']} — worsened ({s['was']} → {s['now']})" for s in scored if s["verdict"] == "missed"
             ]
         else:
-            engaged = engaged_today(root)
+            # Bound here and CARRIED to the ledger below. The first draft consumed this only as an
+            # apply_cuts() argument and dropped it, so the one fact the whole cut runway is
+            # denominated in — how many days actually earned a score — existed for the length of a
+            # function call and was never written down. done-diurnal.sh then read an `engaged_days`
+            # key that no writer produced, and its `.get(..., 0)` default reported "0 days, not
+            # there yet" instead of "this check has no writer" for as long as it would ever run.
+            engaged = ctx["engaged"] = engaged_today(root)
             applied, proposed = apply_cuts(
                 root,
                 sections,
@@ -772,15 +954,20 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
                 _int("LIMEN_DIURNAL_CUT_THRESHOLD", 5),
                 _int("LIMEN_DIURNAL_CUT_MAX_PER_DAY", 1),
                 engaged,
+                probe,
             )
             ctx["cuts_applied"], ctx["cuts_proposed"] = applied, proposed
+            # Only reached when engaged — apply_cuts() returns ([], []) otherwise, so an away-week
+            # can neither manufacture a proposal nor resolve one by failing to observe it.
+            if engaged and not dry_run:
+                ctx["proposal_book"] = record_proposals(root, proposed, today)
             ctx["carry"] = [s["text"] for s in scored if s["verdict"] in ("missed", "noop")][:5]
             if not engaged:
                 ctx["carry"].insert(0, "day UNSCORED (no commits) — no streak moved, no cut fired")
 
     rendered = render_phase(root, sections, phase, ctx)
     if phase == "morning":
-        ctx["claims"] = build_claims(root, sections, rendered, _int("LIMEN_DIURNAL_CLAIM_MAX", 5))
+        ctx["claims"] = build_claims(root, sections, rendered)
         rendered = render_phase(root, sections, phase, ctx)  # re-render with claims populated
 
     block = render_markdown(phase, rendered, today)
@@ -800,15 +987,19 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
     (state_dir(root) / f"{today}-{phase}.json").write_text(
         json.dumps(sidecar, indent=2, sort_keys=True), encoding="utf-8"
     )
-    append_jsonl(
-        state_dir(root) / "ledger.jsonl",
-        {
-            "ts": sidecar["generated_at"],
-            "phase": phase,
-            "sections": len(rendered),
-            "cuts": len(ctx.get("cuts_applied") or []),
-        },
-    )
+    # `engaged` rides only on evening rows — it is the evening that scores, and only a scored day
+    # advances the cut runway. Its ABSENCE on a morning/midday row is meaningful, not missing data,
+    # so it is written conditionally rather than defaulted to False: a reader counting the runway
+    # must not be able to mistake "this phase does not score" for "this day earned nothing."
+    row = {
+        "ts": sidecar["generated_at"],
+        "phase": phase,
+        "sections": len(rendered),
+        "cuts": len(ctx.get("cuts_applied") or []),
+    }
+    if "engaged" in ctx:
+        row["engaged"] = bool(ctx["engaged"])
+    append_jsonl(state_dir(root) / "ledger.jsonl", row)
     save_scores(root, scores)
     state = load_state(root)
     state.setdefault("last_run", {})[phase] = today
@@ -923,8 +1114,17 @@ def _digest(path: Path) -> str:
         return ""
 
 
-def shipped_receipts(root: Path) -> dict:
-    return _load_json(root / "logs" / "diurnal" / "shipped.json") or {}
+def shipped_receipts(root: Path) -> dict[str, dict]:
+    """Normalize to `{rel: {"digest": ..., "pr": ...}}`, accepting the original bare-digest form.
+
+    The first shape was `{rel: digest}`, which recorded THAT a page was handed off but not WHERE
+    it went — so nothing could ever ask whether the handoff completed. That is the whole defect
+    below: five CLEARED PRs sat open for two days while this file reported every page shipped.
+    """
+    out: dict[str, dict] = {}
+    for rel, val in (_load_json(root / "logs" / "diurnal" / "shipped.json") or {}).items():
+        out[rel] = {"digest": val} if isinstance(val, str) else dict(val)
+    return out
 
 
 def unshipped_pages(root: Path) -> list[str]:
@@ -952,20 +1152,75 @@ def unshipped_pages(root: Path) -> list[str]:
         if not rel.endswith(".md") or rel.endswith("/README.md"):
             continue
         path = root / rel
-        if path.is_file() and receipts.get(rel) != _digest(path):
+        if path.is_file() and receipts.get(rel, {}).get("digest") != _digest(path):
             pages.append(rel)
     return sorted(set(pages))
 
 
-def ship_pages(root: Path) -> int:
+def reap_shipped(root: Path, receipts: dict[str, dict]) -> int:
+    """Merge the organ's OWN still-open page PRs. Returns how many reached MERGED.
+
+    ship-docs.sh self-merges only if merge-policy clears within its own wait; otherwise it exits 2
+    and hands the PR to "the beat's merge rung, per the charter". That rung is drain.sh, called at
+    scripts/heartbeat-loop.sh:466 — 113 lines BELOW the paused branch's `continue` at line 353.
+    Autonomy has been window-paused since 2026-07-22, so the named owner has not run once. Five
+    CLEARED, non-deploy, organ-authored PRs sat open across three days while shipped.json reported
+    every page published: the receipt recorded the HANDOFF, not the LANDING.
+
+    So the organ closes its own loop, which is the ownership its own module docstring claims. This
+    is not a general un-pausing and deliberately is not one:
+
+      * scope — only PRs this organ opened, recorded by number in its own receipts;
+      * class — ship-docs.sh REFUSES deploy-trigger paths, so no page here can reach the live site;
+      * authority — the gate is _merge_prohibited(), the pause MARKER, exactly as the shipping path
+        already reads it and for the reason written there: a window pause withdraws dispatch, not
+        the machine's record of what it already observed. await-pr.sh independently refuses to
+        start under a merge-prohibiting marker, so the guard holds even if this one were wrong.
+
+    Bounded on purpose. merge-policy is only consulted for PRs still open, at most
+    LIMEN_DIURNAL_REAP_MAX per run, and the merge itself goes through await-pr.sh — the one
+    sanctioned waiter, with its own hard deadline. A hand-rolled poll loop here is exactly the
+    banned pattern (the 2026-07-15 endless-watcher incident); anything past the deadline stays a
+    PR and is retried next phase.
+    """
+    prs = sorted({r["pr"] for r in receipts.values() if isinstance(r.get("pr"), int)})
+    if not prs:
+        return 0
+    merged = 0
+    for pr in prs[: _int("LIMEN_DIURNAL_REAP_MAX", 3)]:
+        rc, out = _run(f"gh pr view {pr} --json state --jq .state", root, timeout=60)
+        if rc != 0 or out.strip() != "OPEN":
+            continue  # already merged or closed — the receipt is stale, not the PR
+        rc, _ = _run(f"bash {shlex.quote(str(root / 'scripts' / 'merge-policy.sh'))} {pr}", root, timeout=180)
+        if rc != 0:
+            print(f"diurnal: PR #{pr} not cleared (merge-policy exit {rc}) — left for the next phase")
+            continue
+        rc, out = _run(
+            f"bash {shlex.quote(str(root / 'scripts' / 'await-pr.sh'))} {pr} --merge",
+            root,
+            timeout=_int("LIMEN_DIURNAL_REAP_TIMEOUT", 600),
+        )
+        if rc == 0:
+            merged += 1
+            print(f"diurnal: PR #{pr} MERGED — the page is on main")
+        else:
+            print(f"diurnal: PR #{pr} still open after await-pr (exit {rc}) — retried next phase")
+    return merged
+
+
+def ship_pages(root: Path, phase: str = "evening") -> int:
     """Land emitted pages on main through the sanctioned docs path. Never fails the beat.
 
     ship-docs.sh is the charter's answer to this exact class (it calls itself the side-door
     closer): named files only — never `git add -A` — onto a fresh branch cut from origin/main in
     an isolated worktree, PR opened, self-merged the moment merge-policy.sh clears. It refuses
-    deploy-trigger paths outright, so a diurnal page can never blind-deploy the live site. On
-    timeout the PR still exists and its owner is the beat's merge rung, per the charter — this
-    hands off rather than babysitting.
+    deploy-trigger paths outright, so a diurnal page can never blind-deploy the live site.
+
+    Shipping is EVENING-ONLY for the current day. Every phase rewrites the page and regenerates
+    INDEX.md, so a digest-keyed re-ship — correct behavior when pages land — opened three PRs for
+    one file on 2026-08-01 while none of them merged. The page is only complete at evening; morning
+    and midday are intermediate states of the same file. Earlier days still ship from any phase, so
+    a crashed evening is caught the next morning rather than waiting a full day.
     """
     if not _on("LIMEN_DIURNAL_SHIP"):
         return 0
@@ -973,7 +1228,14 @@ def ship_pages(root: Path) -> int:
     if prohibition:
         print(f"diurnal: pages held local — pause marker {prohibition}", file=sys.stderr)
         return 0
+    receipts = shipped_receipts(root)
+    reap_shipped(root, receipts)
     pages = unshipped_pages(root)
+    if phase != "evening":
+        today = datetime.now().strftime("%Y-%m-%d")
+        dated = [p for p in pages if Path(p).stem < today]
+        # INDEX.md is not a day and rides along only when a dated page is actually shipping.
+        pages = dated + [p for p in pages if Path(p).stem == "INDEX"] if dated else []
     if not pages:
         return 0
     script = root / "scripts" / "ship-docs.sh"
@@ -1002,8 +1264,14 @@ def ship_pages(root: Path) -> int:
     # re-shipping would open a duplicate. A dropped page still surfaces: `--ship` is a manual
     # drain and `git status` never stops reporting it.
     if rc != 1:
+        # The PR NUMBER, not just the digest. Without it the receipt says a page was handed off and
+        # gives no way to ask whether the handoff completed — which is how five open PRs coexisted
+        # with a receipt file reporting everything shipped. rc == 0 means ship-docs already merged
+        # it, so there is nothing left to reap and no number is stored.
+        m = re.search(r"opened PR #(\d+)", out)
+        record = {"digest": None, "pr": int(m.group(1)) if m and rc != 0 else None}
         receipts = shipped_receipts(root)
-        receipts.update({rel: _digest(root / rel) for rel in pages})
+        receipts.update({rel: {**record, "digest": _digest(root / rel)} for rel in pages})
         # Date-keyed records accrete forever otherwise — the same reason _prune_notify_keys exists.
         cutoff = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
         receipts = {k: v for k, v in receipts.items() if Path(k).stem >= cutoff}
@@ -1042,8 +1310,9 @@ def main() -> int:
     if args.ship:
         # A standalone drain, so the capability is observable and re-runnable without forcing a
         # re-emission. Idempotent via the shipped receipt, NOT via git state — a shipped page
-        # stays untracked until its PR merges and the beat pulls.
-        return ship_pages(root)
+        # stays untracked until its PR merges and the beat pulls. Explicitly evening-shaped: a
+        # hand-run drain is asked for, so it takes today's page too rather than deferring it.
+        return ship_pages(root, "evening")
 
     if args.list:
         sections, scores = load_registry(root), load_scores(root)
@@ -1112,7 +1381,7 @@ def main() -> int:
     # Shipping sits in main(), not in emit(): rendering a day and publishing it are different
     # concerns, and --dry-run must never reach the world. A failed emission ships nothing.
     if rc == 0 and not args.dry_run:
-        ship_pages(root)
+        ship_pages(root, phase)
     return rc
 
 

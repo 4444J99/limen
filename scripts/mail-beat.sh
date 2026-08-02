@@ -45,12 +45,24 @@ MAX_AGE_HOURS="${LIMEN_MAIL_STATUS_MAX_AGE_HOURS:-24}"
 STATUS_TIMEOUT="${LIMEN_MAIL_STATUS_TIMEOUT:-120}"
 
 # DAEMON-SAFETY: never let a hung/slow Mail AppleScript block the heartbeat beat. Two
-# structural bounds: (1) the sweep reads only the most-recent N messages (new arrivals —
-# the full backlog was already swept), so each account is a couple of paged reads, not the
-# whole inbox; (2) every step runs under `timeout` when available (homebrew coreutils on the
-# daemon PATH). Without `timeout`, the small --limit + the provider's per-call 30s AppleScript
-# cap keep it bounded anyway.
+# structural bounds: (1) the sweep reads only messages received in the last N days (new
+# arrivals — the full backlog was already swept), so each account is a couple of paged reads,
+# not the whole inbox; (2) every step runs under `timeout` when available (homebrew coreutils
+# on the daemon PATH).
+#
+# BOUND (1) IS --since-days, NOT --limit, and the difference hung Mail for 421 seconds
+# (Mail_2026-08-02-101334.hang, escalating 1/day → 4/day over the preceding week). `messages of
+# targetMailbox` is not a cursor: Mail materializes a scripting object for EVERY message in the
+# store on its MAIN THREAD before AppleScript slices anything, so --limit bounded the Python
+# slice and nothing else. Only --since-days reaches the `whose date received > cutoff` predicate
+# that bounds what Mail actually builds.
+#
+# AND `timeout` DOES NOT COVER THIS. It kills the osascript CLIENT; it cannot cancel an Apple
+# Event already executing inside Mail. Mail keeps churning after this beat moves on and reports
+# healthy — which is exactly how a 421s beachball happened under a 240s timeout. The window is
+# the only real bound; the timeout only protects the beat.
 SWEEP_LIMIT="${LIMEN_MAIL_SWEEP_LIMIT:-80}"
+SWEEP_SINCE_DAYS="${LIMEN_MAIL_SWEEP_SINCE_DAYS:-14}"
 TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
 bounded() {  # bounded <secs> <cmd...>  — time-box if a timeout binary exists, else run plain
   if [ -n "$TIMEOUT_BIN" ]; then "$TIMEOUT_BIN" "$@"; else shift; "$@"; fi
@@ -229,7 +241,8 @@ if [ "${LIMEN_MAIL_SWEEP:-1}" = "1" ]; then
     for a in $accts; do
       a="${a#"${a%%[![:space:]]*}"}"; a="${a%"${a##*[![:space:]]}"}"   # trim
       [ -z "$a" ] && continue
-      run_tmp 240 "$PY" "$UMA_ROOT/inbox_sweep.py" --account "$a" --apply --flag-only-gmail --limit "$SWEEP_LIMIT"
+      run_tmp 240 "$PY" "$UMA_ROOT/inbox_sweep.py" --account "$a" --apply --flag-only-gmail \
+        --limit "$SWEEP_LIMIT" --since-days "$SWEEP_SINCE_DAYS"
     done
     IFS="$OLDIFS"
   else
