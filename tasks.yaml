@@ -159719,58 +159719,79 @@ tasks:
   source_origin: 'human_prompt'
   updated: '2026-08-02T14:34:15.741Z'
   receipt_verified: true
-- id: VIC-PUB-002
-  title: Registry-derived disclosure generator
-  description: Generate the public disclosure block from registry authority data (synthetic-only mode, holds list) instead of hand-written text; tests prove the generated block names every active hold.
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-PUB-002'
+  title: 'Registry-derived disclosure generator'
+  description: 'Generate the public disclosure block from registry authority data (synthetic-only mode, holds list) instead of hand-written text; tests prove the generated block names every active hold.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-PUB-002 — Registry-derived disclosure generator.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/publication/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Generate the public disclosure block from registry authority data (synthetic-only mode, holds list) instead of hand-written text; tests prove the generated block names every active hold.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/publication typecheck
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-PUB-002
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/publication typecheck
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-PUB-002
-  horizon: present
-  value_case: Derive-never-pin for the public disclosure surface.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/publication typecheck'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/43'
+  horizon: 'present'
+  value_case: 'Derive-never-pin for the public disclosure surface.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:27.305Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-8905dfa59b999b56718f729f290c546d:13:compatibility
-    conduct_run_id: run-8905dfa59b999b56718f729f290c546d
-    conduct_lease_id: lease-13-8905dfa59b999b56
+  - timestamp: '2026-07-23T10:31:27.305Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-8905dfa59b999b56718f729f290c546d:13:compatibility'
+    conduct_run_id: 'run-8905dfa59b999b56718f729f290c546d'
+    conduct_lease_id: 'lease-13-8905dfa59b999b56'
     conduct_generation: 13
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:27.305Z
+  - timestamp: '2026-08-02T14:35:11.153Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #43; control issue #127.'
+    conduct_event_id: 'conduct:run-5a7cf917c36ed19237471ea5bfe64415:479:compatibility'
+    conduct_run_id: 'run-5a7cf917c36ed19237471ea5bfe64415'
+    conduct_lease_id: 'lease-479-5a7cf917c36ed192'
+    conduct_generation: 479
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:35:11.153Z'
 - id: VIC-FIXTURES-002
   title: Synthetic checkpoint dataset
   description: "Add a synthetic 55-checkpoint dataset (Concept + Phases 0-9) with invariant tests: counts per phase sum to the total, every checkpoint carries phase, title, and verified flag, and verified never exceeds total."
