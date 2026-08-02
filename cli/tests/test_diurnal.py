@@ -193,18 +193,31 @@ def test_claims_are_falsifiable_and_score_three_ways(mod):
 
 
 def test_claims_skip_stale_and_zero_metrics(mod, root):
-    """You cannot claim progress on a number you refused to read."""
+    """You cannot claim progress on a number you refused to read.
+
+    The floor rule is per-`acted_when`, not global: nothing falls below zero, so a
+    `metric_decreased` section at 0 stays unclaimable — but "changes from 0" is the single most
+    consequential claim the organ can make, and excluding it would have made IF-FIRST-DOLLAR
+    unspeakable. See cli/tests/test_diurnal_claims.py for that rule's own cases.
+    """
     sections = {
         "good": {"_key": "good", "title": "good", "metric": "m", "acted_when": "metric_decreased"},
         "zero": {"_key": "zero", "title": "zero", "metric": "m", "acted_when": "metric_decreased"},
+        "zero_changed": {"_key": "zero_changed", "title": "zc", "metric": "m", "acted_when": "metric_changed"},
         "stale": {"_key": "stale", "title": "stale", "metric": "m", "acted_when": "metric_decreased"},
         "unmeasured": {"_key": "unmeasured", "title": "u", "metric": None, "acted_when": None},
     }
     stale = _rendered(mod, "stale", 9)
     stale.stale = True
-    rendered = [_rendered(mod, "good", 4), _rendered(mod, "zero", 0), stale, _rendered(mod, "unmeasured", None)]
-    claims = mod.build_claims(root, sections, rendered, 5)
-    assert [c["section"] for c in claims] == ["good"]
+    rendered = [
+        _rendered(mod, "good", 4),
+        _rendered(mod, "zero", 0),
+        _rendered(mod, "zero_changed", 0),
+        stale,
+        _rendered(mod, "unmeasured", None),
+    ]
+    claims = mod.build_claims(root, sections, rendered)
+    assert [c["section"] for c in claims] == ["good", "zero_changed"]
 
 
 # ── cut authority: bounded, evidence-based, reversible ────────────────────────────

@@ -209,6 +209,93 @@ sys.exit(1)
 PY
 [ $? -eq 0 ] || FAILED=$((FAILED + 1))
 
+# 7b — the cut can actually REACH every section it is declared able to cut
+#
+# Check 7 proves the runway is real. This proves the runway points at the whole pool. `cuttable:
+# true` is a declaration, and like every declaration in this workstream it is worth exactly what
+# its consumer does with it — which, measured 2026-08-02, was 4 of 11:
+#
+#   build_claims() capped itself at a display parameter, so only the first few sections in
+#   registry order were ever claimed; it skipped stale sections, so a section reading a dead
+#   source could never accrue a streak (staleness was a SHIELD); and it implemented only
+#   `metric_decreased`, so the two `metric_changed` sections check-diurnal.py's load-bearing
+#   rule explicitly admits were structurally unclaimable.
+#
+# Three independent leaks, one symptom: section-scores.json held 4 keys while the registry
+# declared 11 cuttable, and the cut could only ever fire at sections that were WORKING. Nothing
+# reported that, because a subset looks exactly like a full set from the outside.
+python3 - "$ROOT" <<'PY'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+try:
+    import yaml
+    sections = (yaml.safe_load((root / "institutio/governance/diurnal.yaml").read_text()) or {}).get("sections") or {}
+except Exception as exc:  # noqa: BLE001 — advisory; check-diurnal.py owns registry validity
+    print(f"      diurnal.yaml unreadable ({exc}) — cut-reach check skipped")
+    sys.exit(0)
+cuttable = {k for k, v in sections.items() if isinstance(v, dict) and v.get("cuttable")}
+try:
+    scored = set(json.loads((root / "logs/diurnal/section-scores.json").read_text()))
+except (OSError, ValueError):
+    scored = set()
+if not scored:
+    print("      no section has been scored yet — check 7 above owns that; nothing to compare")
+    sys.exit(0)
+missing = sorted(cuttable - scored)
+if missing:
+    print(f"  \033[31m✗\033[0m the cut reaches {len(cuttable & scored)}/{len(cuttable)} cuttable sections")
+    print(f"      never scored, so never cuttable in practice: {', '.join(missing)}")
+    sys.exit(1)
+print(f"  \033[32m✓\033[0m every cuttable section is scored — the cut pool is the whole {len(cuttable)}, not a subset")
+sys.exit(0)
+PY
+[ $? -eq 0 ] || FAILED=$((FAILED + 1))
+
+# 7c — a proposal the organ raised is DATED, and cannot sit unanswered forever
+#
+# The evening has always been able to say "retire or repair this dead producer." Until the
+# proposal book existed, saying it was ALL that ever happened: apply_cuts() built the list, the
+# page printed it, nothing read it back. Measured 2026-08-02, the organ had printed the same
+# three proposals on every evening page since 2026-07-31 while their sources aged to 10, 22 and
+# 36 days — narration, not a loop.
+#
+# This does NOT give the organ deletion authority. "Retire or repair" is a judgment it cannot
+# make, and the retire-PR stays a hand step owned by organs.yaml's declared residual. What
+# changes is that the judgment is now owed on a clock and a red check is what owes it. Setting
+# `disposition` on a row in logs/diurnal/proposals.json answers one; a proposal that stops
+# recurring resolves itself, so this can never stay red on a condition already fixed.
+python3 - "$ROOT" <<'PY'
+import datetime, json, os, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+limit = int(os.environ.get("LIMEN_DIURNAL_PROPOSAL_MAX_AGE_DAYS", "14"))
+try:
+    book = json.loads((root / "logs/diurnal/proposals.json").read_text())
+except (OSError, ValueError):
+    print("      no proposal book yet — the evening writes it on the first engaged day")
+    sys.exit(0)
+today = datetime.date.today()
+stale = []
+for what, rec in sorted(book.items()):
+    if not isinstance(rec, dict) or rec.get("disposition") is not None:
+        continue
+    try:
+        age = (today - datetime.date.fromisoformat(str(rec.get("first_seen")))).days
+    except ValueError:
+        continue
+    if age > limit:
+        stale.append((age, what))
+if stale:
+    print(f"  \033[31m✗\033[0m {len(stale)} proposal(s) undisposed past {limit} days")
+    for age, what in sorted(stale, reverse=True):
+        print(f"      {age:>3}d  {what}")
+    print("      answer one by setting `disposition` in logs/diurnal/proposals.json, or land the PR")
+    sys.exit(1)
+open_n = sum(1 for r in book.values() if isinstance(r, dict) and r.get("disposition") is None)
+print(f"  \033[32m✓\033[0m every proposal is inside its {limit}-day window ({open_n} open, {len(book)} tracked)")
+sys.exit(0)
+PY
+[ $? -eq 0 ] || FAILED=$((FAILED + 1))
+
 # 8 — every residual has an owner of record, not a place in someone's head
 python3 - "$ROOT" <<'PY'
 import sys, pathlib, re

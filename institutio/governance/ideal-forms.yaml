@@ -74,12 +74,19 @@ ideals:
       The fleet amalgamates portals faster than it spawns them; a predicate measures open-PR
       plus unmerged-branch debt and the merge daemon drives it monotonically down.
     owner: "Claude (predicate) + merge daemon"
-    probe: null
-    probe_absent_reason: >
-      The ideal is a monotonic TREND, not a level, and a level is the only thing measurable in
-      one shot: `gh pr list` returns today's count with nothing to compare it against. The
-      entry's own recorded distance already names the gap ("No debt-trend predicate"). A real
-      probe needs a committed series, so the debt-trend recorder is this row's next form.
+    # The row carried `probe: null` with an exact reason: a monotonic TREND is not a level, and a
+    # level is all one shot can measure — "a real probe needs a committed series." The series was
+    # already committed. gitvs.py writes open_pr_count into docs/github-pr-debt-ledger.json and
+    # every write is a commit, so five observations sat in `git log` for eleven days, unread.
+    # scripts/pr-debt-trend.py reads them; nothing had to be built first.
+    probe:
+      command: "python3 scripts/pr-debt-trend.py --check"
+      derives: >
+        whether open-PR debt is falling across the committed series in git history of
+        docs/github-pr-debt-ledger.json, AND whether anyone is still recording it — a series
+        nobody writes is not a trend that improved.
+      environment: host
+      at_ideal_when: exit_zero
 
   IF-PUBLICATION-ESTATE:
     ideal: >
