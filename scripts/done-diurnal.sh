@@ -251,6 +251,51 @@ sys.exit(0)
 PY
 [ $? -eq 0 ] || FAILED=$((FAILED + 1))
 
+# 7c — a proposal the organ raised is DATED, and cannot sit unanswered forever
+#
+# The evening has always been able to say "retire or repair this dead producer." Until the
+# proposal book existed, saying it was ALL that ever happened: apply_cuts() built the list, the
+# page printed it, nothing read it back. Measured 2026-08-02, the organ had printed the same
+# three proposals on every evening page since 2026-07-31 while their sources aged to 10, 22 and
+# 36 days — narration, not a loop.
+#
+# This does NOT give the organ deletion authority. "Retire or repair" is a judgment it cannot
+# make, and the retire-PR stays a hand step owned by organs.yaml's declared residual. What
+# changes is that the judgment is now owed on a clock and a red check is what owes it. Setting
+# `disposition` on a row in logs/diurnal/proposals.json answers one; a proposal that stops
+# recurring resolves itself, so this can never stay red on a condition already fixed.
+python3 - "$ROOT" <<'PY'
+import datetime, json, os, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+limit = int(os.environ.get("LIMEN_DIURNAL_PROPOSAL_MAX_AGE_DAYS", "14"))
+try:
+    book = json.loads((root / "logs/diurnal/proposals.json").read_text())
+except (OSError, ValueError):
+    print("      no proposal book yet — the evening writes it on the first engaged day")
+    sys.exit(0)
+today = datetime.date.today()
+stale = []
+for what, rec in sorted(book.items()):
+    if not isinstance(rec, dict) or rec.get("disposition") is not None:
+        continue
+    try:
+        age = (today - datetime.date.fromisoformat(str(rec.get("first_seen")))).days
+    except ValueError:
+        continue
+    if age > limit:
+        stale.append((age, what))
+if stale:
+    print(f"  \033[31m✗\033[0m {len(stale)} proposal(s) undisposed past {limit} days")
+    for age, what in sorted(stale, reverse=True):
+        print(f"      {age:>3}d  {what}")
+    print("      answer one by setting `disposition` in logs/diurnal/proposals.json, or land the PR")
+    sys.exit(1)
+open_n = sum(1 for r in book.values() if isinstance(r, dict) and r.get("disposition") is None)
+print(f"  \033[32m✓\033[0m every proposal is inside its {limit}-day window ({open_n} open, {len(book)} tracked)")
+sys.exit(0)
+PY
+[ $? -eq 0 ] || FAILED=$((FAILED + 1))
+
 # 8 — every residual has an owner of record, not a place in someone's head
 python3 - "$ROOT" <<'PY'
 import sys, pathlib, re
