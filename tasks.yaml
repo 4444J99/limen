@@ -159233,7 +159233,7 @@ tasks:
   workstream: 'governance'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'victoroff'
   - 'public-synthetic'
@@ -159295,8 +159295,19 @@ tasks:
     conduct_run_id: 'run-e4236566cd02732dfea0a5797a3ff036'
     conduct_lease_id: 'lease-470-e4236566cd02732d'
     conduct_generation: 470
+  - timestamp: '2026-08-02T14:33:56.056Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'in_progress'
+    output: 'Verifying preserved PR #41 implementation and exact-main receipt.'
+    conduct_event_id: 'conduct:run-a0ae7c46f653e140e1b1349ae905079e:471:compatibility'
+    conduct_run_id: 'run-a0ae7c46f653e140e1b1349ae905079e'
+    conduct_lease_id: 'lease-471-a0ae7c46f653e140'
+    conduct_generation: 471
   source_origin: 'human_prompt'
-  updated: '2026-08-02T14:33:52.156Z'
+  updated: '2026-08-02T14:33:56.056Z'
 - id: 'VIC-GOV-002'
   title: 'Multi-source governance manifests'
   description: 'Extend docs/governance manifest validation to multi-source manifests: ordered sources, per-source checksum drift isolation (name WHICH source drifted), and duplicate-source rejection, with node:test coverage.'
