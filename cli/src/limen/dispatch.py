@@ -54,6 +54,7 @@ from limen.models import (
     dispatch_session_id,
     has_jules_landing_hold,
 )
+from limen.partition_lanes import heuristics_may_promote
 from limen.tabularius import apply_limen_file_sync
 from limen.runtime_requirements import task_execution_ready
 from limen.doctor import stale_tasks
@@ -1197,7 +1198,21 @@ def _dispatch_focus_bucket(task: Task, value_repos: set[str]) -> int:
     labels = {str(label).strip().lower() for label in (task.labels or [])}
     workstream = str(task.workstream or "").strip().lower()
     if repo and repo in value_repos:
+        # EXPLICIT funding, checked first and never vetoed: a value-repos.json row is the
+        # operator deciding, which is not the accidental overlap the partner boundary blocks.
         return 0
+    if not heuristics_may_promote(task.repo):
+        # THE EXCLUSION AXIS. Everything below this line is a guess -- a label, an id prefix, a
+        # lifecycle term, or a substring of English prose -- and a guess may never promote work
+        # across a partner boundary (operator directive 2026-08-02: "there shouldn't be ANY
+        # possibility of overlap between my work and client work").
+        #
+        # This function had no way to express that: it was pure inclusion, five ways to return 0
+        # and none to refuse. So VIC-CONTRACT-002, a client engagement in a private repo, reached
+        # the top of the personal fleet queue because its prompt boilerplate contained the word
+        # "blocker", and VIC-CLIENT-STORY-001 followed on "custody". Pruning those two terms would
+        # only move the collision to the next English word the client's text happens to contain.
+        return 1
     if labels & _VALUE_LABELS or workstream in _VALUE_WORKSTREAMS:
         return 0
     if str(task.id or "").startswith(("AW-", "REV-")):
@@ -1226,6 +1241,14 @@ def _value_gate_configured(value_repos: set[str]) -> bool:
 
 def task_passes_value_gate(task: Task, value_repos: set[str] | None = None) -> bool:
     value_repos = value_repos if value_repos is not None else _value_tier_repos()
+    repo = _normalize_repo_slug(task.repo)
+    if not (repo and repo in value_repos) and not heuristics_may_promote(task.repo):
+        # Checked BEFORE _value_gate_configured, so LIMEN_VALUE_GATE=0 (and an empty
+        # value-repos.json) cannot open the partner boundary. A confidentiality boundary an env
+        # var can switch off is not a boundary. An explicit `--task <id>` still reaches a partner
+        # lane -- _explicit_task_source bypasses this gate by design, and naming the id IS the
+        # operator deciding -- but nothing automatic selects one.
+        return False
     if not _value_gate_configured(value_repos):
         return True
     return _dispatch_focus_bucket(task, value_repos) == 0
