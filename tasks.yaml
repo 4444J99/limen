@@ -159662,58 +159662,79 @@ tasks:
   source_origin: 'human_prompt'
   updated: '2026-08-02T14:33:48.251Z'
   receipt_verified: true
-- id: VIC-SITE-TEST-001
-  title: Site phase-progress unit coverage
-  description: "Add unit tests for the pitch site's phase-progress aggregation: aggregate equals the sum of phase checkpoints, no hand-set totals, progress never exceeds 100%."
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-SITE-TEST-001'
+  title: 'Site phase-progress unit coverage'
+  description: 'Add unit tests for the pitch site''s phase-progress aggregation: aggregate equals the sum of phase checkpoints, no hand-set totals, progress never exceeds 100%.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-SITE-TEST-001 — Site phase-progress unit coverage.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: apps/site/**, tests/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
-    Required behavior: Add unit tests for the pitch site's phase-progress aggregation: aggregate equals the sum of phase checkpoints, no hand-set totals, progress never exceeds 100%.
+
+    Required behavior: Add unit tests for the pitch site''s phase-progress aggregation: aggregate equals the sum of phase checkpoints, no hand-set totals, progress never exceeds 100%.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm test
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-SITE-TEST-001
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm test
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-SITE-TEST-001
-  horizon: present
-  value_case: Backs the delivery-status surface with mechanical binding tests.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm test'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/56'
+  horizon: 'present'
+  value_case: 'Backs the delivery-status surface with mechanical binding tests.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:19.746Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-2dc1a12527fd7dc8d4e7c45f24f10353:11:compatibility
-    conduct_run_id: run-2dc1a12527fd7dc8d4e7c45f24f10353
-    conduct_lease_id: lease-11-2dc1a12527fd7dc8
+  - timestamp: '2026-07-23T10:31:19.746Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-2dc1a12527fd7dc8d4e7c45f24f10353:11:compatibility'
+    conduct_run_id: 'run-2dc1a12527fd7dc8d4e7c45f24f10353'
+    conduct_lease_id: 'lease-11-2dc1a12527fd7dc8'
     conduct_generation: 11
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:19.746Z
+  - timestamp: '2026-08-02T14:39:52.506Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #56; control issue #127.'
+    conduct_event_id: 'conduct:run-3793d76982b65a610c014bf5eaf39b88:494:compatibility'
+    conduct_run_id: 'run-3793d76982b65a610c014bf5eaf39b88'
+    conduct_lease_id: 'lease-494-3793d76982b65a61'
+    conduct_generation: 494
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:39:52.506Z'
 - id: 'VIC-DOMAIN-003'
   title: 'Authority holds as domain rules'
   description: 'Encode the registry authority holds (custody + production, from program/registry.v1.json) as domain rules: any resolved next action that touches a blocked capability is rejected with the hold id cited. Tests included.'
