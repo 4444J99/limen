@@ -54,11 +54,13 @@ function args(argv) {
     out[key] = argv[i + 1];
   }
   out.rate = Number(out.rate);
+  out.from = Number(out.from);
   return out;
 }
 
 const opt = args(process.argv.slice(2));
 if (!Number.isFinite(opt.rate) || opt.rate < 0) throw new Error("--rate must be a non-negative number");
+if (!Number.isFinite(opt.from) || opt.from < 0) throw new Error("--from must be a non-negative number");
 
 const program = readJSON(path.join(DANSE, "render/program.json"));
 validate(program);
@@ -77,7 +79,7 @@ const seed = opt.seed === null ? (program.seed ?? 0) : Number(opt.seed);
 // where it is told, a `passages` capture snaps to a passage boundary so the
 // sound begins where the phrase begins.
 const cap = captureOf(program, opt.window);
-const from = Number(opt.from) || 0;
+const from = opt.from;
 let t0, t1;
 if (cap.seconds > 0) {
   t0 = from;

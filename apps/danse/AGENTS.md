@@ -104,7 +104,7 @@ session. The phase and predicate below own the dependencies; chat does not.
 | Item | State | Where it lands |
 |---|---|---|
 | Delivery trunk | capture-keyed `--out`, external `--package`, dependency-aware `--only`, absolute score start, and non-writing `--preflight` implemented | `scripts/tests/danse-delivery.test.py` |
-| ScreenDance 2027 package | no attestations live in git; a package build emits phase-owned nulls | `done.sh --package <path> --phase package|uploaded|submitted` |
+| ScreenDance 2027 package | no attestations live in git; a package build emits phase-owned nulls | `done.sh --package <path> --phase package\|uploaded\|submitted` |
 | Private render sources | hydrate 162 raw+Vision pairs, the local `film` tier, and the two-source grain bank before rendering | `deliver.py --preflight` must exit 0 |
 | The title | **confirmed** as `THE THING WITHOUT A NAME` in `program.json` | done |
 | final cut / `bio` / `rights_declaration` | claims **about a person and his work** | only he can set their package-phase attestations — do not invent or infer |

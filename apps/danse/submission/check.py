@@ -80,9 +80,8 @@ def probe(path: Path) -> dict | None:
             "-v",
             "error",
             "-show_entries",
-            "stream=codec_type,codec_name,profile,pix_fmt,width,height,r_frame_rate,channels,sample_rate",
-            "-show_entries",
-            "format=duration",
+            "stream=codec_type,codec_name,profile,pix_fmt,width,height,r_frame_rate,channels,sample_rate:"
+            "stream_disposition=attached_pic:format=duration",
             "-of",
             "json",
             str(path),
@@ -95,7 +94,14 @@ def probe(path: Path) -> dict | None:
         return None
     data = json.loads(out.stdout or "{}")
     streams = data.get("streams") or []
-    video = next((stream for stream in streams if stream.get("codec_type") == "video"), {})
+    video = next(
+        (
+            stream
+            for stream in streams
+            if stream.get("codec_type") == "video" and not (stream.get("disposition") or {}).get("attached_pic")
+        ),
+        {},
+    )
     audio = next((stream for stream in streams if stream.get("codec_type") == "audio"), {})
     num, _, den = (video.get("r_frame_rate") or "0/1").partition("/")
     fps = float(num) / float(den or 1) if float(den or 1) else 0.0
@@ -183,10 +189,10 @@ def find_one(root: Path, stem: str) -> Path | None:
 # ── register-level checks (no package needed) ──────────────────────────────────
 
 
-def check_deadline(reg: dict, phase: str, rep: Report) -> None:
+def check_deadline(reg: dict, phase: str, rep: Report, now: datetime | None = None) -> None:
     d = reg["deadline"]
     wall = datetime.fromisoformat(d["hard_wall"])
-    now = datetime.now(ZoneInfo("America/New_York"))
+    now = now or datetime.now(ZoneInfo("America/New_York"))
     left = wall - now
     days = left.days + left.seconds / 86400
 
@@ -200,11 +206,16 @@ def check_deadline(reg: dict, phase: str, rep: Report) -> None:
     target = datetime.fromisoformat(d["target_file_date"] + "T12:00:00-04:00")
     tdays = (target - now).days
     status = PASS if tdays >= 0 or phase == "submitted" else OPEN
+    detail = (
+        "target passed; submitted-phase receipt now owns closure"
+        if tdays < 0 and phase == "submitted"
+        else "file early; panel sees timestamps"
+    )
     rep.add(
         "deadline",
         "target file date",
         status,
-        f"{d['target_file_date']} ({tdays:+d} days) — file early; panel sees timestamps",
+        f"{d['target_file_date']} ({tdays:+d} days) — {detail}",
     )
 
 

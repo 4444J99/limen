@@ -46,4 +46,5 @@ python3 "$HERE/render/browser.py" --check --verify --arrival --probe
 python3 "$HERE/submission/check.py" --package "$package" --phase "$phase"
 
 echo
-echo "DANSE ${phase^^} DONE — invariant, Metal, reproduction, arrival, continuity, and package predicates hold"
+phase_upper="$(printf '%s' "$phase" | tr '[:lower:]' '[:upper:]')"
+echo "DANSE ${phase_upper} DONE — invariant, Metal, reproduction, arrival, continuity, and package predicates hold"

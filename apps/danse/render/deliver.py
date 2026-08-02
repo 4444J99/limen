@@ -36,6 +36,7 @@ moment sounds the way it sounds, in every crop of the film that contains it.
 from __future__ import annotations
 
 import argparse
+import functools
 import hashlib
 import importlib.util
 import json
@@ -57,12 +58,6 @@ RENDER = HERE / "render.py"
 REGISTER = DANSE / "submission" / "screendance-2027.yaml"
 RAW = DANSE / "pipeline" / ".work" / "raw"
 BANK = DANSE / "sound" / "bank" / "bank.json"
-
-# The untouched photograph visible at t=0 for the registered submission seed.
-# This is deliberately the camera original, not T-2017-full.png (the later,
-# hand-cut composite used by verify.html). The package copies its bytes without
-# decoding or re-encoding them.
-ORIGIN = RAW / "IMG_1594.JPG"
 
 # Captures that are sub-spans or scaled versions of the primary 4K `passage` capture,
 # so they can be cut/scaled from it. `copy` means stream-copy (no re-encode at all).
@@ -122,6 +117,13 @@ def probe(path: Path) -> dict | None:
     return out
 
 
+def probe_required(path: Path) -> dict | None:
+    """Probe media without mistaking a missing tool for an invalid artifact."""
+    if shutil.which("ffprobe") is None:
+        raise SystemExit("ffprobe is required for media delivery; run deliver.py --preflight")
+    return probe(path)
+
+
 def digest(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as fh:
@@ -138,8 +140,9 @@ def hexseed(seed: int) -> str:
     return f"0x{seed:X}"
 
 
-def query_capture_span(capture_name: str, seed: int | None = None, start: float = 0.0) -> dict:
-    """Query control.mjs for exact capture span and passage details."""
+@functools.lru_cache(maxsize=None)
+def _capture_span_items(capture_name: str, seed: int | None = None, start: float = 0.0) -> tuple:
+    """Cache the immutable representation of one control-track query."""
     cmd = [
         "node",
         str(DANSE / "sound" / "control.mjs"),
@@ -156,23 +159,35 @@ def query_capture_span(capture_name: str, seed: int | None = None, start: float 
     if done.returncode != 0:
         raise SystemExit(f"failed to query capture span for {capture_name}:\n{done.stderr.strip()}")
     data = json.loads(done.stdout)
-    return {
-        "t0": data["t0"],
-        "t1": data["t1"],
-        "duration": data["duration"],
-        "seed": data["passageSeed"],
-        "river_seed": data["seed"],
-        "passage": data["passage"],
-        "capture": data["capture"],
-        "origin": data.get("origin"),
-    }
+    return tuple(
+        {
+            "t0": data["t0"],
+            "t1": data["t1"],
+            "duration": data["duration"],
+            "seed": data["passageSeed"],
+            "river_seed": data["seed"],
+            "passage": data["passage"],
+            "capture": data["capture"],
+            "origin": data.get("origin"),
+        }.items()
+    )
 
 
-def origin_path(span: dict) -> Path:
-    frame_id = span.get("origin")
-    manifest = json.loads((DANSE / "corpus" / "manifest.json").read_text())
-    source = next((frame["source"] for frame in manifest["frames"] if frame["id"] == frame_id), None)
-    return RAW / source if source else ORIGIN
+def query_capture_span(capture_name: str, seed: int | None = None, start: float = 0.0) -> dict:
+    """Return a fresh mapping while reusing the pure control-track subprocess."""
+    return dict(_capture_span_items(capture_name, seed, start))
+
+
+def registered_origin() -> Path:
+    """The submission register is the sole owner of the source photograph."""
+    register = yaml.safe_load(REGISTER.read_text()) or {}
+    spec = (register.get("package") or {}).get("origin_still") or {}
+    filename = spec.get("source_filename")
+    if not filename:
+        raise SystemExit(f"{REGISTER} does not declare package.origin_still.source_filename")
+    if spec.get("copy_mode") != "byte-identical":
+        raise SystemExit(f"{REGISTER} must declare package.origin_still.copy_mode: byte-identical")
+    return RAW / filename
 
 
 def capture_root(root: Path, span: dict, start: float) -> Path:
@@ -232,6 +247,7 @@ def preflight(
     tier: str,
     render_root: Path,
     package: Path,
+    origin: Path | None,
 ) -> int:
     """Validate a delivery invocation without creating a directory or rendering."""
     rows: list[tuple[bool, str, str]] = []
@@ -294,12 +310,22 @@ def preflight(
         for module in ("numpy", "scipy"):
             add(importlib.util.find_spec(module) is not None, f"Python module {module}", "score dependency")
         bank = json.loads(BANK.read_text()) if BANK.is_file() else {}
-        sources = bank.get("sources") or []
+        source_names = [
+            name
+            for source in bank.get("sources") or []
+            if isinstance(source, dict) and isinstance((name := source.get("name")), str)
+        ]
+        register = yaml.safe_load(REGISTER.read_text()) or {}
+        declared = ((register.get("package") or {}).get("audio") or {}).get("source_recordings") or []
         add(BANK.is_file(), "grain bank", str(BANK))
-        add(len(sources) == 2, "confirmed apartment recordings", f"{len(sources)}/2")
+        add(
+            sorted(source_names) == sorted(declared),
+            "confirmed apartment recordings",
+            f"{len(source_names)}/{len(declared)} exact sources declared in {REGISTER.name}",
+        )
 
     if "origin" in only:
-        add(ORIGIN.is_file(), "unaltered origin photograph", str(ORIGIN))
+        add(origin is not None and origin.is_file(), "unaltered origin photograph", str(origin or "unresolved"))
     if "text" in only:
         text_root = DANSE / "submission" / "text"
         names = {
@@ -333,7 +359,7 @@ def passage_picture(program: dict, tier: str, force: bool, start: float = 0.0) -
     fps = cap.get("fps", 30)
     want = int(round(span["duration"] * fps))
     if not force:
-        got = probe(dest)
+        got = probe_required(dest) if dest.is_file() else None
         if got and abs(got["seconds"] * fps - want) < 2:
             print(f"  passage picture · kept · {got['width']}×{got['height']} @{got['fps']} · {got['seconds']:.1f}s")
             return dest
@@ -346,7 +372,7 @@ def passage_picture(program: dict, tier: str, force: bool, start: float = 0.0) -
             "--capture",
             "passage",
             "--start",
-            str(start),
+            str(span["t0"]),
             "--tier",
             tier,
             "--codec",
@@ -367,15 +393,15 @@ def passage_picture(program: dict, tier: str, force: bool, start: float = 0.0) -
 def passage_sound(force: bool, start: float = 0.0) -> Path:
     """One score for the passage recording. Every derived capture is cut from it."""
     dest = OUT / "passage-score.wav"
+    span = query_capture_span("passage", start=start)
     if not force:
-        got = probe(dest)
-        span = query_capture_span("passage", start=start)
+        got = probe_required(dest) if dest.is_file() else None
         if got and abs(got["seconds"] - span["duration"]) < 0.1:
             print(f"  passage score · kept · {got['seconds']:.1f}s")
             return dest
     print("  passage score · rendering")
     done = subprocess.run(
-        [sys.executable, str(SCORE), "--window", "passage", "--from", str(start), "--out", str(dest)],
+        [sys.executable, str(SCORE), "--window", "passage", "--from", str(span["t0"]), "--out", str(dest)],
         check=False,
     )
     if done.returncode != 0 or not dest.is_file():
@@ -447,13 +473,14 @@ def deliver_derived(
     for junk in (OUT / f".{name}-v{spec['suffix']}", OUT / f".{name}-a.wav", OUT / f".{name}-raw.mov"):
         junk.unlink(missing_ok=True)
 
-    got = probe(dest)
+    got = probe_required(dest)
+    if not got:
+        raise SystemExit(f"ffprobe could not inspect {dest.name} after muxing")
     want_frames = int(round(seconds * fps))
-    if got:
-        have = int(round(got["seconds"] * got.get("fps", fps)))
-        if abs(have - want_frames) > 1:
-            raise SystemExit(f"{dest.name} is {have} frames, the capture declares {want_frames} — the slice is wrong")
-        print(f"      {got['seconds']:.3f}s · {have} frames (declared {want_frames})")
+    have = int(round(got["seconds"] * got.get("fps", fps)))
+    if abs(have - want_frames) > 1:
+        raise SystemExit(f"{dest.name} is {have} frames, the capture declares {want_frames} — the slice is wrong")
+    print(f"      {got['seconds']:.3f}s · {have} frames (declared {want_frames})")
     return dest
 
 
@@ -504,19 +531,15 @@ def deliver_reel(program: dict, sound: Path, tier: str, force: bool, start: floa
 def deliver_stills(program: dict, tier: str, force: bool, start: float = 0.0) -> list[Path]:
     """Six frames, six seeds. The filename IS the provenance — `seed-0x….jpg`
     says this is one of the films, not the film."""
-    sys.path.insert(0, str(DANSE / "sound"))
-    from rng import hash32
-
-    stills = PACKAGE / "stills"
-    stills.mkdir(parents=True, exist_ok=True)
+    (PACKAGE / "stills").mkdir(parents=True, exist_ok=True)
     cap = captures(program)["passage"]
     fps = cap.get("fps", 30)
     span = query_capture_span("passage", start=start)
     made = []
-    for i, fraction in enumerate(STILL_FRACTIONS):
-        t = span["duration"] * fraction
-        seed = hash32(program["seed"], 0x57111, i) & 0xFFFFFF
-        dest = stills / f"seed-{hexseed(seed)}.jpg"
+    for fraction, dest in zip(STILL_FRACTIONS, still_destinations(program, PACKAGE), strict=True):
+        seed = int(dest.stem.removeprefix("seed-"), 0)
+        still_span = query_capture_span("passage", seed=seed, start=span["t0"])
+        t = still_span["duration"] * fraction
         if dest.is_file() and not force:
             made.append(dest)
             continue
@@ -532,7 +555,7 @@ def deliver_stills(program: dict, tier: str, force: bool, start: float = 0.0) ->
                 "--capture",
                 "passage",
                 "--start",
-                str(start),
+                str(still_span["t0"]),
                 "--tier",
                 tier,
                 "--codec",
@@ -580,16 +603,16 @@ def deliver_text() -> list[Path]:
     return made
 
 
-def deliver_origin(force: bool) -> Path | None:
+def deliver_origin(origin: Path, force: bool) -> Path | None:
     dest = PACKAGE / "stills" / "origin-2017.jpg"
     if dest.is_file() and not force:
         return dest
-    if not ORIGIN.is_file():
-        print(f"  origin-2017.jpg · MISSING SOURCE at {ORIGIN}")
+    if not origin.is_file():
+        print(f"  origin-2017.jpg · MISSING SOURCE at {origin}")
         return None
     dest.parent.mkdir(parents=True, exist_ok=True)
-    print(f"  origin-2017.jpg · byte-identical copy of {ORIGIN.name}")
-    shutil.copy2(ORIGIN, dest)
+    print(f"  origin-2017.jpg · byte-identical copy of {origin.name}")
+    shutil.copy2(origin, dest)
     return dest
 
 
@@ -607,13 +630,13 @@ def attestation_template() -> str:
         "# check.py reads only the cumulative requirements owned by --phase.",
     ]
     for item in requirements:
-        lines.append(f"#   {item['id']:<30} [{item['phase']}] {item['rule']}")
+        lines.append(f"#   {item['id']:<30} [{item.get('phase', 'UNOWNED')}] {item['rule']}")
     lines.extend(f"{item['id']}: null" for item in requirements)
     return "\n".join(lines) + "\n"
 
 
 def main() -> int:
-    global OUT, PACKAGE, ORIGIN
+    global OUT, PACKAGE
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tier", default="film", help="corpus tier for rendered items")
     ap.add_argument("--start", type=float, default=0.0, help="where in the river to begin recording (in seconds)")
@@ -630,13 +653,18 @@ def main() -> int:
     only = set(args.only or SELECTORS)
     force = set(args.force)
     span = query_capture_span("passage", start=args.start)
-    ORIGIN = origin_path(span)
+    origin = registered_origin() if "origin" in only else None
     render_root = capture_root(args.out, span, span["t0"])
     package = args.package or (args.out / "package")
     if args.preflight:
-        return preflight(program, span, only, force, args.tier, render_root, package)
+        return preflight(program, span, only, force, args.tier, render_root, package, origin)
     if not package_provenance_matches(package, span):
         raise SystemExit(f"{package}/manifest.json belongs to a different passage; choose a fresh --package root")
+
+    work = pending(program, only, force, package)
+    media_pending = work["master"] or work["derived"] or work["reel"] or work["stills"]
+    if media_pending and shutil.which("ffprobe") is None:
+        raise SystemExit("ffprobe is required for media delivery; run deliver.py --preflight")
 
     OUT = render_root
     PACKAGE = package
@@ -648,7 +676,6 @@ def main() -> int:
         f"{span['duration']:.1f}s (start at {args.start:.1f}s)\n"
     )
 
-    work = pending(program, only, force, PACKAGE)
     need_picture = work["master"] or bool(work["derived"])
     need_sound = need_picture or work["reel"]
     picture = passage_picture(program, args.tier, "master" in force, start=args.start) if need_picture else None
@@ -683,7 +710,8 @@ def main() -> int:
     if "text" in only:
         made += deliver_text()
     if "origin" in only:
-        got = deliver_origin("origin" in force)
+        assert origin is not None
+        got = deliver_origin(origin, "origin" in force)
         if got:
             made.append(got)
 
@@ -728,9 +756,10 @@ def main() -> int:
         name = str(path.relative_to(PACKAGE))
         item = {"name": name, "bytes": size, "sha256": digest(path), **info}
         if name == "stills/origin-2017.jpg":
+            assert origin is not None
             item |= {
-                "source": ORIGIN.name,
-                "source_sha256": digest(ORIGIN),
+                "source": origin.name,
+                "source_sha256": digest(origin),
                 "copy_mode": "byte-identical",
             }
         previous_items[name] = item
