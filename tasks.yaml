@@ -161576,7 +161576,7 @@ tasks:
   target_agent: 'codex'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'dispatched'
   labels:
   - 'persona:david'
   - 'project:victoroff-os'
@@ -161598,7 +161598,7 @@ tasks:
 
     No source edit, PR, deployment, DNS/payment/custody action, outreach, or collaborator mutation is authorized.'
   predicate: 'test "$(gh issue list --repo 4444J99/victoroff-os --state closed --search ''VIC-ISSUE-AUDIT-001 in:title'' --json number --jq length)" -gt 0'
-  receipt_target: 'github:4444J99/victoroff-os:issue:VIC-ISSUE-AUDIT-001'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/issues/102'
   origin: 'human_prompt'
   horizon: 'present'
   value_case: 'Create durable, deduplicated custody for every confirmed Victoroff defect and unresolved obligation while preserving the repository-only v1.0.0 boundary and issues #2/#3 authority holds.'
@@ -161618,4 +161618,15 @@ tasks:
     conduct_run_id: 'run-3ee4ed3c08a5c519013bb06fd213e61e'
     conduct_lease_id: 'lease-454-3ee4ed3c08a5c519'
     conduct_generation: 454
-  updated: '2026-08-02T13:53:27.986Z'
+  - timestamp: '2026-08-02T16:02:20.360Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'Claim final VIC-ISSUE-AUDIT-001 closeout after complete review-thread issue custody and fixed-point receipts.'
+    conduct_event_id: 'conduct:run-54e52d96d7aaa57f19d721afaf49aa99:504:compatibility'
+    conduct_run_id: 'run-54e52d96d7aaa57f19d721afaf49aa99'
+    conduct_lease_id: 'lease-504-54e52d96d7aaa57f'
+    conduct_generation: 504
+  updated: '2026-08-02T16:02:20.360Z'
