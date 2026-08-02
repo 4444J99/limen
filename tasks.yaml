@@ -158526,30 +158526,41 @@ tasks:
   value_case: the auditor idea is scoped from the recorded interest, or parked
   external_deadline: false
   source_origin: human_prompt
-- id: CONST-VICTOROFF-FACE
-  title: Victoroff-OS review-class + public-face decision packet
-  repo: organvm/victoroff-os
-  type: content
-  target_agent: claude
-  workstream: consulting
-  priority: low
+- id: 'CONST-VICTOROFF-FACE'
+  title: 'Victoroff-OS review-class + public-face decision packet'
+  repo: '4444J99/victoroff-os'
+  type: 'content'
+  target_agent: 'claude'
+  workstream: 'consulting'
+  priority: 'low'
   budget_cost: 10
-  status: open
+  status: 'open'
   labels:
-  - constellation
-  - generated
+  - 'constellation'
+  - 'generated'
   urls: []
-  predicate: organs/consulting/constellation/check.py decision-packet david victoroff-visibility
-  receipt_target: git:organvm/limen:organs/consulting/constellation/registry.yaml
+  predicate: 'gh issue view 3 --repo 4444J99/victoroff-os --json state --jq ''.state == "CLOSED"'''
+  receipt_target: 'https://github.com/4444J99/victoroff-os/issues/3'
   depends_on:
-  - CONST-DAVID-PROTO
+  - 'CONST-DAVID-PROTO'
   created: '2026-07-22'
-  updated: '2026-07-22T22:27:59.973684Z'
-  dispatch_log: []
-  horizon: present
-  value_case: an unreviewed private repo gets an owned exposure decision
+  updated: '2026-08-02T14:41:59.361Z'
+  dispatch_log:
+  - timestamp: '2026-08-02T14:41:59.361Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'open'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation: CONST-VICTOROFF-FACE is aliased to custody/public-face decision issue #3 and remains human-held.'
+    conduct_event_id: 'conduct:run-4cbbd3cc222186a7fc1282c093e2d0a4:503:compatibility'
+    conduct_run_id: 'run-4cbbd3cc222186a7fc1282c093e2d0a4'
+    conduct_lease_id: 'lease-503-4cbbd3cc222186a7'
+    conduct_generation: 503
+  horizon: 'present'
+  value_case: 'an unreviewed private repo gets an owned exposure decision'
   external_deadline: false
-  source_origin: human_prompt
+  source_origin: 'human_prompt'
 - id: CONST-MONFORTE-REVIEW
   title: Dormant-channel memo from the John M. protocol (read-only; no build)
   repo: organvm/limen
