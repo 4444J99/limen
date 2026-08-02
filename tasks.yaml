@@ -159728,7 +159728,7 @@ tasks:
   workstream: 'governance'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'victoroff'
   - 'public-synthetic'
@@ -159790,8 +159790,19 @@ tasks:
     conduct_run_id: 'run-5a7cf917c36ed19237471ea5bfe64415'
     conduct_lease_id: 'lease-479-5a7cf917c36ed192'
     conduct_generation: 479
+  - timestamp: '2026-08-02T14:35:15.151Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'in_progress'
+    output: 'Verifying preserved PR #43 implementation and exact-main receipt.'
+    conduct_event_id: 'conduct:run-0f45ba1045dcf70cd7dba966163474a3:480:compatibility'
+    conduct_run_id: 'run-0f45ba1045dcf70cd7dba966163474a3'
+    conduct_lease_id: 'lease-480-0f45ba1045dcf70c'
+    conduct_generation: 480
   source_origin: 'human_prompt'
-  updated: '2026-08-02T14:35:11.153Z'
+  updated: '2026-08-02T14:35:15.151Z'
 - id: VIC-FIXTURES-002
   title: Synthetic checkpoint dataset
   description: "Add a synthetic 55-checkpoint dataset (Concept + Phases 0-9) with invariant tests: counts per phase sum to the total, every checkpoint carries phase, title, and verified flag, and verified never exceeds total."
