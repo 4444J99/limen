@@ -4884,6 +4884,18 @@ parameters:
     note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Hardcoded default so a zero-env beat still reaches him; override only to redirect the brief to a different self address. Never a third party."
 
   # --- DIVRNAL: the three-phase daily organ that cuts itself --------------------
+  LIMEN_PR_DEBT_WINDOW_DAYS:
+    default: 14
+    env: LIMEN_PR_DEBT_WINDOW_DAYS
+    self_update: none
+    owner: gitvs
+    note: "Days of the committed observation series scripts/pr-debt-trend.py compares across. IF-AMALGAMATION's ideal is a monotonic TREND, not a level, so the probe needs a span; the window is a slice of the SERIES rather than of the calendar, because observations are irregular and comparing two arbitrary points is not a trend."
+  LIMEN_PR_DEBT_MAX_AGE_DAYS:
+    default: 3
+    env: LIMEN_PR_DEBT_MAX_AGE_DAYS
+    self_update: none
+    owner: gitvs
+    note: "How stale the newest open-PR observation may be before scripts/pr-debt-trend.py fails on the SILENCE itself. The half a naive trend predicate gets wrong: a debt series nobody records is not a debt trend that improved. Measured 2026-08-02 the newest observation was 8 days old because the producer (`gitvs.py pr-debt`) is wired to nothing — owner of record GITVS-UNCAPPED-PR-DEBT-0715, which the diurnal morning page names as the board's critical next action."
   LIMEN_DIURNAL:
     default: "1"
     env: LIMEN_DIURNAL
