@@ -1263,7 +1263,18 @@ def sort_value_gate_candidates(
     value_repos = value_repos if value_repos is not None else _value_tier_repos()
     gated = [task for task in candidates if task_passes_value_gate(task, value_repos)]
     if not _value_gate_configured(value_repos):
-        gated = list(candidates)
+        # An unconfigured value gate must not NARROW dispatch -- but "do not narrow" is a
+        # statement about PRIORITY, never about the partner boundary. Restoring `candidates`
+        # wholesale readmitted precisely the tasks task_passes_value_gate had just vetoed, so the
+        # veto was computed and discarded one line later.
+        #
+        # It stayed invisible because _value_tier_repos() defaults its file to
+        # ~/Workspace/limen/value-repos.json: on the operator's host that file exists, the gate
+        # reads CONFIGURED, and the filter survives. On a CI runner or any fresh clone it does
+        # not, the gate reads UNCONFIGURED, and client work walked back into the candidate list.
+        # A confidentiality boundary that holds only where a home-directory path happens to
+        # resolve is not a boundary.
+        gated = [task for task in candidates if heuristics_may_promote(task.repo)]
     if disk_pressure:
         focused = [task for task in gated if _dispatch_focus_bucket(task, value_repos) == 0]
         if focused:

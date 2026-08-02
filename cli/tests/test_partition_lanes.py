@@ -278,3 +278,42 @@ def test_sort_never_ranks_a_client_task_into_the_candidate_list() -> None:
     ranked = D.sort_value_gate_candidates([client, mine], value_repos)
 
     assert [t.id for t in ranked] == ["LIMEN-1"]
+
+
+@pytest.mark.parametrize("value_repos", [set(), {"organvm/limen"}])
+def test_sort_holds_the_boundary_whether_or_not_the_value_gate_is_configured(
+    value_repos: set[str],
+) -> None:
+    """The hole CI found that this host could not: an UNCONFIGURED gate readmitted the veto.
+
+    ``sort_value_gate_candidates`` filtered on ``task_passes_value_gate`` and then, one line later,
+    did ``gated = list(candidates)`` when ``_value_gate_configured`` was False -- discarding the
+    veto it had just computed.
+
+    It was invisible locally because ``_value_tier_repos()`` defaults its file to
+    ``~/Workspace/limen/value-repos.json``. That path resolves on the operator's laptop, so the
+    tier is non-empty, the gate reads CONFIGURED, and the filter survives. On a CI runner or any
+    fresh clone it does not resolve, the tier is empty, and client work walked back in. Both
+    branches are parametrized here so neither host shape can pass alone.
+    """
+    client = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="blocker")
+    mine = _task("LIMEN-1", "organvm/limen", context="blocker")
+
+    ranked = D.sort_value_gate_candidates([client, mine], value_repos)
+
+    assert [t.id for t in ranked] == ["LIMEN-1"]
+
+
+def test_disk_pressure_focus_cannot_readmit_a_client_task() -> None:
+    """The other branch that re-derives its own list from `candidates`-adjacent state.
+
+    Under disk pressure the sort narrows to bucket 0. A vetoed task is bucket 1, so it can only
+    ever be dropped further -- but the assertion is cheap and the branch is exactly the shape that
+    produced the readmission bug, so it is pinned rather than reasoned about.
+    """
+    client = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="blocker")
+    mine = _task("LIMEN-1", "organvm/limen", context="blocker")
+
+    for repos in (set(), D._value_tier_repos()):
+        ranked = D.sort_value_gate_candidates([client, mine], repos, disk_pressure=True)
+        assert [t.id for t in ranked] == ["LIMEN-1"], repos
