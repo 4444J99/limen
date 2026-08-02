@@ -110,7 +110,9 @@ def test_silence_is_not_improvement(mod, repo, capsys, monkeypatch):
     out = capsys.readouterr().out
     assert "STALE" in out
     assert "silence is not improvement" in out
-    assert "gitvs.py reconcile" in out or "gitvs.py" in out, "the failure must name its producer"
+    assert mod.PRODUCER in out, "the failure must name the command that ACTUALLY writes the ledger"
+    assert "pr-debt" in mod.PRODUCER, "`reconcile` is a dry effector report; it never writes the ledger"
+    assert "GITVS-UNCAPPED-PR-DEBT-0715" in out, "and the owner of record for its being unwired"
 
 
 def test_a_single_observation_is_unmeasurable_and_that_is_a_failure(mod, repo, capsys, monkeypatch):
