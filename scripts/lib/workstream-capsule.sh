@@ -801,6 +801,53 @@ workstream_register_conduct_session() {
   printf 'registered protected conduct session: %s (%s)\n' "$LIMEN_SESSION_ID" "$agent"
 }
 
+workstream_hydrate_conduct_environment() {
+  local cache="${LIMEN_CONDUCT_ENV_FILE:-$HOME/.limen.env}"
+  local hydrated=""
+
+  if [[ -n "${LIMEN_CONDUCT_URL:-}" && -n "${LIMEN_CONDUCT_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if [[ ! -e "$cache" ]]; then
+    return 0
+  fi
+  if ! python3 - "$cache" <<'PY'
+import os
+import stat
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    info = path.lstat()
+except OSError:
+    raise SystemExit(1)
+if path.is_symlink() or not stat.S_ISREG(info.st_mode):
+    raise SystemExit(1)
+if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
+    raise SystemExit(1)
+PY
+  then
+    printf 'conduct environment cache must be a user-owned mode-600 regular file: %s\n' "$cache" >&2
+    return 2
+  fi
+  if ! hydrated="$(
+    bash -c '
+      set -a
+      . "$1" >/dev/null
+      set +a
+      [[ -n "${LIMEN_CONDUCT_URL:-}" && -n "${LIMEN_CONDUCT_TOKEN:-}" ]] || exit 2
+      printf "export LIMEN_CONDUCT_URL=%q\nexport LIMEN_CONDUCT_TOKEN=%q\n" \
+        "$LIMEN_CONDUCT_URL" "$LIMEN_CONDUCT_TOKEN"
+    ' _ "$cache"
+  )"; then
+    printf 'conduct environment cache does not define LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN\n' >&2
+    return 2
+  fi
+  eval "$hydrated"
+  unset hydrated
+}
+
 workstream_launch_native_agent() {
   local agent="$1"
   local registry_binary="$2"
@@ -1318,6 +1365,7 @@ PY
       workstream_conduct_keepalive_is_ready \
       workstream_conduct_keepalive_loop \
       workstream_start_conduct_keepalive \
+      workstream_hydrate_conduct_environment \
       workstream_register_conduct_session \
       workstream_launch_native_agent
   )"
@@ -1665,6 +1713,7 @@ refresh_workstream_runway() {
   export LIMEN_WORKSTREAM_REQUESTED LIMEN_WORKSTREAM_RUNWAY_SECONDS LIMEN_WORKSTREAM_STARTED_EPOCH LIMEN_WORKSTREAM_DEADLINE_EPOCH LIMEN_WORKSTREAM_REMAINING_SECONDS
 }
 if [[ "\$conduct" -eq 1 ]]; then
+  workstream_hydrate_conduct_environment
   workstream_register_conduct_session "\$agent" "\$PWD" "\$agent_capabilities"
 fi
 refresh_workstream_runway

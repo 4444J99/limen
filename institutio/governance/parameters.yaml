@@ -1349,6 +1349,12 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Credential-wall-owned bearer for exactly one authenticated conduct principal. The Worker derives principal, native lane, surface, and roles from LIMEN_CONDUCT_PRINCIPAL_REGISTRY; this client-side value is consumed by the adapter and removed before launching a model process."
+  LIMEN_CONDUCT_ENV_FILE:
+    default: "$HOME/.limen.env"
+    env: LIMEN_CONDUCT_ENV_FILE
+    self_update: none
+    owner: dispatch
+    note: "Private user-owned mode-0600 cache from which a plain-shell workstream launcher imports only LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN before registration. The cache's other values are never imported into the provider environment. Tests may point this at an isolated fixture."
   LIMEN_CONDUCT_KEEPALIVE_SECONDS:
     default: 180
     env: LIMEN_CONDUCT_KEEPALIVE_SECONDS

@@ -1395,6 +1395,9 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
     fake_codex.chmod(0o755)
     monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
     monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(tmp_path / "missing-limen.env"))
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
 
     rendered = CliRunner().invoke(
@@ -1496,7 +1499,7 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     fake_limen = fake_bin / "limen"
     fake_limen.write_text(
         "#!/usr/bin/env bash\n"
-        'if [[ -z "${LIMEN_CONDUCT_TOKEN:-}" ]]; then exit 41; fi\n'
+        'if [[ -z "${LIMEN_CONDUCT_URL:-}" || -z "${LIMEN_CONDUCT_TOKEN:-}" ]]; then exit 41; fi\n'
         'attempts="$(cat "$REGISTRATION_ATTEMPTS_CAPTURE" 2>/dev/null || printf 0)"\n'
         "attempts=$((attempts + 1))\n"
         'printf "%s\\n" "$attempts" > "$REGISTRATION_ATTEMPTS_CAPTURE"\n'
@@ -1509,15 +1512,27 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     fake_codex.write_text(
         "#!/usr/bin/env bash\n"
         'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
-        'printf "credential=%s\\nkeepalive=%s\\n" '
-        '"${LIMEN_CONDUCT_TOKEN-unset}" "${LIMEN_CONDUCT_KEEPALIVE_PID:-}" > "$PROVIDER_ENV_CAPTURE"\n'
+        'printf "credential=%s\\nkeepalive=%s\\nunrelated=%s\\n" '
+        '"${LIMEN_CONDUCT_TOKEN-unset}" "${LIMEN_CONDUCT_KEEPALIVE_PID:-}" '
+        '"${UNRELATED_PRIVATE_VALUE-unset}" > "$PROVIDER_ENV_CAPTURE"\n'
         "sleep 5\n",
         encoding="utf-8",
     )
     fake_codex.chmod(0o755)
+    private_cache = tmp_path / "limen.env"
+    private_cache.write_text(
+        "export LIMEN_CONDUCT_URL=https://broker.example.invalid\n"
+        "export LIMEN_CONDUCT_TOKEN=fixture-only\n"
+        "export UNRELATED_PRIVATE_VALUE=must-not-be-imported\n",
+        encoding="utf-8",
+    )
+    private_cache.chmod(0o600)
     monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
     monkeypatch.setenv("LIMEN_AGENT", "codex")
-    monkeypatch.setenv("LIMEN_CONDUCT_TOKEN", "fixture-only")
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(private_cache))
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
+    monkeypatch.delenv("UNRELATED_PRIVATE_VALUE", raising=False)
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
 
     rendered = CliRunner().invoke(
@@ -1562,6 +1577,7 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     provider_values = dict(line.split("=", 1) for line in provider_env.read_text(encoding="utf-8").splitlines())
     assert provider_values["credential"] == "unset"
     assert provider_values["keepalive"].isdigit()
+    assert provider_values["unrelated"] == "unset"
 
     status_path = capsule / "conduct-keepalive.json"
     deadline = time.monotonic() + 5
