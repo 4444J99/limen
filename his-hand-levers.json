@@ -856,7 +856,7 @@
       "unlocks": "clause 3 of the autonomy maintenance resume predicate, which is one of the three conditions holding the estate paused since 2026-07-22",
       "source_task": "PR #1741 — heal(autonomy): a resume predicate written as prose is a pause with no exit",
       "note": "Verify with `python3 scripts/check-heartbeat-env.py --diff`: exit 0 means the root the daemon names still generates it byte-for-byte. This lever exists because a merged organ that never ran led back through a nine-day pause to a daemon whose environment nobody had checked against the repo.",
-      "issue": null
+      "issue": 1776
     }
   ]
 }
