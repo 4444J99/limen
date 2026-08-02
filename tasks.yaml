@@ -159573,58 +159573,79 @@ tasks:
     conduct_generation: 11
   source_origin: human_prompt
   updated: 2026-07-23T10:31:19.746Z
-- id: VIC-DOMAIN-003
-  title: Authority holds as domain rules
-  description: "Encode the registry authority holds (custody + production, from program/registry.v1.json) as domain rules: any resolved next action that touches a blocked capability is rejected with the hold id cited. Tests included."
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-DOMAIN-003'
+  title: 'Authority holds as domain rules'
+  description: 'Encode the registry authority holds (custody + production, from program/registry.v1.json) as domain rules: any resolved next action that touches a blocked capability is rejected with the hold id cited. Tests included.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-DOMAIN-003 — Authority holds as domain rules.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/domain/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Encode the registry authority holds (custody + production, from program/registry.v1.json) as domain rules: any resolved next action that touches a blocked capability is rejected with the hold id cited. Tests included.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/domain test
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-003
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/domain test
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-003
-  horizon: present
-  value_case: Turns the registry's authority section into executable refusals.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/domain test'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/41'
+  horizon: 'present'
+  value_case: 'Turns the registry''s authority section into executable refusals.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:23.280Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-d0b1d255bdb5ddaa23b090596626b928:12:compatibility
-    conduct_run_id: run-d0b1d255bdb5ddaa23b090596626b928
-    conduct_lease_id: lease-12-d0b1d255bdb5ddaa
+  - timestamp: '2026-07-23T10:31:23.280Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-d0b1d255bdb5ddaa23b090596626b928:12:compatibility'
+    conduct_run_id: 'run-d0b1d255bdb5ddaa23b090596626b928'
+    conduct_lease_id: 'lease-12-d0b1d255bdb5ddaa'
     conduct_generation: 12
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:23.280Z
+  - timestamp: '2026-08-02T14:34:04.193Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #41; control issue #127.'
+    conduct_event_id: 'conduct:run-bb0a6ca69b0198d72a64aeae254cea1b:473:compatibility'
+    conduct_run_id: 'run-bb0a6ca69b0198d72a64aeae254cea1b'
+    conduct_lease_id: 'lease-473-bb0a6ca69b0198d7'
+    conduct_generation: 473
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:34:04.193Z'
 - id: VIC-PUB-002
   title: Registry-derived disclosure generator
   description: Generate the public disclosure block from registry authority data (synthetic-only mode, holds list) instead of hand-written text; tests prove the generated block names every active hold.
