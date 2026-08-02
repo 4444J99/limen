@@ -126,9 +126,24 @@ fix, because a reader must still be told where the number comes from.
 
 | PR | Concern | State at writing |
 |---|---|---|
-| #1766 | the cut reaches every cuttable section — score all, render capped; blind + dormant streaks; check 7b | CLEARED, queued |
-| #1768 | proposals get a durable home and a dated gate — `proposals.json`, check 7c | CI pending |
-| #1770 | IF-AMALGAMATION's probe + check F | CI pending |
+| #1766 | the cut reaches every cuttable section — score all, render capped; blind + dormant streaks; check 7b | **merged** 14:57Z |
+| #1770 | IF-AMALGAMATION's probe + check F | **merged** 15:05Z |
+| #1768 | proposals get a durable home and a dated gate — `proposals.json`, check 7c | rebased onto #1766, queued |
+| #1772 | the trend predicate named the wrong producer in its own escalation | opened |
+
+#1772 is this record's own subject arriving one turn late, and it belongs here rather than in a
+quiet patch. The escalation line in `pr-debt-trend.py` was written from the hypothesis below and
+never revisited after the hypothesis was tested and **disproved**, so the file whose entire subject
+is a number that went stale because nobody checked its producer shipped pointing at the wrong
+producer. The test that should have caught it was written not to:
+
+```python
+assert "gitvs.py reconcile" in out or "gitvs.py" in out, "the failure must name its producer"
+```
+
+The `or` clause accepts any string containing `gitvs.py`. It was added to keep the assertion from
+being brittle, and permissiveness is exactly how a wrong value survives review — a check declaring
+an intent its predicate does not enforce, which is the species one more time, in a test.
 
 #1766 and #1768 touch adjacent regions of `emit()` and insert at the same anchors in
 `parameters.yaml` and `done-diurnal.sh`; they were scratch-merged and driven together before
@@ -217,3 +232,8 @@ predicate that validated the registry was correct, and the number was wrong — 
 
 The three new checks (7b, 7c, F) are all the same shape: hold a declaration to its actual consumer,
 so under-consumption is red rather than invisible.
+
+And #1772 is the corollary, learned the hard way in the same afternoon: **an assertion written to
+be permissive is a declaration with no consumer either.** `assert A or B` where `B` subsumes `A`
+does not check `A`. The test read as coverage and enforced nothing, which is how the escalation
+shipped naming a command that does not do the thing. Prefer an assertion that can fail.
