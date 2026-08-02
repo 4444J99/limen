@@ -42,7 +42,7 @@ proposals that need a PR.
 Registry:  institutio/governance/diurnal.yaml
 Predicate: scripts/check-diurnal.py
 Emissions: docs/diurnal/YYYY-MM-DD.md (marker-delimited; human text outside survives)
-State:     logs/diurnal/{state,section-scores}.json, ledger.jsonl, cuts.jsonl
+State:     logs/diurnal/{state,section-scores,proposals}.json, ledger.jsonl, cuts.jsonl
 """
 
 from __future__ import annotations
@@ -430,8 +430,13 @@ def r_cuts(root: Path, spec: dict, ctx: dict) -> Rendered:
         lines.append(f"CUT {c['section']} — {c['reason']} (reverse: diurnal.py --uncut {c['section']})")
     for c in restored:
         lines.append(f"RESTORED {c} — it raised an exception while cut")
+    # The AGE is the whole point of the proposal book: an undated "needs a PR" reads the same on
+    # day 1 and day 40, which is how three of these accumulated to 10, 22 and 36 days unread.
+    book = ctx.get("proposal_book") or {}
     for p in proposed:
-        lines.append(f"PROPOSE {p['what']} — {p['reason']} (needs a PR)")
+        first = (book.get(p["what"]) or {}).get("first_seen")
+        since = f" — open since {first}" if first else ""
+        lines.append(f"PROPOSE {p['what']} — {p['reason']} (needs a PR{since})")
     return Rendered("cuts", spec["title"], lines or ["nothing earned a cut today"])
 
 
@@ -768,6 +773,46 @@ def apply_cuts(
 # ── markdown ───────────────────────────────────────────────────────────────────────
 
 
+def record_proposals(root: Path, proposed: list[dict], today: str) -> dict:
+    """Give the evening's proposals a durable home, an AGE, and a disposition.
+
+    Before this they existed for the length of one render: apply_cuts() built the list, emit()
+    put it on ctx, r_cuts() printed it into the page, and nothing read it again — no file, no
+    dedup, no age, no owner. The organ had been printing "retire or repair logs/omega.json" on
+    every evening page since 2026-07-31 while that file aged from 8 days stale to 10, and
+    printing it is all that ever happened. Same species as the defects this arc opened with, one
+    level up: a value is computed and consumed by nothing.
+
+    A keyed map rather than an append-only log, because a proposal has STATE — open until
+    someone disposes of it — and `disposition` is a field a human edits by hand. The history
+    still lands, as `action: "propose"` rows in the cuts.jsonl the organ already writes, so
+    nothing forks a new substrate to hold it.
+
+    A proposal that stops recurring is auto-resolved. The condition went away — the producer was
+    repaired, the section was retired — and a gate that stayed red on a solved problem would be
+    the same defect wearing the opposite sign. Only ENGAGED evenings call this, so a week away
+    cannot resolve every open proposal by simply not observing them.
+    """
+    path = state_dir(root) / "proposals.json"
+    book = _load_json(path)
+    book = book if isinstance(book, dict) else {}
+    seen = {p["what"] for p in proposed}
+    for p in proposed:
+        rec = book.get(p["what"])
+        if not isinstance(rec, dict):
+            rec = book[p["what"]] = {"first_seen": today, "disposition": None}
+            append_jsonl(
+                state_dir(root) / "cuts.jsonl",
+                {"ts": today, "action": "propose", "what": p["what"], "reason": p["reason"]},
+            )
+        rec["last_seen"], rec["reason"] = today, p["reason"]
+    for what, rec in book.items():
+        if what not in seen and isinstance(rec, dict) and rec.get("disposition") is None:
+            rec["disposition"] = f"resolved {today} — the condition stopped recurring"
+    path.write_text(json.dumps(book, indent=2, sort_keys=True), encoding="utf-8")
+    return book
+
+
 def render_markdown(phase: str, rendered: list[Rendered], stamp: str) -> str:
     lines = [MARKER_RX.format(phase=phase), "", f"## {stamp} · {phase}", ""]
     for r in rendered:
@@ -912,6 +957,10 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
                 probe,
             )
             ctx["cuts_applied"], ctx["cuts_proposed"] = applied, proposed
+            # Only reached when engaged — apply_cuts() returns ([], []) otherwise, so an away-week
+            # can neither manufacture a proposal nor resolve one by failing to observe it.
+            if engaged and not dry_run:
+                ctx["proposal_book"] = record_proposals(root, proposed, today)
             ctx["carry"] = [s["text"] for s in scored if s["verdict"] in ("missed", "noop")][:5]
             if not engaged:
                 ctx["carry"].insert(0, "day UNSCORED (no commits) — no streak moved, no cut fired")
