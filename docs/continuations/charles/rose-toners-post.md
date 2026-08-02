@@ -9,7 +9,7 @@
 
 ## Squarespace body copy
 
-With summer upon us, the sweltering heat has left our skin in need of some consistent refreshment. Maybe you have noticed that your usual skincare routine suddenly feels like too much in this weather. This is when we want something cool, floral, and easy to press or mist onto the skin. Rose has always been one of our favorite scents in skincare, but these formulas prove that rose can take many forms: a nostalgic face spray, a rich fermented toner, or a nearly bare-bones floral water. Here are five worth knowing, along with the details that may decide which one earns a place in your routine.
+With summer upon us, the sweltering heat has left our skin in need of some consistent refreshment. Maybe you have noticed that your usual skincare routine suddenly feels like too much in this weather. This is when we want something cool, floral, and easy to press or mist onto the skin. Rose has always been one of our favorite skincare ingredients, in part because of its scent, but these formulas prove that rose can take many forms: a nostalgic face spray, a rich fermented toner, or a nearly bare-bones floral water. Here are five worth knowing, along with the details that may decide which one earns a place in your routine.
 
 <p style="text-align: center;"><strong><a href="https://www.mariobadescu.com/products/facial-spray-with-aloe-herbs-and-rosewater">Mario Badescu Facial Spray With Aloe, Herbs And Rosewater</a></strong></p>
 
