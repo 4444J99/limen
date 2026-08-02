@@ -160173,64 +160173,86 @@ tasks:
     conduct_generation: 30
   source_origin: agent_recommendation
   updated: 2026-07-23T11:55:40.941Z
-- id: VIC-CLIENT-STORY-001
-  title: BBNC executive transformation proposal
-  description: "Deliver one coordinated, public-source-based client bundle: a BBNC-focused executive sales site, a 12-slide deck with three evidence appendices in PPTX and PDF, and a two-page executive brief plus source page in DOCX and PDF, all driven by one versioned evidence ledger."
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: codex
-  workstream: governance
-  priority: high
+- id: 'VIC-CLIENT-STORY-001'
+  title: 'BBNC executive transformation proposal'
+  description: 'Deliver one coordinated, public-source-based client bundle: a BBNC-focused executive sales site, a 12-slide deck with three evidence appendices in PPTX and PDF, and a two-page executive brief plus source page in DOCX and PDF, all driven by one versioned evidence ledger.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'codex'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 3
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - client-facing
-  - owner:victoroff-site
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'client-facing'
+  - 'owner:victoroff-site'
   urls:
-  - https://github.com/organvm/victoroff-os/pull/11
-  - https://github.com/organvm/victoroff-os/issues/16
-  - https://www.bbnc.net/about/
-  - https://www.bbnc.net/for-shareholders/shareholder-services/
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded integration packet.
+  - 'https://github.com/organvm/victoroff-os/pull/11'
+  - 'https://github.com/organvm/victoroff-os/issues/16'
+  - 'https://www.bbnc.net/about/'
+  - 'https://www.bbnc.net/for-shareholders/shareholder-services/'
+  context: 'Do not ask for feedback or approval. Complete only this bounded integration packet.
+
 
     Task: VIC-CLIENT-STORY-001 - Recast Victoroff as a BBNC executive transformation proposal with one shared evidence ledger across the static site, deck, and brief.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-client-story-integrator
+
     Allowed paths: apps/site/**, docs/client/**, tests/e2e/**, tests/a11y/**, tests/client/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml, packages/contracts/**, packages/domain/**
+
     Collision evidence: PR #11 at b2f30038611b16e33c488a1fa701de9599c05cce and active VIC-PUB-001 / VIC-UI-001 packets are co-equal evidence, not overwrite authority. Preserve patch equivalency for the privacy/outcome boundary and secondary evidence.
+
     Required behavior: executive narrative and navigation, cited BBNC scale claims, six working journeys, baseline-first measures, client ownership and privacy terms, four-stage transformation, full-program decision ask, and static downloadable PPTX/PDF/DOCX/PDF artifacts. Keep governance evidence secondary; show no checkpoint percentage while issue #16 is unresolved.
+
     Authority boundary: independent, uncommissioned, public-source-based concept only; do not imply BBNC approval or affiliation, use real BBNC identities or records, deploy, alter DNS, change custody, or collect data.
+
     Predicate: pnpm verify:scoped
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-CLIENT-STORY-001
 
-    Return a bounded patch, rendered artifact QA, exact predicate results, and the exact-head PR receipt.
-  predicate: pnpm verify:scoped
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CLIENT-STORY-001
-  origin: human_prompt
-  horizon: present
-  value_case: Gives BBNC leadership one coherent, evidence-backed decision package while preserving deterministic authority, privacy, owner custody, and an executable exact-head receipt.
-  owner_surface: victoroff-site
+
+    Return a bounded patch, rendered artifact QA, exact predicate results, and the exact-head PR receipt.'
+  predicate: 'pnpm verify:scoped'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/29'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Gives BBNC leadership one coherent, evidence-backed decision package while preserving deterministic authority, privacy, owner custody, and an executable exact-head receipt.'
+  owner_surface: 'victoroff-site'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T17:25:36.493Z
-    agent: codex
-    session_id: codex-vic-client-story-001-20260723
-    logical_agent: codex
-    logical_session_id: vic-client-story-001-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-3c0bb6c6335ccc0761bbffe0b627c37e:31:compatibility
-    conduct_run_id: run-3c0bb6c6335ccc0761bbffe0b627c37e
-    conduct_lease_id: lease-31-3c0bb6c6335ccc07
+  - timestamp: '2026-07-23T17:25:36.493Z'
+    agent: 'codex'
+    session_id: 'codex-vic-client-story-001-20260723'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-client-story-001-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-3c0bb6c6335ccc0761bbffe0b627c37e:31:compatibility'
+    conduct_run_id: 'run-3c0bb6c6335ccc0761bbffe0b627c37e'
+    conduct_lease_id: 'lease-31-3c0bb6c6335ccc07'
     conduct_generation: 31
-  updated: 2026-07-23T17:25:36.493Z
+  - timestamp: '2026-08-02T14:31:42.571Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged implementation PR #29; control issue 4444J99/victoroff-os#127.'
+    conduct_event_id: 'conduct:run-71ea8c94c6668c9267a2975dad9cecbe:458:compatibility'
+    conduct_run_id: 'run-71ea8c94c6668c9267a2975dad9cecbe'
+    conduct_lease_id: 'lease-458-71ea8c94c6668c92'
+    conduct_generation: 458
+  updated: '2026-08-02T14:31:42.571Z'
 - id: 'VIC-CLIENT-STORY-001-SCOPE'
   title: 'Classify client narrative sources in scoped verification'
   description: 'Extend the checked-in scope planner so docs/client sources implicate code, browser, and release shards, with one exact control regression test.'
