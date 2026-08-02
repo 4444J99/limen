@@ -92,7 +92,8 @@ expect board-change 'syntax-changed
 diff-hygiene
 task-board
 tasks-parse
-check-root-manifest' tasks.yaml
+check-root-manifest
+check-board-partition' tasks.yaml
 
 expect organs-change 'syntax-changed
 diff-hygiene

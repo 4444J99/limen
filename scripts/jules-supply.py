@@ -22,7 +22,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 
 from limen.capacity import derived_daily_floor  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
-from limen.jules_supply import dispatchable_supply, expand_supply, load_supply_registry  # noqa: E402
+from limen.jules_supply import (  # noqa: E402
+    dispatchable_supply,
+    expand_supply,
+    load_supply_registry,
+    partner_lane_repos,
+)
 from limen.tabularius import submit_task_upsert  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -74,6 +79,16 @@ def main() -> int:
         else:
             minted = 0
             print(f"  jules-supply: DRY-RUN would mint {len(patches)} packet(s) — arm with LIMEN_JULES_SUPPLY_APPLY=1")
+
+    excluded = partner_lane_repos(registry)
+    if excluded:
+        # Never a silent cap: this registry was the board's largest single producer of
+        # client-attributed rows, and the exclusion is the reason a deficit may now go unmet.
+        print(
+            f"  jules-supply: EXCLUDED {len(excluded)} partner-lane repo(s) — "
+            "client work cannot be minted onto a board that publishes to a public head; "
+            "declare a non-partner supply repo to restore this lane"
+        )
 
     print(f"  jules-supply: supply={supply} floor={floor} pending={len(pending)} deficit={deficit} minted={minted}")
     return 1 if deficit and not minted else 0

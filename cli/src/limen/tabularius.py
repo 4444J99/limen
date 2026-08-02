@@ -51,7 +51,7 @@ from limen.conduct.models import (
     WorkPacketV1,
     canonical_hash,
 )
-from limen.intake import validate_intake_contract
+from limen.intake import IntakeContractError, validate_intake_contract
 from limen.io import (
     load_limen_file,
     local_conduct_projection_lock,
@@ -67,6 +67,7 @@ from limen.materialize import (
     diff_boards,
 )
 from limen.models import VALID_STATUSES, LimenFile, Task
+from limen.partition_lanes import heuristics_may_promote
 from limen.work_loan import task_work_loan_readiness
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
 
@@ -232,6 +233,40 @@ def _rejected(board_path: Path) -> Path:
     return tickets_root(board_path) / "rejected"
 
 
+def refuse_unfunded_partner_lane(repo: object, task_id: object) -> None:
+    """A NEW row attributed to an unfunded partner lane cannot enter this board.
+
+    THE PUBLICATION HALF OF THE PARTNER BOUNDARY. This board is not a private ledger: the
+    projection is written by the Worker to ``organvm/limen`` on ``tabularius/board-projection``
+    (the worker's declared repo/branch/path vars in wrangler.toml), that head enters the merge
+    queue, and it
+    lands on ``main`` — a PUBLIC repo. Accepting a client engagement here IS publishing it, and no
+    downstream gate can un-publish what the board admitted.
+
+    dispatch's veto stops the machine SELECTING client work; this stops the board ACCEPTING it.
+    Both derive the same boundary from the same registries (see :mod:`limen.partition_lanes`), so
+    there is one boundary rather than two definitions of it.
+
+    CREATES ONLY — never a transition on a row that already exists. 411 partner-attributed rows are
+    already on the board; refusing their status/result transitions would strand them mid-lifecycle
+    with no way to close them. They stay the baselined leak ``check-board-partition`` pins, whose
+    disposition the registry already owns: ``L-PII-SWEEP-CONTAIN`` (issue 534) rules internal
+    content on a PUBLIC surface ``KEEP_OFF_PUBLIC_HEAD`` — history is the intended residue — and
+    assigns the strip-from-HEAD to the Publication Policy organ.
+
+    This lives here and NOT in :mod:`limen.intake`: that module is byte-mirrored into the standalone
+    web and MCP runtime packages, which have no registries to derive a boundary from, and a
+    repo-specific partner boundary is not a provider-neutral intake contract.
+    """
+
+    if heuristics_may_promote(repo):
+        return
+    raise IntakeContractError(
+        f"task {task_id}: repo is an unfunded partner lane; this board publishes to a public head, "
+        "so a client engagement cannot enter it (see limen.partition_lanes)"
+    )
+
+
 def submit_ticket(board_path: Path, ticket: Ticket) -> Path:
     """Append a ticket to the inbox — the worker's *only* board-write surface.
 
@@ -242,6 +277,10 @@ def submit_ticket(board_path: Path, ticket: Ticket) -> Path:
     """
     if ticket.intent not in _INTENTS:
         raise ValueError(f"unknown ticket intent: {ticket.intent!r}")
+    if ticket.intent == INTENT_UPSERT and dict(ticket.precondition or {}).get("absent") is True:
+        # The create case, and only the create case — an `absent` precondition IS the declaration
+        # that this row does not exist yet. See refuse_unfunded_partner_lane.
+        refuse_unfunded_partner_lane(dict(ticket.patch or {}).get("repo"), ticket.task_id)
     inbox = _inbox(board_path)
     inbox.mkdir(parents=True, exist_ok=True)
     dest = inbox / f"{ticket.ticket_id}.json"
@@ -1299,6 +1338,10 @@ def apply_limen_file_sync(
                     )
                 }
             )
+            if prior is None:
+                # This legacy seam relays straight to the keeper and never reaches submit_ticket,
+                # so the create-case refusal has to be repeated on this path or it is a side door.
+                refuse_unfunded_partner_lane(desired.get("repo"), task_id)
             if prior is not None:
                 prior_log = list(prior.get("dispatch_log") or [])
                 desired_log = list(desired.get("dispatch_log") or [])
