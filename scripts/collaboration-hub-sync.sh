@@ -6,7 +6,7 @@ workspace="${LIMEN_COLLABORATION_HUB_WORKSPACE:-$HOME/Workspace/_collaboration-o
 endpoint="${LIMEN_COLLABORATION_HUB_ENDPOINT:-https://collaboration-operations-hub.ivixivi.workers.dev}"
 registry="${LIMEN_COLLABORATION_HUB_REGISTRY:-${LIMEN_ROOT:-$HOME/Workspace/limen}/organs/consulting/constellation/registry.yaml}"
 
-if ! git -C "$hub_root" rev-parse --git-dir >/dev/null 2>&1 || [[ ! -f "$hub_root/package-lock.json" ]]; then
+if ! git -C "$hub_root" rev-parse --git-dir >/dev/null 2>&1; then
   echo "collaboration-hub-sync: owner checkout absent"
   exit 1
 fi
@@ -21,6 +21,10 @@ fi
 
 GIT_TERMINAL_PROMPT=0 git -C "$hub_root" fetch -q origin main
 GIT_TERMINAL_PROMPT=0 git -C "$hub_root" merge -q --ff-only origin/main
+if [[ ! -f "$hub_root/package-lock.json" || ! -x "$hub_root/scripts/heartbeat-sync.sh" ]]; then
+  echo "collaboration-hub-sync: owner release is incomplete"
+  exit 1
+fi
 if [[ ! -x "$hub_root/node_modules/.bin/tsx" ]]; then
   npm --prefix "$hub_root" ci --ignore-scripts --no-audit --no-fund >/dev/null
 fi
