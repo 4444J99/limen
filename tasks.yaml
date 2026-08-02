@@ -160011,58 +160011,79 @@ tasks:
   source_origin: 'human_prompt'
   updated: '2026-08-02T14:35:46.565Z'
   receipt_verified: true
-- id: VIC-UI-002
-  title: Checkpoint-bound progress components
-  description: Bind progress-bar components to checkpoint data mechanically (props in, no internal hand-set numbers), with tests proving the rendered fraction equals the data.
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-UI-002'
+  title: 'Checkpoint-bound progress components'
+  description: 'Bind progress-bar components to checkpoint data mechanically (props in, no internal hand-set numbers), with tests proving the rendered fraction equals the data.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-UI-002 — Checkpoint-bound progress components.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/ui/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Bind progress-bar components to checkpoint data mechanically (props in, no internal hand-set numbers), with tests proving the rendered fraction equals the data.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/ui typecheck
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-UI-002
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/ui typecheck
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-UI-002
-  horizon: present
-  value_case: Removes hand-maintained progress numbers from the UI layer.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/ui typecheck'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/56'
+  horizon: 'present'
+  value_case: 'Removes hand-maintained progress numbers from the UI layer.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:34.371Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-7b94bb8a451a6abd31531224c7e2af85:15:compatibility
-    conduct_run_id: run-7b94bb8a451a6abd31531224c7e2af85
-    conduct_lease_id: lease-15-7b94bb8a451a6abd
+  - timestamp: '2026-07-23T10:31:34.371Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-7b94bb8a451a6abd31531224c7e2af85:15:compatibility'
+    conduct_run_id: 'run-7b94bb8a451a6abd31531224c7e2af85'
+    conduct_lease_id: 'lease-15-7b94bb8a451a6abd'
     conduct_generation: 15
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:34.371Z
+  - timestamp: '2026-08-02T14:37:38.304Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #56; control issue #127.'
+    conduct_event_id: 'conduct:run-27635b7fc994d77c1a64e9f163afa3ad:491:compatibility'
+    conduct_run_id: 'run-27635b7fc994d77c1a64e9f163afa3ad'
+    conduct_lease_id: 'lease-491-27635b7fc994d77c'
+    conduct_generation: 491
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:37:38.304Z'
 - id: CONST-STYX-CASESTUDY
   title: Styx case study for the portfolio
   repo: organvm/portfolio
