@@ -923,8 +923,17 @@ def _digest(path: Path) -> str:
         return ""
 
 
-def shipped_receipts(root: Path) -> dict:
-    return _load_json(root / "logs" / "diurnal" / "shipped.json") or {}
+def shipped_receipts(root: Path) -> dict[str, dict]:
+    """Normalize to `{rel: {"digest": ..., "pr": ...}}`, accepting the original bare-digest form.
+
+    The first shape was `{rel: digest}`, which recorded THAT a page was handed off but not WHERE
+    it went — so nothing could ever ask whether the handoff completed. That is the whole defect
+    below: five CLEARED PRs sat open for two days while this file reported every page shipped.
+    """
+    out: dict[str, dict] = {}
+    for rel, val in (_load_json(root / "logs" / "diurnal" / "shipped.json") or {}).items():
+        out[rel] = {"digest": val} if isinstance(val, str) else dict(val)
+    return out
 
 
 def unshipped_pages(root: Path) -> list[str]:
@@ -952,20 +961,75 @@ def unshipped_pages(root: Path) -> list[str]:
         if not rel.endswith(".md") or rel.endswith("/README.md"):
             continue
         path = root / rel
-        if path.is_file() and receipts.get(rel) != _digest(path):
+        if path.is_file() and receipts.get(rel, {}).get("digest") != _digest(path):
             pages.append(rel)
     return sorted(set(pages))
 
 
-def ship_pages(root: Path) -> int:
+def reap_shipped(root: Path, receipts: dict[str, dict]) -> int:
+    """Merge the organ's OWN still-open page PRs. Returns how many reached MERGED.
+
+    ship-docs.sh self-merges only if merge-policy clears within its own wait; otherwise it exits 2
+    and hands the PR to "the beat's merge rung, per the charter". That rung is drain.sh, called at
+    scripts/heartbeat-loop.sh:466 — 113 lines BELOW the paused branch's `continue` at line 353.
+    Autonomy has been window-paused since 2026-07-22, so the named owner has not run once. Five
+    CLEARED, non-deploy, organ-authored PRs sat open across three days while shipped.json reported
+    every page published: the receipt recorded the HANDOFF, not the LANDING.
+
+    So the organ closes its own loop, which is the ownership its own module docstring claims. This
+    is not a general un-pausing and deliberately is not one:
+
+      * scope — only PRs this organ opened, recorded by number in its own receipts;
+      * class — ship-docs.sh REFUSES deploy-trigger paths, so no page here can reach the live site;
+      * authority — the gate is _merge_prohibited(), the pause MARKER, exactly as the shipping path
+        already reads it and for the reason written there: a window pause withdraws dispatch, not
+        the machine's record of what it already observed. await-pr.sh independently refuses to
+        start under a merge-prohibiting marker, so the guard holds even if this one were wrong.
+
+    Bounded on purpose. merge-policy is only consulted for PRs still open, at most
+    LIMEN_DIURNAL_REAP_MAX per run, and the merge itself goes through await-pr.sh — the one
+    sanctioned waiter, with its own hard deadline. A hand-rolled poll loop here is exactly the
+    banned pattern (the 2026-07-15 endless-watcher incident); anything past the deadline stays a
+    PR and is retried next phase.
+    """
+    prs = sorted({r["pr"] for r in receipts.values() if isinstance(r.get("pr"), int)})
+    if not prs:
+        return 0
+    merged = 0
+    for pr in prs[: _int("LIMEN_DIURNAL_REAP_MAX", 3)]:
+        rc, out = _run(f"gh pr view {pr} --json state --jq .state", root, timeout=60)
+        if rc != 0 or out.strip() != "OPEN":
+            continue  # already merged or closed — the receipt is stale, not the PR
+        rc, _ = _run(f"bash {shlex.quote(str(root / 'scripts' / 'merge-policy.sh'))} {pr}", root, timeout=180)
+        if rc != 0:
+            print(f"diurnal: PR #{pr} not cleared (merge-policy exit {rc}) — left for the next phase")
+            continue
+        rc, out = _run(
+            f"bash {shlex.quote(str(root / 'scripts' / 'await-pr.sh'))} {pr} --merge",
+            root,
+            timeout=_int("LIMEN_DIURNAL_REAP_TIMEOUT", 600),
+        )
+        if rc == 0:
+            merged += 1
+            print(f"diurnal: PR #{pr} MERGED — the page is on main")
+        else:
+            print(f"diurnal: PR #{pr} still open after await-pr (exit {rc}) — retried next phase")
+    return merged
+
+
+def ship_pages(root: Path, phase: str = "evening") -> int:
     """Land emitted pages on main through the sanctioned docs path. Never fails the beat.
 
     ship-docs.sh is the charter's answer to this exact class (it calls itself the side-door
     closer): named files only — never `git add -A` — onto a fresh branch cut from origin/main in
     an isolated worktree, PR opened, self-merged the moment merge-policy.sh clears. It refuses
-    deploy-trigger paths outright, so a diurnal page can never blind-deploy the live site. On
-    timeout the PR still exists and its owner is the beat's merge rung, per the charter — this
-    hands off rather than babysitting.
+    deploy-trigger paths outright, so a diurnal page can never blind-deploy the live site.
+
+    Shipping is EVENING-ONLY for the current day. Every phase rewrites the page and regenerates
+    INDEX.md, so a digest-keyed re-ship — correct behavior when pages land — opened three PRs for
+    one file on 2026-08-01 while none of them merged. The page is only complete at evening; morning
+    and midday are intermediate states of the same file. Earlier days still ship from any phase, so
+    a crashed evening is caught the next morning rather than waiting a full day.
     """
     if not _on("LIMEN_DIURNAL_SHIP"):
         return 0
@@ -973,7 +1037,14 @@ def ship_pages(root: Path) -> int:
     if prohibition:
         print(f"diurnal: pages held local — pause marker {prohibition}", file=sys.stderr)
         return 0
+    receipts = shipped_receipts(root)
+    reap_shipped(root, receipts)
     pages = unshipped_pages(root)
+    if phase != "evening":
+        today = datetime.now().strftime("%Y-%m-%d")
+        dated = [p for p in pages if Path(p).stem < today]
+        # INDEX.md is not a day and rides along only when a dated page is actually shipping.
+        pages = dated + [p for p in pages if Path(p).stem == "INDEX"] if dated else []
     if not pages:
         return 0
     script = root / "scripts" / "ship-docs.sh"
@@ -1002,8 +1073,14 @@ def ship_pages(root: Path) -> int:
     # re-shipping would open a duplicate. A dropped page still surfaces: `--ship` is a manual
     # drain and `git status` never stops reporting it.
     if rc != 1:
+        # The PR NUMBER, not just the digest. Without it the receipt says a page was handed off and
+        # gives no way to ask whether the handoff completed — which is how five open PRs coexisted
+        # with a receipt file reporting everything shipped. rc == 0 means ship-docs already merged
+        # it, so there is nothing left to reap and no number is stored.
+        m = re.search(r"opened PR #(\d+)", out)
+        record = {"digest": None, "pr": int(m.group(1)) if m and rc != 0 else None}
         receipts = shipped_receipts(root)
-        receipts.update({rel: _digest(root / rel) for rel in pages})
+        receipts.update({rel: {**record, "digest": _digest(root / rel)} for rel in pages})
         # Date-keyed records accrete forever otherwise — the same reason _prune_notify_keys exists.
         cutoff = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
         receipts = {k: v for k, v in receipts.items() if Path(k).stem >= cutoff}
@@ -1042,8 +1119,9 @@ def main() -> int:
     if args.ship:
         # A standalone drain, so the capability is observable and re-runnable without forcing a
         # re-emission. Idempotent via the shipped receipt, NOT via git state — a shipped page
-        # stays untracked until its PR merges and the beat pulls.
-        return ship_pages(root)
+        # stays untracked until its PR merges and the beat pulls. Explicitly evening-shaped: a
+        # hand-run drain is asked for, so it takes today's page too rather than deferring it.
+        return ship_pages(root, "evening")
 
     if args.list:
         sections, scores = load_registry(root), load_scores(root)
@@ -1112,7 +1190,7 @@ def main() -> int:
     # Shipping sits in main(), not in emit(): rendering a day and publishing it are different
     # concerns, and --dry-run must never reach the world. A failed emission ships nothing.
     if rc == 0 and not args.dry_run:
-        ship_pages(root)
+        ship_pages(root, phase)
     return rc
 
 

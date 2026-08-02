@@ -4902,6 +4902,18 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_DIURNAL_REAP_MAX:
+    default: 3
+    env: LIMEN_DIURNAL_REAP_MAX
+    self_update: none
+    owner: diurnal
+    note: "How many of the organ's own still-open page PRs it merges per run. ship-docs.sh exits 2 when merge-policy has not cleared within its wait, handing the PR to the beat's merge rung (drain.sh) — which sits below the pause gate in heartbeat-loop.sh and had not run since 2026-07-22, so five CLEARED non-deploy PRs accumulated across three days. The organ now closes its own loop; this caps the work so a backlog cannot stall the beat, and the remainder is retried next phase."
+  LIMEN_DIURNAL_REAP_TIMEOUT:
+    default: 600
+    env: LIMEN_DIURNAL_REAP_TIMEOUT
+    self_update: none
+    owner: diurnal
+    note: "Timeout (seconds) for each scripts/await-pr.sh --merge invocation during the reap. Separate from LIMEN_DIURNAL_TIMEOUT because a merge-queue round-trip is minutes, not seconds, while an emission is seconds. await-pr.sh is the one sanctioned waiter and carries its own hard deadline; this bounds the subprocess around it. Past the deadline the PR simply stays open and is retried."
   LIMEN_DIURNAL_SHIP:
     default: "1"
     env: LIMEN_DIURNAL_SHIP
