@@ -158935,58 +158935,79 @@ tasks:
   value_case: the party-game-suite venture is promoted or parked on evidence
   external_deadline: false
   source_origin: human_prompt
-- id: VIC-CONTRACT-002
-  title: Wire a real test script into @victoroff/contracts
+- id: 'VIC-CONTRACT-002'
+  title: 'Wire a real test script into @victoroff/contracts'
   description: 'packages/contracts has validation.test.ts but NO test script, so its predicate is a silent no-op. Add "test": "vitest run --root ../.. packages/contracts" to packages/contracts/package.json (mirror packages/domain), make the existing validation tests pass, and extend coverage for every exported vali'
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-CONTRACT-002 — Wire a real test script into @victoroff/contracts.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/contracts/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: packages/contracts has validation.test.ts but NO test script, so its predicate is a silent no-op. Add "test": "vitest run --root ../.. packages/contracts" to packages/contracts/package.json (mirror packages/domain), make the existing validation tests pass, and extend coverage for every exported validator.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/contracts test
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-002
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/contracts test
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-002
-  horizon: present
-  value_case: Closes the no-op-predicate trap in contracts so CI actually runs its validation tests.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/contracts test'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/39'
+  horizon: 'present'
+  value_case: 'Closes the no-op-predicate trap in contracts so CI actually runs its validation tests.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:30:04.446Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-c845d5446e8e12f2477acdcc1bdcff87:3:compatibility
-    conduct_run_id: run-c845d5446e8e12f2477acdcc1bdcff87
-    conduct_lease_id: lease-3-c845d5446e8e12f2
+  - timestamp: '2026-07-23T10:30:04.446Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-c845d5446e8e12f2477acdcc1bdcff87:3:compatibility'
+    conduct_run_id: 'run-c845d5446e8e12f2477acdcc1bdcff87'
+    conduct_lease_id: 'lease-3-c845d5446e8e12f2'
     conduct_generation: 3
-  source_origin: human_prompt
-  updated: 2026-07-23T10:30:04.446Z
+  - timestamp: '2026-08-02T14:33:10.506Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #39; control issue #127.'
+    conduct_event_id: 'conduct:run-30d93d9ae767b7b4b8132cf2612b619b:461:compatibility'
+    conduct_run_id: 'run-30d93d9ae767b7b4b8132cf2612b619b'
+    conduct_lease_id: 'lease-461-30d93d9ae767b7b4'
+    conduct_generation: 461
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:33:10.506Z'
 - id: HEAL-ENV-SYNC-GLOBS-REAP
   title: Reap TEMP LIMEN_SYNC_RECEIPT_GLOBS override from ~/.limen.env once limen#1381 is merged
   repo: organvm/limen
