@@ -6,6 +6,6 @@ outside the markers survives regeneration.
 
 | day | phases | first line |
 |-----|--------|------------|
-| [2026-08-02](2026-08-02.md) | morning | ABSENT — logs/AUTONOMY_PAUSED does not exist |
+| [2026-08-02](2026-08-02.md) | morning · evening | ABSENT — logs/AUTONOMY_PAUSED does not exist |
 | [2026-08-01](2026-08-01.md) | morning · midday · evening | ABSENT — logs/AUTONOMY_PAUSED does not exist |
 | [2026-07-31](2026-07-31.md) | morning · midday · evening | ABSENT — logs/AUTONOMY_PAUSED does not exist |
