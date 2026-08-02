@@ -503,9 +503,31 @@ def _short_proc_output(proc: subprocess.CompletedProcess[str] | None, limit: int
     return f"{text[:limit]}...[truncated]" if len(text) > limit else text
 
 
-def _first_command(payload: dict[str, Any]) -> str:
-    commands = payload.get("next_commands") if isinstance(payload.get("next_commands"), list) else []
-    return str(commands[0]) if commands else ""
+# The relay only READS logs/usage.json (_provider_headroom); its own producer is the
+# usage-telemetry sensor (institutio/governance/sensors.yaml, source: [metabolize]).
+# Without that first, a "provider headroom stale" failure can never clear and re-running
+# the relay loops forever.
+HANDOFF_RELAY_REMEDIATION = (
+    "python3 scripts/usage-telemetry.py && python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check"
+)
+
+
+def _remediation_command(payload: dict[str, Any]) -> str:
+    """Every command the gate named, in order — not just the first.
+
+    The value gate emits ``next_commands`` as a LIST because clearing one block can take
+    more than one producer: ``stop_missing_inputs`` names a writer per missing input, and
+    for ``batch_review_index`` the producer is the SECOND entry. Collapsing to
+    ``commands[0]`` printed a command that could not clear the block, so the gate re-fired
+    identically and the operator looped. Chained with ``&&`` to match the multi-step
+    remediation form already used for the handoff relay below.
+    """
+    # Bound once, then narrowed: the isinstance() guard has to test the SAME object that gets
+    # iterated. Guarding a second payload.get() call left the bound value typed
+    # `Any | list[Any] | None`, which mypy correctly refuses to iterate.
+    raw = payload.get("next_commands")
+    commands: list[Any] = raw if isinstance(raw, list) else []
+    return " && ".join(text for text in (str(command).strip() for command in commands) if text)
 
 
 def _run_handoff_relay(root: Path, *, refresh: bool) -> dict[str, Any]:
@@ -706,7 +728,7 @@ def _session_value_admission_gate(
     gate = _parse_json_stdout(proc.stdout)
     gate["returncode"] = proc.returncode
     gate["output"] = _short_proc_output(proc)
-    gate["next_command"] = _first_command(gate)
+    gate["next_command"] = _remediation_command(gate)
     if proc.returncode == 0:
         gate["allow"] = True
         return gate
@@ -772,7 +794,7 @@ def dispatch_admission_check(
                     "status": "alert",
                     "exit_code": 20,
                     "reason": "handoff relay check failed; refresh handoff before launching workers",
-                    "next_command": "python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check",
+                    "next_command": HANDOFF_RELAY_REMEDIATION,
                 }
             )
             return result
