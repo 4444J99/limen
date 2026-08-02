@@ -159671,7 +159671,7 @@ tasks:
   workstream: 'governance'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'victoroff'
   - 'public-synthetic'
@@ -159733,8 +159733,19 @@ tasks:
     conduct_run_id: 'run-3793d76982b65a610c014bf5eaf39b88'
     conduct_lease_id: 'lease-494-3793d76982b65a61'
     conduct_generation: 494
+  - timestamp: '2026-08-02T14:40:01.116Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'in_progress'
+    output: 'Verifying preserved PR #56 implementation and exact-main receipt.'
+    conduct_event_id: 'conduct:run-28c446121a357c4bd0f1b6e31f7fd867:495:compatibility'
+    conduct_run_id: 'run-28c446121a357c4bd0f1b6e31f7fd867'
+    conduct_lease_id: 'lease-495-28c446121a357c4b'
+    conduct_generation: 495
   source_origin: 'human_prompt'
-  updated: '2026-08-02T14:39:52.506Z'
+  updated: '2026-08-02T14:40:01.116Z'
 - id: 'VIC-DOMAIN-003'
   title: 'Authority holds as domain rules'
   description: 'Encode the registry authority holds (custody + production, from program/registry.v1.json) as domain rules: any resolved next action that touches a blocked capability is rejected with the hold id cited. Tests included.'
