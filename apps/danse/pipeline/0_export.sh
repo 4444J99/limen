@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # danse — stage 0: pull the source corpus out of Photos.app.
 #
-# The album lives at etcetera ▸ ballerina danse ▸ danse (161 originals @ 3264×2448,
-# all shot 2017-06-20, plus the 750×750 transmutations made 2017-07-25).
+# The album lives at etcetera ▸ ballerina danse ▸ danse (161 camera originals @
+# 3264×2448, all shot 2017-06-20, plus the imported frame and 750×750
+# transmutations made 2017-07-25). The corpus predicate owns the exact 162-frame
+# source denominator after Vision hydration.
 #
 # Two paths, because the tooling one is the one that breaks:
 #   osxphotos  — preferred; stable UUID filenames, pulls iCloud-offloaded originals.

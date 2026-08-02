@@ -17,6 +17,7 @@ Two facts this encodes, both measured rather than assumed:
     apps/danse/render/browser.py --check          # print the GL renderer and exit
     apps/danse/render/browser.py --verify         # run verify.html, print the verdict
     apps/danse/render/browser.py --arrival        # two visitors, two rivers, in a real browser
+    apps/danse/render/browser.py --probe          # projection continuity, numerically
 """
 
 from __future__ import annotations
@@ -263,17 +264,35 @@ def run_arrival(page, base: str) -> int:
     return 0
 
 
+def run_probe(page, base: str) -> int:
+    """Turn probe.html's projective-continuity self-test into an exit code."""
+    page.goto(f"{base}/probe.html", wait_until="load")
+    page.wait_for_function("() => !!(window.danse && window.danse.selfTest)", timeout=180_000)
+    passed = bool(page.evaluate("() => window.danse.selfTest()"))
+    verdict = page.locator("#verdict").inner_text().strip()
+    print(f"\n  renderer   {page.gl_renderer}")
+    for line in verdict.splitlines():
+        print(f"  {line}")
+    print()
+    if passed:
+        print("PROJECTION CONTINUITY HOLDS — window and carried-picture paths agree")
+        return 0
+    print("PROJECTION CONTINUITY BROKEN — placement and projector disagree")
+    return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="print the GL renderer and exit")
     ap.add_argument("--verify", action="store_true", help="run verify.html and report the verdict")
     ap.add_argument("--arrival", action="store_true", help="run the live page and check every visitor's river")
+    ap.add_argument("--probe", action="store_true", help="run probe.html's projection-continuity self-test")
     ap.add_argument("--headed", action="store_true", help="show the window (debugging)")
     ap.add_argument("--base", help="use an already-running server instead of starting one")
     args = ap.parse_args()
 
-    if not args.check and not args.verify and not args.arrival:
-        ap.error("nothing to do — pass --check, --verify or --arrival")
+    if not args.check and not args.verify and not args.arrival and not args.probe:
+        ap.error("nothing to do — pass --check, --verify, --arrival or --probe")
 
     with contextlib.ExitStack() as stack:
         if args.base and reachable(args.base):
@@ -285,11 +304,13 @@ def main() -> int:
         if args.check:
             gpu = page.evaluate(READ_RENDERER)
             print(json.dumps({**gpu, "serving": base}, indent=1))
-            if not args.verify and not args.arrival:
+            if not args.verify and not args.arrival and not args.probe:
                 return 0
         rc = run_verify(page, base) if args.verify else 0
         if args.arrival:
             rc = run_arrival(page, base) or rc
+        if args.probe:
+            rc = run_probe(page, base) or rc
         return rc
 
 

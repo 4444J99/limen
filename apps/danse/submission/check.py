@@ -15,12 +15,15 @@ An OPEN blocking unknown is not a warning. It exits non-zero, because "we assume
 6:30 was fine" is exactly the failure that is only discovered after the deadline.
 
     ./check.py                        # register-level: deadline + open unknowns
-    ./check.py --package .work/submission
+    ./check.py --package .work/submission --phase package
+    ./check.py --package .work/submission --phase uploaded
+    ./check.py --package .work/submission --phase submitted
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -37,6 +40,7 @@ REGISTER = HERE / "screendance-2027.yaml"
 
 PASS, FAIL, OPEN, SKIP = "PASS", "FAIL", "OPEN", "SKIP"
 GLYPH = {PASS: "\033[32m ok \033[0m", FAIL: "\033[31mFAIL\033[0m", OPEN: "\033[33mOPEN\033[0m", SKIP: "skip"}
+PHASES = ("package", "uploaded", "submitted")
 
 VIDEO_SUFFIXES = {".mov", ".mp4", ".mxf", ".m4v"}
 
@@ -75,10 +79,8 @@ def probe(path: Path) -> dict | None:
             "ffprobe",
             "-v",
             "error",
-            "-select_streams",
-            "v:0",
             "-show_entries",
-            "stream=width,height,r_frame_rate",
+            "stream=codec_type,codec_name,profile,pix_fmt,width,height,r_frame_rate,channels,sample_rate",
             "-show_entries",
             "format=duration",
             "-of",
@@ -92,15 +94,68 @@ def probe(path: Path) -> dict | None:
     if out.returncode != 0:
         return None
     data = json.loads(out.stdout or "{}")
-    stream = (data.get("streams") or [{}])[0]
-    num, _, den = (stream.get("r_frame_rate") or "0/1").partition("/")
+    streams = data.get("streams") or []
+    video = next((stream for stream in streams if stream.get("codec_type") == "video"), {})
+    audio = next((stream for stream in streams if stream.get("codec_type") == "audio"), {})
+    num, _, den = (video.get("r_frame_rate") or "0/1").partition("/")
     fps = float(num) / float(den or 1) if float(den or 1) else 0.0
     return {
-        "width": stream.get("width"),
-        "height": stream.get("height"),
+        "width": video.get("width"),
+        "height": video.get("height"),
         "fps": round(fps, 3),
         "seconds": float((data.get("format") or {}).get("duration") or 0.0),
+        "vcodec": video.get("codec_name"),
+        "vprofile": video.get("profile"),
+        "pix_fmt": video.get("pix_fmt"),
+        "acodec": audio.get("codec_name"),
+        "channels": audio.get("channels"),
+        "sample_rate": int(audio.get("sample_rate") or 0),
     }
+
+
+def loudness(path: Path) -> dict | None:
+    """Integrated loudness and true peak measured from the staged artifact."""
+    if not shutil.which("ffmpeg"):
+        return None
+    try:
+        out = subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-nostats",
+                "-i",
+                str(path),
+                "-map",
+                "0:a:0",
+                "-af",
+                "loudnorm=I=-16:TP=-1:LRA=11:print_format=json",
+                "-f",
+                "null",
+                "-",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=600,
+        )
+    except subprocess.TimeoutExpired:
+        return None
+    blocks = re.findall(r"\{\s*\"input_i\".*?\}", out.stderr, flags=re.DOTALL)
+    if not blocks:
+        return None
+    try:
+        measured = json.loads(blocks[-1])
+        return {"lufs": float(measured["input_i"]), "true_peak_dbtp": float(measured["input_tp"])}
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def image_size(path: Path) -> tuple[int, int] | None:
@@ -128,7 +183,7 @@ def find_one(root: Path, stem: str) -> Path | None:
 # ── register-level checks (no package needed) ──────────────────────────────────
 
 
-def check_deadline(reg: dict, rep: Report) -> None:
+def check_deadline(reg: dict, phase: str, rep: Report) -> None:
     d = reg["deadline"]
     wall = datetime.fromisoformat(d["hard_wall"])
     now = datetime.now(ZoneInfo("America/New_York"))
@@ -144,7 +199,7 @@ def check_deadline(reg: dict, rep: Report) -> None:
 
     target = datetime.fromisoformat(d["target_file_date"] + "T12:00:00-04:00")
     tdays = (target - now).days
-    status = PASS if tdays >= 0 else OPEN
+    status = PASS if tdays >= 0 or phase == "submitted" else OPEN
     rep.add(
         "deadline",
         "target file date",
@@ -172,20 +227,46 @@ def check_unknowns(reg: dict, rep: Report) -> None:
 # ── package checks ─────────────────────────────────────────────────────────────
 
 
-def check_attestations(reg: dict, root: Path, rep: Report) -> None:
+def check_requirement_phases(reg: dict, rep: Report) -> None:
+    rep.add(
+        "register",
+        "schema",
+        PASS if reg.get("schema") == "danse.submission.v2" else FAIL,
+        str(reg.get("schema")),
+    )
+    owned = [item for section in ("requirements", "approvals") for item in reg.get(section, [])]
+    invalid = [item.get("id", "<unnamed>") for item in owned if item.get("phase") not in PHASES]
+    rep.add(
+        "register",
+        "requirement phase ownership",
+        PASS if not invalid else FAIL,
+        f"{len(owned)} owned requirements and approvals"
+        if not invalid
+        else f"missing/invalid phase: {', '.join(invalid)}",
+    )
+
+
+def check_attestations(reg: dict, root: Path, phase: str, rep: Report) -> None:
     path = root / "attest.yaml"
     attested = yaml.safe_load(path.read_text()) if path.exists() else {}
     attested = attested or {}
-    for req in reg["requirements"]:
-        if req.get("check") != "manual":
+    selected = PHASES.index(phase)
+    for req in [item for section in ("requirements", "approvals") for item in reg.get(section, [])]:
+        owner = req.get("phase")
+        if req.get("check") != "manual" or owner not in PHASES or PHASES.index(owner) > selected:
             continue
         value = attested.get(req["id"])
         if value is True:
-            rep.add("attested", req["id"], PASS, req["rule"])
+            rep.add(f"attested through {phase}", req["id"], PASS, req["rule"])
         elif value is False:
-            rep.add("attested", req["id"], FAIL, req["rule"])
+            rep.add(f"attested through {phase}", req["id"], FAIL, req["rule"])
         else:
-            rep.add("attested", req["id"], FAIL, f"unattested in attest.yaml — {req['rule']}")
+            rep.add(
+                f"attested through {phase}",
+                req["id"],
+                FAIL,
+                f"unattested in attest.yaml (owned by {owner}) — {req['rule']}",
+            )
 
 
 def check_master(spec: dict, reg: dict, root: Path, rep: Report) -> None:
@@ -209,6 +290,30 @@ def check_master(spec: dict, reg: dict, root: Path, rep: Report) -> None:
     ok_fps = any(abs(fps - f) < 0.5 for f in spec["fps_allowed"])
     rep.add("package", "frame rate", PASS if ok_fps else FAIL, f"{fps} — allowed {spec['fps_allowed']}")
 
+    ok_size = (w or 0) >= spec["min_width"] and (h or 0) >= spec["min_height"]
+    rep.add(
+        "package",
+        "master resolution",
+        PASS if ok_size else FAIL,
+        f"{w}×{h} (min {spec['min_width']}×{spec['min_height']})",
+    )
+    ok_codec = (
+        info["vcodec"] == spec["video_codec"] and str(info["vprofile"]).lower() == str(spec["video_profile"]).lower()
+    )
+    rep.add(
+        "package",
+        "master codec",
+        PASS if ok_codec else FAIL,
+        f"{info['vcodec']} {info['vprofile']} (want {spec['video_codec']} {spec['video_profile']})",
+    )
+    ok_audio = info["acodec"] == spec["audio_codec"] and info["channels"] == spec["audio_channels"]
+    rep.add(
+        "package",
+        "master audio stream",
+        PASS if ok_audio else FAIL,
+        f"{info['acodec']} · {info['channels']} channels",
+    )
+
     cap = next((u.get("assume_max_seconds") for u in reg.get("unstated", []) if u["id"] == "runtime-cap"), None)
     if cap:
         # OPEN, not PASS: the cap is our assumption, not the festival's stated rule.
@@ -230,12 +335,26 @@ def check_screener(spec: dict, root: Path, rep: Report) -> None:
     if not info:
         rep.add("package", "screener", OPEN, f"{path.name} present; ffprobe unavailable")
         return
-    ok = (info["height"] or 0) >= spec["min_height"]
+    ok = (info["width"] or 0) >= spec["min_width"] and (info["height"] or 0) >= spec["min_height"]
     rep.add(
         "package",
         "screener",
         PASS if ok else FAIL,
-        f"{path.name} · {info['width']}×{info['height']} (min height {spec['min_height']})",
+        f"{path.name} · {info['width']}×{info['height']} (min {spec['min_width']}×{spec['min_height']})",
+    )
+    ok_codec = info["vcodec"] == spec["video_codec"]
+    rep.add(
+        "package",
+        "screener codec",
+        PASS if ok_codec else FAIL,
+        f"{info['vcodec']} (want {spec['video_codec']})",
+    )
+    ok_audio = info["acodec"] == spec["audio_codec"] and info["channels"] == spec["audio_channels"]
+    rep.add(
+        "package",
+        "screener audio stream",
+        PASS if ok_audio else FAIL,
+        f"{info['acodec']} · {info['channels']} channels",
     )
 
 
@@ -287,11 +406,33 @@ def check_stills(spec: dict, root: Path, rep: Report, exempt: set[str] = frozens
 
 def check_origin_still(spec: dict, root: Path, rep: Report) -> None:
     path = root / "stills" / spec["filename"]
+    exists = path.exists()
     rep.add(
         "package",
         "unaltered 2017 photograph",
-        PASS if path.exists() else FAIL,
-        f"stills/{spec['filename']}" + ("" if path.exists() else " — missing"),
+        PASS if exists else FAIL,
+        f"stills/{spec['filename']}" + ("" if exists else " — missing"),
+    )
+    if not exists:
+        return
+    manifest_path = root / "manifest.json"
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
+    item = next(
+        (entry for entry in manifest.get("items", []) if entry.get("name") == f"stills/{spec['filename']}"),
+        {},
+    )
+    actual = sha256(path)
+    copied = (
+        item.get("source") == spec["source_filename"]
+        and item.get("copy_mode") == spec["copy_mode"]
+        and item.get("sha256") == actual
+        and item.get("source_sha256") == actual
+    )
+    rep.add(
+        "package",
+        "origin is byte-identical to its registered source",
+        PASS if copied else FAIL,
+        f"{item.get('source', 'unrecorded')} · {actual[:16]}…",
     )
 
 
@@ -306,6 +447,40 @@ def check_trailer(spec: dict, root: Path, rep: Report) -> None:
         return
     ok = info["seconds"] <= spec["max_seconds"]
     rep.add("package", "trailer", PASS if ok else FAIL, f"{info['seconds']:.0f}s (max {spec['max_seconds']}s)")
+
+
+def check_audio(spec: dict, root: Path, rep: Report) -> None:
+    master = find_one(root, "master")
+    if not master:
+        return
+    measured = loudness(master)
+    if measured is None:
+        rep.add("audio", "loudness", OPEN, "ffmpeg loudnorm measurement unavailable")
+    else:
+        delta = abs(measured["lufs"] - spec["target_lufs"])
+        rep.add(
+            "audio",
+            "integrated loudness",
+            PASS if delta <= spec["tolerance_lu"] else FAIL,
+            f"{measured['lufs']:.2f} LUFS (target {spec['target_lufs']:.1f} ± {spec['tolerance_lu']:.1f})",
+        )
+        rep.add(
+            "audio",
+            "true peak",
+            PASS if measured["true_peak_dbtp"] <= spec["max_true_peak_dbtp"] else FAIL,
+            f"{measured['true_peak_dbtp']:.2f} dBTP (max {spec['max_true_peak_dbtp']:.1f})",
+        )
+
+    manifest_path = root / "manifest.json"
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
+    sources = set((manifest.get("sound") or {}).get("sources") or [])
+    expected = set(spec["source_recordings"])
+    rep.add(
+        "audio",
+        "registered apartment sources only",
+        PASS if sources == expected else FAIL,
+        f"{len(sources)}/{len(expected)} exact sources · bank {(manifest.get('sound') or {}).get('bank_fingerprint', 'missing')}",
+    )
 
 
 def check_text(spec: dict, root: Path, rep: Report) -> None:
@@ -327,6 +502,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--package", type=Path, help="staged submission directory")
     ap.add_argument("--register", type=Path, default=REGISTER)
+    ap.add_argument("--phase", choices=PHASES, default="package", help="cumulative delivery phase to validate")
     args = ap.parse_args()
 
     reg = yaml.safe_load(args.register.read_text())
@@ -334,7 +510,8 @@ def main() -> int:
 
     print(f"\033[1m{reg['call']}\033[0m — {reg['presenter']}")
 
-    check_deadline(reg, rep)
+    check_requirement_phases(reg, rep)
+    check_deadline(reg, args.phase, rep)
     check_unknowns(reg, rep)
 
     if args.package:
@@ -343,12 +520,13 @@ def main() -> int:
             rep.add("package", "directory", FAIL, f"{root} does not exist")
         else:
             pkg = reg["package"]
-            check_attestations(reg, root, rep)
+            check_attestations(reg, root, args.phase, rep)
             check_master(pkg["master"], reg, root, rep)
             check_screener(pkg["screener"], root, rep)
             check_stills(pkg["stills"], root, rep, exempt={pkg["origin_still"]["filename"]})
             check_origin_still(pkg["origin_still"], root, rep)
             check_trailer(pkg["trailer"], root, rep)
+            check_audio(pkg["audio"], root, rep)
             check_text(pkg["text"], root, rep)
     else:
         rep.add("package", "not staged", OPEN, "re-run with --package <dir> once the cut exists")
@@ -358,9 +536,9 @@ def main() -> int:
     n = rep.failures
     print()
     if n == 0:
-        print("\033[32mSUBMITTABLE — every stated requirement met, no open blockers\033[0m")
+        print(f"\033[32m{args.phase.upper()} PHASE READY — every owned requirement met, no open blockers\033[0m")
         return 0
-    print(f"\033[31mNOT SUBMITTABLE — {n} item(s) failing or open\033[0m")
+    print(f"\033[31m{args.phase.upper()} PHASE NOT READY — {n} item(s) failing or open\033[0m")
     return 1
 
 

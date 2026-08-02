@@ -47,7 +47,7 @@ saves you from concluding a check is broken when it is merely refusing to lie.
 | The 39 portable arithmetic invariants (+3 with a local grain bank) | `python3 scripts/check-danse.py` | **anything** with python3 + node |
 | The flat state is still the 2017 composite (**31.60 dB**) | `apps/danse/render/browser.py --verify` | macOS + Google Chrome + Apple Metal **only** |
 | Every visitor gets their own river | `apps/danse/render/browser.py --arrival` | same |
-| Planes at unrelated angles still read as one room | open `probe.html` | any WebGL2 browser — by eye |
+| Planes at unrelated angles still read as one room | `apps/danse/render/browser.py --probe` | same |
 
 `browser.py` **asserts the GL renderer names Metal and exits rather than proceed** on a software
 rasteriser. That is not overcaution: the offline film is 23,400 frames, SwiftShader takes most of a
@@ -99,14 +99,16 @@ arithmetic ceiling, so there is no headroom hiding a fudge.
 ## 5. Open work — this component's own record
 
 Per the root charter, each component carries its own residual items rather than parking them in a
-session. Nothing here is blocked on anything else here.
+session. The phase and predicate below own the dependencies; chat does not.
 
 | Item | State | Where it lands |
 |---|---|---|
-| `render/deliver.py` speaks the **pre-river** vocabulary (`windows`, `t0/t1`, a fixed `master`) | re-fitted to captures + `--start` per `danse.program.v2` | passage-caught outputs & capture spans |
-| ScreenDance 2027 package | `attest.yaml` staged, pending full artifact generation | `check.py` must exit 0 once all renders complete |
+| Delivery trunk | capture-keyed `--out`, external `--package`, dependency-aware `--only`, absolute score start, and non-writing `--preflight` implemented | `scripts/tests/danse-delivery.test.py` |
+| ScreenDance 2027 package | no attestations live in git; a package build emits phase-owned nulls | `done.sh --package <path> --phase package|uploaded|submitted` |
+| Private render sources | hydrate 162 raw+Vision pairs, the local `film` tier, and the two-source grain bank before rendering | `deliver.py --preflight` must exit 0 |
 | The title | **confirmed** as `THE THING WITHOUT A NAME` in `program.json` | done |
-| `bio` / `rights_declaration` | claims **about a person** | only he can verify them — do not invent or infer |
+| final cut / `bio` / `rights_declaration` | claims **about a person and his work** | only he can set their package-phase attestations — do not invent or infer |
+| Vimeo and Submittable acts | password/download belong to `uploaded`; portal filing belongs to `submitted` | cumulative phase checks in the submission register |
 | Fleet homing / publishing | `chambers/danse.yaml`, `deploy_triggers.danse`, and `.github/workflows/deploy-danse.yml` staged | done |
 | `join.html` / MediaPipe — a visitor's own body entering the corpus | deferred past the submission | `#name=` in `arrival.js` is the shipped cheap slice; part of final evolution (a) user interaction |
 | Spatial sound triggering | final evolution (b) concept | sound from the space triggered by each panel/slice generation across background XY axes |

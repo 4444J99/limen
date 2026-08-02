@@ -253,6 +253,39 @@ python3 3_reconstruct.py --target .work/reference/T-2017-full.png \
 python3 3_reconstruct.py ... --sweep 32,64,128,256,384,512   # rate/distortion curve
 ```
 
+## Delivery
+
+The submission register owns formats and phase-specific human acts. Generated media,
+package attestations, and private sources remain ignored; the tracked prose in
+`submission/text/` is the package source.
+
+```bash
+# After export + Vision hydration, build the ignored full-camera tier.
+python3 apps/danse/pipeline/4_corpus.py --tiers film --skip-room
+
+# Read-only: validates the exact dependency plan and source denominator.
+python3 apps/danse/render/deliver.py --preflight \
+  --out <scratch-render-root> --package <archive-package-root>
+
+# Build one default passage (seed 20170620, absolute start 0).
+python3 apps/danse/render/deliver.py \
+  --out <scratch-render-root> --package <archive-package-root>
+
+# Text and origin builds do not invoke the renderer or score.
+python3 apps/danse/render/deliver.py --only text --only origin \
+  --out <scratch-render-root> --package <archive-package-root>
+
+# Cumulative validation; later phases add only the acts they own.
+apps/danse/done.sh --package <archive-package-root> --phase package
+apps/danse/done.sh --package <archive-package-root> --phase uploaded
+apps/danse/done.sh --package <archive-package-root> --phase submitted
+```
+
+Run media commands in a Python environment providing NumPy, SciPy, Pillow, and
+Playwright. `deliver.py --preflight` reports missing modules, the Metal Chrome
+surface, the film tier, the two-source grain bank, and the registered origin
+photograph without creating output directories.
+
 ## Provenance
 
 Nothing is synthesised. Every pixel is a photograph taken on 20 June 2017. The pose

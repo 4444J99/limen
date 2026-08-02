@@ -7,7 +7,7 @@ member:
   source: "2017 composite photography"
   series_type: standalone
 mandate:
-  description: A generative WebGL screendance based on 161 photographs taken on June 20, 2017, algorithmically choreographed via spatial depth and strict variation form.
+  description: A generative WebGL screendance based on 162 photographs from the 2017 corpus, algorithmically choreographed via spatial depth and strict variation form.
   scope_boundary: Engine source code, offline renderer, spatial sound mechanics, and submission text packages.
 standing:
   current: STAGED
@@ -16,9 +16,9 @@ next_standing: EXHIBITED
 standard:
   rubric: The engine must remain deterministic and preserve all 39 portable invariants.
   evidence:
-    - apps/danse/.work/submission/text/ files (6 text documents passing strict word counts)
+    - apps/danse/submission/text/ files (6 tracked text documents passing strict word counts)
     - scripts/check-danse.py (pass 39 invariants)
-    - "Cloudflare Pages deployment"
+    - "https://danse.pages.dev"
 governance:
   artist_gate: true
   forbidden_acts:
@@ -27,4 +27,4 @@ governance:
 human_gates:
   - artist_review
 artifacts:
-  next_reviewable_output: "https://danse.artist.domain/"
+  next_reviewable_output: "ScreenDance package passing apps/danse/done.sh at its owned phase"

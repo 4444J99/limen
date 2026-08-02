@@ -15,7 +15,7 @@
  * plane the renderer draws — so "far" in the score means the plane the viewer
  * sees further away, not an approximation of it.
  *
- *     apps/danse/sound/control.mjs                    # master window to stdout
+ *     apps/danse/sound/control.mjs                    # passage control to stdout
  *     apps/danse/sound/control.mjs --window trailer   # any declared window
  *     apps/danse/sound/control.mjs --rate 60 --out c.json
  */
@@ -58,6 +58,7 @@ function args(argv) {
 }
 
 const opt = args(process.argv.slice(2));
+if (!Number.isFinite(opt.rate) || opt.rate < 0) throw new Error("--rate must be a non-negative number");
 
 const program = readJSON(path.join(DANSE, "render/program.json"));
 validate(program);
@@ -90,13 +91,20 @@ if (cap.seconds > 0) {
     t1 = at.t0 + at.seconds;
   }
 }
-const dt = 1 / opt.rate;
+const dt = opt.rate > 0 ? 1 / opt.rate : null;
+
+// Provenance for an uncropped passage recording: at its boundary the ONE
+// movement is exactly one untouched source photograph. Metadata-only callers
+// use rate 0, avoiding a full 9,000-step control render just to resolve a span.
+const opening = step(corpus, seed, t0, program, { quantise: 0 }).cast;
+const origin = opening.length === 1 ? opening[0].layers?.[0]?.frame ?? null : null;
+const caughtPassage = passageAt(program, seed, t0);
 
 const frames = [];
 let previous = null; // cell id -> frame id, for spotting a re-cast
 let previousCut = null;
 
-for (let i = 0; t0 + i * dt < t1; i++) {
+for (let i = 0; dt !== null && t0 + i * dt < t1; i++) {
   const t = t0 + i * dt;
   const { state, cast } = step(corpus, seed, t, program, { quantise: 0 });
 
@@ -165,10 +173,13 @@ const payload = {
   title: program.title,
   capture: cap.name,
   seed,
+  passage: caughtPassage.index,
+  passageSeed: caughtPassage.seed,
   rate: opt.rate,
   t0,
   t1,
   duration: round(t1 - t0, 4),
+  origin,
   voices: VOICES,
   layout: { v: ["z", "opacity", "area", "x"], e: ["z", "area", "x"] },
   frames,

@@ -19,7 +19,7 @@ leverage of the spine, and it shows up here as arithmetic:
                       projection therefore chooses a different field of view.
     stills            six one-frame renders at distinct seeds, named by seed.
 
-SOUND IS SLICED, NEVER RE-SCORED. `score.py --capture trailer` is a legitimate
+SOUND IS SLICED, NEVER RE-SCORED. `score.py --window trailer` is a legitimate
 standalone composition, but it starts its bed and its voice phrasing at the
 capture's own start time, so the same absolute moment would sound different in the
 passage recording and in the Times Square cut. Slicing one passage score means a
@@ -27,33 +27,42 @@ moment sounds the way it sounds, in every crop of the film that contains it.
 
     apps/danse/render/deliver.py                 # everything
     apps/danse/render/deliver.py --only stills
-    apps/danse/render/deliver.py --start 120.0   # start recording 120s into the river
+    apps/danse/render/deliver.py --start 120.0   # select the passage containing river time 120s
     apps/danse/render/deliver.py --force reel    # re-make one that already exists
+    apps/danse/render/deliver.py --out /Volumes/Scratch/danse --package /Volumes/Archive4T/danse/package
+    apps/danse/render/deliver.py --preflight      # same dependency plan, no writes or rendering
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 HERE = Path(__file__).resolve().parent
 DANSE = HERE.parent
 PROGRAM = HERE / "program.json"
-OUT = HERE / "out"
-PACKAGE = OUT / "package"
+DEFAULT_OUT = HERE / "out"
+OUT = DEFAULT_OUT
+PACKAGE = DEFAULT_OUT / "package"
 SCORE = DANSE / "sound" / "score.py"
 RENDER = HERE / "render.py"
-REFERENCE = DANSE / "pipeline" / ".work" / "reference"
+REGISTER = DANSE / "submission" / "screendance-2027.yaml"
+RAW = DANSE / "pipeline" / ".work" / "raw"
+BANK = DANSE / "sound" / "bank" / "bank.json"
 
-# The origin document. 1024x768 is not a mistake and not a downsample — it is
-# the resolution the 2017 piece exists at. The film restores that composite to
-# 4K from the original photographs; this is what it is being restored FROM.
-ORIGIN = REFERENCE / "T-2017-full.png"
+# The untouched photograph visible at t=0 for the registered submission seed.
+# This is deliberately the camera original, not T-2017-full.png (the later,
+# hand-cut composite used by verify.html). The package copies its bytes without
+# decoding or re-encoding them.
+ORIGIN = RAW / "IMG_1594.JPG"
 
 # Captures that are sub-spans or scaled versions of the primary 4K `passage` capture,
 # so they can be cut/scaled from it. `copy` means stream-copy (no re-encode at all).
@@ -66,7 +75,10 @@ DERIVED = {
 # Six moments, chosen to span the arc rather than to flatter one cut: the
 # composite intact, the composite coming apart, the engine at full stride twice,
 # a body that never existed, and a reseed.
-STILL_TIMES = (55.0, 95.0, 150.0, 200.0, 250.0, 330.0)
+STILL_FRACTIONS = (0.08, 0.22, 0.38, 0.54, 0.70, 0.88)
+
+SELECTORS = ("master", "derived", "reel", "stills", "origin", "text")
+FORCE_ITEMS = (*SELECTORS, *DERIVED)
 
 
 def sh(cmd: list, **kw) -> subprocess.CompletedProcess:
@@ -80,7 +92,7 @@ def ffmpeg(args: list) -> None:
 
 
 def probe(path: Path) -> dict | None:
-    if not path.is_file():
+    if not path.is_file() or shutil.which("ffprobe") is None:
         return None
     done = sh(
         # fmt: off
@@ -115,7 +127,7 @@ def digest(path: Path) -> str:
     with path.open("rb") as fh:
         for chunk in iter(lambda: fh.read(1 << 20), b""):
             h.update(chunk)
-    return h.hexdigest()[:16]
+    return h.hexdigest()
 
 
 def captures(program: dict) -> dict:
@@ -128,7 +140,16 @@ def hexseed(seed: int) -> str:
 
 def query_capture_span(capture_name: str, seed: int | None = None, start: float = 0.0) -> dict:
     """Query control.mjs for exact capture span and passage details."""
-    cmd = ["node", str(DANSE / "sound" / "control.mjs"), "--window", capture_name, "--from", str(start)]
+    cmd = [
+        "node",
+        str(DANSE / "sound" / "control.mjs"),
+        "--window",
+        capture_name,
+        "--from",
+        str(start),
+        "--rate",
+        "0",
+    ]
     if seed is not None:
         cmd += ["--seed", str(seed)]
     done = sh(cmd)
@@ -139,9 +160,165 @@ def query_capture_span(capture_name: str, seed: int | None = None, start: float 
         "t0": data["t0"],
         "t1": data["t1"],
         "duration": data["duration"],
-        "seed": data["seed"],
+        "seed": data["passageSeed"],
+        "river_seed": data["seed"],
+        "passage": data["passage"],
         "capture": data["capture"],
+        "origin": data.get("origin"),
     }
+
+
+def origin_path(span: dict) -> Path:
+    frame_id = span.get("origin")
+    manifest = json.loads((DANSE / "corpus" / "manifest.json").read_text())
+    source = next((frame["source"] for frame in manifest["frames"] if frame["id"] == frame_id), None)
+    return RAW / source if source else ORIGIN
+
+
+def capture_root(root: Path, span: dict, start: float) -> Path:
+    """Keep restartable intermediates for different absolute spans disjoint."""
+    offset = f"{start:.3f}".rstrip("0").rstrip(".").replace("-", "m").replace(".", "p") or "0"
+    return root / f"passage-{span['seed']:08X}-from-{offset}"
+
+
+def is_forced(force: set[str], name: str, group: str | None = None) -> bool:
+    return name in force or (group is not None and group in force)
+
+
+def package_provenance_matches(package: Path, span: dict) -> bool:
+    manifest = package / "manifest.json"
+    if not manifest.is_file():
+        return True
+    data = json.loads(manifest.read_text())
+    return (
+        data.get("passage_seed") == hexseed(span["seed"])
+        and data.get("passage") == span["passage"]
+        and abs(float(data.get("t0", -1)) - span["t0"]) < 1e-9
+    )
+
+
+def still_destinations(program: dict, package: Path) -> list[Path]:
+    sys.path.insert(0, str(DANSE / "sound"))
+    from rng import hash32
+
+    return [
+        package / "stills" / f"seed-{hexseed(hash32(program['seed'], 0x57111, i) & 0xFFFFFF)}.jpg"
+        for i in range(len(STILL_FRACTIONS))
+    ]
+
+
+def pending(program: dict, only: set[str], force: set[str], package: Path) -> dict:
+    """The outputs that would actually be rebuilt for this invocation."""
+    derived = {
+        name
+        for name, spec in DERIVED.items()
+        if "derived" in only
+        and (is_forced(force, name, "derived") or not (package / f"{name}{spec['suffix']}").is_file())
+    }
+    stills = still_destinations(program, package)
+    return {
+        "master": "master" in only and (is_forced(force, "master") or not (package / "master.mov").is_file()),
+        "derived": derived,
+        "reel": "reel" in only and (is_forced(force, "reel") or not (package / "reel.mp4").is_file()),
+        "stills": "stills" in only and (is_forced(force, "stills") or not all(path.is_file() for path in stills)),
+    }
+
+
+def preflight(
+    program: dict,
+    span: dict,
+    only: set[str],
+    force: set[str],
+    tier: str,
+    render_root: Path,
+    package: Path,
+) -> int:
+    """Validate a delivery invocation without creating a directory or rendering."""
+    rows: list[tuple[bool, str, str]] = []
+
+    def add(ok: bool, name: str, detail: str) -> None:
+        rows.append((ok, name, detail))
+
+    add(program.get("schema") == "danse.program.v2", "program", str(program.get("schema")))
+    add(span["duration"] > 0, "capture span", f"{span['duration']:.3f}s from {span['t0']:.3f}s")
+    add(shutil.which("node") is not None, "node", shutil.which("node") or "missing")
+    add(
+        package_provenance_matches(package, span),
+        "package passage provenance",
+        str(package / "manifest.json"),
+    )
+
+    work = pending(program, only, force, package)
+    need_picture = work["master"] or bool(work["derived"])
+    need_score = need_picture or work["reel"]
+    need_renderer = work["reel"] or work["stills"]
+
+    picture = render_root / "passage-default.mov"
+    picture_info = probe(picture)
+    cap = captures(program)["passage"]
+    picture_ready = bool(
+        picture_info
+        and abs(picture_info.get("seconds", 0) * cap.get("fps", 30) - span["duration"] * cap.get("fps", 30)) < 2
+        and not is_forced(force, "master")
+    )
+    need_renderer = need_renderer or (need_picture and not picture_ready)
+
+    need_bank = need_score
+
+    if need_picture or need_score or work["reel"] or work["stills"]:
+        for command in ("ffmpeg", "ffprobe"):
+            add(shutil.which(command) is not None, command, shutil.which(command) or "missing")
+
+    if need_renderer:
+        chrome = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+        add(importlib.util.find_spec("playwright") is not None, "Playwright", "Python module")
+        add(chrome.is_file(), "Google Chrome", str(chrome))
+        local = DANSE / "corpus" / "manifest.local.json"
+        local_data = json.loads(local.read_text()) if local.is_file() else {}
+        tier_spec = (local_data.get("tiers") or {}).get(tier)
+        add(bool(tier_spec), f"corpus tier {tier}", str(local))
+        if tier_spec:
+            ids = [frame["id"] for frame in json.loads((DANSE / "corpus" / "manifest.json").read_text())["frames"]]
+            missing = [
+                fid
+                for fid in ids
+                if not (DANSE / "corpus" / "plates" / tier / f"{fid}.webp").is_file()
+                or not (DANSE / "corpus" / "mattes" / tier / f"{fid}.webp").is_file()
+            ]
+            add(not missing, "film source denominator", f"{len(ids) - len(missing)}/{len(ids)} plate+matte pairs")
+
+    if work["stills"]:
+        add(importlib.util.find_spec("PIL") is not None, "Python module Pillow", "package still dependency")
+
+    if need_bank:
+        for module in ("numpy", "scipy"):
+            add(importlib.util.find_spec(module) is not None, f"Python module {module}", "score dependency")
+        bank = json.loads(BANK.read_text()) if BANK.is_file() else {}
+        sources = bank.get("sources") or []
+        add(BANK.is_file(), "grain bank", str(BANK))
+        add(len(sources) == 2, "confirmed apartment recordings", f"{len(sources)}/2")
+
+    if "origin" in only:
+        add(ORIGIN.is_file(), "unaltered origin photograph", str(ORIGIN))
+    if "text" in only:
+        text_root = DANSE / "submission" / "text"
+        names = {
+            "synopsis_short",
+            "synopsis_long",
+            "artist_statement",
+            "bio",
+            "technical_note",
+            "rights_declaration",
+        }
+        missing = sorted(name for name in names if not (text_root / f"{name}.txt").is_file())
+        add(not missing, "tracked text package", f"{len(names) - len(missing)}/{len(names)} sources")
+
+    print("delivery preflight\n")
+    for ok, name, detail in rows:
+        print(f"  [{'ok' if ok else 'FAIL':>4}] {name} — {detail}")
+    failures = sum(not ok for ok, _, _ in rows)
+    print(f"\n{'READY' if not failures else 'NOT READY'} — {failures} failure(s); no files changed")
+    return 1 if failures else 0
 
 
 # ── the expensive half ─────────────────────────────────────────────────────────
@@ -190,9 +367,12 @@ def passage_picture(program: dict, tier: str, force: bool, start: float = 0.0) -
 def passage_sound(force: bool, start: float = 0.0) -> Path:
     """One score for the passage recording. Every derived capture is cut from it."""
     dest = OUT / "passage-score.wav"
-    if dest.is_file() and not force:
-        print(f"  passage score · kept · {probe(dest)['seconds']:.1f}s")
-        return dest
+    if not force:
+        got = probe(dest)
+        span = query_capture_span("passage", start=start)
+        if got and abs(got["seconds"] - span["duration"]) < 0.1:
+            print(f"  passage score · kept · {got['seconds']:.1f}s")
+            return dest
     print("  passage score · rendering")
     done = subprocess.run(
         [sys.executable, str(SCORE), "--window", "passage", "--from", str(start), "--out", str(dest)],
@@ -236,7 +416,9 @@ def deliver_passage(picture: Path, sound: Path, force: bool) -> Path:
     return dest
 
 
-def deliver_derived(name: str, spec: dict, program: dict, picture: Path, sound: Path, force: bool, start: float = 0.0) -> Path:
+def deliver_derived(
+    name: str, spec: dict, program: dict, picture: Path, sound: Path, force: bool, start: float = 0.0
+) -> Path:
     cap = captures(program)[name]
     span = query_capture_span(name, start=start)
     passage_span = query_capture_span("passage", start=start)
@@ -329,8 +511,10 @@ def deliver_stills(program: dict, tier: str, force: bool, start: float = 0.0) ->
     stills.mkdir(parents=True, exist_ok=True)
     cap = captures(program)["passage"]
     fps = cap.get("fps", 30)
+    span = query_capture_span("passage", start=start)
     made = []
-    for i, t in enumerate(STILL_TIMES):
+    for i, fraction in enumerate(STILL_FRACTIONS):
+        t = span["duration"] * fraction
         seed = hash32(program["seed"], 0x57111, i) & 0xFFFFFF
         dest = stills / f"seed-{hexseed(seed)}.jpg"
         if dest.is_file() and not force:
@@ -397,69 +581,107 @@ def deliver_text() -> list[Path]:
 
 
 def deliver_origin(force: bool) -> Path | None:
-    dest = PACKAGE / "origin-2017.jpg"
+    dest = PACKAGE / "stills" / "origin-2017.jpg"
     if dest.is_file() and not force:
         return dest
     if not ORIGIN.is_file():
         print(f"  origin-2017.jpg · MISSING SOURCE at {ORIGIN}")
         return None
-    print("  origin-2017.jpg · the 2017 composite, at the resolution it exists at")
-    ffmpeg(["-i", ORIGIN, "-q:v", "2", dest])
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    print(f"  origin-2017.jpg · byte-identical copy of {ORIGIN.name}")
+    shutil.copy2(ORIGIN, dest)
     return dest
 
 
-ATTESTATIONS = """# Human assertions. Nothing here may be filled in by a machine — each line is a
-# claim about an act somebody performed, and `check.py --package` reads them as
-# such. Set to true only once the act is done.
-#
-#   final-cut-only            this is a final cut, not a work in progress
-#   link-password-protected   the Vimeo link has a password set
-#   link-downloadable         the Vimeo link has download ENABLED (it ships off)
-#   submitted-via-submittable filed through the Submittable portal
-final-cut-only: null
-link-password-protected: null
-link-downloadable: null
-submitted-via-submittable: null
-"""
+def attestation_template() -> str:
+    reg = yaml.safe_load(REGISTER.read_text()) or {}
+    requirements = [
+        item
+        for section in ("requirements", "approvals")
+        for item in reg.get(section, [])
+        if item.get("check") == "manual"
+    ]
+    lines = [
+        "# Human assertions. The package build creates nulls; only a human who",
+        "# performed or verified an act may set its value to true.",
+        "# check.py reads only the cumulative requirements owned by --phase.",
+    ]
+    for item in requirements:
+        lines.append(f"#   {item['id']:<30} [{item['phase']}] {item['rule']}")
+    lines.extend(f"{item['id']}: null" for item in requirements)
+    return "\n".join(lines) + "\n"
 
 
 def main() -> int:
-    global PACKAGE
+    global OUT, PACKAGE, ORIGIN
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tier", default="film", help="corpus tier for rendered items")
     ap.add_argument("--start", type=float, default=0.0, help="where in the river to begin recording (in seconds)")
-    ap.add_argument("--only", action="append", help="master | derived | reel | stills | origin | text (repeatable)")
-    ap.add_argument("--force", action="append", default=[], help="re-make an item that already exists")
-    ap.add_argument("--package", type=Path, default=PACKAGE)
+    ap.add_argument("--only", action="append", choices=SELECTORS, help="build one output group (repeatable)")
+    ap.add_argument("--force", action="append", choices=FORCE_ITEMS, default=[], help="re-make an existing item")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="root for restartable render intermediates")
+    ap.add_argument("--package", type=Path, help="staged package root (default: <out>/package)")
+    ap.add_argument("--preflight", action="store_true", help="validate this invocation without rendering or writing")
     args = ap.parse_args()
+    if args.start < 0:
+        ap.error("--start must be non-negative")
 
     program = json.loads(PROGRAM.read_text())
-    only = set(args.only or ["master", "derived", "reel", "stills", "origin", "text"])
+    only = set(args.only or SELECTORS)
     force = set(args.force)
-    PACKAGE = args.package
+    span = query_capture_span("passage", start=args.start)
+    ORIGIN = origin_path(span)
+    render_root = capture_root(args.out, span, span["t0"])
+    package = args.package or (args.out / "package")
+    if args.preflight:
+        return preflight(program, span, only, force, args.tier, render_root, package)
+    if not package_provenance_matches(package, span):
+        raise SystemExit(f"{package}/manifest.json belongs to a different passage; choose a fresh --package root")
+
+    OUT = render_root
+    PACKAGE = package
+    OUT.mkdir(parents=True, exist_ok=True)
     PACKAGE.mkdir(parents=True, exist_ok=True)
 
-    span = query_capture_span("passage", start=args.start)
     print(
         f"{program['title']} · seed {hexseed(program['seed'])} · passage seed {hexseed(span['seed'])} · "
         f"{span['duration']:.1f}s (start at {args.start:.1f}s)\n"
     )
 
-    picture = passage_picture(program, args.tier, "master" in force, start=args.start)
-    sound = passage_sound("master" in force, start=args.start)
+    work = pending(program, only, force, PACKAGE)
+    need_picture = work["master"] or bool(work["derived"])
+    need_sound = need_picture or work["reel"]
+    picture = passage_picture(program, args.tier, "master" in force, start=args.start) if need_picture else None
+    sound = passage_sound("master" in force, start=args.start) if need_sound else None
     made: list[Path] = []
 
     if "master" in only:
-        made.append(deliver_passage(picture, sound, "master" in force))
+        made.append(deliver_passage(picture, sound, "master" in force) if work["master"] else PACKAGE / "master.mov")
     if "derived" in only:
         for name, spec in DERIVED.items():
-            made.append(deliver_derived(name, spec, program, picture, sound, name in force, start=args.start))
+            made.append(
+                deliver_derived(
+                    name,
+                    spec,
+                    program,
+                    picture,
+                    sound,
+                    is_forced(force, name, "derived"),
+                    start=args.start,
+                )
+                if name in work["derived"]
+                else PACKAGE / f"{name}{spec['suffix']}"
+            )
     if "reel" in only:
-        made.append(deliver_reel(program, sound, args.tier, "reel" in force, start=args.start))
+        made.append(
+            deliver_reel(program, sound, args.tier, "reel" in force, start=args.start)
+            if work["reel"]
+            else PACKAGE / "reel.mp4"
+        )
     if "stills" in only:
         made += deliver_stills(program, args.tier, "stills" in force, start=args.start)
     if "text" in only:
-        deliver_text()
+        made += deliver_text()
     if "origin" in only:
         got = deliver_origin("origin" in force)
         if got:
@@ -467,32 +689,62 @@ def main() -> int:
 
     attest = PACKAGE / "attest.yaml"
     if not attest.exists():
-        attest.write_text(ATTESTATIONS)
+        attest.write_text(attestation_template())
         print("  attest.yaml · scaffold written — every line is a human's to set")
 
     print()
+    manifest_path = PACKAGE / "manifest.json"
+    previous = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
+    previous_items = {
+        item["name"]: item
+        for item in previous.get("items", [])
+        if isinstance(item, dict) and item.get("name") and (PACKAGE / item["name"]).is_file()
+    }
     manifest = {
+        "schema": "danse.delivery.manifest.v1",
         "title": program["title"],
         "seed": hexseed(program["seed"]),
         "passage_seed": hexseed(span["seed"]),
+        "passage": span["passage"],
         "start": args.start,
+        "t0": span["t0"],
+        "t1": span["t1"],
+        "duration": span["duration"],
         "items": [],
     }
+    if BANK.is_file():
+        bank = json.loads(BANK.read_text())
+        manifest["sound"] = {
+            "bank_fingerprint": bank.get("fingerprint"),
+            "sources": [source.get("name") for source in bank.get("sources", [])],
+        }
+    elif previous.get("sound"):
+        manifest["sound"] = previous["sound"]
     for path in made:
+        if not path.is_file():
+            continue
         info = probe(path) or {}
         size = path.stat().st_size
-        manifest["items"].append(
-            {"name": str(path.relative_to(PACKAGE)), "bytes": size, "sha256": digest(path), **info}
-        )
+        name = str(path.relative_to(PACKAGE))
+        item = {"name": name, "bytes": size, "sha256": digest(path), **info}
+        if name == "stills/origin-2017.jpg":
+            item |= {
+                "source": ORIGIN.name,
+                "source_sha256": digest(ORIGIN),
+                "copy_mode": "byte-identical",
+            }
+        previous_items[name] = item
         shape = f"{info.get('width', '?')}×{info.get('height', '?')}"
         rate = f"@{info['fps']}" if "fps" in info else ""
         secs = f"{info['seconds']:.1f}s " if "seconds" in info else ""
-        print(f"  {str(path.relative_to(PACKAGE)):<28} {size / 1e6:>8.1f} MB  {secs}{shape} {rate}")
-    (PACKAGE / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        media = f"{secs}{shape} {rate}" if info else ""
+        print(f"  {name:<28} {size / 1e6:>8.1f} MB  {media}")
+    manifest["items"] = [previous_items[name] for name in sorted(previous_items)]
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
     total = sum(i["bytes"] for i in manifest["items"])
-    print(f"\n  {len(made)} items · {total / 1e9:.2f} GB · {PACKAGE}")
+    print(f"\n  {len(manifest['items'])} items · {total / 1e9:.2f} GB · {PACKAGE}")
     if shutil.which("python3"):
-        print("\nnext: apps/danse/submission/check.py --package " + str(PACKAGE))
+        print("\nnext: apps/danse/submission/check.py --phase package --package " + str(PACKAGE))
     return 0
 
 

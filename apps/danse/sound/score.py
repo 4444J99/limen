@@ -31,7 +31,7 @@ Two things this deliberately does NOT do:
     ear — quieter, darker (air absorbs treble), lower, and narrower — which is
     filtering of the room's own sound rather than an invention of a second space.
 
-    apps/danse/sound/score.py                       # the 6:30 master
+    apps/danse/sound/score.py                       # one complete passage
     apps/danse/sound/score.py --window trailer
     apps/danse/sound/score.py --seed 0x5F1E --window reel
 """
@@ -45,9 +45,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-import numpy as np
-from scipy.io import wavfile
-from scipy.signal import lfilter, resample_poly
+try:
+    import numpy as np
+    from scipy.io import wavfile
+    from scipy.signal import lfilter, resample_poly
+except ModuleNotFoundError as exc:  # keep --help and control-track tests usable on a static checkout
+    np = None
+    wavfile = None
+    lfilter = None
+    resample_poly = None
+    DEPENDENCY_ERROR = exc
+else:
+    DEPENDENCY_ERROR = None
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -442,8 +451,18 @@ def normalise(raw: np.ndarray, quiet: bool = False) -> np.ndarray:
     return out
 
 
-def control_track(window: str, seed: int | None, rate: int) -> dict:
-    cmd = ["node", str(CONTROL), "--window", window, "--rate", str(rate)]
+def control_track(window: str, seed: int | None, rate: int, start: float = 0.0) -> dict:
+    """Read the picture's absolute control span for the requested capture."""
+    cmd = [
+        "node",
+        str(CONTROL),
+        "--window",
+        window,
+        "--rate",
+        str(rate),
+        "--from",
+        str(start),
+    ]
     if seed is not None:
         cmd += ["--seed", str(seed)]
     done = subprocess.run(cmd, capture_output=True, text=True)
@@ -454,23 +473,40 @@ def control_track(window: str, seed: int | None, rate: int) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--window", default="master", help="any window declared in render/program.json")
+    ap.add_argument("--window", default="passage", help="any capture declared in render/program.json")
     ap.add_argument("--seed", help="override the program seed; accepts 0x notation")
     ap.add_argument("--rate", type=int, default=30, help="control-track sampling rate in Hz")
+    ap.add_argument(
+        "--from",
+        "--start",
+        dest="start",
+        type=float,
+        default=0.0,
+        help="absolute seconds into the river where recording begins",
+    )
     ap.add_argument("--bank", type=Path, default=BANK)
     ap.add_argument("--out", type=Path, default=None)
     args = ap.parse_args()
+    if args.start < 0:
+        ap.error("--from/--start must be non-negative")
+    if DEPENDENCY_ERROR is not None:
+        ap.error(
+            f"sound dependencies unavailable ({DEPENDENCY_ERROR}); run this command in the Danse media environment"
+        )
 
     seed = int(args.seed, 0) if args.seed else None
     bank = Bank(args.bank)
-    control = control_track(args.window, seed, args.rate)
+    control = control_track(args.window, seed, args.rate, args.start)
 
-    print(f"{control['title']} · {control['window']} · seed 0x{control['seed']:X} · {control['duration']:.1f}s")
+    print(
+        f"{control['title']} · {control['capture']} · seed 0x{control['seed']:X} · "
+        f"{control['duration']:.1f}s from {control['t0']:.1f}s"
+    )
     print(f"  bank {bank.fingerprint} · {len(bank.grains)} grains from {len(bank.sources)} recordings")
 
     stereo = normalise(render(control, bank))
 
-    out = args.out or (OUT / f"{control['window']}-0x{control['seed']:X}.wav")
+    out = args.out or (OUT / f"{control['capture']}-0x{control['seed']:X}.wav")
     out.parent.mkdir(parents=True, exist_ok=True)
     wavfile.write(out, SR, stereo.T.astype(np.float32))
     print(f"  {out}")
