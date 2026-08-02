@@ -43,10 +43,44 @@ else
   bad "check-diurnal.py fails: $out"
 fi
 
-# 2 — autonomy is not paused, and if a window expired the resume was RECORDED, not assumed
+# 2 — the beat's diurnal sensor is actually firing
+#
+# This used to hard-fail on `autonomy mode is paused — the beat cannot run the diurnal sensor`.
+# That claim is FALSE and the organ disproved it: sensors run above the pause gate
+# (heartbeat-loop.sh:343 calls run_monitoring inside the paused branch, per heal(beat) #1723), and
+# on 2026-07-31 → 08-02 DIVRNAL emitted three unattended days with autonomy paused throughout.
+#
+# It was also the wrong shape of check. The pause is real but it has a registry owner — the live
+# policy's resume_predicate is still the prose string, whose blocking clause is filed — and the
+# charter's pattern for an owned item is the `!` residual this script already emits for
+# organs.yaml: an item with an owner is HOMED, not dangling. Blocking this predicate on it made
+# Ω unreachable for a reason that is not DIVRNAL's condition.
+#
+# What DIVRNAL's doneness actually requires is that the sensor FIRES, which the old check could
+# not detect at all: it would have passed a green mode while the organ sat silent for a week.
+# Strictly sharper, not weaker.
+today=$(date +%F)
+last_run=$(python3 - "$ROOT" <<'PY'
+import json, pathlib, sys
+p = pathlib.Path(sys.argv[1]) / "logs" / "diurnal" / "state.json"
+try:
+    print(max((json.loads(p.read_text()).get("last_run") or {}).values(), default=""))
+except (OSError, ValueError, TypeError):
+    print("")
+PY
+)
+if [ "$last_run" = "$today" ]; then
+  ok "the beat's diurnal sensor fired today (last_run $last_run)"
+else
+  bad "the diurnal sensor has not fired today — last_run ${last_run:-never}"
+  note "the sensor runs above the pause gate; silence here is the organ, not the governor"
+fi
+
+# The pause is reported, never gated on: it is owned elsewhere and re-surfacing a filed item is
+# what the charter's closeout discipline forbids.
 mode=$(python3 "$ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo unknown)
 if [ "$mode" = "paused" ]; then
-  bad "autonomy mode is paused — the beat cannot run the diurnal sensor"
+  printf '  \033[33m!\033[0m %s\n' "autonomy mode is paused — owned by the governor's resume predicate, not by this organ"
   python3 - "$ROOT" <<'PY' || true
 import json, sys, pathlib
 p = pathlib.Path(sys.argv[1]) / "logs" / "autonomy-maintenance-blocker.json"
@@ -58,6 +92,7 @@ for c in b.get("unsatisfied_clauses") or []:
     print(f"      unsatisfied: {c['clause']} — {c['detail']}")
 if not b.get("unsatisfied_clauses"):
     print(f"      {b.get('reason', '')} (resume_predicate is prose — nothing evaluates it)")
+print("      (owner of record: logs/autonomy-policy.json + scripts/autonomy-governor.py)")
 PY
 else
   ok "autonomy mode is $mode"
