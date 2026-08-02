@@ -1,0 +1,32 @@
+{
+  "schema_version": "limen.collaboration_operations_authority_reconciliation.v1",
+  "status": "reconciled",
+  "branch": "work/collaboration-operations-platform-genesis-20260802",
+  "head_before_reconciliation": "51de63f2c33a8c8ab0c94c84dc4b2ba2c5f99a6c",
+  "original_run": {
+    "run_id": "run-0aafe3f811510d8c3dcd50f7179b239b",
+    "rejected_receipt_id": "receipt-collaboration-operations-genesis-51de63f2",
+    "rejected_receipt_mutation_authorized": false,
+    "terminal_receipt_id": "receipt-collaboration-operations-authority-failure-51de63f2",
+    "terminal_status": "failed",
+    "reason": "The packet omitted platform, governance, runbook, and launcher paths and its receipt did not repeat the packet predicate exactly."
+  },
+  "reconciliation_run": {
+    "run_id": "run-b776a6ce0c29eccdc38e9432d64f9dd7",
+    "lease_id": "lease-453-b776a6ce0c29eccd",
+    "lease_generation": 453,
+    "receipt_id": "receipt-collaboration-operations-authority-reconciliation-20260802",
+    "predicate": "python3 scripts/check-collaboration-operations.py && python3 -m pytest -q cli/tests/test_check_collaboration_operations.py cli/tests/test_repo_genesis.py cli/tests/test_workstream_command.py -k 'collaboration or repo_genesis or kickstart_wrapper'",
+    "authority": "exact collaboration-operations implementation, tests, governance wiring, runbook, successor launcher, and this continuation directory",
+    "external_effects": [
+      "git_push_existing_topic_branch"
+    ]
+  },
+  "retained_gates": [
+    "no repository creation",
+    "no collaborator grants or transfers",
+    "no Victoroff mutation",
+    "no public send",
+    "synthetic fixtures only"
+  ]
+}
