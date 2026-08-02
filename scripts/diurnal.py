@@ -763,7 +763,13 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
                 f"{s['text']} — worsened ({s['was']} → {s['now']})" for s in scored if s["verdict"] == "missed"
             ]
         else:
-            engaged = engaged_today(root)
+            # Bound here and CARRIED to the ledger below. The first draft consumed this only as an
+            # apply_cuts() argument and dropped it, so the one fact the whole cut runway is
+            # denominated in — how many days actually earned a score — existed for the length of a
+            # function call and was never written down. done-diurnal.sh then read an `engaged_days`
+            # key that no writer produced, and its `.get(..., 0)` default reported "0 days, not
+            # there yet" instead of "this check has no writer" for as long as it would ever run.
+            engaged = ctx["engaged"] = engaged_today(root)
             applied, proposed = apply_cuts(
                 root,
                 sections,
@@ -800,15 +806,19 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
     (state_dir(root) / f"{today}-{phase}.json").write_text(
         json.dumps(sidecar, indent=2, sort_keys=True), encoding="utf-8"
     )
-    append_jsonl(
-        state_dir(root) / "ledger.jsonl",
-        {
-            "ts": sidecar["generated_at"],
-            "phase": phase,
-            "sections": len(rendered),
-            "cuts": len(ctx.get("cuts_applied") or []),
-        },
-    )
+    # `engaged` rides only on evening rows — it is the evening that scores, and only a scored day
+    # advances the cut runway. Its ABSENCE on a morning/midday row is meaningful, not missing data,
+    # so it is written conditionally rather than defaulted to False: a reader counting the runway
+    # must not be able to mistake "this phase does not score" for "this day earned nothing."
+    row = {
+        "ts": sidecar["generated_at"],
+        "phase": phase,
+        "sections": len(rendered),
+        "cuts": len(ctx.get("cuts_applied") or []),
+    }
+    if "engaged" in ctx:
+        row["engaged"] = bool(ctx["engaged"])
+    append_jsonl(state_dir(root) / "ledger.jsonl", row)
     save_scores(root, scores)
     state = load_state(root)
     state.setdefault("last_run", {})[phase] = today
