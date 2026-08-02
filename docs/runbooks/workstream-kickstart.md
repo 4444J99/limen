@@ -81,6 +81,14 @@ Run it from any terminal with:
 bash <repo>/.worktrees/<slug>/.limen-workstream/kickstart.sh
 ```
 
+For a capsule rendered before private-cache hydration shipped, use the tracked compatibility
+wrapper. It validates and imports only the broker pair, then executes the identity-bound capsule
+without rewriting it:
+
+```bash
+bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
+```
+
 Autonomous Codex capsules preserve the interactive UI when standard input and output are attached
 to a terminal. In a shell runner without a terminal, the same command uses Codex's noninteractive
 `exec` transport instead of failing at provider handoff.

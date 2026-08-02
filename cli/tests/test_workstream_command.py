@@ -1614,6 +1614,49 @@ def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
     assert not outside_status.exists()
 
 
+def test_kickstart_wrapper_imports_only_the_broker_pair(tmp_path: Path) -> None:
+    cache = tmp_path / "limen.env"
+    cache.write_text(
+        "export LIMEN_CONDUCT_URL=https://broker.example.invalid\n"
+        "export LIMEN_CONDUCT_TOKEN=fixture-only\n"  # allow-secret: inert regression fixture
+        "export UNRELATED_PRIVATE_VALUE=must-not-be-imported\n",
+        encoding="utf-8",
+    )
+    cache.chmod(0o600)
+    capture = tmp_path / "capture.txt"
+    kickstart = tmp_path / "kickstart.sh"
+    kickstart.write_text(
+        "#!/usr/bin/env bash\n"
+        'printf "url=%s\\ntoken=%s\\nunrelated=%s\\n" '
+        '"${LIMEN_CONDUCT_URL-unset}" "${LIMEN_CONDUCT_TOKEN-unset}" '
+        '"${UNRELATED_PRIVATE_VALUE-unset}" > "$CAPTURE"\n',
+        encoding="utf-8",
+    )
+    env = {
+        **os.environ,
+        "CAPTURE": str(capture),
+        "LIMEN_CONDUCT_ENV_FILE": str(cache),
+    }
+    env.pop("LIMEN_CONDUCT_URL", None)
+    env.pop("LIMEN_CONDUCT_TOKEN", None)
+    env.pop("UNRELATED_PRIVATE_VALUE", None)
+
+    launched = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "run-workstream-kickstart.sh"), str(kickstart)],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stderr
+    assert capture.read_text(encoding="utf-8").splitlines() == [
+        "url=https://broker.example.invalid",
+        "token=fixture-only",  # allow-secret: inert regression fixture
+        "unrelated=unset",
+    ]
+
+
 def test_workstream_refuses_an_ignored_tracked_receipt_path(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "demo-repo"
     repo.mkdir()

@@ -25,8 +25,15 @@ genesis lane.
 
 ## Executable successor
 
-From a fresh successor session in this Limen worktree, re-probe reality and run the boundary plus
-the non-mutating genesis gate:
+Launch a fresh successor session in the same identity-bound capsule with the compatibility wrapper
+(this capsule predates the generator hydration fix):
+
+```bash
+cd "/Users/4jp/Workspace/limen/.worktrees/collaboration-operations-platform-genesis-20260802"
+bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
+```
+
+Then re-probe reality and run the boundary plus the non-mutating genesis gate:
 
 ```bash
 cd "/Users/4jp/Workspace/limen/.worktrees/collaboration-operations-platform-genesis-20260802"
