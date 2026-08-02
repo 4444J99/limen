@@ -4974,6 +4974,12 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Consecutive ENGAGED days a cuttable section may sit at its metric floor — fresh source, but nothing falsifiable to claim, so it is neither scored nor blind — before the evening proposes it. Found by driving the blind-streak fix rather than by reading it: such a section carried a record with zero counters and read as reachable while remaining uncuttable forever. It PROPOSES rather than cuts because a zero can mean the section is dead OR that its subject is healthy (mail.owed == 0 is good news), and a cut section auto-restores only on an exception, never on a value change — so cutting a healthy zero would hide the row the day it finally matters."
+  LIMEN_DIURNAL_PROPOSAL_MAX_AGE_DAYS:
+    default: 14
+    env: LIMEN_DIURNAL_PROPOSAL_MAX_AGE_DAYS
+    self_update: none
+    owner: diurnal
+    note: "Days a proposal the evening raised may sit in logs/diurnal/proposals.json with a null `disposition` before done-diurnal.sh goes red. Bounds the gap this window was measured at on 2026-08-02: the organ had printed the same three retire-or-repair proposals on every evening page since 2026-07-31 while their sources aged to 10, 22 and 36 days — narration, not a loop, because nothing read the list back. The clock does NOT grant deletion authority; the retire-PR stays the hand step organs.yaml declares. It only makes the judgment owed on a date. A proposal that stops recurring auto-resolves, so this can never stay red on a condition already fixed."
   LIMEN_DIURNAL_CUT_THRESHOLD:
     default: 5
     env: LIMEN_DIURNAL_CUT_THRESHOLD
