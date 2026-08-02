@@ -2,14 +2,14 @@
 
 ## Page settings
 
-- **Title:** Rose Toners and the Benefits Behind Our Favorite Scent
+- **Title:** Rose in Skincare: 5 Toners and Face Mists Compared
 - **Existing URL:** https://www.downsstyle.com/skincare/2026/8/1/rose-toners-and-the-benefits-behind-our-favorite-scent
-- **SEO description:** Five rose toners and face mists for summer, from rich fermented florals to minimalist rosewater, with honest notes on scent, texture, and formula.
-- **Keywords/tags:** rose toner, rosewater face mist, summer skincare, Mario Badescu, Whamisa, Santa Maria Novella, Chantecaille, Sisley-Paris
+- **SEO description:** Rose as a skincare ingredient across five toners and mists, with honest notes on formula, texture, fragrance, and what sets each one apart.
+- **Keywords/tags:** rose skincare ingredient, rose in skincare, rose toner, face mist, summer skincare, Mario Badescu, Whamisa, Santa Maria Novella, Chantecaille, Sisley-Paris
 
 ## Squarespace body copy
 
-With summer upon us, the sweltering heat has left our skin in need of some consistent refreshment. Maybe you have noticed that your usual skincare routine suddenly feels like too much in this weather. This is when we want something cool, floral, and easy to press or mist onto the skin. Rose has always been one of our favorite skincare ingredients, in part because of its scent, but these formulas prove that rose can take many forms: a nostalgic face spray, a rich fermented toner, or a nearly bare-bones floral water. Here are five worth knowing, along with the details that may decide which one earns a place in your routine.
+With summer upon us, the sweltering heat has left our skin in need of some consistent refreshment. Maybe you have noticed that your usual skincare routine suddenly feels like too much in this weather. This is when we want something cool, floral, and easy to press or mist onto the skin. Rose is the ingredient at the center of this lineup. Its scent is part of the pleasure, but these formulas show how differently rose can appear: in a nostalgic face spray, a rich fermented toner, or a nearly bare-bones floral water. Here are five worth knowing, along with the details that may decide which one earns a place in your routine.
 
 <p style="text-align: center;"><strong><a href="https://www.mariobadescu.com/products/facial-spray-with-aloe-herbs-and-rosewater">Mario Badescu Facial Spray With Aloe, Herbs And Rosewater</a></strong></p>
 
@@ -41,7 +41,7 @@ Chantecaille offers the shortest edit of the group with a two-ingredient list: R
 
 Sisley-Paris lands on the traditional side with a classic wipe-on lotion made with rose, cornflower, and witch-hazel floral waters. It is the option for anyone who likes the familiar feeling of finishing a cleanse with a cotton pad before moving on to serum and moisturizer. The formula is not as minimal as Chantecaille's and it includes fragrance, but that fuller composition is exactly what separates it from a simple rosewater mist.
 
-So, which rose is for you? Mario Badescu is the nostalgic mist, with a clear dye caveat. Whamisa is the rich, fermented, essential-oil bouquet. Santa Maria Novella brings Damask rose and centuries of apothecary history. Chantecaille keeps things to two ingredients, while Sisley-Paris gives us the most traditional floral-toner experience. We will keep testing the bottles that make skincare feel less like a chore and more like a small daily ritual, so come back for more honest skincare reviews soon.
+So, which formula is for you? Each one uses rose differently. Mario Badescu is the nostalgic mist, with a clear dye caveat. Whamisa is the rich, fermented, essential-oil bouquet. Santa Maria Novella brings Damask rose and centuries of apothecary history. Chantecaille keeps things to two ingredients, while Sisley-Paris gives us the most traditional floral-toner experience. We will keep testing the bottles that make skincare feel less like a chore and more like a small daily ritual, so come back for more honest skincare reviews soon.
 
 ## Placement checklist
 
