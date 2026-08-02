@@ -28,8 +28,6 @@ from dataclasses import dataclass
 from typing import Any, Mapping, MutableMapping
 from urllib.parse import urlparse
 
-from limen.partition_lanes import heuristics_may_promote
-
 
 EXECUTABLES = frozenset(
     {
@@ -195,26 +193,6 @@ def validate_intake_contract(
     finding = boundedness_finding(task)
     if required and finding:
         errors.append(finding)
-    if is_new and not heuristics_may_promote(_task_value(task, "repo")):
-        # THE PUBLICATION HALF OF THE PARTNER BOUNDARY.
-        #
-        # This board is not a private ledger. TABVLARIVS's projection is written by the Worker to
-        # organvm/limen on `tabularius/board-projection`, that head enters the merge queue, and it
-        # lands on `main` -- a PUBLIC repo. So accepting a client engagement here is publishing it,
-        # and no downstream gate can un-publish what intake let in.
-        #
-        # dispatch's veto stops the machine SELECTING client work; this stops the board ACCEPTING
-        # it. Both derive the same boundary from the same registries, so there is one boundary and
-        # not two definitions of it.
-        #
-        # `is_new` only, deliberately: the 411 rows already on the board have to keep LOADING or
-        # every consumer breaks. Gating on `required` would fail validation for every existing open
-        # client row and take the whole board down with it. New rows are refused; old rows are the
-        # baselined leak that check-board-partition pins and can only shrink.
-        errors.append(
-            "repo is an unfunded partner lane; this board publishes to a public head, "
-            "so a client engagement cannot enter it (see limen.partition_lanes)"
-        )
     if errors:
         raise IntakeContractError("; ".join(errors))
     if not predicate and not receipt_target:

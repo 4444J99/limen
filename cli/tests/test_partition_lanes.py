@@ -16,7 +16,7 @@ text happens to contain.
 from __future__ import annotations
 
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -26,7 +26,8 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen import partition_lanes as P  # noqa: E402
 from limen import dispatch as D  # noqa: E402
-from limen.intake import IntakeContractError, validate_intake_contract  # noqa: E402
+from limen import tabularius as T  # noqa: E402
+from limen.intake import IntakeContractError  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
 
@@ -335,52 +336,62 @@ def _valid_intake_fields(task_id: str, repo: str) -> dict[str, object]:
         "created": "2026-08-02",
         "predicate": "scripts/verify-scoped.sh",
         "receipt_target": f"github:{repo}:pull-request:{task_id}",
+        # work-loan underwriting, so submit_task_upsert reaches the board-write surface and the
+        # refusal is what rejects the task -- not an incidental earlier validation failure.
+        "source_origin": "system_debt",
+        "horizon": "present",
+        "value_case": "isolate the partner boundary under test",
     }
 
 
 def test_a_new_client_task_cannot_enter_the_board_at_all() -> None:
-    """Intake is the last point where the exposure is still preventable.
+    """The board-write surface is the last point where the exposure is still preventable.
 
     TABVLARIVS's projection is written to organvm/limen on `tabularius/board-projection`, that head
     enters the merge queue, and it lands on `main` -- a PUBLIC repo. Accepting a client engagement
     here IS publishing it, and nothing downstream can un-publish it.
     """
-    with pytest.raises(IntakeContractError, match="unfunded partner lane"):
-        validate_intake_contract(_valid_intake_fields("VIC-NEW-1", BOARD_VICTOROFF), is_new=True)
-
-    with pytest.raises(IntakeContractError, match="unfunded partner lane"):
-        validate_intake_contract(_valid_intake_fields("ELEVATE-NEW-1", ELEVATE), is_new=True)
+    for repo in (BOARD_VICTOROFF, VICTOROFF, ELEVATE):
+        with pytest.raises(IntakeContractError, match="unfunded partner lane"):
+            T.refuse_unfunded_partner_lane(repo, "VIC-NEW-1")
 
 
-def test_the_refusal_reaches_the_producer_seam_every_generator_uses() -> None:
+def test_the_refusal_reaches_the_producer_seam_every_generator_uses(tmp_path: Path) -> None:
     """submit_task_upsert is the documented conversion target for every writer that used to
-    load -> extend -> save_limen_file, so the refusal has to bite THERE, not only in the validator."""
-    from limen import tabularius as T
-
+    load -> extend -> save_limen_file, so the refusal has to bite THERE, not only in a helper."""
     with pytest.raises(IntakeContractError, match="unfunded partner lane"):
-        T.submit_task_upsert(
-            Path("/nonexistent-board-never-touched"),
-            _valid_intake_fields("VIC-NEW-2", BOARD_VICTOROFF),
-            agent="claude",
-        )
+        T.submit_task_upsert(tmp_path, _valid_intake_fields("VIC-NEW-2", BOARD_VICTOROFF), agent="claude")
+    assert not list(tmp_path.rglob("*.json")), "a refused ticket must not be written"
 
 
-def test_own_work_and_funded_collaborations_still_pass_intake() -> None:
+def test_the_refusal_also_covers_the_raw_ticket_side_door(tmp_path: Path) -> None:
+    """submit_task_upsert is not the only way to reach submit_ticket, so the guard sits on
+    submit_ticket itself -- the module's own docstring calls it the only board-write surface."""
+    ticket = T.Ticket(
+        ticket_id=T.new_ticket_id("s", datetime(2026, 8, 2, tzinfo=timezone.utc)),
+        timestamp=datetime(2026, 8, 2, tzinfo=timezone.utc),
+        agent="claude",
+        session_id="s",
+        intent=T.INTENT_UPSERT,
+        task_id="VIC-RAW-1",
+        patch={"id": "VIC-RAW-1", "repo": BOARD_VICTOROFF},
+        precondition={"absent": True},
+    )
+    with pytest.raises(IntakeContractError, match="unfunded partner lane"):
+        T.submit_ticket(tmp_path, ticket)
+
+
+def test_a_transition_on_an_existing_client_row_is_not_refused(tmp_path: Path) -> None:
+    """CREATES only. 411 partner-attributed rows are already on the board; refusing their
+    status/result transitions would strand them mid-lifecycle with no way to close them."""
+    path = T.submit_task_status(tmp_path, "VIC-CONTRACT-002", status="done", agent="claude")
+    assert path.exists()
+
+
+def test_own_work_and_funded_collaborations_are_never_refused() -> None:
     """The refusal must not become a general-purpose intake narrowing."""
-    for repo in ("organvm/limen", "organvm/domus-genoma", "4444J99/mirror-mirror"):
-        assert validate_intake_contract(_valid_intake_fields("OK-1", repo), is_new=True) is not None, repo
-
-
-def test_rows_already_on_the_board_still_load() -> None:
-    """The refusal is `is_new`-only for a load-bearing reason.
-
-    411 partner-attributed rows are already on the board. Gating on `required` instead would fail
-    validation for every existing OPEN client row and take the whole board down with it -- a
-    confidentiality fix that bricks the queue is not a fix.
-    """
-    existing = _valid_intake_fields("VIC-CONTRACT-002", BOARD_VICTOROFF)
-    existing["status"] = "open"
-    assert validate_intake_contract(existing, is_new=False) is not None
+    for repo in ("organvm/limen", "organvm/domus-genoma", "4444J99/mirror-mirror", None, ""):
+        T.refuse_unfunded_partner_lane(repo, "OK-1")  # must not raise
 
 
 def test_the_live_board_still_loads_end_to_end() -> None:
