@@ -4938,18 +4938,30 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Local hour (0-23) at or after which the evening close becomes due. Evening scores every claim held/missed/noop, writes the carry for tomorrow, and is the ONLY phase with cut authority."
-  LIMEN_DIURNAL_CLAIM_MAX:
+  LIMEN_DIURNAL_CLAIM_RENDER_MAX:
     default: 5
-    env: LIMEN_DIURNAL_CLAIM_MAX
+    env: LIMEN_DIURNAL_CLAIM_RENDER_MAX
     self_update: none
     owner: diurnal
-    note: "Maximum falsifiable claims the morning emits. A claim is 'section X's metric will fall below N today' — scoring a claim and scoring a section are ONE measurement, which is what makes the cut loop evidence-based rather than aesthetic."
+    note: "Maximum claims the PAGE lists; the organ scores every eligible section regardless, and an elision always says how many it hid. Replaces the retired CLAIM_MAX parameter, which capped build_claims() itself — and because the claim list is also the score list, that display bound was silently bounding governance: diurnal.yaml declared cuttable on 11 sections while section-scores.json held 4, so the other 7 could never accrue a noop streak and could never be cut. Rendering is a rendering concern; a parameter that shortens a briefing must not decide what the organ is allowed to measure."
+  LIMEN_DIURNAL_BLIND_THRESHOLD:
+    default: 5
+    env: LIMEN_DIURNAL_BLIND_THRESHOLD
+    self_update: none
+    owner: diurnal
+    note: "Consecutive ENGAGED days a cuttable section may render STALE before the evening proposes it. Sibling of LIMEN_DIURNAL_DORMANT_THRESHOLD — same question (how long may a section tell you nothing?), different cause, kept separate so neither counter's name drifts from what it counts. A stale section is skipped by build_claims(), so it never scores and its noop_streak never moves — staleness was a shield that made the sections most worth examining the only ones the cut could not reach. This counter is the missing measurement, and it PROPOSES rather than cuts: 'the producer is dead' and 'the section is worthless' are different findings, and cutting would silence the only evidence the producer died."
   LIMEN_ROOT_VOICE_FLOOR:
     default: 5
     env: LIMEN_ROOT_VOICE_FLOOR
     self_update: none
     owner: tabularius
     note: "Voice stamps a PRIMARY checkout must carry before scripts/_root.py calls it the live organism. Defence in depth behind the exact test (a linked worktree's .git is a gitdir-pointer FILE, a checkout's is a DIRECTORY), covering the root that is a real checkout but not the body: a second clone, a fresh CI checkout, a restored backup. Measured 2026-07-31 — the live body carries 61 stamps, a worktree touched by one scheduled sensor carries 1 — so this sits deliberately nowhere near either edge. Raising it cannot make a worktree pass; only the .git test decides that."
+  LIMEN_DIURNAL_DORMANT_THRESHOLD:
+    default: 5
+    env: LIMEN_DIURNAL_DORMANT_THRESHOLD
+    self_update: none
+    owner: diurnal
+    note: "Consecutive ENGAGED days a cuttable section may sit at its metric floor — fresh source, but nothing falsifiable to claim, so it is neither scored nor blind — before the evening proposes it. Found by driving the blind-streak fix rather than by reading it: such a section carried a record with zero counters and read as reachable while remaining uncuttable forever. It PROPOSES rather than cuts because a zero can mean the section is dead OR that its subject is healthy (mail.owed == 0 is good news), and a cut section auto-restores only on an exception, never on a value change — so cutting a healthy zero would hide the row the day it finally matters."
   LIMEN_DIURNAL_CUT_THRESHOLD:
     default: 5
     env: LIMEN_DIURNAL_CUT_THRESHOLD
