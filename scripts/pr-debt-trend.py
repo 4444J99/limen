@@ -45,6 +45,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LEDGER_REL = "docs/github-pr-debt-ledger.json"
 
+# The command that actually writes LEDGER_REL, verified by running it — not by reading a sensor
+# name. The first version of this file said `gitvs.py reconcile`, because that is the beat-wired
+# GitHub sensor and it LOOKED like the producer. It is not: `reconcile` is a dry effector report
+# that returns in 0.1s and never touches the ledger. Sending a reader there would have cost them
+# the same afternoon it cost to find out, which is the whole failure mode this script measures.
+PRODUCER = "python3 scripts/gitvs.py pr-debt --check --json"
+PRODUCER_OWNER = "wired to nothing; owner of record GITVS-UNCAPPED-PR-DEBT-0715 in tasks.yaml"
+
 
 def _int(name: str, default: int) -> int:
     try:
@@ -139,7 +147,7 @@ def main() -> int:
         # Not "at ideal" and not drift in the predicate — the evidence is absent. Fail, because a
         # trend nobody can see is exactly the state this row was in for eleven days.
         print(f"pr-debt-trend: UNMEASURABLE — {len(rows)} observation(s) in git history of {LEDGER_REL}")
-        print("  a trend needs two points; the producer is scripts/gitvs.py reconcile")
+        print(f"  a trend needs two points; the producer is `{PRODUCER}`")
         return 1
 
     newest_date, newest, _ = rows[-1]
@@ -162,7 +170,7 @@ def main() -> int:
     if age > max_age:
         print(f"  ✗ STALE — the newest observation is {age}d old (tolerance {max_age}d)")
         print("      silence is not improvement: a debt series nobody records is not a debt trend")
-        print("      the producer is `python3 scripts/gitvs.py reconcile` (sensor: github-estate-reconcile)")
+        print(f"      the producer is `{PRODUCER}` — {PRODUCER_OWNER}")
         return 1
     if growth > 0:
         print(f"  ✗ the debt GREW by {growth} — the ideal is monotonically down")
