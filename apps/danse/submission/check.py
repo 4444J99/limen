@@ -197,11 +197,20 @@ def check_deadline(reg: dict, phase: str, rep: Report, now: datetime | None = No
     days = left.days + left.seconds / 86400
 
     if days < 0:
-        rep.add("deadline", "hard wall", FAIL, f"passed {abs(days):.1f} days ago ({d['stated']})")
-        return
-    # The register's wall is already the cautious reading of an ambiguous "EST" on a
-    # date when Miami runs EDT. Report against that, never against the stated string.
-    rep.add("deadline", "hard wall", PASS, f"{days:.1f} days left → {wall:%a %d %b %H:%M %Z}")
+        if phase != "submitted":
+            rep.add("deadline", "hard wall", FAIL, f"passed {abs(days):.1f} days ago ({d['stated']})")
+            return
+        rep.add(
+            "deadline",
+            "hard wall",
+            PASS,
+            f"passed {abs(days):.1f} days ago; the submitted attestation owns historical filing proof",
+        )
+    else:
+        # The register's wall is already the cautious reading of an ambiguous
+        # "EST" on a date when Miami runs EDT. Report against that, never against
+        # the stated string.
+        rep.add("deadline", "hard wall", PASS, f"{days:.1f} days left → {wall:%a %d %b %H:%M %Z}")
 
     target = datetime.fromisoformat(d["target_file_date"] + "T12:00:00-04:00")
     tdays = (target - now).days

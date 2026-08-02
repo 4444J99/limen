@@ -262,6 +262,11 @@ def depth_to(z: float, lo: float, hi: float) -> float:
     return lo + (hi - lo) * u
 
 
+def local_time(control: dict, absolute_time: float) -> float:
+    """Rebase an absolute river timestamp into the finite capture buffer."""
+    return max(0.0, float(absolute_time) - float(control.get("t0", 0.0)))
+
+
 def render(control: dict, bank: Bank, quiet: bool = False) -> np.ndarray:
     seed = int(control["seed"])
     rate = float(control["rate"])
@@ -333,7 +338,8 @@ def render(control: dict, bank: Bank, quiet: bool = False) -> np.ndarray:
             index += 1
             if rand(seed, index, 801) >= EVENT_KEEP:
                 continue
-            second = int(frame["t"])
+            at_seconds = local_time(control, frame["t"])
+            second = int(at_seconds)
             if kept_in_second.get(second, 0) >= EVENT_MAX_PER_SEC:
                 continue
             kept_in_second[second] = kept_in_second.get(second, 0) + 1
@@ -345,7 +351,7 @@ def render(control: dict, bank: Bank, quiet: bool = False) -> np.ndarray:
             a = a * fades(len(a), 0.001, 0.03)
             width = 0.2 + 0.8 * min(1.0, frame["sp"] * 1.6)
             gain = db_to_gain(EVENT_DB) * (0.5 + 0.5 * min(1.0, area * 60))
-            place(buf, a, int(frame["t"] * SR), gain, x * width)
+            place(buf, a, int(at_seconds * SR), gain, x * width)
             counts["event"] += 1
 
     # ── reseed ─────────────────────────────────────────────────────────────────
@@ -355,7 +361,7 @@ def render(control: dict, bank: Bank, quiet: bool = False) -> np.ndarray:
     last_epoch = frames[0]["ep"] if frames else 0
     for frame in frames:
         if frame["ep"] != last_epoch:
-            turns.append(frame["t"])
+            turns.append(local_time(control, frame["t"]))
             last_epoch = frame["ep"]
     for k, when in enumerate(turns):
         g = bank.choose("bed", seed, k, 901)

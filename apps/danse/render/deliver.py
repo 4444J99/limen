@@ -77,7 +77,11 @@ FORCE_ITEMS = (*SELECTORS, *DERIVED)
 
 
 def sh(cmd: list, **kw) -> subprocess.CompletedProcess:
-    return subprocess.run([str(c) for c in cmd], capture_output=True, text=True, **kw)
+    rendered = [str(c) for c in cmd]
+    try:
+        return subprocess.run(rendered, capture_output=True, text=True, **kw)
+    except FileNotFoundError as exc:
+        return subprocess.CompletedProcess(rendered, 127, stdout="", stderr=str(exc))
 
 
 def ffmpeg(args: list) -> None:
@@ -190,6 +194,70 @@ def registered_origin() -> Path:
     return RAW / filename
 
 
+def registered_audio_sources() -> list[str]:
+    """The only recordings a delivery score may claim, from the register."""
+    register = yaml.safe_load(REGISTER.read_text()) or {}
+    return list((((register.get("package") or {}).get("audio") or {}).get("source_recordings") or []))
+
+
+def bank_provenance() -> dict | None:
+    """Current grain-bank identity, if it names the exact registered sources."""
+    if not BANK.is_file():
+        return None
+    bank = json.loads(BANK.read_text())
+    sources = [
+        name
+        for source in bank.get("sources") or []
+        if isinstance(source, dict) and isinstance((name := source.get("name")), str)
+    ]
+    fingerprint = bank.get("fingerprint")
+    if not isinstance(fingerprint, str) or not fingerprint or sorted(sources) != sorted(registered_audio_sources()):
+        return None
+    return {"bank_fingerprint": fingerprint, "sources": sources}
+
+
+def score_receipt_path(score: Path) -> Path:
+    return score.with_suffix(".json")
+
+
+def score_provenance(score: Path, span: dict) -> dict | None:
+    """Provenance bound to the exact cached score bytes and absolute span."""
+    receipt = score_receipt_path(score)
+    if not score.is_file() or not receipt.is_file():
+        return None
+    try:
+        data = json.loads(receipt.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    sources = data.get("sources") or []
+    fingerprint = data.get("bank_fingerprint")
+    valid = (
+        data.get("schema") == "danse.score.receipt.v1"
+        and isinstance(fingerprint, str)
+        and bool(fingerprint)
+        and all(isinstance(source, str) for source in sources)
+        and data.get("sha256") == digest(score)
+        and abs(float(data.get("t0", -1)) - span["t0"]) < 1e-9
+        and abs(float(data.get("duration", -1)) - span["duration"]) < 1e-3
+        and sorted(sources) == sorted(registered_audio_sources())
+    )
+    if not valid:
+        return None
+    return {"bank_fingerprint": fingerprint, "sources": sources}
+
+
+def write_score_receipt(score: Path, span: dict, provenance: dict) -> None:
+    payload = {
+        "schema": "danse.score.receipt.v1",
+        "sha256": digest(score),
+        "t0": span["t0"],
+        "t1": span["t1"],
+        "duration": span["duration"],
+        **provenance,
+    }
+    score_receipt_path(score).write_text(json.dumps(payload, indent=2) + "\n")
+
+
 def capture_root(root: Path, span: dict, start: float) -> Path:
     """Keep restartable intermediates for different absolute spans disjoint."""
     offset = f"{start:.3f}".rstrip("0").rstrip(".").replace("-", "m").replace(".", "p") or "0"
@@ -279,7 +347,15 @@ def preflight(
     )
     need_renderer = need_renderer or (need_picture and not picture_ready)
 
-    need_bank = need_score
+    score = render_root / "passage-score.wav"
+    score_info = probe(score)
+    score_ready = bool(
+        score_info
+        and abs(score_info.get("seconds", 0) - span["duration"]) < 0.1
+        and score_provenance(score, span)
+        and not is_forced(force, "master")
+    )
+    need_bank = need_score and not score_ready
 
     if need_picture or need_score or work["reel"] or work["stills"]:
         for command in ("ffmpeg", "ffprobe"):
@@ -309,19 +385,13 @@ def preflight(
     if need_bank:
         for module in ("numpy", "scipy"):
             add(importlib.util.find_spec(module) is not None, f"Python module {module}", "score dependency")
-        bank = json.loads(BANK.read_text()) if BANK.is_file() else {}
-        source_names = [
-            name
-            for source in bank.get("sources") or []
-            if isinstance(source, dict) and isinstance((name := source.get("name")), str)
-        ]
-        register = yaml.safe_load(REGISTER.read_text()) or {}
-        declared = ((register.get("package") or {}).get("audio") or {}).get("source_recordings") or []
+        current = bank_provenance()
+        declared = registered_audio_sources()
         add(BANK.is_file(), "grain bank", str(BANK))
         add(
-            sorted(source_names) == sorted(declared),
+            current is not None,
             "confirmed apartment recordings",
-            f"{len(source_names)}/{len(declared)} exact sources declared in {REGISTER.name}",
+            f"{len((current or {}).get('sources', []))}/{len(declared)} exact sources declared in {REGISTER.name}",
         )
 
     if "origin" in only:
@@ -390,15 +460,19 @@ def passage_picture(program: dict, tier: str, force: bool, start: float = 0.0) -
     return dest
 
 
-def passage_sound(force: bool, start: float = 0.0) -> Path:
+def passage_sound(force: bool, start: float = 0.0) -> tuple[Path, dict]:
     """One score for the passage recording. Every derived capture is cut from it."""
     dest = OUT / "passage-score.wav"
     span = query_capture_span("passage", start=start)
     if not force:
         got = probe_required(dest) if dest.is_file() else None
-        if got and abs(got["seconds"] - span["duration"]) < 0.1:
+        provenance = score_provenance(dest, span) if got else None
+        if got and provenance and abs(got["seconds"] - span["duration"]) < 0.1:
             print(f"  passage score · kept · {got['seconds']:.1f}s")
-            return dest
+            return dest, provenance
+    provenance = bank_provenance()
+    if provenance is None:
+        raise SystemExit(f"{BANK} must contain only the recordings declared by {REGISTER.name}")
     print("  passage score · rendering")
     done = subprocess.run(
         [sys.executable, str(SCORE), "--window", "passage", "--from", str(span["t0"]), "--out", str(dest)],
@@ -406,7 +480,8 @@ def passage_sound(force: bool, start: float = 0.0) -> Path:
     )
     if done.returncode != 0 or not dest.is_file():
         raise SystemExit("the score would not render")
-    return dest
+    write_score_receipt(dest, span, provenance)
+    return dest, provenance
 
 
 def mux(video: Path, audio: Path, dest: Path, acodec: str, vcopy: bool = True, vfilter: str | None = None) -> None:
@@ -679,7 +754,7 @@ def main() -> int:
     need_picture = work["master"] or bool(work["derived"])
     need_sound = need_picture or work["reel"]
     picture = passage_picture(program, args.tier, "master" in force, start=args.start) if need_picture else None
-    sound = passage_sound("master" in force, start=args.start) if need_sound else None
+    sound, sound_provenance = passage_sound("master" in force, start=args.start) if need_sound else (None, None)
     made: list[Path] = []
 
     if "master" in only:
@@ -740,12 +815,8 @@ def main() -> int:
         "duration": span["duration"],
         "items": [],
     }
-    if BANK.is_file():
-        bank = json.loads(BANK.read_text())
-        manifest["sound"] = {
-            "bank_fingerprint": bank.get("fingerprint"),
-            "sources": [source.get("name") for source in bank.get("sources", [])],
-        }
+    if sound_provenance:
+        manifest["sound"] = sound_provenance
     elif previous.get("sound"):
         manifest["sound"] = previous["sound"]
     for path in made:
