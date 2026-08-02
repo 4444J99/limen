@@ -27,13 +27,30 @@ from limen.status import print_status
 
 
 def resolve_root() -> Path:
+    """The board root: $LIMEN_ROOT, else the first candidate that actually holds tasks.yaml.
+
+    Discovery mirrors resolve_limen_repo_root() below, so a board-reading verb works from
+    any directory the way `limen workstream` already does. Without the fallbacks, `limen
+    dispatch` refused to run outside a checkout while the package could locate its own repo
+    two other ways ($LIMEN_TASKS' parent, and the __file__-relative root).
+    """
     root = os.environ.get("LIMEN_ROOT")
     if root:
         return Path(root).expanduser().resolve()
-    cwd = Path.cwd()
-    if (cwd / "tasks.yaml").exists():
-        return cwd
-    click.echo("LIMEN_ROOT not set and no tasks.yaml in current directory", err=True)
+    candidates = [Path.cwd()]
+    tasks_env = os.environ.get("LIMEN_TASKS")
+    if tasks_env:
+        # Same derivation _root_for_dispatch() applies: a projection names its own root.
+        candidates.append(Path(tasks_env).expanduser().parent)
+    candidates.append(Path(__file__).resolve().parents[3])
+    candidates.append(Path.home() / "Workspace" / "limen")
+    for candidate in candidates:
+        if (candidate / "tasks.yaml").exists():
+            return candidate.resolve()
+    click.echo(
+        "LIMEN_ROOT not set and no tasks.yaml found in: " + ", ".join(str(candidate) for candidate in candidates),
+        err=True,
+    )
     sys.exit(2)
 
 
