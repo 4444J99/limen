@@ -60,6 +60,8 @@ else:
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+from bank_contract import audit_bank  # noqa: E402
+
 BANK = HERE / "bank"
 CONTROL = HERE / "control.mjs"
 OUT = HERE / "out"
@@ -113,11 +115,10 @@ class Bank:
 
     def __init__(self, root: Path):
         index = root / "bank.json"
-        if not index.exists():
-            sys.exit(f"no grain bank at {index} — run apps/danse/sound/1_bank.py first")
+        audit = audit_bank(index)
+        if not audit.valid:
+            sys.exit(f"invalid grain bank at {index}: {audit.summary()}")
         data = json.loads(index.read_text())
-        if data.get("rate") != SR:
-            sys.exit(f"bank is {data.get('rate')} Hz, the score renders at {SR}")
         self.root = root
         self.fingerprint = data.get("fingerprint", "")
         self.sources = data.get("sources", [])

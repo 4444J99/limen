@@ -54,6 +54,8 @@ APP = ROOT / "apps" / "danse"
 CORPUS = APP / "corpus"
 ENGINE = APP / "engine"
 PROGRAM = APP / "render" / "program.json"
+sys.path.insert(0, str(APP / "sound"))
+from bank_contract import audit_bank  # noqa: E402
 
 FAIL: list[str] = []
 NOTE: list[str] = []
@@ -712,42 +714,32 @@ def check_bank() -> None:
     if not index.is_file():
         NOTE.append("no grain bank on this machine — build it with apps/danse/sound/1_bank.py")
         return
-    bank = load(index)
-    grains = bank["grains"]
+    expected = None
+    try:
+        import yaml
 
-    # Every grain must trace to a recording someone LOOKED at and recognised.
-    # This is the whole provenance claim of the sound: three of the first five
-    # `room: true` flags were wrong, inherited from a duplicate filename.
-    licensed = {s["name"] for s in bank.get("sources", [])}
-    strays = sorted({g["source"] for g in grains} - licensed)
+        register = yaml.safe_load(REGISTER.read_text()) or {}
+        expected = (((register.get("package") or {}).get("audio") or {}).get("source_recordings") or [])
+    except (ImportError, OSError):
+        pass
+    audit = audit_bank(index, expected)
+
     check(
         "every grain comes from a confirmed room recording",
-        not strays,
-        f"{', '.join(strays)} is in the bank but not in its source list"
-        if strays
-        else f"{len(grains)} grains from {len(licensed)} recording(s)",
+        not audit.provenance_errors,
+        "; ".join(audit.provenance_errors)
+        if audit.provenance_errors
+        else f"{audit.grain_count} grains from {len(audit.sources)} recording(s)",
     )
-
-    # An index axis with no spread indexes nothing, and it fails SILENTLY: every
-    # weighted draw along it returns an effectively arbitrary grain and nothing
-    # crashes. `flatness` shipped once with 4 distinct values across 265 grains.
-    axes = ("centroid", "brightness", "flatness", "decay", "attack", "zcr")
-    flat = []
-    for axis in axes:
-        distinct = len({g[axis] for g in grains if axis in g})
-        if distinct < max(8, len(grains) // 10):
-            flat.append(f"{axis} has {distinct}")
     check(
-        "every descriptor axis actually discriminates",
-        not flat,
-        "; ".join(flat) if flat else f"{len(axes)} axes over {len(grains)} grains",
+        "the grain bank index is structurally usable",
+        not audit.index_errors,
+        "; ".join(audit.index_errors) if audit.index_errors else audit.summary(),
     )
-
-    missing = [g["id"] for g in grains if not (SOUND / "bank" / f"{g['id']}.wav").is_file()][:3]
     check(
         "every grain the index names exists",
-        not missing,
-        f"{', '.join(missing)} …" if missing else f"{len(grains)} files",
+        not audit.payload_errors,
+        "; ".join(audit.payload_errors[:3]) if audit.payload_errors else f"{audit.grain_count} files",
     )
 
 

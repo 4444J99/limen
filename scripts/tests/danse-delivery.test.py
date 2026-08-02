@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import wave
 from contextlib import redirect_stdout
 from datetime import datetime
 from pathlib import Path
@@ -199,6 +200,8 @@ class DeliveryContractTest(unittest.TestCase):
                         "passage_seed": DELIVER.hexseed(SPAN["seed"]),
                         "passage": SPAN["passage"],
                         "t0": SPAN["t0"],
+                        "t1": SPAN["t1"],
+                        "duration": SPAN["duration"],
                         "sound": old_sound,
                         "items": [],
                     }
@@ -236,6 +239,152 @@ class DeliveryContractTest(unittest.TestCase):
             self.assertEqual(DELIVER.score_provenance(score, SPAN), provenance)
             score.write_bytes(b"changed-audio")
             self.assertIsNone(DELIVER.score_provenance(score, SPAN))
+
+    def test_missing_manifest_refuses_preexisting_package_media(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            package = Path(tmp)
+            self.assertTrue(DELIVER.package_provenance_matches(package, SPAN))
+            (package / "master.mov").write_bytes(b"unowned media")
+            self.assertFalse(DELIVER.package_provenance_matches(package, SPAN))
+
+    def test_forced_score_rebuilds_every_selected_audio_derivative(self) -> None:
+        program = json.loads((ROOT / "apps/danse/render/program.json").read_text())
+        with tempfile.TemporaryDirectory() as tmp:
+            package = Path(tmp)
+            for name in DELIVER.AUDIO_ITEMS:
+                (package / name).parent.mkdir(parents=True, exist_ok=True)
+                (package / name).touch()
+            work = DELIVER.pending(program, {"master", "derived", "reel"}, {"master"}, package)
+        self.assertTrue(work["master"])
+        self.assertEqual(work["derived"], set(DELIVER.DERIVED))
+        self.assertTrue(work["reel"])
+
+    def test_capture_overrun_is_rejected_before_render(self) -> None:
+        overrun = {**SPAN, "t0": 300.0, "t1": 470.0, "duration": 170.0, "capture": "midnight-moment"}
+        with mock.patch.object(DELIVER, "query_capture_span", return_value=overrun):
+            error = DELIVER.capture_span_error("midnight-moment", SPAN, 300.0)
+        self.assertIn("does not fit passage", error)
+
+    def test_bank_contract_rejects_missing_payloads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bank_root = Path(tmp)
+            grains = []
+            kinds = ("bed", "sustained", "transient")
+            sources = ["IMG_0226.MOV", "IMG_0227.MOV"]
+            for i in range(24):
+                grains.append(
+                    {
+                        "id": f"grain-{i}",
+                        "source": sources[i % 2],
+                        "kind": kinds[i % len(kinds)],
+                        "centroid": i + 1,
+                        "brightness": i + 1,
+                        "flatness": i + 1,
+                        "decay": i + 1,
+                        "attack": i + 1,
+                        "zcr": i + 1,
+                    }
+                )
+            index = bank_root / "bank.json"
+            index.write_text(
+                json.dumps(
+                    {
+                        "schema": "danse.sound.bank.v1",
+                        "rate": 48_000,
+                        "fingerprint": "bank-fingerprint",
+                        "sources": [{"name": source} for source in sources],
+                        "grains": grains,
+                    }
+                )
+            )
+            missing = DELIVER.audit_bank(index, sources)
+            self.assertEqual(len(missing.payload_errors), len(grains))
+            for grain in grains:
+                with wave.open(str(bank_root / f"{grain['id']}.wav"), "wb") as payload:
+                    payload.setnchannels(1)
+                    payload.setsampwidth(2)
+                    payload.setframerate(48_000)
+                    payload.writeframes(b"\0\0")
+            self.assertTrue(DELIVER.audit_bank(index, sources).valid)
+
+            bad_rate = bank_root / f"{grains[0]['id']}.wav"
+            with wave.open(str(bad_rate), "wb") as payload:
+                payload.setnchannels(1)
+                payload.setsampwidth(2)
+                payload.setframerate(44_100)
+                payload.writeframes(b"\0\0")
+            self.assertIn("sample rate 44100", DELIVER.audit_bank(index, sources).payload_errors[0])
+
+    def test_malformed_cached_receipts_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            score = root / "passage-score.wav"
+            score.write_bytes(b"score")
+            score.with_suffix(".json").write_text('{"schema":"danse.score.receipt.v1","t0":"bad"}')
+            self.assertIsNone(DELIVER.score_provenance(score, SPAN))
+
+            package = root / "package"
+            package.mkdir()
+            (package / "manifest.json").write_text('{"passage_seed":"0xAF6B7BE5","t0":"bad"}')
+            self.assertFalse(DELIVER.package_provenance_matches(package, SPAN))
+
+    def test_master_must_match_manifested_passage_and_digest(self) -> None:
+        register = yaml.safe_load((ROOT / "apps/danse/submission/screendance-2027.yaml").read_text())
+        with tempfile.TemporaryDirectory() as tmp:
+            package = Path(tmp)
+            master = package / "master.mov"
+            master.write_bytes(b"complete master")
+            (package / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "duration": 312.54,
+                        "items": [{"name": "master.mov", "sha256": "stale"}],
+                    }
+                )
+            )
+            info = {
+                "width": 3840,
+                "height": 2160,
+                "fps": 30.0,
+                "seconds": 4.0,
+                "vcodec": "prores",
+                "vprofile": "HQ",
+                "acodec": "pcm_s24le",
+                "channels": 2,
+            }
+            report = CHECK.Report()
+            with mock.patch.object(CHECK, "probe", return_value=info):
+                CHECK.check_master(register["package"]["master"], register, package, report)
+            statuses = {name: status for _, name, status, _ in report.rows}
+            self.assertEqual(statuses["master is one whole manifested passage"], CHECK.FAIL)
+            self.assertEqual(statuses["master bytes match delivery manifest"], CHECK.FAIL)
+
+    def test_audio_provenance_is_bound_to_each_artifact(self) -> None:
+        register = yaml.safe_load((ROOT / "apps/danse/submission/screendance-2027.yaml").read_text())
+        expected = register["package"]["audio"]["source_recordings"]
+        with tempfile.TemporaryDirectory() as tmp:
+            package = Path(tmp)
+            for name in ("master.mov", "screener.mp4"):
+                (package / name).touch()
+            current = {"bank_fingerprint": "current", "sources": expected}
+            stale = {"bank_fingerprint": "stale", "sources": expected}
+            (package / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "sound": current,
+                        "items": [
+                            {"name": "master.mov", "sound": current},
+                            {"name": "screener.mp4", "sound": stale},
+                        ],
+                    }
+                )
+            )
+            report = CHECK.Report()
+            with mock.patch.object(CHECK, "loudness", return_value={"lufs": -16.0, "true_peak_dbtp": -1.1}):
+                CHECK.check_audio(register["package"]["audio"], package, report)
+            row = next(row for row in report.rows if row[1] == "per-artifact score provenance")
+            self.assertEqual(row[2], CHECK.FAIL)
+            self.assertIn("mixed bank fingerprints", row[3])
 
     def test_attestations_are_cumulative_by_owned_phase(self) -> None:
         reg = yaml.safe_load((ROOT / "apps/danse/submission/screendance-2027.yaml").read_text())

@@ -186,6 +186,25 @@ def find_one(root: Path, stem: str) -> Path | None:
     return hits[0] if len(hits) == 1 else None
 
 
+def read_manifest(root: Path) -> dict:
+    path = root / "manifest.json"
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def manifest_items(root: Path) -> dict[str, dict]:
+    return {
+        item["name"]: item
+        for item in read_manifest(root).get("items", [])
+        if isinstance(item, dict) and isinstance(item.get("name"), str)
+    }
+
+
 # ── register-level checks (no package needed) ──────────────────────────────────
 
 
@@ -332,6 +351,25 @@ def check_master(spec: dict, reg: dict, root: Path, rep: Report) -> None:
         "master audio stream",
         PASS if ok_audio else FAIL,
         f"{info['acodec']} · {info['channels']} channels",
+    )
+
+    manifest = read_manifest(root)
+    item = manifest_items(root).get(path.name) or {}
+    expected_seconds = manifest.get("duration")
+    duration_matches = isinstance(expected_seconds, (int, float)) and abs(secs - expected_seconds) * fps <= 2
+    rep.add(
+        "package",
+        "master is one whole manifested passage",
+        PASS if duration_matches else FAIL,
+        f"{secs:.3f}s staged vs {expected_seconds!r}s manifested",
+    )
+    actual_digest = sha256(path)
+    digest_matches = item.get("sha256") == actual_digest
+    rep.add(
+        "package",
+        "master bytes match delivery manifest",
+        PASS if digest_matches else FAIL,
+        f"{actual_digest[:16]}…" + ("" if digest_matches else " — missing or stale manifest digest"),
     )
 
     cap = next((u.get("assume_max_seconds") for u in reg.get("unstated", []) if u["id"] == "runtime-cap"), None)
@@ -491,8 +529,7 @@ def check_audio(spec: dict, root: Path, rep: Report) -> None:
             f"{measured['true_peak_dbtp']:.2f} dBTP (max {spec['max_true_peak_dbtp']:.1f})",
         )
 
-    manifest_path = root / "manifest.json"
-    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
+    manifest = read_manifest(root)
     sources = set((manifest.get("sound") or {}).get("sources") or [])
     expected = set(spec["source_recordings"])
     rep.add(
@@ -501,6 +538,30 @@ def check_audio(spec: dict, root: Path, rep: Report) -> None:
         PASS if sources == expected else FAIL,
         f"{len(sources)}/{len(expected)} exact sources · bank {(manifest.get('sound') or {}).get('bank_fingerprint', 'missing')}",
     )
+
+    items = manifest_items(root)
+    audio_paths = [
+        path
+        for name in ("master.mov", "midnight-moment.mov", "trailer.mp4", "screener.mp4", "reel.mp4")
+        if (path := root / name).is_file()
+    ]
+    stale: list[str] = []
+    fingerprints: set[str] = set()
+    for path in audio_paths:
+        item = items.get(path.name) or {}
+        sound = item.get("sound") if isinstance(item.get("sound"), dict) else {}
+        fingerprint = sound.get("bank_fingerprint")
+        if set(sound.get("sources") or []) != expected or not isinstance(fingerprint, str) or not fingerprint:
+            stale.append(path.name)
+            continue
+        fingerprints.add(fingerprint)
+    consistent = not stale and len(fingerprints) == 1 and bool(audio_paths)
+    detail = (
+        f"{len(audio_paths)} artifact(s) · bank {next(iter(fingerprints))}"
+        if consistent
+        else f"missing/stale: {', '.join(stale) or 'mixed bank fingerprints'}"
+    )
+    rep.add("audio", "per-artifact score provenance", PASS if consistent else FAIL, detail)
 
 
 def check_text(spec: dict, root: Path, rep: Report) -> None:

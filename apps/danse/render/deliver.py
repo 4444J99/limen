@@ -58,6 +58,8 @@ RENDER = HERE / "render.py"
 REGISTER = DANSE / "submission" / "screendance-2027.yaml"
 RAW = DANSE / "pipeline" / ".work" / "raw"
 BANK = DANSE / "sound" / "bank" / "bank.json"
+sys.path.insert(0, str(DANSE / "sound"))
+from bank_contract import audit_bank  # noqa: E402
 
 # Captures that are sub-spans or scaled versions of the primary 4K `passage` capture,
 # so they can be cut/scaled from it. `copy` means stream-copy (no re-encode at all).
@@ -74,6 +76,13 @@ STILL_FRACTIONS = (0.08, 0.22, 0.38, 0.54, 0.70, 0.88)
 
 SELECTORS = ("master", "derived", "reel", "stills", "origin", "text")
 FORCE_ITEMS = (*SELECTORS, *DERIVED)
+AUDIO_ITEMS = {
+    "master.mov",
+    "midnight-moment.mov",
+    "trailer.mp4",
+    "screener.mp4",
+    "reel.mp4",
+}
 
 
 def sh(cmd: list, **kw) -> subprocess.CompletedProcess:
@@ -201,19 +210,11 @@ def registered_audio_sources() -> list[str]:
 
 
 def bank_provenance() -> dict | None:
-    """Current grain-bank identity, if it names the exact registered sources."""
-    if not BANK.is_file():
+    """Current usable grain-bank identity, bound to the registered sources."""
+    audit = audit_bank(BANK, registered_audio_sources())
+    if not audit.valid or audit.fingerprint is None:
         return None
-    bank = json.loads(BANK.read_text())
-    sources = [
-        name
-        for source in bank.get("sources") or []
-        if isinstance(source, dict) and isinstance((name := source.get("name")), str)
-    ]
-    fingerprint = bank.get("fingerprint")
-    if not isinstance(fingerprint, str) or not fingerprint or sorted(sources) != sorted(registered_audio_sources()):
-        return None
-    return {"bank_fingerprint": fingerprint, "sources": sources}
+    return {"bank_fingerprint": audit.fingerprint, "sources": list(audit.sources)}
 
 
 def score_receipt_path(score: Path) -> Path:
@@ -231,16 +232,20 @@ def score_provenance(score: Path, span: dict) -> dict | None:
         return None
     sources = data.get("sources") or []
     fingerprint = data.get("bank_fingerprint")
-    valid = (
-        data.get("schema") == "danse.score.receipt.v1"
-        and isinstance(fingerprint, str)
-        and bool(fingerprint)
-        and all(isinstance(source, str) for source in sources)
-        and data.get("sha256") == digest(score)
-        and abs(float(data.get("t0", -1)) - span["t0"]) < 1e-9
-        and abs(float(data.get("duration", -1)) - span["duration"]) < 1e-3
-        and sorted(sources) == sorted(registered_audio_sources())
-    )
+    try:
+        valid = (
+            isinstance(data, dict)
+            and data.get("schema") == "danse.score.receipt.v1"
+            and isinstance(fingerprint, str)
+            and bool(fingerprint)
+            and all(isinstance(source, str) for source in sources)
+            and data.get("sha256") == digest(score)
+            and abs(float(data.get("t0", -1)) - span["t0"]) < 1e-9
+            and abs(float(data.get("duration", -1)) - span["duration"]) < 1e-3
+            and sorted(sources) == sorted(registered_audio_sources())
+        )
+    except (TypeError, ValueError):
+        return None
     if not valid:
         return None
     return {"bank_fingerprint": fingerprint, "sources": sources}
@@ -268,16 +273,36 @@ def is_forced(force: set[str], name: str, group: str | None = None) -> bool:
     return name in force or (group is not None and group in force)
 
 
+def recognized_package_media(package: Path) -> list[Path]:
+    """Known delivery media that cannot be adopted without a manifest."""
+    paths = [package / name for name in sorted(AUDIO_ITEMS)]
+    stills = package / "stills"
+    if stills.is_dir():
+        paths.extend(stills.glob("seed-0x*.*"))
+        paths.append(stills / "origin-2017.jpg")
+    return sorted({path for path in paths if path.is_file()})
+
+
 def package_provenance_matches(package: Path, span: dict) -> bool:
     manifest = package / "manifest.json"
     if not manifest.is_file():
-        return True
-    data = json.loads(manifest.read_text())
-    return (
-        data.get("passage_seed") == hexseed(span["seed"])
-        and data.get("passage") == span["passage"]
-        and abs(float(data.get("t0", -1)) - span["t0"]) < 1e-9
-    )
+        return not recognized_package_media(package)
+    try:
+        data = json.loads(manifest.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    try:
+        return (
+            data.get("passage_seed") == hexseed(span["seed"])
+            and data.get("passage") == span["passage"]
+            and abs(float(data.get("t0", -1)) - span["t0"]) < 1e-9
+            and abs(float(data.get("t1", -1)) - span["t1"]) < 1e-9
+            and abs(float(data.get("duration", -1)) - span["duration"]) < 1e-3
+        )
+    except (TypeError, ValueError):
+        return False
 
 
 def still_destinations(program: dict, package: Path) -> list[Path]:
@@ -292,19 +317,36 @@ def still_destinations(program: dict, package: Path) -> list[Path]:
 
 def pending(program: dict, only: set[str], force: set[str], package: Path) -> dict:
     """The outputs that would actually be rebuilt for this invocation."""
+    score_forced = "master" in force
     derived = {
         name
         for name, spec in DERIVED.items()
         if "derived" in only
-        and (is_forced(force, name, "derived") or not (package / f"{name}{spec['suffix']}").is_file())
+        and (
+            score_forced
+            or is_forced(force, name, "derived")
+            or not (package / f"{name}{spec['suffix']}").is_file()
+        )
     }
     stills = still_destinations(program, package)
     return {
         "master": "master" in only and (is_forced(force, "master") or not (package / "master.mov").is_file()),
         "derived": derived,
-        "reel": "reel" in only and (is_forced(force, "reel") or not (package / "reel.mp4").is_file()),
+        "reel": "reel" in only
+        and (score_forced or is_forced(force, "reel") or not (package / "reel.mp4").is_file()),
         "stills": "stills" in only and (is_forced(force, "stills") or not all(path.is_file() for path in stills)),
     }
+
+
+def capture_span_error(name: str, passage_span: dict, start: float) -> str | None:
+    """Explain when a fixed capture would overrun its selected passage."""
+    span = query_capture_span(name, start=start)
+    if span["t0"] < passage_span["t0"] - 1e-9 or span["t1"] > passage_span["t1"] + 1e-9:
+        return (
+            f"{name} [{span['t0']:.3f}, {span['t1']:.3f}] does not fit passage "
+            f"[{passage_span['t0']:.3f}, {passage_span['t1']:.3f}]"
+        )
+    return None
 
 
 def preflight(
@@ -316,6 +358,7 @@ def preflight(
     render_root: Path,
     package: Path,
     origin: Path | None,
+    start: float = 0.0,
 ) -> int:
     """Validate a delivery invocation without creating a directory or rendering."""
     rows: list[tuple[bool, str, str]] = []
@@ -333,6 +376,10 @@ def preflight(
     )
 
     work = pending(program, only, force, package)
+    span_names = sorted(work["derived"] | ({"reel"} if work["reel"] else set()))
+    for name in span_names:
+        error = capture_span_error(name, span, start)
+        add(error is None, f"{name} fits selected passage", error or f"within {span['duration']:.3f}s passage")
     need_picture = work["master"] or bool(work["derived"])
     need_score = need_picture or work["reel"]
     need_renderer = work["reel"] or work["stills"]
@@ -385,14 +432,18 @@ def preflight(
     if need_bank:
         for module in ("numpy", "scipy"):
             add(importlib.util.find_spec(module) is not None, f"Python module {module}", "score dependency")
-        current = bank_provenance()
         declared = registered_audio_sources()
+        audit = audit_bank(BANK, declared)
         add(BANK.is_file(), "grain bank", str(BANK))
         add(
-            current is not None,
+            not audit.provenance_errors,
             "confirmed apartment recordings",
-            f"{len((current or {}).get('sources', []))}/{len(declared)} exact sources declared in {REGISTER.name}",
+            f"{len(audit.sources)}/{len(declared)} exact sources declared in {REGISTER.name}"
+            if not audit.provenance_errors
+            else "; ".join(audit.provenance_errors),
         )
+        add(not audit.index_errors, "grain bank contract", "; ".join(audit.index_errors) or audit.summary())
+        add(not audit.payload_errors, "grain payloads", "; ".join(audit.payload_errors[:4]) or "every indexed WAV exists")
 
     if "origin" in only:
         add(origin is not None and origin.is_file(), "unaltered origin photograph", str(origin or "unresolved"))
@@ -523,6 +574,9 @@ def deliver_derived(
     cap = captures(program)[name]
     span = query_capture_span(name, start=start)
     passage_span = query_capture_span("passage", start=start)
+    error = capture_span_error(name, passage_span, start)
+    if error:
+        raise SystemExit(error)
 
     rel_t0 = max(0.0, span["t0"] - passage_span["t0"])
     seconds = span["duration"]
@@ -566,6 +620,9 @@ def deliver_reel(program: dict, sound: Path, tier: str, force: bool, start: floa
         return dest
     span = query_capture_span("reel", start=start)
     passage_span = query_capture_span("passage", start=start)
+    error = capture_span_error("reel", passage_span, start)
+    if error:
+        raise SystemExit(error)
     rel_t0 = max(0.0, span["t0"] - passage_span["t0"])
     seconds = span["duration"]
 
@@ -732,11 +789,15 @@ def main() -> int:
     render_root = capture_root(args.out, span, span["t0"])
     package = args.package or (args.out / "package")
     if args.preflight:
-        return preflight(program, span, only, force, args.tier, render_root, package, origin)
+        return preflight(program, span, only, force, args.tier, render_root, package, origin, args.start)
     if not package_provenance_matches(package, span):
         raise SystemExit(f"{package}/manifest.json belongs to a different passage; choose a fresh --package root")
 
     work = pending(program, only, force, package)
+    for name in sorted(work["derived"] | ({"reel"} if work["reel"] else set())):
+        error = capture_span_error(name, span, args.start)
+        if error:
+            raise SystemExit(error)
     media_pending = work["master"] or work["derived"] or work["reel"] or work["stills"]
     if media_pending and shutil.which("ffprobe") is None:
         raise SystemExit("ffprobe is required for media delivery; run deliver.py --preflight")
@@ -753,12 +814,13 @@ def main() -> int:
 
     need_picture = work["master"] or bool(work["derived"])
     need_sound = need_picture or work["reel"]
-    picture = passage_picture(program, args.tier, "master" in force, start=args.start) if need_picture else None
-    sound, sound_provenance = passage_sound("master" in force, start=args.start) if need_sound else (None, None)
+    score_forced = "master" in force
+    picture = passage_picture(program, args.tier, score_forced, start=args.start) if need_picture else None
+    sound, sound_provenance = passage_sound(score_forced, start=args.start) if need_sound else (None, None)
     made: list[Path] = []
 
     if "master" in only:
-        made.append(deliver_passage(picture, sound, "master" in force) if work["master"] else PACKAGE / "master.mov")
+        made.append(deliver_passage(picture, sound, score_forced) if work["master"] else PACKAGE / "master.mov")
     if "derived" in only:
         for name, spec in DERIVED.items():
             made.append(
@@ -768,7 +830,7 @@ def main() -> int:
                     program,
                     picture,
                     sound,
-                    is_forced(force, name, "derived"),
+                    score_forced or is_forced(force, name, "derived"),
                     start=args.start,
                 )
                 if name in work["derived"]
@@ -776,7 +838,7 @@ def main() -> int:
             )
     if "reel" in only:
         made.append(
-            deliver_reel(program, sound, args.tier, "reel" in force, start=args.start)
+            deliver_reel(program, sound, args.tier, score_forced or "reel" in force, start=args.start)
             if work["reel"]
             else PACKAGE / "reel.mp4"
         )
@@ -803,6 +865,12 @@ def main() -> int:
         for item in previous.get("items", [])
         if isinstance(item, dict) and item.get("name") and (PACKAGE / item["name"]).is_file()
     }
+    previous_sound = previous.get("sound") if isinstance(previous.get("sound"), dict) else None
+    rebuilt_audio = {
+        *({"master.mov"} if work["master"] else set()),
+        *(f"{name}{DERIVED[name]['suffix']}" for name in work["derived"]),
+        *({"reel.mp4"} if work["reel"] else set()),
+    }
     manifest = {
         "schema": "danse.delivery.manifest.v1",
         "title": program["title"],
@@ -815,17 +883,20 @@ def main() -> int:
         "duration": span["duration"],
         "items": [],
     }
-    if sound_provenance:
-        manifest["sound"] = sound_provenance
-    elif previous.get("sound"):
-        manifest["sound"] = previous["sound"]
     for path in made:
         if not path.is_file():
             continue
         info = probe(path) or {}
         size = path.stat().st_size
         name = str(path.relative_to(PACKAGE))
+        prior = previous_items.get(name) or {}
         item = {"name": name, "bytes": size, "sha256": digest(path), **info}
+        if name in AUDIO_ITEMS:
+            item_sound = (
+                sound_provenance if name in rebuilt_audio else None
+            ) or prior.get("sound") or previous_sound
+            if item_sound:
+                item["sound"] = item_sound
         if name == "stills/origin-2017.jpg":
             assert origin is not None
             item |= {
@@ -840,6 +911,11 @@ def main() -> int:
         media = f"{secs}{shape} {rate}" if info else ""
         print(f"  {name:<28} {size / 1e6:>8.1f} MB  {media}")
     manifest["items"] = [previous_items[name] for name in sorted(previous_items)]
+    master_sound = (previous_items.get("master.mov") or {}).get("sound")
+    if master_sound:
+        manifest["sound"] = master_sound
+    elif previous_sound:
+        manifest["sound"] = previous_sound
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
     total = sum(i["bytes"] for i in manifest["items"])
     print(f"\n  {len(manifest['items'])} items · {total / 1e9:.2f} GB · {PACKAGE}")
