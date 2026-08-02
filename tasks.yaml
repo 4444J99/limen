@@ -160182,7 +160182,7 @@ tasks:
   workstream: 'governance'
   priority: 'high'
   budget_cost: 3
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'victoroff'
   - 'public-synthetic'
@@ -160252,7 +160252,18 @@ tasks:
     conduct_run_id: 'run-71ea8c94c6668c9267a2975dad9cecbe'
     conduct_lease_id: 'lease-458-71ea8c94c6668c92'
     conduct_generation: 458
-  updated: '2026-08-02T14:31:42.571Z'
+  - timestamp: '2026-08-02T14:31:48.114Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'in_progress'
+    output: 'Verifying preserved PR #29 implementation and exact-main receipt.'
+    conduct_event_id: 'conduct:run-5b839ed77355001cd0ec6245784c6e2b:459:compatibility'
+    conduct_run_id: 'run-5b839ed77355001cd0ec6245784c6e2b'
+    conduct_lease_id: 'lease-459-5b839ed77355001c'
+    conduct_generation: 459
+  updated: '2026-08-02T14:31:48.114Z'
 - id: 'VIC-CLIENT-STORY-001-SCOPE'
   title: 'Classify client narrative sources in scoped verification'
   description: 'Extend the checked-in scope planner so docs/client sources implicate code, browser, and release shards, with one exact control regression test.'
