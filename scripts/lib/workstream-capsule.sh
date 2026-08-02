@@ -886,7 +886,11 @@ workstream_hydrate_conduct_environment() {
   if [[ ! -e "$cache" ]]; then
     return 0
   fi
-  if ! python3 - "$cache" <<'PY'
+  # This function is serialized into kickstart.sh with `declare -f`. Bash 5 indents a
+  # here-document delimiter while printing a function, which turns the following shell body into
+  # Python stdin on Linux. Keep the ownership predicate in `-c` so serialization is byte-stable
+  # across the macOS Bash 3.2 renderer and GitHub's Bash 5 runtime.
+  if ! python3 -c '
 import os
 import stat
 import sys
@@ -901,8 +905,7 @@ if path.is_symlink() or not stat.S_ISREG(info.st_mode):
     raise SystemExit(1)
 if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
     raise SystemExit(1)
-PY
-  then
+' "$cache"; then
     printf 'conduct environment cache must be a user-owned mode-600 regular file: %s\n' "$cache" >&2
     return 2
   fi
