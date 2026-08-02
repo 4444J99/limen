@@ -522,7 +522,11 @@ def _remediation_command(payload: dict[str, Any]) -> str:
     identically and the operator looped. Chained with ``&&`` to match the multi-step
     remediation form already used for the handoff relay below.
     """
-    commands = payload.get("next_commands") if isinstance(payload.get("next_commands"), list) else []
+    # Bound once, then narrowed: the isinstance() guard has to test the SAME object that gets
+    # iterated. Guarding a second payload.get() call left the bound value typed
+    # `Any | list[Any] | None`, which mypy correctly refuses to iterate.
+    raw = payload.get("next_commands")
+    commands: list[Any] = raw if isinstance(raw, list) else []
     return " && ".join(text for text in (str(command).strip() for command in commands) if text)
 
 
