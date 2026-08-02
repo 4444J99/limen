@@ -159120,58 +159120,79 @@ tasks:
     conduct_generation: 5
   source_origin: human_prompt
   updated: 2026-07-23T10:30:57.715Z
-- id: VIC-PUB-001
-  title: Publication boundary checks with tests
+- id: 'VIC-PUB-001'
+  title: 'Publication boundary checks with tests'
   description: 'Implement public-safe publication boundary checks: noindex disclosure present, no real BBNC identity strings, synthetic-only marker required. Add a test script ("vitest run --root ../.. packages/publication") and tests proving each violation is rejected.'
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-PUB-001 — Publication boundary checks with tests.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/publication/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Implement public-safe publication boundary checks: noindex disclosure present, no real BBNC identity strings, synthetic-only marker required. Add a test script ("vitest run --root ../.. packages/publication") and tests proving each violation is rejected.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/publication test
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-PUB-001
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/publication test
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-PUB-001
-  horizon: present
-  value_case: Makes the zero-telemetry/synthetic-only boundary executable instead of prose.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/publication test'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/43'
+  horizon: 'present'
+  value_case: 'Makes the zero-telemetry/synthetic-only boundary executable instead of prose.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:01.144Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-ea4609d20d5487851624f24c64d16832:6:compatibility
-    conduct_run_id: run-ea4609d20d5487851624f24c64d16832
-    conduct_lease_id: lease-6-ea4609d20d548785
+  - timestamp: '2026-07-23T10:31:01.144Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-ea4609d20d5487851624f24c64d16832:6:compatibility'
+    conduct_run_id: 'run-ea4609d20d5487851624f24c64d16832'
+    conduct_lease_id: 'lease-6-ea4609d20d548785'
     conduct_generation: 6
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:01.144Z
+  - timestamp: '2026-08-02T14:34:57.446Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #43; control issue #127.'
+    conduct_event_id: 'conduct:run-3fd55ed3833883580cdf8d1bd29b354a:476:compatibility'
+    conduct_run_id: 'run-3fd55ed3833883580cdf8d1bd29b354a'
+    conduct_lease_id: 'lease-476-3fd55ed383388358'
+    conduct_generation: 476
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:34:57.446Z'
 - id: VIC-UI-001
   title: UI package test wiring and contract tests
   description: 'Add a test script ("vitest run --root ../.. packages/ui") and tests for the existing UI components: black-and-white visual contract tokens only, accessible names present, no color literals outside the contract.'
