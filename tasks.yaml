@@ -159276,58 +159276,79 @@ tasks:
     conduct_generation: 8
   source_origin: human_prompt
   updated: 2026-07-23T10:31:08.007Z
-- id: VIC-GOV-002
-  title: Multi-source governance manifests
-  description: "Extend docs/governance manifest validation to multi-source manifests: ordered sources, per-source checksum drift isolation (name WHICH source drifted), and duplicate-source rejection, with node:test coverage."
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-GOV-002'
+  title: 'Multi-source governance manifests'
+  description: 'Extend docs/governance manifest validation to multi-source manifests: ordered sources, per-source checksum drift isolation (name WHICH source drifted), and duplicate-source rejection, with node:test coverage.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-GOV-002 — Multi-source governance manifests.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: docs/governance/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Extend docs/governance manifest validation to multi-source manifests: ordered sources, per-source checksum drift isolation (name WHICH source drifted), and duplicate-source rejection, with node:test coverage.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: node --test docs/governance/*.test.mjs
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-GOV-002
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: node --test docs/governance/*.test.mjs
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-GOV-002
-  horizon: present
-  value_case: Grows the landed Phase 0 manifest from one source to the real multi-source shape.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'node --test docs/governance/*.test.mjs'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/39'
+  horizon: 'present'
+  value_case: 'Grows the landed Phase 0 manifest from one source to the real multi-source shape.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:11.750Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-cb12d92641352652a6a2e7dd2ead7ea1:9:compatibility
-    conduct_run_id: run-cb12d92641352652a6a2e7dd2ead7ea1
-    conduct_lease_id: lease-9-cb12d92641352652
+  - timestamp: '2026-07-23T10:31:11.750Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-cb12d92641352652a6a2e7dd2ead7ea1:9:compatibility'
+    conduct_run_id: 'run-cb12d92641352652a6a2e7dd2ead7ea1'
+    conduct_lease_id: 'lease-9-cb12d92641352652'
     conduct_generation: 9
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:11.750Z
+  - timestamp: '2026-08-02T14:33:23.850Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #39; control issue #127.'
+    conduct_event_id: 'conduct:run-5f57bd44ed839ea793d8c14ecac3bdda:464:compatibility'
+    conduct_run_id: 'run-5f57bd44ed839ea793d8c14ecac3bdda'
+    conduct_lease_id: 'lease-464-5f57bd44ed839ea7'
+    conduct_generation: 464
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:33:23.850Z'
 - id: VIC-CONTRACT-003
   title: Delivery-checkpoint aggregation invariants
   description: "Add validation for checkpoint aggregation: a phase set whose per-phase verified counts do not sum to the whole-system total is rejected; totals never exceed declared checkpoint counts. Tests included."
