@@ -20,8 +20,9 @@ Gates, all of which must pass:
                    or CONST-/IRF id). "I want it" is not evidence; a reviewed
                    conversation record is.
   G2 name        — `scripts/nomenclator.py --check <name>` clears the naming canon.
-  G3 class       — the name resolves to a declared estate.yaml class by glob
-                   (never class J / unclassified).
+  G3 class       — the name resolves to a declared estate.yaml class; an explicit
+                   repo_overrides judgment wins before broad globs. `--class` pins
+                   the expected result (never class J / unclassified).
   G4 seed        — at least one brainstorm extract or seed document to found the repo
                    with; an empty repo is a vacuum, not a genesis.
 
@@ -33,6 +34,7 @@ Visibility is NOT a flag here: estate.yaml classes own it (IF-PUBLICATION-ESTATE
 
 Usage:
   scripts/repo-genesis.py --name the-consulate--intake \\
+      --class operation_private \\
       --evidence "brainstorm-extracts/chatgpt-local-session-memory/threads/042-….md" \\
       --seed-extract <path> [--seed-extract <path> …] --why "…" --dry-run
 """
@@ -78,14 +80,31 @@ def gate_name(name: str) -> tuple[bool, str]:
     return ok, f"G2 name: {'clears' if ok else 'REJECTED by'} the canon ({detail[-1] if detail else name})"
 
 
-def gate_class(full_name: str) -> tuple[bool, str]:
+def gate_class(full_name: str, expected_class: str | None = None) -> tuple[bool, str]:
     doc = yaml.safe_load(ESTATE.read_text(encoding="utf-8")) or {}
     classes = doc.get("classes") or {}
-    for cls_name, cls in classes.items():
-        for glob in cls.get("match") or cls.get("globs") or []:
-            if fnmatch.fnmatch(full_name, glob):
-                return True, f"G3 class: {full_name} → class {cls_name!r} (glob {glob!r})"
-    return False, f"G3 class: {full_name} matches no declared estate.yaml class — would land as class J"
+    override = (doc.get("repo_overrides") or {}).get(full_name)
+    resolved: str | None = None
+    source = ""
+    if isinstance(override, dict) and override.get("class"):
+        resolved = str(override["class"])
+        source = "explicit override"
+        if resolved not in classes:
+            return False, f"G3 class: {full_name} override names undeclared class {resolved!r}"
+    else:
+        for cls_name, cls in classes.items():
+            for glob in cls.get("match") or cls.get("globs") or []:
+                if fnmatch.fnmatch(full_name, glob):
+                    resolved = str(cls_name)
+                    source = f"glob {glob!r}"
+                    break
+            if resolved:
+                break
+    if resolved is None:
+        return False, f"G3 class: {full_name} matches no declared estate.yaml class — would land as class J"
+    if expected_class and resolved != expected_class:
+        return False, f"G3 class: {full_name} resolves to {resolved!r}, expected {expected_class!r} ({source})"
+    return True, f"G3 class: {full_name} → class {resolved!r} ({source})"
 
 
 def gate_seed(paths: list[str]) -> tuple[bool, str]:
@@ -101,6 +120,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--name", required=True, help="bare repo name (org fixed)")
     ap.add_argument("--org", default=DEFAULT_ORG)
+    ap.add_argument("--class", dest="expected_class", help="required estate class for this repository")
     ap.add_argument("--evidence", required=True, help="demand-evidence file path or registry id")
     ap.add_argument("--seed-extract", action="append", default=[], help="founding document(s); repeatable")
     ap.add_argument("--why", required=True, help="the one-line why for the estate override row")
@@ -111,7 +131,7 @@ def main() -> int:
     results = [
         gate_evidence(args.evidence),
         gate_name(args.name),
-        gate_class(full),
+        gate_class(full, args.expected_class),
         gate_seed(args.seed_extract),
     ]
     ok = all(r[0] for r in results)
@@ -167,13 +187,20 @@ def main() -> int:
             print(f"FAILED: seed push — {push.stderr.strip()}")
             return 1
 
-    # estate override row, appended LOCALLY — lands by PR through the normal flow
-    with ESTATE.open("a", encoding="utf-8") as fh:
-        fh.write(
-            f"\n# repo-genesis {args.name}: pending PR review — move into repo_overrides on merge\n"
-            f"# {full}: {{why: {args.why!r}, genesis_evidence: {args.evidence!r}}}\n"
-        )
-    print(f"\nMINTED: https://github.com/{full} (private) — estate row staged locally; commit + PR it.")
+    estate = yaml.safe_load(ESTATE.read_text(encoding="utf-8")) or {}
+    if full in (estate.get("repo_overrides") or {}):
+        registry_detail = "predeclared estate override retained"
+    else:
+        # Backward-compatible staging for callers that did not predeclare a judgment. New
+        # genesis packets should commit an explicit override before minting so G3 cannot be
+        # decided by a broad fallthrough glob.
+        with ESTATE.open("a", encoding="utf-8") as fh:
+            fh.write(
+                f"\n# repo-genesis {args.name}: pending PR review — move into repo_overrides on merge\n"
+                f"# {full}: {{why: {args.why!r}, genesis_evidence: {args.evidence!r}}}\n"
+            )
+        registry_detail = "estate row staged locally; commit + PR it"
+    print(f"\nMINTED: https://github.com/{full} (private) — {registry_detail}.")
     return 0
 
 
