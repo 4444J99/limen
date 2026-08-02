@@ -45,7 +45,7 @@ Write what we can verify, describe personal reactions as personal reactions, dis
 
 A material connection includes money, free or discounted products, employment, and relevant personal or family relationships. Make the disclosure clear, close to the recommendation, and hard to miss. For a blog post, place it before the first product recommendation or shopping link; repeat it near the relevant product if only one item is connected. Use the same language as the post.
 
-- **Affiliate:** “This post contains affiliate links. If you buy through them, Downs Style may earn a commission at no extra cost to you.”
+- **Affiliate:** “Affiliate disclosure: This post contains an affiliate link. If you buy through it, Downs Style may earn a commission at no extra cost to you. As an Amazon Associate I earn from qualifying purchases.” When only one item is linked, repeat “Paid link — Downs Style may earn a commission if you shop this product” directly beside that recommendation.
 - **Gifted:** “Gifted by [Brand]. The opinions are our own.”
 - **Paid:** “Paid partnership with [Brand].”
 - **No material connection:** No disclosure is required merely to say that we bought and liked a product.
@@ -59,7 +59,8 @@ A disclosure cannot rescue a false claim. If the endorsement itself is inaccurat
 - **Santa Maria Novella:** Attribute the documented 1381 history to the brand and describe Damask rose water as an ingredient. Do not recycle historical medicinal uses as present-day efficacy claims.
 - **Chantecaille:** The current list is two ingredients—Rose de Mai flower water and lactobacillus ferment. Do not convert brand language about antioxidants or purification into guaranteed outcomes.
 - **Sisley-Paris:** Describe the rose, cornflower, and witch-hazel floral waters and disclose that the formula includes fragrance. Do not call it universally soothing or sensitivity-safe.
-- **Across the post:** Avoid prices, medical promises, invented results, and universal safety claims. If a shopping link becomes an affiliate link later, add the disclosure before publication.
+- **Fresh:** The current formula includes glycerin, Damask rose water and extracts, sodium hyaluronate, rose flower oil, citronellol, and geraniol. Keep the conclusion comparative and sensory: fuller than the preceding floral waters and deliberately rose-forward, without converting the ingredients into guaranteed performance or suitability claims.
+- **Across the post:** Avoid prices, medical promises, invented results, and universal safety claims. Keep the full affiliate disclosure before the first shopping link, repeat the paid-link notice directly beside Fresh, and do not describe any pre-existing shopping link as an affiliate link.
 
 ## Pre-publication check
 
@@ -78,6 +79,9 @@ A disclosure cannot rescue a false claim. If the endorsement itself is inaccurat
 - [FTC: Health Products Compliance Guidance](https://www.ftc.gov/business-guidance/resources/health-products-compliance-guidance)
 - [FTC: Disclosures 101 for Social Media Influencers](https://www.ftc.gov/business-guidance/resources/disclosures-101-social-media-influencers)
 - [FTC: Consumer Reviews and Testimonials Rule Q&A](https://www.ftc.gov/business-guidance/resources/consumer-reviews-testimonials-rule-questions-answers)
+- [FTC: Endorsement Guides Q&A](https://www.ftc.gov/business-guidance/resources/ftcs-endorsement-guides-what-people-are-asking)
+- [Amazon Associates: Identifying yourself and affiliate links](https://affiliate-program.amazon.com/help/node/topic/GPXFHVYZMTGPUMPE)
+- [Fresh: Rose Deep Hydration Facial Toner](https://www.fresh.com/us/fresh/rose-deep-hydration-toner-rosedeephydrationtoner.html)
 - [FTC: Environmental Claims Summary](https://www.ftc.gov/business-guidance/resources/environmental-claims-summary-green-guides)
 - [FDA: Cosmetics Labeling Claims](https://www.fda.gov/cosmetics/cosmetics-labeling/cosmetics-labeling-claims)
 - [FDA: Is It a Cosmetic, a Drug, or Both?](https://www.fda.gov/cosmetics/cosmetics-laws-regulations/it-cosmetic-drug-or-both-or-it-soap)

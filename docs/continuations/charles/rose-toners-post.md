@@ -4,8 +4,8 @@
 
 - **Title:** Rosewater and the Benefits Behind Our Favorite Flower
 - **Existing URL:** https://www.downsstyle.com/skincare/2026/8/1/rose-toners-and-the-benefits-behind-our-favorite-scent
-- **SEO description:** An ingredient-aware look at rosewater across five toners and face mists, with honest notes on formula, texture, fragrance, and what sets each one apart.
-- **Keywords/tags:** rose skincare ingredient, rose in skincare, rose toner, face mist, summer skincare, Mario Badescu, Whamisa, Santa Maria Novella, Chantecaille, Sisley-Paris
+- **SEO description:** An ingredient-aware look at rosewater across six toners and face mists, with honest notes on formula, texture, fragrance, and what sets each one apart.
+- **Keywords/tags:** rose skincare ingredient, rose in skincare, rose toner, face mist, summer skincare, Mario Badescu, Whamisa, Santa Maria Novella, Chantecaille, Sisley-Paris, Fresh
 
 ## Squarespace body copy
 
@@ -21,7 +21,7 @@ The scent gets our attention, but the formula is what makes us stay.
 
 Mario Badescu keeps the flower light and familiar, whereas Whamisa turns it into a toner so rich it is almost pretending to be a serum.
 
-Then Chantecaille takes the drama away again and leaves us with two ingredients. Same favorite flower, completely different personalities.
+Then Chantecaille takes the drama away again and leaves us with two ingredients, only for Fresh to bring the whole toner ritual roaring back. Same favorite flower, completely different personalities.
 
 So why does rosewater keep finding its way back into our routines?
 
@@ -34,6 +34,8 @@ Still, that result belongs to the material studied and not automatically to ever
 The type of rose matters, but so do the way it was distilled and the amount inside; after that, every other ingredient gets a chance to help the flower or completely crowd it out.
 
 Rose starts the story, but the whole bottle gets the final word.
+
+Affiliate disclosure: This post contains an affiliate link. If you buy through it, Downs Style may earn a commission at no extra cost to you. As an Amazon Associate I earn from qualifying purchases.
 
 <p style="text-align: center;"><strong><a href="https://www.mariobadescu.com/products/facial-spray-with-aloe-herbs-and-rosewater">Mario Badescu Facial Spray With Aloe, Herbs And Rosewater</a></strong></p>
 
@@ -97,6 +99,20 @@ That fuller formula is less minimal, although that is not automatically an insul
 
 Fragrance comes along with that traditional experience because Sisley was clearly not trying to be shy either.
 
+<p style="text-align: center;"><strong><a href="https://on.ltk.com/+IRLNZ3842CX6uNfhjQ9edg">Fresh Rose Deep Hydration Facial Toner</a></strong></p>
+
+<p style="text-align: center;"><em>Paid link — Downs Style may earn a commission if you shop this product</em></p>
+
+> **IMAGE PLACEMENT — Insert Charles's Fresh Rose Deep Hydration Facial Toner photo here and link it to https://on.ltk.com/+IRLNZ3842CX6uNfhjQ9edg.**
+
+If Sisley-Paris is the toner for someone who misses a cotton pad, Fresh is what happens when that same ritual wants to look a little more romantic.
+
+The current formula combines Damask rose water and extracts with glycerin and hyaluronic acid, so the hydration story is more built out than the floral waters before it.
+
+That fullness is also the drawback: rose flower oil and fragrant rose components make this a very committed rose bottle, not a minimal one pretending to be invisible.
+
+Choose it when you want the flower and the toner step to feel equally obvious; click the photo to inspect the full formula or shop the bottle.
+
 By now, the right rose is probably obvious: the bottle whose drawback annoys you the least and whose personality sounds the most like your own.
 
 If the late-2010s nostalgia still has you, the Mario Badescu photo is worth one more click so you can look at the current formula yourself before deciding whether the dyes end the romance.
@@ -109,14 +125,17 @@ Chantecaille takes the drama away again and gives minimalists a very good reason
 
 Sisley-Paris brings us back to the traditional toner, so its photo is the one to open if rose, cornflower, witch hazel, and a cotton pad sound more satisfying than another mist.
 
-To shop, click any product photo above. Each one goes straight to the same product page we used while reviewing it, so you can compare the formulas for yourself before choosing—and then come back, because we will keep testing the bottles that make skincare feel less like a chore and more like a small daily ritual.
+Fresh makes that traditional step feel a little more romantic again, so its photo is the one to click if glycerin, hyaluronic acid, and a very committed rose formula sound like your kind of finale.
+
+To shop, click any product photo above. Each of the six goes straight to the same product page we used while reviewing it, so you can compare the formulas for yourself before choosing—and then come back, because we will keep testing the bottles that make skincare feel less like a chore and more like a small daily ritual.
 
 ## Placement checklist
 
 - Preserve the live post's existing Mario Badescu and Whamisa image blocks in their current sequence.
-- Add Charles's own product photos at the three marked placements; do not substitute retailer or brand imagery.
+- Add Charles's own product photos at the four marked placements; do not substitute retailer or brand imagery.
 - Link each product image to the same canonical shopping URL used in its heading.
-- Keep the links described as ordinary shopping links unless actual affiliate URLs are supplied; add a clear affiliate disclosure if and when that happens.
+- Keep every pre-existing shopping URL unchanged. Use the exact supplied LTK URL for both Fresh links; it is the sole disclosed Amazon affiliate link in this package.
+- Keep the full affiliate disclosure before the first shopping link and the paid-link notice directly beside the Fresh recommendation.
 - Center each linked product heading in its own Squarespace text block.
 - Remove the visible image-placement markers after the image blocks are in place.
 - Keep the existing URL unchanged.
@@ -125,8 +144,9 @@ To shop, click any product photo above. Each one goes straight to the same produ
 
 - Use **Rosewater and the Benefits Behind Our Favorite Flower** as the visible title.
 - Keep the rosewater explanation before the first product and qualify laboratory findings rather than promising finished-product results.
-- Keep the current five-product proposed sequence. Thayers was discussed as a familiar toner brand but was not selected for this article.
+- Keep the six-product sequence: Mario Badescu → Whamisa → Santa Maria Novella → Chantecaille → Sisley-Paris → Fresh. Thayers was discussed as a familiar toner brand but was not selected for this article.
 - Preserve the approved Chantecaille and Sisley framing.
+- Preserve the approved Fresh formula framing and its exact LTK link and affiliate disclosures.
 - Treat the Whamisa brand-site comment as criticism: keep the approved texture description, remove promotional phrasing, and summarize rather than reproduce its long ingredient list.
 
 ## Voice rule
