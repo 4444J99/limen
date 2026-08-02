@@ -178,6 +178,7 @@ class DeliveryContractTest(unittest.TestCase):
             with (
                 mock.patch.object(DELIVER, "probe", side_effect=fake_probe),
                 mock.patch.object(DELIVER, "score_provenance", return_value={"sources": ["a", "b"]}),
+                mock.patch.object(DELIVER.shutil, "which", side_effect=lambda command: f"/tools/{command}"),
                 redirect_stdout(io.StringIO()) as output,
             ):
                 result = DELIVER.preflight(program, SPAN, {"master"}, set(), "film", root, package, None)
