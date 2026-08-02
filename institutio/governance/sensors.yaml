@@ -1494,6 +1494,24 @@ sensors:
         severity: advisory
         escalation: "residue caps breached — this machine is holding state it should be able to re-summon; each breach names its owner (run python3 scripts/residue-census.py)"
 
+  collaboration-hub-sync:
+    section: "0g9c"
+    title: "collaboration hub — refresh the registered denominator, encrypt new originals, reconcile immutable remote events, and verify custody"
+    gate: LIMEN_COLLABORATION_HUB_SYNC
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_COLLABORATION_HUB_SYNC
+      default: 48
+    timeout:
+      env: LIMEN_COLLABORATION_HUB_SYNC_TIMEOUT
+      default: 900
+    steps:
+      - command: "bash scripts/collaboration-hub-sync.sh"
+        severity: advisory
+        escalation: "the owner-only collaboration vault did not reach its bounded discover → migrate → encrypted sync → verify fixed point; inspect its private receipt and credential wall without placing paths, keys, or client data in the board"
+
   diurnal:
     section: "0h"
     title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"

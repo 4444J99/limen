@@ -4907,6 +4907,50 @@ parameters:
     owner: mail
     note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Hardcoded default so a zero-env beat still reaches him; override only to redirect the brief to a different self address. Never a third party."
 
+  # --- COLLABORATION HUB: one bounded rung on the existing heartbeat ------------
+  LIMEN_COLLABORATION_HUB_SYNC:
+    default: "1"
+    env: LIMEN_COLLABORATION_HUB_SYNC
+    self_update: none
+    owner: continuity
+    note: "Master gate for the owner-only collaboration hub sync sensor. The rung installs no daemon: the existing heartbeat invokes one finite discover → migrate → ciphertext sync → verify pass. Credentials remain in macOS Keychain, client plaintext stays local, and failures are advisory with private receipts."
+  LIMEN_BEAT_COLLABORATION_HUB_SYNC:
+    default: 48
+    env: LIMEN_BEAT_COLLABORATION_HUB_SYNC
+    self_update: none
+    owner: continuity
+    note: "Cadence in heartbeat beats for collaboration reconciliation. 48 is approximately daily at the slow quiet tempo; every run is idempotent and remote reconciliation uploads only missing immutable events."
+  LIMEN_COLLABORATION_HUB_SYNC_TIMEOUT:
+    default: 900
+    env: LIMEN_COLLABORATION_HUB_SYNC_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Finite wall-clock bound in seconds for the collaboration hub sensor. It covers source discovery, local hashing/encryption, exact remote-ID reconciliation, and verification without monopolizing the heartbeat."
+  LIMEN_COLLABORATION_HUB_ROOT:
+    default: "~/Workspace/collaboration-operations-platform"
+    env: LIMEN_COLLABORATION_HUB_ROOT
+    self_update: none
+    owner: continuity
+    note: "Owner checkout containing the public-safe application and bounded sync entrypoint. The heartbeat fast-forwards a clean main checkout only; it never merges, rebases, or rewrites a work branch."
+  LIMEN_COLLABORATION_HUB_WORKSPACE:
+    default: "~/Workspace/_collaboration-operations-private"
+    env: LIMEN_COLLABORATION_HUB_WORKSPACE
+    self_update: none
+    owner: continuity
+    note: "Mode-700 private workspace holding the manifest, encrypted vault, and redacted/private operational receipts. The value and its source paths never enter tracked receipts."
+  LIMEN_COLLABORATION_HUB_ENDPOINT:
+    default: "https://collaboration-operations-hub.ivixivi.workers.dev"
+    env: LIMEN_COLLABORATION_HUB_ENDPOINT
+    self_update: none
+    owner: continuity
+    note: "No-cost ciphertext-only Worker endpoint. Changing it never authorizes custom DNS, public sharing, or paid resources."
+  LIMEN_COLLABORATION_HUB_REGISTRY:
+    default: "~/Workspace/limen/organs/consulting/constellation/registry.yaml"
+    env: LIMEN_COLLABORATION_HUB_REGISTRY
+    self_update: none
+    owner: continuity
+    note: "Canonical registered collaboration denominator refreshed before each pass. Private overlays and other registered sources are discovered into the private manifest and never copied into Git."
+
   # --- DIVRNAL: the three-phase daily organ that cuts itself --------------------
   LIMEN_PR_DEBT_WINDOW_DAYS:
     default: 14
