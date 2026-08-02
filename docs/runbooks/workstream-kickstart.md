@@ -89,6 +89,10 @@ without rewriting it:
 bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
 ```
 
+The command is safe to repeat. If that capsule already has a fresh, live protected session, it
+returns success with one plain message and starts no duplicate provider. Continue in the existing
+session; never kill or reap it just to relaunch the command.
+
 Autonomous Codex capsules preserve the interactive UI when standard input and output are attached
 to a terminal. In a shell runner without a terminal, the same command uses Codex's noninteractive
 `exec` transport instead of failing at provider handoff.

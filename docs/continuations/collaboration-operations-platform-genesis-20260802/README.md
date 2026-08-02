@@ -33,6 +33,9 @@ cd "/Users/4jp/Workspace/limen/.worktrees/collaboration-operations-platform-gene
 bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
 ```
 
+The command is safe to repeat: when this workstream is already live, it returns success with a
+plain message and starts no duplicate provider. Continue in the existing session instead.
+
 Then re-probe reality and run the boundary plus the non-mutating genesis gate:
 
 ```bash

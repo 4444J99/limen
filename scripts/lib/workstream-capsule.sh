@@ -605,6 +605,71 @@ if payload.get("observed_epoch", -1) < int(sys.argv[5]):
 PY
 }
 
+workstream_existing_active_session() {
+  local capsule_dir="$1"
+  local status_path="$capsule_dir/conduct-keepalive.json"
+  local record=""
+  local session_id=""
+  local target_pid=""
+  local keepalive_pid=""
+
+  if [[ ! -d "$capsule_dir" || -L "$capsule_dir" || ! -f "$status_path" || -L "$status_path" ]]; then
+    return 1
+  fi
+  if ! record="$(python3 - "$capsule_dir" "$status_path" "$(date +%s)" <<'PY'
+import json
+import re
+import stat
+import sys
+from pathlib import Path
+
+capsule_dir = Path(sys.argv[1])
+status_path = Path(sys.argv[2])
+now = int(sys.argv[3])
+try:
+    capsule = capsule_dir.resolve(strict=True)
+    resolved_status = status_path.resolve(strict=True)
+    info = status_path.lstat()
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    raise SystemExit(1)
+if (
+    capsule_dir.is_symlink()
+    or status_path.is_symlink()
+    or not stat.S_ISREG(info.st_mode)
+    or resolved_status.parent != capsule
+    or resolved_status.name != "conduct-keepalive.json"
+    or not isinstance(payload, dict)
+    or payload.get("schema") != "limen.workstream.conduct-keepalive.v1"
+    or payload.get("state") != "active"
+):
+    raise SystemExit(1)
+session_id = payload.get("session_id")
+if not isinstance(session_id, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{1,256}", session_id):
+    raise SystemExit(1)
+for key in ("target_pid", "keepalive_pid", "deadline_epoch", "observed_epoch"):
+    if type(payload.get(key)) is not int:
+        raise SystemExit(1)
+if (
+    payload["target_pid"] <= 0
+    or payload["keepalive_pid"] <= 0
+    or payload["deadline_epoch"] <= now
+    or payload["observed_epoch"] > now
+    or now - payload["observed_epoch"] > 360
+):
+    raise SystemExit(1)
+print(f"{session_id}\t{payload['target_pid']}\t{payload['keepalive_pid']}")
+PY
+)"; then
+    return 1
+  fi
+  IFS=$'\t' read -r session_id target_pid keepalive_pid <<< "$record"
+  if ! kill -0 "$target_pid" 2>/dev/null || ! kill -0 "$keepalive_pid" 2>/dev/null; then
+    return 1
+  fi
+  printf '%s\n' "$session_id"
+}
+
 workstream_conduct_keepalive_loop() {
   local agent="$1"
   local wt="$2"
@@ -763,9 +828,11 @@ workstream_register_conduct_session() {
   local capabilities="$3"
   local limen_binary="${LIMEN_CLI_BIN:-limen}"
   local register_rc=0
+  local register_output=""
   local capability
   local capability_args=()
 
+  unset LIMEN_WORKSTREAM_ALREADY_RUNNING
   workstream_conduct_token="${LIMEN_CONDUCT_TOKEN:-}"
   if ! command -v "$limen_binary" >/dev/null 2>&1; then
     unset workstream_conduct_token
@@ -778,7 +845,7 @@ workstream_register_conduct_session() {
     capability_args+=(--capability "$capability")
   done
 
-  if "$limen_binary" conduct register \
+  if register_output="$("$limen_binary" conduct register \
     --agent "$agent" \
     --surface workstream \
     --session-id "$LIMEN_SESSION_ID" \
@@ -786,7 +853,7 @@ workstream_register_conduct_session() {
     "${capability_args[@]}" \
     --worktree "$wt" \
     --human-protected \
-    --concurrency 1 >/dev/null; then
+    --concurrency 1 2>&1)"; then
     :
   else
     register_rc=$?
@@ -795,6 +862,14 @@ workstream_register_conduct_session() {
   unset LIMEN_CONDUCT_TOKEN
   if [[ "$register_rc" -ne 0 ]]; then
     unset workstream_conduct_token
+    if [[ "$register_output" == *"worktree is already owned by healthy session"* ]]; then
+      export LIMEN_WORKSTREAM_ALREADY_RUNNING=1
+      printf 'This workstream is already running. Continue in its existing session; no second process was started.\n'
+      return 0
+    fi
+    if [[ -n "$register_output" ]]; then
+      printf '%s\n' "$register_output" >&2
+    fi
     return "$register_rc"
   fi
   export LIMEN_HUMAN_PROTECTED=1
@@ -1715,6 +1790,9 @@ refresh_workstream_runway() {
 if [[ "\$conduct" -eq 1 ]]; then
   workstream_hydrate_conduct_environment
   workstream_register_conduct_session "\$agent" "\$PWD" "\$agent_capabilities"
+  if [[ "\${LIMEN_WORKSTREAM_ALREADY_RUNNING:-}" == "1" ]]; then
+    exit 0
+  fi
 fi
 refresh_workstream_runway
 preflight_timeout="\${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"

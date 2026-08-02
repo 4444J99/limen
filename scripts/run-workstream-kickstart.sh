@@ -14,5 +14,11 @@ if [[ -L "$kickstart" || ! -f "$kickstart" ]]; then
   exit 2
 fi
 
+capsule_dir="$(cd "$(dirname "$kickstart")" && pwd -P)"
+if workstream_existing_active_session "$capsule_dir" >/dev/null; then
+  printf 'This workstream is already running. Continue in its existing session; no second process was started.\n'
+  exit 0
+fi
+
 workstream_hydrate_conduct_environment
 exec bash "$kickstart"
