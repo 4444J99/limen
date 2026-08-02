@@ -29,6 +29,34 @@ GATE_HISTORY = PRIVATE_ROOT / "lifecycle" / "session-value-gate-history.jsonl"
 PRODUCT_LEDGER_INDEX = PRIVATE_ROOT / "lifecycle" / "product-ledger.json"
 PROMPT_PACKET_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
 
+
+def blocks_when_absent(item: dict[str, Any]) -> bool:
+    """An absent input stops dispatch only when its producer is reachable from a clone.
+
+    ``stop_missing_inputs`` is a hard dispatch-admission block, so the inputs it counts
+    must be ones any checkout can actually obtain. ``.limen-private/`` is gitignored and
+    holds no tracked file, so a private index is absent on every fresh clone, CI runner,
+    and new machine — gating admission on one makes dispatch unreachable rather than
+    unsafe. This is the property the previous ``{"git", "product_ledger_index",
+    "prompt_packet_index"}`` name list was approximating: all three are private, or not a
+    file at all. ``batch_review_index`` is their sibling in the same PRIVATE_ROOT/lifecycle
+    directory and was simply missed, so it alone blocked — behind a three-deep producer
+    chain the gate never named. Deriving from the path keeps a new private input from
+    re-drifting the way a hand-maintained name list did.
+    """
+    if item.get("present") is not False:
+        # "git" reports a root and a commit count, never presence, so it is never missing.
+        return False
+    path = item.get("path")
+    if not path:
+        # Cannot prove it is private, so fail toward blocking rather than a silent pass.
+        return True
+    try:
+        Path(path).resolve().relative_to(PRIVATE_ROOT.resolve())
+    except (ValueError, OSError):
+        return True
+    return False
+
 RECORDED_STATUSES = {"owner-recorded", "non-source-recorded", "superseded-recorded"}
 FOLLOWUP_ROOT_STATUSES = {
     "remote_pr_preserved",
@@ -358,11 +386,7 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
     commit_kinds = findings.get("commit_kinds") if isinstance(findings.get("commit_kinds"), dict) else {}
     inputs = snapshot.get("inputs") or {}
     missing_inputs = sorted(
-        name
-        for name, item in inputs.items()
-        if isinstance(item, dict)
-        and item.get("present") is False
-        and name not in {"git", "product_ledger_index", "prompt_packet_index"}
+        name for name, item in inputs.items() if isinstance(item, dict) and blocks_when_absent(item)
     )
     done_or_routed = int(metrics.get("merged_roots") or 0) + int(metrics.get("owner_absent_roots") or 0)
     followups = int(metrics.get("followup_roots") or 0)

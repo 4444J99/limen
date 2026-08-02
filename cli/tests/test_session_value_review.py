@@ -34,6 +34,10 @@ def test_session_value_review_summarizes_long_run_without_raw_text(tmp_path: Pat
     review.DOC_PATH = tmp_path / "docs" / "session-value-review.md"
     review.PRIVATE_INDEX = review.PRIVATE_ROOT / "lifecycle" / "session-value-review.json"
     review.GATE_HISTORY = review.PRIVATE_ROOT / "lifecycle" / "session-value-gate-history.jsonl"
+    # Every private constant derives from one PRIVATE_ROOT at import, so a fixture that
+    # repoints the root must repoint all of them or the module contradicts itself.
+    review.PRODUCT_LEDGER_INDEX = review.PRIVATE_ROOT / "lifecycle" / "product-ledger.json"
+    review.PROMPT_PACKET_INDEX = review.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
 
     _git(tmp_path, "init")
     _git(tmp_path, "config", "user.email", "test@example.com")
@@ -480,3 +484,102 @@ def test_session_value_gate_stops_without_durable_progress():
     assert gate["action"] == "stop_no_durable_progress"
     assert gate["exit_code"] == 20
     assert gate["pressures"]["no_durable_progress"] is True
+
+
+def _missing(path: Path) -> dict[str, object]:
+    return {"path": str(path), "present": False}
+
+
+def test_private_corpus_index_never_blocks_dispatch(tmp_path: Path):
+    """The regression: batch_review_index alone made dispatch admission unreachable.
+
+    .limen-private/ is gitignored and holds no tracked file, so this index is absent on
+    every fresh clone. Counting it as a missing input turned a hard dispatch block into
+    something no checkout could clear — behind a producer chain the gate never named.
+    """
+    review = _load()
+    review.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+
+    item = _missing(review.PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json")
+
+    assert review.blocks_when_absent(item) is False
+
+
+def test_every_private_lifecycle_sibling_is_treated_alike(tmp_path: Path):
+    """The drift guard: three siblings were excluded by name and the fourth was missed."""
+    review = _load()
+    review.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    lifecycle = review.PRIVATE_ROOT / "lifecycle"
+
+    verdicts = {
+        name: review.blocks_when_absent(_missing(lifecycle / f"{name}.json"))
+        for name in ("product-ledger", "prompt-packet-ledger", "prompt-batch-review-ledger")
+    }
+
+    assert set(verdicts.values()) == {False}, verdicts
+
+
+def test_tracked_docs_input_still_blocks(tmp_path: Path):
+    """A git-tracked input is reproducible from a clone, so its absence is a real stop."""
+    review = _load()
+    review.ROOT = tmp_path
+    review.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+
+    item = _missing(tmp_path / "docs" / "prompt-batch-resolution-receipts.json")
+
+    assert review.blocks_when_absent(item) is True
+
+
+def test_present_inputs_and_git_are_never_missing(tmp_path: Path):
+    review = _load()
+    review.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+
+    assert review.blocks_when_absent({"path": str(tmp_path / "docs" / "x.json"), "present": True}) is False
+    # git carries a root and a commit count and never reports presence at all.
+    assert review.blocks_when_absent({"root": str(tmp_path), "commit_count": 3}) is False
+
+
+def test_absent_input_without_a_path_fails_toward_blocking(tmp_path: Path):
+    """An unknown shape cannot be proven private, so it must not silently stop blocking."""
+    review = _load()
+    review.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+
+    assert review.blocks_when_absent({"present": False}) is True
+
+
+def test_shipped_constants_match_the_property_the_gate_relies_on():
+    """Ties the unit tests to the real configuration, not just to hand-built dicts."""
+    review = _load()
+
+    assert review.BATCH_REVIEW_INDEX.is_relative_to(review.PRIVATE_ROOT)
+    assert review.PRODUCT_LEDGER_INDEX.is_relative_to(review.PRIVATE_ROOT)
+    assert review.PROMPT_PACKET_INDEX.is_relative_to(review.PRIVATE_ROOT)
+    assert not review.BATCH_RESOLUTION_RECEIPTS.is_relative_to(review.PRIVATE_ROOT)
+
+
+def test_gate_does_not_stop_on_a_missing_private_index(tmp_path: Path):
+    """End-to-end through decide_gate: the live block the operator actually hit."""
+    review = _load()
+    review.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "git": {"root": str(tmp_path), "commit_count": 4},
+            "batch_resolution_receipts": {"path": str(tmp_path / "docs" / "r.json"), "present": True},
+            "batch_review_index": _missing(review.PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"),
+        },
+        "metrics": {
+            "commits": 4,
+            "batch_receipts": 2,
+            "prompt_events_recorded": 2,
+            "followup_roots": 0,
+            "merged_roots": 2,
+            "owner_absent_roots": 0,
+        },
+        "current_queue": {"coverage": {"open_review_batches": 3}, "next": []},
+    }
+
+    gate = review.decide_gate(snapshot, history=[])
+
+    assert gate["action"] != "stop_missing_inputs"
+    assert "batch_review_index" not in gate["reason"]
