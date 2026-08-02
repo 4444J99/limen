@@ -11,6 +11,10 @@
 #     and every terminal path prints an `AWAIT-PR <n>: <VERDICT>` line — there is no silent exit
 #   - CI-red and BLOCKED are terminal FAILURES, never waited out (a red check needs a fix, a
 #     BLOCKED merge needs a rebase — more waiting cannot clear either)
+#   - an unreadable poll is NOT a verdict: a failed queue observation is retried up to
+#     LIMEN_AWAIT_PR_MAX_OBS_FAILURES consecutive times before it becomes terminal, because a
+#     network blip says nothing about the queue and this waiter never re-enqueues after a
+#     terminal one (2026-08-02: two healthy queued PRs stranded by a single `i/o timeout`)
 #   - refuses to start while logs/AUTONOMY_PAUSED prohibits merges (no --force: a paused estate
 #     waits for the operator, and so does every session in it)
 #   - single instance per PR (mkdir lock under logs/); a second waiter exits ALREADY-WATCHED
@@ -38,7 +42,9 @@ POLICY="${LIMEN_MERGE_POLICY_BIN:-$ROOT/scripts/merge-policy.sh}"
 PR=""; REPO=""; MERGE=0
 TIMEOUT="${LIMEN_AWAIT_PR_TIMEOUT:-1200}"
 INTERVAL="${LIMEN_AWAIT_PR_INTERVAL:-45}"
-usage() { sed -n '22,28p' "$0"; exit 64; }
+# A poll that could not be COMPLETED is not a verdict about the queue — see the retry block below.
+MAX_OBS_FAIL="${LIMEN_AWAIT_PR_MAX_OBS_FAILURES:-3}"
+usage() { sed -n '26,32p' "$0"; exit 64; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO="${2:-}"; shift 2 ;;
@@ -48,13 +54,14 @@ while [ $# -gt 0 ]; do
     --interval) INTERVAL="${2:-}"; shift 2 ;;
     --interval=*) INTERVAL="${1#*=}"; shift ;;
     --merge) MERGE=1; shift ;;
-    -h|--help) sed -n '2,28p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,32p' "$0"; exit 0 ;;
     *) PR="$1"; shift ;;
   esac
 done
 case "$PR" in (*[!0-9]*|"") usage ;; esac
 case "$TIMEOUT" in (*[!0-9]*|"") usage ;; esac
 case "$INTERVAL" in (*[!0-9]*|"") usage ;; esac
+case "$MAX_OBS_FAIL" in (*[!0-9]*|"") usage ;; esac
 repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
 # bash 3.2 (macOS /bin/bash): "${repo_args[@]+"${repo_args[@]}"}" at each call site — an empty
 # array expands to nothing under set -u, a populated one to its elements.
@@ -116,7 +123,7 @@ trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
 
 # ── the bounded, loud poll loop ─────────────────────────────────────────────────────────────────
 start="$(date +%s)"; deadline=$((start + TIMEOUT)); i=0; last=""
-queued=0; queued_head=""
+queued=0; queued_head=""; obs_fail=0
 while :; do
   # Once enqueued, observe GitHub state directly. Never invoke merge-policy or `gh pr merge`
   # again: a successful enqueue is not a merge receipt, and this waiter does not auto re-enqueue
@@ -132,10 +139,31 @@ while :; do
       --jq '[.data.repository.pullRequest.state, .data.repository.pullRequest.headRefOid, .data.repository.pullRequest.mergeStateStatus, (if .data.repository.pullRequest.autoMergeRequest == null then "none" else "armed" end), (if .data.repository.pullRequest.isInMergeQueue then "in-queue" else "not-in-queue" end)] | @tsv' \
       2>/dev/null)"
     queue_rc=$?
+    # A poll that could not be COMPLETED is not evidence about the queue. `pr-debt-trend.py`
+    # encodes this rule in one direction — "silence is not improvement" — and it holds in the
+    # other: silence is not failure either. One dropped packet used to be terminal here, and
+    # because this waiter (correctly) never re-enqueues after a terminal verdict, a single
+    # `dial tcp …: i/o timeout` stranded a healthy PR sitting at queue position 3 (observed
+    # 2026-08-02 on #1775 and #1777, both of which merged untouched minutes later). Absence of
+    # evidence is retried, up to MAX_OBS_FAIL consecutive misses; the hard deadline still bounds
+    # the wait, so tolerating a blip can never turn into an unbounded loop.
     if [ "$queue_rc" -ne 0 ] || [ -z "$queue_state" ]; then
-      echo "AWAIT-PR $PR: QUEUE-FAILED — cannot observe queued PR state"
-      last="QUEUE-OBSERVATION-FAILED"; finish 1
+      obs_fail=$((obs_fail + 1))
+      if [ "$obs_fail" -ge "$MAX_OBS_FAIL" ]; then
+        echo "AWAIT-PR $PR: QUEUE-FAILED — cannot observe queued PR state ($obs_fail consecutive misses)"
+        last="QUEUE-OBSERVATION-FAILED"; finish 1
+      fi
+      now="$(date +%s)"
+      if [ "$now" -ge "$deadline" ]; then
+        echo "AWAIT-PR $PR: TIMEOUT after $((now - start))s — exact head $queued_head remains QUEUED"
+        echo "  the queue owns continuation; this waiter will not re-enqueue."
+        finish 2
+      fi
+      echo "AWAIT-PR $PR: poll $i — OBSERVATION-MISSED ($obs_fail/$MAX_OBS_FAIL); the queue is unread, not failed"
+      sleep "$INTERVAL"
+      continue
     fi
+    obs_fail=0
     state="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $1}')"
     head_now="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $2}')"
     merge_state="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $3}')"

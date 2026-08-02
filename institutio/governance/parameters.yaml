@@ -4679,6 +4679,12 @@ parameters:
     self_update: none
     owner: verify
     note: "Poll interval (seconds) between merge-policy.sh runs inside scripts/await-pr.sh. 45 s keeps a full 20-min wait under ~30 GitHub reads while every poll prints a loud one-liner."
+  LIMEN_AWAIT_PR_MAX_OBS_FAILURES:
+    default: 3
+    env: LIMEN_AWAIT_PR_MAX_OBS_FAILURES
+    self_update: none
+    owner: verify
+    note: "Consecutive FAILED queue observations scripts/await-pr.sh tolerates before QUEUE-FAILED becomes terminal. A poll that could not be completed is not evidence about the queue — the mirror of pr-debt-trend.py's 'silence is not improvement'. One `dial tcp …: i/o timeout` was terminal here until 2026-08-02, and because the waiter never re-enqueues after a terminal verdict it stranded #1775 and #1777 at queue positions 3 and 2; both merged untouched minutes later. 3 rides out a blip; LIMEN_AWAIT_PR_TIMEOUT still bounds the wait, so this can never become an unbounded retry."
   LIMEN_MERGE_POLICY_BIN:
     default: ""                # empty = scripts/merge-policy.sh; set only in tests
     env: LIMEN_MERGE_POLICY_BIN
