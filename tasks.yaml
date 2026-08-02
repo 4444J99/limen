@@ -160826,3 +160826,54 @@ tasks:
     conduct_lease_id: 'lease-447-6f44a8f9fd47e87a'
     conduct_generation: 447
   updated: '2026-08-01T00:34:54.887Z'
+- id: 'VIC-ISSUE-AUDIT-001'
+  title: 'Victoroff exhaustive fixed-point audit and GitHub issue registration'
+  description: 'Audit the signed Victoroff repository baseline without source changes and register every confirmed, independently closable obligation as a deduplicated GitHub issue.'
+  repo: '4444J99/victoroff-os'
+  type: 'governance'
+  target_agent: 'codex'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'persona:david'
+  - 'project:victoroff-os'
+  - 'audit:2026-08-02'
+  - 'owner:victoroff-control-integrator'
+  - 'public-synthetic'
+  - 'audit-only'
+  urls:
+  - 'https://github.com/4444J99/victoroff-os/issues'
+  context: 'persona_owner: david
+
+    project: victoroff-os
+
+    repository: 4444J99/victoroff-os
+
+    registrar: victoroff-control-integrator
+
+    audit_baseline: 6a0b031b104732131da293ce0ddeb2e655da0d63
+
+    No source edit, PR, deployment, DNS/payment/custody action, outreach, or collaborator mutation is authorized.'
+  predicate: 'test "$(gh issue list --repo 4444J99/victoroff-os --state closed --search ''VIC-ISSUE-AUDIT-001 in:title'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:4444J99/victoroff-os:issue:VIC-ISSUE-AUDIT-001'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Create durable, deduplicated custody for every confirmed Victoroff defect and unresolved obligation while preserving the repository-only v1.0.0 boundary and issues #2/#3 authority holds.'
+  owner_surface: 'victoroff-control-integrator'
+  external_deadline: false
+  created: '2026-08-02'
+  depends_on: []
+  dispatch_log:
+  - timestamp: '2026-08-02T13:53:27.986Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-3ee4ed3c08a5c519013bb06fd213e61e:454:compatibility'
+    conduct_run_id: 'run-3ee4ed3c08a5c519013bb06fd213e61e'
+    conduct_lease_id: 'lease-454-3ee4ed3c08a5c519'
+    conduct_generation: 454
+  updated: '2026-08-02T13:53:27.986Z'
