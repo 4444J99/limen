@@ -23,7 +23,7 @@ If you had any sort of fascination with skincare in the late 2010s like we did, 
 
 > **IMAGE PLACEMENT — Keep the existing Whamisa photo here.**
 
-This South Korean brand has been on our radar for its botanical formulas and thoughtful packaging. Instead of beginning with water, this toner uses an aloe vera extract base, then adds glycerin and a fermented complex of rosebud, calendula, dandelion, hibiscus, jasmine, lavender, chamomile, and lotus. The texture is rich, bouncy, and closer to a thin serum than the watery toners many of us grew up using. The drawback is also part of its personality: rosewood, bergamot, bitter orange, Damask rose, and geranium oils give it a full essential-oil bouquet. Choose this when you want cushion and scent, not a barely-there, fragrance-minimal step.
+Whamisa is the outlier here. The texture is rich, bouncy, and closer to a thin serum than the watery toners many of us grew up using. Aloe sits at the base with glycerin and a fermented mix of flowers, including rosebud, calendula, and hibiscus. The point is not to memorize the whole garden—it is to know this formula has more cushion than a simple mist. The scent is not shy. Rosewood, bergamot, bitter orange, Damask rose, and geranium oils give it a full essential-oil bouquet. Choose this when you want texture and fragrance to be part of the ritual, not when you want a barely-there mist.
 
 <p style="text-align: center;"><strong><a href="https://us.smnovella.com/products/adr">Santa Maria Novella Acqua di Rose</a></strong></p>
 
@@ -61,3 +61,4 @@ So, which formula is for you? Each one uses rose differently. Mario Badescu is t
 - Keep the rosewater explanation before the first product and qualify laboratory findings rather than promising finished-product results.
 - Keep the current five-product proposed sequence. Thayers was discussed as a familiar toner brand but was not selected for this article.
 - Preserve the approved Chantecaille and Sisley framing.
+- Treat the Whamisa brand-site comment as criticism: keep the approved texture description, remove promotional phrasing, and summarize rather than reproduce its long ingredient list.
