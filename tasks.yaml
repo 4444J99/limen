@@ -159077,7 +159077,7 @@ tasks:
   workstream: 'governance'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'victoroff'
   - 'public-synthetic'
@@ -159139,8 +159139,19 @@ tasks:
     conduct_run_id: 'run-c9b8c3fbaeddc4234de15bb5afb5a1c9'
     conduct_lease_id: 'lease-482-c9b8c3fbaeddc423'
     conduct_generation: 482
+  - timestamp: '2026-08-02T14:35:27.990Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'in_progress'
+    output: 'Verifying preserved PR #56 implementation and exact-main receipt.'
+    conduct_event_id: 'conduct:run-56924fbb1a043a0540c8bf76007dff9e:483:compatibility'
+    conduct_run_id: 'run-56924fbb1a043a0540c8bf76007dff9e'
+    conduct_lease_id: 'lease-483-56924fbb1a043a05'
+    conduct_generation: 483
   source_origin: 'human_prompt'
-  updated: '2026-08-02T14:35:23.913Z'
+  updated: '2026-08-02T14:35:27.990Z'
 - id: 'VIC-PUB-001'
   title: 'Publication boundary checks with tests'
   description: 'Implement public-safe publication boundary checks: noindex disclosure present, no real BBNC identity strings, synthetic-only marker required. Add a test script ("vitest run --root ../.. packages/publication") and tests proving each violation is rejected.'
