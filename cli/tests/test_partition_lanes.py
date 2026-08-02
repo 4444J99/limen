@@ -26,6 +26,8 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen import partition_lanes as P  # noqa: E402
 from limen import dispatch as D  # noqa: E402
+from limen.intake import IntakeContractError, validate_intake_contract  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
 
 # The two client engagements. estate.yaml annotates both as a "partner build lane", the
@@ -317,3 +319,74 @@ def test_disk_pressure_focus_cannot_readmit_a_client_task() -> None:
     for repos in (set(), D._value_tier_repos()):
         ranked = D.sort_value_gate_candidates([client, mine], repos, disk_pressure=True)
         assert [t.id for t in ranked] == ["LIMEN-1"], repos
+
+
+# --- the publication half: the board must not ACCEPT what it would then publish ----------------
+
+
+def _valid_intake_fields(task_id: str, repo: str) -> dict[str, object]:
+    """A task that satisfies every OTHER intake requirement, so the partner refusal is isolated."""
+    return {
+        "id": task_id,
+        "title": "t",
+        "repo": repo,
+        "context": "",
+        "target_agent": "claude",
+        "created": "2026-08-02",
+        "predicate": "scripts/verify-scoped.sh",
+        "receipt_target": f"github:{repo}:pull-request:{task_id}",
+    }
+
+
+def test_a_new_client_task_cannot_enter_the_board_at_all() -> None:
+    """Intake is the last point where the exposure is still preventable.
+
+    TABVLARIVS's projection is written to organvm/limen on `tabularius/board-projection`, that head
+    enters the merge queue, and it lands on `main` -- a PUBLIC repo. Accepting a client engagement
+    here IS publishing it, and nothing downstream can un-publish it.
+    """
+    with pytest.raises(IntakeContractError, match="unfunded partner lane"):
+        validate_intake_contract(_valid_intake_fields("VIC-NEW-1", BOARD_VICTOROFF), is_new=True)
+
+    with pytest.raises(IntakeContractError, match="unfunded partner lane"):
+        validate_intake_contract(_valid_intake_fields("ELEVATE-NEW-1", ELEVATE), is_new=True)
+
+
+def test_the_refusal_reaches_the_producer_seam_every_generator_uses() -> None:
+    """submit_task_upsert is the documented conversion target for every writer that used to
+    load -> extend -> save_limen_file, so the refusal has to bite THERE, not only in the validator."""
+    from limen import tabularius as T
+
+    with pytest.raises(IntakeContractError, match="unfunded partner lane"):
+        T.submit_task_upsert(
+            Path("/nonexistent-board-never-touched"),
+            _valid_intake_fields("VIC-NEW-2", BOARD_VICTOROFF),
+            agent="claude",
+        )
+
+
+def test_own_work_and_funded_collaborations_still_pass_intake() -> None:
+    """The refusal must not become a general-purpose intake narrowing."""
+    for repo in ("organvm/limen", "organvm/domus-genoma", "4444J99/mirror-mirror"):
+        assert validate_intake_contract(_valid_intake_fields("OK-1", repo), is_new=True) is not None, repo
+
+
+def test_rows_already_on_the_board_still_load() -> None:
+    """The refusal is `is_new`-only for a load-bearing reason.
+
+    411 partner-attributed rows are already on the board. Gating on `required` instead would fail
+    validation for every existing OPEN client row and take the whole board down with it -- a
+    confidentiality fix that bricks the queue is not a fix.
+    """
+    existing = _valid_intake_fields("VIC-CONTRACT-002", BOARD_VICTOROFF)
+    existing["status"] = "open"
+    assert validate_intake_contract(existing, is_new=False) is not None
+
+
+def test_the_live_board_still_loads_end_to_end() -> None:
+    """The integration assertion behind the previous test: the real 5.6MB board, really loaded."""
+    board = ROOT / "tasks.yaml"
+    if not board.exists():  # a clone without the projection cache
+        pytest.skip("no local board projection")
+    loaded = load_limen_file(board)
+    assert len(loaded.tasks) > 0
