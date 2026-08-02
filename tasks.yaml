@@ -159865,58 +159865,79 @@ tasks:
   source_origin: 'human_prompt'
   updated: '2026-08-02T14:35:19.313Z'
   receipt_verified: true
-- id: VIC-FIXTURES-002
-  title: Synthetic checkpoint dataset
-  description: "Add a synthetic 55-checkpoint dataset (Concept + Phases 0-9) with invariant tests: counts per phase sum to the total, every checkpoint carries phase, title, and verified flag, and verified never exceeds total."
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-FIXTURES-002'
+  title: 'Synthetic checkpoint dataset'
+  description: 'Add a synthetic 55-checkpoint dataset (Concept + Phases 0-9) with invariant tests: counts per phase sum to the total, every checkpoint carries phase, title, and verified flag, and verified never exceeds total.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-FIXTURES-002 — Synthetic checkpoint dataset.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/fixtures/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Add a synthetic 55-checkpoint dataset (Concept + Phases 0-9) with invariant tests: counts per phase sum to the total, every checkpoint carries phase, title, and verified flag, and verified never exceeds total.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/fixtures typecheck
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-002
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/fixtures typecheck
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-002
-  horizon: present
-  value_case: One synthetic dataset for site, contracts, and ui to consume instead of three copies.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/fixtures typecheck'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/56'
+  horizon: 'present'
+  value_case: 'One synthetic dataset for site, contracts, and ui to consume instead of three copies.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:30.598Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-500b01110aa839bd30ac2e005c372140:14:compatibility
-    conduct_run_id: run-500b01110aa839bd30ac2e005c372140
-    conduct_lease_id: lease-14-500b01110aa839bd
+  - timestamp: '2026-07-23T10:31:30.598Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-500b01110aa839bd30ac2e005c372140:14:compatibility'
+    conduct_run_id: 'run-500b01110aa839bd30ac2e005c372140'
+    conduct_lease_id: 'lease-14-500b01110aa839bd'
     conduct_generation: 14
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:30.598Z
+  - timestamp: '2026-08-02T14:35:37.424Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #56; control issue #127.'
+    conduct_event_id: 'conduct:run-65b252c763f517234e2d831cee08ae23:485:compatibility'
+    conduct_run_id: 'run-65b252c763f517234e2d831cee08ae23'
+    conduct_lease_id: 'lease-485-65b252c763f51723'
+    conduct_generation: 485
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:35:37.424Z'
 - id: VIC-UI-002
   title: Checkpoint-bound progress components
   description: Bind progress-bar components to checkpoint data mechanically (props in, no internal hand-set numbers), with tests proving the rendered fraction equals the data.
