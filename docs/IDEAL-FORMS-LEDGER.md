@@ -40,9 +40,19 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 ### IF-AMALGAMATION — the future tense closes
 - **Ideal form:** the fleet amalgamates portals faster than it spawns them; a predicate measures
   open-PR + unmerged-branch debt and the merge daemon drives it *monotonically* down.
-- **Distance:** 75 open PRs, 157 unmerged branches (2026-06-25); the daemon rebases stale-base
-  PRs but `gen-*`/`FORCE-route` duplicates accrete faster than they merge. No debt-trend predicate.
-- **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); no monotonic-debt predicate yet.
+- **Distance:** DERIVED — `python3 scripts/pr-debt-trend.py --series` prints every observation,
+  `--check` is the probe. Do not hand-write a number here; the line above it stood at
+  "75 open PRs (2026-06-25)" for 38 days while the real figure passed 1,100.
+- **Evidence (2026-08-02):** the series was already committed and nobody was reading it —
+  `gitvs.py` writes `open_pr_count` into `docs/github-pr-debt-ledger.json` and every write is a
+  commit, so five observations sat in `git log`: 1059 → 1111 → 1115 → 1117 → **1164** across
+  2026-07-22…07-25. The ideal's word is "monotonically **down**"; the measured trend is **+105 in
+  three days**. Then recording stopped: the producer, `gitvs.py pr-debt`, is wired to nothing —
+  no sensor, no gate, no beat rung — so the newest observation is eight days old. Its owner of
+  record is `GITVS-UNCAPPED-PR-DEBT-0715`, which the diurnal morning page names as the board's
+  critical next action, and which asks for a predicate that already exists.
+- **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); the trend probe now exists and
+  reports distance; the producer that feeds it is still unwired.
 - **Owner:** Claude (predicate) + merge daemon.
 
 ### IF-PUBLICATION-ESTATE — every repo's visibility is a judged, enforced decision
