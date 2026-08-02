@@ -27,7 +27,7 @@ So why does rosewater keep finding its way back into our routines?
 
 It is the fragrant water collected when rose petals are distilled, which helps explain why it is more interesting than perfumed tap water.
 
-[Laboratory studies](https://dergipark.org.tr/en/pub/ankutbd/article/786544) have measured antioxidant activity in rose distillation products, which sounds extremely glamorous.
+Laboratory studies have measured antioxidant activity in rose distillation products, which sounds extremely glamorous.
 
 Still, that result belongs to the material studied and not automatically to every pink bottle on a shelf.
 
@@ -97,15 +97,19 @@ That fuller formula is less minimal, although that is not automatically an insul
 
 Fragrance comes along with that traditional experience because Sisley was clearly not trying to be shy either.
 
-A minimalist may love Chantecaille and find Whamisa overwhelming; someone who wants the full ritual may have the exact opposite reaction.
+By now, the right rose is probably obvious: the bottle whose drawback annoys you the least and whose personality sounds the most like your own.
 
-Santa Maria Novella and Sisley sit between those moods for very different reasons—one makes history the attraction, while the other behaves like the toner many of us remember.
+If the late-2010s nostalgia still has you, the Mario Badescu photo is worth one more click so you can look at the current formula yourself before deciding whether the dyes end the romance.
 
-Mario Badescu is the wildcard because the nostalgia is still fun, but the current dyes decide whether it belongs in your routine at all.
+Whamisa answers that light little mist with a toner that almost behaves like a serum, which makes its photo the one to click when you want to see whether the aloe base and fermented flowers are rich enough to earn an extra step.
 
-There is no universal winner, which is probably for the best. The right one is simply the bottle whose drawback does not annoy you.
+That modern richness makes Santa Maria Novella feel even more old-world by comparison; click its photo for the Damask-rose apothecary ritual, because sometimes the ritual is honestly the entire point.
 
-We will keep testing the bottles that make skincare feel less like a chore and more like a small daily ritual, so come back for more honest skincare reviews soon.
+Chantecaille takes the drama away again and gives minimalists a very good reason to click its photo: two ingredients, Rose de Mai, and nowhere for the formula to hide.
+
+Sisley-Paris brings us back to the traditional toner, so its photo is the one to open if rose, cornflower, witch hazel, and a cotton pad sound more satisfying than another mist.
+
+To shop, click any product photo above. Each one goes straight to the same product page we used while reviewing it, so you can compare the formulas for yourself before choosing—and then come back, because we will keep testing the bottles that make skincare feel less like a chore and more like a small daily ritual.
 
 ## Placement checklist
 
