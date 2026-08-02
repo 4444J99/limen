@@ -159224,58 +159224,79 @@ tasks:
     conduct_generation: 7
   source_origin: human_prompt
   updated: 2026-07-23T10:31:04.778Z
-- id: VIC-DOMAIN-002
-  title: Resolver citation and conflict deepening
-  description: "Extend the seven-intent resolver tests: citation preservation through conflict resolution, deterministic tie-breaks, and exactly-one-next-action invariants across adversarial orderings. Keep the existing test script."
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-DOMAIN-002'
+  title: 'Resolver citation and conflict deepening'
+  description: 'Extend the seven-intent resolver tests: citation preservation through conflict resolution, deterministic tie-breaks, and exactly-one-next-action invariants across adversarial orderings. Keep the existing test script.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-DOMAIN-002 — Resolver citation and conflict deepening.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/domain/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Extend the seven-intent resolver tests: citation preservation through conflict resolution, deterministic tie-breaks, and exactly-one-next-action invariants across adversarial orderings. Keep the existing test script.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/domain test
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-002
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/domain test
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-DOMAIN-002
-  horizon: present
-  value_case: Hardens the landed resolver against ordering and conflict edge cases.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/domain test'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/41'
+  horizon: 'present'
+  value_case: 'Hardens the landed resolver against ordering and conflict edge cases.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:08.007Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-6aeed61714da4cf4d739b2cc54645bbe:8:compatibility
-    conduct_run_id: run-6aeed61714da4cf4d739b2cc54645bbe
-    conduct_lease_id: lease-8-6aeed61714da4cf4
+  - timestamp: '2026-07-23T10:31:08.007Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6aeed61714da4cf4d739b2cc54645bbe:8:compatibility'
+    conduct_run_id: 'run-6aeed61714da4cf4d739b2cc54645bbe'
+    conduct_lease_id: 'lease-8-6aeed61714da4cf4'
     conduct_generation: 8
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:08.007Z
+  - timestamp: '2026-08-02T14:33:52.156Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #41; control issue #127.'
+    conduct_event_id: 'conduct:run-e4236566cd02732dfea0a5797a3ff036:470:compatibility'
+    conduct_run_id: 'run-e4236566cd02732dfea0a5797a3ff036'
+    conduct_lease_id: 'lease-470-e4236566cd02732d'
+    conduct_generation: 470
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:33:52.156Z'
 - id: 'VIC-GOV-002'
   title: 'Multi-source governance manifests'
   description: 'Extend docs/governance manifest validation to multi-source manifests: ordered sources, per-source checksum drift isolation (name WHICH source drifted), and duplicate-source rejection, with node:test coverage.'
