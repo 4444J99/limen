@@ -8,6 +8,9 @@ platform:
   audience: self
   collaborator_grants: []
   fixture_policy: synthetic_only
+  purpose: universal_private_collaboration_operations_and_records
+  scope: all_current_and_future_collaborations_and_clients
+  record_model: central_private_hub_with_owner_partitions
   bootstrap:
     evidence: docs/continuations/collaboration-operations-platform-genesis-20260802/workstream.json
     required_lever: L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS
@@ -17,15 +20,21 @@ platform:
       --org organvm-iii-ergon --class operation_private
       --evidence docs/continuations/collaboration-operations-platform-genesis-20260802/workstream.json
       --seed-extract institutio/collaboration-operations/platform.yaml
-      --why 'project-neutral collaboration operations platform; no collaborator grants; synthetic fixtures only'
+      --why 'universal private collaboration operations and records hub; no collaborator grants; client records stay partitioned; synthetic fixtures only'
       --dry-run
 
 flow_policy:
   studio_code: reusable_across_lanes
-  client_content: owner_lane_only
+  collaboration_records: private_platform_owner_partition_only
+  client_content: private_platform_owner_partition_only
   cross_client_content: forbidden
   public_release: audited_sanitized_split_only
   live_client_fixtures: forbidden
+
+# The named lanes below are current boundary examples, not the full scope of the platform.
+# The platform is the owner's private place to capture and retrieve important information across
+# every current and future collaboration or client. Each collaboration's records retain a distinct
+# owner partition; central storage never grants cross-client disclosure.
 
 lanes:
   david:

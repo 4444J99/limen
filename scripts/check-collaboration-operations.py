@@ -65,6 +65,9 @@ def validate_documents(
         "audience": "self",
         "collaborator_grants": [],
         "fixture_policy": "synthetic_only",
+        "purpose": "universal_private_collaboration_operations_and_records",
+        "scope": "all_current_and_future_collaborations_and_clients",
+        "record_model": "central_private_hub_with_owner_partitions",
     }
     for key, expected in expected_platform.items():
         if platform.get(key) != expected:
@@ -79,7 +82,8 @@ def validate_documents(
     flow = contract.get("flow_policy") or {}
     required_flow = {
         "studio_code": "reusable_across_lanes",
-        "client_content": "owner_lane_only",
+        "collaboration_records": "private_platform_owner_partition_only",
+        "client_content": "private_platform_owner_partition_only",
         "cross_client_content": "forbidden",
         "live_client_fixtures": "forbidden",
     }
@@ -92,6 +96,9 @@ def validate_documents(
         errors.append(f"estate override for {PLATFORM_REPO} must be operation_private")
     if override.get("audience") != "self":
         errors.append(f"estate override for {PLATFORM_REPO} must declare audience self")
+    estate_why = str(override.get("why") or "")
+    if "universal private collaboration" not in estate_why or "partitioned" not in estate_why:
+        errors.append(f"estate override for {PLATFORM_REPO} must describe the universal partitioned records hub")
     if (access.get("grants") or {}).get(PLATFORM_REPO):
         errors.append(f"{PLATFORM_REPO} must have no collaborator grant rows")
 
@@ -168,7 +175,10 @@ def main() -> int:
         print(f"collaboration-operations: {len(errors)} boundary failure(s)")
         return 1
     scope = args.person or "all lanes"
-    print(f"collaboration-operations: OK — {scope}; project-neutral, synthetic-only, owner-routed")
+    print(
+        f"collaboration-operations: OK — {scope}; universal private records hub, "
+        "partitioned, synthetic-only, owner-routed"
+    )
     return 0
 
 

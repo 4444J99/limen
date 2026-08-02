@@ -26,6 +26,21 @@ def test_live_collaboration_operations_contract_is_owner_routed() -> None:
     assert MODULE.validate_documents(*documents()) == []
 
 
+def test_platform_requires_universal_private_collaboration_record_scope() -> None:
+    contract, estate, access, register = documents()
+    drifted_contract = copy.deepcopy(contract)
+    drifted_estate = copy.deepcopy(estate)
+    drifted_contract["platform"]["scope"] = "three_named_projects_only"
+    drifted_contract["flow_policy"]["client_content"] = "owner_lane_only"
+    drifted_estate["repo_overrides"][MODULE.PLATFORM_REPO]["why"] = "project-neutral operation"
+
+    errors = MODULE.validate_documents(drifted_contract, drifted_estate, access, register)
+
+    assert "platform.scope must be 'all_current_and_future_collaborations_and_clients'" in errors
+    assert "flow_policy.client_content must be 'private_platform_owner_partition_only'" in errors
+    assert f"estate override for {MODULE.PLATFORM_REPO} must describe the universal partitioned records hub" in errors
+
+
 def test_david_lane_cannot_turn_external_references_into_mutation_authority() -> None:
     contract, estate, access, register = documents()
     drifted = copy.deepcopy(contract)
