@@ -10,12 +10,18 @@ Two properties matter and the second is the one a naive trend predicate gets wro
 
   1. growth is measured across the series, not between two arbitrary points;
   2. STALENESS IS NOT AT-IDEAL. A debt series nobody records is not a debt trend that improved.
+
+The second half of this file covers check-ideal-forms.py's check F, which is the same concern
+seen from the enforcing side. The probe makes IF-AMALGAMATION's distance derivable; check F makes
+writing one by hand impossible. Without both, the next entry drifts 15x exactly the way this one
+did — the registry's header says "there is no field to lie in," and there was one, in the prose.
 """
 
 from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -155,3 +161,124 @@ def test_the_registry_row_actually_names_this_script(mod):
     assert "pr-debt-trend.py" in probe["command"]
     assert probe["at_ideal_when"] == "exit_zero"
     assert probe["environment"] == "host", "a shallow CI checkout truncates git history — never read that as at-ideal"
+
+
+# ── check F: the ledger's Distance stops being a field a human can write in ────────
+
+
+def _check_ideal_forms(tmp_path: Path, ledger: str, registry: str, capsys) -> tuple[int, str]:
+    """Run the real predicate against a synthetic registry+ledger pair.
+
+    In-process with its module globals repointed, not a subprocess: check-ideal-forms.py resolves
+    ROOT from its own __file__, so a fixture directory passed as cwd never reaches it — it would
+    have silently graded the live ledger and passed for the wrong reason.
+    """
+    spec = importlib.util.spec_from_file_location("check_ideal_forms", ROOT / "scripts" / "check-ideal-forms.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    reg_path = tmp_path / "ideal-forms.yaml"
+    led_path = tmp_path / "IDEAL-FORMS-LEDGER.md"
+    reg_path.write_text(registry, encoding="utf-8")
+    led_path.write_text(ledger, encoding="utf-8")
+    module.ROOT, module.REGISTRY, module.LEDGER = tmp_path, reg_path, led_path
+    module.failures.clear()  # module-level accumulators; a second call would inherit the first
+    module.notes.clear()
+
+    argv = sys.argv
+    sys.argv = ["check-ideal-forms.py"]
+    try:
+        rc = module.main()
+    finally:
+        sys.argv = argv
+    return rc, capsys.readouterr().out
+
+
+PROBED_REGISTRY = """
+schema_version: 0.1
+prose_status_vocabulary:
+  at_ideal: [DONE]
+  distance_remains: [OPEN]
+ideals:
+  IF-EXAMPLE:
+    ideal: an example ideal
+    owner: Claude
+    probe:
+      command: "true"
+      derives: nothing at all
+      environment: host
+      at_ideal_when: exit_zero
+"""
+
+
+def _ledger(distance_line: str) -> str:
+    return f"""# ledger
+
+### IF-EXAMPLE — an example
+
+- **Ideal form:** an example ideal.
+{distance_line}
+- **Status:** OPEN — still going.
+- **Owner:** Claude.
+"""
+
+
+def test_check_f_rejects_a_hand_written_distance_on_a_probed_row(tmp_path, capsys):
+    """The field check A forbids in the registry survived in the doc, which A never read."""
+    rc, out = _check_ideal_forms(
+        tmp_path, _ledger("- **Distance:** 75 open PRs (2026-06-25)."), PROBED_REGISTRY, capsys
+    )
+    assert rc == 1
+    assert "[F] IF-EXAMPLE" in out
+    assert "writes a Distance by hand" in out
+
+
+def test_check_f_accepts_a_derived_distance(tmp_path, capsys):
+    line = "- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`."
+    rc, out = _check_ideal_forms(tmp_path, _ledger(line), PROBED_REGISTRY, capsys)
+    assert rc == 0, out
+
+
+def test_check_f_rejects_a_probed_row_with_no_distance_line_at_all(tmp_path, capsys):
+    """Deleting the field is not the fix — a reader must still be told where the number comes from."""
+    rc, out = _check_ideal_forms(tmp_path, _ledger("- **Evidence:** things happened."), PROBED_REGISTRY, capsys)
+    assert rc == 1
+    assert "no `**Distance:**` line" in out
+
+
+def test_check_f_leaves_unprobed_rows_alone(tmp_path, capsys):
+    """A `probe: null` row has no derivation, so prose is all it has — check E counts those."""
+    registry = """
+schema_version: 0.1
+prose_status_vocabulary:
+  at_ideal: [DONE]
+  distance_remains: [OPEN]
+ideals:
+  IF-EXAMPLE:
+    ideal: an example ideal
+    owner: Claude
+    probe: null
+    probe_absent_reason: nothing can measure this yet
+"""
+    rc, out = _check_ideal_forms(tmp_path, _ledger("- **Distance:** 75 open PRs (2026-06-25)."), registry, capsys)
+    assert rc == 0, out
+
+
+def test_the_real_ledger_writes_no_distance_by_hand_on_any_probed_row(tmp_path):
+    """The live artefact, not a fixture. 12 rows carried one when this check was written."""
+    import yaml
+
+    reg = yaml.safe_load((ROOT / "institutio/governance/ideal-forms.yaml").read_text())["ideals"]
+    text = (ROOT / "docs/IDEAL-FORMS-LEDGER.md").read_text()
+    heads = list(re.finditer(r"^### (IF-[A-Z0-9-]+)", text, re.M))
+    spans = [m.start() for m in heads] + [len(text)]
+    offenders = []
+    for i, m in enumerate(heads):
+        ident = m.group(1)
+        if not (reg.get(ident) or {}).get("probe"):
+            continue
+        for line in re.findall(r"^- \*\*Distance[^:]*:\*\*\s*(.+)$", text[spans[i] : spans[i + 1]], re.M):
+            if "DERIVED" not in line:
+                offenders.append(ident)
+    assert not offenders, f"hand-written distances survive on probed rows: {sorted(set(offenders))}"

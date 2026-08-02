@@ -76,7 +76,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   result to source, and self-erases; losing the disk loses zero state. Residue is a defect caught
   by predicates, never a periodic cleanup chore. (The operator's Meeseeks law, decision 5 of the
   2026-07-30 PORTVS/ASTRA plan.)
-- **Distance (measured 2026-07-30 by `scripts/residue-census.py`):** four caps breached. Worktrees
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence (measured 2026-07-30 by `scripts/residue-census.py`):** four caps breached. Worktrees
   **38/8**; local branches **520/40**; `.agent-runtime` **10,663 MiB / 2,048**;
   `docs/prompt-atom-ledger.json` **571 MiB / 128**. Remote branches sit at **1,620** against a
   cap of 100 but are counted report-only, because their relief is double-dark behind a filed lever
@@ -99,7 +100,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 ### IF-LIVE-TREE-COHERENCE — the live checkout never drifts
 - **Ideal form:** the live daemon checkout is always `≡ origin/main`; capture/sync keeps it
   fast-forwarded; no ahead/behind divergence, no stranded local commits.
-- **Distance (re-measured 2026-07-29 by `scripts/check-live-checkout.py`):** the hand-written
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence (re-measured 2026-07-29 by `scripts/check-live-checkout.py`):** the hand-written
   distance this entry carried — "ahead 6 / behind 24" — had gone stale by **5×** and nobody
   knew, which is the defect the probe now closes. At 10:37 the live checkout sat at a
   **2026-07-23** commit: **behind 120**, one unpushed local commit, 12 dirty paths — so for six
@@ -130,7 +132,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   exactly one place (`cli/src/limen/harness_paths.py`), and sensed at beat cadence
   (`scripts/harness-root-probe.py`), so relocating it is a red check rather than a silent blinding.
   The fleet senses its work product (lint, tests, contracts, deploys); it must also sense the worker.
-- **Distance:** none — probe green. Reached 2026-07-30 after the harness moved its tree from
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** none — probe green. Reached 2026-07-30 after the harness moved its tree from
   `~/.claude` to `<repo>/.agent-runtime/claude` and the location, hard-coded in **ten** places,
   blinded every consumer at once with nothing going red: `action_admission` stopped recognising
   plan-file writes (breaking plan mode, and re-breaking PR #1521's fix six days after it landed),
@@ -147,7 +150,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   (`institutio/governance/sensors.yaml`, VIGILIA's third axis beside GATES + PARAMETERS); the beat loop
   and every consumer that reads a sensor gate **derive** from it; `check-sensors.py` holds it in parity.
   Adding a sensor is one registry entry, never a hand-wired shell block in three places.
-- **Distance:** DONE for the beat. Phase 1 (#884) shipped the registry (now 20 sensors), `beat-sensors.py`
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** DONE for the beat. Phase 1 (#884) shipped the registry (now 20 sensors), `beat-sensors.py`
   (`--list`/`--run`), and `check-sensors.py` (pr-gate). Phase 2 landed the consumer flips: `metabolize.sh`
   **derives** its whole sensor loop from the registry — dark-first behind `LIMEN_BEAT_DERIVE` (#914,
   proven byte-equivalent by a 23-script test + an observed real-sensor run), then default-on with the 20
@@ -179,7 +183,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   and (for the narrow SAFE tier, when armed) sent — with the tier decision as **declared data**
   (`mail-tiers.yaml`, the 4th VIGILIA panel) and a paired sensor red until the loop closes. Legal /
   money / personal mail **never** auto-sends; the operator is never the default send button.
-- **Distance:** nearly closed. Effector (`scripts/mail-beat.sh`), done-predicate
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** nearly closed. Effector (`scripts/mail-beat.sh`), done-predicate
   (`scripts/check-mail-answered.py`, now the `mail-answered` beat sensor), the tier **registry**
   (`institutio/governance/mail-tiers.yaml` + `check-mail-tiers.py`, PR #1010), the fail-closed
   **sender** (UMA `send_drafts.py`, PR #166, ships DISARMED), and now the **keyed headless path**
@@ -224,7 +229,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   ideal: it does not close the distance, it deletes the instrument (you cannot measure "does it
   ask?" where nothing can ask), and it silently un-gates the `rm` class that once wiped the live
   checkout. `never-hang-permission-spec.md` R1/R4/R5 + §Design-consequences-2.
-- **Distance:** the estate was **measured but unregistered** — `dialogs-silenced.sh` has printed
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** the estate was **measured but unregistered** — `dialogs-silenced.sh` has printed
   the classes since 2026-07-09 across 25 recorded raisings, while this ledger carried no row, so
   nothing held the measurement to an owner. Two defects found 2026-07-31 and closed here:
   **(a)** the hook's standalone branch was far stricter than its own `cd`-chain branch — `cd $W
@@ -299,7 +305,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is
   linked from memory and the autopoiesis heartbeat references it (closing the self-loop).
-- **Distance:** created 2026-06-25 with the gap recorded as "not yet wired into a
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** created 2026-06-25 with the gap recorded as "not yet wired into a
   verification/heartbeat lane" — **still exactly true 34 days later**, `metabolize.sh` referencing
   this ledger only in a *comment*. That is what a hand-maintained distance does: it decays with
   nothing to notice, and two entries here had. Closed 2026-07-29 for the **verification** half:
@@ -326,7 +333,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   deliverable valve is armed (`LIMEN_DECORUM_APPLY=1`, dry-run otherwise), and re-queues a prose
   surface for model-in-the-loop voice-judgment whenever its content changes. Fully alive ⟺
   `--sweep` is green at a fixed point (nothing on any public surface is currently embarrassing).
-- **Distance:** Phases 0–2 + 4 landed and verified (2026-07-22): federator + beat-wire + HTML face
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** Phases 0–2 + 4 landed and verified (2026-07-22): federator + beat-wire + HTML face
   + deterministic polish lane + effector proven idempotent against an isolated board;
   `check-sensors` green (53 sensors). First live sweep is RED — it correctly surfaced a moat leak,
   the portfolio rendering as unstyled HTML, and 3 other broken frontends (these are real, pre-existing
@@ -360,7 +368,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   (a subject/cartridge in the owner's schema) or retired. The convergence registry
   (`institutio/governance/convergence.yaml`) is the machine form; `check-convergence.py` makes
   "never build the 7th" a red check instead of a memory.
-- **Distance (measured 2026-07-25):** ZERO cross-repo code dependencies across ~310 repos — no
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence (measured 2026-07-25):** ZERO cross-repo code dependencies across ~310 repos — no
   internal packages, no submodules, no template repo; six Cloudflare Workers each hand-rolling
   Stripe/auth/rate-limiting; rubric logic encoded four ways; `data_export.py` copy-pasted across
   three repos; two full builds of the speech-score product, neither referencing the other or the
@@ -378,7 +387,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   floor. Homing is **distillation, never transfer**: counts, ids and generalizations cross into
   the public tree; a *statement* never does (the executable form of `redacted: false ⇒ never
   leaves its store`). Adding a kind is one registry row.
-- **Distance:** the axis shipped 2026-07-29 (PR #1608) — `institutio/governance/atom-homing.yaml`
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** the axis shipped 2026-07-29 (PR #1608) — `institutio/governance/atom-homing.yaml`
   (8 kinds, each with a home / `admits` gate / unit / ratchet), `check-atom-homing.py` (checks
   A–G), a statement-free `atom-census.yaml`, and a monotonic residue ceiling. What it *measures*
   is the open distance: of 4,099 drained atoms, **4,099 remain residual** and **2,080 are
@@ -398,7 +408,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   education, governance, contributions — 9, inside his stated 6-10); `limen streams` opens them by
   default, the constellation family stays the consulting domain's interior, and check N holds the
   projection to the roster on every pr-gate.
-- **Distance:** shipped 2026-07-30 after the question was answered wrongly three times (governance
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** shipped 2026-07-30 after the question was answered wrongly three times (governance
   phases s0-s10; per-project collaborator lanes; per-person lanes still one altitude low). Root
   cause measured by the full-history excavation (all AI apps, local + external + remote): the
   roster existed only as derived data — the operator deliberately declined to enumerate (Codex
@@ -418,7 +429,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   as current. Sections are declared data (`institutio/governance/diurnal.yaml`) because an
   auto-cut cannot edit Python source, and `cuttable: true` implies both a `metric` and an
   `acted_when` because you cannot prune what you cannot score.
-- **Distance:** the loop is built and closes — driven end to end 2026-07-31 in a sandbox: claims
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** the loop is built and closes — driven end to end 2026-07-31 in a sandbox: claims
   emitted, re-probed, scored, one cut fired at threshold, receipted to `cuts.jsonl`, reversed by
   `--uncut`. **It has never run against the live organism.** `docs/diurnal/` holds no dated page,
   so the 5-engaged-day cut runway has not started and no scoring rule has yet been tested against
