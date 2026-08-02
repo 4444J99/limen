@@ -159068,58 +159068,79 @@ tasks:
     conduct_generation: 4
   source_origin: human_prompt
   updated: 2026-07-23T10:30:44.323Z
-- id: VIC-FIXTURES-001
-  title: Synthetic seven-intent scenario fixtures
-  description: Add public-safe synthetic fixtures for the seven registered ActionIntent values (happy path, ambiguity, conflict per intent) exported for use by domain tests, plus a test script ("vitest run --root ../.. packages/fixtures") and invariant tests (exactly seven intents, no duplicates, citations present
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-FIXTURES-001'
+  title: 'Synthetic seven-intent scenario fixtures'
+  description: 'Add public-safe synthetic fixtures for the seven registered ActionIntent values (happy path, ambiguity, conflict per intent) exported for use by domain tests, plus a test script ("vitest run --root ../.. packages/fixtures") and invariant tests (exactly seven intents, no duplicates, citations present'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-FIXTURES-001 — Synthetic seven-intent scenario fixtures.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/fixtures/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Add public-safe synthetic fixtures for the seven registered ActionIntent values (happy path, ambiguity, conflict per intent) exported for use by domain tests, plus a test script ("vitest run --root ../.. packages/fixtures") and invariant tests (exactly seven intents, no duplicates, citations present).
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/fixtures test
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-001
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/fixtures test
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-FIXTURES-001
-  horizon: present
-  value_case: Gives every downstream package one synthetic scenario source instead of ad-hoc inline data.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/fixtures test'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/56'
+  horizon: 'present'
+  value_case: 'Gives every downstream package one synthetic scenario source instead of ad-hoc inline data.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:30:57.715Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-c4b9d388606ffc58c8ceb7916db49914:5:compatibility
-    conduct_run_id: run-c4b9d388606ffc58c8ceb7916db49914
-    conduct_lease_id: lease-5-c4b9d388606ffc58
+  - timestamp: '2026-07-23T10:30:57.715Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-c4b9d388606ffc58c8ceb7916db49914:5:compatibility'
+    conduct_run_id: 'run-c4b9d388606ffc58c8ceb7916db49914'
+    conduct_lease_id: 'lease-5-c4b9d388606ffc58'
     conduct_generation: 5
-  source_origin: human_prompt
-  updated: 2026-07-23T10:30:57.715Z
+  - timestamp: '2026-08-02T14:35:23.913Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #56; control issue #127.'
+    conduct_event_id: 'conduct:run-c9b8c3fbaeddc4234de15bb5afb5a1c9:482:compatibility'
+    conduct_run_id: 'run-c9b8c3fbaeddc4234de15bb5afb5a1c9'
+    conduct_lease_id: 'lease-482-c9b8c3fbaeddc423'
+    conduct_generation: 482
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:35:23.913Z'
 - id: 'VIC-PUB-001'
   title: 'Publication boundary checks with tests'
   description: 'Implement public-safe publication boundary checks: noindex disclosure present, no real BBNC identity strings, synthetic-only marker required. Add a test script ("vitest run --root ../.. packages/publication") and tests proving each violation is rejected.'
