@@ -2043,7 +2043,13 @@ parameters:
     env: LIMEN_MAIL_SWEEP_LIMIT
     self_update: none
     owner: mail
-    note: "Max most-recent messages inbox_sweep.py reads per account each C_MAIL beat — bounds the AppleScript reads so the sweep is a couple of paged reads, not the whole inbox."
+    note: "Max messages inbox_sweep.py KEEPS per account each C_MAIL beat. It bounds the Python slice, NOT Mail.app's work — `messages of targetMailbox` materializes a scripting object for every message in the store before anything is sliced. LIMEN_MAIL_SWEEP_SINCE_DAYS is the bound that reaches Mail; this one only caps what comes back."
+  LIMEN_MAIL_SWEEP_SINCE_DAYS:
+    default: 14
+    env: LIMEN_MAIL_SWEEP_SINCE_DAYS
+    self_update: none
+    owner: mail
+    note: "Recency window (days) inbox_sweep.py enumerates per account each C_MAIL beat — the ONLY bound that reaches Mail.app, via the AppleScript `whose date received > cutoff` predicate, so Mail materializes just the in-window slice. Unset/0 restores the unbounded selector that hung Mail's main thread for 421s (Mail_2026-08-02-101334.hang), escalating 1/day to 4/day as the inbox grew; `timeout` does not cover it, because killing the osascript client cannot cancel an Apple Event already executing inside Mail. 14 days covers new arrivals — the backlog was already swept. Requires inbox_sweep.py --since-days (organvm/universal-mail--automation#189)."
   LIMEN_MAIL_GMAIL_ARCHIVE:
     default: 1
     env: LIMEN_MAIL_GMAIL_ARCHIVE
