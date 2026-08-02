@@ -11,6 +11,8 @@
 
 With summer upon us, the sweltering heat has left our skin in need of some consistent refreshment. Maybe you have noticed that your usual skincare routine suddenly feels like too much in this weather. This is when we want something cool, floral, and easy to press or mist onto the skin. Rose is the ingredient at the center of this lineup. Its scent is part of the pleasure, but these formulas show how differently rose can appear: in a nostalgic face spray, a rich fermented toner, or a nearly bare-bones floral water. Here are five worth knowing, along with the details that may decide which one earns a place in your routine.
 
+So why does rosewater keep showing up? It is the fragrant hydrosol collected during rose-petal distillation. It can carry volatile compounds and plant phenolics, and [laboratory studies](https://dergipark.org.tr/en/pub/ankutbd/article/786544) have measured antioxidant activity in rose distillation products. Interesting, yes—but not proof that every pink mist is a miracle. The rose species, distillation, concentration, and rest of the formula all matter, which is why we are reading the whole label instead of giving the flower all the credit.
+
 <p style="text-align: center;"><strong><a href="https://www.mariobadescu.com/products/facial-spray-with-aloe-herbs-and-rosewater">Mario Badescu Facial Spray With Aloe, Herbs And Rosewater</a></strong></p>
 
 > **IMAGE PLACEMENT — Keep the existing Mario Badescu photo here.**
@@ -47,6 +49,8 @@ So, which formula is for you? Each one uses rose differently. Mario Badescu is t
 
 - Preserve the live post's existing Mario Badescu and Whamisa image blocks in their current sequence.
 - Add Charles's own product photos at the three marked placements; do not substitute retailer or brand imagery.
+- Link each product image to the same canonical shopping URL used in its heading.
+- Keep the links described as ordinary shopping links unless actual affiliate URLs are supplied; add a clear affiliate disclosure if and when that happens.
 - Center each linked product heading in its own Squarespace text block.
 - Remove the visible image-placement markers after the image blocks are in place.
 - Keep the existing URL unchanged.
