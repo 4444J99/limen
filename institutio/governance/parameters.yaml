@@ -3795,6 +3795,12 @@ parameters:
     self_update: "refreshed from the immutable deadline at each capsule launch boundary"
     owner: continuity
     note: "Read-only remaining-runway observation exported to the current successor session."
+  LIMEN_WORKSTREAM_ALREADY_RUNNING:
+    default: null
+    env: LIMEN_WORKSTREAM_ALREADY_RUNNING
+    self_update: "set transiently by conducted capsule registration when the same human-protected session is already live"
+    owner: continuity
+    note: "Internal one-launch sentinel. A value of 1 makes an idempotent kickstart return without spawning a duplicate provider; it is unset before each registration attempt and outside that narrow boundary."
   LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:
     default: 120
     env: LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS
