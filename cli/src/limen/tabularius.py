@@ -238,7 +238,8 @@ def refuse_unfunded_partner_lane(repo: object, task_id: object) -> None:
 
     THE PUBLICATION HALF OF THE PARTNER BOUNDARY. This board is not a private ledger: the
     projection is written by the Worker to ``organvm/limen`` on ``tabularius/board-projection``
-    (wrangler.toml ``LIMEN_GITHUB_{REPO,BRANCH,PATH}``), that head enters the merge queue, and it
+    (the worker's declared repo/branch/path vars in wrangler.toml), that head enters the merge
+    queue, and it
     lands on ``main`` — a PUBLIC repo. Accepting a client engagement here IS publishing it, and no
     downstream gate can un-publish what the board admitted.
 
