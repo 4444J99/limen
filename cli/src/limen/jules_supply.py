@@ -16,6 +16,7 @@ from typing import Any
 
 import yaml
 
+from limen.partition_lanes import heuristics_may_promote
 from limen.work_loan import task_work_loan_readiness
 
 _SERIES_RE = re.compile(r"^(?P<prefix>.+)-(?P<index>\d{3})$")
@@ -88,6 +89,15 @@ def _context_for(repo_entry: dict[str, Any], template: dict[str, Any], task_id: 
     )
 
 
+def partner_lane_repos(registry: SupplyRegistry) -> tuple[str, ...]:
+    """Registry repos :func:`expand_supply` will refuse to mint from, for the caller to report."""
+    return tuple(
+        str(repo_entry.get("repo"))
+        for repo_entry in registry.repos
+        if not heuristics_may_promote(repo_entry.get("repo"))
+    )
+
+
 def expand_supply(
     registry: SupplyRegistry,
     existing_ids: set[str],
@@ -95,13 +105,24 @@ def expand_supply(
     *,
     created: str,
 ) -> list[dict[str, Any]]:
-    """Round-robin templates into up to ``min(deficit, per_run_cap)`` new task patches."""
+    """Round-robin templates into up to ``min(deficit, per_run_cap)`` new task patches.
+
+    Partner-lane repos are excluded from the series. This registry was the largest single
+    producer of the board's client-attributed rows: all 7 of its declared templates targeted one
+    unfunded partner lane, so every beat that ran short of Jules supply minted client-engagement
+    tasks onto a board that publishes to a PUBLIC head. Filtering here rather than deleting the
+    registry entry keeps the declaration as a record while stopping the mint;
+    :func:`partner_lane_repos` names what was skipped so the exclusion is reported, never silent.
+    """
     budget = min(max(deficit, 0), registry.per_run_cap)
     if budget <= 0:
         return []
     highest = next_indices(existing_ids)
     series: list[tuple[dict[str, Any], dict[str, Any]]] = [
-        (repo_entry, template) for repo_entry in registry.repos for template in repo_entry.get("templates") or ()
+        (repo_entry, template)
+        for repo_entry in registry.repos
+        if heuristics_may_promote(repo_entry.get("repo"))
+        for template in repo_entry.get("templates") or ()
     ]
     patches: list[dict[str, Any]] = []
     cursor = 0
