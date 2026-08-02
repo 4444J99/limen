@@ -159874,7 +159874,7 @@ tasks:
   workstream: 'governance'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'victoroff'
   - 'public-synthetic'
@@ -159936,8 +159936,19 @@ tasks:
     conduct_run_id: 'run-65b252c763f517234e2d831cee08ae23'
     conduct_lease_id: 'lease-485-65b252c763f51723'
     conduct_generation: 485
+  - timestamp: '2026-08-02T14:35:42.101Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'in_progress'
+    output: 'Verifying preserved PR #56 implementation and exact-main receipt.'
+    conduct_event_id: 'conduct:run-827d65424ff5c71b1307e19e759694b7:486:compatibility'
+    conduct_run_id: 'run-827d65424ff5c71b1307e19e759694b7'
+    conduct_lease_id: 'lease-486-827d65424ff5c71b'
+    conduct_generation: 486
   source_origin: 'human_prompt'
-  updated: '2026-08-02T14:35:37.424Z'
+  updated: '2026-08-02T14:35:42.101Z'
 - id: VIC-UI-002
   title: Checkpoint-bound progress components
   description: Bind progress-bar components to checkpoint data mechanically (props in, no internal hand-set numbers), with tests proving the rendered fraction equals the data.
