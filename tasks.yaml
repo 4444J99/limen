@@ -159375,58 +159375,79 @@ tasks:
   source_origin: 'human_prompt'
   updated: '2026-08-02T14:33:34.394Z'
   receipt_verified: true
-- id: VIC-CONTRACT-003
-  title: Delivery-checkpoint aggregation invariants
-  description: "Add validation for checkpoint aggregation: a phase set whose per-phase verified counts do not sum to the whole-system total is rejected; totals never exceed declared checkpoint counts. Tests included."
-  repo: organvm/victoroff-os
-  type: code
-  target_agent: jules
-  workstream: governance
-  priority: high
+- id: 'VIC-CONTRACT-003'
+  title: 'Delivery-checkpoint aggregation invariants'
+  description: 'Add validation for checkpoint aggregation: a phase set whose per-phase verified counts do not sum to the whole-system total is rejected; totals never exceed declared checkpoint counts. Tests included.'
+  repo: '4444J99/victoroff-os'
+  type: 'code'
+  target_agent: 'jules'
+  workstream: 'governance'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - victoroff
-  - public-synthetic
-  - owner:victoroff-governance
+  - 'victoroff'
+  - 'public-synthetic'
+  - 'owner:victoroff-governance'
   urls: []
-  context: |-
-    Do not ask for feedback or approval. Complete only this bounded packet.
+  context: 'Do not ask for feedback or approval. Complete only this bounded packet.
+
 
     Task: VIC-CONTRACT-003 — Delivery-checkpoint aggregation invariants.
+
     Repository: organvm/victoroff-os
+
     Exact base: 898be23c1737de45cc57877c259cd72f023b029a
+
     Owner: victoroff-governance
+
     Allowed paths: packages/contracts/**
+
     Forbidden paths: tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml
+
     Required behavior: Add validation for checkpoint aggregation: a phase set whose per-phase verified counts do not sum to the whole-system total is rejected; totals never exceed declared checkpoint counts. Tests included.
+
     Authority boundary: public/synthetic only; do not invent, ratify, approve, deploy, transfer, spend, use real BBNC data, or represent client authority.
+
     Predicate: pnpm --filter @victoroff/contracts typecheck
+
     Receipt: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-003
 
-    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.
-  predicate: pnpm --filter @victoroff/contracts typecheck
-  receipt_target: github:organvm/victoroff-os:pull-request:VIC-CONTRACT-003
-  horizon: present
-  value_case: Encodes the pitch-surface progress-sum invariant at the contract layer.
-  owner_surface: victoroff-governance
+
+    Return a bounded patch, tests, documentation, and the exact predicate result. Stop with a precise blocker if required authority or source is missing.'
+  predicate: 'pnpm --filter @victoroff/contracts typecheck'
+  receipt_target: 'https://github.com/4444J99/victoroff-os/pull/39'
+  horizon: 'present'
+  value_case: 'Encodes the pitch-surface progress-sum invariant at the contract layer.'
+  owner_surface: 'victoroff-governance'
   external_deadline: false
   depends_on: []
-  created: 2026-07-23
+  created: '2026-07-23'
   dispatch_log:
-  - timestamp: 2026-07-23T10:31:15.972Z
-    agent: codex
-    session_id: claude-jules-daily-engine-20260723
-    logical_agent: claude
-    logical_session_id: jules-daily-engine-20260723
-    status: open
-    output: Created by codex through the conduct keeper
-    conduct_event_id: conduct:run-6434fb535620841ba91bf82daf281b5d:10:compatibility
-    conduct_run_id: run-6434fb535620841ba91bf82daf281b5d
-    conduct_lease_id: lease-10-6434fb535620841b
+  - timestamp: '2026-07-23T10:31:15.972Z'
+    agent: 'codex'
+    session_id: 'claude-jules-daily-engine-20260723'
+    logical_agent: 'claude'
+    logical_session_id: 'jules-daily-engine-20260723'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6434fb535620841ba91bf82daf281b5d:10:compatibility'
+    conduct_run_id: 'run-6434fb535620841ba91bf82daf281b5d'
+    conduct_lease_id: 'lease-10-6434fb535620841b'
     conduct_generation: 10
-  source_origin: human_prompt
-  updated: 2026-07-23T10:31:15.972Z
+  - timestamp: '2026-08-02T14:33:39.093Z'
+    agent: 'codex'
+    session_id: 'vic-issue-audit-001-codex'
+    logical_agent: 'codex'
+    logical_session_id: 'vic-issue-audit-001-codex'
+    status: 'dispatched'
+    output: 'VIC-ISSUE-AUDIT-001 reconciliation claim; merged PR #39; control issue #127.'
+    conduct_event_id: 'conduct:run-dd2026ac048e15731636c3d9cb23e92a:467:compatibility'
+    conduct_run_id: 'run-dd2026ac048e15731636c3d9cb23e92a'
+    conduct_lease_id: 'lease-467-dd2026ac048e1573'
+    conduct_generation: 467
+  source_origin: 'human_prompt'
+  updated: '2026-08-02T14:33:39.093Z'
 - id: VIC-SITE-TEST-001
   title: Site phase-progress unit coverage
   description: "Add unit tests for the pitch site's phase-progress aggregation: aggregate equals the sum of phase checkpoints, no hand-set totals, progress never exceeds 100%."
