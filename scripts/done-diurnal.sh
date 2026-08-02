@@ -115,21 +115,61 @@ else
 fi
 
 # 7 — the cut loop has a real observation runway behind it, not a synthetic one
+#
+# This read `section-scores.json` for an `engaged_days` key. Nothing in the estate wrote that key —
+# `grep -rn engaged_days` matched this line and nothing else — so the check was unsatisfiable, and
+# the `.get(..., 0)` default made it unsatisfiable QUIETLY: it reported "0 days, not there yet",
+# which is indistinguishable from an honest early runway. A KeyError would have surfaced it on day
+# one. Same species as the resume_predicate written as prose one layer up.
+#
+# The runway is now derived from `ledger.jsonl`, which the organ already writes per phase. Counting
+# evening EMISSIONS would over-count and the live data proves it: 2026-08-01 emitted an evening and
+# had zero commits, so diurnal itself marked the day UNSCORED and moved no streak. An away-week
+# would otherwise manufacture a runway and cut sections on no evidence — exactly what
+# engaged_today()'s docstring exists to prevent. So a day counts only when it was ENGAGED.
 python3 - "$ROOT" <<'PY'
-import json, pathlib, sys
+import json, os, pathlib, subprocess, sys
 root = pathlib.Path(sys.argv[1])
-need = int(__import__("os").environ.get("LIMEN_DIURNAL_CUT_THRESHOLD", "5"))
-p = root / "logs" / "diurnal" / "section-scores.json"
+need = int(os.environ.get("LIMEN_DIURNAL_CUT_THRESHOLD", "5"))
+p = root / "logs" / "diurnal" / "ledger.jsonl"
 try:
-    scores = json.loads(p.read_text())
+    rows = [json.loads(ln) for ln in p.read_text().splitlines() if ln.strip()]
 except (OSError, ValueError):
-    print(f"  \033[31m✗\033[0m no {p.relative_to(root)} — no day has ever been scored")
+    print(f"  \033[31m✗\033[0m no readable {p.relative_to(root)} — no day has ever been scored")
     sys.exit(1)
-days = max((rec.get("engaged_days", 0) for rec in scores.values() if isinstance(rec, dict)), default=0)
-if days >= need:
-    print(f"  \033[32m✓\033[0m {days} engaged day(s) scored — the cut threshold ({need}) has a real runway")
+
+
+def engaged_by_git(day: str) -> bool:
+    """Rows written before `engaged` existed carry the fact implicitly, in git.
+
+    Re-derivation, not backfill: this is the same source and the same question engaged_today()
+    asks at emission time, so an old row yields the answer the organ would have recorded.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), "log", "--since", f"{day} 00:00", "--until", f"{day} 23:59", "--oneline"],
+            capture_output=True, text=True, timeout=60,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return out.returncode == 0 and bool(out.stdout.strip())
+
+
+days = set()
+for row in rows:
+    if row.get("phase") != "evening":
+        continue
+    day = str(row.get("ts", ""))[:10]
+    if not day:
+        continue
+    if row["engaged"] if "engaged" in row else engaged_by_git(day):
+        days.add(day)
+
+n = len(days)
+if n >= need:
+    print(f"  \033[32m✓\033[0m {n} engaged day(s) scored — the cut threshold ({need}) has a real runway")
     sys.exit(0)
-print(f"  \033[31m✗\033[0m only {days} engaged day(s) scored — a cut cannot yet fire on evidence (need {need})")
+print(f"  \033[31m✗\033[0m only {n} engaged day(s) scored — a cut cannot yet fire on evidence (need {need})")
 sys.exit(1)
 PY
 [ $? -eq 0 ] || FAILED=$((FAILED + 1))
