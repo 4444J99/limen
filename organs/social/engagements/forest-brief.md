@@ -2,7 +2,7 @@
 
 **Person:** Forest  
 **Identifier:** `forest-design-peer`  
-**Generated:** 2026-08-03T15:49:30Z  
+**Generated:** 2026-08-03T16:00:47Z  
 
 ---
 
@@ -56,6 +56,10 @@
 
   - A portfolio review he agreed to in 2026-02 was never delivered. Release him from it explicitly rather than leaving it as a silent debt on his side
 
+  - He opened the 2026-08 exchange by saying he is going through the same thing, then spent the entire thread on Anthony's situation and none of it on his own. Ask about his before reporting on the one he opened
+
+  - A direct question asked 2026-07-30 was never answered, and the window it referred to closes 2026-08-08. Re-ask it rather than treating silence as a decline — this channel loses messages
+
 **Care pattern:** Reciprocate advocacy with advocacy, not with gratitude alone — the standing repayment for a referral is an equivalent open door, offered unprompted when one appears. Ask about his own situation before reporting on the one he opened. Keep the social thread (shows, bars, art walks) alive independently of any professional thread, so the friendship is never reduced to its usefulness.
 
 
@@ -91,7 +95,8 @@
   - member: name, identifier, context, and two-dimensional tie note recorded
   - mandate: peer-advocacy relationship and why_it_matters documented
   - standing: ACTIVE, manually derived from a dated 83-message export spanning 2026-01-14 to 2026-08-02
-  - standard: reciprocity norm, episodic cadence, reply window, three boundaries, three owed replies, and care pattern all named
+  - standard: reciprocity norm, episodic cadence, reply window, four boundaries, five owed replies, and care pattern all named
+  - actions: an item list derived 2026-08-03 from every utterance by the other party, held in the private correspondence lane
   - governance: manual_mode=true, 5 human gates, 5 forbidden autonomous acts, consent recorded as NOT YET GIVEN
   - source: WhatsApp export ingested 2026-08-03; raw text, media, and transcripts held only in the private correspondence lane
 
