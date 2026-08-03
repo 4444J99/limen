@@ -162,6 +162,12 @@ def fallback_date_and_collection(url: str) -> tuple[str, str]:
     return date, values["collection"]
 
 
+def collections_to_audit(urls: Iterable[str]) -> list[str]:
+    """Return configured collections plus any discovered through another rail."""
+    discovered = {fallback_date_and_collection(url)[1] for url in urls}
+    return sorted(set(COLLECTION_LABELS) | (discovered - {""}))
+
+
 def clean_text(node: BeautifulSoup) -> str:
     text = node.get_text(" ", strip=True)
     return " ".join(text.split())
@@ -328,7 +334,6 @@ def main() -> int:
     sources_by_url: dict[str, set[str]] = {post.url: {"sitemap"} for post in sitemap_posts}
     lastmod_by_url = {post.url: post.lastmod for post in sitemap_posts}
 
-    collections = sorted({fallback_date_and_collection(post.url)[1] for post in sitemap_posts})
     try:
         _, _, homepage_html = fetch(BASE_URL, timeout=args.timeout)
         for url in discover_posts(homepage_html):
@@ -336,6 +341,7 @@ def main() -> int:
     except Exception as exc:  # noqa: BLE001 - continue with other discovery rails
         print(f"warning: homepage discovery failed: {exc}")
 
+    collections = collections_to_audit(sources_by_url)
     for collection in collections:
         source = f"collection:{collection}"
         try:

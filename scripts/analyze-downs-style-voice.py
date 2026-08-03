@@ -85,6 +85,21 @@ def safe_rate(count: int, total: int) -> float:
     return round((count / total * 1000) if total else 0.0, 2)
 
 
+def phrase_count(text: str, phrase: str) -> int:
+    """Count a normalized phrase without matching prefixes of longer words."""
+    pattern = rf"(?<![a-z']){re.escape(phrase)}(?![a-z'])"
+    return len(re.findall(pattern, text))
+
+
+def contains_key(value: Any, key: str) -> bool:
+    """Return whether a nested JSON-compatible value contains an exact key."""
+    if isinstance(value, dict):
+        return key in value or any(contains_key(item, key) for item in value.values())
+    if isinstance(value, list):
+        return any(contains_key(item, key) for item in value)
+    return False
+
+
 def era_for(published_date: str) -> str:
     year = int(published_date[:4])
     if year <= 2018:
@@ -140,12 +155,15 @@ def summarize(posts: list[dict[str, Any]]) -> dict[str, Any]:
         }
         for marker in LEXICAL_MARKERS
     }
+    phrase_counts = {
+        marker: phrase_count(normalized_text, marker) for marker in PHRASE_MARKERS
+    }
     phrases = {
         marker: {
-            "count": normalized_text.count(marker),
-            "per_1000_words": safe_rate(normalized_text.count(marker), word_total),
+            "count": count,
+            "per_1000_words": safe_rate(count, word_total),
         }
-        for marker in PHRASE_MARKERS
+        for marker, count in phrase_counts.items()
     }
 
     return {
@@ -264,11 +282,11 @@ def main() -> int:
         "method_notes": [
             "Tokens are alphabetic words with internal apostrophes.",
             "Sentence and paragraph boundaries are heuristic because historic posts mix prose and shopping lists.",
-            "Rates are normalized per 1,000 words; phrase counts are literal and case-insensitive.",
+            "Rates are normalized per 1,000 words; phrase counts are case-insensitive and require token boundaries.",
             "Metrics describe the corpus and are evidence for editorial judgment, not a claim of sole authorship.",
         ],
     }
-    if any("body" in key for key in output):
+    if contains_key(output, "body"):
         raise AssertionError("derived output must not expose article bodies")
     serialized = json.dumps(output, indent=2, ensure_ascii=False, sort_keys=False) + "\n"
     args.output.parent.mkdir(parents=True, exist_ok=True)

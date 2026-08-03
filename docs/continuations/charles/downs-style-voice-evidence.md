@@ -15,7 +15,7 @@ The causal baseline is 257 posts published from 2017 through 2024: 76,597 alphab
 | First-person singular | 3,448 uses; 45.01 per 1,000 words | Write as `I` when Charles is speaking. |
 | First-person plural | 75 uses; 0.98 per 1,000 words | `We` is exceptional, not the house default. |
 | Second person | 734 uses; 9.58 per 1,000 words | Help the reader choose without turning every sentence into advice. |
-| `I love` | 226 uses | Visible enthusiasm is authentic when attached to a specific reason. |
+| `I love` | 154 uses | Visible enthusiasm is authentic when attached to a specific reason. |
 | `My favorite` | 92 uses | Personal ranking is part of the voice, not a neutral-review defect. |
 | `However` | 180 uses | Praise normally makes room for a qualification. Vary the transition in polished copy. |
 | `Overall` | 124 uses; `overall I` appears 75 times | End in a personal conclusion rather than an impersonal summary. |

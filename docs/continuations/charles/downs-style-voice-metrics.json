@@ -119,8 +119,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 226,
-          "per_1000_words": 2.95
+          "count": 154,
+          "per_1000_words": 2.01
         },
         "i loved": {
           "count": 72,
@@ -309,8 +309,8 @@
     },
     "phrase_markers": {
       "i love": {
-        "count": 226,
-        "per_1000_words": 2.92
+        "count": 154,
+        "per_1000_words": 1.99
       },
       "i loved": {
         "count": 72,
@@ -499,8 +499,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 90,
-          "per_1000_words": 4.08
+          "count": 58,
+          "per_1000_words": 2.63
         },
         "i loved": {
           "count": 32,
@@ -688,8 +688,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 83,
-          "per_1000_words": 3.16
+          "count": 56,
+          "per_1000_words": 2.13
         },
         "i loved": {
           "count": 27,
@@ -877,8 +877,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 39,
-          "per_1000_words": 2.0
+          "count": 29,
+          "per_1000_words": 1.48
         },
         "i loved": {
           "count": 10,
@@ -1066,8 +1066,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 14,
-          "per_1000_words": 1.6
+          "count": 11,
+          "per_1000_words": 1.26
         },
         "i loved": {
           "count": 3,
@@ -1256,7 +1256,7 @@
       "phrase_markers": {
         "i love": {
           "count": 0,
-          "per_1000_words": 0.0
+          "per_1000_words": 0
         },
         "i loved": {
           "count": 0,
@@ -1446,8 +1446,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 13,
-          "per_1000_words": 3.54
+          "count": 10,
+          "per_1000_words": 2.72
         },
         "i loved": {
           "count": 3,
@@ -1635,8 +1635,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 77,
-          "per_1000_words": 4.19
+          "count": 48,
+          "per_1000_words": 2.61
         },
         "i loved": {
           "count": 29,
@@ -1824,8 +1824,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 29,
-          "per_1000_words": 3.81
+          "count": 16,
+          "per_1000_words": 2.1
         },
         "i loved": {
           "count": 13,
@@ -2013,8 +2013,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 54,
-          "per_1000_words": 2.9
+          "count": 40,
+          "per_1000_words": 2.14
         },
         "i loved": {
           "count": 14,
@@ -2202,8 +2202,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 11,
-          "per_1000_words": 1.51
+          "count": 9,
+          "per_1000_words": 1.24
         },
         "i loved": {
           "count": 2,
@@ -2391,8 +2391,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 9,
-          "per_1000_words": 4.06
+          "count": 5,
+          "per_1000_words": 2.25
         },
         "i loved": {
           "count": 4,
@@ -2580,8 +2580,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 19,
-          "per_1000_words": 1.89
+          "count": 15,
+          "per_1000_words": 1.5
         },
         "i loved": {
           "count": 4,
@@ -2769,8 +2769,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 14,
-          "per_1000_words": 1.6
+          "count": 11,
+          "per_1000_words": 1.26
         },
         "i loved": {
           "count": 3,
@@ -2959,7 +2959,7 @@
       "phrase_markers": {
         "i love": {
           "count": 0,
-          "per_1000_words": 0.0
+          "per_1000_words": 0
         },
         "i loved": {
           "count": 0,
@@ -3149,8 +3149,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 12,
-          "per_1000_words": 2.91
+          "count": 11,
+          "per_1000_words": 2.66
         },
         "i loved": {
           "count": 1,
@@ -3338,8 +3338,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 1,
-          "per_1000_words": 0.26
+          "count": 0,
+          "per_1000_words": 0
         },
         "i loved": {
           "count": 1,
@@ -4094,8 +4094,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 59,
-          "per_1000_words": 4.09
+          "count": 26,
+          "per_1000_words": 1.8
         },
         "i loved": {
           "count": 33,
@@ -4283,8 +4283,8 @@
       },
       "phrase_markers": {
         "i love": {
-          "count": 129,
-          "per_1000_words": 3.18
+          "count": 92,
+          "per_1000_words": 2.27
         },
         "i loved": {
           "count": 37,
@@ -4750,7 +4750,7 @@
   "method_notes": [
     "Tokens are alphabetic words with internal apostrophes.",
     "Sentence and paragraph boundaries are heuristic because historic posts mix prose and shopping lists.",
-    "Rates are normalized per 1,000 words; phrase counts are literal and case-insensitive.",
+    "Rates are normalized per 1,000 words; phrase counts are case-insensitive and require token boundaries.",
     "Metrics describe the corpus and are evidence for editorial judgment, not a claim of sole authorship."
   ]
 }

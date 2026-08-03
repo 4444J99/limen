@@ -64,16 +64,20 @@ The raw article-body corpus was created only as a transient local analysis input
 
 The voice baseline includes 257 posts published through December 31, 2024. It intentionally excludes the August 2, 2026 rose-water post because that article was produced before this audit; including it would let newer assisted copy teach the system what it was supposed to discover from Charles's earlier history.
 
-The baseline contains 76,597 alphabetic tokens. Sentence and paragraph boundaries are heuristic because older pages mix prose, lists, and shopping modules. Phrase counts are literal and case-insensitive. These measurements describe the published corpus; they do not establish that every claim in it was true or that every word had one author.
+The baseline contains 76,597 alphabetic tokens. Sentence and paragraph boundaries are heuristic because older pages mix prose, lists, and shopping modules. Phrase counts are case-insensitive and require token boundaries. These measurements describe the published corpus; they do not establish that every claim in it was true or that every word had one author.
 
 ## Reproduction
 
 ```sh
-python3 scripts/audit-downs-style-archive.py \
+python3 -m venv /tmp/downs-style-archive-venv
+/tmp/downs-style-archive-venv/bin/python -m pip install \
+  -r scripts/requirements-downs-style-archive.txt
+
+/tmp/downs-style-archive-venv/bin/python scripts/audit-downs-style-archive.py \
   --output docs/continuations/charles/downs-style-post-ledger.csv \
   --corpus-json /tmp/downs-style-corpus.json
 
-python3 scripts/analyze-downs-style-voice.py \
+/tmp/downs-style-archive-venv/bin/python scripts/analyze-downs-style-voice.py \
   --corpus-json /tmp/downs-style-corpus.json \
   --output docs/continuations/charles/downs-style-voice-metrics.json \
   --baseline-cutoff 2024-12-31
@@ -81,5 +85,5 @@ python3 scripts/analyze-downs-style-voice.py \
 
 Current artifact fingerprints:
 
-- Ledger SHA-256: `00568b0f472b0e6cf7792064c40a1f8c32dde764195109e27d507684bd88dcad`
-- Metrics SHA-256: `65e090919ea2eb44e3f565f09a51f1f145bc6cac99a81cd598a662c4e9bbd98e`
+- Ledger SHA-256: `d3a03b2510c6a4b25450cbf463dc7d34b76f6ccfb0b81446c574d84ce3fb8c95`
+- Metrics SHA-256: `81373c9e033e12040fa7b711ec4f40d9e77360cda805ef8bde6fed05d0d1a0ba`

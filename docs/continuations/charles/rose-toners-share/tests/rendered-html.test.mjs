@@ -33,6 +33,12 @@ async function render(path = "/") {
   );
 }
 
+test("image optimization fails clearly when its binding is absent", async () => {
+  const response = await render("/_vinext/image?url=%2Fog.png&w=640&q=75");
+  assert.equal(response.status, 501);
+  assert.equal(await response.text(), "Image optimization is not configured");
+});
+
 test("server-renders the complete six-product editorial preview", async () => {
   const response = await render();
   assert.equal(response.status, 200);
@@ -204,6 +210,7 @@ test("server-renders the evidence-backed Charles voice system", async () => {
   assert.match(html, /alphabetic tokens in the historical baseline/);
   assert.match(html, /45\.01/);
   assert.match(html, /0\.98/);
+  assert.match(html, /154×/);
   assert.match(html, /I is the fingerprint/);
   assert.match(html, /Thematic core/);
   assert.match(html, /Natural Center/);

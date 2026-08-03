@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -58,6 +59,11 @@ def parse_args() -> argparse.Namespace:
         default=Path(
             "docs/continuations/charles/rose-toners-share/data/posts.json"
         ),
+    )
+    parser.add_argument(
+        "--natural-center",
+        type=Path,
+        default=Path("docs/continuations/charles/downs-style-natural-center.yaml"),
     )
     return parser.parse_args()
 
@@ -115,6 +121,23 @@ def main() -> int:
     require(metrics["baseline"]["included_posts"] == 257, "baseline must contain 257 posts")
     require(metrics["baseline"]["excluded_posts"] == 1, "baseline must exclude one newer post")
     require(metrics["baseline"]["cutoff"] == "2024-12-31", "baseline cutoff changed")
+    baseline_love = metrics["baseline"]["metrics"]["phrase_markers"]["i love"]
+    require(
+        baseline_love == {"count": 154, "per_1000_words": 2.01},
+        "I love metric must use exact token boundaries",
+    )
+
+    ledger_sha = hashlib.sha256(args.ledger.read_bytes()).hexdigest()
+    metrics_sha = hashlib.sha256(args.metrics.read_bytes()).hexdigest()
+    natural_center = args.natural_center.read_text(encoding="utf-8")
+    require(
+        f"downs-style-post-ledger.csv@sha256:{ledger_sha}" in natural_center,
+        "Natural Center ledger digest does not match committed bytes",
+    )
+    require(
+        f"downs-style-voice-metrics.json@sha256:{metrics_sha}" in natural_center,
+        "Natural Center metrics digest does not match committed bytes",
+    )
 
     site_posts = load_json(args.site_json)
     require(isinstance(site_posts, list), "site archive must be a JSON list")

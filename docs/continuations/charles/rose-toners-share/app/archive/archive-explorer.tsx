@@ -51,11 +51,11 @@ export function ArchiveExplorer({
   const [year, setYear] = useState("All");
 
   const filteredPosts = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
+    const needle = query.trim().toLowerCase();
     return posts.filter((post) => {
       const matchesQuery =
         !needle ||
-        `${post.title} ${post.category}`.toLocaleLowerCase().includes(needle);
+        `${post.title} ${post.category}`.toLowerCase().includes(needle);
       const matchesCategory =
         category === "All" || post.category === category;
       const matchesYear = year === "All" || post.year === year;

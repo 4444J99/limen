@@ -126,7 +126,7 @@ export default function VoicePage() {
           <span>we / us / our uses per 1,000 words</span>
         </article>
         <article>
-          <strong>226×</strong>
+          <strong>154×</strong>
           <span>“I love” across the archive baseline</span>
         </article>
       </section>
