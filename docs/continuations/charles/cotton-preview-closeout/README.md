@@ -9,6 +9,7 @@ and executable predicate without publishing private meeting transcripts or messa
 - Article source: `docs/continuations/charles/rose-toners-share/app/cotton/page.tsx`
 - Editorial source commit: `38d53030c18d8597c1eb59b40ade942070aa2183`
 - Source branch: `feat/charles-cotton-preview`
+- Delivery PR: <https://github.com/organvm/limen/pull/1791>
 - Deployed Sites version: `11`
 - Deployed source commit: `468889391985d2e02c43c9aa07f0dce1cc41aa42`
 - Review route: <https://downs-style-rose-toners-preview.ajpadavano.chatgpt.site/cotton>
@@ -46,3 +47,8 @@ docs/continuations/charles/cotton-preview-closeout/done.sh
 
 The predicate builds and tests every preview route, lints the source, checks the deployed cotton
 route, rejects the superseded opening, validates the evidence set, and requires a clean worktree.
+
+The admitted successor capsule is durably recorded on
+`work/charles-cotton-preview-successor-20260803` at
+`f32283af3004dfed18f6a9e725b58b301916af0f`. Its private README owns the tested one-line launch
+command and preserves the seven-day runway admitted on 2026-08-03.

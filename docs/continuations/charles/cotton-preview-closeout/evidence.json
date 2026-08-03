@@ -23,7 +23,8 @@
   "source_receipt": {
     "repository": "organvm/limen",
     "branch": "feat/charles-cotton-preview",
-    "article_commit": "38d53030c18d8597c1eb59b40ade942070aa2183"
+    "article_commit": "38d53030c18d8597c1eb59b40ade942070aa2183",
+    "pull_request": "https://github.com/organvm/limen/pull/1791"
   },
   "deployment_receipt": {
     "provider": "OpenAI Sites",
@@ -34,6 +35,12 @@
     "route": "https://downs-style-rose-toners-preview.ajpadavano.chatgpt.site/cotton",
     "access_mode": "public",
     "status": "succeeded"
+  },
+  "successor_capsule": {
+    "branch": "work/charles-cotton-preview-successor-20260803",
+    "commit": "f32283af3004dfed18f6a9e725b58b301916af0f",
+    "runway_seconds": 604800,
+    "launch_tested": true
   },
   "verification": {
     "rendered_route_tests": {
