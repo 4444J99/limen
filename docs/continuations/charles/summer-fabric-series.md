@@ -2,70 +2,55 @@
 
 ## Series promise
 
-One fiber name can produce radically different clothes. This sequence begins with cotton, gives silk the same head-to-toe treatment, and then makes the two compete garment by garment.
+This is the three-post sequence Charles requested: cotton → silk → cotton versus silk, garment by garment.
 
-The third post is the decision payoff, not a summary of the first two. No fabric wins a body part by reputation alone; construction, weight, cut, care, opacity, occasion, and the reader's tolerance for maintenance all get a vote.
+Cotton and silk each get a complete story before they compete. The finale is a reactive wardrobe decision, not a recap, and no fiber wins the whole body by reputation.
 
-Each installment uses small myth or common-error pop-ups beside the relevant section. The main article must contain the essential truth on its own; the pop-up gives the misconception a memorable name and a concise correction.
+Every substantive section carries a small **Common error** pop-up when a real misconception changes the choice. The body contains the full truth; the pop-up gives the mistake a memorable name and a short correction.
 
-## Sequence
+## Complete sequence
 
-### 1. Cotton Tops, Cotton Bottoms, and the Summer Difference
+### 1. Cotton Tops and Bottoms for Summer: What Kind Are You Actually Wearing?
 
-**Status:** Complete draft in `cotton-summer-post.md`.
+**Status:** Complete in [cotton-summer-post.md](cotton-summer-post.md).
 
-**Question:** Why can two garments labeled 100 percent cotton behave like different seasons?
+**Reaction:** Charles’s linen post established fit and softness as personal summer priorities. Cotton looks familiar, then turns into several different garments once jersey, poplin, seersucker, twill, denim, weight, lining, and cut enter the conversation.
 
-**Movement:** Start with cotton's automatic summer reputation, separate fiber from finished fabric, let light knits and shirtings compete above the waist, then make twill, seersucker, denim, and jersey negotiate the different demands below it.
+**Verdict:** Let the top move and ask the bottom to hold its nerve. Cotton wins both jobs only when it is allowed to become two different fabrics.
 
-**Verdict:** The top may float; the bottom has to hold its nerve. Weight, construction, lining, and cut finish the answer the fiber label only began.
+**Handoff:** Silk arrives with the opposite reputation and the same hidden problem: one glamorous fiber name is being asked to describe too many fabrics.
 
-**Handoff:** Silk arrives with the opposite reputation and the same hidden problem: one glamorous name is being asked to describe too many fabrics.
+### 2. Silk, Satin, and Charmeuse: What Are You Actually Buying?
 
-### 2. Silk Tops, Silk Bottoms, and the Summer Complication
+**Status:** Complete in [silk-summer-post.md](silk-summer-post.md).
 
-**Working title:** Silk Tops, Silk Bottoms, and the Summer Complication
+**Reaction:** Cotton taught Charles not to trust one fiber name. Silk makes the distinction more romantic and more confusing by separating fiber, satin weave, charmeuse, drape, opacity, structure, and care.
 
-**Question:** When does silk feel beautifully light, and when do delicacy, opacity, water marking, cling, or care make it the more complicated summer choice?
+**Verdict:** Silk keeps the jobs where movement, light, and finish are the point. It loses the jobs that demand hard sitting, frequent washing, and no second thought.
 
-**Research route:** Establish silk as a fiber before comparing habotai, crepe de Chine, charmeuse, chiffon, organza, noil, and silk twill. Verify every construction, care, and moisture claim against current primary textile or brand-care sources before drafting.
+**Handoff:** Once both fibers have been taken apart, they can compete where readers actually decide: article of clothing by article of clothing.
 
-**Proposed movement:** Begin with charmeuse's glamorous monopoly on the word *silk*, answer it with quieter matte and plain-weave constructions, let tops benefit from drape and lightness, then force bottoms to answer harder questions about opacity, friction, structure, sweat, and maintenance.
+### 3. Cotton vs. Silk: Who Wins Each Part of the Wardrobe?
 
-**Required reaction to post one:** Cotton asked us to inspect weight and construction; silk proves that the same discipline matters even more when a fiber's reputation is doing most of the selling.
+**Status:** Complete in [cotton-vs-silk-post.md](cotton-vs-silk-post.md).
 
-**Do not pre-decide:** Silk does not automatically win heat, luxury, skin comfort, or sustainability. The final copy must distinguish a fabric property from the performance of a particular garment.
+**Reactive order:** first layer → T-shirt/camisole → button-down/blouse → shorts/trousers → dress/set → sleepwear → lining/scarf → travel/everyday.
 
-**Handoff:** Once both fibers have been taken apart, the series can finally stop asking which one wins in general and ask where each one earns its place.
+**Verdict:** Cotton wins more categories; silk wins moments cotton does not need to imitate. Charles’s rule is that cotton does the living and silk does the entrance.
 
-**Pop-up research:** Test the familiar assumptions that satin always means silk, every silk construction behaves delicately, silk automatically wins hot weather, and every silk garment requires identical care. Publish only the corrections supported by the final source pass.
+## Voice and truth gates
 
-### 3. Cotton or Silk: Who Wins Where?
+- Write Charles in first-person singular. His archive uses `I` roughly 46 times as often as `we`.
+- Begin with a personal reason to care, let the next section react to the last, admit the drawback, and end with a use-case verdict.
+- Keep one thought per paragraph and enough technical language to change the buying decision—no textile-manual detours.
+- Preserve Charles’s published view that silk can feel heavier to him than linen as his reaction, never as a universal material claim.
+- Never invent a wear result, purchase, memory, quotation, or body response for Charles.
+- Reject universal cooling, breathability, quick-drying, hypoallergenic, health, skin, hair, sleep, or sustainability claims.
+- Keep fiber, construction, garment design, weight, lining, finish, and care distinct whenever the difference changes a verdict.
+- Add no prices, products, or shopping links until Charles chooses and approves them.
+- Use Charles-owned images unless separately licensed imagery is approved.
+- Keep Downs Style, Squarespace, and every deployed preview unchanged until Charles authorizes publication.
 
-**Working title:** Cotton or Silk: Who Wins Where?
+## Queued companion posts—not part of this trilogy
 
-**Question:** If we dress from the skin outward, which fiber earns each article of clothing?
-
-**Matchups:** Begin close to the body and move outward: underwear or first layer → T-shirt or camisole → button-down or blouse → shorts or trousers → dress → sleepwear → scarf or finishing layer. Combine or cut categories when the researched distinctions do not change the verdict.
-
-**Decision frame:** Give each round a real use case—ordinary day, dressed-up evening, travel, high-sweat activity, and low-maintenance repeat wear—so “who wins” never becomes a universal claim detached from an actual garment.
-
-**Tone:** Treat the contest as a conversation between the first two posts. Each round should overturn, qualify, or sharpen the previous one; do not paste two fabric inventories beside each other.
-
-**Likely ending:** The winner is a mixed wardrobe with reasons, not a single fiber sweeping the body. Cotton should be allowed to win practicality where it actually does, silk should be allowed to win sensation or drape where the construction supports it, and neither receives a trophy for its name.
-
-**Pop-up pattern:** Give each garment round one common decision error, such as choosing by fiber alone while ignoring activity, lining, opacity, care, or the rest of the outfit. Do not repeat the same “construction matters” correction in every round.
-
-## Series-wide editorial rules
-
-- Preserve Charles's intimate we/our perspective, delighted reactions, candid drawbacks, and decisive judgments without inventing personal wear results.
-- Keep paragraphs as single-thought clusters. A new contrast, qualification, drawback, or verdict starts a new paragraph.
-- Write each installment as an unfolding reaction, not a catalogue of fabric definitions.
-- Keep every pop-up to one misconception and one short correction. Never hide a necessary disclosure, drawback, or factual qualification inside it.
-- Separate fiber, yarn, fabric construction, garment design, finish, and care whenever the distinction changes the conclusion.
-- Reject universal cooling, breathability, moisture-wicking, hypoallergenic, health, or sustainability claims.
-- Do not use “natural” as proof of safety or environmental superiority.
-- Do not add prices, shopping links, or affiliate language until Charles chooses exact garments and destinations.
-- If shopping links are later added, preserve the destination exactly, disclose any material relationship before the first affiliated link, and keep any link-specific notice close to its recommendation.
-- Use Charles-owned images unless a separately licensed source is approved; do not lift retailer or brand photography.
-- Keep the websites and deployed previews unchanged until Charles explicitly authorizes a publishing pass.
+The candle-burning and Transcend Essentials drafts remain separate companion work. They are not articles one and two of the summer-fabric sequence and do not appear in its client review packet.

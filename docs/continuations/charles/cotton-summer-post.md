@@ -2,231 +2,176 @@
 
 ## Page settings
 
-- **Title:** Cotton Tops, Cotton Bottoms, and the Summer Difference
+- **Title:** Cotton Tops and Bottoms for Summer: What Kind Are You Actually Wearing?
 - **Suggested slug:** `cotton-tops-and-bottoms-for-summer`
-- **SEO description:** A guide to summer cotton tops and bottoms, from jersey and piqué to chambray, seersucker, twill, and denim—and why construction matters.
-- **Keywords/tags:** cotton clothing, summer style, cotton tops, cotton bottoms, fabric guide, Upland cotton, Pima cotton, cotton jersey, piqué, poplin, chambray, Oxford cloth, seersucker, cotton twill, lightweight denim
+- **SEO description:** Cotton is only the beginning. Here is how jersey, poplin, seersucker, twill, and denim change what a cotton top or bottom does in summer.
+- **Keywords/tags:** cotton clothing, summer style, cotton tops, cotton bottoms, cotton jersey, cotton poplin, seersucker, cotton twill, denim, Pima cotton, Supima cotton, fabric guide
 
 ## Squarespace body copy
 
-Every summer, cotton walks into our wardrobes like the argument has already been settled.
+When I wrote about linen, fit and softness were the two details I kept coming back to.
 
-It is natural, familiar, and printed on so many warm-weather labels that we almost stop asking what kind of cotton we are actually wearing.
+Cotton deserves the same inspection.
 
-Then one cotton shirt feels easy all afternoon, another turns dense the second the temperature climbs, and a pair of 100-percent-cotton jeans somehow becomes the least summery object we own.
-
-The problem is not the fiber. It is expecting one fiber to behave like one fabric.
-
-Cotton can be knitted into jersey, opened into piqué, woven into crisp shirting, puckered into seersucker, or built into twill and denim substantial enough to outlive the season.
+A 100-percent-cotton label looks like the answer. It is only the beginning, because that cotton can become a soft T-shirt, a crisp poplin shirt, a puckered seersucker suit, or a pair of jeans that has no interest in July.
 
 Same plant, completely different personalities.
 
-Even before cotton becomes fabric, there are varieties worth separating.
+The name of the cotton does not finish the story either.
 
-American Upland is the familiar majority, while Pima has longer fibers and is classified as extra-long staple cotton, which can give a mill different options for yarn fineness, hand, and drape.
+Pima is a category of extra-long-staple cotton, Supima is a trademark used for American-grown extra-long-staple cotton, and Egyptian tells you where the cotton comes from—not automatically how fine the finished garment will feel.
 
-That distinction may change how refined a shirt feels. It still cannot make a dense fabric light, so fiber pedigree does not get to settle the summer question either.
+I like knowing those distinctions, but I would never let one impressive word distract me from the fabric in my hand.
 
-<p style="text-align: center;"><strong>Cotton on top</strong></p>
+<p style="text-align: center;"><strong>The cotton top I want</strong></p>
 
-Above the waist, cotton has more freedom to be light.
+Jersey is the obvious place to begin because it gives us the T-shirt.
 
-Jersey gives us the T-shirt, and its knitted loops give the fabric the flexibility we expect from something meant to move with us.
+Its knitted loops allow more natural give than a basic woven shirt, which is exactly what makes a good cotton tee feel so easy.
 
-That familiar softness can hide a fairly important difference, because jersey comes in weights ranging from barely there to sweatshirt-adjacent.
+However, jersey can be featherlight or surprisingly dense. If the shirt feels almost like a sweatshirt before I have even put it on, the cotton label is not going to rescue it from the heat.
 
-A fine, relaxed jersey can be the simplest answer in the closet, whereas a dense jersey cut close to the body may feel heavier the moment it absorbs moisture and stays there.
+Then piqué adds texture and a little more presence.
 
-Cotton can absorb moisture; that does not make every untreated cotton T-shirt a quick-drying performance shirt.
+I love the way a fine piqué polo can look more finished than a T-shirt without feeling as formal as a button-down. The drawback is that fuller piqué constructions can carry much more weight, so I still want to touch the shirt instead of trusting the tiny texture in a photograph.
 
-Then piqué interrupts all that smoothness with texture.
+Woven cotton changes the mood again.
 
-Single piqué has the little micro-mesh openings that make a polo feel more deliberate than a T-shirt without becoming a button-down, which is exactly why the construction keeps returning in warm weather.
+Poplin and chambray can give a summer shirt a clean surface and a crisp line, but the weave does not stretch like jersey. This is where the cut has to help: I want room through the body, an easy shoulder, and no unnecessary lining trying to turn a light shirt into two shirts.
 
-Still, the word *piqué* does not settle the question by itself. Double piqué and other fuller versions use more yarn and can feel much more substantial, so this is another label that requires a hand on the actual fabric.
+Oxford cloth is where I become more careful.
 
-Woven cotton shirts change the conversation again.
+A fine pinpoint Oxford can work beautifully, while a thick heritage Oxford can feel like it belongs in another season. Voile, lawn, and gauze move in the opposite direction, although a very sheer fabric may need another layer and give back some of the lightness that attracted me in the first place.
 
-A light poplin or chambray gives us a cleaner, crisper surface than jersey, but a woven fabric does not offer the same easy stretch; the relaxed shoulder, open collar, and room through the body are doing part of the summer work.
-
-That is also why a generous cotton shirt can feel more convincing than a very fitted one even when their fiber labels are identical.
-
-Oxford cloth sits at the more substantial edge of this category.
-
-Its basket-weave construction commonly uses a heavier filling yarn, while pinpoint Oxford uses finer yarns, so we would take the lighter pinpoint into serious summer before a thick heritage Oxford and stop pretending the shared name makes them the same shirt.
-
-Voile, lawn, and gauze take lightness even further, which sounds perfect until a sheer top arrives with a full lining that quietly returns all the fabric we thought we had escaped.
-
-Hold the garment up, look inside it, and judge every layer rather than falling in love with the name on the product page.
+Overall, my favorite cotton top on paper means nothing until weight, cut, and every hidden layer agree with it.
 
 <p style="text-align: center;"><strong>Then cotton has to become a bottom</strong></p>
 
-Below the waist, the lightest cotton does not automatically win.
+The lightest cotton does not automatically make the best trousers.
 
-We ask bottoms to handle pockets, movement, opacity, and enough structure to keep their shape, so a fabric that makes a beautifully weightless blouse may make a trouser that announces every seam and pocket bag.
+A bottom needs enough body for pockets, seams, movement, and opacity. That is why twill appears so often in chinos and why the diagonal structure can feel wonderfully composed—or far too substantial when the cloth is dense and the cut is narrow.
 
-That is why twill keeps appearing here.
+For summer, I would choose the lighter chino with room through the leg. A slim, heavy twill is autumn in denial, even when the tag says cotton in very reassuring letters.
 
-Its diagonal construction gives chinos, gabardine, and denim their familiar substance, but substance is precisely what we have to control once the weather becomes unreasonable.
+Seersucker is the more playful answer.
 
-A lighter chino with room through the thigh makes sense; a dense, slim twill is autumn in denial no matter how reassuring its cotton percentage looks.
-
-Seersucker solves the structure problem with a little more personality.
-
-Its alternating smooth and puckered areas keep the entire surface from lying flat, while the built-in crinkle makes a rumpled summer garment look intentional instead of neglected.
-
-We would still check the fiber label and the inside, because seersucker can be blended and a heavy lining can cancel the lightness its surface promised.
+Its alternating smooth and puckered areas keep the surface from lying completely flat, and I love that the crinkle already looks intentional. Still, I would check the fiber label and the inside because seersucker names a construction, not a guaranteed cotton content, weight, or lining.
 
 Denim is where cotton finally loses its alibi.
 
-Cotton Incorporated's textile guidance places lighter denim for blouses, tops, and shirts around 3.5 to 8 ounces per square yard, while denim used for trousers, jeans, and jackets commonly runs from 8 to 16.5 ounces.
+Light denim can make a convincing shirt or loose short. Rigid, heavy denim remains rigid, heavy denim, and no botanical backstory is going to turn it into my first choice for the hottest afternoon.
 
-Those numbers explain why a loose, lightweight denim short can participate in July while a rigid 14-ounce jean remains a cotton garment, not a summer strategy.
+Jersey shorts solve the weight problem but create a different one: they look casual because they are casual.
 
-Jersey shorts bring the easy logic of the T-shirt below the waist, although they bring its casualness with them.
+That can be perfect when softness is the entire assignment. It is less useful when I want the bottom half of an outfit to hold a clean line.
 
-They win when softness is the entire assignment and lose when an outfit needs a clean line, which is not a flaw so much as a reminder that fabric and occasion are always negotiating.
+<p style="text-align: center;"><strong>What I would actually choose</strong></p>
 
-<p style="text-align: center;"><strong>What the label still has not told us</strong></p>
+Before buying cotton for summer, I would lift the garment, pinch the cloth, look through it, check the lining, and read the care label.
 
-If a tag says 100 percent cotton, it has given us the beginning of the answer and nothing close to the end.
+I also want to know what the day is asking from it. Cotton can absorb moisture, but absorbent does not mean quick-drying, so an ordinary cotton shirt is not automatically the right answer when fast drying is the real job.
 
-Lift the garment, pinch the cloth, look for a lining, notice whether it stretches or holds firm, and pay attention to how much space the cut leaves around the body.
+For an everyday summer outfit, my rule is simple: let the top move and ask the bottom to hold its nerve.
 
-We want a summer top light enough to move and a summer bottom structured enough to hold itself together without feeling armored.
+That could mean fine jersey over light twill, relaxed poplin over unlined seersucker, or chambray with denim light enough to stop behaving like armor.
 
-Those are different jobs, which is why buying the same cotton from neck to ankle is not automatically a coherent plan.
+Overall, cotton wins both halves only when I let it become two different fabrics.
 
-The day's actual plan matters too.
+Silk gets the next post, and it arrives with the opposite reputation: romantic, glossy, delicate, and supposedly too complicated for heat.
 
-For a long workout or any situation where fast drying is the priority, ordinary absorbent cotton may be the drawback rather than the solution; an engineered moisture-management fabric deserves a separate conversation.
+Cotton has already taught me not to trust one fiber name. I am not going to let charmeuse speak for every silk either.
 
-For lunch, a desk, errands, and all the places where we want our clothes to look like clothes rather than equipment, cotton has an enormous range—as long as we choose the construction instead of trusting the fiber to make every decision for us.
+## Common-error pop-ups
 
-So cotton does win summer, but only after we stop letting the fiber label accept the trophy by itself.
+Use these as small inline **COMMON ERROR** triggers beside the named paragraph. The trigger is the visible text; the short answer is the complete pop-up copy.
 
-Above the waist, we give the advantage to lighter knits and relaxed shirtings because they can afford softness and movement.
-
-Below it, we want a little more discipline: a light twill, an unlined seersucker, or denim genuinely light enough to stop behaving like armor.
-
-The best cotton outfit is therefore not matching fabric from head to toe. It is a top allowed to float and a bottom asked to hold its nerve.
-
-Silk gets the next chance, and it arrives with the opposite reputation: luxurious, delicate, and supposedly too complicated for real heat.
-
-We suspect that label is hiding just as many personalities, which means charmeuse does not get to speak for the entire family either.
-
-## Myth and shopping-error pop-ups
-
-Use these as small inline **MYTH** or **COMMON ERROR** triggers beside the named paragraph. The trigger is the visible text; the short answer is the complete pop-up copy.
-
-### 1. Opening fiber-versus-fabric distinction
+### 1. The opening distinction
 
 **Place after:** “Same plant, completely different personalities.”
 
-**Trigger:** MYTH: 100% cotton means summer-ready
+**Trigger:** COMMON ERROR: 100% cotton means summer-ready
 
-**Pop-up:** Not automatically. Cotton names the fiber, but that fiber can become a light jersey, an open piqué, or a dense twill. Construction, weight, lining, and cut decide how the finished garment behaves.
+**Pop-up:** Cotton names the fiber, not the finished experience. The same fiber can become a light knit, a crisp plain weave, or a dense twill. Check the construction, weight, cut, and lining before deciding what belongs in summer.
 
-### 2. Upland and Pima varieties
+### 2. Pima, Supima, and Egyptian labels
 
-**Place after:** “That distinction may change how refined a shirt feels.”
+**Place after:** The paragraph separating Pima, Supima, and Egyptian cotton.
 
-**Trigger:** MYTH: Pima cotton always feels cooler
+**Trigger:** COMMON ERROR: Pima, Supima, and Egyptian mean the same thing
 
-**Pop-up:** Pima's extra-long fibers can support finer yarns and a different hand or drape, but the variety does not guarantee a lightweight garment. Pima can still be made into a dense fabric.
+**Pop-up:** Pima is a generic extra-long-staple cotton category. Supima is a trademark for qualifying American-grown extra-long-staple cotton. Egyptian identifies origin, not an automatic quality grade. None of the three replaces an inspection of the finished fabric.
 
-### 3. Jersey and piqué tops
+### 3. Cotton knits
 
-**Place after:** The single-piqué paragraph.
+**Place after:** The piqué drawback paragraph.
 
-**Trigger:** COMMON ERROR: treating every cotton knit alike
+**Trigger:** COMMON ERROR: every cotton knit feels alike
 
-**Pop-up:** Jersey comes in many weights, and the visible openings belong specifically to piqué constructions such as single piqué. A thick jersey or fuller piqué can feel very different from its lighter relative.
+**Pop-up:** Jersey and piqué are different knit constructions, and both can be made in different weights. A fiber label—or even a knit name—cannot tell you how light the actual shirt will feel.
 
-### 4. Woven shirts, Oxford cloth, and sheer layers
+### 4. Woven shirts
 
-**Place after:** “Hold the garment up, look inside it, and judge every layer...”
+**Place after:** The Oxford, voile, lawn, and gauze paragraph.
 
-**Trigger:** COMMON ERROR: shopping by fabric name alone
+**Trigger:** COMMON ERROR: a light fabric name guarantees a light shirt
 
-**Pop-up:** Poplin, chambray, Oxford cloth, and the lightest sheer cottons still vary in weight, density, cut, and lining. The name narrows the category; it does not finish the inspection.
+**Pop-up:** A sheer cotton may need a lining or extra layer, while the cut can make a crisp woven shirt feel easier or more restrictive. Judge the whole garment, including anything hidden inside it.
 
-### 5. Twill and chinos
+### 5. Seersucker and denim
 
-**Place after:** “A lighter chino with room through the thigh makes sense...”
+**Place after:** “Denim is where cotton finally loses its alibi.”
 
-**Trigger:** MYTH: Cotton chinos are automatically summer trousers
+**Trigger:** COMMON ERROR: seersucker and denim are each one fixed weight
 
-**Pop-up:** Chinos are commonly made from twill, a construction often used for more substantial bottom-weight fabrics. A lighter cloth and roomier cut can change the equation; the cotton percentage cannot do that alone.
+**Pop-up:** Both names describe fabric constructions, not one universal summer result. Seersucker can vary by fiber, weight, and lining, while denim ranges from light shirting to substantial bottom weights.
 
-### 6. Seersucker
+### 6. The final shopping test
 
-**Place after:** The seersucker fiber-label and lining paragraph.
+**Place after:** The paragraph about moisture and fast drying.
 
-**Trigger:** MYTH: Seersucker guarantees cool
+**Trigger:** COMMON ERROR: absorbent means quick-drying
 
-**Pop-up:** Seersucker describes a puckered construction, not a universal temperature result or a guaranteed fiber content. Check the label, weight, lining, and cut before giving the crinkles all the credit.
-
-### 7. Denim
-
-**Place after:** The 3.5-to-16.5-ounce denim paragraph.
-
-**Trigger:** COMMON ERROR: calling all denim one weight
-
-**Pop-up:** Denim spans a wide range. Cotton Incorporated places many denim tops around 3.5 to 8 ounces per square yard, while many jeans and trousers sit between 8 and 16.5 ounces. “Denim” is not one summer experience.
-
-### 8. The final shopping test
-
-**Place after:** The workout and fast-drying paragraph.
-
-**Trigger:** MYTH: Absorbent means quick-drying
-
-**Pop-up:** Absorbency and fast drying are not the same property. Ordinary cotton can hold moisture; cotton engineered for moisture management is a separate category and should be identified as such.
+**Pop-up:** Absorption and drying speed are not the same property. Ordinary cotton can hold moisture. If fast drying matters, look for a garment specifically designed and tested for that job instead of assuming the cotton percentage supplies it.
 
 ## Placement checklist
 
-- Keep the opening uninterrupted through “Same plant, completely different personalities.”
-- Use Charles's own hero image of a complete cotton summer look, or a cotton top-and-bottom pairing, before the first paragraph. Do not substitute retailer or brand imagery.
-- Place one Charles-owned detail image after **Cotton on top** showing the visible difference between a knit and a woven cotton, if that image exists.
-- Place one Charles-owned bottoms image after **Then cotton has to become a bottom**; seersucker, chino, or genuinely lightweight denim should be identifiable in the caption.
-- Do not add shopping links until Charles selects the exact garments and supplies or approves the destinations.
-- If any later shopping link is affiliated, add the required relationship disclosure before the first affiliate link and place any link-specific notice beside the recommendation.
-- Place each myth or error trigger directly beside its named paragraph; do not collect the pop-ups into a quiz or interrupt the reactive reading order.
-- Keep the trigger visible on touch devices rather than relying on hover. Each pop-up must be dismissible, keyboard-accessible, and return focus to its trigger when closed.
-- Do not move an essential qualification exclusively into a pop-up. The article must remain accurate and complete when every pop-up is closed.
-- Remove any visible production notes after the image blocks are placed.
-- Write literal alt text for the garment and fabric shown; do not stuff the fabric list into every image description.
+- Use Charles’s own hero image of a complete summer cotton look before the first paragraph; do not substitute retailer or brand imagery.
+- Place one Charles-owned top detail after **The cotton top I want**, ideally showing knit texture or a relaxed woven shirt.
+- Place one Charles-owned bottoms image after **Then cotton has to become a bottom**, with the actual fabric identified in the caption.
+- Place every common-error trigger directly beside its named paragraph. Keep it visible on touch devices, keyboard-accessible, dismissible, and able to return focus to the trigger.
+- Do not hide an essential qualification inside a pop-up; the body remains accurate with every pop-up closed.
+- Do not add shopping links until Charles selects the exact garments and approves their destinations.
+- If an affiliated link is added later, disclose the relationship before the first affiliate link and place any required link-specific notice beside the recommendation.
+- Use literal alt text for the clothing actually shown and remove all production notes before publication.
 
 ## Editorial guardrails
 
-- Keep the argument focused on construction, weight, lining, cut, and intended use. “Cotton” alone is never the performance verdict.
-- Do not promise that cotton, seersucker, or any named construction will keep every reader cool.
-- Do not describe ordinary cotton as quick-drying or moisture-wicking. Engineered moisture-management cotton must be identified as treated or constructed for that purpose.
-- Do not turn “natural” into a safety, skin-health, or sustainability claim.
-- Do not add medical promises, universal suitability claims, invented personal wear tests, unsupported durability claims, or prices.
-- Preserve single-thought paragraphs and the reactive movement: jersey → piqué → woven shirting → Oxford/light wovens → twill → seersucker → denim → jersey shorts → shopping test → silk handoff.
-- Use the pop-ups to correct one misconception at a time. Do not turn them into footnotes, product pitches, or a second glossary.
-- Keep technical names only where they change a buying decision. This is a style argument, not a textile glossary.
+- Keep Charles in first-person singular. Do not replace `I` with an anonymous `we`.
+- Preserve the reaction: linen memory → label surprise → tops → bottoms → buying test → silk handoff.
+- Do not claim that cotton, seersucker, or any construction keeps every reader cool.
+- Do not describe ordinary cotton as quick-drying, moisture-wicking, hypoallergenic, or universally suitable.
+- Do not use `natural` as proof of safety or environmental superiority.
+- Do not add prices, medical promises, invented personal wear results, or unsupported performance and durability claims.
+- Keep technical vocabulary only where it changes the choice. This is Charles making a summer decision, not teaching a textile course.
 
 ## Fact-check notes
 
-- CottonWorks distinguishes Upland and Pima as cotton species and identifies Pima's longer fiber as extra-long staple. Its discussion connects longer fiber with the ability to make finer yarn and different hand or drape; the copy does not turn that into a blanket quality or summer-performance claim.
-- CottonWorks explains that knits are built from loops and are generally more flexible and conforming than wovens; jersey varies substantially by weight. Its single-piqué reference identifies the construction's visible micro-mesh openings and common warm-weather polo use.
-- CottonWorks identifies chambray and broadcloth as plain-weave fabrics, Oxford as a shirting basket weave commonly made with a heavier filling yarn, and pinpoint Oxford as a finer variation.
-- CottonWorks identifies 3 × 1 twill as a common heavier bottom-weight construction used for denim, chino, and gabardine.
-- CottonWorks gives the denim weight ranges used in the copy: 3.5–8 ounces per square yard for many tops and shirts, and 8–16.5 ounces for many trousers, jeans, and jackets.
-- University of Tennessee Extension identifies seersucker as a slack-tension weave; the copy limits itself to the visible puckered structure and does not promise a universal thermal result.
-- Cotton Incorporated's TransDRY material exists because ordinary cotton absorbency can be a drawback in performance apparel. The copy uses that source only to reject a blanket quick-drying claim, not to endorse a product.
+- CottonWorks distinguishes fiber varieties from knit and woven constructions and documents that jersey, piqué, plain weaves, Oxford, twill, and denim do not behave as one fabric.
+- Supima identifies its own mark as applying to American-grown extra-long-staple cotton and distinguishes that mark from generic Pima terminology. Its quality claims are interested-party claims and are not repeated here.
+- CottonWorks describes chambray and broadcloth as plain-weave fabrics, Oxford as a basket-weave shirting, and twill as the family that includes common chino and denim constructions.
+- University of Tennessee Extension identifies seersucker as a slack-tension weave. The copy describes the puckered surface without promising a universal cooling result.
+- Cotton Incorporated’s moisture-management material is used only to support the narrow distinction between cotton absorption and engineered drying performance.
 
 ## Sources
 
+- [Downs Style: Why I Only Wear Linen in the Summer](https://www.downsstyle.com/look-book/2024/7/1/why-i-only-wear-linen-in-the-summer)
+- [Supima: Frequently Asked Questions](https://supima.com/faq/)
 - [CottonWorks: Cotton Varieties Explained](https://cottonworks.com/fiber/fiber-science/cotton-varieties-explained/)
 - [CottonWorks: Knit Basics](https://cottonworks.com/learning-hub/knitting/knit-basics/)
 - [CottonWorks: Single & Double Knits](https://cottonworks.com/learning-hub/knitting/single-and-double-knits/)
-- [CottonWorks: Weaving Basics](https://cottonworks.com/learning-hub/weaving/weaving-basics/)
 - [CottonWorks: Basic Woven Fabric Designs](https://cottonworks.com/learning-hub/weaving/basic-woven-fabric-designs/)
 - [CottonWorks: Denim Basics](https://cottonworks.com/learning-hub/denim/denim-basics/)
 - [University of Tennessee Extension: STEM Activities in the Clothing and Textile Sciences](https://utia.tennessee.edu/publications/wp-content/uploads/sites/269/2023/10/W881.pdf)
 - [Cotton Incorporated: TransDRY Technology](https://www.cottoninc.com/quality-products/fabric-technology/transdry-technology/)
 
-CottonWorks and Cotton Incorporated are cotton-industry sources. They are used here for construction definitions and stated weight ranges, not for unqualified superiority or sustainability claims.
+CottonWorks, Supima, and Cotton Incorporated are industry sources. They are used for narrow terminology and construction points, not for unqualified quality, health, performance, or sustainability claims.
