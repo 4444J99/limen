@@ -40,7 +40,7 @@ class ConductConflict(ConductError):
     pass
 
 
-def _dump(model) -> dict[str, Any]:
+def _dump(model: Any) -> dict[str, Any]:
     return model.model_dump(mode="json")
 
 
