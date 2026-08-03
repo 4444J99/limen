@@ -24,6 +24,12 @@ ARTICLES = (
     CHARLES / "cotton-vs-silk-post.md",
 )
 
+INDIVIDUAL_OUTPUTS = {
+    ARTICLES[0]: CHARLES / "downs-style-cotton-summer-charles-review.docx",
+    ARTICLES[1]: CHARLES / "downs-style-silk-charles-review.docx",
+    ARTICLES[2]: CHARLES / "downs-style-cotton-vs-silk-charles-review.docx",
+}
+
 # Resolved preset: google_docs_default.
 # Named overrides used consistently:
 # - Article Section: centered 13 pt bold for headings embedded in Squarespace copy.
@@ -61,7 +67,7 @@ def configure_style(style, *, size, color, before, after, line, bold=False):
     fmt.keep_with_next = style.name.startswith("Heading")
 
 
-def configure_document(document: Document) -> None:
+def configure_document(document: Document, *, title: str, subject: str) -> None:
     section = document.sections[0]
     section.page_width = Inches(8.5)
     section.page_height = Inches(11)
@@ -155,8 +161,8 @@ def configure_document(document: Document) -> None:
     )
     popup.paragraph_format.left_indent = Inches(0.25)
 
-    document.core_properties.title = "Downs Style Summer Fabric Trilogy"
-    document.core_properties.subject = "Charles review copy: cotton, silk, and cotton versus silk"
+    document.core_properties.title = title
+    document.core_properties.subject = subject
     document.core_properties.author = "Downs Style editorial team"
     document.core_properties.last_modified_by = "Downs Style editorial team"
 
@@ -306,10 +312,11 @@ def add_popups(document: Document, text: str) -> None:
         add_inline_markdown(paragraph, answer)
 
 
-def add_article(document: Document, path: Path) -> None:
+def add_article(document: Document, path: Path, *, page_break: bool = True) -> None:
     text = path.read_text(encoding="utf-8")
     settings = metadata(text)
-    document.add_page_break()
+    if page_break:
+        document.add_page_break()
     document.add_paragraph(settings["Title"], style="Heading 1")
 
     for label in ("Suggested slug", "SEO description", "Keywords/tags"):
@@ -340,20 +347,49 @@ def audit(document: Document) -> None:
     assert normal.paragraph_format.line_spacing == 1.15
 
     assert all(paragraph.style.name != "Title" for paragraph in document.paragraphs)
-def main() -> None:
-    document = Document()
-    configure_document(document)
-    add_cover(document)
-    for article in ARTICLES:
-        add_article(document, article)
+
+
+def save_and_audit(document: Document, output: Path) -> None:
     audit(document)
-    document.save(OUTPUT)
-    with ZipFile(OUTPUT) as archive:
+    document.save(output)
+    with ZipFile(output) as archive:
         assert not any(
             re.fullmatch(r"word/(?:header|footer)\d+\.xml", name)
             for name in archive.namelist()
         )
-    print(OUTPUT)
+    print(output)
+
+
+def build_combined() -> None:
+    document = Document()
+    configure_document(
+        document,
+        title="Downs Style Summer Fabric Trilogy",
+        subject="Charles review copy: cotton, silk, and cotton versus silk",
+    )
+    add_cover(document)
+    for article in ARTICLES:
+        add_article(document, article)
+    save_and_audit(document, OUTPUT)
+
+
+def build_individual(article: Path, output: Path) -> None:
+    text = article.read_text(encoding="utf-8")
+    settings = metadata(text)
+    document = Document()
+    configure_document(
+        document,
+        title=settings["Title"],
+        subject="Downs Style article review copy for Charles",
+    )
+    add_article(document, article, page_break=False)
+    save_and_audit(document, output)
+
+
+def main() -> None:
+    build_combined()
+    for article, output in INDIVIDUAL_OUTPUTS.items():
+        build_individual(article, output)
 
 
 if __name__ == "__main__":

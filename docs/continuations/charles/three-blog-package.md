@@ -2,13 +2,15 @@
 
 ## Delivery status
 
-The complete three-post sequence is ready for Charles’s review.
+The complete three-post sequence is ready for Charles’s review. **Charles-facing delivery is DOCX only; the Markdown files are internal production sources and should not be sent to him.**
 
 **Combined Charles review copy:** [Summer Fabric Trilogy](downs-style-three-new-blogs-review-copy.docx)
 
-1. [Cotton Tops and Bottoms for Summer: What Kind Are You Actually Wearing?](cotton-summer-post.md)
-2. [Silk, Satin, and Charmeuse: What Are You Actually Buying?](silk-summer-post.md)
-3. [Cotton vs. Silk: Who Wins Each Part of the Wardrobe?](cotton-vs-silk-post.md)
+1. [Cotton Tops and Bottoms for Summer: What Kind Are You Actually Wearing?](downs-style-cotton-summer-charles-review.docx)
+2. [Silk, Satin, and Charmeuse: What Are You Actually Buying?](downs-style-silk-charles-review.docx)
+3. [Cotton vs. Silk: Who Wins Each Part of the Wardrobe?](downs-style-cotton-vs-silk-charles-review.docx)
+
+Internal production sources: `cotton-summer-post.md`, `silk-summer-post.md`, and `cotton-vs-silk-post.md`.
 
 Each production file includes complete body copy, SEO settings, section-specific **Common error** pop-ups, image and placement instructions, editorial guardrails, fact-check notes, and sources.
 

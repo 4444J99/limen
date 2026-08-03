@@ -20,6 +20,7 @@ NS = {"w": W_NS}
 PACKAGES = {
     "cotton": {
         "path": CHARLES / "cotton-summer-post.md",
+        "docx": CHARLES / "downs-style-cotton-summer-charles-review.docx",
         "title": "Cotton Tops and Bottoms for Summer: What Kind Are You Actually Wearing?",
         "min_popups": 6,
         "required": [
@@ -32,6 +33,7 @@ PACKAGES = {
     },
     "silk": {
         "path": CHARLES / "silk-summer-post.md",
+        "docx": CHARLES / "downs-style-silk-charles-review.docx",
         "title": "Silk, Satin, and Charmeuse: What Are You Actually Buying?",
         "min_popups": 7,
         "required": [
@@ -44,6 +46,7 @@ PACKAGES = {
     },
     "comparison": {
         "path": CHARLES / "cotton-vs-silk-post.md",
+        "docx": CHARLES / "downs-style-cotton-vs-silk-charles-review.docx",
         "title": "Cotton vs. Silk: Who Wins Each Part of the Wardrobe?",
         "min_popups": 9,
         "required": [
@@ -187,6 +190,67 @@ def verify_docx(errors: list[str], source_texts: list[str]) -> None:
         fail(errors, "review DOCX has the wrong core title")
 
 
+def verify_individual_docx(
+    errors: list[str], name: str, spec: dict[str, object], source_text: str
+) -> None:
+    path = spec["docx"]
+    if not isinstance(path, Path) or not path.exists():
+        fail(errors, f"{name}: missing individual Charles review DOCX")
+        return
+
+    try:
+        with ZipFile(path) as archive:
+            names = set(archive.namelist())
+            if any(re.fullmatch(r"word/(?:header|footer)\d+\.xml", item) for item in names):
+                fail(errors, f"{name}: individual DOCX contains header/footer parts")
+            document_root = ET.fromstring(archive.read("word/document.xml"))
+            core_root = ET.fromstring(archive.read("docProps/core.xml"))
+    except (BadZipFile, KeyError, ET.ParseError) as exc:
+        fail(errors, f"{name}: individual DOCX is not structurally valid: {exc}")
+        return
+
+    title = spec["title"]
+    if not isinstance(title, str):
+        fail(errors, f"{name}: invalid title specification")
+        return
+    paragraphs = docx_paragraphs(document_root)
+    if normalized_text(title) not in paragraphs:
+        fail(errors, f"{name}: individual DOCX is missing its title")
+
+    blocks = [
+        block.strip()
+        for block in re.split(r"\n\s*\n", body_from(source_text))
+        if block.strip()
+    ]
+    blocks.extend(
+        re.findall(r"^\*\*(?:Trigger|Pop-up):\*\*\s*(.+)$", source_text, re.MULTILINE)
+    )
+    for block in blocks:
+        expected = normalized_text(block)
+        if expected and expected not in paragraphs:
+            fail(errors, f"{name}: individual DOCX missing source paragraph {expected!r}")
+
+    other_titles = {
+        normalized_text(other["title"])
+        for other_name, other in PACKAGES.items()
+        if other_name != name
+    }
+    if paragraphs.intersection(other_titles):
+        fail(errors, f"{name}: individual DOCX contains another article")
+    joined = " ".join(paragraphs)
+    if re.search(r"\b(?:candle|Transcend Essentials)\b", joined, flags=re.IGNORECASE):
+        fail(errors, f"{name}: individual DOCX contains queued companion copy")
+    if re.search(r"(?:\*\*|```|<p\b)", joined):
+        fail(errors, f"{name}: individual DOCX contains visible Markdown or HTML residue")
+    if document_root.find('.//w:pStyle[@w:val="Title"]', NS) is not None:
+        fail(errors, f"{name}: individual DOCX applies the Word Title style")
+
+    dc_ns = "http://purl.org/dc/elements/1.1/"
+    core_title = core_root.find(f"{{{dc_ns}}}title")
+    if core_title is None or core_title.text != title:
+        fail(errors, f"{name}: individual DOCX has the wrong core title")
+
+
 def main() -> int:
     errors: list[str] = []
     body_counts: dict[str, int] = {}
@@ -273,6 +337,12 @@ def main() -> int:
             fail(errors, "package index is missing the no-publish boundary")
         if "downs-style-three-new-blogs-review-copy.docx" not in index:
             fail(errors, "package index is missing the combined review copy")
+        for spec in PACKAGES.values():
+            docx = spec["docx"]
+            if not isinstance(docx, Path) or docx.name not in index:
+                fail(errors, "package index is missing an individual DOCX review copy")
+        if "Charles-facing delivery is DOCX only" not in index:
+            fail(errors, "package index is missing the no-Markdown delivery rule")
         if "candle-burning and Transcend Essentials stories remain queued companion drafts" not in index:
             fail(errors, "package index does not preserve the corrected scope")
 
@@ -288,6 +358,8 @@ def main() -> int:
 
     if len(source_texts) == len(PACKAGES):
         verify_docx(errors, source_texts)
+        for (name, spec), source_text in zip(PACKAGES.items(), source_texts, strict=True):
+            verify_individual_docx(errors, name, spec, source_text)
 
     if errors:
         for error in errors:
