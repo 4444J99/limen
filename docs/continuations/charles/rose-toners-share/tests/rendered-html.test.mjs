@@ -76,8 +76,7 @@ test("server-renders the complete six-product editorial preview", async () => {
   const disclosurePosition = html.indexOf("Affiliate disclosure");
   assert.notEqual(disclosurePosition, -1);
   for (const url of unchangedShoppingUrls) {
-    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    assert.equal((html.match(new RegExp(`href="${escaped}"`, "g")) ?? []).length, 2);
+    assert.equal(html.split(`href="${url}"`).length - 1, 2);
     assert.ok(html.indexOf(`href="${url}"`) > disclosurePosition);
   }
   assert.equal(
