@@ -27,10 +27,10 @@ import sys
 
 receipt = json.load(open(sys.argv[1], encoding="utf-8"))["deployment_receipt"]
 expected = {
-    "version_number": 11,
-    "version_id": "appgprj_6a6f989f3d908191aa52562e2f0c212d~appgver_742cdea5737081919466c2f1c5b77c63",
-    "source_commit": "468889391985d2e02c43c9aa07f0dce1cc41aa42",
-    "archive_content_hash": "sha256:22f0f908efed030ab383cac581397e8b9fcf98b08548df541bba0f4a93f99fe0",
+    "version_number": 12,
+    "version_id": "appgprj_6a6f989f3d908191aa52562e2f0c212d~appgver_74b8a360a0e48191925877b122c11787",
+    "source_commit": "9a169efaa60e18516e9be8a7948e7a14751f8047",
+    "archive_content_hash": "sha256:7c2651a9207663f8d050273830e83806620ccca1bc3afd6d814437e30568a40b",
     "site_source_manifest_sha256": sys.argv[3],
     "route": sys.argv[2],
     "status": "succeeded",

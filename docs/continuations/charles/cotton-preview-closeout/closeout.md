@@ -11,6 +11,9 @@ Proof is owned by `done.sh`, the deployment receipt in `evidence.json`, and the 
 screenshots under `evidence/`. Raw meeting transcripts remain private; only their redacted lineage
 is recorded here.
 
+The reviewed correction tree is deployed as Sites version 12. Its receipt binds the live route to
+the exact tracked site manifest, saved source commit, and immutable archive digest.
+
 Delivery custody is [PR #1791](https://github.com/organvm/limen/pull/1791). The tested successor
 capsule is remotely preserved at `f32283af3004dfed18f6a9e725b58b301916af0f` on
 `work/charles-cotton-preview-successor-20260803`; its private README owns the launch command.

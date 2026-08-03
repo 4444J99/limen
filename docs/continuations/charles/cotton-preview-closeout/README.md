@@ -7,11 +7,11 @@ and executable predicate without publishing private meeting transcripts or messa
 ## Current authority
 
 - Article source: `docs/continuations/charles/rose-toners-share/app/cotton/page.tsx`
-- Editorial source commit: `38d53030c18d8597c1eb59b40ade942070aa2183`
+- Editorial source commit: `7e53d8cef0108bdefeab95efff105a81805b51ec`
 - Source branch: `feat/charles-cotton-preview`
 - Delivery PR: <https://github.com/organvm/limen/pull/1791>
-- Deployed Sites version: `11`
-- Deployed source commit: `468889391985d2e02c43c9aa07f0dce1cc41aa42`
+- Deployed Sites version: `12`
+- Deployed source commit: `9a169efaa60e18516e9be8a7948e7a14751f8047`
 - Review route: <https://downs-style-rose-toners-preview.ajpadavano.chatgpt.site/cotton>
 - Live Downs Style / Squarespace mutation: none
 
