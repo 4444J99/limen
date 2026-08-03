@@ -29,13 +29,13 @@ def canonical_hash(value: Any) -> str:
     return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
 
 
-def _identifier(value: str, field_name: str) -> str:
+def _identifier(value: str, field_name: str | None) -> str:
     if not _IDENTIFIER_RE.fullmatch(value):
         raise ValueError(f"{field_name} must be a bounded protocol identifier")
     return value
 
 
-def _bounded_text(value: str, field_name: str) -> str:
+def _bounded_text(value: str, field_name: str | None) -> str:
     normalized = value.strip()
     if not normalized or "\x00" in normalized or len(normalized) > 8192:
         raise ValueError(f"{field_name} must be a non-empty bounded string")
@@ -57,7 +57,7 @@ class AgentIdentityV1(ProtocolModel):
     @field_validator("agent", "surface", "session_id")
     @classmethod
     def validate_identifiers(cls, value: str, info: ValidationInfo) -> str:
-        return _identifier(value, info.field_name or "")
+        return _identifier(value, info.field_name)
 
 
 class ConductPrincipalV1(ProtocolModel):
@@ -72,7 +72,7 @@ class ConductPrincipalV1(ProtocolModel):
     @field_validator("principal_id", "agent", "surface")
     @classmethod
     def validate_identifiers(cls, value: str, info: ValidationInfo) -> str:
-        return _identifier(value, info.field_name or "")
+        return _identifier(value, info.field_name)
 
     @model_validator(mode="after")
     def has_roles(self) -> "ConductPrincipalV1":
@@ -112,7 +112,7 @@ class ConductorSessionV1(ProtocolModel):
     @field_validator("session_id", "transport", "harvest_method")
     @classmethod
     def validate_identifiers(cls, value: str, info: ValidationInfo) -> str:
-        return _identifier(value, info.field_name or "")
+        return _identifier(value, info.field_name)
 
     @field_validator("capabilities")
     @classmethod
@@ -124,7 +124,7 @@ class ConductorSessionV1(ProtocolModel):
     @field_validator("supersedes")
     @classmethod
     def validate_supersedes(cls, value: str | None, info: ValidationInfo) -> str | None:
-        return None if value is None else _identifier(value, info.field_name or "")
+        return None if value is None else _identifier(value, info.field_name)
 
     @model_validator(mode="after")
     def identity_matches_session(self) -> "ConductorSessionV1":
@@ -159,7 +159,7 @@ class AuthorityEnvelopeV1(ProtocolModel):
     def validate_atoms(cls, value: frozenset[str], info: ValidationInfo) -> frozenset[str]:
         for atom in value:
             if atom != "*":
-                _identifier(atom, info.field_name or "")
+                _identifier(atom, info.field_name)
         return value
 
     @field_validator("path_prefixes")
@@ -218,7 +218,7 @@ class CampaignPacketV1(ProtocolModel):
     @field_validator("failed_predicate", "owner", "next_action")
     @classmethod
     def validate_bounded_text(cls, value: str, info: ValidationInfo) -> str:
-        return _bounded_text(value, info.field_name or "")
+        return _bounded_text(value, info.field_name)
 
 
 class WorkPacketV1(ProtocolModel):
@@ -254,7 +254,7 @@ class WorkPacketV1(ProtocolModel):
     @field_validator("work_id", "work_key")
     @classmethod
     def validate_work_identifiers(cls, value: str, info: ValidationInfo) -> str:
-        return _identifier(value, info.field_name or "")
+        return _identifier(value, info.field_name)
 
     @field_validator("preferred_agent")
     @classmethod
@@ -271,7 +271,7 @@ class WorkPacketV1(ProtocolModel):
     @field_validator("predicate", "receipt_target")
     @classmethod
     def validate_contract_text(cls, value: str, info: ValidationInfo) -> str:
-        return _bounded_text(value, info.field_name or "")
+        return _bounded_text(value, info.field_name)
 
     @model_validator(mode="after")
     def validate_hashes_and_shape(self) -> "WorkPacketV1":
@@ -340,7 +340,7 @@ class ExecutorAttemptV1(ProtocolModel):
     @field_validator("attempt_id", "run_id", "lease_id", "adapter")
     @classmethod
     def validate_identifiers(cls, value: str, info: ValidationInfo) -> str:
-        return _identifier(value, info.field_name or "")
+        return _identifier(value, info.field_name)
 
     @field_validator("provider_run_id")
     @classmethod
@@ -413,7 +413,7 @@ class CampaignBlockerV1(ProtocolModel):
     @field_validator("owner", "failed_predicate", "next_action")
     @classmethod
     def validate_bounded_text(cls, value: str, info: ValidationInfo) -> str:
-        return _bounded_text(value, info.field_name or "")
+        return _bounded_text(value, info.field_name)
 
 
 class CampaignRelayReceiptV1(ProtocolModel):
@@ -499,7 +499,7 @@ class CampaignRelayReceiptV1(ProtocolModel):
     )
     @classmethod
     def validate_identifiers(cls, value: str | None, info: ValidationInfo) -> str | None:
-        return _identifier(value, info.field_name or "") if value is not None else None
+        return _identifier(value, info.field_name) if value is not None else None
 
     @field_validator("selected_capabilities")
     @classmethod
@@ -608,7 +608,7 @@ class CampaignReceiptV1(ProtocolModel):
     @field_validator("campaign_id", "value_unit")
     @classmethod
     def validate_identifiers(cls, value: str, info: ValidationInfo) -> str:
-        return _identifier(value, info.field_name or "")
+        return _identifier(value, info.field_name)
 
     @field_validator("actual_value", mode="before")
     @classmethod
@@ -655,7 +655,7 @@ class RunReceiptV1(ProtocolModel):
     @field_validator("receipt_id", "run_id", "lease_id")
     @classmethod
     def validate_identifiers(cls, value: str, info: ValidationInfo) -> str:
-        return _identifier(value, info.field_name or "")
+        return _identifier(value, info.field_name)
 
     @model_validator(mode="after")
     def validate_campaign_outcome(self) -> "RunReceiptV1":
