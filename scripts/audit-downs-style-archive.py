@@ -20,11 +20,8 @@ import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 from urllib.parse import urljoin, urlparse
-
-from bs4 import BeautifulSoup
-
 
 BASE_URL = "https://www.downsstyle.com"
 SITEMAP_URL = f"{BASE_URL}/sitemap.xml"
@@ -46,6 +43,19 @@ COLLECTION_LABELS = {
     "travel": "Travel",
     "workoutsdiet": "Workouts/Diet",
 }
+
+BeautifulSoup: Any = None
+
+
+def load_beautiful_soup() -> bool:
+    """Load the optional parser after CLI state exists so absence is controlled."""
+    global BeautifulSoup
+    try:
+        from bs4 import BeautifulSoup as parser
+    except ImportError:
+        return False
+    BeautifulSoup = parser
+    return True
 
 
 @dataclass(frozen=True)
@@ -87,7 +97,8 @@ def fetch(url: str, *, timeout: float, attempts: int = 3) -> tuple[int, str, str
             last_error = exc
             if attempt + 1 < attempts:
                 time.sleep(0.5 * (attempt + 1))
-    assert last_error is not None
+    if last_error is None:
+        raise RuntimeError(f"fetch failed without an exception: {url}")
     raise last_error
 
 
@@ -181,7 +192,7 @@ def require_complete_discovery(failures: list[str]) -> None:
         raise SystemExit("archive discovery incomplete: " + "; ".join(failures))
 
 
-def clean_text(node: BeautifulSoup) -> str:
+def clean_text(node: Any) -> str:
     text = node.get_text(" ", strip=True)
     return " ".join(text.split())
 
@@ -231,11 +242,7 @@ def parse_post(
         author_node = soup.select_one(".Blog-meta-item--author")
         author = clean_text(author_node) if author_node else ""
         tags = sorted(
-            {
-                clean_text(tag)
-                for tag in soup.select(".Blog-meta-item--tags .Blog-meta-item-tag")
-                if clean_text(tag)
-            },
+            {clean_text(tag) for tag in soup.select(".Blog-meta-item--tags .Blog-meta-item-tag") if clean_text(tag)},
             key=str.casefold,
         )
 
@@ -303,6 +310,12 @@ def write_inventory(path: Path, records: list[PostRecord]) -> None:
 
 
 def write_corpus(path: Path, records_and_bodies: list[tuple[PostRecord, str]]) -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    resolved = path.resolve()
+    if resolved.is_relative_to(repo_root):
+        raise SystemExit(
+            "private corpus output must be outside the repository worktree; use a system temporary directory"
+        )
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = [
         {
@@ -353,6 +366,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--timeout", type=float, default=30.0)
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Write validated artifacts; default mode audits without mutating files",
+    )
     return parser.parse_args()
 
 
@@ -360,6 +378,12 @@ def main() -> int:
     args = parse_args()
     if not 1 <= args.workers <= 8:
         raise SystemExit("--workers must be between 1 and 8")
+    if not load_beautiful_soup():
+        print(
+            "archive audit unavailable: beautifulsoup4 is not installed; "
+            "install scripts/requirements-downs-style-archive.txt"
+        )
+        return 0
 
     _, _, sitemap_xml = fetch(SITEMAP_URL, timeout=args.timeout)
     sitemap_posts = parse_sitemap(sitemap_xml)
@@ -417,22 +441,27 @@ def main() -> int:
         )
     )
     records = [record for record, _ in audited]
-    write_inventory(args.output, records)
-    if args.corpus_json:
-        write_corpus(args.corpus_json, audited)
-    if args.site_json:
-        write_site_inventory(args.site_json, records)
-
     failures = [record for record in records if record.error or record.http_status != 200]
-    sitemap_only = [
-        record for record in records if record.discovery_sources == "sitemap"
-    ]
+    sitemap_only = [record for record in records if record.discovery_sources == "sitemap"]
     non_sitemap = [record for record in records if not record.sitemap_lastmod]
     print(f"inventory: {len(records)} posts")
     print(f"sitemap-only: {len(sitemap_only)}")
     print(f"discovered outside sitemap: {len(non_sitemap)}")
     print(f"parse/fetch failures: {len(failures)}")
-    return 1 if failures else 0
+    if failures:
+        print("validated artifacts withheld because one or more posts failed")
+        return 1
+    if not args.apply:
+        print("audit complete; no artifacts written without --apply")
+        return 0
+
+    write_inventory(args.output, records)
+    if args.corpus_json:
+        write_corpus(args.corpus_json, audited)
+    if args.site_json:
+        write_site_inventory(args.site_json, records)
+    print("validated artifacts written with --apply")
+    return 0
 
 
 if __name__ == "__main__":

@@ -123,16 +123,8 @@ def summarize(posts: list[dict[str, Any]]) -> dict[str, Any]:
     paragraphs: list[str] = []
     for post in posts:
         compact = " ".join(post["body"].split())
-        sentences.extend(
-            sentence
-            for sentence in SENTENCE_BOUNDARY.split(compact)
-            if len(words(sentence)) >= 3
-        )
-        paragraphs.extend(
-            paragraph.strip()
-            for paragraph in post["body"].split("\n\n")
-            if paragraph.strip()
-        )
+        sentences.extend(sentence for sentence in SENTENCE_BOUNDARY.split(compact) if len(words(sentence)) >= 3)
+        paragraphs.extend(paragraph.strip() for paragraph in post["body"].split("\n\n") if paragraph.strip())
 
     joined = "\n".join(post["body"] for post in posts)
     normalized_text = joined.lower().replace("’", "'")
@@ -142,9 +134,7 @@ def summarize(posts: list[dict[str, Any]]) -> dict[str, Any]:
     pronouns = {
         label: {
             "count": sum(word_counts[word] for word in group),
-            "per_1000_words": safe_rate(
-                sum(word_counts[word] for word in group), word_total
-            ),
+            "per_1000_words": safe_rate(sum(word_counts[word] for word in group), word_total),
         }
         for label, group in PRONOUN_GROUPS.items()
     }
@@ -155,9 +145,7 @@ def summarize(posts: list[dict[str, Any]]) -> dict[str, Any]:
         }
         for marker in LEXICAL_MARKERS
     }
-    phrase_counts = {
-        marker: phrase_count(normalized_text, marker) for marker in PHRASE_MARKERS
-    }
+    phrase_counts = {marker: phrase_count(normalized_text, marker) for marker in PHRASE_MARKERS}
     phrases = {
         marker: {
             "count": count,
@@ -170,37 +158,22 @@ def summarize(posts: list[dict[str, Any]]) -> dict[str, Any]:
         "posts": len(posts),
         "words": word_total,
         "median_post_words": round(statistics.median(post_lengths), 2) if posts else 0,
-        "mean_sentence_words": round(statistics.mean(sentence_lengths), 2)
-        if sentence_lengths
-        else 0,
-        "median_paragraph_words": round(statistics.median(paragraph_lengths), 2)
-        if paragraph_lengths
-        else 0,
+        "mean_sentence_words": round(statistics.mean(sentence_lengths), 2) if sentence_lengths else 0,
+        "median_paragraph_words": round(statistics.median(paragraph_lengths), 2) if paragraph_lengths else 0,
         "pronouns": pronouns,
         "punctuation_per_1000_words": {
             "question_marks": safe_rate(joined.count("?"), word_total),
             "exclamation_marks": safe_rate(joined.count("!"), word_total),
         },
         "structural_post_counts": {
-            "first_person_title": sum(
-                bool(re.search(r"\b(?:i|my)\b", post["title"], re.IGNORECASE))
-                for post in posts
-            ),
+            "first_person_title": sum(bool(re.search(r"\b(?:i|my)\b", post["title"], re.IGNORECASE)) for post in posts),
             "question_title": sum("?" in post["title"] for post in posts),
             "review_title": sum("review" in post["title"].lower() for post in posts),
-            "shop_cue": sum(
-                bool(re.search(r"\bshop\b", post["body"], re.IGNORECASE))
-                for post in posts
-            ),
+            "shop_cue": sum(bool(re.search(r"\bshop\b", post["body"], re.IGNORECASE)) for post in posts),
             "reader_thanks": sum(
-                "thanks" in post["body"].lower()
-                and "reading" in post["body"].lower()
-                for post in posts
+                "thanks" in post["body"].lower() and "reading" in post["body"].lower() for post in posts
             ),
-            "numeric_rating": sum(
-                bool(re.search(r"\b\d+(?:\.\d+)?\s*/\s*10\b", post["body"]))
-                for post in posts
-            ),
+            "numeric_rating": sum(bool(re.search(r"\b\d+(?:\.\d+)?\s*/\s*10\b", post["body"])) for post in posts),
         },
         "lexical_markers": lexical,
         "phrase_markers": phrases,
@@ -217,6 +190,11 @@ def parse_args() -> argparse.Namespace:
         default=date(2024, 12, 31),
         help="Latest publication date included in the causal voice baseline",
     )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Write the derived metrics; default mode compares without mutating files",
+    )
     return parser.parse_args()
 
 
@@ -231,18 +209,18 @@ def main() -> int:
         missing = required - post.keys()
         if missing:
             raise SystemExit(f"post {index} is missing fields: {sorted(missing)}")
+        if not isinstance(post["body"], str) or not post["body"].strip():
+            raise SystemExit(f"post {index} has no extracted article body")
+    if len(posts) != 258:
+        raise SystemExit(f"expected 258 public posts, found {len(posts)}")
+    if len({post["url"] for post in posts}) != len(posts):
+        raise SystemExit("corpus URLs must be unique")
 
-    baseline = [
-        post
-        for post in posts
-        if date.fromisoformat(post["published_date"][:10]) <= args.baseline_cutoff
-    ]
+    baseline = [post for post in posts if date.fromisoformat(post["published_date"][:10]) <= args.baseline_cutoff]
     excluded = [post for post in posts if post not in baseline]
 
     by_year = {
-        year: summarize(
-            [post for post in posts if post["published_date"].startswith(year)]
-        )
+        year: summarize([post for post in posts if post["published_date"].startswith(year)])
         for year in sorted({post["published_date"][:4] for post in posts})
     }
     by_category = {
@@ -250,9 +228,7 @@ def main() -> int:
         for category in sorted({post["category"] for post in posts})
     }
     by_era = {
-        era: summarize(
-            [post for post in posts if era_for(post["published_date"]) == era]
-        )
+        era: summarize([post for post in posts if era_for(post["published_date"]) == era])
         for era in dict.fromkeys(era_for(post["published_date"]) for post in posts)
     }
 
@@ -268,8 +244,7 @@ def main() -> int:
         "baseline": {
             "cutoff": args.baseline_cutoff.isoformat(),
             "rationale": (
-                "Causal baseline excludes posts published after the historical corpus "
-                "that prompted this voice audit."
+                "Causal baseline excludes posts published after the historical corpus that prompted this voice audit."
             ),
             "included_posts": len(baseline),
             "excluded_posts": len(excluded),
@@ -289,14 +264,19 @@ def main() -> int:
         ],
     }
     if contains_key(output, "body"):
-        raise AssertionError("derived output must not expose article bodies")
+        raise SystemExit("derived output must not expose article bodies")
     serialized = json.dumps(output, indent=2, ensure_ascii=False, sort_keys=False) + "\n"
+    if not args.apply:
+        if not args.output.exists():
+            raise SystemExit("metrics output is absent; rerun with --apply to create it")
+        if args.output.read_text(encoding="utf-8") != serialized:
+            raise SystemExit("metrics output is stale; review and rerun with --apply")
+        print(f"validated {args.output}; no artifacts written without --apply")
+        return 0
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(serialized, encoding="utf-8")
-    print(
-        f"analyzed {len(posts)} posts; baseline {len(baseline)}; "
-        f"excluded {len(excluded)}; wrote {args.output}"
-    )
+    print(f"analyzed {len(posts)} posts; baseline {len(baseline)}; excluded {len(excluded)}; wrote {args.output}")
     return 0
 
 

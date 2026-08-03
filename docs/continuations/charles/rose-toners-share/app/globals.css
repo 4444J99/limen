@@ -26,7 +26,7 @@ body {
     radial-gradient(circle at 95% 5%, rgb(225 176 178 / 0.28), transparent 22rem),
     var(--paper);
   font-family: var(--font-sans), sans-serif;
-  text-rendering: optimizeLegibility;
+  text-rendering: optimizelegibility;
 }
 
 body::before {
@@ -115,7 +115,7 @@ footer > a::after {
   bottom: 7px;
   left: 0;
   height: 1px;
-  background: currentColor;
+  background: currentcolor;
   content: "";
   transform: scaleX(0);
   transform-origin: right;
@@ -505,7 +505,7 @@ footer > a:focus-visible::after {
 .product-copy h2 a:hover,
 .product-copy h2 a:focus-visible {
   color: var(--rose-dark);
-  text-decoration-color: currentColor;
+  text-decoration-color: currentcolor;
 }
 
 .paid-link-notice {
@@ -1341,7 +1341,7 @@ footer > a {
 .archive-empty button {
   padding: 12px 0;
   border: 0;
-  border-bottom: 1px solid currentColor;
+  border-bottom: 1px solid currentcolor;
   color: var(--rose-dark);
   background: transparent;
   cursor: pointer;
@@ -1773,13 +1773,13 @@ footer > a {
 .voice-guardrails ul {
   margin: 55px 0 0;
   padding: 0;
-  border-top: 1px solid currentColor;
+  border-top: 1px solid currentcolor;
   list-style: none;
 }
 
 .voice-guardrails li {
   padding: 21px 0;
-  border-bottom: 1px solid currentColor;
+  border-bottom: 1px solid currentcolor;
   font-family: var(--font-display), serif;
   font-size: 19px;
   line-height: 1.4;
@@ -2328,6 +2328,7 @@ body:has(.cotton-page)::before {
   --cotton-rust: #a64a31;
   --cotton-sand: #d3b879;
   --cotton-line: rgb(38 48 45 / 0.18);
+
   min-height: 100vh;
   color: var(--cotton-ink);
   background: var(--cotton-paper);
@@ -2396,7 +2397,7 @@ body:has(.cotton-page)::before {
   bottom: 7px;
   left: 0;
   height: 1px;
-  background: currentColor;
+  background: currentcolor;
   content: "";
   transform: scaleX(0);
   transform-origin: right;

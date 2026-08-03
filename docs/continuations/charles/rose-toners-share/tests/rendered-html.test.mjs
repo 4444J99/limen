@@ -75,7 +75,7 @@ test("server-renders the complete six-product editorial preview", async () => {
   assert.match(html, /bring the whole toner ritual roaring back/);
   assert.match(html, /glycerin and hyaluronic acid/);
   assert.match(html, /Affiliate disclosure/);
-  assert.match(html, /As an Amazon Associate I earn from qualifying purchases/);
+  assert.doesNotMatch(html, /Amazon Associate/);
   assert.match(html, /Paid link — Downs Style may earn a commission/);
   assert.match(html, /Each of the six goes straight/);
   assert.equal((html.match(/<section class="product/g) ?? []).length, 6);
@@ -210,14 +210,21 @@ test("server-renders the evidence-backed Charles voice system", async () => {
   assert.equal(response.status, 200);
 
   const html = await response.text();
+  const voiceMetrics = JSON.parse(
+    await readFile(new URL("../../downs-style-voice-metrics.json", import.meta.url), "utf8"),
+  );
+  const baseline = voiceMetrics.baseline.metrics;
   assert.match(html, /His voice was/);
   assert.match(html, /already there/);
   assert.match(html, /257-post causal baseline/);
-  assert.match(html, /76,597/);
+  assert.match(html, new RegExp(baseline.words.toLocaleString("en-US")));
   assert.match(html, /alphabetic tokens in the historical baseline/);
-  assert.match(html, /45\.01/);
-  assert.match(html, /0\.98/);
-  assert.match(html, /154×/);
+  assert.match(html, new RegExp(String(baseline.pronouns.first_person_singular.per_1000_words).replace(".", "\\.")));
+  assert.match(html, new RegExp(String(baseline.pronouns.first_person_plural.per_1000_words).replace(".", "\\.")));
+  assert.match(
+    html,
+    new RegExp(`${baseline.phrase_markers["i love"].count}(?:<!-- -->)?×`),
+  );
   assert.match(html, /I is the fingerprint/);
   assert.match(html, /Thematic core/);
   assert.match(html, /Natural Center/);

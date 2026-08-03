@@ -370,8 +370,7 @@ export default function Home() {
         <strong>Affiliate disclosure</strong>
         <p>
           This post contains an affiliate link. If you buy through it, Downs
-          Style may earn a commission at no extra cost to you. As an Amazon
-          Associate I earn from qualifying purchases.
+          Style may earn a commission at no extra cost to you.
         </p>
       </aside>
 

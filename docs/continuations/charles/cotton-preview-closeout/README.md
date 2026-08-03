@@ -7,7 +7,8 @@ and executable predicate without publishing private meeting transcripts or messa
 ## Current authority
 
 - Article source: `docs/continuations/charles/rose-toners-share/app/cotton/page.tsx`
-- Editorial source commit: `7e53d8cef0108bdefeab95efff105a81805b51ec`
+- Article source commit: `38d53030c18d8597c1eb59b40ade942070aa2183`
+- Editorial review commit: `7e53d8cef0108bdefeab95efff105a81805b51ec`
 - Source branch: `feat/charles-cotton-preview`
 - Delivery PR: <https://github.com/organvm/limen/pull/1791>
 - Deployed Sites version: `12`
@@ -45,8 +46,9 @@ absent from public Git history.
 docs/continuations/charles/cotton-preview-closeout/done.sh
 ```
 
-The predicate builds and tests every preview route, lints the source, checks the deployed cotton
-route, rejects the superseded opening, validates the evidence set, and requires a clean worktree.
+The predicate runs the scoped repository gate, whose registered local check builds and tests every
+preview route, lints the source, checks the deployed cotton route, rejects the superseded opening,
+validates the five named PNG evidence files by signature, and then requires a clean worktree.
 
 The admitted successor capsule is durably recorded on
 `work/charles-cotton-preview-successor-20260803` at

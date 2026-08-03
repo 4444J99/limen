@@ -75,12 +75,14 @@ python3 -m venv /tmp/downs-style-archive-venv
 
 /tmp/downs-style-archive-venv/bin/python scripts/audit-downs-style-archive.py \
   --output docs/continuations/charles/downs-style-post-ledger.csv \
-  --corpus-json /tmp/downs-style-corpus.json
+  --corpus-json /tmp/downs-style-corpus.json \
+  --apply
 
 /tmp/downs-style-archive-venv/bin/python scripts/analyze-downs-style-voice.py \
   --corpus-json /tmp/downs-style-corpus.json \
   --output docs/continuations/charles/downs-style-voice-metrics.json \
-  --baseline-cutoff 2024-12-31
+  --baseline-cutoff 2024-12-31 \
+  --apply
 ```
 
 Current artifact fingerprints:

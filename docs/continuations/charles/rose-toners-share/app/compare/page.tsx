@@ -200,7 +200,7 @@ const sections: ComparisonSection[] = [
     original: "Not present in Charles's original draft.",
     human: "Not present in Charles's original draft.",
     edited: thoughtClusters(
-      "Affiliate disclosure: This post contains an affiliate link. If you buy through it, Downs Style may earn a commission at no extra cost to you. As an Amazon Associate I earn from qualifying purchases.",
+      "Affiliate disclosure: This post contains an affiliate link. If you buy through it, Downs Style may earn a commission at no extra cost to you.",
       "Paid link — Downs Style may earn a commission if you shop this product",
     ),
     decision:
@@ -339,7 +339,7 @@ export default function CompareDrafts() {
       </section>
 
       <section className="comparison-board" id="comparison-board">
-        <div className="panel-headings" aria-hidden="true">
+        <div className="panel-headings">
           <div>
             <span>01</span>
             <strong>Original draft</strong>

@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "../site-header";
+import voiceMetrics from "../../../downs-style-voice-metrics.json";
+
+const baselineMetrics = voiceMetrics.baseline.metrics;
+const voiceHeadline = {
+  words: baselineMetrics.words.toLocaleString("en-US"),
+  firstPerson: baselineMetrics.pronouns.first_person_singular.per_1000_words,
+  firstPersonPlural: baselineMetrics.pronouns.first_person_plural.per_1000_words,
+  love: baselineMetrics.phrase_markers["i love"].count,
+} as const;
 
 export const metadata: Metadata = {
   title: "Charles's voice system | Downs Style Studio",
@@ -114,19 +123,19 @@ export default function VoicePage() {
 
       <section className="voice-metrics" aria-label="Headline voice evidence">
         <article>
-          <strong>76,597</strong>
+          <strong>{voiceHeadline.words}</strong>
           <span>alphabetic tokens in the historical baseline</span>
         </article>
         <article>
-          <strong>45.01</strong>
+          <strong>{voiceHeadline.firstPerson}</strong>
           <span>I / me / my / mine uses per 1,000 words</span>
         </article>
         <article>
-          <strong>0.98</strong>
+          <strong>{voiceHeadline.firstPersonPlural}</strong>
           <span>we / us / our uses per 1,000 words</span>
         </article>
         <article>
-          <strong>154×</strong>
+          <strong>{voiceHeadline.love}×</strong>
           <span>“I love” across the archive baseline</span>
         </article>
       </section>
