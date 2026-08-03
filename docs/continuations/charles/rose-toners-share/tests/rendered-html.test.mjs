@@ -131,6 +131,13 @@ test("server-renders the three-panel draft comparison", async () => {
   assert.match(html, /Organic Flowers Toner Deep Rich/);
   assert.match(html, /Santa Maria Novella Acqua di Rose/);
   assert.match(html, /current dye disclosure stays factual and calm/);
+  assert.match(html, /<ins>kept<\/ins>/);
+  const compareSource = await readFile(
+    new URL("../app/compare/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(compareSource, /supporting botanicals kept it from feeling like plain floral water/);
+  assert.doesNotMatch(compareSource, /supporting botanicals keep it from feeling like plain floral water/);
   assert.match(html, /<ins>/);
   assert.match(html, /<del>/);
   assert.equal((html.match(/class="comparison-row"/g) ?? []).length, 11);

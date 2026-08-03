@@ -100,6 +100,32 @@ def main() -> int:
         "article body not extracted"
     )
     assert audit["extraction_error"](article_found=True, body="text") == ""
+    parse_post = audit["parse_post"]
+    original_fetch = parse_post.__globals__["fetch"]
+    original_soup = parse_post.__globals__["BeautifulSoup"]
+    try:
+        parse_post.__globals__["fetch"] = lambda *_args, **_kwargs: (
+            200,
+            "https://www.downsstyle.com/skincare/2026/8/3/replacement",
+            "<article>replacement copy must not be parsed</article>",
+        )
+        parse_post.__globals__["BeautifulSoup"] = lambda *_args, **_kwargs: (
+            (_ for _ in ()).throw(AssertionError("redirect body was parsed"))
+        )
+        redirected, redirected_body = parse_post(
+            "https://www.downsstyle.com/look-book/2024/7/1/original",
+            sources={"sitemap"},
+            lastmod="2026-08-03",
+            timeout=1,
+        )
+    finally:
+        parse_post.__globals__["fetch"] = original_fetch
+        parse_post.__globals__["BeautifulSoup"] = original_soup
+    assert redirected.http_status == 200
+    assert redirected.final_url.endswith("/replacement")
+    assert redirected.error.startswith("unexpected archive redirect:")
+    assert redirected.content_sha256 == ""
+    assert redirected_body == ""
     try:
         audit["require_complete_discovery"](["homepage: unavailable"])
     except SystemExit as exc:

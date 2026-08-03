@@ -197,6 +197,25 @@ def parse_post(
     category = COLLECTION_LABELS.get(collection, collection)
     try:
         status, final_url, html = fetch(url, timeout=timeout)
+        if canonical_post_url(final_url) != canonical_post_url(url):
+            record = PostRecord(
+                published_date=fallback_date,
+                category=category,
+                collection=collection,
+                title="",
+                url=url,
+                discovery_sources=";".join(sorted(set(sources))),
+                sitemap_lastmod=lastmod,
+                http_status=status,
+                final_url=final_url,
+                author="",
+                tags="",
+                word_count=0,
+                body_blocks=0,
+                content_sha256="",
+                error=f"unexpected archive redirect: {final_url}",
+            )
+            return record, ""
         soup = BeautifulSoup(html, "html.parser")
         article = soup.select_one("article.BlogItem")
         title_node = soup.select_one("h1.BlogItem-title")

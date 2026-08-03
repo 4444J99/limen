@@ -4,7 +4,6 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 site_dir="$repo_root/docs/continuations/charles/rose-toners-share"
-site_path="docs/continuations/charles/rose-toners-share"
 route="https://downs-style-rose-toners-preview.ajpadavano.chatgpt.site/cotton"
 receipt="$script_dir/evidence.json"
 
@@ -12,16 +11,13 @@ python3 "$repo_root/scripts/tests/downs-style-analysis.test.py"
 python3 "$repo_root/scripts/verify-downs-style-archive.py"
 
 cd "$site_dir"
+npm ci
 npm test
 npm run lint
 
-site_source_manifest_sha256="$(
-  git -C "$repo_root" ls-tree -r HEAD -- "$site_path" \
-    | LC_ALL=C sort \
-    | shasum -a 256 \
-    | awk '{print $1}'
-)"
-python3 - "$receipt" "$route" "$site_source_manifest_sha256" <<'PY'
+# Version 12 owns the cotton URL. Other private studio routes can move without
+# claiming that the complete current studio tree was deployed as version 12.
+python3 - "$receipt" "$route" <<'PY'
 import json
 import sys
 
@@ -31,7 +27,7 @@ expected = {
     "version_id": "appgprj_6a6f989f3d908191aa52562e2f0c212d~appgver_74b8a360a0e48191925877b122c11787",
     "source_commit": "9a169efaa60e18516e9be8a7948e7a14751f8047",
     "archive_content_hash": "sha256:7c2651a9207663f8d050273830e83806620ccca1bc3afd6d814437e30568a40b",
-    "site_source_manifest_sha256": sys.argv[3],
+    "site_source_manifest_sha256": "90c3c92d34252fc8a1138b69d08478326b9ee7fcd2b8247c791c278b7e3dbcb2",
     "route": sys.argv[2],
     "status": "succeeded",
 }

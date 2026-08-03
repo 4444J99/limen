@@ -101,7 +101,7 @@ const sections: ComparisonSection[] = [
     edited: thoughtClusters(
       "Mario Badescu Facial Spray With Aloe, Herbs And Rosewater",
       "If you had any sort of affliction with skincare like we did in the late 2010s, then you already know this bottle. From your favorite celebrities to your next-door neighbor, someone you knew owned at least one Mario Badescu product, if not this one specifically.",
-      "Not without good cause, of course. Rosewater and aloe give the facial spray the light, refreshing personality we all remember, while the supporting botanicals keep it from feeling like plain floral water.",
+      "Not without good cause, of course. Rosewater and aloe give the facial spray the light, refreshing personality we all remember, while the supporting botanicals kept it from feeling like plain floral water.",
       "The nostalgia is real, although it cannot answer what is in the bottle now. The current label lists Red 40 and Yellow 5, which does not need to become a medical panic to be worth mentioning.",
       "If you want a dye-free mist, this romance ends here; if you do not, the bottle is still very easy to understand. We just cannot call the formula all-natural anymore.",
     ),
