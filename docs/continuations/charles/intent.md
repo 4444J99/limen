@@ -3,7 +3,7 @@
 
 # charles — collaboration domain
 
-**Tier T2** (operator-accepted 2026-07-22) · **3 lanes** ·
+**Tier T2** (operator-accepted 2026-07-22) · **5 lanes** ·
 owner of record `organs/consulting/constellation/registry.yaml`.
 
 ## Objective
@@ -39,7 +39,33 @@ Repos:
 Keywords: your-fit-tailored, circular apparel, weekly subscription, fit intelligence, tism · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug charles --project your-fit-tailored`
 
+### downs-style — stage **live**, public face **portal**
+
+> Register note: live Squarespace publication; private hub holds the editorial studio, 258-post archive, production queue, and encrypted-custody receipts
+
+The lane is LIVE — operate and grow it; do not rebuild it. Funnel, contract, and follow-through work only, honoring any register note that closes the build lane.
+
+Repos:
+- `organvm-iii-ergon/charles-universe`
+
+Keywords: downs style, editorial studio, skincare, style blog, archive, voice system · Corpus evidence:
+`python3 scripts/constellation-dossier.py --slug charles --project downs-style`
+
+### transcend-essentials — stage **live**, public face **portal**
+
+> Register note: live Shopify business; private hub holds brand, editorial, registry, and legal-index material without credentials or customer records
+
+The lane is LIVE — operate and grow it; do not rebuild it. Funnel, contract, and follow-through work only, honoring any register note that closes the build lane.
+
+Repos:
+- `organvm-iii-ergon/charles-universe`
+
+Keywords: transcend essentials, skincare, soap, candles, shopify, membership · Corpus evidence:
+`python3 scripts/constellation-dossier.py --slug charles --project transcend-essentials`
+
 ### cosmetics-universe — stage **idea**, public face **none**
+
+> Register note: evidence-gated dossier only; establish customer, differentiation, ownership, and a falsifiable pilot before creating a repository
 
 Dossier first. Assemble the evidence from the corpus (`python3 scripts/constellation-dossier.py --slug charles --project cosmetics-universe`), then bring a build/no-build recommendation to the operator's demand review. Do not scaffold a repo before that review — minting is `scripts/repo-genesis.py`'s job and it is evidence-gated.
 
@@ -60,7 +86,7 @@ Keywords: cosmetics, beauty universe, evolving cosmetics · Corpus evidence:
 
 ## Fan-out
 
-At most **3** children, only via `limen conduct split <parent_run> --packet`, which reserves
+At most **4** children, only via `limen conduct split <parent_run> --packet`, which reserves
 each child against this session's lineage before launch. Never nest a git worktree inside this
 one — the reclaim organ sweeps roots, so a nested worktree leaks. Tier every child explicitly.
 

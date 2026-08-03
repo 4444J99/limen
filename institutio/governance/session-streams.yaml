@@ -457,7 +457,7 @@ streams:
   charles:
     family: constellation
     register_tier: T2
-    title: "charles's domain (T2, 3 lanes)"
+    title: "charles's domain (T2, 5 lanes)"
     branch_prefix: feat
     intent: docs/continuations/charles/intent.md
     requires: []
@@ -467,8 +467,8 @@ streams:
     predicate_status: existing
     runway: 1d
     owner_of_record: organs/consulting/constellation/registry.yaml
-    max_children: 3
-    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): charles's whole collaboration domain — lanes: mirror-mirror (stage building), your-fit-tailored (stage building), cosmetics-universe (stage idea)."
+    max_children: 4
+    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): charles's whole collaboration domain — lanes: mirror-mirror (stage building), your-fit-tailored (stage building), downs-style (stage live), transcend-essentials (stage live), cosmetics-universe (stage idea)."
 
   scott:
     family: constellation

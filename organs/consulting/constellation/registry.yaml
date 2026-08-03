@@ -111,12 +111,27 @@ people:
         public_face_state: readme
         dossier: null
         notes: spec-complete, pilot-kit ready (Epoch 0 done); next rung is the Epoch-1 foundation build
+      - name: downs-style
+        repo: organvm-iii-ergon/charles-universe
+        keywords: [downs style, editorial studio, skincare, style blog, archive, voice system]
+        stage: live
+        public_face_state: portal
+        dossier: null
+        notes: live Squarespace publication; private hub holds the editorial studio, 258-post archive, production queue, and encrypted-custody receipts
+      - name: transcend-essentials
+        repo: organvm-iii-ergon/charles-universe
+        keywords: [transcend essentials, skincare, soap, candles, shopify, membership]
+        stage: live
+        public_face_state: portal
+        dossier: null
+        notes: live Shopify business; private hub holds brand, editorial, registry, and legal-index material without credentials or customer records
       - name: cosmetics-universe
         repo: null
         keywords: [cosmetics, beauty universe, evolving cosmetics]
         stage: idea
         public_face_state: none
         dossier: null
+        notes: evidence-gated dossier only; establish customer, differentiation, ownership, and a falsifiable pilot before creating a repository
 
   - slug: scott
     tier: T2

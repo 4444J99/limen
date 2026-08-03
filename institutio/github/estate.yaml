@@ -721,6 +721,7 @@ repo_overrides:
   # ── ERGON shelf rows (Phase 2 T1, 2026-07-30) — movers without prior judgment rows; class
   # carried verbatim from the census at move time, so the tranche changed placement, never posture.
   organvm-iii-ergon/collaboration-operations-platform: {class: operation_private, audience: self, why: "universal private collaboration operations and records hub — no collaborator grants; client records are centrally held in partitioned owner spaces; synthetic fixtures only; no cross-client disclosure"}
+  organvm-iii-ergon/charles-universe: {class: operation_private, audience: self, why: "private Charles collaboration and business hub — editorial and registry artifacts only; raw correspondence, recordings, credentials, customer records, and private originals remain encrypted outside Git; collaborator access requires an explicit identity and ownership grant"}
   organvm-iii-ergon/a-i-council--coliseum: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
   organvm-iii-ergon/agent--claude-smith: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
   organvm-iii-ergon/bountyscope: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
