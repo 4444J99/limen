@@ -89,6 +89,7 @@ receipt owners, with only the missing contracts and coordinator added here.
 ## Implementation and verification receipt
 
 - Limen implementation branch: `feat/daily-communications-application-loop-20260803`.
+- Limen draft PR #1798 is the remote custody receipt for that branch.
 - Application-owner truthfulness branch: PR #112, commit `bf1f45ef`, stacked on
   PR #111; its focused suite passed 32 tests and Ruff.
 - Limen focused wave passed 25 tests across daily execution, MCP delegation,
