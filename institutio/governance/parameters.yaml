@@ -3807,6 +3807,30 @@ parameters:
     self_update: "set transiently by conducted capsule registration when the same human-protected session is already live"
     owner: continuity
     note: "Internal one-launch sentinel. A value of 1 makes an idempotent kickstart return without spawning a duplicate provider; it is unset before each registration attempt and outside that narrow boundary."
+  LIMEN_WORKSTREAM_PROVIDER_ACTIVE:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_ACTIVE
+    self_update: "set to 1 only in the admitted provider process environment"
+    owner: continuity
+    note: "Provider-side recursion sentinel. Generated kickstart scripts honor it only when the capsule, worktree, and session bindings below all match their exact identity; a host shell leaves it unset."
+  LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID
+    self_update: "bound from LIMEN_CAPSULE_ID immediately before native provider launch"
+    owner: continuity
+    note: "Exact capsule identity paired with LIMEN_WORKSTREAM_PROVIDER_ACTIVE. A mismatch cannot suppress a host bootstrap or a different capsule."
+  LIMEN_WORKSTREAM_PROVIDER_WORKTREE:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_WORKTREE
+    self_update: "bound from the admitted absolute LIMEN_WORKTREE immediately before native provider launch"
+    owner: continuity
+    note: "Exact linked-worktree binding paired with the provider recursion sentinel. It does not grant the provider access to the shared common Git directory."
+  LIMEN_WORKSTREAM_PROVIDER_SESSION_ID:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_SESSION_ID
+    self_update: "bound from LIMEN_SESSION_ID immediately before native provider launch"
+    owner: continuity
+    note: "Exact admitted-session binding paired with the provider recursion sentinel. It prevents a stale or inherited marker from suppressing a later host launch."
   LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:
     default: 120
     env: LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS

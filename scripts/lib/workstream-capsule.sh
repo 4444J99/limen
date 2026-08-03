@@ -313,6 +313,58 @@ workstream_exact_remote_ref_head() {
   printf '%s\n' "$observed_head"
 }
 
+workstream_validate_launch_environment() {
+  local timeout_seconds="$1"
+  local contract_helper="${LIMEN_CAPSULE_DIR:-}/workstream-contract.py"
+  local git_paths="" git_dir="" common_git_dir=""
+
+  if [[ ! -f "$contract_helper" ]]; then
+    printf 'launch-environment error: capsule contract helper is unavailable\n' >&2
+    return 2
+  fi
+  if ! git_paths="$(git rev-parse --path-format=absolute --git-dir --git-common-dir 2>/dev/null)"; then
+    printf 'launch-environment error: linked worktree Git metadata could not be resolved\n' >&2
+    return 2
+  fi
+  git_dir="$(printf '%s\n' "$git_paths" | sed -n '1p')"
+  common_git_dir="$(printf '%s\n' "$git_paths" | sed -n '2p')"
+  if [[ -z "$git_dir" || -z "$common_git_dir"
+    || "$git_dir" != /* || "$common_git_dir" != /* ]]; then
+    printf 'launch-environment error: linked worktree Git metadata resolved to an invalid path\n' >&2
+    return 2
+  fi
+  if [[ ! -d "$git_dir" || ! -w "$git_dir" ]]; then
+    printf 'launch-environment error: linked worktree Git directory is not writable: %s\n' "$git_dir" >&2
+    return 2
+  fi
+  if [[ ! -d "$common_git_dir" || ! -w "$common_git_dir" ]]; then
+    printf 'launch-environment error: common Git directory is not writable: %s\n' "$common_git_dir" >&2
+    return 2
+  fi
+  if git remote get-url origin >/dev/null 2>&1; then
+    if ! GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+      --timeout-seconds "$timeout_seconds" -- git ls-remote origin HEAD >/dev/null; then
+      printf 'launch-environment error: configured remote origin is unavailable\n' >&2
+      return 2
+    fi
+  fi
+}
+
+workstream_mark_provider_active() {
+  local actual_worktree=""
+
+  actual_worktree="$(pwd -P)"
+  if [[ -z "${LIMEN_CAPSULE_ID:-}" || -z "${LIMEN_WORKTREE:-}"
+    || -z "${LIMEN_SESSION_ID:-}" || "$actual_worktree" != "$LIMEN_WORKTREE" ]]; then
+    printf 'workstream provider launch is missing its admitted capsule, worktree, or session binding\n' >&2
+    return 2
+  fi
+  export LIMEN_WORKSTREAM_PROVIDER_ACTIVE=1
+  export LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID="$LIMEN_CAPSULE_ID"
+  export LIMEN_WORKSTREAM_PROVIDER_WORKTREE="$LIMEN_WORKTREE"
+  export LIMEN_WORKSTREAM_PROVIDER_SESSION_ID="$LIMEN_SESSION_ID"
+}
+
 workstream_publish_admitted_receipt() {
   local receipt="$1"
   local expected_branch="$2"
@@ -942,6 +994,7 @@ workstream_launch_native_agent() {
   local -a lane_args=()
   local binary capsule_prompt="" jules_repo="" intent_path=""
   local contract_helper="" timeout_seconds=""
+  local provider_instruction="This session is already admitted; read the modules and continue. Do not execute the operator launch command."
   local jules_output="" jules_rc=0 jules_session_id="" jules_session_url="" jules_receipt=""
   local jules_reserved_this_launch=0
   local -a codex_args=()
@@ -1010,8 +1063,13 @@ workstream_launch_native_agent() {
     esac
   fi
 
+  workstream_mark_provider_active || return $?
+
   if [[ "$autonomous" -eq 1 ]]; then
     IFS= read -r -d '' capsule_prompt < "$readme" || true
+    capsule_prompt="$provider_instruction
+
+$capsule_prompt"
     case "$agent" in
       codex)
         if [[ -t 0 && -t 1 ]]; then
@@ -1047,7 +1105,9 @@ workstream_launch_native_agent() {
           return 2
         fi
         IFS= read -r -d '' capsule_prompt < "$intent_path" || true
-        capsule_prompt="Do NOT ask for feedback or approval. Work autonomously and return the requested durable receipts. $capsule_prompt"
+        capsule_prompt="$provider_instruction
+
+Do NOT ask for feedback or approval. Work autonomously and return the requested durable receipts. $capsule_prompt"
         # The pre-session push is the durable recovery capsule. Preserve it if a later provider
         # step fails; deleting it after Jules may have started would orphan the cloud run.
         if [[ "${workstream_jules_reuse_reservation:-0}" != "1" ]]; then
@@ -1117,6 +1177,9 @@ workstream_launch_native_agent() {
       # Agy has no argument-free interactive session.
       if [[ -s "$readme" ]]; then
         IFS= read -r -d '' capsule_prompt < "$readme" || true
+        capsule_prompt="$provider_instruction
+
+$capsule_prompt"
         exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt-interactive "$capsule_prompt"
       fi
       ;;
@@ -1436,8 +1499,10 @@ PY
       workstream_jules_sync_receipt \
       workstream_jules_publish_receipt \
       workstream_exact_remote_ref_head \
+      workstream_validate_launch_environment \
       workstream_publish_admitted_receipt \
       workstream_export_context \
+      workstream_mark_provider_active \
       workstream_write_conduct_keepalive_status \
       workstream_conduct_target_is_live \
       workstream_conduct_keepalive_is_ready \
@@ -1542,7 +1607,10 @@ The private capsule remains local and ignored. Its tracked redacted custody rece
 The kickstart acquires the capsule lock and validates \`.limen-workstream/capsule.identity\`
 plus that receipt before it admits the runway or launches a provider.
 
-## Launch command
+## Host-shell-only launch command
+
+Run this command exactly once from the host shell. A provider launched by it is already admitted
+and must continue from the modules above without executing this operator command.
 
 \`\`\`bash
 bash "$kickstart"
@@ -1581,7 +1649,21 @@ EOF
 set -euo pipefail
 $launch_helpers
 
-cd $q_wt
+expected_worktree=$q_wt
+expected_slug=$q_slug
+expected_branch=$q_branch
+expected_workstream=$q_workstream
+if [[ "\${LIMEN_WORKSTREAM_PROVIDER_ACTIVE:-}" == "1"
+  && -n "\${LIMEN_WORKSTREAM_PROVIDER_SESSION_ID:-}"
+  && "\${LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID:-}" == "\$expected_slug"
+  && "\${LIMEN_WORKSTREAM_PROVIDER_WORKTREE:-}" == "\$expected_worktree"
+  && "\${LIMEN_WORKSTREAM_PROVIDER_SESSION_ID:-}" == "\${LIMEN_SESSION_ID:-}"
+  && "\${LIMEN_CAPSULE_ID:-}" == "\$expected_slug"
+  && "\${LIMEN_WORKTREE:-}" == "\$expected_worktree" ]]; then
+  printf 'This session is already admitted; continue directly without launching another provider.\n'
+  exit 0
+fi
+cd "\$expected_worktree"
 capsule_dir=$q_capsule_dir
 capsule_lock=$q_capsule_lock
 receipt=$q_receipt
@@ -1594,9 +1676,6 @@ intent=$q_intent
 runtime=$q_runtime
 closeout=$q_closeout
 kickstart=$q_kickstart
-expected_slug=$q_slug
-expected_branch=$q_branch
-expected_workstream=$q_workstream
 expected_invocation_sha256=$q_input_digest
 agent=$q_agent
 registry_binary=$q_registry_binary
@@ -1739,6 +1818,18 @@ PY
 workstream_export_context \
   "\$agent" "\$PWD" "\$capsule_dir" "\$expected_slug" "\$expected_workstream" "\$agent_capabilities"
 validate_capsule_receipt
+preflight_timeout="\${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
+case "\$preflight_timeout" in
+  ""|*[!0-9]*)
+    printf 'invalid capsule preflight timeout: %s\n' "\$preflight_timeout" >&2
+    exit 2
+    ;;
+esac
+if (( preflight_timeout < 1 || preflight_timeout > 300 )); then
+  printf 'capsule preflight timeout must be between 1 and 300 seconds\n' >&2
+  exit 2
+fi
+workstream_validate_launch_environment "\$preflight_timeout"
 if [[ "\$agent" == "jules" ]]; then
   bound_session_id=""
   if bound_session_id="\$(workstream_jules_provider_run_id "\$receipt")"; then
@@ -1798,23 +1889,18 @@ if [[ "\$conduct" -eq 1 ]]; then
   fi
 fi
 refresh_workstream_runway
-preflight_timeout="\${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
-case "\$preflight_timeout" in
-  ""|*[!0-9]*)
-    printf 'invalid capsule preflight timeout: %s\n' "\$preflight_timeout" >&2
+if git remote get-url origin >/dev/null 2>&1 9>&-; then
+  if ! GIT_TERMINAL_PROMPT=0 python3 "\$contract_helper" run-bounded \
+    --timeout-seconds "\$preflight_timeout" -- git fetch --prune 9>&-; then
+    printf 'launch-environment error: bounded fetch from origin failed\n' >&2
     exit 2
-    ;;
-esac
-if (( preflight_timeout < 1 || preflight_timeout > 300 )); then
-  printf 'capsule preflight timeout must be between 1 and 300 seconds\n' >&2
+  fi
+fi
+if ! python3 "\$contract_helper" run-bounded \
+  --timeout-seconds "\$preflight_timeout" -- git status --short --branch 9>&-; then
+  printf 'launch-environment error: bounded Git status failed\n' >&2
   exit 2
 fi
-if git remote get-url origin >/dev/null 2>&1 9>&-; then
-  GIT_TERMINAL_PROMPT=0 python3 "\$contract_helper" run-bounded \
-    --timeout-seconds "\$preflight_timeout" -- git fetch --prune 9>&-
-fi
-python3 "\$contract_helper" run-bounded \
-  --timeout-seconds "\$preflight_timeout" -- git status --short --branch 9>&-
 refresh_workstream_runway
 if [[ "\$agent" != "jules" ]]; then
   workstream_publish_admitted_receipt "\$receipt" "\$expected_branch" "\$expected_slug"

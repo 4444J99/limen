@@ -5,6 +5,7 @@ import os
 import pty
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -16,6 +17,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.cli import main  # noqa: E402
+
+
+ADMITTED_PROVIDER_INSTRUCTION = (
+    "This session is already admitted; read the modules and continue. Do not execute the operator launch command."
+)
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -144,7 +150,8 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
             '    check_count="$(cat "$REMOTE_HEAD_CHECK_COUNT" 2>/dev/null || printf 0)"\n'
             "    check_count=$((check_count + 1))\n"
             '    printf "%s" "$check_count" > "$REMOTE_HEAD_CHECK_COUNT"\n'
-            '    if [[ "$check_count" -gt 1 ]]; then resolved_head="$ADVANCED_REMOTE_HEAD"; fi\n'
+            '    if [[ "$check_count" -gt "${ADVANCE_REMOTE_AFTER_CHECKS:-1}" ]]; then '
+            'resolved_head="$ADVANCED_REMOTE_HEAD"; fi\n'
             "  fi\n"
             '  printf "%s\\tHEAD\\n" "$resolved_head"\n'
             "  exit 0\n"
@@ -204,8 +211,9 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     assert args[:4] == ["remote", "new", "--repo", "organvm/demo-repo"]
     assert all("redacted" not in arg for arg in args)
     assert args[4] == "--session"
-    assert args[5].startswith("Do NOT ask for feedback or approval.")
-    assert "Ship the exact bounded packet." in args[5]
+    assert args[5] == ADMITTED_PROVIDER_INSTRUCTION
+    assert "Do NOT ask for feedback or approval." in args[7]
+    assert "Ship the exact bounded packet." in "\n".join(args[5:])
     assert "# Continuation capsule:" not in args[5]
     wt = repo / ".worktrees" / "jules-cloud"
     receipt_path = wt / "docs" / "continuations" / "jules-cloud" / "workstream.json"
@@ -302,6 +310,7 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     remote_head_check_count.unlink(missing_ok=True)
     race_event_count = len(events_capture.read_text(encoding="utf-8").splitlines())
     monkeypatch.setenv("ADVANCE_REMOTE_AFTER_FIRST_CHECK", "1")
+    monkeypatch.setenv("ADVANCE_REMOTE_AFTER_CHECKS", "2")
     moving_default = CliRunner().invoke(
         main,
         [
@@ -320,6 +329,7 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     assert race_events == ["push"]
     assert not args_capture.exists()
     monkeypatch.delenv("ADVANCE_REMOTE_AFTER_FIRST_CHECK")
+    monkeypatch.delenv("ADVANCE_REMOTE_AFTER_CHECKS")
 
     timeout_events_before = events_capture.read_text(encoding="utf-8")
     monkeypatch.setenv("JULES_SLEEP", "1")
@@ -530,25 +540,60 @@ def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: P
 
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
+    real_git = shutil.which("git")
+    assert real_git is not None
+    fake_git = fake_bin / "git"
+    fake_git.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'case "${1:-}" in\n'
+            '  fetch) printf "fetch\\n" >> "$GIT_EVENTS_CAPTURE" ;;\n'
+            '  push) printf "push\\n" >> "$GIT_EVENTS_CAPTURE" ;;\n'
+            '  ls-remote) printf "ls-remote\\n" >> "$GIT_EVENTS_CAPTURE" ;;\n'
+            "esac\n"
+            'exec "$REAL_GIT" "$@"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_git.chmod(0o755)
     fake_codex = fake_bin / "codex"
     fake_codex.write_text(
         (
             "#!/usr/bin/env bash\n"
-            'branch="$(git branch --show-current)"\n'
-            'head="$(git rev-parse HEAD)"\n'
-            'remote_head="$(git ls-remote origin "refs/heads/$branch" | awk \'{print $1}\')"\n'
-            '[[ "$head" == "$remote_head" ]] || exit 42\n'
-            '[[ -z "$(git status --porcelain --untracked-files=all)" ]] || exit 43\n'
             'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
+            'printf "%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n" '
+            '"${LIMEN_WORKSTREAM_PROVIDER_ACTIVE:-}" '
+            '"${LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID:-}" '
+            '"${LIMEN_WORKSTREAM_PROVIDER_WORKTREE:-}" '
+            '"${LIMEN_WORKSTREAM_PROVIDER_SESSION_ID:-}" '
+            '"${LIMEN_CAPSULE_ID:-}" "${LIMEN_WORKTREE:-}" "${LIMEN_SESSION_ID:-}" '
+            '> "$PROVIDER_BINDINGS_CAPTURE"\n'
+            'last="${!#}"\n'
+            'printf "%s" "$last" > "$SESSION_PROMPT_CAPTURE"\n'
+            'receipt="$LIMEN_WORKTREE/docs/continuations/$LIMEN_CAPSULE_ID/workstream.json"\n'
+            'before="$(python3 -c \'import os, sys; print(os.stat(sys.argv[1]).st_mtime_ns)\' "$receipt")"\n'
+            'bash "$LIMEN_CAPSULE_DIR/kickstart.sh" > "$RECURSION_CAPTURE"\n'
+            'after="$(python3 -c \'import os, sys; print(os.stat(sys.argv[1]).st_mtime_ns)\' "$receipt")"\n'
+            '[[ "$before" == "$after" ]] || exit 44\n'
+            'printf "provider-return\\n" >> "$EVENTS_CAPTURE"\n'
         ),
         encoding="utf-8",
     )
     fake_codex.chmod(0o755)
     events = tmp_path / "events.txt"
+    git_events = tmp_path / "git-events.txt"
+    bindings = tmp_path / "provider-bindings.txt"
+    prompt_capture = tmp_path / "prompt.txt"
+    recursion_capture = tmp_path / "recursion.txt"
     env = {
         **os.environ,
         "PATH": f"{fake_bin}:{os.environ['PATH']}",
         "EVENTS_CAPTURE": str(events),
+        "GIT_EVENTS_CAPTURE": str(git_events),
+        "PROVIDER_BINDINGS_CAPTURE": str(bindings),
+        "SESSION_PROMPT_CAPTURE": str(prompt_capture),
+        "RECURSION_CAPTURE": str(recursion_capture),
+        "REAL_GIT": real_git,
     }
     command = [
         "bash",
@@ -576,20 +621,164 @@ def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: P
         == "docs: publish admitted codex-admission-publication runway"
     )
     assert _git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD", cwd=wt).stdout.strip() == receipt_rel
-    assert events.read_text(encoding="utf-8").splitlines() == ["provider"]
+    assert events.read_text(encoding="utf-8").splitlines() == ["provider", "provider-return"]
+    assert git_events.read_text(encoding="utf-8").splitlines().count("fetch") == 1
+    assert git_events.read_text(encoding="utf-8").splitlines().count("push") == 1
+    assert git_events.read_text(encoding="utf-8").splitlines().count("ls-remote") == 2
+    provider_bindings = bindings.read_text(encoding="utf-8").splitlines()
+    assert provider_bindings[0] == "1"
+    assert provider_bindings[1] == provider_bindings[4] == "codex-admission-publication"
+    assert provider_bindings[2] == provider_bindings[5] == str(wt)
+    assert provider_bindings[3] == provider_bindings[6]
+    assert provider_bindings[3]
+    assert prompt_capture.read_text(encoding="utf-8").startswith(f"{ADMITTED_PROVIDER_INSTRUCTION}\n\n")
+    assert recursion_capture.read_text(encoding="utf-8") == (
+        "This session is already admitted; continue directly without launching another provider.\n"
+    )
 
-    relaunched = subprocess.run(
-        ["bash", str(wt / ".limen-workstream" / "kickstart.sh")],
-        cwd=wt,
+
+def test_workstream_rejects_unwritable_linked_git_metadata_before_admission(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text('#!/usr/bin/env bash\n: > "$PROVIDER_MARKER"\n', encoding="utf-8")
+    fake_codex.chmod(0o755)
+    provider_marker = tmp_path / "provider-started"
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+    monkeypatch.setenv("PROVIDER_MARKER", str(provider_marker))
+
+    rendered = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--autonomous",
+            "--prompt",
+            "Reject unwritable linked Git metadata before admission.",
+            str(repo),
+            "Git Metadata Preflight",
+        ],
+    )
+    assert rendered.exit_code == 0, rendered.output
+    wt = repo / ".worktrees" / "git-metadata-preflight"
+    capsule = wt / ".limen-workstream"
+    contract = capsule / "workstream.json"
+    receipt = wt / "docs/continuations/git-metadata-preflight/workstream.json"
+    protected = (contract, receipt)
+    original_bytes = {path: path.read_bytes() for path in protected}
+    git_dir, common_git_dir = (
+        Path(raw)
+        for raw in _git(
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-dir",
+            "--git-common-dir",
+            cwd=wt,
+        ).stdout.splitlines()
+    )
+
+    for target, diagnostic in (
+        (git_dir, "linked worktree Git directory is not writable"),
+        (common_git_dir, "common Git directory is not writable"),
+    ):
+        original_mode = stat.S_IMODE(target.stat().st_mode)
+        target.chmod(0o500)
+        try:
+            rejected = subprocess.run(
+                ["bash", str(capsule / "kickstart.sh")],
+                cwd=wt,
+                env=os.environ.copy(),
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        finally:
+            target.chmod(original_mode)
+        assert rejected.returncode == 2
+        assert f"launch-environment error: {diagnostic}" in rejected.stderr
+        assert {path: path.read_bytes() for path in protected} == original_bytes
+        assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
+        assert not provider_marker.exists()
+
+
+def test_workstream_rejects_unavailable_github_before_admission(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+    remote = tmp_path / "origin.git"
+    remote.mkdir()
+    _git("init", "--bare", "-q", cwd=remote)
+    _git("remote", "add", "origin", str(remote), cwd=repo)
+    _git("push", "-u", "origin", "main", cwd=repo)
+    _git("remote", "set-url", "origin", "https://github.com/organvm/unavailable-fixture.git", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    real_git = shutil.which("git")
+    assert real_git is not None
+    fake_git = fake_bin / "git"
+    fake_git.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "ls-remote" && "${2:-}" == "origin" ]]; then exit 69; fi\n'
+            'exec "$REAL_GIT" "$@"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_git.chmod(0o755)
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text('#!/usr/bin/env bash\n: > "$PROVIDER_MARKER"\n', encoding="utf-8")
+    fake_codex.chmod(0o755)
+    provider_marker = tmp_path / "provider-started"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "REAL_GIT": real_git,
+        "PROVIDER_MARKER": str(provider_marker),
+    }
+
+    rejected = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts/start-worktree-session.sh"),
+            "--autonomous",
+            "--agent",
+            "codex",
+            "--prompt",
+            "Reject an unavailable GitHub remote before admission.",
+            str(repo),
+            "Unavailable GitHub",
+        ],
         env=env,
         text=True,
         capture_output=True,
         timeout=15,
         check=False,
     )
-    assert relaunched.returncode == 0, relaunched.stdout + relaunched.stderr
-    assert _git("rev-parse", "HEAD", cwd=wt).stdout.strip() == first_head
-    assert events.read_text(encoding="utf-8").splitlines() == ["provider", "provider"]
+    assert rejected.returncode == 2
+    assert "launch-environment error: configured remote origin is unavailable" in rejected.stderr
+    wt = repo / ".worktrees" / "unavailable-github"
+    contract = wt / ".limen-workstream/workstream.json"
+    assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
+    assert not provider_marker.exists()
 
 
 def test_codex_workstream_denies_provider_when_admitted_receipt_push_fails(tmp_path: Path) -> None:
@@ -933,6 +1122,17 @@ def test_autonomous_workstream_requires_prompt_and_launches_with_dynamic_readme(
     assert "run-bounded" in kickstart_text
     assert kickstart_text.count("refresh_workstream_runway") == 3
     assert "workstream-contract.py" in kickstart_text
+    assert "## Host-shell-only launch command" in readme_text
+    assert "Run this command exactly once from the host shell." in readme_text
+    assert ADMITTED_PROVIDER_INSTRUCTION in kickstart_text
+    assert "LIMEN_WORKSTREAM_PROVIDER_ACTIVE=1" in kickstart_text
+    assert "LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID" in kickstart_text
+    assert "LIMEN_WORKSTREAM_PROVIDER_WORKTREE" in kickstart_text
+    assert "LIMEN_WORKSTREAM_PROVIDER_SESSION_ID" in kickstart_text
+    assert kickstart_text.index('if [[ "${LIMEN_WORKSTREAM_PROVIDER_ACTIVE:-}" == "1"') < kickstart_text.index(
+        'exec 9>> "$capsule_lock"'
+    )
+    assert "--add-dir" not in kickstart_text
     readme_assignment = next(line for line in kickstart_text.splitlines() if line.startswith("readme="))
     assert shlex.split(readme_assignment) == [f"readme={readme}"]
     identity_data = json.loads(identity.read_text(encoding="utf-8"))
@@ -1233,7 +1433,7 @@ render_workstream_capsule \
     launched = subprocess.run(["bash", str(kickstart)], cwd=wt, env=env, text=True, capture_output=True)
     assert launched.returncode == 0, launched.stderr
     launched_prompt = prompt_capture.read_text(encoding="utf-8")
-    assert launched_prompt == readme_text
+    assert launched_prompt == f"{ADMITTED_PROVIDER_INSTRUCTION}\n\n{readme_text}"
     assert "intent.md" in launched_prompt
     assert args_capture.read_text(encoding="utf-8").splitlines() == [
         "--ask-for-approval",
@@ -1259,7 +1459,7 @@ render_workstream_capsule \
         os.close(slave_fd)
         os.close(master_fd)
     assert tty_launch.returncode == 0, tty_launch.stderr
-    assert prompt_capture.read_text(encoding="utf-8") == readme_text
+    assert prompt_capture.read_text(encoding="utf-8") == f"{ADMITTED_PROVIDER_INSTRUCTION}\n\n{readme_text}"
     assert args_capture.read_text(encoding="utf-8").splitlines() == [
         "--ask-for-approval",
         "never",
