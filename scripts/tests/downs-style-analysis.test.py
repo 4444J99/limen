@@ -29,6 +29,16 @@ def main() -> int:
     )
     assert "homepage-only" in collections
     assert set(audit["COLLECTION_LABELS"]) <= set(collections)
+    assert audit["extraction_error"](article_found=True, body="") == (
+        "article body not extracted"
+    )
+    assert audit["extraction_error"](article_found=True, body="text") == ""
+    try:
+        audit["require_complete_discovery"](["homepage: unavailable"])
+    except SystemExit as exc:
+        assert "archive discovery incomplete" in str(exc)
+    else:
+        raise AssertionError("failed discovery rail must stop the audit")
 
     requirements = (
         ROOT / "scripts/requirements-downs-style-archive.txt"

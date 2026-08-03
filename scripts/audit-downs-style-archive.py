@@ -168,6 +168,19 @@ def collections_to_audit(urls: Iterable[str]) -> list[str]:
     return sorted(set(COLLECTION_LABELS) | (discovered - {""}))
 
 
+def extraction_error(*, article_found: bool, body: str) -> str:
+    if not article_found:
+        return "article element not found"
+    if not body:
+        return "article body not extracted"
+    return ""
+
+
+def require_complete_discovery(failures: list[str]) -> None:
+    if failures:
+        raise SystemExit("archive discovery incomplete: " + "; ".join(failures))
+
+
 def clean_text(node: BeautifulSoup) -> str:
     text = node.get_text(" ", strip=True)
     return " ".join(text.split())
@@ -236,7 +249,7 @@ def parse_post(
             word_count=len(WORD.findall(body)),
             body_blocks=len(blocks),
             content_sha256=digest,
-            error="" if article else "article element not found",
+            error=extraction_error(article_found=article is not None, body=body),
         )
         return record, body
     except Exception as exc:  # noqa: BLE001 - inventory must retain failed URLs
@@ -333,13 +346,14 @@ def main() -> int:
     sitemap_posts = parse_sitemap(sitemap_xml)
     sources_by_url: dict[str, set[str]] = {post.url: {"sitemap"} for post in sitemap_posts}
     lastmod_by_url = {post.url: post.lastmod for post in sitemap_posts}
+    discovery_failures: list[str] = []
 
     try:
         _, _, homepage_html = fetch(BASE_URL, timeout=args.timeout)
         for url in discover_posts(homepage_html):
             sources_by_url.setdefault(url, set()).add("homepage")
-    except Exception as exc:  # noqa: BLE001 - continue with other discovery rails
-        print(f"warning: homepage discovery failed: {exc}")
+    except Exception as exc:  # noqa: BLE001 - report all failed discovery rails together
+        discovery_failures.append(f"homepage: {exc}")
 
     collections = collections_to_audit(sources_by_url)
     for collection in collections:
@@ -349,12 +363,14 @@ def main() -> int:
                 collection,
                 timeout=args.timeout,
             )
-        except Exception as exc:  # noqa: BLE001 - continue with sitemap coverage
-            print(f"warning: {source} discovery failed: {exc}")
+        except Exception as exc:  # noqa: BLE001 - report all failed discovery rails together
+            discovery_failures.append(f"{source}: {exc}")
             continue
         print(f"discovered {len(collection_urls)} posts in {source}")
         for url in collection_urls:
             sources_by_url.setdefault(url, set()).add(source)
+
+    require_complete_discovery(discovery_failures)
 
     def audit(url: str) -> tuple[PostRecord, str]:
         return parse_post(
