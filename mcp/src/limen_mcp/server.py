@@ -1,5 +1,7 @@
 import os
 import re
+import subprocess
+import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 import json
@@ -773,6 +775,68 @@ def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
             return _submission_message(f"submitted claim for {agent_name} on", task_id, result)
 
     raise ValueError(f"Task {task_id} not found")
+
+
+@mcp.tool()
+def application_funnel(fire: bool = False, timeout_seconds: int = 120) -> dict:
+    """Run the outbound job-application funnel; optionally submit staged applications.
+
+    The cross-agent entry point for the funnel that ``scripts/application-funnel.py``
+    drives. Exposed over MCP so ANY assigned agent — opencode, Codex, Copilot, Gemini —
+    invokes the same effector the beat does, instead of each one reinventing a submitter.
+
+    Disarmed (default) the cycle is reversible end to end: it sources roles from ATS and
+    public boards, scores them (>=9.0), builds tailored materials, stages complete
+    application packages, and prepares follow-up dates. Nothing leaves the machine.
+
+    ``fire=True`` adds the ``apply`` phase, which SUBMITS staged applications to real ATS
+    portals on the operator's behalf. That is outward-facing and irreversible: a submitted
+    application cannot be recalled. It stays capped by the engine's own precision limits
+    (<=2/week, 1 per organization, <=10 active) and by per-entry readiness, and
+    operator-gated portals are never auto-submitted. Pass it only on explicit instruction
+    from the operator — never to "catch up" a backlog on your own initiative.
+
+    Args:
+        fire: Include the submit phase. Default False (stage only).
+        timeout_seconds: Cap on the launch call. The cycle itself runs detached; counts
+            from the previous completed cycle are returned immediately.
+
+    Returns:
+        The driver's JSON summary: sourced, qualified, staged, submitted, armed,
+        launched, and human-readable notes.
+    """
+    repo_root = Path(__file__).resolve().parents[3]
+    driver = repo_root / "scripts" / "application-funnel.py"
+    if not driver.exists():
+        return {"error": f"driver not found: {driver}", "launched": False}
+
+    env = dict(os.environ)
+    if fire:
+        # Per-invocation arm. Deliberately NOT written to ~/.limen.env: persistence-arming
+        # is the operator's lever (L-APPLY-FIRE), while a single armed run is a bounded act.
+        env["LIMEN_APPLY_FIRE"] = "1"
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(driver), "--json"],
+            capture_output=True,
+            text=True,
+            timeout=max(10, min(int(timeout_seconds), 600)),
+            env=env,
+            cwd=str(repo_root),
+        )
+    except subprocess.TimeoutExpired:
+        return {"error": "funnel driver timed out", "launched": False, "armed": fire}
+
+    try:
+        return json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        return {
+            "error": "driver produced non-JSON output",
+            "returncode": proc.returncode,
+            "stderr": (proc.stderr or "")[-800:],
+            "launched": False,
+        }
 
 
 if __name__ == "__main__":

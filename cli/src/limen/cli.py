@@ -294,6 +294,56 @@ def qa(agent, json_output, report_file):
         print_qa_report(report)
 
 
+@main.command("apply")
+@click.option("--fire", is_flag=True, help="Include the submit phase — SUBMITS to real ATS portals")
+@click.option("--json", "json_output", is_flag=True, help="Emit the raw driver summary")
+def apply_cmd(fire, json_output):
+    """Run the outbound job-application funnel (stage only unless --fire).
+
+    The CLI twin of the ``application_funnel`` MCP tool and the beat's
+    ``application-funnel`` sensor — one effector, three front doors, so an agent
+    without MCP still drives the same funnel instead of writing its own submitter.
+
+    Disarmed this is reversible: source, score, build materials, stage packages,
+    prepare follow-ups. Nothing leaves the machine. ``--fire`` adds the submit
+    phase, which sends real applications and cannot be undone.
+    """
+    root = Path(__file__).resolve().parents[3]
+    driver = root / "scripts" / "application-funnel.py"
+    if not driver.exists():
+        click.echo(f"funnel driver not found: {driver}", err=True)
+        sys.exit(1)
+
+    env = dict(os.environ)
+    if fire:
+        env["LIMEN_APPLY_FIRE"] = "1"
+
+    proc = subprocess.run(
+        [sys.executable, str(driver), "--json"],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(root),
+    )
+    if json_output:
+        click.echo(proc.stdout.strip() or proc.stderr.strip())
+        sys.exit(proc.returncode)
+
+    try:
+        summary = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        click.echo(proc.stderr.strip() or "funnel produced no summary", err=True)
+        sys.exit(proc.returncode or 1)
+
+    click.echo(
+        f"sourced {summary.get('sourced', 0)} · qualified {summary.get('qualified', 0)} · "
+        f"staged {summary.get('staged', 0)} · submitted {summary.get('submitted', 0)}"
+    )
+    for note in summary.get("notes", []):
+        click.echo(f"  - {note}")
+    sys.exit(proc.returncode)
+
+
 @main.command()
 @click.option("--agent", default=None, help="Filter by agent")
 @click.option("--status", default=None, help="Filter by status")

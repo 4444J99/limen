@@ -36,6 +36,7 @@ Usage:
     python3 scripts/application-funnel.py --json     # machine-readable summary
     python3 scripts/application-funnel.py --notify    # also emit a one-line notify
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,7 +48,39 @@ import time
 from pathlib import Path
 
 HOME = Path.home()
-APPLICATION_PIPELINE = Path(os.environ.get("APPLICATION_PIPELINE", HOME / "Workspace" / "application-pipeline"))
+
+# Candidate checkout locations, in priority order. A single hardcoded default made this
+# driver fail SILENTLY on 2026-08-03: the clone lives at ~/Workspace/4444J99/application-pipeline
+# (owner-namespaced, the estate's normal layout) while the default pointed one directory up.
+# _find_orchestrator() returned None, run() took its fail-open path, and the beat reported a
+# clean note every cycle while the funnel had never once executed. Fail-open is right for a
+# network hiccup and wrong for a permanently wrong path — so resolution is now a SEARCH, and
+# run() distinguishes "no checkout anywhere" from "checkout present but cycle failed".
+PIPELINE_CANDIDATES = (
+    HOME / "Workspace" / "application-pipeline",
+    HOME / "Workspace" / "4444J99" / "application-pipeline",
+    HOME / "Workspace" / "organvm" / "application-pipeline",
+    HOME / "application-pipeline",
+)
+
+
+def _resolve_pipeline() -> Path:
+    """First candidate that actually carries the orchestrator; else the declared default.
+
+    An explicit APPLICATION_PIPELINE always wins, even if it does not exist — an operator
+    pointing somewhere deliberately gets a loud failure there, not a silent relocation.
+    """
+    override = os.environ.get("APPLICATION_PIPELINE")
+    if override:
+        return Path(override).expanduser()
+    for candidate in PIPELINE_CANDIDATES:
+        for sub in ("scripts", "tools"):
+            if (candidate / sub / "daily_pipeline_orchestrator.py").exists():
+                return candidate
+    return PIPELINE_CANDIDATES[0]
+
+
+APPLICATION_PIPELINE = _resolve_pipeline()
 
 # The reversible phases: they source/score/build/stage + prepare follow-up dates, but
 # NEVER submit or send. `apply` is deliberately excluded here and gated behind the arm.
@@ -139,7 +172,9 @@ def _launch(orchestrator: Path, py: str, phases: list[str]) -> None:
     subprocess.Popen(  # noqa: S603 — detached beat-owned cycle, single-instance via lock
         ["/bin/sh", "-c", inner],
         start_new_session=True,
-        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
 
@@ -182,9 +217,9 @@ def run() -> dict:
     py, is_venv = _pipeline_python()
     if not is_venv:
         notes.append(
-            "pipeline .venv missing — funnel idle. Bootstrap: "
-            "cd ~/Workspace/application-pipeline && python3 -m venv .venv && "
-            ".venv/bin/pip install -e . (or set LIMEN_APPLICATION_PIPELINE_PYTHON)"
+            f"pipeline .venv missing — funnel idle. Bootstrap: cd {APPLICATION_PIPELINE} "
+            "&& python3 -m venv .venv && .venv/bin/pip install -e . "
+            "(or set LIMEN_APPLICATION_PIPELINE_PYTHON)"
         )
         return _summary(_last_result(), False, False, notes)
 
