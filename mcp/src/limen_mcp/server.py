@@ -839,5 +839,25 @@ def application_funnel(fire: bool = False, timeout_seconds: int = 120) -> dict:
         }
 
 
+@mcp.tool()
+def daily_execution(fire: bool = False, timeout_seconds: int = 300) -> dict:
+    """Run the shared daily communications/application loop.
+
+    This is the provider-neutral MCP twin of ``limen daily-execute`` and the
+    existing heartbeat voice. It composes the canonical mail, opportunity,
+    correspondence, and application owners. ``fire`` is invocation-local and
+    does not persist an arm or treat generated templates/forms as delivery.
+    """
+    _check_circuit_breaker()
+    from limen.daily_execution import run_daily_execution
+
+    repo_root = Path(__file__).resolve().parents[3]
+    return run_daily_execution(
+        fire=bool(fire),
+        root=repo_root,
+        timeout_seconds=max(1, min(int(timeout_seconds), 1800)),
+    )
+
+
 if __name__ == "__main__":
     mcp.run()

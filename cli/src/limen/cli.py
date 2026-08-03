@@ -344,6 +344,45 @@ def apply_cmd(fire, json_output):
     sys.exit(proc.returncode)
 
 
+@main.command("daily-execute")
+@click.option("--fire", is_flag=True, help="Arm routine professional applications and follow-ups for this invocation")
+@click.option("--json", "json_output", is_flag=True, help="Emit the bounded PII-clean execution receipt")
+@click.option("--timeout", default=300, type=click.IntRange(min=1, max=1800), show_default=True)
+@click.option("--receipt", type=click.Path(path_type=Path), default=None, help="Write the private receipt here")
+def daily_execute(fire: bool, json_output: bool, timeout: int, receipt: Path | None) -> None:
+    """Run the shared daily communications and application loop.
+
+    This is the same implementation exposed through MCP ``daily_execution`` and
+    the existing heartbeat. ``--fire`` is invocation-local; generated templates,
+    staged forms, and unconfirmed submissions never count as delivered.
+    """
+    from limen.daily_execution import run_daily_execution
+
+    prior = os.environ.get("LIMEN_DAILY_EXECUTION_RECEIPT")
+    if receipt is not None:
+        os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = str(receipt.expanduser())
+    try:
+        result = run_daily_execution(fire=fire, root=resolve_limen_repo_root(), timeout_seconds=timeout)
+    finally:
+        if prior is None:
+            os.environ.pop("LIMEN_DAILY_EXECUTION_RECEIPT", None)
+        else:
+            os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = prior
+
+    if json_output:
+        click.echo(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        click.echo(
+            f"daily-execute: {result['status']} · applications "
+            f"{result['applications']['confirmed']}/{result['applications']['target']} confirmed · "
+            f"follow-ups {result['follow_ups']['confirmed']} confirmed"
+        )
+        for blocker in result["blockers"]:
+            click.echo(f"  - {blocker}")
+    if result["status"] == "blocked":
+        raise click.exceptions.Exit(3)
+
+
 @main.command()
 @click.option("--agent", default=None, help="Filter by agent")
 @click.option("--status", default=None, help="Filter by status")
