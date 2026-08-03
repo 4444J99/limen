@@ -663,14 +663,20 @@ export "LIMEN_${relay_env_suffix}_BIN=$kickstart"
 workstream_launch_native_agent   "$agent" "$registry_binary"'''
 if source.count("set -euo pipefail\n") != 1:
     raise SystemExit("campaign relay kickstart preamble is ambiguous")
-if source.count("\n\ncd ") != 1:
+helper_anchor = "\n\nexpected_worktree="
+legacy_helper_anchor = "\n\ncd "
+if source.count(helper_anchor) == 1:
+    pass
+elif source.count(helper_anchor) == 0 and source.count(legacy_helper_anchor) == 1:
+    helper_anchor = legacy_helper_anchor
+else:
     raise SystemExit("campaign relay helper insertion point is ambiguous")
 if source.count(published_marker) != 1:
     raise SystemExit("campaign relay publication insertion point is ambiguous")
 if source.count(launch_marker) != 1:
     raise SystemExit("campaign relay exec insertion point is ambiguous")
 source = source.replace("set -euo pipefail\n", "set -euo pipefail\n" + early, 1)
-source = source.replace("\n\ncd ", "\n" + helpers + "\ncd ", 1)
+source = source.replace(helper_anchor, "\n" + helpers + helper_anchor[1:], 1)
 source = source.replace(published_marker, published_replacement, 1)
 source = source.replace(launch_marker, launch_replacement, 1)
 temporary = kickstart.with_name(f".{kickstart.name}.relay.{os.getpid()}")

@@ -778,6 +778,13 @@ def _launch_argv(tmp_path: Path, lane: str, pin: str) -> subprocess.CompletedPro
     readme = tmp_path / "README.md"
     readme.write_text("capsule prompt body")
     env = dict(os.environ)
+    env.update(
+        {
+            "LIMEN_CAPSULE_ID": "argv-contract",
+            "LIMEN_WORKTREE": str(tmp_path),
+            "LIMEN_SESSION_ID": "argv-contract-session",
+        }
+    )
     for name in ("CLAUDE", "GEMINI", "AGY", "OPENCODE", "CODEX", "JULES"):
         env[f"LIMEN_{name}_BIN"] = str(binary)
     script = (
@@ -788,6 +795,7 @@ def _launch_argv(tmp_path: Path, lane: str, pin: str) -> subprocess.CompletedPro
         capture_output=True,
         text=True,
         env=env,
+        cwd=tmp_path,
         timeout=60,
         check=False,
     )
@@ -803,7 +811,8 @@ def test_lane_tier_pin_reaches_the_launched_argv(tmp_path: Path, lane: str) -> N
 def test_unpinned_launch_argv_is_unchanged(tmp_path: Path) -> None:
     """No pin must add NO argument — not an empty string, which would break a strict lane parser."""
     result = _launch_argv(tmp_path, "claude", "")
-    assert "ARGV: [capsule prompt body]" in result.stdout, result.stdout or result.stderr
+    assert "ARGV: [This session is already admitted; read the modules and continue." in result.stdout
+    assert "capsule prompt body]" in result.stdout, result.stdout or result.stderr
     assert "--model" not in result.stdout
 
 
