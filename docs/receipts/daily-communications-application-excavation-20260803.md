@@ -103,3 +103,15 @@ receipt owners, with only the missing contracts and coordinator added here.
   idle without a terminal summary; that stage was stopped at the bounded-wait
   boundary. It is not used as the implementation receipt; the focused
   predicates above are the exact-head evidence for this branch.
+
+## Residual owner-gated atoms
+
+These are deliberately preserved as incomplete/blocked owner work, not
+represented as solved by this coordinator:
+
+| Atom | Owner receipt | Failed predicate / next command |
+| --- | --- | --- |
+| Historical application claims | application-pipeline PRs #111/#112 plus provider mailbox/portal receipts | 23 rows were censused and remain unconfirmed without explicit evidence; reconcile the owner rows against provider evidence, then supply `LIMEN_APPLICATION_CONFIRMATION_RECEIPT` to the daily run |
+| Authenticated LinkedIn action | social-automation/browser-state private provider surface | no public authenticated effector was present; run the shared loop only after a provider send/submission receipt exists, otherwise preserve the precise session/CAPTCHA blocker |
+| Forrest/WhatsApp/iMessage capture | Limen PRs #1794/#1509 | public/private capture owners remain open; accept their capture predicates before using full conversation/audio grounding for applications |
+| Biography evidence union | Limen PR #1715 / issue #1734 | registry must union existing source evidence; do not let a newer registry hide prior docs/reviews before customization |
