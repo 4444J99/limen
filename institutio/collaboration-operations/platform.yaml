@@ -14,7 +14,10 @@ platform:
   bootstrap:
     evidence: docs/continuations/collaboration-operations-platform-genesis-20260802/workstream.json
     required_lever: L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS
-    required_receipt: his-hand-levers.json plus its needs-human issue receipt
+    required_receipt: his-hand-levers.json plus closed needs-human issue 1790
+    authorization_state: discharged
+    authorization_date: '2026-08-03'
+    execution_plan: docs/continuations/collaboration-operations-platform-alpha-omega-20260803/execution-dag.yaml
     dry_run_command: >-
       python3 scripts/repo-genesis.py --name collaboration-operations-platform
       --org organvm-iii-ergon --class operation_private

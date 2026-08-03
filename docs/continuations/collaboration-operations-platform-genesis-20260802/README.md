@@ -29,34 +29,23 @@ genesis lane.
 
 ## Executable successor
 
-Launch a fresh successor session in the same identity-bound capsule with the compatibility wrapper
-(this capsule predates the generator hydration fix):
+The human authorized private repository genesis and bounded autonomous execution on 2026-08-03.
+`L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS` is discharged by closed issue #1790. The complete
+successor contract is indexed by
+[`collaboration-operations-platform-alpha-omega-20260803`](../collaboration-operations-platform-alpha-omega-20260803/agy-autonomous-intent.md):
+24 ordered phases, 72 bounded packets, packet predicates and receipts, a root `omega` predicate, and
+an Agy conductor that derives native teammate lanes from live broker capabilities.
+
+After the successor capsule has been rendered, launch it with one command:
 
 ```bash
-cd "/Users/4jp/Workspace/limen/.worktrees/collaboration-operations-platform-genesis-20260802"
-bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
+cd "/Users/4jp/Workspace/limen/.worktrees/collaboration-operations-platform-alpha-omega-20260803" && bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
 ```
 
-The command is safe to repeat: when this workstream is already live, it returns success with a
-plain message and starts no duplicate provider. Continue in the existing session instead.
+The command is idempotent: when the workstream is already live, it returns success without starting
+a duplicate provider. Agy must re-probe live remote, host, broker, usage, and custody state before
+each packet boundary; the plan never pins a model or fabricates a future green state.
 
-Then re-probe reality and run the boundary plus the non-mutating genesis gate:
-
-```bash
-cd "/Users/4jp/Workspace/limen/.worktrees/collaboration-operations-platform-genesis-20260802"
-python3 scripts/check-collaboration-operations.py
-python3 scripts/repo-genesis.py \
-  --name collaboration-operations-platform \
-  --org organvm-iii-ergon \
-  --class operation_private \
-  --evidence docs/continuations/collaboration-operations-platform-genesis-20260802/workstream.json \
-  --seed-extract institutio/collaboration-operations/platform.yaml \
-  --why 'universal private collaboration operations and records hub; no collaborator grants; client records stay partitioned; synthetic fixtures only' \
-  --dry-run
-```
-
-Removing `--dry-run` is not authorized by this receipt. Repository creation requires the tracked
-`L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS` his-hand lever, its needs-human issue receipt, a fresh
-remote absence probe, and a successor packet that also records the new ERGON shelf assignment. The
-same boundary continues to prohibit invites, transfers, deployment, DNS, payments, email, and
-credential movement without their own applicable receipts.
+Repository creation is authorized only inside that plan's private, synthetic-fixture boundary.
+Invites, transfers, destructive personal-data operations, credentials, paid spend, public sends,
+DNS, production deployment, and live client or transcript import retain their explicit human gates.

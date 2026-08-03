@@ -1,0 +1,1135 @@
+schema_version: limen.collaboration_operations_execution_dag.v1
+
+program:
+  id: collaboration-operations-platform-alpha-omega
+  owner: organvm/limen
+  target_repository: organvm-iii-ergon/collaboration-operations-platform
+  target_class: operation_private
+  audience: self
+  start_state: prepared_not_created
+  target_state: omega_fixed_point
+  source_origin: human_prompt
+  horizon: future
+  value_case: >-
+    Establish one private, partition-safe system of record and action for every collaboration while
+    eliminating fragmented custody, forgotten commitments, untraceable decisions, and cross-client
+    disclosure risk.
+  root_predicate: ./scripts/omega.sh
+  root_receipt: receipts/omega/latest.json
+
+authority:
+  allowed_actions:
+    - inspect
+    - plan
+    - create_private_repository
+    - create_isolated_worktree
+    - edit_scoped_source
+    - run_scoped_predicate
+    - commit_topic_branch
+    - push_topic_branch
+    - open_private_pull_request
+    - review_private_pull_request
+    - merge_green_private_pull_request
+    - emit_successor_capsule
+  allowed_external_effects:
+    - github_private_repo_create
+    - git_push_new_private_repo_founding_commit
+    - git_push_existing_topic_branch
+    - github_private_pull_request_mutation
+    - github_private_repository_ruleset_configuration
+  retained_gates:
+    - destructive_personal_data_action
+    - credential_or_secret_movement
+    - paid_spend
+    - collaborator_invitation_or_transfer
+    - public_send_or_release
+    - dns_mutation
+    - production_deployment
+    - live_client_data_or_transcript_import
+
+team:
+  root_agent: agy
+  provider_selection: live_capability_derived
+  max_children: 4
+  max_depth: 1
+  writer_rule: one_writer_per_worktree
+  integration_rule: exact_head_receipts_then_independent_review
+  session_rule: human_protected
+
+packet_contract:
+  predicate_pattern: ./scripts/gates/packets/<packet-id-lower>.sh
+  receipt_pattern: receipts/packets/<packet-id-lower>.json
+  retry:
+    max_attempts: 2
+    transient_only: true
+  output_ceiling_bytes: 65536
+  required_receipt_fields:
+    - run_id
+    - lease_id
+    - lease_generation
+    - executor
+    - observed_heads_before
+    - observed_heads_after
+    - changed_paths
+    - predicate
+    - checks
+    - spend
+    - outcome
+
+phases:
+  - id: alpha
+    symbol: "α"
+    title: Authority, intent, and executable definition of done
+    depends_on: []
+    purpose: Freeze the product boundary and build the predicate spine before implementation.
+    exit_predicate: ./scripts/gates/alpha.sh
+    packets:
+      - id: ALPHA-01
+        title: Reconcile authority, evidence, and retained gates
+        depends_on: []
+        effect: write
+        scope: ["Limen authorization receipt", "target founding evidence", "authority matrix"]
+        deliverables:
+          - Record the discharged private-repository genesis authorization and graph receipt.
+          - Re-probe target-repository absence, estate classification, shelf, and access rows.
+          - Materialize the root WorkPacketV1 with exact session, head, deadline, spend, and fanout.
+        predicate: ./scripts/gates/packets/alpha-01.sh
+        receipt_target: receipts/packets/alpha-01.json
+        required_capabilities: [inspect, conduct]
+      - id: ALPHA-02
+        title: Ratify product charter, architecture, ADRs, and threat model
+        depends_on: []
+        effect: write
+        scope: ["docs/product", "docs/architecture", "docs/security", "ADRs"]
+        deliverables:
+          - Copy the founding plan set into the target repository as immutable lineage.
+          - Define personas, journeys, exclusions, partition semantics, and domain vocabulary.
+          - Record chosen stack, alternatives rejected, threat actors, assets, and trust boundaries.
+        predicate: ./scripts/gates/packets/alpha-02.sh
+        receipt_target: receipts/packets/alpha-02.json
+        required_capabilities: [inspect, code]
+      - id: ALPHA-03
+        title: Install the failing phase-gate and Omega skeleton
+        depends_on: [ALPHA-01, ALPHA-02]
+        effect: write
+        scope: ["scripts/gates", "scripts/omega.sh", "receipts/schema"]
+        deliverables:
+          - Create one executable gate per phase and packet before feature work.
+          - Make Omega compose immutable receipts and fail on missing, stale, or wrong-head evidence.
+          - Prove a second unchanged run is byte-idempotent.
+        predicate: ./scripts/gates/packets/alpha-03.sh
+        receipt_target: receipts/packets/alpha-03.json
+        required_capabilities: [code, execute]
+
+  - id: beta
+    symbol: "β"
+    title: Private repository genesis and custody
+    depends_on: [alpha]
+    purpose: Mint exactly one private repository and establish remote custody and integration rules.
+    exit_predicate: ./scripts/gates/beta.sh
+    packets:
+      - id: BETA-01
+        title: Pass the fresh four-gate genesis preflight
+        depends_on: [ALPHA-03]
+        effect: read
+        scope: ["remote absence", "naming canon", "estate class", "founding seed"]
+        deliverables:
+          - Confirm the repository is absent immediately before creation.
+          - Confirm operation_private, audience self, no grants, and the ERGON shelf assignment.
+          - Run repo-genesis in dry-run mode against the exact founding evidence.
+        predicate: ./scripts/gates/packets/beta-01.sh
+        receipt_target: receipts/packets/beta-01.json
+        required_capabilities: [inspect, github-api]
+      - id: BETA-02
+        title: Mint and verify the private founding repository
+        depends_on: [BETA-01]
+        effect: external
+        scope: ["GitHub private repository", "founding commit", "seed documents"]
+        deliverables:
+          - Run the accepted repo-genesis path once without dry-run.
+          - Verify private visibility, default branch, founding commit, seed content, and no grants.
+          - Clone into an isolated local worktree without modifying any collaborator repository.
+        predicate: ./scripts/gates/packets/beta-02.sh
+        receipt_target: receipts/packets/beta-02.json
+        required_capabilities: [github-api, execute]
+      - id: BETA-03
+        title: Establish branch, review, ruleset, and preservation rails
+        depends_on: [BETA-02]
+        effect: external
+        scope: ["repository settings", "branch policy", "CODEOWNERS", "custody receipt"]
+        deliverables:
+          - Make the founding push the only direct-main exception.
+          - Configure no-bypass pull-request integration, merge queue where supported, and secret scanning.
+          - Add AGENTS.md, CONTRIBUTING, ownership, security, and exact-head preservation contracts.
+        predicate: ./scripts/gates/packets/beta-03.sh
+        receipt_target: receipts/packets/beta-03.json
+        required_capabilities: [github-api, code]
+
+  - id: gamma
+    symbol: "γ"
+    title: Monorepo foundation and developer experience
+    depends_on: [beta]
+    purpose: Create the smallest reproducible skeleton for every declared application and package.
+    exit_predicate: ./scripts/gates/gamma.sh
+    packets:
+      - id: GAMMA-01
+        title: Pin runtime, workspace, lockfile, and package boundaries
+        depends_on: [BETA-03]
+        effect: write
+        scope: ["package manager", "TypeScript config", "workspace graph", "tool versions"]
+        deliverables:
+          - Pin the current supported Node runtime and package manager discovered at execution time.
+          - Enable strict TypeScript, reproducible installs, dependency boundaries, and import aliases.
+          - Add versioned formatting, linting, and package graph commands.
+        predicate: ./scripts/gates/packets/gamma-01.sh
+        receipt_target: receipts/packets/gamma-01.json
+        required_capabilities: [code, execute]
+      - id: GAMMA-02
+        title: Scaffold all application and package entrypoints
+        depends_on: [GAMMA-01]
+        effect: write
+        scope: ["apps/*", "packages/*", "shared configuration"]
+        deliverables:
+          - Scaffold web, API, worker, CLI, and MCP applications with health/version commands.
+          - Scaffold every architecture package with explicit public exports and owner docs.
+          - Prove no package imports an application or bypasses the domain/policy seams.
+        predicate: ./scripts/gates/packets/gamma-02.sh
+        receipt_target: receipts/packets/gamma-02.json
+        required_capabilities: [code, execute]
+      - id: GAMMA-03
+        title: Build local orchestration and scoped verification
+        depends_on: [GAMMA-02]
+        effect: write
+        scope: ["Docker Compose", "developer commands", "gate resolver", "CI bootstrap"]
+        deliverables:
+          - Compose web, API, worker, PostgreSQL, and an S3-compatible local object service.
+          - Add deterministic start, stop, reset-synthetic, seed, doctor, and scoped-test commands.
+          - Implement changed-path gate resolution and bounded output/timeouts.
+        predicate: ./scripts/gates/packets/gamma-03.sh
+        receipt_target: receipts/packets/gamma-03.json
+        required_capabilities: [code, execute]
+
+  - id: delta
+    symbol: "δ"
+    title: Contracts and domain model
+    depends_on: [gamma]
+    purpose: Define the portable language and invariants of the platform before persistence or UI.
+    exit_predicate: ./scripts/gates/delta.sh
+    packets:
+      - id: DELTA-01
+        title: Define identifiers, envelopes, classification, and partition contracts
+        depends_on: [GAMMA-03]
+        effect: write
+        scope: ["packages/contracts", "packages/domain primitives"]
+        deliverables:
+          - Define IDs, timestamps, actor/source references, classifications, and partition scopes.
+          - Define command, query, event, problem, page, job, and receipt envelopes.
+          - Generate TypeScript from canonical JSON Schemas and reject drift.
+        predicate: ./scripts/gates/packets/delta-01.sh
+        receipt_target: receipts/packets/delta-01.json
+        required_capabilities: [code, execute]
+      - id: DELTA-02
+        title: Model relationship, engagement, knowledge, and work aggregates
+        depends_on: [DELTA-01]
+        effect: write
+        scope: ["packages/domain aggregates", "state machines", "invariants"]
+        deliverables:
+          - Implement person, organization, relationship, engagement, project, and matter aggregates.
+          - Implement interaction, artifact, note, decision, commitment, task, milestone, and risk.
+          - Encode lifecycle transitions as commands with explicit invariant failures.
+        predicate: ./scripts/gates/packets/delta-02.sh
+        receipt_target: receipts/packets/delta-02.json
+        required_capabilities: [code, execute]
+      - id: DELTA-03
+        title: Define API, event, compatibility, and fixture contracts
+        depends_on: [DELTA-01, DELTA-02]
+        effect: write
+        scope: ["OpenAPI", "event catalog", "contract fixtures", "compatibility policy"]
+        deliverables:
+          - Define v1 resources and command endpoints without persistence leakage.
+          - Define event evolution and backward-compatibility checks.
+          - Publish synthetic golden fixtures and consumer contract tests.
+        predicate: ./scripts/gates/packets/delta-03.sh
+        receipt_target: receipts/packets/delta-03.json
+        required_capabilities: [code, execute]
+
+  - id: epsilon
+    symbol: "ε"
+    title: Persistence, migrations, transactions, and jobs
+    depends_on: [delta]
+    purpose: Implement durable state while keeping SQL, policy, and domain boundaries explicit.
+    exit_predicate: ./scripts/gates/epsilon.sh
+    packets:
+      - id: EPSILON-01
+        title: Design normalized PostgreSQL schema and migration discipline
+        depends_on: [DELTA-03]
+        effect: write
+        scope: ["SQL schema", "numbered migrations", "database roles", "constraints"]
+        deliverables:
+          - Map all canonical entities to partitioned tables and immutable provenance columns.
+          - Create least-privilege owner, migrator, runtime, worker, and read-only roles.
+          - Prove clean install and upgrade in ephemeral databases.
+        predicate: ./scripts/gates/packets/epsilon-01.sh
+        receipt_target: receipts/packets/epsilon-01.json
+        required_capabilities: [code, execute]
+      - id: EPSILON-02
+        title: Implement repositories, unit of work, outbox, and idempotency
+        depends_on: [EPSILON-01]
+        effect: write
+        scope: ["packages/database", "transactions", "outbox", "idempotency keys"]
+        deliverables:
+          - Implement typed repositories without exposing SQL rows to applications.
+          - Commit domain changes, events, audit events, and outbox records atomically.
+          - Reject conflicting command replays and return prior receipts for exact duplicates.
+        predicate: ./scripts/gates/packets/epsilon-02.sh
+        receipt_target: receipts/packets/epsilon-02.json
+        required_capabilities: [code, execute]
+      - id: EPSILON-03
+        title: Implement durable jobs, leases, retries, and synthetic seed lifecycle
+        depends_on: [EPSILON-02]
+        effect: write
+        scope: ["jobs table", "worker leases", "retry policy", "synthetic seeding"]
+        deliverables:
+          - Claim jobs atomically with finite leases, heartbeats, attempts, and dead letters.
+          - Support graceful worker interruption and deterministic retry clocks.
+          - Seed and reset only tagged synthetic partitions with custody checks.
+        predicate: ./scripts/gates/packets/epsilon-03.sh
+        receipt_target: receipts/packets/epsilon-03.json
+        required_capabilities: [code, execute]
+
+  - id: zeta
+    symbol: "ζ"
+    title: Identity, partition authorization, redaction, and audit
+    depends_on: [delta, epsilon]
+    purpose: Make disclosure safety structural before feature data can be queried.
+    exit_predicate: ./scripts/gates/zeta.sh
+    packets:
+      - id: ZETA-01
+        title: Implement identity and session adapter boundaries
+        depends_on: [EPSILON-03]
+        effect: write
+        scope: ["principal model", "OIDC adapter", "sessions", "service identities"]
+        deliverables:
+          - Define owner, collaborator, service, and agent principals without vendor coupling.
+          - Implement secure session rotation, expiry, revocation, and test identities.
+          - Keep authentication claims separate from authorization decisions.
+        predicate: ./scripts/gates/packets/zeta-01.sh
+        receipt_target: receipts/packets/zeta-01.json
+        required_capabilities: [code, execute]
+      - id: ZETA-02
+        title: Implement policy engine and forced row-level security
+        depends_on: [ZETA-01]
+        effect: write
+        scope: ["packages/policy", "PostgreSQL RLS", "capability matrix"]
+        deliverables:
+          - Define roles, actions, resources, field visibility, and non-transitive grants.
+          - Enable and force RLS on every partitioned table with default deny.
+          - Generate and execute the principal x partition x role x action matrix.
+        predicate: ./scripts/gates/packets/zeta-02.sh
+        receipt_target: receipts/packets/zeta-02.json
+        required_capabilities: [code, execute, review]
+      - id: ZETA-03
+        title: Implement redaction and append-only audit receipts
+        depends_on: [ZETA-02]
+        effect: write
+        scope: ["field redaction", "audit chain", "policy receipts", "privacy scanner"]
+        deliverables:
+          - Apply policy-aware DTO redaction before serialization, logging, indexing, or export.
+          - Record actor, decision, reason, request, causation, and resource in append-only audit events.
+          - Detect audit tampering and private-field leakage in generated artifacts.
+        predicate: ./scripts/gates/packets/zeta-03.sh
+        receipt_target: receipts/packets/zeta-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: eta
+    symbol: "η"
+    title: Capture, ingestion, provenance, and object custody
+    depends_on: [epsilon, zeta]
+    purpose: Accept heterogeneous inputs without sacrificing provenance, safety, or idempotency.
+    exit_predicate: ./scripts/gates/eta.sh
+    packets:
+      - id: ETA-01
+        title: Implement source envelopes, cursors, and connector-neutral ingest API
+        depends_on: [ZETA-03]
+        effect: write
+        scope: ["packages/ingest", "source API", "cursor state", "raw envelopes"]
+        deliverables:
+          - Capture source identity, external id, revision, cursor, checksum, and observed times.
+          - Make raw envelopes append-only and replayable.
+          - Enforce partition, classification, size, media type, and provenance at admission.
+        predicate: ./scripts/gates/packets/eta-01.sh
+        receipt_target: receipts/packets/eta-01.json
+        required_capabilities: [code, execute]
+      - id: ETA-02
+        title: Implement normalization, dedupe, linking, and quarantine
+        depends_on: [ETA-01]
+        effect: write
+        scope: ["normalizers", "dedupe", "link proposals", "dead letters"]
+        deliverables:
+          - Normalize to versioned domain commands with deterministic receipts.
+          - Separate exact duplicates, probable matches, and human-review link proposals.
+          - Quarantine malformed, hostile, oversized, or unsupported payloads with bounded diagnostics.
+        predicate: ./scripts/gates/packets/eta-02.sh
+        receipt_target: receipts/packets/eta-02.json
+        required_capabilities: [code, execute]
+      - id: ETA-03
+        title: Implement encrypted content-addressed artifact custody
+        depends_on: [ETA-01, ETA-02]
+        effect: write
+        scope: ["packages/object-store", "uploads", "encryption adapter", "retention metadata"]
+        deliverables:
+          - Hash, quarantine, scan, encrypt, store, and verify object bytes through adapters.
+          - Keep object keys opaque and partition-scoped; never trust filenames for identity.
+          - Exercise local filesystem and S3-compatible adapters with synthetic artifacts.
+        predicate: ./scripts/gates/packets/eta-03.sh
+        receipt_target: receipts/packets/eta-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: theta
+    symbol: "θ"
+    title: Deterministic search and retrieval
+    depends_on: [eta]
+    purpose: Make every authorized record retrievable with explainable ranking and provenance.
+    exit_predicate: ./scripts/gates/theta.sh
+    packets:
+      - id: THETA-01
+        title: Build policy-safe search documents and indexing pipeline
+        depends_on: [ETA-03]
+        effect: write
+        scope: ["packages/search", "index jobs", "search documents", "reindex receipts"]
+        deliverables:
+          - Project authorized text and facets into partitioned PostgreSQL search documents.
+          - Incrementally update indexes from domain events and support idempotent full reindex.
+          - Exclude quarantined, revoked, purged, or non-indexable fields.
+        predicate: ./scripts/gates/packets/theta-01.sh
+        receipt_target: receipts/packets/theta-01.json
+        required_capabilities: [code, execute]
+      - id: THETA-02
+        title: Implement query parsing, filters, ranking, highlights, and saved search
+        depends_on: [THETA-01]
+        effect: write
+        scope: ["search API", "ranking", "filters", "saved views"]
+        deliverables:
+          - Support exact phrase, prefix, faceted, date, source, person, project, and type filters.
+          - Return explainable rank, safe highlights, provenance, and stable cursor pagination.
+          - Store saved queries as policy-checked definitions rather than cached private result sets.
+        predicate: ./scripts/gates/packets/theta-02.sh
+        receipt_target: receipts/packets/theta-02.json
+        required_capabilities: [code, execute]
+      - id: THETA-03
+        title: Add optional semantic retrieval behind a disabled provider-neutral adapter
+        depends_on: [THETA-01, THETA-02]
+        effect: write
+        scope: ["embedding interface", "hybrid rank fusion", "capability valve", "fallback tests"]
+        deliverables:
+          - Define content-minimizing embedding requests and versioned vector metadata.
+          - Keep semantic retrieval off by default and preserve full deterministic functionality without it.
+          - Test provider removal, reorder, outage, stale embeddings, and exact-search fallback.
+        predicate: ./scripts/gates/packets/theta-03.sh
+        receipt_target: receipts/packets/theta-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: iota
+    symbol: "ι"
+    title: Relationship and work operations
+    depends_on: [delta, zeta]
+    purpose: Turn preserved knowledge into accountable collaboration operations.
+    exit_predicate: ./scripts/gates/iota.sh
+    packets:
+      - id: IOTA-01
+        title: Implement people, organizations, relationships, engagements, and timelines
+        depends_on: [ZETA-03, DELTA-03]
+        effect: write
+        scope: ["relationship services", "engagement lifecycle", "timeline projections"]
+        deliverables:
+          - Create and merge identity records through explicit, reversible proposals.
+          - Model relationship and engagement states without leaking across partitions.
+          - Project provenance-backed chronological timelines.
+        predicate: ./scripts/gates/packets/iota-01.sh
+        receipt_target: receipts/packets/iota-01.json
+        required_capabilities: [code, execute]
+      - id: IOTA-02
+        title: Implement commitments, tasks, milestones, waiting, risk, and review queues
+        depends_on: [IOTA-01]
+        effect: write
+        scope: ["workflows package", "task API", "review queues", "state transitions"]
+        deliverables:
+          - Enforce assignee, due, waiting-on, blocked, complete, cancelled, and reopened semantics.
+          - Derive overdue, stale, at-risk, waiting, and next-action views from canonical state.
+          - Preserve transition actor, rationale, causation, and audit receipts.
+        predicate: ./scripts/gates/packets/iota-02.sh
+        receipt_target: receipts/packets/iota-02.json
+        required_capabilities: [code, execute]
+      - id: IOTA-03
+        title: Implement meetings, decisions, notes, and action propagation
+        depends_on: [IOTA-01, IOTA-02]
+        effect: write
+        scope: ["meeting prep", "decision records", "action extraction", "follow-up views"]
+        deliverables:
+          - Assemble meeting briefs from authorized history and open operational state.
+          - Record decisions with alternatives, rationale, participants, evidence, and supersession.
+          - Atomically create resulting commitments/tasks and link them to their source decision.
+        predicate: ./scripts/gates/packets/iota-03.sh
+        receipt_target: receipts/packets/iota-03.json
+        required_capabilities: [code, execute]
+
+  - id: kappa
+    symbol: "κ"
+    title: Owner console and interaction design
+    depends_on: [theta, iota]
+    purpose: Deliver the complete owner workflow as an accessible responsive web application.
+    exit_predicate: ./scripts/gates/kappa.sh
+    packets:
+      - id: KAPPA-01
+        title: Build information architecture, design system, shell, and state patterns
+        depends_on: [THETA-03, IOTA-03]
+        effect: write
+        scope: ["packages/ui", "apps/web shell", "navigation", "responsive states"]
+        deliverables:
+          - Define tokens, components, layouts, keyboard model, and accessibility baseline.
+          - Build partition switcher, global command surface, breadcrumbs, and policy-aware navigation.
+          - Implement loading, empty, error, offline, conflict, and permission-denied patterns.
+        predicate: ./scripts/gates/packets/kappa-01.sh
+        receipt_target: receipts/packets/kappa-01.json
+        required_capabilities: [code, execute, review]
+      - id: KAPPA-02
+        title: Build capture, inbox, classification, and linking experiences
+        depends_on: [KAPPA-01]
+        effect: write
+        scope: ["quick capture", "inbox", "artifact upload", "classification UI"]
+        deliverables:
+          - Capture note, URL, file, and source reference into an explicit partition.
+          - Process inbox records into entities, tasks, decisions, links, archive, or quarantine.
+          - Show provenance and policy consequences before every classification or move.
+        predicate: ./scripts/gates/packets/kappa-02.sh
+        receipt_target: receipts/packets/kappa-02.json
+        required_capabilities: [code, execute]
+      - id: KAPPA-03
+        title: Build search, timelines, reviews, projects, and meeting-prep experiences
+        depends_on: [KAPPA-01, KAPPA-02]
+        effect: write
+        scope: ["search UI", "entity pages", "work review", "meeting prep"]
+        deliverables:
+          - Implement global/faceted search with explainable results and safe highlights.
+          - Implement person, organization, engagement, project, and decision timelines.
+          - Implement commitment review, waiting/risk views, dashboards, and meeting briefs.
+        predicate: ./scripts/gates/packets/kappa-03.sh
+        receipt_target: receipts/packets/kappa-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: lambda
+    symbol: "λ"
+    title: Scoped collaborator portal
+    depends_on: [zeta, kappa]
+    purpose: Project minimum necessary collaboration views without weakening owner custody.
+    exit_predicate: ./scripts/gates/lambda.sh
+    packets:
+      - id: LAMBDA-01
+        title: Define portal capability grants and projection contracts
+        depends_on: [ZETA-03, KAPPA-03]
+        effect: write
+        scope: ["portal policy", "grant lifecycle", "projection DTOs", "invitation valve"]
+        deliverables:
+          - Define viewer, contributor, and editor capabilities per partition and resource.
+          - Keep invitation delivery disabled; implement grant proposals and preview receipts only.
+          - Prove links, counts, navigation, and errors reveal no owner-only or foreign-partition state.
+        predicate: ./scripts/gates/packets/lambda-01.sh
+        receipt_target: receipts/packets/lambda-01.json
+        required_capabilities: [code, execute, review]
+      - id: LAMBDA-02
+        title: Implement portal views, comments, uploads, and scoped work actions
+        depends_on: [LAMBDA-01]
+        effect: write
+        scope: ["collaborator routes", "comment/upload commands", "scoped task actions"]
+        deliverables:
+          - Render only policy-projected records and explicitly shared artifacts.
+          - Support comments, uploads, acknowledgements, and permitted task transitions.
+          - Quarantine uploads and audit every collaborator-visible mutation.
+        predicate: ./scripts/gates/packets/lambda-02.sh
+        receipt_target: receipts/packets/lambda-02.json
+        required_capabilities: [code, execute]
+      - id: LAMBDA-03
+        title: Implement view-as, revocation, expiry, and disclosure regression suite
+        depends_on: [LAMBDA-01, LAMBDA-02]
+        effect: write
+        scope: ["owner preview", "revocation", "grant expiry", "negative E2E tests"]
+        deliverables:
+          - Let the owner preview exact collaborator visibility without changing identity.
+          - Revoke/expire grants immediately across sessions, caches, search, jobs, and downloads.
+          - Generate cross-partition disclosure tests for every portal route and tool.
+        predicate: ./scripts/gates/packets/lambda-03.sh
+        receipt_target: receipts/packets/lambda-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: mu
+    symbol: "μ"
+    title: Connector SDK and source adapters
+    depends_on: [eta, zeta]
+    purpose: Make source integration repeatable, least-privilege, and safe before credentials exist.
+    exit_predicate: ./scripts/gates/mu.sh
+    packets:
+      - id: MU-01
+        title: Build connector manifests, lifecycle, cursors, limits, and contract testkit
+        depends_on: [ETA-03, ZETA-03]
+        effect: write
+        scope: ["packages/connectors", "capability manifests", "connector testkit"]
+        deliverables:
+          - Declare read/write capabilities, scopes, data classes, rate limits, and cursor semantics.
+          - Implement discover, authorize, pull, push, revoke, health, and dry-run interfaces.
+          - Require idempotency, bounded retries, redacted diagnostics, and synthetic conformance tests.
+        predicate: ./scripts/gates/packets/mu-01.sh
+        receipt_target: receipts/packets/mu-01.json
+        required_capabilities: [code, execute]
+      - id: MU-02
+        title: Implement synthetic reference connectors
+        depends_on: [MU-01]
+        effect: write
+        scope: ["fixture mail", "fixture calendar", "fixture drive", "fixture chat", "fixture GitHub"]
+        deliverables:
+          - Simulate pagination, edits, deletes, duplicates, attachments, rate limits, and outages.
+          - Exercise read-only and proposed-write modes without network or secrets.
+          - Publish deterministic replay corpora and expected normalization receipts.
+        predicate: ./scripts/gates/packets/mu-02.sh
+        receipt_target: receipts/packets/mu-02.json
+        required_capabilities: [code, execute]
+      - id: MU-03
+        title: Implement production adapter shells behind credential and effect valves
+        depends_on: [MU-01, MU-02]
+        effect: write
+        scope: ["GitHub", "Google", "Slack", "Notion", "generic webhook/file adapters"]
+        deliverables:
+          - Implement provider-neutral adapter shells and live capability probes.
+          - Keep all real credentials absent and all outward writes disabled by default.
+          - Prove provider removal, reordering, revocation, partial scope, and fallback behavior.
+        predicate: ./scripts/gates/packets/mu-03.sh
+        receipt_target: receipts/packets/mu-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: nu
+    symbol: "ν"
+    title: Agent, MCP, and automation runtime
+    depends_on: [theta, mu, zeta]
+    purpose: Let agents retrieve and propose work without becoming an authority bypass.
+    exit_predicate: ./scripts/gates/nu.sh
+    packets:
+      - id: NU-01
+        title: Implement policy-scoped MCP resources and read tools
+        depends_on: [THETA-03, MU-03, ZETA-03]
+        effect: write
+        scope: ["apps/mcp", "tool/resource schemas", "stdio", "Streamable HTTP"]
+        deliverables:
+          - Expose search, entities, timelines, commitments, decisions, and source receipts.
+          - Bind every request to principal, partition, capability, correlation, and policy receipt.
+          - Support local stdio and remote Streamable HTTP without duplicating domain logic.
+        predicate: ./scripts/gates/packets/nu-01.sh
+        receipt_target: receipts/packets/nu-01.json
+        required_capabilities: [code, execute]
+      - id: NU-02
+        title: Implement mutation tools with proposals, idempotency, and receipts
+        depends_on: [NU-01]
+        effect: write
+        scope: ["MCP commands", "proposal workflow", "mutation receipts", "agent grants"]
+        deliverables:
+          - Expose capture, task, decision, note, link, and classification commands.
+          - Require explicit scoped capability and idempotency key for every mutation.
+          - Return bounded machine-readable receipts and deny hidden cross-partition references.
+        predicate: ./scripts/gates/packets/nu-02.sh
+        receipt_target: receipts/packets/nu-02.json
+        required_capabilities: [code, execute, review]
+      - id: NU-03
+        title: Implement automation triggers, rules, dry-run, approval, replay, and safety
+        depends_on: [NU-01, NU-02]
+        effect: write
+        scope: ["packages/automation", "rule engine", "effect valves", "automation UI/API"]
+        deliverables:
+          - Trigger from domain events, schedules, and manual requests through typed conditions/actions.
+          - Support dry-run, proposed, approved, executing, succeeded, failed, and cancelled states.
+          - Isolate untrusted captured content from instruction authority and prevent effect replay.
+        predicate: ./scripts/gates/packets/nu-03.sh
+        receipt_target: receipts/packets/nu-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: xi
+    symbol: "ξ"
+    title: Notifications, briefings, and correspondence valves
+    depends_on: [iota, mu]
+    purpose: Surface what matters while keeping every outward communication disarmed by default.
+    exit_predicate: ./scripts/gates/xi.sh
+    packets:
+      - id: XI-01
+        title: Implement internal notification inbox and preference model
+        depends_on: [IOTA-03, MU-03]
+        effect: write
+        scope: ["notification domain", "in-app inbox", "preferences", "dedupe"]
+        deliverables:
+          - Model urgency, audience, channel eligibility, read/acted state, and source receipt.
+          - Collapse duplicate notifications without erasing individual causation.
+          - Respect partition, quiet time, severity, and policy in all projections.
+        predicate: ./scripts/gates/packets/xi-01.sh
+        receipt_target: receipts/packets/xi-01.json
+        required_capabilities: [code, execute]
+      - id: XI-02
+        title: Implement daily, weekly, meeting, and risk briefings
+        depends_on: [XI-01]
+        effect: write
+        scope: ["briefing queries", "digest renderer", "owner dashboard", "snapshot receipts"]
+        deliverables:
+          - Derive briefings from canonical commitments, decisions, changes, waiting, and risks.
+          - Link every statement to underlying records and report data-window scope.
+          - Render in-app and exportable private snapshots with deterministic ordering.
+        predicate: ./scripts/gates/packets/xi-02.sh
+        receipt_target: receipts/packets/xi-02.json
+        required_capabilities: [code, execute]
+      - id: XI-03
+        title: Implement disarmed outbound channel adapters and preview receipts
+        depends_on: [XI-01, XI-02]
+        effect: write
+        scope: ["email/chat/webhook renderers", "outbox previews", "send valves"]
+        deliverables:
+          - Render channel-specific drafts from policy-safe data.
+          - Keep send disabled without a separately authorized effect token and destination ownership.
+          - Test preview, approval expiry, duplicate suppression, and revoked destination behavior.
+        predicate: ./scripts/gates/packets/xi-03.sh
+        receipt_target: receipts/packets/xi-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: omicron
+    symbol: "ο"
+    title: Reporting, analytics, portability, and export
+    depends_on: [theta, iota, lambda]
+    purpose: Make operational truth explainable and the owner's data portable without leakage.
+    exit_predicate: ./scripts/gates/omicron.sh
+    packets:
+      - id: OMICRON-01
+        title: Implement metrics, trend queries, and explainable dashboards
+        depends_on: [THETA-03, IOTA-03]
+        effect: write
+        scope: ["metrics catalog", "analytics queries", "dashboard cards", "denominators"]
+        deliverables:
+          - Define source, window, denominator, freshness, and owner for every metric.
+          - Implement workload, response, commitment, decision, risk, and source-health trends.
+          - Separate unknown/unscanned coverage from zero and avoid invented progress percentages.
+        predicate: ./scripts/gates/packets/omicron-01.sh
+        receipt_target: receipts/packets/omicron-01.json
+        required_capabilities: [code, execute]
+      - id: OMICRON-02
+        title: Implement saved reports, snapshots, comparison, and drill-through
+        depends_on: [OMICRON-01]
+        effect: write
+        scope: ["report definitions", "snapshots", "comparison", "drill-through"]
+        deliverables:
+          - Store policy-checked report definitions and immutable dated snapshots.
+          - Compare periods with explicit windows and changed-source warnings.
+          - Drill every aggregate back to authorized records and provenance.
+        predicate: ./scripts/gates/packets/omicron-02.sh
+        receipt_target: receipts/packets/omicron-02.json
+        required_capabilities: [code, execute]
+      - id: OMICRON-03
+        title: Implement partition export, redaction, checksums, import, and isolated restore
+        depends_on: [OMICRON-02, LAMBDA-03]
+        effect: write
+        scope: ["export bundle", "redaction policy", "manifest/checksums", "restore tool"]
+        deliverables:
+          - Export one partition with schemas, records, artifacts, provenance, and integrity manifest.
+          - Support full-owner and scoped-redacted exports with explicit omissions.
+          - Import and verify into an isolated environment without overwriting existing custody.
+        predicate: ./scripts/gates/packets/omicron-03.sh
+        receipt_target: receipts/packets/omicron-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: pi
+    symbol: "π"
+    title: Security, privacy, and supply-chain hardening
+    depends_on: [zeta, eta, lambda, nu, omicron]
+    purpose: Convert the threat model into executable controls across every surface.
+    exit_predicate: ./scripts/gates/pi.sh
+    packets:
+      - id: PI-01
+        title: Implement application and content security controls
+        depends_on: [ZETA-03, ETA-03, LAMBDA-03, NU-03]
+        effect: write
+        scope: ["sessions", "CSRF/CSP", "rate/size limits", "safe rendering", "webhooks"]
+        deliverables:
+          - Enforce secure cookies, CSRF, CSP, origin checks, request/upload limits, and safe rendering.
+          - Validate signatures, replay windows, and destinations before any webhook capability opens.
+          - Isolate prompt-like captured content from agent/tool instruction channels.
+        predicate: ./scripts/gates/packets/pi-01.sh
+        receipt_target: receipts/packets/pi-01.json
+        required_capabilities: [code, execute, review]
+      - id: PI-02
+        title: Implement secret, dependency, license, static, container, and SBOM gates
+        depends_on: [PI-01]
+        effect: write
+        scope: ["CI security", "dependency policy", "container scan", "SBOM", "secret scan"]
+        deliverables:
+          - Scan source, history additions, images, fixtures, logs, and build artifacts for secrets.
+          - Fail on disallowed licenses, vulnerable direct dependencies, or unowned exceptions.
+          - Generate signed/checksummed SBOM and provenance for release artifacts.
+        predicate: ./scripts/gates/packets/pi-02.sh
+        receipt_target: receipts/packets/pi-02.json
+        required_capabilities: [code, execute, review]
+      - id: PI-03
+        title: Execute abuse, disclosure, and authorization regression program
+        depends_on: [PI-01, PI-02, OMICRON-03]
+        effect: write
+        scope: ["security tests", "fuzz/property tests", "disclosure matrix", "remediation receipts"]
+        deliverables:
+          - Test compromised sessions, forged identities, hostile imports, race/replay, and enumeration.
+          - Property-test default deny and cross-partition non-interference.
+          - Route every finding to a bounded remediation packet and preserve green shard receipts.
+        predicate: ./scripts/gates/packets/pi-03.sh
+        receipt_target: receipts/packets/pi-03.json
+        required_capabilities: [execute, review]
+
+  - id: rho
+    symbol: "ρ"
+    title: Reliability, observability, backup, and recovery
+    depends_on: [epsilon, nu, pi]
+    purpose: Make failures visible, bounded, recoverable, and attributable.
+    exit_predicate: ./scripts/gates/rho.sh
+    packets:
+      - id: RHO-01
+        title: Implement redacted logs, metrics, traces, health, and readiness
+        depends_on: [EPSILON-03, NU-03, PI-03]
+        effect: write
+        scope: ["observability package", "correlation", "health/readiness", "privacy filter"]
+        deliverables:
+          - Correlate requests, commands, events, jobs, connector calls, and automation runs.
+          - Expose liveness, readiness, migration, dependency, queue, and storage health.
+          - Prove private fields and source payloads cannot enter telemetry exports.
+        predicate: ./scripts/gates/packets/rho-01.sh
+        receipt_target: receipts/packets/rho-01.json
+        required_capabilities: [code, execute]
+      - id: RHO-02
+        title: Implement graceful lifecycle, alert ownership, and operational runbooks
+        depends_on: [RHO-01]
+        effect: write
+        scope: ["startup/shutdown", "job drain", "alerts", "runbooks", "SLOs"]
+        deliverables:
+          - Gate startup on config/migration compatibility and drain in-flight work on shutdown.
+          - Give every alert severity, owner, predicate, runbook, suppression, and recovery condition.
+          - Measure service and job objectives against synthetic workloads.
+        predicate: ./scripts/gates/packets/rho-02.sh
+        receipt_target: receipts/packets/rho-02.json
+        required_capabilities: [code, execute]
+      - id: RHO-03
+        title: Implement backup, encrypted custody, restore, and disaster-recovery drill
+        depends_on: [RHO-01, RHO-02]
+        effect: write
+        scope: ["database backup", "object inventory", "encryption adapter", "restore drill"]
+        deliverables:
+          - Back up schema/data plus object manifests with checksums and explicit RLS completeness checks.
+          - Restore into an isolated environment and compare logical counts and sampled content hashes.
+          - Record measured recovery point/time, missing dependencies, and rollback steps.
+        predicate: ./scripts/gates/packets/rho-03.sh
+        receipt_target: receipts/packets/rho-03.json
+        required_capabilities: [code, execute, review]
+
+  - id: sigma
+    symbol: "σ"
+    title: Whole-suite quality system and continuous integration
+    depends_on: [kappa, lambda, xi, omicron, pi, rho]
+    purpose: Make every claimed behavior executable, scoped, parallel, and receipt-backed.
+    exit_predicate: ./scripts/gates/sigma.sh
+    packets:
+      - id: SIGMA-01
+        title: Complete unit, property, contract, migration, and integration test matrices
+        depends_on: [KAPPA-03, LAMBDA-03, XI-03, OMICRON-03, PI-03, RHO-03]
+        effect: write
+        scope: ["unit tests", "property tests", "contract tests", "integration tests"]
+        deliverables:
+          - Cover domain invariants, policy matrices, serializers, migrations, repositories, and jobs.
+          - Test clocks, retries, concurrency, cancellation, replay, and malformed inputs deterministically.
+          - Enforce coverage by critical behavior rather than one undifferentiated percentage.
+        predicate: ./scripts/gates/packets/sigma-01.sh
+        receipt_target: receipts/packets/sigma-01.json
+        required_capabilities: [code, execute]
+      - id: SIGMA-02
+        title: Complete browser journeys, accessibility, visual, and persona tests
+        depends_on: [SIGMA-01]
+        effect: write
+        scope: ["Playwright", "accessibility", "visual baselines", "owner/collaborator personas"]
+        deliverables:
+          - Cover every primary journey and destructive confirmation with user-visible assertions.
+          - Test keyboard, focus, screen-reader labels, contrast, reduced motion, responsive and offline states.
+          - Keep visual baselines synthetic and reviewable with bounded diffs.
+        predicate: ./scripts/gates/packets/sigma-02.sh
+        receipt_target: receipts/packets/sigma-02.json
+        required_capabilities: [code, execute, review]
+      - id: SIGMA-03
+        title: Implement changed-path CI waves, receipt reuse, merge-group, and release gates
+        depends_on: [SIGMA-01, SIGMA-02]
+        effect: external
+        scope: ["GitHub Actions", "gate graph", "timeouts/output caps", "merge queue"]
+        deliverables:
+          - Run cheap implicated shards first and admission-gated heavy shards concurrently by resource tier.
+          - Reuse exact-head green receipts and invalidate only affected shards.
+          - Verify synthetic merge groups and release artifacts without branch-rewrite loops.
+        predicate: ./scripts/gates/packets/sigma-03.sh
+        receipt_target: receipts/packets/sigma-03.json
+        required_capabilities: [code, github-api, execute]
+
+  - id: tau
+    symbol: "τ"
+    title: Synthetic Alpha-to-Omega system trial
+    depends_on: [sigma]
+    purpose: Drive the complete system under realistic synthetic load and failure before live data.
+    exit_predicate: ./scripts/gates/tau.sh
+    packets:
+      - id: TAU-01
+        title: Build versioned multi-partition synthetic universe and expected truth
+        depends_on: [SIGMA-03]
+        effect: write
+        scope: ["synthetic personas", "sources", "artifacts", "truth manifest", "privacy scan"]
+        deliverables:
+          - Generate multiple clients, collaborators, projects, messages, files, meetings, and tasks.
+          - Include duplicates, edits, revocations, hostile content, time zones, and edge lifecycles.
+          - Publish expected counts, links, search results, policy outcomes, and checksums.
+        predicate: ./scripts/gates/packets/tau-01.sh
+        receipt_target: receipts/packets/tau-01.json
+        required_capabilities: [code, execute]
+      - id: TAU-02
+        title: Run end-to-end ingest, operation, portal, automation, export, and restore trial
+        depends_on: [TAU-01]
+        effect: write
+        scope: ["local Compose trial", "all primary journeys", "trial receipts"]
+        deliverables:
+          - Ingest every synthetic source and reconcile with the truth manifest.
+          - Execute owner, collaborator-preview, MCP, automation, reporting, export, and restore journeys.
+          - Prove no cross-partition disclosure and no duplicate outward effect.
+        predicate: ./scripts/gates/packets/tau-02.sh
+        receipt_target: receipts/packets/tau-02.json
+        required_capabilities: [execute, review]
+      - id: TAU-03
+        title: Execute performance, interruption, corruption, and recovery trials
+        depends_on: [TAU-01, TAU-02]
+        effect: write
+        scope: ["load trial", "worker kill", "dependency outage", "backup corruption", "recovery"]
+        deliverables:
+          - Measure declared performance budgets against the versioned corpus.
+          - Interrupt workers/services, replay jobs, rotate sessions, and simulate connector outages.
+          - Detect bad backups/checksums and restore the last valid generation with bounded evidence.
+        predicate: ./scripts/gates/packets/tau-03.sh
+        receipt_target: receipts/packets/tau-03.json
+        required_capabilities: [execute, review]
+
+  - id: upsilon
+    symbol: "υ"
+    title: Controlled source onboarding and partition migration
+    depends_on: [tau, mu]
+    purpose: Prepare every real source lane without moving live private content absent its own gate.
+    exit_predicate: ./scripts/gates/upsilon.sh
+    packets:
+      - id: UPSILON-01
+        title: Inventory source owners, classifications, volumes, contracts, and custody gates
+        depends_on: [TAU-03, MU-03]
+        effect: read
+        scope: ["source registry", "data classes", "owner partitions", "custody gates"]
+        deliverables:
+          - Enumerate source systems dynamically and distinguish metadata references from content custody.
+          - Record owner, partition, classification, volume, update semantics, and live-import gate.
+          - Preserve David, Maddie, and Ari as external owner lanes under the Limen boundary.
+        predicate: ./scripts/gates/packets/upsilon-01.sh
+        receipt_target: receipts/packets/upsilon-01.json
+        required_capabilities: [inspect, review]
+      - id: UPSILON-02
+        title: Build per-source mapping, dry-run, reconciliation, rollback, and acceptance packets
+        depends_on: [UPSILON-01]
+        effect: write
+        scope: ["mapping manifests", "dry-run reports", "reconciliation", "rollback"]
+        deliverables:
+          - Map source fields/classes to canonical records without embedding private samples in Git.
+          - Generate count-only/hash-only dry-run reports and mismatch thresholds.
+          - Define source-specific acceptance, rollback, duplicate, and deletion semantics.
+        predicate: ./scripts/gates/packets/upsilon-02.sh
+        receipt_target: receipts/packets/upsilon-02.json
+        required_capabilities: [code, inspect]
+      - id: UPSILON-03
+        title: Execute only authorized pilot imports and preserve all other gates
+        depends_on: [UPSILON-01, UPSILON-02]
+        effect: external
+        requires_gate: live_client_data_or_transcript_import
+        scope: ["explicitly authorized source only", "pilot partition", "custody receipts"]
+        deliverables:
+          - Require a source-specific authorization and custody receipt immediately before live import.
+          - Import one bounded partition, reconcile, sample, accept or roll back, and record exact evidence.
+          - Leave unauthorized sources as fully planned owner-routed packets without stalling release artifacts.
+        predicate: ./scripts/gates/packets/upsilon-03.sh
+        receipt_target: receipts/packets/upsilon-03.json
+        required_capabilities: [execute, review]
+
+  - id: phi
+    symbol: "φ"
+    title: Packaging and deployable operations
+    depends_on: [rho, sigma, tau]
+    purpose: Produce reproducible private deployment artifacts without silently deploying them.
+    exit_predicate: ./scripts/gates/phi.sh
+    packets:
+      - id: PHI-01
+        title: Build minimal hardened containers and local production topology
+        depends_on: [RHO-03, SIGMA-03, TAU-03]
+        effect: write
+        scope: ["container images", "Compose production profile", "health", "non-root runtime"]
+        deliverables:
+          - Build reproducible minimal images for web, API, worker, CLI jobs, and MCP.
+          - Run as non-root with read-only filesystem where possible and explicit writable mounts.
+          - Exercise startup, migrations, health, drain, backup, and rollback locally.
+        predicate: ./scripts/gates/packets/phi-01.sh
+        receipt_target: receipts/packets/phi-01.json
+        required_capabilities: [code, execute]
+      - id: PHI-02
+        title: Define provider-neutral deployment and secret interfaces
+        depends_on: [PHI-01]
+        effect: write
+        scope: ["deployment contract", "config schema", "secret references", "storage/database adapters"]
+        deliverables:
+          - Define required compute, network, database, object, identity, secret, and telemetry capabilities.
+          - Keep credentials as owner-native references and validate presence/validity without printing values.
+          - Supply one local and one provider-neutral production configuration example.
+        predicate: ./scripts/gates/packets/phi-02.sh
+        receipt_target: receipts/packets/phi-02.json
+        required_capabilities: [code, review]
+      - id: PHI-03
+        title: Produce signed release artifacts, provenance, SBOM, and deployment dry-run
+        depends_on: [PHI-01, PHI-02]
+        effect: write
+        scope: ["release bundle", "checksums", "provenance", "deployment dry-run"]
+        deliverables:
+          - Build immutable images/packages, schema bundle, migration set, docs, SBOM, and checksums.
+          - Verify artifacts against the exact source head and synthetic trial receipts.
+          - Run deployment plan/dry-run only; retain production deployment, DNS, and paid spend gates.
+        predicate: ./scripts/gates/packets/phi-03.sh
+        receipt_target: receipts/packets/phi-03.json
+        required_capabilities: [execute, review]
+
+  - id: chi
+    symbol: "χ"
+    title: Release readiness, documentation, and operational rehearsal
+    depends_on: [phi, upsilon]
+    purpose: Ensure another authorized operator or agent can run and recover the suite from receipts.
+    exit_predicate: ./scripts/gates/chi.sh
+    packets:
+      - id: CHI-01
+        title: Complete product, API, schema, connector, security, and operator documentation
+        depends_on: [PHI-03, UPSILON-03]
+        effect: write
+        scope: ["docs", "OpenAPI", "schema catalog", "runbooks", "ADRs"]
+        deliverables:
+          - Document every surface, domain concept, policy, connector, configuration, and failure mode.
+          - Generate API/schema/tool references from sources and reject hand-edited drift.
+          - Keep README files as indexes over cohesive owner modules.
+        predicate: ./scripts/gates/packets/chi-01.sh
+        receipt_target: receipts/packets/chi-01.json
+        required_capabilities: [code, review]
+      - id: CHI-02
+        title: Rehearse installation, upgrade, rollback, backup, restore, and incident response
+        depends_on: [CHI-01]
+        effect: write
+        scope: ["fresh-host rehearsal", "upgrade/rollback", "restore", "incident drills"]
+        deliverables:
+          - Follow only published runbooks from a clean environment.
+          - Upgrade from the prior release fixture, roll back safely, and restore from backup.
+          - Exercise disclosure, auth outage, connector outage, job backlog, and corrupt-artifact incidents.
+        predicate: ./scripts/gates/packets/chi-02.sh
+        receipt_target: receipts/packets/chi-02.json
+        required_capabilities: [execute, review]
+      - id: CHI-03
+        title: Perform independent release review and residual ownership audit
+        depends_on: [CHI-01, CHI-02]
+        effect: write
+        scope: ["release review", "residual registry", "gate receipts", "exact-head evidence"]
+        deliverables:
+          - Review product, security, data, UX, operations, and plan coverage independently.
+          - Route every finding to a bounded packet or retained-gate owner.
+          - Prove no TODO, local-only artifact, unpushed branch, or unowned decision remains.
+        predicate: ./scripts/gates/packets/chi-03.sh
+        receipt_target: receipts/packets/chi-03.json
+        required_capabilities: [review, inspect]
+
+  - id: psi
+    symbol: "ψ"
+    title: Autonomic governance and continuous improvement
+    depends_on: [chi]
+    purpose: Keep the platform healthy, current, and policy-aligned after initial delivery.
+    exit_predicate: ./scripts/gates/psi.sh
+    packets:
+      - id: PSI-01
+        title: Implement scheduled maintenance, freshness, drift, and capacity sensors
+        depends_on: [CHI-03]
+        effect: write
+        scope: ["maintenance jobs", "sensor registry", "freshness", "capacity", "drift"]
+        deliverables:
+          - Check backups, queues, source cursors, index freshness, grants, sessions, storage, and certificates.
+          - Detect schema, contract, docs, policy, configuration, and deployment drift.
+          - Give every sensor finite runtime, bounded output, severity, owner, and remediation command.
+        predicate: ./scripts/gates/packets/psi-01.sh
+        receipt_target: receipts/packets/psi-01.json
+        required_capabilities: [code, execute]
+      - id: PSI-02
+        title: Implement dependency, schema, connector, and policy evolution rails
+        depends_on: [PSI-01]
+        effect: write
+        scope: ["upgrade policy", "deprecation", "compatibility windows", "migration rehearsal"]
+        deliverables:
+          - Discover current supported versions live and stage bounded upgrades with rollback.
+          - Version connector capabilities, API/events, policy, and exports with compatibility receipts.
+          - Deprecate only after consumer inventory, warning window, and migration predicate pass.
+        predicate: ./scripts/gates/packets/psi-02.sh
+        receipt_target: receipts/packets/psi-02.json
+        required_capabilities: [code, execute, review]
+      - id: PSI-03
+        title: Implement feedback, decision, recommendation, and work-loan loop
+        depends_on: [PSI-01, PSI-02]
+        effect: write
+        scope: ["feedback intake", "decision log", "work loans", "value/spend reconciliation"]
+        deliverables:
+          - Capture feedback and incidents with source lineage without turning chat into a backlog.
+          - Underwrite packets with value, cost, owner, predicate, and receipt before consuming capacity.
+          - Reconcile forecast value/spend to actual durable credit and feed results into ranking.
+        predicate: ./scripts/gates/packets/psi-03.sh
+        receipt_target: receipts/packets/psi-03.json
+        required_capabilities: [code, execute]
+
+  - id: omega
+    symbol: "ω"
+    title: Exact-head fixed point and terminal custody
+    depends_on: [psi]
+    purpose: Prove the declared suite, receipts, and lifecycle have converged without hidden residue.
+    exit_predicate: ./scripts/omega.sh
+    packets:
+      - id: OMEGA-01
+        title: Reconcile every phase, packet, capability, source, and retained gate
+        depends_on: [PSI-03]
+        effect: read
+        scope: ["execution DAG", "packet receipts", "capability registry", "source coverage", "gates"]
+        deliverables:
+          - Verify every packet is succeeded or has a precise terminal owner receipt permitted by acceptance.
+          - Verify every declared capability has implementation and predicate evidence or visible gated status.
+          - Verify source coverage distinguishes unscanned, unauthorized, partial, and complete.
+        predicate: ./scripts/gates/packets/omega-01.sh
+        receipt_target: receipts/packets/omega-01.json
+        required_capabilities: [inspect, review]
+      - id: OMEGA-02
+        title: Run scoped resolver and Omega twice on one unchanged exact head
+        depends_on: [OMEGA-01]
+        effect: write
+        scope: ["exact target head", "phase receipts", "Omega receipt", "idempotence"]
+        deliverables:
+          - Run only invalidated scoped shards, preserve unchanged green receipts, then compose Omega.
+          - Run Omega a second time and prove byte-identical/no-growth state.
+          - Bind the final receipt to source, artifact, migration, schema, and trial digests.
+        predicate: ./scripts/gates/packets/omega-02.sh
+        receipt_target: receipts/packets/omega-02.json
+        required_capabilities: [execute, review]
+      - id: OMEGA-03
+        title: Close lifecycle, publish private custody, and reap disposable worktrees
+        depends_on: [OMEGA-01, OMEGA-02]
+        effect: external
+        scope: ["green PRs", "remote receipts", "branch custody", "worktree closeout", "successor state"]
+        deliverables:
+          - Merge or owner-route every green PR through the accepted integration rail.
+          - Push all receipts and prove every useful head is remotely reachable.
+          - Reap only clean inactive exact-head-preserved worktrees and emit no successor when settled.
+        predicate: ./scripts/gates/packets/omega-03.sh
+        receipt_target: receipts/packets/omega-03.json
+        required_capabilities: [github-api, execute, review]

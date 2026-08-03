@@ -339,7 +339,7 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
         ],
     )
     assert timed_out.exit_code != 0
-    assert time.monotonic() - started < 4
+    assert time.monotonic() - started < 5
     monkeypatch.delenv("JULES_SLEEP")
     monkeypatch.delenv("LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS")
 

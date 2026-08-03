@@ -847,6 +847,24 @@
       "issue": 1736
     },
     {
+      "id": "L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS",
+      "label": "DISCHARGED 2026-08-03: create the private organvm-iii-ergon/collaboration-operations-platform repository and execute the complete non-destructive Alpha-to-Omega software-suite plan through a native Agy conductor. The platform remains owner-private, carries no collaborator grants, and uses synthetic fixtures until each live source has its own custody authorization.",
+      "owner": "yours",
+      "cost": "authorized in the direct session; no paid spend authorized",
+      "status": "discharged",
+      "gate": "none remaining for private repository genesis and non-destructive implementation; destructive personal-data actions, credential movement, paid spend, collaborator invitations/transfers, public send/release, DNS, production deployment, and live client-data/transcript import remain separately gated",
+      "unlocks": "private repository genesis plus the autonomous 24-phase, 72-packet Collaboration Operations Platform implementation program",
+      "source_task": "direct human authorization 2026-08-03; .codex/plans/2026-08-03-collaboration-operations-platform-alpha-omega.md",
+      "steps": [
+        "Launch the identity-bound Agy successor capsule from the exact pushed Limen head",
+        "Pass the fresh remote-absence, naming, estate-class, and seed gates",
+        "Run repo-genesis once without --dry-run, then use topic branches and PRs for all later work",
+        "Execute the machine-readable Alpha-to-Omega DAG with one predicate and receipt per packet"
+      ],
+      "issue": 1790,
+      "discharged": "2026-08-03 — explicit direct-session authorization; needs-human issue #1790 CLOSED with retained gates preserved"
+    },
+    {
       "id": "L-HEARTBEAT-WORKTREE-VOLUME-GONE",
       "label": "The running heartbeat daemon is configured with LIMEN_WORKTREES=/Volumes/Scratch/limen-worktrees, and /Volumes/Scratch is NOT MOUNTED. Every worktree the fleet creates targets a path on a volume that no longer exists. The installed plist was generated while the volume was present; gen-launchd-plist.sh falls back to $WORKDIR/.limen-worktrees only when the scratch root is absent AND writable at generation time, so the daemon kept the dead path. Two ways out, and only you can pick: (a) remount /Volumes/Scratch, which restores the intent that worktrees live off the main disk — relevant on a 16GB machine that logs jetsam kills; or (b) accept the derived path by regenerating and reinstalling the plist, which moves worktrees under ~/Workspace. Either resolves it; doing neither leaves the fleet writing to a phantom mountpoint.",
       "owner": "yours",
