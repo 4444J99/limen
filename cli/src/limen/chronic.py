@@ -13,6 +13,7 @@ halves of the oscillation this module closes.
 from __future__ import annotations
 
 import re
+from typing import Any
 
 CHRONIC_FLEET_DEBT_LABEL = "chronic-fleet-debt"
 
@@ -29,13 +30,13 @@ CHRONIC_FLEET_DEBT_LABEL = "chronic-fleet-debt"
 CHRONIC_ESCALATION_RE = re.compile(r"chronic.*escalat|repeated no-op failures", re.IGNORECASE | re.DOTALL)
 
 
-def _entry_field(entry, name: str):
+def _entry_field(entry: Any, name: str) -> Any:
     if isinstance(entry, dict):
         return entry.get(name)
     return getattr(entry, name, None)
 
 
-def chronic_escalated_to_needs_human(task) -> bool:
+def chronic_escalated_to_needs_human(task: Any) -> bool:
     """True iff the task's LAST transition into ``needs_human`` was a machine chronic escalation.
 
     Walks the dispatch_log backwards to the newest ``needs_human`` entry: if a human (or any

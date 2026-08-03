@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Iterable, Literal, Mapping
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, ValidationInfo, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from limen.intake import is_durable_receipt_target, is_executable_predicate
 
@@ -102,7 +102,7 @@ class WorkLoanV1(BaseModel):
 
     @field_validator("value_case", "owner_surface")
     @classmethod
-    def validate_bounded_text(cls, value: str, info) -> str:
+    def validate_bounded_text(cls, value: str, info: ValidationInfo) -> str:
         normalized = value.strip()
         if not normalized or "\x00" in normalized or len(normalized) > 8192:
             raise ValueError(f"{info.field_name} must be a non-empty bounded string")

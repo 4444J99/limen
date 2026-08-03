@@ -1229,7 +1229,7 @@ def _relay_ticket(
     ticket: Ticket,
     base: dict[str, Any] | None,
     *,
-    client=None,
+    client: Any = None,
     board_path: Path | None = None,
 ) -> dict[str, Any]:
     remote = client or client_from_env()

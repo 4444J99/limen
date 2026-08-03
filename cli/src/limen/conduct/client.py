@@ -174,7 +174,7 @@ class LocalConductClient:
     def submit_projection(
         self,
         packet: WorkPacketV1,
-        project_task_event,
+        project_task_event: Any,
     ) -> dict[str, Any]:
         """Submit one task packet through the local keeper's atomic projection seam.
 
@@ -248,7 +248,7 @@ class LocalConductClient:
         return self.broker.request_stop(run_id, session_id)
 
 
-def client_from_env():
+def client_from_env() -> Any:
     endpoint = os.environ.get("LIMEN_CONDUCT_URL", "").strip()
     token = os.environ.get("LIMEN_CONDUCT_TOKEN", "").strip()
     if endpoint:
