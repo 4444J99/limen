@@ -138,6 +138,39 @@ test("server-renders the three-panel draft comparison", async () => {
   assert.match(html, /Voice system/);
 });
 
+test("server-renders the cotton article and private launch package", async () => {
+  const response = await render("/cotton");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(
+    html,
+    /<title>Is Cotton Good for Summer\? What the Label Leaves Out \| Downs Style<\/title>/i,
+  );
+  assert.match(html, /name="robots" content="noindex, nofollow"/i);
+  assert.match(html, /Is cotton actually/);
+  assert.match(html, /good for summer\?/);
+  assert.match(html, /Both can say 100% cotton/);
+  assert.match(html, /The label tells me where to start/);
+  assert.match(html, /Same fiber\. Four different jobs/);
+  assert.match(html, /The top half gets to be easy/);
+  assert.match(html, /The bottom has a harder job/);
+  assert.match(html, /The five-part label test/);
+  assert.match(html, /Cotton is good for summer when the garment is/);
+  assert.match(html, /Cotton in summer, without the sales pitch/);
+  assert.equal((html.match(/<details/g) ?? []).length, 6);
+  assert.match(html, /Private launch package · not article copy/);
+  assert.match(html, /#SummerStyle #SummerOutfits #MensFashionTips #HowToStyle #Cotton/);
+  assert.match(html, /Stock reference by ömer aliko \/ Pexels/);
+  assert.match(html, /Stock reference by Enes Çelik \/ Pexels/);
+  assert.match(html, /application\/ld\+json/);
+  assert.match(html, /BlogPosting/);
+  assert.doesNotMatch(html, /full circle moment/i);
+  assert.doesNotMatch(html, /autumn in denial/i);
+  assert.doesNotMatch(html, /botanical backstory/i);
+  assert.doesNotMatch(html, /stop behaving like armor/i);
+});
+
 test("server-renders all 258 archive records without article bodies or tags", async () => {
   const response = await render("/archive");
   assert.equal(response.status, 200);

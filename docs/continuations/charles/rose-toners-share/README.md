@@ -10,6 +10,7 @@ rosewater article into one coherent review surface.
 - `/archive` — all 258 public posts, searchable and filterable by category and year
 - `/voice` — the corpus → Natural Center → channel-profile voice architecture
 - `/compare` — the preserved three-panel rosewater draft comparison
+- `/cotton` — the cotton-only article, recreation shot list, SEO package, and current social launch language
 
 The archive stores public metadata only: publication date, year, category,
 title, canonical Downs Style URL, author, and word count. Article bodies and raw
@@ -31,7 +32,7 @@ This starter does not use `wrangler.jsonc`.
 
 ## Project shape
 
-- `app/` contains the article, archive, voice, comparison, and shared navigation
+- `app/` contains the rose article, cotton article, archive, voice, comparison, and shared navigation
 - `data/posts.json` is the bounded 258-record public ledger
 - `tests/rendered-html.test.mjs` verifies complete server-rendered routes and data integrity
 - `.openai/hosting.json` preserves the existing Sites project identity
@@ -40,7 +41,8 @@ This starter does not use `wrangler.jsonc`.
 
 - `npm run dev`: start local development
 - `npm run build`: verify the vinext build output
-- `npm test`: build and verify all four rendered routes plus archive integrity
+- `npm test`: build and verify all rendered routes plus archive integrity
 
 The studio is a review artifact. It does not modify or publish the live
-Squarespace site.
+Squarespace site. The cotton route is explicitly `noindex`; its Pexels images
+are composition references for Charles to recreate, not final publication art.
