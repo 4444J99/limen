@@ -22,6 +22,7 @@ The causal baseline is 257 posts published from 2017 through 2024: 76,597 alphab
 | Shopping cue | 178 of 257 posts | Commerce is historically native, but modern links need a live check and disclosure. |
 | Reader thanks | 88 of 257 posts | Warm signoffs are established, though they fade sharply in later years. |
 | Numeric rating | 35 of 257 posts | Ratings are available but not required; a use-case verdict is more durable. |
+| First-person title | 28 of 257 posts | First-person framing is established in titles as well as article bodies. |
 | Review in title | 86 of 257 posts | Direct, searchable review framing is historically grounded. |
 | Question title | 6 of 257 posts | Questions should be purposeful, not a default headline trick. |
 | Question marks | 0.21 per 1,000 words | Avoid faux-conversational strings of questions. |

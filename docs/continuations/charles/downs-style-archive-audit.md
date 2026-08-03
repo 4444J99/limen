@@ -64,7 +64,7 @@ The raw article-body corpus was created only as a transient local analysis input
 
 The voice baseline includes 257 posts published through December 31, 2024. It intentionally excludes the August 2, 2026 rose-water post because that article was produced before this audit; including it would let newer assisted copy teach the system what it was supposed to discover from Charles's earlier history.
 
-The baseline contains 76,597 alphabetic tokens. Sentence and paragraph boundaries are heuristic because older pages mix prose, lists, and shopping modules. Phrase counts are case-insensitive and require token boundaries. These measurements describe the published corpus; they do not establish that every claim in it was true or that every word had one author.
+The baseline contains 76,597 alphabetic tokens. Sentence and paragraph boundaries are heuristic because older pages mix prose, lists, and shopping modules. Phrase counts are case-insensitive and require token boundaries; first-person title markers are also matched case-insensitively, producing 28 baseline and all-public titles. These measurements describe the published corpus; they do not establish that every claim in it was true or that every word had one author.
 
 ## Reproduction
 
@@ -86,4 +86,4 @@ python3 -m venv /tmp/downs-style-archive-venv
 Current artifact fingerprints:
 
 - Ledger SHA-256: `d3a03b2510c6a4b25450cbf463dc7d34b76f6ccfb0b81446c574d84ce3fb8c95`
-- Metrics SHA-256: `81373c9e033e12040fa7b711ec4f40d9e77360cda805ef8bde6fed05d0d1a0ba`
+- Metrics SHA-256: `7019716c9a2afb4322ba03ba4f299b160e2a93280ab7b3dc55c980a2403044c9`

@@ -72,6 +72,42 @@ def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def normalized_text_sha256(path: Path) -> str:
+    """Hash text after canonicalizing checkout-dependent line endings to LF."""
+    normalized = (
+        path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    )
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def ledger_site_projection(record: dict[str, str]) -> dict[str, Any]:
+    """Return the complete body-free projection allowed in the preview archive."""
+    return {
+        "publishedDate": record["published_date"][:10],
+        "year": record["published_date"][:4],
+        "category": record["category"],
+        "title": record["title"],
+        "url": record["url"],
+        "author": record["author"],
+        "wordCount": int(record["word_count"]),
+    }
+
+
+def site_projection_matches(
+    records: list[dict[str, str]], site_posts: list[Any]
+) -> bool:
+    """Return whether every site row exactly matches its seven ledger fields."""
+    projected_by_url = {
+        projection["url"]: projection
+        for projection in (ledger_site_projection(record) for record in records)
+    }
+    return len(site_posts) == len(records) and all(
+        isinstance(post, dict)
+        and post == projected_by_url.get(post.get("url"))
+        for post in site_posts
+    )
+
+
 def main() -> int:
     args = parse_args()
     with args.ledger.open(newline="", encoding="utf-8") as handle:
@@ -126,9 +162,23 @@ def main() -> int:
         baseline_love == {"count": 154, "per_1000_words": 2.01},
         "I love metric must use exact token boundaries",
     )
+    require(
+        metrics["baseline"]["metrics"]["structural_post_counts"][
+            "first_person_title"
+        ]
+        == 28,
+        "baseline first-person title count must match case-insensitively",
+    )
+    require(
+        metrics["all_public_posts"]["structural_post_counts"][
+            "first_person_title"
+        ]
+        == 28,
+        "all-public first-person title count must match case-insensitively",
+    )
 
-    ledger_sha = hashlib.sha256(args.ledger.read_bytes()).hexdigest()
-    metrics_sha = hashlib.sha256(args.metrics.read_bytes()).hexdigest()
+    ledger_sha = normalized_text_sha256(args.ledger)
+    metrics_sha = normalized_text_sha256(args.metrics)
     natural_center = args.natural_center.read_text(encoding="utf-8")
     require(
         f"downs-style-post-ledger.csv@sha256:{ledger_sha}" in natural_center,
@@ -143,17 +193,16 @@ def main() -> int:
     require(isinstance(site_posts, list), "site archive must be a JSON list")
     require(len(site_posts) == 258, "site archive must expose all 258 posts")
     require(
+        all(isinstance(post, dict) for post in site_posts),
+        "site archive rows must be JSON objects",
+    )
+    require(
         {post.get("url") for post in site_posts} == set(urls),
         "site and ledger URL sets differ",
     )
-    prohibited = {"body", "content", "html", "tags"}
     require(
-        all(not (prohibited & post.keys()) for post in site_posts),
-        "site data includes article bodies or noisy raw tags",
-    )
-    require(
-        all(post.get("author") == "Chas Downs" for post in site_posts),
-        "site author metadata changed",
+        site_projection_matches(records, site_posts),
+        "site archive differs from the ledger's seven-field projection",
     )
 
     print(

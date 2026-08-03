@@ -183,7 +183,8 @@ def summarize(posts: list[dict[str, Any]]) -> dict[str, Any]:
         },
         "structural_post_counts": {
             "first_person_title": sum(
-                bool(re.search(r"\b(?:I|My)\b", post["title"])) for post in posts
+                bool(re.search(r"\b(?:i|my)\b", post["title"], re.IGNORECASE))
+                for post in posts
             ),
             "question_title": sum("?" in post["title"] for post in posts),
             "review_title": sum("review" in post["title"].lower() for post in posts),
@@ -283,6 +284,7 @@ def main() -> int:
             "Tokens are alphabetic words with internal apostrophes.",
             "Sentence and paragraph boundaries are heuristic because historic posts mix prose and shopping lists.",
             "Rates are normalized per 1,000 words; phrase counts are case-insensitive and require token boundaries.",
+            "First-person title markers are matched case-insensitively on word boundaries.",
             "Metrics describe the corpus and are evidence for editorial judgment, not a claim of sole authorship.",
         ],
     }

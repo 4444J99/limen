@@ -40,7 +40,7 @@
         "exclamation_marks": 0.52
       },
       "structural_post_counts": {
-        "first_person_title": 27,
+        "first_person_title": 28,
         "question_title": 6,
         "review_title": 86,
         "shop_cue": 178,
@@ -230,7 +230,7 @@
       "exclamation_marks": 0.52
     },
     "structural_post_counts": {
-      "first_person_title": 27,
+      "first_person_title": 28,
       "question_title": 6,
       "review_title": 86,
       "shop_cue": 178,
@@ -420,7 +420,7 @@
         "exclamation_marks": 0.64
       },
       "structural_post_counts": {
-        "first_person_title": 10,
+        "first_person_title": 11,
         "question_title": 3,
         "review_title": 10,
         "shop_cue": 70,
@@ -1556,7 +1556,7 @@
         "exclamation_marks": 0.65
       },
       "structural_post_counts": {
-        "first_person_title": 7,
+        "first_person_title": 8,
         "question_title": 2,
         "review_title": 9,
         "shop_cue": 60,
@@ -3826,7 +3826,7 @@
         "exclamation_marks": 1.29
       },
       "structural_post_counts": {
-        "first_person_title": 6,
+        "first_person_title": 7,
         "question_title": 0,
         "review_title": 0,
         "shop_cue": 19,
@@ -4751,6 +4751,7 @@
     "Tokens are alphabetic words with internal apostrophes.",
     "Sentence and paragraph boundaries are heuristic because historic posts mix prose and shopping lists.",
     "Rates are normalized per 1,000 words; phrase counts are case-insensitive and require token boundaries.",
+    "First-person title markers are matched case-insensitively on word boundaries.",
     "Metrics describe the corpus and are evidence for editorial judgment, not a claim of sole authorship."
   ]
 }

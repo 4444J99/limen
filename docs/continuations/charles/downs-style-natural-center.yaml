@@ -62,7 +62,7 @@ overall_confidence: 0.88
 
 source_asset_ids:
   - "downs-style-post-ledger.csv@sha256:d3a03b2510c6a4b25450cbf463dc7d34b76f6ccfb0b81446c574d84ce3fb8c95"
-  - "downs-style-voice-metrics.json@sha256:81373c9e033e12040fa7b711ec4f40d9e77360cda805ef8bde6fed05d0d1a0ba"
+  - "downs-style-voice-metrics.json@sha256:7019716c9a2afb4322ba03ba4f299b160e2a93280ab7b3dc55c980a2403044c9"
   - "public-archive:downsstyle.com:2017-12-04..2026-08-02:258-posts"
 
 system_prompt: |-

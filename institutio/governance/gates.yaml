@@ -158,6 +158,7 @@ gates:
   downs-style-preview:
     command: "python3 scripts/tests/downs-style-analysis.test.py && python3 scripts/verify-downs-style-archive.py && npm --prefix docs/continuations/charles/rose-toners-share ci && npm --prefix docs/continuations/charles/rose-toners-share test && npm --prefix docs/continuations/charles/rose-toners-share run lint"
     paths: ["docs/continuations/charles/rose-toners-share/**", "docs/continuations/charles/downs-style-*.md", "docs/continuations/charles/downs-style-*.json", "docs/continuations/charles/downs-style-*.yaml", "docs/continuations/charles/downs-style-*.csv", "scripts/analyze-downs-style-voice.py", "scripts/audit-downs-style-archive.py", "scripts/verify-downs-style-archive.py", "scripts/requirements-downs-style-archive.txt", "scripts/tests/downs-style-analysis.test.py"]
+    tier: heavy
     owner: charles-preview
     note: "The Downs Style preview must build and render every route, keep its bounded archive and voice evidence internally consistent, reject incomplete discovery/extraction, and lint cleanly whenever its source or derivation changes."
 
