@@ -88,4 +88,4 @@ python3 -m venv /tmp/downs-style-archive-venv
 Current artifact fingerprints:
 
 - Ledger SHA-256: `d3a03b2510c6a4b25450cbf463dc7d34b76f6ccfb0b81446c574d84ce3fb8c95`
-- Metrics SHA-256: `7019716c9a2afb4322ba03ba4f299b160e2a93280ab7b3dc55c980a2403044c9`
+- Metrics SHA-256: `fa7055dbe70faff4527dd0e0e46ae821842e1633bd4376d6fd1884108103820b`

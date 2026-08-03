@@ -2,6 +2,7 @@
 """Focused regression tests for the Downs Style archive analysis helpers."""
 
 from __future__ import annotations
+import hashlib
 import runpy
 import sys
 import tempfile
@@ -23,6 +24,7 @@ def main() -> int:
     if not not voice["contains_key"]({"body_blocks": 2}, "body"):
         raise AssertionError("validation failed at original line 22")
     summarize = voice["summarize"]
+    voice_body_manifest = voice["body_fingerprint_manifest_sha256"]
     posts = [
         {
             "published_date": "2018-01-01",
@@ -35,6 +37,7 @@ def main() -> int:
     if not summarize(posts)["structural_post_counts"]["first_person_title"] == 1:
         raise AssertionError("validation failed at original line 33")
     verifier = runpy.run_path(str(ROOT / "scripts/verify-downs-style-archive.py"))
+    ledger_body_manifest = verifier["body_fingerprint_manifest_sha256"]
     normalized_text_sha256 = verifier["normalized_text_sha256"]
     ledger_site_projection = verifier["ledger_site_projection"]
     site_projection_matches = verifier["site_projection_matches"]
@@ -77,6 +80,12 @@ def main() -> int:
         raise AssertionError("validation failed at original line 64")
     if not site_projection_matches([record], [projection]):
         raise AssertionError("validation failed at original line 73")
+    body = "I love it."
+    content_sha256 = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    if voice_body_manifest([{**posts[0], "body": body}]) != ledger_body_manifest(
+        [{"url": posts[0]["url"], "content_sha256": content_sha256}]
+    ):
+        raise AssertionError("voice metrics are not bound to the audited body fingerprints")
     stale_values = {
         "publishedDate": "2018-01-03",
         "year": "2019",
@@ -109,9 +118,11 @@ def main() -> int:
         raise AssertionError("validation failed at original line 97")
     if not set(audit["COLLECTION_LABELS"]) <= set(collections):
         raise AssertionError("validation failed at original line 98")
-    if not audit["extraction_error"](article_found=True, body="") == "article body not extracted":
+    if not audit["extraction_error"](article_found=True, title="Title", body="") == "article body not extracted":
         raise AssertionError("validation failed at original line 99")
-    if not audit["extraction_error"](article_found=True, body="text") == "":
+    if not audit["extraction_error"](article_found=True, title="", body="text") == "article title not extracted":
+        raise AssertionError("missing article title was accepted")
+    if not audit["extraction_error"](article_found=True, title="Title", body="text") == "":
         raise AssertionError("validation failed at original line 102")
     parse_post = audit["parse_post"]
     original_fetch = parse_post.__globals__["fetch"]

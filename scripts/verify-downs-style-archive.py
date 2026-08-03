@@ -178,6 +178,13 @@ def normalized_text_sha256(path: Path) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def body_fingerprint_manifest_sha256(records: list[dict[str, str]]) -> str:
+    """Hash the ordered URL/body fingerprints without retaining article text."""
+    rows = sorted((record["url"], record["content_sha256"]) for record in records)
+    manifest = "".join(f"{url}\t{digest}\n" for url, digest in rows)
+    return hashlib.sha256(manifest.encode("utf-8")).hexdigest()
+
+
 def ledger_site_projection(record: dict[str, str]) -> dict[str, Any]:
     """Return the complete body-free projection allowed in the preview archive."""
     return {
@@ -217,6 +224,7 @@ def main() -> int:
         all(not record["error"] for record in records),
         "one or more posts have a parse error",
     )
+    require(all(record["title"].strip() for record in records), "one or more posts have no title")
     require(
         {record["author"] for record in records} == {"Chas Downs"},
         "author metadata is not uniformly Chas Downs",
@@ -259,6 +267,7 @@ def main() -> int:
         metrics["source"],
         {
             "corpus_sha256",
+            "body_fingerprints_sha256",
             "public_post_count",
             "first_publication_date",
             "last_publication_date",
@@ -289,6 +298,10 @@ def main() -> int:
     )
     require(metrics.get("schema_version") == 1, "unsupported metrics schema")
     require(metrics["source"]["public_post_count"] == 258, "metrics omit public posts")
+    require(
+        metrics["source"]["body_fingerprints_sha256"] == body_fingerprint_manifest_sha256(records),
+        "voice metrics do not match the audited body fingerprints",
+    )
     require(
         metrics["source"]["contains_verbatim_article_text"] is False,
         "metrics claim to contain verbatim article text",

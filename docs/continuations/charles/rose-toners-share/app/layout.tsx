@@ -36,6 +36,10 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(origin),
     title,
     description,
+    robots: {
+      index: false,
+      follow: false,
+    },
     openGraph: {
       title: socialTitle,
       description,

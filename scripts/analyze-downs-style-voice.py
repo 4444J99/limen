@@ -100,6 +100,13 @@ def contains_key(value: Any, key: str) -> bool:
     return False
 
 
+def body_fingerprint_manifest_sha256(posts: list[dict[str, Any]]) -> str:
+    """Bind aggregate metrics to the ordered URL/body fingerprints."""
+    rows = sorted((post["url"], hashlib.sha256(post["body"].encode("utf-8")).hexdigest()) for post in posts)
+    manifest = "".join(f"{url}\t{digest}\n" for url, digest in rows)
+    return hashlib.sha256(manifest.encode("utf-8")).hexdigest()
+
+
 def era_for(published_date: str) -> str:
     year = int(published_date[:4])
     if year <= 2018:
@@ -236,6 +243,7 @@ def main() -> int:
         "schema_version": 1,
         "source": {
             "corpus_sha256": hashlib.sha256(corpus_bytes).hexdigest(),
+            "body_fingerprints_sha256": body_fingerprint_manifest_sha256(posts),
             "public_post_count": len(posts),
             "first_publication_date": min(post["published_date"] for post in posts),
             "last_publication_date": max(post["published_date"] for post in posts),

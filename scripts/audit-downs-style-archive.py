@@ -179,9 +179,11 @@ def collections_to_audit(urls: Iterable[str]) -> list[str]:
     return sorted(set(COLLECTION_LABELS) | (discovered - {""}))
 
 
-def extraction_error(*, article_found: bool, body: str) -> str:
+def extraction_error(*, article_found: bool, title: str, body: str) -> str:
     if not article_found:
         return "article element not found"
+    if not title:
+        return "article title not extracted"
     if not body:
         return "article body not extracted"
     return ""
@@ -275,7 +277,7 @@ def parse_post(
             word_count=len(WORD.findall(body)),
             body_blocks=len(blocks),
             content_sha256=digest,
-            error=extraction_error(article_found=article is not None, body=body),
+            error=extraction_error(article_found=article is not None, title=title, body=body),
         )
         return record, body
     except Exception as exc:  # noqa: BLE001 - inventory must retain failed URLs

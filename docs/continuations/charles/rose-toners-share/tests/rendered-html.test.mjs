@@ -49,6 +49,7 @@ test("server-renders the complete six-product editorial preview", async () => {
     html,
     /<title>Rosewater and the Benefits Behind Our Favorite Flower \| Downs Style<\/title>/i,
   );
+  assert.match(html, /name="robots" content="noindex, nofollow"/i);
   assert.match(html, /og-comparison\.png/);
   assert.match(html, /six toners and face mists/i);
   assert.match(html, /Rose in Skincare/);
@@ -109,6 +110,7 @@ test("server-renders the three-panel draft comparison", async () => {
   assert.equal(response.status, 200);
 
   const html = await response.text();
+  assert.match(html, /name="robots" content="noindex, nofollow"/i);
   assert.match(html, /Original draft/);
   assert.match(html, /Human draft/);
   assert.match(html, /All edits/);
@@ -189,6 +191,7 @@ test("server-renders all 258 archive records without article bodies or tags", as
   assert.equal(response.status, 200);
 
   const html = await response.text();
+  assert.match(html, /name="robots" content="noindex, nofollow"/i);
   assert.match(html, /The whole history/);
   assert.match(html, /finally in one room/);
   assert.match(html, /258 pieces across nine editorial worlds/);
@@ -210,6 +213,7 @@ test("server-renders the evidence-backed Charles voice system", async () => {
   assert.equal(response.status, 200);
 
   const html = await response.text();
+  assert.match(html, /name="robots" content="noindex, nofollow"/i);
   const voiceMetrics = JSON.parse(
     await readFile(new URL("../../downs-style-voice-metrics.json", import.meta.url), "utf8"),
   );

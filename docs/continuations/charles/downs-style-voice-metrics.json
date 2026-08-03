@@ -2,6 +2,7 @@
   "schema_version": 1,
   "source": {
     "corpus_sha256": "a0e32a426e74214bed92734a98e4041192f4230446ff521d205981180d4dae0a",
+    "body_fingerprints_sha256": "e3bdb575a6b07dd6384f0ce52eec4f6294edda8bdc15484b1caec7c96ad4ed31",
     "public_post_count": 258,
     "first_publication_date": "2017-12-04",
     "last_publication_date": "2026-08-02",
