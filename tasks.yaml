@@ -60178,25 +60178,34 @@ tasks:
     session_id: cli
     status: archived
     output: No-op result; archived without requeueing.
-- id: ASK-quicken-login
+- id: 'ASK-quicken-login'
   title: 'one login/identity step (your hand: browser/OAuth/portal)'
-  type: ops
-  target_agent: agy
-  priority: high
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - user-ask
-  - quicken-residue
-  - needs-human
+  - 'user-ask'
+  - 'quicken-residue'
+  - 'needs-human'
   urls: []
-  context: "Cheapest path \u2192 one login/identity step (your hand: browser/OAuth/portal).\
-    \ Unblocks: exercise app launch. Auto-hung by QUICKEN (finish-not-park); refreshes\
-    \ each beat until you act."
+  context: 'Cheapest path → one login/identity step (your hand: browser/OAuth/portal). Unblocks: exercise app launch. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-07-18T00:41:03.279532Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:40:12.625Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:40:12.625Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-be124fd567fb68dfa7a6aa9c6f56cb13:514:compatibility'
+    conduct_run_id: 'run-be124fd567fb68dfa7a6aa9c6f56cb13'
+    conduct_lease_id: 'lease-514-be124fd567fb68df'
+    conduct_generation: 514
 - id: GEN-organvm-limen-simplify-0624-refactor-dispatch
   title: "Reduce complexity in organvm/limen \u2014 refactor dispatch.py"
   repo: organvm/limen
