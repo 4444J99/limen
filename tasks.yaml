@@ -63694,25 +63694,34 @@ tasks:
     status: failed_blocked
     output: "heal-dispatch: chronic escalation re-homed needs_human \u2192 failed_blocked\
       \ (fleet-debt, not a human atom)"
-- id: ASK-quicken-credential
-  title: land the credential/secret (your account/identity)
-  type: ops
-  target_agent: agy
-  priority: high
+- id: 'ASK-quicken-credential'
+  title: 'land the credential/secret (your account/identity)'
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - user-ask
-  - quicken-residue
-  - needs-human
+  - 'user-ask'
+  - 'quicken-residue'
+  - 'needs-human'
   urls: []
-  context: "Cheapest path \u2192 land the credential/secret (your account/identity).\
-    \ Unblocks: web estate audit mapping. Auto-hung by QUICKEN (finish-not-park);\
-    \ refreshes each beat until you act."
+  context: 'Cheapest path → land the credential/secret (your account/identity). Unblocks: web estate audit mapping. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-18T19:23:33.945145Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:40:21.228Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:40:21.228Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-a79acec9da2eeb9e2312e4588c540441:515:compatibility'
+    conduct_run_id: 'run-a79acec9da2eeb9e2312e4588c540441'
+    conduct_lease_id: 'lease-515-a79acec9da2eeb9e'
+    conduct_generation: 515
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
   type: ops
