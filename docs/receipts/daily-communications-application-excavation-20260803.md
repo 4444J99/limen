@@ -3,7 +3,7 @@
 Date: 2026-08-03  
 Repository: `organvm/limen`  
 Remote head inspected: `origin/main` / `d59af05c2f315aa8f5156f19a83e8782845eb0a1`
-Implementation head: `c94a36e9ec9578d7a7d117523f0f02bb6ab33230`
+Implementation head: `efcb0456` (documentation receipt update)
 
 This is the remote-first capability map for the daily loop. It is deliberately
 PII-clean: conversation bodies, contact data, raw audio, and provider tokens stay
