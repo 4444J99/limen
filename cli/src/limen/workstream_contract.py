@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Iterator, cast
 
 SCHEMA = "limen.workstream.contract.v1"
+SCHEMA_V2 = "limen.workstream.contract.v2"
 RECEIPT_SCHEMA = "limen.workstream.receipt.v1"
 IDENTITY_SCHEMA = "limen.workstream.capsule-identity.v2"
 WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
@@ -35,6 +36,7 @@ _DURATION_RE = re.compile(r"^([1-9][0-9]*)([mhd])$")
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 _WORKSTREAM_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+CODEX_SANDBOXES = frozenset({"read-only", "workspace-write", "danger-full-access"})
 RECEIPT_MODULES = (
     "README.md",
     "manifest.md",
@@ -117,10 +119,91 @@ def new_contract(runway: str = DEFAULT_RUNWAY) -> dict[str, Any]:
     }
 
 
-def validate_contract(value: object) -> dict[str, Any]:
-    if not isinstance(value, dict) or set(value) != {"schema", "runway", "authorization", "conductor"}:
+def _authorization_for_sandbox(sandbox: str) -> dict[str, Any]:
+    if sandbox not in CODEX_SANDBOXES:
+        allowed = ", ".join(sorted(CODEX_SANDBOXES))
+        raise ContractError(f"Codex sandbox must be one of: {allowed}")
+    authorization = copy.deepcopy(AUTHORIZATION)
+    authorization["sandbox"] = sandbox
+    return authorization
+
+
+def _primary_launch(
+    *,
+    agent: object,
+    model: object,
+    reasoning_effort: object,
+) -> dict[str, str]:
+    primary_launch = {
+        "agent": str(agent or "").strip(),
+        "model": str(model or "").strip(),
+        "reasoning_effort": str(reasoning_effort or "").strip(),
+        "selection": "human_explicit",
+    }
+    if primary_launch["agent"] != "codex":
+        raise ContractError("explicit workstream launch profiles require the Codex native lane")
+    if not primary_launch["model"]:
+        raise ContractError("explicit workstream launch profiles require a model")
+    if not primary_launch["reasoning_effort"]:
+        raise ContractError("explicit workstream launch profiles require a reasoning effort")
+    return primary_launch
+
+
+def new_contract_v2(
+    runway: str,
+    *,
+    agent: str,
+    model: str,
+    reasoning_effort: str,
+    sandbox: str,
+) -> dict[str, Any]:
+    contract = new_contract(runway)
+    contract["schema"] = SCHEMA_V2
+    contract["authorization"] = _authorization_for_sandbox(sandbox)
+    contract["primary_launch"] = _primary_launch(
+        agent=agent,
+        model=model,
+        reasoning_effort=reasoning_effort,
+    )
+    return contract
+
+
+def _validate_v2_contract(value: dict[str, Any]) -> None:
+    if set(value) != {"schema", "runway", "authorization", "conductor", "primary_launch"}:
         raise ContractError("workstream contract has unknown or missing top-level fields")
-    if value.get("schema") != SCHEMA:
+    primary_launch = value.get("primary_launch")
+    if not isinstance(primary_launch, dict) or set(primary_launch) != {
+        "agent",
+        "model",
+        "reasoning_effort",
+        "selection",
+    }:
+        raise ContractError("workstream primary launch profile has unknown or missing fields")
+    expected_primary = _primary_launch(
+        agent=primary_launch.get("agent"),
+        model=primary_launch.get("model"),
+        reasoning_effort=primary_launch.get("reasoning_effort"),
+    )
+    if primary_launch != expected_primary:
+        raise ContractError("workstream primary launch profile is invalid")
+    authorization = value.get("authorization")
+    if not isinstance(authorization, dict):
+        raise ContractError("workstream authorization contract is invalid")
+    expected_authorization = _authorization_for_sandbox(str(authorization.get("sandbox") or ""))
+    if authorization != expected_authorization:
+        raise ContractError("workstream authorization contract is invalid")
+
+
+def validate_contract(value: object) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ContractError("workstream contract has unknown or missing top-level fields")
+    schema = value.get("schema")
+    if schema == SCHEMA:
+        if set(value) != {"schema", "runway", "authorization", "conductor"}:
+            raise ContractError("workstream contract has unknown or missing top-level fields")
+    elif schema == SCHEMA_V2:
+        _validate_v2_contract(value)
+    else:
         raise ContractError("workstream contract schema is unsupported")
     runway = value.get("runway")
     if not isinstance(runway, dict) or set(runway) != {
@@ -158,11 +241,66 @@ def validate_contract(value: object) -> dict[str, Any]:
         ):
             raise ContractError("started workstream runway timing state is invalid")
 
-    if value.get("authorization") != AUTHORIZATION:
+    if schema == SCHEMA and value.get("authorization") != AUTHORIZATION:
         raise ContractError("workstream authorization contract is invalid")
     if value.get("conductor") != CONDUCTOR:
         raise ContractError("workstream conductor contract is invalid")
     return value
+
+
+def validate_codex_launch(
+    binary: str,
+    *,
+    model: str,
+    reasoning_effort: str,
+    timeout_seconds: int = 30,
+) -> dict[str, Any]:
+    """Prove an exact human override against the live local Codex catalog."""
+
+    if not binary.strip():
+        raise ContractError("Codex binary is required for live model validation")
+    if not model.strip() or not reasoning_effort.strip():
+        raise ContractError("Codex model and reasoning effort are required")
+    if isinstance(timeout_seconds, bool) or not 1 <= timeout_seconds <= 120:
+        raise ContractError("Codex catalog timeout must be between 1 and 120 seconds")
+    try:
+        result = subprocess.run(
+            [binary, "debug", "models"],
+            text=True,
+            capture_output=True,
+            timeout=timeout_seconds,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ContractError(f"live Codex model catalog is unavailable: {exc}") from exc
+    if result.returncode != 0:
+        detail = result.stderr.strip().splitlines()
+        suffix = f": {detail[-1]}" if detail else ""
+        raise ContractError(f"live Codex model catalog query failed{suffix}")
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise ContractError("live Codex model catalog returned invalid JSON") from exc
+    entries = payload if isinstance(payload, list) else payload.get("models") if isinstance(payload, dict) else None
+    if not isinstance(entries, list):
+        raise ContractError("live Codex model catalog has an unsupported shape")
+    selected = next(
+        (entry for entry in entries if isinstance(entry, dict) and entry.get("slug") == model),
+        None,
+    )
+    if selected is None:
+        raise ContractError(f"Codex model {model!r} is not present in the live local catalog")
+    raw_levels = selected.get("supported_reasoning_levels")
+    if not isinstance(raw_levels, list):
+        raise ContractError(f"Codex model {model!r} does not publish reasoning capabilities")
+    levels = {
+        level if isinstance(level, str) else level.get("effort") if isinstance(level, dict) else None
+        for level in raw_levels
+    }
+    levels.discard(None)
+    if reasoning_effort not in levels:
+        raise ContractError(f"Codex model {model!r} does not support reasoning effort {reasoning_effort!r}")
+    return selected
 
 
 def validate_packet_contract(value: object) -> dict[str, Any]:
@@ -381,10 +519,44 @@ def _contract_lock(path: Path) -> Iterator[None]:
         os.close(descriptor)
 
 
-def configure_contract(path: Path, requested: str | None = None) -> tuple[dict[str, Any], bool]:
+def configure_contract(
+    path: Path,
+    requested: str | None = None,
+    *,
+    agent: str | None = None,
+    model: str | None = None,
+    reasoning_effort: str | None = None,
+    sandbox: str | None = None,
+) -> tuple[dict[str, Any], bool]:
+    launch_values = (agent, model, reasoning_effort, sandbox)
+    explicit_launch = any(value is not None for value in launch_values)
+    if explicit_launch and not all(value is not None for value in launch_values):
+        raise ContractError("explicit workstream launch profiles require agent, model, reasoning effort, and sandbox")
+
+    def configured_contract(runway: str) -> dict[str, Any]:
+        if not explicit_launch:
+            return new_contract(runway)
+        return new_contract_v2(
+            runway,
+            agent=cast(str, agent),
+            model=cast(str, model),
+            reasoning_effort=cast(str, reasoning_effort),
+            sandbox=cast(str, sandbox),
+        )
+
     with _contract_lock(path):
         if path.exists():
             contract = read_contract(path)
+            expected_schema = SCHEMA_V2 if explicit_launch else contract["schema"]
+            if contract["schema"] != expected_schema:
+                raise ContractError("cannot change an existing launch profile; emit a successor workstream")
+            if explicit_launch:
+                expected_launch = configured_contract(contract["runway"]["requested"])
+                if (
+                    contract["primary_launch"] != expected_launch["primary_launch"]
+                    or contract["authorization"] != expected_launch["authorization"]
+                ):
+                    raise ContractError("cannot change an existing launch profile; emit a successor workstream")
             if requested is None:
                 return contract, False
             normalized, seconds = parse_runway(requested)
@@ -393,9 +565,19 @@ def configure_contract(path: Path, requested: str | None = None) -> tuple[dict[s
                 return contract, False
             if runway["started_epoch"] is not None:
                 raise ContractError("cannot change an admitted runway; emit a successor workstream")
-            contract = new_contract(normalized)
+            if contract["schema"] == SCHEMA_V2 and not explicit_launch:
+                primary_launch = contract["primary_launch"]
+                contract = new_contract_v2(
+                    normalized,
+                    agent=primary_launch["agent"],
+                    model=primary_launch["model"],
+                    reasoning_effort=primary_launch["reasoning_effort"],
+                    sandbox=contract["authorization"]["sandbox"],
+                )
+            else:
+                contract = configured_contract(normalized)
         else:
-            contract = new_contract(requested or DEFAULT_RUNWAY)
+            contract = configured_contract(requested or DEFAULT_RUNWAY)
         return contract, _write_if_changed(path, contract)
 
 
@@ -761,6 +943,26 @@ def main(argv: list[str] | None = None) -> int:
     configure = subparsers.add_parser("configure")
     configure.add_argument("--path", type=Path, required=True)
     configure.add_argument("--runway")
+    configure.add_argument("--agent")
+    configure.add_argument("--model")
+    configure.add_argument("--reasoning-effort")
+    configure.add_argument("--sandbox")
+
+    # The STATIC half of validate-codex-launch, split out so a caller can reject an invalid sandbox
+    # WITHOUT first resolving a codex binary. Argument validity is a property of the arguments, not
+    # of what happens to be installed: CI (no codex) must reach the same verdict as a workstation
+    # that has one. Deliberately takes no --binary, so it cannot regress into a binary-dependent
+    # check. validate-codex-launch still runs this same authorization itself — this adds an earlier
+    # gate, it never replaces one.
+    codex_sandbox = subparsers.add_parser("validate-codex-sandbox")
+    codex_sandbox.add_argument("--sandbox", required=True)
+
+    codex_launch = subparsers.add_parser("validate-codex-launch")
+    codex_launch.add_argument("--binary", required=True)
+    codex_launch.add_argument("--model", required=True)
+    codex_launch.add_argument("--reasoning-effort", required=True)
+    codex_launch.add_argument("--sandbox", required=True)
+    codex_launch.add_argument("--timeout-seconds", type=int, default=30)
 
     admit = subparsers.add_parser("admit")
     admit.add_argument("--path", type=Path, required=True)
@@ -802,8 +1004,28 @@ def main(argv: list[str] | None = None) -> int:
             requested, seconds = parse_runway(args.runway)
             print(f"{requested}:{seconds}")
         elif args.command == "configure":
-            _contract, changed = configure_contract(args.path, args.runway)
+            _contract, changed = configure_contract(
+                args.path,
+                args.runway,
+                agent=args.agent,
+                model=args.model,
+                reasoning_effort=args.reasoning_effort,
+                sandbox=args.sandbox,
+            )
             print("changed" if changed else "unchanged")
+        elif args.command == "validate-codex-sandbox":
+            # Raises ContractError on an unknown value; echo the accepted one, mirroring
+            # validate-codex-launch printing its selected slug.
+            print(_authorization_for_sandbox(args.sandbox)["sandbox"])
+        elif args.command == "validate-codex-launch":
+            _authorization_for_sandbox(args.sandbox)
+            selected = validate_codex_launch(
+                args.binary,
+                model=args.model,
+                reasoning_effort=args.reasoning_effort,
+                timeout_seconds=args.timeout_seconds,
+            )
+            print(selected["slug"])
         elif args.command == "admit":
             contract, remaining = admit_contract(args.path, now_epoch=args.now_epoch)
             runway = contract["runway"]

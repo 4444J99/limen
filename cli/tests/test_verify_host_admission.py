@@ -54,12 +54,12 @@ def test_scoped_verifier_acquires_once_for_heavy_and_serialized_tail(tmp_path, m
     monkeypatch.setattr(
         verify,
         "run_gate",
-        lambda gate_id, *_args: not events.append(f"gate:{gate_id}"),
+        lambda gate_id, *_args, **_kwargs: not events.append(f"gate:{gate_id}"),
     )
     monkeypatch.setattr(verify, "heavy_admission", held)
     monkeypatch.setenv("LIMEN_VERIFY_LOCK_FILE", str(tmp_path / "verify.lock"))
 
-    assert verify.cmd_changed(registry(), None) == 0
+    assert verify.cmd_changed(registry(), None, jobs=1, gate_timeout_seconds=300.0, gate_output_bytes=1024 * 1024) == 0
     assert events == ["gate:cheap", "acquire", "gate:heavy", "gate:serialized", "release"]
 
 
@@ -73,10 +73,10 @@ def test_scoped_verifier_returns_temporary_failure_on_admission_denial(monkeypat
 
     monkeypatch.setattr(verify, "changed_set", lambda _base: ["changed.py"])
     monkeypatch.setattr(verify, "select", lambda _registry, _changed: (["heavy"], []))
-    monkeypatch.setattr(verify, "run_gate", lambda *_args: True)
+    monkeypatch.setattr(verify, "run_gate", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(verify, "heavy_admission", denied)
 
-    assert verify.cmd_changed(registry(), None) == 75
+    assert verify.cmd_changed(registry(), None, jobs=1, gate_timeout_seconds=300.0, gate_output_bytes=1024 * 1024) == 75
 
 
 def test_scoped_verifier_returns_temporary_failure_when_process_identity_is_unavailable(monkeypatch) -> None:
@@ -91,9 +91,9 @@ def test_scoped_verifier_returns_temporary_failure_when_process_identity_is_unav
     monkeypatch.setattr(host_admission, "hold_lease", identity_unavailable)
     monkeypatch.setattr(verify, "changed_set", lambda _base: ["changed.py"])
     monkeypatch.setattr(verify, "select", lambda _registry, _changed: (["heavy"], []))
-    monkeypatch.setattr(verify, "run_gate", lambda *_args: True)
+    monkeypatch.setattr(verify, "run_gate", lambda *_args, **_kwargs: True)
 
-    assert verify.cmd_changed(registry(), None) == 75
+    assert verify.cmd_changed(registry(), None, jobs=1, gate_timeout_seconds=300.0, gate_output_bytes=1024 * 1024) == 75
 
 
 def test_verify_whole_takes_legacy_flock_before_host_admission() -> None:

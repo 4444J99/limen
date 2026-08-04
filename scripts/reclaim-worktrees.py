@@ -23,6 +23,7 @@ It scans every known creation site (the historical blind spot — see worktree-l
   • LIMEN_AGY_SCRATCH_ROOT (~/.gemini/antigravity-cli/scratch) — Antigravity/Agy scratch clones,
     min-age LIMEN_AGY_SCRATCH_MIN_IDLE_H.
   • repo-local .worktrees roots discovered under LIMEN_RECLAIM_WORKSPACE_ROOTS.
+  • workspace checkout roots themselves only when LIMEN_RECLAIM_WORKSPACE_CHECKOUTS=1.
   • registered git worktrees from LIMEN_RECLAIM_MAIN_REPOS (default: Limen and Portvs).
 Set LIMEN_RECLAIM_CLAUDE_WT=0 to disable the interactive sweep.
 
@@ -43,7 +44,8 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
      LIMEN_RECLAIM_CLAUDE_AGE_H (24), LIMEN_RECLAIM_REPO_LOCAL_WT, LIMEN_RECLAIM_REPO_LOCAL_AGE_H,
      LIMEN_RECLAIM_AGY_SCRATCH, LIMEN_AGY_SCRATCH_ROOT, LIMEN_AGY_SCRATCH_MIN_IDLE_H,
      LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
-     LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
+     LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_WORKSPACE_CHECKOUTS,
+     LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
      LIMEN_RECLAIM_ORPHANS (0 — observable-first arm for the dead-gitdir orphan sweep),
      LIMEN_ORPHAN_QUARANTINE (same-volume off-worktree target for preserved orphans),
      LIMEN_ABANDONMENT_QUARANTINE (same-volume target for clones/residue/generated payloads),
@@ -66,6 +68,7 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -75,17 +78,32 @@ if str(SCRIPT_DIR) not in sys.path:
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 
-from reap_acceptance import (  # noqa: E402
-    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
-    has_required_acceptance_proof,
+from limen.estate_audit_custody import (
+    EstateAuditCustodyError,
+    verify_failed_checkout_state,
 )
-from limen.worktree_abandonment import (  # noqa: E402
+from limen.estate_audit_custody import (
+    discover_plan as discover_estate_custody_plan,
+)
+from limen.estate_audit_custody import (
+    verify_receipt as verify_estate_custody_receipt,
+)
+from limen.worktree_abandonment import (
+    CustodyPathIdentity,
     WorktreeAbandonmentError,
     detach_registered_worktree,
+    purge_custody_proven_path,
+    purge_remote_proven_path,
     quarantine_path,
 )
-from limen.worktree_debt import is_generated_log_shell  # noqa: E402
-from limen.worktree_roots import iter_worktree_targets  # noqa: E402
+from limen.worktree_debt import is_generated_log_shell
+from limen.worktree_roots import iter_worktree_targets
+from reap_acceptance import (
+    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
+)
+from reap_acceptance import (
+    has_required_acceptance_proof,
+)
 
 HOME = os.environ.get("HOME", "/Users/4jp")
 
@@ -133,8 +151,11 @@ def _option_value(name: str) -> str:
 
 
 EXPECTED_PLAN_SHA = _option_value("--expected-plan-sha")
+ESTATE_CUSTODY_ROOT = _option_value("--estate-custody-root")
+ESTATE_CUSTODY_PLAN_SHA = _option_value("--estate-custody-plan-sha")
 REMOTE_MERGED_LANES = {"remote-merged"}
 REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
+CUSTODY_RESTORED_REASON = "custody-restored+idle"
 ACCEPTED_ARCHIVE_STATUSES = {
     "verified",
     "remote_merged_receipt_verified",
@@ -163,6 +184,11 @@ GENERATED_CLEAN_PATHS = (
     "__pycache__",
 )
 _ACTIVE_PROCESS_CWDS: dict[Path, int] = {}
+# A planning pass may inspect dozens of registered worktrees backed by one repository. Querying the
+# same origin separately for every sibling made the canonical check exceed the heartbeat's bound.
+# ``main`` enables this cache only while building one manifest; apply reclassification runs with it
+# disabled so each accepted removal still gets a fresh remote proof immediately before detach.
+_REMOTE_ADVERTISEMENT_CACHE: dict[Path, tuple[tuple[str, str], ...] | None] | None = None
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -200,55 +226,16 @@ def active_async_root(d: Path, active_prefixes: set[str]) -> bool:
     return any(name.startswith(prefix) for prefix in active_prefixes)
 
 
-def active_process_cwds() -> dict[Path, int]:
-    """Return observable process cwd roots; an unavailable probe fails closed."""
-    observed: dict[Path, int] = {}
-    proc = Path("/proc")
-    if proc.is_dir():
-        for entry in proc.iterdir():
-            if not entry.name.isdigit():
-                continue
-            try:
-                observed[(entry / "cwd").resolve(strict=True)] = int(entry.name)
-            except (OSError, ValueError):
-                continue
-        return observed
-    try:
-        result = subprocess.run(
-            ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
-            capture_output=True,
-            text=True,
-            timeout=20,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return {Path("/"): -1}
-    pid: int | None = None
-    for line in result.stdout.splitlines():
-        if line.startswith("p"):
-            try:
-                pid = int(line[1:])
-            except ValueError:
-                pid = None
-        elif line.startswith("n/") and pid is not None:
-            try:
-                observed[Path(line[1:]).resolve()] = pid
-            except OSError:
-                continue
-    return observed
+# The probe and its containment rule live in _worktree_liveness (shared with the stream
+# launcher's live/dormant classification — one probe, two consumers with opposite decisions:
+# reclaim must not DELETE a live worktree, the launcher must not REOPEN one). Extracted verbatim;
+# this organ keeps its own refresh cycle (it re-scans mid-apply on purpose), so it consumes
+# `active_process_cwds` + `owner_in` directly rather than the helper's memoized `process_owner`.
+from _worktree_liveness import active_process_cwds, owner_in  # noqa: E402
 
 
 def active_process_owner(d: Path) -> int | None:
-    try:
-        root = d.resolve()
-    except OSError:
-        return -1
-    for cwd, pid in _ACTIVE_PROCESS_CWDS.items():
-        if pid == -1:
-            return -1
-        if cwd == root or root in cwd.parents:
-            return pid
-    return None
+    return owner_in(_ACTIVE_PROCESS_CWDS, d)
 
 
 def has_generated_payload(d: Path) -> bool:
@@ -310,7 +297,7 @@ def reclaim_generated_payloads(targets) -> dict[str, object]:
     It does not remove source files, untracked non-ignored files, worktree roots, branches, or
     private artifacts.
     """
-    if os.environ.get("LIMEN_RECLAIM_GENERATED", "1") != "1":
+    if os.environ.get("LIMEN_RECLAIM_GENERATED", "0") != "1":
         return {"enabled": False, "cleaned": [], "failed": []}
     active_prefixes = active_async_task_prefixes()
     now = time.time()
@@ -342,10 +329,241 @@ def reclaim_generated_payloads(targets) -> dict[str, object]:
 
 
 def reachable_from_remote(cwd, head) -> bool:
-    r = git(["for-each-ref", f"--contains={head}", "--format=%(refname)", "refs/remotes"], cwd)
-    if r.returncode != 0:
-        return False
-    return bool(r.stdout.strip())
+    return bool(remote_refs_containing_head(cwd, head))
+
+
+def _git_common_dir(cwd: Path) -> Path:
+    """Resolve the repository identity shared by linked worktrees without another Git process."""
+    checkout = Path(cwd)
+    dot_git = checkout / ".git"
+    try:
+        if dot_git.is_dir():
+            return dot_git.resolve()
+        marker = dot_git.read_text(encoding="utf-8", errors="replace").splitlines()[0]
+        prefix = "gitdir: "
+        if not marker.startswith(prefix):
+            return checkout.resolve()
+        git_dir = Path(marker[len(prefix) :])
+        if not git_dir.is_absolute():
+            git_dir = dot_git.parent / git_dir
+        git_dir = git_dir.resolve()
+        common_marker = git_dir / "commondir"
+        if common_marker.is_file():
+            common = Path(common_marker.read_text(encoding="utf-8", errors="replace").strip())
+            if not common.is_absolute():
+                common = git_dir / common
+            return common.resolve()
+        return git_dir
+    except (IndexError, OSError):
+        try:
+            return checkout.resolve()
+        except OSError:
+            return checkout
+
+
+def _advertised_remote_refs(cwd: Path) -> tuple[tuple[str, str], ...] | None:
+    cache_key = _git_common_dir(cwd)
+    if _REMOTE_ADVERTISEMENT_CACHE is not None and cache_key in _REMOTE_ADVERTISEMENT_CACHE:
+        return _REMOTE_ADVERTISEMENT_CACHE[cache_key]
+
+    advertised = git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
+    parsed: tuple[tuple[str, str], ...] | None = None
+    if advertised.returncode == 0:
+        rows: list[tuple[str, str]] = []
+        valid = True
+        for line in advertised.stdout.splitlines():
+            try:
+                remote_object, remote_ref = line.split("\t", 1)
+            except ValueError:
+                valid = False
+                break
+            if not remote_object or not remote_ref.startswith("refs/"):
+                valid = False
+                break
+            rows.append((remote_ref, remote_object))
+        if valid:
+            parsed = tuple(rows)
+
+    if _REMOTE_ADVERTISEMENT_CACHE is not None:
+        _REMOTE_ADVERTISEMENT_CACHE[cache_key] = parsed
+    return parsed
+
+
+def remote_refs_containing_head(cwd: Path, head: str) -> tuple[str, ...]:
+    """Return only provider-advertised refs that currently preserve ``head``.
+
+    Local ``refs/remotes/*`` are caches and can outlive a deleted server
+    branch. Reclaim proof therefore queries the live remote on every planning
+    and apply pass. One planning manifest shares the resulting advertisement
+    across linked worktrees from the same repository.
+    """
+
+    if not head:
+        return ()
+    advertised = _advertised_remote_refs(cwd)
+    if advertised is None:
+        return ()
+    exact = sorted(remote_ref for remote_ref, remote_object in advertised if remote_object == head)
+    if exact:
+        return tuple(exact)
+
+    # The dominant merged-worktree case needs no all-ref walk. Prove that the locally fetched
+    # default tip is byte-for-byte the tip currently advertised by origin, then ask Git whether it
+    # contains HEAD. A stale origin/main cannot pass the object-ID equality check.
+    default_ref = remote_default_ref(cwd)
+    if default_ref and default_ref.startswith("origin/"):
+        advertised_default = f"refs/heads/{default_ref.removeprefix('origin/')}"
+        advertised_object = dict(advertised).get(advertised_default)
+        if advertised_object:
+            local_default = git(["rev-parse", default_ref], cwd)
+            if (
+                local_default.returncode == 0
+                and local_default.stdout.strip() == advertised_object
+                and git(["merge-base", "--is-ancestor", head, default_ref], cwd).returncode == 0
+            ):
+                return (advertised_default,)
+
+    # GitHub can advertise thousands of refs. Spawning one ``merge-base`` process per ref made a
+    # single Limen planning pass exceed five minutes. Ask Git once for locally known refs containing
+    # HEAD, then accept only entries whose ref name *and object ID* still match the live advertisement.
+    # A stale or unfetched remote-tracking ref cannot pass that intersection, so this is a conservative
+    # fail-closed replacement for the per-ref process storm.
+    local = git(
+        [
+            "for-each-ref",
+            f"--contains={head}",
+            "--format=%(refname)%00%(objectname)",
+            "refs/remotes/origin",
+            "refs/tags",
+        ],
+        cwd,
+        timeout=60,
+    )
+    if local.returncode != 0:
+        return ()
+    local_containing: dict[str, str] = {}
+    remote_prefix = "refs/remotes/origin/"
+    for line in local.stdout.splitlines():
+        parts = line.split("\0")
+        if len(parts) != 2:
+            return ()
+        local_ref, object_id = parts
+        if local_ref.startswith(remote_prefix):
+            suffix = local_ref[len(remote_prefix) :]
+            if suffix != "HEAD":
+                local_containing[f"refs/heads/{suffix}"] = object_id
+        elif local_ref.startswith("refs/tags/"):
+            local_containing[local_ref] = object_id
+
+    containing: list[str] = []
+    for remote_ref, remote_object in advertised:
+        if local_containing.get(remote_ref) == remote_object:
+            containing.append(remote_ref)
+    return tuple(sorted(containing))
+
+
+def all_local_refs_remote_proof(cwd: Path) -> tuple[dict[str, object], ...] | None:
+    """Prove every local ref's object is recoverable from the live origin.
+
+    HEAD-only proof loses local branches, tags, notes, and stashes. This queries
+    the provider-native advertised refs and then proves each local object is
+    either advertised exactly or is an ancestor of an advertised commit that is
+    already present locally. Unknown object type or reachability fails closed.
+    """
+
+    local = git(
+        [
+            "for-each-ref",
+            "--format=%(refname)%00%(objectname)%00%(*objectname)",
+            "refs/heads",
+            "refs/tags",
+            "refs/notes",
+            "refs/stash",
+        ],
+        cwd,
+        timeout=60,
+    )
+    advertised = _advertised_remote_refs(cwd)
+    if local.returncode != 0 or advertised is None:
+        return None
+    remote = list(advertised)
+    if not remote:
+        return None
+    proof: list[dict[str, object]] = []
+    for line in local.stdout.splitlines():
+        parts = line.split("\0")
+        if len(parts) != 3:
+            return None
+        local_ref, object_id, peeled = parts
+        containing: list[str] = [remote_ref for remote_ref, remote_object in remote if object_id == remote_object]
+        object_type = git(["cat-file", "-t", object_id], cwd)
+        if object_type.returncode != 0:
+            return None
+        if object_type.stdout.strip() == "commit":
+            for remote_ref, remote_object in remote:
+                if remote_ref in containing:
+                    continue
+                if git(["merge-base", "--is-ancestor", object_id, remote_object], cwd).returncode == 0:
+                    containing.append(remote_ref)
+        if not containing:
+            return None
+        proof.append(
+            {
+                "local_ref": local_ref,
+                "object": object_id,
+                "peeled_object": peeled or None,
+                "remote_refs": sorted(containing),
+            }
+        )
+    return tuple(sorted(proof, key=lambda value: str(value["local_ref"])))
+
+
+def estate_checkout_content_probe(
+    root_record: dict[str, object],
+    state: dict[str, object],
+) -> Callable[[Path], None]:
+    def probe(_path: Path) -> None:
+        verify_failed_checkout_state(root_record, state, max_seconds=900)
+
+    return probe
+
+
+def remote_clone_content_probe(
+    expected_head: str,
+    expected_refs: tuple[str, ...],
+    expected_local_refs: tuple[dict[str, object], ...],
+) -> Callable[[Path], None]:
+    def probe(current: Path) -> None:
+        status = git(["status", "--porcelain=v1", "-z", "--untracked-files=all"], current)
+        if status.returncode != 0 or status.stdout:
+            raise RuntimeError("remote-purge-working-tree-drift")
+        observed_head = git(["rev-parse", "HEAD"], current).stdout.strip()
+        observed_refs = remote_refs_containing_head(current, observed_head)
+        observed_local_refs = all_local_refs_remote_proof(current)
+        if (
+            observed_head,
+            observed_refs,
+            observed_local_refs,
+        ) != (
+            expected_head,
+            expected_refs,
+            expected_local_refs,
+        ):
+            raise RuntimeError("remote-purge-all-ref-proof-drift")
+
+    return probe
+
+
+def path_identity(path: Path) -> dict[str, object]:
+    resolved = path.resolve(strict=True)
+    current = resolved.lstat()
+    return {
+        "path": str(resolved),
+        "path_sha256": hashlib.sha256(str(resolved).encode("utf-8", errors="surrogateescape")).hexdigest(),
+        "device": int(current.st_dev),
+        "inode": int(current.st_ino),
+        "mtime_ns": int(current.st_mtime_ns),
+    }
 
 
 def remote_default_ref(cwd) -> str | None:
@@ -425,6 +643,84 @@ def load_reclaim_acceptance():
         if isinstance(event, dict):
             events.append(event)
     return events
+
+
+def load_estate_custody_context() -> dict[str, object] | None:
+    """Verify one exact external custody plan and expose only its public reclaim proof.
+
+    The custody override is deliberately limited to failed-checkout roots whose
+    working payloads are present in the fully restored receipt. Indexed roots
+    continue through the ordinary clean/remote lifecycle gates.
+    """
+
+    if not ESTATE_CUSTODY_ROOT and not ESTATE_CUSTODY_PLAN_SHA:
+        return None
+    if not ESTATE_CUSTODY_ROOT or not ESTATE_CUSTODY_PLAN_SHA:
+        raise EstateAuditCustodyError("custody-arguments-incomplete")
+    if len(ESTATE_CUSTODY_PLAN_SHA) != 64 or any(
+        character not in "0123456789abcdef" for character in ESTATE_CUSTODY_PLAN_SHA
+    ):
+        raise EstateAuditCustodyError("invalid-custody-plan-sha")
+
+    receipt = verify_estate_custody_receipt(
+        Path(ESTATE_CUSTODY_ROOT),
+        ESTATE_CUSTODY_PLAN_SHA,
+        full_restore=True,
+        max_seconds=900,
+    )
+    current = discover_estate_custody_plan(LIMEN_ROOT)
+    if current.plan_sha256 != ESTATE_CUSTODY_PLAN_SHA:
+        raise EstateAuditCustodyError("custody-current-plan-mismatch")
+    if receipt.get("roots") != current.private_payload()["roots"]:
+        raise EstateAuditCustodyError("custody-current-roots-mismatch")
+
+    restored_paths: set[Path] = set()
+    restored_identities: dict[str, dict[str, object]] = {}
+    private_content_states: dict[str, dict[str, object]] = {}
+    states_by_path_sha = {
+        str(state.get("path_sha256") or ""): state
+        for state in receipt.get("failed_checkout_states") or []
+        if isinstance(state, dict)
+    }
+    for root in receipt.get("roots") or []:
+        if not isinstance(root, dict) or int(root.get("index_entry_count", -1)) != 0:
+            continue
+        try:
+            restored = Path(str(root["path"])).resolve(strict=True)
+            restored_paths.add(restored)
+            restored_identities[str(restored)] = {
+                "path": str(restored),
+                "path_sha256": str(root["path_sha256"]),
+                "device": int(root["device"]),
+                "inode": int(root["inode"]),
+                "mtime_ns": int(root["mtime_ns"]),
+            }
+            state = states_by_path_sha.get(str(root["path_sha256"]))
+            if not isinstance(state, dict):
+                raise EstateAuditCustodyError("custody-content-state-missing")
+            private_content_states[str(restored)] = {
+                "root_record": root,
+                "state": state,
+            }
+        except (KeyError, OSError, TypeError, ValueError) as exc:
+            raise EstateAuditCustodyError("custody-root-unavailable") from exc
+    failed_checkout_count = int(receipt.get("failed_checkout_root_count", -1))
+    if not restored_paths or failed_checkout_count != len(restored_paths):
+        raise EstateAuditCustodyError("custody-failed-checkout-coverage-mismatch")
+
+    return {
+        "paths": frozenset(restored_paths),
+        "identities": restored_identities,
+        "content_states": private_content_states,
+        "proof": {
+            "schema": "limen.worktree_reclaim_estate_custody.v1",
+            "plan_sha256": ESTATE_CUSTODY_PLAN_SHA,
+            "content_sha256": str(receipt.get("content_sha256") or ""),
+            "root_count": int(receipt.get("root_count") or 0),
+            "failed_checkout_root_count": failed_checkout_count,
+            "restoration_passed": receipt.get("restoration_passed") is True,
+        },
+    }
 
 
 STANDING_ACCEPTANCE = os.environ.get("LIMEN_RECLAIM_STANDING_ACCEPTANCE", "1") != "0"
@@ -571,7 +867,13 @@ def quarantine_orphan(d: Path, stamp: str) -> tuple[bool, str]:
     return True, str(dest)
 
 
-def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:
+def reclaim_accepted(
+    path: Path,
+    action: str,
+    reason: str,
+    acceptance_events,
+    estate_custody_proof: dict[str, object] | None = None,
+) -> tuple[bool, str]:
     if STANDING_ACCEPTANCE and reason in STANDING_ACCEPTANCE_REASONS:
         return True, "standing-grant-2026-07-09"
     try:
@@ -579,7 +881,18 @@ def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) ->
     except OSError:
         resolved = str(path)
     for event in reversed(acceptance_events):
-        if event.get("root") != path.name:
+        root = event.get("root")
+        wildcard_custody = root == "*" and reason == CUSTODY_RESTORED_REASON
+        if root != path.name and not wildcard_custody:
+            continue
+        if reason == CUSTODY_RESTORED_REASON:
+            if not estate_custody_proof:
+                continue
+            if event.get("custody_plan_sha256") != estate_custody_proof.get("plan_sha256"):
+                continue
+            if event.get("custody_content_sha256") != estate_custody_proof.get("content_sha256"):
+                continue
+        elif root == "*":
             continue
         if event.get("accepted") is not True:
             continue
@@ -646,7 +959,37 @@ def worktree_lock_reason(path: Path) -> str | None:
     return None
 
 
-def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, source: str = ""):
+def registered_sibling_worktrees(path: Path) -> tuple[Path, ...]:
+    """Return live sibling worktrees whose admin state is owned by this clone."""
+
+    listed = git(["worktree", "list", "--porcelain"], path)
+    if listed.returncode != 0:
+        raise RuntimeError("registered-worktree-state-unavailable")
+    try:
+        current = path.resolve(strict=True)
+    except OSError as exc:
+        raise RuntimeError("registered-worktree-owner-unavailable") from exc
+    siblings: list[Path] = []
+    for line in listed.stdout.splitlines():
+        if not line.startswith("worktree "):
+            continue
+        try:
+            candidate = Path(line.split(" ", 1)[1]).resolve(strict=True)
+        except OSError as exc:
+            raise RuntimeError("registered-sibling-worktree-unavailable") from exc
+        if candidate != current:
+            siblings.append(candidate)
+    return tuple(siblings)
+
+
+def classify(
+    d: Path,
+    now: float,
+    min_age_h: float,
+    preservation_receipts=None,
+    source: str = "",
+    estate_custody_paths: frozenset[Path] | set[Path] | None = None,
+):
     """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue,
     quarantine-orphan, skip}. quarantine-orphan MOVES (never deletes) a dead-gitdir orphan."""
     preservation_receipts = preservation_receipts or {}
@@ -658,8 +1001,6 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, 
     owner_pid = active_process_owner(d)
     if owner_pid is not None:
         return "skip", f"active-process-cwd:{owner_pid}"
-    if inside_agy_scratch_root(d):
-        return "skip", "antigravity-scratch-uses-bridge-acceptance"
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
         if is_generated_log_shell(d):
             return "remove-residue", "generated-log-shell"
@@ -682,10 +1023,30 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, 
     age_h = (now - d.stat().st_mtime) / 3600.0
     if age_h < min_age_h:
         return "skip", f"active(<{min_age_h:g}h, age={age_h:.1f}h)"
-    if git(["status", "--porcelain"], d).stdout.strip():
+    status = git(["status", "--porcelain"], d)
+    if status.returncode != 0:
+        return "skip", "status-unavailable"
+    if status.stdout.strip():
+        try:
+            custody_restored = d.resolve() in (estate_custody_paths or set())
+        except OSError:
+            custody_restored = False
+        if custody_restored:
+            is_wt = (d / ".git").is_file()
+            return ("remove-worktree" if is_wt else "remove-clone"), CUSTODY_RESTORED_REASON
         return "skip", "dirty"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
+    if source == "workspace-checkout" and is_wt:
+        return "skip", "workspace-checkout-source-contract-violation"
+    if not is_wt:
+        try:
+            if registered_sibling_worktrees(d):
+                return "skip", "registered-worktree-owner"
+        except RuntimeError as exc:
+            return "skip", str(exc)
     if receipt_remote_merged(d, preservation_receipts):
+        if not is_wt and all_local_refs_remote_proof(d) is None:
+            return "skip", "unpreserved-local-refs"
         return ("remove-worktree" if is_wt else "remove-clone"), "receipt-remote-merged+clean+idle"
     head = git(["rev-parse", "HEAD"], d).stdout.strip()
     patch_equivalent = patch_equivalent_to_default(d)
@@ -697,8 +1058,14 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, 
         # operator's push-first rule this LOCAL checkout is loss-free to remove — the branch stays
         # on origin, resumable. Without PUSHED_OK, keep the conservative merged-only gate.
         if PUSHED_OK:
+            # Removing one linked worktree leaves the common repository and every local ref intact.
+            # A standalone clone purge deletes that ref store, so only the clone needs all-ref proof.
+            if not is_wt and all_local_refs_remote_proof(d) is None:
+                return "skip", "unpreserved-local-refs"
             return ("remove-worktree" if is_wt else "remove-clone"), "clean+pushed+idle"
         return "skip", "not-merged-to-default"
+    if not is_wt and all_local_refs_remote_proof(d) is None:
+        return "skip", "unpreserved-local-refs"
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
 
@@ -750,10 +1117,14 @@ def build_candidate_manifest(
     now: float,
     preservation_receipts: dict,
     reclaim_acceptance: list[dict],
+    estate_custody_context: dict[str, object] | None = None,
 ) -> tuple[dict, str, list[tuple[str, str]], list[str]]:
     """Return the canonical, bounded, accepted candidate set and its digest."""
 
-    candidates: list[dict[str, str]] = []
+    custody_paths = estate_custody_context.get("paths", frozenset()) if estate_custody_context else frozenset()
+    custody_proof = estate_custody_context.get("proof") if estate_custody_context else None
+    custody_identities = estate_custody_context.get("identities", {}) if estate_custody_context else {}
+    candidates: list[dict[str, object]] = []
     skipped: list[tuple[str, str]] = []
     for directory, min_age_h, source in dirs:
         action, reason = classify(
@@ -762,6 +1133,7 @@ def build_candidate_manifest(
             min_age_h,
             preservation_receipts,
             source=source,
+            estate_custody_paths=custody_paths,
         )
         if action == "skip":
             skipped.append((directory.name, reason))
@@ -771,19 +1143,40 @@ def build_candidate_manifest(
             action,
             reason,
             reclaim_acceptance,
+            estate_custody_proof=custody_proof,
         )
         if not accepted:
             skipped.append((directory.name, accept_reason))
             continue
-        candidates.append(
-            {
-                "action": action,
-                "path": str(directory),
-                "reason": reason,
-                "root": directory.name,
-                "source": source,
+        candidate: dict[str, object] = {
+            "action": action,
+            "path": str(directory),
+            "reason": reason,
+            "root": directory.name,
+            "source": source,
+        }
+        if reason == CUSTODY_RESTORED_REASON:
+            try:
+                identity = custody_identities[str(directory.resolve(strict=True))]
+            except (KeyError, OSError) as exc:
+                raise EstateAuditCustodyError("custody-root-identity-missing") from exc
+            if not isinstance(identity, dict):
+                raise EstateAuditCustodyError("custody-root-identity-invalid")
+            candidate["custody_identity"] = identity
+        elif action == "remove-clone":
+            head = git(["rev-parse", "HEAD"], directory).stdout.strip()
+            remote_refs = remote_refs_containing_head(directory, head)
+            local_ref_proof = all_local_refs_remote_proof(directory)
+            if not head or not remote_refs or local_ref_proof is None:
+                skipped.append((directory.name, "remote-clone-proof-drift"))
+                continue
+            candidate["path_identity"] = path_identity(directory)
+            candidate["remote_proof"] = {
+                "head": head,
+                "remote_refs": list(remote_refs),
+                "local_refs": list(local_ref_proof),
             }
-        )
+        candidates.append(candidate)
 
     candidates.sort(key=lambda row: (row["path"], row["action"], row["reason"]))
     selected = candidates[:MAX_REMOVE]
@@ -793,6 +1186,8 @@ def build_candidate_manifest(
         "max_reclaim": MAX_REMOVE,
         "candidates": selected,
     }
+    if custody_proof:
+        manifest["estate_custody"] = custody_proof
     canonical = json.dumps(
         manifest,
         ensure_ascii=False,
@@ -839,15 +1234,36 @@ def _print_json_result(
 
 
 def main():
-    global _ACTIVE_PROCESS_CWDS
+    global _ACTIVE_PROCESS_CWDS, _REMOTE_ADVERTISEMENT_CACHE
     if HELP:
         print(
             "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] "
-            "[--generated-only] [--expected-plan-sha SHA256]\n\n"
+            "[--generated-only] [--expected-plan-sha SHA256] "
+            "[--estate-custody-root PATH --estate-custody-plan-sha SHA256]\n\n"
             "Dry-run by default. Use --check --json for a canonical candidate manifest, "
-            "then --apply --expected-plan-sha SHA256 to re-probe and remove only that plan."
+            "then --apply --expected-plan-sha SHA256 to re-probe and remove only that plan. "
+            "The estate-custody pair admits only exact fully restored failed-checkout roots."
         )
         return 0
+
+    try:
+        estate_custody_context = load_estate_custody_context()
+    except EstateAuditCustodyError as exc:
+        if JSON_OUT:
+            print(
+                json.dumps(
+                    {
+                        "mode": "CUSTODY-BLOCKED",
+                        "apply": APPLY,
+                        "failed": [{"root": "estate-custody", "reason": exc.code}],
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(f"reclaim [CUSTODY-BLOCKED]: {exc.code}")
+        return 2
 
     targets = iter_worktree_targets(LIMEN_ROOT)
     if not targets:
@@ -887,12 +1303,20 @@ def main():
     preservation_receipts = load_preservation_receipts()
     reclaim_acceptance = load_reclaim_acceptance()
     dirs = [(target.path, target.min_age_h, target.source) for target in targets]
-    manifest, plan_sha256, skipped, deferred = build_candidate_manifest(
-        dirs,
-        now,
-        preservation_receipts,
-        reclaim_acceptance,
-    )
+    previous_advertisement_cache = _REMOTE_ADVERTISEMENT_CACHE
+    _REMOTE_ADVERTISEMENT_CACHE = {}
+    try:
+        manifest, plan_sha256, skipped, deferred = build_candidate_manifest(
+            dirs,
+            now,
+            preservation_receipts,
+            reclaim_acceptance,
+            estate_custody_context,
+        )
+    finally:
+        # The exact manifest gets one coherent remote advertisement per repository. Disable the
+        # cache before apply's candidate reclassification so remote deletion/drift still blocks.
+        _REMOTE_ADVERTISEMENT_CACHE = previous_advertisement_cache
     generated_reclaim = {"enabled": False, "cleaned": [], "failed": []}
     removed: list[tuple[str, str]] = []
     failed: list[tuple[str, str]] = []
@@ -907,6 +1331,15 @@ def main():
                     f"plan-sha-mismatch:expected={EXPECTED_PLAN_SHA}:actual={plan_sha256}",
                 )
             )
+        if not failed and estate_custody_context:
+            try:
+                refreshed_custody = load_estate_custody_context()
+            except EstateAuditCustodyError as exc:
+                failed.append(("estate-custody", exc.code))
+            else:
+                if refreshed_custody != estate_custody_context:
+                    failed.append(("estate-custody", "custody-proof-drift"))
+                estate_custody_context = refreshed_custody
         if failed:
             if JSON_OUT:
                 _print_json_result(
@@ -928,18 +1361,22 @@ def main():
         for planned in manifest["candidates"]:
             directory = Path(planned["path"])
             _ACTIVE_PROCESS_CWDS = active_process_cwds()
+            custody_paths = estate_custody_context.get("paths", frozenset()) if estate_custody_context else frozenset()
+            custody_proof = estate_custody_context.get("proof") if estate_custody_context else None
             action, reason = classify(
                 directory,
                 time.time(),
                 next(min_age_h for path, min_age_h, _source in dirs if path == directory),
                 preservation_receipts,
                 source=planned["source"],
+                estate_custody_paths=custody_paths,
             )
             accepted, accept_reason = reclaim_accepted(
                 directory,
                 action,
                 reason,
                 reclaim_acceptance,
+                estate_custody_proof=custody_proof,
             )
             if not accepted or action != planned["action"] or reason != planned["reason"]:
                 detail = accept_reason if not accepted else f"candidate-drift:{action}:{reason}"
@@ -957,6 +1394,99 @@ def main():
                         reason=reason,
                         receipt_root=ABANDONMENT_RECEIPTS,
                         owner_probe=lambda _path, root=directory: active_process_owner(root),
+                    )
+                elif action == "remove-clone" and reason == CUSTODY_RESTORED_REASON:
+                    identity = planned.get("custody_identity")
+                    if not isinstance(identity, dict) or not isinstance(custody_proof, dict):
+                        failed.append((directory.name, "custody-purge-proof-missing"))
+                        continue
+                    try:
+                        expected_identity = CustodyPathIdentity(
+                            path=str(identity["path"]),
+                            path_sha256=str(identity["path_sha256"]),
+                            device=int(identity["device"]),
+                            inode=int(identity["inode"]),
+                            mtime_ns=int(identity["mtime_ns"]),
+                        )
+                    except (KeyError, TypeError, ValueError):
+                        failed.append((directory.name, "custody-purge-identity-invalid"))
+                        continue
+                    content_states = estate_custody_context.get("content_states", {}) if estate_custody_context else {}
+                    content_state = (
+                        content_states.get(str(directory.resolve(strict=True)))
+                        if isinstance(content_states, dict)
+                        else None
+                    )
+                    if not isinstance(content_state, dict):
+                        failed.append((directory.name, "custody-content-state-missing"))
+                        continue
+
+                    rehash_estate_checkout = estate_checkout_content_probe(
+                        dict(content_state["root_record"]),
+                        dict(content_state["state"]),
+                    )
+
+                    receipt = purge_custody_proven_path(
+                        directory,
+                        expected_identity,
+                        reason=reason,
+                        custody_plan_sha256=str(custody_proof.get("plan_sha256") or ""),
+                        custody_content_sha256=str(custody_proof.get("content_sha256") or ""),
+                        receipt_root=ABANDONMENT_RECEIPTS,
+                        owner_probe=lambda _path, root=directory: active_process_owner(root),
+                        content_probe=rehash_estate_checkout,
+                    )
+                elif action == "remove-clone":
+                    identity = planned.get("path_identity")
+                    remote_proof = planned.get("remote_proof")
+                    if not isinstance(identity, dict) or not isinstance(remote_proof, dict):
+                        failed.append((directory.name, "remote-purge-proof-missing"))
+                        continue
+                    try:
+                        expected_identity = CustodyPathIdentity(
+                            path=str(identity["path"]),
+                            path_sha256=str(identity["path_sha256"]),
+                            device=int(identity["device"]),
+                            inode=int(identity["inode"]),
+                            mtime_ns=int(identity["mtime_ns"]),
+                        )
+                        planned_head = str(remote_proof["head"])
+                        planned_refs = tuple(str(value) for value in remote_proof["remote_refs"])
+                        planned_local_refs = tuple(remote_proof["local_refs"])
+                    except (KeyError, TypeError, ValueError):
+                        failed.append((directory.name, "remote-purge-proof-invalid"))
+                        continue
+                    current_head = git(["rev-parse", "HEAD"], directory).stdout.strip()
+                    current_refs = remote_refs_containing_head(directory, current_head)
+                    current_local_refs = all_local_refs_remote_proof(directory)
+                    if (
+                        current_head,
+                        current_refs,
+                        current_local_refs,
+                    ) != (
+                        planned_head,
+                        planned_refs,
+                        planned_local_refs,
+                    ):
+                        failed.append((directory.name, "remote-purge-proof-drift"))
+                        continue
+
+                    rehash_remote_clone = remote_clone_content_probe(
+                        planned_head,
+                        planned_refs,
+                        planned_local_refs,
+                    )
+
+                    receipt = purge_remote_proven_path(
+                        directory,
+                        expected_identity,
+                        reason=reason,
+                        head=current_head,
+                        remote_refs=current_refs,
+                        local_ref_proof=current_local_refs,
+                        receipt_root=ABANDONMENT_RECEIPTS,
+                        owner_probe=lambda _path, root=directory: active_process_owner(root),
+                        content_probe=rehash_remote_clone,
                     )
                 elif action == "quarantine-orphan":
                     ok, destination = quarantine_orphan(directory, stamp)

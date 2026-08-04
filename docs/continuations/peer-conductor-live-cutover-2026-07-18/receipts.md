@@ -13,7 +13,7 @@
   point; 1,143 to 1,145 current heads).
 - Campaign closeout census: `docs/receipts/pr-campaign/2026-07-18-pass-3.json` (complete over 307
   repositories, 1,146 current heads, no API errors; pass 2 to pass 3 remained non-zero-growth).
-- Protocol and deployment contract: `docs/peer-conductor-protocol.md`.
+- Protocol and deployment contract: `docs/architecture/peer-conductor-protocol.md`.
 
 For every subsequent leaf, retain exact old/new head, changed paths, predicate command/exit,
 checks/reviews/thread evidence, provider run URL, spend, children, terminal outcome, and owner URL.

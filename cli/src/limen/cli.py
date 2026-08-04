@@ -27,13 +27,30 @@ from limen.status import print_status
 
 
 def resolve_root() -> Path:
+    """The board root: $LIMEN_ROOT, else the first candidate that actually holds tasks.yaml.
+
+    Discovery mirrors resolve_limen_repo_root() below, so a board-reading verb works from
+    any directory the way `limen workstream` already does. Without the fallbacks, `limen
+    dispatch` refused to run outside a checkout while the package could locate its own repo
+    two other ways ($LIMEN_TASKS' parent, and the __file__-relative root).
+    """
     root = os.environ.get("LIMEN_ROOT")
     if root:
         return Path(root).expanduser().resolve()
-    cwd = Path.cwd()
-    if (cwd / "tasks.yaml").exists():
-        return cwd
-    click.echo("LIMEN_ROOT not set and no tasks.yaml in current directory", err=True)
+    candidates = [Path.cwd()]
+    tasks_env = os.environ.get("LIMEN_TASKS")
+    if tasks_env:
+        # Same derivation _root_for_dispatch() applies: a projection names its own root.
+        candidates.append(Path(tasks_env).expanduser().parent)
+    candidates.append(Path(__file__).resolve().parents[3])
+    candidates.append(Path.home() / "Workspace" / "limen")
+    for candidate in candidates:
+        if (candidate / "tasks.yaml").exists():
+            return candidate.resolve()
+    click.echo(
+        "LIMEN_ROOT not set and no tasks.yaml found in: " + ", ".join(str(candidate) for candidate in candidates),
+        err=True,
+    )
     sys.exit(2)
 
 
@@ -275,6 +292,95 @@ def qa(agent, json_output, report_file):
         click.echo(json.dumps(report, indent=2))
     else:
         print_qa_report(report)
+
+
+@main.command("apply")
+@click.option("--fire", is_flag=True, help="Include the submit phase — SUBMITS to real ATS portals")
+@click.option("--json", "json_output", is_flag=True, help="Emit the raw driver summary")
+def apply_cmd(fire, json_output):
+    """Run the outbound job-application funnel (stage only unless --fire).
+
+    The CLI twin of the ``application_funnel`` MCP tool and the beat's
+    ``application-funnel`` sensor — one effector, three front doors, so an agent
+    without MCP still drives the same funnel instead of writing its own submitter.
+
+    Disarmed this is reversible: source, score, build materials, stage packages,
+    prepare follow-ups. Nothing leaves the machine. ``--fire`` adds the submit
+    phase, which sends real applications and cannot be undone.
+    """
+    root = Path(__file__).resolve().parents[3]
+    driver = root / "scripts" / "application-funnel.py"
+    if not driver.exists():
+        click.echo(f"funnel driver not found: {driver}", err=True)
+        sys.exit(1)
+
+    env = dict(os.environ)
+    if fire:
+        env["LIMEN_APPLY_FIRE"] = "1"
+
+    proc = subprocess.run(
+        [sys.executable, str(driver), "--json"],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(root),
+    )
+    if json_output:
+        click.echo(proc.stdout.strip() or proc.stderr.strip())
+        sys.exit(proc.returncode)
+
+    try:
+        summary = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        click.echo(proc.stderr.strip() or "funnel produced no summary", err=True)
+        sys.exit(proc.returncode or 1)
+
+    click.echo(
+        f"sourced {summary.get('sourced', 0)} · qualified {summary.get('qualified', 0)} · "
+        f"staged {summary.get('staged', 0)} · submitted {summary.get('submitted', 0)}"
+    )
+    for note in summary.get("notes", []):
+        click.echo(f"  - {note}")
+    sys.exit(proc.returncode)
+
+
+@main.command("daily-execute")
+@click.option("--fire", is_flag=True, help="Arm routine professional applications and follow-ups for this invocation")
+@click.option("--json", "json_output", is_flag=True, help="Emit the bounded PII-clean execution receipt")
+@click.option("--timeout", default=1800, type=click.IntRange(min=1, max=1800), show_default=True)
+@click.option("--receipt", type=click.Path(path_type=Path), default=None, help="Write the private receipt here")
+def daily_execute(fire: bool, json_output: bool, timeout: int, receipt: Path | None) -> None:
+    """Run the shared daily communications and application loop.
+
+    This is the same implementation exposed through MCP ``daily_execution`` and
+    the existing heartbeat. ``--fire`` is invocation-local; generated templates,
+    staged forms, and unconfirmed submissions never count as delivered.
+    """
+    from limen.daily_execution import run_daily_execution
+
+    prior = os.environ.get("LIMEN_DAILY_EXECUTION_RECEIPT")
+    if receipt is not None:
+        os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = str(receipt.expanduser())
+    try:
+        result = run_daily_execution(fire=fire, root=resolve_limen_repo_root(), timeout_seconds=timeout)
+    finally:
+        if prior is None:
+            os.environ.pop("LIMEN_DAILY_EXECUTION_RECEIPT", None)
+        else:
+            os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = prior
+
+    if json_output:
+        click.echo(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        click.echo(
+            f"daily-execute: {result['status']} · applications "
+            f"{result['applications']['confirmed']}/{result['applications']['target']} confirmed · "
+            f"follow-ups {result['follow_ups']['confirmed']} confirmed"
+        )
+        for blocker in result["blockers"]:
+            click.echo(f"  - {blocker}")
+    if result["status"] == "blocked":
+        raise click.exceptions.Exit(3)
 
 
 @main.command()
@@ -573,6 +679,24 @@ def harvest(agent):
     help="Register the launched direct session with the conduct broker as human-protected.",
 )
 @click.option(
+    "--model",
+    "launch_model",
+    default=None,
+    help="With --reasoning-effort and --sandbox: the exact human-selected Codex model. Alone: a lane tier pin passed to a non-Codex lane as --model (claude, gemini, agy, opencode); requires --agent.",
+)
+@click.option(
+    "--reasoning-effort",
+    "launch_reasoning_effort",
+    default=None,
+    help="Exact reasoning effort supported by the selected live Codex model.",
+)
+@click.option(
+    "--sandbox",
+    "launch_sandbox",
+    default=None,
+    help="Codex sandbox for the explicit primary launch profile.",
+)
+@click.option(
     "--shell",
     "launch_shell",
     is_flag=True,
@@ -613,6 +737,9 @@ def workstream(
     autonomous,
     agent_name,
     conduct,
+    launch_model,
+    launch_reasoning_effort,
+    launch_sandbox,
     launch_shell,
     from_ref,
     prompt_text,
@@ -633,6 +760,12 @@ def workstream(
         args.extend(["--agent", agent_name])
     if conduct:
         args.append("--conduct")
+    if launch_model:
+        args.extend(["--model", launch_model])
+    if launch_reasoning_effort:
+        args.extend(["--reasoning-effort", launch_reasoning_effort])
+    if launch_sandbox:
+        args.extend(["--sandbox", launch_sandbox])
     if launch_shell:
         args.append("--shell")
     if from_ref:
@@ -657,6 +790,53 @@ def workstream(
         if result.stderr:
             click.echo(result.stderr, err=True, nl=False)
     raise SystemExit(result.returncode)
+
+
+@main.command("streams")
+@click.option(
+    "--status",
+    "show_status",
+    is_flag=True,
+    help="One line per stream with its derived state (live/dormant/ready/blocked/stale/settled); touches nothing.",
+)
+@click.option(
+    "--family",
+    default=None,
+    type=click.Choice(["domain", "constellation", "governance", "all"]),
+    help="Which rows to open. Default domain — the operator's life/work domains (correspondence, "
+    "financial, representation, …); constellation (the consulting domain's collaborator interior) "
+    "and governance rows are named as elided and opened deliberately.",
+)
+@click.option("--lane", default=None, metavar="LANE", help="Native lane to open on (claude|codex|agy|opencode|…).")
+@click.option("--dry-run", "dry_run", is_flag=True, help="Print exactly what would open; touch nothing.")
+@click.option("--max-parallel", "max_parallel", default=None, type=int, help="Override the RAM-derived bound.")
+@click.option("--unbounded", is_flag=True, help="Waive the RAM-derived bound (you accept the jetsam risk).")
+@click.option("--session", "tmux_session", default=None, help="tmux session name (default limen-streams).")
+def streams(show_status, family, lane, dry_run, max_parallel, unbounded, tmux_session):
+    """Open (and REOPEN) the session streams, each in its own tmux window.
+
+    The advertised form of scripts/open-streams.sh — a pure delegate, so the CLI can never tell a
+    different story than the script. The round trip: open → work → exit the agent (the tmux window
+    is kept) → `limen streams` again reopens the dormant stream; `limen streams --status` shows
+    every lane's derived state at a glance.
+    """
+    root = resolve_limen_repo_root()
+    args = ["bash", str(root / "scripts" / "open-streams.sh")]
+    if show_status:
+        args.append("--status")
+    if family:
+        args.extend(["--family", family])
+    if lane:
+        args.extend(["--lane", lane])
+    if dry_run:
+        args.append("--dry-run")
+    if max_parallel is not None:
+        args.extend(["--max-parallel", str(max_parallel)])
+    if unbounded:
+        args.append("--all")
+    if tmux_session:
+        args.extend(["--session", tmux_session])
+    raise SystemExit(subprocess.run(args).returncode)
 
 
 @main.command()

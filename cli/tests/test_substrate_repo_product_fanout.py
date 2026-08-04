@@ -34,8 +34,7 @@ def test_substrate_ledger_uses_env_roots_without_stale_drive_blocker(tmp_path: P
     snap = mod.build_snapshot(
         config_path=tmp_path / "missing-config.json",
         include_mounted=False,
-        free_floor_gib=0,
-        usage_ceiling_pct=100,
+        required_free_gib=0,
     )
 
     by_path = {Path(row["path"]).name: row for row in snap["roots"]}

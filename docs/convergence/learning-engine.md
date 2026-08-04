@@ -52,6 +52,61 @@ surface.** "Do it right, do it once."
   the spaced-rep plugin. Its greenfield `curriculum.yaml` was deleted; curriculum is now
   `PersonalizedLesson` records in the `aps` schema; provenance is a ChainBlockARK ledger.
 
+## Disposition of the wider education estate (2026-07-26 sweep)
+
+The sections above predate the 310-repo estate sweep. Every education-cluster repo the doc
+omitted now carries a disposition — grounded in the estate census descriptions and the
+CONVERGENCE registry rows (`institutio/governance/convergence.yaml`), never re-derived
+from memory:
+
+- **`writelens`** → **text-quality-scoring OWNER** (live, billed API — see the
+  `text-quality-scoring` and `worker-toolkit` registry rows). Education consumes it;
+  it is not a learning engine.
+- **`essay-pipeline`** → ORGAN-V discourse automation; its `validator.py` **lifts into
+  writelens** (registry row); the pipeline itself stays a tenant of the editorial specs.
+- **`editorial-standards`** → spec-only rubric/style repo; its schemas **fold into the
+  rubric-schema owner** (`edu-organism` kernel schema — registry row), then it renders
+  from the one schema. Declared-data source, never an engine.
+- **`classroom-rpg-aetheria`** → engagement/reward-surface variant. Reward is owned by
+  **gamified-coach-interface**; aetheria is a candidate *skin/subject* of that surface,
+  never a second reward engine.
+- **`reading-observatory`** → curated reading lists + RSS aggregation; a **content-atom
+  source** in the my-knowledge-base lane. Not an engine.
+- **`reading-group-curriculum`** → curricula content; its `data_export.py` **lifts**
+  (data-export registry row); its 8–12-week programs are **`aps` subject candidates**
+  (PersonalizedLesson records), never a curriculum format of their own.
+- **`laurea`** → **RECLUSTERED out of education**: a developer-portfolio metrics auditor
+  (topics `developer-metrics`/`github-stats`); tenant of the **auditor-verdicts
+  convention** (`docs/convergence/auditor-verdicts.md`), owner of record: governance.
+- **`composition-1-2`** → FERPA-adjacent teaching workspace (real course artifacts).
+  Renders **FROM** the rubric schema; its content is **never ingested** into any shared
+  corpus (the standing FERPA guard, restated in the rubric-schema registry row).
+- **`speech-score-engine`** → self-described recovered *design corpus* of the same
+  product `sign-signal--voice-synth` already implements. **Retire the scaffold, keep the
+  corpus** (voice-infrastructure registry row).
+- **`sign-signal--voice-synth`** → the working speech-score build ("Speech Score Engine —
+  Layer 1" by its own description). **Voice tenant**: points synth/transcription at
+  `vox`, keeps its product layer.
+- **`learning-resources`** → workshop curricula + creative-coding tutorials; **subject
+  content** for `aps` cartridges. Not an engine.
+- **`community-hub`** → **the single real front end** (live on Render) for the
+  curricula/syllabus/reading content of 3–4 back-end repos. The export-format divergence
+  it absorbs is precisely the data-export lift's motivation. Web surface, never an engine.
+- **`organvm/studium-generale`** → self-declared superseded (2026-03-19) yet was still
+  unflagged and receiving pushes. **Archive-flagged on GitHub** (this sweep); the active
+  successor is **`studium-generale--4444j99`** (academic governance: commissions,
+  defenses, senate).
+- **`academic-publication`** → already **ARCHIVED** on GitHub; historical record, no
+  action.
+- **`edu-organism` mirrors** (six standalone repos, read-only `--squash`) → drift is
+  currently caught only by a manual `verify.sh`. Named follow-up: encode the mirror
+  direction as declared data so drift becomes a predicate, per the registry pattern.
+  **Now counted** as the `mirror-drift-detection` vacuum in
+  `institutio/governance/convergence.yaml` (`status: unresolved`, `owner: null`) — a
+  follow-up named only in prose is a vacuum with nowhere to be counted, which is the
+  condition Rule #1 forbids. The registry row is the owner of this item's resolution;
+  this bullet is its rationale, not its record.
+
 ## The subject/cartridge contract
 
 A subject is a set of **`aps` `PersonalizedLesson` records** (schema:

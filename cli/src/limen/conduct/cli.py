@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Literal
 
 import click
 
+from limen.conduct.broker import ConductError
+from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.client import client_from_env
+from limen.conduct.liveness import foreign_worktree_occupant
 from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
+from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, run_campaign
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -67,6 +72,82 @@ def conduct_group() -> None:
 @conduct_group.command("capabilities")
 def capabilities() -> None:
     _emit(client_from_env().capabilities())
+
+
+@conduct_group.group("campaign")
+def campaign_group() -> None:
+    """Evaluate and route one finite institutional campaign epoch."""
+
+
+@campaign_group.command("run")
+@click.option("--capsule", type=click.Path(path_type=Path, exists=True))
+@click.option("--capsule-commit", default=None)
+@click.option("--capsule-base", default=None)
+@click.option("--capsule-path", default=None)
+@click.option("--capsule-branch", default=None)
+@click.option("--terminal-predicate", type=click.Choice(["omega"]), default="omega", show_default=True)
+@click.option("--session-id", default=None)
+@click.option("--agent", default=lambda: os.environ.get("LIMEN_AGENT"))
+@click.option("--evaluation-timeout", type=click.IntRange(300, 7200), default=1800, show_default=True)
+@click.option("--wake-deadline-monotonic-ns", type=click.IntRange(min=1), default=None, hidden=True)
+def campaign_run(
+    capsule: Path | None,
+    capsule_commit: str | None,
+    capsule_base: str | None,
+    capsule_path: str | None,
+    capsule_branch: str | None,
+    terminal_predicate: str,
+    session_id: str | None,
+    agent: str | None,
+    evaluation_timeout: int,
+    wake_deadline_monotonic_ns: int | None,
+) -> None:
+    if not agent:
+        raise click.ClickException("agent identity is required via --agent or LIMEN_AGENT")
+    identity = AgentIdentityV1(
+        agent=agent,
+        surface=os.environ.get("LIMEN_SURFACE", "workstream"),
+        session_id=_session_id(session_id),
+        native_run_id=os.environ.get("LIMEN_NATIVE_RUN_ID"),
+        provider_identity=os.environ.get("LIMEN_PROVIDER_IDENTITY"),
+    )
+    try:
+        result = run_campaign(
+            client=client_from_env(),
+            root=Path.cwd(),
+            capsule=capsule,
+            capsule_commit=capsule_commit,
+            capsule_base=capsule_base,
+            capsule_path=capsule_path,
+            capsule_branch=capsule_branch,
+            identity=identity,
+            terminal_predicate=terminal_predicate,
+            evaluation_timeout_seconds=evaluation_timeout,
+            wake_deadline_monotonic_ns=wake_deadline_monotonic_ns,
+        )
+    except CampaignRelayError as exc:
+        _emit(
+            {
+                "schema": RESULT_SCHEMA,
+                "boundary": "invalid",
+                "reason": exc.public_reason,
+                "successor_required": True,
+                "terminal_predicate": terminal_predicate,
+            }
+        )
+        raise click.exceptions.Exit(1) from exc
+    except (CampaignSupervisorError, ConductError) as exc:
+        _emit(
+            {
+                "schema": RESULT_SCHEMA,
+                "boundary": "invalid",
+                "reason": str(exc)[:2000],
+                "successor_required": False,
+                "terminal_predicate": terminal_predicate,
+            }
+        )
+        raise click.exceptions.Exit(1) from exc
+    _emit(result)
 
 
 @conduct_group.command("register")
@@ -147,7 +228,32 @@ def register(
             receipt_quality=receipt_quality,
             accepting_work=accepting_work,
         )
-    _emit(client_from_env().register(session))
+    client = client_from_env()
+    try:
+        _emit(client.register(session))
+    except ConductError as exc:
+        owner_id = _dead_owner_to_supersede(str(exc), session)
+        if owner_id is None:
+            raise
+        _emit(client.register(session.model_copy(update={"supersedes": owner_id})))
+
+
+_OWNED_BY = re.compile(r"worktree is already owned by healthy session ([A-Za-z0-9._:-]+)")
+
+
+def _dead_owner_to_supersede(detail: str, session: ConductorSessionV1) -> str | None:
+    """The 409's named owner, but only when succession is provably safe: the broker's heartbeat
+    TTL cannot see a crash/exec exit, so the claimant — the only party on the worktree's host —
+    must prove no foreign process is still live there. Fail-closed: an unavailable probe reads
+    as occupied and the original conflict is re-raised."""
+    if not session.worktree:
+        return None
+    match = _OWNED_BY.search(detail)
+    if not match:
+        return None
+    if foreign_worktree_occupant(Path(session.worktree)) is not None:
+        return None
+    return match.group(1)
 
 
 @conduct_group.command("submit")

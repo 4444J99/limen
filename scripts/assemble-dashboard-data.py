@@ -19,11 +19,14 @@ def load_policy(app: Path) -> dict[str, Any]:
         raise ValueError("dashboard export policy has an unsupported schema_version")
     max_logs = policy.get("max_dispatch_log_entries")
     max_bytes = policy.get("max_dashboard_bytes")
+    max_context_chars = policy.get("max_task_context_chars")
     done_statuses = policy.get("done_statuses")
     if not isinstance(max_logs, int) or isinstance(max_logs, bool) or max_logs < 0:
         raise ValueError("dashboard export policy max_dispatch_log_entries must be a non-negative integer")
     if not isinstance(max_bytes, int) or isinstance(max_bytes, bool) or max_bytes < 1:
         raise ValueError("dashboard export policy max_dashboard_bytes must be a positive integer")
+    if not isinstance(max_context_chars, int) or isinstance(max_context_chars, bool) or max_context_chars < 1:
+        raise ValueError("dashboard export policy max_task_context_chars must be a positive integer")
     if (
         not isinstance(done_statuses, list)
         or not done_statuses
@@ -33,8 +36,12 @@ def load_policy(app: Path) -> dict[str, Any]:
     return policy
 
 
-def slim_task(task: dict[str, Any], *, max_logs: int) -> dict[str, Any]:
+def slim_task(task: dict[str, Any], *, max_logs: int, max_context_chars: int) -> dict[str, Any]:
     projected = dict(task)
+    context = task.get("context")
+    if isinstance(context, str) and len(context) > max_context_chars:
+        projected["context"] = context[: max_context_chars - 1].rstrip() + "…"
+        projected["context_truncated"] = True
     logs = task.get("dispatch_log")
     if logs is None:
         return projected
@@ -69,10 +76,17 @@ def payloads(
         }
     done_statuses = set(policy["done_statuses"])
     max_logs = policy["max_dispatch_log_entries"]
+    max_context_chars = policy["max_task_context_chars"]
     active = [
-        slim_task(task, max_logs=max_logs) for task in normalized_tasks if task.get("status") not in done_statuses
+        slim_task(task, max_logs=max_logs, max_context_chars=max_context_chars)
+        for task in normalized_tasks
+        if task.get("status") not in done_statuses
     ]
-    done = [slim_task(task, max_logs=max_logs) for task in normalized_tasks if task.get("status") in done_statuses]
+    done = [
+        slim_task(task, max_logs=max_logs, max_context_chars=max_context_chars)
+        for task in normalized_tasks
+        if task.get("status") in done_statuses
+    ]
     dashboard = {
         "portal": internal.get("portal"),
         "summary": summary,
@@ -134,6 +148,7 @@ def assemble(app: Path, *, repo_root: Path, write_public: bool = False) -> dict[
         "done_bytes": len(done_bytes),
         "max_dashboard_bytes": policy["max_dashboard_bytes"],
         "max_dispatch_log_entries": policy["max_dispatch_log_entries"],
+        "max_task_context_chars": policy["max_task_context_chars"],
     }
 
 
@@ -147,7 +162,8 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"dashboard.json: {result['dashboard_bytes'] // 1024}KB ({result['active']} active tasks) | "
         f"done-tasks.json: {result['done_bytes'] // 1024}KB ({result['done']} done/archived) | "
-        f"dispatch_log<={result['max_dispatch_log_entries']}"
+        f"dispatch_log<={result['max_dispatch_log_entries']} | "
+        f"context<={result['max_task_context_chars']} chars"
     )
     return 0
 

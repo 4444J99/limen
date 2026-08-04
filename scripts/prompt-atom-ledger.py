@@ -6104,7 +6104,7 @@ def rebind_checkpoint(paths: LedgerPaths) -> list[str]:
     markdown_bytes = markdown.encode("utf-8")
 
     paths.private_dir.mkdir(parents=True, exist_ok=True)
-    atomic_write_bytes(paths.public_snapshot, public_bytes, mode=0o644)
+    atomic_write_bytes(paths.public_snapshot, public_bytes, mode=0o600)
     atomic_write_bytes(paths.public_seal, seal_bytes, mode=0o644)
     atomic_write_bytes(paths.public_markdown, markdown_bytes, mode=0o644)
     # Write the marker last: a crash before this line leaves check_ledger red.

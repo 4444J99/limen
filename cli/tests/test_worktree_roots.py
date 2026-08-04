@@ -15,6 +15,7 @@ from limen.worktree_roots import (
     _children,
     _dedupe_targets,
     _discover_repo_local_roots,
+    _discover_workspace_checkouts,
     _flag,
     _float_env,
     _git_worktree_paths,
@@ -219,6 +220,33 @@ def test_discover_respects_max_depth(tmp_path, monkeypatch):
     assert deep not in roots
 
 
+def test_discover_workspace_checkouts_stops_at_git_roots(tmp_path, monkeypatch):
+    checkout = tmp_path / "owner" / "repo"
+    nested = checkout / "nested"
+    (checkout / ".git").mkdir(parents=True)
+    (nested / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(tmp_path))
+
+    roots = _discover_workspace_checkouts(strict=True)
+
+    assert roots == [checkout]
+
+
+def test_discover_workspace_checkouts_skips_symlinked_checkout(tmp_path, monkeypatch):
+    external = tmp_path / "external"
+    (external / ".git").mkdir(parents=True)
+    inventory = tmp_path / "inventory"
+    inventory.mkdir()
+    linked = inventory / "package-manager-project"
+    linked.symlink_to(external, target_is_directory=True)
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(inventory))
+
+    roots = _discover_workspace_checkouts(strict=True)
+
+    assert roots == []
+    assert linked.exists()
+
+
 # ---------------------------------------------------------------- _git_worktree_paths
 def test_git_worktree_paths_parses_porcelain(tmp_path):
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=tmp_path, check=True)
@@ -335,6 +363,24 @@ def test_iter_worktree_targets_dispatch_root_children(tmp_path, monkeypatch):
     targets = iter_worktree_targets(tmp_path)
     names = {t.path.name for t in targets}
     assert "active-task" in names
+
+
+def test_iter_worktree_targets_workspace_checkouts_are_explicitly_armed(tmp_path, monkeypatch):
+    dispatch = tmp_path / ".limen-worktrees"
+    dispatch.mkdir()
+    checkout = tmp_path / "owner" / "repo"
+    (checkout / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(tmp_path))
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_CHECKOUTS", "1")
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H", "0")
+
+    targets = iter_worktree_targets(tmp_path)
+
+    assert any(target.path == checkout and target.source == "workspace-checkout" for target in targets)
 
 
 def test_dispatch_clone_cache_root_requires_same_device_parent(tmp_path, monkeypatch):

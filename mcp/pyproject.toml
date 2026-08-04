@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "limen>=0.1.0",
     "mcp[fastmcp]",
+    "cryptography>=50.0.0",
     "pyyaml>=6.0",
     "pydantic>=2.0",
 ]

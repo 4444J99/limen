@@ -24,17 +24,19 @@ policy:
     - organvm/limen
     - organvm/relationship-pipeline
     - organvm/arca
-    - organvm/conversation-corpus-engine
+    - organvm-i-theoria/conversation-corpus-engine
     - organvm/collaboratory
-    - organvm/portfolio
+    - organvm-vii-kerygma/portfolio
     - organvm/4444J99.github.io
   owner: gitvs
   note: "vault/conductor classes are structurally ungrantable; the repo list covers engine repos sitting in otherwise-grantable classes. The ceiling is push: partners contribute through review-gated branches, never administer."
 
 grants:
-  organvm/peer-audited--behavioral-blockchain:
-    - {login: jtenen, person: jessica, role: push, granted: 2026-07-23, why: "styx co-founder build lane — contributes to exactly this repo (pre-existing grant, documented at audit)"}
-  organvm/content-engine--asset-amplifier:
-    - {login: LeflerDesign, person: scott, role: push, granted: 2026-07-23, why: "content-cannibalizer build lane (pre-existing grant, documented at audit)"}
-  organvm/sovereign-systems--elevate-align:
-    - {login: eauco-mads, person: maddie, role: push, granted: 2026-07-23, why: "spiral funnel/content lane (pre-existing grant, confirmed at audit: this is the one repo the login holds)"}
+  4444J99/peer-audited--behavioral-blockchain:
+    - {login: jtenen, person: jessica, role: push, granted: 2026-07-23, why: "styx co-founder build lane — contributes to exactly this repo (pre-existing grant, documented at audit; re-keyed 2026-07-30, custody v4.0.0 transfer — lane verified intact post-move)"}
+  4444J99/content-engine--asset-amplifier:
+    - {login: LeflerDesign, person: scott, role: push, granted: 2026-07-23, why: "content-cannibalizer build lane (pre-existing grant, documented at audit; re-keyed 2026-07-30, custody v4.0.0 transfer — lane verified intact post-move)"}
+  4444J99/sovereign-systems--elevate-align:
+    - {login: eauco-mads, person: maddie, role: push, granted: 2026-07-23, why: "spiral funnel/content lane (pre-existing grant, confirmed at audit: this is the one repo the login holds; re-keyed 2026-07-30, custody v4.0.0 transfer — lane verified intact post-move)"}
+  4444J99/victoroff-os:
+    - {login: davidvictoroff85-collab, person: david, role: push, granted: 2026-07-29, why: "victoroff-os build lane on the personal estate — pre-existing access documented at the dual-estate custody audit (live role verified write 2026-07-29); undeclared, it sat exposed to the undeclared-removal direction"}

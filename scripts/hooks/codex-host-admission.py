@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -46,7 +47,7 @@ def _hash_label(prefix: str, raw: str) -> str:
 def _process_table() -> dict[int, tuple[int, str]]:
     try:
         result = subprocess.run(
-            ["ps", "-axo", "pid=,ppid=,comm="],
+            ["ps", "-axo", "pid=,ppid=,command="],
             capture_output=True,
             text=True,
             timeout=0.5,
@@ -65,15 +66,40 @@ def _process_table() -> dict[int, tuple[int, str]]:
     return table
 
 
+def _is_codex_process(command: str) -> bool:
+    """Return true only for an evidence-bearing Codex or ChatGPT process."""
+
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    if not tokens:
+        return False
+    executable_path = tokens[0].casefold()
+    executable = Path(executable_path).name
+    if executable.startswith("codex") or executable == "chatgpt":
+        return True
+    if "/applications/chatgpt.app/contents/" in executable_path:
+        return True
+    if executable not in {"node", "nodejs"}:
+        return False
+    for token in tokens[1:]:
+        candidate = token.casefold().rstrip("/")
+        if "/@openai/codex/" in candidate:
+            return True
+        if Path(candidate).name.startswith("codex"):
+            return True
+    return False
+
+
 def codex_owner_pid() -> int:
-    """Resolve the durable Codex ancestor instead of leasing to this short hook."""
+    """Resolve a proven durable Codex ancestor; never lease a terminal fallback."""
 
     current = os.getppid()
     table = _process_table()
     if not table:
         raise ValueError("durable Codex owner process table is unavailable")
     seen: set[int] = set()
-    oldest: int | None = None
     for _ in range(32):
         if current <= 1 or current in seen:
             break
@@ -82,14 +108,10 @@ def codex_owner_pid() -> int:
         if row is None:
             break
         parent, command = row
-        oldest = current
-        lowered = command.lower()
-        if any(marker in lowered for marker in ("codex", "chatgpt", "openai")):
+        if _is_codex_process(command):
             return current
         current = parent
-    if oldest is None:
-        raise ValueError("durable Codex owner ancestor cannot be proven")
-    return oldest
+    raise ValueError("durable Codex owner ancestor cannot be proven")
 
 
 def _turn_owner(payload: dict[str, Any]) -> str | None:
@@ -329,11 +351,20 @@ def handle(
     if event == "UserPromptSubmit":
         return None
 
-    controller = controller or AdmissionController()
-    owner = _turn_owner(payload)
-    pid = owner_pid or codex_owner_pid()
-
     if event == "PreToolUse":
+        # Observation and sanctioned self-gated controls do not need a durable
+        # writer owner. Return before walking process ancestry so read-only
+        # operation remains available when that ancestry cannot be proven.
+        action = classify_action(payload)
+        if action.category in {"observe", "sanctioned_control"}:
+            return None
+        controller = controller or AdmissionController()
+        owner = _turn_owner(payload)
+        if owner is None:
+            return _tool_deny(
+                "Limen host admission denied mutation: durable Codex session identity is missing"
+            )
+        pid = owner_pid or codex_owner_pid()
         decision = admit_pre_tool_action(
             payload,
             controller=controller,
@@ -358,6 +389,10 @@ def handle(
                 ),
             },
         }
+
+    controller = controller or AdmissionController()
+    owner = _turn_owner(payload)
+    pid = owner_pid or codex_owner_pid()
 
     if event == "Stop" and owner is not None:
         # Codex may expose the compatibility flag used by Stop hooks. Only that

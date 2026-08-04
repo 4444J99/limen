@@ -36,15 +36,14 @@
     "LIMEN_NOMENCLATOR",
     "LIMEN_POSITIONING",
     "LIMEN_AVTOPOIESIS",
-    "LIMEN_ALLOW_HIGH_LOCAL_LIMIT",
     "LIMEN_CENSOR_APPLY",
-    "LIMEN_DISPATCH_ASYNC",
     "LIMEN_MEDIA_ATOMIZE",
     "LIMEN_QUICKEN_BREATHE",
     "LIMEN_STUDIUM",
     "LIMEN_OBSERVATORY",
     "LIMEN_PROMPT_ATOM_CONTROL",
-    "LIMEN_SESSION_CLOSEOUT"
+    "LIMEN_SESSION_CLOSEOUT",
+    "LIMEN_DAILY_EXECUTION_FIRE"
   ],
-  "_safety_note": "LIMEN_DISPATCH_ASYNC / LIMEN_CENSOR_APPLY / LIMEN_MEDIA_ATOMIZE are armed in the DAEMON'S environment (launchd plist), which this audit cannot read from a shell — promoting one to 'deliverable' requires a probe of daemon truth (a runtime stamp), not an env read; enactment-audit.py owns declared-vs-live for fleet flags. LIMEN_ALLOW_HIGH_LOCAL_LIMIT is a budget-cap override: off IS the design."
+  "_safety_note": "LIMEN_CENSOR_APPLY / LIMEN_MEDIA_ATOMIZE are armed in the daemon environment, which this audit cannot read from a shell. Promoting one to deliverable requires a probe of daemon truth; enactment-audit.py owns declared-vs-live for fleet flags. Provider admission belongs to the keeper-backed campaign supervisor, not a heartbeat dispatch-mode valve. LIMEN_DAILY_EXECUTION_FIRE remains safe-off by default: only an explicit, invocation-scoped fire lever may authorize routine professional sends."
 }

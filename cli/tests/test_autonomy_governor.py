@@ -246,3 +246,168 @@ def test_throttle_bounds_the_completion_attempt(tmp_path):
     proc = run_governor_completion(tmp_path, LOGGING_GH, HOLD_POLICY, "mode", extra_env=extra)
     assert proc.stdout.strip() == "paused"
     assert _gh_log(tmp_path).count("\n") == first  # second call throttled — zero new gh reads
+
+
+# ── finite maintenance-window lifecycle (#1578) ────────────────────────────────
+
+
+def _seed_maintenance_policy(tmp_path, *, expires_at):
+    logs = tmp_path / "logs"
+    logs.mkdir(exist_ok=True)
+    policy = {
+        "mode": "observe",
+        "dispatch_enabled": False,
+        "maintenance_window": {
+            "owner": "whole-estate-custody-reset",
+            "expires_at": expires_at,
+            "resume_predicate": "host admission valid; live root exact and clean",
+        },
+    }
+    (logs / "autonomy-policy.json").write_text(json.dumps(policy))
+    return logs
+
+
+def test_explicit_observe_without_maintenance_window_is_unchanged(tmp_path):
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps({"mode": "observe", "dispatch_enabled": False, "reason": "explicit operator observation"})
+    )
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "observe"
+    assert not (logs / "autonomy-maintenance-blocker.json").exists()
+
+
+def test_unexpired_maintenance_window_stays_observe(tmp_path):
+    logs = _seed_maintenance_policy(tmp_path, expires_at="2999-01-01T00:00:00Z")
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "observe"
+    assert not (logs / "autonomy-maintenance-blocker.json").exists()
+
+
+def test_expired_maintenance_window_fails_loud_with_stable_receipt(tmp_path):
+    logs = _seed_maintenance_policy(tmp_path, expires_at="2000-01-01T00:00:00Z")
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "paused"
+
+    receipt = logs / "autonomy-maintenance-blocker.json"
+    blocker = json.loads(receipt.read_text())
+    assert blocker["state"] == "expired"
+    assert blocker["owner"] == "whole-estate-custody-reset"
+    assert blocker["resume_predicate"] == "host admission valid; live root exact and clean"
+    first = receipt.read_bytes()
+
+    second = run_governor(tmp_path, "mode")
+    assert second.returncode == 0
+    assert second.stdout.strip() == "paused"
+    assert receipt.read_bytes() == first
+
+    explained = run_governor(tmp_path, "explain")
+    assert explained.returncode == 0
+    payload = json.loads(explained.stdout)
+    assert payload["mode"] == "paused"
+    assert payload["maintenanceBlocker"]["state"] == "expired"
+    assert payload["maintenanceBlockerReceipt"] == str(receipt)
+
+
+def test_malformed_maintenance_expiry_fails_closed(tmp_path):
+    logs = _seed_maintenance_policy(tmp_path, expires_at="not-a-timestamp")
+    proc = run_governor(tmp_path, "mode")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "paused"
+    blocker = json.loads((logs / "autonomy-maintenance-blocker.json").read_text())
+    assert blocker["state"] == "invalid-expiry"
+
+
+def test_non_object_maintenance_window_fails_closed(tmp_path):
+    for index, malformed in enumerate((None, [], "until later")):
+        case = tmp_path / f"case-{index}"
+        logs = case / "logs"
+        logs.mkdir(parents=True)
+        (logs / "autonomy-policy.json").write_text(
+            json.dumps({"mode": "observe", "dispatch_enabled": False, "maintenance_window": malformed})
+        )
+        proc = run_governor(case, "mode")
+        assert proc.returncode == 0
+        assert proc.stdout.strip() == "paused"
+        blocker = json.loads((logs / "autonomy-maintenance-blocker.json").read_text())
+        assert blocker["state"] == "invalid-window"
+
+
+# ── the expired maintenance window must be able to complete itself ────────────────
+#
+# The deadly-embrace fix `_try_complete_release` gives MARKER-owned pauses was never extended to
+# WINDOW-owned ones. Measured 2026-07-31: a four-hour window that expired 2026-07-22 had held the
+# estate for nine days, and its own resume predicate required "live root exact origin/main" — a
+# state produced ONLY by sync-release.sh, which ran solely when NOT paused. The halt could not
+# clear itself by construction.
+
+
+def _expired_window(tmp_path, predicate, expires="2026-07-22T03:14:24Z"):
+    logs = tmp_path / "logs"
+    logs.mkdir(exist_ok=True)
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "mode": "observe",
+                "dispatch_enabled": False,
+                "maintenance_window": {
+                    "started_at": "2026-07-21T23:14:24Z",
+                    "expires_at": expires,
+                    "owner": "whole-estate-custody-reset",
+                    "resume_predicate": predicate,
+                },
+            }
+        )
+    )
+    return logs
+
+
+def test_a_prose_resume_predicate_never_auto_completes(tmp_path):
+    """Back-compat, and the whole diagnosis: a sentence cannot fire. This is the live policy's
+    exact shape, and it must keep behaving precisely as it does today — blocked until a human
+    edits it. Only a list opts in."""
+    _expired_window(tmp_path, "host admission valid; live root exact origin/main and clean")
+    assert run_governor(tmp_path, "mode").stdout.strip() == "paused"
+
+
+def test_an_unsatisfied_clause_is_named_rather_than_merely_expired(tmp_path):
+    """A halt that says only 'expired without a recorded resume' is indistinguishable from a halt
+    with no way out. Naming the failing clause is the difference between a halt and a to-do list."""
+    _expired_window(tmp_path, ["true", "false # the clause that blocks", "true"])
+    assert run_governor(tmp_path, "mode").stdout.strip() == "paused"
+    blocker = json.loads(run_governor(tmp_path, "explain").stdout)["maintenanceBlocker"]
+    assert [c["clause"] for c in blocker["unsatisfied_clauses"]] == ["false # the clause that blocks"]
+
+
+def test_all_clauses_satisfied_resumes_and_records_the_resume(tmp_path):
+    logs = _expired_window(tmp_path, ["true", "echo all-clear"])
+    assert run_governor(tmp_path, "mode").stdout.strip() == "observe"
+
+    receipt = json.loads((logs / "autonomy-maintenance-resume.json").read_text())
+    assert receipt["window_expires_at"] == "2026-07-22T03:14:24Z"
+    assert all(c["passed"] for c in receipt["clauses"])
+
+    # idempotent: the recorded resume answers the next read without re-running anything
+    assert run_governor(tmp_path, "mode").stdout.strip() == "observe"
+
+
+def test_a_recorded_resume_does_not_cover_a_different_window(tmp_path):
+    """A resume is scoped to the window it satisfied. Otherwise one lift would silently license
+    every future maintenance window, which is the opposite of a finite lifecycle boundary."""
+    logs = _expired_window(tmp_path, ["true"])
+    assert run_governor(tmp_path, "mode").stdout.strip() == "observe"
+
+    _expired_window(tmp_path, ["false"], expires="2026-07-25T00:00:00Z")
+    (logs / ".autonomy-clause-cache.json").unlink(missing_ok=True)
+    assert run_governor(tmp_path, "mode").stdout.strip() == "paused"
+
+
+def test_an_unrunnable_clause_fails_closed(tmp_path):
+    """Fail-CLOSED everywhere, matching _try_complete_release: a broken predicate leaves the
+    blocker standing rather than being read as satisfied."""
+    _expired_window(tmp_path, ["definitely-not-a-real-command-xyz"])
+    assert run_governor(tmp_path, "mode").stdout.strip() == "paused"

@@ -1,3 +1,4 @@
+import { ChunkedDurableStateStore } from "./durable-store.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
 import {
   canonicalHash,
@@ -82,6 +83,55 @@ async function sha256Text(value) {
   return [...new Uint8Array(raw)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function fanoutCampaignEvidence(root, children, outcome) {
+  const packet = root.packet || {};
+  const campaign = packet.campaign;
+  if (campaign === null || typeof campaign !== "object") return null;
+  const childCampaigns = [];
+  const spend = {};
+  for (const child of children) {
+    for (const receipt of child.receipts || []) {
+      if (receipt.campaign && typeof receipt.campaign === "object") {
+        childCampaigns.push(receipt.campaign);
+      }
+      for (const [unit, value] of Object.entries(receipt.spend || {})) {
+        if (typeof value === "number" && Number.isFinite(value)) {
+          spend[unit] = (spend[unit] || 0) + value;
+        }
+      }
+    }
+  }
+  const outputs = childCampaigns.map((item) => item.output);
+  const ceiling = Number(campaign.output_ceiling_bytes);
+  const outputSummary = outputs.map((item) => item.sha256).join("");
+  const emittedSummary = outputSummary.slice(0, ceiling);
+  return {
+    spend,
+    campaign: {
+      schema_version: "limen.campaign_receipt.v1",
+      campaign_id: campaign.campaign_id,
+      actual_value: childCampaigns.reduce((total, item) => total + Number(item.actual_value || 0), 0),
+      value_unit: "predicate_passes",
+      output: {
+        schema_version: "limen.campaign_output_evidence.v1",
+        output_ceiling_bytes: ceiling,
+        bytes_emitted: encoder.encode(emittedSummary).length,
+        lines_emitted: emittedSummary ? emittedSummary.split(/\r?\n/).length : 0,
+        sha256: await sha256Text(emittedSummary),
+        truncated: outputSummary.length > ceiling || outputs.some((item) => Boolean(item.truncated)),
+      },
+      blocker: outcome === "succeeded" ? null : {
+        schema_version: "limen.campaign_blocker.v1",
+        owner: campaign.owner,
+        failed_predicate: campaign.failed_predicate,
+        next_action: campaign.next_action,
+      },
+      successor_capsule: outcome === "succeeded" ? null : packet.receipt_target,
+      boundary: outcome === "succeeded" ? "settled" : "wait_relay",
+    },
+  };
+}
+
 async function capabilityToken(secret, leaseId, generation, principalId) {
   if (typeof secret !== "string" || secret.length < 24) {
     throw new ConductError("conduct capability secret is not configured", 503);
@@ -156,6 +206,7 @@ export class ConductKernel {
     switch (operation) {
       case "register": return this.register(payload.session, payload.principal);
       case "capabilities": return this.capabilities();
+      case "task_run": return this.taskRun(payload.task_id);
       case "submit": return this.submit(payload.packet, payload.principal);
       case "submit_graph": return this.submitGraph(payload.packets, payload.principal);
       case "split": return this.split(payload.parent_run_id, payload.packet, payload.principal);
@@ -297,7 +348,26 @@ export class ConductKernel {
       for (const owner of Object.values(this.state.sessions)) {
         if (owner.session_id === session.session_id || !owner.worktree) continue;
         const owned = parseResource(`worktree/${owner.worktree}`).identity[0];
-        if (owned === claimed && this.now - asDate(owner.heartbeat_at) <= this.sessionTtlMs) {
+        if (owned !== claimed) continue;
+        // Succession: the heartbeat TTL cannot see a crash/exec exit, so an exited session
+        // blocks its own reopen for the TTL. A claimant that names the exact owner of the
+        // very worktree it claims — and does not attenuate the owner's protection level —
+        // replaces it immediately; anything else keeps the two-concurrent-sessions guard.
+        if (session.supersedes === owner.session_id
+          && (session.human_protected || !owner.human_protected)) {
+          this.state.sessions[owner.session_id] = {
+            ...clone(owner),
+            worktree: null,
+            accepting_work: false,
+          };
+          this.recordEvent("session.superseded", {
+            session_id: owner.session_id,
+            superseded_by: session.session_id,
+            worktree: claimed,
+          });
+          continue;
+        }
+        if (this.now - asDate(owner.heartbeat_at) <= this.sessionTtlMs) {
           throw new ConductError(`worktree is already owned by healthy session ${owner.session_id}`);
         }
       }
@@ -307,6 +377,7 @@ export class ConductKernel {
       registered_at: current?.registered_at || this.timestamp,
       heartbeat_at: this.timestamp,
       human_protected: Boolean(current?.human_protected || session.human_protected),
+      supersedes: null,
     };
     const priorPrincipal = this.state.session_principals[session.session_id];
     if (priorPrincipal && priorPrincipal !== principal.principal_id) {
@@ -335,6 +406,43 @@ export class ConductKernel {
       schema_version: "limen.conduct_capabilities.v1",
       generated_at: this.timestamp,
       sessions,
+    };
+  }
+
+  taskRun(taskId) {
+    const candidates = Object.values(this.state.runs)
+      .filter((run) => String(run.packet?.task_id || "") === taskId);
+    const active = candidates.filter((run) =>
+      run.status === "waiting" || ACTIVE_RUN_STATES.has(run.status));
+    if (active.length > 1) {
+      throw new ConductError(`task ${taskId} has multiple active conduct runs`);
+    }
+    let selected = active[0] || null;
+    if (!selected && candidates.length) {
+      selected = [...candidates].sort((left, right) => {
+        const leftTime = asDate(left.updated_at || left.created_at).getTime();
+        const rightTime = asDate(right.updated_at || right.created_at).getTime();
+        return rightTime - leftTime || right.run_id.localeCompare(left.run_id);
+      })[0];
+    }
+    if (!selected) {
+      return {
+        schema_version: "limen.conduct_task_run.v1",
+        task_id: taskId,
+        found: false,
+      };
+    }
+    return {
+      schema_version: "limen.conduct_task_run.v1",
+      task_id: taskId,
+      found: true,
+      run_id: selected.run_id,
+      root_run_id: selected.root_run_id,
+      status: selected.status,
+      executor_session_id: selected.executor_session_id,
+      exact_base: selected.packet?.execution?.exact_base || null,
+      receipt_count: (selected.receipts || []).length,
+      updated_at: selected.updated_at,
     };
   }
 
@@ -390,7 +498,8 @@ export class ConductKernel {
         && stableStringify(stored.resource_claims) === stableStringify(packet.resource_claims)
         && stored.predicate === packet.predicate
         && stored.receipt_target === packet.receipt_target
-        && stableStringify(stored.work_loan) === stableStringify(packet.work_loan);
+        && stableStringify(stored.work_loan) === stableStringify(packet.work_loan)
+        && stableStringify(stored.campaign) === stableStringify(packet.campaign);
       if (!samePayload) {
         throw new ConductError("work id/key was reused with different immutable hashes or contract");
       }
@@ -1030,6 +1139,14 @@ export class ConductKernel {
     const childRunsAuthorized = childIds.size === receipt.child_runs.length
       && childIds.size === run.children.length
       && run.children.every((childId) => childIds.has(childId));
+    const packetCampaign = packet.campaign ?? null;
+    const receiptCampaign = receipt.campaign ?? null;
+    const campaignAuthorized = (packetCampaign === null && receiptCampaign === null)
+      || (packetCampaign !== null
+        && receiptCampaign !== null
+        && packetCampaign.campaign_id === receiptCampaign.campaign_id
+        && packetCampaign.output_ceiling_bytes
+          === receiptCampaign.output.output_ceiling_bytes);
     const predicateAuthorized = receipt.predicate.command === packet.predicate
       && (receipt.outcome !== "succeeded" || receipt.predicate.exit_code === 0);
     const mutationAuthorized = ACTIVE_LEASE_STATES.has(lease.state)
@@ -1040,6 +1157,7 @@ export class ConductKernel {
       && readOnlyAuthorized
       && spendAuthorized
       && childRunsAuthorized
+      && campaignAuthorized
       && predicateAuthorized;
     run.receipts.push({
       ...clone(receipt),
@@ -1163,6 +1281,7 @@ export class ConductKernel {
     if (!children.length || children.some((child) =>
       ["waiting", "reserved", "running", "stop_requested"].includes(child.status))) return;
     const outcome = children.every((child) => child.status === "succeeded") ? "succeeded" : "blocked";
+    const campaignEvidence = await fanoutCampaignEvidence(root, children, outcome);
     root.status = outcome;
     root.updated_at = this.timestamp;
     root.receipts = [{
@@ -1173,6 +1292,7 @@ export class ConductKernel {
       child_runs: [...root.children],
       mutation_authorized: true,
       accepted_at: this.timestamp,
+      ...(campaignEvidence || {}),
     }];
     this.recordEvent("fanout.campaign_settled", { run_id: rootRunId, outcome });
   }
@@ -1605,17 +1725,9 @@ export class MemoryConductStore {
   }
 }
 
-export class DurableConductStore {
+export class DurableConductStore extends ChunkedDurableStateStore {
   constructor(storage) {
-    this.storage = storage;
-  }
-
-  async load() {
-    return (await this.storage.get("conduct_state")) || emptyConductState();
-  }
-
-  async save(state) {
-    await this.storage.put("conduct_state", state);
+    super(storage, emptyConductState);
   }
 }
 
@@ -1677,7 +1789,7 @@ export class SerializedConductService {
         result.projection_receipts = projectionReceipts;
         const run = kernel.state.runs[result.run_id];
         if (run) run.projection_receipts = clone(projectionReceipts);
-      } else if (result?.run_id) {
+      } else if (result?.run_id && operation !== "task_run") {
         const stored = kernel.state.runs[result.run_id]?.projection_receipts || [];
         if (stored.length) result.projection_receipts = clone(stored);
       }

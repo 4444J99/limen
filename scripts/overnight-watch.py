@@ -37,6 +37,11 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SOURCE_ROOT / "cli" / "src"))
 
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
+from limen.conduct.client import HttpConductClient, client_from_env  # noqa: E402
+from limen.conduct.task_execution import (  # noqa: E402
+    TaskExecutionError,
+    start_task_execution,
+)
 from limen.dispatch import agent_can_run_task  # noqa: E402
 from limen.execution_contract import execution_contract_hash, execution_contract_payload  # noqa: E402
 from limen.intake import validate_intake_contract  # noqa: E402
@@ -45,6 +50,8 @@ from limen.models import Task, dispatch_session_id  # noqa: E402
 from limen.tabularius import (  # noqa: E402
     INTENT_UPSERT,
     Ticket,
+    drain_once,
+    fetch_canonical_task_projection,
     new_ticket_id,
     pending_upsert_patches,
     submit_task_upsert,
@@ -86,7 +93,24 @@ LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", os.environ.get("LIMEN_LAUNCHD_LA
 WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
 LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
 
-MAX_LOG_AGE_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", "1200") or "1200")
+
+def _positive_env_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)) or str(default))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+# The heartbeat writes its tick at the end of a beat. Its longest healthy silence is therefore
+# the idle backoff plus bounded dispatch work plus reconciliation overhead. Keep this derivation
+# aligned with watchdog.py and heartbeat-loop.sh; a shorter independent literal guarantees false
+# alerts whenever the healthy idle cadence exceeds the monitor threshold.
+_HEARTBEAT_MAX_BEAT_SEC = _positive_env_int("LIMEN_LOOP_MAX", 1800)
+_HEARTBEAT_CAMPAIGN_WAKE_SEC = _positive_env_int("LIMEN_CAMPAIGN_WAKE_TIMEOUT", 300) + 30
+_HEARTBEAT_OVERHEAD_SEC = _positive_env_int("LIMEN_WATCHDOG_OVERHEAD_SEC", 600)
+_HEARTBEAT_MAX_INTER_TICK_SEC = _HEARTBEAT_MAX_BEAT_SEC + _HEARTBEAT_CAMPAIGN_WAKE_SEC + _HEARTBEAT_OVERHEAD_SEC
+MAX_LOG_AGE_SEC = _positive_env_int("LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", _HEARTBEAT_MAX_INTER_TICK_SEC)
 MAX_STALE_TICKS = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS", "6") or "6")
 HEAL_ENABLED = (os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL", "1") or "1") != "0"
 HEAL_COOLDOWN_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC", "1200") or "1200")
@@ -102,7 +126,7 @@ THROUGHPUT_FLOOR_FRACTION = float(os.environ.get("LIMEN_THROUGHPUT_FLOOR_FRACTIO
 THROUGHPUT_BASELINE_DAYS = int(os.environ.get("LIMEN_THROUGHPUT_BASELINE_DAYS", "7") or "7")
 ISSUE_ESCALATE = (os.environ.get("LIMEN_THROUGHPUT_ISSUE_ESCALATE", "1") or "1") != "0"
 ESCALATE_REPO = os.environ.get("LIMEN_CENSOR_ISSUES_REPO", "organvm/limen")
-PLIST_DRIFT_KEYS = ("LIMEN_ASYNC_MAX", "LIMEN_DISPATCH_ASYNC", "LIMEN_DISPATCH_LANES", "LIMEN_ROOT")
+PLIST_DRIFT_KEYS = ("LIMEN_CAMPAIGN_WAKE_TIMEOUT", "LIMEN_ROOT", "LIMEN_VIGILIA")
 TAIL_BYTES = 192 * 1024
 TRIAL_SCHEMA_VERSION = "overnight-trial.v2"
 TRIAL_MARKER_SCHEMA_VERSION = "overnight-trial-window.v2"
@@ -119,8 +143,7 @@ TRIAL_PROMPT_MAX_AGE_SEC = 10 * 60
 TRIAL_PREDICATE_TIMEOUT_SEC = 120
 TRIAL_CLOCK_TOLERANCE_SEC = 60
 
-EXPECT_DISPATCH_ASYNC = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC", "")
-EXPECT_DISPATCH_LANES = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES", "")
+EXPECT_CAMPAIGN_WAKE_TIMEOUT = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT", "")
 try:
     VALUE_GATE_HOURS = float(os.environ.get("LIMEN_OVERNIGHT_VALUE_GATE_HOURS", "1.5") or "1.5")
 except ValueError:
@@ -135,6 +158,7 @@ LANE_SWITCH_ACTIVE_TASK_STATUSES = frozenset({"open", "dispatched", "in_progress
 LANE_SWITCH_GOOD_STATUSES = frozenset(
     {"would_submit", "would_launch", "launched", "already_running", "result_pending_harvest"}
 )
+LANE_SWITCH_EXECUTION_PROGRESS_STATUSES = frozenset({"launched", "already_running", "result_pending_harvest"})
 LANE_SWITCH_BAD_PROVIDER_HEALTH = frozenset(
     {"blocked", "disabled", "down", "exhausted", "low", "rate_limited", "unavailable"}
 )
@@ -946,41 +970,123 @@ def _owner_contract_reconcile_ticket(task: Task) -> dict[str, Any]:
     return {"status": "reconcile_submitted", "ticket_name": path.name, "fields": sorted(patch)}
 
 
-def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str, Any]:
+def _drain_and_dispatch_one_owner_task(
+    task: Task,
+    owner_state: str,
+    canonical_task: Task | None = None,
+) -> dict[str, Any]:
     """Drain/launch one exact packet, or return a named fail-closed blocker."""
 
-    existing_async = _async_task_state(task.id)
-    if existing_async:
-        if existing_async.get("status") in {"already_running", "result_pending_harvest"}:
-            return {**existing_async, "owner_state": owner_state, "targeted_launch_count": 0}
-        return _active_owner_outcome(task, owner_state)
-    if owner_state in {"dispatched", "in_progress"}:
-        return _active_owner_outcome(task, owner_state)
+    try:
+        conduct_client = client_from_env()
+    except Exception as exc:
+        return {
+            "status": "blocked",
+            "blocker": _named_lane_blocker(
+                "overnight-owner-conduct-unavailable",
+                f"authenticated conduct is unavailable for exact owner packet {task.id}: {exc}",
+                owner=str(task.repo or "organvm/limen"),
+                failed_predicate=str(task.predicate or ""),
+                next_command="PYTHONPATH=cli/src limen conduct capabilities",
+            ),
+        }
+    remote_conduct = isinstance(conduct_client, HttpConductClient)
+    if not remote_conduct:
+        existing_async = _async_task_state(task.id)
+        if existing_async:
+            if existing_async.get("status") in {"already_running", "result_pending_harvest"}:
+                return {**existing_async, "owner_state": owner_state, "targeted_launch_count": 0}
+            return _active_owner_outcome(task, owner_state)
+        if owner_state in {"dispatched", "in_progress"}:
+            return _active_owner_outcome(task, owner_state)
 
     if owner_state == "pending":
-        keeper = run([sys.executable, str(TABULARIUS_SCRIPT)], timeout=120)
-        if keeper.returncode != 0:
+        if remote_conduct:
+            try:
+                keeper_result = drain_once(TASKS_PATH)
+            except Exception as exc:
+                keeper_result = None
+                keeper_error = str(exc)
+            else:
+                keeper_error = keeper_result.note
+            if (
+                keeper_result is None
+                or keeper_result.deferred
+                or keeper_result.rejected
+                or task.id not in keeper_result.projected_tasks
+            ):
+                return {
+                    "status": "blocked",
+                    "blocker": _named_lane_blocker(
+                        "overnight-owner-ticket-drain-failed",
+                        (f"TABVLARIVS returned no canonical receipt for exact owner packet {task.id}: {keeper_error}"),
+                        owner=str(task.repo or "organvm/limen"),
+                        failed_predicate="python3 scripts/check-tabularius.py",
+                        next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                    ),
+                }
+            try:
+                canonical_task = Task.model_validate(keeper_result.projected_tasks[task.id])
+            except ValueError as exc:
+                return {
+                    "status": "blocked",
+                    "blocker": _named_lane_blocker(
+                        "overnight-owner-canonical-task-invalid",
+                        f"keeper receipt for exact owner packet {task.id} is invalid: {exc}",
+                        owner=str(task.repo or "organvm/limen"),
+                        failed_predicate="python3 scripts/validate-task-board.py --tasks tasks.yaml",
+                        next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                    ),
+                }
+        else:
+            keeper = run([sys.executable, str(TABULARIUS_SCRIPT)], timeout=120)
+            if keeper.returncode != 0:
+                return {
+                    "status": "blocked",
+                    "blocker": _named_lane_blocker(
+                        "overnight-owner-ticket-drain-failed",
+                        f"TABVLARIVS could not drain exact owner packet {task.id} (exit {keeper.returncode})",
+                        owner=str(task.repo or "organvm/limen"),
+                        failed_predicate="python3 scripts/check-tabularius.py",
+                        next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                    ),
+                }
+
+    if remote_conduct:
+        if canonical_task is None:
             return {
                 "status": "blocked",
                 "blocker": _named_lane_blocker(
-                    "overnight-owner-ticket-drain-failed",
-                    f"TABVLARIVS could not drain exact owner packet {task.id} (exit {keeper.returncode})",
+                    "overnight-owner-canonical-receipt-missing",
+                    f"exact owner packet {task.id} has no fresh canonical remote task receipt",
                     owner=str(task.repo or "organvm/limen"),
                     failed_predicate="python3 scripts/check-tabularius.py",
                     next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                 ),
             }
-
-    try:
-        board = load_limen_file(TASKS_PATH)
-        pending_ids = {
-            str(patch.get("id"))
-            for patch in pending_upsert_patches(TASKS_PATH)
-            if isinstance(patch, dict) and patch.get("id")
-        }
-        current_state = _owned_task_state(task, board, pending_ids)
-    except Exception:
-        current_state = None
+        if canonical_task.id != task.id or execution_contract_hash(canonical_task) != execution_contract_hash(task):
+            return {
+                "status": "blocked",
+                "blocker": _named_lane_blocker(
+                    "overnight-owner-canonical-contract-mismatch",
+                    f"canonical remote task receipt for {task.id} changed its execution contract",
+                    owner=str(task.repo or "organvm/limen"),
+                    failed_predicate=str(task.predicate or ""),
+                    next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
+                ),
+            }
+        current_state = canonical_task.status
+    else:
+        try:
+            board = load_limen_file(TASKS_PATH)
+            pending_ids = {
+                str(patch.get("id"))
+                for patch in pending_upsert_patches(TASKS_PATH)
+                if isinstance(patch, dict) and patch.get("id")
+            }
+            current_state = _owned_task_state(task, board, pending_ids)
+        except Exception:
+            current_state = None
     if current_state == "pending" or current_state is None:
         return {
             "status": "blocked",
@@ -992,6 +1098,28 @@ def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str
                 failed_predicate="python3 scripts/check-tabularius.py",
                 next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
             ),
+        }
+    if remote_conduct and current_state in {"open", "dispatched", "in_progress"}:
+        try:
+            execution = start_task_execution(canonical_task, client=conduct_client)
+        except TaskExecutionError as exc:
+            return {
+                "status": "blocked",
+                "owner_state": current_state,
+                "targeted_launch_count": 0,
+                "blocker": _named_lane_blocker(
+                    "overnight-owner-conduct-reservation-failed",
+                    str(exc),
+                    owner=str(task.repo or "organvm/limen"),
+                    failed_predicate=str(task.predicate or ""),
+                    next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --json",
+                ),
+            }
+        return {
+            **execution,
+            "execution_mode": "conduct",
+            "owner_state": "dispatched" if execution.get("status") != "result_pending_harvest" else current_state,
+            "next_command": "PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
         }
     if current_state in {"dispatched", "in_progress"}:
         return _active_owner_outcome(task, current_state)
@@ -1281,6 +1409,52 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
                 base["skipped"].append({"task_id": task.id, "gate": local_gate, "reason": local_reason[:300]})
                 continue
         owner_state = _owned_task_state(task, board, pending_ids)
+        canonical_owner_task: Task | None = None
+        try:
+            configured_conduct = client_from_env()
+        except Exception:
+            configured_conduct = None
+        if isinstance(configured_conduct, HttpConductClient):
+            try:
+                projection = fetch_canonical_task_projection(task.id)
+            except Exception as exc:
+                base.update(
+                    {
+                        "status": "blocked",
+                        "blocker": _named_lane_blocker(
+                            "overnight-owner-remote-projection-unavailable",
+                            f"canonical remote task lookup failed for {task.id}: {exc}",
+                            owner=str(task.repo or "organvm/limen"),
+                            failed_predicate="python3 scripts/check-tabularius.py",
+                            next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                        ),
+                    }
+                )
+                return base
+            canonical_owner_task = projection.task
+            if canonical_owner_task is not None:
+                if execution_contract_hash(canonical_owner_task) != execution_contract_hash(task):
+                    base.update(
+                        {
+                            "status": "blocked",
+                            "blocker": _named_lane_blocker(
+                                "overnight-owner-canonical-contract-mismatch",
+                                f"canonical remote task {task.id} changed its execution contract",
+                                owner=str(task.repo or "organvm/limen"),
+                                failed_predicate=str(task.predicate or ""),
+                                next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
+                            ),
+                        }
+                    )
+                    return base
+                owner_state = canonical_owner_task.status
+            else:
+                # The remote publication is authoritative.  A row left behind
+                # in the disposable local projection must not suppress the
+                # canonical upsert that creates this task.  Preserve only an
+                # actual pending inbox ticket, which the drain below can
+                # consume idempotently.
+                owner_state = "pending" if task.id in pending_ids else None
         if owner_state and owner_state not in {"pending", *LANE_SWITCH_ACTIVE_TASK_STATUSES}:
             base["skipped"].append(
                 {
@@ -1292,6 +1466,16 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
             continue
         base["packet"] = _packet_summary(task)
         if not submit:
+            if canonical_owner_task is not None and owner_state in LANE_SWITCH_ACTIVE_TASK_STATUSES:
+                base.update(
+                    {
+                        "status": "would_launch",
+                        "execution_mode": "conduct",
+                        "owner_state": owner_state,
+                        "next_command": "PYTHONPATH=cli/src python3 scripts/overnight-watch.py --json",
+                    }
+                )
+                return base
             if owner_state in {"dispatched", "in_progress"}:
                 base.update(_active_owner_outcome(task, owner_state))
                 if base.get("status") in LANE_SWITCH_GOOD_STATUSES:
@@ -1330,9 +1514,17 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
         if base.get("status") == "blocked":
             return base
         execution_state = str(base.get("owner_state") or ("pending" if base.get("ticket_submitted") else ""))
-        execution = _drain_and_dispatch_one_owner_task(task, execution_state)
+        execution = (
+            _drain_and_dispatch_one_owner_task(task, execution_state)
+            if canonical_owner_task is None
+            else _drain_and_dispatch_one_owner_task(
+                task,
+                execution_state,
+                canonical_task=canonical_owner_task,
+            )
+        )
         base.update(execution)
-        if base.get("status") in LANE_SWITCH_GOOD_STATUSES:
+        if base.get("status") in LANE_SWITCH_GOOD_STATUSES and base.get("execution_mode") != "conduct":
             base["next_command"] = _exact_task_command(task)
         return base
 
@@ -1373,9 +1565,10 @@ def apply_lane_switch_control(dispatch: dict[str, Any], lane_switch: dict[str, A
     result["allow_dispatch"] = False
     if lane_switch.get("status") in LANE_SWITCH_GOOD_STATUSES:
         task_id = str((lane_switch.get("packet") or {}).get("task_id") or "owner packet")
+        exit_code = 0 if lane_switch.get("status") in LANE_SWITCH_EXECUTION_PROGRESS_STATUSES else 10
         result.update(
             {
-                "exit_code": 10,
+                "exit_code": exit_code,
                 "reason": f"generic dispatch remains closed; bounded owner packet {task_id} selected",
                 "next_command": str(lane_switch.get("next_command") or ""),
             }
@@ -1688,18 +1881,14 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
             }
         )
 
-    if EXPECT_DISPATCH_ASYNC and env.get("LIMEN_DISPATCH_ASYNC") != EXPECT_DISPATCH_ASYNC:
+    if EXPECT_CAMPAIGN_WAKE_TIMEOUT and env.get("LIMEN_CAMPAIGN_WAKE_TIMEOUT") != EXPECT_CAMPAIGN_WAKE_TIMEOUT:
         alerts.append(
             {
-                "id": "heartbeat-async-env-mismatch",
-                "evidence": f"LIMEN_DISPATCH_ASYNC={env.get('LIMEN_DISPATCH_ASYNC')} expected={EXPECT_DISPATCH_ASYNC}",
-            }
-        )
-    if EXPECT_DISPATCH_LANES and env.get("LIMEN_DISPATCH_LANES") != EXPECT_DISPATCH_LANES:
-        alerts.append(
-            {
-                "id": "heartbeat-lanes-env-mismatch",
-                "evidence": f"LIMEN_DISPATCH_LANES={env.get('LIMEN_DISPATCH_LANES')} expected={EXPECT_DISPATCH_LANES}",
+                "id": "heartbeat-campaign-timeout-env-mismatch",
+                "evidence": (
+                    "LIMEN_CAMPAIGN_WAKE_TIMEOUT="
+                    f"{env.get('LIMEN_CAMPAIGN_WAKE_TIMEOUT')} expected={EXPECT_CAMPAIGN_WAKE_TIMEOUT}"
+                ),
             }
         )
 
@@ -2112,16 +2301,64 @@ def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _stream_file_custody(
+    path: Path,
+    *,
+    label: str,
+    size: int | None = None,
+) -> tuple[dict[str, Any], list[str]]:
+    """Hash one trusted file snapshot without materializing it in memory.
+
+    A full snapshot binds to the descriptor size observed before the first
+    read, so a concurrent append cannot make the reader chase a moving EOF.
+    An explicit size binds the digest to an already-recorded append-only
+    prefix.
+    """
+
+    empty = {"present": False, "size": 0, "digest": _sha256_bytes(b"")}
+    path_errors = _trusted_canonical_file_errors(path, label=label)
+    if path_errors:
+        return empty, path_errors
+    directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    directory_fd: int | None = None
+    file_fd: int | None = None
+    try:
+        directory_fd = os.open(path.parent, directory_flags)
+        file_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        file_fd = os.open(path.name, file_flags, dir_fd=directory_fd)
+        metadata = os.fstat(file_fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return empty, [f"{label} is not a regular file"]
+        target_size = metadata.st_size if size is None else size
+        if not _strict_nonnegative_int(target_size) or target_size > metadata.st_size:
+            return empty, [f"{label} is shorter than its required custody prefix"]
+        digest = hashlib.sha256()
+        remaining = target_size
+        with os.fdopen(file_fd, "rb") as handle:
+            file_fd = None
+            while remaining:
+                chunk = handle.read(min(1024 * 1024, remaining))
+                if not chunk:
+                    return empty, [f"{label} changed while its custody snapshot was read"]
+                digest.update(chunk)
+                remaining -= len(chunk)
+        return {
+            "present": True,
+            "size": target_size,
+            "digest": digest.hexdigest(),
+        }, []
+    except OSError as exc:
+        return empty, [f"{label} no-follow stream failed: {exc}"]
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if directory_fd is not None:
+            os.close(directory_fd)
+
+
 def _file_custody(path: Path) -> dict[str, Any]:
-    payload, _, file_errors = _read_trusted_regular_file(path, label="custody source")
-    present = not file_errors and payload is not None
-    if payload is None:
-        payload = b""
-    return {
-        "present": present,
-        "size": len(payload),
-        "digest": _sha256_bytes(payload),
-    }
+    custody, _ = _stream_file_custody(path, label="custody source")
+    return custody
 
 
 def _custody_errors(value: Any) -> list[str]:
@@ -2145,12 +2382,17 @@ def _prefix_matches(path: Path, custody: dict[str, Any]) -> bool:
         path.lstat()
     except OSError:
         return size == 0 and custody.get("present") is False and custody.get("digest") == _sha256_bytes(b"")
-    payload, _, file_errors = _read_trusted_regular_file(path, label="prefix source")
-    if file_errors or payload is None:
-        return False
-    prefix = payload[:size]
-    current_size = len(payload)
-    return current_size >= size and len(prefix) == size and _sha256_bytes(prefix) == custody.get("digest")
+    prefix, file_errors = _stream_file_custody(
+        path,
+        label="prefix source",
+        size=size,
+    )
+    return (
+        not file_errors
+        and prefix.get("present") is True
+        and prefix.get("size") == size
+        and prefix.get("digest") == custody.get("digest")
+    )
 
 
 def _jsonl_bytes(payload: bytes) -> tuple[list[dict[str, Any]], int]:
@@ -3620,13 +3862,113 @@ def _operator_count_from_event_bytes(payload: bytes) -> tuple[int, int]:
     return count, errors
 
 
-def _operator_count_at_custody(path: Path, custody: dict[str, Any]) -> tuple[int, int]:
-    if not _prefix_matches(path, custody):
+def _operator_event_file_snapshot(
+    path: Path,
+    *,
+    size: int | None = None,
+) -> tuple[int, int, dict[str, Any], list[str]]:
+    """Stream operator lineage and custody in one bounded-memory pass."""
+
+    empty = {"present": False, "size": 0, "digest": _sha256_bytes(b"")}
+    label = "prompt operator journal"
+    path_errors = _trusted_canonical_file_errors(path, label=label)
+    if path_errors:
+        return 0, 0, empty, path_errors
+    directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    directory_fd: int | None = None
+    file_fd: int | None = None
+    try:
+        directory_fd = os.open(path.parent, directory_flags)
+        file_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        file_fd = os.open(path.name, file_flags, dir_fd=directory_fd)
+        metadata = os.fstat(file_fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return 0, 0, empty, [f"{label} is not a regular file"]
+        target_size = metadata.st_size if size is None else size
+        if not _strict_nonnegative_int(target_size) or target_size > metadata.st_size:
+            return 0, 0, empty, [f"{label} is shorter than its required custody prefix"]
+        digest = hashlib.sha256()
+        authority_by_occurrence: dict[str, bool] = {}
+        journal_errors = 0
+        remaining = target_size
+        read_error = ""
+        with os.fdopen(file_fd, "rb") as handle:
+            file_fd = None
+            while remaining:
+                line = handle.readline(remaining)
+                if not line:
+                    read_error = f"{label} changed while its snapshot was read"
+                    break
+                remaining -= len(line)
+                digest.update(line)
+                if not line.endswith(b"\n"):
+                    journal_errors += 1
+                    break
+                try:
+                    row = json.loads(line)
+                except (UnicodeError, ValueError):
+                    journal_errors += 1
+                    continue
+                if not isinstance(row, dict):
+                    journal_errors += 1
+                    continue
+                occurrence = row.get("occurrence")
+                atoms = row.get("atoms")
+                if not isinstance(occurrence, dict) or not isinstance(atoms, list):
+                    journal_errors += 1
+                    continue
+                occurrence_id = str(occurrence.get("occurrence_id") or "")
+                revision_of = str(row.get("revision_of") or "")
+                if not occurrence_id:
+                    journal_errors += 1
+                    continue
+                if occurrence_id in authority_by_occurrence and revision_of != occurrence_id:
+                    journal_errors += 1
+                    continue
+                if revision_of and revision_of not in authority_by_occurrence:
+                    journal_errors += 1
+                    continue
+                authority_by_occurrence[occurrence_id] = occurrence.get("authority") == "operator"
+        if read_error or remaining:
+            return 0, journal_errors, empty, [read_error or f"{label} changed while its snapshot was read"]
+        custody = {
+            "present": True,
+            "size": target_size,
+            "digest": digest.hexdigest(),
+        }
+        return (
+            sum(1 for is_operator in authority_by_occurrence.values() if is_operator),
+            journal_errors,
+            custody,
+            [],
+        )
+    except OSError as exc:
+        return 0, 0, empty, [f"{label} no-follow stream failed: {exc}"]
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if directory_fd is not None:
+            os.close(directory_fd)
+
+
+def _operator_count_at_custody(
+    path: Path,
+    custody: dict[str, Any],
+) -> tuple[int, int]:
+    if _custody_errors(custody) or custody.get("present") is not True:
         return 0, 1
-    payload, _, file_errors = _read_trusted_regular_file(path, label="prompt operator journal")
-    if file_errors or payload is None:
-        return 0, 1
-    return _operator_count_from_event_bytes(payload[: int(custody["size"])])
+    count, errors, actual, file_errors = _operator_event_file_snapshot(
+        path,
+        size=int(custody["size"]),
+    )
+    if (
+        file_errors
+        or actual.get("present") is not True
+        or actual.get("size") != custody.get("size")
+        or actual.get("digest") != custody.get("digest")
+    ):
+        return 0, errors + 1
+    return count, errors
 
 
 def _prompt_scope_exact(snapshot: dict[str, Any], cursor: dict[str, Any]) -> bool:
@@ -3719,9 +4061,16 @@ def prompt_authority_snapshot(
             label=f"prompt {name} source",
         )
     ]
+    journal_operator_count, journal_errors, event_custody, event_file_errors = _operator_event_file_snapshot(
+        paths["events"]
+    )
     payloads: dict[str, bytes] = {}
-    for name, path_value in paths.items():
-        payload, _, file_errors = _read_trusted_regular_file(path_value, label=f"prompt {name} source")
+    for name in ("snapshot", "cursor"):
+        path_value = paths[name]
+        payload, _, file_errors = _read_trusted_regular_file(
+            path_value,
+            label=f"prompt {name} source",
+        )
         if not file_errors and payload is not None:
             payloads[name] = payload
     try:
@@ -3734,7 +4083,7 @@ def prompt_authority_snapshot(
         cursor_value = {}
     snapshot = snapshot_value if isinstance(snapshot_value, dict) else {}
     cursor = cursor_value if isinstance(cursor_value, dict) else {}
-    errors = len(path_errors)
+    errors = len(path_errors) + len(event_file_errors)
     if not snapshot:
         errors += 1
     if not cursor:
@@ -3745,7 +4094,7 @@ def prompt_authority_snapshot(
     if not operator_valid:
         errors += 1
     validation_ok = bool((snapshot.get("validation") or {}).get("ok"))
-    exact = not path_errors and validation_ok and _prompt_scope_exact(snapshot, cursor)
+    exact = not path_errors and not event_file_errors and validation_ok and _prompt_scope_exact(snapshot, cursor)
     expected_cursor_digest = str(snapshot.get("source_cursor_digest") or "")
     actual_cursor_digest = _cursor_digest(cursor) if cursor else ""
     if not re.fullmatch(r"[0-9a-f]{64}", expected_cursor_digest) or expected_cursor_digest != actual_cursor_digest:
@@ -3767,9 +4116,9 @@ def prompt_authority_snapshot(
         if not signature_ok:
             errors += 1
             exact = False
-    source_custody = {name: _file_custody(path_value) for name, path_value in paths.items()}
-    event_bytes = payloads.get("events", b"")
-    journal_operator_count, journal_errors = _operator_count_from_event_bytes(event_bytes)
+    source_custody = {
+        name: (event_custody if name == "events" else _file_custody(path_value)) for name, path_value in paths.items()
+    }
     if journal_errors or not operator_valid or journal_operator_count != operator_value:
         errors += max(1, journal_errors)
         exact = False
@@ -5270,7 +5619,8 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
     ):
         return 1
     if snapshot.get("status") == "blocked":
-        return int((snapshot.get("dispatch_control") or {}).get("exit_code") or 10)
+        exit_code = (snapshot.get("dispatch_control") or {}).get("exit_code")
+        return 10 if exit_code is None else int(exit_code)
     return 0
 
 
@@ -5359,6 +5709,11 @@ def main(argv: list[str] | None = None) -> int:
         help="counts-only receipt path for --check-trial (finalization always uses the active marker owner)",
     )
     parser.add_argument(
+        "--omega-strict",
+        action="store_true",
+        help="with --check-trial, exit 77 only when the terminal receipt is absent",
+    )
+    parser.add_argument(
         "--watch", action="store_true", help="run an attached loop; launchd should prefer one-shot mode"
     )
     parser.add_argument(
@@ -5413,7 +5768,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if receipt.get("pass") else 1
 
     if args.check_trial:
-        ok, errors = check_trial_receipt(Path(args.trial_output).expanduser())
+        trial_output = Path(args.trial_output).expanduser()
+        if args.omega_strict and not trial_output.exists():
+            print("overnight-watch: trial receipt SKIP - terminal receipt is absent", file=sys.stderr)
+            return 77
+        ok, errors = check_trial_receipt(trial_output)
         if ok:
             receipt = load_json(Path(args.trial_output).expanduser())
             print(

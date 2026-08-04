@@ -14,6 +14,9 @@ from typing import Any, Callable
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
+    CampaignBlockerV1,
+    CampaignOutputEvidenceV1,
+    CampaignReceiptV1,
     ConductorSessionV1,
     ConductPrincipalV1,
     LeaseV1,
@@ -93,6 +96,57 @@ def _require_work_loan(packet: WorkPacketV1) -> None:
         raise ConductConflict(work_loan_denial(missing))
 
 
+def _fanout_campaign_evidence(
+    root: dict[str, Any],
+    children: list[dict[str, Any]],
+    outcome: str,
+) -> dict[str, Any] | None:
+    """Aggregate typed child evidence into the keeper-settled campaign root."""
+
+    packet = root.get("packet") or {}
+    campaign = packet.get("campaign")
+    if not isinstance(campaign, dict):
+        return None
+    child_campaigns: list[dict[str, Any]] = []
+    spend: dict[str, int | float] = {}
+    for child in children:
+        for receipt in child.get("receipts", []):
+            receipt_campaign = receipt.get("campaign")
+            if isinstance(receipt_campaign, dict):
+                child_campaigns.append(receipt_campaign)
+            for unit, value in (receipt.get("spend") or {}).items():
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    spend[unit] = spend.get(unit, 0) + value
+    outputs = [item["output"] for item in child_campaigns]
+    ceiling = int(campaign["output_ceiling_bytes"])
+    output_summary = "".join(str(item["sha256"]) for item in outputs).encode()
+    emitted_summary = output_summary[:ceiling]
+    typed = CampaignReceiptV1(
+        campaign_id=campaign["campaign_id"],
+        actual_value=sum(float(item.get("actual_value", 0)) for item in child_campaigns),
+        value_unit="predicate_passes",
+        output=CampaignOutputEvidenceV1(
+            output_ceiling_bytes=ceiling,
+            bytes_emitted=len(emitted_summary),
+            lines_emitted=len(emitted_summary.splitlines()),
+            sha256=hashlib.sha256(emitted_summary).hexdigest(),
+            truncated=(len(output_summary) > ceiling or any(bool(item.get("truncated")) for item in outputs)),
+        ),
+        blocker=(
+            CampaignBlockerV1(
+                owner=campaign["owner"],
+                failed_predicate=campaign["failed_predicate"],
+                next_action=campaign["next_action"],
+            )
+            if outcome != "succeeded"
+            else None
+        ),
+        successor_capsule=str(packet["receipt_target"]) if outcome != "succeeded" else None,
+        boundary="settled" if outcome == "succeeded" else "wait_relay",
+    )
+    return {"campaign": _dump(typed), "spend": spend}
+
+
 class ConductBroker:
     """Serialize all coordination state through one transactional keeper."""
 
@@ -146,12 +200,33 @@ class ConductBroker:
                 raise ConductConflict("session_id is already bound to another principal")
             if session.worktree:
                 claimed = str(PurePath(session.worktree))
-                for raw in state["sessions"].values():
+                for raw in list(state["sessions"].values()):
                     owner = ConductorSessionV1.model_validate(raw)
                     if owner.session_id == session.session_id or not owner.worktree:
                         continue
-                    if str(PurePath(owner.worktree)) == claimed and now - owner.heartbeat_at <= self.session_ttl:
+                    if str(PurePath(owner.worktree)) != claimed:
+                        continue
+                    # Succession: the heartbeat TTL cannot see a crash/exec exit, so an exited
+                    # session blocks its own reopen for session_ttl. A claimant that names the
+                    # exact owner of the very worktree it claims — and does not attenuate the
+                    # owner's protection level — replaces it immediately; anything else keeps
+                    # the two-concurrent-sessions guard intact.
+                    if session.supersedes == owner.session_id and (
+                        session.human_protected or not owner.human_protected
+                    ):
+                        released = owner.model_copy(update={"worktree": None, "accepting_work": False})
+                        state["sessions"][owner.session_id] = _dump(released)
+                        _event(
+                            state,
+                            "session.superseded",
+                            session_id=owner.session_id,
+                            superseded_by=session.session_id,
+                            worktree=claimed,
+                        )
+                        continue
+                    if now - owner.heartbeat_at <= self.session_ttl:
                         raise ConductConflict(f"worktree is already owned by healthy session {owner.session_id}")
+            session = session.model_copy(update={"supersedes": None})
             state["sessions"][session.session_id] = _dump(session)
             state["session_principals"][session.session_id] = principal.principal_id
             _event(
@@ -243,6 +318,7 @@ class ConductBroker:
                     or stored.predicate != packet.predicate
                     or stored.receipt_target != packet.receipt_target
                     or stored.work_loan != packet.work_loan
+                    or stored.campaign != packet.campaign
                 ):
                     raise ConductConflict("duplicate work changed its identity, authority, or contract")
                 state["work_index"][packet.work_id] = duplicate
@@ -604,6 +680,49 @@ class ConductBroker:
                 raise ConductError(f"work index points to missing run: {work_id}")
             return self._submit_result(state, run, duplicate=True)
 
+    def task_run(self, task_id: str) -> dict[str, Any]:
+        """Return the canonical current run for one task without rebuilding its packet."""
+
+        with self.store.transaction() as state:
+            candidates = [
+                run for run in state["runs"].values() if str((run.get("packet") or {}).get("task_id") or "") == task_id
+            ]
+            active = [
+                run for run in candidates if run.get("status") in {"waiting", "reserved", "running", "stop_requested"}
+            ]
+            if len(active) > 1:
+                raise ConductConflict(f"task {task_id} has multiple active conduct runs")
+            if active:
+                selected = active[0]
+            elif candidates:
+                selected = max(
+                    candidates,
+                    key=lambda run: (
+                        _load_time(run.get("updated_at") or run.get("created_at")),
+                        str(run.get("run_id") or ""),
+                    ),
+                )
+            else:
+                return {
+                    "schema_version": "limen.conduct_task_run.v1",
+                    "task_id": task_id,
+                    "found": False,
+                }
+            packet = selected.get("packet") or {}
+            execution = packet.get("execution") or {}
+            return {
+                "schema_version": "limen.conduct_task_run.v1",
+                "task_id": task_id,
+                "found": True,
+                "run_id": selected["run_id"],
+                "root_run_id": selected["root_run_id"],
+                "status": selected["status"],
+                "executor_session_id": selected.get("executor_session_id"),
+                "exact_base": execution.get("exact_base"),
+                "receipt_count": len(selected.get("receipts") or []),
+                "updated_at": selected.get("updated_at"),
+            }
+
     def local_board_projection(self) -> dict[str, Any] | None:
         """Read the explicit local keeper's latest full canonical projection."""
 
@@ -927,6 +1046,12 @@ class ConductBroker:
                 and 0 <= spend_value <= packet.spend.limit
             )
             child_runs_authorized = set(receipt.child_runs) == set(run["children"])
+            campaign_authorized = (packet.campaign is None and receipt.campaign is None) or (
+                packet.campaign is not None
+                and receipt.campaign is not None
+                and receipt.campaign.campaign_id == packet.campaign.campaign_id
+                and receipt.campaign.output.output_ceiling_bytes == packet.campaign.output_ceiling_bytes
+            )
             mutation_authorized = (
                 lease.state in {"reserved", "active"}
                 and receipt.lease_generation == lease.generation
@@ -936,6 +1061,7 @@ class ConductBroker:
                 and read_only_authorized
                 and spend_authorized
                 and child_runs_authorized
+                and campaign_authorized
                 and receipt.predicate.command == packet.predicate
                 and (receipt.outcome != "succeeded" or receipt.predicate.exit_code == 0)
             )
@@ -1061,6 +1187,7 @@ class ConductBroker:
         ):
             return
         outcome = "succeeded" if all(child["status"] == "succeeded" for child in children) else "blocked"
+        campaign_evidence = _fanout_campaign_evidence(root, children, outcome)
         root["status"] = outcome
         root["updated_at"] = now.isoformat()
         root["receipts"] = [
@@ -1072,6 +1199,7 @@ class ConductBroker:
                 "child_runs": list(root["children"]),
                 "mutation_authorized": True,
                 "accepted_at": now.isoformat(),
+                **(campaign_evidence or {}),
             }
         ]
         _event(state, "fanout.campaign_settled", run_id=root_run_id, outcome=outcome)

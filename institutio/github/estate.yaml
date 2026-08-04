@@ -239,6 +239,15 @@ resource_types:
     status: envisioned
     owner: gitvs
     note: "Deployment-environment governance — owed."
+  repo_custody:
+    identity: derived
+    desired: ["owner_matches_custody_home"]
+    observe: "scripts/gitvs.py doctor class O — product_ledger ∧ access.yaml live grants ∧ census collaborators/org join (custody_drift)"
+    effector:
+      - {kind: file-atom, target: L-CONST-CUSTODY-MIGRATION}
+    status: active
+    owner: gitvs
+    note: "DUAL-ESTATE custody (operator directive 2026-07-29; lineage: docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md). The org is the SYSTEM (organs, engine, moat, governance): custody organvm. A collaboration-born product is a personally-owned asset: custody the personal account — its private-repo collaborator seats stay free permanently, insulated from the org Team upgrade (L-ORG-TEAM-UPGRADE), and partner access never touches the org that holds the moat. Candidates DERIVE from the constellation register's project repos (organs/consulting/constellation/registry.yaml) — never a second list here. Access stays grants-not-transfers (access.yaml) in BOTH estates: partitioning governs access, dual-estate governs custody. Activation = wire observe (census owner vs derived custody home) + the transfer effector behind L-CONST-CUSTODY-MIGRATION (transfers are outward-facing multi-repo custody moves — his hand). Precedent: 4444J99/victoroff-os, transferred 2026-07 (redirect from organvm/victoroff-os live), rows healed 2026-07-29. v4.0.0 (2026-07-30): the product_ledger block below is the ASSET axis — it marks WHAT is a product; partner-wave membership still derives from the constellation register. The rung joins ledger ∧ access.yaml live grants ∧ census owner: product ∧ live outside grant on a private lane ⇒ custody home 4444J99. ACTIVATED 2026-07-30 (class O wired live; staged grants and undeclared collaborators stay class N's jurisdiction; drift cites the migration lever — transfers never auto-fire)."
   dependabot:
     identity: derived
     desired: ["security_updates_on"]
@@ -275,14 +284,306 @@ orgs:
     repos: sole_owner
     actions_spending_limit_usd: 25
     owner: gitvs
-    note: "The one repo-holding org (307 repos). Spending limit + plan are account-level his-hand acts (GitHub billing UI, cited via L-CARD-FRAUD-HOLD / the runbook) — the doctor observes, never mutates billing."
+    note: "The one repo-holding org (307 repos) — sole owner of the SYSTEM estate. Dual-estate custody (2026-07-29): collaboration-born products are personally-owned assets whose custody home is the personal account (see the repo_custody resource type; membership derives from the constellation register) — sole_owner reads 'all SYSTEM code lives here', not 'no repo may live on the personal estate'. Spending limit + plan are account-level his-hand acts (GitHub billing UI, cited via L-CARD-FRAUD-HOLD / the runbook) — the doctor observes, never mutates billing."
+  shelves:
+    match: ["organvm-*", "meta-organvm"]
+    plan_ok: ["free"]
+    repos: shelf_derived
+    enterprise_subscription: none
+    owner: gitvs
+    note: "The backbone SHELF orgs (custody v4.0.0 Phase 2): populated from shelf_assignments per tranche; membership is class P's shelf-parity (declared == census owner, BOTH directions) — repos is derived, never a hand count. T1 ERGON populated 2026-07-30; remaining shelves fill on their tranches."
   reserved:
-    match: ["organvm-*", "meta-organvm", "a-organvm"]
+    match: ["a-organvm"]
     plan_ok: ["free"]
     repos: 0
     enterprise_subscription: none
     owner: gitvs
-    note: "Name-reservation shells: keep the names at $0, hold ZERO repos. The 2026-07-17 plan=enterprise drift on 8 of these was CLEARED by machine the same day (all removed from the meta-organvm enterprise, #1185); recurrence cites L-ORG-TEAM-UPGRADE. Consolidation history: scripts/consolidate-github.py; deletion stays an optional future lever (names are brand)."
+    note: "Name-reservation shells: keep the names at $0, hold ZERO repos. The 2026-07-17 plan=enterprise drift on 8 of these was CLEARED by machine the same day (all removed from the meta-organvm enterprise, #1185); recurrence cites L-ORG-TEAM-UPGRADE. Consolidation history: scripts/consolidate-github.py; deletion stays an optional future lever (names are brand). VENTURE TRIGGER (v4.0.0, 2026-07-30): a NEW org is created only when an external party gains independent brand/legal standing — client-required org (victoroffgroup shape), equity partner, incorporation, or sale; internal proliferation never earns one. SHELF AXIS (v4.0.0): the 8 backbone orgs (organvm-i…vii, meta-organvm) are SHELVES of the one library — the operator's public profile already advertises them; the Phase-2 shelf tranches populate them from the registry (organ-assignment rows + transfer batches + doctor shelf-parity), at which point this repos: 0 invariant is superseded per tranche by shelf-parity (census owner == declared organ). a-organvm stays reserve until the venture trigger fires."
+
+# ── the ASSET LEDGER (custody axis, doctrine v4.0.0 — 2026-07-30) ────────────────────────────
+# What the organism BUILT: every register-marked product (its own contained system/venture),
+# adjudicated by the 308-repo sweep 2026-07-30 (38 agents, two-lens adversarial verify; lineage
+# docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md). Names are OWNER-INDEPENDENT (bare)
+# so partner-event transfers never invalidate the books: the repo_custody doctor rung joins THIS
+# ledger ∧ access.yaml live grants ∧ census owner to derive each product's custody home. Partner-
+# lane MEMBERSHIP still derives from the constellation register — this ledger never re-lists it;
+# it marks WHAT is a product, not WHO its partner is. The ERGON shelf tranche (Phase 2) reads this
+# ledger as its move-list. Adding a product = adding ONE name here.
+product_ledger:
+  provenance: "sweep 2026-07-30; doctrine v4.0.0 (storefront/shelves/engine-room; venture axis unchanged)"
+  repos:
+    - a-i-chat--exporter
+    - a-i-council--coliseum
+    - advocata
+    - agent--claude-smith
+    - agent-runtime
+    - agentic-titan
+    - anon-hookup-now
+    - atomic-substrata
+    - bountyscope
+    - card-trade-social
+    - carrier-wave--zeitgeist-thesis
+    - classroom-rpg-aetheria
+    - content-engine--asset-amplifier
+    - content-engine--asset-amplifier--a-organvm-legacy
+    - cve-watch
+    - edgarflash
+    - enterprise-plugin
+    - etceter4
+    - fetch-familiar-friends
+    - gens
+    - glyph-cascade
+    - growth-auditor
+    - hokage-chess
+    - hokage-chess--4444j99
+    - hospes
+    - life-my--midst--in
+    - materia-collider
+    - mesh
+    - micro-tato
+    - micro-tato-play
+    - mirror-mirror
+    - multi-camera--livestream--framework
+    - my-block-warfare
+    - object-lessons
+    - palimpsest
+    - parlor-games--ephemera-engine
+    - peer-audited--behavioral-blockchain
+    - prima
+    - promptscope
+    - public-record-data-scrapper
+    - search-local--happy-hour
+    - select-or-left-or-right-or
+    - shared-remembrance-gateway
+    - sign-signal--voice-synth
+    - sovereign-ecosystem--real-estate-luxury
+    - sovereign-systems--elevate-align
+    - sovereign-systems--layer-above-hokage
+    - specvla-ergon--avditor-mvndi
+    - speech-score-engine
+    - styx-behavioral-art
+    - styx-behavioral-economics-theory
+    - surface-engine
+    - tab-bookmark-manager
+    - the-actual-news
+    - trade-perpetual-future
+    - trendpulse
+    - universal-waveform-explorer
+    - vox
+    - vox--publica
+    - vulnpulse
+    - writelens
+    - your-fit-tailored
+
+# ── SHELF ASSIGNMENTS (custody v4.0.0 Phase 2 — the library's shelves) ──────────────────────
+# Declared placement for the backbone shelf orgs. The class P rung (shelf-parity) asserts
+# census owner == declared shelf BOTH directions: a declared repo living elsewhere is drift,
+# an undeclared repo squatting in a shelf org is drift. Bare names — GitHub redirects keep
+# every old organvm/* link alive. Tranches fill this block; adding a shelf repo = one row here.
+shelf_assignments:
+  provenance: "Phase 2 T1–T4 2026-07-30 — all eight shelves populated (ERGON from the product_ledger; THEORIA/POIESIS/TAXIS/LOGOS/KOINONIA/KERYGMA from the governance sweep; meta = superprojects; plumbing home: X.github.io + dot-github--X → .github per org). Archived stays in the organvm attic; homebrew-limen stays engine-room (live brew-tap infra)."
+  shelves:
+    organvm-i-theoria:
+      - .github
+      - _agent-ontology
+      - case-studies-methodology
+      - chthon-oneiros
+      - conversation-corpus-engine
+      - cvrsvs-honorvm
+      - hierarchia-mundi
+      - nexus--babel-alexandria
+      - organvm-i-theoria.github.io
+      - scale-threshold-emergence
+      - universal-node-network
+      - visual-substrate-inquiry
+    organvm-ii-poiesis:
+      - .github
+      - a-mavs-olevm
+      - archive-past-works
+      - art-from--auto-revision-epistemic-engine
+      - art-from--narratological-algorithmic-lenses
+      - cind-and-sol-foundation
+      - example-ai-collaboration
+      - example-choreographic-interface
+      - example-generative-music
+      - example-interactive-installation
+      - example-theatre-dialogue
+      - ivi374ivi027-05
+      - life-betterment-simulation
+      - narratological-algorithmic-lenses
+      - organvm-ii-poiesis.github.io
+      - vigiles-aeternae--agon-cosmogonicum
+      - vigiles-aeternae--corpus-mythicum
+      - vigiles-aeternae--theatrum-mundi
+    organvm-iv-taxis:
+      - .github
+      - a-i--skills
+      - a-recursive-root
+      - aerarium--res-publica
+      - call-function--ontological
+      - commerce--meta
+      - distribution-strategy
+      - krypto-velamen
+      - lido-v3-audit-2026-05-04
+      - meta-source--ledger-output
+      - orchestration-start-here
+      - organvm-iv-taxis.github.io
+      - petasum-super-petasum
+      - praxis-perpetua
+      - quick-fire--all-command
+      - rules-system-bound
+      - schema-definitions
+      - system-governance-framework
+    organvm-v-logos:
+      - .github
+      - organvm-v-logos.github.io
+      - studium-generale--4444j99
+    organvm-vi-koinonia:
+      - .github
+      - awesome-claude-code
+      - blender-mcp
+      - community-hub
+      - contrib
+      - gemini-cli-blender-extension
+      - organvm-vi-koinonia.github.io
+      - public-process
+      - pydantic-ai
+      - reading-group-curriculum
+      - typescript-sdk
+    organvm-vii-kerygma:
+      - .github
+      - organvm-vii-kerygma.github.io
+      - portfolio
+      - showcase-portfolio
+      - stakeholder-portal
+    meta-organvm:
+      - meta-organvm--superproject
+      - meta-organvm.github.io
+      - organvm-i-theoria--superproject
+      - organvm-ii-poiesis--superproject
+      - organvm-iii-ergon--superproject
+      - organvm-iv-taxis--superproject
+      - organvm-v-logos--superproject
+      - organvm-vi-koinonia--superproject
+      - organvm-vii-kerygma--superproject
+      - workspace--superproject
+    organvm-iii-ergon:
+      - .github
+      - organvm-iii-ergon.github.io
+      - a-i-chat--exporter
+      - a-i-council--coliseum
+      - advocata
+      - agent--claude-smith
+      - agent-runtime
+      - agentic-titan
+      - anon-hookup-now
+      - atomic-substrata
+      - bountyscope
+      - card-trade-social
+      - carrier-wave--zeitgeist-thesis
+      - classroom-rpg-aetheria
+      - cve-watch
+      - edgarflash
+      - enterprise-plugin
+      - fetch-familiar-friends
+      - gens
+      - glyph-cascade
+      - growth-auditor
+      - life-my--midst--in
+      - materia-collider
+      - mesh
+      - multi-camera--livestream--framework
+      - my-block-warfare
+      - object-lessons
+      - palimpsest
+      - parlor-games--ephemera-engine
+      - prima
+      - promptscope
+      - public-record-data-scrapper
+      - search-local--happy-hour
+      - select-or-left-or-right-or
+      - shared-remembrance-gateway
+      - sign-signal--voice-synth
+      - sovereign-ecosystem--real-estate-luxury
+      - sovereign-systems--layer-above-hokage
+      - specvla-ergon--avditor-mvndi
+      - speech-score-engine
+      - surface-engine
+      - tab-bookmark-manager
+      - the-actual-news
+      - trade-perpetual-future
+      - trendpulse
+      - universal-waveform-explorer
+      - vox
+      - vox--publica
+      - vulnpulse
+      - writelens
+
+# ── SAUCE VERDICTS (Phase 4, custody v4.0.0 — a derivation law, never a second hand list) ───
+# Every repo carries exactly one sauce verdict, DERIVED from adjudicated registry data:
+#   PRIVATE — census-private (the core stays dark). Enforced by class G + the publish
+#             triple-gate (double-dark env + released lever + fresh publish-sweep receipt).
+#   SPLIT   — a registered form/operation pair held history-disjoint by check-split-hygiene
+#             P1–P5. Adjudicated NOT-split 2026-07-30: vox ═ vox--publica (P1 clean —
+#             independent siblings; P3 manifest and P5 pairing never claimed).
+#   GUARD   — public with crown-jewel patterns registered in moat-guard.json; moat-audit
+#             (beat-wired, fail-closed) greps every reachable blob.
+#   CLEAN   — public, not GUARD, not a SPLIT twin: the published form IS the product.
+# Platform law the verdicts respect: GitHub cannot disable forking of a public repo —
+# visibility and the split protocol are the only sauce levers.
+sauce_policy:
+  provenance: "Phase 4 2026-07-30 — verdicts derive from class + moat-guard rows + split registrations (the never-a-second-list law)"
+  derivation: {private_classes: [vault_private, operation_private, private_unreviewed, conductor], guard_registry: moat-guard.json, split_predicate: scripts/check-split-hygiene.py}
+  owner: gitvs
+  note: "Enforcement is the composition of shipped predicates: class G + publish triple-gate (PRIVATE), moat-audit (GUARD), check-split-hygiene (SPLIT). Coverage expansion = adding moat-guard rows or split registrations — never editing this block."
+
+# ── AUDIENCE (2026-07-30, decision 4 — the middle tier the estate enforced without naming) ───
+# Every surface faces the world, an invited collaborator, or nobody. The estate already ENFORCED
+# the middle tier in one place — moat-audit's "a partner's eyes make the tree exposed", which
+# applies a zero-Actions-secrets rule to granted repos that world-public repos never face — but
+# had no word for it, so `operation_private` covers both a zero-collaborator engine repo and a
+# partner's shared lane with the same value.
+#
+# DERIVED, never stored. A third copy of a fact `classes[].visibility` and access.yaml already
+# carry would rot on contact (this very file proves the failure mode: sauce_policy.private_classes
+# lists `conductor`, whose class visibility is `public`). So:
+#     world  = the class says public          "me and the world"
+#     collab = private AND >=1 access.yaml grant row     "me and collab"
+#     self   = private, nobody invited        the engine-room default
+#
+# `audience:` appears on a repo_overrides row ONLY as declared INTENT where intent and derivation
+# disagree — the same shape as the `publish_candidate:` flag beside it. It is not a column on the
+# classes and not a row on all 144 overrides.
+#
+# PRECEDENCE, once: observed GitHub state > per-repo judgment row > constellation-register hint.
+# The register SUGGESTS a lane and never decides. That restraint is load-bearing: a wrong stream
+# row is regenerable prose, but a wrong audience row is access posture — drop a project from the
+# register, the derived `collab` vanishes, the repo derives `self`, and a deliberate grant reads as
+# "undeclared exposure" whose machine-runnable direction (L-PARTNER-GRANTS) is REMOVAL. An
+# editorial edit to a people file must never stage revocation of a partner's access to their work.
+#
+# `world` is "public, SOLO" — so public+granted is a FOURTH state the enum cannot express. It is
+# an owed decision, never drift, and never a demand to flip a traction repo private.
+audience_policy:
+  provenance: "2026-07-30 decision 4 (PORTVS/ASTRA plan, PR #1682) — the content half is publication-policy.py's 3-column matrix"
+  derivation: {public_class: world, private_with_grant: collab, private_no_grant: self, source_of_grants: access.yaml}
+  declared_key: "repo_overrides.<repo>.audience — intent only, where it disagrees with the derivation"
+  precedence: [observed_github_state, per_repo_judgment_row, constellation_register_hint]
+  owner: gitvs
+  predicate: scripts/check-audience.py
+  note: "Coverage expansion = declaring intent on the rows that need it or landing an access.yaml grant — never editing this block."
+
+# ── LICENSE POSTURE (Phase 4 — the doctrine gap the 2026-07-29 excavation named, now owned) ─
+license_policy:
+  provenance: "Phase 4 2026-07-30 — first written license doctrine for the estate"
+  default: all-rights-reserved
+  by_surface:
+    shelf_public: "no LICENSE by default — the published FORM, all rights reserved; a per-repo grant is a judgment-row fact"
+    portal_public: "permissive only where the README already claims it (a-i-chat--exporter ships MIT — grandfathered); new grants are per-repo judgment rows"
+    engine_room: "no LICENSE — the machine is not offered"
+    partner_estate: "per-venture decision at the partner table, never a default"
+  owner: gitvs
+  note: "License governs reuse rights, not the fork button (allow_forking binds private repos only). Changing a repo's license = a judgment row + a LICENSE commit in that repo — never a blanket sweep."
 
 # ── per-repo-CLASS governance posture ────────────────────────────────────────────────────────
 # The desired-state of the `repo` / `branch_protection` types, bucketed by owner/repo glob. `required_checks`
@@ -373,6 +674,18 @@ classes:
     archive_policy: never
     owner: gitvs
     note: "Private repos pending publication judgment — the safe default (a private repo never flips by omission). The doctor cites the count as owed judgment; classify proposals + override rows migrate repos to vault_private / operation_private / the publish wave."
+  shelf_public:
+    match: ["organvm-*/**", "meta-organvm/**"]
+    visibility: public
+    branch_protection: exempt
+    required_checks: []
+    app_installed: optional
+    secret_hygiene: enforced
+    stale_branch_grace_min: 1440
+    archive_policy: reap_after_stale
+    seo: {description: required, topics_min: 0, homepage: optional, readme: minimal}
+    owner: gitvs
+    note: "Shelf-org default (custody v4.0.0 Phase 2): the advertised shelves carry the PUBLIC form; private shelf residents carry explicit judgment rows, which outrank this glob. Placement itself is class P (shelf_assignments) — this class carries only posture. App optional until L-LIMENBOT-INSTALL expands installs."
   governed_public:
     match: ["organvm/**"]
     visibility: public
@@ -405,35 +718,72 @@ classes:
 # (history-asset review owed). Sensitive rationale → estate.private.yaml (gitignored overlay).
 # Rows land by PR from `gitvs.py classify --emit-overrides` output — never auto-written.
 repo_overrides:
+  # ── ERGON shelf rows (Phase 2 T1, 2026-07-30) — movers without prior judgment rows; class
+  # carried verbatim from the census at move time, so the tranche changed placement, never posture.
+  organvm-iii-ergon/collaboration-operations-platform: {class: operation_private, audience: self, why: "universal private collaboration operations and records hub — no collaborator grants; client records are centrally held in partitioned owner spaces; synthetic fixtures only; no cross-client disclosure"}
+  organvm-iii-ergon/a-i-council--coliseum: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/agent--claude-smith: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/bountyscope: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/card-trade-social: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/classroom-rpg-aetheria: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/cve-watch: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/edgarflash: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/fetch-familiar-friends: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/life-my--midst--in: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/multi-camera--livestream--framework: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/my-block-warfare: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/parlor-games--ephemera-engine: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/prima: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/promptscope: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/search-local--happy-hour: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/shared-remembrance-gateway: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/sovereign-ecosystem--real-estate-luxury: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/sovereign-systems--layer-above-hokage: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/specvla-ergon--avditor-mvndi: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/surface-engine: {class: operation_private, why: "private product operation — ERGON shelf T1 2026-07-30; owned exposure decision: private core (was private_unreviewed fallthrough; Phase-4 sauce sweep owns any split)"}
+  organvm-iii-ergon/tab-bookmark-manager: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/the-actual-news: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/trade-perpetual-future: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/trendpulse: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/universal-waveform-explorer: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/vulnpulse: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  organvm-iii-ergon/writelens: {class: governed_public, why: "product-ledger row — ERGON shelf T1 2026-07-30 (class carried from census at move time)"}
+  4444J99/victoroff-os: {class: operation_private, why: "collaboration product on the personal estate (transferred from organvm 2026-07, redirect live; dual-estate custody 2026-07-29) — partner build lane, private operation; any public face is a split, never a flip (CONST-VICTOROFF-FACE). Without this row the 4444J99/** portal glob classed it desired-PUBLIC — a latent flip hazard."}
   organvm/4444J99.github.io: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/_agent: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/_agent-health: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/_agent-ontology: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-i-theoria/visual-substrate-inquiry: {class: operation_private, why: "private inquiry corpus — THEORIA shelf T2 2026-07-30; private core, no publish wave (first judgment row: was glob-classed)"}
+  organvm-i-theoria/_agent-ontology: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/_diagnostics: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/_dot-config: {class: vault_private, why: "raw config/state corpus — private"}
   organvm/_limen: {class: vault_private, why: "raw state mirror — private"}
-  organvm/a-i--skills: {class: portal_public, why: "star leader — the estate's traffic head"}
-  organvm/a-i-chat--exporter: {class: portal_public, why: "traction/value lure — portal tier"}
-  organvm/a-mavs-olevm: {class: governed_public, why: "history-asset strip review owed (~1 GB public tree)", oversize: true}
-  organvm/advocata: {class: operation_private, why: "law-firm OS — private operation"}
-  organvm/agent-runtime: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/agentic-titan: {class: portal_public, why: "traction/value lure — portal tier"}
-  organvm/anon-hookup-now: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iv-taxis/a-i--skills: {class: portal_public, why: "star leader — the estate's traffic head"}
+  organvm-iii-ergon/a-i-chat--exporter: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm-ii-poiesis/a-mavs-olevm: {class: governed_public, why: "history-asset strip review owed (~1 GB public tree)", oversize: true}
+  organvm-iii-ergon/advocata: {class: operation_private, why: "law-firm OS — private operation"}
+  organvm-iii-ergon/agent-runtime: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/agentic-titan: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm-iii-ergon/anon-hookup-now: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/arca: {class: vault_private, why: "the sealed vault — ciphertext home"}
-  organvm/atomic-substrata: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/atomic-substrata: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/bound: {class: vault_private, why: "raw corpus w/ secret-shaped paths — private"}
   organvm/brainstorm-20260423: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/browser-state: {class: vault_private, why: "personal browser corpus — private data"}
-  organvm/call-function--ontological: {class: portal_public, why: "traction/value lure — portal tier"}
-  organvm/carrier-wave--zeitgeist-thesis: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/cind-and-sol-foundation: {class: operation_private, why: "foundation operation — private"}
+  organvm-iv-taxis/call-function--ontological: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm-iii-ergon/carrier-wave--zeitgeist-thesis: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-ii-poiesis/cind-and-sol-foundation: {class: operation_private, why: "foundation operation — private"}
   organvm/claude-runtime-state: {class: vault_private, why: "runtime state mirror — private"}
   organvm/collaboratory: {class: operation_private, why: "collaboratory constellation — private operation"}
-  organvm/commerce--meta: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iv-taxis/commerce--meta: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/composition-1-2: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/content-engine--asset-amplifier: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant; was falling to protection-exempt private_unreviewed)"}
+  4444J99/content-engine--asset-amplifier: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant); personal estate 2026-07-30 (custody v4.0.0 transfer, redirect live)"}
+  4444J99/hokage-chess: {class: portal_public, why: "partner product face (rob lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public product, Pages re-homes under the personal domain"}
+  4444J99/micro-tato-play: {class: portal_public, why: "partner product face (rob lane, canary of the 2026-07-30 wave); personal estate — public play surface of micro-tato"}
+  4444J99/styx-behavioral-art: {class: portal_public, why: "styx venture face (jessica lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public"}
+  4444J99/styx-behavioral-economics-theory: {class: portal_public, why: "styx venture face (jessica lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public"}
+  4444J99/your-fit-tailored: {class: portal_public, why: "partner product face (charles lane); personal estate 2026-07-30 (custody v4.0.0 transfer) — public, spec-complete pilot kit"}
   organvm/content-engine--asset-amplifier--a-organvm-legacy: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/contrib: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm-vi-koinonia/contrib: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
   organvm/contrib--anthropic-skills: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
   organvm/contrib--clyra-gait: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
   organvm/contrib--dbt-mcp: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
@@ -451,70 +801,78 @@ repo_overrides:
   organvm/digital-income-organism-inquiry: {class: vault_private, why: "inquiry corpus — internal strategy"}
   organvm/domus-genoma: {class: operation_private, why: "the config cartridge — host/factory operation; strategy+secret-shaped paths never publish raw"}
   organvm/edu-organism: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/enterprise-plugin: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/enterprise-plugin: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/euro-trip-2026: {class: vault_private, why: "personal travel — private data"}
   organvm/generative-abstract-environments-studies: {class: vault_private, why: "studies corpus — internal strategy"}
-  organvm/gens: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/glyph-cascade: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/gens: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/glyph-cascade: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/glyph-cascade-tapes: {class: vault_private, why: "session recordings corpus — private data"}
-  organvm/growth-auditor: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/growth-auditor: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/hokage-chess--4444j99: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/hospes: {class: operation_private, why: "guest-ops engine; transcripts are vault-class", split: {into: ["organvm/arca"], why: "extract transcripts to the vault; engine stays private"}}
   organvm/in-my-head: {class: vault_private, why: "personal notes — private data"}
   organvm/knowledge-corpus: {class: vault_private, why: "distilled corpus — internal strategy"}
   organvm/manumissio: {class: operation_private, why: "sovereign inference operation — private by design"}
-  organvm/materia-collider: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/materia-collider: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/md-summoning: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/mesh: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/meta-organvm--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/micro-tato: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/mirror-mirror: {class: operation_private, why: "seeded value product — wave candidate (sweep decides)", publish_candidate: true}
+  organvm-iii-ergon/mesh: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  meta-organvm/meta-organvm--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  # AUDIENCE 2026-07-30: the operation half of an operation/form pair that already exists in
+  # practice — 4444J99/micro-tato-play is declared "public play surface of micro-tato" below. Under
+  # the split doctrine the operation stays private and the form twin carries the public face, so
+  # `publish_candidate` here was a leftover from before that twin existed: it would have published
+  # the operation alongside its own form. Declared `collab` (rob's lane) rather than left to derive
+  # `self`, because the derivation cannot see intent — an uninvited lane derives `self` and passes
+  # green while the partner cannot open their own work. The INVITE itself is outbound and stays
+  # with L-PARTNER-GRANTS; the rung now cites it as a staged invite instead of certifying silence.
+  4444J99/micro-tato: {class: operation_private, audience: collab, why: "product operation (rob lane); path-sample clean. Operation half — 4444J99/micro-tato-play is the public form twin, so this stays private; publish candidacy dropped 2026-07-30 as a pre-twin leftover. Personal estate 2026-07-30 (custody v4.0.0 transfer)"}
+  4444J99/mirror-mirror: {class: operation_private, why: "seeded value product — wave candidate (sweep decides); personal estate 2026-07-30 (custody v4.0.0 transfer)", publish_candidate: true}
   organvm/my-knowledge-base: {class: operation_private, why: "value-tier knowledge operation; secret-shaped paths — sweep before any form twin"}
-  organvm/narratological-algorithmic-lenses: {class: portal_public, why: "traction/value lure — portal tier"}
-  organvm/netmode: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/object-lessons: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-ii-poiesis/narratological-algorithmic-lenses: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/netmode: {class: operation_private, why: "machine infra, not a product (sweep 2026-07-30): network-health receipts, session-blockers, conductor-tranche dependencies ride it — engine room, no publish wave"}
+  organvm-iii-ergon/object-lessons: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/opencode-plans: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/organvm-corpvs-testamentvm: {class: vault_private, why: "testament corpus — internal strategy"}
-  organvm/organvm-i-theoria--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/organvm-ii-poiesis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/organvm-iii-ergon--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/organvm-iv-taxis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-i-theoria--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-ii-poiesis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-iii-ergon--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-iv-taxis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
   organvm/organvm-mcp-server: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/organvm-v-logos--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/organvm-vi-koinonia--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/organvm-vii-kerygma--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  organvm/palimpsest: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  meta-organvm/organvm-v-logos--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-vi-koinonia--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-vii-kerygma--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm-iii-ergon/palimpsest: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/payrail: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/peer-audited--behavioral-blockchain: {class: portal_public, why: "traction/value lure — portal tier"}
+  4444J99/peer-audited--behavioral-blockchain: {class: portal_public, why: "traction/value lure — portal tier; personal estate 2026-07-30 (custody v4.0.0 transfer, jtenen lane intact)"}
   organvm/persona-fleet: {class: vault_private, why: "persona corpus — private data"}
   organvm/personal: {class: vault_private, why: "personal memory store — private data"}
-  organvm/portfolio: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm-vii-kerygma/portfolio: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/portvs: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/process-environment-enactment-20260609173021: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/prompt-registry-archive: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
-  organvm/public-record-data-scrapper: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm-iii-ergon/public-record-data-scrapper: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/quaestor: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/quick-fire--all-command: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iv-taxis/quick-fire--all-command: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/relationship-pipeline: {class: vault_private, why: "personal-relations data — private"}
   organvm/render-second-amendment: {class: vault_private, why: "held for content-policy review (rationale in private overlay)", oversize: true}
-  organvm/scale-threshold-emergence: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/select-or-left-or-right-or: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-i-theoria/scale-threshold-emergence: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/select-or-left-or-right-or: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/session-meta: {class: vault_private, why: "4.4 GB raw session corpus; value is mined, never published", oversize: true, split: {into: ["organvm/arca"], why: "evict sealed corpus to the vault; slim/archive the residue"}}
   organvm/session-stone-sanitized-019ea761-bff5-7841-b772-f2d85475092e-20260609175059: {class: vault_private, why: "session archive — private data"}
-  organvm/sign-signal--voice-synth: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/sign-signal--voice-synth: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/sovereign--ground: {class: vault_private, why: "ground corpus — internal strategy"}
   organvm/sovereign--ground--4444j99: {class: vault_private, why: "ground corpus — internal strategy"}
-  organvm/sovereign-systems--elevate-align: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant; was falling to protection-exempt private_unreviewed)"}
+  4444J99/sovereign-systems--elevate-align: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant); personal estate 2026-07-30 (custody v4.0.0 transfer; flipped private personal-side — the org-side 422 seat-metering block dissolved exactly as doctrine predicted)"}
   organvm/speculum-opencode: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
-  organvm/speech-score-engine: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/speech-score-engine: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/studium-generale: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/system-system--system: {class: vault_private, why: "system corpus — internal strategy"}
   organvm/the-invisible-ledger: {class: operation_private, why: "financial ledger operation — private"}
   organvm/universal-mail--automation: {class: portal_public, why: "traction/value lure — portal tier"}
-  organvm/vox: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm-iii-ergon/vox: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/vox--architectura-gubernatio: {class: vault_private, why: "design-provenance corpus — internal strategy"}
-  organvm/vox--publica: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/workspace--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm-iii-ergon/vox--publica: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  meta-organvm/workspace--superproject: {class: vault_private, why: "superproject state mirror — private state"}
 
 # ── expected orgs — reserved namespaces are declared, an unexpected org is drift ────────────────
 expected_orgs:
@@ -689,5 +1047,9 @@ human_atoms:
 ratchets:
   setup_rulesets_derives_checks: false     # ARM when setup-rulesets.py reads classes[].required_checks
   session_pressure_derives_remote: false   # ARM when session-lifecycle-pressure.py delegates remote-branch counts to the census ledger
-  visibility_gate_armed: true              # ARMED with the decision registry (308/308 classified) — class G diffs desired visibility per repo; pending lever-gated flips are CITED, never failed
+  visibility_gate_armed: true
+  # Doctor rung Q (audience intent). Report-only by construction — it emits cites, never a flip
+  # demand — so arming it only decides whether the doctor SPEAKS about audience drift. Observable
+  # before autonomous, the house pattern: leave it false until the rung has been quiet for a cycle.
+  audience_parity_armed: false              # ARMED with the decision registry (308/308 classified) — class G diffs desired visibility per repo; pending lever-gated flips are CITED, never failed
   seo_drift_gates: false                   # ARM post-backfill — class K (SEO floor) flips from cited-owed to a red predicate

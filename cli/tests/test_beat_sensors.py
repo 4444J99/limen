@@ -5,6 +5,7 @@ tests never execute the real beat sensors.
 """
 
 import importlib.util
+import json
 import os
 import sys
 import time
@@ -138,6 +139,18 @@ def test_real_registry_derives_nonempty_metabolize_loop(capsys):
     assert "scripts/creds-hydrate.py --apply" in out
 
 
+def test_real_omega_manifest_derives_exact_live_owner_receipt_invariant():
+    m = _mod()
+    core = json.loads((ROOT / "institutio/governance/omega-core-rungs.json").read_text())["rungs"]
+    sensors = m.omega_contract(m.load_sensors(REAL_REGISTRY))["rungs"]
+    rungs = [*core, *sensors]
+    live = [rung for rung in rungs if rung["tier"] == "live"]
+
+    assert len(rungs) == 34
+    assert len(live) == 19
+    assert all(sum(item.get("role") == "owner_receipt" for item in rung["semantic_inputs"]) == 1 for rung in live)
+
+
 def test_scheduled_sensor_is_identity_agnostic_and_stamps_only_when_due(tmp_path, monkeypatch):
     m = _mod()
     registry = tmp_path / "scheduled.yaml"
@@ -207,8 +220,11 @@ sensors:
         escalation: skipped
     omega_eligible:
       - label: arbitrary parity
+        rung_id: sensor.arbitrary.parity
         tier: det
         command: "python3 scripts/arbitrary.py check"
+        semantic_inputs:
+          - {path: scripts/arbitrary.py, normalization: raw}
 """,
         encoding="utf-8",
     )
@@ -226,6 +242,17 @@ sensors:
     monkeypatch.setattr(m, "_run_command", lambda command, **kwargs: calls.append((command, kwargs)) or 0)
     assert m.run_omega("arbitrary.future.id", 0, registry=registry) == 0
     assert calls == [("python3 scripts/arbitrary.py check", {"timeout": 7, "quiet": False})]
+    contract = m.omega_contract(m.load_sensors(registry))
+    assert contract["schema"] == "limen.omega_sensor_rungs.v1"
+    assert contract["rungs"][0]["id"] == "sensor.arbitrary.parity"
+    assert contract["rungs"][0]["semantic_inputs"] == [
+        {
+            "normalization": "raw",
+            "path": "scripts/arbitrary.py",
+            "role": "input",
+            "volatile_fields": [],
+        }
+    ]
 
 
 def test_renamed_omega_capability_without_timeout_is_typed_and_executes(tmp_path, monkeypatch, capsys):
@@ -245,8 +272,11 @@ sensors:
         escalation: skipped
     omega_eligible:
       - label: independently renamed fixed point
+        rung_id: sensor.independently-renamed.v47
         tier: det
         command: "python3 scripts/arbitrary.py verify"
+        semantic_inputs:
+          - {path: scripts/arbitrary.py, normalization: raw}
 """,
         encoding="utf-8",
     )
@@ -261,6 +291,122 @@ sensors:
     monkeypatch.setattr(m, "_run_command", lambda command, **kwargs: calls.append((command, kwargs)) or 0)
     assert m.run_omega("independently.renamed.no-timeout.v47", 0, registry=registry) == 0
     assert calls == [("python3 scripts/arbitrary.py verify", {"timeout": None, "quiet": False})]
+
+
+def test_omega_json_discovery_is_stable_and_typed(tmp_path, capsys):
+    m = _mod()
+    registry = tmp_path / "omega-json.yaml"
+    registry.write_text(
+        """\
+sensors:
+  renamed-sensor:
+    section: heartbeat
+    title: renamed
+    gate: null
+    source: [metabolize]
+    steps:
+      - command: "python3 scripts/arbitrary.py beat"
+        severity: silent
+        escalation: skipped
+    omega_eligible:
+      - label: semantic receipt
+        rung_id: sensor.semantic-receipt
+        tier: live
+        command: "python3 scripts/arbitrary.py verify"
+        semantic_inputs:
+          - path: logs/example.json
+            normalization: json
+            volatile_fields: [observed_at]
+            role: owner_receipt
+            max_age_seconds: 300
+""",
+        encoding="utf-8",
+    )
+    assert m.list_omega_json(registry) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema"] == "limen.omega_sensor_rungs.v1"
+    assert payload["rungs"][0]["id"] == "sensor.semantic-receipt"
+    assert payload["rungs"][0]["semantic_inputs"][0] == {
+        "normalization": "json",
+        "path": "logs/example.json",
+        "role": "owner_receipt",
+        "volatile_fields": ["observed_at"],
+        "max_age_seconds": 300,
+    }
+
+
+def test_live_omega_emits_explicit_skip_and_pass_owner_receipts(tmp_path, monkeypatch):
+    m = _mod()
+    monkeypatch.setattr(m, "ROOT", tmp_path)
+    registry = tmp_path / "live-omega.yaml"
+    registry.write_text(
+        """\
+sensors:
+  live-source:
+    section: heartbeat
+    title: live source
+    gate: TEST_LIVE_SOURCE
+    default: "0"
+    source: [metabolize]
+    steps: [{command: "true", severity: silent, escalation: skipped}]
+    omega_eligible:
+      - label: live source
+        rung_id: sensor.live-source
+        tier: live
+        timeout: 10
+        command: "printf stable"
+        semantic_inputs:
+          - {path: scripts/source.py, normalization: raw}
+          - path: logs/omega-owner-receipts/sensor.live-source.json
+            normalization: json
+            volatile_fields: [observed_at]
+            role: owner_receipt
+            max_age_seconds: 300
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("TEST_LIVE_SOURCE", raising=False)
+    assert m.run_omega("live-source", 0, registry=registry) == 77
+    receipt = tmp_path / "logs/omega-owner-receipts/sensor.live-source.json"
+    assert json.loads(receipt.read_text())["status"] == "SKIP"
+
+    monkeypatch.setenv("TEST_LIVE_SOURCE", "1")
+    assert m.run_omega("live-source", 0, registry=registry) == 0
+    assert json.loads(receipt.read_text())["status"] == "PASS"
+
+
+def test_omega_discovery_rejects_missing_duplicate_or_unknown_identity(tmp_path, capsys):
+    m = _mod()
+    registry = tmp_path / "invalid-omega.yaml"
+    registry.write_text(
+        """\
+sensors:
+  alpha:
+    section: heartbeat
+    title: alpha
+    gate: null
+    source: [metabolize]
+    steps: [{command: "python3 scripts/a.py", severity: silent, escalation: skipped}]
+    omega_eligible:
+      - {label: alpha, rung_id: sensor.duplicate, tier: det, command: "python3 scripts/a.py"}
+  beta:
+    section: heartbeat
+    title: beta
+    gate: null
+    source: [metabolize]
+    steps: [{command: "python3 scripts/b.py", severity: silent, escalation: skipped}]
+    omega_eligible:
+      - label: beta
+        rung_id: sensor.duplicate
+        tier: det
+        command: "python3 scripts/b.py"
+        semantic_inputs:
+          - {path: scripts/b.py, normalization: opaque}
+""",
+        encoding="utf-8",
+    )
+    assert m.list_omega_json(registry) == 2
+    assert "invalid omega contract" in capsys.readouterr().err
 
 
 def test_command_timeout_kills_the_bounded_process_group():

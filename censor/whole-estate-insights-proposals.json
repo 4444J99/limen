@@ -18,7 +18,7 @@
         "feature_to_try",
         "horizon"
       ],
-      "disposition": "in_flight",
+      "disposition": "shipped",
       "vendors": [
         "claude",
         "codex",
@@ -29,7 +29,8 @@
       ],
       "finding": "Session-abandonment is systemic across the estate but wears a different face per vendor: Claude stalls mid-session (24 stall-sessions; persisting closeout loop), Codex abandons whole sessions after one entry (16.6%), OpenCode rapid-abandons half its sessions inside 30s (55%). The disciplines that fix this (closeout terminality, done-as-predicate, registry-owns-answer, scoped verification) exist only for the Claude surface.",
       "evidence": [
-        "PR #1122 (Session Discipline shared layer + check M \u2014 discipline parity across all 10 agent surfaces)"
+        "PR #1122 (Session Discipline shared layer + check M \u2014 discipline parity across all 10 agent surfaces)",
+        "PR #1122 MERGED 2026-07-16; empirical close now measured continuously \u2014 the insight-cross-vendor sensor (0z0, PR #1518) refreshes per-vendor abandonment rates every beat, so the next drift windows show whether parity moved them"
       ],
       "review": "empirical close = PR #1122 merged and check M green across the agent-doc surfaces; cross-vendor abandonment rates fall in the next ingest window",
       "armed": false
@@ -51,7 +52,8 @@
       "finding": "Require an owner-scope + predicate + expected-receipt handshake before an OpenCode/Codex session mutates tasks.yaml or code, mirroring docs/agent-opencode-review.md Improvements #1 and the ask-gate discipline. Refuses to start unbounded work, targeting the 16.6% Codex single-entry and 55% OpenCode rapid-abandon rates.",
       "evidence": [
         "docs/agent-opencode-review.md (Improvements #1)",
-        "scripts/ask-gate.py (Claude-side precedent)"
+        "scripts/ask-gate.py (Claude-side precedent)",
+        "assessed 2026-07-24 (insights drive-through): not small \u2014 a session-start handshake across two vendor lanes; broker add_task intake was deferred by the board_mutation_deferred valve during the publication jam (limen#1522), so this row remains the registry home until intake flows again; arming stays a lever"
       ],
       "review": "proposal-only; arming is a future lever, not an auto-enable",
       "armed": false
@@ -65,7 +67,7 @@
         "feature_to_try",
         "horizon"
       ],
-      "disposition": "proposed",
+      "disposition": "shipped",
       "vendors": [
         "claude",
         "codex",
@@ -77,10 +79,11 @@
       "finding": "Promote scripts/insight-cross-vendor-ingest.py (PR #1124) to a registered beat sensor in institutio/governance/sensors.yaml so per-vendor friction counts refresh every cadence and feed the censor cascade the way insights-drift.json already does for the Claude surface.",
       "evidence": [
         "scripts/insight-cross-vendor-ingest.py (PR #1124)",
-        "institutio/governance/sensors.yaml (SENSORS registry \u2014 the arming target)"
+        "institutio/governance/sensors.yaml (SENSORS registry \u2014 the arming target)",
+        "institutio/governance/sensors.yaml `insight-cross-vendor` (0z0) + parameter panel (LIMEN_CROSS_VENDOR_INGEST/LIMEN_BEAT_CROSS_VENDOR/LIMEN_CROSS_VENDOR_TIMEOUT) \u2014 enacted 2026-07-24 on the operator's 'implement all of it' (the 2026-07-24 /insights report drive-through); arming act authorised by that directive"
       ],
-      "review": "proposal-only; arming is a lever, not an auto-enable",
-      "armed": false
+      "review": "shipped 2026-07-24; empirical close = logs/insight-cross-vendor/run-manifest.json refreshing on beat cadence without manual runs",
+      "armed": true
     }
   ],
   "data_gaps": [
@@ -88,13 +91,15 @@
       "id": "D-gap-1",
       "vendor": "opencode",
       "gap": "Adapter pattern-matches the SQLite JSON blob and cannot distinguish an empty/errored zero-cost session from real work lost to a flaky free provider. The 55% rapid-abandon / 100% zero-cost numbers are therefore unreadable as either cheap-ignore or expensive-alarm.",
-      "owner": "future revision to scripts/insight-cross-vendor-ingest.py (bounded PII-safe blob parse: classify each zero-cost session empty / errored / completed-free)"
+      "owner": "future revision to scripts/insight-cross-vendor-ingest.py (bounded PII-safe blob parse: classify each zero-cost session empty / errored / completed-free)",
+      "resolved": "2026-07-24: shipped in scripts/insight-cross-vendor-ingest.py \u2014 zero-cost/rapid-abandon sessions now classified empty_shell / aborted_after_content / completed_fast (verified in the 2026-07-24 live run: 548 rapid-abandons \u2192 2 empty_shell, 353 aborted_after_content, 193 completed_fast; message text never read)"
     },
     {
       "id": "D-gap-2",
       "vendor": "claude",
       "gap": "Adapter counts 1,793 tool errors across a capped 500-session sample (>=3.6/session, a floor) but does not classify them (permission-denial vs file-race vs network/MCP vs speculative-cheap), so a real regression is inseparable from expected speculative noise.",
-      "owner": "future follow-up sensor to bucket Claude tool-error classes; would also make the root-to-leaf-permission discipline measurable"
+      "owner": "future follow-up sensor to bucket Claude tool-error classes; would also make the root-to-leaf-permission discipline measurable",
+      "resolved": "2026-07-24: shipped in scripts/insight-cross-vendor-ingest.py (error_class bucketing) \u2014 verified in the 2026-07-24 live run: 1042 tool errors \u2192 permission_denied 121, file_not_found_race 197, network_timeout_mcp 226, bash_exit_nonzero 200, parse_decode 109, interrupt_cancel 55, other 134"
     }
   ]
 }

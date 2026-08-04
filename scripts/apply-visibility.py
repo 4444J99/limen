@@ -12,9 +12,21 @@ toward it. The two directions carry ASYMMETRIC gates (autonomy is derived from r
           evaluated loudest-first:
           (1) a green + fresh publish-sweep receipt (scripts/publish-sweep.py — FULL history swept);
           (2) DOUBLE-DARK: --apply AND LIMEN_VISIBILITY_APPLY=1 (the reap-remote-branches precedent).
-          A `publish_candidate: true` override row is desired-public-pending-sweep (its
+          A `publish_candidate: true` override row is desired-public-PENDING-SWEEP (its
           operation_private class is nominally private; the green sweep — not a class flip —
           authorizes the flip).
+
+Because candidacy is a CONDITIONAL desire, the two directions meet in a third case the effector was
+blind to until 2026-07-30: a candidate already observed PUBLIC with no green+fresh receipt owning
+the flip. Reading that as "converged" (desired == observed) is what let 32 operation-private repos
+sit world-readable while every predicate reported green. It resolves by what the sweep actually
+says, never by the bare absence of a receipt:
+
+  SWEEP RED   a secret is exposed in live-public history — a genuine leak. Demote, auto-guard.
+  NO RECEIPT  nobody has looked yet. UNKNOWN IS NOT UNSAFE: mass-demoting here would fight the
+  or STALE    build-in-public directive, so this reports (reds --check, rides the beat) and routes
+              to publish-sweep.py. The sweep adjudicates; the effector does not guess.
+  GREEN+FRESH converged — the receipt legitimately owns the public posture.
 
 Every action (and every held plan row) appends to logs/visibility-actions.jsonl. Fail-open, bounded
 (LIMEN_VISIBILITY_MAX per run), offline → skip. Registered as the `repo` resource delegate effector
@@ -53,10 +65,14 @@ def _module(name: str, filename: str):
     return mod
 
 
-def _plan(estate: dict, rows: list[dict], gitvs) -> list[dict]:
+def _plan(estate: dict, rows: list[dict], gitvs, receipt_ok) -> list[dict]:
     """Drift rows: (repo, direction) where desired class visibility ≠ observed. A `publish_candidate`
     override is desired-public-pending-sweep, even when its class (operation_private) is nominally
-    private — build-in-public: the green sweep, not the class, authorizes the flip."""
+    private — build-in-public: the green sweep, not the class, authorizes the flip.
+
+    ``receipt_ok(repo) -> (bool, why)`` resolves that pending desire. It is needed HERE, not only at
+    execution time, because the desire is conditional: an unswept candidate never earned
+    desired-public, so an already-public one is an unauthorized flip, not a convergence."""
     classes = estate.get("classes") or {}
     overrides = estate.get("repo_overrides") or {}
     plan: list[dict] = []
@@ -64,18 +80,45 @@ def _plan(estate: dict, rows: list[dict], gitvs) -> list[dict]:
         full = str(row.get("full_name") or "")
         cls_name = gitvs.classify_repo(full, estate, facts=row)
         desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
-        if (overrides.get(full) or {}).get("publish_candidate"):
+        publish_candidate = bool((overrides.get(full) or {}).get("publish_candidate"))
+        if publish_candidate:
             desired = "public"  # publish_candidate ⇒ desired-public (green sweep is the gate)
         if desired not in ("public", "private"):
             continue
         observed = "private" if row.get("private") else "public"
         if desired == observed:
+            # Mirrors gitvs.visibility_drift's class-G citation: candidacy is a GATED desire, so
+            # desired == observed == "public" only means converged when a receipt owns the flip.
+            # The doctor names this case; this is the half that acts on it — and the ACTION splits
+            # three ways, because receipt_fresh_green()'s single False hides three different worlds:
+            #   red        → the sweep looked and FOUND a secret. A real leak: demote, auto-guard.
+            #   no/stale   → nobody has looked. Unknown ≠ unsafe, and mass-demoting here would
+            #                fight the standing build-in-public directive. Sweep it; the sweep
+            #                adjudicates. Surfaced (so --check reds) but never flipped blind.
+            #   green+fresh→ genuinely converged.
+            if publish_candidate and observed == "public":
+                ok, why = receipt_ok(full)
+                if not ok:
+                    leak = why == "receipt red"
+                    plan.append(
+                        {
+                            "repo": full,
+                            "class": cls_name,
+                            "action": "demote" if leak else "sweep",
+                            "why": (
+                                "publish-sweep RED on a live-public candidate — history secret exposed"
+                                if leak
+                                else f"public candidate never cleared to be public ({why}) — sweep adjudicates"
+                            ),
+                        }
+                    )
             continue
         plan.append(
             {
                 "repo": full,
                 "class": cls_name,
                 "action": "publish" if desired == "public" else "demote",
+                "why": f"class '{cls_name}' demands {desired}, observed {observed}",
             }
         )
     return sorted(plan, key=lambda p: (p["action"], p["repo"]))
@@ -121,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         print("[apply-visibility] no census facts — run `gitvs.py census` first (skip, fail-open)")
         return 0
 
-    plan = _plan(estate, rows, gitvs)
+    plan = _plan(estate, rows, gitvs, publish_sweep.receipt_fresh_green)
     if not plan:
         print("[apply-visibility] visibility drift == ∅ — nothing to converge")
         return 0
@@ -142,13 +185,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"   ~ held  {action} {repo} — per-run cap reached")
             continue
         if action == "demote":
+            why = p.get("why") or "leak-posture auto-guard"
             if args.apply:
                 result = _flip(repo, "private")
                 done += 1
                 _log({**p, "result": result, "mode": "apply"})
-                print(f"   ✓ demote {repo} → private ({result}) — leak-posture auto-guard")
+                print(f"   ✓ demote {repo} → private ({result}) — {why}")
             else:
-                print(f"   · would demote {repo} → private (auto under --apply)")
+                print(f"   · would demote {repo} → private (auto under --apply) — {why}")
+            continue
+        if action == "sweep":
+            # Never a visibility flip: an unswept live-public candidate is UNKNOWN, not unsafe, and
+            # the remedy is to look. Reported (so --check reds and the beat carries it) and routed
+            # to its owner; publish-sweep.py --candidates is what clears or condemns it.
+            _log({**p, "result": "reported", "mode": mode})
+            print(f"   ! sweep  {repo} — {p.get('why')} → publish-sweep.py --repo {repo}")
             continue
         # publish — build-in-public: the directive is the standing sanction (no per-repo lever).
         # Gated on the REAL safety, loudest-first: a green+fresh sweep receipt, then double-dark arming.

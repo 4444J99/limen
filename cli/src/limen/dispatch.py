@@ -6,10 +6,12 @@ import re
 import secrets
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import threading
 import time
+from collections.abc import Mapping
 from contextlib import ExitStack, contextmanager
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
@@ -52,6 +54,7 @@ from limen.models import (
     dispatch_session_id,
     has_jules_landing_hold,
 )
+from limen.partition_lanes import heuristics_may_promote
 from limen.tabularius import apply_limen_file_sync
 from limen.runtime_requirements import task_execution_ready
 from limen.doctor import stale_tasks
@@ -106,6 +109,7 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _fable_reserve_receipt_present,
     _guard_fable_model_pin,
     _resolve_claude_model,
+    tier_for_classes,
 )
 from limen.worktree_debt import (
     IMPACT_DEBT_CREATING,
@@ -356,6 +360,10 @@ def _run_capture(
     pipes so the timeout actually fires. Still raises TimeoutExpired so callers' handlers run."""
     import signal
 
+    lifetime_fds = _stable_agent_host_lifetime_fds(
+        os.environ if env is None else env,
+    )
+
     proc = subprocess.Popen(
         cmd,
         cwd=cwd,
@@ -365,6 +373,7 @@ def _run_capture(
         stderr=subprocess.PIPE,
         stdin=subprocess.DEVNULL,
         start_new_session=True,
+        pass_fds=lifetime_fds,
     )
     try:
         out, err = proc.communicate(timeout=timeout)
@@ -495,9 +504,31 @@ def _short_proc_output(proc: subprocess.CompletedProcess[str] | None, limit: int
     return f"{text[:limit]}...[truncated]" if len(text) > limit else text
 
 
-def _first_command(payload: dict[str, Any]) -> str:
-    commands = payload.get("next_commands") if isinstance(payload.get("next_commands"), list) else []
-    return str(commands[0]) if commands else ""
+# The relay only READS logs/usage.json (_provider_headroom); its own producer is the
+# usage-telemetry sensor (institutio/governance/sensors.yaml, source: [metabolize]).
+# Without that first, a "provider headroom stale" failure can never clear and re-running
+# the relay loops forever.
+HANDOFF_RELAY_REMEDIATION = (
+    "python3 scripts/usage-telemetry.py && python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check"
+)
+
+
+def _remediation_command(payload: dict[str, Any]) -> str:
+    """Every command the gate named, in order — not just the first.
+
+    The value gate emits ``next_commands`` as a LIST because clearing one block can take
+    more than one producer: ``stop_missing_inputs`` names a writer per missing input, and
+    for ``batch_review_index`` the producer is the SECOND entry. Collapsing to
+    ``commands[0]`` printed a command that could not clear the block, so the gate re-fired
+    identically and the operator looped. Chained with ``&&`` to match the multi-step
+    remediation form already used for the handoff relay below.
+    """
+    # Bound once, then narrowed: the isinstance() guard has to test the SAME object that gets
+    # iterated. Guarding a second payload.get() call left the bound value typed
+    # `Any | list[Any] | None`, which mypy correctly refuses to iterate.
+    raw = payload.get("next_commands")
+    commands: list[Any] = raw if isinstance(raw, list) else []
+    return " && ".join(text for text in (str(command).strip() for command in commands) if text)
 
 
 def _run_handoff_relay(root: Path, *, refresh: bool) -> dict[str, Any]:
@@ -698,7 +729,7 @@ def _session_value_admission_gate(
     gate = _parse_json_stdout(proc.stdout)
     gate["returncode"] = proc.returncode
     gate["output"] = _short_proc_output(proc)
-    gate["next_command"] = _first_command(gate)
+    gate["next_command"] = _remediation_command(gate)
     if proc.returncode == 0:
         gate["allow"] = True
         return gate
@@ -764,7 +795,7 @@ def dispatch_admission_check(
                     "status": "alert",
                     "exit_code": 20,
                     "reason": "handoff relay check failed; refresh handoff before launching workers",
-                    "next_command": "python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check",
+                    "next_command": HANDOFF_RELAY_REMEDIATION,
                 }
             )
             return result
@@ -1189,7 +1220,21 @@ def _dispatch_focus_bucket(task: Task, value_repos: set[str]) -> int:
     labels = {str(label).strip().lower() for label in (task.labels or [])}
     workstream = str(task.workstream or "").strip().lower()
     if repo and repo in value_repos:
+        # EXPLICIT funding, checked first and never vetoed: a value-repos.json row is the
+        # operator deciding, which is not the accidental overlap the partner boundary blocks.
         return 0
+    if not heuristics_may_promote(task.repo):
+        # THE EXCLUSION AXIS. Everything below this line is a guess -- a label, an id prefix, a
+        # lifecycle term, or a substring of English prose -- and a guess may never promote work
+        # across a partner boundary (operator directive 2026-08-02: "there shouldn't be ANY
+        # possibility of overlap between my work and client work").
+        #
+        # This function had no way to express that: it was pure inclusion, five ways to return 0
+        # and none to refuse. So VIC-CONTRACT-002, a client engagement in a private repo, reached
+        # the top of the personal fleet queue because its prompt boilerplate contained the word
+        # "blocker", and VIC-CLIENT-STORY-001 followed on "custody". Pruning those two terms would
+        # only move the collision to the next English word the client's text happens to contain.
+        return 1
     if labels & _VALUE_LABELS or workstream in _VALUE_WORKSTREAMS:
         return 0
     if str(task.id or "").startswith(("AW-", "REV-")):
@@ -1218,6 +1263,14 @@ def _value_gate_configured(value_repos: set[str]) -> bool:
 
 def task_passes_value_gate(task: Task, value_repos: set[str] | None = None) -> bool:
     value_repos = value_repos if value_repos is not None else _value_tier_repos()
+    repo = _normalize_repo_slug(task.repo)
+    if not (repo and repo in value_repos) and not heuristics_may_promote(task.repo):
+        # Checked BEFORE _value_gate_configured, so LIMEN_VALUE_GATE=0 (and an empty
+        # value-repos.json) cannot open the partner boundary. A confidentiality boundary an env
+        # var can switch off is not a boundary. An explicit `--task <id>` still reaches a partner
+        # lane -- _explicit_task_source bypasses this gate by design, and naming the id IS the
+        # operator deciding -- but nothing automatic selects one.
+        return False
     if not _value_gate_configured(value_repos):
         return True
     return _dispatch_focus_bucket(task, value_repos) == 0
@@ -1232,7 +1285,18 @@ def sort_value_gate_candidates(
     value_repos = value_repos if value_repos is not None else _value_tier_repos()
     gated = [task for task in candidates if task_passes_value_gate(task, value_repos)]
     if not _value_gate_configured(value_repos):
-        gated = list(candidates)
+        # An unconfigured value gate must not NARROW dispatch -- but "do not narrow" is a
+        # statement about PRIORITY, never about the partner boundary. Restoring `candidates`
+        # wholesale readmitted precisely the tasks task_passes_value_gate had just vetoed, so the
+        # veto was computed and discarded one line later.
+        #
+        # It stayed invisible because _value_tier_repos() defaults its file to
+        # ~/Workspace/limen/value-repos.json: on the operator's host that file exists, the gate
+        # reads CONFIGURED, and the filter survives. On a CI runner or any fresh clone it does
+        # not, the gate reads UNCONFIGURED, and client work walked back into the candidate list.
+        # A confidentiality boundary that holds only where a home-directory path happens to
+        # resolve is not a boundary.
+        gated = [task for task in candidates if heuristics_may_promote(task.repo)]
     if disk_pressure:
         focused = [task for task in gated if _dispatch_focus_bucket(task, value_repos) == 0]
         if focused:
@@ -1608,7 +1672,10 @@ def _record_model_selection(
 
 
 def resolve_agent() -> str:
-    return canonical_agent(os.environ.get("LIMEN_AGENT", "claude"))
+    agent = canonical_agent(os.environ.get("LIMEN_AGENT"))
+    if not agent:
+        raise RuntimeError("LIMEN_AGENT identity is required for generic dispatch")
+    return agent
 
 
 def session_id() -> str:
@@ -2048,6 +2115,10 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
     except FileNotFoundError:
         print(f"  dispatch command not found: {cmd[0]}")
         return False
+    except StableAgentHostError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+        return _blocked_result(reason)
     except subprocess.TimeoutExpired:
         print(f"  timed out: {task.id}")
         return False
@@ -2493,6 +2564,159 @@ class WorkstreamLaunchContractError(RuntimeError):
 
 class ProviderSelectionError(RuntimeError):
     """A provider override cannot be validated against live provider metadata."""
+
+
+class StableAgentHostError(RuntimeError):
+    """A macOS local lane cannot enter the fixed responsibility identity."""
+
+
+def _stable_agent_host_lifetime_fds(
+    env: Mapping[str, str],
+    *,
+    required: bool = False,
+) -> tuple[int, ...]:
+    lifetime_raw = env.get("DOMUS_AGENT_HOST_LIFETIME_FD")
+    if not lifetime_raw:
+        if required:
+            raise StableAgentHostError("Domus agent host marker has no lifetime descriptor")
+        return ()
+    identity = env.get("DOMUS_AGENT_HOST_LIFETIME_ID")
+    if not identity:
+        raise StableAgentHostError("Domus agent host marker has no lifetime identity")
+    try:
+        lifetime_fd = int(lifetime_raw)
+        metadata = os.fstat(lifetime_fd)
+    except (OSError, TypeError, ValueError) as exc:
+        raise StableAgentHostError("Domus agent host lifetime descriptor is invalid") from exc
+    identity_parts = identity.rsplit(":", 2)
+    try:
+        handle, device_raw, inode_raw = identity_parts
+        device = int(device_raw)
+        inode = int(inode_raw)
+    except (TypeError, ValueError) as exc:
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid") from exc
+    if (
+        len(identity_parts) != 3
+        or not re.fullmatch(r"[0-9a-fA-F]{16}", handle)
+        or not stat.S_ISFIFO(metadata.st_mode)
+        or metadata.st_dev != device
+        or metadata.st_ino != inode
+    ):
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid")
+    return (lifetime_fd,)
+
+
+def _validate_stable_agent_host_contract(host_path: Path) -> None:
+    try:
+        completed = subprocess.run(
+            [str(host_path), "status", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        payload = json.loads(completed.stdout or "")
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}") from exc
+    if not isinstance(payload, dict):
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}")
+    try:
+        resolved_host = host_path.resolve(strict=True)
+        reported_executable = Path(str(payload.get("executable_path", ""))).resolve(strict=True)
+        application = Path(str(payload.get("bundle_path", ""))).resolve(strict=True)
+        if (
+            resolved_host != reported_executable
+            or resolved_host.parent.name != "MacOS"
+            or resolved_host.parent.parent.name != "Contents"
+            or resolved_host.parents[2] != application
+            or application.suffix != ".app"
+        ):
+            raise OSError("stable-host status paths disagree")
+        receipt = application.parent / f".{application.stem}.designated-requirement"
+        receipt_lines = receipt.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}") from exc
+    designated_requirement = str(payload.get("designated_requirement", "")).strip()
+    if (
+        completed.returncode != 0
+        or payload.get("schema") != "domus.agent_host_status.v1"
+        or payload.get("ok") is not True
+        or payload.get("bundle_id") != "org.organvm.domus.agent-host"
+        or payload.get("stable_path") is not True
+        or payload.get("signature_valid") is not True
+        or not designated_requirement
+        or len(receipt_lines) != 1
+        or receipt_lines[0].strip() != designated_requirement
+        or not re.fullmatch(r"[0-9a-fA-F]{40,128}", str(payload.get("cdhash", "")))
+    ):
+        raise StableAgentHostError(f"stable Domus agent host contract is invalid: {host_path}")
+
+
+def _stable_agent_host_path(values: Mapping[str, str]) -> Path:
+    configured = values.get("LIMEN_AGENT_HOST_BIN") or values.get("DOMUS_AGENT_HOST_BIN")
+    host = configured or shutil.which("domus-agent-host", path=values.get("PATH"))
+    if not host:
+        host = str(
+            Path(values.get("HOME", str(Path.home()))) / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
+        )
+    if host == "~":
+        return Path(values.get("HOME", str(Path.home())))
+    if host.startswith("~/"):
+        return Path(values.get("HOME", str(Path.home()))) / host[2:]
+    return Path(host).expanduser()
+
+
+def _validate_stable_agent_host_lifetime(
+    host_path: Path,
+    env: Mapping[str, str],
+    lifetime_fds: tuple[int, ...],
+) -> None:
+    try:
+        completed = subprocess.run(
+            [str(host_path), "verify-lifetime"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+            env=dict(env),
+            pass_fds=lifetime_fds,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid") from exc
+    if completed.returncode != 0:
+        raise StableAgentHostError("Domus agent host lifetime identity is invalid")
+
+
+def _stable_agent_host_command(
+    command: list[str],
+    env: Mapping[str, str] | None = None,
+    *,
+    platform_name: str | None = None,
+) -> list[str]:
+    """Wrap one local provider launch in the stable macOS responsibility host.
+
+    The native host inherits Limen's process group and supervises providers in
+    its own child group, so ``_run_capture`` retains whole-tree timeout semantics
+    through native signal forwarding. A process already below the host is
+    returned unchanged; nested hosts would obscure lifecycle receipts.
+    """
+
+    values = os.environ if env is None else env
+    observed_platform = sys.platform if platform_name is None else platform_name
+    if observed_platform != "darwin":
+        return list(command)
+    host_path = _stable_agent_host_path(values)
+    if values.get("DOMUS_AGENT_HOST_ACTIVE") == "1":
+        lifetime_fds = _stable_agent_host_lifetime_fds(values, required=True)
+        if not host_path.is_file() or not os.access(host_path, os.X_OK):
+            raise StableAgentHostError(f"stable Domus agent host is unavailable: {host_path}")
+        _validate_stable_agent_host_contract(host_path)
+        _validate_stable_agent_host_lifetime(host_path, values, lifetime_fds)
+        return list(command)
+    if not host_path.is_file() or not os.access(host_path, os.X_OK):
+        raise StableAgentHostError(f"stable Domus agent host is unavailable: {host_path}")
+    _validate_stable_agent_host_contract(host_path)
+    return [str(host_path), "run", "--", *command]
 
 
 def _option_values(argv: list[str], *names: str) -> list[str]:
@@ -4356,6 +4580,11 @@ def _run_isolated_agent(
             run_env["LIMEN_OPENCODE_CLOCK"] = "1"
             run_env["LIMEN_TASK_ID"] = task.id
         _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
+        supervised_cmd = _stable_agent_host_command(agent_cmd, run_env)
+    except StableAgentHostError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+        return _blocked_result(reason)
     except WorkstreamLaunchContractError as exc:
         reason = str(exc)
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
@@ -4364,7 +4593,12 @@ def _run_isolated_agent(
     max_retries = provider_health_policy().same_model_retries if agent == "opencode" else retry_count
     while True:
         try:
-            run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
+            run = _run_capture(
+                supervised_cmd,
+                cwd=str(wt),
+                timeout=lane_timeout,
+                env=run_env,
+            )
             # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
             # a fresh process re-reads the now-rotated token. ONE retry only.
             if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
@@ -4372,11 +4606,28 @@ def _run_isolated_agent(
                 try:
                     run_env = _lane_run_env(agent, wt, task)
                     _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
+                    supervised_cmd = _stable_agent_host_command(
+                        agent_cmd,
+                        run_env,
+                    )
+                except StableAgentHostError as exc:
+                    reason = str(exc)
+                    print(f"  BLOCKED {task.id}: {reason}; refusing an unstable auth-retry TCC principal")
+                    return _blocked_result(reason)
                 except WorkstreamLaunchContractError as exc:
                     reason = str(exc)
                     print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
                     return _workstream_successor_result(reason)
-                run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
+                run = _run_capture(
+                    supervised_cmd,
+                    cwd=str(wt),
+                    timeout=lane_timeout,
+                    env=run_env,
+                )
+        except StableAgentHostError as exc:
+            reason = str(exc)
+            print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+            return _blocked_result(reason)
         except subprocess.TimeoutExpired:
             if agent == "opencode":
                 _record_opencode_outcome(
@@ -4953,6 +5204,13 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | Pla
         print(f"  BLOCKED {task.id}: {reason}")
         return False
     cmd = [binary, *agent_args, _build_prompt(task)]
+    if not dry_run:
+        try:
+            cmd = _stable_agent_host_command(cmd)
+        except StableAgentHostError as exc:
+            reason = str(exc)
+            print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
+            return _blocked_result(reason)
     return _run_cmd(cmd, task, dry_run, cwd=str(cwd))
 
 
@@ -5703,17 +5961,14 @@ def _claude_tier_for(task: Task | None) -> str:
         if pin == "fable":
             return _earned_fable_tier()
         return str(pin)
-    classes = _task_classes(task)
-    override = _claude_tier_overrides()
-    if classes & (_claude_fable_classes() | set(override.get("fable") or [])):
-        return _earned_fable_tier() if _claude_fable_acceptance_present() else _fable_fallback_tier()
-    if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
-        return "opus"
-    lane_data = _ledger_lanes().get("claude") or {}
-    waste = set(lane_data.get("waste_classes") or [])
-    if classes & (waste | set(override.get("sonnet") or [])):
-        return "sonnet"
-    return "haiku"
+    # The class sort itself lives in model_selection.tier_for_classes — the ONE ladder, so the
+    # STREAMS registry can derive a job_class's tier without importing dispatch. This function
+    # keeps what is genuinely task-local: the per-task pin above, and the two lane inputs below.
+    return tier_for_classes(
+        _task_classes(task),
+        waste_classes=(_ledger_lanes().get("claude") or {}).get("waste_classes") or (),
+        overrides=_claude_tier_overrides(),
+    )
 
 
 def _bump_tier(tier: str, task: Task | None) -> str:

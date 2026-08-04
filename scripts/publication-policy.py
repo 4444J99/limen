@@ -20,6 +20,11 @@ DOCTRINE (the source of truth this engine encodes):
     named third parties) on a PUBLIC surface stays OFF the public HEAD — preserved
     in git HISTORY (never deleted from the universe), just not on the live face.
     On a PRIVATE repo the same content is restore-and-redacted (kept, PII-scrubbed).
+    On a SHARED (collab) repo it stays off the head too: a private repo is a safe
+    home, a tree an invited collaborator can read is not.
+  - There are THREE audiences, not two — world / collab / self (2026-07-30). The
+    same axis ships as `persona: owner|client|public` in the surface-manifest
+    schema; both spellings normalize here (see the matrix header).
   - Autonomy is DERIVED from reversibility (the Censor's constitution): reversible
     -> auto; publish / flip-visibility / send -> his hand (the media-pillar boundary
     "mine, but the publish click is his").
@@ -141,6 +146,7 @@ def _has_live_secret(text: str | None) -> bool:
         return False
     return any(not _PLACEHOLDER_RX.search(m.group(0)) for m in _SECRET_RX.finditer(text))
 
+
 # test / fixture / mock paths — a secret-SHAPED string here is a PLANTED FIXTURE (a secret-scrubber's
 # own mock provider errors), never a live credential: real secrets live in the credential organ
 # (op:// / ~/.limen.env), never in the tree. Path-scoped exemption only — a shape match on any
@@ -212,29 +218,60 @@ def classify(path: str, text: str | None = None, owner: dict | None = None) -> t
 
 
 # ---------------------------------------------------------------------------
-# Disposition matrix: (visibility, class) -> (disposition, autonomy)
+# Disposition matrix: (audience, class) -> (disposition, autonomy)
 #   autonomy: "auto" (reversible, executive) | "his_lever" (publish/flip/rotate = his hand)
+#
+# THREE audiences, not two (2026-07-30, decision 4 of the PORTVS/ASTRA plan). Every surface faces
+# one of: the world, an invited collaborator, or nobody. The estate already ENFORCED the middle
+# tier in exactly one place without being able to name it — moat-audit's "a partner's eyes make the
+# tree exposed", which applies a zero-Actions-secrets rule to granted repos that world-public repos
+# never face, because a push collaborator can exfiltrate via a workflow edit.
+#
+# ONE vocabulary, three spellings. `spec/contracts/surface-manifest.schema.json` already owns this
+# axis as `persona: owner|client|public` (PUBLICATION-POLICY.md convergence row 3). The operator
+# names it world|collab|self. Both are accepted as INPUT and normalized here; the table keys stay
+# public/collab/private so no shipped row is renamed.
+#
+#   world  ≡ public  ≡ persona:public      collab ≡ persona:client       self ≡ private ≡ persona:owner
+#
+# The collab column differs from private in exactly ONE content cell — internal_strategy — and that
+# cell is the whole justification for the column: a private repo is a safe home, a SHARED tree is
+# not, because premortems, positioning and raw session dumps routinely discuss the very
+# collaborator who was invited in.
 # ---------------------------------------------------------------------------
 DISPOSITIONS = {
-    # class            (public,                 private)
+    # class            (public,                collab,                 private)
     "secret": {
         "public": ("REMOVE_ROTATE", "his_lever"),  # remove now (auto), rotation is the credential organ + his mint
+        # Unchanged, and if anything more urgent: a third party now HOLDS the credential.
+        "collab": ("REMOVE_ROTATE", "his_lever"),
         "private": ("REMOVE_ROTATE", "his_lever"),
     },
     "personal_pii": {
         "public": ("REDACT_IDENTIFIERS", "auto"),  # reversible, protective
+        # Same ACTION, honest NAME: the redactor is owner-scoped by construction, so on a shared
+        # tree it scrubs his identifiers and nothing else. The collaborator's own identifiers are a
+        # legitimate resident there; a THIRD party's are not, and nothing redacts them today.
+        # Reporting plain REDACT_IDENTIFIERS here would be a false assurance.
+        "collab": ("REDACT_OWNER_ONLY", "auto"),
         "private": ("REDACT_IDENTIFIERS", "auto"),
     },
     "internal_strategy": {
         "public": ("KEEP_OFF_PUBLIC_HEAD", "auto"),  # don't restore to public HEAD; history preserves it
+        "collab": ("KEEP_OFF_SHARED_HEAD", "auto"),  # a shared tree is NOT a safe home — see the header
         "private": ("RESTORE_REDACT", "auto"),  # private is a safe home: restore + redact identifiers
     },
     "product_content": {
         "public": ("LEAVE", "noop"),  # NEVER redact product emails / placeholders / 555 fixtures
+        "collab": ("LEAVE", "noop"),  # it is what the collaborator was invited for
         "private": ("LEAVE", "noop"),
     },
     "public_safe": {
         "public": ("PUBLISH", "his_lever"),  # the publish/flip-visibility click is his
+        # Still his. Autonomy derives from the reversibility of the action the disposition NAMES,
+        # and PUBLISH names the visibility flip — irreversible and outbound whether or not a
+        # collaborator is already inside.
+        "collab": ("PUBLISH", "his_lever"),
         "private": ("PUBLISH", "his_lever"),
     },
 }
@@ -242,18 +279,57 @@ DISPOSITIONS = {
 DISPOSITION_DOC = {
     "REMOVE_ROTATE": "Secret — remove from the tree now; rotation is the credential organ + a vendor mint (his).",
     "REDACT_IDENTIFIERS": "Scrub OWNER identifiers only (name/handle/home-path/convo-link); keep all substance.",
+    "REDACT_OWNER_ONLY": (
+        "Shared tree — scrub OWNER identifiers only. The invited collaborator's own identifiers are a "
+        "legitimate resident; THIRD-party identifiers are NOT covered by any redactor and stay unadjudicated."
+    ),
     "KEEP_OFF_PUBLIC_HEAD": "Internal strategy on a PUBLIC surface — keep OFF the public HEAD; git history is the residue (not deleted).",
+    "KEEP_OFF_SHARED_HEAD": (
+        "Internal strategy on a SHARED surface — keep OFF the head an invited collaborator can read. "
+        "A private repo is a safe home; a shared one is not (the material routinely discusses them)."
+    ),
     "RESTORE_REDACT": "Private repo is a safe home — restore the content and redact owner identifiers.",
     "LEAVE": "Product content (source, product contacts, UI placeholders, synthetic 555/example fixtures) — never touch.",
     "PUBLISH": "Public-safe — publishing / flipping visibility is HIS hand (the media-pillar boundary).",
 }
 
+# Every spelling of the three audiences -> the matrix column. `any` (the estate's contrib_fork /
+# frozen / archived classes) resolves to the STRICTEST column, never the most permissive.
+_AUDIENCE_ALIASES = {
+    "public": "public",
+    "world": "public",
+    "any": "public",
+    "collab": "collab",
+    "client": "collab",
+    "guest": "collab",
+    "private": "private",
+    "self": "private",
+    "owner": "private",
+}
+
+
+def audience_column(audience: str) -> str:
+    """Normalize any accepted audience spelling to a matrix column, or die.
+
+    This used to be `"public" if str(v).lower().startswith("pub") else "private"` — which silently
+    swallowed EVERY unrecognized value into the *permissive* column. `disposition("world", ...)`
+    returned RESTORE_REDACT ("private repo is a safe home") for something actually world-readable:
+    the most dangerous cell in the table, reached by a typo. Callers feed this from arbitrary
+    ledger JSON (`cmd_audit`) and from argv (`cmd_classify`), so an unknown value is a bug in the
+    caller and must say so rather than fail open.
+    """
+    key = str(audience).strip().lower()
+    col = _AUDIENCE_ALIASES.get(key)
+    if col is None:
+        raise SystemExit(f"unknown audience: {audience!r} (expected one of {sorted(_AUDIENCE_ALIASES)})")
+    return col
+
 
 def disposition(visibility: str, cls: str) -> tuple[str, str]:
-    v = "public" if str(visibility).lower().startswith("pub") else "private"
+    """(disposition, autonomy) for one (audience, class) pair. `visibility` accepts any spelling."""
     if cls not in DISPOSITIONS:
         raise SystemExit(f"unknown class: {cls!r} (expected one of {CLASSES})")
-    return DISPOSITIONS[cls][v]
+    return DISPOSITIONS[cls][audience_column(visibility)]
 
 
 # ---------------------------------------------------------------------------
@@ -436,7 +512,9 @@ def _check_convergence() -> list[str]:
     for rel_path, gate_name in _CONVERGENCE_GATES:
         target = ROOT / rel_path
         if not target.exists():
-            fails.append(f"convergence: {rel_path} — file missing; convergence table row ({gate_name}) cannot be verified")
+            fails.append(
+                f"convergence: {rel_path} — file missing; convergence table row ({gate_name}) cannot be verified"
+            )
             continue
         if GATE_REF not in target.read_text(encoding="utf-8", errors="replace"):
             fails.append(
@@ -560,6 +638,43 @@ def _self_test() -> list[str]:
     check(disposition("PUBLIC", "secret")[0] == "REMOVE_ROTATE", "secret disposition wrong")
     check(disposition("PUBLIC", "public_safe") == ("PUBLISH", "his_lever"), "publish disposition wrong")
     check(disposition("PUBLIC", "personal_pii") == ("REDACT_IDENTIFIERS", "auto"), "pii disposition wrong")
+    # 4b. the collab column — the middle audience the estate enforced without naming (2026-07-30).
+    # The cell that justifies the column: a SHARED tree is not the safe home a private repo is.
+    check(
+        disposition("collab", "internal_strategy") == ("KEEP_OFF_SHARED_HEAD", "auto"),
+        "collab strategy must stay off a shared head — a collaborator's tree is not a safe home",
+    )
+    check(
+        disposition("collab", "personal_pii") == ("REDACT_OWNER_ONLY", "auto"),
+        "collab PII must name the third-party gap, not report blanket REDACT_IDENTIFIERS",
+    )
+    check(disposition("collab", "secret")[0] == "REMOVE_ROTATE", "collab secret must never soften")
+    check(
+        disposition("collab", "public_safe") == ("PUBLISH", "his_lever"),
+        "an already-invited collaborator does not make the PUBLIC flip reversible",
+    )
+    check(disposition("collab", "product_content") == ("LEAVE", "noop"), "collab product disposition wrong")
+    # 4c. one axis, three spellings — his world|collab|self and the shipped persona|client|owner
+    # must land on the same cells, or the estate is running two vocabularies through one engine.
+    for a, b in (("world", "public"), ("client", "collab"), ("owner", "private"), ("self", "private")):
+        for cls_ in CLASSES:
+            check(
+                disposition(a, cls_) == disposition(b, cls_),
+                f"audience alias {a!r} must resolve identically to {b!r} for {cls_}",
+            )
+    # 4d. fail-CLOSED on an unknown audience. This was the live fail-open: anything not starting
+    # with "pub" collapsed to the permissive private column, so a typo bought RESTORE_REDACT
+    # ("safe home") on a world-readable tree. `any` must resolve to the STRICTEST column, not the
+    # loosest — verified against internal_strategy, the only row where the columns disagree.
+    check(
+        disposition("any", "internal_strategy")[0] == "KEEP_OFF_PUBLIC_HEAD",
+        "visibility 'any' must resolve to the strictest column",
+    )
+    try:
+        disposition("wrold", "secret")
+        check(False, "an unknown audience must raise, never collapse into a column")
+    except SystemExit:
+        pass
     # 5. convergence integrity — scattered gates still reference this rule table
     fails.extend(_check_convergence())
     return fails

@@ -185,15 +185,15 @@ def test_plist_drift_detected_and_reinstalled(tmp_path, monkeypatch):
     agents = tmp_path / "LaunchAgents"
     agents.mkdir()
     live = agents / "com.limen.heartbeat.plist"
-    live.write_text("<key>LIMEN_ASYNC_MAX</key><string>1</string>", encoding="utf-8")
+    live.write_text("<key>LIMEN_CAMPAIGN_WAKE_TIMEOUT</key><string>120</string>", encoding="utf-8")
     committed = tmp_path / "container" / "launchd" / "com.limen.heartbeat.plist"
     committed.parent.mkdir(parents=True)
-    committed.write_text("<key>LIMEN_ASYNC_MAX</key><string>10</string>", encoding="utf-8")
+    committed.write_text("<key>LIMEN_CAMPAIGN_WAKE_TIMEOUT</key><string>300</string>", encoding="utf-8")
     monkeypatch.setattr(module, "LAUNCH_AGENTS", agents)
     monkeypatch.setattr(module, "COMMITTED_PLIST", committed)
 
     drift = module.plist_drift()
-    assert drift == [{"key": "LIMEN_ASYNC_MAX", "live": "1", "committed": "10"}]
+    assert drift == [{"key": "LIMEN_CAMPAIGN_WAKE_TIMEOUT", "live": "120", "committed": "300"}]
 
     calls = []
     monkeypatch.setattr(module, "run", lambda args, timeout=10: calls.append(args) or _CP(args, rc=0))

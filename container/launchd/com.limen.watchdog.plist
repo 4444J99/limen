@@ -4,10 +4,10 @@
   The dead-man's switch. com.limen.heartbeat is KeepAlive=false (respawns on crash, but NOT if
   it is cleanly killed or wedges mid-beat). This supervisor closes that gap: launchd re-fires it
   every StartInterval REGARDLESS of how the prior run ended, so the watchdog itself can never
-  permanently die — and watchdog.py --heal `launchctl kickstart`s the heartbeat whenever it is
+  permanently die — and watchdog.py in heal mode `launchctl kickstart`s the heartbeat whenever it is
   down / not-beating / wedged. heartbeat + watchdog = the flame relights itself with no human hand.
 
-  Self-heal is double-gated by design (watchdog.py): --heal AND LIMEN_WATCHDOG_HEAL=1, both set
+  Self-heal is double-gated by design (watchdog.py): heal mode AND LIMEN_WATCHDOG_HEAL=1, both set
   here. Loading is his-hand (one launchctl bootstrap — see docs/NEEDS-HUMAN-DIGEST.md).
 -->
 <plist version="1.0">
@@ -16,10 +16,13 @@
     <string>com.limen.watchdog</string>
     <key>ProgramArguments</key>
     <array>
+        <string>/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost</string>
+        <string>run</string>
+        <string>--</string>
         <string>/bin/bash</string>
         <string>-c</string>
-        <!-- Mirror the heartbeat's PATH + pinned-venv interpreter so watchdog.py resolves the
-             SAME python3 the daemon uses (avoids the macOS TCC python prompt + import drift). -->
+        <!-- The versioned interpreter remains updateable, but protected I/O is attributed to
+             DomusAgentHost. -->
         <string>export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"; PY="$LIMEN_ROOT/.venv/bin/python3"; [ -x "$PY" ] || PY="$(command -v python3 || echo python3)"; exec "$PY" "$LIMEN_ROOT/scripts/watchdog.py" --heal</string>
     </array>
     <key>EnvironmentVariables</key>

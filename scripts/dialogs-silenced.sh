@@ -14,8 +14,9 @@
 # Exit 0  ⟺  every recurring dialog class is silenced (the done-predicate).
 set -uo pipefail
 
-# --agent-curable-only: count ONLY the classes that have a shipped beat effector (1b hook-drift,
-# 4 gatekeeper-cask, 4b lsregister-stub) toward the exit status. Human-gated classes (defaultMode /
+# --agent-curable-only: count the classes that have a shipped beat effector (1b hook-drift,
+# 4 gatekeeper-cask, 4b lsregister-stub) plus the stable-host identity invariant toward the exit
+# status. Human-gated classes (defaultMode /
 # ask-list / hook-wiring self-mod, 1Password, firewall) and the effectorless quarantined-binary case
 # still PRINT as advisory but do not fail this mode. This is the form the omega fixed point
 # (scripts/omega.sh) holds against: the bare predicate can never reach exit 0 while a self-mod class
@@ -33,10 +34,40 @@ curable_gaps=0    # subset with a shipped beat effector (drives the omega rung +
 green(){ printf '  \033[32m✓\033[0m %s\n' "$1"; }
 red(){   printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); }
 redx(){  printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); curable_gaps=$((curable_gaps+1)); }
+redb(){  printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); curable_gaps=$((curable_gaps+1)); }
 cure(){  printf '      ↳ %s\n' "$1"; }
 note(){  printf '      · %s\n' "$1"; }
+ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 
-echo "== dialogs-silenced — the four recurring permission classes =="
+echo "== dialogs-silenced — recurring permission classes + stable TCC identity =="
+echo
+
+# ── 0. macOS responsibility identity — updates rotate below one fixed native host. ──
+# This is the structural cure for version-path TCC churn. The audit is read-only and itself enters
+# through DomusAgentHost before opening TCC.db, so Python cannot become the new permission client.
+# It fails when update-disabling variables reappear, the fixed app/signature drifts, a post-deploy
+# Claude/Python/Homebrew/uv/Limen path becomes a TCC client, or a malformed Claude helper is
+# registered. Existing pre-containment rows remain an exact legacy_stale cleanup inventory.
+TCC_AUDIT="$ROOT/scripts/tcc-identity-audit"
+if [ ! -f "$TCC_AUDIT" ] || [ ! -r "$TCC_AUDIT" ] || [ ! -x "$TCC_AUDIT" ]; then
+  tcc_output="tcc-identity-audit wrapper is missing, unreadable, or not executable: $TCC_AUDIT"
+  tcc_status=69
+else
+  tcc_output="$("$TCC_AUDIT" --strict 2>&1)"
+  tcc_status=$?
+fi
+if [ "$tcc_status" -eq 0 ]; then
+  green "TCC identity: automatic updates enabled; stable DomusAgentHost valid; zero post-deploy versioned clients"
+else
+  redb "TCC identity invariant is not contained (audit exit $tcc_status)"
+  while IFS= read -r audit_line; do
+    [ -n "$audit_line" ] && note "$audit_line"
+  done <<EOF
+$tcc_output
+EOF
+  cure "Install/apply DomusAgentHost, route the named launch seam through it, then run: tcc-identity-audit --strict"
+  note "Never cure this by setting DISABLE_AUTOUPDATER, DISABLE_UPDATES, HOMEBREW_NO_AUTO_UPDATE, pinning a tool, resetting all TCC, or editing TCC.db."
+fi
 echo
 
 # ── 1. Claude Code in-app permission prompts — the highest-volume "asking permission". ──
@@ -50,14 +81,49 @@ except Exception:
 print((d.get("permissions") or {}).get("defaultMode", ""))
 PY
 )"
+# THE SURGICAL PATH IS A GREEN, NOT A CONSOLATION PRIZE (fixed 2026-07-31).
+# This class used to demand bypassPermissions for green, so the estate could NEVER reach
+# ALL CLEAR while holding the configuration the spec and IF-NO-MODAL actually recommend —
+# the predicate contradicted its own doctrine and manufactured a permanent red. `auto` with
+# the trust hook wired, the five ask rules in place, and autoMode.allow teaching the
+# classifier IS the ideal (never-hang-permission-spec §Design-consequences-2): it reaches
+# zero prompts on non-destructive work while KEEPING the instrument that measures it.
+surgical="$(python3 - "$SETTINGS" <<'PY' 2>/dev/null
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    print("no"); raise SystemExit
+perms = d.get("permissions") or {}
+want = {"Bash(git push* --force*)", "Bash(git push* -f*)", "Bash(rm:*)", "Bash(rmdir:*)", "Bash(shred:*)"}
+hooks = (d.get("hooks") or {}).get("PreToolUse") or []
+wired = any("allow-trusted-cd-git.sh" in str(h.get("command", ""))
+            for g in hooks for h in (g.get("hooks") or []))
+allow = ((perms.get("autoMode") or {}).get("allow") or [])
+ok = (perms.get("defaultMode") == "auto" and wired
+      and set(perms.get("ask") or []) == want
+      and bool(allow) and allow[0] == "$defaults")
+print("yes" if ok else "no")
+PY
+)"
 if [ "$mode" = "bypassPermissions" ]; then
   green "Claude prompts: permissions.defaultMode = bypassPermissions (no in-app prompts)"
+elif [ "$surgical" = "yes" ]; then
+  green "Claude prompts: the surgical estate is complete — defaultMode 'auto' + trust hook wired + five ask rules + autoMode.allow"
+  note "This is the RECOMMENDED terminal state, not a partial one: zero prompts on non-destructive"
+  note "  work, while destruction outside disposable paths, force-push and sudo still gate — and the"
+  note "  gauge that measures 'does it ask?' stays alive. bypassPermissions would delete that gauge."
 else
   red "Claude prompts: defaultMode is '${mode:-unset}' — Claude still asks for off-allowlist tools"
-  cure "Simplest total cure — edit $SETTINGS, inside \"permissions\": { … } add:  \"defaultMode\": \"bypassPermissions\","
+  cure "PREFER the surgical path (class 1d below): python3 scripts/heal-hook-wiring.py --apply"
   note "An AI cannot set this for you: disabling one's own approval gate is guard-railed by design."
   note "acceptEdits is NOT enough — it still prompts for Bash. bypassPermissions = truly zero prompts."
-  note "Surgical alternative, already homed as L-AGENT-BASH-PROMPT (#183): generalize the trust hook instead of full bypass."
+  note "But bypassPermissions is NOT recommended and is NOT this repo's contract (never-hang-permission-spec"
+  note "  §Design-consequences-2): it does not close the distance to the ideal, it DELETES the instrument —"
+  note "  you cannot measure 'does it ask?' where nothing can ask, and it silently un-gates the rm class that"
+  note "  once wiped the live checkout. Keep defaultMode 'auto'; make the hook good enough that auto never asks."
+  note "If you still want it: edit the CARTRIDGE SOURCE (domus-genoma private_dot_claude/settings.json.tmpl),"
+  note "  NOT $SETTINGS — that file is rendered and the next \`chezmoi apply\` overwrites a hand edit (Rule #6)."
 fi
 
 # ── 1b. Live-hook drift — deployed hooks must match the repo canonical sources. ──
@@ -66,7 +132,6 @@ fi
 # suppress the compound-cd guard, and only a hook `allow` preempts the destructive
 # ask rules for path-gated reap work — docs/never-hang-permission-spec.md). A stale
 # live copy silently reintroduces the prompt flood, so parity is a checked class.
-ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 for hf in allow-trusted-cd-git.sh insights-capture.sh; do
   canon="$ROOT/scripts/hooks/$hf"; live="$HOME/.claude/hooks/$hf"
   [ -f "$canon" ] || continue
@@ -103,7 +168,9 @@ if [ -z "$askdelta" ]; then
   green "Ask-list policy: the five destructive ask rules are exactly in place (fail-safe backstop)"
 else
   red "Ask-list policy drift: $askdelta"
-  cure "Restore permissions.ask in $SETTINGS to exactly the five rules: Bash(git push* --force*), Bash(git push* -f*), Bash(rm:*), Bash(rmdir:*), Bash(shred:*)."
+  cure "python3 scripts/heal-hook-wiring.py --apply   # same effector asserts these five in the CARTRIDGE SOURCE"
+  note "Exactly: Bash(git push* --force*), Bash(git push* -f*), Bash(rm:*), Bash(rmdir:*), Bash(shred:*)."
+  note "Assert them in domus-genoma private_dot_claude/settings.json.tmpl — $SETTINGS is rendered (Rule #6)."
 fi
 
 # ── 1d. Hook wiring — settings must actually run the trust hook on Bash PreToolUse. ──
@@ -113,9 +180,15 @@ try:
     d = json.load(open(sys.argv[1]))
 except Exception:
     print("no"); raise SystemExit
+# SUBSTRING, never endswith (fixed 2026-07-31). The wiring is a GUARDED invocation —
+#   H=$HOME/.claude/hooks/allow-trusted-cd-git.sh; [ -x "$H" ] && "$H" || true
+# so a machine without the hook deployed cannot error. That command ends in `|| true`, so
+# the old endswith test reported NOT WIRED against a correctly wired, live, working gate —
+# measured on the first successful arming. A sensor that only recognises one spelling of a
+# correct state manufactures phantom work; match the hook's identity, not its call syntax.
 for m in (d.get("hooks") or {}).get("PreToolUse") or []:
     for h in m.get("hooks") or []:
-        if str(h.get("command", "")).endswith("/.claude/hooks/allow-trusted-cd-git.sh"):
+        if "allow-trusted-cd-git.sh" in str(h.get("command", "")):
             print("yes"); raise SystemExit
 print("no")
 PY
@@ -123,8 +196,15 @@ PY
 if [ "$wired" = "yes" ]; then
   green "Hook wired: hooks.PreToolUse runs ~/.claude/hooks/allow-trusted-cd-git.sh"
 else
+  # `red`, NOT `redx`: the effector below exists, but the auto-mode classifier blocks the AGENT
+  # from running it (verified 2026-07-31 — the block covers the chezmoi SOURCE, not just the
+  # rendered target). So this class has a shipped cure but no agent-executable path; counting it
+  # curable would wedge --agent-curable-only and the omega fixed point forever.
   red "Trust hook NOT wired in $SETTINGS hooks.PreToolUse — the compound-cd guard floods every fleet job"
-  cure "Add hooks.PreToolUse matcher \"Bash\" -> command \$HOME/.claude/hooks/allow-trusted-cd-git.sh to $SETTINGS (one paste; agent self-edit of permission files is classifier-blocked)."
+  cure "python3 scripts/heal-hook-wiring.py --apply   # effector: asserts hook + ask + autoMode in the CARTRIDGE SOURCE, then chezmoi apply"
+  note "$SETTINGS is RENDERED (owner: cartridge, mechanism: template — config-ownership.json)."
+  note "Editing it by hand is futile: the next \`chezmoi apply\` overwrites it. Fix the base, never the output (Rule #6)."
+  note "The effector is OPERATOR-ARMED and deliberately NOT beat-wired: an agent must never be the actor that widens its own gate."
 fi
 echo
 
@@ -180,9 +260,8 @@ echo
 # ── 4. Gatekeeper — "'claude' is an app downloaded from the Internet" (Dialog 6, 2026-07-04). ──
 # ROOT: a DUPLICATE install of Claude Code via a Homebrew cask. Casks (unlike bottled formulae)
 # stamp com.apple.quarantine on every download, so each cask upgrade = a fresh quarantined binary
-# at a new Caskroom path = a Gatekeeper first-open prompt — and `brew upgrade --greedy-auto-updates`
-# re-seeds it forever, silently defeating DISABLE_AUTOUPDATER (which only stops the native updater).
-# The sanctioned install is the native ~/.local/bin/claude (deliberate updates). Agent-curable.
+# at a new Caskroom path = a Gatekeeper first-open prompt. It is an independent rotating install,
+# not the sanctioned updater-managed native ~/.local/bin/claude. Agent-curable.
 if command -v brew >/dev/null 2>&1 && brew list --cask 2>/dev/null | grep -qx 'claude-code'; then
   redx "Gatekeeper: duplicate Homebrew cask 'claude-code' installed → quarantined per upgrade, prompts on first exec"
   cure "LIMEN_CASK_DUPLICATE_HEAL=1 bash scripts/heal-claude-cask.sh   # effector; or by hand: brew uninstall --cask claude-code (native ~/.local/bin/claude is the sanctioned install)"

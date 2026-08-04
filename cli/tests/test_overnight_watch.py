@@ -36,6 +36,16 @@ def _fresh_module(tmp_path, monkeypatch, **env):
     return module
 
 
+def _clear_heartbeat_budget_env(monkeypatch):
+    for name in (
+        "LIMEN_LOOP_MAX",
+        "LIMEN_CAMPAIGN_WAKE_TIMEOUT",
+        "LIMEN_WATCHDOG_OVERHEAD_SEC",
+        "LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+
 def _minimal_ok_snapshot():
     return {
         "status": "ok",
@@ -49,14 +59,74 @@ def _minimal_ok_snapshot():
     }
 
 
-def _launchd_output(*, state="active", async_env="1", lanes="auto"):
+def test_max_log_age_defaults_to_complete_heartbeat_cadence(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+
+    module = _fresh_module(tmp_path, monkeypatch)
+
+    assert module.MAX_LOG_AGE_SEC == 2730
+
+
+def test_complete_healthy_cadence_does_not_raise_stale_alert(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = {
+        "launchd": {"ok": True, "state": "active"},
+        "log_age_sec": 1800,
+        "heartbeat": {"latest_tick": {"timestamp": "2026-07-27T08:00:00+00:00"}},
+        "stale_tick_count": 0,
+        "worker_count": 0,
+        "heartbeat_child_count": 0,
+    }
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "ok"
+    assert alerts == []
+
+    snapshot["log_age_sec"] = module.MAX_LOG_AGE_SEC + 1
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {"heartbeat-log-stale"}
+
+
+def test_max_log_age_tracks_live_heartbeat_components(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+
+    module = _fresh_module(
+        tmp_path,
+        monkeypatch,
+        LIMEN_LOOP_MAX=120,
+        LIMEN_CAMPAIGN_WAKE_TIMEOUT=240,
+        LIMEN_WATCHDOG_OVERHEAD_SEC=480,
+    )
+
+    assert module.MAX_LOG_AGE_SEC == 870
+
+
+def test_explicit_max_log_age_override_wins(tmp_path, monkeypatch):
+    _clear_heartbeat_budget_env(monkeypatch)
+
+    module = _fresh_module(
+        tmp_path,
+        monkeypatch,
+        LIMEN_LOOP_MAX=120,
+        LIMEN_CAMPAIGN_WAKE_TIMEOUT=240,
+        LIMEN_WATCHDOG_OVERHEAD_SEC=480,
+        LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC=777,
+    )
+
+    assert module.MAX_LOG_AGE_SEC == 777
+
+
+def _launchd_output(*, state="active", campaign_timeout="300"):
     return f"""
 state = {state}
 pid = 4242
 last exit code = (never exited)
 environment = {{
-    LIMEN_DISPATCH_ASYNC => {async_env}
-    LIMEN_DISPATCH_LANES => {lanes}
+    LIMEN_CAMPAIGN_WAKE_TIMEOUT => {campaign_timeout}
 }}
 """
 
@@ -328,6 +398,16 @@ def test_missing_pause_marker_runs_normal_snapshot(tmp_path, monkeypatch):
     assert calls == [{"refresh_handoff": False, "record_gate": False, "submit_lane_switch": False}]
 
 
+def test_successful_bounded_lane_preserves_explicit_zero_exit(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = _minimal_ok_snapshot()
+    snapshot["status"] = "blocked"
+    snapshot["dispatch_control"] = {"allow_dispatch": False, "exit_code": 0}
+    monkeypatch.setattr(module, "build_snapshot", lambda **_kwargs: snapshot)
+
+    assert module.run_once(dry_run=True, json_output=False) == 0
+
+
 def test_existing_force_autonomy_override_runs_normal_snapshot(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_FORCE_AUTONOMY=1)
     module.PAUSE_MARKER.write_text("reason: overridden by governed escape hatch\n", encoding="utf-8")
@@ -417,16 +497,14 @@ def test_expected_env_mismatch_alerts(tmp_path, monkeypatch):
     module = _fresh_module(
         tmp_path,
         monkeypatch,
-        LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC=1,
-        LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES="auto",
+        LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT=300,
     )
-    _mock_launchd(module, monkeypatch, stdout=_launchd_output(async_env="0", lanes="codex"))
+    _mock_launchd(module, monkeypatch, stdout=_launchd_output(campaign_timeout="120"))
     _write_heartbeat(module)
 
     snapshot = module.build_snapshot()
     ids = {alert["id"] for alert in snapshot["alerts"]}
-    assert "heartbeat-async-env-mismatch" in ids
-    assert "heartbeat-lanes-env-mismatch" in ids
+    assert ids == {"heartbeat-campaign-timeout-env-mismatch"}
 
 
 def test_stale_handoff_blocks_new_dispatch(tmp_path, monkeypatch):
@@ -760,6 +838,201 @@ def test_lane_switch_drains_launches_exactly_one_and_is_idempotent(tmp_path, mon
     assert dispatch_calls[0][dispatch_calls[0].index("--task-id") + 1].startswith("AW-FIRST-")
     assert "--targeted-only" in dispatch_calls[0]
     assert "SECOND" not in first["packet"]["task_id"]
+
+
+def test_remote_lane_switch_uses_canonical_receipt_and_never_legacy_dispatch(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="REMOTE-BROKER", target_agent="jules", priority=1)
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+    expected = module.owner_task_from_item(item)
+    calls = []
+
+    class FakeHttp(module.HttpConductClient):
+        def __init__(self):
+            super().__init__("https://conduct.example", "test-token")
+
+    remote = FakeHttp()
+    monkeypatch.setattr(module, "client_from_env", lambda: remote)
+    monkeypatch.setattr(
+        module,
+        "fetch_canonical_task_projection",
+        lambda _task_id: type(
+            "Projection",
+            (),
+            {"task": None, "head_sha": "f" * 40},
+        )(),
+    )
+
+    def fake_drain(_board):
+        from limen.tabularius import DrainResult
+
+        return DrainResult(
+            pending=1,
+            applied=1,
+            wrote=False,
+            note="broker-committed",
+            projected_tasks={
+                expected.id: expected.model_dump(mode="json", exclude_none=True),
+            },
+        )
+
+    def fake_start(task, *, client):
+        calls.append((task, client))
+        return {
+            "schema_version": "limen.task_execution_start.v1",
+            "status": "launched",
+            "run_id": "run-remote",
+            "root_run_id": "run-remote",
+            "executor_session_id": "renamed-capability-executor",
+            "targeted_launch_count": 1,
+            "executor_wakes": [
+                {
+                    "session_id": "renamed-capability-executor",
+                    "adapter": "capability-runtime",
+                    "status": "woken",
+                }
+            ],
+            "unavailable_adapters": [],
+            "idempotent": False,
+        }
+
+    monkeypatch.setattr(module, "drain_once", fake_drain)
+    monkeypatch.setattr(module, "start_task_execution", fake_start)
+    monkeypatch.setattr(
+        module,
+        "run",
+        lambda args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError(f"remote broker path invoked legacy subprocess: {args}")
+        ),
+    )
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "launched"
+    assert result["execution_mode"] == "conduct"
+    assert result["targeted_launch_count"] == 1
+    assert result["next_command"].endswith("scripts/overnight-watch.py --dry-run --json")
+    assert calls == [(expected, remote)]
+    assert json.loads(module.TASKS_PATH.read_text(encoding="utf-8"))["tasks"] == []
+
+
+def test_remote_existing_task_resumes_from_sha_pinned_projection_without_new_ticket(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="REMOTE-RESUME", target_agent="jules", priority=1)
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+    expected = module.owner_task_from_item(item).model_copy(update={"status": "dispatched"})
+
+    class FakeHttp(module.HttpConductClient):
+        def __init__(self):
+            super().__init__("https://conduct.example", "test-token")
+
+    remote = FakeHttp()
+    monkeypatch.setattr(module, "client_from_env", lambda: remote)
+    monkeypatch.setattr(
+        module,
+        "fetch_canonical_task_projection",
+        lambda task_id: type(
+            "Projection",
+            (),
+            {"task": expected, "head_sha": "e" * 40},
+        )(),
+    )
+    monkeypatch.setattr(
+        module,
+        "drain_once",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("existing canonical task must not emit or drain another upsert")
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "start_task_execution",
+        lambda task, *, client: {
+            "schema_version": "limen.task_execution_start.v1",
+            "status": "already_running",
+            "run_id": "run-existing",
+            "root_run_id": "run-existing",
+            "executor_session_id": "runtime-renamed",
+            "targeted_launch_count": 1,
+            "executor_wakes": [{"session_id": "runtime-renamed", "adapter": "capability-runtime", "status": "woken"}],
+            "unavailable_adapters": [],
+            "idempotent": True,
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "run",
+        lambda args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError(f"remote resume invoked legacy subprocess: {args}")
+        ),
+    )
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "already_running"
+    assert result["owner_state"] == "dispatched"
+    assert result["ticket_count"] == 0
+    assert result["execution_mode"] == "conduct"
+    assert not list((module.LOGS / "tickets" / "inbox").glob("*.json"))
+
+
+def test_remote_missing_task_ignores_stale_local_projection_and_submits_canonical_upsert(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="REMOTE-STALE-LOCAL", target_agent="jules", priority=1)
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+    expected = module.owner_task_from_item(item)
+    module.TASKS_PATH.write_text(
+        json.dumps({"tasks": [expected.model_dump(mode="json", exclude_none=True)]}),
+        encoding="utf-8",
+    )
+    submitted = []
+
+    class FakeHttp(module.HttpConductClient):
+        def __init__(self):
+            super().__init__("https://conduct.example", "test-token")
+
+    remote = FakeHttp()
+    monkeypatch.setattr(module, "client_from_env", lambda: remote)
+    monkeypatch.setattr(
+        module,
+        "fetch_canonical_task_projection",
+        lambda _task_id: type("Projection", (), {"task": None, "head_sha": "d" * 40})(),
+    )
+
+    def fake_submit(task):
+        submitted.append(task)
+        return {
+            "status": "submitted",
+            "ticket_submitted": True,
+            "owner_state": "pending",
+        }
+
+    monkeypatch.setattr(module, "_submit_one_owner_task", fake_submit)
+    monkeypatch.setattr(
+        module,
+        "_drain_and_dispatch_one_owner_task",
+        lambda task, state, canonical_task=None: {
+            "status": "launched",
+            "execution_mode": "conduct",
+            "owner_state": "dispatched",
+            "targeted_launch_count": 1,
+        },
+    )
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "launched"
+    assert result["ticket_count"] == 1
+    assert submitted == [expected]
 
 
 def test_lane_switch_zero_launch_is_named_blocker(tmp_path, monkeypatch):
@@ -1220,6 +1493,25 @@ def test_lane_switch_next_command_uses_repo_owned_dispatch_script(tmp_path, monk
     assert argv[0] == os.sys.executable
     assert argv[1] == str(module.DISPATCH_ASYNC_SCRIPT)
     assert argv[argv.index("--execution-contract-hash") + 1] == module.execution_contract_hash(task)
+
+
+def test_launched_owner_packet_closes_generic_dispatch_with_success(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    dispatch = {"allow_dispatch": False, "exit_code": 20, "reason": "gate stopped"}
+
+    controlled = module.apply_lane_switch_control(
+        dispatch,
+        {
+            "requested": True,
+            "status": "launched",
+            "packet": {"task_id": "AW-SUBSTRATE-DISK-TEMP-fixture"},
+            "next_command": "python3 scripts/overnight-watch.py --dry-run --json",
+        },
+    )
+
+    assert controlled["allow_dispatch"] is False
+    assert controlled["exit_code"] == 0
+    assert "AW-SUBSTRATE-DISK-TEMP-fixture" in controlled["reason"]
 
 
 def test_alert_state_resolves(tmp_path, monkeypatch):

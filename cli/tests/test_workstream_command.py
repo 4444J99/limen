@@ -236,7 +236,12 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     assert events_capture.read_text(encoding="utf-8").splitlines() == ["push", "jules", "push"]
     kickstart = wt / ".limen-workstream" / "kickstart.sh"
     kickstart_text = kickstart.read_text(encoding="utf-8")
-    assert 'if [[ "$agent" != "jules" ]]; then\n  exec 9>&-\nfi' in kickstart_text
+    assert (
+        'if [[ "$agent" != "jules" ]]; then\n'
+        '  workstream_publish_admitted_receipt "$receipt" "$expected_branch" "$expected_slug"\n'
+        "  exec 9>&-\n"
+        "fi"
+    ) in kickstart_text
 
     original_receipt = receipt_path.read_text(encoding="utf-8")
     args_capture.unlink()
@@ -507,6 +512,302 @@ def test_shell_launcher_hands_off_to_generated_kickstart_without_a_tty(tmp_path:
     assert "# Continuation capsule: agent-launch" in prompt_capture.read_text(encoding="utf-8")
 
 
+def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    remote = tmp_path / "origin.git"
+    remote.mkdir()
+    _git("init", "--bare", "-q", cwd=remote)
+    _git("remote", "add", "origin", str(remote), cwd=repo)
+    _git("push", "-u", "origin", "main", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'branch="$(git branch --show-current)"\n'
+            'head="$(git rev-parse HEAD)"\n'
+            'remote_head="$(git ls-remote origin "refs/heads/$branch" | awk \'{print $1}\')"\n'
+            '[[ "$head" == "$remote_head" ]] || exit 42\n'
+            '[[ -z "$(git status --porcelain --untracked-files=all)" ]] || exit 43\n'
+            'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    events = tmp_path / "events.txt"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "EVENTS_CAPTURE": str(events),
+    }
+    command = [
+        "bash",
+        str(ROOT / "scripts" / "start-worktree-session.sh"),
+        "--autonomous",
+        "--agent",
+        "codex",
+        "--prompt",
+        "Publish the admitted receipt before provider launch.",
+        str(repo),
+        "Codex Admission Publication",
+    ]
+
+    launched = subprocess.run(command, env=env, text=True, capture_output=True, timeout=15, check=False)
+    assert launched.returncode == 0, launched.stdout + launched.stderr
+    wt = repo / ".worktrees" / "codex-admission-publication"
+    branch = "work/codex-admission-publication"
+    receipt_rel = "docs/continuations/codex-admission-publication/workstream.json"
+    first_head = _git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+    remote_head = _git("ls-remote", "origin", f"refs/heads/{branch}", cwd=wt).stdout.split()[0]
+    assert first_head == remote_head
+    assert _git("status", "--short", "--untracked-files=all", cwd=wt).stdout == ""
+    assert (
+        _git("log", "-1", "--format=%s", cwd=wt).stdout.strip()
+        == "docs: publish admitted codex-admission-publication runway"
+    )
+    assert _git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD", cwd=wt).stdout.strip() == receipt_rel
+    assert events.read_text(encoding="utf-8").splitlines() == ["provider"]
+
+    relaunched = subprocess.run(
+        ["bash", str(wt / ".limen-workstream" / "kickstart.sh")],
+        cwd=wt,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert relaunched.returncode == 0, relaunched.stdout + relaunched.stderr
+    assert _git("rev-parse", "HEAD", cwd=wt).stdout.strip() == first_head
+    assert events.read_text(encoding="utf-8").splitlines() == ["provider", "provider"]
+
+
+def test_codex_workstream_denies_provider_when_admitted_receipt_push_fails(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    remote = tmp_path / "origin.git"
+    remote.mkdir()
+    _git("init", "--bare", "-q", cwd=remote)
+    _git("remote", "add", "origin", str(remote), cwd=repo)
+    _git("push", "-u", "origin", "main", cwd=repo)
+    pre_receive = remote / "hooks" / "pre-receive"
+    pre_receive.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            "while read -r _old _new ref; do\n"
+            '  [[ "$ref" == "refs/heads/work/codex-publication-rejected" ]] && exit 1\n'
+            "done\n"
+        ),
+        encoding="utf-8",
+    )
+    pre_receive.chmod(0o755)
+    _git("config", "core.hooksPath", "hooks", cwd=remote)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        '#!/usr/bin/env bash\nprintf "provider\\n" > "$PROVIDER_MARKER"\n',
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    provider_marker = tmp_path / "provider-started"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "PROVIDER_MARKER": str(provider_marker),
+    }
+
+    rejected = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--autonomous",
+            "--agent",
+            "codex",
+            "--prompt",
+            "Fail closed when publication is rejected.",
+            str(repo),
+            "Codex Publication Rejected",
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert rejected.returncode != 0
+    assert "publication was confirmed absent or mismatched" in rejected.stdout + rejected.stderr
+    assert not provider_marker.exists()
+
+    pre_receive.unlink()
+    wt = repo / ".worktrees" / "codex-publication-rejected"
+    retried = subprocess.run(
+        ["bash", str(wt / ".limen-workstream" / "kickstart.sh")],
+        cwd=wt,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert retried.returncode == 0, retried.stdout + retried.stderr
+    assert provider_marker.read_text(encoding="utf-8") == "provider\n"
+    local_head = _git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+    remote_head = _git(
+        "ls-remote",
+        "origin",
+        "refs/heads/work/codex-publication-rejected",
+        cwd=wt,
+    ).stdout.split()[0]
+    assert local_head == remote_head
+
+
+def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "debug" && "${2:-}" == "models" ]]; then\n'
+            '  printf "catalog\\n" >> "$CATALOG_CAPTURE"\n'
+            "  printf '%s\\n' "
+            '\'{"models":[{"slug":"fixture-sol","supported_reasoning_levels":'
+            '[{"effort":"high"},{"effort":"ultra-fixture"}]}]}\'\n'
+            "  exit 0\n"
+            "fi\n"
+            'printf "%s\\n" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" '
+            '> "$SESSION_ARGS_CAPTURE"\n'
+            'last="${!#}"\n'
+            'printf "%s" "$last" > "$SESSION_PROMPT_CAPTURE"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    args_capture = tmp_path / "args.txt"
+    prompt_capture = tmp_path / "prompt.txt"
+    catalog_capture = tmp_path / "catalog.txt"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "SESSION_ARGS_CAPTURE": str(args_capture),
+        "SESSION_PROMPT_CAPTURE": str(prompt_capture),
+        "CATALOG_CAPTURE": str(catalog_capture),
+    }
+    launched = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--autonomous",
+            "--agent",
+            "codex",
+            "--model",
+            "fixture-sol",
+            "--reasoning-effort",
+            "ultra-fixture",
+            "--sandbox",
+            "danger-full-access",
+            "--prompt",
+            "Continue through the explicit primary profile.",
+            str(repo),
+            "Explicit Agent Launch",
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stdout + launched.stderr
+    assert catalog_capture.read_text(encoding="utf-8").splitlines() == ["catalog", "catalog"]
+    assert args_capture.read_text(encoding="utf-8").splitlines() == [
+        "--model",
+        "fixture-sol",
+        "--config",
+        'model_reasoning_effort="ultra-fixture"',
+        "--ask-for-approval",
+        "never",
+        "--sandbox",
+        "danger-full-access",
+        "exec",
+    ]
+    assert "# Continuation capsule: explicit-agent-launch" in prompt_capture.read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo / ".worktrees" / "explicit-agent-launch" / ".limen-workstream" / "workstream.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert contract["schema"] == "limen.workstream.contract.v2"
+    assert contract["primary_launch"] == {
+        "agent": "codex",
+        "model": "fixture-sol",
+        "reasoning_effort": "ultra-fixture",
+        "selection": "human_explicit",
+    }
+    assert contract["authorization"]["sandbox"] == "danger-full-access"
+    assert contract["authorization"]["approval_mode"] == "never"
+
+    invalid_profiles = [
+        ("Missing Model", "fixture-missing", "ultra-fixture", "danger-full-access", "not present"),
+        ("Missing Effort", "fixture-sol", "missing-effort", "danger-full-access", "does not support"),
+        ("Invalid Sandbox", "fixture-sol", "ultra-fixture", "host-everything", "sandbox"),
+    ]
+    for slug, model, effort, sandbox, message in invalid_profiles:
+        rejected = subprocess.run(
+            [
+                "bash",
+                str(ROOT / "scripts" / "start-worktree-session.sh"),
+                "--model",
+                model,
+                "--reasoning-effort",
+                effort,
+                "--sandbox",
+                sandbox,
+                "--prompt",
+                "This invalid profile must fail before render.",
+                str(repo),
+                slug,
+            ],
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=15,
+            check=False,
+        )
+        assert rejected.returncode == 2
+        assert message in rejected.stderr
+        assert not (repo / ".worktrees" / slug.lower().replace(" ", "-")).exists()
+
+
 def test_autonomous_workstream_requires_prompt_and_launches_with_dynamic_readme(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "demo repo"
     repo.mkdir()
@@ -622,7 +923,11 @@ def test_autonomous_workstream_requires_prompt_and_launches_with_dynamic_readme(
     assert "workstream_export_context" in kickstart_text
     assert "workstream_launch_native_agent" in kickstart_text
     assert "if [[ -t 0 && -t 1 ]]; then" in kickstart_text
-    assert 'exec "$binary" "$capsule_prompt"' in kickstart_text
+    # The generic lane exec now carries the lane tier pin expansion (s9-lane-tier-pin). With no pin
+    # the array is empty and bash expands it to NOTHING, so an unpinned launch is argv-identical to
+    # what it was before the pin existed.
+    assert 'exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" "$capsule_prompt"' in kickstart_text
+    assert "launch_lane_model=" in kickstart_text
     assert "IFS= read -r -d '' capsule_prompt" in kickstart_text
     assert '"$agent" "$registry_binary" "1" "$readme" "$allow_shell_fallback"' in kickstart_text
     assert "run-bounded" in kickstart_text
@@ -1061,6 +1366,397 @@ render_workstream_capsule \
     invalid = subprocess.run(["bash", str(kickstart)], cwd=wt, env=env, text=True, capture_output=True)
     assert invalid.returncode == 2
     assert "invalid capsule: missing or empty module" in invalid.stderr
+
+
+def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    events = tmp_path / "events.txt"
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text(
+        "#!/usr/bin/env bash\n"
+        'printf "register\\n" >> "$EVENTS_CAPTURE"\n'
+        'if [[ "${REGISTER_CONFLICT:-}" == "1" ]]; then\n'
+        '  printf "worktree is already owned by healthy session fixture-session\\n" >&2\n'
+        "  exit 75\n"
+        "fi\n"
+        'exit "${REGISTER_RC:-0}"\n',
+        encoding="utf-8",
+    )
+    fake_limen.chmod(0o755)
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        '#!/usr/bin/env bash\nprintf "provider\\n" >> "$EVENTS_CAPTURE"\nsleep 1\n',
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    fake_ps = fake_bin / "ps"
+    fake_ps.write_text('#!/usr/bin/env bash\nprintf "Sat Aug  2 00:00:00 2026\\n"\n', encoding="utf-8")
+    fake_ps.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(tmp_path / "missing-limen.env"))
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    rendered = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--autonomous",
+            "--conduct",
+            "--prompt",
+            "Prove conduct before admission.",
+            str(repo),
+            "Conduct Ordering",
+        ],
+    )
+    assert rendered.exit_code == 0, rendered.output
+
+    wt = repo / ".worktrees" / "conduct-ordering"
+    capsule = wt / ".limen-workstream"
+    kickstart = capsule / "kickstart.sh"
+    contract = capsule / "workstream.json"
+    identity = capsule / "capsule.identity"
+    receipt = wt / "docs" / "continuations" / "conduct-ordering" / "workstream.json"
+    protected = (contract, identity, receipt)
+    bytes_before = {path: path.read_bytes() for path in protected}
+    mtimes_before = {path: path.stat().st_mtime_ns for path in protected}
+
+    real_python = shutil.which("python3")
+    assert real_python is not None
+    fake_python = fake_bin / "python3"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        'if [[ "${2:-}" == "admit-identity" ]]; then\n'
+        '  printf "admit\\n" >> "$EVENTS_CAPTURE"\n'
+        "fi\n"
+        'exec "$REAL_PYTHON" "$@"\n',
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    launch_env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "EVENTS_CAPTURE": str(events),
+        "REAL_PYTHON": real_python,
+        "REGISTER_RC": "42",
+    }
+
+    rejected = subprocess.run(
+        ["bash", str(kickstart)],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rejected.returncode == 42
+    assert events.read_text(encoding="utf-8").splitlines() == ["register"]
+    assert {path: path.read_bytes() for path in protected} == bytes_before
+    assert {path: path.stat().st_mtime_ns for path in protected} == mtimes_before
+    assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
+
+    events.write_text("", encoding="utf-8")
+    launch_env["REGISTER_RC"] = "0"
+    launch_env["REGISTER_CONFLICT"] = "1"
+    already_running = subprocess.run(
+        ["bash", str(kickstart)],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert already_running.returncode == 0, already_running.stderr
+    assert "This workstream is already running." in already_running.stdout
+    assert events.read_text(encoding="utf-8").splitlines() == ["register"]
+    assert {path: path.read_bytes() for path in protected} == bytes_before
+
+    events.write_text("", encoding="utf-8")
+    launch_env.pop("REGISTER_CONFLICT")
+    launched = subprocess.run(
+        ["bash", str(kickstart)],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert launched.returncode == 0, launched.stderr
+    assert events.read_text(encoding="utf-8").splitlines() == [
+        "register",
+        "admit",
+        "admit",
+        "provider",
+    ]
+    assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is not None
+
+
+def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    events = tmp_path / "events.txt"
+    registration_attempts = tmp_path / "registration-attempts.txt"
+    provider_env = tmp_path / "provider-env.txt"
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text(
+        "#!/usr/bin/env bash\n"
+        'if [[ -z "${LIMEN_CONDUCT_URL:-}" || -z "${LIMEN_CONDUCT_TOKEN:-}" ]]; then exit 41; fi\n'
+        'attempts="$(cat "$REGISTRATION_ATTEMPTS_CAPTURE" 2>/dev/null || printf 0)"\n'
+        "attempts=$((attempts + 1))\n"
+        'printf "%s\\n" "$attempts" > "$REGISTRATION_ATTEMPTS_CAPTURE"\n'
+        'printf "register\\n" >> "$EVENTS_CAPTURE"\n'
+        'if [[ "$attempts" -eq 2 ]]; then exit 42; fi\n',
+        encoding="utf-8",
+    )
+    fake_limen.chmod(0o755)
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        "#!/usr/bin/env bash\n"
+        'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
+        'printf "credential=%s\\nkeepalive=%s\\nunrelated=%s\\n" '
+        '"${LIMEN_CONDUCT_TOKEN-unset}" "${LIMEN_CONDUCT_KEEPALIVE_PID:-}" '
+        '"${UNRELATED_PRIVATE_VALUE-unset}" > "$PROVIDER_ENV_CAPTURE"\n'
+        "sleep 5\n",
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    private_cache = tmp_path / "limen.env"
+    private_cache.write_text(
+        "export LIMEN_CONDUCT_URL=https://broker.example.invalid\n"
+        "export LIMEN_CONDUCT_TOKEN=fixture-only\n"
+        "export UNRELATED_PRIVATE_VALUE=must-not-be-imported\n",
+        encoding="utf-8",
+    )
+    private_cache.chmod(0o600)
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(private_cache))
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
+    monkeypatch.delenv("UNRELATED_PRIVATE_VALUE", raising=False)
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    rendered = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--autonomous",
+            "--conduct",
+            "--prompt",
+            "Keep the protected conductor live for the provider epoch.",
+            str(repo),
+            "Conduct Keepalive",
+        ],
+    )
+    assert rendered.exit_code == 0, rendered.output
+
+    wt = repo / ".worktrees" / "conduct-keepalive"
+    capsule = wt / ".limen-workstream"
+    launch_env = {
+        **os.environ,
+        "EVENTS_CAPTURE": str(events),
+        "REGISTRATION_ATTEMPTS_CAPTURE": str(registration_attempts),
+        "PROVIDER_ENV_CAPTURE": str(provider_env),
+        "LIMEN_CONDUCT_KEEPALIVE_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS": "1",
+    }
+    launched = subprocess.run(
+        ["bash", str(capsule / "kickstart.sh")],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert launched.returncode == 0, launched.stderr
+    observed_events = events.read_text(encoding="utf-8").splitlines()
+    assert observed_events[0] == "register"
+    assert observed_events.count("provider") == 1
+    assert observed_events.count("register") >= 4
+    assert int(registration_attempts.read_text(encoding="utf-8")) >= 4
+    provider_values = dict(line.split("=", 1) for line in provider_env.read_text(encoding="utf-8").splitlines())
+    assert provider_values["credential"] == "unset"
+    assert provider_values["keepalive"].isdigit()
+    assert provider_values["unrelated"] == "unset"
+
+    status_path = capsule / "conduct-keepalive.json"
+    deadline = time.monotonic() + 5
+    status = {}
+    while time.monotonic() < deadline:
+        if status_path.exists():
+            status = json.loads(status_path.read_text(encoding="utf-8"))
+            if status.get("state") == "stopped":
+                break
+        time.sleep(0.1)
+    assert status["schema"] == "limen.workstream.conduct-keepalive.v1"
+    assert status["state"] == "stopped"
+    assert status["refresh_count"] >= 3
+    assert status["last_failure_epoch"] is not None
+    assert status["last_success_epoch"] >= status["last_failure_epoch"]
+    assert status["detail"] == "provider process exited or changed identity"
+    assert status_path.stat().st_mode & 0o777 == 0o600
+    assert ".limen-workstream" not in _git("status", "--short", cwd=wt).stdout
+
+    status_path.unlink()
+    outside_status = tmp_path / "outside-status.json"
+    status_path.symlink_to(outside_status)
+    denied = subprocess.run(
+        ["bash", str(capsule / "kickstart.sh")],
+        cwd=wt,
+        env=launch_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert denied.returncode != 0
+    assert "keepalive did not acknowledge" in denied.stderr
+    assert events.read_text(encoding="utf-8").splitlines().count("provider") == 1
+    assert not outside_status.exists()
+
+
+def test_kickstart_wrapper_imports_only_the_broker_pair(tmp_path: Path) -> None:
+    cache = tmp_path / "limen.env"
+    cache.write_text(
+        "export LIMEN_CONDUCT_URL=https://broker.example.invalid\n"
+        "export LIMEN_CONDUCT_TOKEN=fixture-only\n"  # allow-secret: inert regression fixture
+        "export UNRELATED_PRIVATE_VALUE=must-not-be-imported\n",
+        encoding="utf-8",
+    )
+    cache.chmod(0o600)
+    capture = tmp_path / "capture.txt"
+    kickstart = tmp_path / "kickstart.sh"
+    kickstart.write_text(
+        "#!/usr/bin/env bash\n"
+        'printf "url=%s\\ntoken=%s\\nunrelated=%s\\n" '
+        '"${LIMEN_CONDUCT_URL-unset}" "${LIMEN_CONDUCT_TOKEN-unset}" '
+        '"${UNRELATED_PRIVATE_VALUE-unset}" > "$CAPTURE"\n',
+        encoding="utf-8",
+    )
+    env = {
+        **os.environ,
+        "CAPTURE": str(capture),
+        "LIMEN_CONDUCT_ENV_FILE": str(cache),
+    }
+    env.pop("LIMEN_CONDUCT_URL", None)
+    env.pop("LIMEN_CONDUCT_TOKEN", None)
+    env.pop("UNRELATED_PRIVATE_VALUE", None)
+
+    launched = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "run-workstream-kickstart.sh"), str(kickstart)],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stderr
+    assert capture.read_text(encoding="utf-8").splitlines() == [
+        "url=https://broker.example.invalid",
+        "token=fixture-only",  # allow-secret: inert regression fixture
+        "unrelated=unset",
+    ]
+
+
+def test_kickstart_wrapper_noops_for_a_fresh_live_capsule_session(tmp_path: Path) -> None:
+    capsule = tmp_path / ".limen-workstream"
+    capsule.mkdir()
+    capture = tmp_path / "provider-started"
+    now = int(time.time())
+    holder = subprocess.Popen(["sleep", "30"])
+    try:
+        (capsule / "conduct-keepalive.json").write_text(
+            json.dumps(
+                {
+                    "schema": "limen.workstream.conduct-keepalive.v1",
+                    "session_id": "fixture-active-session",
+                    "state": "active",
+                    "target_pid": holder.pid,
+                    "keepalive_pid": holder.pid,
+                    "deadline_epoch": now + 600,
+                    "observed_epoch": now,
+                }
+            ),
+            encoding="utf-8",
+        )
+        kickstart = capsule / "kickstart.sh"
+        kickstart.write_text('#!/usr/bin/env bash\n: > "$CAPTURE"\n', encoding="utf-8")
+
+        launched = subprocess.run(
+            ["bash", str(ROOT / "scripts" / "run-workstream-kickstart.sh"), str(kickstart)],
+            env={**os.environ, "CAPTURE": str(capture)},
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        assert launched.returncode == 0, launched.stderr
+        assert launched.stdout.strip() == (
+            "This workstream is already running. Continue in its existing session; no second process was started."
+        )
+        assert not capture.exists()
+    finally:
+        holder.terminate()
+        holder.wait(timeout=2)
+
+
+def test_kickstart_wrapper_does_not_mask_a_stale_keepalive_receipt(tmp_path: Path) -> None:
+    capsule = tmp_path / ".limen-workstream"
+    capsule.mkdir()
+    capture = tmp_path / "provider-started"
+    now = int(time.time())
+    (capsule / "conduct-keepalive.json").write_text(
+        json.dumps(
+            {
+                "schema": "limen.workstream.conduct-keepalive.v1",
+                "session_id": "fixture-stale-session",
+                "state": "active",
+                "target_pid": os.getpid(),
+                "keepalive_pid": os.getppid(),
+                "deadline_epoch": now + 600,
+                "observed_epoch": now - 361,
+            }
+        ),
+        encoding="utf-8",
+    )
+    kickstart = capsule / "kickstart.sh"
+    kickstart.write_text('#!/usr/bin/env bash\n: > "$CAPTURE"\n', encoding="utf-8")
+
+    launched = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "run-workstream-kickstart.sh"), str(kickstart)],
+        env={**os.environ, "CAPTURE": str(capture)},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stderr
+    assert launched.stdout == ""
+    assert capture.exists()
 
 
 def test_workstream_refuses_an_ignored_tracked_receipt_path(tmp_path: Path, monkeypatch) -> None:

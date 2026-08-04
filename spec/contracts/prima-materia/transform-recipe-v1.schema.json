@@ -1,0 +1,156 @@
+{
+  "$defs": {
+    "EncryptedPayloadRefV1": {
+      "additionalProperties": false,
+      "properties": {
+        "chunk_manifest_digest": {
+          "title": "Chunk Manifest Digest",
+          "type": "string"
+        },
+        "ciphertext_bytes": {
+          "minimum": 0,
+          "title": "Ciphertext Bytes",
+          "type": "integer"
+        },
+        "ciphertext_sha256": {
+          "title": "Ciphertext Sha256",
+          "type": "string"
+        },
+        "encryption_profile_digest": {
+          "title": "Encryption Profile Digest",
+          "type": "string"
+        },
+        "object_id": {
+          "title": "Object Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.encrypted_payload_ref.v1",
+          "default": "limen.encrypted_payload_ref.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "object_id",
+        "ciphertext_sha256",
+        "encryption_profile_digest",
+        "chunk_manifest_digest",
+        "ciphertext_bytes"
+      ],
+      "title": "EncryptedPayloadRefV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "code_digest": {
+      "title": "Code Digest",
+      "type": "string"
+    },
+    "config_digest": {
+      "title": "Config Digest",
+      "type": "string"
+    },
+    "environment_digest": {
+      "title": "Environment Digest",
+      "type": "string"
+    },
+    "input_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 4096,
+      "minItems": 1,
+      "title": "Input Digests",
+      "type": "array"
+    },
+    "original_output_refs": {
+      "items": {
+        "$ref": "#/$defs/EncryptedPayloadRefV1"
+      },
+      "title": "Original Output Refs",
+      "type": "array"
+    },
+    "output_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 4096,
+      "minItems": 1,
+      "title": "Output Digests",
+      "type": "array"
+    },
+    "parameters": {
+      "additionalProperties": true,
+      "title": "Parameters",
+      "type": "object"
+    },
+    "randomness_declaration": {
+      "title": "Randomness Declaration",
+      "type": "string"
+    },
+    "recipe_id": {
+      "title": "Recipe Id",
+      "type": "string"
+    },
+    "replay_class": {
+      "enum": [
+        "exact",
+        "semantic",
+        "observable_only"
+      ],
+      "title": "Replay Class",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.transform_recipe.v1",
+      "default": "limen.transform_recipe.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "semantic_equivalence_predicate": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Semantic Equivalence Predicate"
+    },
+    "time_declaration": {
+      "title": "Time Declaration",
+      "type": "string"
+    },
+    "tool_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 256,
+      "title": "Tool Digests",
+      "type": "array"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "recipe_id",
+    "version",
+    "input_digests",
+    "code_digest",
+    "config_digest",
+    "environment_digest",
+    "randomness_declaration",
+    "time_declaration",
+    "output_digests",
+    "replay_class"
+  ],
+  "title": "TransformRecipeV1",
+  "type": "object"
+}

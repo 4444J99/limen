@@ -46,6 +46,7 @@ function session(agent, {
   heartbeatAt = NOW,
   protectedSession = false,
   worktree = null,
+  supersedes = null,
 } = {}) {
   const ident = identity(agent, sessionId);
   return validateSession({
@@ -58,6 +59,7 @@ function session(agent, {
     registered_at: heartbeatAt.toISOString(),
     heartbeat_at: heartbeatAt.toISOString(),
     human_protected: protectedSession,
+    supersedes,
   }, heartbeatAt);
 }
 
@@ -83,6 +85,7 @@ async function packet({
   maxAttempts = 2,
   transientOnly = true,
   underwritten = true,
+  campaign = null,
   deadline = new Date(NOW.getTime() + 60 * 60 * 1000),
 } = {}) {
   return validateWorkPacket({
@@ -109,6 +112,7 @@ async function packet({
       external_deadline: false,
       due_at: null,
     } : null,
+    campaign,
     authority: authority || {
       actions: ["code", "review"],
       repositories: ["organvm/limen"],
@@ -124,6 +128,40 @@ async function packet({
     effect,
     task_id: taskId,
   });
+}
+
+function campaignPacket(campaignId = "github:organvm/limen:issue:1571") {
+  return {
+    schema_version: "limen.campaign_packet.v1",
+    campaign_id: campaignId,
+    failed_predicate: "python3 scripts/omega.sh --strict",
+    owner: "github:organvm/limen:issue:1571",
+    next_action: "Repair the typed failing rung and rerun its exact predicate",
+    output_ceiling_bytes: 4096,
+  };
+}
+
+function campaignReceipt(
+  campaignId = "github:organvm/limen:issue:1571",
+  outputCeilingBytes = 4096,
+) {
+  return {
+    schema_version: "limen.campaign_receipt.v1",
+    campaign_id: campaignId,
+    actual_value: 1,
+    value_unit: "predicate_passes",
+    output: {
+      schema_version: "limen.campaign_output_evidence.v1",
+      output_ceiling_bytes: outputCeilingBytes,
+      bytes_emitted: 2,
+      lines_emitted: 1,
+      sha256: "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+      truncated: false,
+    },
+    blocker: null,
+    successor_capsule: null,
+    boundary: "continue",
+  };
 }
 
 async function taskPacket({
@@ -227,6 +265,77 @@ test("conduct auth fails closed without a principal registry and derives identit
   assert.equal(auth.ok, true);
   assert.equal(auth.principal.principal_id, "codex-cloud");
   assert.equal("bearer" in auth.principal, false);
+});
+
+test("task-run lookup reuses one broker-owned execution and rejects ambiguous active runs", async () => {
+  const codex = session("codex");
+  const jules = session("jules", { capabilities: ["code", "review"] });
+  const { service, store } = await serviceWith([codex, jules]);
+  const first = await service.call("submit", {
+    packet: await packet({
+      workId: "task-run-one",
+      conductor: codex.identity,
+      preferredAgent: "jules",
+      taskId: "TASK-RUN",
+    }),
+  });
+
+  assert.deepEqual(await service.call("task_run", { task_id: "MISSING" }), {
+    schema_version: "limen.conduct_task_run.v1",
+    task_id: "MISSING",
+    found: false,
+  });
+  assert.deepEqual(await service.call("task_run", { task_id: "TASK-RUN" }), {
+    schema_version: "limen.conduct_task_run.v1",
+    task_id: "TASK-RUN",
+    found: true,
+    run_id: first.run_id,
+    root_run_id: first.root_run_id,
+    status: "reserved",
+    executor_session_id: jules.session_id,
+    exact_base: null,
+    receipt_count: 0,
+    updated_at: NOW.toISOString(),
+  });
+
+  const state = store.snapshot();
+  const duplicate = structuredClone(state.runs[first.run_id]);
+  duplicate.run_id = "run-ambiguous-task";
+  duplicate.root_run_id = "run-ambiguous-task";
+  state.runs[duplicate.run_id] = duplicate;
+  await store.save(state);
+  await assert.rejects(
+    service.call("task_run", { task_id: "TASK-RUN" }),
+    /multiple active conduct runs/,
+  );
+});
+
+test("task-run HTTP route exposes the bounded lookup to conductor principals", async () => {
+  const durable = Object.create(ConductKeeperDurableObject.prototype);
+  durable.env = {};
+  const calls = [];
+  durable.service = {
+    async call(operation, payload) {
+      calls.push([operation, payload]);
+      return {
+        schema_version: "limen.conduct_task_run.v1",
+        task_id: payload.task_id,
+        found: false,
+      };
+    },
+  };
+  const response = await durable.route(
+    new Request("https://limen.example/api/conduct/tasks/HTTP-TASK/run"),
+    principalMeta("route-conductor", "codex", ["conductor"]),
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    schema_version: "limen.conduct_task_run.v1",
+    task_id: "HTTP-TASK",
+    found: false,
+  });
+  assert.deepEqual(calls, [["task_run", { task_id: "HTTP-TASK" }]]);
 });
 
 test("principal-bound executor claims are recoverable and secret from conductors", async () => {
@@ -641,6 +750,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
     resource: "task/fanout-root",
     effect: "read",
     spendLimit: 2,
+    campaign: campaignPacket(),
   });
   const root = await validateWorkPacket({
     ...rootTemplate,
@@ -662,6 +772,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
     rootRunId,
     depth: 1,
     spendLimit: 1,
+    campaign: campaignPacket(),
   });
   const secondTemplate = await packet({
     workId: "fanout-second",
@@ -671,6 +782,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
     rootRunId,
     depth: 1,
     spendLimit: 1,
+    campaign: campaignPacket(),
   });
   const second = await validateWorkPacket({
     ...secondTemplate,
@@ -704,6 +816,7 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
         predicate: { command: "pytest -q", exit_code: 0 },
         spend: { runs: 1 },
         child_runs: [],
+        campaign: campaignReceipt(),
         outcome: "succeeded",
       }, NOW),
     });
@@ -719,6 +832,14 @@ test("fanout graph serializes dependency claims and settles its keeper root", as
   assert.deepEqual(terminal.by_status, { succeeded: 3 });
   assert.deepEqual(terminal.unharvested, []);
   assert.equal(terminal.receipt_count, 3);
+  const terminalGraph = await service.call("graph", { run_id: rootRunId });
+  const rootReceipt = terminalGraph.nodes
+    .find((node) => node.packet.work_id === "fanout-root").receipts[0];
+  assert.deepEqual(rootReceipt.spend, { runs: 2 });
+  assert.equal(rootReceipt.campaign.actual_value, 2);
+  assert.equal(rootReceipt.campaign.boundary, "settled");
+  assert.equal(rootReceipt.campaign.blocker, null);
+  assert.equal(rootReceipt.campaign.successor_capsule, null);
 });
 
 test("registration timestamps are server-owned while protection and healthy worktree ownership are sticky", async () => {
@@ -755,6 +876,80 @@ test("registration timestamps are server-owned while protection and healthy work
     }),
     /worktree is already owned by healthy session sticky-session/,
   );
+});
+
+test("succession replaces the named dead owner immediately and is audited", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => NOW });
+  await service.call("register", {
+    session: session("claude", { sessionId: "stream-boot-1", worktree: "/tmp/lane" }),
+  });
+  const registered = await service.call("register", {
+    session: session("claude", {
+      sessionId: "stream-boot-2",
+      worktree: "/tmp/lane",
+      supersedes: "stream-boot-1",
+    }),
+  });
+  assert.equal(registered.worktree, "/tmp/lane");
+  assert.equal(registered.supersedes, null);
+  const snapshot = store.snapshot();
+  assert.equal(snapshot.sessions["stream-boot-1"].worktree, null);
+  assert.equal(snapshot.sessions["stream-boot-1"].accepting_work, false);
+  assert.ok(snapshot.events.some((event) =>
+    event.kind === "session.superseded"
+    && event.session_id === "stream-boot-1"
+    && event.superseded_by === "stream-boot-2"));
+});
+
+test("succession requires naming the actual owner", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => NOW });
+  await service.call("register", {
+    session: session("claude", { sessionId: "true-owner", worktree: "/tmp/lane" }),
+  });
+  await assert.rejects(
+    service.call("register", {
+      session: session("claude", {
+        sessionId: "pretender",
+        worktree: "/tmp/lane",
+        supersedes: "some-other-session",
+      }),
+    }),
+    /worktree is already owned by healthy session true-owner/,
+  );
+  assert.equal(store.snapshot().sessions["true-owner"].worktree, "/tmp/lane");
+});
+
+test("unprotected claimant cannot supersede a protected owner", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => NOW });
+  await service.call("register", {
+    session: session("codex", {
+      sessionId: "human-lane",
+      worktree: "/tmp/mesh",
+      protectedSession: true,
+    }),
+  });
+  await assert.rejects(
+    service.call("register", {
+      session: session("claude", {
+        sessionId: "bot-claim",
+        worktree: "/tmp/mesh",
+        supersedes: "human-lane",
+      }),
+    }),
+    /worktree is already owned by healthy session human-lane/,
+  );
+  const reopened = await service.call("register", {
+    session: session("claude", {
+      sessionId: "human-reopen",
+      worktree: "/tmp/mesh",
+      protectedSession: true,
+      supersedes: "human-lane",
+    }),
+  });
+  assert.equal(reopened.worktree, "/tmp/mesh");
 });
 
 test("only healthy registered conductors with the adapter-specific capability may submit", async () => {
@@ -858,6 +1053,16 @@ test("work ids and deterministic work keys share one idempotency index", async (
   assert.equal(store.snapshot().work_index["work-index-alias"], first.run_id);
   assert.equal(store.snapshot().work_key_index["stable-work-key"], first.run_id);
   assert.equal(Object.keys(store.snapshot().leases).length, 1);
+
+  const changedCampaign = await validateWorkPacket({
+    ...original,
+    work_id: "campaign-index-alias",
+    campaign: campaignPacket(),
+  });
+  await assert.rejects(
+    service.call("submit", { packet: changedCampaign }),
+    /reused with different immutable hashes or contract/,
+  );
 
   await assert.rejects(
     service.call("submit", {
@@ -1352,6 +1557,114 @@ test("RFC 8785 canonical hashes match the cross-runtime Unicode and integral-flo
   }
 });
 
+test("campaign contract validation is bounded and backward compatible", async () => {
+  const codex = session("codex");
+  const legacy = await packet({ workId: "legacy-campaignless", conductor: codex.identity });
+  assert.equal(legacy.campaign, null);
+  const normalized = await validateWorkPacket({
+    ...legacy,
+    predicate: "  pytest -q  ",
+    receipt_target: "  github:organvm/limen:pull-request:legacy-campaignless  ",
+  });
+  assert.equal(normalized.predicate, "pytest -q");
+  assert.equal(normalized.receipt_target, "github:organvm/limen:pull-request:legacy-campaignless");
+
+  await assert.rejects(
+    packet({
+      workId: "campaign-without-loan",
+      conductor: codex.identity,
+      underwritten: false,
+      campaign: campaignPacket(),
+    }),
+    /value\/cost work loan/,
+  );
+  await assert.rejects(
+    packet({
+      workId: "campaign-invalid-id",
+      conductor: codex.identity,
+      campaign: { ...campaignPacket(), campaign_id: "contains spaces" },
+    }),
+    /campaign\.campaign_id/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-output-over-ceiling",
+      run_id: "run-output-over-ceiling",
+      lease_id: "lease-output-over-ceiling",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 0 },
+      campaign: {
+        ...campaignReceipt(),
+        output: {
+          ...campaignReceipt().output,
+          output_ceiling_bytes: 1,
+          bytes_emitted: 2,
+        },
+      },
+      outcome: "succeeded",
+    }, NOW),
+    /campaign output/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-invalid-output-digest",
+      run_id: "run-invalid-output-digest",
+      lease_id: "lease-invalid-output-digest",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 0 },
+      campaign: {
+        ...campaignReceipt(),
+        output: { ...campaignReceipt().output, sha256: "A".repeat(64) },
+      },
+      outcome: "succeeded",
+    }, NOW),
+    /lowercase SHA-256/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-switch-without-successor",
+      run_id: "run-switch-without-successor",
+      lease_id: "lease-switch-without-successor",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 1 },
+      campaign: { ...campaignReceipt(), boundary: "switch" },
+      outcome: "blocked",
+    }, NOW),
+    /successor capsule/,
+  );
+  assert.throws(
+    () => validateReceipt({
+      receipt_id: "receipt-blocked-without-owner",
+      run_id: "run-blocked-without-owner",
+      lease_id: "lease-blocked-without-owner",
+      lease_generation: 1,
+      executor: codex.identity,
+      predicate: { command: "pytest -q", exit_code: 1 },
+      campaign: campaignReceipt(),
+      outcome: "blocked",
+    }, NOW),
+    /precise blocker ownership/,
+  );
+  for (const outcome of ["failed", "succeeded"]) {
+    assert.throws(
+      () => validateReceipt({
+        receipt_id: `receipt-settled-${outcome}`,
+        run_id: `run-settled-${outcome}`,
+        lease_id: `lease-settled-${outcome}`,
+        lease_generation: 1,
+        executor: codex.identity,
+        predicate: { command: "pytest -q", exit_code: 1 },
+        campaign: { ...campaignReceipt(), boundary: "settled" },
+        outcome,
+      }, NOW),
+      /successful outcome and predicate/,
+    );
+  }
+});
+
 test("moved heads fence leases and late receipts remain evidence only", async () => {
   const codex = session("codex");
   const { service } = await serviceWith([codex]);
@@ -1464,6 +1777,49 @@ test("receipts authorize mutation only with exact predicates, scoped paths, boun
     child_runs: ["run-forged-child"],
   })).mutation_authorized, false);
   assert.equal((await report("receipt-contract-valid")).mutation_authorized, true);
+});
+
+test("campaign receipts must match the packet identity and output ceiling", async () => {
+  const codex = session("codex");
+  const { service } = await serviceWith([codex]);
+  const reserved = await service.call("submit", {
+    packet: await packet({
+      workId: "campaign-receipt-match",
+      conductor: codex.identity,
+      resource: "path/organvm/limen/main/cli/campaign-receipt",
+      campaign: campaignPacket(),
+    }),
+  });
+  const claimProof = await leaseCapability(service, reserved);
+  const report = async (receiptId, campaign) => service.call("report", {
+    lease_id: reserved.lease.lease_id,
+    capability_token: claimProof,
+    generation: reserved.lease.generation,
+    receipt: validateReceipt({
+      receipt_id: receiptId,
+      run_id: reserved.run_id,
+      lease_id: reserved.lease.lease_id,
+      lease_generation: reserved.lease.generation,
+      executor: codex.identity,
+      observed_heads_before: { pr: "abc123" },
+      changed_paths: ["cli/campaign-receipt.js"],
+      predicate: { command: "pytest -q", exit_code: 0 },
+      spend: { runs: 1 },
+      campaign,
+      outcome: "succeeded",
+    }, NOW),
+  });
+
+  assert.equal((await report(
+    "receipt-campaign-wrong-id",
+    campaignReceipt("github:organvm/limen:issue:other"),
+  )).mutation_authorized, false);
+  assert.equal((await report(
+    "receipt-campaign-wrong-ceiling",
+    campaignReceipt("github:organvm/limen:issue:1571", 2048),
+  )).mutation_authorized, false);
+  assert.equal((await report("receipt-campaign-missing", null)).mutation_authorized, false);
+  assert.equal((await report("receipt-campaign-valid", campaignReceipt())).mutation_authorized, true);
 });
 
 test("read receipts cannot change paths or observed heads", async () => {
@@ -2312,8 +2668,9 @@ tasks: []
   assert.equal(readInlineProjectionForTest(env).tasks[0].dispatch_log.length, 1);
 });
 
-test("GitHub projection reads large boards, retries SHA conflicts, and writes the observed SHA", async () => {
-  let board = {
+test("GitHub projection retries branch-head conflicts without losing a competing task mutation", async () => {
+  const yaml = (await import("yaml")).default;
+  const initialBoard = {
     portal: { budget: { daily: 10, per_agent: { codex: 10 }, track: { spent: 0, per_agent: {} } } },
     tasks: [{
       id: "TASK-2",
@@ -2328,16 +2685,34 @@ test("GitHub projection reads large boards, retries SHA conflicts, and writes th
       predicate: "npm test",
       receipt_target: "git:organvm/limen:tasks.yaml#TASK-2",
       dispatch_log: [],
+    }, {
+      id: "TASK-OTHER",
+      title: "Unrelated task before the competing writer",
+      repo: "organvm/limen",
+      status: "open",
+      budget_cost: 0,
+      origin: "system_debt",
+      horizon: "present",
+      value_case: "Prove a competing projection mutation remains present",
+      owner_surface: "organvm/limen",
+      predicate: "npm test",
+      receipt_target: "git:organvm/limen:tasks.yaml#TASK-OTHER",
+      dispatch_log: [],
     }],
   };
-  let sha = "sha-1";
-  let puts = 0;
+  const blobs = new Map();
+  const treeBoards = new Map([["tree-1", structuredClone(initialBoard)]]);
+  const commits = new Map([["commit-1", { tree: "tree-1", parents: [] }]]);
+  let headSha = "commit-1";
+  let objectCounter = 1;
+  let refUpdates = 0;
   let rawReads = 0;
   let reconciles = 0;
   const fetchImpl = async (url, init) => {
-    if (init.method === "POST") {
+    const location = String(url);
+    if (init.method === "POST" && location.endsWith("/merges")) {
       reconciles += 1;
-      assert.match(String(url), /\/repos\/organvm\/limen\/merges$/);
+      assert.match(location, /\/repos\/organvm\/limen\/merges$/);
       assert.deepEqual(JSON.parse(init.body), {
         base: "tabularius/board-projection",
         head: "main",
@@ -2345,27 +2720,76 @@ test("GitHub projection reads large boards, retries SHA conflicts, and writes th
       });
       return new Response(null, { status: 204 });
     }
+    if (init.method === "GET" && location.includes("/git/refs/heads/")) {
+      assert.match(location, /\/git\/refs\/heads\/tabularius\/board-projection$/);
+      return new Response(JSON.stringify({ object: { sha: headSha } }), { status: 200 });
+    }
+    if (init.method === "GET" && location.includes("/git/commits/")) {
+      const commitSha = location.split("/").at(-1);
+      const commit = commits.get(commitSha);
+      assert.ok(commit);
+      return new Response(JSON.stringify({ tree: { sha: commit.tree } }), { status: 200 });
+    }
     if (init.method === "GET") {
-      assert.match(String(url), /ref=tabularius%2Fboard-projection/);
+      const ref = new URL(location).searchParams.get("ref");
+      assert.ok(commits.has(ref));
+      const current = treeBoards.get(commits.get(ref).tree);
       if (init.headers.accept === "application/vnd.github.raw+json") {
         rawReads += 1;
-        return new Response((await import("yaml")).default.stringify(board), { status: 200 });
+        return new Response(yaml.stringify(current), { status: 200 });
       }
       return new Response(JSON.stringify({
-        sha,
+        sha: `blob-for-${ref}`,
         content: "",
       }), { status: 200 });
     }
-    puts += 1;
-    const payload = JSON.parse(init.body);
-    assert.equal(payload.sha, sha);
-    assert.equal(payload.branch, "tabularius/board-projection");
-    if (puts === 1) {
-      sha = "sha-2";
-      return new Response(JSON.stringify({ message: "sha does not match" }), { status: 409 });
+    if (init.method === "POST" && location.endsWith("/git/blobs")) {
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.encoding, "utf-8");
+      const blobSha = `blob-${objectCounter++}`;
+      blobs.set(blobSha, payload.content);
+      return new Response(JSON.stringify({ sha: blobSha }), { status: 201 });
     }
-    board = (await import("yaml")).default.parse(decodeURIComponent(escape(atob(payload.content))));
-    return new Response(JSON.stringify({ content: { sha: "sha-3" } }), { status: 200 });
+    if (init.method === "POST" && location.endsWith("/git/trees")) {
+      const payload = JSON.parse(init.body);
+      assert.ok([...commits.values()].some((commit) => commit.tree === payload.base_tree));
+      assert.equal(payload.tree.length, 1);
+      assert.equal(payload.tree[0].path, "tasks.yaml");
+      const treeSha = `tree-${objectCounter++}`;
+      treeBoards.set(treeSha, yaml.parse(blobs.get(payload.tree[0].sha)));
+      return new Response(JSON.stringify({ sha: treeSha }), { status: 201 });
+    }
+    if (init.method === "POST" && location.endsWith("/git/commits")) {
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.parents.length, 1);
+      const commitSha = `commit-${objectCounter++}`;
+      commits.set(commitSha, { tree: payload.tree, parents: payload.parents });
+      return new Response(JSON.stringify({ sha: commitSha }), { status: 201 });
+    }
+    if (init.method === "PATCH" && location.includes("/git/refs/heads/")) {
+      refUpdates += 1;
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.force, false);
+      const proposed = commits.get(payload.sha);
+      assert.ok(proposed);
+      if (refUpdates === 1) {
+        const competing = structuredClone(treeBoards.get(commits.get(headSha).tree));
+        competing.tasks.find((task) => task.id === "TASK-OTHER").title =
+          "Competing task mutation survived";
+        treeBoards.set("tree-competing", competing);
+        commits.set("commit-competing", { tree: "tree-competing", parents: [headSha] });
+        headSha = "commit-competing";
+      }
+      if (proposed.parents[0] !== headSha) {
+        return new Response(
+          JSON.stringify({ message: "Update is not a fast forward" }),
+          { status: 422 },
+        );
+      }
+      headSha = payload.sha;
+      return new Response(JSON.stringify({ object: { sha: headSha } }), { status: 200 });
+    }
+    assert.fail(`unexpected GitHub request: ${init.method} ${location}`);
   };
   const event = {
     event_id: "conduct:run-2:1:reserved",
@@ -2388,10 +2812,16 @@ test("GitHub projection reads large boards, retries SHA conflicts, and writes th
     LIMEN_GITHUB_BRANCH: "main",
   }, event, { fetchImpl });
   assert.equal(result.status, "committed");
-  assert.equal(puts, 2);
+  assert.equal(result.sha, headSha);
+  assert.equal(refUpdates, 2);
   assert.equal(rawReads, 2);
   assert.equal(reconciles, 2);
-  assert.equal(board.tasks[0].status, "dispatched");
+  const board = treeBoards.get(commits.get(headSha).tree);
+  assert.equal(board.tasks.find((task) => task.id === "TASK-2").status, "dispatched");
+  assert.equal(
+    board.tasks.find((task) => task.id === "TASK-OTHER").title,
+    "Competing task mutation survived",
+  );
 });
 
 test("GitHub task projection preserves unrelated board bytes", async () => {
@@ -2425,6 +2855,45 @@ test("GitHub task projection preserves unrelated board bytes", async () => {
   const changedText = renderTaskBoardProjection(rendered, after, changed, "TASK-NEW");
   assert.equal(changedText.slice(0, source.length), source);
   assert.deepEqual((await import("yaml")).default.parse(changedText), changed);
+});
+
+test("GitHub task projection quotes strings for YAML 1.1-compatible consumers", async () => {
+  const yaml = (await import("yaml")).default;
+  const source = [
+    "version: '1.0'",
+    "portal:",
+    "  budget:",
+    "    track:",
+    "      date: '2026-07-25'",
+    "      per_agent_reset:",
+    "        codex: '2026-07-25T12:00:00.000Z'",
+    "tasks:",
+    "- id: TASK-DATE",
+    "  title: 'Preserve string types'",
+    "  status: open",
+    "  created: '2026-07-25'",
+    "  updated: '2026-07-25T12:00:00.000Z'",
+    "  dispatch_log: []",
+    "",
+  ].join("\n");
+  const before = yaml.parse(source);
+  const after = structuredClone(before);
+  after.portal.budget.track.date = "2026-07-26";
+  after.portal.budget.track.per_agent_reset.codex = "2026-07-26T12:00:00.000Z";
+  after.tasks[0].status = "dispatched";
+  after.tasks[0].updated = "2026-07-26T12:00:00.000Z";
+  after.tasks[0].dispatch_log.push({
+    timestamp: "2026-07-26T12:00:00.000Z",
+    status: "dispatched",
+  });
+
+  const rendered = renderTaskBoardProjection(source, before, after, "TASK-DATE");
+  assert.match(rendered, /date: '2026-07-26'/);
+  assert.match(rendered, /codex: '2026-07-26T12:00:00.000Z'/);
+  assert.match(rendered, /created: '2026-07-25'/);
+  assert.match(rendered, /updated: '2026-07-26T12:00:00.000Z'/);
+  assert.match(rendered, /timestamp: '2026-07-26T12:00:00.000Z'/);
+  assert.deepEqual(yaml.parse(rendered), after);
 });
 
 test("Durable Object HTTP routes match the authenticated client surface and survive recreation", async () => {

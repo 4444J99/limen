@@ -32,6 +32,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # plist whose paths drift from the committed copy.
 ROOT="$(cd "$(resolve "${LIMEN_ROOT:-$SCRIPT_DIR/..}")" && pwd -P)"
 HOME_DIR="${HOME:?HOME is unset}"
+AGENT_HOST="${LIMEN_AGENT_HOST_BIN:-${DOMUS_AGENT_HOST_BIN:-$HOME_DIR/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}}"
+case "$AGENT_HOST" in
+  \~) AGENT_HOST="$HOME_DIR" ;;
+  \~/*) AGENT_HOST="$HOME_DIR/${AGENT_HOST#\~/}" ;;
+esac
+AGENT_HOST="$(resolve "$AGENT_HOST")"
 WORKDIR="${LIMEN_WORKDIR:-$(cd "$ROOT/.." && pwd)}"        # parent of the repo
 SCRATCH_ROOT="${LIMEN_SCRATCH_ROOT:-/Volumes/Scratch}"
 if [ -n "${LIMEN_WORKTREES:-}" ]; then
@@ -53,36 +59,25 @@ PY="${LIMEN_PYTHON:-$(command -v python3 || true)}"
 PY="$(resolve "$PY")"
 PYDIR="$(dirname "$PY")"
 PATH_VAL="$PYDIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"
-DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
-LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"
-DISPATCH_ASYNC="${LIMEN_DISPATCH_ASYNC:-1}"
-# ASYNC_MAX derives from the host's live CPU count. Workers are network-bound agent CLIs, so ncpu
-# is a soft host-sized ceiling; VITALS remains the live memory backpressure. There is no literal
-# fleet cap here, and remote lanes never consume these local slots.
-# 2026-07-08 incident: a manually pinned 1 starved every local lane for a night while budget
-# sat unused — the ceiling is decided by this derivation, never by hand.
-NCPU="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 1)"
-case "$NCPU" in
-  ''|*[!0-9]*|0) NCPU=1 ;;
+CAMPAIGN_WAKE_TIMEOUT="${LIMEN_CAMPAIGN_WAKE_TIMEOUT:-300}"
+case "$CAMPAIGN_WAKE_TIMEOUT" in
+  ''|*[!0-9]*) echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 300 to 7200" >&2; exit 2 ;;
 esac
-ASYNC_MAX_DERIVED="$NCPU"
-ASYNC_MAX="${LIMEN_ASYNC_MAX:-$ASYNC_MAX_DERIVED}"
+if [ "$CAMPAIGN_WAKE_TIMEOUT" -lt 300 ] || [ "$CAMPAIGN_WAKE_TIMEOUT" -gt 7200 ]; then
+  echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 300 to 7200" >&2
+  exit 2
+fi
 VIGILIA="${LIMEN_VIGILIA:-1}"
-NOMENCLATOR="${LIMEN_NOMENCLATOR:-1}"
 
 render() {
   sed -e "s|@@HOME@@|$HOME_DIR|g" \
+      -e "s|@@DOMUS_AGENT_HOST_BIN@@|$AGENT_HOST|g" \
       -e "s|@@LIMEN_ROOT@@|$ROOT|g" \
       -e "s|@@LIMEN_WORKDIR@@|$WORKDIR|g" \
       -e "s|@@LIMEN_WORKTREES@@|$WORKTREES|g" \
       -e "s|@@LIMEN_WORKTREE_ROOT@@|$WORKTREE_ROOT|g" \
       -e "s|@@LIMEN_PYTHON@@|$PY|g" \
-      -e "s|@@LIMEN_LANES@@|$LANES|g" \
-      -e "s|@@LIMEN_DISPATCH_LANES@@|$DISPATCH_LANES|g" \
-      -e "s|@@LIMEN_LOCAL_LIMIT@@|$LOCAL_LIMIT|g" \
-      -e "s|@@LIMEN_DISPATCH_ASYNC@@|$DISPATCH_ASYNC|g" \
-      -e "s|@@LIMEN_ASYNC_MAX@@|$ASYNC_MAX|g" \
+      -e "s|@@LIMEN_CAMPAIGN_WAKE_TIMEOUT@@|$CAMPAIGN_WAKE_TIMEOUT|g" \
       -e "s|@@LIMEN_VIGILIA@@|$VIGILIA|g" \
       -e "s|@@PATH@@|$PATH_VAL|g" \
       "$TMPL"

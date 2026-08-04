@@ -75,6 +75,7 @@ function assertBoundedText(value, field) {
   if (typeof value !== "string" || !value.trim() || value.length > 8192 || value.includes("\0")) {
     fail(`${field} must be a non-empty bounded string`);
   }
+  return value.trim();
 }
 
 export function stableStringify(value) {
@@ -112,11 +113,13 @@ export function validateSession(payload, now = new Date()) {
     heartbeat_at: timestamp,
     human_protected: false,
     accepting_work: true,
+    supersedes: null,
     ...clone(payload),
   };
   if (candidate.identity) candidate.identity = identityDefaults(candidate.identity);
   const session = validateSchema("session", candidate);
   assertIdentifier(session.session_id, "session_id");
+  if (session.supersedes != null) assertIdentifier(session.supersedes, "supersedes");
   assertIdentity(session.identity);
   if (session.identity.session_id !== session.session_id) fail("identity.session_id must equal session_id");
   for (const capability of session.capabilities) assertIdentifier(capability, "capability");
@@ -148,6 +151,7 @@ export async function validateWorkPacket(payload) {
     intent_hash: "",
     execution_hash: "",
     work_loan: null,
+    campaign: null,
     preferred_agent: null,
     required_capabilities: [],
     resource_claims: [],
@@ -194,14 +198,22 @@ export async function validateWorkPacket(payload) {
   if (packet.authority.path_prefixes.some((path) => typeof path !== "string" || path.length > 4096 || path.includes("\0"))) {
     fail("authority.path_prefixes must be bounded strings without NUL");
   }
-  assertBoundedText(packet.predicate, "predicate");
-  assertBoundedText(packet.receipt_target, "receipt_target");
+  packet.predicate = assertBoundedText(packet.predicate, "predicate");
+  packet.receipt_target = assertBoundedText(packet.receipt_target, "receipt_target");
   assertDate(packet.deadline, "deadline");
   if (packet.spend.reserve > packet.spend.limit) fail("spend reserve cannot exceed limit");
   if (packet.parent_run_id === null && packet.depth !== 0) fail("root work packet depth must be zero");
   if (packet.parent_run_id !== null && packet.depth === 0) fail("child work packet depth must be positive");
   if (packet.effect === "external" && !packet.authority.external_effects.length) {
     fail("external work requires an explicit external-effect authority");
+  }
+  if (packet.campaign !== null) {
+    if (packet.work_loan === null) fail("campaign work packets require a value/cost work loan");
+    if (!packet.authority.actions.length) fail("campaign work packets require an explicit authority scope");
+    assertIdentifier(packet.campaign.campaign_id, "campaign.campaign_id");
+    for (const field of ["failed_predicate", "owner", "next_action"]) {
+      packet.campaign[field] = assertBoundedText(packet.campaign[field], `campaign.${field}`);
+    }
   }
   const expectedIntentHash = await canonicalHash(packet.intent);
   const expectedExecutionHash = await canonicalHash(packet.execution);
@@ -227,6 +239,7 @@ export function validateReceipt(payload, now = new Date()) {
     reviews: [],
     spend: {},
     child_runs: [],
+    campaign: null,
     completed_at: timestamp,
     ...clone(payload),
   };
@@ -245,6 +258,39 @@ export function validateReceipt(payload, now = new Date()) {
   assertIdentity(receipt.executor, "executor");
   assertDate(receipt.completed_at, "completed_at");
   assertDate(receipt.predicate.observed_at, "predicate.observed_at");
+  if (receipt.campaign !== null) {
+    const campaign = receipt.campaign;
+    assertIdentifier(campaign.campaign_id, "campaign.campaign_id");
+    assertIdentifier(campaign.value_unit, "campaign.value_unit");
+    if (!HASH_RE.test(campaign.output.sha256)) {
+      fail("campaign.output.sha256 must be a lowercase SHA-256 digest");
+    }
+    if (campaign.output.bytes_emitted > campaign.output.output_ceiling_bytes) {
+      fail("campaign output exceeds its declared ceiling");
+    }
+    if (campaign.successor_capsule !== null) {
+      campaign.successor_capsule = assertBoundedText(campaign.successor_capsule, "campaign.successor_capsule");
+    }
+    if (campaign.blocker !== null) {
+      for (const field of ["owner", "failed_predicate", "next_action"]) {
+        campaign.blocker[field] = assertBoundedText(campaign.blocker[field], `campaign.blocker.${field}`);
+      }
+    }
+    if (["switch", "wait_relay"].includes(campaign.boundary)
+        && campaign.successor_capsule === null) {
+      fail(`${campaign.boundary} campaign receipts require a successor capsule`);
+    }
+    if (campaign.boundary === "settled" && campaign.successor_capsule !== null) {
+      fail("settled campaign receipts cannot name a successor capsule");
+    }
+    if (campaign.boundary === "settled"
+        && (receipt.outcome !== "succeeded" || receipt.predicate.exit_code !== 0)) {
+      fail("settled campaign receipts require a successful outcome and predicate");
+    }
+    if (receipt.outcome === "blocked" && campaign.blocker === null) {
+      fail("blocked campaign receipts require precise blocker ownership");
+    }
+  }
   return receipt;
 }
 

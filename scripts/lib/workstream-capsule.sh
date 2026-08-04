@@ -294,6 +294,137 @@ workstream_jules_publish_receipt() {
     git push --set-upstream origin "$publish_commit:refs/heads/$branch"
 }
 
+workstream_exact_remote_ref_head() {
+  local rows="$1"
+  local expected_ref="$2"
+  local observed_head="" observed_ref=""
+
+  if [[ -z "$rows" ]]; then
+    return 0
+  fi
+  if [[ "$rows" == *$'\n'* || "$rows" != *$'\t'* ]]; then
+    return 2
+  fi
+  observed_head="${rows%%$'\t'*}"
+  observed_ref="${rows#*$'\t'}"
+  if [[ ! "$observed_head" =~ ^[0-9a-fA-F]{40,64}$ || "$observed_ref" != "$expected_ref" ]]; then
+    return 2
+  fi
+  printf '%s\n' "$observed_head"
+}
+
+workstream_publish_admitted_receipt() {
+  local receipt="$1"
+  local expected_branch="$2"
+  local slug="$3"
+  local contract_helper="${LIMEN_CAPSULE_DIR:-}/workstream-contract.py"
+  local timeout_seconds="${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
+  local branch="" current_head="" receipt_rel="" dirty="" staged_paths="" publish_commit=""
+  local topic_ref="" remote_line="" remote_head=""
+  local current_subject="" changed_paths="" parent_head=""
+
+  # Preserve backward compatibility for local-only fixture and owner-native repositories. A
+  # configured remote, however, makes durable publication a hard pre-provider gate.
+  if ! git remote get-url origin >/dev/null 2>&1; then
+    return 0
+  fi
+
+  branch="$(git branch --show-current 2>/dev/null || true)"
+  topic_ref="refs/heads/$branch"
+  current_head="$(git rev-parse HEAD 2>/dev/null || true)"
+  receipt_rel="${receipt#"${LIMEN_WORKTREE:-}/"}"
+  if [[ -z "$branch" || "$branch" != "$expected_branch" || -z "$current_head"
+    || ! -f "$contract_helper" || "$receipt_rel" == "$receipt" || ! -f "$receipt_rel" ]]; then
+    printf 'workstream launch could not resolve its admitted receipt publication boundary\n' >&2
+    return 2
+  fi
+  if ! dirty="$(git status --porcelain --untracked-files=all -- . ":(exclude)$receipt_rel" 2>/dev/null)"; then
+    printf 'workstream launch could not inspect the admitted receipt worktree\n' >&2
+    return 2
+  fi
+  if [[ -n "$dirty" ]]; then
+    printf 'workstream launch requires a clean worktree before admitted receipt publication\n' >&2
+    return 2
+  fi
+
+  if ! remote_line="$(
+    GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+      --timeout-seconds "$timeout_seconds" -- \
+      git ls-remote origin "$topic_ref"
+  )"; then
+    printf 'workstream launch could not resolve its remote receipt branch\n' >&2
+    return 2
+  fi
+  if ! remote_head="$(workstream_exact_remote_ref_head "$remote_line" "$topic_ref")"; then
+    printf 'workstream launch received an invalid remote receipt branch head\n' >&2
+    return 2
+  fi
+  if [[ -n "$remote_head" && "$remote_head" != "$current_head" ]]; then
+    current_subject="$(git log -1 --format=%s 2>/dev/null || true)"
+    changed_paths="$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null || true)"
+    parent_head="$(git rev-parse HEAD^ 2>/dev/null || true)"
+    if [[ "$current_subject" != "docs: publish admitted $slug runway"
+      || "$changed_paths" != "$receipt_rel" || "$parent_head" != "$remote_head" ]] ||
+      ! git diff --quiet HEAD -- "$receipt_rel"; then
+      printf 'workstream launch no longer owns its remote receipt branch\n' >&2
+      return 2
+    fi
+  fi
+
+  if ! git add -- "$receipt_rel"; then
+    printf 'workstream admitted receipt could not be staged\n' >&2
+    return 2
+  fi
+  staged_paths="$(git diff --cached --name-only)"
+  if [[ -n "$staged_paths" ]]; then
+    if [[ "$staged_paths" != "$receipt_rel" ]]; then
+      printf 'workstream admitted receipt publication found unrelated staged paths\n' >&2
+      return 2
+    fi
+    if ! git -c commit.gpgsign=false commit -qm \
+      "docs: publish admitted $slug runway" -- "$receipt_rel"; then
+      printf 'workstream admitted receipt could not be committed\n' >&2
+      return 2
+    fi
+  elif ! git cat-file -e "HEAD:$receipt_rel" 2>/dev/null ||
+    ! git diff --quiet HEAD -- "$receipt_rel"; then
+    printf 'workstream admitted receipt is not durably committed\n' >&2
+    return 2
+  fi
+  if ! dirty="$(git status --porcelain --untracked-files=all 2>/dev/null)" ||
+    [[ -n "$dirty" ]] || ! git diff --quiet || ! git diff --cached --quiet; then
+    printf 'workstream admitted receipt publication left uncommitted state\n' >&2
+    return 2
+  fi
+
+  publish_commit="$(git rev-parse HEAD 2>/dev/null || true)"
+  if [[ -z "$publish_commit" ]]; then
+    printf 'workstream admitted receipt publication lost its exact head\n' >&2
+    return 2
+  fi
+  if ! GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+    --timeout-seconds "$timeout_seconds" -- \
+    git push --set-upstream origin "$publish_commit:$topic_ref"; then
+    if ! remote_line="$(
+      GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+        --timeout-seconds "$timeout_seconds" -- \
+        git ls-remote origin "$topic_ref"
+    )"; then
+      printf 'workstream admitted receipt publication outcome is uncertain; exact topic ref is unreachable\n' >&2
+      return 2
+    fi
+    if ! remote_head="$(workstream_exact_remote_ref_head "$remote_line" "$topic_ref")"; then
+      printf 'workstream admitted receipt publication outcome is uncertain; exact topic ref is malformed\n' >&2
+      return 2
+    fi
+    if [[ "$remote_head" != "$publish_commit" ]]; then
+      printf 'workstream admitted receipt publication was confirmed absent or mismatched\n' >&2
+      return 2
+    fi
+  fi
+  printf 'admitted workstream receipt published: %s\n' "$receipt_rel"
+}
+
 workstream_export_context() {
   local agent="$1"
   local wt="$2"
@@ -332,16 +463,379 @@ workstream_export_context() {
   export LIMEN_EXECUTION_HASH="${LIMEN_EXECUTION_HASH:-}"
 }
 
+workstream_write_conduct_keepalive_status() {
+  local status_path="$1"
+  local capsule_dir="$2"
+  local session_id="$3"
+  local state="$4"
+  local target_pid="$5"
+  local keepalive_pid="$6"
+  local deadline_epoch="$7"
+  local refresh_count="$8"
+  local last_success_epoch="$9"
+  local last_failure_epoch="${10}"
+  local detail="${11}"
+
+  python3 - "$status_path" "$capsule_dir" "$session_id" "$state" "$target_pid" \
+    "$keepalive_pid" "$deadline_epoch" "$refresh_count" "$last_success_epoch" \
+    "$last_failure_epoch" "$detail" <<'PY'
+import json
+import os
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+(
+    raw_status,
+    raw_capsule,
+    session_id,
+    state,
+    raw_target_pid,
+    raw_keepalive_pid,
+    raw_deadline,
+    raw_refresh_count,
+    raw_last_success,
+    raw_last_failure,
+    detail,
+) = sys.argv[1:]
+status_path = Path(raw_status)
+capsule_dir = Path(raw_capsule)
+try:
+    resolved_capsule = capsule_dir.resolve(strict=True)
+    resolved_parent = status_path.parent.resolve(strict=True)
+except OSError as exc:
+    raise SystemExit(f"conduct keepalive status path is invalid: {exc}")
+if (
+    capsule_dir.is_symlink()
+    or resolved_parent != resolved_capsule
+    or status_path.name != "conduct-keepalive.json"
+    or status_path.is_symlink()
+):
+    raise SystemExit("conduct keepalive status must be a real file inside the private capsule")
+if state not in {"active", "refresh_failed", "stopped"}:
+    raise SystemExit("conduct keepalive status has an invalid state")
+
+
+def optional_epoch(raw: str) -> int | None:
+    if not raw:
+        return None
+    value = int(raw)
+    if value < 0:
+        raise ValueError("epoch must be non-negative")
+    return value
+
+
+observed_epoch = int(datetime.now(UTC).timestamp())
+payload = {
+    "schema": "limen.workstream.conduct-keepalive.v1",
+    "session_id": session_id,
+    "state": state,
+    "target_pid": int(raw_target_pid),
+    "keepalive_pid": int(raw_keepalive_pid),
+    "deadline_epoch": int(raw_deadline),
+    "refresh_count": int(raw_refresh_count),
+    "last_success_epoch": optional_epoch(raw_last_success),
+    "last_failure_epoch": optional_epoch(raw_last_failure),
+    "observed_epoch": observed_epoch,
+    "observed_at": datetime.fromtimestamp(observed_epoch, UTC).isoformat().replace("+00:00", "Z"),
+    "detail": detail[:512],
+}
+temporary = status_path.with_name(f".{status_path.name}.tmp.{os.getpid()}")
+descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+try:
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, status_path)
+    os.chmod(status_path, 0o600)
+finally:
+    try:
+        temporary.unlink()
+    except FileNotFoundError:
+        pass
+PY
+}
+
+workstream_conduct_target_is_live() {
+  local target_pid="$1"
+  local target_started="$2"
+  local observed_started=""
+
+  if ! kill -0 "$target_pid" 2>/dev/null; then
+    return 1
+  fi
+  observed_started="$(ps -o lstart= -p "$target_pid" 2>/dev/null || true)"
+  [[ -n "$observed_started" && "$observed_started" == "$target_started" ]]
+}
+
+workstream_conduct_keepalive_is_ready() {
+  local status_path="$1"
+  local session_id="$2"
+  local target_pid="$3"
+  local keepalive_pid="$4"
+  local minimum_observed_epoch="$5"
+
+  python3 - "$status_path" "$session_id" "$target_pid" "$keepalive_pid" \
+    "$minimum_observed_epoch" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+status_path = Path(sys.argv[1])
+if status_path.is_symlink():
+    raise SystemExit(1)
+try:
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    raise SystemExit(1)
+expected = {
+    "schema": "limen.workstream.conduct-keepalive.v1",
+    "session_id": sys.argv[2],
+    "target_pid": int(sys.argv[3]),
+    "keepalive_pid": int(sys.argv[4]),
+}
+if any(payload.get(key) != value for key, value in expected.items()):
+    raise SystemExit(1)
+if payload.get("state") not in {"active", "refresh_failed"}:
+    raise SystemExit(1)
+if payload.get("observed_epoch", -1) < int(sys.argv[5]):
+    raise SystemExit(1)
+PY
+}
+
+workstream_existing_active_session() {
+  local capsule_dir="$1"
+  local status_path="$capsule_dir/conduct-keepalive.json"
+  local record=""
+  local session_id=""
+  local target_pid=""
+  local keepalive_pid=""
+
+  if [[ ! -d "$capsule_dir" || -L "$capsule_dir" || ! -f "$status_path" || -L "$status_path" ]]; then
+    return 1
+  fi
+  if ! record="$(python3 - "$capsule_dir" "$status_path" "$(date +%s)" <<'PY'
+import json
+import re
+import stat
+import sys
+from pathlib import Path
+
+capsule_dir = Path(sys.argv[1])
+status_path = Path(sys.argv[2])
+now = int(sys.argv[3])
+try:
+    capsule = capsule_dir.resolve(strict=True)
+    resolved_status = status_path.resolve(strict=True)
+    info = status_path.lstat()
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    raise SystemExit(1)
+if (
+    capsule_dir.is_symlink()
+    or status_path.is_symlink()
+    or not stat.S_ISREG(info.st_mode)
+    or resolved_status.parent != capsule
+    or resolved_status.name != "conduct-keepalive.json"
+    or not isinstance(payload, dict)
+    or payload.get("schema") != "limen.workstream.conduct-keepalive.v1"
+    or payload.get("state") != "active"
+):
+    raise SystemExit(1)
+session_id = payload.get("session_id")
+if not isinstance(session_id, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{1,256}", session_id):
+    raise SystemExit(1)
+for key in ("target_pid", "keepalive_pid", "deadline_epoch", "observed_epoch"):
+    if type(payload.get(key)) is not int:
+        raise SystemExit(1)
+if (
+    payload["target_pid"] <= 0
+    or payload["keepalive_pid"] <= 0
+    or payload["deadline_epoch"] <= now
+    or payload["observed_epoch"] > now
+    or now - payload["observed_epoch"] > 360
+):
+    raise SystemExit(1)
+print(f"{session_id}\t{payload['target_pid']}\t{payload['keepalive_pid']}")
+PY
+)"; then
+    return 1
+  fi
+  IFS=$'\t' read -r session_id target_pid keepalive_pid <<< "$record"
+  if ! kill -0 "$target_pid" 2>/dev/null || ! kill -0 "$keepalive_pid" 2>/dev/null; then
+    return 1
+  fi
+  printf '%s\n' "$session_id"
+}
+
+workstream_conduct_keepalive_loop() {
+  local agent="$1"
+  local wt="$2"
+  local capabilities="$3"
+  local target_pid="$4"
+  local target_started="$5"
+  local deadline_epoch="$6"
+  local status_path="$7"
+  local capsule_dir="$8"
+  local interval_seconds="$9"
+  local retry_seconds="${10}"
+  local poll_seconds="${11}"
+  local limen_binary="${12}"
+  local conduct_token="${13}"
+  local capability
+  local capability_args=()
+  local keepalive_pid
+  local now_epoch next_refresh refresh_count=1
+  local last_success_epoch last_failure_epoch=""
+  local register_rc=0 detail="initial registration passed"
+
+  trap 'exit 0' HUP INT TERM
+  # Apple's Bash 3.2 does not expose BASHPID. A direct child reports this
+  # background subshell as its PPID, which is the exact PID returned by $!.
+  keepalive_pid="$(/bin/sh -c 'printf "%s\n" "$PPID"')"
+  case "$keepalive_pid" in
+    ""|*[!0-9]*) return 2 ;;
+  esac
+  for capability in $capabilities; do
+    capability_args+=(--capability "$capability")
+  done
+  now_epoch="$(date +%s)"
+  last_success_epoch="$now_epoch"
+  next_refresh=$((now_epoch + interval_seconds))
+  workstream_write_conduct_keepalive_status \
+    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$keepalive_pid" \
+    "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+  while workstream_conduct_target_is_live "$target_pid" "$target_started"; do
+    now_epoch="$(date +%s)"
+    if (( now_epoch >= deadline_epoch )); then
+      detail="capsule deadline reached"
+      break
+    fi
+    if (( now_epoch < next_refresh )); then
+      sleep "$poll_seconds"
+      continue
+    fi
+    register_rc=0
+    LIMEN_CONDUCT_TOKEN="$conduct_token" "$limen_binary" conduct register \
+      --agent "$agent" \
+      --surface workstream \
+      --session-id "$LIMEN_SESSION_ID" \
+      --origin direct \
+      "${capability_args[@]}" \
+      --worktree "$wt" \
+      --human-protected \
+      --concurrency 1 >/dev/null 2>&1 || register_rc=$?
+    now_epoch="$(date +%s)"
+    if [[ "$register_rc" -eq 0 ]]; then
+      refresh_count=$((refresh_count + 1))
+      last_success_epoch="$now_epoch"
+      detail="protected session refreshed"
+      next_refresh=$((now_epoch + interval_seconds))
+      workstream_write_conduct_keepalive_status \
+        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" active "$target_pid" "$keepalive_pid" \
+        "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+    else
+      last_failure_epoch="$now_epoch"
+      detail="conduct registration refresh failed with exit $register_rc"
+      next_refresh=$((now_epoch + retry_seconds))
+      workstream_write_conduct_keepalive_status \
+        "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" refresh_failed "$target_pid" "$keepalive_pid" \
+        "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+    fi
+  done
+  if [[ "$detail" != "capsule deadline reached" ]]; then
+    detail="provider process exited or changed identity"
+  fi
+  workstream_write_conduct_keepalive_status \
+    "$status_path" "$capsule_dir" "$LIMEN_SESSION_ID" stopped "$target_pid" "$keepalive_pid" \
+    "$deadline_epoch" "$refresh_count" "$last_success_epoch" "$last_failure_epoch" "$detail"
+}
+
+workstream_start_conduct_keepalive() {
+  local agent="$1"
+  local wt="$2"
+  local capabilities="$3"
+  local target_pid="$4"
+  local deadline_epoch="$5"
+  local capsule_dir="$6"
+  local limen_binary="${LIMEN_CLI_BIN:-limen}"
+  local interval_seconds="${LIMEN_CONDUCT_KEEPALIVE_SECONDS:-180}"
+  local retry_seconds="${LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS:-30}"
+  local poll_seconds="${LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS:-5}"
+  local status_path="$capsule_dir/conduct-keepalive.json"
+  local target_started=""
+  local launched_epoch=""
+  local ready=0
+  local attempt
+
+  for value in "$target_pid" "$deadline_epoch" "$interval_seconds" "$retry_seconds" "$poll_seconds"; do
+    case "$value" in
+      ""|*[!0-9]*)
+        printf 'invalid conduct keepalive numeric contract\n' >&2
+        return 2
+        ;;
+    esac
+  done
+  if (( interval_seconds < 1 || interval_seconds > 240
+    || retry_seconds < 1 || retry_seconds > 60
+    || poll_seconds < 1 || poll_seconds > 30
+    || deadline_epoch <= $(date +%s) )); then
+    printf 'conduct keepalive interval, retry, poll, or deadline is out of bounds\n' >&2
+    return 2
+  fi
+  target_started="$(ps -o lstart= -p "$target_pid" 2>/dev/null || true)"
+  if [[ -z "$target_started" ]]; then
+    printf 'conduct keepalive could not bind the provider process identity\n' >&2
+    return 2
+  fi
+  launched_epoch="$(date +%s)"
+  (
+    exec 9>&-
+    workstream_conduct_keepalive_loop \
+      "$agent" "$wt" "$capabilities" "$target_pid" "$target_started" "$deadline_epoch" \
+      "$status_path" "$capsule_dir" "$interval_seconds" "$retry_seconds" "$poll_seconds" \
+      "$limen_binary" "${workstream_conduct_token:-}"
+  ) </dev/null >/dev/null 2>&1 &
+  workstream_conduct_keepalive_pid=$!
+  unset workstream_conduct_token
+  for ((attempt = 0; attempt < 50; attempt++)); do
+    if ! kill -0 "$workstream_conduct_keepalive_pid" 2>/dev/null; then
+      break
+    fi
+    if workstream_conduct_keepalive_is_ready \
+      "$status_path" "$LIMEN_SESSION_ID" "$target_pid" \
+      "$workstream_conduct_keepalive_pid" "$launched_epoch"; then
+      ready=1
+      break
+    fi
+    sleep 0.1
+  done
+  if [[ "$ready" -ne 1 ]]; then
+    kill "$workstream_conduct_keepalive_pid" 2>/dev/null || true
+    wait "$workstream_conduct_keepalive_pid" 2>/dev/null || true
+    printf 'conduct keepalive did not acknowledge a live protected-session channel\n' >&2
+    return 2
+  fi
+  export LIMEN_CONDUCT_KEEPALIVE_PID="$workstream_conduct_keepalive_pid"
+  printf 'started protected conduct keepalive: %s\n' "$workstream_conduct_keepalive_pid"
+}
+
 workstream_register_conduct_session() {
   local agent="$1"
   local wt="$2"
   local capabilities="$3"
   local limen_binary="${LIMEN_CLI_BIN:-limen}"
   local register_rc=0
+  local register_output=""
   local capability
   local capability_args=()
 
+  unset LIMEN_WORKSTREAM_ALREADY_RUNNING
+  workstream_conduct_token="${LIMEN_CONDUCT_TOKEN:-}"
   if ! command -v "$limen_binary" >/dev/null 2>&1; then
+    unset workstream_conduct_token
     unset LIMEN_CONDUCT_TOKEN
     printf 'conduct registration requires the limen CLI (set LIMEN_CLI_BIN to its path)\n' >&2
     return 127
@@ -351,7 +845,7 @@ workstream_register_conduct_session() {
     capability_args+=(--capability "$capability")
   done
 
-  if "$limen_binary" conduct register \
+  if register_output="$("$limen_binary" conduct register \
     --agent "$agent" \
     --surface workstream \
     --session-id "$LIMEN_SESSION_ID" \
@@ -359,7 +853,7 @@ workstream_register_conduct_session() {
     "${capability_args[@]}" \
     --worktree "$wt" \
     --human-protected \
-    --concurrency 1 >/dev/null; then
+    --concurrency 1 2>&1)"; then
     :
   else
     register_rc=$?
@@ -367,10 +861,69 @@ workstream_register_conduct_session() {
   # The broker client consumes its credential; the native model process must not inherit it.
   unset LIMEN_CONDUCT_TOKEN
   if [[ "$register_rc" -ne 0 ]]; then
+    unset workstream_conduct_token
+    if [[ "$register_output" == *"worktree is already owned by healthy session"* ]]; then
+      export LIMEN_WORKSTREAM_ALREADY_RUNNING=1
+      printf 'This workstream is already running. Continue in its existing session; no second process was started.\n'
+      return 0
+    fi
+    if [[ -n "$register_output" ]]; then
+      printf '%s\n' "$register_output" >&2
+    fi
     return "$register_rc"
   fi
   export LIMEN_HUMAN_PROTECTED=1
   printf 'registered protected conduct session: %s (%s)\n' "$LIMEN_SESSION_ID" "$agent"
+}
+
+workstream_hydrate_conduct_environment() {
+  local cache="${LIMEN_CONDUCT_ENV_FILE:-$HOME/.limen.env}"
+  local hydrated=""
+
+  if [[ -n "${LIMEN_CONDUCT_URL:-}" && -n "${LIMEN_CONDUCT_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if [[ ! -e "$cache" ]]; then
+    return 0
+  fi
+  # This function is serialized into kickstart.sh with `declare -f`. Bash 5 indents a
+  # here-document delimiter while printing a function, which turns the following shell body into
+  # Python stdin on Linux. Keep the ownership predicate in `-c` so serialization is byte-stable
+  # across the macOS Bash 3.2 renderer and GitHub's Bash 5 runtime.
+  if ! python3 -c '
+import os
+import stat
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    info = path.lstat()
+except OSError:
+    raise SystemExit(1)
+if path.is_symlink() or not stat.S_ISREG(info.st_mode):
+    raise SystemExit(1)
+if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
+    raise SystemExit(1)
+' "$cache"; then
+    printf 'conduct environment cache must be a user-owned mode-600 regular file: %s\n' "$cache" >&2
+    return 2
+  fi
+  if ! hydrated="$(
+    bash -c '
+      set -a
+      . "$1" >/dev/null
+      set +a
+      [[ -n "${LIMEN_CONDUCT_URL:-}" && -n "${LIMEN_CONDUCT_TOKEN:-}" ]] || exit 2
+      printf "export LIMEN_CONDUCT_URL=%q\nexport LIMEN_CONDUCT_TOKEN=%q\n" \
+        "$LIMEN_CONDUCT_URL" "$LIMEN_CONDUCT_TOKEN"
+    ' _ "$cache"
+  )"; then
+    printf 'conduct environment cache does not define LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN\n' >&2
+    return 2
+  fi
+  eval "$hydrated"
+  unset hydrated
 }
 
 workstream_launch_native_agent() {
@@ -379,10 +932,19 @@ workstream_launch_native_agent() {
   local autonomous="$3"
   local readme="$4"
   local allow_shell_fallback="$5"
+  local launch_model="${6:-}"
+  local launch_reasoning_effort="${7:-}"
+  local launch_sandbox="${8:-}"
+  local launch_contract_helper="${9:-}"
+  # Positional and defaulted, so a capsule rendered before the lane pin existed still calls this
+  # with nine arguments and behaves exactly as it did.
+  local launch_lane_model="${10:-}"
+  local -a lane_args=()
   local binary capsule_prompt="" jules_repo="" intent_path=""
   local contract_helper="" timeout_seconds=""
   local jules_output="" jules_rc=0 jules_session_id="" jules_session_url="" jules_receipt=""
   local jules_reserved_this_launch=0
+  local -a codex_args=()
 
   # A broker credential belongs to the registration client, never to the model process.
   unset LIMEN_CONDUCT_TOKEN
@@ -395,21 +957,74 @@ workstream_launch_native_agent() {
     return 127
   fi
 
+  if [[ -n "$launch_model" || -n "$launch_reasoning_effort" || -n "$launch_sandbox" ]]; then
+    if [[ "$agent" != "codex" || -z "$launch_model" || -z "$launch_reasoning_effort" \
+      || -z "$launch_sandbox" || ! -f "$launch_contract_helper" ]]; then
+      printf 'invalid explicit native launch profile\n' >&2
+      return 2
+    fi
+    if ! python3 "$launch_contract_helper" validate-codex-launch \
+      --binary "$binary" \
+      --model "$launch_model" \
+      --reasoning-effort "$launch_reasoning_effort" \
+      --sandbox "$launch_sandbox" >/dev/null; then
+      return 2
+    fi
+    codex_args=(
+      --model "$launch_model"
+      --config "model_reasoning_effort=\"$launch_reasoning_effort\""
+      --ask-for-approval never
+      --sandbox "$launch_sandbox"
+    )
+  else
+    codex_args=(--ask-for-approval never --sandbox workspace-write)
+  fi
+
+  # ── lane tier pin ────────────────────────────────────────────────────────────
+  # A bare `--model` for a NON-Codex lane. Codex keeps its own validated triple above and is
+  # rejected here on purpose, so there stays exactly one way to launch Codex explicitly.
+  #
+  # The allowlist is lanes whose `--model <value>` form was verified against the installed CLI's
+  # own --help (2026-07-29):
+  #   claude    "--model <model>            Model for the current session"
+  #   gemini    "-m, --model                Model  [string]"
+  #   agy       "--model                    Model for the current CLI session"
+  #   opencode  "-m, --model                model to use in the format of provider/model"
+  # opencode takes a provider-qualified value; the operator owns the string, this only proves the
+  # flag exists. Any lane not listed REFUSES the pin rather than dropping it — a silently ignored
+  # pin is precisely the defect this closes (the lane would run on the inherited default and look
+  # pinned).
+  if [[ -n "$launch_lane_model" ]]; then
+    case "$agent" in
+      claude|gemini|agy|opencode)
+        lane_args=(--model "$launch_lane_model")
+        ;;
+      codex)
+        printf 'lane tier pin refused: the codex lane requires the validated --model/--reasoning-effort/--sandbox profile, not a bare pin\n' >&2
+        return 2
+        ;;
+      *)
+        printf 'lane tier pin refused: lane %s has no verified --model flag form; remove the pin or extend the verified allowlist\n' "$agent" >&2
+        return 2
+        ;;
+    esac
+  fi
+
   if [[ "$autonomous" -eq 1 ]]; then
     IFS= read -r -d '' capsule_prompt < "$readme" || true
     case "$agent" in
       codex)
         if [[ -t 0 && -t 1 ]]; then
-          exec "$binary" --ask-for-approval never --sandbox workspace-write "$capsule_prompt"
+          exec "$binary" "${codex_args[@]}" "$capsule_prompt"
         fi
         # Shell runners do not provide a terminal; use Codex's noninteractive transport.
-        exec "$binary" --ask-for-approval never --sandbox workspace-write exec "$capsule_prompt"
+        exec "$binary" "${codex_args[@]}" exec "$capsule_prompt"
         ;;
       opencode)
-        exec "$binary" --prompt "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt "$capsule_prompt"
         ;;
       agy|gemini)
-        exec "$binary" --prompt-interactive "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt-interactive "$capsule_prompt"
         ;;
       jules)
         if ! jules_repo="$(workstream_jules_repository)"; then
@@ -489,24 +1104,24 @@ workstream_launch_native_agent() {
         return 2
         ;;
       *)
-        exec "$binary" "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" "$capsule_prompt"
         ;;
     esac
   fi
 
   case "$agent" in
     codex)
-      exec "$binary" --ask-for-approval never --sandbox workspace-write
+      exec "$binary" "${codex_args[@]}"
       ;;
     agy)
       # Agy has no argument-free interactive session.
       if [[ -s "$readme" ]]; then
         IFS= read -r -d '' capsule_prompt < "$readme" || true
-        exec "$binary" --prompt-interactive "$capsule_prompt"
+        exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt-interactive "$capsule_prompt"
       fi
       ;;
   esac
-  exec "$binary"
+  exec "$binary" "${lane_args[@]+"${lane_args[@]}"}"
 }
 
 _limen_capsule_input_digest() {
@@ -598,6 +1213,13 @@ render_workstream_capsule() {
   local conduct="${14}"
   local allow_shell_fallback="${15}"
   local agent_capabilities="${16}"
+  local launch_model="${17:-}"
+  local launch_reasoning_effort="${18:-}"
+  local launch_sandbox="${19:-}"
+  # The lane tier pin is DELIBERATELY a separate variable from launch_model. launch_model being
+  # non-empty is what triggers the v2 Codex contract build below, and a v2 contract requires a
+  # reasoning effort and a sandbox; reusing it for a bare pin raises ContractError at render.
+  local launch_lane_model="${20:-}"
   local capsule_dir="$wt/.limen-workstream"
   local readme="$capsule_dir/README.md"
   local manifest="$capsule_dir/manifest.md"
@@ -619,6 +1241,7 @@ render_workstream_capsule() {
   local q_wt q_capsule_dir q_capsule_lock q_receipt q_identity q_readme q_manifest q_contract q_contract_helper
   local q_intent q_runtime q_closeout q_kickstart q_slug q_branch q_workstream q_input_digest
   local q_agent q_registry_binary q_conduct q_allow_shell_fallback q_agent_capabilities
+  local q_launch_model q_launch_reasoning_effort q_launch_sandbox q_launch_lane_model
   local capsule_preexisting=0
   local capsule_changed=0
 
@@ -717,6 +1340,15 @@ PY
   runtime_source_digest="$(_limen_capsule_file_digest "$runtime_template")"
   closeout_source_digest="$(_limen_capsule_file_digest "$spec_dir/closeout.md")"
   contract_source_digest="$(_limen_capsule_file_digest "$contract_source")"
+  # CONDITIONAL ON PURPOSE. An unconditional new digest field would change the recomputed
+  # invocation digest of every capsule already on disk, and the pre-existing-capsule path below
+  # runs `verify-identity` against the stored one and exits 1 on mismatch — that would brick every
+  # live capsule on its next render. Appending only when a pin is actually set leaves the unpinned
+  # digest byte-identical to what it has always been, while still binding a pin to the identity.
+  local -a lane_pin_digest_field=()
+  if [[ -n "$launch_lane_model" ]]; then
+    lane_pin_digest_field=("launch-lane-model=$launch_lane_model")
+  fi
   input_digest="$(
     _limen_capsule_input_digest \
       "limen.workstream.capsule-identity.v2" \
@@ -724,9 +1356,12 @@ PY
       "$autonomous" "$effective_runway" "$prompt_payload" \
       "agent=$agent" "registry-binary=$registry_binary" "conduct=$conduct" \
       "allow-shell-fallback=$allow_shell_fallback" "agent-capabilities=$agent_capabilities" \
+      "launch-model=$launch_model" "launch-reasoning-effort=$launch_reasoning_effort" \
+      "launch-sandbox=$launch_sandbox" \
       "runtime-source-sha256=$runtime_source_digest" \
       "closeout-source-sha256=$closeout_source_digest" \
-      "contract-source-sha256=$contract_source_digest"
+      "contract-source-sha256=$contract_source_digest" \
+      "${lane_pin_digest_field[@]+"${lane_pin_digest_field[@]}"}"
   )"
   actual_branch="$(git -C "$wt" branch --show-current)"
   if [[ "$actual_branch" != "$branch" ]]; then
@@ -800,7 +1435,15 @@ PY
       workstream_jules_reserve_receipt_branch \
       workstream_jules_sync_receipt \
       workstream_jules_publish_receipt \
+      workstream_exact_remote_ref_head \
+      workstream_publish_admitted_receipt \
       workstream_export_context \
+      workstream_write_conduct_keepalive_status \
+      workstream_conduct_target_is_live \
+      workstream_conduct_keepalive_is_ready \
+      workstream_conduct_keepalive_loop \
+      workstream_start_conduct_keepalive \
+      workstream_hydrate_conduct_environment \
       workstream_register_conduct_session \
       workstream_launch_native_agent
   )"
@@ -834,6 +1477,9 @@ PY
 - Autonomous: \`$([[ "$autonomous" -eq 1 ]] && printf yes || printf no)\`
 - Agent: \`$agent\`
 - Agent capabilities: \`$agent_capabilities\`
+- Primary model: \`${launch_model:-${launch_lane_model:-provider-auto}}\`
+- Primary reasoning effort: \`${launch_reasoning_effort:-provider-auto}\`
+- Primary sandbox: \`${launch_sandbox:-workspace-write}\`
 - Conduct: \`$([[ "$conduct" -eq 1 ]] && printf yes || printf no)\`
 
 This is a historical snapshot. The runtime module requires fresh probes before action.
@@ -844,11 +1490,25 @@ EOF
     chmod +x "$contract_helper"
     capsule_changed=1
   fi
+  local -a contract_launch_args=()
+  if [[ -n "$launch_model" ]]; then
+    contract_launch_args=(
+      --agent "$agent"
+      --model "$launch_model"
+      --reasoning-effort "$launch_reasoning_effort"
+      --sandbox "$launch_sandbox"
+    )
+  fi
   if [[ -n "$runway_requested" ]]; then
-    contract_action="$(python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" 9>&-)" \
-      || exit 1
+    contract_action="$(
+      python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" \
+        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
+    )" || exit 1
   else
-    contract_action="$(python3 "$contract_helper" configure --path "$contract" 9>&-)" || exit 1
+    contract_action="$(
+      python3 "$contract_helper" configure --path "$contract" \
+        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
+    )" || exit 1
   fi
   if [[ "$contract_action" == "changed" || "$contract_action" == "unchanged" ]]; then
     [[ "$contract_action" == "changed" ]] && capsule_changed=1
@@ -912,6 +1572,10 @@ EOF
   printf -v q_conduct '%q' "$conduct"
   printf -v q_allow_shell_fallback '%q' "$allow_shell_fallback"
   printf -v q_agent_capabilities '%q' "$agent_capabilities"
+  printf -v q_launch_model '%q' "$launch_model"
+  printf -v q_launch_reasoning_effort '%q' "$launch_reasoning_effort"
+  printf -v q_launch_sandbox '%q' "$launch_sandbox"
+  printf -v q_launch_lane_model '%q' "$launch_lane_model"
   _capsule_write_module "$kickstart" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
@@ -939,6 +1603,10 @@ registry_binary=$q_registry_binary
 conduct=$q_conduct
 allow_shell_fallback=$q_allow_shell_fallback
 agent_capabilities=$q_agent_capabilities
+launch_model=$q_launch_model
+launch_reasoning_effort=$q_launch_reasoning_effort
+launch_sandbox=$q_launch_sandbox
+launch_lane_model=$q_launch_lane_model
 if [[ -L "\$capsule_dir" || ! -d "\$capsule_dir" \
   || "\$(cd "\$capsule_dir" && pwd -P)" != "\$capsule_dir" ]]; then
   printf 'invalid capsule: private root is not the expected real directory\n' >&2
@@ -1122,6 +1790,13 @@ refresh_workstream_runway() {
   IFS=: read -r LIMEN_WORKSTREAM_REQUESTED LIMEN_WORKSTREAM_RUNWAY_SECONDS LIMEN_WORKSTREAM_STARTED_EPOCH LIMEN_WORKSTREAM_DEADLINE_EPOCH LIMEN_WORKSTREAM_REMAINING_SECONDS <<< "\$runway_fields"
   export LIMEN_WORKSTREAM_REQUESTED LIMEN_WORKSTREAM_RUNWAY_SECONDS LIMEN_WORKSTREAM_STARTED_EPOCH LIMEN_WORKSTREAM_DEADLINE_EPOCH LIMEN_WORKSTREAM_REMAINING_SECONDS
 }
+if [[ "\$conduct" -eq 1 ]]; then
+  workstream_hydrate_conduct_environment
+  workstream_register_conduct_session "\$agent" "\$PWD" "\$agent_capabilities"
+  if [[ "\${LIMEN_WORKSTREAM_ALREADY_RUNNING:-}" == "1" ]]; then
+    exit 0
+  fi
+fi
 refresh_workstream_runway
 preflight_timeout="\${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
 case "\$preflight_timeout" in
@@ -1140,15 +1815,19 @@ if git remote get-url origin >/dev/null 2>&1 9>&-; then
 fi
 python3 "\$contract_helper" run-bounded \
   --timeout-seconds "\$preflight_timeout" -- git status --short --branch 9>&-
-if [[ "\$conduct" -eq 1 ]]; then
-  workstream_register_conduct_session "\$agent" "\$PWD" "\$agent_capabilities"
-fi
 refresh_workstream_runway
 if [[ "\$agent" != "jules" ]]; then
+  workstream_publish_admitted_receipt "\$receipt" "\$expected_branch" "\$expected_slug"
   exec 9>&-
 fi
+if [[ "\$conduct" -eq 1 ]]; then
+  workstream_start_conduct_keepalive \
+    "\$agent" "\$PWD" "\$agent_capabilities" "\$\$" "\$LIMEN_WORKSTREAM_DEADLINE_EPOCH" "\$capsule_dir"
+fi
 workstream_launch_native_agent \
-  "\$agent" "\$registry_binary" "$autonomous" "\$readme" "\$allow_shell_fallback"
+  "\$agent" "\$registry_binary" "$autonomous" "\$readme" "\$allow_shell_fallback" \
+  "\$launch_model" "\$launch_reasoning_effort" "\$launch_sandbox" "\$contract_helper" \
+  "\$launch_lane_model"
 EOF
   if [[ ! -x "$kickstart" ]]; then
     chmod +x "$kickstart"

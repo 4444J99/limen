@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from . import harness_paths
+
 _HEAVY_COMMAND = re.compile(
     r"""(?ix)
     \b(
@@ -29,32 +31,67 @@ _UNSUPPORTED_REDIRECTS = frozenset({"<<", "<<<"})
 _READ_ONLY_COMMANDS = frozenset(
     {
         "[",
+        "b2sum",
+        "basename",
         "cat",
+        "cksum",
+        "column",
+        "comm",
         "cut",
         "df",
+        "diff",
+        "dirname",
         "du",
+        "echo",
+        "egrep",
+        "expand",
         "false",
+        "fgrep",
+        "file",
+        "fmt",
+        "fold",
+        "grep",
         "head",
+        "hexdump",
+        "join",
         "jq",
         "ls",
+        "md5",
+        "md5sum",
         "nl",
+        "od",
+        "paste",
         "pgrep",
+        "printf",
         "ps",
         "pwd",
         "readlink",
         "realpath",
+        "rev",
         "rg",
+        "seq",
+        "sha1sum",
+        "sha224sum",
+        "sha256sum",
+        "sha384sum",
+        "sha512sum",
+        "shasum",
         "sort",
         "stat",
+        "strings",
+        "sum",
+        "tac",
         "tail",
         "test",
         "tr",
         "true",
         "type",
+        "unexpand",
         "uname",
         "uniq",
         "wc",
         "which",
+        "xxd",
     }
 )
 _GIT_READ_ONLY = frozenset(
@@ -92,6 +129,7 @@ _SANCTIONED_LIMEN = frozenset(
 )
 _SANCTIONED_SCRIPTS = frozenset(
     {
+        "agent-state-metabolism.py",
         "dispatch-async.py",
         "host-work-admission.py",
         "reclaim-generated-caches.py",
@@ -199,9 +237,7 @@ def _git_read_only(tokens: list[str]) -> bool:
         return False
     if subcommand == "remote" and rest and rest[0] not in {"-v", "get-url", "show"}:
         return False
-    if subcommand == "worktree" and (not rest or rest[0] != "list"):
-        return False
-    return True
+    return not (subcommand == "worktree" and (not rest or rest[0] != "list"))
 
 
 def _gh_read_only(tokens: list[str]) -> bool:
@@ -284,9 +320,13 @@ def _background_operator(tokens: list[str]) -> bool:
     for index, token in enumerate(tokens):
         if token != "&":
             continue
-        if index > 0 and tokens[index - 1] in _OUTPUT_REDIRECTS and index + 1 < len(tokens):
-            if tokens[index + 1].isdigit():
-                continue
+        if (
+            index > 0
+            and tokens[index - 1] in _OUTPUT_REDIRECTS
+            and index + 1 < len(tokens)
+            and tokens[index + 1].isdigit()
+        ):
+            continue
         return True
     return False
 
@@ -588,12 +628,53 @@ def path_within(path: Path, root: Path) -> bool:
     return True
 
 
+def _harness_session_dirs() -> tuple[Path, ...]:
+    """Claude-harness session-metadata roots, resolved live so tests can retarget HOME.
+
+    Covers *every* harness layout, not just ``~/.claude``: the harness relocated this tree to a
+    repo-local ``.agent-runtime/claude`` and the original carve-out silently stopped matching, so
+    plan-file writes fell back through to plan-only-mutation denial and plan mode broke again six
+    days after it was fixed.  ``harness_paths.session_dirs`` enumerates the candidates —
+    ``plans`` (plan mode's own file), ``jobs`` (background-job scratch), and ``projects``
+    (per-project harness memory + session TLDRs, whose writes the system prompt itself directs;
+    blocking them silently drops session memory).
+    """
+
+    return harness_paths.session_dirs()
+
+
+def harness_session_write(targets: list[Path]) -> bool:
+    """True when EVERY write target is Claude-harness session metadata.
+
+    Plan-mode's own plan file (<harness-root>/plans/<slug>.md) and background-job scratch
+    (<harness-root>/jobs/<id>/tmp) are harness state, not workspace mutations — the harness
+    *instructs* the model to write them. Before this carve-out they were denied three
+    ways (plan-only-mutation in plan mode, shared-checkout-write outside a worktree,
+    write-target-outside-worktree inside one), which broke every plan-mode session on
+    the host ("No plan found" after ExitPlanMode) and pushed job scratch into repo
+    worktrees. Targets arrive canonicalized (target_paths resolves), so a symlink
+    planted under a session dir resolves outside it and falls through to the normal
+    workspace machinery.
+
+    The harness root is resolved, never hard-coded — see :mod:`limen.harness_paths`.  Pinning
+    this to ``~/.claude`` is what let the same bug recur once the harness moved its tree.
+    """
+
+    if not targets:
+        return False
+    roots = _harness_session_dirs()
+    return all(
+        any(path_within(path, root) for root in roots) or harness_paths.is_session_path(path) for path in targets
+    )
+
+
 __all__ = [
     "Action",
     "AdmissionInputError",
     "action_denial_supported",
     "classify_action",
     "classify_bash",
+    "harness_session_write",
     "mutation_build_allowed",
     "path_within",
     "resolve_effective_cwd",

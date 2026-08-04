@@ -25,6 +25,9 @@ import os
 import re
 import subprocess
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 from collections import OrderedDict
 from dataclasses import dataclass, field
@@ -32,6 +35,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+import yaml
 from pydantic import BaseModel
 
 from limen.conduct.broker import ConductError
@@ -47,7 +51,7 @@ from limen.conduct.models import (
     WorkPacketV1,
     canonical_hash,
 )
-from limen.intake import validate_intake_contract
+from limen.intake import IntakeContractError, validate_intake_contract
 from limen.io import (
     load_limen_file,
     local_conduct_projection_lock,
@@ -63,6 +67,7 @@ from limen.materialize import (
     diff_boards,
 )
 from limen.models import VALID_STATUSES, LimenFile, Task
+from limen.partition_lanes import heuristics_may_promote
 from limen.work_loan import task_work_loan_readiness
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
 
@@ -228,6 +233,40 @@ def _rejected(board_path: Path) -> Path:
     return tickets_root(board_path) / "rejected"
 
 
+def refuse_unfunded_partner_lane(repo: object, task_id: object) -> None:
+    """A NEW row attributed to an unfunded partner lane cannot enter this board.
+
+    THE PUBLICATION HALF OF THE PARTNER BOUNDARY. This board is not a private ledger: the
+    projection is written by the Worker to ``organvm/limen`` on ``tabularius/board-projection``
+    (the worker's declared repo/branch/path vars in wrangler.toml), that head enters the merge
+    queue, and it
+    lands on ``main`` — a PUBLIC repo. Accepting a client engagement here IS publishing it, and no
+    downstream gate can un-publish what the board admitted.
+
+    dispatch's veto stops the machine SELECTING client work; this stops the board ACCEPTING it.
+    Both derive the same boundary from the same registries (see :mod:`limen.partition_lanes`), so
+    there is one boundary rather than two definitions of it.
+
+    CREATES ONLY — never a transition on a row that already exists. 411 partner-attributed rows are
+    already on the board; refusing their status/result transitions would strand them mid-lifecycle
+    with no way to close them. They stay the baselined leak ``check-board-partition`` pins, whose
+    disposition the registry already owns: ``L-PII-SWEEP-CONTAIN`` (issue 534) rules internal
+    content on a PUBLIC surface ``KEEP_OFF_PUBLIC_HEAD`` — history is the intended residue — and
+    assigns the strip-from-HEAD to the Publication Policy organ.
+
+    This lives here and NOT in :mod:`limen.intake`: that module is byte-mirrored into the standalone
+    web and MCP runtime packages, which have no registries to derive a boundary from, and a
+    repo-specific partner boundary is not a provider-neutral intake contract.
+    """
+
+    if heuristics_may_promote(repo):
+        return
+    raise IntakeContractError(
+        f"task {task_id}: repo is an unfunded partner lane; this board publishes to a public head, "
+        "so a client engagement cannot enter it (see limen.partition_lanes)"
+    )
+
+
 def submit_ticket(board_path: Path, ticket: Ticket) -> Path:
     """Append a ticket to the inbox — the worker's *only* board-write surface.
 
@@ -238,6 +277,10 @@ def submit_ticket(board_path: Path, ticket: Ticket) -> Path:
     """
     if ticket.intent not in _INTENTS:
         raise ValueError(f"unknown ticket intent: {ticket.intent!r}")
+    if ticket.intent == INTENT_UPSERT and dict(ticket.precondition or {}).get("absent") is True:
+        # The create case, and only the create case — an `absent` precondition IS the declaration
+        # that this row does not exist yet. See refuse_unfunded_partner_lane.
+        refuse_unfunded_partner_lane(dict(ticket.patch or {}).get("repo"), ticket.task_id)
     inbox = _inbox(board_path)
     inbox.mkdir(parents=True, exist_ok=True)
     dest = inbox / f"{ticket.ticket_id}.json"
@@ -355,6 +398,16 @@ class DrainResult:
     projected_tasks: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class CanonicalTaskProjection:
+    """One task read from an exact GitHub-backed projection head."""
+
+    repository: str
+    branch: str
+    head_sha: str
+    task: Task | None
+
+
 @dataclass
 class PreserveResult:
     changed: bool = False
@@ -366,6 +419,99 @@ class PreserveResult:
     commit: str = ""
     branch: str = ""
     pr_number: int = 0
+
+
+def _github_read_headers() -> dict[str, str]:
+    token = (  # allow-secret: environment reference only
+        os.environ.get("LIMEN_GITHUB_TOKEN", "").strip()
+        or os.environ.get("GITHUB_TOKEN", "").strip()
+        or os.environ.get("GH_TOKEN", "").strip()
+    )
+    return {
+        "accept": "application/vnd.github+json",
+        "user-agent": "limen-tabularius-projection-reader/1",
+        "x-github-api-version": "2022-11-28",
+        **({"authorization": f"Bearer {token}"} if token else {}),
+    }
+
+
+def _read_url(request: urllib.request.Request, *, timeout: int) -> bytes:
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.read()
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise BrokerUnavailable(f"canonical task projection read failed: {exc}") from exc
+
+
+def _task_from_projection_text(text: str, task_id: str) -> Task | None:
+    marker = re.compile(rf"(?m)^- id:\s*(?:['\"])?{re.escape(task_id)}(?:['\"])?\s*(?:#.*)?$").search(text)
+    if marker is None:
+        return None
+    following = re.compile(r"(?m)^- id:\s*").search(text, marker.end())
+    block = text[marker.start() : following.start() if following else len(text)]
+    try:
+        parsed = yaml.safe_load(f"tasks:\n{block}") or {}
+        task = (parsed.get("tasks") or [None])[0]
+        validated = Task.model_validate(task)
+    except (AttributeError, IndexError, TypeError, ValueError, yaml.YAMLError) as exc:
+        raise RuntimeError(f"canonical task {task_id} could not be parsed from projection") from exc
+    if validated.id != task_id:
+        raise RuntimeError(f"canonical task projection returned {validated.id}, expected {task_id}")
+    return validated
+
+
+def fetch_canonical_task_projection(
+    task_id: str,
+    *,
+    repository: str | None = None,
+    branch: str = BOARD_PUBLICATION_BRANCH,
+    timeout: int = 30,
+) -> CanonicalTaskProjection:
+    """Read one named task from a SHA-pinned remote board projection.
+
+    The projection is several megabytes, so GitHub GraphQL ``Blob.text`` is not
+    authoritative here.  Resolve the publication ref through REST, fetch the
+    raw file at that immutable commit, and parse only the requested task block.
+    """
+
+    owner = (repository or os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "organvm/limen").strip()
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", owner):
+        raise ValueError("canonical projection repository must be owner/repo")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,127}", task_id):
+        raise ValueError("canonical projection task id is invalid")
+    encoded_branch = urllib.parse.quote(branch, safe="")
+    ref_url = f"https://api.github.com/repos/{owner}/git/ref/heads/{encoded_branch}"
+    ref_request = urllib.request.Request(ref_url, headers=_github_read_headers())
+    try:
+        ref = json.loads(_read_url(ref_request, timeout=timeout))
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise BrokerUnavailable("canonical task projection ref returned invalid JSON") from exc
+    head_sha = str((ref.get("object") or {}).get("sha") or "") if isinstance(ref, dict) else ""
+    if not re.fullmatch(r"[0-9a-f]{40}", head_sha):
+        raise BrokerUnavailable("canonical task projection ref returned no exact commit SHA")
+    raw_owner = "/".join(urllib.parse.quote(part, safe="") for part in owner.split("/"))
+    raw_url = f"https://raw.githubusercontent.com/{raw_owner}/{head_sha}/tasks.yaml"
+    raw_request = urllib.request.Request(
+        raw_url,
+        headers={
+            "user-agent": "limen-tabularius-projection-reader/1",
+            **(
+                {"authorization": _github_read_headers()["authorization"]}
+                if "authorization" in _github_read_headers()
+                else {}
+            ),
+        },
+    )
+    try:
+        text = _read_url(raw_request, timeout=timeout).decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise BrokerUnavailable("canonical task projection is not UTF-8") from exc
+    return CanonicalTaskProjection(
+        repository=owner,
+        branch=branch,
+        head_sha=head_sha,
+        task=_task_from_projection_text(text, task_id),
+    )
 
 
 def pending_count(board_path: Path) -> int:
@@ -1192,6 +1338,10 @@ def apply_limen_file_sync(
                     )
                 }
             )
+            if prior is None:
+                # This legacy seam relays straight to the keeper and never reaches submit_ticket,
+                # so the create-case refusal has to be repeated on this path or it is a side door.
+                refuse_unfunded_partner_lane(desired.get("repo"), task_id)
             if prior is not None:
                 prior_log = list(prior.get("dispatch_log") or [])
                 desired_log = list(desired.get("dispatch_log") or [])
@@ -1544,6 +1694,7 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
             board = load_limen_file(board_path)
             tasks = {task.id: task.model_dump(mode="json", exclude_none=True) for task in board.tasks}
         applied: list[tuple[Path, Ticket]] = []
+        projected_tasks: dict[str, dict[str, Any]] = {}
         admitted, precondition_rejections = _admit_exact_preconditions(good)
         rejected: list[tuple[Path, str]] = [*bad, *precondition_rejections]
         try:
@@ -1568,6 +1719,7 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
                     board_path=board_path,
                 )
                 tasks[str(ticket.task_id)] = projected
+                projected_tasks[str(ticket.task_id)] = projected
                 applied.append((path, ticket))
             except BrokerUnavailable as exc:
                 deferred_reason = str(exc)
@@ -1593,4 +1745,5 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
         ),
         applied_ids=[t.ticket_id for _, t in applied],
         rejected_ids=[p.stem for p, _ in rejected],
+        projected_tasks=projected_tasks,
     )

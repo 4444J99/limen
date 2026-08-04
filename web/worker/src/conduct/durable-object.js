@@ -212,6 +212,13 @@ export class ConductKeeperDurableObject {
         run_id: decodeIdentifier(match[1], "root_run_id"),
       }), 200, this.env);
     }
+    match = path.match(/^\/api\/conduct\/tasks\/([^/]+)\/run$/);
+    if (match && request.method === "GET") {
+      requireRole(principal, "observer", "conductor");
+      return json(await this.service.call("task_run", {
+        task_id: decodeIdentifier(match[1], "task_id"),
+      }), 200, this.env);
+    }
     match = path.match(/^\/api\/conduct\/leases\/([^/]+)\/claim$/);
     if (match && request.method === "POST") {
       requireRole(principal, "executor", "compatibility");

@@ -1106,6 +1106,9 @@ def test_safe_git_executor_neutralizes_repo_signature_helpers(tmp_path, monkeypa
         text=True,
     )
     git("config", "gpg.format", "ssh")
+    # Do not inherit a machine-level signing helper (for example, a credential provider) while
+    # constructing this disposable fixture. The test later installs its own hostile repo helper.
+    git("config", "gpg.ssh.program", ssh_keygen)
     git("config", "user.signingkey", str(signing_key))
     (tmp_path / "signed.txt").write_text("signed fixture\n", encoding="utf-8")
     git("add", "signed.txt")
