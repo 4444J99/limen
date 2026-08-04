@@ -3,6 +3,7 @@
 Date: 2026-08-03  
 Repository: `organvm/limen`  
 Remote head inspected: `origin/main` / `d59af05c2f315aa8f5156f19a83e8782845eb0a1`
+Implementation head: `c94a36e9ec9578d7a7d117523f0f02bb6ab33230`
 
 This is the remote-first capability map for the daily loop. It is deliberately
 PII-clean: conversation bodies, contact data, raw audio, and provider tokens stay
@@ -12,9 +13,10 @@ in the existing private stores.
 
 - `organvm/limen`: default branch `main`; 320 open issues at inspection time.
 - `organvm/application-pipeline`: default branch `main`; PR #111 is merged at
-  `8b110385c731656ad4c5f0482bd5d5bfd916b316`. PR #112 is open/draft, retargeted
-  to `main`, and extends the existing portal-keyed application runtime with
-  structured provider outcomes.
+  `8b110385c731656ad4c5f0482bd5d5bfd916b316`, and PR #112 is merged at
+  `43b58a0fabac21ba8a6da176b92171e9c829685a`. The merged extension keeps the
+  existing portal-keyed application runtime and returns structured provider
+  outcomes.
 - `organvm/universal-mail--automation`: default branch `main`; owns provider
   ingestion, obligations construction, draft/send policy, and delivery evidence.
 - `organvm/social-automation`: default branch `main`; owns social-provider
@@ -31,9 +33,9 @@ The relevant Limen remote receipts were also inspected:
 | Receipt | State | Canonical contribution |
 | --- | --- | --- |
 | PR #1797 | open, draft | fixes application-pipeline path discovery and adds `limen apply` / MCP `application_funnel`; PR #1798 still carries and extends its commit |
-| PR #1509 | open, draft | incremental iMessage + WhatsApp capture; source remains the existing capture owner |
+| PR #1509 | open, draft | incremental iMessage + WhatsApp capture with append-only private tapes, source checkpoints, attachment hashes, and idempotency tests; owner checks await the current Limen base |
 | PR #1794 | open, draft | Forrest/WhatsApp disclosure split; public posture only, private raw source |
-| PR #1715 | open, draft | corpus substrate and biography registry; issue #1734 records the evidence-union defect |
+| PR #1715 | open, ready | corpus substrate and biography registry; issue #1734 records the evidence-union defect and the branch now has a deterministic union resolver |
 | Issue #1734 | open | prevents a newer biography registry from hiding existing life-history evidence |
 
 The current remote re-query corrected the owner findings: browser-state still has
@@ -75,12 +77,12 @@ receipt, so the coordinator preserves their unavailable/ambiguous outcomes.
    loop. Any corpus grounding used by future application customization must union
    existing evidence before the registry PR is accepted.
 
-5. Application-pipeline PR #112 (`b43d200f`) removes the prior mutation that
+5. Application-pipeline PR #112 (`43b58a0f`, source commit `b43d200f`) removes the prior mutation that
    logged generated LinkedIn templates as completed outreach and now returns
    structured ATS outcomes. Its readiness gate has no universal outreach
    prerequisite; role-specific referral prerequisites still require a
    provider-observed send state plus receipt/message identifier. The branch is
-   pushed at `fix/truthful-outreach-receipts-20260803`, retargeted to `main`.
+   merged to `main`.
 
 The read-only local application-pipeline census found 23 YAML rows under its
 `pipeline/submitted/` owner directory. The current snapshot contained no explicit
@@ -96,8 +98,11 @@ receipt owners, with only the missing contracts and coordinator added here.
 
 ## Implementation and verification receipt
 
-- Limen implementation branch: `feat/daily-communications-application-loop-20260803`.
-- Limen draft PR #1798 is the remote custody receipt for that branch.
+- Limen implementation branch: `feat/daily-communications-application-loop-20260803` at
+  `c94a36e9`.
+- Limen PR #1798 is the remote custody receipt for that branch and is ready for
+  merge once its current `pr-gate` completes; Python, worker, web, validation,
+  CodeQL, and static-analysis checks are green on this head.
 - Application-owner truthfulness branch: PR #112, commit `b43d200f`, based on
   merged PR #111; its focused suite passed 65 tests and Ruff.
 - Limen focused wave passed 65 tests across daily execution, MCP delegation,
@@ -113,6 +118,24 @@ receipt owners, with only the missing contracts and coordinator added here.
   idle without a terminal summary; that stage was stopped at the bounded-wait
   boundary. It is not used as the implementation receipt; the focused
   predicates above are the exact-head evidence for this branch.
+- The shared Python audit was red on the first implementation head because
+  `cryptography` resolved to `49.0.0`. Commit `c94a36e9` pins
+  `cryptography>=50.0.0`, regenerates `mcp/uv.lock`, and makes
+  `scripts/pip-audit-autofix.py --check` clean.
+
+## Live dry-run receipt
+
+The first bounded read-only execution used the coordinator with all outbound
+valves absent and a 30-second per-stage timeout. It returned a redacted
+`limen.daily_execution.v1` receipt for local date `2026-08-03`, run
+`daily_add7f6e5a00fd26db3a13183`, with zero current-run delivery receipts,
+zero confirmed applications, and three eligible-role shortage units. The
+opportunity and correspondence stages completed without outbound action; mail
+ingestion and the application owner timed out at the deliberately short probe
+bound. The local pipeline census reported 15 claimed submitted rows and zero
+provider-confirmed historical rows in the accessible snapshot. This is a
+truthful shortage/blocker receipt, not proof of the three-application
+acceptance item.
 
 ## Residual owner-gated atoms
 
@@ -121,7 +144,7 @@ represented as solved by this coordinator:
 
 | Atom | Owner receipt | Failed predicate / next command |
 | --- | --- | --- |
-| Historical application claims | application-pipeline PRs #111/#112 plus provider mailbox/portal receipts | 23 rows were censused and remain unconfirmed without explicit evidence; reconcile the owner rows against provider evidence, then supply the canonical `LIMEN_DELIVERY_RECEIPTS` ledger to the daily run |
+| Historical application claims | application-pipeline PRs #111/#112 plus provider mailbox/portal receipts | 23 rows were censused; the accessible live snapshot exposed 15 submitted-directory rows and no explicit confirmation evidence. Reconcile all 23 owner rows against every configured mailbox/portal, then supply the canonical `LIMEN_DELIVERY_RECEIPTS` ledger to the daily run |
 | Authenticated LinkedIn action | social-automation/browser-state private provider surface | no public authenticated effector was present; run the shared loop only after a provider send/submission receipt exists, otherwise preserve the precise session/CAPTCHA blocker |
 | Forrest/WhatsApp/iMessage capture | Limen PRs #1794/#1509 | public/private capture owners remain open; accept their capture predicates before using full conversation/audio grounding for applications |
 | Biography evidence union | Limen PR #1715 / issue #1734 | registry must union existing source evidence; do not let a newer registry hide prior docs/reviews before customization |
