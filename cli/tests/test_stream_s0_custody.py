@@ -17,6 +17,7 @@ declared data or source, never the filesystem of a runner. A test that only pass
 is mounted would be the "vacuously true on a runner" failure item 2 itself warns about.
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -77,11 +78,25 @@ def test_an_unaccounted_root_fails_rather_than_being_advisory():
     assert 'fail("B"' in window, "an UNACCOUNTED root no longer FAILS — this is the s0 defect returning"
 
 
-def test_the_verdict_is_declared_data_not_a_filesystem_probe():
+def test_the_verdict_is_declared_data_not_a_filesystem_probe(tmp_path: Path):
     """Must run store-free in CI. If the verdict came from a disk probe it would be vacuously true
     on every runner, which is exactly what s0's mission item 2 prohibited."""
+    isolated_home = tmp_path / "ci-home"
+    isolated_home.mkdir()
     proc = subprocess.run(
-        [sys.executable, str(CORPORA_CHECK)], cwd=ROOT, capture_output=True, text=True, check=False, timeout=120
+        [sys.executable, str(CORPORA_CHECK)],
+        cwd=ROOT,
+        env={
+            **os.environ,
+            "HOME": str(isolated_home),
+            # Changing HOME must not hide dependencies installed in this interpreter's
+            # original user site-packages (the portable macOS verifier uses that layout).
+            "PYTHONPATH": os.pathsep.join(path for path in sys.path if path),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "archived off-host" in proc.stdout, (

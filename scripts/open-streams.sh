@@ -204,7 +204,7 @@ fi
 # The ready set, its bound, and each row's shell-quoted command — derived in one place. The checker
 # exits non-zero on registry drift, and `set -e` makes that fatal here: we never open a set derived
 # from an incoherent graph.
-plan="$(
+plan=$(
   python3 - "$repo_root" "${max_parallel:-}" "$unbounded" "$family" <<'PY'
 import json
 import os
@@ -292,7 +292,7 @@ for i, row in enumerate(rows):
     kind = ("REOPEN" if row.get("reopen") else "OPEN") if i < cap else "DEFER"
     print(f"{kind}\t{row['id']}\t{row['job_class']}\t{shlex.join(row['argv'])}\t{row['title']}")
 PY
-)"
+)
 
 cap_line="$(printf '%s\n' "$plan" | awk -F'\t' '$1=="CAP"')"
 cap="$(printf '%s' "$cap_line" | cut -f2)"

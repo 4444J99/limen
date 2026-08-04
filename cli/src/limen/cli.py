@@ -682,7 +682,7 @@ def harvest(agent):
     "--model",
     "launch_model",
     default=None,
-    help="With --reasoning-effort and --sandbox: the exact human-selected Codex model. Alone: a lane tier pin passed to a non-Codex lane as --model (claude, gemini, agy, opencode); requires --agent.",
+    help="With --reasoning-effort and --sandbox: the exact human-selected Codex model. Alone: a lane tier pin for a registry profile that declares model-flag support; requires --agent.",
 )
 @click.option(
     "--reasoning-effort",
@@ -721,6 +721,18 @@ def harvest(agent):
     help="Prompt packet file to copy into intent.md.",
 )
 @click.option(
+    "--predecessor-receipt",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="Create a validated successor from one committed tracked workstream receipt.",
+)
+@click.option(
+    "--runway-mode",
+    type=click.Choice(["inherit", "renew"]),
+    default=None,
+    help="Inherit the predecessor deadline exactly, or renew with an explicit --runway.",
+)
+@click.option(
     "--runway",
     default=None,
     help="Finite workstream runway (for example 90m, 8h, or 7d); defaults to 1d.",
@@ -744,6 +756,8 @@ def workstream(
     from_ref,
     prompt_text,
     prompt_file,
+    predecessor_receipt,
+    runway_mode,
     runway,
     workstream_handle,
     no_readme,
@@ -751,6 +765,9 @@ def workstream(
     slug,
 ):
     """Create/reuse a repo worktree plus a modular kickoff capsule and command."""
+    if predecessor_receipt is None and runway_mode is not None:
+        raise click.UsageError("--runway-mode requires --predecessor-receipt")
+    effective_runway_mode = runway_mode or "inherit"
     root = resolve_limen_repo_root()
     script = root / "scripts" / "start-worktree-session.sh"
     args = ["bash", str(script)]
@@ -774,6 +791,8 @@ def workstream(
         args.extend(["--prompt", prompt_text])
     if prompt_file:
         args.extend(["--prompt-file", prompt_file])
+    if predecessor_receipt:
+        args.extend(["--predecessor-receipt", predecessor_receipt, "--runway-mode", effective_runway_mode])
     if runway:
         args.extend(["--runway", runway])
     if workstream_handle:

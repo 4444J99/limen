@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+import limen.daily_execution as daily_execution
 from limen.daily_execution import (
     DeliveryReceiptV1,
     InteractionEventV1,
@@ -131,9 +132,16 @@ def test_submitted_or_generated_templates_never_become_confirmed(tmp_path: Path,
 
 
 def test_only_current_run_provider_evidence_counts_as_application_confirmation(tmp_path: Path, monkeypatch):
-    # The receipt fixture is dated in the operator's local calendar. Keep the
-    # test stable when CI runs just after UTC midnight.
+    # Pin the operator's local day while retaining the production parser for receipt
+    # timestamps. A wall-clock fixture eventually stops being a current-run receipt.
     monkeypatch.setenv("LIMEN_DAILY_EXECUTION_TIMEZONE", "America/New_York")
+    parsed_local_date = daily_execution._local_date
+    fixture_date = parsed_local_date("2026-08-03T12:00:00Z")
+    monkeypatch.setattr(
+        daily_execution,
+        "_local_date",
+        lambda value=None: fixture_date if value is None else parsed_local_date(value),
+    )
     confirmation_path = tmp_path / "delivery-receipts.json"
     run_id = _run_id(tmp_path)
     confirmation_path.write_text(

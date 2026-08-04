@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/start-worktree-session.sh [--autonomous] [--agent auto|<canonical-lane>] [--model <id>] [--reasoning-effort <level>] [--sandbox <mode>] [--conduct] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
+  scripts/start-worktree-session.sh [--autonomous] [--agent auto|<canonical-lane>] [--model <id>] [--reasoning-effort <level>] [--sandbox <mode>] [--conduct] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--predecessor-receipt <receipt>] [--runway-mode inherit|renew] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
 
 Examples:
   scripts/start-worktree-session.sh portvs triptych-story
@@ -13,6 +13,7 @@ Examples:
   scripts/start-worktree-session.sh --shell --prompt-file /tmp/prompt.md domus package-map
   scripts/start-worktree-session.sh --workstream contributions --prompt 'drain the code lane' limen contrib-run
   scripts/start-worktree-session.sh --model gpt-example --reasoning-effort high --sandbox danger-full-access limen explicit-codex
+  scripts/start-worktree-session.sh --predecessor-receipt /path/to/docs/continuations/prior/workstream.json danse successor
 
 --agent selects and launches a native agent CLI. "auto" derives an available installed CLI from the
 canonical Limen census. Omitting --agent creates the capsule without launching; its kickstart uses
@@ -21,12 +22,12 @@ the same live-derived Auto selection with a login-shell fallback.
 --model, --reasoning-effort, and --sandbox form one explicit Codex launch profile. All three are
 required together. The exact model and effort must exist in the live local Codex catalog at render
 and launch time; no substitution is permitted. Omitting --agent records the Codex profile without
-launching immediately, while --agent codex launches the validated capsule.
+launching immediately; an explicit lane whose registry profile uses the Codex adapter launches it.
 
 --model supplied ALONE is a lane tier pin for a non-Codex lane: it is passed to the launched CLI as
---model <value> and nothing else changes. It requires --agent, and the lane must be one whose
---model flag form is verified (claude, gemini, agy, opencode); any other lane refuses the pin rather
-than ignoring it. A pin never builds a Codex launch profile, so it needs no effort or sandbox.
+--model <value> and nothing else changes. It requires --agent, and the selected registry profile
+must declare a verified model-flag form; any other lane refuses the pin rather than ignoring it. A
+pin never builds a Codex launch profile, so it needs no effort or sandbox.
 
 --branch-prefix sets the branch namespace for a NEW worktree (work|feat|fix|heal|chore|docs|
 refactor; default work). An unknown value is REFUSED, never coerced, and the check runs before any
@@ -43,6 +44,14 @@ docs/lanes/). It is stamped into the kickoff packet so the session stays single-
 
 --runway sets the finite workstream admission window (15m..30d; default 1d). The clock starts at the
 first kickstart, survives successor sessions, and is never silently reset by a rerender.
+
+--predecessor-receipt creates a validated successor from one committed tracked receipt. The default
+--runway-mode inherit copies the predecessor's admitted start and deadline exactly and refuses
+--runway. --runway-mode renew requires an explicit --runway and creates a fresh unstarted contract.
+The predecessor checkout must be on its declared branch at the exact live origin branch head; that
+commit becomes the successor base. Both modes retain provider-neutral workspace-write authorization.
+Only the predecessor slug, branch, and SHA-256 receipt digest enter the successor receipt; its local
+path is never recorded. Re-rendering must repeat the same predecessor and runway-mode arguments.
 
 --autonomous requires an explicit prompt and turns the README into the selected agent's initial prompt. The
 packet defines live probes and completion/switch predicates; it never predeclares the ending.
@@ -80,6 +89,10 @@ prompt_text=""
 prompt_file=""
 runway=""
 runway_explicit=0
+predecessor_receipt=""
+predecessor_head=""
+runway_mode="inherit"
+runway_mode_explicit=0
 workstream=""
 launch_model=""
 launch_reasoning_effort=""
@@ -204,6 +217,25 @@ while [[ $# -gt 0 ]]; do
       runway_explicit=1
       shift 2
       ;;
+    --predecessor-receipt)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --predecessor-receipt" >&2
+        usage >&2
+        exit 2
+      fi
+      predecessor_receipt="$2"
+      shift 2
+      ;;
+    --runway-mode)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --runway-mode" >&2
+        usage >&2
+        exit 2
+      fi
+      runway_mode="$2"
+      runway_mode_explicit=1
+      shift 2
+      ;;
     --workstream|--ws)
       if [[ $# -lt 2 ]]; then
         echo "missing value for --workstream" >&2
@@ -297,13 +329,32 @@ if [[ "$launch_profile_values" -eq 3 && "$write_readme" -ne 1 ]]; then
   echo "explicit model launch profiles cannot be combined with --no-readme" >&2
   exit 2
 fi
-if [[ "$launch_profile_values" -eq 3 && -n "$requested_agent" \
-  && "$requested_agent" != "auto" && "$requested_agent" != "codex" ]]; then
-  echo "explicit model launch profiles require --agent codex or no --agent" >&2
+case "$runway_mode" in
+  inherit|renew) ;;
+  *)
+    echo "--runway-mode must be inherit or renew" >&2
+    exit 2
+    ;;
+esac
+if [[ -z "$predecessor_receipt" ]]; then
+  if [[ "$runway_mode_explicit" -eq 1 ]]; then
+    echo "--runway-mode requires --predecessor-receipt" >&2
+    exit 2
+  fi
+elif [[ "$runway_mode" == "inherit" && "$runway_explicit" -eq 1 ]]; then
+  echo "--runway-mode inherit copies the admitted predecessor timing and cannot accept --runway" >&2
+  exit 2
+elif [[ "$runway_mode" == "renew" && "$runway_explicit" -ne 1 ]]; then
+  echo "--runway-mode renew requires an explicit --runway" >&2
   exit 2
 fi
-if [[ "$launch_profile_values" -eq 3 && -z "$requested_agent" ]]; then
-  requested_agent="codex"
+if [[ -n "$predecessor_receipt" && ( "$launch_profile_values" -ne 0 || -n "$launch_lane_model" ) ]]; then
+  echo "a successor derives its launch contract from the predecessor; explicit model flags are not accepted" >&2
+  exit 2
+fi
+if [[ -n "$predecessor_receipt" && "$write_readme" -ne 1 ]]; then
+  echo "--predecessor-receipt cannot be combined with --no-readme because successor custody requires a capsule" >&2
+  exit 2
 fi
 if [[ -n "$prompt_file" && ! -f "$prompt_file" ]]; then
   echo "prompt file not found: $prompt_file" >&2
@@ -320,6 +371,28 @@ if [[ "$runway_explicit" -eq 1 ]]; then
     exit 2
   fi
   runway="${normalized_runway%%:*}"
+fi
+if [[ -n "$predecessor_receipt" ]]; then
+  if [[ ! -f "$predecessor_receipt" || -L "$predecessor_receipt" ]]; then
+    echo "predecessor receipt must be a real committed file" >&2
+    exit 2
+  fi
+  successor_metadata_args=(
+    successor-metadata
+    --predecessor-receipt "$predecessor_receipt"
+    --runway-mode "$runway_mode"
+  )
+  if [[ "$runway_mode" == "renew" ]]; then
+    successor_metadata_args+=(--runway "$runway")
+  fi
+  if ! successor_metadata="$(python3 "$contract_helper" "${successor_metadata_args[@]}")"; then
+    exit 2
+  fi
+  predecessor_head="$(printf '%s\n' "$successor_metadata" | sed -n '5p')"
+  if [[ ! "$predecessor_head" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ ]]; then
+    echo "predecessor receipt did not resolve an exact remotely custodied HEAD" >&2
+    exit 2
+  fi
 fi
 if [[ -n "$campaign_relay" ]]; then
   if [[ ! "$campaign_relay" =~ ^[0-9a-f]{64}$ \
@@ -347,6 +420,8 @@ if [[ -n "$campaign_relay" ]]; then
     || -n "$launch_reasoning_effort" \
     || -n "$launch_sandbox" \
     || -n "$launch_lane_model" \
+    || -n "$predecessor_receipt" \
+    || "$runway_mode_explicit" -ne 0 \
     || ! "$from_ref" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ \
     || "${LIMEN_CAMPAIGN_RELAY_BASE:-}" != "$from_ref" \
     || "${LIMEN_WORKSTREAM_SESSION_ID:-}" != "relay-${campaign_relay:0:32}" ]]; then
@@ -392,7 +467,7 @@ if [[ -n "$requested_agent" ]]; then
 fi
 agent_resolution="$(
   PYTHONPATH="$script_dir/../cli/src${PYTHONPATH:+:$PYTHONPATH}" \
-    python3 - "${requested_agent:-auto}" <<'PY'
+    python3 - "${requested_agent:-auto}" "$launch_profile_values" <<'PY'
 import os
 import shutil
 import sys
@@ -404,7 +479,7 @@ from limen.census import VENDORS, by_name, canonical
 def candidates(vendor):
     env_key = f"LIMEN_{vendor.name.upper().replace('-', '_')}_BIN"
     override = os.environ.get(env_key, "").strip()
-    values = (override, vendor.name, vendor.binary if vendor.binary == vendor.name else "")
+    values = (override, vendor.binary, vendor.name)
     return tuple(dict.fromkeys(value for value in values if value))
 
 
@@ -415,7 +490,14 @@ def direct_native(vendor):
     return profile.transport == "native-cli" or profile.transport.startswith("ianva-")
 
 
+def workstream_launchable(vendor):
+    profile = getattr(vendor, "execution", None)
+    adapter = profile.workstream_adapter if profile is not None else "positional"
+    return not vendor.issue_assignment and (direct_native(vendor) or adapter == "jules")
+
+
 requested = sys.argv[1].strip().lower()
+require_codex_adapter = sys.argv[2] == "3"
 if requested == "auto":
     relay_order = [
         canonical(value)
@@ -441,7 +523,8 @@ if requested == "auto":
         vendor
         for vendor in ordered
         if vendor is not None
-        if vendor.status.available and vendor.status.state == "live" and direct_native(vendor)
+        if vendor.status.available and vendor.status.state == "live" and workstream_launchable(vendor)
+        if not require_codex_adapter or vendor.execution.workstream_adapter == "codex"
     ]
     selected = next(
         (
@@ -465,6 +548,8 @@ else:
     if vendor is None:
         allowed = ", ".join(item.name for item in VENDORS)
         raise SystemExit(f"unknown Limen agent lane {requested!r}; canonical lanes: {allowed}")
+    if not workstream_launchable(vendor):
+        raise SystemExit(f"Limen agent lane {vendor.name!r} has no verified native workstream adapter")
     binary = next((item for item in candidates(vendor) if shutil.which(item)), vendor.name)
 
 print(vendor.name)
@@ -472,28 +557,46 @@ print(binary)
 profile = getattr(vendor, "execution", None)
 capabilities = profile.capabilities if profile is not None else frozenset({"code", "conduct", "review"})
 print(" ".join(sorted(capabilities)))
+print(profile.workstream_adapter if profile is not None else "positional")
+print("1" if profile is not None and profile.workstream_model_flag else "0")
 PY
 )"
 agent="$(printf '%s\n' "$agent_resolution" | sed -n '1p')"
 registry_binary="$(printf '%s\n' "$agent_resolution" | sed -n '2p')"
 agent_capabilities="$(printf '%s\n' "$agent_resolution" | sed -n '3p')"
+agent_launch_adapter="$(printf '%s\n' "$agent_resolution" | sed -n '4p')"
+agent_model_flag="$(printf '%s\n' "$agent_resolution" | sed -n '5p')"
+case "$agent_launch_adapter" in
+  codex|jules|positional|prompt-flag|prompt-interactive) ;;
+  *)
+    echo "canonical lane $agent has an unsupported workstream launch adapter" >&2
+    exit 2
+    ;;
+esac
+case "$agent_model_flag" in
+  0|1) ;;
+  *)
+    echo "canonical lane $agent has an invalid workstream model-flag contract" >&2
+    exit 2
+    ;;
+esac
+if [[ "$launch_profile_values" -eq 3 && "$agent_launch_adapter" != "codex" ]]; then
+  echo "explicit model launch profiles require the Codex native lane" >&2
+  exit 2
+fi
 if [[ -n "$launch_lane_model" ]]; then
   # Ordered BEFORE the binary-existence probe on purpose: a flag combination is invalid
   # regardless of what happens to be installed, and CI (no codex binary) must reach the same
   # verdict as a workstation that has one.
   # Refuse rather than swallow. Verified --model flag forms only; codex keeps its own triple so
   # there stays exactly one way to launch it explicitly.
-  case "$agent" in
-    claude|gemini|agy|opencode) ;;
-    codex)
+  if [[ "$agent_launch_adapter" == "codex" ]]; then
       echo "lane tier pin refused: the codex lane requires the validated --model/--reasoning-effort/--sandbox profile, not a bare pin" >&2
       exit 2
-      ;;
-    *)
-      echo "lane tier pin refused: lane $agent has no verified --model flag form; remove the pin or extend the verified allowlist" >&2
-      exit 2
-      ;;
-  esac
+  elif [[ "$agent_model_flag" != "1" ]]; then
+    echo "lane tier pin refused: lane $agent has no verified --model flag form; remove the pin or extend its registry profile" >&2
+    exit 2
+  fi
 fi
 if [[ "$launch_profile_values" -eq 3 && -n "$launch_sandbox" ]]; then
   # STATIC sandbox validation, ordered before EVERY binary probe for the same reason the lane tier
@@ -511,12 +614,8 @@ if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry
   exit 127
 fi
 if [[ "$launch_profile_values" -eq 3 ]]; then
-  if [[ "$agent" != "codex" ]]; then
-    echo "explicit model launch profiles require the Codex native lane" >&2
-    exit 2
-  fi
   if ! codex_binary="$(workstream_native_binary "$agent" "$registry_binary")"; then
-    echo "native CLI not found for canonical lane codex" >&2
+    echo "native CLI not found for canonical lane $agent" >&2
     exit 127
   fi
   if ! python3 "$contract_helper" validate-codex-launch \
@@ -563,6 +662,22 @@ if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "not a git repo: $repo" >&2
   exit 1
 fi
+if [[ -n "$predecessor_receipt" ]]; then
+  if ! git -C "$repo" cat-file -e "${predecessor_head}^{commit}" 2>/dev/null; then
+    echo "predecessor HEAD is not present in the target repository" >&2
+    exit 2
+  fi
+  if [[ -n "$from_ref" ]]; then
+    requested_from_head="$(git -C "$repo" rev-parse --verify "${from_ref}^{commit}" 2>/dev/null || true)"
+    if [[ "$requested_from_head" != "$predecessor_head" ]]; then
+      echo "--from must resolve to the exact predecessor HEAD" >&2
+      exit 2
+    fi
+  fi
+  # Canonicalize the successor base to the remotely custodied predecessor commit. The local
+  # receipt path remains an input only and is never written into the successor capsule.
+  from_ref="$predecessor_head"
+fi
 if [[ -n "$campaign_relay" ]]; then
   relay_root_head="$(git -C "$repo" rev-parse HEAD 2>/dev/null || true)"
   relay_root_status="$(git -C "$repo" status --porcelain=v1 --untracked-files=all 2>/dev/null || true)"
@@ -602,6 +717,30 @@ if [[ -n "$campaign_relay" ]]; then
     || git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
     echo "internal campaign relay requires an absent deterministic target branch and worktree" >&2
     exit 2
+  fi
+fi
+
+if [[ -n "$predecessor_receipt" ]]; then
+  existing_target_ref=""
+  successor_identity="$wt/.limen-workstream/capsule.identity"
+  successor_receipt="$wt/docs/continuations/$slug/workstream.json"
+  if [[ -d "$wt" ]] && git -C "$wt" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    if [[ ! -s "$successor_identity" || ! -s "$successor_receipt" ]]; then
+      existing_target_ref="HEAD"
+    fi
+  elif git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+    existing_target_ref="refs/heads/$branch"
+  fi
+  if [[ -n "$existing_target_ref" ]]; then
+    if [[ "$existing_target_ref" == "HEAD" ]]; then
+      existing_target_head="$(git -C "$wt" rev-parse --verify "HEAD^{commit}" 2>/dev/null || true)"
+    else
+      existing_target_head="$(git -C "$repo" rev-parse --verify "${existing_target_ref}^{commit}" 2>/dev/null || true)"
+    fi
+    if [[ "$existing_target_head" != "$predecessor_head" ]]; then
+      echo "existing uncapsuled successor target does not match the exact predecessor HEAD" >&2
+      exit 2
+    fi
   fi
 fi
 
@@ -677,7 +816,8 @@ if [[ "$write_readme" -eq 1 ]]; then
     "$wt" "$repo" "$slug" "$branch" "$workstream" "$from_ref" "$autonomous" \
     "$prompt_payload" "$script_dir/../spec/continuation-capsule" "$runway" "$contract_helper" \
     "$agent" "$registry_binary" "$conduct" "$allow_shell_fallback" "$agent_capabilities" \
-    "$launch_model" "$launch_reasoning_effort" "$launch_sandbox" "$launch_lane_model"
+    "$launch_model" "$launch_reasoning_effort" "$launch_sandbox" "$launch_lane_model" \
+    "$agent_launch_adapter" "$agent_model_flag" "$predecessor_receipt" "$runway_mode"
   if [[ -n "$campaign_relay" ]]; then
     workstream_prepare_campaign_relay_capsule \
       "$wt" "$slug" "$branch" "$workstream" "$campaign_relay"
