@@ -511,7 +511,7 @@ def _redact_step_summary(name: str, value: Mapping[str, Any]) -> dict[str, Any]:
             return 0
 
     if name == "applications":
-        summary = {
+        summary: dict[str, Any] = {
             key: integer(key) for key in ("sourced", "qualified", "staged", "submitted", "attempted", "confirmed")
         } | {key: bool(value.get(key, False)) for key in ("armed", "launched", "cycle_completed", "retry_locked")}
         for key in ("ambiguous", "blocked", "superseded"):
@@ -654,7 +654,7 @@ def _application_pipeline_census() -> dict[str, Any]:
         return {"source_present": False, "claimed_submitted": 0, "unconfirmed_claims": 0, "confirmed": 0}
 
     try:
-        import yaml  # type: ignore[import-untyped]
+        import yaml
     except ImportError:
         return {"source_present": True, "claimed_submitted": 0, "unconfirmed_claims": 0, "confirmed": 0}
 
@@ -911,7 +911,7 @@ def run_daily_execution(
     script = repo_root / "scripts"
     runner = step_runner or _run_step
     timeout = max(1, min(int(timeout_seconds), DEFAULT_TIMEOUT_SECONDS))
-    stage_specs: tuple[tuple[str, Sequence[str], str], ...] = (
+    stage_specs: tuple[tuple[str, Sequence[str] | None, str], ...] = (
         ("ingest", ("bash", str(script / "mail-beat.sh")), "read"),
         # The opportunity owner is also the obligations derivation owner.  Keep
         # its historical command name in the receipt for compatibility.
@@ -951,25 +951,25 @@ def run_daily_execution(
             continue
         if args is None:
             delivery_rows = _provider_delivery_receipts()
-            result = _internal_stage(name, delivery_rows=delivery_rows, run_id=run_id)
+            stage_result = _internal_stage(name, delivery_rows=delivery_rows, run_id=run_id)
         else:
-            result = runner(
+            stage_result = runner(
                 name=name,
                 args=list(args),
                 env=_stage_env(repo_root, fire, owner, run_id),
                 cwd=repo_root,
                 timeout_seconds=timeout,
             )
-        result = dict(result)
-        result["name"] = name
-        result["fire"] = bool(fire) if owner in {"application", "followup"} else False
-        if result.get("status") == "blocked" and owner in {"application", "followup"}:
-            result["retry_locked"] = bool(
-                result.get("ambiguous")
-                or result.get("summary", {}).get("ambiguous")
-                or result.get("summary", {}).get("retry_locked")
+        stage_result = dict(stage_result)
+        stage_result["name"] = name
+        stage_result["fire"] = bool(fire) if owner in {"application", "followup"} else False
+        if stage_result.get("status") == "blocked" and owner in {"application", "followup"}:
+            stage_result["retry_locked"] = bool(
+                stage_result.get("ambiguous")
+                or stage_result.get("summary", {}).get("ambiguous")
+                or stage_result.get("summary", {}).get("retry_locked")
             )
-        checkpoints[name] = result
+        checkpoints[name] = stage_result
 
     delivery_rows = _provider_delivery_receipts()
     if "voice_checks" not in checkpoints:
