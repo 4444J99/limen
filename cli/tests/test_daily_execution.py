@@ -131,6 +131,9 @@ def test_submitted_or_generated_templates_never_become_confirmed(tmp_path: Path,
 
 
 def test_only_current_run_provider_evidence_counts_as_application_confirmation(tmp_path: Path, monkeypatch):
+    # The receipt fixture is dated in the operator's local calendar. Keep the
+    # test stable when CI runs just after UTC midnight.
+    monkeypatch.setenv("LIMEN_DAILY_EXECUTION_TIMEZONE", "America/New_York")
     confirmation_path = tmp_path / "delivery-receipts.json"
     run_id = _run_id(tmp_path)
     confirmation_path.write_text(
