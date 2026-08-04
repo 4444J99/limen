@@ -201,6 +201,9 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     fake_opencode = fake_bin / "opencode"
     fake_opencode.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
     fake_opencode.chmod(0o755)
+    fake_jules = fake_bin / "jules"
+    fake_jules.write_text('#!/usr/bin/env bash\n: > "$PROVIDER_MARKER"\n', encoding="utf-8")
+    fake_jules.chmod(0o755)
     monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
     monkeypatch.setenv("LIMEN_AGENT", "opencode")
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
@@ -303,6 +306,50 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert renewed_receipt["predecessor"] == expected_lineage
     assert _git("rev-parse", "HEAD", cwd=renewed_wt).stdout.strip() == predecessor_head
     assert predecessor.read_bytes() == predecessor_bytes
+
+    # A successor is deliberately based on the predecessor's exact branch head, which need not
+    # be the repository's live default HEAD. Jules cannot consume that base. The generated
+    # kickstart must reject it before admission mutates the fresh runway or receipt.
+    _git("symbolic-ref", "HEAD", "refs/heads/main", cwd=repo.parent / "origin.git")
+    monkeypatch.setenv("LIMEN_AGENT", "jules")
+    jules_successor = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--predecessor-receipt",
+            str(predecessor),
+            "--runway-mode",
+            "renew",
+            "--runway",
+            "2d",
+            str(repo),
+            "Jules Incompatible Successor",
+        ],
+    )
+    assert jules_successor.exit_code == 0, jules_successor.output
+    monkeypatch.setenv("LIMEN_AGENT", "opencode")
+    jules_wt = repo / ".worktrees" / "jules-incompatible-successor"
+    jules_contract = jules_wt / ".limen-workstream" / "workstream.json"
+    jules_receipt = jules_wt / "docs" / "continuations" / "jules-incompatible-successor" / "workstream.json"
+    protected = (jules_contract, jules_receipt)
+    protected_bytes = {path: path.read_bytes() for path in protected}
+    provider_marker = tmp_path / "jules-provider-started"
+
+    rejected_jules = subprocess.run(
+        ["bash", str(jules_wt / ".limen-workstream" / "kickstart.sh")],
+        cwd=jules_wt,
+        env={**os.environ, "PROVIDER_MARKER": str(provider_marker)},
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert rejected_jules.returncode == 2
+    assert "requires current HEAD to equal the live remote default HEAD" in rejected_jules.stderr
+    assert {path: path.read_bytes() for path in protected} == protected_bytes
+    assert json.loads(jules_contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
+    assert not provider_marker.exists()
 
     invalid = CliRunner().invoke(
         main,
@@ -603,7 +650,10 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     remote_head_check_count.unlink(missing_ok=True)
     race_event_count = len(events_capture.read_text(encoding="utf-8").splitlines())
     monkeypatch.setenv("ADVANCE_REMOTE_AFTER_FIRST_CHECK", "1")
-    monkeypatch.setenv("ADVANCE_REMOTE_AFTER_CHECKS", "2")
+    # Launch-environment and pre-admission Jules validation are both read-only. Advance only
+    # after the later provider-side validation so this fixture still exercises the reservation
+    # race rather than the earlier fail-closed base check.
+    monkeypatch.setenv("ADVANCE_REMOTE_AFTER_CHECKS", "3")
     moving_default = CliRunner().invoke(
         main,
         [
@@ -627,26 +677,36 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     timeout_events_before = events_capture.read_text(encoding="utf-8")
     monkeypatch.setenv("JULES_SLEEP", "1")
     monkeypatch.setenv("LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS", "1")
-    started = time.monotonic()
-    timed_out = CliRunner().invoke(
+    monkeypatch.setenv("LIMEN_AGENT", "jules")
+    rendered_timeout = CliRunner().invoke(
         main,
         [
             "workstream",
             "--autonomous",
-            "--agent",
-            "jules",
             "--prompt",
             "The provider call must be bounded.",
             str(repo),
             "Jules Timeout",
         ],
     )
-    assert timed_out.exit_code != 0
+    assert rendered_timeout.exit_code == 0, rendered_timeout.output
+    monkeypatch.delenv("LIMEN_AGENT")
+    timeout_wt = repo / ".worktrees" / "jules-timeout"
+    started = time.monotonic()
+    timed_out = subprocess.run(
+        ["bash", str(timeout_wt / ".limen-workstream" / "kickstart.sh")],
+        cwd=timeout_wt,
+        env={**os.environ},
+        text=True,
+        capture_output=True,
+        timeout=10,
+        check=False,
+    )
+    assert timed_out.returncode != 0
     assert time.monotonic() - started < 4
     monkeypatch.delenv("JULES_SLEEP")
     monkeypatch.delenv("LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS")
 
-    timeout_wt = repo / ".worktrees" / "jules-timeout"
     args_capture.unlink(missing_ok=True)
     retried = subprocess.run(
         ["bash", str(timeout_wt / ".limen-workstream" / "kickstart.sh")],
@@ -1141,7 +1201,8 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
     fake_git.write_text(
         (
             "#!/usr/bin/env bash\n"
-            'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "fetch" && "${1:-}" == "fetch" ]]; then exit 71; fi\n'
+            'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "fetch" && "${1:-}" == "fetch" ]]; then '
+            'printf "fetch-output-must-not-escape\\n"; exit 71; fi\n'
             'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "status" && "$*" == "status --short --branch" ]]; then '
             'printf "status-output-must-not-escape\\n"; exit 72; fi\n'
             'exec "$REAL_GIT" "$@"\n'
@@ -1190,6 +1251,7 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
         kickstart_text.index("git fetch --prune", kickstart_text.index("refresh_workstream_runway()")) < admission_call
     )
     assert kickstart_text.index("git status --short --branch") < admission_call
+    assert "git fetch --prune >/dev/null 2>&1" in kickstart_text
     assert "git status --short --branch >/dev/null" in kickstart_text
 
     rejected = subprocess.run(
@@ -1204,7 +1266,7 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
 
     assert rejected.returncode == 2
     assert f"launch-environment error: {diagnostic}" in rejected.stderr
-    assert "status-output-must-not-escape" not in rejected.stdout + rejected.stderr
+    assert "output-must-not-escape" not in rejected.stdout + rejected.stderr
     assert {path: path.read_bytes() for path in protected} == original_bytes
     assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
     assert not provider_marker.exists()

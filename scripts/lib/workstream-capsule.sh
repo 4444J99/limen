@@ -2075,7 +2075,7 @@ refresh_workstream_runway() {
 }
 if git remote get-url origin >/dev/null 2>&1 9>&-; then
   if ! GIT_TERMINAL_PROMPT=0 python3 "\$contract_helper" run-bounded \
-    --timeout-seconds "\$preflight_timeout" -- git fetch --prune 9>&-; then
+    --timeout-seconds "\$preflight_timeout" -- git fetch --prune >/dev/null 2>&1 9>&-; then
     printf 'launch-environment error: bounded fetch from origin failed\n' >&2
     exit 2
   fi
@@ -2084,6 +2084,12 @@ if ! python3 "\$contract_helper" run-bounded \
   --timeout-seconds "\$preflight_timeout" -- git status --short --branch >/dev/null 9>&-; then
   printf 'launch-environment error: bounded Git status failed\n' >&2
   exit 2
+fi
+if [[ "\$launch_adapter" == "jules" ]]; then
+  # Jules can only see the live remote default HEAD (or its own already-published reservation).
+  # Prove that custody before runway admission so an incompatible exact successor base cannot
+  # start its clock or rewrite its receipt and then fail at provider handoff.
+  workstream_jules_validate_default_base
 fi
 if [[ "\$conduct" -eq 1 ]]; then
   workstream_hydrate_conduct_environment
