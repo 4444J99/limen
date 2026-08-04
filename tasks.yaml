@@ -136157,30 +136157,34 @@ tasks:
     status: failed_blocked
     output: "heal-dispatch: chronic escalation re-homed needs_human \u2192 failed_blocked\
       \ (fleet-debt, not a human atom)"
-- id: ASK-quicken-escalate-6a48ce1d
-  title: finish stalled session 'Design movement ontology and workout composi' (breathed
-    24x, still stalling)
-  type: ops
-  target_agent: agy
-  priority: high
+- id: 'ASK-quicken-escalate-6a48ce1d'
+  title: 'finish stalled session ''Design movement ontology and workout composi'' (breathed 24x, still stalling)'
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - quicken-residue
-  - quicken-escalate
-  - needs-human
+  - 'quicken-residue'
+  - 'quicken-escalate'
+  - 'needs-human'
   urls: []
-  context: "Session 6a48ce1d-1de5-4b35-858d-7b485280737d ('Design movement ontology\
-    \ and workout composition system') re-stalled after 24 guardrailed breathes \u2014\
-    \ the identical continuation will not move it. Parked purpose (last prompt): \"\
-    did i not say i did it already? hence the review....wasnt that obvious?\". Resume\
-    \ by hand or with a NEW instruction: claude --resume 6a48ce1d-1de5-4b35-858d-7b485280737d\
-    \   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson).\
-    \ Auto-escalated by QUICKEN."
+  context: 'Session 6a48ce1d-1de5-4b35-858d-7b485280737d (''Design movement ontology and workout composition system'') re-stalled after 24 guardrailed breathes — the identical continuation will not move it. Parked purpose (last prompt): "did i not say i did it already? hence the review....wasnt that obvious?". Resume by hand or with a NEW instruction: claude --resume 6a48ce1d-1de5-4b35-858d-7b485280737d   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson). Auto-escalated by QUICKEN.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T18:42:32.207581Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:41:11.475Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:41:11.475Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-a624abcab8224feac23cd32f361b853b:522:compatibility'
+    conduct_run_id: 'run-a624abcab8224feac23cd32f361b853b'
+    conduct_lease_id: 'lease-522-a624abcab8224fea'
+    conduct_generation: 522
 - id: GH-organvm-limen-827
   title: '[his-hand] Arm the Fable interactive-guard settings snippet'
   repo: organvm/limen
