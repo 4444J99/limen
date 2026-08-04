@@ -10,9 +10,11 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
+import limen.census as census
 import limen.conduct.campaign_relay as relay_core
 import limen.conduct.campaign_relay_process as relay_process
 import limen.conduct.campaign_relay_protocol as relay_protocol
@@ -36,7 +38,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _agent_resolution_source() -> str:
     source = (ROOT / "scripts" / "start-worktree-session.sh").read_text(encoding="utf-8")
-    marker = '    python3 - "${requested_agent:-auto}" "$launch_profile_values" <<\'PY\'\n'
+    marker = '    python3 - "${requested_agent:-auto}" "$launch_profile_values" "$autonomous" <<\'PY\'\n'
     return source.split(marker, 1)[1].split("\nPY\n)", 1)[0]
 
 
@@ -44,7 +46,7 @@ def _run_agent_resolution() -> None:
     # Execute the exact tracked heredoc so the fixture cannot drift into testing a duplicate.
     original_argv = sys.argv
     try:
-        sys.argv = [*sys.argv, "0"]
+        sys.argv = [*sys.argv, "0", "0"]
         exec(compile(_agent_resolution_source(), "agent-resolution", "exec"), {})  # noqa: S102
     finally:
         sys.argv = original_argv
@@ -172,6 +174,32 @@ def test_campaign_relay_second_census_fails_for_empty_intersection(
         SystemExit,
         match="campaign relay has no remaining live provider capacity before launch",
     ):
+        _run_agent_resolution()
+
+
+def test_non_autonomous_auto_selection_excludes_the_jules_adapter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = next(vendor for vendor in census.VENDORS if vendor.execution.workstream_adapter == "jules")
+    renamed = replace(
+        source,
+        name="fixture-jules-provider-renamed",
+        aliases=(),
+        binary="fixture-jules-provider-cli",
+    )
+    monkeypatch.setattr(census, "VENDORS", (renamed,))
+    monkeypatch.setattr(census, "_BY_NAME", {renamed.name: renamed})
+    monkeypatch.setattr(
+        shutil,
+        "which",
+        lambda binary: f"/fixture/{binary}" if binary == renamed.binary else None,
+    )
+    monkeypatch.setattr(sys, "argv", ["agent-resolution", "auto"])
+    monkeypatch.delenv("LIMEN_AGENT", raising=False)
+    monkeypatch.delenv("LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES", raising=False)
+    monkeypatch.delenv("LIMEN_FIXTURE_JULES_PROVIDER_RENAMED_BIN", raising=False)
+
+    with pytest.raises(SystemExit, match="no live canonical Limen lane supports native execution"):
         _run_agent_resolution()
 
 

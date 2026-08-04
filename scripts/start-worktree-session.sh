@@ -467,37 +467,21 @@ if [[ -n "$requested_agent" ]]; then
 fi
 agent_resolution="$(
   PYTHONPATH="$script_dir/../cli/src${PYTHONPATH:+:$PYTHONPATH}" \
-    python3 - "${requested_agent:-auto}" "$launch_profile_values" <<'PY'
+    python3 - "${requested_agent:-auto}" "$launch_profile_values" "$autonomous" <<'PY'
 import os
 import shutil
 import sys
 
 from limen.capacity import select_lanes
 from limen.census import VENDORS, by_name, canonical
-
-
-def candidates(vendor):
-    env_key = f"LIMEN_{vendor.name.upper().replace('-', '_')}_BIN"
-    override = os.environ.get(env_key, "").strip()
-    values = (override, vendor.binary, vendor.name)
-    return tuple(dict.fromkeys(value for value in values if value))
-
-
-def direct_native(vendor):
-    profile = getattr(vendor, "execution", None)
-    if profile is None:
-        return vendor.local_checkout
-    return profile.transport == "native-cli" or profile.transport.startswith("ianva-")
-
-
-def workstream_launchable(vendor):
-    profile = getattr(vendor, "execution", None)
-    adapter = profile.workstream_adapter if profile is not None else "positional"
-    return not vendor.issue_assignment and (direct_native(vendor) or adapter == "jules")
+from limen.workstream_provider import workstream_binary_candidates, workstream_launchable
 
 
 requested = sys.argv[1].strip().lower()
 require_codex_adapter = sys.argv[2] == "3"
+if sys.argv[3] not in {"0", "1"}:
+    raise SystemExit("invalid autonomous workstream selection mode")
+autonomous = sys.argv[3] == "1"
 if requested == "auto":
     relay_order = [
         canonical(value)
@@ -523,14 +507,16 @@ if requested == "auto":
         vendor
         for vendor in ordered
         if vendor is not None
-        if vendor.status.available and vendor.status.state == "live" and workstream_launchable(vendor)
+        if vendor.status.available
+        and vendor.status.state == "live"
+        and workstream_launchable(vendor, autonomous=autonomous)
         if not require_codex_adapter or vendor.execution.workstream_adapter == "codex"
     ]
     selected = next(
         (
             (vendor, binary)
             for vendor in eligible
-            for binary in candidates(vendor)
+            for binary in workstream_binary_candidates(vendor, os.environ)
             if shutil.which(binary)
         ),
         None,
@@ -539,7 +525,7 @@ if requested == "auto":
         if not eligible:
             raise SystemExit("no live canonical Limen lane supports native execution")
         vendor = eligible[0]
-        binary = next(iter(candidates(vendor)), vendor.name)
+        binary = next(iter(workstream_binary_candidates(vendor, os.environ)), vendor.name)
     else:
         vendor, binary = selected
 else:
@@ -548,9 +534,14 @@ else:
     if vendor is None:
         allowed = ", ".join(item.name for item in VENDORS)
         raise SystemExit(f"unknown Limen agent lane {requested!r}; canonical lanes: {allowed}")
-    if not workstream_launchable(vendor):
+    if not workstream_launchable(vendor, autonomous=autonomous):
+        if vendor.execution.workstream_adapter == "jules" and not autonomous:
+            raise SystemExit(f"Limen agent lane {vendor.name!r} requires --autonomous")
         raise SystemExit(f"Limen agent lane {vendor.name!r} has no verified native workstream adapter")
-    binary = next((item for item in candidates(vendor) if shutil.which(item)), vendor.name)
+    binary = next(
+        (item for item in workstream_binary_candidates(vendor, os.environ) if shutil.which(item)),
+        vendor.name,
+    )
 
 print(vendor.name)
 print(binary)

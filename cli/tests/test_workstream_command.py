@@ -74,13 +74,7 @@ def _write_committed_predecessor(repo: Path) -> tuple[Path, bytes, dict[str, obj
     return receipt, receipt.read_bytes(), contract
 
 
-def _fixture_limen_root_with_renamed_provider(
-    tmp_path: Path,
-    source: census.Vendor,
-    renamed: census.Vendor,
-) -> Path:
-    """Copy the launcher with a test registry whose selected provider has an arbitrary ID."""
-
+def _fixture_limen_root(tmp_path: Path) -> Path:
     fixture_root = tmp_path / "fixture-limen"
     (fixture_root / "scripts" / "lib").mkdir(parents=True)
     (fixture_root / "spec").mkdir()
@@ -89,6 +83,17 @@ def _fixture_limen_root_with_renamed_provider(
         shutil.copy2(ROOT / "scripts" / "lib" / name, fixture_root / "scripts" / "lib")
     shutil.copytree(ROOT / "spec" / "continuation-capsule", fixture_root / "spec" / "continuation-capsule")
     shutil.copytree(ROOT / "cli" / "src", fixture_root / "cli" / "src")
+    return fixture_root
+
+
+def _fixture_limen_root_with_renamed_provider(
+    tmp_path: Path,
+    source: census.Vendor,
+    renamed: census.Vendor,
+) -> Path:
+    """Copy the launcher with a test registry whose selected provider has an arbitrary ID."""
+
+    fixture_root = _fixture_limen_root(tmp_path)
     census_path = fixture_root / "cli" / "src" / "limen" / "census.py"
     registry_source = census_path.read_text(encoding="utf-8")
     original_name = f'name="{source.name}"'
@@ -335,6 +340,9 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
         main,
         [
             "workstream",
+            "--autonomous",
+            "--prompt",
+            "Reject a successor base that Jules cannot consume.",
             "--predecessor-receipt",
             str(predecessor),
             "--runway-mode",
@@ -425,6 +433,73 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert "--runway-mode requires --predecessor-receipt" in missing_predecessor.output
 
 
+def test_successor_custody_failure_precedes_module_writes_and_allows_exact_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+    predecessor, _predecessor_bytes, _predecessor_contract = _write_committed_predecessor(repo)
+    fixture_root = _fixture_limen_root(tmp_path)
+    helper = fixture_root / "cli" / "src" / "limen" / "workstream_contract.py"
+    helper_source = helper.read_text(encoding="utf-8")
+    parse_marker = "    args = parser.parse_args(argv)\n    try:\n"
+    assert parse_marker in helper_source
+    helper.write_text(
+        helper_source.replace(
+            parse_marker,
+            (
+                "    args = parser.parse_args(argv)\n"
+                "    if args.command == 'configure-successor' and "
+                "os.environ.get('FAIL_SUCCESSOR_CONFIGURE') == '1':\n"
+                "        raise SystemExit('injected successor custody race')\n"
+                "    try:\n"
+            ),
+            1,
+        ),
+        encoding="utf-8",
+    )
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_opencode = fake_bin / "opencode"
+    fake_opencode.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    fake_opencode.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(fixture_root))
+    monkeypatch.setenv("LIMEN_AGENT", "opencode")
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+    monkeypatch.setenv("FAIL_SUCCESSOR_CONFIGURE", "1")
+    argv = [
+        "workstream",
+        "--predecessor-receipt",
+        str(predecessor),
+        str(repo),
+        "Retryable Successor",
+    ]
+
+    failed = CliRunner().invoke(main, argv)
+
+    assert failed.exit_code != 0
+    wt = repo / ".worktrees" / "retryable-successor"
+    capsule = wt / ".limen-workstream"
+    assert capsule.is_dir()
+    assert sorted(path.name for path in capsule.iterdir()) == [".capsule.lock"]
+    assert not (wt / "docs" / "continuations" / "retryable-successor" / "workstream.json").exists()
+
+    monkeypatch.delenv("FAIL_SUCCESSOR_CONFIGURE")
+    retried = CliRunner().invoke(main, argv)
+
+    assert retried.exit_code == 0, retried.output
+    assert (capsule / "workstream.json").is_file()
+    assert (capsule / "manifest.md").is_file()
+    assert (wt / "docs" / "continuations" / "retryable-successor" / "workstream.json").is_file()
+
+
 NON_NATIVE_WORKSTREAM_PROVIDERS = tuple(
     provider
     for provider in census.VENDORS
@@ -462,6 +537,41 @@ def test_non_native_lane_is_rejected_before_workstream_creation(
     assert result.exit_code != 0
     assert "has no verified native workstream adapter" in capfd.readouterr().err
     assert not (repo / ".worktrees" / f"no-native-{provider.name}").exists()
+
+
+def test_non_autonomous_jules_is_rejected_before_workstream_creation(tmp_path: Path, monkeypatch, capfd) -> None:
+    source = next(provider for provider in census.VENDORS if provider.execution.workstream_adapter == "jules")
+    renamed = replace(
+        source,
+        name="fixture-jules-interactive-renamed",
+        aliases=(),
+        binary="fixture-jules-interactive-cli",
+    )
+    fixture_root = _fixture_limen_root_with_renamed_provider(tmp_path, source, renamed)
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_jules = fake_bin / renamed.binary
+    fake_jules.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    fake_jules.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(fixture_root))
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    result = CliRunner().invoke(
+        main,
+        ["workstream", "--agent", renamed.name, str(repo), "Interactive Renamed Jules"],
+    )
+
+    assert result.exit_code != 0
+    assert "requires --autonomous" in capfd.readouterr().err
+    assert not (repo / ".worktrees" / "interactive-renamed-jules").exists()
 
 
 def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path, monkeypatch, capfd) -> None:
