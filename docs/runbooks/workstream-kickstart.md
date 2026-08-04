@@ -12,8 +12,10 @@ workstream --autonomous --agent auto --conduct --runway 8h --prompt-file /path/t
 Autonomous mode refuses a missing prompt. Its thin README index is passed to the selected native
 agent as the initial prompt and requires four cohesive Markdown modules (manifest, intent, runtime
 decision contract, and closeout) plus a machine-readable `workstream.json`. `--agent auto` derives an available installed CLI from the
-canonical Limen census; an explicit canonical lane such as `claude`, `opencode`, `agy`, `copilot`,
-or `codex` preserves that native identity. `--runway` accepts `Nm`, `Nh`, or `Nd` from 15 minutes
+canonical Limen census; an explicit canonical lane such as `claude`, `opencode`, `agy`, `gemini`,
+or `codex` preserves that native identity. Copilot is an issue-assignment lane: dispatch it by
+assigning an existing GitHub issue to `copilot-swe-agent`, not through `workstream --agent`.
+`--runway` accepts `Nm`, `Nh`, or `Nd` from 15 minutes
 through 30 days and defaults to one day. The clock starts on first kickstart, subsequent sessions
 inherit the same deadline, and an expired capsule fails closed instead of silently renewing.
 Runtime evidence derives `continue`, `switch`, `wait_relay`, `settled`, or `invalid`.

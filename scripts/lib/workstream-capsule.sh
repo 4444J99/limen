@@ -2081,7 +2081,7 @@ if git remote get-url origin >/dev/null 2>&1 9>&-; then
   fi
 fi
 if ! python3 "\$contract_helper" run-bounded \
-  --timeout-seconds "\$preflight_timeout" -- git status --short --branch >/dev/null 9>&-; then
+  --timeout-seconds "\$preflight_timeout" -- git status --short --branch >/dev/null 2>&1 9>&-; then
   printf 'launch-environment error: bounded Git status failed\n' >&2
   exit 2
 fi

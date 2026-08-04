@@ -95,7 +95,8 @@ def _fixture_limen_root_with_renamed_provider(
     original_binary = f'binary="{source.binary}"'
     record_start = registry_source.index(f"    Vendor(\n        {original_name},")
     record_end = registry_source.find("\n    Vendor(", record_start + 1)
-    assert record_end != -1
+    if record_end == -1:
+        record_end = len(registry_source)
     source_record = registry_source[record_start:record_end]
     assert source_record.count(original_name) == 1
     assert source_record.count(original_binary) == 1
@@ -106,6 +107,22 @@ def _fixture_limen_root_with_renamed_provider(
     registry_source = registry_source[:record_start] + renamed_record + registry_source[record_end:]
     census_path.write_text(registry_source, encoding="utf-8")
     return fixture_root
+
+
+def test_registry_fixture_can_rename_a_provider_in_the_last_catalog_position(tmp_path: Path) -> None:
+    source = census.VENDORS[-1]
+    renamed = replace(
+        source,
+        name="fixture-final-provider",
+        aliases=(),
+        binary="fixture-final-provider-cli",
+    )
+
+    fixture_root = _fixture_limen_root_with_renamed_provider(tmp_path, source, renamed)
+
+    fixture_registry = (fixture_root / "cli" / "src" / "limen" / "census.py").read_text(encoding="utf-8")
+    assert f'name="{renamed.name}"' in fixture_registry
+    assert f'binary="{renamed.binary}"' in fixture_registry
 
 
 def test_workstream_command_writes_private_kickstart_packet(tmp_path: Path, monkeypatch) -> None:
@@ -261,7 +278,9 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     )
     assert str(predecessor) not in inherited_receipt_text
     for generated in (inherited_wt / ".limen-workstream").iterdir():
-        assert str(predecessor) not in generated.read_text(encoding="utf-8")
+        if not generated.is_file():
+            continue
+        assert str(predecessor).encode() not in generated.read_bytes()
     assert predecessor.read_bytes() == predecessor_bytes
 
     rerender_paths = [
@@ -1204,7 +1223,7 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
             'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "fetch" && "${1:-}" == "fetch" ]]; then '
             'printf "fetch-output-must-not-escape\\n"; exit 71; fi\n'
             'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "status" && "$*" == "status --short --branch" ]]; then '
-            'printf "status-output-must-not-escape\\n"; exit 72; fi\n'
+            'printf "status-output-must-not-escape\\n" >&2; exit 72; fi\n'
             'exec "$REAL_GIT" "$@"\n'
         ),
         encoding="utf-8",
@@ -1252,7 +1271,7 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
     )
     assert kickstart_text.index("git status --short --branch") < admission_call
     assert "git fetch --prune >/dev/null 2>&1" in kickstart_text
-    assert "git status --short --branch >/dev/null" in kickstart_text
+    assert "git status --short --branch >/dev/null 2>&1" in kickstart_text
 
     rejected = subprocess.run(
         ["bash", str(kickstart)],

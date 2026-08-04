@@ -414,6 +414,33 @@ def test_successor_rejects_predecessor_head_without_exact_remote_custody(tmp_pat
         W.successor_contract(predecessor)
 
 
+@pytest.mark.parametrize(
+    ("stream", "ceiling"),
+    [
+        ("stdout", W.GIT_CONTROL_STDOUT_CEILING),
+        ("stderr", W.GIT_CONTROL_STDERR_CEILING),
+    ],
+)
+def test_predecessor_git_probes_fail_at_hard_output_ceilings(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    stream: str,
+    ceiling: int,
+) -> None:
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_git = fake_bin / "git"
+    fake_git.write_text(
+        (f'#!/usr/bin/env python3\nimport sys\nsys.{stream}.buffer.write(b"x" * {ceiling + 1})\n'),
+        encoding="utf-8",
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    with pytest.raises(ContractError, match="output ceiling"):
+        W._git_control(tmp_path, "rev-parse", "--show-toplevel")
+
+
 @pytest.mark.parametrize(("field", "invalid"), [("slug", 1), ("branch", 1), ("workstream", 1)])
 def test_predecessor_receipt_rejects_non_string_metadata(field: str, invalid: object, tmp_path: Path) -> None:
     predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)

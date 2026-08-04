@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import selectors
 import signal
 import stat
 import subprocess
@@ -34,6 +35,9 @@ DEFAULT_RUNWAY = "1d"
 MIN_RUNWAY_SECONDS = 15 * 60
 MAX_RUNWAY_SECONDS = 30 * 24 * 60 * 60
 PREDECESSOR_RECEIPT_CEILING = 256 * 1024
+GIT_CONTROL_STDOUT_CEILING = 4096
+GIT_CONTROL_STDERR_CEILING = 4096
+GIT_CONTROL_TIMEOUT_SECONDS = 10
 SUCCESSOR_RUNWAY_MODES = frozenset({"inherit", "renew"})
 _DURATION_RE = re.compile(r"^([1-9][0-9]*)([mhd])$")
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
@@ -519,24 +523,84 @@ def validate_workstream_receipt(value: object) -> dict[str, Any]:
     return normalized
 
 
-def _git_control(root: Path, *args: str) -> bytes:
-    """Run one bounded local Git metadata read for predecessor validation."""
+def _git_control(
+    root: Path,
+    *args: str,
+    stdout_ceiling: int = GIT_CONTROL_STDOUT_CEILING,
+) -> bytes:
+    """Run one Git custody probe with wall-clock and separate output ceilings."""
 
+    if stdout_ceiling < 0:
+        raise ContractError("committed predecessor receipt Git metadata ceiling is invalid")
     environment = os.environ.copy()
     environment["GIT_TERMINAL_PROMPT"] = "0"
+    process: subprocess.Popen[bytes] | None = None
+    selector: selectors.BaseSelector | None = None
+    streams: dict[int, tuple[str, Any]] = {}
+    chunks: dict[str, list[bytes]] = {"stdout": [], "stderr": []}
+    sizes = {"stdout": 0, "stderr": 0}
+    ceilings = {"stdout": stdout_ceiling, "stderr": GIT_CONTROL_STDERR_CEILING}
+    deadline = time.monotonic() + GIT_CONTROL_TIMEOUT_SECONDS
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             ["git", "-C", str(root), *args],
-            capture_output=True,
-            timeout=10,
-            check=False,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
             env=environment,
         )
-    except (OSError, subprocess.TimeoutExpired) as exc:
+        if process.stdout is None or process.stderr is None:  # pragma: no cover - PIPE invariant
+            raise ContractError("committed predecessor receipt Git metadata pipes are unavailable")
+        selector = selectors.DefaultSelector()
+        for label, stream in (("stdout", process.stdout), ("stderr", process.stderr)):
+            descriptor = stream.fileno()
+            os.set_blocking(descriptor, False)
+            selector.register(descriptor, selectors.EVENT_READ)
+            streams[descriptor] = (label, stream)
+
+        while streams:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ContractError("committed predecessor receipt Git metadata timed out")
+            for key, _mask in selector.select(timeout=min(remaining, 0.1)):
+                label, stream = streams[key.fd]
+                remaining_output = ceilings[label] - sizes[label]
+                chunk = os.read(key.fd, min(65_536, remaining_output + 1))
+                if not chunk:
+                    selector.unregister(key.fd)
+                    streams.pop(key.fd)
+                    stream.close()
+                    continue
+                sizes[label] += len(chunk)
+                if sizes[label] > ceilings[label]:
+                    raise ContractError("committed predecessor receipt Git metadata exceeded its output ceiling")
+                chunks[label].append(chunk)
+        try:
+            returncode = process.wait(timeout=max(0.001, deadline - time.monotonic()))
+        except subprocess.TimeoutExpired as exc:
+            raise ContractError("committed predecessor receipt Git metadata timed out") from exc
+    except ContractError:
+        if process is not None:
+            _terminate_process_group(process, process.pid)
+        raise
+    except OSError as exc:
+        if process is not None:
+            _terminate_process_group(process, process.pid)
         raise ContractError("committed predecessor receipt Git metadata is unavailable") from exc
-    if result.returncode != 0 or len(result.stderr) > 4096:
+    except BaseException:
+        if process is not None:
+            _terminate_process_group(process, process.pid)
+        raise
+    finally:
+        if selector is not None:
+            selector.close()
+        for _label, stream in streams.values():
+            stream.close()
+
+    if returncode != 0:
         raise ContractError("committed predecessor receipt Git metadata is invalid")
-    return result.stdout
+    return b"".join(chunks["stdout"])
 
 
 def predecessor_custody(receipt_path: Path) -> tuple[dict[str, Any], dict[str, str], str]:
@@ -577,7 +641,13 @@ def predecessor_custody(receipt_path: Path) -> tuple[dict[str, Any], dict[str, s
         raise ContractError("predecessor receipt is not committed at the checkout HEAD") from exc
     if not 0 < committed_size <= PREDECESSOR_RECEIPT_CEILING:
         raise ContractError("predecessor receipt exceeds its bounded size")
-    committed = _git_control(root, "cat-file", "blob", object_name)
+    committed = _git_control(
+        root,
+        "cat-file",
+        "blob",
+        object_name,
+        stdout_ceiling=PREDECESSOR_RECEIPT_CEILING,
+    )
     if len(committed) != committed_size:
         raise ContractError("predecessor receipt changed during committed capture")
     try:
