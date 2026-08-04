@@ -63722,25 +63722,34 @@ tasks:
     conduct_run_id: 'run-a79acec9da2eeb9e2312e4588c540441'
     conduct_lease_id: 'lease-515-a79acec9da2eeb9e'
     conduct_generation: 515
-- id: ASK-quicken-d2l
-  title: the D2L go-live click + cadence confirm (your login + judgment)
-  type: ops
-  target_agent: agy
-  priority: high
+- id: 'ASK-quicken-d2l'
+  title: 'the D2L go-live click + cadence confirm (your login + judgment)'
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - user-ask
-  - quicken-residue
-  - needs-human
+  - 'user-ask'
+  - 'quicken-residue'
+  - 'needs-human'
   urls: []
-  context: "Cheapest path \u2192 the D2L go-live click + cadence confirm (your login\
-    \ + judgment). Unblocks: Continue previous coding session. Auto-hung by QUICKEN\
-    \ (finish-not-park); refreshes each beat until you act."
+  context: 'Cheapest path → the D2L go-live click + cadence confirm (your login + judgment). Unblocks: Continue previous coding session. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T03:07:12.958028Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:40:27.681Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:40:27.681Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-e0c1b3053eb9f6c46ad8ce3480f2af55:516:compatibility'
+    conduct_run_id: 'run-e0c1b3053eb9f6c46ad8ce3480f2af55'
+    conduct_lease_id: 'lease-516-e0c1b3053eb9f6c4'
+    conduct_generation: 516
 - id: GEN-organvm-portfolio-test-coverage-0626
   title: Raise test coverage in organvm/portfolio
   repo: organvm/portfolio
