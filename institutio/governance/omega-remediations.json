@@ -160,6 +160,11 @@
       "owner": "tabularius"
     },
     {
+      "id": "sensor.tcc.track-c",
+      "next_action": "Run python3 scripts/tcc-track-c-closeout.py --beat; keep L-DOMUS-AGENT-HOST-TCC open on external_vendor_wait; never treat a no-op claude update as completion; finalize only from a met receipt.",
+      "owner": "tabularius"
+    },
+    {
       "id": "sensor.storage.parity",
       "next_action": "Run storage registry parity and repair only declared rail-role or producer-contract drift.",
       "owner": "continuity"

@@ -23,6 +23,12 @@
     "passed": true
   },
   "completion": {
+    "closeout_commands": [
+      "python3 scripts/tcc-track-c-closeout.py --beat",
+      "python3 scripts/tcc-track-c-closeout.py --run",
+      "python3 scripts/tcc-track-c-closeout.py --finalize --write-lever"
+    ],
+    "closeout_owner": "scripts/tcc-track-c-closeout.py",
     "complete": false,
     "remaining_predicate": "A future real Claude Code vendor update must advance beyond 2.1.220 while this normalized TCC inventory remains green.",
     "status": "external_vendor_wait"
@@ -75,5 +81,39 @@
     "path_rows_removed": 8,
     "supported_per_row_minus_control": true,
     "whole_service_reset": false
+  },
+  "tcc_track_c": {
+    "beat": {
+      "command": "python3 scripts/tcc-track-c-closeout.py --beat --json",
+      "exit_0_means": "external_vendor_wait (clean) OR track_c.met",
+      "sensor": "tcc-track-c"
+    },
+    "doctrine": {
+      "fixture_only_is_not_completion": true,
+      "formula": "track_c_pass = non_noop_update AND normalized_inventory_green",
+      "non_noop_means": "claude --version advances past cutover baseline",
+      "noop_is_not_completion": true
+    },
+    "met": false,
+    "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline 2.1.220, then normalized v2 tcc-identity-audit predicates must remain green.",
+    "status": "external_vendor_wait",
+    "strict_audit": {
+      "baseline_snapshot": "docs/receipts/tcc-track-c-1703/2026-08-04-baseline.json",
+      "closeout_latest": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+      "immutable_attempt_receipt": "docs/receipts/tcc-track-c-1703/acceptance-2026-08-04.json",
+      "normalized_inventory_diff_met": true,
+      "post_snapshot": "docs/receipts/tcc-track-c-1703/2026-08-04-post.json",
+      "schema_preference": "limen.tcc_identity_audit.v2",
+      "status_file": "logs/tcc-track-c-status.json"
+    },
+    "update_flow": {
+      "baseline_version": "2.1.220",
+      "current_version": "2.1.220",
+      "failure_classification": "noop_update_proof_missing",
+      "non_noop": false,
+      "result": "Claude Code is up to date (2.1.220)",
+      "update_attempted": true,
+      "update_command": "domus-agent-host run -- claude update"
+    }
   }
 }

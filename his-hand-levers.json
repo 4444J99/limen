@@ -254,7 +254,8 @@
         "Completed: add and enable DomusAgentHost.app and remove exactly eight path rows through the pane's per-row minus control; no bundle row changed",
         "Completed: prove one enabled host row, zero App Management path rows, zero active leaks, zero unhosted ingresses, and an unchanged twelve-entry unrelated bundle-grant map",
         "Completed: run the hosted update/delete fixture through renamed uvx, Node, Python, and portable Ruby paths and cold-start Claude Desktop without a new identity",
-        "Pending external predicate: when a version newer than 2.1.220 is offered, update through the host and require the normalized inventory to remain green"
+        "Completed: freeze Track C automation — `scripts/tcc-track-c-closeout.py` owns probe/run/beat/finalize; beat sensor `tcc-track-c` waits without re-litigating the gate; no-op update is wait evidence never completion",
+        "Pending external predicate: when a version newer than 2.1.220 is offered, `python3 scripts/tcc-track-c-closeout.py --beat` captures non-noop proof + green inventory, then `--finalize --write-lever` discharges this lever and closes #1703"
       ],
       "status": "open",
       "issue": 1703
