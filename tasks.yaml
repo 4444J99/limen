@@ -143681,34 +143681,37 @@ tasks:
       \ institutional leverage math, provenance from the imported ChatGPT design,\
       \ and the two FACE docs + KERNEL.md as companions. Predicate note as in kernel\
       \ twin."
-- id: ASK-quicken-escalate-9feaa902
-  title: finish stalled session 'Complete chat tasks with appropriate model a' (breathed
-    2x, still stalling)
-  repo: organvm/limen
-  type: ops
-  target_agent: agy
-  priority: high
+- id: 'ASK-quicken-escalate-9feaa902'
+  title: 'finish stalled session ''Complete chat tasks with appropriate model a'' (breathed 2x, still stalling)'
+  repo: 'organvm/limen'
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - quicken-residue
-  - quicken-escalate
-  - needs-human
+  - 'quicken-residue'
+  - 'quicken-escalate'
+  - 'needs-human'
   urls: []
-  context: "Session 9feaa902-acdd-4656-87a0-4ee7e3b5760c ('Complete chat tasks with\
-    \ appropriate model assignments') re-stalled after 2 guardrailed breathes \u2014\
-    \ the identical continuation will not move it. Parked purpose (last prompt): \"\
-    Resume and FINISH your original purpose \u2014 you stalled at a decision and have\
-    \ been sitting. Decide every open step via th\". Resume by hand or with a NEW\
-    \ instruction: claude --resume 9feaa902-acdd-4656-87a0-4ee7e3b5760c   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/bright-cooking-kahn).\
-    \ Auto-escalated by QUICKEN."
-  predicate: test "$(gh issue list --repo organvm/limen --state closed --search 'ASK-quicken-escalate-9feaa902
-    in:title' --json number --jq length)" -gt 0
-  receipt_target: github:organvm/limen:issue:ASK-quicken-escalate-9feaa902
+  context: 'Session 9feaa902-acdd-4656-87a0-4ee7e3b5760c (''Complete chat tasks with appropriate model assignments'') re-stalled after 2 guardrailed breathes — the identical continuation will not move it. Parked purpose (last prompt): "Resume and FINISH your original purpose — you stalled at a decision and have been sitting. Decide every open step via th". Resume by hand or with a NEW instruction: claude --resume 9feaa902-acdd-4656-87a0-4ee7e3b5760c   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/bright-cooking-kahn). Auto-escalated by QUICKEN.'
+  predicate: 'test "$(gh issue list --repo organvm/limen --state closed --search ''ASK-quicken-escalate-9feaa902 in:title'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:issue:ASK-quicken-escalate-9feaa902'
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-13T06:50:37.613354Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:41:24.784Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:41:24.784Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-ca715abf90c57b70488b9ea8d6909e55:524:compatibility'
+    conduct_run_id: 'run-ca715abf90c57b70488b9ea8d6909e55'
+    conduct_lease_id: 'lease-524-ca715abf90c57b70'
+    conduct_generation: 524
 - id: HEAL-rebase-organvm-a-i-chat--exporter-121
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#121
   repo: organvm/a-i-chat--exporter
