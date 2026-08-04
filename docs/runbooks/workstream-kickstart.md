@@ -21,9 +21,11 @@ Runtime evidence derives `continue`, `switch`, `wait_relay`, `settled`, or `inva
 `--conduct` registers the direct session with the shared broker as `human_protected` before the
 agent starts. The generated launcher passes only session, capsule, lineage, task, lease-generation,
 and execution-hash context through environment variables. Broker credentials remain environment
-owned for the registration call: the launcher never writes or prints their values, and removes the
-conduct credential before the native agent process starts. If the broker cannot acknowledge the
-registration, the agent does not start.
+owned for the registration call. When a plain shell has not already exported the broker pair, the
+launcher imports only `LIMEN_CONDUCT_URL` and `LIMEN_CONDUCT_TOKEN` from the user-owned mode-`0600`
+`~/.limen.env` cache; it does not expose the cache's other values. The launcher never writes or
+prints broker values, and removes the conduct credential before the native agent process starts. If
+the cache is unsafe or the broker cannot acknowledge registration, the agent does not start.
 
 After the admitted receipt is published, a conductor-only background channel inherits the broker
 credential while the provider still receives none. It refreshes the same protected session every
@@ -78,6 +80,18 @@ Run it from any terminal with:
 ```bash
 bash <repo>/.worktrees/<slug>/.limen-workstream/kickstart.sh
 ```
+
+For a capsule rendered before private-cache hydration shipped, use the tracked compatibility
+wrapper. It validates and imports only the broker pair, then executes the identity-bound capsule
+without rewriting it:
+
+```bash
+bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
+```
+
+The command is safe to repeat. If that capsule already has a fresh, live protected session, it
+returns success with one plain message and starts no duplicate provider. Continue in the existing
+session; never kill or reap it just to relaunch the command.
 
 Autonomous Codex capsules preserve the interactive UI when standard input and output are attached
 to a terminal. In a shell runner without a terminal, the same command uses Codex's noninteractive

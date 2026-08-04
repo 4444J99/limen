@@ -228,6 +228,56 @@ due_voice() {
   expected=$(( cadence * MAX ))
   [ $(( now - last )) -ge "$expected" ]
 }
+# NETWORK REACH — one definition, used by the connectivity gate AND by paused-beat sensing.
+# True when the host the cycle depends on answers; true (fail-open) when the preflight is disabled.
+net_up() {
+  [ "${LIMEN_NET_PREFLIGHT:-1}" = "1" ] || return 0
+  python3 -c "import socket; socket.create_connection(('${LIMEN_NET_HOST:-api.github.com}', 443), timeout=${LIMEN_NET_TIMEOUT:-3}).close()" 2>/dev/null
+}
+# MONITORING SENSORS + the comms sweep — read-only telemetry, extracted to a function because it
+# must run from TWO call sites: the live body, and the paused branch above it.
+#
+# A pause must stop the fleet ACTING. It must never stop the fleet SENSING. Before this, the
+# `paused` branch `continue`d ~80 lines above this block, so arming any marker silently switched
+# off drift monitors, the mail sweep, and every scheduled sensor. On 2026-07-27 an agent-armed
+# marker did exactly that: four days blind, during which the live checkout drifted to 27 commits
+# behind origin/main with check-live-checkout.py sitting at exit 1 that nobody was asking for, and
+# the inbox sweep that would have reported an already-answered thread never ran. The 2026-07-21
+# hoist fixed the same shape one split down (observe), which is why this read as already-fixed.
+# Cheap, cadence-gated, timeout-bounded per sensors.yaml — safe on a paused beat by construction.
+run_monitoring() {
+  if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
+    python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source heartbeat --scheduled-only \
+      --beat "$c" --loop-max "$MAX" --voice-dir "$VOICED" || true
+  fi
+  # COMMS monitoring — inbox sweep + obligations-ledger rebuild is monitoring, NOT queue mutation
+  # (it flags/archives reversibly and writes its own ledger, never tasks.yaml; the send stays gated
+  # by LIMEN_MAIL_SEND inside mail-beat.sh). Safe while paused for the same reason.
+  play "$C_MAIL" && { bash "$LIMEN_ROOT/scripts/mail-beat.sh" 2>&1 | tail -3 || true; stamp mail; }
+}
+# SUBSTRATE COHERENCE — re-converge this checkout to the release. Extracted for the same reason
+# run_monitoring was: it must run from the live body AND from the paused branch above it.
+#
+# A pause withdraws the authority to act ON THE WORLD — dispatch, spend, send, merge. Fast-forwarding
+# the daemon's own checkout to already-merged trunk is not that; it is the machine keeping its own
+# body coherent, the same category as sensing. Leaving it below the paused `continue` created a
+# deadlock that ate its own tail: the 2026-07-21 maintenance blocker's resume_predicate requires
+# "live root exact origin/main and clean", and the ONLY rung that produces that state ran solely
+# when NOT paused. The halt could therefore never self-clear. Measured on 2026-07-31: a hand-run
+# sync brought the tree to exact-origin at 12:04; twenty-five minutes later origin had moved and
+# check-live-checkout.py was back to exit 1, naming this very script as its owner.
+#
+# Safe by sync-release.sh's own contract: fast-forward ONLY (never force/reset/merge-commit), fails
+# open always, never exits or re-execs the daemon, and untracked runtime state — including the
+# governor gate that holds the pause itself — is untouched, because a ff only advances committed
+# history. A paused fleet running stale code is strictly worse: that is the state which ran a broken
+# mail organ 27 commits behind origin for four days.
+#
+# The tradeoff this accepts: if a pause was armed BECAUSE trunk is bad, syncing while paused pulls
+# that code in. Set LIMEN_PAUSED_SYNC=0 to freeze code for the duration of such a pause.
+run_release_sync() {
+  play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
+}
 planning_lanes() {
   python3 - "$1" <<'PY'
 import os
@@ -281,8 +331,21 @@ while true; do
   if [ "$MODE" = "paused" ]; then
     # Stay the singleton owner. Exiting here made launchd KeepAlive respawn a fresh
     # process every minute, so a pause paradoxically created repeated startup probes.
-    # The receipt is byte-stable: the first paused beat writes it and later beats do
-    # no filesystem work until the governor resumes.
+    #
+    # SENSING SURVIVES THE PAUSE. A pause withdraws the fleet's authority to ACT; it has never
+    # been a decision to stop LOOKING, and conflating the two is what made an unauthorized marker
+    # cost four blind days (see run_monitoring's header). Read-only telemetry runs here, gated on
+    # network reach because every sensor in it talks to a remote. The receipt is no longer
+    # byte-stable across paused beats — that was a property of doing nothing, and doing nothing is
+    # precisely the defect.
+    if [ "${LIMEN_PAUSED_SENSING:-1}" = "1" ] && net_up; then
+      echo "  paused — acting withdrawn, sensing continues"
+      run_monitoring
+      # And the machine keeps its own body coherent — see run_release_sync's header. Without this the
+      # maintenance blocker's resume_predicate ("live root exact origin/main and clean") is
+      # unsatisfiable by construction, because the only rung that satisfies it sat below this branch.
+      [ "${LIMEN_PAUSED_SYNC:-1}" = "1" ] && run_release_sync
+    fi
     python3 "$LIMEN_ROOT/scripts/heartbeat-paused-receipt.py" \
       --write --cadence-seconds "$PAUSED_BEAT" >/dev/null 2>&1 || true
     echo "autonomy paused by governor — stable idle receipt; next check in ${PAUSED_BEAT}s"
@@ -299,8 +362,7 @@ while true; do
   # same DNS+TCP:443 reach the CLIs' own silent refresh needs; offline it caps at the short timeout
   # (and offline beats are exactly the ones we want to short-circuit). Set LIMEN_NET_PREFLIGHT=0 to
   # disable. Mirrors the per-lane _oauth_unreachable_lanes() gate, one scale up (whole beat).
-  if [ "${LIMEN_NET_PREFLIGHT:-1}" = "1" ] && \
-     ! python3 -c "import socket; socket.create_connection(('${LIMEN_NET_HOST:-api.github.com}', 443), timeout=${LIMEN_NET_TIMEOUT:-3}).close()" 2>/dev/null; then
+  if ! net_up; then
     echo "  offline — ${LIMEN_NET_HOST:-api.github.com} unreachable; idle beat (self-heals when network returns)"
     python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
     beat="$MAX"
@@ -328,7 +390,8 @@ while true; do
     # SUBSTRATE SELF-HEAL — re-converge this checkout to the release (origin/main) before doing
     # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
     # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
-    play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
+    # The block itself now lives in run_release_sync() so the paused branch above can call it too.
+    run_release_sync
     # BOARD-INTEGRITY self-heal — if the SSOT queue is unloadable or collapsed (a clobber that
     # slipped past the save-time guard, or external corruption), restore it from HEAD BEFORE the
     # body tries to load it, so a dead board self-recovers instead of idling the fleet for hours
@@ -366,16 +429,8 @@ while true; do
     # idled at MAX tempo). Monitoring must NOT be gated by dispatch mode. Cheap, cadence-gated, and
     # timeout-bounded per sensors.yaml; the expensive dispatch/mine/route work stays gated below.
     # Loop-body edit — effective only after `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat`.
-    if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
-      python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source heartbeat --scheduled-only \
-        --beat "$c" --loop-max "$MAX" --voice-dir "$VOICED" || true
-    fi
-    # COMMS monitoring — the inbox sweep + obligations-ledger rebuild is monitoring, NOT queue
-    # mutation (it flags/archives reversibly and writes its own ledger, never tasks.yaml; the send
-    # stays gated by LIMEN_MAIL_SEND inside mail-beat.sh). It too lived below the observe-branch
-    # `continue`, so observe mode stopped sweeping email entirely for 22h (2026-07-21). Hoisted here,
-    # still cadence-gated by C_MAIL, so "monitor my email" holds in observe mode too.
-    play "$C_MAIL"    && { bash "$LIMEN_ROOT/scripts/mail-beat.sh" 2>&1 | tail -3 || true; stamp mail; }
+    # The block itself now lives in run_monitoring() so the paused branch above can call it too.
+    run_monitoring
 
     if [ "$MODE" != "dispatch" ]; then
       echo "autonomy mode=$MODE — telemetry/status only; queue mutation and campaign wake skipped"
@@ -445,16 +500,26 @@ while true; do
       # RECLAIM is intentionally outside the queue lock. It can spend minutes scanning
       # worktrees with git status/cherry; holding the board mutex there starves harvest/refill.
       if [ "${DRAIN_VOICE_DUE:-0}" = "1" ] && [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
-        reclaim_args=()
-        [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
+        reclaim_apply_args=()
+        [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_apply_args+=(--apply)
         # The cheap generated-only pass (just-finished lanes) ALWAYS runs — it closes this beat's own
         # worktree debt at negligible cost. The FULL estate census (git status/cherry across every
         # worktree — the git storm over ~71 roots) is deferred while VITALS is SHEDDING (memory/swap
         # ≥ critical), so the beat never thrashes an already-starved host to relieve worktree debt.
-        # It resumes the next unpressured beat. Under mere throttle/warn it still runs (LIMEN_RECLAIM_TIMEOUT-bounded).
-        PYTHONPATH="$PYTHONPATH" timeout "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" --generated-only "${reclaim_args[@]}" 2>&1 | tail -4 || true
+        # It resumes the next unpressured beat. The shared controller bounds each whole cycle and
+        # makes the full pass an exact check(JSON)+SHA-validated apply transaction. This live loop
+        # explicitly scans repo-local and registered worktrees even though LIMEN_WORKTREE_ROOT is
+        # set; library callers and isolated tests retain worktree_roots.py's "auto" semantics.
+        LIMEN_RECLAIM_REPO_LOCAL_WT=1 LIMEN_RECLAIM_REGISTERED_WT=1 \
+          PYTHONPATH="$PYTHONPATH" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+            --timeout "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" \
+            "${reclaim_apply_args[@]}" --generated-only || \
+          echo "  reclaim: generated-only cycle failed — next beat retries"
         if [ "$VITALS_PRESSURE" != "1" ]; then
-          PYTHONPATH="$PYTHONPATH" timeout "${LIMEN_RECLAIM_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+          LIMEN_RECLAIM_REPO_LOCAL_WT=1 LIMEN_RECLAIM_REGISTERED_WT=1 \
+            PYTHONPATH="$PYTHONPATH" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+              --timeout "${LIMEN_RECLAIM_TIMEOUT:-300}" "${reclaim_apply_args[@]}" || \
+            echo "  reclaim: full cycle failed — next beat retries"
         else
           echo "  reclaim: full estate census deferred — vitals shedding (memory/swap critical)"
         fi

@@ -74,12 +74,19 @@ ideals:
       The fleet amalgamates portals faster than it spawns them; a predicate measures open-PR
       plus unmerged-branch debt and the merge daemon drives it monotonically down.
     owner: "Claude (predicate) + merge daemon"
-    probe: null
-    probe_absent_reason: >
-      The ideal is a monotonic TREND, not a level, and a level is the only thing measurable in
-      one shot: `gh pr list` returns today's count with nothing to compare it against. The
-      entry's own recorded distance already names the gap ("No debt-trend predicate"). A real
-      probe needs a committed series, so the debt-trend recorder is this row's next form.
+    # The row carried `probe: null` with an exact reason: a monotonic TREND is not a level, and a
+    # level is all one shot can measure — "a real probe needs a committed series." The series was
+    # already committed. gitvs.py writes open_pr_count into docs/github-pr-debt-ledger.json and
+    # every write is a commit, so five observations sat in `git log` for eleven days, unread.
+    # scripts/pr-debt-trend.py reads them; nothing had to be built first.
+    probe:
+      command: "python3 scripts/pr-debt-trend.py --check"
+      derives: >
+        whether open-PR debt is falling across the committed series in git history of
+        docs/github-pr-debt-ledger.json, AND whether anyone is still recording it — a series
+        nobody writes is not a trend that improved.
+      environment: host
+      at_ideal_when: exit_zero
 
   IF-PUBLICATION-ESTATE:
     ideal: >
@@ -182,6 +189,22 @@ ideals:
       organvm/domus-genoma, not here — correctly, since the constitution it checks lives there
       too. This row is measurable only by a cross-repo call, which is the ecosystem-layer
       promotion already tracked as IF-SENSOR-REGISTRY's follow-up.
+
+  IF-NO-MODAL:
+    ideal: >
+      No approval question is ever asked for non-destructive work, in any lane, and the
+      destructive boundary that remains is DERIVED and MEASURABLE rather than switched off.
+      The trust hook is wired from the cartridge source, permissions.ask carries its five-rule
+      fail-safe backstop, and permissions.autoMode.allow teaches the classifier the same trust
+      boundary the hook enforces — so defaultMode stays "auto" and the gauge stays alive.
+      bypassPermissions is explicitly NOT the ideal: it does not close the distance, it deletes
+      the instrument (never-hang-permission-spec.md, R1/R4/R5 + Design-consequences-2).
+    owner: "Anthony (arm the effector — classifier-gated) + Claude (hook, effector, matrix)"
+    probe:
+      command: "python3 scripts/heal-hook-wiring.py"
+      derives: "the effector in dry-run: exit 0 iff the cartridge source carries hook + ask + autoMode"
+      environment: host
+      at_ideal_when: exit_zero
 
   IF-HOST-PRESSURE:
     ideal: >
@@ -288,4 +311,21 @@ ideals:
       command: "python3 scripts/harness-root-probe.py --root-only"
       derives: "the resolved Claude harness root still holds transcripts; empty-while-a-sibling-candidate-is-full is the relocation signature"
       environment: repo
+      at_ideal_when: exit_zero
+  IF-DIURNAL:
+    ideal: "The day is a falsifiable loop, not a report. Morning emits a dashboard PLUS claims of\
+      \ the form 'section X's metric falls below N today'; midday re-probes them mid-flight and\
+      \ pushes only on drift; evening scores every claim held/missed/noop and CUTS sections that\
+      \ scored noop for the threshold in consecutive ENGAGED days. Sections are declared data\
+      \ because an auto-cut cannot edit Python source, and cuttable implies a metric because you\
+      \ cannot prune what you cannot score. The loop is only real once it has run against the LIVE\
+      \ organism for enough days that a cut could fire on evidence rather than on a fixture.\n"
+    owner: Claude (scripts/diurnal.py + scripts/check-diurnal.py + institutio/governance/diurnal.yaml)
+      · the beat's `diurnal` sensor (execution) · the operator (the `calendar` lever)
+    probe:
+      command: bash scripts/done-diurnal.sh --quiet
+      derives: the organ is reaching the organism and scoring real days — a dated page exists in
+        the live root today, the shared root predicate is the only liveness guard, and the cut
+        threshold has an actual observation runway behind it
+      environment: host
       at_ideal_when: exit_zero

@@ -1,0 +1,327 @@
+# DIVRNAL — the daily emission registry (the template is DATA, not code).
+#
+# Three phases of ONE organ — morning / midday / evening — that reach forward and backward
+# toward each other. Morning emits falsifiable claims; midday re-probes them mid-flight;
+# evening SCORES them and CUTS the sections that never earned their place.
+#
+# Why a registry: the evening phase has authority to remove a section that scored noop for
+# LIMEN_DIURNAL_CUT_THRESHOLD consecutive engaged days. An auto-cut cannot edit Python source,
+# so the template must be declared data — the parameter-panel pattern, one surface over.
+#
+# THE LOAD-BEARING RULE: a section with `metric: null` is `cuttable: false`.
+# You cannot prune what you cannot score. This is ideal-forms.yaml's doctrine
+# ("there is no field to lie in") applied to the briefing's own body.
+#
+# THE SECOND RULE: freshness is derived, never asserted. A section whose `source` is older
+# than `max_age_seconds` renders as STALE with its age — never as a number that looks current.
+# Founded on the measured defect: logs/organ-health.json 10d stale, omega.json 9d,
+# money-view.json 10d, fleet-status.json 27d, all presenting as authoritative; and
+# session-orientation.md reporting "Autonomy — PAUSED" on 2026-07-31 after the marker was gone.
+#
+# section schema:
+#   phases:          [morning|midday|evening] — which emissions render it
+#   title:           the human-facing heading
+#   render:          renderer key; must resolve in scripts/diurnal.py RENDERERS
+#   source:          repo-relative path read for the value + its freshness (null = derived live)
+#   refresh:         optional command run BEFORE reading source (for caches known to lie)
+#   max_age_seconds: freshness tolerance; 0 = must refresh every emission, no cache tolerated
+#   stale_policy:    withhold (default) | annotate — a stale CACHE may hold a WRONG value, so
+#                    withhold it; a stale REGISTRY holds a FROZEN but still-true value, so report
+#                    it and name how old the state is. Withholding a registry over-corrects.
+#   metric:          name of the integer this renderer emits, or null if unmeasurable
+#   acted_when:      metric_decreased | metric_changed | null  (null ⟹ cuttable: false)
+#   protected:       true = NEVER cuttable, regardless of score (safety sections)
+#   cuttable:        may the evening phase remove this section
+#   absent_reason:   REQUIRED when source is null and render is `absent`
+#
+# Drift predicate: scripts/check-diurnal.py
+# Cut state (noop_streak, cut, cut_at) lives in logs/diurnal/section-scores.json — NOT here.
+# The registry declares what COULD render; the state file records what currently does.
+
+schema_version: 0.1
+
+sections:
+
+  # ── safety: probed every emission, never cuttable ──────────────────────────────
+
+  autonomy:
+    phases: [morning, midday]
+    title: "autonomy"
+    render: pause_marker
+    source: logs/AUTONOMY_PAUSED
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false
+
+  overnight:
+    phases: [morning]
+    title: "overnight"
+    render: overnight_alerts
+    source: logs/overnight-watch.md
+    refresh: null
+    max_age_seconds: 3600
+    metric: alert_count
+    acted_when: metric_decreased
+    protected: true
+    cuttable: false
+
+  claims:
+    phases: [morning]
+    title: "claims — the evening scores these"
+    render: claims
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false
+
+  # ── the forward edge ───────────────────────────────────────────────────────────
+
+  next:
+    phases: [morning, midday]
+    title: "next action"
+    render: next_action
+    source: logs/handoff.json
+    refresh: null
+    max_age_seconds: 5400
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false
+
+  board:
+    phases: [morning]
+    title: "board"
+    render: board_counts
+    source: tasks.yaml
+    refresh: null
+    max_age_seconds: 86400
+    stale_policy: annotate
+    metric: needs_human
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  budget:
+    phases: [morning, midday]
+    title: "budget + headroom"
+    render: budget
+    source: logs/handoff.json
+    refresh: null
+    max_age_seconds: 5400
+    metric: runs_remaining
+    acted_when: metric_changed
+    protected: false
+    cuttable: true
+
+  levers:
+    phases: [morning]
+    title: "only you"
+    render: his_hand
+    source: his-hand-levers.json
+    refresh: null
+    max_age_seconds: 604800
+    stale_policy: annotate
+    metric: open_levers
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  mail:
+    phases: [morning]
+    title: "owed replies"
+    render: owed_mail
+    source: logs/obligations-view.json
+    refresh: null
+    max_age_seconds: 43200
+    metric: owed
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  # ── liveness + fixed point: caches known to lie, so they REFRESH ───────────────
+
+  organs:
+    phases: [morning]
+    title: "organ liveness"
+    render: organ_liveness
+    source: logs/organ-health.json
+    refresh: "python3 scripts/organ-health.py"
+    max_age_seconds: 0
+    metric: not_green
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  ideal_forms:
+    phases: [morning]
+    title: "distance to ideal"
+    render: ideal_forms_distance
+    source: null
+    refresh: "python3 scripts/check-ideal-forms.py --measure"
+    max_age_seconds: 0
+    metric: distance_remains
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  omega:
+    phases: [morning]
+    title: "fixed point"
+    render: omega_verdict
+    source: logs/omega.json
+    refresh: null
+    max_age_seconds: 86400
+    metric: fail_count
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  # ── outward state ──────────────────────────────────────────────────────────────
+
+  prs:
+    phases: [morning]
+    title: "pull requests"
+    render: pr_state
+    source: docs/github-pr-debt-ledger.json
+    refresh: null
+    max_age_seconds: 43200
+    metric: open_prs
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  revenue:
+    phases: [morning]
+    title: "revenue"
+    render: revenue
+    source: state/aug1/revenue-received.json
+    refresh: null
+    max_age_seconds: 604800
+    stale_policy: annotate
+    metric: received_count
+    acted_when: metric_changed
+    protected: false
+    cuttable: true
+
+  opportunity:
+    phases: [morning]
+    title: "opportunity"
+    render: opportunity
+    source: logs/opportunity-status.json
+    refresh: null
+    max_age_seconds: 86400
+    metric: red_count
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  routines:
+    phases: [morning]
+    title: "cloud routines"
+    render: routine_freshness
+    source: logs/routine-freshness.json
+    refresh: null
+    max_age_seconds: 86400
+    metric: overdue
+    acted_when: metric_decreased
+    protected: false
+    cuttable: true
+
+  calendar:
+    phases: [morning]
+    title: "calendar"
+    render: absent
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: false
+    cuttable: false
+    absent_reason: >-
+      No calendar state exists on disk anywhere in the estate — no .ics, no CalDAV client, no
+      cached mirror. It exists only as session-scoped MCP tools (mcp__claude_ai_Google_Calendar__*)
+      which no script, beat, or artifact is wired to. Declared ABSENT rather than silently omitted,
+      so the gap is visible instead of invented. Closing it is a real lever, not a render bug.
+
+  # ── midday: the mid-flight correction ──────────────────────────────────────────
+
+  claims_midflight:
+    phases: [midday]
+    title: "claims at noon"
+    render: claim_midflight
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false
+
+  drift:
+    phases: [midday]
+    title: "broke since morning"
+    render: drift
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: drift_count
+    acted_when: metric_decreased
+    protected: true
+    cuttable: false
+
+  # ── evening: the backward edge ─────────────────────────────────────────────────
+
+  score:
+    phases: [evening]
+    title: "claims scored"
+    render: claim_scores
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false
+
+  happened:
+    phases: [evening]
+    title: "what happened"
+    render: happened
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false
+
+  cuts:
+    phases: [evening]
+    title: "cuts"
+    render: cuts
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false
+
+  carry:
+    phases: [evening]
+    title: "carry to tomorrow"
+    render: carry
+    source: null
+    refresh: null
+    max_age_seconds: 0
+    metric: null
+    acted_when: null
+    protected: true
+    cuttable: false

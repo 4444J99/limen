@@ -23,11 +23,54 @@ Five faces, one engine:
 
 | Face | What it is |
 |---|---|
-| **The film** | A deterministic 4K render. A fixed cut of an unfixed thing. |
-| **The page** | The engine running live, drifting, forever. |
-| **The seed** | Any moment is addressable — `#s=<seed>&t=<seconds>` returns exactly it. |
-| **The visitor** | Bring your own photograph; join the vocabulary. Entirely in your browser. |
+| **The river** | The work itself: the engine running, unbounded, never the same water. |
+| **The passage** | One traversal of the declared phrase, with its own seed and its own length. |
+| **The capture** | A recording of the river. Named by the passage it caught, never mistaken for the piece. |
+| **The visitor** | Their own river, minted on arrival, kept, and shareable. |
 | **The room** | The same engine driving real projectors onto real hanging scrim. |
+
+### Final Evolution
+
+1. **User Interaction**: Direct interaction (via MediaPipe pose querying, body input, and visitor modulation in the space).
+2. **Spatial Sound Triggering**: Sound derived from the room/space that each generation of panel/slice triggers between the background's XY axes as material assembles and moves.
+
+## Arriving is the seed
+
+The piece has no duration and no end. It traverses a declared **phrase** forever, and each
+traversal is a **passage** with its own seed, its own material and its own length — so a
+passage that has gone by does not come back.
+
+That makes the *piece* unrepeatable. What makes a *visit* unrepeatable is `arrival.js`: a
+visitor's river is two numbers made by the act of showing up.
+
+```
+seed    a draw from the platform CSPRNG, mixed with the epoch
+epoch   the wall-clock millisecond it was drawn
+
+t = (now − epoch) / 1000      the river has been flowing since it began
+```
+
+Time only moves one way, so a returning visitor rejoins **downstream** and never at the
+source: close the tab, come back in an hour, and your river ran for that hour without you.
+The river is kept in `localStorage` under `danse.river`, so it is *yours* across visits —
+what does not repeat is the water, not the riverbed.
+
+Two links, and they are different objects:
+
+| Link | What it hands over |
+|---|---|
+| `#s=<seed>&e=<epoch>` | **Your river**, live and still flowing. The recipient lands in the same water at the same instant, having exchanged nothing with you but those two numbers. |
+| `#s=<seed>&t=<seconds>` | **One moment**, cited. The frame that reproduces exactly what you saw, wherever it is opened. |
+| `#s=<seed>` | A river named by seed alone — no birthday, so it starts at its source. `#s=20170620` is the archival one. |
+| `#p=free` | The older free-running dwell cycle, which `verify.html` pins the 2017 reproduction to. |
+
+The address bar is written once a second and deliberately **never** carries `t`: persisting
+it would make a reload resume where you left, which is a loop wearing a river's clothes.
+
+`arrival.js` is the only file in the app permitted to read a clock or draw entropy, and both
+halves of that are checked — `check-danse.py` fails if either appears inside `engine/`, and
+also if either appears anywhere else in the app. The engine stays a pure `f(seed, t)`;
+uniqueness costs it nothing.
 
 ## The three decisions
 
@@ -98,6 +141,13 @@ came back as the 2017 hand-treatment in the two numbers a shader takes.
 Reading the curve: the piece is *about a hundred rectangles* — past that, fidelity is
 bought a fifth of a dB at a time. Which is a statement about how much grammar the engine
 actually needs.
+
+![reconstruction](reference/reconstruction-comparison.png)
+
+*Left, the 2017 composite as it was cut by hand. Centre, the same picture re-derived from
+the 162 originals by the solver at 256 rectangles — 32.3 dB. Right, where each region came
+from. The middle panel is not a filter applied to the left one: every pixel in it was
+fetched from a photograph and placed by a number.*
 
 What the solve found:
 
@@ -176,10 +226,11 @@ animating it toward `0` is literally its undoing.
 
 ```
 apps/danse/
-  index.html   the living page          film.html    render harness (no UI, no rAF)
+  index.html   the living page          film.html    capture harness (no UI, no rAF)
+  arrival.js   the ONE impure module — a visitor's river, and the only clock
   studio.html  seed browser             join.html    visitor upload
   probe.html   the projection go/no-go, with its self-test
-  engine/      gl · mat4 · rng · room · grammar · renderer · corpus · clock · profile
+  engine/      gl · mat4 · rng · room · grammar · renderer · corpus · clock · program
   corpus/      score-2017.json · manifest.json · plates/ · masks/
   pipeline/    corpus preparation (local only, never deployed)
   render/      deterministic offline renderer (local only, never deployed)

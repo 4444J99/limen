@@ -18,7 +18,8 @@
  * keeps arriving at its own origin and leaving again.
  */
 
-import { range } from "./rng.js";
+import { channel, epochAt, movementAt } from "./program.js";
+import { hash, range } from "./rng.js";
 
 /** Seconds for one full departure-and-return. Long enough that the return reads
  *  as recognition rather than as a pulse. */
@@ -49,8 +50,69 @@ function dwell(phase, rest = 0.16) {
   return smooth(Math.sin(t * Math.PI)); // 0 → 1 → 0
 }
 
-/** The state of the piece at (seed, t). Everything downstream reads this. */
-export function state(seed, t) {
+/** The state of the piece at (seed, t), optionally under a program.
+ *
+ * Without a program the piece runs free — the endless departure-and-return above,
+ * which is what the live page and the gallery wall want. With one, the movements
+ * declared in `render/program.json` drive every channel and the result is a film:
+ * still a pure function of (seed, t), so an offline renderer can seek anywhere,
+ * render segments out of order, and get bit-identical frames.
+ */
+export function state(seed, t, program = null) {
+  return program ? programState(seed, t, program) : freeState(seed, t);
+}
+
+/** Under a program, every channel is interpolated across its movement, and the
+ *  MATERIAL seed changes at declared reseed points — which is how the closing
+ *  movement restarts the engine with entirely different photographs while the
+ *  structural moves stay the same. */
+function programState(seed, t, program) {
+  const { movement, index, u, passage } = movementAt(program, seed, t);
+  const epoch = epochAt(movement, u);
+  const divergence = channel(movement, "divergence", u);
+
+  // Every passage draws from its own seed, so the phrase recurs and the material
+  // never does. The passage ORDINAL goes into the derivation too: a 32-bit seed
+  // has a birthday bound around 65,000 passages — roughly nine months of
+  // continuous running — and without the ordinal a gallery could, eventually,
+  // show the same passage twice. Including it makes recurrence impossible rather
+  // than merely unlikely, which is the whole claim the piece makes.
+  const material = hash(passage.seed, passage.index, epoch, index);
+
+  // Seeded drift on top of the programmed arc, so two seeds trace different paths
+  // through the same dramaturgy rather than the same path twice.
+  const w = movement.wander ?? 0;
+  const drift = (k) => (w ? Math.sin((t / range(6.5, 13.5, seed, index, k) + range(0, 1, seed, index, k + 1)) * TAU) * w : 0);
+
+  return {
+    t,
+    // `reveal` is only a legibility signal — it tells the grammar the room is
+    // open. Under a program the cut is declared, so nothing infers it from here.
+    reveal: divergence,
+    divergence,
+    azimuth: channel(movement, "azimuth", u) + drift(111),
+    elevation: channel(movement, "elevation", u) + drift(113),
+    spread: channel(movement, "spread", u),
+    projK: channel(movement, "projK", u),
+    // Everything the grammar needs to cast this frame.
+    cut: movement.cut,
+    turnover: channel(movement, "turnover", u),
+    movement: movement.id,
+    epoch,
+    material,
+    // Which passage of the river this is, and its name. The signature frame
+    // prints both: a passage is identified by its seed AND its ordinal, so the
+    // receipt is unique for as long as the piece runs.
+    passage: passage.index,
+    passageSeed: passage.seed,
+    passageSeconds: passage.seconds,
+    passageT0: passage.t0,
+  };
+}
+
+/** The free-running piece: no program, no end. Unchanged behaviour — the flat
+ *  state at t=0 and at every PERIOD is what `check-danse.py` asserts. */
+function freeState(seed, t) {
   const phase = t / PERIOD;
   const reveal = dwell(phase);
 
@@ -77,6 +139,21 @@ export function state(seed, t) {
     // each plane carry its own crop, which duplicates the poster row. That is a
     // real state of the piece, but it is a departure from the room, not the room.
     projK: 0,
+    // The same fields a programmed state carries, so no consumer has to ask which
+    // kind of clock it is holding. Free-running, the cut is inferred from `reveal`
+    // and the material never reseeds.
+    cut: null,
+    turnover: 1,
+    movement: null,
+    epoch: 0,
+    material: seed,
+    // Free-running there are no passages — the piece departs and returns on one
+    // continuous breath rather than in phrases. Declared anyway, so a consumer
+    // never has to ask which kind of clock it is holding.
+    passage: 0,
+    passageSeed: seed,
+    passageSeconds: PERIOD,
+    passageT0: Math.floor(t / PERIOD) * PERIOD,
   };
 }
 
@@ -86,9 +163,12 @@ export function state(seed, t) {
  * continuously across the picture rather than all at once — the room is always
  * partly changing and never entirely.
  */
-export function turnover(id, seed, t) {
+export function turnover(id, seed, t, rate = 1) {
+  // rate 0 freezes the corpus — movement ONE holds a single photograph for forty
+  // seconds, and a cell that crossfades under it would break that claim.
+  if (rate <= 0) return { epoch: 0, next: 0, mix: 0 };
   const offset = range(0, 1, seed, id, 201);
-  const p = t / HOLD + offset;
+  const p = (t * rate) / HOLD + offset;
   const epoch = Math.floor(p);
   const frac = p - epoch;
 

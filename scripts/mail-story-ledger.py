@@ -9,21 +9,29 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _uma_root
+
+from _uma_root import resolve as resolve_uma  # noqa: E402 — the one resolver, shared with mail-beat.sh
+from _uma_root import uma_command  # noqa: E402
 
 # UMA_MAIL_TRIAGE_WRAPPER
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
-UMA_ROOT = Path(os.environ.get("UMA_ROOT", Path.home() / "Workspace" / "universal-mail--automation"))
 DOC_PATH = ROOT / "docs" / "mail-story-ledger.md"
 LOG_PATH = ROOT / "logs" / "mail-story-ledger.json"
 STATUS_PATH = Path(os.environ.get("LIMEN_MAIL_STATUS_OUT", ROOT / "logs" / "uma-mail-status.json"))
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_MAIL_STORY", ROOT / ".limen-private" / "mail-story"))
 PRIVATE_ATOMS = PRIVATE_ROOT / "inventory" / "mail-story-atoms.jsonl"
 PRIVATE_SNAPSHOT = PRIVATE_ROOT / "inventory" / "mail-story-snapshot.json"
-OPS_REPORT = Path(os.environ.get("UMA_OPS_REPORT_PATH", Path.home() / "System" / "Reports" / "mail-triage" / "latest.json"))
-HISTORY_REPORT = Path(os.environ.get("UMA_HISTORICAL_MAIL_PATH", Path.home() / "System" / "Reports" / "mail-history" / "latest.json"))
+OPS_REPORT = Path(
+    os.environ.get("UMA_OPS_REPORT_PATH", Path.home() / "System" / "Reports" / "mail-triage" / "latest.json")
+)
+HISTORY_REPORT = Path(
+    os.environ.get("UMA_HISTORICAL_MAIL_PATH", Path.home() / "System" / "Reports" / "mail-history" / "latest.json")
+)
 
 SCHEMA = "limen.mail_story.wrapper.v1"
 ATOM_SCHEMA = "limen.mail_story_atom.wrapper.v1"
@@ -40,17 +48,6 @@ def load_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{path} did not contain a JSON object")
     return data
-
-
-def uma_command(override: str | None = None) -> list[str]:
-    if override:
-        return [override]
-    if os.environ.get("UMA_BIN"):
-        return [os.environ["UMA_BIN"]]
-    cli = UMA_ROOT / "cli.py"
-    if cli.exists():
-        return [os.environ.get("LIMEN_PY", "python3"), str(cli)]
-    return ["umail"]
 
 
 def blocked_status(detail: str) -> dict[str, Any]:
@@ -85,8 +82,15 @@ def fetch_status(
     if status_path.exists():
         return load_json(status_path), status_path
 
+    argv = uma_command(uma_bin)
+    if argv is None:
+        # The checkout could not be resolved. This used to fall back to `["umail"]` — a binary that
+        # is installed nowhere — so the line below raised FileNotFoundError out of a fail-open rung
+        # instead of returning the blocked status this function already knows how to build.
+        return blocked_status(resolve_uma()[1]), None
+
     command = [
-        *uma_command(uma_bin),
+        *argv,
         "mail-status",
         "--ops-report",
         str(ops_report),
@@ -97,7 +101,11 @@ def fetch_status(
         "--output",
         str(status_path),
     ]
-    proc = subprocess.run(command, text=True, capture_output=True, check=False)
+    try:
+        proc = subprocess.run(command, text=True, capture_output=True, check=False)
+    except (FileNotFoundError, PermissionError) as exc:
+        # UMA_BIN can still name something unrunnable. A beat rung reports blocked; it never dies.
+        return blocked_status(f"cannot execute {command[0]}: {exc}"), None
     if proc.returncode in (0, 2) and status_path.exists():
         return load_json(status_path), status_path
     detail = proc.stderr.strip() or proc.stdout.strip() or "UMA status command failed"

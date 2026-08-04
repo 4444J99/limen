@@ -1183,34 +1183,29 @@ sensors:
         severity: silent
         escalation: "opportunity sync skipped or exceeded its bound (reads obligations-ledger.json; fails open)"
 
-  application-funnel:
+  daily-execution:
     section: heartbeat
-    title: "the OUTBOUND funnel — mount the dormant application-pipeline on the beat: TRIGGER (detached, single-instance) its orchestrator to source roles from ATS/public boards, score >=9.0, build tailored materials, and STAGE complete application packages autonomously. Reversible by construction: nothing is submitted (the `apply`/ATS-submit phase stays behind the LIMEN_APPLY_FIRE arm, lever L-APPLY-FIRE) and nothing is sent (outreach only prepares follow-up dates). The inbound sibling of opportunity-pipeline"
-    gate: LIMEN_APPLICATION_SOURCE
+    title: "the daily professional communications/application loop — ingest, reconcile, derive obligations, source/rank live roles, run voice/factual checks, and settle only provider-receipted applications and follow-ups in one persisted run"
+    gate: LIMEN_DAILY_EXECUTION
     default: "1"
     source: [heartbeat]
     owner: mail
     cadence:
-      env: LIMEN_BEAT_APPLICATION_SOURCE
+      env: LIMEN_BEAT_DAILY_EXECUTION
       default: 48
     timeout:
-      env: LIMEN_APPLICATION_SOURCE_TIMEOUT
-      default: 120
-    # The full cycle (match re-scores the whole pipeline) is a multi-minute job, so the driver
-    # TRIGGERS it detached under a single-instance lock and returns in <1s — the beat is never
-    # blocked, and the next trigger reports the last completed cycle's PII-clean counts. Dark
-    # until this rung: the mature funnel existed but nothing scheduled it (no working launchd
-    # agent, no beat sensor), so the outbound top-of-funnel never ran on its own.
+      env: LIMEN_DAILY_EXECUTION_TIMEOUT
+      default: 1800
     steps:
-      - command: "python3 scripts/application-funnel.py"
+      - command: 'python3 -m limen.daily_execution --json --timeout "${LIMEN_DAILY_EXECUTION_TIMEOUT:-1800}"'
         args_when:
-          - env: LIMEN_APPLICATION_NOTIFY
-            default: "1"
+          - env: LIMEN_DAILY_EXECUTION_FIRE
+            default: "0"
             equals: "1"
-            args: ["--notify"]
+            args: ["--fire"]
             armed_valve_type: safety
         severity: silent
-        escalation: "outbound funnel trigger skipped, or the pipeline runtime is missing — needs application-pipeline/.venv (the driver prints the exact bootstrap); fails open and never submits unless LIMEN_APPLY_FIRE=1"
+        escalation: "daily execution skipped or exceeded its 1,800-second bound; its persisted redacted receipt names the exact owner stage and provider blocker"
 
   conversion-funnel:
     section: heartbeat
@@ -1493,3 +1488,43 @@ sensors:
       - command: "python3 scripts/residue-census.py"
         severity: advisory
         escalation: "residue caps breached — this machine is holding state it should be able to re-summon; each breach names its owner (run python3 scripts/residue-census.py)"
+
+  collaboration-hub-sync:
+    section: "0g9c"
+    title: "collaboration hub — refresh the registered denominator, encrypt new originals, reconcile immutable remote events, and verify custody"
+    gate: LIMEN_COLLABORATION_HUB_SYNC
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_COLLABORATION_HUB_SYNC
+      default: 48
+    timeout:
+      env: LIMEN_COLLABORATION_HUB_SYNC_TIMEOUT
+      default: 900
+    steps:
+      - command: "bash scripts/collaboration-hub-sync.sh"
+        severity: advisory
+        escalation: "the owner-only collaboration vault did not reach its bounded discover → migrate → encrypted sync → verify fixed point; inspect its private receipt and credential wall without placing paths, keys, or client data in the board"
+
+  diurnal:
+    section: "0h"
+    title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"
+    gate: LIMEN_DIURNAL
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: diurnal
+    # Cadence is beat-modulo ONLY. True time-of-day gating is wall-clock inside the script
+    # (logs/diurnal/state.json, one emission per phase per calendar day) — the
+    # scripts/insight-cadence.py precedent. Visiting often is cheap: a phase that is not yet
+    # due exits before doing any work.
+    cadence:
+      env: LIMEN_BEAT_DIURNAL
+      default: 2
+    timeout:
+      env: LIMEN_DIURNAL_TIMEOUT
+      default: 240
+    steps:
+      - command: "python3 scripts/diurnal.py --phase auto"
+        severity: advisory
+        escalation: "diurnal emission failed — the day has no briefing; check that LIMEN_ROOT resolves to the LIVE organism (a worktree's logs/ is empty and the organ refuses to emit a false 'all quiet') and inspect logs/diurnal/state.json"

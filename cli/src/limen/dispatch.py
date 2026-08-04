@@ -54,6 +54,7 @@ from limen.models import (
     dispatch_session_id,
     has_jules_landing_hold,
 )
+from limen.partition_lanes import heuristics_may_promote
 from limen.tabularius import apply_limen_file_sync
 from limen.runtime_requirements import task_execution_ready
 from limen.doctor import stale_tasks
@@ -503,9 +504,31 @@ def _short_proc_output(proc: subprocess.CompletedProcess[str] | None, limit: int
     return f"{text[:limit]}...[truncated]" if len(text) > limit else text
 
 
-def _first_command(payload: dict[str, Any]) -> str:
-    commands = payload.get("next_commands") if isinstance(payload.get("next_commands"), list) else []
-    return str(commands[0]) if commands else ""
+# The relay only READS logs/usage.json (_provider_headroom); its own producer is the
+# usage-telemetry sensor (institutio/governance/sensors.yaml, source: [metabolize]).
+# Without that first, a "provider headroom stale" failure can never clear and re-running
+# the relay loops forever.
+HANDOFF_RELAY_REMEDIATION = (
+    "python3 scripts/usage-telemetry.py && python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check"
+)
+
+
+def _remediation_command(payload: dict[str, Any]) -> str:
+    """Every command the gate named, in order — not just the first.
+
+    The value gate emits ``next_commands`` as a LIST because clearing one block can take
+    more than one producer: ``stop_missing_inputs`` names a writer per missing input, and
+    for ``batch_review_index`` the producer is the SECOND entry. Collapsing to
+    ``commands[0]`` printed a command that could not clear the block, so the gate re-fired
+    identically and the operator looped. Chained with ``&&`` to match the multi-step
+    remediation form already used for the handoff relay below.
+    """
+    # Bound once, then narrowed: the isinstance() guard has to test the SAME object that gets
+    # iterated. Guarding a second payload.get() call left the bound value typed
+    # `Any | list[Any] | None`, which mypy correctly refuses to iterate.
+    raw = payload.get("next_commands")
+    commands: list[Any] = raw if isinstance(raw, list) else []
+    return " && ".join(text for text in (str(command).strip() for command in commands) if text)
 
 
 def _run_handoff_relay(root: Path, *, refresh: bool) -> dict[str, Any]:
@@ -706,7 +729,7 @@ def _session_value_admission_gate(
     gate = _parse_json_stdout(proc.stdout)
     gate["returncode"] = proc.returncode
     gate["output"] = _short_proc_output(proc)
-    gate["next_command"] = _first_command(gate)
+    gate["next_command"] = _remediation_command(gate)
     if proc.returncode == 0:
         gate["allow"] = True
         return gate
@@ -772,7 +795,7 @@ def dispatch_admission_check(
                     "status": "alert",
                     "exit_code": 20,
                     "reason": "handoff relay check failed; refresh handoff before launching workers",
-                    "next_command": "python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check",
+                    "next_command": HANDOFF_RELAY_REMEDIATION,
                 }
             )
             return result
@@ -1197,7 +1220,21 @@ def _dispatch_focus_bucket(task: Task, value_repos: set[str]) -> int:
     labels = {str(label).strip().lower() for label in (task.labels or [])}
     workstream = str(task.workstream or "").strip().lower()
     if repo and repo in value_repos:
+        # EXPLICIT funding, checked first and never vetoed: a value-repos.json row is the
+        # operator deciding, which is not the accidental overlap the partner boundary blocks.
         return 0
+    if not heuristics_may_promote(task.repo):
+        # THE EXCLUSION AXIS. Everything below this line is a guess -- a label, an id prefix, a
+        # lifecycle term, or a substring of English prose -- and a guess may never promote work
+        # across a partner boundary (operator directive 2026-08-02: "there shouldn't be ANY
+        # possibility of overlap between my work and client work").
+        #
+        # This function had no way to express that: it was pure inclusion, five ways to return 0
+        # and none to refuse. So VIC-CONTRACT-002, a client engagement in a private repo, reached
+        # the top of the personal fleet queue because its prompt boilerplate contained the word
+        # "blocker", and VIC-CLIENT-STORY-001 followed on "custody". Pruning those two terms would
+        # only move the collision to the next English word the client's text happens to contain.
+        return 1
     if labels & _VALUE_LABELS or workstream in _VALUE_WORKSTREAMS:
         return 0
     if str(task.id or "").startswith(("AW-", "REV-")):
@@ -1226,6 +1263,14 @@ def _value_gate_configured(value_repos: set[str]) -> bool:
 
 def task_passes_value_gate(task: Task, value_repos: set[str] | None = None) -> bool:
     value_repos = value_repos if value_repos is not None else _value_tier_repos()
+    repo = _normalize_repo_slug(task.repo)
+    if not (repo and repo in value_repos) and not heuristics_may_promote(task.repo):
+        # Checked BEFORE _value_gate_configured, so LIMEN_VALUE_GATE=0 (and an empty
+        # value-repos.json) cannot open the partner boundary. A confidentiality boundary an env
+        # var can switch off is not a boundary. An explicit `--task <id>` still reaches a partner
+        # lane -- _explicit_task_source bypasses this gate by design, and naming the id IS the
+        # operator deciding -- but nothing automatic selects one.
+        return False
     if not _value_gate_configured(value_repos):
         return True
     return _dispatch_focus_bucket(task, value_repos) == 0
@@ -1240,7 +1285,18 @@ def sort_value_gate_candidates(
     value_repos = value_repos if value_repos is not None else _value_tier_repos()
     gated = [task for task in candidates if task_passes_value_gate(task, value_repos)]
     if not _value_gate_configured(value_repos):
-        gated = list(candidates)
+        # An unconfigured value gate must not NARROW dispatch -- but "do not narrow" is a
+        # statement about PRIORITY, never about the partner boundary. Restoring `candidates`
+        # wholesale readmitted precisely the tasks task_passes_value_gate had just vetoed, so the
+        # veto was computed and discarded one line later.
+        #
+        # It stayed invisible because _value_tier_repos() defaults its file to
+        # ~/Workspace/limen/value-repos.json: on the operator's host that file exists, the gate
+        # reads CONFIGURED, and the filter survives. On a CI runner or any fresh clone it does
+        # not, the gate reads UNCONFIGURED, and client work walked back into the candidate list.
+        # A confidentiality boundary that holds only where a home-directory path happens to
+        # resolve is not a boundary.
+        gated = [task for task in candidates if heuristics_may_promote(task.repo)]
     if disk_pressure:
         focused = [task for task in gated if _dispatch_focus_bucket(task, value_repos) == 0]
         if focused:

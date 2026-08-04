@@ -41,11 +41,17 @@ diff-hygiene
 check-docs-manifest
 check-docs-exports' docs/some-note.md
 
+# io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
+# makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
+# listing `cli/src/limen/*.py` silently drops this case, and dispatch.py (a live `gh pr merge`
+# site) sits in exactly that directory. organs-change below is the matching negative: a .md must
+# NOT pull in an AST scan.
 expect cli-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 tasks-parse
 check-params
+check-effectors
 ruff-lint
 ruff-format
 pytest-cli
@@ -62,6 +68,7 @@ pytest-api' web/api/main.py
 expect mcp-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
+check-effectors
 ruff-lint
 ruff-format' mcp/src/limen_mcp/server.py
 
@@ -78,13 +85,15 @@ expect enactment-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 enactment-test
-check-params' scripts/enactment-audit.py
+check-params
+check-effectors' scripts/enactment-audit.py
 
 expect board-change 'syntax-changed
 diff-hygiene
 task-board
 tasks-parse
-check-root-manifest' tasks.yaml
+check-root-manifest
+check-board-partition' tasks.yaml
 
 expect organs-change 'syntax-changed
 diff-hygiene
@@ -101,11 +110,15 @@ agent-docs
 check-gates
 check-root-manifest' CLAUDE.md
 
+# check-runner-coverage is implicated because a workflow is a REACHABILITY ROOT: adding a
+# `run: bash scripts/metabolize.sh` step is exactly what would make an orphaned runner reachable,
+# so the verdict genuinely changes when a workflow does.
 expect workflow-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 workflow-yaml
-check-gates' .github/workflows/ci.yml
+check-gates
+check-runner-coverage' .github/workflows/ci.yml
 
 expect dashboard-change 'syntax-changed
 diff-hygiene
@@ -127,10 +140,14 @@ diff-hygiene
 nomenclator
 web-build' spec/contracts/readiness.schema.json
 
+# paused-beat-test is implicated because its fixtures assert that each paused-branch escape hatch
+# (LIMEN_PAUSED_SENSING, LIMEN_PAUSED_SYNC) is DECLARED in the panel — deleting a declaration there
+# is exactly the drift those checks exist to catch, so a params change must run them.
 expect params-change 'syntax-changed
 diff-hygiene
 sync-release-test
-check-params' institutio/governance/parameters.yaml
+check-params
+paused-beat-test' institutio/governance/parameters.yaml
 
 expect registry-change 'syntax-changed
 diff-hygiene
@@ -147,7 +164,8 @@ verify-resolver-test
 verify-parallel-test
 verify-ci-hardening-test
 check-params
-check-gates' scripts/verify.py
+check-gates
+check-effectors' scripts/verify.py
 
 expect parallel-verifier-change 'syntax-changed
 diff-hygiene
@@ -160,6 +178,7 @@ diff-hygiene
 direct-main-writer-contract
 tasks-parse
 check-params
+check-effectors
 ruff-lint
 ruff-format
 pytest-cli

@@ -51,7 +51,10 @@ fi
 #   - checkout present, classes NOT yet present        → WARN (the sibling UMA PR is not merged yet)
 #   - could not locate INBOUND_CLASSES in the delta    → FAIL (a real, in-our-control drift)
 # A hard FAIL only on the last case avoids a cross-PR merge deadlock while still catching real drift.
-UMA_ROOT="${LIMEN_UMA_ROOT:-$HOME/Workspace/universal-mail--automation}"
+# One resolver, one answer. This site read LIMEN_UMA_ROOT while four others read UMA_ROOT — two
+# names for one checkout, both defaulting to a path that does not exist. The resolver honours both,
+# in that order, and rejects an explicitly-set-but-wrong value instead of silently substituting.
+UMA_ROOT="$(python3 "$(dirname "${BASH_SOURCE[0]}")/_uma_root.py" --path 2>/dev/null || true)"
 UMA_PROTO="$UMA_ROOT/core/protocols.py"
 if [ -f "$UMA_PROTO" ]; then
   parity_out="$(python3 - "$DELTA" "$UMA_PROTO" <<'PY'
