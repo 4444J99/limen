@@ -141691,29 +141691,34 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR merged \u2192 done"
-- id: ASK-quicken-escalate-0bd3a5ed
-  title: finish stalled session 'Design movement ontology and workout composi' (breathed
-    2x, still stalling)
-  type: ops
-  target_agent: agy
-  priority: high
+- id: 'ASK-quicken-escalate-0bd3a5ed'
+  title: 'finish stalled session ''Design movement ontology and workout composi'' (breathed 2x, still stalling)'
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - quicken-residue
-  - quicken-escalate
-  - needs-human
+  - 'quicken-residue'
+  - 'quicken-escalate'
+  - 'needs-human'
   urls: []
-  context: "Session 0bd3a5ed-3d61-4334-b557-8a4e02422765 ('Design movement ontology\
-    \ and workout composition system') re-stalled after 2 guardrailed breathes \u2014\
-    \ the identical continuation will not move it. Parked purpose (last prompt): \"\
-    explain to me what is going on\". Resume by hand or with a NEW instruction: claude\
-    \ --resume 0bd3a5ed-3d61-4334-b557-8a4e02422765   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson).\
-    \ Auto-escalated by QUICKEN."
+  context: 'Session 0bd3a5ed-3d61-4334-b557-8a4e02422765 (''Design movement ontology and workout composition system'') re-stalled after 2 guardrailed breathes — the identical continuation will not move it. Parked purpose (last prompt): "explain to me what is going on". Resume by hand or with a NEW instruction: claude --resume 0bd3a5ed-3d61-4334-b557-8a4e02422765   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson). Auto-escalated by QUICKEN.'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-15T16:59:42.098197Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:41:17.753Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:41:17.753Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-6741519acc771ea43d172d60549218c7:523:compatibility'
+    conduct_run_id: 'run-6741519acc771ea43d172d60549218c7'
+    conduct_lease_id: 'lease-523-6741519acc771ea4'
+    conduct_generation: 523
 - id: HEAL-cifix-organvm-session-meta-106
   title: fix failing CI on organvm/session-meta#106
   repo: organvm/session-meta
