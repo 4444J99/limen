@@ -127,6 +127,21 @@ def test_execution_profiles_are_complete_model_neutral_conduct_metadata():
         assert not hasattr(profile, "concurrency")
 
 
+def test_workstream_launch_protocols_are_registry_owned_and_closed():
+    profiles = census.execution_profiles()
+    assert {profile.workstream_adapter for profile in profiles.values()} <= {
+        "codex",
+        "jules",
+        "positional",
+        "prompt-flag",
+        "prompt-interactive",
+    }
+    assert all(isinstance(profile.workstream_model_flag, bool) for profile in profiles.values())
+    assert profiles["codex"].workstream_adapter == "codex"
+    assert profiles["jules"].workstream_adapter == "jules"
+    assert profiles["opencode"].workstream_adapter == "prompt-flag"
+
+
 def test_primary_peer_conductors_preserve_native_identity_and_fanout_contract():
     profiles = census.execution_profiles()
     assert {name: profiles[name].transport for name in ("codex", "claude", "opencode", "agy", "copilot")} == {

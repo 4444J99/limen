@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import pty
@@ -9,14 +10,18 @@ import stat
 import subprocess
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
+import limen.census as census  # noqa: E402
 from limen.cli import main  # noqa: E402
+from limen.workstream_contract import RECEIPT_MODULES, new_contract  # noqa: E402
 
 
 ADMITTED_PROVIDER_INSTRUCTION = (
@@ -29,6 +34,63 @@ def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     if result.returncode != 0:
         raise AssertionError(f"git {' '.join(args)} failed\n{result.stdout}\n{result.stderr}")
     return result
+
+
+def _write_committed_predecessor(repo: Path) -> tuple[Path, bytes, dict[str, object]]:
+    contract = new_contract("16d")
+    runway = contract["runway"]
+    runway.update(
+        {
+            "started_at": "2026-08-01T19:22:22+00:00",
+            "started_epoch": 1_785_612_142,
+            "deadline_at": "2026-08-17T19:22:22+00:00",
+            "deadline_epoch": 1_786_994_542,
+        }
+    )
+    receipt_value = {
+        "schema": "limen.workstream.receipt.v1",
+        "slug": "predecessor",
+        "branch": "work/predecessor",
+        "workstream": "alpha-omega",
+        "contract": contract,
+        "private_capsule": {
+            "content": "redacted",
+            "modules": list(RECEIPT_MODULES),
+        },
+    }
+    receipt = repo / "docs" / "continuations" / "predecessor" / "workstream.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text(json.dumps(receipt_value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _git("add", "docs/continuations/predecessor/workstream.json", cwd=repo)
+    _git("commit", "-qm", "docs: preserve admitted predecessor", cwd=repo)
+    return receipt, receipt.read_bytes(), contract
+
+
+def _fixture_limen_root_with_renamed_provider(
+    tmp_path: Path,
+    source: census.Vendor,
+    renamed: census.Vendor,
+) -> Path:
+    """Copy the launcher with a test registry whose selected provider has an arbitrary ID."""
+
+    fixture_root = tmp_path / "fixture-limen"
+    (fixture_root / "scripts" / "lib").mkdir(parents=True)
+    (fixture_root / "spec").mkdir()
+    shutil.copy2(ROOT / "scripts" / "start-worktree-session.sh", fixture_root / "scripts")
+    for name in ("workstream-capsule.sh", "campaign-relay-capsule.sh"):
+        shutil.copy2(ROOT / "scripts" / "lib" / name, fixture_root / "scripts" / "lib")
+    shutil.copytree(ROOT / "spec" / "continuation-capsule", fixture_root / "spec" / "continuation-capsule")
+    shutil.copytree(ROOT / "cli" / "src", fixture_root / "cli" / "src")
+    census_path = fixture_root / "cli" / "src" / "limen" / "census.py"
+    registry_source = census_path.read_text(encoding="utf-8")
+    original_name = f'name="{source.name}"'
+    original_binary = f'binary="{source.binary}"'
+    assert registry_source.count(original_name) >= 1
+    assert registry_source.count(original_binary) >= 1
+    registry_source = registry_source.replace(original_name, f'name="{renamed.name}"', 1)
+    registry_source = registry_source.replace(original_binary, f'binary="{renamed.binary}"', 1)
+    census_path.write_text(registry_source, encoding="utf-8")
+    return fixture_root
 
 
 def test_workstream_command_writes_private_kickstart_packet(tmp_path: Path, monkeypatch) -> None:
@@ -105,6 +167,121 @@ def test_workstream_command_writes_private_kickstart_packet(tmp_path: Path, monk
     assert "workstream contract is missing" in partial.output
 
 
+def test_workstream_command_creates_inherited_and_renewed_successors_without_mutating_predecessor(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+    predecessor, predecessor_bytes, predecessor_contract = _write_committed_predecessor(repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_opencode = fake_bin / "opencode"
+    fake_opencode.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    fake_opencode.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_AGENT", "opencode")
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    inherited = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--prompt",
+            "Continue from the committed predecessor.",
+            "--predecessor-receipt",
+            str(predecessor),
+            str(repo),
+            "Inherited Successor",
+        ],
+    )
+
+    assert inherited.exit_code == 0, inherited.output
+    inherited_wt = repo / ".worktrees" / "inherited-successor"
+    inherited_contract = json.loads(
+        (inherited_wt / ".limen-workstream" / "workstream.json").read_text(encoding="utf-8")
+    )
+    inherited_receipt_path = inherited_wt / "docs" / "continuations" / "inherited-successor" / "workstream.json"
+    inherited_receipt_text = inherited_receipt_path.read_text(encoding="utf-8")
+    inherited_receipt = json.loads(inherited_receipt_text)
+    expected_lineage = {
+        "slug": "predecessor",
+        "branch": "work/predecessor",
+        "receipt_sha256": hashlib.sha256(predecessor_bytes).hexdigest(),
+    }
+    assert inherited_contract["runway"] == predecessor_contract["runway"]
+    assert inherited_contract["schema"] == "limen.workstream.contract.v1"
+    assert inherited_contract["authorization"]["sandbox"] == "workspace-write"
+    assert inherited_contract["conductor"]["provider_and_model"] == "provider_neutral"
+    assert inherited_contract["runway"]["deadline_at"] == "2026-08-17T19:22:22+00:00"
+    assert inherited_receipt["predecessor"] == expected_lineage
+    assert str(predecessor) not in inherited_receipt_text
+    for generated in (inherited_wt / ".limen-workstream").iterdir():
+        assert str(predecessor) not in generated.read_text(encoding="utf-8")
+    assert predecessor.read_bytes() == predecessor_bytes
+
+    renewed = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--prompt",
+            "Create a distinct renewed successor.",
+            "--predecessor-receipt",
+            str(predecessor),
+            "--runway-mode",
+            "renew",
+            "--runway",
+            "2d",
+            str(repo),
+            "Renewed Successor",
+        ],
+    )
+
+    assert renewed.exit_code == 0, renewed.output
+    renewed_wt = repo / ".worktrees" / "renewed-successor"
+    renewed_contract = json.loads((renewed_wt / ".limen-workstream" / "workstream.json").read_text(encoding="utf-8"))
+    renewed_receipt = json.loads(
+        (renewed_wt / "docs" / "continuations" / "renewed-successor" / "workstream.json").read_text(encoding="utf-8")
+    )
+    assert renewed_contract["runway"]["requested"] == "2d"
+    assert renewed_contract["runway"]["started_epoch"] is None
+    assert renewed_contract["runway"]["deadline_epoch"] is None
+    assert renewed_contract["authorization"]["sandbox"] == "workspace-write"
+    assert renewed_contract["conductor"]["provider_and_model"] == "provider_neutral"
+    assert renewed_receipt["predecessor"] == expected_lineage
+    assert predecessor.read_bytes() == predecessor_bytes
+
+    invalid = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--predecessor-receipt",
+            str(predecessor),
+            "--runway",
+            "1d",
+            str(repo),
+            "Invalid Inherited Successor",
+        ],
+    )
+    assert invalid.exit_code == 2
+    assert "cannot accept --runway" in invalid.output
+    assert not (repo / ".worktrees" / "invalid-inherited-successor").exists()
+
+    missing_predecessor = CliRunner().invoke(
+        main,
+        ["workstream", "--runway-mode", "inherit", str(repo), "Missing Predecessor"],
+    )
+    assert missing_predecessor.exit_code == 2
+    assert "--runway-mode requires --predecessor-receipt" in missing_predecessor.output
+
+
 def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path, monkeypatch, capfd) -> None:
     repo = tmp_path / "demo-repo"
     repo.mkdir()
@@ -124,7 +301,7 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
             "#!/usr/bin/env bash\n"
             'printf "jules\\n" >> "$EVENTS_CAPTURE"\n'
             'printf "%s\\n" "$@" > "$SESSION_ARGS_CAPTURE"\n'
-            'if [[ "${JULES_SLEEP:-0}" == "1" ]]; then sleep 5; fi\n'
+            'if [[ "${JULES_SLEEP:-0}" == "1" ]]; then exec sleep 5; fi\n'
             'printf "Session is created.\\nID: 12345678901234567890\\nTask: test\\n\\n'
             'URL: https://jules.google.com/session/12345678901234567890\\n"\n'
             'if [[ "${JULES_FAIL_AFTER_OUTPUT:-0}" == "1" ]]; then exit 42; fi\n'
@@ -245,7 +422,7 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     kickstart = wt / ".limen-workstream" / "kickstart.sh"
     kickstart_text = kickstart.read_text(encoding="utf-8")
     assert (
-        'if [[ "$agent" != "jules" ]]; then\n'
+        'if [[ "$launch_adapter" != "jules" ]]; then\n'
         '  workstream_publish_admitted_receipt "$receipt" "$expected_branch" "$expected_slug"\n'
         "  exec 9>&-\n"
         "fi"
@@ -522,7 +699,15 @@ def test_shell_launcher_hands_off_to_generated_kickstart_without_a_tty(tmp_path:
     assert "# Continuation capsule: agent-launch" in prompt_capture.read_text(encoding="utf-8")
 
 
-def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: Path) -> None:
+def test_registry_provider_workstream_publishes_admitted_receipt_before_provider(tmp_path: Path) -> None:
+    source_provider = next(provider for provider in census.VENDORS if provider.execution.workstream_adapter == "codex")
+    provider = replace(
+        source_provider,
+        name="fixture-provider-renamed-arbitrarily",
+        aliases=(),
+        binary="fixture-provider-cli",
+    )
+    fixture_limen = _fixture_limen_root_with_renamed_provider(tmp_path, source_provider, provider)
     repo = tmp_path / "demo-repo"
     repo.mkdir()
     _git("init", "-q", "-b", "main", cwd=repo)
@@ -556,10 +741,16 @@ def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: P
         encoding="utf-8",
     )
     fake_git.chmod(0o755)
-    fake_codex = fake_bin / "codex"
-    fake_codex.write_text(
+    fake_provider = fake_bin / provider.binary
+    fake_provider.write_text(
         (
             "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "debug" && "${2:-}" == "models" ]]; then\n'
+            "  printf '%s\\n' "
+            '\'{"models":[{"slug":"fixture-sol","supported_reasoning_levels":'
+            '[{"effort":"high"}]}]}\'\n'
+            "  exit 0\n"
+            "fi\n"
             'printf "provider\\n" >> "$EVENTS_CAPTURE"\n'
             'printf "%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n" '
             '"${LIMEN_WORKSTREAM_PROVIDER_ACTIVE:-}" '
@@ -579,7 +770,7 @@ def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: P
         ),
         encoding="utf-8",
     )
-    fake_codex.chmod(0o755)
+    fake_provider.chmod(0o755)
     events = tmp_path / "events.txt"
     git_events = tmp_path / "git-events.txt"
     bindings = tmp_path / "provider-bindings.txt"
@@ -597,28 +788,34 @@ def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: P
     }
     command = [
         "bash",
-        str(ROOT / "scripts" / "start-worktree-session.sh"),
+        str(fixture_limen / "scripts" / "start-worktree-session.sh"),
         "--autonomous",
         "--agent",
-        "codex",
+        provider.name,
+        "--model",
+        "fixture-sol",
+        "--reasoning-effort",
+        "high",
+        "--sandbox",
+        "workspace-write",
         "--prompt",
         "Publish the admitted receipt before provider launch.",
         str(repo),
-        "Codex Admission Publication",
+        "Registry Admission Publication",
     ]
 
     launched = subprocess.run(command, env=env, text=True, capture_output=True, timeout=15, check=False)
     assert launched.returncode == 0, launched.stdout + launched.stderr
-    wt = repo / ".worktrees" / "codex-admission-publication"
-    branch = "work/codex-admission-publication"
-    receipt_rel = "docs/continuations/codex-admission-publication/workstream.json"
+    wt = repo / ".worktrees" / "registry-admission-publication"
+    branch = "work/registry-admission-publication"
+    receipt_rel = "docs/continuations/registry-admission-publication/workstream.json"
     first_head = _git("rev-parse", "HEAD", cwd=wt).stdout.strip()
     remote_head = _git("ls-remote", "origin", f"refs/heads/{branch}", cwd=wt).stdout.split()[0]
     assert first_head == remote_head
     assert _git("status", "--short", "--untracked-files=all", cwd=wt).stdout == ""
     assert (
         _git("log", "-1", "--format=%s", cwd=wt).stdout.strip()
-        == "docs: publish admitted codex-admission-publication runway"
+        == "docs: publish admitted registry-admission-publication runway"
     )
     assert _git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD", cwd=wt).stdout.strip() == receipt_rel
     assert events.read_text(encoding="utf-8").splitlines() == ["provider", "provider-return"]
@@ -627,7 +824,7 @@ def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: P
     assert git_events.read_text(encoding="utf-8").splitlines().count("ls-remote") == 2
     provider_bindings = bindings.read_text(encoding="utf-8").splitlines()
     assert provider_bindings[0] == "1"
-    assert provider_bindings[1] == provider_bindings[4] == "codex-admission-publication"
+    assert provider_bindings[1] == provider_bindings[4] == "registry-admission-publication"
     assert provider_bindings[2] == provider_bindings[5] == str(wt)
     assert provider_bindings[3] == provider_bindings[6]
     assert provider_bindings[3]
@@ -635,6 +832,12 @@ def test_codex_workstream_publishes_admitted_receipt_before_provider(tmp_path: P
     assert recursion_capture.read_text(encoding="utf-8") == (
         "This session is already admitted; continue directly without launching another provider.\n"
     )
+    kickstart_text = (wt / ".limen-workstream" / "kickstart.sh").read_text(encoding="utf-8")
+    assert f"agent={provider.name}" in kickstart_text
+    assert f"agent={source_provider.name}" not in kickstart_text
+    assert "launch_adapter=codex" in kickstart_text
+    contract = json.loads((wt / ".limen-workstream" / "workstream.json").read_text(encoding="utf-8"))
+    assert contract["primary_launch"]["agent"] == "codex"
 
 
 def test_workstream_rejects_unwritable_linked_git_metadata_before_admission(
@@ -777,6 +980,106 @@ def test_workstream_rejects_unavailable_github_before_admission(tmp_path: Path) 
     assert "launch-environment error: configured remote origin is unavailable" in rejected.stderr
     wt = repo / ".worktrees" / "unavailable-github"
     contract = wt / ".limen-workstream/workstream.json"
+    assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
+    assert not provider_marker.exists()
+
+
+@pytest.mark.parametrize(
+    ("failed_preflight", "diagnostic"),
+    [
+        ("fetch", "bounded fetch from origin failed"),
+        ("status", "bounded Git status failed"),
+    ],
+)
+def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_receipt(
+    tmp_path: Path,
+    failed_preflight: str,
+    diagnostic: str,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+    remote = tmp_path / "origin.git"
+    remote.mkdir()
+    _git("init", "--bare", "-q", cwd=remote)
+    _git("remote", "add", "origin", str(remote), cwd=repo)
+    _git("push", "-u", "origin", "main", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    real_git = shutil.which("git")
+    assert real_git is not None
+    fake_git = fake_bin / "git"
+    fake_git.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "fetch" && "${1:-}" == "fetch" ]]; then exit 71; fi\n'
+            'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "status" && "$*" == "status --short --branch" ]]; then exit 72; fi\n'
+            'exec "$REAL_GIT" "$@"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_git.chmod(0o755)
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text('#!/usr/bin/env bash\n: > "$PROVIDER_MARKER"\n', encoding="utf-8")
+    fake_codex.chmod(0o755)
+    provider_marker = tmp_path / "provider-started"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "REAL_GIT": real_git,
+        "LIMEN_AGENT": "codex",
+        "PROVIDER_MARKER": str(provider_marker),
+    }
+    slug = f"preflight-{failed_preflight}-failure"
+    rendered = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--prompt",
+            "Preflights must finish before admission.",
+            str(repo),
+            slug,
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert rendered.returncode == 0, rendered.stdout + rendered.stderr
+    wt = repo / ".worktrees" / slug
+    capsule = wt / ".limen-workstream"
+    contract = capsule / "workstream.json"
+    receipt = wt / "docs" / "continuations" / slug / "workstream.json"
+    kickstart = capsule / "kickstart.sh"
+    protected = (contract, receipt)
+    original_bytes = {path: path.read_bytes() for path in protected}
+    kickstart_text = kickstart.read_text(encoding="utf-8")
+    admission_call = kickstart_text.index("\nrefresh_workstream_runway\n")
+    assert (
+        kickstart_text.index("git fetch --prune", kickstart_text.index("refresh_workstream_runway()")) < admission_call
+    )
+    assert kickstart_text.index("git status --short --branch") < admission_call
+
+    rejected = subprocess.run(
+        ["bash", str(kickstart)],
+        cwd=wt,
+        env={**env, "FAIL_WORKSTREAM_PREFLIGHT": failed_preflight},
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert rejected.returncode == 2
+    assert f"launch-environment error: {diagnostic}" in rejected.stderr
+    assert {path: path.read_bytes() for path in protected} == original_bytes
     assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
     assert not provider_marker.exists()
 

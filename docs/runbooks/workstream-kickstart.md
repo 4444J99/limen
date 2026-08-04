@@ -18,6 +18,20 @@ through 30 days and defaults to one day. The clock starts on first kickstart, su
 inherit the same deadline, and an expired capsule fails closed instead of silently renewing.
 Runtime evidence derives `continue`, `switch`, `wait_relay`, `settled`, or `invalid`.
 
+To create a successor from a tracked receipt, point at its exact committed file:
+
+```bash
+workstream --predecessor-receipt /path/to/docs/continuations/prior/workstream.json \
+  --prompt-file /path/to/next-session.md danse successor
+```
+
+The default `--runway-mode inherit` copies the predecessor's admitted start and absolute deadline
+exactly; it refuses a new `--runway`. A deliberately distinct window uses
+`--runway-mode renew --runway <duration>` and starts unadmitted. The source receipt must match its
+checkout's committed `HEAD` bytes. Both successor modes use the provider-neutral `workspace-write`
+authorization contract; an old provider-specific launch profile is not inherited. The successor records only the predecessor slug, branch, and
+receipt SHA-256 digest—never a machine-local path—and never rewrites the predecessor.
+
 `--conduct` registers the direct session with the shared broker as `human_protected` before the
 agent starts. The generated launcher passes only session, capsule, lineage, task, lease-generation,
 and execution-hash context through environment variables. Broker credentials remain environment
@@ -35,7 +49,9 @@ deadline arrives. The channel closes its inherited capsule-lock descriptor and o
 bounded mode-`0600` private status object at
 `.limen-workstream/conduct-keepalive.json`; it creates no second session or local campaign store.
 
-After admission, a repository-backed non-Jules launcher commits only the synchronized public receipt
+Before admission or conduct registration, the launcher completes its bounded remote fetch and Git
+status preflights. Either failure leaves the private contract and tracked receipt byte-identical and
+starts no provider. After admission, a repository-backed non-Jules launcher commits only the synchronized public receipt
 and fast-forward-pushes that exact head to its topic branch before provider `exec`. Unrelated dirty
 state, remote branch drift, commit failure, or push failure denies provider launch. Re-entry at an
 already published exact head is byte-idempotent. Local-only repositories without an `origin` retain

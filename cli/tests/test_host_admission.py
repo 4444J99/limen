@@ -865,6 +865,8 @@ esac
 set -euo pipefail
 export PATH={fake_bin!s}:$PATH
 export LIMEN_HOST_ADMISSION_ROOT={state_root!s}
+export VITALS_LOAD_WARN_PER_CORE=999
+export VITALS_LOAD_CRIT_PER_CORE=999
 source {ROOT / "scripts" / "lib" / "host-admission.sh"}
 host_admission_acquire fixture {ROOT!s}
 [[ -n "$HOST_ADMISSION_LEASE_ID" ]]
