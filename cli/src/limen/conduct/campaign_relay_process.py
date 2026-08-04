@@ -52,7 +52,7 @@ def _live_relay_lanes(_root: Path) -> tuple[str, ...]:
         vendor = by_name(name)
         if vendor is None:
             continue
-        if not workstream_launchable(vendor, autonomous=False):
+        if not workstream_launchable(vendor, autonomous=True):
             continue
         candidates = workstream_binary_candidates(vendor, os.environ)
         if any(shutil.which(candidate) for candidate in candidates):

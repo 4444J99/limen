@@ -76,6 +76,30 @@ def test_live_relay_lane_resolves_a_renamed_registry_binary(
     assert relay_process._live_relay_lanes(Path("/fixture")) == (renamed.name,)
 
 
+def test_live_relay_lane_includes_a_renamed_jules_adapter_for_its_autonomous_launch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from limen import capacity
+
+    source = next(vendor for vendor in census.VENDORS if vendor.execution.workstream_adapter == "jules")
+    renamed = replace(
+        source,
+        name="fixture-jules-relay-renamed",
+        aliases=(),
+        binary="fixture-jules-relay-cli",
+    )
+    monkeypatch.setattr(census, "_BY_NAME", {renamed.name: renamed})
+    monkeypatch.setattr(capacity, "select_lanes", lambda _selector: [renamed.name])
+    monkeypatch.setattr(
+        relay_process.shutil,
+        "which",
+        lambda binary: f"/fixture/{binary}" if binary == renamed.binary else None,
+    )
+    monkeypatch.delenv("LIMEN_FIXTURE_JULES_RELAY_RENAMED_BIN", raising=False)
+
+    assert relay_process._live_relay_lanes(Path("/fixture")) == (renamed.name,)
+
+
 def test_live_relay_lane_excludes_issue_assignment_even_when_its_binary_exists(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
