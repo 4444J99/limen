@@ -3996,6 +3996,26 @@ parameters:
     owner: tabularius
     note: "The effector for the recurring Gatekeeper 'claude is an app downloaded from the Internet' dialog (scripts/heal-claude-cask.sh, sensed by dialogs-silenced.sh class 4, beat-wired on the heartbeat hygiene cadence). A duplicate Homebrew *cask* install of claude-code is re-quarantined on every brew upgrade (casks stamp com.apple.quarantine), creating an independent rotating Gatekeeper principal beside the sanctioned native updater-managed install. Dry-run by default. When 1, the beat runs 'brew uninstall --cask claude-code' ONLY when the cask is present and verifies the native ~/.local/bin/claude (the one sanctioned install) survives; it never touches the native install. macOS-only; fails OPEN off-darwin or without brew. Arm once in ~/.limen.env. Set 0 to silence."
 
+  # --- Track C vendor-update closeout sensor (0g8c): wait cleanly or meet on non-noop ---
+  LIMEN_TCC_TRACK_C:
+    default: "1"
+    env: LIMEN_TCC_TRACK_C
+    self_update: none
+    owner: tabularius
+    note: "Gate for the tcc-track-c sensor (sensors.yaml 0g8c). When 1, each cadence tick runs scripts/tcc-track-c-closeout.py --beat. Exit 0 is external_vendor_wait (Claude still at cutover baseline 2.1.220) OR track_c.met after a real version advance with green normalized inventory. Exit 1 is inventory/host regression. No-op 'up to date' is never completion. Set 0 to silence."
+  LIMEN_BEAT_TCC_TRACK_C:
+    default: 8
+    env: LIMEN_BEAT_TCC_TRACK_C
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the tcc-track-c sensor (sensors.yaml 0g8c). 8 matches the hygiene cadence used by dialogs-silenced so vendor-offer detection rides the same beat family without monopolizing the hot path."
+  LIMEN_TCC_TRACK_C_TIMEOUT:
+    default: 300
+    env: LIMEN_TCC_TRACK_C_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for Track C closeout beat step: hosted claude --version, optional claude update, and two strict tcc-identity-audit passes. 300 covers a real vendor download without stalling the beat forever; the runner kills the command group on overrun and continues fail-open."
+
   # --- dialogs-silenced sensor (0g8b): the agent-curable dialog estate, self-healed + verified on the beat ---
   LIMEN_DIALOGS_SILENCED:
     default: "1"               # ON — the sensor gate; each cadence tick runs the heal pass + --agent-curable-only verify.
