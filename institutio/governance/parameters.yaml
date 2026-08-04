@@ -499,12 +499,12 @@ parameters:
     self_update: none
     owner: integrity
     note: "Read-only TCC database source for tcc-identity-audit. The default is the current user's supported database location; tests may point at an isolated fixture."
-  LIMEN_TCC_HOST_DEPLOYED_AT:
-    default: ""
-    env: LIMEN_TCC_HOST_DEPLOYED_AT
+  LIMEN_TCC_IDENTITY_BASELINE:
+    default: "~/.config/limen/tcc-identity-baseline.json"
+    env: LIMEN_TCC_IDENTITY_BASELINE
     self_update: none
     owner: integrity
-    note: "Optional integer deployment epoch for deterministic audit fixtures. Production leaves it empty and derives the containment boundary from DomusAgentHost.app birth time."
+    note: "Create-once, mode-600 redacted identity and unrelated App Management bundle-grant baseline for tcc-identity-audit. Production uses the Domus-owned default; isolated tests may override it. The writer refuses to replace an existing cutover anchor."
   LIMEN_TCC_HOST_STATUS_JSON:
     default: ""
     env: LIMEN_TCC_HOST_STATUS_JSON

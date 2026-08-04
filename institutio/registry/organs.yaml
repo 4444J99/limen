@@ -65,7 +65,7 @@ organs:
     status: built
     role: "app/binary/signature → don't self-corrupt. Keep vendor updates enabled while one stable native responsible identity owns protected access."
     evidence: "'Claude app is corrupt' dialog this session; repeated Claude/Python/Homebrew/uv version paths accumulated as TCC clients. Stable-host signature + executable TCC audit replace updater suppression."
-    residual: "codesign --verify the fixed host and operating apps; alert if an updater is disabled or any post-deploy versioned client appears. Never re-pin/re-disable a rotating tool."
+    residual: "The 2026-08-03 local cutover passed: fixed-host signature unchanged, App Management has one host row and zero path rows, and the unrelated grant map is preserved. Keep alerting if an updater is disabled, any managed identity appears outside the redacted baseline, or a path client returns. Final acceptance waits for a real Claude version advance beyond 2.1.220 with the inventory still green. Never re-pin/re-disable a rotating tool."
 
   - name: identity
     layer: autonomic
@@ -144,9 +144,9 @@ organs:
     layer: autonomic
     home: "DomusAgentHost.app + limen (scripts/tcc-identity-audit.py; heal-claude-lsregister.sh + heal-hook-drift.sh + heal-claude-cask.sh; scripts/dialogs-silenced.sh; institutio/governance/sensors.yaml §0g8b)"
     status: partial
-    role: "Every beat, verify auto-updates remain enabled beneath the fixed signed Domus responsibility host, reject post-deploy versioned TCC clients, heal the agent-curable Gatekeeper/LaunchServices estate, and prove the combined predicate."
+    role: "Every beat, verify auto-updates remain enabled beneath the fixed signed Domus responsibility host; reject new managed TCC identities, visible App Management path clients, and unhosted configured ingresses; heal the agent-curable Gatekeeper/LaunchServices estate; and prove the independent predicates."
     evidence: "Born from the recurring 'ClaudeCode.app is damaged — move to Trash' modal (2026-07-17). R1 shipped the lsregister effector + 4b sensor (#1206); R2+R3 completed the effector family + registry-derived sensor + omega rung (#1219). --agent-curable-only → exit 0 on the live host."
-    residual: "One System Settings transaction remains after containment: grant the fixed host and remove the audit's legacy_stale inventory. The three HEAL valves remain separately armed. No recurring cleanup, updater suppression, global TCC reset, direct database edit, or version pin is an accepted closure."
+    residual: "Local predicates passed 2026-08-03: ten managed GUI ingresses enter through domus-agent-host ensure; App Management has one enabled host row, zero path rows, and the baseline's unrelated bundle grants unchanged; renamed-runner and cold-start matrices added no identity. The real Claude vendor-update predicate remains open because 2.1.220 was already current. The three HEAL valves remain separately armed. No recurring cleanup, updater suppression, global TCC reset, direct database edit, or version pin is an accepted closure."
 
 # ============================ THE C-SUITE (officers) ============================
 # HIERARCHY.md rendered as data: which officer convenes which organs. Federation,

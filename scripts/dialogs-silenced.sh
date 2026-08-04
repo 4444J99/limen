@@ -45,9 +45,10 @@ echo
 # ── 0. macOS responsibility identity — updates rotate below one fixed native host. ──
 # This is the structural cure for version-path TCC churn. The audit is read-only and itself enters
 # through DomusAgentHost before opening TCC.db, so Python cannot become the new permission client.
-# It fails when update-disabling variables reappear, the fixed app/signature drifts, a post-deploy
-# Claude/Python/Homebrew/uv/Limen path becomes a TCC client, or a malformed Claude helper is
-# registered. Existing pre-containment rows remain an exact legacy_stale cleanup inventory.
+# It fails when update-disabling variables reappear, the fixed app/signature drifts, a managed
+# identity appears outside the redacted baseline, any App Management path row remains visible
+# (disabled included), a tracked GUI ingress bypasses `domus-agent-host ensure --`, or a malformed
+# Claude helper is registered.
 TCC_AUDIT="$ROOT/scripts/tcc-identity-audit"
 if [ ! -f "$TCC_AUDIT" ] || [ ! -r "$TCC_AUDIT" ] || [ ! -x "$TCC_AUDIT" ]; then
   tcc_output="tcc-identity-audit wrapper is missing, unreadable, or not executable: $TCC_AUDIT"
@@ -57,7 +58,7 @@ else
   tcc_status=$?
 fi
 if [ "$tcc_status" -eq 0 ]; then
-  green "TCC identity: automatic updates enabled; stable DomusAgentHost valid; zero post-deploy versioned clients"
+  green "TCC identity: automatic updates enabled; stable host valid; active leaks, visible path rows, and unhosted ingresses all zero"
 else
   redb "TCC identity invariant is not contained (audit exit $tcc_status)"
   while IFS= read -r audit_line; do
@@ -185,7 +186,7 @@ except Exception:
 # so a machine without the hook deployed cannot error. That command ends in `|| true`, so
 # the old endswith test reported NOT WIRED against a correctly wired, live, working gate —
 # measured on the first successful arming. A sensor that only recognises one spelling of a
-# correct state manufactures phantom work; match the hook's identity, not its call syntax.
+# correct state manufactures phantom work; match the hook identity, not its call syntax.
 for m in (d.get("hooks") or {}).get("PreToolUse") or []:
     for h in m.get("hooks") or []:
         if "allow-trusted-cd-git.sh" in str(h.get("command", "")):
