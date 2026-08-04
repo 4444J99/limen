@@ -16,11 +16,13 @@ in the existing private stores.
   `8b110385c731656ad4c5f0482bd5d5bfd916b316`, and PR #112 is merged at
   `43b58a0fabac21ba8a6da176b92171e9c829685a`. The merged extension keeps the
   existing portal-keyed application runtime and returns structured provider
-  outcomes.
+  outcomes. Historical reconciliation is now merged as PR #113 at
+  `13b9931bc080fe1a034ee61994dfa1412084e63e`.
 - `organvm/universal-mail--automation`: default branch `main`; owns provider
   ingestion, obligations construction, draft/send policy, and delivery evidence.
 - `organvm/social-automation`: default branch `main`; owns social-provider
-  adapters, but has no LinkedIn effector in the inspected public tree.
+  adapters. LinkedIn delivery support is now present at default-branch commit
+  `218f516`; authenticated browser context remains runtime-private.
 - `organvm/browser-state`: default branch `main`; public repository contains only
   a README, so authenticated browser state remains private/provider-owned.
 - `organvm/koinonia-db`: default branch `main`; owns a database engine, not the
@@ -83,6 +85,11 @@ receipt, so the coordinator preserves their unavailable/ambiguous outcomes.
    prerequisite; role-specific referral prerequisites still require a
    provider-observed send state plus receipt/message identifier. The branch is
    merged to `main`.
+6. Application-pipeline PR #113 (`13b9931b`) extends that same email checker
+   across five configured Mail.app targets and records a redacted, exact-coverage
+   reconciliation receipt. It classifies 8 rows as provider-confirmed and 15 as
+   deferred/blocked; the named Hamming, Pinecone, and Tapcart rows remain
+   duplicate-guarded until exact provider evidence appears.
 
 The read-only local application-pipeline census found 23 YAML rows under its
 `pipeline/submitted/` owner directory. The current snapshot contained no explicit
@@ -105,6 +112,10 @@ receipt owners, with only the missing contracts and coordinator added here.
   CodeQL, and static-analysis checks are green on this head.
 - Application-owner truthfulness branch: PR #112, commit `b43d200f`, based on
   merged PR #111; its focused suite passed 65 tests and Ruff.
+- Historical application reconciliation: application-pipeline PR #113 merged
+  at `13b9931b`; its live receipt covers all 23 rows with counts
+  `confirmed=8`, `blocked=15`, `superseded=0`, and its focused owner wave passed
+  104 tests.
 - Limen focused wave passed 65 tests across daily execution, MCP delegation,
   heartbeat sensors, registry checks, and the audit-autofix fixture. The worker
   gate passed `npm ci`, `npm audit --audit-level=high`, and all 66 worker tests.
@@ -144,7 +155,7 @@ represented as solved by this coordinator:
 
 | Atom | Owner receipt | Failed predicate / next command |
 | --- | --- | --- |
-| Historical application claims | application-pipeline PRs #111/#112 plus provider mailbox/portal receipts | 23 rows were censused; the accessible live snapshot exposed 15 submitted-directory rows and no explicit confirmation evidence. Reconcile all 23 owner rows against every configured mailbox/portal, then supply the canonical `LIMEN_DELIVERY_RECEIPTS` ledger to the daily run |
+| Historical application claims | application-pipeline PRs #111/#112/#113 plus provider mailbox/portal receipts | all 23 rows are now covered by the redacted reconciliation receipt: 8 confirmed, 15 deferred/blocked, 0 superseded. Deferred rows retain duplicate guards and require exact provider evidence before any retry |
 | Authenticated LinkedIn action | social-automation/browser-state private provider surface | no public authenticated effector was present; run the shared loop only after a provider send/submission receipt exists, otherwise preserve the precise session/CAPTCHA blocker |
 | Forrest/WhatsApp/iMessage capture | Limen PRs #1794/#1509 | public/private capture owners remain open; accept their capture predicates before using full conversation/audio grounding for applications |
 | Biography evidence union | Limen PR #1715 / issue #1734 | registry must union existing source evidence; do not let a newer registry hide prior docs/reviews before customization |
