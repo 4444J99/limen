@@ -308,6 +308,7 @@ name = "limen-mcp"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "cryptography" },
     { name = "limen" },
     { name = "mcp" },
     { name = "pydantic" },
@@ -316,6 +317,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = ">=50.0.0" },
     { name = "limen", editable = "../cli" },
     { name = "mcp", extras = ["fastmcp"] },
     { name = "pydantic", specifier = ">=2.0" },

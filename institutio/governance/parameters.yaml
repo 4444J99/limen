@@ -675,6 +675,18 @@ parameters:
     self_update: none
     owner: governance
     note: "Forces check-corpora's disk checks (B/C/E) to bind strictly even when no declared corpus store is visible. The stores are local-only by design, so a CI runner's missing-store state is a host fact, not drift — auto-detection (any store present ⇒ strict) covers the operator host; this knob covers a host that SHOULD have the stores but has lost them."
+  LIMEN_LIFE_HOST:
+    default: "0"
+    env: LIMEN_LIFE_HOST
+    self_update: none
+    owner: governance
+    note: "Forces check-biography's store-parity check (E) to bind strictly even when ~/Workspace is not visible. The _life-private store is local-only and mode 700 by design, so a CI runner's missing-store state is a host fact, not drift — auto-detection (estate root present ⇒ strict) covers the operator host; this knob covers a host that SHOULD hold the store but has lost it. Sibling of LIMEN_CORPORA_HOST, same CUSTODY reasoning."
+  LIMEN_PEOPLE_HOST:
+    default: "0"
+    env: LIMEN_PEOPLE_HOST
+    self_update: none
+    owner: consulting
+    note: "Forces constellation Rule #6 (overlay parity) to treat a missing private overlay as a violation rather than an unverifiable skip. Rule #6 used to return [] unconditionally when the overlay was absent, so the suite passed BECAUSE the store was missing — 15 people indexed publicly with zero private backing, every dossier lane failing, all green. Auto-detection (estate root present ⇒ provable absence) covers the operator host; this knob covers a host that should hold it."
   LIMEN_CORPVS_ROOT:
     default: "$LIMEN_WORKSPACE_ROOT/organvm-corpvs-testamentvm"
     env: LIMEN_CORPVS_ROOT
@@ -4820,30 +4832,61 @@ parameters:
     owner: mail
     note: "Safety-valve arg for the opportunity-pipeline effector (--notify). When 1, review-due detections append COUNT-ONLY events to the sealed private log ~/Workspace/_people-private/opportunities/review-due.jsonl (ARCA-sealed, never public) and push a count-only line through the existing notify cascade. ON by default because both write targets are private/count-only; set 0 to run detection without recording."
 
-  LIMEN_APPLICATION_SOURCE:
+  LIMEN_DAILY_EXECUTION:
     default: "1"
-    env: LIMEN_APPLICATION_SOURCE
+    env: LIMEN_DAILY_EXECUTION
     self_update: none
     owner: mail
-    note: "Gate for the application-funnel beat sensor (the OUTBOUND job funnel: scripts/application-funnel.py TRIGGERS the dormant application-pipeline orchestrator — scan->match->build->stage — detached). ON by default: the reversible cycle only SOURCES/SCORES/BUILDS/STAGES application packages; it NEVER submits (apply is gated behind LIMEN_APPLY_FIRE) and NEVER sends (outreach only prepares dates). Fails open; if the pipeline .venv is missing it reports the bootstrap loudly rather than silently no-op."
-  LIMEN_BEAT_APPLICATION_SOURCE:
+    note: "Gate for the single persisted daily communications/application coordinator. ON by default for read-only reconciliation and staging; outbound authority still requires the invocation-scoped LIMEN_DAILY_EXECUTION_FIRE valve."
+  LIMEN_BEAT_DAILY_EXECUTION:
     default: 48
-    env: LIMEN_BEAT_APPLICATION_SOURCE
+    env: LIMEN_BEAT_DAILY_EXECUTION
     self_update: none
     owner: mail
-    note: "Cadence (every N beats) of the application-funnel sensor. 48 beats ~ once daily — sourcing/scoring the whole pipeline is a multi-minute job, so it runs detached at a daily tempo, not every beat. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only)."
-  LIMEN_APPLICATION_SOURCE_TIMEOUT:
-    default: 120
-    env: LIMEN_APPLICATION_SOURCE_TIMEOUT
+    note: "Cadence for the generic heartbeat daily-execution sensor. 48 beats is the existing daily-class tempo; the sensor owns the complete bounded run instead of a separately scheduled application-funnel trigger."
+  LIMEN_DAILY_EXECUTION_TIMEOUT:
+    default: 1800
+    env: LIMEN_DAILY_EXECUTION_TIMEOUT
     self_update: none
     owner: mail
-    note: "Per-run timeout (seconds) for the application-funnel sensor. The driver only TRIGGERS a detached cycle and returns in <1s (the multi-minute cycle runs in the background under its own lock), so 120s is generous headroom for the trigger itself."
-  LIMEN_APPLICATION_NOTIFY:
-    default: "1"
-    env: LIMEN_APPLICATION_NOTIFY
+    note: "Hard timeout in seconds for one daily coordinator run. The default 1,800-second bound covers the application owner cycle while preventing a detached or wedged provider from holding the heartbeat indefinitely."
+  LIMEN_DAILY_EXECUTION_FIRE:
+    default: "0"
+    env: LIMEN_DAILY_EXECUTION_FIRE
     self_update: none
     owner: mail
-    note: "Safety-valve arg for the application-funnel effector (--notify). When 1, the trigger emits a COUNT-ONLY line (cycle launched/held; last cycle's sourced/qualified/staged/submitted counts) through the notify cascade. PII-clean by construction (counts only; per-role detail stays in the pipeline's private estate)."
+    note: "Invocation safety valve for routine professional application submission and professional email/LinkedIn follow-up effectors. SAFE-OFF by default; it is never persisted by the coordinator and never arms ingestion or reconciliation."
+  LIMEN_DAILY_EXECUTION_RECEIPT:
+    default: ""
+    env: LIMEN_DAILY_EXECUTION_RECEIPT
+    self_update: none
+    owner: mail
+    note: "Optional private path for the persisted redacted daily execution receipt. Empty selects the existing private communications report home; raw bodies, browser state, and credentials never enter the receipt."
+  LIMEN_DELIVERY_RECEIPTS:
+    default: ""
+    env: LIMEN_DELIVERY_RECEIPTS
+    self_update: none
+    owner: mail
+    note: "Optional private path to the canonical append-only DeliveryReceiptV1 ledger. Exact provider/account/run/obligation bindings are required for current-day counts; historical rows remain reconciliation-only."
+  LIMEN_DAILY_EXECUTION_TIMEZONE:
+    default: ""
+    env: LIMEN_DAILY_EXECUTION_TIMEZONE
+    self_update: none
+    owner: mail
+    note: "Optional IANA timezone for the daily local-calendar boundary. Empty uses the host timezone; an invalid value fails back to the host without changing provider state."
+  LIMEN_DAILY_RUN_ID:
+    default: ""
+    env: LIMEN_DAILY_RUN_ID
+    self_update: none
+    owner: mail
+    note: "Private run binding passed to owner effectors by the coordinator. It is derived from the local root and calendar date; operators do not set it as a scheduler or persistence knob."
+  LIMEN_LINKEDIN_FIRE:
+    default: "0"
+    env: LIMEN_LINKEDIN_FIRE
+    self_update: none
+    owner: mail
+    note: "Per-owner LinkedIn professional-effector arm. The daily coordinator sets it only for the explicit fire invocation and never passes it to ingestion or reconciliation."
+
   LIMEN_APPLY_FIRE:
     default: "0"
     env: LIMEN_APPLY_FIRE
