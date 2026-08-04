@@ -320,6 +320,21 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert "--from must resolve to the exact predecessor HEAD" in wrong_base.output
     assert not (repo / ".worktrees" / "wrong-base-successor").exists()
 
+    no_capsule = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--predecessor-receipt",
+            str(predecessor),
+            "--no-readme",
+            str(repo),
+            "Missing Successor Capsule",
+        ],
+    )
+    assert no_capsule.exit_code == 2
+    assert "successor custody requires a capsule" in no_capsule.output
+    assert not (repo / ".worktrees" / "missing-successor-capsule").exists()
+
     missing_predecessor = CliRunner().invoke(
         main,
         ["workstream", "--runway-mode", "inherit", str(repo), "Missing Predecessor"],

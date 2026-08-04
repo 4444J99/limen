@@ -352,6 +352,10 @@ if [[ -n "$predecessor_receipt" && ( "$launch_profile_values" -ne 0 || -n "$laun
   echo "a successor derives its launch contract from the predecessor; explicit model flags are not accepted" >&2
   exit 2
 fi
+if [[ -n "$predecessor_receipt" && "$write_readme" -ne 1 ]]; then
+  echo "--predecessor-receipt cannot be combined with --no-readme because successor custody requires a capsule" >&2
+  exit 2
+fi
 if [[ -n "$prompt_file" && ! -f "$prompt_file" ]]; then
   echo "prompt file not found: $prompt_file" >&2
   exit 1
