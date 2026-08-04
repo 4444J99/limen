@@ -121,16 +121,16 @@ facts:
     home: _life-private/epochs/current.md
     atom: circumstance
     tier: private
-    applicable: unknown
+    applicable: false
     required: false
-    verify: non_empty
+    verify: unavailable
     provenance: operator
     consumers: [check-biography.py]
     note: >
-      Where the operator is NOW — the standing context a fresh agent needs before it reasons
-      about anything in his life. The nearest existing thing is the north-star paragraph in
-      _finance-private/briefing.md: one domain, undated, unindexed, reachable by no agent
-      that does not already know to look.
+      The declared `_life-private/epochs/current.md` source is not present on this host.
+      It is explicitly unavailable rather than synthesized from conversation text. A future
+      operator-owned current-context source may set applicable: true after it has a custody
+      receipt; until then a resolver must surface this absence.
 
   biography.narrative.cited:
     domain: life
@@ -142,8 +142,13 @@ facts:
     verify: non_empty
     provenance: cited
     consumers: [check-biography.py]
+    source_documents:
+      - docs/reviews/deep-history-2022-2026.md
+      - docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
     note: >
-      Longer-form life context, every assertion carrying a corpus locator into the declared
-      session-memory corpora (426 Claude threads + the ChatGPT corpus). This is retrieval of
-      the operator's own account, not reconstruction of it. Uncited narrative is not written
+      Longer-form life context. The resolver unions both existing review histories above
+      before reporting the source set; older evidence is never hidden by a newer registry.
+      Every assertion carrying a corpus locator into the declared session-memory corpora
+      (426 Claude threads + the ChatGPT corpus) remains a citation. This is retrieval of the
+      operator's own account, not reconstruction of it. Uncited narrative is not written
       here — it has no home in this estate, by design.
