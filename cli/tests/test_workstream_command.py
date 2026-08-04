@@ -37,6 +37,13 @@ def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
 
 
 def _write_committed_predecessor(repo: Path) -> tuple[Path, bytes, dict[str, object]]:
+    remote = repo.parent / "origin.git"
+    remote.mkdir()
+    _git("init", "--bare", "-q", cwd=remote)
+    _git("remote", "add", "origin", str(remote), cwd=repo)
+    _git("push", "-u", "origin", "main", cwd=repo)
+    predecessor_worktree = repo.parent / "predecessor-worktree"
+    _git("worktree", "add", "-b", "work/predecessor", str(predecessor_worktree), "main", cwd=repo)
     contract = new_contract("16d")
     runway = contract["runway"]
     runway.update(
@@ -58,11 +65,12 @@ def _write_committed_predecessor(repo: Path) -> tuple[Path, bytes, dict[str, obj
             "modules": list(RECEIPT_MODULES),
         },
     }
-    receipt = repo / "docs" / "continuations" / "predecessor" / "workstream.json"
+    receipt = predecessor_worktree / "docs" / "continuations" / "predecessor" / "workstream.json"
     receipt.parent.mkdir(parents=True)
     receipt.write_text(json.dumps(receipt_value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    _git("add", "docs/continuations/predecessor/workstream.json", cwd=repo)
-    _git("commit", "-qm", "docs: preserve admitted predecessor", cwd=repo)
+    _git("add", "docs/continuations/predecessor/workstream.json", cwd=predecessor_worktree)
+    _git("commit", "-qm", "docs: preserve admitted predecessor", cwd=predecessor_worktree)
+    _git("push", "-u", "origin", "work/predecessor", cwd=predecessor_worktree)
     return receipt, receipt.read_bytes(), contract
 
 
@@ -85,10 +93,17 @@ def _fixture_limen_root_with_renamed_provider(
     registry_source = census_path.read_text(encoding="utf-8")
     original_name = f'name="{source.name}"'
     original_binary = f'binary="{source.binary}"'
-    assert registry_source.count(original_name) >= 1
-    assert registry_source.count(original_binary) >= 1
-    registry_source = registry_source.replace(original_name, f'name="{renamed.name}"', 1)
-    registry_source = registry_source.replace(original_binary, f'binary="{renamed.binary}"', 1)
+    record_start = registry_source.index(f"    Vendor(\n        {original_name},")
+    record_end = registry_source.find("\n    Vendor(", record_start + 1)
+    assert record_end != -1
+    source_record = registry_source[record_start:record_end]
+    assert source_record.count(original_name) == 1
+    assert source_record.count(original_binary) == 1
+    alias_line = next(line for line in source_record.splitlines() if line.strip().startswith("aliases="))
+    renamed_record = source_record.replace(original_name, f'name="{renamed.name}"', 1)
+    renamed_record = renamed_record.replace(original_binary, f'binary="{renamed.binary}"', 1)
+    renamed_record = renamed_record.replace(alias_line, "        aliases=(),", 1)
+    registry_source = registry_source[:record_start] + renamed_record + registry_source[record_end:]
     census_path.write_text(registry_source, encoding="utf-8")
     return fixture_root
 
@@ -190,18 +205,17 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     monkeypatch.setenv("LIMEN_AGENT", "opencode")
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
 
-    inherited = CliRunner().invoke(
-        main,
-        [
-            "workstream",
-            "--prompt",
-            "Continue from the committed predecessor.",
-            "--predecessor-receipt",
-            str(predecessor),
-            str(repo),
-            "Inherited Successor",
-        ],
-    )
+    predecessor_head = _git("rev-parse", "HEAD", cwd=predecessor.parents[3]).stdout.strip()
+    inherited_args = [
+        "workstream",
+        "--prompt",
+        "Continue from the committed predecessor.",
+        "--predecessor-receipt",
+        str(predecessor),
+        str(repo),
+        "Inherited Successor",
+    ]
+    inherited = CliRunner().invoke(main, inherited_args)
 
     assert inherited.exit_code == 0, inherited.output
     inherited_wt = repo / ".worktrees" / "inherited-successor"
@@ -222,10 +236,25 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert inherited_contract["conductor"]["provider_and_model"] == "provider_neutral"
     assert inherited_contract["runway"]["deadline_at"] == "2026-08-17T19:22:22+00:00"
     assert inherited_receipt["predecessor"] == expected_lineage
+    assert _git("rev-parse", "HEAD", cwd=inherited_wt).stdout.strip() == predecessor_head
+    assert f"Base ref: `{predecessor_head}`" in (inherited_wt / ".limen-workstream" / "manifest.md").read_text(
+        encoding="utf-8"
+    )
     assert str(predecessor) not in inherited_receipt_text
     for generated in (inherited_wt / ".limen-workstream").iterdir():
         assert str(predecessor) not in generated.read_text(encoding="utf-8")
     assert predecessor.read_bytes() == predecessor_bytes
+
+    rerender_paths = [
+        path
+        for path in (inherited_wt / ".limen-workstream").iterdir()
+        if path.is_file() and path.name != ".capsule.lock"
+    ] + [inherited_receipt_path]
+    before_rerender = {path: path.read_bytes() for path in rerender_paths}
+    repeated = CliRunner().invoke(main, inherited_args)
+    assert repeated.exit_code == 0, repeated.output
+    assert "capsule index:" in repeated.output and "(unchanged)" in repeated.output
+    assert {path: path.read_bytes() for path in rerender_paths} == before_rerender
 
     renewed = CliRunner().invoke(
         main,
@@ -256,6 +285,7 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert renewed_contract["authorization"]["sandbox"] == "workspace-write"
     assert renewed_contract["conductor"]["provider_and_model"] == "provider_neutral"
     assert renewed_receipt["predecessor"] == expected_lineage
+    assert _git("rev-parse", "HEAD", cwd=renewed_wt).stdout.strip() == predecessor_head
     assert predecessor.read_bytes() == predecessor_bytes
 
     invalid = CliRunner().invoke(
@@ -274,12 +304,53 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert "cannot accept --runway" in invalid.output
     assert not (repo / ".worktrees" / "invalid-inherited-successor").exists()
 
+    wrong_base = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--predecessor-receipt",
+            str(predecessor),
+            "--from",
+            "main",
+            str(repo),
+            "Wrong Base Successor",
+        ],
+    )
+    assert wrong_base.exit_code == 2
+    assert "--from must resolve to the exact predecessor HEAD" in wrong_base.output
+    assert not (repo / ".worktrees" / "wrong-base-successor").exists()
+
     missing_predecessor = CliRunner().invoke(
         main,
         ["workstream", "--runway-mode", "inherit", str(repo), "Missing Predecessor"],
     )
     assert missing_predecessor.exit_code == 2
     assert "--runway-mode requires --predecessor-receipt" in missing_predecessor.output
+
+
+def test_issue_assignment_lane_is_rejected_before_native_workstream_creation(
+    tmp_path: Path,
+    monkeypatch,
+    capfd,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+
+    result = CliRunner().invoke(
+        main,
+        ["workstream", "--agent", "copilot", str(repo), "No Issue Assignment Native Launch"],
+    )
+
+    assert result.exit_code != 0
+    assert "uses issue assignment and has no native workstream adapter" in capfd.readouterr().err
+    assert not (repo / ".worktrees" / "no-issue-assignment-native-launch").exists()
 
 
 def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path, monkeypatch, capfd) -> None:
@@ -771,19 +842,25 @@ def test_registry_provider_workstream_publishes_admitted_receipt_before_provider
         encoding="utf-8",
     )
     fake_provider.chmod(0o755)
+    stale_id_provider = fake_bin / provider.name
+    stale_id_provider.write_text('#!/usr/bin/env bash\n: > "$STALE_PROVIDER_MARKER"\nexit 91\n', encoding="utf-8")
+    stale_id_provider.chmod(0o755)
     events = tmp_path / "events.txt"
     git_events = tmp_path / "git-events.txt"
     bindings = tmp_path / "provider-bindings.txt"
     prompt_capture = tmp_path / "prompt.txt"
     recursion_capture = tmp_path / "recursion.txt"
+    stale_provider_marker = tmp_path / "stale-provider.txt"
     env = {
         **os.environ,
+        "LIMEN_ROOT": str(fixture_limen),
         "PATH": f"{fake_bin}:{os.environ['PATH']}",
         "EVENTS_CAPTURE": str(events),
         "GIT_EVENTS_CAPTURE": str(git_events),
         "PROVIDER_BINDINGS_CAPTURE": str(bindings),
         "SESSION_PROMPT_CAPTURE": str(prompt_capture),
         "RECURSION_CAPTURE": str(recursion_capture),
+        "STALE_PROVIDER_MARKER": str(stale_provider_marker),
         "REAL_GIT": real_git,
     }
     command = [
@@ -819,6 +896,7 @@ def test_registry_provider_workstream_publishes_admitted_receipt_before_provider
     )
     assert _git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD", cwd=wt).stdout.strip() == receipt_rel
     assert events.read_text(encoding="utf-8").splitlines() == ["provider", "provider-return"]
+    assert not stale_provider_marker.exists()
     assert git_events.read_text(encoding="utf-8").splitlines().count("fetch") == 1
     assert git_events.read_text(encoding="utf-8").splitlines().count("push") == 1
     assert git_events.read_text(encoding="utf-8").splitlines().count("ls-remote") == 2

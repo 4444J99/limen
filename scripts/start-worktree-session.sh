@@ -48,8 +48,10 @@ first kickstart, survives successor sessions, and is never silently reset by a r
 --predecessor-receipt creates a validated successor from one committed tracked receipt. The default
 --runway-mode inherit copies the predecessor's admitted start and deadline exactly and refuses
 --runway. --runway-mode renew requires an explicit --runway and creates a fresh unstarted contract.
-Both modes retain provider-neutral workspace-write authorization. Only the predecessor slug, branch,
-and SHA-256 receipt digest enter the successor receipt; its local path is never recorded.
+The predecessor checkout must be on its declared branch at the exact live origin branch head; that
+commit becomes the successor base. Both modes retain provider-neutral workspace-write authorization.
+Only the predecessor slug, branch, and SHA-256 receipt digest enter the successor receipt; its local
+path is never recorded. Re-rendering must repeat the same predecessor and runway-mode arguments.
 
 --autonomous requires an explicit prompt and turns the README into the selected agent's initial prompt. The
 packet defines live probes and completion/switch predicates; it never predeclares the ending.
@@ -88,6 +90,7 @@ prompt_file=""
 runway=""
 runway_explicit=0
 predecessor_receipt=""
+predecessor_head=""
 runway_mode="inherit"
 runway_mode_explicit=0
 workstream=""
@@ -378,7 +381,12 @@ if [[ -n "$predecessor_receipt" ]]; then
   if [[ "$runway_mode" == "renew" ]]; then
     successor_metadata_args+=(--runway "$runway")
   fi
-  if ! python3 "$contract_helper" "${successor_metadata_args[@]}" >/dev/null; then
+  if ! successor_metadata="$(python3 "$contract_helper" "${successor_metadata_args[@]}")"; then
+    exit 2
+  fi
+  predecessor_head="$(printf '%s\n' "$successor_metadata" | sed -n '5p')"
+  if [[ ! "$predecessor_head" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ ]]; then
+    echo "predecessor receipt did not resolve an exact remotely custodied HEAD" >&2
     exit 2
   fi
 fi
@@ -505,6 +513,7 @@ if requested == "auto":
         vendor
         for vendor in ordered
         if vendor is not None
+        if not vendor.issue_assignment
         if vendor.status.available and vendor.status.state == "live" and direct_native(vendor)
         if not require_codex_adapter or vendor.execution.workstream_adapter == "codex"
     ]
@@ -530,6 +539,8 @@ else:
     if vendor is None:
         allowed = ", ".join(item.name for item in VENDORS)
         raise SystemExit(f"unknown Limen agent lane {requested!r}; canonical lanes: {allowed}")
+    if vendor.issue_assignment:
+        raise SystemExit(f"Limen agent lane {vendor.name!r} uses issue assignment and has no native workstream adapter")
     binary = next((item for item in candidates(vendor) if shutil.which(item)), vendor.name)
 
 print(vendor.name)
@@ -641,6 +652,22 @@ repo="$(cd "$repo" && pwd -P)"
 if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "not a git repo: $repo" >&2
   exit 1
+fi
+if [[ -n "$predecessor_receipt" ]]; then
+  if ! git -C "$repo" cat-file -e "${predecessor_head}^{commit}" 2>/dev/null; then
+    echo "predecessor HEAD is not present in the target repository" >&2
+    exit 2
+  fi
+  if [[ -n "$from_ref" ]]; then
+    requested_from_head="$(git -C "$repo" rev-parse --verify "${from_ref}^{commit}" 2>/dev/null || true)"
+    if [[ "$requested_from_head" != "$predecessor_head" ]]; then
+      echo "--from must resolve to the exact predecessor HEAD" >&2
+      exit 2
+    fi
+  fi
+  # Canonicalize the successor base to the remotely custodied predecessor commit. The local
+  # receipt path remains an input only and is never written into the successor capsule.
+  from_ref="$predecessor_head"
 fi
 if [[ -n "$campaign_relay" ]]; then
   relay_root_head="$(git -C "$repo" rev-parse HEAD 2>/dev/null || true)"

@@ -28,9 +28,17 @@ workstream --predecessor-receipt /path/to/docs/continuations/prior/workstream.js
 The default `--runway-mode inherit` copies the predecessor's admitted start and absolute deadline
 exactly; it refuses a new `--runway`. A deliberately distinct window uses
 `--runway-mode renew --runway <duration>` and starts unadmitted. The source receipt must match its
-checkout's committed `HEAD` bytes. Both successor modes use the provider-neutral `workspace-write`
-authorization contract; an old provider-specific launch profile is not inherited. The successor records only the predecessor slug, branch, and
+checkout's committed `HEAD` bytes, that checkout must be on the receipt's declared branch, and its
+exact HEAD must be the live `origin` branch head. The successor worktree is based on that exact
+commit; an explicit `--from` is accepted only when it resolves to the same commit. Both successor
+modes use the provider-neutral `workspace-write` authorization contract; an old provider-specific
+launch profile is not inherited. The successor records only the predecessor slug, branch, and
 receipt SHA-256 digest—never a machine-local path—and never rewrites the predecessor.
+
+Re-rendering an existing successor must repeat the same exact `--predecessor-receipt` and
+`--runway-mode` arguments (and the same `--runway` for a renewal). The receipt path is intentionally
+not persisted, so omission or substitution fails the capsule identity check instead of guessing a
+local source.
 
 `--conduct` registers the direct session with the shared broker as `human_protected` before the
 agent starts. The generated launcher passes only session, capsule, lineage, task, lease-generation,

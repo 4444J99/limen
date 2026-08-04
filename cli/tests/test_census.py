@@ -129,17 +129,19 @@ def test_execution_profiles_are_complete_model_neutral_conduct_metadata():
 
 def test_workstream_launch_protocols_are_registry_owned_and_closed():
     profiles = census.execution_profiles()
-    assert {profile.workstream_adapter for profile in profiles.values()} <= {
+    adapters = {profile.workstream_adapter for profile in profiles.values()}
+    assert adapters <= {
         "codex",
         "jules",
         "positional",
         "prompt-flag",
         "prompt-interactive",
     }
+    assert {"codex", "jules", "prompt-flag"} <= adapters
     assert all(isinstance(profile.workstream_model_flag, bool) for profile in profiles.values())
-    assert profiles["codex"].workstream_adapter == "codex"
-    assert profiles["jules"].workstream_adapter == "jules"
-    assert profiles["opencode"].workstream_adapter == "prompt-flag"
+    for vendor in census.VENDORS:
+        assert profiles[vendor.name].workstream_adapter == vendor.execution.workstream_adapter
+        assert profiles[vendor.name].workstream_model_flag == vendor.execution.workstream_model_flag
 
 
 def test_primary_peer_conductors_preserve_native_identity_and_fanout_contract():

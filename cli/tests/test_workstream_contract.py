@@ -282,9 +282,13 @@ def _git_fixture(*args: str, cwd: Path) -> str:
 def _committed_predecessor(tmp_path: Path, *, explicit_profile: bool = False) -> tuple[Path, bytes, dict[str, object]]:
     repo = tmp_path / "predecessor-repo"
     repo.mkdir()
-    _git_fixture("init", "-q", "-b", "main", cwd=repo)
+    _git_fixture("init", "-q", "-b", "work/predecessor", cwd=repo)
     _git_fixture("config", "user.email", "test@example.invalid", cwd=repo)
     _git_fixture("config", "user.name", "Test User", cwd=repo)
+    remote = tmp_path / "predecessor-origin.git"
+    remote.mkdir()
+    _git_fixture("init", "--bare", "-q", cwd=remote)
+    _git_fixture("remote", "add", "origin", str(remote), cwd=repo)
     capsule = repo / ".limen-workstream"
     contract_path = capsule / "workstream.json"
     launch = (
@@ -311,6 +315,7 @@ def _committed_predecessor(tmp_path: Path, *, explicit_profile: bool = False) ->
     )
     _git_fixture("add", "docs/continuations/predecessor/workstream.json", cwd=repo)
     _git_fixture("commit", "-qm", "docs: preserve predecessor receipt", cwd=repo)
+    _git_fixture("push", "-u", "origin", "work/predecessor", cwd=repo)
     return receipt, receipt.read_bytes(), admitted
 
 
@@ -382,6 +387,30 @@ def test_successor_rejects_mode_drift_and_uncommitted_predecessor_bytes(tmp_path
 
     predecessor.write_bytes(predecessor_bytes + b"\n")
     with pytest.raises(ContractError, match="committed HEAD bytes"):
+        W.successor_contract(predecessor)
+
+
+def test_successor_rejects_receipt_branch_that_does_not_match_checkout(tmp_path: Path) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    repo = predecessor.parents[3]
+    value = json.loads(predecessor.read_text(encoding="utf-8"))
+    value["branch"] = "work/different-predecessor"
+    predecessor.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _git_fixture("add", str(predecessor.relative_to(repo)), cwd=repo)
+    _git_fixture("commit", "-qm", "test: mismatch predecessor branch", cwd=repo)
+
+    with pytest.raises(ContractError, match="does not match its checkout branch"):
+        W.successor_contract(predecessor)
+
+
+def test_successor_rejects_predecessor_head_without_exact_remote_custody(tmp_path: Path) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    repo = predecessor.parents[3]
+    (repo / "unpushed.txt").write_text("not remotely custodied\n", encoding="utf-8")
+    _git_fixture("add", "unpushed.txt", cwd=repo)
+    _git_fixture("commit", "-qm", "test: leave predecessor head local", cwd=repo)
+
+    with pytest.raises(ContractError, match="not the exact origin branch head"):
         W.successor_contract(predecessor)
 
 
@@ -980,7 +1009,10 @@ def test_lane_tier_pin_is_refused_never_ignored(
     assert "ARGV:" not in result.stdout
 
 
-def test_registry_profile_survives_provider_rename_catalog_add_remove_and_reorder(tmp_path: Path) -> None:
+def test_registry_profile_survives_provider_rename_catalog_add_remove_and_reorder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Launch behavior follows the stable registry profile, never a frozen provider-name allowlist."""
 
     source = next(item for item in C.VENDORS if item.execution.workstream_adapter == "prompt-flag")
@@ -1004,7 +1036,11 @@ def test_registry_profile_survives_provider_rename_catalog_add_remove_and_reorde
     )
 
     for catalog in catalogs:
-        selected = next(item for item in catalog if item.name == renamed.name)
+        monkeypatch.setattr(C, "VENDORS", catalog)
+        monkeypatch.setattr(C, "_BY_NAME", {item.name: item for item in catalog})
+        selected = C.by_name(C.canonical(renamed.name))
+        assert selected is renamed
+        assert C.by_name(source.name) is None
         result = _launch_argv(tmp_path, selected, "fixture-model")
         assert result.returncode == 0, result.stdout + result.stderr
         assert "ARGV: [--model] [fixture-model] [--prompt]" in result.stdout

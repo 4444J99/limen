@@ -8,7 +8,9 @@ workstream_native_binary() {
   env_suffix="$(printf '%s' "$agent" | tr '[:lower:]-' '[:upper:]_')"
   env_key="LIMEN_${env_suffix}_BIN"
   override="$(printenv "$env_key" 2>/dev/null || true)"
-  for candidate in "$override" "$agent" "$registry_binary"; do
+  # Match renderer selection exactly: explicit override, registry binary, then the canonical ID
+  # only as a compatibility fallback. Validation and exec must never choose different binaries.
+  for candidate in "$override" "$registry_binary" "$agent"; do
     if [[ -n "$candidate" ]] && command -v "$candidate" >/dev/null 2>&1; then
       printf '%s\n' "$candidate"
       return 0
@@ -1361,7 +1363,7 @@ render_workstream_capsule() {
   local required_template created_at head_short upstream_ref origin_url status_line readme_action contract_action receipt_action
   local launch_helpers
   local actual_branch effective_runway input_digest identity_action successor_metadata successor_runway
-  local predecessor_slug="" predecessor_branch="" predecessor_receipt_sha256=""
+  local predecessor_slug="" predecessor_branch="" predecessor_receipt_sha256="" predecessor_head=""
   local runtime_source_digest closeout_source_digest contract_source_digest capsule_real wt_real lock_status
   local q_wt q_capsule_dir q_capsule_lock q_receipt q_identity q_readme q_manifest q_contract q_contract_helper
   local q_intent q_runtime q_closeout q_kickstart q_slug q_branch q_workstream q_input_digest
@@ -1473,9 +1475,15 @@ render_workstream_capsule() {
     predecessor_branch="$(printf '%s\n' "$successor_metadata" | sed -n '2p')"
     predecessor_receipt_sha256="$(printf '%s\n' "$successor_metadata" | sed -n '3p')"
     successor_runway="$(printf '%s\n' "$successor_metadata" | sed -n '4p')"
+    predecessor_head="$(printf '%s\n' "$successor_metadata" | sed -n '5p')"
     if [[ -z "$predecessor_slug" || -z "$predecessor_branch" \
-      || ! "$predecessor_receipt_sha256" =~ ^[0-9a-f]{64}$ || -z "$successor_runway" ]]; then
+      || ! "$predecessor_receipt_sha256" =~ ^[0-9a-f]{64}$ || -z "$successor_runway" \
+      || ! "$predecessor_head" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ ]]; then
       echo "invalid predecessor successor metadata" >&2
+      exit 1
+    fi
+    if [[ "$from_ref" != "$predecessor_head" ]]; then
+      echo "successor base does not match the exact predecessor HEAD" >&2
       exit 1
     fi
   fi
@@ -2086,7 +2094,9 @@ if [[ "\$conduct" -eq 1 ]]; then
 fi
 # Admit only after every launch-environment preflight and conduct registration has succeeded.
 refresh_workstream_runway
-# Preserve the final exact-boundary recheck immediately before publication and provider handoff.
+# Recheck the absolute deadline at the final boundary before publication and provider handoff. The
+# first admission may start or observe a runway with only one second remaining; this second read is
+# intentionally separate so expiry during that boundary is denied rather than published.
 refresh_workstream_runway
 if [[ "\$launch_adapter" != "jules" ]]; then
   workstream_publish_admitted_receipt "\$receipt" "\$expected_branch" "\$expected_slug"

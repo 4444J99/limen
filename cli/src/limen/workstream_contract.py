@@ -39,6 +39,7 @@ _DURATION_RE = re.compile(r"^([1-9][0-9]*)([mhd])$")
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 _WORKSTREAM_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_GIT_OID_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 CODEX_SANDBOXES = frozenset({"read-only", "workspace-write", "danger-full-access"})
 RECEIPT_MODULES = (
     "README.md",
@@ -538,8 +539,8 @@ def _git_control(root: Path, *args: str) -> bytes:
     return result.stdout
 
 
-def predecessor_lineage(receipt_path: Path) -> tuple[dict[str, Any], dict[str, str]]:
-    """Load one exact committed predecessor receipt and return path-free lineage."""
+def predecessor_custody(receipt_path: Path) -> tuple[dict[str, Any], dict[str, str], str]:
+    """Load one exact remotely custodied predecessor receipt and its checkout head."""
 
     try:
         info = receipt_path.lstat()
@@ -567,6 +568,10 @@ def predecessor_lineage(receipt_path: Path) -> tuple[dict[str, Any], dict[str, s
 
     object_name = f"HEAD:{relative_posix.as_posix()}"
     try:
+        _git_control(root, "cat-file", "-e", object_name)
+    except ContractError as exc:
+        raise ContractError("predecessor receipt is not committed at the checkout HEAD") from exc
+    try:
         committed_size = int(_git_control(root, "cat-file", "-s", object_name).decode("ascii").strip())
     except (UnicodeDecodeError, ValueError) as exc:
         raise ContractError("predecessor receipt is not committed at the checkout HEAD") from exc
@@ -587,6 +592,36 @@ def predecessor_lineage(receipt_path: Path) -> tuple[dict[str, Any], dict[str, s
         raise ContractError("committed predecessor receipt is invalid JSON") from exc
     if receipt["slug"] != relative_posix.parts[2]:
         raise ContractError("predecessor receipt slug does not match its custody path")
+    try:
+        checkout_branch = _git_control(root, "symbolic-ref", "--quiet", "--short", "HEAD").decode("utf-8").strip()
+        checkout_head = _git_control(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
+    except UnicodeDecodeError as exc:
+        raise ContractError("predecessor checkout Git identity is invalid") from exc
+    if checkout_branch != receipt["branch"]:
+        raise ContractError("predecessor receipt branch does not match its checkout branch")
+    if not _GIT_OID_RE.fullmatch(checkout_head):
+        raise ContractError("predecessor checkout HEAD is invalid")
+    try:
+        remote_raw = _git_control(
+            root,
+            "ls-remote",
+            "--exit-code",
+            "origin",
+            f"refs/heads/{receipt['branch']}",
+        ).decode("ascii")
+    except (ContractError, UnicodeDecodeError) as exc:
+        raise ContractError("predecessor receipt branch has no verifiable origin custody") from exc
+    remote_rows = [line.split() for line in remote_raw.splitlines() if line.strip()]
+    expected_ref = f"refs/heads/{receipt['branch']}"
+    if (
+        len(remote_rows) != 1
+        or len(remote_rows[0]) != 2
+        or not _GIT_OID_RE.fullmatch(remote_rows[0][0])
+        or remote_rows[0][1] != expected_ref
+    ):
+        raise ContractError("predecessor receipt branch has invalid origin custody")
+    if remote_rows[0][0] != checkout_head:
+        raise ContractError("predecessor checkout HEAD is not the exact origin branch head")
     runway = receipt["contract"]["runway"]
     if runway["started_epoch"] is None or runway["deadline_epoch"] is None:
         raise ContractError("predecessor workstream has not been admitted")
@@ -595,7 +630,38 @@ def predecessor_lineage(receipt_path: Path) -> tuple[dict[str, Any], dict[str, s
         "branch": receipt["branch"],
         "receipt_sha256": hashlib.sha256(committed).hexdigest(),
     }
+    return receipt, lineage, checkout_head
+
+
+def predecessor_lineage(receipt_path: Path) -> tuple[dict[str, Any], dict[str, str]]:
+    """Return validated path-free lineage while keeping checkout details ephemeral."""
+
+    receipt, lineage, _checkout_head = predecessor_custody(receipt_path)
     return receipt, lineage
+
+
+def successor_metadata(
+    predecessor_receipt: Path,
+    *,
+    runway_mode: str = "inherit",
+    requested: str | None = None,
+) -> tuple[dict[str, Any], dict[str, str], str]:
+    """Derive a successor contract, lineage, and its exact remotely custodied base."""
+
+    if runway_mode not in SUCCESSOR_RUNWAY_MODES:
+        raise ContractError("successor runway mode must be inherit or renew")
+    if runway_mode == "inherit" and requested is not None:
+        raise ContractError("inherited successors cannot specify a new runway")
+    if runway_mode == "renew" and requested is None:
+        raise ContractError("renewed successors require an explicit runway")
+    receipt, lineage, checkout_head = predecessor_custody(predecessor_receipt)
+    predecessor = receipt["contract"]
+    if runway_mode == "inherit":
+        inherited = new_contract(predecessor["runway"]["requested"])
+        inherited["runway"] = copy.deepcopy(predecessor["runway"])
+        return inherited, lineage, checkout_head
+
+    return new_contract(cast(str, requested)), lineage, checkout_head
 
 
 def successor_contract(
@@ -606,20 +672,12 @@ def successor_contract(
 ) -> tuple[dict[str, Any], dict[str, str]]:
     """Derive one successor contract without changing predecessor state."""
 
-    if runway_mode not in SUCCESSOR_RUNWAY_MODES:
-        raise ContractError("successor runway mode must be inherit or renew")
-    if runway_mode == "inherit" and requested is not None:
-        raise ContractError("inherited successors cannot specify a new runway")
-    if runway_mode == "renew" and requested is None:
-        raise ContractError("renewed successors require an explicit runway")
-    receipt, lineage = predecessor_lineage(predecessor_receipt)
-    predecessor = receipt["contract"]
-    if runway_mode == "inherit":
-        inherited = new_contract(predecessor["runway"]["requested"])
-        inherited["runway"] = copy.deepcopy(predecessor["runway"])
-        return inherited, lineage
-
-    return new_contract(cast(str, requested)), lineage
+    contract, lineage, _checkout_head = successor_metadata(
+        predecessor_receipt,
+        runway_mode=runway_mode,
+        requested=requested,
+    )
+    return contract, lineage
 
 
 def configure_successor_contract(
@@ -1283,8 +1341,9 @@ def main(argv: list[str] | None = None) -> int:
                     expected_receipt_sha256=args.expected_receipt_sha256,
                 )
                 print("changed" if changed else "unchanged")
+                predecessor_head = ""
             else:
-                contract, lineage = successor_contract(
+                contract, lineage, predecessor_head = successor_metadata(
                     args.predecessor_receipt,
                     runway_mode=args.runway_mode,
                     requested=args.runway,
@@ -1293,6 +1352,8 @@ def main(argv: list[str] | None = None) -> int:
             print(lineage["branch"])
             print(lineage["receipt_sha256"])
             print(contract["runway"]["requested"])
+            if predecessor_head:
+                print(predecessor_head)
         elif args.command == "validate-codex-sandbox":
             # Raises ContractError on an unknown value; echo the accepted one, mirroring
             # validate-codex-launch printing its selected slug.
