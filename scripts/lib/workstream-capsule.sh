@@ -1370,6 +1370,7 @@ render_workstream_capsule() {
   local q_agent q_registry_binary q_conduct q_allow_shell_fallback q_agent_capabilities
   local q_launch_model q_launch_reasoning_effort q_launch_sandbox q_launch_lane_model
   local q_launch_adapter q_model_flag q_predecessor_slug q_predecessor_branch q_predecessor_receipt_sha256
+  local -a contract_launch_args=() successor_configure_args=()
   local capsule_preexisting=0
   local capsule_changed=0
 
@@ -1613,6 +1614,40 @@ PY
     exit 0
   fi
 
+  if [[ -n "$launch_model" ]]; then
+    contract_launch_args=(
+      --agent "$launch_adapter"
+      --model "$launch_model"
+      --reasoning-effort "$launch_reasoning_effort"
+      --sandbox "$launch_sandbox"
+    )
+  fi
+  # A successor performs its second, authoritative custody validation before any capsule module
+  # is written. If the predecessor or origin changes after successor-metadata, configure-successor
+  # fails with only the empty capsule root and its owned lock left behind, so an exact retry can
+  # reuse the worktree instead of inheriting a stranded partial capsule.
+  if [[ -n "$predecessor_receipt" ]]; then
+    successor_configure_args=(
+      configure-successor
+      --path "$contract"
+      --predecessor-receipt "$predecessor_receipt"
+      --runway-mode "$runway_mode"
+      --expected-receipt-sha256 "$predecessor_receipt_sha256"
+    )
+    if [[ "$runway_mode" == "renew" ]]; then
+      successor_configure_args+=(--runway "$runway_requested")
+    fi
+    contract_action="$(
+      python3 "$contract_source" "${successor_configure_args[@]}" 9>&- | sed -n '1p'
+    )" || exit 1
+    if [[ "$contract_action" == "changed" || "$contract_action" == "unchanged" ]]; then
+      [[ "$contract_action" == "changed" ]] && capsule_changed=1
+    else
+      echo "invalid workstream contract helper response: $contract_action" >&2
+      exit 1
+    fi
+  fi
+
   created_at=""
   if [[ -f "$manifest" ]]; then
     # shellcheck disable=SC2016
@@ -1695,45 +1730,24 @@ EOF
     chmod +x "$contract_helper"
     capsule_changed=1
   fi
-  local -a contract_launch_args=()
-  if [[ -n "$launch_model" ]]; then
-    contract_launch_args=(
-      --agent "$launch_adapter"
-      --model "$launch_model"
-      --reasoning-effort "$launch_reasoning_effort"
-      --sandbox "$launch_sandbox"
-    )
-  fi
-  if [[ -n "$predecessor_receipt" ]]; then
-    local -a successor_configure_args=(
-      configure-successor
-      --path "$contract"
-      --predecessor-receipt "$predecessor_receipt"
-      --runway-mode "$runway_mode"
-      --expected-receipt-sha256 "$predecessor_receipt_sha256"
-    )
-    if [[ "$runway_mode" == "renew" ]]; then
-      successor_configure_args+=(--runway "$runway_requested")
+  if [[ -z "$predecessor_receipt" ]]; then
+    if [[ -n "$runway_requested" ]]; then
+      contract_action="$(
+        python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" \
+          "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
+      )" || exit 1
+    else
+      contract_action="$(
+        python3 "$contract_helper" configure --path "$contract" \
+          "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
+      )" || exit 1
     fi
-    contract_action="$(
-      python3 "$contract_helper" "${successor_configure_args[@]}" 9>&- | sed -n '1p'
-    )" || exit 1
-  elif [[ -n "$runway_requested" ]]; then
-    contract_action="$(
-      python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" \
-        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
-    )" || exit 1
-  else
-    contract_action="$(
-      python3 "$contract_helper" configure --path "$contract" \
-        "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
-    )" || exit 1
-  fi
-  if [[ "$contract_action" == "changed" || "$contract_action" == "unchanged" ]]; then
-    [[ "$contract_action" == "changed" ]] && capsule_changed=1
-  else
-    echo "invalid workstream contract helper response: $contract_action" >&2
-    exit 1
+    if [[ "$contract_action" == "changed" || "$contract_action" == "unchanged" ]]; then
+      [[ "$contract_action" == "changed" ]] && capsule_changed=1
+    else
+      echo "invalid workstream contract helper response: $contract_action" >&2
+      exit 1
+    fi
   fi
   _capsule_write_module "$intent" <<EOF
 $prompt_payload
