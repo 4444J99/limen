@@ -60,6 +60,7 @@ def _now() -> datetime:
 # Project-dir derivation (mirrors check-gates.py: derive, don't hardcode)
 # ---------------------------------------------------------------------------
 
+
 def npm_project_dirs(root: Path) -> list[Path]:
     """npm projects = immediate web/* subdirs holding a package-lock.json (pnpm dirs excluded).
 
@@ -86,6 +87,7 @@ def npm_project_dirs(root: Path) -> list[Path]:
 # ---------------------------------------------------------------------------
 # npm audit --json → advisories (pure parse)
 # ---------------------------------------------------------------------------
+
 
 def run_audit(project_dir: Path) -> dict | None:
     """Run `npm audit --json` in project_dir. npm exits non-zero when vulns exist — parse stdout
@@ -140,13 +142,20 @@ def parse_advisories(audit_json: dict) -> list[dict]:
         fix = node.get("fixAvailable", False)
         fixable = fix is not False  # False ⟺ no patched version exists at all
         urls = [v["url"] for v in via if isinstance(v, dict) and v.get("url")]
-        out.append({
-            "name": name,
-            "severity": severity,
-            "range": str(node.get("range", "")),
-            "fixable": fixable,
-            "urls": urls,
-        })
+        ranges = [str(node.get("range", ""))]
+        ranges.extend(
+            str(via_item.get("range", "")) for via_item in via if isinstance(via_item, dict) and via_item.get("range")
+        )
+        out.append(
+            {
+                "name": name,
+                "severity": severity,
+                "range": str(node.get("range", "")),
+                "ranges": [item for item in dict.fromkeys(ranges) if item],
+                "fixable": fixable,
+                "urls": urls,
+            }
+        )
     return out
 
 
@@ -226,10 +235,48 @@ def derive_override(advisory: dict) -> dict:
     """
     if not advisory.get("fixable"):
         return {"name": advisory["name"], "pin": None, "disposition": "human"}
-    pin = patched_pin(advisory.get("range", ""))
-    if pin is None:
+    ranges = advisory.get("ranges") or [advisory.get("range", "")]
+    candidate_pins = [patched_pin(str(range_str)) for range_str in ranges if range_str]
+    candidate_pins = [pin for pin in candidate_pins if pin is not None]
+    if not candidate_pins:
         return {"name": advisory["name"], "pin": None, "disposition": "human"}
-    return {"name": advisory["name"], "pin": pin, "disposition": "auto"}
+    floors: list[tuple[tuple[int, int, int], int, str]] = []
+    for pin in candidate_pins:
+        match = re.match(r"^>=(\d+)\.(\d+)\.(\d+)\s+<(\d+)\.0\.0$", pin)
+        if not match:
+            return {"name": advisory["name"], "pin": None, "disposition": "human"}
+        floor = tuple(int(match.group(index)) for index in (1, 2, 3))
+        major = int(match.group(4)) - 1
+        floors.append((floor, major, pin))
+    majors = {major for _, major, _ in floors}
+    if len(majors) != 1:
+        # One override cannot safely satisfy advisories that straddle major
+        # lines without overriding the parent's compatibility contract.
+        return {"name": advisory["name"], "pin": None, "disposition": "human"}
+    _, _, highest = max(floors, key=lambda item: item[0])
+    return {"name": advisory["name"], "pin": highest, "disposition": "auto"}
+
+
+def derive_overrides(advisories: list[dict]) -> list[dict]:
+    """Resolve all advisories for one package before writing one override.
+
+    npm can expose several advisories for the same leaf.  Applying whichever
+    advisory happened to be last made the result order-dependent and could
+    leave the highest safe floor vulnerable.  Group first, merge ranges, then
+    choose the highest safe within-major floor.
+    """
+
+    grouped: dict[str, dict] = {}
+    for advisory in advisories:
+        name = str(advisory.get("name", ""))
+        if not name:
+            continue
+        current = grouped.setdefault(name, {**advisory, "ranges": []})
+        current["ranges"].extend(advisory.get("ranges") or [advisory.get("range", "")])
+        current["fixable"] = bool(current.get("fixable")) and bool(advisory.get("fixable"))
+    for advisory in grouped.values():
+        advisory["ranges"] = list(dict.fromkeys(item for item in advisory["ranges"] if item))
+    return [derive_override(grouped[name]) for name in sorted(grouped)]
 
 
 def compute_plan(dirs: list[Path]) -> dict:
@@ -246,8 +293,7 @@ def compute_plan(dirs: list[Path]) -> dict:
         advisories = parse_advisories(audit)
         pins: dict[str, str] = {}
         human: list[str] = []
-        for adv in advisories:
-            ov = derive_override(adv)
+        for ov in derive_overrides(advisories):
             if ov["disposition"] == "human":
                 human.append(ov["name"])
                 plan["has_human"] = True
@@ -267,6 +313,7 @@ def compute_plan(dirs: list[Path]) -> dict:
 # Apply + verify (armed path)
 # ---------------------------------------------------------------------------
 
+
 def apply_overrides(project_dir: Path, pins: dict[str, str]) -> None:
     """Merge pins into package.json's `overrides` block (never clobber existing entries), then
     regenerate the lockfile with `npm install --package-lock-only`."""
@@ -278,7 +325,11 @@ def apply_overrides(project_dir: Path, pins: dict[str, str]) -> None:
     pkg_path.write_text(json.dumps(pkg, indent=2) + "\n", encoding="utf-8")
     subprocess.run(
         ["npm", "install", "--package-lock-only"],
-        cwd=str(project_dir), check=True, capture_output=True, text=True, timeout=300,
+        cwd=str(project_dir),
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
 
 
@@ -307,8 +358,7 @@ def resolve_overrides(project_dir: Path, max_rounds: int = 6) -> dict:
         if not advisories:
             break  # clean
         new = False
-        for adv in advisories:
-            ov = derive_override(adv)
+        for ov in derive_overrides(advisories):
             if ov["disposition"] == "human":
                 human.add(ov["name"])
                 continue
@@ -324,6 +374,7 @@ def resolve_overrides(project_dir: Path, max_rounds: int = 6) -> dict:
 # ---------------------------------------------------------------------------
 # Throttle stamp (idempotence while a fix PR is already open)
 # ---------------------------------------------------------------------------
+
 
 def _plan_signature(plan: dict) -> str:
     parts = []
@@ -355,13 +406,15 @@ def _write_stamp(payload: dict) -> None:
 # still gates the merge (web/app → HOLD until CI green).
 # ---------------------------------------------------------------------------
 
+
 def open_fix_pr(root: Path, plan: dict) -> int:
     """Apply the plan in an isolated worktree cut from origin/main, open a PR, and (non-major only)
     self-merge via merge-policy.sh. Returns process exit code. Real git/gh/npm — armed path only."""
     stamp = _now().strftime("%Y%m%d%H%M%S")
-    slug = "npm-audit-" + "-".join(sorted(
-        p for proj in plan["projects"].values() for p in proj["pins"]
-    ))[:60] or "npm-audit-fix"
+    slug = (
+        "npm-audit-" + "-".join(sorted(p for proj in plan["projects"].values() for p in proj["pins"]))[:60]
+        or "npm-audit-fix"
+    )
     branch = f"fix/{slug}-{stamp}"
     wt_root = os.environ.get("LIMEN_WORKTREES") or str(Path.home() / "Workspace" / ".limen-worktrees")
     Path(wt_root).mkdir(parents=True, exist_ok=True)
@@ -389,15 +442,23 @@ def open_fix_pr(root: Path, plan: dict) -> int:
             return 1
         git("add", "--", *touched, cwd=tmp)
         pins_desc = "; ".join(
-            f"{name}: {', '.join(f'{k}{v}' for k, v in res['pins'].items())}"
-            for name, res in resolved.items()
+            f"{name}: {', '.join(f'{k}{v}' for k, v in res['pins'].items())}" for name, res in resolved.items()
         )
         subprocess.run(
-            ["git", "-C", str(tmp), "commit", "--quiet", "-m",
-             f"fix: pin npm audit high-severity transitives via overrides\n\n{pins_desc}\n\n"
-             "Auto-authored by scripts/npm-audit-autofix.py (dark-armed effector).\n\n"
-             "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"],
-            check=True, capture_output=True, text=True,
+            [
+                "git",
+                "-C",
+                str(tmp),
+                "commit",
+                "--quiet",
+                "-m",
+                f"fix: pin npm audit high-severity transitives via overrides\n\n{pins_desc}\n\n"
+                "Auto-authored by scripts/npm-audit-autofix.py (dark-armed effector).\n\n"
+                "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
         )
         git("push", "--quiet", "-u", "origin", branch, cwd=tmp)
         body = (
@@ -407,9 +468,19 @@ def open_fix_pr(root: Path, plan: dict) -> int:
             "If a forced pin breaks the build, CI reds THIS PR only (not the queue) for human review.\n"
         )
         pr_url = subprocess.run(
-            ["gh", "pr", "create", "--title",
-             "fix: clear npm audit high-severity advisories (overrides)", "--body", body],
-            cwd=str(tmp), check=True, capture_output=True, text=True,
+            [
+                "gh",
+                "pr",
+                "create",
+                "--title",
+                "fix: clear npm audit high-severity advisories (overrides)",
+                "--body",
+                body,
+            ],
+            cwd=str(tmp),
+            check=True,
+            capture_output=True,
+            text=True,
         ).stdout.strip()
         pr_num = pr_url.rstrip("/").split("/")[-1]
         print(f"npm-audit-autofix: opened PR #{pr_num} ({pr_url})")
@@ -423,13 +494,16 @@ def open_fix_pr(root: Path, plan: dict) -> int:
         return 2
     finally:
         # Retain the worktree/branch for the reclaim/reap organs (ship-docs convention).
-        print(f"npm-audit-autofix: retained worktree {tmp} + branch {branch} "
-              "(cleanup → reclaim-worktrees.py / reap-branches.py)")
+        print(
+            f"npm-audit-autofix: retained worktree {tmp} + branch {branch} "
+            "(cleanup → reclaim-worktrees.py / reap-branches.py)"
+        )
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _print_plan(plan: dict) -> None:
     if not plan["projects"]:
@@ -437,17 +511,21 @@ def _print_plan(plan: dict) -> None:
         return
     for name, proj in sorted(plan["projects"].items()):
         for pkg, pin in sorted(proj["pins"].items()):
-            print(f"  {name}: pin \"{pkg}\": \"{pin}\"")
+            print(f'  {name}: pin "{pkg}": "{pin}"')
         for pkg in sorted(proj["human"]):
             print(f"  {name}: {pkg} — NO clean fix (fixAvailable:false) → flag for human")
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="npm-audit autofix effector")
-    ap.add_argument("--check", action="store_true",
-                    help="detection only — never act, even if armed (safe manual inspect)")
-    ap.add_argument("--apply", action="store_true",
-                    help="force the armed path for a manual run (bare invocation already acts if the env lever is set)")
+    ap.add_argument(
+        "--check", action="store_true", help="detection only — never act, even if armed (safe manual inspect)"
+    )
+    ap.add_argument(
+        "--apply",
+        action="store_true",
+        help="force the armed path for a manual run (bare invocation already acts if the env lever is set)",
+    )
     ap.add_argument("--json", action="store_true", help="emit the machine-readable plan")
     args = ap.parse_args(argv)
 

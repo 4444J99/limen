@@ -294,6 +294,95 @@ def qa(agent, json_output, report_file):
         print_qa_report(report)
 
 
+@main.command("apply")
+@click.option("--fire", is_flag=True, help="Include the submit phase — SUBMITS to real ATS portals")
+@click.option("--json", "json_output", is_flag=True, help="Emit the raw driver summary")
+def apply_cmd(fire, json_output):
+    """Run the outbound job-application funnel (stage only unless --fire).
+
+    The CLI twin of the ``application_funnel`` MCP tool and the beat's
+    ``application-funnel`` sensor — one effector, three front doors, so an agent
+    without MCP still drives the same funnel instead of writing its own submitter.
+
+    Disarmed this is reversible: source, score, build materials, stage packages,
+    prepare follow-ups. Nothing leaves the machine. ``--fire`` adds the submit
+    phase, which sends real applications and cannot be undone.
+    """
+    root = Path(__file__).resolve().parents[3]
+    driver = root / "scripts" / "application-funnel.py"
+    if not driver.exists():
+        click.echo(f"funnel driver not found: {driver}", err=True)
+        sys.exit(1)
+
+    env = dict(os.environ)
+    if fire:
+        env["LIMEN_APPLY_FIRE"] = "1"
+
+    proc = subprocess.run(
+        [sys.executable, str(driver), "--json"],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(root),
+    )
+    if json_output:
+        click.echo(proc.stdout.strip() or proc.stderr.strip())
+        sys.exit(proc.returncode)
+
+    try:
+        summary = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        click.echo(proc.stderr.strip() or "funnel produced no summary", err=True)
+        sys.exit(proc.returncode or 1)
+
+    click.echo(
+        f"sourced {summary.get('sourced', 0)} · qualified {summary.get('qualified', 0)} · "
+        f"staged {summary.get('staged', 0)} · submitted {summary.get('submitted', 0)}"
+    )
+    for note in summary.get("notes", []):
+        click.echo(f"  - {note}")
+    sys.exit(proc.returncode)
+
+
+@main.command("daily-execute")
+@click.option("--fire", is_flag=True, help="Arm routine professional applications and follow-ups for this invocation")
+@click.option("--json", "json_output", is_flag=True, help="Emit the bounded PII-clean execution receipt")
+@click.option("--timeout", default=1800, type=click.IntRange(min=1, max=1800), show_default=True)
+@click.option("--receipt", type=click.Path(path_type=Path), default=None, help="Write the private receipt here")
+def daily_execute(fire: bool, json_output: bool, timeout: int, receipt: Path | None) -> None:
+    """Run the shared daily communications and application loop.
+
+    This is the same implementation exposed through MCP ``daily_execution`` and
+    the existing heartbeat. ``--fire`` is invocation-local; generated templates,
+    staged forms, and unconfirmed submissions never count as delivered.
+    """
+    from limen.daily_execution import run_daily_execution
+
+    prior = os.environ.get("LIMEN_DAILY_EXECUTION_RECEIPT")
+    if receipt is not None:
+        os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = str(receipt.expanduser())
+    try:
+        result = run_daily_execution(fire=fire, root=resolve_limen_repo_root(), timeout_seconds=timeout)
+    finally:
+        if prior is None:
+            os.environ.pop("LIMEN_DAILY_EXECUTION_RECEIPT", None)
+        else:
+            os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = prior
+
+    if json_output:
+        click.echo(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        click.echo(
+            f"daily-execute: {result['status']} · applications "
+            f"{result['applications']['confirmed']}/{result['applications']['target']} confirmed · "
+            f"follow-ups {result['follow_ups']['confirmed']} confirmed"
+        )
+        for blocker in result["blockers"]:
+            click.echo(f"  - {blocker}")
+    if result["status"] == "blocked":
+        raise click.exceptions.Exit(3)
+
+
 @main.command()
 @click.option("--agent", default=None, help="Filter by agent")
 @click.option("--status", default=None, help="Filter by status")
