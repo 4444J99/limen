@@ -146,6 +146,24 @@ this section is their generalization):
   until proven otherwise — re-derive it by a second independent method before presenting.
 - **When a file could be a queue or a record, assume RECORD** — verify live sent-state/channel
   state before acting on a file's title or presence.
+- **A conversation corpus records SPEECH ACTS, not EVENTS.** "I sent you $150" is evidence that a
+  sentence was typed. Ideas floated, contracts drafted, plans proposed, dates agreed and amounts
+  negotiated are *conversation* — most are never executed. A claim of the form "X happened"
+  sourced only from message text is **asserted-in-conversation**, never **occurred**, unless a
+  NON-conversational channel corroborates it: commits, transactions, calendar, filesystem
+  artifacts, or the operator. Mark the distinction in the output. (2026-07-31: summing every
+  dollar figure in a thread was reported as "$103,309 funded" and a proposed arrangement as an
+  executed one; the contracts went unsigned and the job was never left.)
+- **A window is not the corpus — never state a sample's finding in the corpus's language.** Report
+  the denominator you actually read, next to the denominator that exists, every time. The failure
+  is silent and it scales: a 435-message / 10-day slice of a 65,872-message / 34-month record is
+  0.7% of it, and conclusions drawn there were written as "never once" and "in six months." If the
+  full extent is unknown, that is itself the first finding — establish it before analyzing.
+- **Corpus retrieval fails silently and looks like absence.** Before concluding a corpus holds
+  nothing about a subject, verify the resolver reached a real store: `python3
+  scripts/corpus_resolve.py` must name a populated home. The estate has now twice reported "no
+  populated corpus" with hundreds of MB on disk (registry header, and again 2026-07-31 from a
+  relocated store) — "I found nothing" and "I read nothing" are indistinguishable in the output.
 
 ## Edits Policy
 

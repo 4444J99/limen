@@ -209,10 +209,43 @@ def _validate_registry(path: Path) -> tuple[list[str], dict[str, Any] | None]:
     return v, doc
 
 
+def _overlay_absence_is_provable(overlay_path: Path) -> bool:
+    """True when THIS machine is the one that would hold the private estate.
+
+    A CI runner has no `~/Workspace`, so a missing overlay there is absence of
+    evidence, not drift — the one part of the old unconditional skip that was
+    right. On the operator's host the estate root exists, so a missing overlay
+    is a fact about the estate. Mirrors check-corpora.py's CUSTODY axis
+    (`LIMEN_CORPORA_HOST`); `LIMEN_PEOPLE_HOST=1` forces the strict reading.
+    """
+    if os.environ.get("LIMEN_PEOPLE_HOST") == "1":
+        return True
+    if os.environ.get("CI"):
+        return False
+    return overlay_path.parent.parent.is_dir()
+
+
 def _validate_overlay(overlay_path: Path, registry: dict[str, Any]) -> list[str]:
-    """Rule #6 — parity with the private overlay; skipped when the store is absent."""
+    """Rule #6 — parity with the private overlay.
+
+    A missing overlay used to return [] unconditionally, so the rule was SKIPPED
+    rather than failed and the suite went green BECAUSE the store was absent.
+    That is the shape of every defect this session found: 15 people indexed in
+    the public register against zero private backing, all 22 dossier lanes
+    failing with `no pipeline_slug in overlay`, and nothing anywhere reporting
+    it. An index with no backing store is not a passing state.
+    """
     if not overlay_path.exists():
-        return []
+        if not _overlay_absence_is_provable(overlay_path):
+            return []
+        public_slugs = {
+            str(p.get("slug")) for p in registry.get("people") or [] if isinstance(p, dict) and p.get("slug")
+        }
+        return [
+            f"Rule #6 violation: private overlay absent at {overlay_path} while the estate root exists — "
+            f"{len(public_slugs)} people are indexed publicly with no private backing, so every "
+            f"dossier lane fails with 'no pipeline_slug in overlay'"
+        ]
     v: list[str] = []
     try:
         overlay: Any = yaml.safe_load(overlay_path.read_text(encoding="utf-8"))

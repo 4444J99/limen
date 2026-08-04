@@ -675,6 +675,18 @@ parameters:
     self_update: none
     owner: governance
     note: "Forces check-corpora's disk checks (B/C/E) to bind strictly even when no declared corpus store is visible. The stores are local-only by design, so a CI runner's missing-store state is a host fact, not drift — auto-detection (any store present ⇒ strict) covers the operator host; this knob covers a host that SHOULD have the stores but has lost them."
+  LIMEN_LIFE_HOST:
+    default: "0"
+    env: LIMEN_LIFE_HOST
+    self_update: none
+    owner: governance
+    note: "Forces check-biography's store-parity check (E) to bind strictly even when ~/Workspace is not visible. The _life-private store is local-only and mode 700 by design, so a CI runner's missing-store state is a host fact, not drift — auto-detection (estate root present ⇒ strict) covers the operator host; this knob covers a host that SHOULD hold the store but has lost it. Sibling of LIMEN_CORPORA_HOST, same CUSTODY reasoning."
+  LIMEN_PEOPLE_HOST:
+    default: "0"
+    env: LIMEN_PEOPLE_HOST
+    self_update: none
+    owner: consulting
+    note: "Forces constellation Rule #6 (overlay parity) to treat a missing private overlay as a violation rather than an unverifiable skip. Rule #6 used to return [] unconditionally when the overlay was absent, so the suite passed BECAUSE the store was missing — 15 people indexed publicly with zero private backing, every dossier lane failing, all green. Auto-detection (estate root present ⇒ provable absence) covers the operator host; this knob covers a host that should hold it."
   LIMEN_CORPVS_ROOT:
     default: "$LIMEN_WORKSPACE_ROOT/organvm-corpvs-testamentvm"
     env: LIMEN_CORPVS_ROOT

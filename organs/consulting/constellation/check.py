@@ -106,6 +106,15 @@ def check_corpus_refresh() -> int:
     scripts/constellation-dossier.py each used to carry their own copy, and both
     copies were wrong in the same two ways (repo-root instead of the sibling
     store; a nested CCE path that does not exist).
+
+    CCE importability is REPORTED, never failed on. It used to be a hard gate,
+    which inverted the contract above: the predicate answers "is there corpus
+    data", and an importer being absent is not an answer to that. Worse, the
+    gate masked a second defect — with CCE gone the declared-id set was empty,
+    so the sweep below classified `docs` and `scripts` as corpora, and had the
+    gate ever passed this check would have reported a populated corpus while
+    reading nothing. Ids now come from the CORPORA registry, so the sweep is
+    correct with or without CCE.
     """
     sys.path.insert(0, str(REPO_ROOT / "scripts"))
     try:
@@ -114,20 +123,16 @@ def check_corpus_refresh() -> int:
         return _fail(f"scripts/corpus_resolve.py not importable: {exc}")
 
     home = corpus_resolve.corpus_home()
-    if corpus_resolve.import_provider_config() is None:
-        return _fail(
-            "conversation-corpus-engine not importable — checked "
-            + ", ".join(str(p) for p in corpus_resolve.cce_src_roots())
-        )
-
     populated = [p.name for p in corpus_resolve.populated_corpora(home)]
     undeclared = [p.name for p in corpus_resolve.undeclared_corpora(home)]
     if populated or undeclared:
         msg = f"corpus populated: {', '.join(sorted(populated))}"
         if undeclared:
-            # Present but unnamed by CCE — swept anyway, reported so the drift
-            # gets fixed rather than silently tolerated.
+            # Present but declared by neither the registry nor CCE — swept
+            # anyway, reported so the drift gets fixed rather than tolerated.
             msg += f" (undeclared on disk: {', '.join(sorted(undeclared))})"
+        if corpus_resolve.import_provider_config() is None:
+            msg += " [cce not importable — registry-derived ids in use]"
         return _ok(msg)
     return _fail(f"no populated corpus under {home}")
 
