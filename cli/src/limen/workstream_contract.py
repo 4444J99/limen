@@ -603,17 +603,74 @@ def _git_control(
     return b"".join(chunks["stdout"])
 
 
+def _read_bounded_predecessor_receipt(receipt_path: Path) -> tuple[bytes, os.stat_result]:
+    """Read one real local receipt through a single descriptor and a hard byte ceiling."""
+
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor: int | None = None
+    try:
+        descriptor = os.open(receipt_path, flags)
+        descriptor_info = os.fstat(descriptor)
+        path_info = receipt_path.lstat()
+        if (
+            stat.S_ISLNK(path_info.st_mode)
+            or not stat.S_ISREG(path_info.st_mode)
+            or not stat.S_ISREG(descriptor_info.st_mode)
+            or (path_info.st_dev, path_info.st_ino) != (descriptor_info.st_dev, descriptor_info.st_ino)
+        ):
+            raise ContractError("predecessor receipt must be a real file")
+        if not 0 < descriptor_info.st_size <= PREDECESSOR_RECEIPT_CEILING:
+            raise ContractError("predecessor receipt exceeds its bounded size")
+        chunks: list[bytes] = []
+        captured = 0
+        while captured <= PREDECESSOR_RECEIPT_CEILING:
+            chunk = os.read(descriptor, min(65_536, PREDECESSOR_RECEIPT_CEILING + 1 - captured))
+            if not chunk:
+                break
+            captured += len(chunk)
+            if captured > PREDECESSOR_RECEIPT_CEILING:
+                raise ContractError("predecessor receipt exceeds its bounded size")
+            chunks.append(chunk)
+        local = b"".join(chunks)
+        if len(local) != descriptor_info.st_size:
+            raise ContractError("predecessor receipt changed during bounded capture")
+        return local, descriptor_info
+    except ContractError:
+        raise
+    except OSError as exc:
+        raise ContractError("predecessor receipt is unavailable") from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
+def _verify_predecessor_receipt_identity(receipt_path: Path, captured: os.stat_result) -> None:
+    """Fail if the local custody path changed after its bounded descriptor capture."""
+
+    try:
+        current = receipt_path.lstat()
+    except OSError as exc:
+        raise ContractError("predecessor receipt is unavailable") from exc
+    stable_fields = (
+        "st_dev",
+        "st_ino",
+        "st_mode",
+        "st_size",
+        "st_mtime_ns",
+        "st_ctime_ns",
+    )
+    if (
+        stat.S_ISLNK(current.st_mode)
+        or not stat.S_ISREG(current.st_mode)
+        or any(getattr(current, field) != getattr(captured, field) for field in stable_fields)
+    ):
+        raise ContractError("predecessor receipt changed during bounded capture")
+
+
 def predecessor_custody(receipt_path: Path) -> tuple[dict[str, Any], dict[str, str], str]:
     """Load one exact remotely custodied predecessor receipt and its checkout head."""
 
-    try:
-        info = receipt_path.lstat()
-    except OSError as exc:
-        raise ContractError("predecessor receipt is unavailable") from exc
-    if receipt_path.is_symlink() or not stat.S_ISREG(info.st_mode):
-        raise ContractError("predecessor receipt must be a real file")
-    if not 0 < info.st_size <= PREDECESSOR_RECEIPT_CEILING:
-        raise ContractError("predecessor receipt exceeds its bounded size")
+    local, local_info = _read_bounded_predecessor_receipt(receipt_path)
     try:
         resolved = receipt_path.resolve(strict=True)
         root_raw = _git_control(receipt_path.parent, "rev-parse", "--show-toplevel").decode("utf-8").strip()
@@ -650,10 +707,7 @@ def predecessor_custody(receipt_path: Path) -> tuple[dict[str, Any], dict[str, s
     )
     if len(committed) != committed_size:
         raise ContractError("predecessor receipt changed during committed capture")
-    try:
-        local = receipt_path.read_bytes()
-    except OSError as exc:
-        raise ContractError("predecessor receipt is unavailable") from exc
+    _verify_predecessor_receipt_identity(receipt_path, local_info)
     if local != committed:
         raise ContractError("predecessor receipt must match its committed HEAD bytes")
     try:

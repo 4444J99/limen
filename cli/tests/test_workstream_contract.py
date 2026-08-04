@@ -390,6 +390,56 @@ def test_successor_rejects_mode_drift_and_uncommitted_predecessor_bytes(tmp_path
         W.successor_contract(predecessor)
 
 
+def test_predecessor_receipt_growth_during_descriptor_read_hits_the_hard_ceiling(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    original_read = os.read
+    grew = False
+
+    def grow_then_read(descriptor: int, size: int) -> bytes:
+        nonlocal grew
+        if not grew:
+            with predecessor.open("ab") as stream:
+                stream.write(b"x" * W.PREDECESSOR_RECEIPT_CEILING)
+            grew = True
+        return original_read(descriptor, size)
+
+    monkeypatch.setattr(W.os, "read", grow_then_read)
+
+    with pytest.raises(ContractError, match="exceeds its bounded size"):
+        W.predecessor_custody(predecessor)
+    assert grew is True
+
+
+def test_predecessor_receipt_growth_during_git_custody_fails_without_a_second_path_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    original_git_control = W._git_control
+    replaced = False
+
+    def replace_then_probe(*args, **kwargs):
+        nonlocal replaced
+        if not replaced:
+            predecessor.write_bytes(b"x" * (W.PREDECESSOR_RECEIPT_CEILING + 1))
+            replaced = True
+        return original_git_control(*args, **kwargs)
+
+    monkeypatch.setattr(W, "_git_control", replace_then_probe)
+    monkeypatch.setattr(
+        Path,
+        "read_bytes",
+        lambda _path: pytest.fail("predecessor custody must not reopen the path for an unbounded read"),
+    )
+
+    with pytest.raises(ContractError, match="changed during bounded capture"):
+        W.predecessor_custody(predecessor)
+    assert replaced is True
+
+
 def test_successor_rejects_receipt_branch_that_does_not_match_checkout(tmp_path: Path) -> None:
     predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
     repo = predecessor.parents[3]
