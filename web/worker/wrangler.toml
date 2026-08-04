@@ -1,4 +1,4 @@
-name = "limen-runtime"
+name = "collaboration-operations-platform-api"
 main = "src/index.js"
 compatibility_date = "2026-06-03"
 
