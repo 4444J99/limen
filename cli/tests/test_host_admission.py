@@ -479,7 +479,9 @@ def _concurrent_acquire(root: str, owner: str, ready, start, results) -> None:
 
 
 def test_legacy_unscoped_execution_kind_admits_only_one_owner(tmp_path: Path) -> None:
-    context = multiprocessing.get_context("fork")
+    # xdist workers are multi-threaded; forking one can deadlock before the child reaches
+    # the barrier. Spawn proves the same cross-process lock without inheriting worker threads.
+    context = multiprocessing.get_context("spawn")
     ready = context.Queue()
     results = context.Queue()
     start = context.Event()
@@ -488,14 +490,24 @@ def test_legacy_unscoped_execution_kind_admits_only_one_owner(tmp_path: Path) ->
         context.Process(target=_concurrent_acquire, args=(str(root), owner, ready, start, results))
         for owner in ("root-a", "root-b")
     ]
-    for process in processes:
-        process.start()
-    assert {ready.get(timeout=5), ready.get(timeout=5)} == {"root-a", "root-b"}
-    start.set()
-    outcomes = [results.get(timeout=5), results.get(timeout=5)]
-    for process in processes:
-        process.join(timeout=5)
-        assert process.exitcode == 0
+    forced_cleanup: list[str] = []
+    try:
+        for process in processes:
+            process.start()
+        assert {ready.get(timeout=5), ready.get(timeout=5)} == {"root-a", "root-b"}
+        start.set()
+        outcomes = [results.get(timeout=5), results.get(timeout=5)]
+    finally:
+        # A failed synchronization proof must not strand a child or poison the verifier lease.
+        start.set()
+        for process in processes:
+            process.join(timeout=5)
+            if process.is_alive():
+                forced_cleanup.append(process.name)
+                process.terminate()
+                process.join(timeout=1)
+    assert forced_cleanup == []
+    assert all(process.exitcode == 0 for process in processes)
     assert sum(1 for _owner, allowed in outcomes if allowed) == 1
 
 
