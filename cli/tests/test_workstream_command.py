@@ -215,6 +215,22 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
         str(repo),
         "Inherited Successor",
     ]
+
+    _git("branch", "work/uncapsuled-successor", "main", cwd=repo)
+    unrelated_reuse = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--predecessor-receipt",
+            str(predecessor),
+            str(repo),
+            "Uncapsuled Successor",
+        ],
+    )
+    assert unrelated_reuse.exit_code == 2
+    assert "existing uncapsuled successor target does not match" in unrelated_reuse.output
+    assert not (repo / ".worktrees" / "uncapsuled-successor").exists()
+
     inherited = CliRunner().invoke(main, inherited_args)
 
     assert inherited.exit_code == 0, inherited.output
@@ -343,10 +359,24 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert "--runway-mode requires --predecessor-receipt" in missing_predecessor.output
 
 
-def test_issue_assignment_lane_is_rejected_before_native_workstream_creation(
+NON_NATIVE_WORKSTREAM_PROVIDERS = tuple(
+    provider
+    for provider in census.VENDORS
+    if provider.issue_assignment
+    or (
+        provider.execution.transport != "native-cli"
+        and not provider.execution.transport.startswith("ianva-")
+        and provider.execution.workstream_adapter != "jules"
+    )
+)
+
+
+@pytest.mark.parametrize("provider", NON_NATIVE_WORKSTREAM_PROVIDERS, ids=lambda provider: provider.name)
+def test_non_native_lane_is_rejected_before_workstream_creation(
     tmp_path: Path,
     monkeypatch,
     capfd,
+    provider: census.Vendor,
 ) -> None:
     repo = tmp_path / "demo-repo"
     repo.mkdir()
@@ -360,12 +390,12 @@ def test_issue_assignment_lane_is_rejected_before_native_workstream_creation(
 
     result = CliRunner().invoke(
         main,
-        ["workstream", "--agent", "copilot", str(repo), "No Issue Assignment Native Launch"],
+        ["workstream", "--agent", provider.name, str(repo), f"No Native {provider.name}"],
     )
 
     assert result.exit_code != 0
-    assert "uses issue assignment and has no native workstream adapter" in capfd.readouterr().err
-    assert not (repo / ".worktrees" / "no-issue-assignment-native-launch").exists()
+    assert "has no verified native workstream adapter" in capfd.readouterr().err
+    assert not (repo / ".worktrees" / f"no-native-{provider.name}").exists()
 
 
 def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path, monkeypatch, capfd) -> None:
@@ -1112,7 +1142,8 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
         (
             "#!/usr/bin/env bash\n"
             'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "fetch" && "${1:-}" == "fetch" ]]; then exit 71; fi\n'
-            'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "status" && "$*" == "status --short --branch" ]]; then exit 72; fi\n'
+            'if [[ "${FAIL_WORKSTREAM_PREFLIGHT:-}" == "status" && "$*" == "status --short --branch" ]]; then '
+            'printf "status-output-must-not-escape\\n"; exit 72; fi\n'
             'exec "$REAL_GIT" "$@"\n'
         ),
         encoding="utf-8",
@@ -1159,6 +1190,7 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
         kickstart_text.index("git fetch --prune", kickstart_text.index("refresh_workstream_runway()")) < admission_call
     )
     assert kickstart_text.index("git status --short --branch") < admission_call
+    assert "git status --short --branch >/dev/null" in kickstart_text
 
     rejected = subprocess.run(
         ["bash", str(kickstart)],
@@ -1172,6 +1204,7 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
 
     assert rejected.returncode == 2
     assert f"launch-environment error: {diagnostic}" in rejected.stderr
+    assert "status-output-must-not-escape" not in rejected.stdout + rejected.stderr
     assert {path: path.read_bytes() for path in protected} == original_bytes
     assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
     assert not provider_marker.exists()

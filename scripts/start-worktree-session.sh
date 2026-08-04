@@ -490,6 +490,12 @@ def direct_native(vendor):
     return profile.transport == "native-cli" or profile.transport.startswith("ianva-")
 
 
+def workstream_launchable(vendor):
+    profile = getattr(vendor, "execution", None)
+    adapter = profile.workstream_adapter if profile is not None else "positional"
+    return not vendor.issue_assignment and (direct_native(vendor) or adapter == "jules")
+
+
 requested = sys.argv[1].strip().lower()
 require_codex_adapter = sys.argv[2] == "3"
 if requested == "auto":
@@ -517,8 +523,7 @@ if requested == "auto":
         vendor
         for vendor in ordered
         if vendor is not None
-        if not vendor.issue_assignment
-        if vendor.status.available and vendor.status.state == "live" and direct_native(vendor)
+        if vendor.status.available and vendor.status.state == "live" and workstream_launchable(vendor)
         if not require_codex_adapter or vendor.execution.workstream_adapter == "codex"
     ]
     selected = next(
@@ -543,8 +548,8 @@ else:
     if vendor is None:
         allowed = ", ".join(item.name for item in VENDORS)
         raise SystemExit(f"unknown Limen agent lane {requested!r}; canonical lanes: {allowed}")
-    if vendor.issue_assignment:
-        raise SystemExit(f"Limen agent lane {vendor.name!r} uses issue assignment and has no native workstream adapter")
+    if not workstream_launchable(vendor):
+        raise SystemExit(f"Limen agent lane {vendor.name!r} has no verified native workstream adapter")
     binary = next((item for item in candidates(vendor) if shutil.which(item)), vendor.name)
 
 print(vendor.name)
@@ -712,6 +717,30 @@ if [[ -n "$campaign_relay" ]]; then
     || git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
     echo "internal campaign relay requires an absent deterministic target branch and worktree" >&2
     exit 2
+  fi
+fi
+
+if [[ -n "$predecessor_receipt" ]]; then
+  existing_target_ref=""
+  successor_identity="$wt/.limen-workstream/capsule.identity"
+  successor_receipt="$wt/docs/continuations/$slug/workstream.json"
+  if [[ -d "$wt" ]] && git -C "$wt" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    if [[ ! -s "$successor_identity" || ! -s "$successor_receipt" ]]; then
+      existing_target_ref="HEAD"
+    fi
+  elif git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+    existing_target_ref="refs/heads/$branch"
+  fi
+  if [[ -n "$existing_target_ref" ]]; then
+    if [[ "$existing_target_ref" == "HEAD" ]]; then
+      existing_target_head="$(git -C "$wt" rev-parse --verify "HEAD^{commit}" 2>/dev/null || true)"
+    else
+      existing_target_head="$(git -C "$repo" rev-parse --verify "${existing_target_ref}^{commit}" 2>/dev/null || true)"
+    fi
+    if [[ "$existing_target_head" != "$predecessor_head" ]]; then
+      echo "existing uncapsuled successor target does not match the exact predecessor HEAD" >&2
+      exit 2
+    fi
   fi
 fi
 
