@@ -1,0 +1,40 @@
+{
+  "status": "done",
+  "packet_id": "ZETA-02",
+  "run_id": "run-5f9c4d2a2a2e5f03-zeta-02",
+  "lease_id": "lease-zeta-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/policy/package.json",
+    "packages/policy/src/index.ts",
+    "packages/policy/tests/policy.test.ts",
+    "packages/database/migrations/0005-rls.sql",
+    "packages/database/migrations/manifest.json",
+    "packages/database/src/schema.ts",
+    "receipts/packets/zeta-02.json"
+  ],
+  "predicate": "./scripts/gates/packets/zeta-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/zeta-02.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "ZETA-02 introduces a policy matrix engine with explicit principal types, roles, capabilities, non-transitive grants, and field-level visibility controls; added partition-scoped row-level security migration with forced deny-by-default policies and read/write partition context predicates."
+}

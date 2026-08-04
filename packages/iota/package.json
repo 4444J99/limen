@@ -1,0 +1,11 @@
+{
+  "name": "@collaboration-operations-platform/iota",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "People, organizations, relationships, engagements, and partition-safe timeline projection.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/iota.test.ts"
+  }
+}

@@ -43,6 +43,12 @@ function repoName(repo: string) {
 export default function QASurfaceClient({ apiUrl }: { apiUrl: string }) {
   const [token, setToken] = useState("");
   const [state, setState] = useState<LoadState>({ loading: false, error: "", statusData: null, manifest: null, readiness: null });
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskRepo, setNewTaskRepo] = useState("organvm/limen");
+  const [newTaskAgent, setNewTaskAgent] = useState("jules");
+  const [newTaskPriority, setNewTaskPriority] = useState("high");
+  const [taskCreateStatus, setTaskCreateStatus] = useState({ loading: false, message: "", error: "" });
 
   async function loadSurface(nextToken = token, clearExisting = true) {
     if (!apiUrl) return;
@@ -78,6 +84,37 @@ export default function QASurfaceClient({ apiUrl }: { apiUrl: string }) {
 
   async function refreshAfterAction() {
     await loadSurface(token, false);
+  }
+
+  async function handleCreateTask(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newTaskTitle.trim() || !apiUrl) return;
+    setTaskCreateStatus({ loading: true, message: "", error: "" });
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    try {
+      const res = await fetch(`${apiUrl}/api/tasks`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          title: newTaskTitle,
+          repo: newTaskRepo,
+          target_agent: newTaskAgent,
+          priority: newTaskPriority,
+          budget_cost: 1,
+          predicate: "scripts/verify-scoped.sh",
+          receipt_target: "github_pr",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || res.statusText || "Task creation failed");
+      setTaskCreateStatus({ loading: false, message: `Created task ${data.id || ""}`, error: "" });
+      setNewTaskTitle("");
+      await refreshAfterAction();
+    } catch (err) {
+      setTaskCreateStatus({ loading: false, message: "", error: err instanceof Error ? err.message : "Creation error" });
+    }
   }
 
   const statusData = state.statusData;
@@ -122,10 +159,58 @@ export default function QASurfaceClient({ apiUrl }: { apiUrl: string }) {
 
           <section className="qaLayout">
             <div className="surfacePanel wide">
-              <div className="panelTitle">
-                <span>Next steering batch</span>
-                <strong>{nextBatch.length} lifecycle gates, generated {formatDate(statusData.generated_at)}</strong>
+              <div className="panelTitle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <span>Next steering batch</span>
+                  <strong>{nextBatch.length} lifecycle gates, generated {formatDate(statusData.generated_at)}</strong>
+                </div>
+                <button
+                  onClick={() => setShowTaskModal(!showTaskModal)}
+                  style={{ padding: "0.4rem 0.8rem", borderRadius: "6px", border: "1px solid #2563eb", background: "#2563eb", color: "#fff", cursor: "pointer" }}
+                >
+                  {showTaskModal ? "Hide Intake" : "+ Intake Task"}
+                </button>
               </div>
+
+              {showTaskModal && (
+                <form onSubmit={handleCreateTask} className="assignPanel" style={{ background: "#f8fafc", padding: "1rem", borderRadius: "8px", margin: "1rem 0" }}>
+                  <strong style={{ display: "block", marginBottom: "0.5rem" }}>Submit Steering Task</strong>
+                  <label>
+                    <span>Title</span>
+                    <input type="text" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="Task title..." required />
+                  </label>
+                  <label>
+                    <span>Repo</span>
+                    <input type="text" value={newTaskRepo} onChange={(e) => setNewTaskRepo(e.target.value)} required />
+                  </label>
+                  <label>
+                    <span>Target Agent</span>
+                    <select value={newTaskAgent} onChange={(e) => setNewTaskAgent(e.target.value)}>
+                      <option value="jules">Jules</option>
+                      <option value="codex">Codex</option>
+                      <option value="claude">Claude</option>
+                      <option value="opencode">OpenCode</option>
+                      <option value="agy">Agy</option>
+                      <option value="gemini">Gemini</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Priority</span>
+                    <select value={newTaskPriority} onChange={(e) => setNewTaskPriority(e.target.value)}>
+                      <option value="critical">Critical</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </label>
+                  <button type="submit" disabled={taskCreateStatus.loading}>
+                    {taskCreateStatus.loading ? "Creating..." : "Submit Task"}
+                  </button>
+                  {taskCreateStatus.message && <p className="opsResult">{taskCreateStatus.message}</p>}
+                  {taskCreateStatus.error && <p className="opsError">{taskCreateStatus.error}</p>}
+                </form>
+              )}
+
               <div className="qaQueue">
                 {nextBatch.map((item) => (
                   <article key={item.id}>

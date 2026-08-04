@@ -1,0 +1,16 @@
+{
+  "status": "done",
+  "packet_id": "NU-01",
+  "checks": [
+    {
+      "name": "tests",
+      "status": "pass",
+      "command": "cd mcp && PYTHONPATH=src:../cli/src python3 -m unittest tests/test_nu_01.py"
+    },
+    {
+      "name": "plan-guard",
+      "status": "pass",
+      "command": "python3 scripts/check-collaboration-operations-plan.py"
+    }
+  ]
+}

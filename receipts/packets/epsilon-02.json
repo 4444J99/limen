@@ -1,0 +1,38 @@
+{
+  "status": "done",
+  "packet_id": "EPSILON-02",
+  "run_id": "run-5f9c4d2a2a2e5f03-epsilon-02",
+  "lease_id": "lease-epsilon-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/database/src/epsilon-02.ts",
+    "packages/database/src/schema.ts",
+    "packages/database/src/index.ts",
+    "packages/database/README.md",
+    "receipts/packets/epsilon-02.json"
+  ],
+  "predicate": "./scripts/gates/packets/epsilon-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/epsilon-02.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "EPSILON-02 implemented in-memory partition-principal-task-decision-outbox-audit repositories, command-envelope unit-of-work with idempotent replay handling, conflict detection, and atomic snapshot commit semantics."
+}

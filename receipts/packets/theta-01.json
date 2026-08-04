@@ -1,0 +1,37 @@
+{
+  "status": "done",
+  "packet_id": "THETA-01",
+  "run_id": "run-16b611a8-theta-01",
+  "lease_id": "lease-theta-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/search/package.json",
+    "packages/search/src/index.ts",
+    "packages/search/tests/search.test.ts",
+    "receipts/packets/theta-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/theta-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/theta-01.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "THETA-01 introduces an in-memory policy-safe search document indexer: redacts sensitive payload fields, computes payload checksums and receipts, stores partition-scoped documents, and exposes deterministic query replay primitives."
+}

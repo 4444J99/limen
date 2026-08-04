@@ -1,0 +1,11 @@
+{
+  "name": "@collaboration-operations-platform/webhooks",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Webhook egress with RFC8785 canonical JSON signing and transactional outbox",
+  "main": "egress.ts",
+  "types": "egress.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/egress.test.ts"
+  }
+}

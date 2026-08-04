@@ -1,0 +1,34 @@
+{
+  "status": "done",
+  "packet_id": "GAMMA-02",
+  "run_id": "run-f612c35dc18771f4bcde5e85dfc4e166",
+  "lease_id": "lease-gamma-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "receipts/packets/gamma-02.json"
+  ],
+  "predicate": "./scripts/gates/packets/gamma-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "python3 -c \"import json, subprocess; repo='repos/organvm-iii-ergon/collaboration-operations-platform'; apps=['apps/api','apps/worker','apps/cli','apps/mcp','apps/web']; pkgs=['audit','auth','billing','compliance','connectors','database','domain','ingest','marketplace','migration','object-store','policy','portal','sdk','search','ui','webhooks','workflows']; [subprocess.check_output(['gh','api',f'{repo}/contents/{pkg}/package.json']) for pkg in apps]; [subprocess.check_output(['gh','api',f'{repo}/contents/packages/{pkg}/index.ts']) for pkg in pkgs]; print('PASS: GAMMA-02 scaffolding checks passed')\"",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "GAMMA-02 packet proof recorded for packet progression after validating required app/package scaffolding checks in the target repository."
+}

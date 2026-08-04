@@ -1,0 +1,36 @@
+[
+  {
+    "id": "0001",
+    "filename": "0001-foundation.sql",
+    "description": "Create partition, principal, membership, capability, and policy decision foundations.",
+    "scope": "base"
+  },
+  {
+    "id": "0002",
+    "filename": "0002-domain-core.sql",
+    "description": "Create canonical relationship, engagement, work, and decision entities.",
+    "scope": "domain",
+    "dependsOn": ["0001"]
+  },
+  {
+    "id": "0003",
+    "filename": "0003-operability.sql",
+    "description": "Add source envelopes, source cursors, jobs, outbox, automation, search, and custody artifacts.",
+    "scope": "operations",
+    "dependsOn": ["0002"]
+  },
+  {
+    "id": "0004",
+    "filename": "0004-roles-and-privileges.sql",
+    "description": "Define owner/migrator/runtime/worker/read-only roles and baseline grants.",
+    "scope": "security",
+    "dependsOn": ["0003"]
+  },
+  {
+    "id": "0005",
+    "filename": "0005-rls.sql",
+    "description": "Enable forced row-level security on partition tables with default-deny policies.",
+    "scope": "security",
+    "dependsOn": ["0004"]
+  }
+]

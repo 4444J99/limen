@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import re
+import sqlite3
 import subprocess
 import urllib.error
 import urllib.parse
@@ -17,12 +18,16 @@ from typing import Any
 
 import yaml
 import rfc8785
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
 from limen_intake import IntakeContractError, validate_intake_contract
 from limen_work_loan import task_work_loan_missing_fields, work_loan_denial
+import db
+import oauth
+import webhooks
+
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
@@ -553,12 +558,19 @@ def save_github_board(data: dict[str, Any], sha: str | None = None) -> None:
 
 def load_board_doc() -> LoadedBoard:
     if storage_mode() == "github":
-        return load_github_board()
-    path = tasks_path()
-    if not path.exists():
-        return LoadedBoard(empty_board(f"Missing task file at {path}"))
-    with path.open() as handle:
-        return LoadedBoard(yaml.safe_load(handle) or {"portal": {}, "tasks": []})
+        board = load_github_board()
+    else:
+        path = tasks_path()
+        if not path.exists():
+            board = LoadedBoard(empty_board(f"Missing task file at {path}"))
+        else:
+            with path.open() as handle:
+                board = LoadedBoard(yaml.safe_load(handle) or {"portal": {}, "tasks": []})
+    try:
+        db.db_sync_tasks_from_board(board.data.get("tasks", []))
+    except Exception:
+        pass
+    return board
 
 
 def load_board() -> dict[str, Any]:
@@ -1925,3 +1937,405 @@ def release_stale(
         "tasks": projected_tasks,
         "broker_receipts": broker_receipts,
     }
+
+
+# --- Milestone 1 Endpoints: Decisions & Timelines ---
+
+@app.get("/api/decisions")
+def list_decisions(
+    authorization: str | None = Header(None),
+    task_id: str | None = Query(None, max_length=128),
+) -> dict[str, Any]:
+    require_persona(authorization, {"owner", "client"})
+    decisions = db.db_list_decisions(task_id=task_id)
+    return {"decisions": decisions, "count": len(decisions)}
+
+
+@app.get("/api/timelines")
+def list_timelines(
+    authorization: str | None = Header(None),
+    task_id: str | None = Query(None, max_length=128),
+) -> dict[str, Any]:
+    require_persona(authorization, {"owner", "client"})
+    timelines = db.db_list_timelines(task_id=task_id)
+    return {"timelines": timelines, "count": len(timelines)}
+
+
+# --- Milestone 1 Webhook Ingress ---
+
+webhook_ingress_handler = webhooks.WebhookIngressHandler()
+
+
+@app.post("/api/webhooks/ingress")
+async def webhook_ingress(
+    request: Request,
+    x_collab_signature: str | None = Header(None, alias="X-Collab-Signature"),
+    x_idempotency_key: str | None = Header(None, alias="X-Idempotency-Key"),
+) -> dict[str, Any]:
+    secret = os.environ.get("LIMEN_WEBHOOK_SECRET", "webhook-secret-key-12345")  # allow-secret
+    raw_body = (await request.body()).decode("utf-8")
+    if not x_collab_signature:
+        raise HTTPException(status_code=401, detail="Missing X-Collab-Signature header")
+
+    valid, reason, payload = webhook_ingress_handler.verify_and_admit(
+        raw_body, x_collab_signature, secret, idempotency_key=x_idempotency_key
+    )
+    if not valid:
+        raise HTTPException(status_code=400, detail=reason)
+
+    event_type = payload.get("event_type", "webhook.admitted") if isinstance(payload, dict) else "webhook.admitted"
+    outbox_record = db.db_create_outbox_event(event_type, payload, signature=x_collab_signature)
+
+    return {"status": "accepted", "event_id": outbox_record["id"], "payload": payload}
+
+
+# --- Milestone 1 OAuth2 Token Authority ---
+
+oauth2_provider = oauth.OAuth2Provider()
+
+
+@app.post("/oauth/token")
+def oauth_token(
+    grant_type: str = Query(...),
+    client_id: str = Query(...),
+    client_secret: str | None = Query(None),
+    code: str | None = Query(None),
+    redirect_uri: str | None = Query(None),
+    code_verifier: str | None = Query(None),
+    scope: str | None = Query(None),
+) -> dict[str, Any]:
+    if grant_type == "authorization_code":
+        if not code or not redirect_uri or not code_verifier:
+            raise HTTPException(status_code=400, detail="code, redirect_uri, and code_verifier required")
+        try:
+            return oauth2_provider.handle_authorization_code_flow(
+                client_id=client_id, code=code, redirect_uri=redirect_uri, code_verifier=code_verifier
+            )
+        except oauth.OAuthError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.description) from exc
+    elif grant_type == "client_credentials":
+        if not client_secret:
+            raise HTTPException(status_code=400, detail="client_secret required")
+        try:
+            return oauth2_provider.handle_client_credentials_flow(
+                client_id=client_id, client_secret=client_secret, scope=scope
+            )
+        except oauth.OAuthError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.description) from exc
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported grant_type")
+
+
+# --- Milestone 1 SCIM 2.0 Directory Sync ---
+
+@app.get("/scim/v2/Users")
+def scim_list_users(
+    authorization: str | None = Header(None),
+    filter: str | None = Query(None),
+    startIndex: int = Query(1, ge=1),
+    count: int = Query(20, ge=1, le=100),
+) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    user_name = None
+    ext_id = None
+    if filter:
+        match_name = re.search(r'userName eq "([^"]+)"', filter, re.IGNORECASE)
+        match_ext = re.search(r'externalId eq "([^"]+)"', filter, re.IGNORECASE)
+        if match_name:
+            user_name = match_name.group(1)
+        if match_ext:
+            ext_id = match_ext.group(1)
+
+    users = db.db_list_users(user_name=user_name, external_id=ext_id, limit=count, offset=startIndex - 1)
+    resources = []
+    for u in users:
+        resources.append(
+            {
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                "id": u["id"],
+                "externalId": u.get("external_id"),
+                "userName": u["user_name"],
+                "name": {"formatted": u.get("name") or u["user_name"]},
+                "emails": [{"value": u["email"], "primary": True}] if u.get("email") else [],
+                "active": u["active"],
+                "meta": {
+                    "resourceType": "User",
+                    "created": u["created_at"],
+                    "lastModified": u["updated_at"],
+                    "location": f"/scim/v2/Users/{u['id']}",
+                },
+            }
+        )
+    return {
+        "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+        "totalResults": len(resources),
+        "itemsPerPage": len(resources),
+        "startIndex": startIndex,
+        "Resources": resources,
+    }
+
+
+@app.post("/scim/v2/Users", status_code=201)
+def scim_create_user(user_data: dict[str, Any], authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    user_name = user_data.get("userName")
+    if not user_name:
+        raise HTTPException(status_code=400, detail="userName is required")
+
+    name_str = None
+    if isinstance(user_data.get("name"), dict):
+        name_str = user_data["name"].get("formatted") or user_data["name"].get("givenName")
+
+    email_str = None
+    if isinstance(user_data.get("emails"), list) and user_data["emails"]:
+        email_str = user_data["emails"][0].get("value")
+
+    try:
+        u = db.db_create_user(
+            {
+                "user_name": user_name,
+                "external_id": user_data.get("externalId"),
+                "name": name_str,
+                "email": email_str,
+                "active": user_data.get("active", True),
+                "roles": ["client"],
+            }
+        )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(status_code=409, detail=f"User already exists: {exc}") from exc
+
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+        "id": u["id"],
+        "externalId": u.get("external_id"),
+        "userName": u["user_name"],
+        "name": {"formatted": u.get("name") or u["user_name"]},
+        "active": u["active"],
+        "meta": {
+            "resourceType": "User",
+            "created": u["created_at"],
+            "lastModified": u["updated_at"],
+            "location": f"/scim/v2/Users/{u['id']}",
+        },
+    }
+
+
+@app.get("/scim/v2/Users/{user_id}")
+def scim_get_user(user_id: str, authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    u = db.db_get_user(user_id)
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+        "id": u["id"],
+        "externalId": u.get("external_id"),
+        "userName": u["user_name"],
+        "name": {"formatted": u.get("name") or u["user_name"]},
+        "active": u["active"],
+        "meta": {
+            "resourceType": "User",
+            "created": u["created_at"],
+            "lastModified": u["updated_at"],
+            "location": f"/scim/v2/Users/{u['id']}",
+        },
+    }
+
+
+@app.put("/scim/v2/Users/{user_id}")
+def scim_update_user_put(user_id: str, user_data: dict[str, Any], authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    name_str = None
+    if isinstance(user_data.get("name"), dict):
+        name_str = user_data["name"].get("formatted") or user_data["name"].get("givenName")
+
+    email_str = None
+    if isinstance(user_data.get("emails"), list) and user_data["emails"]:
+        email_str = user_data["emails"][0].get("value")
+
+    updates: dict[str, Any] = {}
+    if "userName" in user_data:
+        updates["user_name"] = user_data["userName"]
+    if "externalId" in user_data:
+        updates["external_id"] = user_data["externalId"]
+    if name_str is not None:
+        updates["name"] = name_str
+    if email_str is not None:
+        updates["email"] = email_str
+    if "active" in user_data:
+        updates["active"] = user_data["active"]
+
+    try:
+        u = db.db_update_user(user_id, updates)
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(status_code=409, detail=f"User update conflict: {exc}") from exc
+
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+        "id": u["id"],
+        "externalId": u.get("external_id"),
+        "userName": u["user_name"],
+        "name": {"formatted": u.get("name") or u["user_name"]},
+        "active": u["active"],
+        "meta": {
+            "resourceType": "User",
+            "created": u["created_at"],
+            "lastModified": u["updated_at"],
+            "location": f"/scim/v2/Users/{u['id']}",
+        },
+    }
+
+
+@app.patch("/scim/v2/Users/{user_id}")
+def scim_update_user_patch(user_id: str, patch_data: dict[str, Any], authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    updates: dict[str, Any] = {}
+    ops = patch_data.get("Operations") or patch_data.get("operations")
+    if isinstance(ops, list):
+        for op in ops:
+            val = op.get("value")
+            if isinstance(val, dict):
+                if "active" in val:
+                    updates["active"] = val["active"]
+                if "userName" in val:
+                    updates["user_name"] = val["userName"]
+            elif op.get("path") == "active":
+                updates["active"] = bool(val)
+    else:
+        if "active" in patch_data:
+            updates["active"] = patch_data["active"]
+        if "userName" in patch_data:
+            updates["user_name"] = patch_data["userName"]
+
+    try:
+        u = db.db_update_user(user_id, updates)
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(status_code=409, detail=f"User patch conflict: {exc}") from exc
+
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+        "id": u["id"],
+        "externalId": u.get("external_id"),
+        "userName": u["user_name"],
+        "name": {"formatted": u.get("name") or u["user_name"]},
+        "active": u["active"],
+        "meta": {
+            "resourceType": "User",
+            "created": u["created_at"],
+            "lastModified": u["updated_at"],
+            "location": f"/scim/v2/Users/{u['id']}",
+        },
+    }
+
+
+@app.delete("/scim/v2/Users/{user_id}", status_code=204)
+def scim_deactivate_user(user_id: str, authorization: str | None = Header(None)):
+    require_persona(authorization, {"owner"})
+    success = db.db_deactivate_user(user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return Response(status_code=204)
+
+
+# --- SCIM 2.0 Groups Endpoints ---
+
+@app.get("/scim/v2/Groups")
+def scim_list_groups(
+    authorization: str | None = Header(None),
+    filter: str | None = Query(None),
+    startIndex: int = Query(1, ge=1),
+    count: int = Query(20, ge=1, le=100),
+) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    display_name = None
+    if filter:
+        match_name = re.search(r'displayName eq "([^"]+)"', filter, re.IGNORECASE)
+        if match_name:
+            display_name = match_name.group(1)
+
+    groups = db.db_list_groups(display_name=display_name, limit=count, offset=startIndex - 1)
+    resources = []
+    for g in groups:
+        resources.append(
+            {
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+                "id": g["id"],
+                "displayName": g["display_name"],
+                "members": g.get("members", []),
+                "meta": {
+                    "resourceType": "Group",
+                    "created": g["created_at"],
+                    "lastModified": g["updated_at"],
+                    "location": f"/scim/v2/Groups/{g['id']}",
+                },
+            }
+        )
+    return {
+        "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+        "totalResults": len(resources),
+        "itemsPerPage": len(resources),
+        "startIndex": startIndex,
+        "Resources": resources,
+    }
+
+
+@app.post("/scim/v2/Groups", status_code=201)
+def scim_create_group(group_data: dict[str, Any], authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    display_name = group_data.get("displayName")
+    if not display_name:
+        raise HTTPException(status_code=400, detail="displayName is required")
+
+    try:
+        g = db.db_create_group(group_data)
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(status_code=409, detail=f"Group with displayName '{display_name}' already exists: {exc}") from exc
+
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+        "id": g["id"],
+        "displayName": g["display_name"],
+        "members": g.get("members", []),
+        "meta": {
+            "resourceType": "Group",
+            "created": g["created_at"],
+            "lastModified": g["updated_at"],
+            "location": f"/scim/v2/Groups/{g['id']}",
+        },
+    }
+
+
+@app.get("/scim/v2/Groups/{group_id}")
+def scim_get_group(group_id: str, authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    g = db.db_get_group(group_id)
+    if not g:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+        "id": g["id"],
+        "displayName": g["display_name"],
+        "members": g.get("members", []),
+        "meta": {
+            "resourceType": "Group",
+            "created": g["created_at"],
+            "lastModified": g["updated_at"],
+            "location": f"/scim/v2/Groups/{g['id']}",
+        },
+    }
+
+
+@app.delete("/scim/v2/Groups/{group_id}", status_code=204)
+def scim_delete_group(group_id: str, authorization: str | None = Header(None)):
+    require_persona(authorization, {"owner"})
+    success = db.db_delete_group(group_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return Response(status_code=204)
+

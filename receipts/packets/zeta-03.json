@@ -1,0 +1,36 @@
+{
+  "status": "done",
+  "packet_id": "ZETA-03",
+  "run_id": "run-16b611a8-zeta-03",
+  "lease_id": "lease-zeta-03-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/policy/src/index.ts",
+    "packages/policy/tests/redaction-audit.test.ts",
+    "receipts/packets/zeta-03.json"
+  ],
+  "predicate": "./scripts/gates/packets/zeta-03.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/zeta-03.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "ZETA-03 adds policy-aware payload redaction for serialization, logging, indexing, and export, adds append-only policy audit receipts with chained hashes, and introduces private-field leakage assertions for generated artifacts."
+}

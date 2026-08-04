@@ -1,0 +1,34 @@
+{
+  "status": "done",
+  "packet_id": "GAMMA-01",
+  "run_id": "run-f612c35dc18771f4bcde5e85dfc4e165",
+  "lease_id": "lease-gamma-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "receipts/packets/gamma-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/gamma-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "python3 - <<'PY'\nimport json, subprocess\n\nrepo='repos/organvm-iii-ergon/collaboration-operations-platform'\nroot = json.loads(subprocess.check_output(['gh', 'api', f'{repo}/contents/package.json'], text=True))\ncontent = json.loads(__import__('base64').b64decode(root['content']).decode('utf-8'))\n\nassert content.get('packageManager')\nengines = content.get('engines') or {}\nassert 'node' in engines and 'npm' in engines\nassert content['engines']['node']\nassert content['engines']['npm']\n\nscripts = content.get('scripts') or {}\nfor key in ('format', 'lint', 'check:graph', 'typecheck', 'verify'):\n    assert scripts.get(key), key\n\nassert 'workspaces' in content\nassert content['private'] is True\n\nlockfile = json.loads(subprocess.check_output(['gh', 'api', f'{repo}/contents/package-lock.json'], text=True))\nlock = json.loads(__import__('base64').b64decode(lockfile['content']).decode('utf-8'))\nassert lock.get('lockfileVersion')\n\nfor file in ['.nvmrc', 'tsconfig.json', '.prettierrc', 'eslint.config.js', 'apps/api/package.json', 'apps/worker/package.json', 'apps/web/package.json', 'apps/cli/package.json', 'apps/mcp/package.json']:\n    info = subprocess.check_output(['gh', 'api', f'{repo}/contents/{file}'], text=True)\n    assert info\n\nprint('PASS: runtime and workspace pinning present; strict scripts and graph tooling are in place.')\nPY",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "Verified GAMMA-01 preconditions in the target repository: pinned Node/NPM via .nvmrc and engines, package-manager lockfile, strict TS/ES lint/format/build/test graph commands, and workspace boundaries for apps/packages are already present."
+}

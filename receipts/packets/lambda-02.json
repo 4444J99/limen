@@ -1,0 +1,40 @@
+{
+  "status": "done",
+  "packet_id": "LAMBDA-02",
+  "run_id": "run-20260804-lambda-02",
+  "lease_id": "lease-lambda-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "observed_heads_after": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "changed_paths": [
+    "packages/policy/src/index.ts",
+    "packages/policy/tests/lambda-02.test.ts",
+    "packages/policy/tests/lambda-01.test.ts",
+    "packages/policy/tests/policy.test.ts",
+    "packages/policy/tests/redaction-audit.test.ts",
+    "packages/policy/package.json",
+    "receipts/packets/lambda-02.json"
+  ],
+  "predicate": "./scripts/gates/packets/lambda-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "cd packages/policy && node --experimental-strip-types --test tests/policy.test.ts tests/lambda-01.test.ts tests/lambda-02.test.ts tests/redaction-audit.test.ts",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 2,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "LAMBDA-02 implements portal mutating commands with capability-aware eligibility checks, explicit-share-aware projection filtering, quarantined uploads, task-transition policy enforcement, and collaborator mutation audit receipts."
+}

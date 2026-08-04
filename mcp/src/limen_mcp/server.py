@@ -1,5 +1,7 @@
 import os
 import re
+import uuid
+from urllib.parse import unquote
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 import json
@@ -44,7 +46,1049 @@ VALID_WORK_ORIGINS = {"obligation", "human_prompt", "agent_recommendation", "sys
 VALID_WORK_HORIZONS = {"past", "present", "future"}
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
+mcp = FastMCP("Limen")
 
+# -- NU-01 MCP surface (policy-scoped, read-only) ---------------------------
+
+NU01_POLICY_VERSION = "nu-01-policy-v1"
+NU01_CAPABILITY_BY_RESOURCE = {
+    "search": "search.read",
+    "entities": "entities.read",
+    "timelines": "timelines.read",
+    "commitments": "commitments.read",
+    "decisions": "decisions.read",
+    "source_receipts": "source_receipts.read",
+}
+NU01_ROLE_POLICY: dict[str, set[str]] = {
+    "owner": {"search", "entities", "timelines", "commitments", "decisions", "source_receipts"},
+    "collaborator": {"search", "entities", "timelines", "commitments", "decisions"},
+    "auditor": {"search", "source_receipts"},
+}
+
+NU01_PRINCIPAL_DIRECTORY: dict[str, dict[str, Any]] = {
+    "owner:arya@partition-a": {"role": "owner", "partitions": {"partition-a", "partition-b"}},
+    "owner:niko@partition-b": {"role": "owner", "partitions": {"partition-b"}},
+    "collab:maya@partition-a": {"role": "collaborator", "partitions": {"partition-a"}},
+    "collab:leo@partition-b": {"role": "collaborator", "partitions": {"partition-b"}},
+    "auditor:io@partition-a": {"role": "auditor", "partitions": {"partition-a"}},
+}
+
+NU01_ENTITIES = [
+    {
+        "id": "person-arya",
+        "partitionId": "partition-a",
+        "type": "person",
+        "displayName": "Aria Nova",
+        "classification": "partner",
+        "contactEmail": "aria.nova+demo@example.com",
+        "privateNotes": "Potential high-value account; never exposed outside owner role.",
+    },
+    {
+        "id": "org-sigma",
+        "partitionId": "partition-a",
+        "type": "organization",
+        "displayName": "Sigma Group",
+        "classification": "client",
+        "contactEmail": "owner@sigma.example",
+        "privateNotes": "Regulatory NDA requires special handling.",
+    },
+    {
+        "id": "engage-omega",
+        "partitionId": "partition-b",
+        "type": "engagement",
+        "displayName": "Omega Pilot",
+        "classification": "internal",
+        "contactEmail": "omega@internal.example",
+        "privateNotes": "Cross-portfolio exposure risk.",
+    },
+]
+
+NU01_COMMITMENTS = [
+    {
+        "id": "commit-11",
+        "partitionId": "partition-a",
+        "title": "Finalize onboarding packet",
+        "owner": "owner:arya@partition-a",
+        "status": "open",
+        "dueAt": "2026-08-20",
+        "riskNotes": "Needs legal signature before escalation.",
+    },
+    {
+        "id": "commit-22",
+        "partitionId": "partition-a",
+        "title": "Prepare Q3 narrative",
+        "owner": "owner:arya@partition-a",
+        "status": "in_progress",
+        "dueAt": "2026-08-18",
+        "riskNotes": "Coordinate with research.",
+    },
+    {
+        "id": "commit-31",
+        "partitionId": "partition-b",
+        "title": "Archive source receipts",
+        "owner": "owner:niko@partition-b",
+        "status": "blocked",
+        "dueAt": "2026-08-15",
+        "riskNotes": "Blocked on third-party export approval.",
+    },
+]
+
+NU01_DECISIONS = [
+    {
+        "id": "dec-01",
+        "partitionId": "partition-a",
+        "summary": "Approve external review window",
+        "result": "approved",
+        "madeBy": "owner:arya@partition-a",
+        "decisionNotes": "Approved if review queue is within SLA.",
+        "sourceReceiptRef": "src-rx-101",
+    },
+    {
+        "id": "dec-02",
+        "partitionId": "partition-b",
+        "summary": "Suspend partner sync",
+        "result": "conditional",
+        "madeBy": "owner:niko@partition-b",
+        "decisionNotes": "Limited to critical records only.",
+        "sourceReceiptRef": "src-rx-402",
+    },
+]
+
+NU01_SOURCE_RECEIPTS = [
+    {
+        "id": "src-rx-101",
+        "partitionId": "partition-a",
+        "source": "ingest-email",
+        "status": "accepted",
+        "correlationId": "corr-1001",
+        "rawPayload": "subject=weekly digest; body=<redacted>",
+    },
+    {
+        "id": "src-rx-402",
+        "partitionId": "partition-b",
+        "source": "connector-webhook",
+        "status": "quarantine",
+        "correlationId": "corr-2002",
+        "rawPayload": "payload=<redacted>",
+    },
+]
+
+NU01_TIMELINES = {
+    "person-arya": [
+        {"id": "ev-1", "partitionId": "partition-a", "kind": "engagement_started", "notes": "Initial intake completed"},
+        {"id": "ev-2", "partitionId": "partition-a", "kind": "commitment_created", "notes": "Commit-11 created"},
+    ],
+    "org-sigma": [
+        {"id": "ev-3", "partitionId": "partition-a", "kind": "risk_alert", "notes": "NDA clause changed"},
+    ],
+    "engage-omega": [
+        {"id": "ev-4", "partitionId": "partition-b", "kind": "source_sync", "notes": "Source receipts refreshed"},
+    ],
+}
+
+NU01_REDCTIONS = {
+    "owner": set(),
+    "collaborator": {"privateNotes", "riskNotes", "decisionNotes", "rawPayload", "contactEmail"},
+    "auditor": {"privateNotes", "riskNotes", "decisionNotes", "rawPayload", "contactEmail"},
+}
+
+NU02_POLICY_VERSION = "nu-02-policy-v1"
+NU02_CAPABILITY_BY_MUTATION = {
+    "capture": "capture.write",
+    "task": "task.write",
+    "decision": "decision.write",
+    "note": "note.write",
+    "link": "link.write",
+    "classification": "classification.write",
+}
+NU02_ROLE_MUTATION_POLICY: dict[str, set[str]] = {
+    "owner": set(NU02_CAPABILITY_BY_MUTATION),
+    "collaborator": {"capture", "task", "note", "link", "classification"},
+    "auditor": set(),
+}
+NU02_MUTATION_PROPOSALS: dict[str, list[dict[str, Any]]] = {operation: [] for operation in NU02_CAPABILITY_BY_MUTATION}
+NU02_IDEMPOTENCY_INDEX: dict[str, dict[str, Any]] = {}
+
+
+def _nu02_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _nu02_make_policy_receipt(
+    principal_id: str,
+    partition_id: str,
+    operation: str,
+    capability: str,
+    correlation_id: str,
+    allowed: bool,
+    reason_code: str,
+    reason: str,
+    role: str,
+) -> dict[str, Any]:
+    signature = canonical_hash(
+        {
+            "operation": operation,
+            "capability": capability,
+            "correlationId": correlation_id,
+            "partitionId": partition_id,
+            "policyVersion": NU02_POLICY_VERSION,
+            "principalId": principal_id,
+            "timestamp": "nu-02",
+            "role": role,
+        }
+    )[:20]
+    return {
+        "policyVersion": NU02_POLICY_VERSION,
+        "receiptId": signature,
+        "principalId": principal_id,
+        "principalRole": role,
+        "partitionId": partition_id,
+        "operation": operation,
+        "capability": capability,
+        "correlationId": correlation_id,
+        "allowed": allowed,
+        "reasonCode": reason_code,
+        "reason": reason,
+    }
+
+
+def _nu02_apply_policy(
+    principal_id: str,
+    partition_id: str,
+    operation: str,
+    capability: str | None = None,
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    principal = NU01_PRINCIPAL_DIRECTORY.get(_nu01_normalize_principal(principal_id))
+    if principal is None:
+        return _nu02_make_policy_receipt(
+            principal_id=principal_id,
+            partition_id=partition_id,
+            operation=operation,
+            capability=capability or NU02_CAPABILITY_BY_MUTATION.get(operation, "mutate.unknown"),
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            allowed=False,
+            reason_code="DENY_UNKNOWN_PRINCIPAL",
+            reason=f"principal {principal_id} is not declared",
+            role="unknown",
+        )
+
+    role = principal.get("role", "unknown")
+    allowed_operations = NU02_ROLE_MUTATION_POLICY.get(role, set())
+    partitions = principal.get("partitions", set())
+    expected_capability = NU02_CAPABILITY_BY_MUTATION.get(operation, "mutate.unknown")
+    if capability != expected_capability:
+        return _nu02_make_policy_receipt(
+            principal_id=principal_id,
+            partition_id=partition_id,
+            operation=operation,
+            capability=capability or expected_capability,
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            allowed=False,
+            reason_code="DENY_CAPABILITY_MISMATCH",
+            reason=f"capability {capability} cannot be used for {operation}",
+            role=role,
+        )
+
+    if partition_id not in partitions and "*" not in partitions:
+        return _nu02_make_policy_receipt(
+            principal_id=principal_id,
+            partition_id=partition_id,
+            operation=operation,
+            capability=capability or expected_capability,
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            allowed=False,
+            reason_code="DENY_PARTITION_MISMATCH",
+            reason=f"principal {principal_id} is not scoped to partition {partition_id}",
+            role=role,
+        )
+
+    if operation not in allowed_operations:
+        return _nu02_make_policy_receipt(
+            principal_id=principal_id,
+            partition_id=partition_id,
+            operation=operation,
+            capability=capability or expected_capability,
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            allowed=False,
+            reason_code="DENY_OPERATION_SCOPE",
+            reason=f"role {role} cannot perform {operation}",
+            role=role,
+        )
+
+    return _nu02_make_policy_receipt(
+        principal_id=principal_id,
+        partition_id=partition_id,
+        operation=operation,
+        capability=capability or expected_capability,
+        correlation_id=correlation_id or str(uuid.uuid4()),
+        allowed=True,
+        reason_code="ALLOW_SCOPE",
+        reason=f"principal {principal_id} as {role} on partition {partition_id} is allowed to perform {operation}",
+        role=role,
+    )
+
+
+def _nu02_check_partition_references(references: list[str], partition_id: str) -> list[str]:
+    return [reference for reference in references if reference and reference != partition_id]
+
+
+def _nu02_make_mutation_payload(
+    operation: str,
+    principal_id: str,
+    partition_id: str,
+    payload: dict[str, Any],
+    idempotency_key: str,
+    capability: str,
+    correlation_id: str,
+    status: str,
+) -> dict[str, Any]:
+    return {
+        "mutationId": canonical_hash(
+            {
+                "capability": capability,
+                "correlationId": correlation_id,
+                "idempotencyKey": idempotency_key,
+                "operation": operation,
+                "partitionId": partition_id,
+                "payload": payload,
+                "principalId": principal_id,
+                "requestedAt": "nu-02",
+            }
+        )[:20],
+        "operation": operation,
+        "status": status,
+        "partitionId": partition_id,
+        "principalId": principal_id,
+        "capability": capability,
+        "idempotencyKey": idempotency_key,
+        "correlationId": correlation_id,
+        "requestedAt": _nu02_now(),
+    }
+
+
+def _nu02_mutation_response(
+    *,
+    principal_id: str,
+    partition_id: str,
+    operation: str,
+    capability: str,
+    payload: dict[str, Any],
+    idempotency_key: str,
+    correlation_id: str | None = None,
+    partition_refs: list[str] | None = None,
+) -> dict[str, Any]:
+    if not correlation_id:
+        correlation_id = str(uuid.uuid4())
+
+    if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+        return {
+            "allowed": False,
+            "principalId": principal_id,
+            "partitionId": partition_id,
+            "operation": operation,
+            "capability": capability,
+            "correlationId": correlation_id,
+            "policyReceipt": _nu02_make_policy_receipt(
+                principal_id=principal_id,
+                partition_id=partition_id,
+                operation=operation,
+                capability=capability,
+                correlation_id=correlation_id,
+                allowed=False,
+                reason_code="DENY_MISSING_IDEMPOTENCY_KEY",
+                reason="idempotency_key is required for mutation proposals",
+                role="unknown",
+            ),
+            "mutationReceipt": {
+                "mutationId": None,
+                "status": "denied",
+                "operation": operation,
+                "idempotencyKey": idempotency_key,
+                "reasonCode": "DENY_MISSING_IDEMPOTENCY_KEY",
+            },
+        }
+
+    partition_refs = partition_refs or []
+    policy_decision = _nu02_apply_policy(
+        principal_id=principal_id,
+        partition_id=partition_id,
+        operation=operation,
+        capability=capability,
+        correlation_id=correlation_id,
+    )
+    policy_decision["correlationId"] = correlation_id
+
+    if not policy_decision["allowed"]:
+        return {
+            "allowed": False,
+            "principalId": principal_id,
+            "partitionId": partition_id,
+            "operation": operation,
+            "capability": capability,
+            "correlationId": correlation_id,
+            "policyReceipt": policy_decision,
+            "mutationReceipt": {
+                "mutationId": None,
+                "status": "denied",
+                "operation": operation,
+                "idempotencyKey": idempotency_key,
+                "reasonCode": policy_decision["reasonCode"],
+            },
+        }
+
+    off_partition_refs = _nu02_check_partition_references(partition_refs, partition_id)
+    if off_partition_refs:
+        return {
+            "allowed": False,
+            "principalId": principal_id,
+            "partitionId": partition_id,
+            "operation": operation,
+            "capability": capability,
+            "correlationId": correlation_id,
+            "policyReceipt": policy_decision,
+            "mutationReceipt": {
+                "mutationId": None,
+                "status": "denied",
+                "operation": operation,
+                "idempotencyKey": idempotency_key,
+                "reasonCode": "DENY_CROSS_PARTITION_REFERENCE",
+                "offPartitionRefs": off_partition_refs,
+            },
+        }
+
+    proposal_key = f"{principal_id}:{partition_id}:{operation}:{idempotency_key}"
+    existing = NU02_IDEMPOTENCY_INDEX.get(proposal_key)
+    if existing is not None:
+        existing = dict(existing)
+        replay_receipt = dict(existing["mutationReceipt"])
+        replay_receipt["status"] = "replayed"
+        existing["correlationId"] = correlation_id
+        existing["policyReceipt"] = policy_decision
+        existing["mutationReceipt"] = replay_receipt
+        return existing
+
+    proposal_payload = dict(payload)
+    mutation_record = _nu02_make_mutation_payload(
+        operation=operation,
+        principal_id=principal_id,
+        partition_id=partition_id,
+        payload=proposal_payload,
+        idempotency_key=idempotency_key,
+        capability=capability,
+        correlation_id=correlation_id,
+        status="proposed",
+    )
+    mutation_record["payload"] = proposal_payload
+    NU02_MUTATION_PROPOSALS[operation].append(mutation_record)
+
+    receipt = {
+        "mutationReceipt": mutation_record,
+    }
+    response = {
+        "allowed": True,
+        "principalId": principal_id,
+        "partitionId": partition_id,
+        "operation": operation,
+        "capability": capability,
+        "correlationId": correlation_id,
+        "policyReceipt": policy_decision,
+        "mutationReceipt": receipt["mutationReceipt"],
+    }
+    NU02_IDEMPOTENCY_INDEX[proposal_key] = dict(response)
+    return response
+
+
+def _nu02_create_note_payload(
+    target_id: str,
+    target_partition_id: str,
+    summary: str,
+    body: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "targetId": target_id,
+        "targetPartitionId": target_partition_id,
+        "summary": summary,
+        "body": body or "",
+    }
+
+
+def _nu01_normalize_partition(partition_id: str) -> str:
+    return partition_id.strip()
+
+
+def _nu01_normalize_principal(principal_id: str) -> str:
+    return principal_id.strip()
+
+
+def _nu01_make_receipt(
+    principal_id: str,
+    partition_id: str,
+    resource: str,
+    capability: str,
+    correlation_id: str,
+    allowed: bool,
+    reason_code: str,
+    reason: str,
+    role: str,
+) -> dict[str, Any]:
+    signature = canonical_hash(
+        {
+            "capability": capability,
+            "correlationId": correlation_id,
+            "partitionId": partition_id,
+            "policyVersion": NU01_POLICY_VERSION,
+            "principalId": principal_id,
+            "resource": resource,
+            "role": role,
+            "timestamp": "nu-01",
+        }
+    )[:20]
+    return {
+        "policyVersion": NU01_POLICY_VERSION,
+        "receiptId": signature,
+        "principalId": principal_id,
+        "principalRole": role,
+        "partitionId": partition_id,
+        "resource": resource,
+        "capability": capability,
+        "correlationId": correlation_id,
+        "allowed": allowed,
+        "reasonCode": reason_code,
+        "reason": reason,
+    }
+
+
+def _nu01_apply_policy(
+    principal_id: str,
+    partition_id: str,
+    resource: str,
+    correlation_id: str | None = None,
+    capability: str | None = None,
+) -> dict[str, Any]:
+    principal = NU01_PRINCIPAL_DIRECTORY.get(_nu01_normalize_principal(principal_id))
+    if principal is None:
+        return _nu01_make_receipt(
+            principal_id=principal_id,
+            partition_id=partition_id,
+            resource=resource,
+            capability=capability or NU01_CAPABILITY_BY_RESOURCE.get(resource, "read.unknown"),
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            allowed=False,
+            reason_code="DENY_UNKNOWN_PRINCIPAL",
+            reason=f"principal {principal_id} is not declared",
+            role="unknown",
+        )
+
+    role = principal.get("role", "unknown")
+    allowed_resources = NU01_ROLE_POLICY.get(role, set())
+    partitions = principal.get("partitions", set())
+    can_partition = partition_id in partitions or "*" in partitions
+    can_resource = resource in allowed_resources
+
+    if not can_partition:
+        return _nu01_make_receipt(
+            principal_id=principal_id,
+            partition_id=partition_id,
+            resource=resource,
+            capability=capability or NU01_CAPABILITY_BY_RESOURCE.get(resource, "read.unknown"),
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            allowed=False,
+            reason_code="DENY_PARTITION_MISMATCH",
+            reason=f"principal {principal_id} is not scoped to partition {partition_id}",
+            role=role,
+        )
+
+    if not can_resource:
+        return _nu01_make_receipt(
+            principal_id=principal_id,
+            partition_id=partition_id,
+            resource=resource,
+            capability=capability or NU01_CAPABILITY_BY_RESOURCE.get(resource, "read.unknown"),
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            allowed=False,
+            reason_code="DENY_RESOURCE_SCOPE",
+            reason=f"role {role} cannot read {resource}",
+            role=role,
+        )
+
+    return _nu01_make_receipt(
+        principal_id=principal_id,
+        partition_id=partition_id,
+        resource=resource,
+        capability=capability or NU01_CAPABILITY_BY_RESOURCE.get(resource, "read.unknown"),
+        correlation_id=correlation_id or str(uuid.uuid4()),
+        allowed=True,
+        reason_code="ALLOW_SCOPE",
+        reason=f"principal {principal_id} as {role} on partition {partition_id} is allowed to read {resource}",
+        role=role,
+    )
+
+
+def _nu01_redact_row(role: str, row: dict[str, Any]) -> dict[str, Any]:
+    deny_fields = NU01_REDCTIONS.get(role, set())
+    return {key: value for key, value in row.items() if key not in deny_fields}
+
+
+def _nu01_filter_partition(rows: List[dict[str, Any]], partition_id: str) -> List[dict[str, Any]]:
+    return [row for row in rows if row.get("partitionId") == partition_id]
+
+
+def _nu01_search(partition_id: str, query: str, limit: int = 25) -> list[dict[str, Any]]:
+    normalized = (query or "").strip().lower()
+    docs = []
+    for row in (
+        _nu01_filter_partition(NU01_ENTITIES, partition_id)
+        + _nu01_filter_partition(NU01_COMMITMENTS, partition_id)
+        + _nu01_filter_partition(NU01_DECISIONS, partition_id)
+    ):
+        text = " ".join(str(value).lower() for value in row.values())
+        if not normalized or normalized in text:
+            docs.append(
+                {
+                    "documentId": row["id"],
+                    "resource": row.get("type") or "resource",
+                    "excerpt": " ".join(str(value) for key, value in row.items() if key not in {"privateNotes", "riskNotes", "decisionNotes"}),
+                }
+            )
+            if len(docs) >= limit:
+                break
+    return docs
+
+
+def _nu01_handle_read(
+    *, principal_id: str, partition_id: str, resource: str, capability: str, payload: dict[str, Any], correlation_id: str | None = None
+) -> dict[str, Any]:
+    if not correlation_id or not isinstance(correlation_id, str):
+        correlation_id = str(uuid.uuid4())
+    decision = _nu01_apply_policy(
+        principal_id=principal_id,
+        partition_id=partition_id,
+        resource=resource,
+        capability=capability,
+        correlation_id=correlation_id,
+    )
+    decision["correlationId"] = correlation_id
+    role = decision["principalRole"] if decision["allowed"] else "unknown"
+    if not decision["allowed"]:
+        return {
+            "allowed": False,
+            "principalId": principal_id,
+            "partitionId": partition_id,
+            "capability": capability,
+            "correlationId": correlation_id,
+            "policyReceipt": decision,
+            "data": None,
+        }
+    visible_data = _nu01_redact_row(role, payload.get("data", {}))
+    if isinstance(payload.get("items"), list):
+        visible_data = [_nu01_redact_row(role, item) for item in payload["items"]]
+    return {
+        "allowed": True,
+        "principalId": principal_id,
+        "partitionId": partition_id,
+        "capability": capability,
+        "correlationId": correlation_id,
+        "policyReceipt": decision,
+        "data": visible_data if payload.get("items") is not None else visible_data,
+    }
+
+
+def _nu01_entities_payload(partition_id: str) -> list[dict[str, Any]]:
+    return _nu01_filter_partition(NU01_ENTITIES, partition_id)
+
+
+def _nu01_timeline_payload(partition_id: str, entity_id: str) -> list[dict[str, Any]]:
+    events = [event for event in NU01_TIMELINES.get(entity_id, []) if event.get("partitionId") == partition_id]
+    events = sorted(events, key=lambda event: event.get("id"))
+    if not events:
+        return []
+    return events
+
+
+def _nu01_commitments_payload(partition_id: str) -> list[dict[str, Any]]:
+    return _nu01_filter_partition(NU01_COMMITMENTS, partition_id)
+
+
+def _nu01_decisions_payload(partition_id: str) -> list[dict[str, Any]]:
+    return _nu01_filter_partition(NU01_DECISIONS, partition_id)
+
+
+def _nu01_source_receipts_payload(partition_id: str) -> list[dict[str, Any]]:
+    return _nu01_filter_partition(NU01_SOURCE_RECEIPTS, partition_id)
+
+
+# -- NU-01 MCP resources and read tools ----------------------------------
+
+
+@mcp.resource("mcp://nu/{principal_id}/{partition_id}/search/{query}")
+def nu01_resource_search(
+    principal_id: str,
+    partition_id: str,
+    query: str,
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="search",
+        capability=NU01_CAPABILITY_BY_RESOURCE["search"],
+        payload={"items": _nu01_search(partition_id, unquote(query))},
+    )
+
+
+@mcp.tool()
+def nu01_search(
+    principal_id: str,
+    partition_id: str,
+    query: str,
+    capability: str = NU01_CAPABILITY_BY_RESOURCE["search"],
+    limit: int = 25,
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    docs = _nu01_search(partition_id, query, limit=limit)
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="search",
+        capability=capability,
+        correlation_id=correlation_id,
+        payload={"items": docs},
+    )
+
+
+@mcp.resource("mcp://nu/{principal_id}/{partition_id}/entities")
+def nu01_resource_entities(
+    principal_id: str,
+    partition_id: str,
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="entities",
+        capability=NU01_CAPABILITY_BY_RESOURCE["entities"],
+        payload={"items": _nu01_entities_payload(partition_id)},
+    )
+
+
+@mcp.tool()
+def nu01_entities(
+    principal_id: str,
+    partition_id: str,
+    capability: str = NU01_CAPABILITY_BY_RESOURCE["entities"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="entities",
+        capability=capability,
+        correlation_id=correlation_id,
+        payload={"items": _nu01_entities_payload(partition_id)},
+    )
+
+
+@mcp.resource("mcp://nu/{principal_id}/{partition_id}/timeline/{entity_id}")
+def nu01_resource_timeline(
+    principal_id: str,
+    partition_id: str,
+    entity_id: str,
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="timelines",
+        capability=NU01_CAPABILITY_BY_RESOURCE["timelines"],
+        payload={"items": _nu01_timeline_payload(partition_id, entity_id)},
+    )
+
+
+@mcp.tool()
+def nu01_timeline(
+    principal_id: str,
+    partition_id: str,
+    entity_id: str,
+    capability: str = NU01_CAPABILITY_BY_RESOURCE["timelines"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="timelines",
+        capability=capability,
+        correlation_id=correlation_id,
+        payload={"items": _nu01_timeline_payload(partition_id, entity_id)},
+    )
+
+
+@mcp.resource("mcp://nu/{principal_id}/{partition_id}/commitments")
+def nu01_resource_commitments(
+    principal_id: str,
+    partition_id: str,
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="commitments",
+        capability=NU01_CAPABILITY_BY_RESOURCE["commitments"],
+        payload={"items": _nu01_commitments_payload(partition_id)},
+    )
+
+
+@mcp.tool()
+def nu01_commitments(
+    principal_id: str,
+    partition_id: str,
+    capability: str = NU01_CAPABILITY_BY_RESOURCE["commitments"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="commitments",
+        capability=capability,
+        correlation_id=correlation_id,
+        payload={"items": _nu01_commitments_payload(partition_id)},
+    )
+
+
+@mcp.resource("mcp://nu/{principal_id}/{partition_id}/decisions")
+def nu01_resource_decisions(
+    principal_id: str,
+    partition_id: str,
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="decisions",
+        capability=NU01_CAPABILITY_BY_RESOURCE["decisions"],
+        payload={"items": _nu01_decisions_payload(partition_id)},
+    )
+
+
+@mcp.tool()
+def nu01_decisions(
+    principal_id: str,
+    partition_id: str,
+    capability: str = NU01_CAPABILITY_BY_RESOURCE["decisions"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="decisions",
+        capability=capability,
+        correlation_id=correlation_id,
+        payload={"items": _nu01_decisions_payload(partition_id)},
+    )
+
+
+@mcp.resource("mcp://nu/{principal_id}/{partition_id}/source-receipts")
+def nu01_resource_source_receipts(
+    principal_id: str,
+    partition_id: str,
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="source_receipts",
+        capability=NU01_CAPABILITY_BY_RESOURCE["source_receipts"],
+        payload={"items": _nu01_source_receipts_payload(partition_id)},
+    )
+
+
+@mcp.tool()
+def nu01_source_receipts(
+    principal_id: str,
+    partition_id: str,
+    capability: str = NU01_CAPABILITY_BY_RESOURCE["source_receipts"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu01_handle_read(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        resource="source_receipts",
+        capability=capability,
+        correlation_id=correlation_id,
+        payload={"items": _nu01_source_receipts_payload(partition_id)},
+    )
+
+
+# -- NU-02 MCP tools (mutation commands with proposals + idempotency) ------
+
+
+@mcp.tool()
+def nu02_capture(
+    principal_id: str,
+    partition_id: str,
+    capture_type: str,
+    title: str,
+    body: str,
+    idempotency_key: str,
+    source_partition_id: str = "",
+    capability: str = NU02_CAPABILITY_BY_MUTATION["capture"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu02_mutation_response(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        operation="capture",
+        capability=capability,
+        idempotency_key=idempotency_key,
+        correlation_id=correlation_id,
+        partition_refs=[source_partition_id],
+        payload={
+            "captureType": _validate_text(capture_type, "capture_type", 120),
+            "title": _validate_text(title, "title", 240),
+            "body": _validate_text(body, "body", 2_000),
+            "sourcePartitionId": source_partition_id,
+        },
+    )
+
+
+@mcp.tool()
+def nu02_task(
+    principal_id: str,
+    partition_id: str,
+    title: str,
+    owner: str,
+    due_at: str,
+    idempotency_key: str,
+    source_partition_id: str = "",
+    capability: str = NU02_CAPABILITY_BY_MUTATION["task"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu02_mutation_response(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        operation="task",
+        capability=capability,
+        idempotency_key=idempotency_key,
+        correlation_id=correlation_id,
+        partition_refs=[source_partition_id],
+        payload={
+            "title": _validate_text(title, "title", 240),
+            "owner": _validate_text(owner, "owner", 240),
+            "dueAt": _validate_text(due_at, "due_at", 80),
+            "sourcePartitionId": source_partition_id,
+        },
+    )
+
+
+@mcp.tool()
+def nu02_decision(
+    principal_id: str,
+    partition_id: str,
+    summary: str,
+    result: str,
+    idempotency_key: str,
+    target_partition_id: str = "",
+    capability: str = NU02_CAPABILITY_BY_MUTATION["decision"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu02_mutation_response(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        operation="decision",
+        capability=capability,
+        idempotency_key=idempotency_key,
+        correlation_id=correlation_id,
+        partition_refs=[target_partition_id],
+        payload={
+            "summary": _validate_text(summary, "summary", 640),
+            "result": _validate_text(result, "result", 120),
+            "targetPartitionId": target_partition_id,
+        },
+    )
+
+
+@mcp.tool()
+def nu02_note(
+    principal_id: str,
+    partition_id: str,
+    target_id: str,
+    summary: str,
+    body: str,
+    idempotency_key: str,
+    target_partition_id: str = "",
+    capability: str = NU02_CAPABILITY_BY_MUTATION["note"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu02_mutation_response(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        operation="note",
+        capability=capability,
+        idempotency_key=idempotency_key,
+        correlation_id=correlation_id,
+        partition_refs=[target_partition_id],
+        payload=_nu02_create_note_payload(
+            target_id=_validate_text(target_id, "target_id", 240),
+            target_partition_id=target_partition_id,
+            summary=_validate_text(summary, "summary", 640),
+            body=body,
+        ),
+    )
+
+
+@mcp.tool()
+def nu02_link(
+    principal_id: str,
+    partition_id: str,
+    left_entity_id: str,
+    right_entity_id: str,
+    left_entity_partition_id: str,
+    right_entity_partition_id: str,
+    idempotency_key: str,
+    capability: str = NU02_CAPABILITY_BY_MUTATION["link"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu02_mutation_response(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        operation="link",
+        capability=capability,
+        idempotency_key=idempotency_key,
+        correlation_id=correlation_id,
+        partition_refs=[left_entity_partition_id, right_entity_partition_id],
+        payload={
+            "leftEntityId": _validate_text(left_entity_id, "left_entity_id", 240),
+            "rightEntityId": _validate_text(right_entity_id, "right_entity_id", 240),
+            "leftEntityPartitionId": left_entity_partition_id,
+            "rightEntityPartitionId": right_entity_partition_id,
+        },
+    )
+
+
+@mcp.tool()
+def nu02_classification(
+    principal_id: str,
+    partition_id: str,
+    target_id: str,
+    classification: str,
+    idempotency_key: str,
+    rationale: str = "",
+    target_partition_id: str = "",
+    capability: str = NU02_CAPABILITY_BY_MUTATION["classification"],
+    correlation_id: str = "",
+) -> dict[str, Any]:
+    return _nu02_mutation_response(
+        principal_id=principal_id,
+        partition_id=_nu01_normalize_partition(partition_id),
+        operation="classification",
+        capability=capability,
+        idempotency_key=idempotency_key,
+        correlation_id=correlation_id,
+        partition_refs=[target_partition_id],
+        payload={
+            "targetId": _validate_text(target_id, "target_id", 240),
+            "targetPartitionId": target_partition_id,
+            "classification": _validate_text(classification, "classification", 120),
+            "rationale": _validate_text(rationale, "rationale", 640),
+        },
+    )
+
+
+# -- Server State -----------------------------------------------------------
 
 def _reject_control_chars(value: str, field_name: str) -> str:
     if any((ord(ch) < 32 and ch not in "\t\n\r") or ord(ch) == 127 for ch in value):
@@ -205,8 +1249,6 @@ class LimenFile(BaseModel):
 
 
 # -- Server State -----------------------------------------------------------
-
-mcp = FastMCP("Limen")
 
 CIRCUIT_BREAKER_TRIPPED = False
 TASK_LOOP_TRACKER: Dict[str, int] = {}
@@ -776,4 +1818,9 @@ def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    transport = os.environ.get("LIMEN_MCP_TRANSPORT", "stdio")
+    mount_path = os.environ.get("LIMEN_MCP_MOUNT_PATH", "/mcp")
+    if transport == "streamable-http":
+        mcp.run(transport="streamable-http", mount_path=mount_path)
+    else:
+        mcp.run()

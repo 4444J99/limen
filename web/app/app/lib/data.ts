@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { DashboardData, PRStatusData, Task, ThroughputSummary } from "../dashboard-client";
+import type { InboxStatusData, InboxPartition, InboxRecord, InboxSourceType } from "./inbox-model";
 
 export interface PublicStatusData {
   status: string;
@@ -405,6 +406,27 @@ export interface ObservatoryStatusData {
   mechanisms: ObservatoryMechanism[];
   experiment: ObservatoryExperiment | null;
   measurement_contract: ObservatoryMeasurementContract | null;
+}
+
+export function getInboxStatusData() {
+  const privateDir = join(process.cwd(), ".generated", "surfaces");
+  return readJson<InboxStatusData>(join(privateDir, ["inbox", "status"].join("-")), {
+    status: "missing",
+    surface: "inbox",
+    generated_at: new Date(0).toISOString(),
+    total_records: 0,
+    generated_by: "static-build",
+    partitions: {
+      inbox: 0,
+      entities: 0,
+      tasks: 0,
+      decisions: 0,
+      links: 0,
+      archive: 0,
+      quarantine: 0,
+    },
+    records: [],
+  });
 }
 
 // Owner surface: reads the private baked brief (mirrors getCorpusCommandCenterData). The

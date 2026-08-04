@@ -1,0 +1,11 @@
+{
+  "name": "@collaboration-operations-platform/policy",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Partition policy primitives, roles, capabilities, and matrix evaluator.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "node --import tsx --test tests/policy.test.ts tests/lambda-01.test.ts tests/lambda-02.test.ts tests/lambda-03.test.ts"
+  }
+}

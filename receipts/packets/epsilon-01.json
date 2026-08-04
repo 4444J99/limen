@@ -1,0 +1,47 @@
+{
+  "status": "done",
+  "packet_id": "EPSILON-01",
+  "run_id": "run-5f9c4d2a2a2e5f03-epsilon-01",
+  "lease_id": "lease-epsilon-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/database/src/schema.ts",
+    "packages/database/src/index.ts",
+    "packages/database/package.json",
+    "packages/database/README.md",
+    "packages/database/migrations/manifest.json",
+    "packages/database/migrations/0001-foundation.sql",
+    "packages/database/migrations/0002-domain-core.sql",
+    "packages/database/migrations/0003-operability.sql",
+    "packages/database/migrations/0004-roles-and-privileges.sql",
+    "receipts/packets/epsilon-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/epsilon-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "! rg \"TIMESTAMPTPTZ\" packages/database/src/schema.ts packages/database/migrations/*.sql",
+      "status": "pass"
+    },
+    {
+      "command": "npm --prefix packages/database run -s migrations:check",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "EPSILON-01 migration-first schema was introduced with partitioned canonical entities, a migration manifest contract, bootstrap SQL, and role/grant scaffolding across foundation/domain/operations/security migration steps."
+}

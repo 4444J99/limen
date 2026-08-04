@@ -1,0 +1,40 @@
+{
+  "status": "done",
+  "packet_id": "KAPPA-03",
+  "run_id": "run-20260804-kappa-03",
+  "lease_id": "lease-kappa-03-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "observed_heads_after": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "changed_paths": [
+    "web/app/app/insights/insights-client.tsx",
+    "web/app/app/globals.css",
+    "receipts/packets/kappa-03.json"
+  ],
+  "predicate": "./scripts/gates/packets/kappa-03.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "npm --prefix web/app run validate:surfaces",
+      "status": "pass"
+    },
+    {
+      "command": "npm --prefix web/app run build",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 3,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "KAPPA-03 completes search, reviews, timelines, and meeting-prep operator surfaces by adding faceted insight search, commitment/risk review queues, grouped meeting briefs, and person/organization/project/decision/engagement timelines with responsive layout behavior."
+}

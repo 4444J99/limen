@@ -1,13 +1,15 @@
-type SurfaceKey = "internal" | "client" | "public" | "qa" | "insights" | "corpus" | "observatory";
+type SurfaceKey = "internal" | "client" | "public" | "qa" | "insights" | "corpus" | "observatory" | "marketplace" | "inbox";
 type Persona = "owner" | "client" | "public";
 
 export default function SurfaceNav({ active, persona = "owner" }: { active: SurfaceKey; persona?: Persona }) {
   const items: { key: SurfaceKey; label: string; href: string; personas: Persona[] }[] = [
     { key: "internal", label: "Internal", href: "/internal", personas: ["owner"] },
+    { key: "inbox", label: "Inbox", href: "/inbox", personas: ["owner"] },
     { key: "qa", label: "QA", href: "/qa", personas: ["owner"] },
     { key: "insights", label: "Insights", href: "/insights", personas: ["owner"] },
     { key: "corpus", label: "Corpus", href: "/corpus", personas: ["owner"] },
     { key: "observatory", label: "Observatory", href: "/observatory", personas: ["owner"] },
+    { key: "marketplace", label: "Marketplace", href: "/marketplace", personas: ["owner", "client"] },
     { key: "client", label: "Client", href: "/client", personas: ["owner", "client"] },
     { key: "public", label: "Public", href: "/", personas: ["owner", "client", "public"] },
   ];

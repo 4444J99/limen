@@ -1,0 +1,17 @@
+{
+  "status": "done",
+  "packet_id": "MU-01",
+  "run_id": "run-mu-01-20260804-01",
+  "checks": [
+    {
+      "name": "tests",
+      "status": "pass",
+      "command": "node --experimental-strip-types --test packages/connectors/tests/mu-01.test.ts"
+    },
+    {
+      "name": "plan-guard",
+      "status": "pass",
+      "command": "python3 scripts/check-collaboration-operations-plan.py"
+    }
+  ]
+}

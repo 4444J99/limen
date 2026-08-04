@@ -1,0 +1,15 @@
+{
+  "name": "@collaboration-operations-platform/database",
+  "version": "0.1.0",
+  "description": "Database schema and atomic job queue for Collaboration Operations Platform",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "migrations:list": "cat migrations/manifest.json",
+    "migrations:check": "node -e \"const fs=require('fs'); const manifest=JSON.parse(fs.readFileSync('migrations/manifest.json','utf8')); const missing=manifest.map(item=>'migrations/' + item.filename).filter(file=>!fs.existsSync(file)); if(missing.length){console.error('missing migration files: '+missing.join(', ')); process.exit(1);} console.log('migration files present');\"",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "status": "done",
+  "packet_id": "ETA-02",
+  "run_id": "run-16b611a8-eta-02",
+  "lease_id": "lease-eta-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/ingest/src/index.ts",
+    "packages/ingest/tests/ingest.test.ts",
+    "receipts/packets/eta-02.json"
+  ],
+  "predicate": "./scripts/gates/packets/eta-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/eta-02.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "ETA-02 adds deterministic normalization to connector-neutral source envelopes with normalized domain commands, duplicate and probable-match classification, bounded quarantines for malformed/hostile payloads, and replayable link proposal diagnostics."
+}

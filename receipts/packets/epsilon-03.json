@@ -1,0 +1,37 @@
+{
+  "status": "done",
+  "packet_id": "EPSILON-03",
+  "run_id": "run-5f9c4d2a2a2e5f03-epsilon-03",
+  "lease_id": "lease-epsilon-03-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/database/src/schema.ts",
+    "packages/database/src/epsilon-02.ts",
+    "packages/database/README.md",
+    "receipts/packets/epsilon-03.json"
+  ],
+  "predicate": "./scripts/gates/packets/epsilon-03.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/epsilon-03.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "EPSILON-03 adds durable in-memory job queue leasing, deterministic heartbeat+recovery, retry transitions, dead-letter behavior, and synthetic seed lifecycle controls with custody token checks."
+}

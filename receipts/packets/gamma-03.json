@@ -1,0 +1,34 @@
+{
+  "status": "done",
+  "packet_id": "GAMMA-03",
+  "run_id": "run-6e657f80cf24d17-gamma-03",
+  "lease_id": "lease-gamma-03-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "receipts/packets/gamma-03.json"
+  ],
+  "predicate": "./scripts/gates/packets/gamma-03.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "python3 -c \"import json, subprocess, base64; repo='repos/organvm-iii-ergon/collaboration-operations-platform'; compose=json.loads(subprocess.check_output(['gh','api',f'{repo}/contents/docker-compose.yml'], text=True)); text=base64.b64decode(compose['content']).decode('utf-8'); assert all(item in text for item in ['api:', 'worker:', 'web:']); [subprocess.check_output(['gh','api',f'{repo}/contents/{name}']) for name in ['scripts/dev.sh', 'scripts/stop.sh', 'scripts/reset-synthetic.sh', 'scripts/seed.sh', 'scripts/doctor.sh', 'scripts/verify-scoped.sh']]; root_pkg=json.loads(base64.b64decode(json.loads(subprocess.check_output(['gh','api',f'{repo}/contents/package.json'], text=True))['content']).decode('utf-8'); scripts=json.loads(root_pkg).get('scripts', {}); required=['start:local', 'stop:local', 'reset:synthetic', 'seed:local', 'doctor', 'verify:scoped']; assert all(cmd in scripts for cmd in required); print('PASS: GAMMA-03 orchestration scaffolding checks passed')\"",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "GAMMA-03 scaffolded local orchestration, added local start/stop/reset/seed/doctor commands, and updated compose to include API, worker, and web services atop PostgreSQL and MinIO."
+}

@@ -1,0 +1,37 @@
+{
+  "status": "done",
+  "packet_id": "ETA-01",
+  "run_id": "run-16b611a8-eta-01",
+  "lease_id": "lease-eta-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/ingest/package.json",
+    "packages/ingest/src/index.ts",
+    "packages/ingest/tests/ingest.test.ts",
+    "receipts/packets/eta-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/eta-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/eta-01.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "ETA-01 captures connector-neutral source envelopes with identity, external IDs, revisions, cursors, checksums, and observed times; enforces partition/classification/media/provenance admission rules; provides append-only replayable source envelope ledger with source cursor progression."
+}

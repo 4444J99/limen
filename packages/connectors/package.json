@@ -1,0 +1,11 @@
+{
+  "name": "@collaboration-operations-platform/connectors",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Connector manifests, lifecycle semantics, rate limits, redacted diagnostics, and synthetic conformance harness.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/mu-01.test.ts tests/mu-02.test.ts tests/mu-03.test.ts"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "status": "done",
+  "packet_id": "IOTA-01",
+  "run_id": "run-draft-iota-01",
+  "lease_id": "lease-iota-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/iota/src/index.ts",
+    "packages/iota/tests/iota.test.ts",
+    "receipts/packets/iota-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/iota-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "node --experimental-strip-types --test packages/iota/tests/iota.test.ts",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "IOTA-01 implements identity, relationship, engagement, proposal, and timeline primitives with partition guards and reversible operations."
+}

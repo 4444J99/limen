@@ -1,0 +1,38 @@
+{
+  "status": "done",
+  "packet_id": "BETA-03",
+  "run_id": "run-f612c35dc18771f4bcde5e85dfc4e164",
+  "lease_id": "lease-beta-03-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "receipts/packets/beta-03.json"
+  ],
+  "predicate": "./scripts/gates/packets/beta-03.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "python3 - <<'PY'\nimport base64\nimport json\nimport subprocess\n\nrepo='repos/organvm-iii-ergon/collaboration-operations-platform'\n\nmeta = json.loads(subprocess.check_output(['gh', 'api', repo], text=True))\nassert meta.get('private') is True\nassert meta.get('default_branch') == 'main'\n\nfor file in ['AGENTS.md', 'CONTRIBUTING.md', 'SECURITY.md', 'CODEOWNERS', '.github/CODEOWNERS']:\n    payload = json.loads(subprocess.check_output(['gh', 'api', f'{repo}/contents/{file}'], text=True))\n    text = base64.b64decode(payload['content']).decode('utf-8') if payload.get('encoding') == 'base64' else ''\n    if file.endswith('CODEOWNERS'):\n        assert '* @organvm-iii-ergon/owners' in text\n\noutside = json.loads(subprocess.check_output(['gh', 'api', f'{repo}/collaborators?affiliation=outside&per_page=100'], text=True))\nassert outside == []\n\nlatest = json.loads(subprocess.check_output(['gh', 'api', f'{repo}/commits/main'], text=True))\nassert latest['commit']['message'].startswith('chore: add root CODEOWNERS for governance')\nprint('PASS: governance files present and constraints captured; outside collaborators none; commit', latest['sha'][:8])\nPY",
+      "status": "pass"
+    },
+    {
+      "command": "python3 - <<'PY'\nimport subprocess\n\nrepo='repos/organvm-iii-ergon/collaboration-operations-platform'\nprot = subprocess.run(['gh', 'api', f'{repo}/branches/main/protection'], capture_output=True, text=True)\nrule = subprocess.run(['gh', 'api', f'{repo}/rulesets'], capture_output=True, text=True)\nassert prot.returncode == 1 and 'Upgrade to GitHub Pro or make this repository public to enable this feature.' in (prot.stderr + prot.stdout)\nassert rule.returncode == 1 and 'Upgrade to GitHub Pro or make this repository public to enable this feature.' in (rule.stderr + rule.stdout)\nprint('SKIP: branch protection + rulesets APIs are blocked by GitHub private-org plan constraints; remediation deferred to retained gate.')\nPY",
+      "status": "skip"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "BETA-03 governance bootstrap completed for the target repository: private main repository verified, root and .github CODEOWNERS added/present, AGENTS/CONTRIBUTING/SECURITY present, and no outside collaborators. Branch protection and rulesets controls remain blocked by GitHub plan/visibility constraints and are recorded as retained external actions."
+}

@@ -77,11 +77,13 @@ const ownerOnlyUiNeedles = [
 ];
 
 assertLabels("index.html", ["Public"]);
-assertLabels("internal.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
-assertLabels("qa.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
-assertLabels("corpus.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
-assertLabels("observatory.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
-assertLabels("client.html", ["Client", "Public"]);
+const ownerNavLabels = ["Internal", "Inbox", "QA", "Insights", "Corpus", "Observatory", "Marketplace", "Client", "Public"];
+assertLabels("internal.html", ownerNavLabels);
+assertLabels("qa.html", ownerNavLabels);
+assertLabels("corpus.html", ownerNavLabels);
+assertLabels("observatory.html", ownerNavLabels);
+assertLabels("inbox.html", ownerNavLabels);
+assertLabels("client.html", ["Marketplace", "Client", "Public"]);
 assertLabels("public.html", ["Public"]);
 
 const runtimeAttached = Boolean(process.env.NEXT_PUBLIC_API_URL);
@@ -195,7 +197,7 @@ for (const needle of ['"body_preview"', '"body_object"', '"private_source_path"'
   }
 }
 console.log("Exported page persona/runtime checks verified");
-assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+assertLabels("insights.html", ["Internal", "Inbox", "QA", "Insights", "Corpus", "Observatory", "Marketplace", "Client", "Public"]);
 
 // Payload-size ratchet: the shared export policy bounds the static-first projection.
 import { statSync as _statSync, existsSync as _existsSync } from "fs";
@@ -221,6 +223,8 @@ const exportedPages = [
   "insights.html",
   "corpus.html",
   "observatory.html",
+  "marketplace.html",
+  "inbox.html",
 ];
 
 function extractTitle(html) {

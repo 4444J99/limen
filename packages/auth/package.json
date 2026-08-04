@@ -1,0 +1,11 @@
+{
+  "name": "@collaboration-operations-platform/auth",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OAuth2 Provider, Token Authority, and SAML/SSO Authentication",
+  "main": "oauth.ts",
+  "types": "oauth.ts",
+  "scripts": {
+    "test": "node --import tsx --test tests/oauth.test.ts"
+  }
+}

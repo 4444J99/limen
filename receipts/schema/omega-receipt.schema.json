@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Collaboration Operations Omega Receipt",
+  "type": "object",
+  "required": ["status", "target_head", "gate_stamps", "schema_hash", "outcome"],
+  "properties": {
+    "status": {"type": "string", "enum": ["done", "failed", "failed_blocked", "needs_human"]},
+    "target_head": {"type": "string", "minLength": 1},
+    "gate_stamps": {"type": "object"},
+    "schema_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "outcome": {"type": "string"},
+    "omega_runs": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "additionalProperties": true
+}

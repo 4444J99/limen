@@ -70,6 +70,17 @@ export default function PublicSurface() {
           <p className="surfaceCopy">
             Public status stays aggregate-only. It shows the operational ledger and completion state without exposing task titles, dispatch logs, tokens, or owner controls.
           </p>
+
+          <div style={{ margin: "1.25rem 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem", fontSize: "0.85rem", fontWeight: 600 }}>
+              <span>Completion Rate</span>
+              <span>{completion}%</span>
+            </div>
+            <div style={{ width: "100%", height: "12px", background: "#e5e7eb", borderRadius: "6px", overflow: "hidden" }}>
+              <div style={{ width: `${completion}%`, height: "100%", background: "#16a34a", transition: "width 0.3s ease" }} />
+            </div>
+          </div>
+
           <div className="publicSplit">
             <div>
               <span>Done</span>

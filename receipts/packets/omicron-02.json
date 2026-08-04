@@ -1,0 +1,16 @@
+{
+  "status": "done",
+  "packet_id": "OMICRON-02",
+  "checks": [
+    {
+      "name": "functional-verification",
+      "status": "pass",
+      "command": "python3 web/api/tests/test_m1_endpoints.py"
+    },
+    {
+      "name": "plan-guard",
+      "status": "pass",
+      "command": "python3 scripts/check-collaboration-operations-plan.py"
+    }
+  ]
+}

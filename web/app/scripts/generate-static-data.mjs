@@ -29,6 +29,7 @@ const corpusStatusSourcePath = process.env.LIMEN_CORPUS_STATUS || join(limenRoot
 const corpusStatusPath = join(privateDir, "corpus-status.json");
 const observatoryBriefSourcePath = process.env.LIMEN_OBSERVATORY_BRIEF || join(limenRoot, "logs", "observatory", "brief-latest.json");
 const observatoryStatusPath = join(privateDir, "observatory-status.json");
+const inboxStatusPath = join(privateDir, "inbox-status.json");
 const doneTasksPath = join(appRoot, "public", "done-tasks.json");
 const hostedPrivatePaths = [
   join(appRoot, "public", "tasks.json"),
@@ -505,6 +506,136 @@ function observatoryStatus() {
   };
 }
 
+function inboxPolicyByPartition() {
+  return {
+    inbox: ["No partition assigned yet; retain in inbox until explicit review before action."],
+    entities: [
+      "Classify as an entity candidate; route for identity, relationship enrichment, and duplicate suppression.",
+      "Policy consequence: linking rules require source citation and non-retraction confirmation.",
+      "Review provenance before allowing merges with existing identity rows.",
+    ],
+    tasks: [
+      "Classify as operational task; route to assignment/dispatch pipelines.",
+      "Policy consequence: task records remain redacted and cannot mutate source artifacts directly.",
+      "Policy consequence: stale policy checks are required before dispatch to lanes.",
+    ],
+    decisions: [
+      "Classify as decision artifact; mark as policy-bearing outcome for later reviews.",
+      "Policy consequence: all transitions should preserve decision rationale and trace IDs.",
+      "Policy consequence: this partition requires explicit audit note before any external action.",
+    ],
+    links: [
+      "Classify as source linkage evidence; enrich graph edges and provenance graph only.",
+      "Policy consequence: relationship links remain read-only until source signature validates.",
+      "Policy consequence: do not dispatch linked evidence without source integrity checks.",
+    ],
+    archive: [
+      "Classify as archival evidence and suppress from active steering.",
+      "Policy consequence: archive retains context but blocks routing and mutation actions.",
+      "Policy consequence: policy consequence checks are replayable only from immutability logs.",
+    ],
+    quarantine: [
+      "Classify as quarantine; hold for human/legal review.",
+      "Policy consequence: quarantine is blocked from runtime workflows until deconflicted.",
+      "Policy consequence: no downstream automation may read or propagate before clearance.",
+    ],
+  };
+}
+
+function pickSourceType(index) {
+  const sourceTypes = ["note", "url", "file", "source_ref"];
+  return sourceTypes[index % sourceTypes.length];
+}
+
+function inboxPartitionFromTask(task, index) {
+  const partitionOrder = ["inbox", "entities", "tasks", "decisions", "links", "archive", "quarantine"];
+  if (task?.priority === "critical" || task?.risk === "high") return "quarantine";
+  if (task?.status === "archived") return "archive";
+  if (task?.status === "done") return "decisions";
+  return partitionOrder[index % partitionOrder.length];
+}
+
+function truncate(value, max = 160) {
+  const text = String(value || "");
+  return text.length <= max ? text : `${text.slice(0, max)}…`;
+}
+
+function buildInboxStatus(tasks, summary) {
+  const now = summary.generated_at || new Date().toISOString();
+  const sourceEntries = (Array.isArray(tasks) ? tasks : []).slice(0, 16).map((task, index) => {
+    const partition = inboxPartitionFromTask(task, index);
+    const sourceType = pickSourceType(index);
+    const sourceReference =
+      sourceType === "url"
+        ? `https://github.com/${task.repo || task.id || "organvm/limen"}`
+        : sourceType === "file"
+          ? `artifacts/${task.repo ? task.repo.replace(/\//g, ".") : "inbox"}-${task.id || index}.txt`
+          : sourceType === "source_ref"
+            ? `task://${task.id || index}`
+            : `repo://${task.repo || "organvm/limen"}`;
+    return {
+      id: `task-${task.id || index}-inbox`,
+      title: task.title || `Captured task ${task.id || index}`,
+      source_type: sourceType,
+      source_reference: sourceReference,
+      body_excerpt: truncate(task.context || task.note || task.description || task.title, 180),
+      partition,
+      captured_at: now,
+      captured_by: task.target_agent || "owner",
+      policy_consequences: inboxPolicyByPartition()[partition],
+      provenance: {
+        source_system: "tasks.yaml",
+        source_reference: `task:${task.id || index}`,
+        observed_at: now,
+        policy_vector: [task.status || "open", task.priority || "medium", task.target_agent || "owner"],
+        source_note: "Seeded from task board snapshot for inbox bootstrapping.",
+      },
+    };
+  });
+
+  const records = sourceEntries.length ? sourceEntries : [{
+    id: "seed-000-inbox",
+    title: "Manual capture seed",
+    source_type: "note",
+    source_reference: "note://sample-inbox/seed-1",
+    body_excerpt: "Seed capture while intake is empty; provenance and partition policy are preserved for review.",
+    partition: "inbox",
+    captured_at: now,
+    captured_by: "owner",
+    policy_consequences: inboxPolicyByPartition().inbox,
+    provenance: {
+      source_system: "seed",
+      source_reference: "seed://kappa-02",
+      observed_at: now,
+      policy_vector: ["empty-board", "review-first"],
+      source_note: "Synthetic fallback fixture for first surface paint.",
+    },
+  }];
+
+  const partitions = {
+    inbox: 0,
+    entities: 0,
+    tasks: 0,
+    decisions: 0,
+    links: 0,
+    archive: 0,
+    quarantine: 0,
+  };
+  for (const record of records) {
+    partitions[record.partition] += 1;
+  }
+
+  return {
+    status: "ok",
+    surface: "inbox",
+    generated_at: now,
+    generated_by: "static-build",
+    total_records: records.length,
+    partitions,
+    records,
+  };
+}
+
 function surfaceManifest(summary) {
   const generatedAt = summary.generated_at;
   return {
@@ -727,6 +858,7 @@ const readiness = readinessReport(data, summary);
 const qa = qaStatus(data, summary);
 const corpus = corpusStatus();
 const observatory = observatoryStatus();
+const inboxStatus = buildInboxStatus(data.tasks || [], summary);
 
 mkdirSync(dirname(outPath), { recursive: true });
 mkdirSync(dirname(publicStatusPath), { recursive: true });
@@ -746,6 +878,7 @@ writeFileSync(readinessPath, `${JSON.stringify(readiness, null, 2)}\n`);
 writeFileSync(qaStatusPath, `${JSON.stringify(qa, null, 2)}\n`);
 writeFileSync(corpusStatusPath, `${JSON.stringify(corpus, null, 2)}\n`);
 writeFileSync(observatoryStatusPath, `${JSON.stringify(observatory, null, 2)}\n`);
+writeFileSync(inboxStatusPath, `${JSON.stringify(inboxStatus, null, 2)}\n`);
 mirrorFleetStatus();
 mirrorInsights();
 // Copy static passthrough files (e.g. Cloudflare Pages _headers) into public/ so they land in out/.

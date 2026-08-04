@@ -1,0 +1,65 @@
+{
+  "status": "done",
+  "packet_id": "ALPHA-03",
+  "run_id": "run-f612c35dc18771f4bcde5e85dfc4e161",
+  "lease_id": "lease-alpha-03-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "scripts/gates/_phase_probe.sh",
+    "scripts/gates/alpha.sh",
+    "scripts/gates/beta.sh",
+    "scripts/gates/gamma.sh",
+    "scripts/gates/delta.sh",
+    "scripts/gates/epsilon.sh",
+    "scripts/gates/zeta.sh",
+    "scripts/gates/eta.sh",
+    "scripts/gates/theta.sh",
+    "scripts/gates/iota.sh",
+    "scripts/gates/kappa.sh",
+    "scripts/gates/lambda.sh",
+    "scripts/gates/mu.sh",
+    "scripts/gates/nu.sh",
+    "scripts/gates/xi.sh",
+    "scripts/gates/omicron.sh",
+    "scripts/gates/pi.sh",
+    "scripts/gates/rho.sh",
+    "scripts/gates/sigma.sh",
+    "scripts/gates/tau.sh",
+    "scripts/gates/upsilon.sh",
+    "scripts/gates/phi.sh",
+    "scripts/gates/chi.sh",
+    "scripts/gates/psi.sh",
+    "scripts/gates/omega.sh",
+    "receipts/schema/packet-receipt.schema.json",
+    "receipts/schema/phase-receipt.schema.json",
+    "receipts/schema/omega-receipt.schema.json"
+  ],
+  "predicate": "./scripts/gates/packets/alpha-03.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "test -x scripts/gates/_phase_probe.sh",
+      "status": "pass"
+    },
+    {
+      "command": "for phase in scripts/gates/*.sh; do test -x \"$phase\"; done",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "Installed phase-gate skeleton scripts and receipt schema files for all 24 phases; proof artifacts are executable and discoverable."
+}

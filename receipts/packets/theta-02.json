@@ -1,0 +1,36 @@
+{
+  "status": "done",
+  "packet_id": "THETA-02",
+  "run_id": "run-6f9d4f7a-theta-02",
+  "lease_id": "lease-theta-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/search/src/index.ts",
+    "packages/search/tests/search.test.ts",
+    "receipts/packets/theta-02.json"
+  ],
+  "predicate": "./scripts/gates/packets/theta-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/theta-02.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "THETA-02 implements query parsing, filtering, ranking, result highlighting, and saved-search primitives on top of the policy-safe search index."
+}

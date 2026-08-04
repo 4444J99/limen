@@ -1,0 +1,42 @@
+{
+  "status": "done",
+  "packet_id": "ALPHA-02",
+  "run_id": "run-f612c35dc18771f4bcde5e85dfc4e160",
+  "lease_id": "lease-alpha-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "docs/product/founding-charter.md",
+    "docs/product/domain-vocabulary.md",
+    "docs/product/customer-journeys.md",
+    "docs/product/founding-plan-lineage.md",
+    "docs/architecture/platform-stack-and-boundaries.md",
+    "docs/security/threat-model.md",
+    "docs/adr/0001-private-partition-boundary.md",
+    "docs/adr/0002-type-safe-monorepo-stack.md",
+    "docs/adr/0003-synthetic-first-ingest-gate.md"
+  ],
+  "predicate": "./scripts/gates/packets/alpha-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/alpha-02.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "Ratified founding charter, architecture, ADRs, and threat model; documented immutable lineage."
+}

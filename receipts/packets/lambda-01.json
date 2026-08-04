@@ -1,0 +1,36 @@
+{
+  "status": "done",
+  "packet_id": "LAMBDA-01",
+  "run_id": "run-20260804-lambda-01",
+  "lease_id": "lease-lambda-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "observed_heads_after": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "changed_paths": [
+    "packages/policy/src/index.ts",
+    "packages/policy/tests/lambda-01.test.ts",
+    "packages/policy/package.json"
+  ],
+  "predicate": "./scripts/gates/packets/lambda-01.sh",
+  "checks": [
+    {
+      "command": "./scripts/gates/packets/lambda-01.sh",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 1,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "LAMBDA-01 defines portal capability levels (viewer/contributor/editor), projection input/output contracts, preview-only grant proposal receipts without invitation delivery, and projection filtering helpers that prevent owner-only and foreign-partition disclosure in projected rows, links, counts, navigation, and errors."
+}

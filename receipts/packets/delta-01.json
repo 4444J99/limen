@@ -1,0 +1,34 @@
+{
+  "status": "done",
+  "packet_id": "DELTA-01",
+  "run_id": "run-CEE3F28-delta-01",
+  "lease_id": "lease-delta-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "receipts/packets/delta-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/delta-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "python3 - <<'PY'\nimport base64\nimport json\nimport subprocess\nrepo = 'repos/organvm-iii-ergon/collaboration-operations-platform'\nrequired_files = [\n    'packages/contracts/package.json',\n    'packages/contracts/src/index.ts',\n    'packages/contracts/src/base.ts',\n    'packages/contracts/src/command.ts',\n    'packages/contracts/src/query.ts',\n    'packages/contracts/src/event.ts',\n    'packages/contracts/src/job.ts',\n    'packages/contracts/src/enums.ts',\n    'packages/contracts/README.md',\n    'packages/contracts/scripts/validate-contracts.mjs',\n    'packages/contracts/schemas/envelope.command.json',\n    'packages/contracts/schemas/envelope.query.json',\n    'packages/contracts/schemas/envelope.event.json',\n    'packages/contracts/schemas/receipt.json',\n    'packages/contracts/schemas/job.json',\n    'packages/contracts/schemas/problem.json',\n]\nfor path in required_files:\n    payload = subprocess.check_output(['gh', 'api', f'{repo}/contents/{path}'], text=True)\n    assert json.loads(payload).get('type') == 'file'\npackage_meta = json.loads(subprocess.check_output(['gh', 'api', f'{repo}/contents/packages/contracts/package.json'], text=True))\npackage_cfg = json.loads(base64.b64decode(package_meta['content']).decode('utf-8'))\nassert package_cfg.get('name') == '@collaboration-operations-platform/contracts'\nassert package_cfg.get('scripts', {}).get('validate') == 'node scripts/validate-contracts.mjs'\nrequired_schemas = {\n    'packages/contracts/schemas/envelope.command.json': 'CommandEnvelope',\n    'packages/contracts/schemas/envelope.query.json': 'QueryEnvelope',\n    'packages/contracts/schemas/envelope.event.json': 'EventEnvelope',\n    'packages/contracts/schemas/receipt.json': 'ReceiptEnvelope',\n    'packages/contracts/schemas/job.json': 'JobEnvelope',\n    'packages/contracts/schemas/problem.json': 'ProblemEnvelope',\n}\nfor path, expected in required_schemas.items():\n    data = json.loads(subprocess.check_output(['gh', 'api', f'{repo}/contents/{path}'], text=True))\n    schema = json.loads(base64.b64decode(data['content']).decode('utf-8'))\n    assert schema.get('title') == expected\n    assert schema.get('type') == 'object'\nindex_content = base64.b64decode(json.loads(subprocess.check_output(['gh', 'api', f'{repo}/contents/packages/contracts/src/index.ts'], text=True))['content']).decode('utf-8')\nfor anchor in ['base', 'command', 'query', 'event', 'job', 'enums']:\n    assert f\"from './{anchor}'\" in index_content\nprint('PASS: DELTA-01 contract scaffold exists with expected files and schema titles')\nPY",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "DELTA-01 introduced a contracts package with envelope/domain primitives, canonical schema artifacts, and a drift-check script."
+}

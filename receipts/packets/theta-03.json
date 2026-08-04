@@ -1,0 +1,36 @@
+{
+  "status": "done",
+  "packet_id": "THETA-03",
+  "run_id": "run-91b5b3d6-theta-03",
+  "lease_id": "lease-theta-03-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/search/src/index.ts",
+    "packages/search/tests/search.test.ts",
+    "receipts/packets/theta-03.json"
+  ],
+  "predicate": "./scripts/gates/packets/theta-03.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/theta-03.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "THETA-03 adds optional provider-neutral semantic retrieval behind a capability valve, stores versioned vector metadata with minimised embedding requests, and maintains exact-search fallback behavior for disabled providers, outages, removals, and stale embedding versions."
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@collaboration-operations-platform/api",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Backend API handlers for SCIM and Webhooks",
+  "main": "webhook.ts",
+  "types": "webhook.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/webhook.test.ts"
+  }
+}

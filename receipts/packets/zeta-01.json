@@ -1,0 +1,35 @@
+{
+  "status": "done",
+  "packet_id": "ZETA-01",
+  "run_id": "run-5f9c4d2a2a2e5f03-zeta-01",
+  "lease_id": "lease-zeta-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "packages/auth/oauth.ts",
+    "receipts/packets/zeta-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/zeta-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "./scripts/gates/packets/zeta-01.sh",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "ZETA-01 introduces vendor-neutral principal typing, secure session issuance/rotation/revocation with expiry, test-identity generation, and a separate authorization decision function over authentication claims in the auth provider."
+}

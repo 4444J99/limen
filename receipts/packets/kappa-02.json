@@ -1,0 +1,44 @@
+{
+  "status": "done",
+  "packet_id": "KAPPA-02",
+  "run_id": "run-20260804-kappa-02",
+  "lease_id": "lease-kappa-02-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "observed_heads_after": {
+    "local_main": "16b611a864e0950758c3ae99c961cb0cf1445be4"
+  },
+  "changed_paths": [
+    "web/app/app/inbox/page.tsx",
+    "web/app/app/inbox/inbox-surface-client.tsx",
+    "web/app/app/lib/data.ts",
+    "web/app/app/lib/inbox-model.ts",
+    "web/app/app/globals.css",
+    "web/app/app/surface-nav.tsx",
+    "receipts/packets/kappa-02.json"
+  ],
+  "predicate": "./scripts/gates/packets/kappa-02.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "npm --prefix web/app run validate:surfaces",
+      "status": "pass"
+    },
+    {
+      "command": "npm --prefix web/app run build",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 3,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "KAPPA-02 introduces owner inbox capture and capture-to-partition review workflows, including inbox nav wiring, static inbox status fixture generation, and confirm-before-move policies with export contract and surface validation updates."
+}

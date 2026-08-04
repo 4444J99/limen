@@ -1,0 +1,45 @@
+{
+  "status": "done",
+  "packet_id": "KAPPA-01",
+  "run_id": "run-20260804-kappa-01",
+  "lease_id": "lease-kappa-01-local",
+  "lease_generation": 1,
+  "executor": "codex",
+  "observed_heads_before": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "observed_heads_after": {
+    "local_main": "work/collaboration-operations-platform-alpha-omega-20260803"
+  },
+  "changed_paths": [
+    "web/app/app/client/client-surface-client.tsx",
+    "web/app/app/marketplace/marketplace-client.tsx",
+    "web/app/app/marketplace/page.tsx",
+    "web/app/app/public-surface.tsx",
+    "web/app/app/qa/qa-surface-client.tsx",
+    "web/app/app/surface-nav.tsx",
+    "web/app/scripts/validate-exported-pages.mjs",
+    "receipts/packets/kappa-01.json"
+  ],
+  "predicate": "./scripts/gates/packets/kappa-01.sh",
+  "checks": [
+    {
+      "command": "python3 scripts/check-collaboration-operations-plan.py",
+      "status": "pass"
+    },
+    {
+      "command": "npm --prefix web/app run validate:surfaces",
+      "status": "pass"
+    },
+    {
+      "command": "npm --prefix web/app run build",
+      "status": "pass"
+    }
+  ],
+  "spend": {
+    "commands": 0,
+    "tokens": 0,
+    "minutes": 0
+  },
+  "outcome": "KAPPA-01 defines the owner and client web architecture shell, shared surface navigation/state patterns, and exported page validation/runtime surfaces with partition-aware surfaces, permission-aware rendering, and static contract checks for public/owner/client paths."
+}
