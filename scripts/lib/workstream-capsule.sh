@@ -355,7 +355,7 @@ workstream_validate_launch_environment() {
   fi
   if git remote get-url origin >/dev/null 2>&1; then
     if ! GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
-      --timeout-seconds "$timeout_seconds" -- git ls-remote origin HEAD >/dev/null; then
+      --timeout-seconds "$timeout_seconds" -- git ls-remote origin HEAD >/dev/null 2>&1; then
       printf 'launch-environment error: configured remote origin is unavailable\n' >&2
       return 2
     fi

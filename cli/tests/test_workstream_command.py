@@ -1143,7 +1143,8 @@ def test_workstream_rejects_unavailable_github_before_admission(tmp_path: Path) 
     fake_git.write_text(
         (
             "#!/usr/bin/env bash\n"
-            'if [[ "${1:-}" == "ls-remote" && "${2:-}" == "origin" ]]; then exit 69; fi\n'
+            'if [[ "${1:-}" == "ls-remote" && "${2:-}" == "origin" ]]; then '
+            'printf "remote-output-must-not-escape\\n" >&2; exit 69; fi\n'
             'exec "$REAL_GIT" "$@"\n'
         ),
         encoding="utf-8",
@@ -1180,8 +1181,12 @@ def test_workstream_rejects_unavailable_github_before_admission(tmp_path: Path) 
     )
     assert rejected.returncode == 2
     assert "launch-environment error: configured remote origin is unavailable" in rejected.stderr
+    assert "remote-output-must-not-escape" not in rejected.stdout + rejected.stderr
     wt = repo / ".worktrees" / "unavailable-github"
     contract = wt / ".limen-workstream/workstream.json"
+    assert "git ls-remote origin HEAD > /dev/null 2>&1" in (wt / ".limen-workstream/kickstart.sh").read_text(
+        encoding="utf-8"
+    )
     assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
     assert not provider_marker.exists()
 
