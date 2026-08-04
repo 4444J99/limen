@@ -186,7 +186,6 @@ C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
 C_NOMENCLATOR="${LIMEN_BEAT_NOMENCLATOR:-4}"     # NOMENCLATOR (INDEX·NOMINVM — hold names to the naming canon)
 C_CENSOR="${LIMEN_BEAT_CENSOR:-4}"     # CENSOR (insights→actions; hourly/daily/weekly tiers self-gate on wall-clock)
 C_MAIL="${LIMEN_BEAT_MAIL:-6}"         # COMMS (sweep inbound mail + rebuild the obligations ledger/faces)
-C_DAILY_EXECUTION="${LIMEN_BEAT_DAILY_EXECUTION:-48}" # DAILY EXECUTION (unified professional comms/application pass)
 C_CONTINUATION="${LIMEN_BEAT_CONTINUATION:-6}" # KEEP GOING (reduction -> photos proof -> creative proxy -> reduction)
 C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits to once per usage-day)
 C_INSIGHT_CADENCE="${LIMEN_BEAT_INSIGHT_CADENCE:-4}" # INSIGHT-CADENCE (auto-reports on four tiers)
@@ -255,16 +254,6 @@ run_monitoring() {
   # (it flags/archives reversibly and writes its own ledger, never tasks.yaml; the send stays gated
   # by LIMEN_MAIL_SEND inside mail-beat.sh). Safe while paused for the same reason.
   play "$C_MAIL" && { bash "$LIMEN_ROOT/scripts/mail-beat.sh" 2>&1 | tail -3 || true; stamp mail; }
-}
-run_daily_execution() {
-  due_voice daily_execution "$C_DAILY_EXECUTION" || return 0
-  [ "${LIMEN_DAILY_EXECUTION:-1}" = "1" ] || return 0
-  daily_fire=()
-  [ "${LIMEN_DAILY_EXECUTION_FIRE:-0}" = "1" ] && daily_fire+=(--fire)
-  PYTHONPATH="$LIMEN_ROOT/cli/src${PYTHONPATH:+:$PYTHONPATH}" \
-    python3 -m limen.daily_execution --json --timeout "${LIMEN_DAILY_EXECUTION_TIMEOUT:-300}" "${daily_fire[@]}" \
-    2>&1 | tail -4 || true
-  stamp daily_execution
 }
 # SUBSTRATE COHERENCE — re-converge this checkout to the release. Extracted for the same reason
 # run_monitoring was: it must run from the live body AND from the paused branch above it.
@@ -455,12 +444,6 @@ while true; do
       sleep "$beat"
       continue
     fi
-
-    # DAILY EXECUTION — one bounded coordinator over the canonical mail, opportunity,
-    # correspondence, and application owners. It stages by default; the irreversible
-    # professional fire remains an explicit invocation/local lever. This is deliberately
-    # after the observe branch so a governor pause cannot create outbound work.
-    run_daily_execution
 
     # acquire the shared queue lock so the BODY never races a SUPERVISOR write to
     # tasks.yaml (two-scale safety). If a supervisor holds it, skip queue-mutation this

@@ -16,9 +16,10 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 LIFECYCLE_STATES = (
@@ -44,7 +45,47 @@ ALLOWED_TRANSITIONS = {
 }
 DAILY_APPLICATION_TARGET = 3
 RECEIPT_SCHEMA = "limen.daily_execution.v1"
-DEFAULT_TIMEOUT_SECONDS = 300
+DEFAULT_TIMEOUT_SECONDS = 1800
+LOCAL_DATE_ENV = "LIMEN_DAILY_EXECUTION_TIMEZONE"
+DELIVERY_RECEIPT_ENV = "LIMEN_DELIVERY_RECEIPTS"
+OUTBOUND_ENV_NAMES = {
+    "LIMEN_APPLY_FIRE",
+    "LIMEN_CORRESPONDENCE_FIRE",
+    "LIMEN_LINKEDIN_FIRE",
+    "LIMEN_MAIL_SEND",
+}
+
+
+def _stable_id(prefix: str, *values: object) -> str:
+    """Build a deterministic, PII-safe record identifier."""
+
+    material = "\x1f".join(str(value) for value in values).encode("utf-8")
+    return f"{prefix}_{hashlib.sha256(material).hexdigest()[:24]}"
+
+
+def _local_zone() -> Any:
+    configured = os.environ.get(LOCAL_DATE_ENV, "").strip()
+    if configured:
+        try:
+            return ZoneInfo(configured)
+        except ZoneInfoNotFoundError:
+            pass
+    return datetime.now().astimezone().tzinfo or timezone.utc
+
+
+def _local_date(value: str | datetime | None = None) -> date:
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return datetime.now(_local_zone()).date()
+    elif isinstance(value, datetime):
+        parsed = value
+    else:
+        parsed = datetime.now(timezone.utc)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(_local_zone()).date()
 
 
 def _text(value: Any, field_name: str, *, required: bool = True) -> str:
@@ -71,10 +112,51 @@ def _list(value: Any, field_name: str) -> list[str]:
     return list(value)
 
 
+def _evidence_list(value: Any, field_name: str) -> list[str | dict[str, Any]]:
+    """Validate redacted evidence references while preserving exact bindings."""
+    if not isinstance(value, list) or any(not isinstance(item, (str, dict)) for item in value):
+        raise ValueError(f"{field_name} must be a list of strings or objects")
+    return [dict(item) if isinstance(item, dict) else item for item in value]
+
+
 def _state(value: Any, field_name: str = "state") -> str:
     if value not in LIFECYCLE_STATES:
         raise ValueError(f"{field_name} must be one of {', '.join(LIFECYCLE_STATES)}")
     return str(value)
+
+
+def _coalesce(value: Mapping[str, Any], *names: str, default: Any = None) -> Any:
+    for name in names:
+        if name in value:
+            return value[name]
+    return default
+
+
+def _confirmation_reference(value: Any, exact_target: str) -> bool:
+    """Accept only portal/mailbox evidence tied to the receipt's target.
+
+    Provider adapters may keep the target binding private, so a redacted reference
+    such as ``portal:<opaque-id>`` is sufficient in the public shape. Generic
+    labels (``submitted``, ``accepted``, a filled form, or an SMTP response) are
+    deliberately not confirmation evidence.
+    """
+
+    if isinstance(value, Mapping):
+        kind = str(value.get("kind") or value.get("source") or "").lower()
+        target = value.get("exact_target") or value.get("target") or value.get("role")
+        return kind in {"portal", "mailbox"} and (not target or str(target) == exact_target)
+    if not isinstance(value, str):
+        return False
+    normalized = value.strip().lower()
+    return normalized.startswith(("portal:", "mailbox:", "sent-mail:")) and normalized not in {
+        "portal:submitted",
+        "portal:filled",
+        "portal:template",
+        "mailbox:submitted",
+        "mailbox:accepted",
+        "sent-mail:submitted",
+        "sent-mail:accepted",
+    }
 
 
 @dataclass(frozen=True)
@@ -91,6 +173,9 @@ class InteractionEventV1:
     observation_receipt: str | dict[str, Any] = ""
     state: str = "observed"
     schema: str = "limen.interaction_event.v1"
+    record_id: str = ""
+    run_id: str = ""
+    obligation_id: str = ""
 
     def __post_init__(self) -> None:
         _text(self.source, "source")
@@ -102,9 +187,24 @@ class InteractionEventV1:
         _list(self.attachments, "attachments")
         if not isinstance(self.observation_receipt, (str, dict)):
             raise ValueError("observation_receipt must be a string or object")
+        if not self.observation_receipt:
+            raise ValueError("observation_receipt is required")
         _state(self.state)
         if self.state != "observed":
             raise ValueError("an InteractionEventV1 is created in observed state")
+        if not self.record_id:
+            object.__setattr__(
+                self,
+                "record_id",
+                _stable_id(
+                    "interaction",
+                    self.source,
+                    self.account,
+                    self.thread,
+                    self.timestamp,
+                    self.content_ref,
+                ),
+            )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -114,10 +214,15 @@ class InteractionEventV1:
             "thread": self.thread,
             "participants": list(self.participants),
             "timestamp": self.timestamp,
+            "time": self.timestamp,
             "content_ref": self.content_ref,
+            "content_reference": self.content_ref,
             "attachments": list(self.attachments),
             "observation_receipt": self.observation_receipt,
             "state": self.state,
+            "record_id": self.record_id,
+            "run_id": self.run_id,
+            "obligation_id": self.obligation_id,
         }
 
     @classmethod
@@ -134,6 +239,9 @@ class InteractionEventV1:
             attachments=_list(value.get("attachments", []), "attachments"),
             observation_receipt=value.get("observation_receipt", ""),
             state=value.get("state", "observed"),
+            record_id=str(value.get("record_id", "")),
+            run_id=str(value.get("run_id", "")),
+            obligation_id=str(value.get("obligation_id", "")),
         )
 
 
@@ -144,11 +252,15 @@ class ObligationV1:
     evidence_links: list[str]
     required_action: str
     recipient_target: str
-    due_at: str | None
+    due_at: str
     risk_class: str
     owner: str
     state: str = "observed"
     schema: str = "limen.obligation.v1"
+    record_id: str = ""
+    not_before: str | None = None
+    prerequisite_receipts: list[str] = field(default_factory=list)
+    run_id: str = ""
 
     def __post_init__(self) -> None:
         _list(self.evidence_links, "evidence_links")
@@ -156,11 +268,26 @@ class ObligationV1:
             raise ValueError("evidence_links must not be empty")
         _text(self.required_action, "required_action")
         _text(self.recipient_target, "recipient_target")
-        if self.due_at is not None:
-            _text(self.due_at, "due_at")
+        _text(self.due_at, "due_at")
         _text(self.risk_class, "risk_class")
         _text(self.owner, "owner")
         _state(self.state)
+        if self.not_before is not None:
+            _text(self.not_before, "not_before")
+        _list(self.prerequisite_receipts, "prerequisite_receipts")
+        if not self.record_id:
+            object.__setattr__(
+                self,
+                "record_id",
+                _stable_id(
+                    "obligation",
+                    *self.evidence_links,
+                    self.required_action,
+                    self.recipient_target,
+                    self.due_at,
+                    self.owner,
+                ),
+            )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -172,6 +299,17 @@ class ObligationV1:
             "risk_class": self.risk_class,
             "owner": self.owner,
             "state": self.state,
+            "record_id": self.record_id,
+            "not_before": self.not_before,
+            "prerequisite_receipts": list(self.prerequisite_receipts),
+            "run_id": self.run_id,
+            # Canonical short names are included for owner adapters that do not
+            # use Limen's compatibility names.
+            "evidence": list(self.evidence_links),
+            "action": self.required_action,
+            "target": self.recipient_target,
+            "due": self.due_at,
+            "risk": self.risk_class,
         }
 
     @classmethod
@@ -179,13 +317,17 @@ class ObligationV1:
         if value.get("schema", cls.schema) != cls.schema:
             raise ValueError("unsupported ObligationV1 schema")
         return cls(
-            evidence_links=_list(value.get("evidence_links"), "evidence_links"),
-            required_action=_required(value.get("required_action"), "required_action"),
-            recipient_target=_required(value.get("recipient_target"), "recipient_target"),
-            due_at=value.get("due_at"),
-            risk_class=_required(value.get("risk_class"), "risk_class"),
+            evidence_links=_list(_coalesce(value, "evidence_links", "evidence"), "evidence_links"),
+            required_action=_required(_coalesce(value, "required_action", "action"), "required_action"),
+            recipient_target=_required(_coalesce(value, "recipient_target", "target"), "recipient_target"),
+            due_at=_required(_coalesce(value, "due_at", "due"), "due_at"),
+            risk_class=_required(_coalesce(value, "risk_class", "risk"), "risk_class"),
             owner=_required(value.get("owner"), "owner"),
             state=value.get("state", "observed"),
+            record_id=str(value.get("record_id", "")),
+            not_before=value.get("not_before"),
+            prerequisite_receipts=_list(value.get("prerequisite_receipts", []), "prerequisite_receipts"),
+            run_id=str(value.get("run_id", "")),
         )
 
 
@@ -197,10 +339,15 @@ class DeliveryReceiptV1:
     attempted_action: str
     provider_response: str | dict[str, Any]
     timestamp: str
-    confirmation_evidence: list[str]
+    confirmation_evidence: list[str | dict[str, Any]]
     failure_category: str | None = None
     state: str = "attempted"
     schema: str = "limen.delivery_receipt.v1"
+    provider: str = "unknown"
+    account: str = "unknown"
+    run_id: str = ""
+    obligation_id: str = ""
+    receipt_id: str = ""
 
     def __post_init__(self) -> None:
         _text(self.exact_target, "exact_target")
@@ -211,22 +358,63 @@ class DeliveryReceiptV1:
         _list(self.confirmation_evidence, "confirmation_evidence")
         if self.failure_category is not None:
             _text(self.failure_category, "failure_category")
+        _text(self.provider, "provider")
+        _text(self.account, "account")
+        if self.run_id:
+            _text(self.run_id, "run_id")
+        if self.obligation_id:
+            _text(self.obligation_id, "obligation_id")
         _state(self.state)
-        if self.state == "confirmed" and not self.confirmation_evidence:
+        if self.state == "confirmed" and not any(
+            _confirmation_reference(item, self.exact_target) for item in self.confirmation_evidence
+        ):
             raise ValueError("confirmed delivery requires confirmation_evidence")
         if self.state == "blocked" and not self.failure_category:
             raise ValueError("blocked delivery requires failure_category")
+        if self.provider.lower() == "unknown":
+            raise ValueError("provider is required")
+        if self.account.lower() == "unknown":
+            raise ValueError("account is required")
+        if not self.run_id:
+            raise ValueError("run_id is required")
+        if not self.obligation_id:
+            raise ValueError("obligation_id is required")
+        if not self.receipt_id:
+            object.__setattr__(
+                self,
+                "receipt_id",
+                _stable_id(
+                    "delivery",
+                    self.provider,
+                    self.account,
+                    self.exact_target,
+                    self.attempted_action,
+                    self.timestamp,
+                    self.run_id,
+                    self.obligation_id,
+                ),
+            )
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "schema": self.schema,
             "exact_target": self.exact_target,
             "attempted_action": self.attempted_action,
+            "action": self.attempted_action,
             "provider_response": self.provider_response,
+            "response": self.provider_response,
             "timestamp": self.timestamp,
+            "time": self.timestamp,
             "confirmation_evidence": list(self.confirmation_evidence),
+            "evidence": list(self.confirmation_evidence),
             "failure_category": self.failure_category,
+            "failure": self.failure_category,
             "state": self.state,
+            "provider": self.provider,
+            "account": self.account,
+            "run_id": self.run_id,
+            "obligation_id": self.obligation_id,
+            "receipt_id": self.receipt_id,
         }
 
     @classmethod
@@ -234,13 +422,20 @@ class DeliveryReceiptV1:
         if value.get("schema", cls.schema) != cls.schema:
             raise ValueError("unsupported DeliveryReceiptV1 schema")
         return cls(
-            exact_target=_required(value.get("exact_target"), "exact_target"),
-            attempted_action=_required(value.get("attempted_action"), "attempted_action"),
-            provider_response=_string_or_object(value.get("provider_response"), "provider_response"),
-            timestamp=_required(value.get("timestamp"), "timestamp"),
-            confirmation_evidence=_list(value.get("confirmation_evidence", []), "confirmation_evidence"),
-            failure_category=value.get("failure_category"),
+            exact_target=_required(_coalesce(value, "exact_target", "target"), "exact_target"),
+            attempted_action=_required(_coalesce(value, "attempted_action", "action"), "attempted_action"),
+            provider_response=_string_or_object(_coalesce(value, "provider_response", "response"), "provider_response"),
+            timestamp=_required(_coalesce(value, "timestamp", "time"), "timestamp"),
+            confirmation_evidence=_evidence_list(
+                _coalesce(value, "confirmation_evidence", "evidence", default=[]), "confirmation_evidence"
+            ),
+            failure_category=_coalesce(value, "failure_category", "failure"),
             state=value.get("state", "attempted"),
+            provider=_required(value.get("provider", "unknown"), "provider"),
+            account=_required(value.get("account", "unknown"), "account"),
+            run_id=str(value.get("run_id", "")),
+            obligation_id=str(value.get("obligation_id", "")),
+            receipt_id=str(value.get("receipt_id", "")),
         )
 
 
@@ -266,10 +461,14 @@ def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _run_id(root: Path, fire: bool) -> str:
-    day = datetime.now(timezone.utc).date().isoformat()
-    material = f"{root.resolve()}|{day}|{'fire' if fire else 'stage'}".encode()
-    return hashlib.sha256(material).hexdigest()[:20]
+def _run_id(root: Path) -> str:
+    """Return one stable run identity for the local calendar day.
+
+    Dry and fire invocations deliberately share this identity.  A fire retry
+    resumes the staged run instead of creating a second application day.
+    """
+
+    return _stable_id("daily", root.resolve(), _local_date().isoformat())
 
 
 def _safe_tail(value: str, limit: int = 240) -> str:
@@ -282,6 +481,12 @@ def _safe_tail(value: str, limit: int = 240) -> str:
 
 
 def _parse_json_output(stdout: str) -> dict[str, Any]:
+    try:
+        value = json.loads(stdout)
+        if isinstance(value, dict):
+            return value
+    except json.JSONDecodeError:
+        pass
     for line in reversed(stdout.splitlines()):
         try:
             value = json.loads(line)
@@ -293,7 +498,11 @@ def _parse_json_output(stdout: str) -> dict[str, Any]:
 
 
 def _redact_step_summary(name: str, value: Mapping[str, Any]) -> dict[str, Any]:
-    """Keep only count/state fields from existing owners' machine output."""
+    """Keep count/state fields from existing owners' machine output.
+
+    Provider IDs and role names stay in the owner receipt ledger.  The daily
+    report carries only counts and safe lifecycle categories.
+    """
 
     def integer(key: str) -> int:
         try:
@@ -302,10 +511,15 @@ def _redact_step_summary(name: str, value: Mapping[str, Any]) -> dict[str, Any]:
             return 0
 
     if name == "applications":
-        return {
-            key: integer(key)
-            for key in ("sourced", "qualified", "staged", "submitted")
-        } | {key: bool(value.get(key, False)) for key in ("armed", "launched")}
+        summary = {
+            key: integer(key) for key in ("sourced", "qualified", "staged", "submitted", "attempted", "confirmed")
+        } | {key: bool(value.get(key, False)) for key in ("armed", "launched", "cycle_completed", "retry_locked")}
+        for key in ("ambiguous", "blocked", "superseded"):
+            summary[key] = integer(key)
+        notes = value.get("notes")
+        if isinstance(notes, list):
+            summary["notes"] = ["owner note suppressed" for note in notes if note]
+        return summary
     if name == "followups":
         dispositions = value.get("by_disposition")
         safe_dispositions: dict[str, int] = {}
@@ -320,13 +534,15 @@ def _redact_step_summary(name: str, value: Mapping[str, Any]) -> dict[str, Any]:
             "by_disposition": safe_dispositions,
             "fixed_point": bool(value.get("fixed_point", False)),
             "uma_available": bool(value.get("uma_available", False)),
+            "attempted": integer("attempted"),
+            "delivered": integer("delivered"),
+            "confirmed": integer("confirmed"),
+            "blocked": integer("blocked"),
+            "superseded": integer("superseded"),
+            "retry_locked": bool(value.get("retry_locked", False)),
         }
     # Opportunity review is count-only by contract; still retain only scalar counts.
-    return {
-        str(key): int(raw)
-        for key, raw in value.items()
-        if isinstance(key, str) and isinstance(raw, (int, float))
-    }
+    return {str(key): int(raw) for key, raw in value.items() if isinstance(key, str) and isinstance(raw, (int, float))}
 
 
 def _run_step(
@@ -381,26 +597,36 @@ def _load_json(path: Path) -> Any:
         return None
 
 
-def _confirmation_receipts() -> list[dict[str, Any]]:
-    configured = os.environ.get("LIMEN_APPLICATION_CONFIRMATION_RECEIPT") or os.environ.get(
-        "LIMEN_APPLICATION_RECEIPTS"
-    )
+def _canonical_delivery_rows() -> list[dict[str, Any]]:
+    """Read the one provider-owned delivery ledger.
+
+    Older application-specific environment variables are intentionally not
+    accepted.  A receipt is useful to the coordinator only when it is a
+    valid DeliveryReceiptV1; labels and templates are not upgraded here.
+    """
+
+    configured = os.environ.get(DELIVERY_RECEIPT_ENV)
     if not configured:
         return []
     value = _load_json(Path(configured).expanduser())
     if isinstance(value, dict):
-        value = value.get("receipts") or value.get("applications") or []
+        value = value.get("receipts") or []
     if not isinstance(value, list):
         return []
-    confirmed: list[dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
     for row in value:
         if not isinstance(row, dict):
             continue
-        state = str(row.get("state") or row.get("status") or "").lower()
-        evidence = row.get("confirmation_evidence") or row.get("evidence") or []
-        if state in {"confirmed", "portal_confirmed", "mailbox_confirmed"} and evidence:
-            confirmed.append(row)
-    return confirmed
+        try:
+            receipt = DeliveryReceiptV1.from_dict(row)
+        except (TypeError, ValueError):
+            continue
+        if receipt.receipt_id in seen:
+            continue
+        seen.add(receipt.receipt_id)
+        rows.append(receipt.as_dict())
+    return rows
 
 
 def _application_pipeline_census() -> dict[str, Any]:
@@ -450,8 +676,10 @@ def _application_pipeline_census() -> dict[str, Any]:
         submission_value = row.get("submission")
         if isinstance(submission_value, dict):
             submission = submission_value
-        evidence = submission.get("confirmation_evidence") or submission.get("portal_confirmation") or submission.get(
-            "mailbox_confirmation"
+        evidence = (
+            submission.get("confirmation_evidence")
+            or submission.get("portal_confirmation")
+            or submission.get("mailbox_confirmation")
         )
         if str(row.get("status", "")).lower() == "confirmed" and evidence:
             confirmed += 1
@@ -463,16 +691,45 @@ def _application_pipeline_census() -> dict[str, Any]:
     }
 
 
-def _application_summary(application_step: Mapping[str, Any]) -> dict[str, Any]:
+def _is_application_action(action: str) -> bool:
+    normalized = action.lower()
+    return any(token in normalized for token in ("application", "apply", "ats", "submit"))
+
+
+def _is_followup_action(action: str) -> bool:
+    normalized = action.lower()
+    return any(token in normalized for token in ("email", "mail", "linkedin", "follow-up", "followup"))
+
+
+def _current_receipts(rows: Sequence[Mapping[str, Any]], run_id: str) -> list[dict[str, Any]]:
+    today = _local_date().isoformat()
+    return [
+        dict(row)
+        for row in rows
+        if str(row.get("run_id", "")) == run_id and _local_date(str(row.get("timestamp", ""))).isoformat() == today
+    ]
+
+
+def _application_summary(
+    application_step: Mapping[str, Any],
+    *,
+    run_id: str,
+    delivery_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
     summary = application_step.get("summary")
     if not isinstance(summary, dict):
         summary = {}
     qualified = int(summary.get("qualified", 0) or 0)
     staged = int(summary.get("staged", 0) or 0)
     submitted = int(summary.get("submitted", 0) or 0)
-    confirmed_rows = _confirmation_receipts()
+    current_rows = [
+        row
+        for row in _current_receipts(delivery_rows, run_id)
+        if _is_application_action(str(row.get("attempted_action", "")))
+    ]
+    confirmed_rows = [row for row in current_rows if row.get("state") == "confirmed"]
     pipeline_census = _application_pipeline_census()
-    confirmed = len(confirmed_rows) + int(pipeline_census["confirmed"])
+    confirmed = len(confirmed_rows)
     eligible = max(qualified, staged)
     shortage_reason: str | None
     if eligible < DAILY_APPLICATION_TARGET:
@@ -482,8 +739,14 @@ def _application_summary(application_step: Mapping[str, Any]) -> dict[str, Any]:
         shortage = max(0, DAILY_APPLICATION_TARGET - confirmed)
         shortage_reason = "provider confirmation evidence is below the daily target" if shortage else None
     blockers: list[str] = []
-    if submitted and not confirmed:
+    attempted = sum(1 for row in current_rows if row.get("state") in {"attempted", "delivered"})
+    ambiguous = sum(1 for row in current_rows if row.get("state") == "attempted")
+    blocked_receipts = sum(1 for row in current_rows if row.get("state") == "blocked")
+    superseded = sum(1 for row in current_rows if row.get("state") == "superseded")
+    if (submitted or attempted) and not confirmed:
         blockers.append("application engine reported submitted, but no portal/mailbox confirmation receipt was found")
+    if ambiguous:
+        blockers.append("ambiguous application attempts are retry-locked until provider state is reconciled")
     if summary.get("notes"):
         blockers.append("application pipeline reported an owner/runtime note")
     if shortage and shortage_reason:
@@ -493,6 +756,10 @@ def _application_summary(application_step: Mapping[str, Any]) -> dict[str, Any]:
         "eligible": eligible,
         "staged": staged,
         "submitted": submitted,
+        "attempted": attempted,
+        "ambiguous": ambiguous,
+        "blocked": blocked_receipts,
+        "superseded": superseded,
         "confirmed": confirmed,
         "shortage": shortage,
         "shortage_reason": shortage_reason,
@@ -501,23 +768,36 @@ def _application_summary(application_step: Mapping[str, Any]) -> dict[str, Any]:
             {
                 "state": "confirmed",
                 "evidence_count": len(row.get("confirmation_evidence") or row.get("evidence") or []),
+                "receipt_id": row.get("receipt_id", ""),
             }
             for row in confirmed_rows
         ],
         "historical_reconciliation": pipeline_census,
+        "current_receipt_count": len(current_rows),
     }
 
 
-def _followup_summary(followup_step: Mapping[str, Any]) -> dict[str, Any]:
+def _followup_summary(
+    followup_step: Mapping[str, Any],
+    *,
+    run_id: str,
+    delivery_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
     summary = followup_step.get("summary")
     if not isinstance(summary, dict):
         summary = {}
     by_disposition = summary.get("by_disposition")
     if not isinstance(by_disposition, dict):
         by_disposition = {}
-    confirmed = int(by_disposition.get("sent", 0) or 0) + int(by_disposition.get("awaiting-them", 0) or 0)
+    current_rows = [
+        row
+        for row in _current_receipts(delivery_rows, run_id)
+        if _is_followup_action(str(row.get("attempted_action", "")))
+    ]
+    confirmed = sum(1 for row in current_rows if row.get("state") == "confirmed")
     blocked = int(by_disposition.get("held", 0) or 0) + int(by_disposition.get("needs-human", 0) or 0)
     blocked += int(summary.get("non_terminal", 0) or 0)
+    blocked += sum(1 for row in current_rows if row.get("state") == "blocked")
     return {
         "due": int(summary.get("reply_owed", 0) or 0),
         "confirmed": confirmed,
@@ -525,6 +805,11 @@ def _followup_summary(followup_step: Mapping[str, Any]) -> dict[str, Any]:
         "by_disposition": {str(k): int(v or 0) for k, v in by_disposition.items()},
         "fixed_point": bool(summary.get("fixed_point", False)),
         "provider_evidence": bool(summary.get("uma_available", False)),
+        "attempted": sum(1 for row in current_rows if row.get("state") in {"attempted", "delivered"}),
+        "delivered": sum(1 for row in current_rows if row.get("state") == "delivered"),
+        "receipt_count": len(current_rows),
+        "superseded": sum(1 for row in current_rows if row.get("state") == "superseded"),
+        "retry_locked": any(row.get("state") == "attempted" for row in current_rows),
     }
 
 
@@ -536,25 +821,60 @@ def _provider_delivery_receipts() -> list[dict[str, Any]]:
     provider receipt ledger into the daily report with ``LIMEN_DELIVERY_RECEIPTS``.
     """
 
-    configured = os.environ.get("LIMEN_DELIVERY_RECEIPTS")
-    if not configured:
-        return []
-    value = _load_json(Path(configured).expanduser())
-    if isinstance(value, dict):
-        value = value.get("receipts") or []
-    if not isinstance(value, list):
-        return []
-    receipts: list[dict[str, Any]] = []
-    for row in value:
-        if not isinstance(row, dict):
-            continue
-        try:
-            receipt = DeliveryReceiptV1.from_dict(row)
-        except (TypeError, ValueError):
-            continue
-        if receipt.state in {"delivered", "confirmed", "blocked", "superseded"}:
-            receipts.append(receipt.as_dict())
-    return receipts
+    return _canonical_delivery_rows()
+
+
+def _stage_env(repo_root: Path, fire: bool, owner: str, run_id: str) -> dict[str, str]:
+    """Give each owner only the valve it can exercise.
+
+    In particular, ingestion and reconciliation do not inherit a send arm from
+    the daemon's environment.  This is an allow-list, not a set-to-zero
+    convention, so a provider cannot accidentally interpret a new variable.
+    """
+
+    env = {key: value for key, value in os.environ.items() if key not in OUTBOUND_ENV_NAMES}
+    env["LIMEN_ROOT"] = str(repo_root)
+    env["LIMEN_DAILY_RUN_ID"] = run_id
+    if owner == "application":
+        env["LIMEN_APPLY_FIRE"] = "1" if fire else "0"
+    elif owner == "followup":
+        env["LIMEN_CORRESPONDENCE_FIRE"] = "1" if fire else "0"
+        env["LIMEN_LINKEDIN_FIRE"] = "1" if fire else "0"
+        env["LIMEN_MAIL_SEND"] = "1" if fire else "0"
+    return env
+
+
+def _internal_stage(name: str, *, delivery_rows: Sequence[Mapping[str, Any]], run_id: str) -> dict[str, Any]:
+    current = _current_receipts(delivery_rows, run_id)
+    historical = [row for row in delivery_rows if row not in current]
+    return {
+        "name": name,
+        "status": "completed",
+        "returncode": 0,
+        "failure_category": None,
+        "summary": {
+            "current_receipts": len(current),
+            "historical_receipts": len(historical),
+            "historical_confirmed": sum(1 for row in historical if row.get("state") == "confirmed"),
+        }
+        if name.startswith("provider_reconcile")
+        else {"voice_reviewed": 0, "factual_reviewed": 0, "judgment": "no_outbound_prose"},
+    }
+
+
+def _checkpoint_reusable(checkpoint: Mapping[str, Any], *, owner: str, fire: bool) -> bool:
+    if checkpoint.get("status") != "completed":
+        return bool(checkpoint.get("retry_locked"))
+    if owner in {"application", "followup"}:
+        return bool(checkpoint.get("fire", False)) or not fire
+    return True
+
+
+def _write_receipt(path: Path, result: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
 
 
 def run_daily_execution(
@@ -565,89 +885,168 @@ def run_daily_execution(
     step_runner: Callable[..., dict[str, Any]] | None = None,
     write_receipt: bool = True,
 ) -> dict[str, Any]:
-    """Run the existing daily owners once and return a PII-clean bounded receipt.
+    """Run one persisted, resumable local-calendar-day execution.
 
-    ``fire`` is an invocation-local valve. It never persists credentials or arms a
-    global environment file. With the valve off, applications stage and follow-ups
-    remain drafts/holds. The coordinator still performs the same idempotent reads
-    and reconciliation so a dry run is useful evidence.
+    Successful stage checkpoints are reused on retry.  A later fire invocation
+    may resume a dry run, but it gets a fresh checkpoint for each outbound owner;
+    an already-attempted or ambiguous outbound checkpoint remains retry-locked.
     """
 
     repo_root = (root or _root_from_env()).expanduser().resolve()
-    started_at = _now()
-    run_id = _run_id(repo_root, fire)
-    env = dict(os.environ)
-    env.update(
-        {
-            "LIMEN_ROOT": str(repo_root),
-            "LIMEN_APPLY_FIRE": "1" if fire else "0",
-            "LIMEN_CORRESPONDENCE_FIRE": "1" if fire else "0",
-            "LIMEN_MAIL_SEND": "1" if fire else "0",
+    path = _receipt_path()
+    run_id = _run_id(repo_root)
+    prior = _load_json(path) if write_receipt else None
+    if isinstance(prior, dict) and prior.get("run_id") == run_id:
+        prior_fire = bool(prior.get("fire", False))
+        if prior.get("status") == "confirmed" and (prior_fire or not fire):
+            return prior
+
+    started_at = str(prior.get("started_at")) if isinstance(prior, dict) and prior.get("started_at") else _now()
+    checkpoints: dict[str, dict[str, Any]] = {}
+    if isinstance(prior, dict) and isinstance(prior.get("stage_checkpoints"), dict):
+        checkpoints = {
+            str(name): dict(value) for name, value in prior["stage_checkpoints"].items() if isinstance(value, dict)
         }
-    )
+
     script = repo_root / "scripts"
     runner = step_runner or _run_step
-
-    steps: list[dict[str, Any]] = []
-    commands = (
-        ("ingest", ["bash", str(script / "mail-beat.sh")]),
-        ("opportunities", [sys.executable, str(script / "opportunity-review-delta.py"), "--json"]),
-        ("applications", [sys.executable, str(script / "application-funnel.py"), "--json"]),
-        ("followups", [sys.executable, str(script / "correspondence-walk.py"), "--drain", "--json"]),
+    timeout = max(1, min(int(timeout_seconds), DEFAULT_TIMEOUT_SECONDS))
+    stage_specs: tuple[tuple[str, Sequence[str], str], ...] = (
+        ("ingest", ("bash", str(script / "mail-beat.sh")), "read"),
+        # The opportunity owner is also the obligations derivation owner.  Keep
+        # its historical command name in the receipt for compatibility.
+        ("opportunities", (sys.executable, str(script / "opportunity-review-delta.py"), "--json"), "read"),
+        (
+            "applications",
+            (sys.executable, str(script / "application-funnel.py"), "--json", "--wait"),
+            "application",
+        ),
+        ("voice_checks", None, "read"),
+        ("application_confirmation", None, "read"),
+        (
+            "followups",
+            (sys.executable, str(script / "correspondence-walk.py"), "--drain", "--json"),
+            "followup",
+        ),
     )
-    for name, args in commands:
-        result = runner(
-            name=name,
-            args=args,
-            env=env,
-            cwd=repo_root,
-            timeout_seconds=max(1, min(int(timeout_seconds), 1800)),
-        )
-        steps.append(result)
 
-    application_step = next((step for step in steps if step.get("name") == "applications"), {})
-    followup_step = next((step for step in steps if step.get("name") == "followups"), {})
-    applications = _application_summary(application_step)
-    followups = _followup_summary(followup_step)
-    timestamp = _now()
+    logical_stage_order = [
+        "ingest_transcribe",
+        "provider_reconcile_before",
+        "derive_obligations",
+        "source_rank_evidence",
+        "voice_factual_checks",
+        "confirm_applications",
+        "settle_professional_followups",
+        "provider_reconcile_after",
+    ]
+    if "provider_reconcile_before" not in checkpoints:
+        checkpoints["provider_reconcile_before"] = _internal_stage(
+            "provider_reconcile_before", delivery_rows=_provider_delivery_receipts(), run_id=run_id
+        )
+
+    for name, args, owner in stage_specs:
+        existing = checkpoints.get(name)
+        if existing is not None and _checkpoint_reusable(existing, owner=owner, fire=fire):
+            continue
+        if args is None:
+            delivery_rows = _provider_delivery_receipts()
+            result = _internal_stage(name, delivery_rows=delivery_rows, run_id=run_id)
+        else:
+            result = runner(
+                name=name,
+                args=list(args),
+                env=_stage_env(repo_root, fire, owner, run_id),
+                cwd=repo_root,
+                timeout_seconds=timeout,
+            )
+        result = dict(result)
+        result["name"] = name
+        result["fire"] = bool(fire) if owner in {"application", "followup"} else False
+        if result.get("status") == "blocked" and owner in {"application", "followup"}:
+            result["retry_locked"] = bool(
+                result.get("ambiguous")
+                or result.get("summary", {}).get("ambiguous")
+                or result.get("summary", {}).get("retry_locked")
+            )
+        checkpoints[name] = result
+
+    delivery_rows = _provider_delivery_receipts()
+    if "voice_checks" not in checkpoints:
+        checkpoints["voice_checks"] = {
+            "name": "voice_checks",
+            "status": "completed",
+            "returncode": 0,
+            "failure_category": None,
+            "summary": {"voice_reviewed": 0, "factual_reviewed": 0, "judgment": "no_outbound_prose"},
+            "fire": False,
+        }
+    if "application_confirmation" not in checkpoints:
+        checkpoints["application_confirmation"] = {
+            "name": "application_confirmation",
+            "status": "completed",
+            "returncode": 0,
+            "failure_category": None,
+            "summary": {"target": DAILY_APPLICATION_TARGET},
+            "fire": False,
+        }
+    if "provider_reconcile_after" not in checkpoints:
+        checkpoints["provider_reconcile_after"] = _internal_stage(
+            "provider_reconcile_after", delivery_rows=delivery_rows, run_id=run_id
+        )
+    steps = [checkpoints[name] for name, _, _ in stage_specs if name in checkpoints]
+    application_step = checkpoints.get("applications", {})
+    followup_step = checkpoints.get("followups", {})
+    applications = _application_summary(application_step, run_id=run_id, delivery_rows=delivery_rows)
+    followups = _followup_summary(followup_step, run_id=run_id, delivery_rows=delivery_rows)
     blockers = list(applications["blockers"])
     blockers.extend(
         f"{step.get('name', 'unknown')} stage blocked: {step.get('failure_category', 'unknown')}"
         for step in steps
-        if step.get("status") == "blocked"
+        if step.get("status") == "blocked" and not step.get("retry_locked")
+    )
+    blockers.extend(
+        f"{step.get('name', 'unknown')} remains retry-locked pending provider reconciliation"
+        for step in steps
+        if step.get("retry_locked")
     )
     blockers.extend(
         [
-            "professional follow-up reconciliation is not at a fixed point"
-            if not followups["fixed_point"]
-            else "",
+            "professional follow-up reconciliation is not at a fixed point" if not followups["fixed_point"] else "",
             "follow-up provider evidence unavailable"
             if followups["due"] and not followups["provider_evidence"]
             else "",
         ]
     )
-    blockers = [blocker for blocker in blockers if blocker]
-    receipts = _provider_delivery_receipts()
-    result = {
+    blockers = list(dict.fromkeys(blocker for blocker in blockers if blocker))
+    current_rows = _current_receipts(delivery_rows, run_id)
+    historical_rows = [row for row in delivery_rows if row not in current_rows]
+    result: dict[str, Any] = {
         "schema": RECEIPT_SCHEMA,
         "run_id": run_id,
+        "local_date": _local_date().isoformat(),
         "started_at": started_at,
-        "completed_at": timestamp,
-        "fire": bool(fire),
+        "completed_at": _now(),
+        "fire": bool(fire or (isinstance(prior, dict) and prior.get("fire", False))),
+        "stage_order": logical_stage_order,
         "stages": steps,
+        "stage_checkpoints": checkpoints,
         "applications": applications,
         "follow_ups": followups,
-        "delivery_receipts": receipts,
+        "delivery_receipts": delivery_rows,
+        "reconciliation": {
+            "current_run_receipts": len(current_rows),
+            "historical_receipts": len(historical_rows),
+            "historical_confirmed": sum(1 for row in historical_rows if row.get("state") == "confirmed"),
+        },
         "blockers": blockers,
-        "status": "blocked" if blockers else "confirmed",
+        "status": "confirmed" if not blockers else "blocked",
         "privacy": {"redacted": True, "content_bodies": False, "contact_data": False},
     }
     if write_receipt:
-        path = _receipt_path()
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             result["receipt_path"] = str(path)
+            _write_receipt(path, result)
         except OSError:
             result["blockers"].append("daily receipt could not be written")
             result["status"] = "blocked"
@@ -656,7 +1055,9 @@ def run_daily_execution(
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the bounded daily communications/application loop")
-    parser.add_argument("--fire", action="store_true", help="arm routine professional applications/follow-ups for this invocation")
+    parser.add_argument(
+        "--fire", action="store_true", help="arm routine professional applications/follow-ups for this invocation"
+    )
     parser.add_argument("--json", action="store_true", help="print the PII-clean machine receipt")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--receipt", type=Path, default=None, help="override the private receipt path")

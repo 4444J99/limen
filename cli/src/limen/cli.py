@@ -347,7 +347,7 @@ def apply_cmd(fire, json_output):
 @main.command("daily-execute")
 @click.option("--fire", is_flag=True, help="Arm routine professional applications and follow-ups for this invocation")
 @click.option("--json", "json_output", is_flag=True, help="Emit the bounded PII-clean execution receipt")
-@click.option("--timeout", default=300, type=click.IntRange(min=1, max=1800), show_default=True)
+@click.option("--timeout", default=1800, type=click.IntRange(min=1, max=1800), show_default=True)
 @click.option("--receipt", type=click.Path(path_type=Path), default=None, help="Write the private receipt here")
 def daily_execute(fire: bool, json_output: bool, timeout: int, receipt: Path | None) -> None:
     """Run the shared daily communications and application loop.

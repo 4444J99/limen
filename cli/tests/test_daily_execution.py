@@ -10,22 +10,39 @@ from limen.daily_execution import (
     DeliveryReceiptV1,
     InteractionEventV1,
     ObligationV1,
+    _run_id,
     can_transition,
     run_daily_execution,
     transition_state,
 )
 
 
-def _runner_factory(calls: list[dict]):
+def _runner_factory(calls: list[dict], *, followup_due: int = 2):
     def runner(*, name, args, env, cwd, timeout_seconds):
-        calls.append({"name": name, "args": list(args), "fire": env["LIMEN_APPLY_FIRE"]})
+        calls.append(
+            {
+                "name": name,
+                "args": list(args),
+                "fire": env.get("LIMEN_APPLY_FIRE"),
+                "outbound_env": {
+                    key: env[key]
+                    for key in (
+                        "LIMEN_APPLY_FIRE",
+                        "LIMEN_CORRESPONDENCE_FIRE",
+                        "LIMEN_LINKEDIN_FIRE",
+                        "LIMEN_MAIL_SEND",
+                    )
+                    if key in env
+                },
+            }
+        )
         summaries = {
             "ingest": {},
             "opportunities": {"inbound": 0},
             "applications": {"qualified": 3, "staged": 3, "submitted": 3},
             "followups": {
-                "reply_owed": 2,
-                "by_disposition": {"held": 2},
+                "reply_owed": followup_due,
+                "by_disposition": {"held": followup_due} if followup_due else {},
                 "fixed_point": True,
                 "uma_available": True,
             },
@@ -82,7 +99,14 @@ def test_daily_loop_passes_one_fire_valve_to_all_existing_owners(tmp_path: Path,
     )
 
     assert [call["name"] for call in calls] == ["ingest", "opportunities", "applications", "followups"]
-    assert {call["fire"] for call in calls} == {"1"}
+    assert calls[0]["outbound_env"] == {}
+    assert calls[1]["outbound_env"] == {}
+    assert calls[2]["outbound_env"] == {"LIMEN_APPLY_FIRE": "1"}
+    assert calls[3]["outbound_env"] == {
+        "LIMEN_CORRESPONDENCE_FIRE": "1",
+        "LIMEN_LINKEDIN_FIRE": "1",
+        "LIMEN_MAIL_SEND": "1",
+    }
     assert result["fire"] is True
     assert result["applications"]["submitted"] == 3
     assert result["follow_ups"]["blocked"] == 2
@@ -106,21 +130,55 @@ def test_submitted_or_generated_templates_never_become_confirmed(tmp_path: Path,
     assert any("confirmation receipt" in blocker for blocker in result["applications"]["blockers"])
 
 
-def test_only_explicit_provider_evidence_counts_as_application_confirmation(tmp_path: Path, monkeypatch):
-    confirmation_path = tmp_path / "application-confirmations.json"
+def test_only_current_run_provider_evidence_counts_as_application_confirmation(tmp_path: Path, monkeypatch):
+    confirmation_path = tmp_path / "delivery-receipts.json"
+    run_id = _run_id(tmp_path)
     confirmation_path.write_text(
         json.dumps(
             {
                 "receipts": [
-                    {"state": "confirmed", "confirmation_evidence": ["portal:1"]},
-                    {"state": "confirmed", "confirmation_evidence": ["mailbox:2"]},
-                    {"state": "staged", "confirmation_evidence": []},
+                    {
+                        "exact_target": "role-1",
+                        "attempted_action": "application submit",
+                        "provider_response": "provider response",
+                        "timestamp": "2026-08-03T12:00:00Z",
+                        "confirmation_evidence": ["portal:1"],
+                        "state": "confirmed",
+                        "provider": "greenhouse",
+                        "account": "candidate",
+                        "run_id": run_id,
+                        "obligation_id": "obligation-1",
+                    },
+                    {
+                        "exact_target": "role-2",
+                        "attempted_action": "application submit",
+                        "provider_response": "provider response",
+                        "timestamp": "2026-08-03T12:00:00Z",
+                        "confirmation_evidence": ["mailbox:2"],
+                        "state": "confirmed",
+                        "provider": "lever",
+                        "account": "candidate",
+                        "run_id": run_id,
+                        "obligation_id": "obligation-2",
+                    },
+                    {
+                        "exact_target": "role-3",
+                        "attempted_action": "application submit",
+                        "provider_response": "accepted",
+                        "timestamp": "2026-08-03T12:00:00Z",
+                        "confirmation_evidence": [],
+                        "state": "attempted",
+                        "provider": "ashby",
+                        "account": "candidate",
+                        "run_id": run_id,
+                        "obligation_id": "obligation-3",
+                    },
                 ]
             }
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("LIMEN_APPLICATION_CONFIRMATION_RECEIPT", str(confirmation_path))
+    monkeypatch.setenv("LIMEN_DELIVERY_RECEIPTS", str(confirmation_path))
     result = run_daily_execution(
         fire=True,
         root=tmp_path,
@@ -156,6 +214,7 @@ def test_pipeline_submitted_label_and_filled_form_are_not_confirmation(tmp_path:
 
 def test_daily_receipt_keeps_only_valid_exact_target_provider_receipts(tmp_path: Path, monkeypatch):
     provider_path = tmp_path / "provider-receipts.json"
+    run_id = _run_id(tmp_path)
     provider_path.write_text(
         json.dumps(
             {
@@ -168,6 +227,10 @@ def test_daily_receipt_keeps_only_valid_exact_target_provider_receipts(tmp_path:
                         "timestamp": "2026-08-03T12:00:00Z",
                         "confirmation_evidence": ["sent-mail:message-1"],
                         "state": "confirmed",
+                        "provider": "uma",
+                        "account": "candidate",
+                        "run_id": run_id,
+                        "obligation_id": "obligation-1",
                     },
                     {"state": "confirmed", "exact_target": "missing evidence"},
                 ]
@@ -185,6 +248,53 @@ def test_daily_receipt_keeps_only_valid_exact_target_provider_receipts(tmp_path:
 
     assert len(result["delivery_receipts"]) == 1
     assert result["delivery_receipts"][0]["exact_target"] == "provider-target-1"
+
+
+def test_repeated_completed_run_returns_identical_persisted_state(tmp_path: Path, monkeypatch):
+    receipt_path = tmp_path / "daily.json"
+    delivery_path = tmp_path / "delivery-receipts.json"
+    run_id = _run_id(tmp_path)
+    delivery_path.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "exact_target": f"role-{index}",
+                        "attempted_action": "application submit",
+                        "provider_response": "provider response",
+                        "timestamp": "2026-08-03T12:00:00Z",
+                        "confirmation_evidence": [f"portal:{index}"],
+                        "state": "confirmed",
+                        "provider": "greenhouse",
+                        "account": "candidate",
+                        "run_id": run_id,
+                        "obligation_id": f"obligation-{index}",
+                    }
+                    for index in range(3)
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_DAILY_EXECUTION_RECEIPT", str(receipt_path))
+    monkeypatch.setenv("LIMEN_DELIVERY_RECEIPTS", str(delivery_path))
+    calls: list[dict] = []
+
+    first = run_daily_execution(
+        fire=False,
+        root=tmp_path,
+        step_runner=_runner_factory(calls, followup_due=0),
+    )
+    first_bytes = receipt_path.read_bytes()
+    second = run_daily_execution(
+        fire=False,
+        root=tmp_path,
+        step_runner=_runner_factory(calls, followup_due=0),
+    )
+
+    assert second == first
+    assert receipt_path.read_bytes() == first_bytes
+    assert len(calls) == 4
 
 
 def test_cli_daily_execute_uses_the_same_coordinator(monkeypatch):

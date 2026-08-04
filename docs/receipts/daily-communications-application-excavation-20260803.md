@@ -11,9 +11,10 @@ in the existing private stores.
 ## Remote state consulted
 
 - `organvm/limen`: default branch `main`; 320 open issues at inspection time.
-- `organvm/application-pipeline`: default branch `main`; PR #111 is open/draft and
-  owns the submit-config generator and portal-keyed application runtime. Stacked
-  PR #112 adds the truthful outreach-receipt gate described below.
+- `organvm/application-pipeline`: default branch `main`; PR #111 is merged at
+  `8b110385c731656ad4c5f0482bd5d5bfd916b316`. PR #112 is open/draft, retargeted
+  to `main`, and extends the existing portal-keyed application runtime with
+  structured provider outcomes.
 - `organvm/universal-mail--automation`: default branch `main`; owns provider
   ingestion, obligations construction, draft/send policy, and delivery evidence.
 - `organvm/social-automation`: default branch `main`; owns social-provider
@@ -29,11 +30,18 @@ The relevant Limen remote receipts were also inspected:
 
 | Receipt | State | Canonical contribution |
 | --- | --- | --- |
-| PR #1797 | open, draft | fixes application-pipeline path discovery and adds `limen apply` / MCP `application_funnel`; this branch carries its commit and extends it |
+| PR #1797 | open, draft | fixes application-pipeline path discovery and adds `limen apply` / MCP `application_funnel`; PR #1798 still carries and extends its commit |
 | PR #1509 | open, draft | incremental iMessage + WhatsApp capture; source remains the existing capture owner |
 | PR #1794 | open, draft | Forrest/WhatsApp disclosure split; public posture only, private raw source |
 | PR #1715 | open, draft | corpus substrate and biography registry; issue #1734 records the evidence-union defect |
 | Issue #1734 | open | prevents a newer biography registry from hiding existing life-history evidence |
+
+The current remote re-query corrected the owner findings: browser-state still has
+only its public README and no public authenticated session; `vox--publica` has no
+focused transcription/scoring change available; Universal Mail Automation has no
+focused #1509 delivery change; and `social-automation` still has no LinkedIn
+effector PR. Those are owner-gated capabilities, not substitutes for a Limen
+receipt, so the coordinator preserves their unavailable/ambiguous outcomes.
 
 ## Capability and gap ledger
 
@@ -44,7 +52,7 @@ The relevant Limen remote receipts were also inspected:
 | Correspondence reconciliation | `scripts/correspondence-walk.py` | `logs/correspondence-dispositions.json`, drain-trend predicate | reusable | use its `--drain --json` result as the follow-up source of truth |
 | Inbound opportunity review | `scripts/opportunity-review-delta.py` | `logs/opportunity-status.json` and its scoped tests | reusable | invoke once per daily run and preserve count-only output |
 | ATS sourcing/matching/materials | `organvm/application-pipeline` | pipeline preflight, orchestrator result, PR #111 | reusable but externally owned | invoke through `scripts/application-funnel.py`; never reimplement ATS logic |
-| Application submission | application funnel `apply` phase | provider/portal result plus application receipt | incomplete | submitted is not treated as confirmed; only explicit provider/mailbox evidence counts |
+| Application submission | application funnel `apply` phase | structured provider result plus canonical `LIMEN_DELIVERY_RECEIPTS` ledger | incomplete | attempted is retry-locked; only exact provider/mailbox evidence counts as confirmed |
 | LinkedIn follow-up | opportunity/correspondence lane and private browser state | discovery notes and provider session state | incomplete | preserve `needs-human`/CAPTCHA/session blockers; no fake template completion |
 | WhatsApp/iMessage ingestion | PR #1509 / PR #1794 owners | private capture receipts, public posture PRs | incomplete | coordinator exposes the shared event shape without copying private content |
 | Voice transcription | existing local capture/transcription tools | private source receipts | reusable but private | no public transcript or second transcriber is introduced |
@@ -67,12 +75,12 @@ The relevant Limen remote receipts were also inspected:
    loop. Any corpus grounding used by future application customization must union
    existing evidence before the registry PR is accepted.
 
-5. Application-pipeline PR #112 (`bf1f45ef`) removes the prior mutation that
-   logged generated LinkedIn templates as completed outreach. Its readiness gate
-   now requires a provider-observed send state plus a provider receipt/message
-   identifier; prepared copy remains prepared and cannot authorize submission.
-   The branch is pushed at
-   `fix/truthful-outreach-receipts-20260803`, stacked on PR #111.
+5. Application-pipeline PR #112 (`b43d200f`) removes the prior mutation that
+   logged generated LinkedIn templates as completed outreach and now returns
+   structured ATS outcomes. Its readiness gate has no universal outreach
+   prerequisite; role-specific referral prerequisites still require a
+   provider-observed send state plus receipt/message identifier. The branch is
+   pushed at `fix/truthful-outreach-receipts-20260803`, retargeted to `main`.
 
 The read-only local application-pipeline census found 23 YAML rows under its
 `pipeline/submitted/` owner directory. The current snapshot contained no explicit
@@ -90,12 +98,14 @@ receipt owners, with only the missing contracts and coordinator added here.
 
 - Limen implementation branch: `feat/daily-communications-application-loop-20260803`.
 - Limen draft PR #1798 is the remote custody receipt for that branch.
-- Application-owner truthfulness branch: PR #112, commit `bf1f45ef`, stacked on
-  PR #111; its focused suite passed 32 tests and Ruff.
-- Limen focused wave passed 25 tests across daily execution, MCP delegation,
-  heartbeat pause, and heartbeat routing/custody. Mypy, Ruff, shell syntax, diff
-  whitespace, and the armed-valve contract passed; the new fire lever is
-  explicitly `SAFE-OFF` by default.
+- Application-owner truthfulness branch: PR #112, commit `b43d200f`, based on
+  merged PR #111; its focused suite passed 65 tests and Ruff.
+- Limen focused wave passed 65 tests across daily execution, MCP delegation,
+  heartbeat sensors, registry checks, and the audit-autofix fixture. The worker
+  gate passed `npm ci`, `npm audit --audit-level=high`, and all 66 worker tests.
+  The scoped resolver then passed `scripts/verify-scoped.sh --base origin/main
+  --require-base`, including the whole matrix escalation and armed-valve
+  contract; the new fire lever is explicitly `SAFE-OFF` by default.
 - The changed-file resolver escalated to the whole matrix because the existing
   application-funnel driver is deploy-sensitive. Its static, lifecycle,
   contract, and shell predicates passed. The broad `web/api/tests` plus
@@ -111,7 +121,7 @@ represented as solved by this coordinator:
 
 | Atom | Owner receipt | Failed predicate / next command |
 | --- | --- | --- |
-| Historical application claims | application-pipeline PRs #111/#112 plus provider mailbox/portal receipts | 23 rows were censused and remain unconfirmed without explicit evidence; reconcile the owner rows against provider evidence, then supply `LIMEN_APPLICATION_CONFIRMATION_RECEIPT` to the daily run |
+| Historical application claims | application-pipeline PRs #111/#112 plus provider mailbox/portal receipts | 23 rows were censused and remain unconfirmed without explicit evidence; reconcile the owner rows against provider evidence, then supply the canonical `LIMEN_DELIVERY_RECEIPTS` ledger to the daily run |
 | Authenticated LinkedIn action | social-automation/browser-state private provider surface | no public authenticated effector was present; run the shared loop only after a provider send/submission receipt exists, otherwise preserve the precise session/CAPTCHA blocker |
 | Forrest/WhatsApp/iMessage capture | Limen PRs #1794/#1509 | public/private capture owners remain open; accept their capture predicates before using full conversation/audio grounding for applications |
 | Biography evidence union | Limen PR #1715 / issue #1734 | registry must union existing source evidence; do not let a newer registry hide prior docs/reviews before customization |

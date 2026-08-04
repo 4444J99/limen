@@ -840,7 +840,7 @@ def application_funnel(fire: bool = False, timeout_seconds: int = 120) -> dict:
 
 
 @mcp.tool()
-def daily_execution(fire: bool = False, timeout_seconds: int = 300) -> dict:
+def daily_execution(fire: bool = False, timeout_seconds: int = 1800) -> dict:
     """Run the shared daily communications/application loop.
 
     This is the provider-neutral MCP twin of ``limen daily-execute`` and the
