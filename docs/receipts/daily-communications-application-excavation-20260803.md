@@ -119,9 +119,11 @@ receipt owners, with only the missing contracts and coordinator added here.
 - Limen focused wave passed 65 tests across daily execution, MCP delegation,
   heartbeat sensors, registry checks, and the audit-autofix fixture. The worker
   gate passed `npm ci`, `npm audit --audit-level=high`, and all 66 worker tests.
-  The scoped resolver then passed `scripts/verify-scoped.sh --base origin/main
-  --require-base`, including the whole matrix escalation and armed-valve
-  contract; the new fire lever is explicitly `SAFE-OFF` by default.
+  The final-head scoped resolver's cheap wave passed, but its heavy wave was
+  denied by the preserved machine-wide `verify-whole` lease (`heavy-lease-held`)
+  rather than stealing that existing run. The remote exact-head `pr-gate` owns
+  the corresponding heavy receipt; the new fire lever is explicitly
+  `SAFE-OFF` by default.
 - The changed-file resolver escalated to the whole matrix because the existing
   application-funnel driver is deploy-sensitive. Its static, lifecycle,
   contract, and shell predicates passed. The broad `web/api/tests` plus
