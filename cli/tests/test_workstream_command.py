@@ -540,6 +540,14 @@ def test_non_native_lane_is_rejected_before_workstream_creation(
 
 
 def test_non_autonomous_jules_is_rejected_before_workstream_creation(tmp_path: Path, monkeypatch, capfd) -> None:
+    source = next(provider for provider in census.VENDORS if provider.execution.workstream_adapter == "jules")
+    renamed = replace(
+        source,
+        name="fixture-jules-interactive-renamed",
+        aliases=(),
+        binary="fixture-jules-interactive-cli",
+    )
+    fixture_root = _fixture_limen_root_with_renamed_provider(tmp_path, source, renamed)
     repo = tmp_path / "demo-repo"
     repo.mkdir()
     _git("init", "-q", "-b", "main", cwd=repo)
@@ -550,20 +558,20 @@ def test_non_autonomous_jules_is_rejected_before_workstream_creation(tmp_path: P
     _git("commit", "-qm", "init", cwd=repo)
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
-    fake_jules = fake_bin / "jules"
+    fake_jules = fake_bin / renamed.binary
     fake_jules.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
     fake_jules.chmod(0o755)
-    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_ROOT", str(fixture_root))
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
 
     result = CliRunner().invoke(
         main,
-        ["workstream", "--agent", "jules", str(repo), "Interactive Jules"],
+        ["workstream", "--agent", renamed.name, str(repo), "Interactive Renamed Jules"],
     )
 
     assert result.exit_code != 0
     assert "requires --autonomous" in capfd.readouterr().err
-    assert not (repo / ".worktrees" / "interactive-jules").exists()
+    assert not (repo / ".worktrees" / "interactive-renamed-jules").exists()
 
 
 def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path, monkeypatch, capfd) -> None:

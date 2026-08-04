@@ -606,7 +606,7 @@ def _git_control(
 def _read_bounded_predecessor_receipt(receipt_path: Path) -> tuple[bytes, os.stat_result]:
     """Read one real local receipt through a single descriptor and a hard byte ceiling."""
 
-    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     descriptor: int | None = None
     try:
         descriptor = os.open(receipt_path, flags)
@@ -746,6 +746,7 @@ def predecessor_custody(receipt_path: Path) -> tuple[dict[str, Any], dict[str, s
         raise ContractError("predecessor receipt branch has invalid origin custody")
     if remote_rows[0][0] != checkout_head:
         raise ContractError("predecessor checkout HEAD is not the exact origin branch head")
+    _verify_predecessor_receipt_identity(receipt_path, local_info)
     runway = receipt["contract"]["runway"]
     if runway["started_epoch"] is None or runway["deadline_epoch"] is None:
         raise ContractError("predecessor workstream has not been admitted")
