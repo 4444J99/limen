@@ -108448,25 +108448,34 @@ tasks:
     status: failed_blocked
     output: "heal-dispatch: chronic escalation re-homed needs_human \u2192 failed_blocked\
       \ (fleet-debt, not a human atom)"
-- id: ASK-quicken-send
-  title: send the drafted message (never auto-send)
-  type: ops
-  target_agent: agy
-  priority: high
+- id: 'ASK-quicken-send'
+  title: 'send the drafted message (never auto-send)'
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - user-ask
-  - quicken-residue
-  - needs-human
+  - 'user-ask'
+  - 'quicken-residue'
+  - 'needs-human'
   urls: []
-  context: "Cheapest path \u2192 send the drafted message (never auto-send). Unblocks:\
-    \ mail workstream roadmap. Auto-hung by QUICKEN (finish-not-park); refreshes each\
-    \ beat until you act."
+  context: 'Cheapest path → send the drafted message (never auto-send). Unblocks: mail workstream roadmap. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-19T08:23:34.928317Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:40:40.096Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:40:40.096Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-b163d1dff3a0fae6735c6cb0a87b8dde:518:compatibility'
+    conduct_run_id: 'run-b163d1dff3a0fae6735c6cb0a87b8dde'
+    conduct_lease_id: 'lease-518-b163d1dff3a0fae6'
+    conduct_generation: 518
 - id: HEAL-cifix-organvm-limen-401
   title: fix failing CI on organvm/limen#401
   repo: organvm/limen
