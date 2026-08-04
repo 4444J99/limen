@@ -1,0 +1,154 @@
+# BIOGRAPHY — the registry that OWNS the operator's life-context over time.
+#
+# The declared-data pattern (sibling of gates.yaml / parameters.yaml / sensors.yaml /
+# corpora.yaml / personal-facts.yaml). Same row shape as personal-facts.yaml —
+# {domain, home, atom, tier, applicable, required, verify, consumers} — so the fact-wall
+# tooling generalizes rather than forking, plus ONE axis that file does not need:
+# `provenance`.
+#
+# WHY THIS EXISTS: personal-facts.yaml was minted because filling a PDF needed a DOB with no
+# store, so an agent CHAT-ASKED the operator. The response was not to answer — it was to
+# declare the class, name its home, and make an un-homed fact a RED build.
+#
+# This file is that precedent applied one axis over. On 2026-07-31 an agent asked to review a
+# relationship had no record of the operator's life, and instead of reporting that, it
+# reconstructed one from message text: read a 0.7% window as the whole record, read a
+# conversation as a ledger, and reported proposed arrangements as executed history. Four
+# confidently-wrong analyses. personal-facts.yaml already prevents that failure for a DOB.
+# Nothing prevented it for a life.
+#
+# THE DISTINCTION THIS FILE ENFORCES — a conversation corpus records SPEECH ACTS, not EVENTS.
+# "I sent you $150" is evidence a sentence was typed. Every row therefore carries a
+# `provenance`, and `inferred` is NOT a member of the vocabulary. A life-context claim is
+# derived, cited, given by the operator, or it is absent. There is no fourth option, and
+# "the agent reasoned it out" is not one.
+#
+# CONSUMERS
+#   scripts/check-biography.py  — registry <-> store parity, provenance legality (drift = RED)
+#   scripts/derive-epochs.py    — writes the DERIVED half from hard signals only
+#
+# Retrieval precondition: every `cited` row resolves into the corpora declared by
+# corpora.yaml. `python3 scripts/corpus_resolve.py` must name a populated home before any
+# citation is trusted — the estate has twice reported "no populated corpus" with hundreds of
+# MB on disk, and "I found nothing" is indistinguishable from "I read nothing" in the output.
+
+schema_version: 0.1
+
+# ── provenance ───────────────────────────────────────────────────────────────────────────
+# How a row's value came to be known. The whole point of the file. `inferred` is deliberately
+# absent: it is the failure mode, not a provenance.
+provenance_kinds:
+  derived: >
+    Arithmetic over metadata — dates, counts, volumes, gaps, commit timestamps. Reproducible
+    by re-running the deriver against the same inputs. Interpretation-free by construction:
+    counting messages per month is not reading them.
+  cited: >
+    The operator's own words, retrieved from a declared corpus, carrying a locator
+    (corpus-id/relpath). Quoting him is not inferring about him. A `cited` row WITHOUT a
+    resolvable locator is a violation, not a weaker citation.
+  operator: >
+    Stated directly by the operator in session or written by him into the store. Outranks
+    every other provenance on conflict; never overwritten by a deriver.
+  unknown: >
+    Not yet established. The resting state for meaning fields, and a legitimate ANSWER —
+    "no record" is the correct output when nothing else holds. Rule #1 applies: an unknown is
+    a named vacuum that surfaces, never a silent omission and never a prompt to guess.
+
+# ── epoch signals ────────────────────────────────────────────────────────────────────────
+# The ONLY inputs that may produce an epoch boundary. Each is metadata arithmetic. Content
+# interpretation is not on this list and may never be added to it — a boundary drawn from
+# "what the conversations felt like" is the defect this registry exists to prevent.
+epoch_signals:
+  - id: corpus-thread-dates
+    source: corpora.yaml -> session-memory corpora
+    measure: thread start/end timestamps and per-month thread counts
+  - id: message-volume
+    source: per-channel message counts per month
+    measure: order-of-magnitude changes and sustained silences
+  - id: repo-activity
+    source: git commit timestamps across the estate
+    measure: first commit, sustained gaps, repo creation dates
+  - id: store-mutations
+    source: _life-private/chronicle.jsonl and _health-private/chronicle.jsonl
+    measure: dated append records (account/asset/clinical series)
+
+# ── facts ────────────────────────────────────────────────────────────────────────────────
+# home is relative to ~/Workspace, matching personal-facts.yaml. The store is mode 700 and
+# sits outside every git checkout; this registry declares CLASSES and never holds content,
+# exactly as personal-facts.yaml names identity.ssn without holding an SSN.
+#
+# NOT `_life-private/chronicle.jsonl` — that name is already taken by the digital-accounts
+# metric series (27 records, keys accounts/assets/purge_due). It namesquats the slot a
+# biography would want; epochs get their own directory rather than overloading it.
+facts:
+
+  biography.epochs.index:
+    domain: life
+    home: _life-private/epochs/index.yaml
+    atom: epochs
+    tier: private
+    applicable: true
+    required: true
+    verify: non_empty
+    provenance: derived
+    derived_from: [corpus-thread-dates, message-volume, repo-activity]
+    consumers: [check-biography.py, derive-epochs.py]
+    note: >
+      The boundary series: ordered {id, start, end, signal, evidence} rows. Boundaries are
+      FACTS — a channel carrying 63,515 messages over thirteen months and 37 over the next
+      fourteen has a boundary in it whether or not anyone knows what it meant. Derivable
+      today from the corpora Phase A reconnected.
+
+  biography.epochs.meaning:
+    domain: life
+    home: _life-private/epochs/index.yaml
+    atom: epochs.*.meaning
+    tier: private
+    applicable: unknown
+    required: false
+    verify: non_empty
+    provenance: unknown
+    consumers: [check-biography.py]
+    note: >
+      What an epoch WAS — the circumstance, the transition, what changed. Starts `unknown`
+      and stays there until `operator` or `cited` fills it. This row is the one that had to
+      exist: an agent with boundaries but no meanings must say "no record", and the failure
+      this registry answers was an agent inventing meanings to sit under boundaries it had
+      not even measured. A deriver may NEVER write this field.
+
+  biography.circumstance.current:
+    domain: life
+    home: _life-private/epochs/current.md
+    atom: circumstance
+    tier: private
+    applicable: false
+    required: false
+    verify: unavailable
+    provenance: operator
+    consumers: [check-biography.py]
+    note: >
+      The declared `_life-private/epochs/current.md` source is not present on this host.
+      It is explicitly unavailable rather than synthesized from conversation text. A future
+      operator-owned current-context source may set applicable: true after it has a custody
+      receipt; until then a resolver must surface this absence.
+
+  biography.narrative.cited:
+    domain: life
+    home: _life-private/epochs/narrative/
+    atom: "*.md"
+    tier: private
+    applicable: unknown
+    required: false
+    verify: non_empty
+    provenance: cited
+    consumers: [check-biography.py]
+    source_documents:
+      - docs/reviews/deep-history-2022-2026.md
+      - docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
+    note: >
+      Longer-form life context. The resolver unions both existing review histories above
+      before reporting the source set; older evidence is never hidden by a newer registry.
+      Every assertion carrying a corpus locator into the declared session-memory corpora
+      (426 Claude threads + the ChatGPT corpus) remains a citation. This is retrieval of the
+      operator's own account, not reconstruction of it. Uncited narrative is not written
+      here — it has no home in this estate, by design.
