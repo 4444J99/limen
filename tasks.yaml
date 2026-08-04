@@ -78738,25 +78738,34 @@ tasks:
     status: failed_blocked
     output: "heal-dispatch: chronic escalation re-homed needs_human \u2192 failed_blocked\
       \ (fleet-debt, not a human atom)"
-- id: ASK-quicken-delete
-  title: approve the irreversible delete/clear (archived reversibly; purge is yours)
-  type: ops
-  target_agent: agy
-  priority: high
+- id: 'ASK-quicken-delete'
+  title: 'approve the irreversible delete/clear (archived reversibly; purge is yours)'
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'open'
   labels:
-  - user-ask
-  - quicken-residue
-  - needs-human
+  - 'user-ask'
+  - 'quicken-residue'
+  - 'needs-human'
   urls: []
-  context: "Cheapest path \u2192 approve the irreversible delete/clear (archived reversibly;\
-    \ purge is yours). Unblocks: Design movement ontology and workout composition.\
-    \ Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act."
+  context: 'Cheapest path → approve the irreversible delete/clear (archived reversibly; purge is yours). Unblocks: Design movement ontology and workout composition. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-09T14:13:20.901412Z'
-  dispatch_log: []
+  updated: '2026-08-04T15:40:34.289Z'
+  dispatch_log:
+  - timestamp: '2026-08-04T15:40:34.289Z'
+    agent: 'codex'
+    session_id: 'codex-quicken-clear-open'
+    logical_agent: 'codex'
+    logical_session_id: 'quicken-clear-open'
+    status: 'open'
+    output: 'clearing hanging quicken item per durable-resume scope'
+    conduct_event_id: 'conduct:run-ff7f2dcbec5b4254644b22443519de5a:517:compatibility'
+    conduct_run_id: 'run-ff7f2dcbec5b4254644b22443519de5a'
+    conduct_lease_id: 'lease-517-ff7f2dcbec5b4254'
+    conduct_generation: 517
 - id: GEN-organvm-session-meta-test-coverage-0702
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
