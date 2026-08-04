@@ -220,6 +220,17 @@ def test_agent_claim_rejects_successor_required_open_row_without_mutating(tmp_pa
     assert tasks.read_bytes() == before
 
 
+def test_daily_execution_tool_delegates_to_shared_coordinator(monkeypatch):
+    server = _load_server()
+    expected = {"schema": "limen.daily_execution.v1", "status": "confirmed"}
+    import limen.daily_execution as implementation
+
+    monkeypatch.setattr(server, "_check_circuit_breaker", lambda: None)
+    monkeypatch.setattr(implementation, "run_daily_execution", lambda **kwargs: expected)
+
+    assert server.daily_execution(fire=True, timeout_seconds=1) == expected
+
+
 def test_mcp_status_update_cannot_reopen_successor_required_row(tmp_path, monkeypatch):
     server = _load_server()
     tasks = tmp_path / "tasks.yaml"
