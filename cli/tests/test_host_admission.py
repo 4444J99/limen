@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import ctypes
 import json
-import multiprocessing
 import os
 import stat
 import subprocess
 import sys
+import time
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
@@ -463,39 +463,97 @@ def test_hold_lease_releases_on_exception(tmp_path: Path) -> None:
     assert service.status(probe=False)["leases"] == []
 
 
-def _concurrent_acquire(root: str, owner: str, ready, start, results) -> None:
-    service = AdmissionController(
-        Path(root),
-        clock=lambda: 100.0,
-        alive=lambda pid: True,
-        identity=lambda pid: f"start-{pid}",
-        descendant=lambda _pid, _ancestor: False,
-        pressure_probe=lambda: healthy_pressure(),
-    )
-    ready.put(owner)
-    start.wait(timeout=5)
-    decision = service.acquire("execution", owner=owner, surface="turn", pid=os.getpid())
-    results.put((owner, decision["allowed"]))
+_CONCURRENT_ACQUIRE_PROGRAM = """\
+import json
+import os
+import sys
+import time
+from pathlib import Path
+
+from limen.host_admission import AdmissionController
+
+root, owner, ready_raw, start_raw = sys.argv[1:]
+ready = Path(ready_raw)
+start = Path(start_raw)
+service = AdmissionController(
+    Path(root),
+    clock=lambda: 100.0,
+    alive=lambda _pid: True,
+    identity=lambda pid: f"start-{pid}",
+    descendant=lambda _pid, _ancestor: False,
+    pressure_probe=lambda: {
+        "observed_epoch": 100.0,
+        "backblaze_cpu_percent": 0.0,
+        "backblaze_rss_bytes": 0,
+        "swap_used_bytes": 0,
+        "memory_bytes": 16 * 1024**3,
+        "disk_mib_per_second_samples": [0.0, 0.0],
+        "vitals_action": "ok",
+        "sensor_errors": [],
+    },
+)
+ready.write_text(owner, encoding="utf-8")
+while not start.exists():
+    time.sleep(0.01)
+decision = service.acquire("execution", owner=owner, surface="turn", pid=os.getpid())
+print(json.dumps([owner, decision["allowed"]]), flush=True)
+"""
 
 
 def test_legacy_unscoped_execution_kind_admits_only_one_owner(tmp_path: Path) -> None:
-    context = multiprocessing.get_context("fork")
-    ready = context.Queue()
-    results = context.Queue()
-    start = context.Event()
     root = tmp_path / "state"
-    processes = [
-        context.Process(target=_concurrent_acquire, args=(str(root), owner, ready, start, results))
-        for owner in ("root-a", "root-b")
-    ]
-    for process in processes:
-        process.start()
-    assert {ready.get(timeout=5), ready.get(timeout=5)} == {"root-a", "root-b"}
-    start.set()
-    outcomes = [results.get(timeout=5), results.get(timeout=5)]
-    for process in processes:
-        process.join(timeout=5)
-        assert process.exitcode == 0
+    start = tmp_path / "start"
+    environment = {
+        **os.environ,
+        "PYTHONPATH": os.pathsep.join(path for path in sys.path if path),
+    }
+    processes: list[subprocess.Popen[str]] = []
+    try:
+        for owner in ("root-a", "root-b"):
+            processes.append(
+                subprocess.Popen(
+                    [
+                        sys.executable,
+                        "-c",
+                        _CONCURRENT_ACQUIRE_PROGRAM,
+                        str(root),
+                        owner,
+                        str(tmp_path / f"{owner}.ready"),
+                        str(start),
+                    ],
+                    cwd=ROOT,
+                    env=environment,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True,
+                )
+            )
+        ready_paths = [tmp_path / "root-a.ready", tmp_path / "root-b.ready"]
+        startup_deadline = time.monotonic() + 30
+        while not all(path.is_file() for path in ready_paths):
+            assert all(process.poll() is None for process in processes), "admission worker exited before rendezvous"
+            assert time.monotonic() < startup_deadline, "admission workers did not reach the rendezvous"
+            time.sleep(0.01)
+
+        assert {path.read_text(encoding="utf-8") for path in ready_paths} == {"root-a", "root-b"}
+        start.write_text("go\n", encoding="utf-8")
+        completion_deadline = time.monotonic() + 5
+        completed = [
+            process.communicate(timeout=max(0.001, completion_deadline - time.monotonic())) for process in processes
+        ]
+    finally:
+        for process in processes:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.communicate(timeout=1)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.communicate()
+
+    assert all(process.returncode == 0 for process in processes), [stderr for _stdout, stderr in completed]
+    outcomes = [json.loads(stdout) for stdout, _stderr in completed]
     assert sum(1 for _owner, allowed in outcomes if allowed) == 1
 
 
@@ -865,6 +923,8 @@ esac
 set -euo pipefail
 export PATH={fake_bin!s}:$PATH
 export LIMEN_HOST_ADMISSION_ROOT={state_root!s}
+export VITALS_LOAD_WARN_PER_CORE=999
+export VITALS_LOAD_CRIT_PER_CORE=999
 source {ROOT / "scripts" / "lib" / "host-admission.sh"}
 host_admission_acquire fixture {ROOT!s}
 [[ -n "$HOST_ADMISSION_LEASE_ID" ]]

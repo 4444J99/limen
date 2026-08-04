@@ -103,6 +103,10 @@ class ExecutionProfile:
     health_ref: str
     auth_ref: str
     daily_fill: bool = False
+    # Stable workstream invocation protocol. Provider IDs are registry data and may be renamed;
+    # launch behavior must therefore dispatch on this protocol rather than on ``Vendor.name``.
+    workstream_adapter: str = "positional"
+    workstream_model_flag: bool = False
 
 
 @dataclass(frozen=True)
@@ -134,6 +138,8 @@ def _execution(
     harvest_method: str,
     concurrency_scope: str,
     daily_fill: bool = False,
+    workstream_adapter: str = "positional",
+    workstream_model_flag: bool = False,
 ) -> ExecutionProfile:
     """Build one profile while deriving every per-lane live-state reference from its name."""
 
@@ -147,6 +153,8 @@ def _execution(
         health_ref=f"limen.capacity:agent_status/{name}",
         auth_ref=f"limen.census:vendors/{name}/auth_mode",
         daily_fill=daily_fill,
+        workstream_adapter=workstream_adapter,
+        workstream_model_flag=workstream_model_flag,
     )
 
 
@@ -177,6 +185,7 @@ VENDORS: tuple[Vendor, ...] = (
             harvest_method="conduct-report",
             concurrency_scope="local-host-admission",
             daily_fill=True,
+            workstream_adapter="codex",
         ),
     ),
     Vendor(
@@ -202,6 +211,7 @@ VENDORS: tuple[Vendor, ...] = (
             harvest_method="conduct-report",
             concurrency_scope="local-host-admission",
             daily_fill=True,
+            workstream_model_flag=True,
         ),
     ),
     Vendor(
@@ -225,6 +235,8 @@ VENDORS: tuple[Vendor, ...] = (
             harvest_method="conduct-report",
             concurrency_scope="local-host-admission",
             daily_fill=True,
+            workstream_adapter="prompt-flag",
+            workstream_model_flag=True,
         ),
     ),
     Vendor(
@@ -259,6 +271,8 @@ VENDORS: tuple[Vendor, ...] = (
             harvest_method="conduct-report",
             concurrency_scope="local-host-admission",
             daily_fill=True,
+            workstream_adapter="prompt-interactive",
+            workstream_model_flag=True,
         ),
     ),
     Vendor(
@@ -301,6 +315,8 @@ VENDORS: tuple[Vendor, ...] = (
             harvest_method="conduct-report",
             concurrency_scope="local-host-admission",
             daily_fill=True,
+            workstream_adapter="prompt-interactive",
+            workstream_model_flag=True,
         ),
     ),
     Vendor(
@@ -349,6 +365,7 @@ VENDORS: tuple[Vendor, ...] = (
             harvest_method="jules-remote",
             concurrency_scope="provider-headroom",
             daily_fill=True,
+            workstream_adapter="jules",
         ),
     ),
     Vendor(

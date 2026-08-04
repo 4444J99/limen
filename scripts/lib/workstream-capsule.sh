@@ -8,7 +8,9 @@ workstream_native_binary() {
   env_suffix="$(printf '%s' "$agent" | tr '[:lower:]-' '[:upper:]_')"
   env_key="LIMEN_${env_suffix}_BIN"
   override="$(printenv "$env_key" 2>/dev/null || true)"
-  for candidate in "$override" "$agent" "$registry_binary"; do
+  # Match renderer selection exactly: explicit override, registry binary, then the canonical ID
+  # only as a compatibility fallback. Validation and exec must never choose different binaries.
+  for candidate in "$override" "$registry_binary" "$agent"; do
     if [[ -n "$candidate" ]] && command -v "$candidate" >/dev/null 2>&1; then
       printf '%s\n' "$candidate"
       return 0
@@ -124,13 +126,15 @@ workstream_jules_validate_clean_worktree() {
 
 workstream_jules_provider_run_id() {
   local receipt="$1"
+  local expected_provider="${2:-jules}"
 
-  python3 - "$receipt" <<'PY'
+  python3 - "$receipt" "$expected_provider" <<'PY'
 import json
 import sys
 from pathlib import Path
 
 receipt_path = Path(sys.argv[1])
+expected_provider = sys.argv[2]
 try:
     receipt = json.loads(receipt_path.read_text())
 except (OSError, json.JSONDecodeError) as exc:
@@ -143,7 +147,7 @@ if (
     not isinstance(run_id, str)
     or not run_id.isdigit()
     or provider_run != {
-        "provider": "jules",
+        "provider": expected_provider,
         "id": run_id,
         "url": f"https://jules.google.com/session/{run_id}",
     }
@@ -203,10 +207,12 @@ workstream_jules_sync_receipt() {
   local receipt="$1"
   local session_id="$2"
   local session_url="$3"
+  local provider="${4:-jules}"
 
-  python3 - "$receipt" "${LIMEN_WORKTREE:-}" "$session_id" "$session_url" <<'PY'
+  python3 - "$receipt" "${LIMEN_WORKTREE:-}" "$session_id" "$session_url" "$provider" <<'PY'
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -214,6 +220,7 @@ receipt_path = Path(sys.argv[1])
 worktree = Path(sys.argv[2])
 session_id = sys.argv[3].strip()
 session_url = sys.argv[4].strip()
+provider = sys.argv[5].strip()
 expected_url = f"https://jules.google.com/session/{session_id}"
 try:
     worktree_resolved = worktree.resolve(strict=True)
@@ -228,10 +235,15 @@ if (
     or receipt.get("schema") != "limen.workstream.receipt.v1"
 ):
     raise SystemExit("invalid Jules session receipt target")
-if not session_id.isdigit() or not session_id or session_url != expected_url:
+if (
+    not session_id.isdigit()
+    or not session_id
+    or session_url != expected_url
+    or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", provider)
+):
     raise SystemExit("invalid Jules session ID or URL")
 receipt["provider_run"] = {
-    "provider": "jules",
+    "provider": provider,
     "id": session_id,
     "url": session_url,
 }
@@ -311,6 +323,58 @@ workstream_exact_remote_ref_head() {
     return 2
   fi
   printf '%s\n' "$observed_head"
+}
+
+workstream_validate_launch_environment() {
+  local timeout_seconds="$1"
+  local contract_helper="${LIMEN_CAPSULE_DIR:-}/workstream-contract.py"
+  local git_paths="" git_dir="" common_git_dir=""
+
+  if [[ ! -f "$contract_helper" ]]; then
+    printf 'launch-environment error: capsule contract helper is unavailable\n' >&2
+    return 2
+  fi
+  if ! git_paths="$(git rev-parse --path-format=absolute --git-dir --git-common-dir 2>/dev/null)"; then
+    printf 'launch-environment error: linked worktree Git metadata could not be resolved\n' >&2
+    return 2
+  fi
+  git_dir="$(printf '%s\n' "$git_paths" | sed -n '1p')"
+  common_git_dir="$(printf '%s\n' "$git_paths" | sed -n '2p')"
+  if [[ -z "$git_dir" || -z "$common_git_dir"
+    || "$git_dir" != /* || "$common_git_dir" != /* ]]; then
+    printf 'launch-environment error: linked worktree Git metadata resolved to an invalid path\n' >&2
+    return 2
+  fi
+  if [[ ! -d "$git_dir" || ! -w "$git_dir" ]]; then
+    printf 'launch-environment error: linked worktree Git directory is not writable: %s\n' "$git_dir" >&2
+    return 2
+  fi
+  if [[ ! -d "$common_git_dir" || ! -w "$common_git_dir" ]]; then
+    printf 'launch-environment error: common Git directory is not writable: %s\n' "$common_git_dir" >&2
+    return 2
+  fi
+  if git remote get-url origin >/dev/null 2>&1; then
+    if ! GIT_TERMINAL_PROMPT=0 python3 "$contract_helper" run-bounded \
+      --timeout-seconds "$timeout_seconds" -- git ls-remote origin HEAD >/dev/null 2>&1; then
+      printf 'launch-environment error: configured remote origin is unavailable\n' >&2
+      return 2
+    fi
+  fi
+}
+
+workstream_mark_provider_active() {
+  local actual_worktree=""
+
+  actual_worktree="$(pwd -P)"
+  if [[ -z "${LIMEN_CAPSULE_ID:-}" || -z "${LIMEN_WORKTREE:-}"
+    || -z "${LIMEN_SESSION_ID:-}" || "$actual_worktree" != "$LIMEN_WORKTREE" ]]; then
+    printf 'workstream provider launch is missing its admitted capsule, worktree, or session binding\n' >&2
+    return 2
+  fi
+  export LIMEN_WORKSTREAM_PROVIDER_ACTIVE=1
+  export LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID="$LIMEN_CAPSULE_ID"
+  export LIMEN_WORKSTREAM_PROVIDER_WORKTREE="$LIMEN_WORKTREE"
+  export LIMEN_WORKSTREAM_PROVIDER_SESSION_ID="$LIMEN_SESSION_ID"
 }
 
 workstream_publish_admitted_receipt() {
@@ -939,12 +1003,47 @@ workstream_launch_native_agent() {
   # Positional and defaulted, so a capsule rendered before the lane pin existed still calls this
   # with nine arguments and behaves exactly as it did.
   local launch_lane_model="${10:-}"
+  local launch_adapter="${11:-}"
+  local model_flag="${12:-}"
   local -a lane_args=()
   local binary capsule_prompt="" jules_repo="" intent_path=""
   local contract_helper="" timeout_seconds=""
+  local provider_instruction="This session is already admitted; read the modules and continue. Do not execute the operator launch command."
   local jules_output="" jules_rc=0 jules_session_id="" jules_session_url="" jules_receipt=""
   local jules_reserved_this_launch=0
   local -a codex_args=()
+
+  # Provider IDs are mutable registry data. Older generated capsules called this helper with ten
+  # arguments, so retain their historical mapping only as a compatibility fallback; current
+  # capsules carry the stable invocation adapter and model-flag capability from the registry.
+  if [[ -z "$launch_adapter" ]]; then
+    case "$agent" in
+      codex|jules) launch_adapter="$agent" ;;
+      opencode) launch_adapter="prompt-flag" ;;
+      agy|gemini) launch_adapter="prompt-interactive" ;;
+      *) launch_adapter="positional" ;;
+    esac
+  fi
+  if [[ -z "$model_flag" ]]; then
+    case "$agent" in
+      claude|gemini|agy|opencode) model_flag=1 ;;
+      *) model_flag=0 ;;
+    esac
+  fi
+  case "$launch_adapter" in
+    codex|jules|positional|prompt-flag|prompt-interactive) ;;
+    *)
+      printf 'workstream launch adapter is unsupported for registry lane %s\n' "$agent" >&2
+      return 2
+      ;;
+  esac
+  case "$model_flag" in
+    0|1) ;;
+    *)
+      printf 'workstream model-flag contract is invalid for registry lane %s\n' "$agent" >&2
+      return 2
+      ;;
+  esac
 
   # A broker credential belongs to the registration client, never to the model process.
   unset LIMEN_CONDUCT_TOKEN
@@ -958,7 +1057,7 @@ workstream_launch_native_agent() {
   fi
 
   if [[ -n "$launch_model" || -n "$launch_reasoning_effort" || -n "$launch_sandbox" ]]; then
-    if [[ "$agent" != "codex" || -z "$launch_model" || -z "$launch_reasoning_effort" \
+    if [[ "$launch_adapter" != "codex" || -z "$launch_model" || -z "$launch_reasoning_effort" \
       || -z "$launch_sandbox" || ! -f "$launch_contract_helper" ]]; then
       printf 'invalid explicit native launch profile\n' >&2
       return 2
@@ -995,24 +1094,24 @@ workstream_launch_native_agent() {
   # pin is precisely the defect this closes (the lane would run on the inherited default and look
   # pinned).
   if [[ -n "$launch_lane_model" ]]; then
-    case "$agent" in
-      claude|gemini|agy|opencode)
-        lane_args=(--model "$launch_lane_model")
-        ;;
-      codex)
+    if [[ "$launch_adapter" == "codex" ]]; then
         printf 'lane tier pin refused: the codex lane requires the validated --model/--reasoning-effort/--sandbox profile, not a bare pin\n' >&2
         return 2
-        ;;
-      *)
-        printf 'lane tier pin refused: lane %s has no verified --model flag form; remove the pin or extend the verified allowlist\n' "$agent" >&2
-        return 2
-        ;;
-    esac
+    elif [[ "$model_flag" != "1" ]]; then
+      printf 'lane tier pin refused: lane %s has no verified --model flag form; remove the pin or extend its registry profile\n' "$agent" >&2
+      return 2
+    fi
+    lane_args=(--model "$launch_lane_model")
   fi
+
+  workstream_mark_provider_active || return $?
 
   if [[ "$autonomous" -eq 1 ]]; then
     IFS= read -r -d '' capsule_prompt < "$readme" || true
-    case "$agent" in
+    capsule_prompt="$provider_instruction
+
+$capsule_prompt"
+    case "$launch_adapter" in
       codex)
         if [[ -t 0 && -t 1 ]]; then
           exec "$binary" "${codex_args[@]}" "$capsule_prompt"
@@ -1020,10 +1119,10 @@ workstream_launch_native_agent() {
         # Shell runners do not provide a terminal; use Codex's noninteractive transport.
         exec "$binary" "${codex_args[@]}" exec "$capsule_prompt"
         ;;
-      opencode)
+      prompt-flag)
         exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt "$capsule_prompt"
         ;;
-      agy|gemini)
+      prompt-interactive)
         exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt-interactive "$capsule_prompt"
         ;;
       jules)
@@ -1047,7 +1146,9 @@ workstream_launch_native_agent() {
           return 2
         fi
         IFS= read -r -d '' capsule_prompt < "$intent_path" || true
-        capsule_prompt="Do NOT ask for feedback or approval. Work autonomously and return the requested durable receipts. $capsule_prompt"
+        capsule_prompt="$provider_instruction
+
+Do NOT ask for feedback or approval. Work autonomously and return the requested durable receipts. $capsule_prompt"
         # The pre-session push is the durable recovery capsule. Preserve it if a later provider
         # step fails; deleting it after Jules may have started would orphan the cloud run.
         if [[ "${workstream_jules_reuse_reservation:-0}" != "1" ]]; then
@@ -1079,7 +1180,8 @@ workstream_launch_native_agent() {
         jules_receipt="${LIMEN_WORKTREE:-}/docs/continuations/${LIMEN_CAPSULE_ID:-}/workstream.json"
         if [[ "$jules_session_id" =~ ^[0-9]+$
           && "$jules_session_url" == "https://jules.google.com/session/$jules_session_id" ]]; then
-          if ! workstream_jules_sync_receipt "$jules_receipt" "$jules_session_id" "$jules_session_url"; then
+          if ! workstream_jules_sync_receipt \
+            "$jules_receipt" "$jules_session_id" "$jules_session_url" "$agent"; then
             printf 'Jules workstream launch could not bind the session to its receipt\n' >&2
             return 2
           fi
@@ -1109,14 +1211,17 @@ workstream_launch_native_agent() {
     esac
   fi
 
-  case "$agent" in
+  case "$launch_adapter" in
     codex)
       exec "$binary" "${codex_args[@]}"
       ;;
-    agy)
-      # Agy has no argument-free interactive session.
+    prompt-interactive)
+      # Prompt-interactive adapters have no argument-free workstream session.
       if [[ -s "$readme" ]]; then
         IFS= read -r -d '' capsule_prompt < "$readme" || true
+        capsule_prompt="$provider_instruction
+
+$capsule_prompt"
         exec "$binary" "${lane_args[@]+"${lane_args[@]}"}" --prompt-interactive "$capsule_prompt"
       fi
       ;;
@@ -1146,10 +1251,12 @@ PY
 _limen_capsule_validate_receipt() {
   python3 - "$@" 9>&- <<'PY'
 import json
+import re
 import sys
 from pathlib import Path
 
-contract_path, receipt_path, slug, branch, workstream = sys.argv[1:]
+contract_path, receipt_path, slug, branch, workstream = sys.argv[1:6]
+predecessor_slug, predecessor_branch, predecessor_digest = (sys.argv[6:9] + ["", "", ""])[:3]
 modules = [
     "README.md",
     "manifest.md",
@@ -1177,17 +1284,32 @@ expected = {
         "modules": modules,
     },
 }
+if predecessor_slug or predecessor_branch or predecessor_digest:
+    if (
+        not predecessor_slug
+        or not predecessor_branch
+        or not re.fullmatch(r"[0-9a-f]{64}", predecessor_digest)
+    ):
+        raise SystemExit("invalid capsule receipt: predecessor lineage is incomplete")
+    expected["predecessor"] = {
+        "slug": predecessor_slug,
+        "branch": predecessor_branch,
+        "receipt_sha256": predecessor_digest,
+    }
 provider_run = receipt.get("provider_run")
 if provider_run is not None:
     if not isinstance(provider_run, dict):
         raise SystemExit("invalid capsule receipt: provider run must be an object")
     run_id = provider_run.get("id")
     expected_url = f"https://jules.google.com/session/{run_id}"
-    if provider_run != {
-        "provider": "jules",
-        "id": run_id,
-        "url": expected_url,
-    } or not isinstance(run_id, str) or not run_id.isdigit():
+    provider = provider_run.get("provider")
+    if (
+        not isinstance(provider, str)
+        or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", provider)
+        or provider_run != {"provider": provider, "id": run_id, "url": expected_url}
+        or not isinstance(run_id, str)
+        or not run_id.isdigit()
+    ):
         raise SystemExit("invalid capsule receipt: provider run identity mismatch")
     expected["provider_run"] = provider_run
 if receipt != expected:
@@ -1220,6 +1342,10 @@ render_workstream_capsule() {
   # non-empty is what triggers the v2 Codex contract build below, and a v2 contract requires a
   # reasoning effort and a sandbox; reusing it for a bare pin raises ContractError at render.
   local launch_lane_model="${20:-}"
+  local launch_adapter="${21:-}"
+  local model_flag="${22:-}"
+  local predecessor_receipt="${23:-}"
+  local runway_mode="${24:-inherit}"
   local capsule_dir="$wt/.limen-workstream"
   local readme="$capsule_dir/README.md"
   local manifest="$capsule_dir/manifest.md"
@@ -1236,14 +1362,31 @@ render_workstream_capsule() {
   local runtime_template="$spec_dir/runtime-interactive.md"
   local required_template created_at head_short upstream_ref origin_url status_line readme_action contract_action receipt_action
   local launch_helpers
-  local actual_branch effective_runway input_digest identity_action
+  local actual_branch effective_runway input_digest identity_action successor_metadata successor_runway
+  local predecessor_slug="" predecessor_branch="" predecessor_receipt_sha256="" predecessor_head=""
   local runtime_source_digest closeout_source_digest contract_source_digest capsule_real wt_real lock_status
   local q_wt q_capsule_dir q_capsule_lock q_receipt q_identity q_readme q_manifest q_contract q_contract_helper
   local q_intent q_runtime q_closeout q_kickstart q_slug q_branch q_workstream q_input_digest
   local q_agent q_registry_binary q_conduct q_allow_shell_fallback q_agent_capabilities
   local q_launch_model q_launch_reasoning_effort q_launch_sandbox q_launch_lane_model
+  local q_launch_adapter q_model_flag q_predecessor_slug q_predecessor_branch q_predecessor_receipt_sha256
   local capsule_preexisting=0
   local capsule_changed=0
+
+  if [[ -z "$launch_adapter" ]]; then
+    case "$agent" in
+      codex|jules) launch_adapter="$agent" ;;
+      opencode) launch_adapter="prompt-flag" ;;
+      agy|gemini) launch_adapter="prompt-interactive" ;;
+      *) launch_adapter="positional" ;;
+    esac
+  fi
+  if [[ -z "$model_flag" ]]; then
+    case "$agent" in
+      claude|gemini|agy|opencode) model_flag=1 ;;
+      *) model_flag=0 ;;
+    esac
+  fi
 
   if [[ "$autonomous" -eq 1 ]]; then
     runtime_template="$spec_dir/runtime-autonomous.md"
@@ -1316,8 +1459,39 @@ render_workstream_capsule() {
     exit 1
   fi
 
+  if [[ -n "$predecessor_receipt" ]]; then
+    local -a successor_metadata_args=(
+      successor-metadata
+      --predecessor-receipt "$predecessor_receipt"
+      --runway-mode "$runway_mode"
+    )
+    if [[ "$runway_mode" == "renew" ]]; then
+      successor_metadata_args+=(--runway "$runway_requested")
+    fi
+    successor_metadata="$(
+      python3 "$contract_source" "${successor_metadata_args[@]}" 9>&-
+    )" || exit 1
+    predecessor_slug="$(printf '%s\n' "$successor_metadata" | sed -n '1p')"
+    predecessor_branch="$(printf '%s\n' "$successor_metadata" | sed -n '2p')"
+    predecessor_receipt_sha256="$(printf '%s\n' "$successor_metadata" | sed -n '3p')"
+    successor_runway="$(printf '%s\n' "$successor_metadata" | sed -n '4p')"
+    predecessor_head="$(printf '%s\n' "$successor_metadata" | sed -n '5p')"
+    if [[ -z "$predecessor_slug" || -z "$predecessor_branch" \
+      || ! "$predecessor_receipt_sha256" =~ ^[0-9a-f]{64}$ || -z "$successor_runway" \
+      || ! "$predecessor_head" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ ]]; then
+      echo "invalid predecessor successor metadata" >&2
+      exit 1
+    fi
+    if [[ "$from_ref" != "$predecessor_head" ]]; then
+      echo "successor base does not match the exact predecessor HEAD" >&2
+      exit 1
+    fi
+  fi
+
   effective_runway="$runway_requested"
-  if [[ -z "$effective_runway" && "$capsule_preexisting" -eq 1 ]]; then
+  if [[ -n "$predecessor_receipt" ]]; then
+    effective_runway="$successor_runway"
+  elif [[ -z "$effective_runway" && "$capsule_preexisting" -eq 1 ]]; then
     effective_runway="$(
       python3 - "$contract" 9>&- <<'PY'
 import json
@@ -1349,6 +1523,31 @@ PY
   if [[ -n "$launch_lane_model" ]]; then
     lane_pin_digest_field=("launch-lane-model=$launch_lane_model")
   fi
+  local legacy_launch_adapter="positional" legacy_model_flag="0"
+  case "$agent" in
+    codex|jules) legacy_launch_adapter="$agent" ;;
+    opencode) legacy_launch_adapter="prompt-flag" ;;
+    agy|gemini) legacy_launch_adapter="prompt-interactive" ;;
+  esac
+  case "$agent" in
+    claude|gemini|agy|opencode) legacy_model_flag="1" ;;
+  esac
+  local -a registry_profile_digest_fields=()
+  if [[ "$launch_adapter" != "$legacy_launch_adapter" || "$model_flag" != "$legacy_model_flag" ]]; then
+    registry_profile_digest_fields=(
+      "launch-adapter=$launch_adapter"
+      "model-flag=$model_flag"
+    )
+  fi
+  local -a predecessor_digest_fields=()
+  if [[ -n "$predecessor_receipt" ]]; then
+    predecessor_digest_fields=(
+      "predecessor-slug=$predecessor_slug"
+      "predecessor-branch=$predecessor_branch"
+      "predecessor-receipt-sha256=$predecessor_receipt_sha256"
+      "runway-mode=$runway_mode"
+    )
+  fi
   input_digest="$(
     _limen_capsule_input_digest \
       "limen.workstream.capsule-identity.v2" \
@@ -1361,7 +1560,9 @@ PY
       "runtime-source-sha256=$runtime_source_digest" \
       "closeout-source-sha256=$closeout_source_digest" \
       "contract-source-sha256=$contract_source_digest" \
-      "${lane_pin_digest_field[@]+"${lane_pin_digest_field[@]}"}"
+      "${lane_pin_digest_field[@]+"${lane_pin_digest_field[@]}"}" \
+      "${registry_profile_digest_fields[@]+"${registry_profile_digest_fields[@]}"}" \
+      "${predecessor_digest_fields[@]+"${predecessor_digest_fields[@]}"}"
   )"
   actual_branch="$(git -C "$wt" branch --show-current)"
   if [[ "$actual_branch" != "$branch" ]]; then
@@ -1399,7 +1600,9 @@ PY
       echo "invalid existing capsule: missing or empty module $receipt; emit a successor capsule" >&2
       exit 1
     fi
-    if ! _limen_capsule_validate_receipt "$contract" "$receipt" "$slug" "$branch" "$workstream"; then
+    if ! _limen_capsule_validate_receipt \
+      "$contract" "$receipt" "$slug" "$branch" "$workstream" \
+      "$predecessor_slug" "$predecessor_branch" "$predecessor_receipt_sha256"; then
       echo "invalid existing capsule receipt; emit a successor capsule" >&2
       exit 1
     fi
@@ -1436,8 +1639,10 @@ PY
       workstream_jules_sync_receipt \
       workstream_jules_publish_receipt \
       workstream_exact_remote_ref_head \
+      workstream_validate_launch_environment \
       workstream_publish_admitted_receipt \
       workstream_export_context \
+      workstream_mark_provider_active \
       workstream_write_conduct_keepalive_status \
       workstream_conduct_target_is_live \
       workstream_conduct_keepalive_is_ready \
@@ -1493,13 +1698,27 @@ EOF
   local -a contract_launch_args=()
   if [[ -n "$launch_model" ]]; then
     contract_launch_args=(
-      --agent "$agent"
+      --agent "$launch_adapter"
       --model "$launch_model"
       --reasoning-effort "$launch_reasoning_effort"
       --sandbox "$launch_sandbox"
     )
   fi
-  if [[ -n "$runway_requested" ]]; then
+  if [[ -n "$predecessor_receipt" ]]; then
+    local -a successor_configure_args=(
+      configure-successor
+      --path "$contract"
+      --predecessor-receipt "$predecessor_receipt"
+      --runway-mode "$runway_mode"
+      --expected-receipt-sha256 "$predecessor_receipt_sha256"
+    )
+    if [[ "$runway_mode" == "renew" ]]; then
+      successor_configure_args+=(--runway "$runway_requested")
+    fi
+    contract_action="$(
+      python3 "$contract_helper" "${successor_configure_args[@]}" 9>&- | sed -n '1p'
+    )" || exit 1
+  elif [[ -n "$runway_requested" ]]; then
     contract_action="$(
       python3 "$contract_helper" configure --path "$contract" --runway "$runway_requested" \
         "${contract_launch_args[@]+"${contract_launch_args[@]}"}" 9>&-
@@ -1542,7 +1761,10 @@ The private capsule remains local and ignored. Its tracked redacted custody rece
 The kickstart acquires the capsule lock and validates \`.limen-workstream/capsule.identity\`
 plus that receipt before it admits the runway or launches a provider.
 
-## Launch command
+## Host-shell-only launch command
+
+Run this command exactly once from the host shell. A provider launched by it is already admitted
+and must continue from the modules above without executing this operator command.
 
 \`\`\`bash
 bash "$kickstart"
@@ -1576,12 +1798,34 @@ EOF
   printf -v q_launch_reasoning_effort '%q' "$launch_reasoning_effort"
   printf -v q_launch_sandbox '%q' "$launch_sandbox"
   printf -v q_launch_lane_model '%q' "$launch_lane_model"
+  printf -v q_launch_adapter '%q' "$launch_adapter"
+  printf -v q_model_flag '%q' "$model_flag"
+  printf -v q_predecessor_slug '%q' "$predecessor_slug"
+  printf -v q_predecessor_branch '%q' "$predecessor_branch"
+  printf -v q_predecessor_receipt_sha256 '%q' "$predecessor_receipt_sha256"
   _capsule_write_module "$kickstart" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 $launch_helpers
 
-cd $q_wt
+expected_worktree=$q_wt
+expected_slug=$q_slug
+expected_branch=$q_branch
+expected_workstream=$q_workstream
+expected_predecessor_slug=$q_predecessor_slug
+expected_predecessor_branch=$q_predecessor_branch
+expected_predecessor_receipt_sha256=$q_predecessor_receipt_sha256
+if [[ "\${LIMEN_WORKSTREAM_PROVIDER_ACTIVE:-}" == "1"
+  && -n "\${LIMEN_WORKSTREAM_PROVIDER_SESSION_ID:-}"
+  && "\${LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID:-}" == "\$expected_slug"
+  && "\${LIMEN_WORKSTREAM_PROVIDER_WORKTREE:-}" == "\$expected_worktree"
+  && "\${LIMEN_WORKSTREAM_PROVIDER_SESSION_ID:-}" == "\${LIMEN_SESSION_ID:-}"
+  && "\${LIMEN_CAPSULE_ID:-}" == "\$expected_slug"
+  && "\${LIMEN_WORKTREE:-}" == "\$expected_worktree" ]]; then
+  printf 'This session is already admitted; continue directly without launching another provider.\n'
+  exit 0
+fi
+cd "\$expected_worktree"
 capsule_dir=$q_capsule_dir
 capsule_lock=$q_capsule_lock
 receipt=$q_receipt
@@ -1594,9 +1838,6 @@ intent=$q_intent
 runtime=$q_runtime
 closeout=$q_closeout
 kickstart=$q_kickstart
-expected_slug=$q_slug
-expected_branch=$q_branch
-expected_workstream=$q_workstream
 expected_invocation_sha256=$q_input_digest
 agent=$q_agent
 registry_binary=$q_registry_binary
@@ -1607,6 +1848,8 @@ launch_model=$q_launch_model
 launch_reasoning_effort=$q_launch_reasoning_effort
 launch_sandbox=$q_launch_sandbox
 launch_lane_model=$q_launch_lane_model
+launch_adapter=$q_launch_adapter
+model_flag=$q_model_flag
 if [[ -L "\$capsule_dir" || ! -d "\$capsule_dir" \
   || "\$(cd "\$capsule_dir" && pwd -P)" != "\$capsule_dir" ]]; then
   printf 'invalid capsule: private root is not the expected real directory\n' >&2
@@ -1686,12 +1929,25 @@ if [[ "\$(git branch --show-current 9>&-)" != "\$expected_branch" ]]; then
   exit 2
 fi
 validate_capsule_receipt() {
-  python3 - "\$contract" "\$receipt" "\$expected_slug" "\$expected_branch" "\$expected_workstream" 9>&- <<'PY'
+  python3 - "\$contract" "\$receipt" "\$expected_slug" "\$expected_branch" "\$expected_workstream" \
+    "\$expected_predecessor_slug" "\$expected_predecessor_branch" \
+    "\$expected_predecessor_receipt_sha256" "\$agent" 9>&- <<'PY'
 import json
+import re
 import sys
 from pathlib import Path
 
-contract_path, receipt_path, slug, branch, workstream = sys.argv[1:]
+(
+    contract_path,
+    receipt_path,
+    slug,
+    branch,
+    workstream,
+    predecessor_slug,
+    predecessor_branch,
+    predecessor_digest,
+    expected_provider,
+) = sys.argv[1:]
 modules = [
     "README.md",
     "manifest.md",
@@ -1719,17 +1975,29 @@ expected = {
         "modules": modules,
     },
 }
+if predecessor_slug or predecessor_branch or predecessor_digest:
+    if (
+        not predecessor_slug
+        or not predecessor_branch
+        or not re.fullmatch(r"[0-9a-f]{64}", predecessor_digest)
+    ):
+        raise SystemExit("invalid capsule receipt: predecessor lineage is incomplete")
+    expected["predecessor"] = {
+        "slug": predecessor_slug,
+        "branch": predecessor_branch,
+        "receipt_sha256": predecessor_digest,
+    }
 provider_run = receipt.get("provider_run")
 if provider_run is not None:
     if not isinstance(provider_run, dict):
         raise SystemExit("invalid capsule receipt: provider run must be an object")
     run_id = provider_run.get("id")
     expected_url = f"https://jules.google.com/session/{run_id}"
-    if provider_run != {
-        "provider": "jules",
-        "id": run_id,
-        "url": expected_url,
-    } or not isinstance(run_id, str) or not run_id.isdigit():
+    if (
+        provider_run != {"provider": expected_provider, "id": run_id, "url": expected_url}
+        or not isinstance(run_id, str)
+        or not run_id.isdigit()
+    ):
         raise SystemExit("invalid capsule receipt: provider run identity mismatch")
     expected["provider_run"] = provider_run
 if receipt != expected:
@@ -1739,9 +2007,21 @@ PY
 workstream_export_context \
   "\$agent" "\$PWD" "\$capsule_dir" "\$expected_slug" "\$expected_workstream" "\$agent_capabilities"
 validate_capsule_receipt
-if [[ "\$agent" == "jules" ]]; then
+preflight_timeout="\${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
+case "\$preflight_timeout" in
+  ""|*[!0-9]*)
+    printf 'invalid capsule preflight timeout: %s\n' "\$preflight_timeout" >&2
+    exit 2
+    ;;
+esac
+if (( preflight_timeout < 1 || preflight_timeout > 300 )); then
+  printf 'capsule preflight timeout must be between 1 and 300 seconds\n' >&2
+  exit 2
+fi
+workstream_validate_launch_environment "\$preflight_timeout"
+if [[ "\$launch_adapter" == "jules" ]]; then
   bound_session_id=""
-  if bound_session_id="\$(workstream_jules_provider_run_id "\$receipt")"; then
+  if bound_session_id="\$(workstream_jules_provider_run_id "\$receipt" "\$agent")"; then
     if workstream_jules_publish_receipt "\$receipt" "\$bound_session_id"; then
       printf 'Jules session receipt republished: %s\n' "\$receipt"
       exit 0
@@ -1775,6 +2055,9 @@ refresh_workstream_runway() {
     --slug "\$expected_slug" \
     --branch "\$expected_branch" \
     --workstream "\$expected_workstream" \
+    --predecessor-slug "\$expected_predecessor_slug" \
+    --predecessor-branch "\$expected_predecessor_branch" \
+    --predecessor-receipt-sha256 "\$expected_predecessor_receipt_sha256" \
     --module "README.md=\$readme" \
     --module "manifest.md=\$manifest" \
     --module "workstream.json=\$contract" \
@@ -1790,6 +2073,24 @@ refresh_workstream_runway() {
   IFS=: read -r LIMEN_WORKSTREAM_REQUESTED LIMEN_WORKSTREAM_RUNWAY_SECONDS LIMEN_WORKSTREAM_STARTED_EPOCH LIMEN_WORKSTREAM_DEADLINE_EPOCH LIMEN_WORKSTREAM_REMAINING_SECONDS <<< "\$runway_fields"
   export LIMEN_WORKSTREAM_REQUESTED LIMEN_WORKSTREAM_RUNWAY_SECONDS LIMEN_WORKSTREAM_STARTED_EPOCH LIMEN_WORKSTREAM_DEADLINE_EPOCH LIMEN_WORKSTREAM_REMAINING_SECONDS
 }
+if git remote get-url origin >/dev/null 2>&1 9>&-; then
+  if ! GIT_TERMINAL_PROMPT=0 python3 "\$contract_helper" run-bounded \
+    --timeout-seconds "\$preflight_timeout" -- git fetch --prune >/dev/null 2>&1 9>&-; then
+    printf 'launch-environment error: bounded fetch from origin failed\n' >&2
+    exit 2
+  fi
+fi
+if ! python3 "\$contract_helper" run-bounded \
+  --timeout-seconds "\$preflight_timeout" -- git status --short --branch >/dev/null 2>&1 9>&-; then
+  printf 'launch-environment error: bounded Git status failed\n' >&2
+  exit 2
+fi
+if [[ "\$launch_adapter" == "jules" ]]; then
+  # Jules can only see the live remote default HEAD (or its own already-published reservation).
+  # Prove that custody before runway admission so an incompatible exact successor base cannot
+  # start its clock or rewrite its receipt and then fail at provider handoff.
+  workstream_jules_validate_default_base
+fi
 if [[ "\$conduct" -eq 1 ]]; then
   workstream_hydrate_conduct_environment
   workstream_register_conduct_session "\$agent" "\$PWD" "\$agent_capabilities"
@@ -1797,26 +2098,13 @@ if [[ "\$conduct" -eq 1 ]]; then
     exit 0
   fi
 fi
+# Admit only after every launch-environment preflight and conduct registration has succeeded.
 refresh_workstream_runway
-preflight_timeout="\${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
-case "\$preflight_timeout" in
-  ""|*[!0-9]*)
-    printf 'invalid capsule preflight timeout: %s\n' "\$preflight_timeout" >&2
-    exit 2
-    ;;
-esac
-if (( preflight_timeout < 1 || preflight_timeout > 300 )); then
-  printf 'capsule preflight timeout must be between 1 and 300 seconds\n' >&2
-  exit 2
-fi
-if git remote get-url origin >/dev/null 2>&1 9>&-; then
-  GIT_TERMINAL_PROMPT=0 python3 "\$contract_helper" run-bounded \
-    --timeout-seconds "\$preflight_timeout" -- git fetch --prune 9>&-
-fi
-python3 "\$contract_helper" run-bounded \
-  --timeout-seconds "\$preflight_timeout" -- git status --short --branch 9>&-
+# Recheck the absolute deadline at the final boundary before publication and provider handoff. The
+# first admission may start or observe a runway with only one second remaining; this second read is
+# intentionally separate so expiry during that boundary is denied rather than published.
 refresh_workstream_runway
-if [[ "\$agent" != "jules" ]]; then
+if [[ "\$launch_adapter" != "jules" ]]; then
   workstream_publish_admitted_receipt "\$receipt" "\$expected_branch" "\$expected_slug"
   exec 9>&-
 fi
@@ -1827,7 +2115,7 @@ fi
 workstream_launch_native_agent \
   "\$agent" "\$registry_binary" "$autonomous" "\$readme" "\$allow_shell_fallback" \
   "\$launch_model" "\$launch_reasoning_effort" "\$launch_sandbox" "\$contract_helper" \
-  "\$launch_lane_model"
+  "\$launch_lane_model" "\$launch_adapter" "\$model_flag"
 EOF
   if [[ ! -x "$kickstart" ]]; then
     chmod +x "$kickstart"
@@ -1859,6 +2147,9 @@ EOF
     --slug "$slug" \
     --branch "$branch" \
     --workstream "$workstream" \
+    --predecessor-slug "$predecessor_slug" \
+    --predecessor-branch "$predecessor_branch" \
+    --predecessor-receipt-sha256 "$predecessor_receipt_sha256" \
     --module "README.md=$readme" \
     --module "manifest.md=$manifest" \
     --module "workstream.json=$contract" \
@@ -1876,7 +2167,9 @@ EOF
     echo "invalid capsule receipt helper response: $receipt_action" >&2
     exit 1
   fi
-  if ! _limen_capsule_validate_receipt "$contract" "$receipt" "$slug" "$branch" "$workstream"; then
+  if ! _limen_capsule_validate_receipt \
+    "$contract" "$receipt" "$slug" "$branch" "$workstream" \
+    "$predecessor_slug" "$predecessor_branch" "$predecessor_receipt_sha256"; then
     echo "capsule receipt failed final validation" >&2
     exit 1
   fi
