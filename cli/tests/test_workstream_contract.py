@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import json
 import os
 import signal
@@ -9,10 +10,12 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+import limen.census as C
 import limen.workstream_contract as W
 from limen.workstream_contract import (
     AUTHORIZATION,
@@ -262,6 +265,290 @@ def _sync_receipt_identity(capsule: Path) -> None:
         invocation_sha256="0" * 64,
         modules=[(name, capsule / name) for name in IDENTITY_MODULES],
     )
+
+
+def _git_fixture(*args: str, cwd: Path) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    return result.stdout.strip()
+
+
+def _committed_predecessor(tmp_path: Path, *, explicit_profile: bool = False) -> tuple[Path, bytes, dict[str, object]]:
+    repo = tmp_path / "predecessor-repo"
+    repo.mkdir()
+    _git_fixture("init", "-q", "-b", "work/predecessor", cwd=repo)
+    _git_fixture("config", "user.email", "test@example.invalid", cwd=repo)
+    _git_fixture("config", "user.name", "Test User", cwd=repo)
+    remote = tmp_path / "predecessor-origin.git"
+    remote.mkdir()
+    _git_fixture("init", "--bare", "-q", cwd=remote)
+    _git_fixture("remote", "add", "origin", str(remote), cwd=repo)
+    capsule = repo / ".limen-workstream"
+    contract_path = capsule / "workstream.json"
+    launch = (
+        {
+            "agent": "codex",
+            "model": "fixture-sol",
+            "reasoning_effort": "high",
+            "sandbox": "danger-full-access",
+        }
+        if explicit_profile
+        else {}
+    )
+    configure_contract(contract_path, "16d", **launch)
+    admitted, _remaining = admit_contract(contract_path, now_epoch=1_754_000_000)
+    modules = _receipt_modules(capsule)
+    receipt = repo / "docs" / "continuations" / "predecessor" / "workstream.json"
+    sync_receipt(
+        contract_path,
+        receipt,
+        slug="predecessor",
+        branch="work/predecessor",
+        workstream="alpha-omega",
+        modules=modules,
+    )
+    _git_fixture("add", "docs/continuations/predecessor/workstream.json", cwd=repo)
+    _git_fixture("commit", "-qm", "docs: preserve predecessor receipt", cwd=repo)
+    _git_fixture("push", "-u", "origin", "work/predecessor", cwd=repo)
+    return receipt, receipt.read_bytes(), admitted
+
+
+def test_successor_inherits_exact_admitted_timing_and_records_only_path_free_lineage(tmp_path: Path) -> None:
+    predecessor, predecessor_bytes, admitted = _committed_predecessor(tmp_path, explicit_profile=True)
+    successor_capsule = tmp_path / "successor" / ".limen-workstream"
+    successor_contract_path = successor_capsule / "workstream.json"
+
+    contract, lineage, changed = W.configure_successor_contract(successor_contract_path, predecessor)
+
+    assert changed is True
+    assert contract["schema"] == "limen.workstream.contract.v1"
+    assert admitted["schema"] == "limen.workstream.contract.v2"
+    assert admitted["authorization"]["sandbox"] == "danger-full-access"
+    assert contract["runway"] == admitted["runway"]
+    assert contract["authorization"] == AUTHORIZATION
+    assert contract["conductor"]["provider_and_model"] == "provider_neutral"
+    assert lineage == {
+        "slug": "predecessor",
+        "branch": "work/predecessor",
+        "receipt_sha256": hashlib.sha256(predecessor_bytes).hexdigest(),
+    }
+    modules = _receipt_modules(successor_capsule)
+    successor_receipt = tmp_path / "successor" / "docs" / "continuations" / "successor" / "workstream.json"
+    value, _receipt_changed = sync_receipt(
+        successor_contract_path,
+        successor_receipt,
+        slug="successor",
+        branch="work/successor",
+        workstream="alpha-omega",
+        modules=modules,
+        predecessor_slug=lineage["slug"],
+        predecessor_branch=lineage["branch"],
+        predecessor_receipt_sha256=lineage["receipt_sha256"],
+    )
+    serialized = successor_receipt.read_text(encoding="utf-8")
+    assert value["predecessor"] == lineage
+    assert str(predecessor) not in serialized
+    assert predecessor.read_bytes() == predecessor_bytes
+
+
+def test_successor_renewal_is_distinct_unstarted_and_provider_neutral(tmp_path: Path) -> None:
+    predecessor, predecessor_bytes, admitted = _committed_predecessor(tmp_path, explicit_profile=True)
+
+    renewed, lineage = W.successor_contract(predecessor, runway_mode="renew", requested="2d")
+
+    assert admitted["schema"] == "limen.workstream.contract.v2"
+    assert admitted["authorization"]["sandbox"] == "danger-full-access"
+    assert renewed["schema"] == "limen.workstream.contract.v1"
+    assert renewed["runway"]["requested"] == "2d"
+    assert renewed["runway"]["duration_seconds"] == 172_800
+    assert renewed["runway"]["started_epoch"] is None
+    assert renewed["runway"]["deadline_epoch"] is None
+    assert "primary_launch" not in renewed
+    assert renewed["authorization"] == AUTHORIZATION
+    assert renewed["authorization"]["sandbox"] == "workspace-write"
+    assert renewed["conductor"]["provider_and_model"] == "provider_neutral"
+    assert set(lineage) == {"slug", "branch", "receipt_sha256"}
+    assert predecessor.read_bytes() == predecessor_bytes
+
+
+def test_successor_rejects_mode_drift_and_uncommitted_predecessor_bytes(tmp_path: Path) -> None:
+    predecessor, predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+
+    with pytest.raises(ContractError, match="cannot specify a new runway"):
+        W.successor_contract(predecessor, runway_mode="inherit", requested="1d")
+    with pytest.raises(ContractError, match="require an explicit runway"):
+        W.successor_contract(predecessor, runway_mode="renew")
+
+    predecessor.write_bytes(predecessor_bytes + b"\n")
+    with pytest.raises(ContractError, match="committed HEAD bytes"):
+        W.successor_contract(predecessor)
+
+
+def test_predecessor_receipt_growth_during_descriptor_read_hits_the_hard_ceiling(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    original_read = os.read
+    grew = False
+
+    def grow_then_read(descriptor: int, size: int) -> bytes:
+        nonlocal grew
+        if not grew:
+            with predecessor.open("ab") as stream:
+                stream.write(b"x" * W.PREDECESSOR_RECEIPT_CEILING)
+            grew = True
+        return original_read(descriptor, size)
+
+    monkeypatch.setattr(W.os, "read", grow_then_read)
+
+    with pytest.raises(ContractError, match="exceeds its bounded size"):
+        W.predecessor_custody(predecessor)
+    assert grew is True
+
+
+def test_predecessor_receipt_fifo_without_a_writer_is_rejected_without_blocking(tmp_path: Path) -> None:
+    predecessor = tmp_path / "receipt-fifo"
+    os.mkfifo(predecessor)
+    probe = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import sys\n"
+                "from pathlib import Path\n"
+                "from limen.workstream_contract import ContractError, predecessor_custody\n"
+                "try:\n"
+                "    predecessor_custody(Path(sys.argv[1]))\n"
+                "except ContractError as exc:\n"
+                "    raise SystemExit(0 if str(exc) == 'predecessor receipt must be a real file' else 2)\n"
+                "raise SystemExit(1)\n"
+            ),
+            str(predecessor),
+        ],
+        check=False,
+        timeout=2,
+    )
+
+    assert probe.returncode == 0
+
+
+def test_predecessor_receipt_growth_during_git_custody_fails_without_a_second_path_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    original_git_control = W._git_control
+    replaced = False
+
+    def replace_then_probe(*args, **kwargs):
+        nonlocal replaced
+        if not replaced:
+            predecessor.write_bytes(b"x" * (W.PREDECESSOR_RECEIPT_CEILING + 1))
+            replaced = True
+        return original_git_control(*args, **kwargs)
+
+    monkeypatch.setattr(W, "_git_control", replace_then_probe)
+    monkeypatch.setattr(
+        Path,
+        "read_bytes",
+        lambda _path: pytest.fail("predecessor custody must not reopen the path for an unbounded read"),
+    )
+
+    with pytest.raises(ContractError, match="changed during bounded capture"):
+        W.predecessor_custody(predecessor)
+    assert replaced is True
+
+
+def test_predecessor_receipt_change_during_final_remote_probe_is_rejected(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    original_git_control = W._git_control
+    changed = False
+
+    def change_after_remote_probe(*args, **kwargs):
+        nonlocal changed
+        result = original_git_control(*args, **kwargs)
+        if len(args) > 1 and args[1] == "ls-remote" and not changed:
+            with predecessor.open("ab") as stream:
+                stream.write(b"\n")
+            changed = True
+        return result
+
+    monkeypatch.setattr(W, "_git_control", change_after_remote_probe)
+
+    with pytest.raises(ContractError, match="changed during bounded capture"):
+        W.predecessor_custody(predecessor)
+    assert changed is True
+
+
+def test_successor_rejects_receipt_branch_that_does_not_match_checkout(tmp_path: Path) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    repo = predecessor.parents[3]
+    value = json.loads(predecessor.read_text(encoding="utf-8"))
+    value["branch"] = "work/different-predecessor"
+    predecessor.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _git_fixture("add", str(predecessor.relative_to(repo)), cwd=repo)
+    _git_fixture("commit", "-qm", "test: mismatch predecessor branch", cwd=repo)
+
+    with pytest.raises(ContractError, match="does not match its checkout branch"):
+        W.successor_contract(predecessor)
+
+
+def test_successor_rejects_predecessor_head_without_exact_remote_custody(tmp_path: Path) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    repo = predecessor.parents[3]
+    (repo / "unpushed.txt").write_text("not remotely custodied\n", encoding="utf-8")
+    _git_fixture("add", "unpushed.txt", cwd=repo)
+    _git_fixture("commit", "-qm", "test: leave predecessor head local", cwd=repo)
+
+    with pytest.raises(ContractError, match="not the exact origin branch head"):
+        W.successor_contract(predecessor)
+
+
+@pytest.mark.parametrize(
+    ("stream", "ceiling"),
+    [
+        ("stdout", W.GIT_CONTROL_STDOUT_CEILING),
+        ("stderr", W.GIT_CONTROL_STDERR_CEILING),
+    ],
+)
+def test_predecessor_git_probes_fail_at_hard_output_ceilings(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    stream: str,
+    ceiling: int,
+) -> None:
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_git = fake_bin / "git"
+    fake_git.write_text(
+        (f'#!/usr/bin/env python3\nimport sys\nsys.{stream}.buffer.write(b"x" * {ceiling + 1})\n'),
+        encoding="utf-8",
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    with pytest.raises(ContractError, match="output ceiling"):
+        W._git_control(tmp_path, "rev-parse", "--show-toplevel")
+
+
+@pytest.mark.parametrize(("field", "invalid"), [("slug", 1), ("branch", 1), ("workstream", 1)])
+def test_predecessor_receipt_rejects_non_string_metadata(field: str, invalid: object, tmp_path: Path) -> None:
+    predecessor, _predecessor_bytes, _admitted = _committed_predecessor(tmp_path)
+    value = json.loads(predecessor.read_text(encoding="utf-8"))
+    value[field] = invalid
+
+    with pytest.raises(ContractError, match="metadata types"):
+        W.validate_workstream_receipt(value)
 
 
 def test_redacted_receipt_is_idempotent_and_contains_no_private_paths_or_bodies(tmp_path: Path) -> None:
@@ -773,54 +1060,148 @@ def _fake_lane_binary(tmp_path: Path) -> Path:
     return binary
 
 
-def _launch_argv(tmp_path: Path, lane: str, pin: str) -> subprocess.CompletedProcess[str]:
+def _launch_argv(tmp_path: Path, provider: C.Vendor, pin: str) -> subprocess.CompletedProcess[str]:
     binary = _fake_lane_binary(tmp_path)
     readme = tmp_path / "README.md"
     readme.write_text("capsule prompt body")
     env = dict(os.environ)
-    for name in ("CLAUDE", "GEMINI", "AGY", "OPENCODE", "CODEX", "JULES"):
-        env[f"LIMEN_{name}_BIN"] = str(binary)
+    env.update(
+        {
+            "LIMEN_CAPSULE_ID": "argv-contract",
+            "LIMEN_WORKTREE": str(tmp_path),
+            "LIMEN_SESSION_ID": "argv-contract-session",
+        }
+    )
+    env[f"LIMEN_{provider.name.upper().replace('-', '_')}_BIN"] = str(binary)
     script = (
-        f'source "{CAPSULE_LIB}"\nworkstream_launch_native_agent "{lane}" "limen" 1 "{readme}" 0 "" "" "" "" "{pin}"\n'
+        f'source "{CAPSULE_LIB}"\n'
+        f'workstream_launch_native_agent "{provider.name}" "{binary}" 1 "{readme}" 0 '
+        f'"" "" "" "" "{pin}" "{provider.execution.workstream_adapter}" '
+        f'"{int(provider.execution.workstream_model_flag)}"\n'
     )
     return subprocess.run(
         ["bash", "-c", script],
         capture_output=True,
         text=True,
         env=env,
+        cwd=tmp_path,
         timeout=60,
         check=False,
     )
 
 
-@pytest.mark.parametrize("lane", ["claude", "gemini", "agy", "opencode"])
-def test_lane_tier_pin_reaches_the_launched_argv(tmp_path: Path, lane: str) -> None:
+PIN_CAPABLE_PROVIDERS = tuple(provider for provider in C.VENDORS if provider.execution.workstream_model_flag)
+
+
+@pytest.mark.parametrize("provider", PIN_CAPABLE_PROVIDERS, ids=lambda provider: provider.name)
+def test_lane_tier_pin_reaches_the_launched_argv(tmp_path: Path, provider: C.Vendor) -> None:
     """The pin must arrive as a real `--model <value>` pair in the exec'd argv, not be dropped."""
-    result = _launch_argv(tmp_path, lane, "opus")
+    result = _launch_argv(tmp_path, provider, "opus")
     assert "ARGV: [--model] [opus]" in result.stdout, result.stdout or result.stderr
 
 
 def test_unpinned_launch_argv_is_unchanged(tmp_path: Path) -> None:
     """No pin must add NO argument — not an empty string, which would break a strict lane parser."""
-    result = _launch_argv(tmp_path, "claude", "")
-    assert "ARGV: [capsule prompt body]" in result.stdout, result.stdout or result.stderr
+    provider = next(item for item in C.VENDORS if item.execution.workstream_adapter == "positional")
+    result = _launch_argv(tmp_path, provider, "")
+    assert "ARGV: [This session is already admitted; read the modules and continue." in result.stdout
+    assert "capsule prompt body]" in result.stdout, result.stdout or result.stderr
     assert "--model" not in result.stdout
 
 
 @pytest.mark.parametrize(
-    ("lane", "expected"),
+    ("provider", "expected"),
     [
-        ("codex", "requires the validated --model/--reasoning-effort/--sandbox profile"),
-        ("jules", "no verified --model flag form"),
+        (
+            next(item for item in C.VENDORS if item.execution.workstream_adapter == "codex"),
+            "requires the validated --model/--reasoning-effort/--sandbox profile",
+        ),
+        (
+            next(item for item in C.VENDORS if item.execution.workstream_adapter == "jules"),
+            "no verified --model flag form",
+        ),
     ],
+    ids=lambda value: value.name if isinstance(value, C.Vendor) else str(value),
 )
-def test_lane_tier_pin_is_refused_never_ignored(tmp_path: Path, lane: str, expected: str) -> None:
+def test_lane_tier_pin_is_refused_never_ignored(
+    tmp_path: Path,
+    provider: C.Vendor,
+    expected: str,
+) -> None:
     """A lane that cannot honour a pin must FAIL. Silently launching unpinned is the bug itself:
     the lane would run on the inherited default while the operator believes it is pinned."""
-    result = _launch_argv(tmp_path, lane, "opus")
+    result = _launch_argv(tmp_path, provider, "opus")
     assert result.returncode == 2, result.stdout
     assert expected in result.stderr, result.stderr
     assert "ARGV:" not in result.stdout
+
+
+def test_registry_profile_survives_provider_rename_catalog_add_remove_and_reorder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Launch behavior follows the stable registry profile, never a frozen provider-name allowlist."""
+
+    source = next(item for item in C.VENDORS if item.execution.workstream_adapter == "prompt-flag")
+    renamed = replace(
+        source,
+        name="fixture-provider-renamed-arbitrarily",
+        aliases=(),
+        binary="fixture-provider-cli",
+    )
+    addition = replace(
+        source,
+        name="fixture-catalog-addition",
+        aliases=(),
+        binary="fixture-addition-cli",
+        execution=replace(source.execution, workstream_adapter="positional"),
+    )
+    catalogs = (
+        (renamed,),  # the old ID was removed
+        (addition, renamed),  # unrelated addition before the selected lane
+        (renamed, addition),  # arbitrary reorder
+    )
+
+    for catalog in catalogs:
+        monkeypatch.setattr(C, "VENDORS", catalog)
+        monkeypatch.setattr(C, "_BY_NAME", {item.name: item for item in catalog})
+        selected = C.by_name(C.canonical(renamed.name))
+        assert selected is renamed
+        assert C.by_name(source.name) is None
+        result = _launch_argv(tmp_path, selected, "fixture-model")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ARGV: [--model] [fixture-model] [--prompt]" in result.stdout
+
+
+def test_renamed_jules_adapter_records_the_registry_provider_id(tmp_path: Path) -> None:
+    provider = replace(
+        next(item for item in C.VENDORS if item.execution.workstream_adapter == "jules"),
+        name="fixture-jules-renamed",
+        aliases=(),
+    )
+    receipt = tmp_path / "docs" / "continuations" / "fixture" / "workstream.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text('{"schema":"limen.workstream.receipt.v1"}\n', encoding="utf-8")
+    session_id = "12345678901234567890"
+    session_url = f"https://jules.google.com/session/{session_id}"
+    script = (
+        f'source "{CAPSULE_LIB}"\n'
+        f'workstream_jules_sync_receipt "{receipt}" "{session_id}" "{session_url}" "{provider.name}"\n'
+        f'workstream_jules_provider_run_id "{receipt}" "{provider.name}"\n'
+    )
+
+    result = subprocess.run(
+        ["bash", "-c", script],
+        cwd=tmp_path,
+        env={**os.environ, "LIMEN_WORKTREE": str(tmp_path)},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.splitlines() == [session_id]
+    assert json.loads(receipt.read_text(encoding="utf-8"))["provider_run"]["provider"] == provider.name
 
 
 def _launcher(*args: str) -> subprocess.CompletedProcess[str]:

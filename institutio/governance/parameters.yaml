@@ -499,12 +499,12 @@ parameters:
     self_update: none
     owner: integrity
     note: "Read-only TCC database source for tcc-identity-audit. The default is the current user's supported database location; tests may point at an isolated fixture."
-  LIMEN_TCC_HOST_DEPLOYED_AT:
-    default: ""
-    env: LIMEN_TCC_HOST_DEPLOYED_AT
+  LIMEN_TCC_IDENTITY_BASELINE:
+    default: "~/.config/limen/tcc-identity-baseline.json"
+    env: LIMEN_TCC_IDENTITY_BASELINE
     self_update: none
     owner: integrity
-    note: "Optional integer deployment epoch for deterministic audit fixtures. Production leaves it empty and derives the containment boundary from DomusAgentHost.app birth time."
+    note: "Create-once, mode-600 redacted identity and unrelated App Management bundle-grant baseline for tcc-identity-audit. Production uses the Domus-owned default; isolated tests may override it. The writer refuses to replace an existing cutover anchor."
   LIMEN_TCC_HOST_STATUS_JSON:
     default: ""
     env: LIMEN_TCC_HOST_STATUS_JSON
@@ -675,6 +675,18 @@ parameters:
     self_update: none
     owner: governance
     note: "Forces check-corpora's disk checks (B/C/E) to bind strictly even when no declared corpus store is visible. The stores are local-only by design, so a CI runner's missing-store state is a host fact, not drift — auto-detection (any store present ⇒ strict) covers the operator host; this knob covers a host that SHOULD have the stores but has lost them."
+  LIMEN_LIFE_HOST:
+    default: "0"
+    env: LIMEN_LIFE_HOST
+    self_update: none
+    owner: governance
+    note: "Forces check-biography's store-parity check (E) to bind strictly even when ~/Workspace is not visible. The _life-private store is local-only and mode 700 by design, so a CI runner's missing-store state is a host fact, not drift — auto-detection (estate root present ⇒ strict) covers the operator host; this knob covers a host that SHOULD hold the store but has lost it. Sibling of LIMEN_CORPORA_HOST, same CUSTODY reasoning."
+  LIMEN_PEOPLE_HOST:
+    default: "0"
+    env: LIMEN_PEOPLE_HOST
+    self_update: none
+    owner: consulting
+    note: "Forces constellation Rule #6 (overlay parity) to treat a missing private overlay as a violation rather than an unverifiable skip. Rule #6 used to return [] unconditionally when the overlay was absent, so the suite passed BECAUSE the store was missing — 15 people indexed publicly with zero private backing, every dossier lane failing, all green. Auto-detection (estate root present ⇒ provable absence) covers the operator host; this knob covers a host that should hold it."
   LIMEN_CORPVS_ROOT:
     default: "$LIMEN_WORKSPACE_ROOT/organvm-corpvs-testamentvm"
     env: LIMEN_CORPVS_ROOT
@@ -1349,6 +1361,12 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Credential-wall-owned bearer for exactly one authenticated conduct principal. The Worker derives principal, native lane, surface, and roles from LIMEN_CONDUCT_PRINCIPAL_REGISTRY; this client-side value is consumed by the adapter and removed before launching a model process."
+  LIMEN_CONDUCT_ENV_FILE:
+    default: "$HOME/.limen.env"
+    env: LIMEN_CONDUCT_ENV_FILE
+    self_update: none
+    owner: dispatch
+    note: "Private user-owned mode-0600 cache from which a plain-shell workstream launcher imports only LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN before registration. The cache's other values are never imported into the provider environment. Tests may point this at an isolated fixture."
   LIMEN_CONDUCT_KEEPALIVE_SECONDS:
     default: 180
     env: LIMEN_CONDUCT_KEEPALIVE_SECONDS
@@ -3795,6 +3813,36 @@ parameters:
     self_update: "refreshed from the immutable deadline at each capsule launch boundary"
     owner: continuity
     note: "Read-only remaining-runway observation exported to the current successor session."
+  LIMEN_WORKSTREAM_ALREADY_RUNNING:
+    default: null
+    env: LIMEN_WORKSTREAM_ALREADY_RUNNING
+    self_update: "set transiently by conducted capsule registration when the same human-protected session is already live"
+    owner: continuity
+    note: "Internal one-launch sentinel. A value of 1 makes an idempotent kickstart return without spawning a duplicate provider; it is unset before each registration attempt and outside that narrow boundary."
+  LIMEN_WORKSTREAM_PROVIDER_ACTIVE:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_ACTIVE
+    self_update: "set to 1 only in the admitted provider process environment"
+    owner: continuity
+    note: "Provider-side recursion sentinel. Generated kickstart scripts honor it only when the capsule, worktree, and session bindings below all match their exact identity; a host shell leaves it unset."
+  LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_CAPSULE_ID
+    self_update: "bound from LIMEN_CAPSULE_ID immediately before native provider launch"
+    owner: continuity
+    note: "Exact capsule identity paired with LIMEN_WORKSTREAM_PROVIDER_ACTIVE. A mismatch cannot suppress a host bootstrap or a different capsule."
+  LIMEN_WORKSTREAM_PROVIDER_WORKTREE:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_WORKTREE
+    self_update: "bound from the admitted absolute LIMEN_WORKTREE immediately before native provider launch"
+    owner: continuity
+    note: "Exact linked-worktree binding paired with the provider recursion sentinel. It does not grant the provider access to the shared common Git directory."
+  LIMEN_WORKSTREAM_PROVIDER_SESSION_ID:
+    default: null
+    env: LIMEN_WORKSTREAM_PROVIDER_SESSION_ID
+    self_update: "bound from LIMEN_SESSION_ID immediately before native provider launch"
+    owner: continuity
+    note: "Exact admitted-session binding paired with the provider recursion sentinel. It prevents a stale or inherited marker from suppressing a later host launch."
   LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:
     default: 120
     env: LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS
@@ -4784,30 +4832,61 @@ parameters:
     owner: mail
     note: "Safety-valve arg for the opportunity-pipeline effector (--notify). When 1, review-due detections append COUNT-ONLY events to the sealed private log ~/Workspace/_people-private/opportunities/review-due.jsonl (ARCA-sealed, never public) and push a count-only line through the existing notify cascade. ON by default because both write targets are private/count-only; set 0 to run detection without recording."
 
-  LIMEN_APPLICATION_SOURCE:
+  LIMEN_DAILY_EXECUTION:
     default: "1"
-    env: LIMEN_APPLICATION_SOURCE
+    env: LIMEN_DAILY_EXECUTION
     self_update: none
     owner: mail
-    note: "Gate for the application-funnel beat sensor (the OUTBOUND job funnel: scripts/application-funnel.py TRIGGERS the dormant application-pipeline orchestrator — scan->match->build->stage — detached). ON by default: the reversible cycle only SOURCES/SCORES/BUILDS/STAGES application packages; it NEVER submits (apply is gated behind LIMEN_APPLY_FIRE) and NEVER sends (outreach only prepares dates). Fails open; if the pipeline .venv is missing it reports the bootstrap loudly rather than silently no-op."
-  LIMEN_BEAT_APPLICATION_SOURCE:
+    note: "Gate for the single persisted daily communications/application coordinator. ON by default for read-only reconciliation and staging; outbound authority still requires the invocation-scoped LIMEN_DAILY_EXECUTION_FIRE valve."
+  LIMEN_BEAT_DAILY_EXECUTION:
     default: 48
-    env: LIMEN_BEAT_APPLICATION_SOURCE
+    env: LIMEN_BEAT_DAILY_EXECUTION
     self_update: none
     owner: mail
-    note: "Cadence (every N beats) of the application-funnel sensor. 48 beats ~ once daily — sourcing/scoring the whole pipeline is a multi-minute job, so it runs detached at a daily tempo, not every beat. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only)."
-  LIMEN_APPLICATION_SOURCE_TIMEOUT:
-    default: 120
-    env: LIMEN_APPLICATION_SOURCE_TIMEOUT
+    note: "Cadence for the generic heartbeat daily-execution sensor. 48 beats is the existing daily-class tempo; the sensor owns the complete bounded run instead of a separately scheduled application-funnel trigger."
+  LIMEN_DAILY_EXECUTION_TIMEOUT:
+    default: 1800
+    env: LIMEN_DAILY_EXECUTION_TIMEOUT
     self_update: none
     owner: mail
-    note: "Per-run timeout (seconds) for the application-funnel sensor. The driver only TRIGGERS a detached cycle and returns in <1s (the multi-minute cycle runs in the background under its own lock), so 120s is generous headroom for the trigger itself."
-  LIMEN_APPLICATION_NOTIFY:
-    default: "1"
-    env: LIMEN_APPLICATION_NOTIFY
+    note: "Hard timeout in seconds for one daily coordinator run. The default 1,800-second bound covers the application owner cycle while preventing a detached or wedged provider from holding the heartbeat indefinitely."
+  LIMEN_DAILY_EXECUTION_FIRE:
+    default: "0"
+    env: LIMEN_DAILY_EXECUTION_FIRE
     self_update: none
     owner: mail
-    note: "Safety-valve arg for the application-funnel effector (--notify). When 1, the trigger emits a COUNT-ONLY line (cycle launched/held; last cycle's sourced/qualified/staged/submitted counts) through the notify cascade. PII-clean by construction (counts only; per-role detail stays in the pipeline's private estate)."
+    note: "Invocation safety valve for routine professional application submission and professional email/LinkedIn follow-up effectors. SAFE-OFF by default; it is never persisted by the coordinator and never arms ingestion or reconciliation."
+  LIMEN_DAILY_EXECUTION_RECEIPT:
+    default: ""
+    env: LIMEN_DAILY_EXECUTION_RECEIPT
+    self_update: none
+    owner: mail
+    note: "Optional private path for the persisted redacted daily execution receipt. Empty selects the existing private communications report home; raw bodies, browser state, and credentials never enter the receipt."
+  LIMEN_DELIVERY_RECEIPTS:
+    default: ""
+    env: LIMEN_DELIVERY_RECEIPTS
+    self_update: none
+    owner: mail
+    note: "Optional private path to the canonical append-only DeliveryReceiptV1 ledger. Exact provider/account/run/obligation bindings are required for current-day counts; historical rows remain reconciliation-only."
+  LIMEN_DAILY_EXECUTION_TIMEZONE:
+    default: ""
+    env: LIMEN_DAILY_EXECUTION_TIMEZONE
+    self_update: none
+    owner: mail
+    note: "Optional IANA timezone for the daily local-calendar boundary. Empty uses the host timezone; an invalid value fails back to the host without changing provider state."
+  LIMEN_DAILY_RUN_ID:
+    default: ""
+    env: LIMEN_DAILY_RUN_ID
+    self_update: none
+    owner: mail
+    note: "Private run binding passed to owner effectors by the coordinator. It is derived from the local root and calendar date; operators do not set it as a scheduler or persistence knob."
+  LIMEN_LINKEDIN_FIRE:
+    default: "0"
+    env: LIMEN_LINKEDIN_FIRE
+    self_update: none
+    owner: mail
+    note: "Per-owner LinkedIn professional-effector arm. The daily coordinator sets it only for the explicit fire invocation and never passes it to ingestion or reconciliation."
+
   LIMEN_APPLY_FIRE:
     default: "0"
     env: LIMEN_APPLY_FIRE
@@ -4894,6 +4973,50 @@ parameters:
     self_update: none
     owner: mail
     note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Hardcoded default so a zero-env beat still reaches him; override only to redirect the brief to a different self address. Never a third party."
+
+  # --- COLLABORATION HUB: one bounded rung on the existing heartbeat ------------
+  LIMEN_COLLABORATION_HUB_SYNC:
+    default: "1"
+    env: LIMEN_COLLABORATION_HUB_SYNC
+    self_update: none
+    owner: continuity
+    note: "Master gate for the owner-only collaboration hub sync sensor. The rung installs no daemon: the existing heartbeat invokes one finite discover → migrate → ciphertext sync → verify pass. Credentials remain in macOS Keychain, client plaintext stays local, and failures are advisory with private receipts."
+  LIMEN_BEAT_COLLABORATION_HUB_SYNC:
+    default: 48
+    env: LIMEN_BEAT_COLLABORATION_HUB_SYNC
+    self_update: none
+    owner: continuity
+    note: "Cadence in heartbeat beats for collaboration reconciliation. 48 is approximately daily at the slow quiet tempo; every run is idempotent and remote reconciliation uploads only missing immutable events."
+  LIMEN_COLLABORATION_HUB_SYNC_TIMEOUT:
+    default: 900
+    env: LIMEN_COLLABORATION_HUB_SYNC_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Finite wall-clock bound in seconds for the collaboration hub sensor. It covers source discovery, local hashing/encryption, exact remote-ID reconciliation, and verification without monopolizing the heartbeat."
+  LIMEN_COLLABORATION_HUB_ROOT:
+    default: "~/Workspace/collaboration-operations-platform"
+    env: LIMEN_COLLABORATION_HUB_ROOT
+    self_update: none
+    owner: continuity
+    note: "Owner checkout containing the public-safe application and bounded sync entrypoint. The heartbeat fast-forwards a clean main checkout only; it never merges, rebases, or rewrites a work branch."
+  LIMEN_COLLABORATION_HUB_WORKSPACE:
+    default: "~/Workspace/_collaboration-operations-private"
+    env: LIMEN_COLLABORATION_HUB_WORKSPACE
+    self_update: none
+    owner: continuity
+    note: "Mode-700 private workspace holding the manifest, encrypted vault, and redacted/private operational receipts. The value and its source paths never enter tracked receipts."
+  LIMEN_COLLABORATION_HUB_ENDPOINT:
+    default: "https://collaboration-operations-hub.ivixivi.workers.dev"
+    env: LIMEN_COLLABORATION_HUB_ENDPOINT
+    self_update: none
+    owner: continuity
+    note: "No-cost ciphertext-only Worker endpoint. Changing it never authorizes custom DNS, public sharing, or paid resources."
+  LIMEN_COLLABORATION_HUB_REGISTRY:
+    default: "~/Workspace/limen/organs/consulting/constellation/registry.yaml"
+    env: LIMEN_COLLABORATION_HUB_REGISTRY
+    self_update: none
+    owner: continuity
+    note: "Canonical registered collaboration denominator refreshed before each pass. Private overlays and other registered sources are discovered into the private manifest and never copied into Git."
 
   # --- DIVRNAL: the three-phase daily organ that cuts itself --------------------
   LIMEN_PR_DEBT_WINDOW_DAYS:

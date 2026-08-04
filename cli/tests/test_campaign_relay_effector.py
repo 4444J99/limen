@@ -10,9 +10,11 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
+import limen.census as census
 import limen.conduct.campaign_relay as relay_core
 import limen.conduct.campaign_relay_process as relay_process
 import limen.conduct.campaign_relay_protocol as relay_protocol
@@ -36,13 +38,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _agent_resolution_source() -> str:
     source = (ROOT / "scripts" / "start-worktree-session.sh").read_text(encoding="utf-8")
-    marker = "    python3 - \"${requested_agent:-auto}\" <<'PY'\n"
+    marker = '    python3 - "${requested_agent:-auto}" "$launch_profile_values" "$autonomous" <<\'PY\'\n'
     return source.split(marker, 1)[1].split("\nPY\n)", 1)[0]
 
 
 def _run_agent_resolution() -> None:
     # Execute the exact tracked heredoc so the fixture cannot drift into testing a duplicate.
-    exec(compile(_agent_resolution_source(), "agent-resolution", "exec"), {})  # noqa: S102
+    original_argv = sys.argv
+    try:
+        sys.argv = [*sys.argv, "0", "0"]
+        exec(compile(_agent_resolution_source(), "agent-resolution", "exec"), {})  # noqa: S102
+    finally:
+        sys.argv = original_argv
 
 
 def _git(root: Path, *args: str) -> str:
@@ -167,6 +174,32 @@ def test_campaign_relay_second_census_fails_for_empty_intersection(
         SystemExit,
         match="campaign relay has no remaining live provider capacity before launch",
     ):
+        _run_agent_resolution()
+
+
+def test_non_autonomous_auto_selection_excludes_the_jules_adapter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = next(vendor for vendor in census.VENDORS if vendor.execution.workstream_adapter == "jules")
+    renamed = replace(
+        source,
+        name="fixture-jules-provider-renamed",
+        aliases=(),
+        binary="fixture-jules-provider-cli",
+    )
+    monkeypatch.setattr(census, "VENDORS", (renamed,))
+    monkeypatch.setattr(census, "_BY_NAME", {renamed.name: renamed})
+    monkeypatch.setattr(
+        shutil,
+        "which",
+        lambda binary: f"/fixture/{binary}" if binary == renamed.binary else None,
+    )
+    monkeypatch.setattr(sys, "argv", ["agent-resolution", "auto"])
+    monkeypatch.delenv("LIMEN_AGENT", raising=False)
+    monkeypatch.delenv("LIMEN_CAMPAIGN_RELAY_ELIGIBLE_LANES", raising=False)
+    monkeypatch.delenv("LIMEN_FIXTURE_JULES_PROVIDER_RENAMED_BIN", raising=False)
+
+    with pytest.raises(SystemExit, match="no live canonical Limen lane supports native execution"):
         _run_agent_resolution()
 
 
@@ -756,6 +789,7 @@ def test_startup_output_ceiling_crossed_before_selected_ack_fails_closed(
     observed_digests: list[relay_process._BoundedStreamDigest] = []
     registrations: list[bool] = []
     ack_observation = tmp_path / "ack-observation.txt"
+    registration_started = tmp_path / "registration-started.txt"
     original_digest = relay_process._BoundedStreamDigest
 
     class ObservableDigest(original_digest):
@@ -765,6 +799,7 @@ def test_startup_output_ceiling_crossed_before_selected_ack_fails_closed(
 
     def register(**kwargs):
         registrations.append(kwargs["accepting_work"])
+        registration_started.write_text("started", encoding="utf-8")
         assert observed_digests[0].wait_for_output_ceiling(timeout=2)
         raw = json.dumps(
             {
@@ -783,6 +818,7 @@ def test_startup_output_ceiling_crossed_before_selected_ack_fails_closed(
         child_source = f"""
 import json
 import os
+import time
 from pathlib import Path
 
 control_fd = {kwargs["control_descriptor"]}
@@ -799,6 +835,12 @@ event = {{
 payload = (json.dumps(event, sort_keys=True, separators=(",", ":")) + "\\n").encode()
 while payload:
     payload = payload[os.write(control_fd, payload):]
+registration_started = Path(os.environ["REGISTRATION_STARTED"])
+deadline = time.monotonic() + 2
+while not registration_started.exists() and time.monotonic() < deadline:
+    time.sleep(0.001)
+if not registration_started.exists():
+    raise SystemExit("registration did not start")
 payload = b"x" * {relay_process._STARTUP_OUTPUT_CEILING + 8192}
 while payload:
     payload = payload[os.write(1, payload):]
@@ -807,7 +849,11 @@ Path(os.environ["ACK_OBSERVATION"]).write_text(ack.hex() if ack else "closed", e
 os.close(control_fd)
 os.close(exec_fd)
 """
-        env = {**kwargs["env"], "ACK_OBSERVATION": str(ack_observation)}
+        env = {
+            **kwargs["env"],
+            "ACK_OBSERVATION": str(ack_observation),
+            "REGISTRATION_STARTED": str(registration_started),
+        }
         return subprocess.Popen(
             [sys.executable, "-c", child_source],
             cwd=root,

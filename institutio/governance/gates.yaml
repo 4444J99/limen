@@ -135,6 +135,11 @@ gates:
     paths: ["organs/consulting/constellation/**", "institutio/github/access.yaml"]
     owner: consulting
     note: "The constellation register's Rules #1-7 (completeness, name discipline, PII lint, cross-refs, single-org, overlay parity, access cross-check) run per-diff — previously reachable only via constellation-done.sh. access.yaml implicates it because Rule #7 cross-checks every grant against the granted person's registered project rows."
+  biography-registry:
+    command: "python3 scripts/check-biography.py --quiet"
+    paths: ["institutio/governance/biography.yaml", "scripts/check-biography.py", "scripts/derive-epochs.py", "scripts/corpus_resolve.py"]
+    owner: governance
+    note: "BIOGRAPHY registry drift — schema, provenance legality (`inferred` is not a provenance), derived rows naming declared epoch_signals, and the rule a deriver may never write a meaning. Store parity only where absence is provable (LIMEN_LIFE_HOST); a CI runner with no ~/Workspace reports unverifiable, never drift. `corpus_resolve.py` is in paths because check F and the deriver both import it: renaming a resolver function crashes this gate, and without that path a scoped run went green while the gate was broken."
   artist-records:
     command: "python3 organs/artist/validate-artist.py --fleet --quiet"
     paths: ["organs/artist/**"]
@@ -416,6 +421,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: gitvs
     note: "AUDIENCE drift: every surface faces the world, an invited collaborator, or nobody (2026-07-30 decision 4). The audience is DERIVED (public → world; private+grant → collab; else self), never stored as a third copy. --check exits 1 only on a structural BREAK — a bad enum value, or `collab` declared on a class access.yaml can never grant. Open judgments (a declared collab nobody was invited to; a partner lane also marked publish_candidate; the public-AND-granted fourth state the enum cannot express) are reported with named owners but do NOT halt the estate: holding every PR hostage to an open partner question is a worse failure than the question. --strict exits 1 on those too."
+  collaboration-operations-boundary:
+    command: "python3 scripts/check-collaboration-operations.py"
+    paths: ["institutio/collaboration-operations/**", "institutio/github/estate.yaml", "institutio/github/access.yaml", "organs/consulting/constellation/registry.yaml", "scripts/check-collaboration-operations.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: consulting
+    note: "The reusable collaboration-operations platform is project-neutral infrastructure, never another client lane. This predicate locks its private/no-grants/synthetic-only posture, David's mostly-complete Victoroff external references, Maddie's closed push-only lane, and Ari's transcript-vault custody gate to their typed owner registries."
   check-plan-decisions:
     command: "python3 scripts/check-plan-decisions.py --check"
     paths: ["docs/plans/**", "scripts/check-plan-decisions.py"]

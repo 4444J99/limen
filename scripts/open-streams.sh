@@ -133,35 +133,17 @@ import shutil
 import sys
 
 from limen.census import VENDORS, canonical
+from limen.workstream_provider import workstream_binary_candidates, workstream_launchable
 
 
-def native(v):
-    p = getattr(v, "execution", None)
-    return v.local_checkout if p is None else (p.transport == "native-cli" or p.transport.startswith("ianva-"))
-
-
-def binary(v):
-    """EXACTLY start-worktree-session.sh's candidate rule (:262-306). Copied deliberately, not
-    improved: this validator's only job is to predict what THAT script will do, so any divergence
-    makes it wrong even when it looks more correct.
-
-    The narrow `v.binary if v.binary == v.name else ""` clause is the load-bearing part. `copilot`
-    declares binary `gh`, so the launcher will NOT resolve it — and a more permissive rule here
-    accepted `--lane copilot`, set LIMEN_AGENT=copilot, and then watched `auto` silently fall
-    through to codex. It passed locally (both `copilot` and `gh` on PATH) and failed in CI (only
-    `gh`), which is the signature of a validator that disagrees with the thing it validates.
-    """
-    override = os.environ.get(f"LIMEN_{v.name.upper().replace('-', '_')}_BIN", "").strip()
-    for cand in dict.fromkeys(
-        x for x in (override, v.name, v.binary if v.binary == v.name else "") if x
-    ):
-        found = shutil.which(cand)
-        if found:
-            return found
-    return None
-
-
-live = [v for v in VENDORS if v.status.available and v.status.state == "live" and native(v) and binary(v)]
+live = [
+    v
+    for v in VENDORS
+    if v.status.available
+    and v.status.state == "live"
+    and workstream_launchable(v, autonomous=False)
+    and any(shutil.which(candidate) for candidate in workstream_binary_candidates(v, os.environ))
+]
 want = canonical(sys.argv[1].strip().lower()) or sys.argv[1].strip().lower()
 if want == "--list":
     # The set this script will accept, printed by the script itself. Anything that needs to know
@@ -204,7 +186,7 @@ fi
 # The ready set, its bound, and each row's shell-quoted command — derived in one place. The checker
 # exits non-zero on registry drift, and `set -e` makes that fatal here: we never open a set derived
 # from an incoherent graph.
-plan="$(
+plan=$(
   python3 - "$repo_root" "${max_parallel:-}" "$unbounded" "$family" <<'PY'
 import json
 import os
@@ -260,21 +242,28 @@ try:
     import shutil
 
     from limen.census import VENDORS, by_name, canonical
-
-    def _cands(v):
-        override = os.environ.get(f"LIMEN_{v.name.upper().replace('-', '_')}_BIN", "").strip()
-        return tuple(dict.fromkeys(x for x in (override, v.name, v.binary if v.binary == v.name else "") if x))
-
-    def _native(v):
-        p = getattr(v, "execution", None)
-        return v.local_checkout if p is None else (p.transport == "native-cli" or p.transport.startswith("ianva-"))
+    from limen.workstream_provider import workstream_binary_candidates, workstream_launchable
 
     preferred = canonical(os.environ.get("LIMEN_AGENT"))
     ordered = list(VENDORS)
     if preferred and by_name(preferred):
         ordered.sort(key=lambda v: v.name != preferred)
-    eligible = [v for v in ordered if v.status.available and v.status.state == "live" and _native(v)]
-    picked = next(((v, b) for v in eligible for b in _cands(v) if shutil.which(b)), None)
+    eligible = [
+        v
+        for v in ordered
+        if v.status.available
+        and v.status.state == "live"
+        and workstream_launchable(v, autonomous=False)
+    ]
+    picked = next(
+        (
+            (v, b)
+            for v in eligible
+            for b in workstream_binary_candidates(v, os.environ)
+            if shutil.which(b)
+        ),
+        None,
+    )
     if picked:
         lane = picked[0].name + ("" if preferred else "  (census default — set LIMEN_AGENT to steer)")
 except Exception:  # noqa: BLE001 — reporting only; the launcher must not fail on a census hiccup
@@ -292,7 +281,7 @@ for i, row in enumerate(rows):
     kind = ("REOPEN" if row.get("reopen") else "OPEN") if i < cap else "DEFER"
     print(f"{kind}\t{row['id']}\t{row['job_class']}\t{shlex.join(row['argv'])}\t{row['title']}")
 PY
-)"
+)
 
 cap_line="$(printf '%s\n' "$plan" | awk -F'\t' '$1=="CAP"')"
 cap="$(printf '%s' "$cap_line" | cut -f2)"

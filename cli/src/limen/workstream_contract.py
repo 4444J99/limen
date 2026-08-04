@@ -14,14 +14,16 @@ import hashlib
 import json
 import os
 import re
+import selectors
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
 import threading
 import time
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterator, cast
 
 SCHEMA = "limen.workstream.contract.v1"
@@ -32,10 +34,16 @@ WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
 DEFAULT_RUNWAY = "1d"
 MIN_RUNWAY_SECONDS = 15 * 60
 MAX_RUNWAY_SECONDS = 30 * 24 * 60 * 60
+PREDECESSOR_RECEIPT_CEILING = 256 * 1024
+GIT_CONTROL_STDOUT_CEILING = 4096
+GIT_CONTROL_STDERR_CEILING = 4096
+GIT_CONTROL_TIMEOUT_SECONDS = 10
+SUCCESSOR_RUNWAY_MODES = frozenset({"inherit", "renew"})
 _DURATION_RE = re.compile(r"^([1-9][0-9]*)([mhd])$")
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 _WORKSTREAM_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_GIT_OID_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 CODEX_SANDBOXES = frozenset({"read-only", "workspace-write", "danger-full-access"})
 RECEIPT_MODULES = (
     "README.md",
@@ -410,6 +418,419 @@ def validate_receipt_metadata(
     return slug, _validate_branch(branch), _normalize_workstream_handle(workstream)
 
 
+def _predecessor_metadata(
+    *,
+    slug: str | None,
+    branch: str | None,
+    receipt_sha256: str | None,
+) -> dict[str, str] | None:
+    values = (slug, branch, receipt_sha256)
+    if not any(value for value in values):
+        if any(value is not None and value != "" for value in values):
+            raise ContractError("predecessor lineage must provide slug, branch, and receipt digest together")
+        return None
+    if not all(isinstance(value, str) and value for value in values):
+        raise ContractError("predecessor lineage must provide slug, branch, and receipt digest together")
+    validated_slug, validated_branch, _workstream = validate_receipt_metadata(
+        slug=cast(str, slug),
+        branch=cast(str, branch),
+        workstream=None,
+    )
+    digest = cast(str, receipt_sha256)
+    if not _SHA256_RE.fullmatch(digest):
+        raise ContractError("predecessor receipt digest must be lowercase SHA-256")
+    return {
+        "slug": validated_slug,
+        "branch": validated_branch,
+        "receipt_sha256": digest,
+    }
+
+
+def validate_workstream_receipt(value: object) -> dict[str, Any]:
+    """Validate one redacted workstream receipt without trusting its local path."""
+
+    if not isinstance(value, dict):
+        raise ContractError("workstream receipt must be an object")
+    required = {"schema", "slug", "branch", "workstream", "contract", "private_capsule"}
+    optional = {"provider_run", "predecessor"}
+    if not required <= set(value) or not set(value) <= required | optional:
+        raise ContractError("workstream receipt has unknown or missing fields")
+    if value.get("schema") != RECEIPT_SCHEMA:
+        raise ContractError("workstream receipt schema is unsupported")
+    slug_value = value.get("slug")
+    branch_value = value.get("branch")
+    workstream_value = value.get("workstream")
+    if (
+        not isinstance(slug_value, str)
+        or not isinstance(branch_value, str)
+        or (workstream_value is not None and not isinstance(workstream_value, str))
+    ):
+        raise ContractError("workstream receipt metadata types are invalid")
+    slug, branch, workstream = validate_receipt_metadata(
+        slug=slug_value,
+        branch=branch_value,
+        workstream=workstream_value,
+    )
+    if value.get("workstream") != workstream:
+        raise ContractError("workstream receipt handle is invalid")
+    contract = validate_contract(value.get("contract"))
+    if value.get("private_capsule") != {
+        "content": "redacted",
+        "modules": list(RECEIPT_MODULES),
+    }:
+        raise ContractError("workstream receipt private capsule declaration is invalid")
+
+    normalized: dict[str, Any] = {
+        "schema": RECEIPT_SCHEMA,
+        "slug": slug,
+        "branch": branch,
+        "workstream": workstream,
+        "contract": contract,
+        "private_capsule": value["private_capsule"],
+    }
+    provider_run = value.get("provider_run")
+    if provider_run is not None:
+        if not isinstance(provider_run, dict) or set(provider_run) != {"provider", "id", "url"}:
+            raise ContractError("workstream provider run identity is invalid")
+        provider = provider_run.get("provider")
+        run_id = provider_run.get("id")
+        if (
+            not isinstance(provider, str)
+            or not _SLUG_RE.fullmatch(provider)
+            or not isinstance(run_id, str)
+            or not run_id.isdigit()
+            or provider_run.get("url") != f"https://jules.google.com/session/{run_id}"
+        ):
+            raise ContractError("workstream provider run identity is invalid")
+        normalized["provider_run"] = provider_run
+
+    predecessor = value.get("predecessor")
+    if predecessor is not None:
+        if not isinstance(predecessor, dict) or set(predecessor) != {
+            "slug",
+            "branch",
+            "receipt_sha256",
+        }:
+            raise ContractError("workstream predecessor lineage is invalid")
+        normalized_predecessor = _predecessor_metadata(
+            slug=predecessor.get("slug"),
+            branch=predecessor.get("branch"),
+            receipt_sha256=predecessor.get("receipt_sha256"),
+        )
+        if predecessor != normalized_predecessor:
+            raise ContractError("workstream predecessor lineage is invalid")
+        normalized["predecessor"] = predecessor
+    return normalized
+
+
+def _git_control(
+    root: Path,
+    *args: str,
+    stdout_ceiling: int = GIT_CONTROL_STDOUT_CEILING,
+) -> bytes:
+    """Run one Git custody probe with wall-clock and separate output ceilings."""
+
+    if stdout_ceiling < 0:
+        raise ContractError("committed predecessor receipt Git metadata ceiling is invalid")
+    environment = os.environ.copy()
+    environment["GIT_TERMINAL_PROMPT"] = "0"
+    process: subprocess.Popen[bytes] | None = None
+    selector: selectors.BaseSelector | None = None
+    streams: dict[int, tuple[str, Any]] = {}
+    chunks: dict[str, list[bytes]] = {"stdout": [], "stderr": []}
+    sizes = {"stdout": 0, "stderr": 0}
+    ceilings = {"stdout": stdout_ceiling, "stderr": GIT_CONTROL_STDERR_CEILING}
+    deadline = time.monotonic() + GIT_CONTROL_TIMEOUT_SECONDS
+    try:
+        process = subprocess.Popen(
+            ["git", "-C", str(root), *args],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+            env=environment,
+        )
+        if process.stdout is None or process.stderr is None:  # pragma: no cover - PIPE invariant
+            raise ContractError("committed predecessor receipt Git metadata pipes are unavailable")
+        selector = selectors.DefaultSelector()
+        for label, stream in (("stdout", process.stdout), ("stderr", process.stderr)):
+            descriptor = stream.fileno()
+            os.set_blocking(descriptor, False)
+            selector.register(descriptor, selectors.EVENT_READ)
+            streams[descriptor] = (label, stream)
+
+        while streams:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ContractError("committed predecessor receipt Git metadata timed out")
+            for key, _mask in selector.select(timeout=min(remaining, 0.1)):
+                label, stream = streams[key.fd]
+                remaining_output = ceilings[label] - sizes[label]
+                chunk = os.read(key.fd, min(65_536, remaining_output + 1))
+                if not chunk:
+                    selector.unregister(key.fd)
+                    streams.pop(key.fd)
+                    stream.close()
+                    continue
+                sizes[label] += len(chunk)
+                if sizes[label] > ceilings[label]:
+                    raise ContractError("committed predecessor receipt Git metadata exceeded its output ceiling")
+                chunks[label].append(chunk)
+        try:
+            returncode = process.wait(timeout=max(0.001, deadline - time.monotonic()))
+        except subprocess.TimeoutExpired as exc:
+            raise ContractError("committed predecessor receipt Git metadata timed out") from exc
+    except ContractError:
+        if process is not None:
+            _terminate_process_group(process, process.pid)
+        raise
+    except OSError as exc:
+        if process is not None:
+            _terminate_process_group(process, process.pid)
+        raise ContractError("committed predecessor receipt Git metadata is unavailable") from exc
+    except BaseException:
+        if process is not None:
+            _terminate_process_group(process, process.pid)
+        raise
+    finally:
+        if selector is not None:
+            selector.close()
+        for _label, stream in streams.values():
+            stream.close()
+
+    if returncode != 0:
+        raise ContractError("committed predecessor receipt Git metadata is invalid")
+    return b"".join(chunks["stdout"])
+
+
+def _read_bounded_predecessor_receipt(receipt_path: Path) -> tuple[bytes, os.stat_result]:
+    """Read one real local receipt through a single descriptor and a hard byte ceiling."""
+
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    descriptor: int | None = None
+    try:
+        descriptor = os.open(receipt_path, flags)
+        descriptor_info = os.fstat(descriptor)
+        path_info = receipt_path.lstat()
+        if (
+            stat.S_ISLNK(path_info.st_mode)
+            or not stat.S_ISREG(path_info.st_mode)
+            or not stat.S_ISREG(descriptor_info.st_mode)
+            or (path_info.st_dev, path_info.st_ino) != (descriptor_info.st_dev, descriptor_info.st_ino)
+        ):
+            raise ContractError("predecessor receipt must be a real file")
+        if not 0 < descriptor_info.st_size <= PREDECESSOR_RECEIPT_CEILING:
+            raise ContractError("predecessor receipt exceeds its bounded size")
+        chunks: list[bytes] = []
+        captured = 0
+        while captured <= PREDECESSOR_RECEIPT_CEILING:
+            chunk = os.read(descriptor, min(65_536, PREDECESSOR_RECEIPT_CEILING + 1 - captured))
+            if not chunk:
+                break
+            captured += len(chunk)
+            if captured > PREDECESSOR_RECEIPT_CEILING:
+                raise ContractError("predecessor receipt exceeds its bounded size")
+            chunks.append(chunk)
+        local = b"".join(chunks)
+        if len(local) != descriptor_info.st_size:
+            raise ContractError("predecessor receipt changed during bounded capture")
+        return local, descriptor_info
+    except ContractError:
+        raise
+    except OSError as exc:
+        raise ContractError("predecessor receipt is unavailable") from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
+def _verify_predecessor_receipt_identity(receipt_path: Path, captured: os.stat_result) -> None:
+    """Fail if the local custody path changed after its bounded descriptor capture."""
+
+    try:
+        current = receipt_path.lstat()
+    except OSError as exc:
+        raise ContractError("predecessor receipt is unavailable") from exc
+    stable_fields = (
+        "st_dev",
+        "st_ino",
+        "st_mode",
+        "st_size",
+        "st_mtime_ns",
+        "st_ctime_ns",
+    )
+    if (
+        stat.S_ISLNK(current.st_mode)
+        or not stat.S_ISREG(current.st_mode)
+        or any(getattr(current, field) != getattr(captured, field) for field in stable_fields)
+    ):
+        raise ContractError("predecessor receipt changed during bounded capture")
+
+
+def predecessor_custody(receipt_path: Path) -> tuple[dict[str, Any], dict[str, str], str]:
+    """Load one exact remotely custodied predecessor receipt and its checkout head."""
+
+    local, local_info = _read_bounded_predecessor_receipt(receipt_path)
+    try:
+        resolved = receipt_path.resolve(strict=True)
+        root_raw = _git_control(receipt_path.parent, "rev-parse", "--show-toplevel").decode("utf-8").strip()
+        root = Path(root_raw).resolve(strict=True)
+        relative = resolved.relative_to(root)
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        raise ContractError("predecessor receipt must belong to one Git checkout") from exc
+    relative_posix = PurePosixPath(relative.as_posix())
+    if (
+        len(relative_posix.parts) != 4
+        or relative_posix.parts[:2] != ("docs", "continuations")
+        or relative_posix.name != "workstream.json"
+        or any(part in {"", ".", ".."} for part in relative_posix.parts)
+    ):
+        raise ContractError("predecessor receipt path is not canonical")
+
+    object_name = f"HEAD:{relative_posix.as_posix()}"
+    try:
+        _git_control(root, "cat-file", "-e", object_name)
+    except ContractError as exc:
+        raise ContractError("predecessor receipt is not committed at the checkout HEAD") from exc
+    try:
+        committed_size = int(_git_control(root, "cat-file", "-s", object_name).decode("ascii").strip())
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise ContractError("predecessor receipt is not committed at the checkout HEAD") from exc
+    if not 0 < committed_size <= PREDECESSOR_RECEIPT_CEILING:
+        raise ContractError("predecessor receipt exceeds its bounded size")
+    committed = _git_control(
+        root,
+        "cat-file",
+        "blob",
+        object_name,
+        stdout_ceiling=PREDECESSOR_RECEIPT_CEILING,
+    )
+    if len(committed) != committed_size:
+        raise ContractError("predecessor receipt changed during committed capture")
+    _verify_predecessor_receipt_identity(receipt_path, local_info)
+    if local != committed:
+        raise ContractError("predecessor receipt must match its committed HEAD bytes")
+    try:
+        receipt = validate_workstream_receipt(json.loads(committed.decode("utf-8")))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ContractError("committed predecessor receipt is invalid JSON") from exc
+    if receipt["slug"] != relative_posix.parts[2]:
+        raise ContractError("predecessor receipt slug does not match its custody path")
+    try:
+        checkout_branch = _git_control(root, "symbolic-ref", "--quiet", "--short", "HEAD").decode("utf-8").strip()
+        checkout_head = _git_control(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
+    except UnicodeDecodeError as exc:
+        raise ContractError("predecessor checkout Git identity is invalid") from exc
+    if checkout_branch != receipt["branch"]:
+        raise ContractError("predecessor receipt branch does not match its checkout branch")
+    if not _GIT_OID_RE.fullmatch(checkout_head):
+        raise ContractError("predecessor checkout HEAD is invalid")
+    try:
+        remote_raw = _git_control(
+            root,
+            "ls-remote",
+            "--exit-code",
+            "origin",
+            f"refs/heads/{receipt['branch']}",
+        ).decode("ascii")
+    except (ContractError, UnicodeDecodeError) as exc:
+        raise ContractError("predecessor receipt branch has no verifiable origin custody") from exc
+    remote_rows = [line.split() for line in remote_raw.splitlines() if line.strip()]
+    expected_ref = f"refs/heads/{receipt['branch']}"
+    if (
+        len(remote_rows) != 1
+        or len(remote_rows[0]) != 2
+        or not _GIT_OID_RE.fullmatch(remote_rows[0][0])
+        or remote_rows[0][1] != expected_ref
+    ):
+        raise ContractError("predecessor receipt branch has invalid origin custody")
+    if remote_rows[0][0] != checkout_head:
+        raise ContractError("predecessor checkout HEAD is not the exact origin branch head")
+    _verify_predecessor_receipt_identity(receipt_path, local_info)
+    runway = receipt["contract"]["runway"]
+    if runway["started_epoch"] is None or runway["deadline_epoch"] is None:
+        raise ContractError("predecessor workstream has not been admitted")
+    lineage = {
+        "slug": receipt["slug"],
+        "branch": receipt["branch"],
+        "receipt_sha256": hashlib.sha256(committed).hexdigest(),
+    }
+    return receipt, lineage, checkout_head
+
+
+def predecessor_lineage(receipt_path: Path) -> tuple[dict[str, Any], dict[str, str]]:
+    """Return validated path-free lineage while keeping checkout details ephemeral."""
+
+    receipt, lineage, _checkout_head = predecessor_custody(receipt_path)
+    return receipt, lineage
+
+
+def successor_metadata(
+    predecessor_receipt: Path,
+    *,
+    runway_mode: str = "inherit",
+    requested: str | None = None,
+) -> tuple[dict[str, Any], dict[str, str], str]:
+    """Derive a successor contract, lineage, and its exact remotely custodied base."""
+
+    if runway_mode not in SUCCESSOR_RUNWAY_MODES:
+        raise ContractError("successor runway mode must be inherit or renew")
+    if runway_mode == "inherit" and requested is not None:
+        raise ContractError("inherited successors cannot specify a new runway")
+    if runway_mode == "renew" and requested is None:
+        raise ContractError("renewed successors require an explicit runway")
+    receipt, lineage, checkout_head = predecessor_custody(predecessor_receipt)
+    predecessor = receipt["contract"]
+    if runway_mode == "inherit":
+        inherited = new_contract(predecessor["runway"]["requested"])
+        inherited["runway"] = copy.deepcopy(predecessor["runway"])
+        return inherited, lineage, checkout_head
+
+    return new_contract(cast(str, requested)), lineage, checkout_head
+
+
+def successor_contract(
+    predecessor_receipt: Path,
+    *,
+    runway_mode: str = "inherit",
+    requested: str | None = None,
+) -> tuple[dict[str, Any], dict[str, str]]:
+    """Derive one successor contract without changing predecessor state."""
+
+    contract, lineage, _checkout_head = successor_metadata(
+        predecessor_receipt,
+        runway_mode=runway_mode,
+        requested=requested,
+    )
+    return contract, lineage
+
+
+def configure_successor_contract(
+    path: Path,
+    predecessor_receipt: Path,
+    *,
+    runway_mode: str = "inherit",
+    requested: str | None = None,
+    expected_receipt_sha256: str | None = None,
+) -> tuple[dict[str, Any], dict[str, str], bool]:
+    """Write an exact successor contract while preserving predecessor bytes."""
+
+    contract, lineage = successor_contract(
+        predecessor_receipt,
+        runway_mode=runway_mode,
+        requested=requested,
+    )
+    if expected_receipt_sha256 is not None and lineage["receipt_sha256"] != expected_receipt_sha256:
+        raise ContractError("predecessor receipt changed during successor creation")
+    with _contract_lock(path):
+        if path.exists():
+            existing = read_contract(path)
+            if existing != contract:
+                raise ContractError("existing successor contract conflicts with its predecessor")
+            return existing, lineage, False
+        return contract, lineage, _write_if_changed(path, contract)
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -676,6 +1097,9 @@ def sync_receipt(
     branch: str,
     workstream: str | None,
     modules: list[tuple[str, Path]],
+    predecessor_slug: str | None = None,
+    predecessor_branch: str | None = None,
+    predecessor_receipt_sha256: str | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Write a tracked, redacted derivative of one private capsule.
 
@@ -687,6 +1111,11 @@ def sync_receipt(
         slug=slug,
         branch=branch,
         workstream=workstream,
+    )
+    predecessor = _predecessor_metadata(
+        slug=predecessor_slug,
+        branch=predecessor_branch,
+        receipt_sha256=predecessor_receipt_sha256,
     )
     names = [name for name, _path in modules]
     if len(names) != len(set(names)):
@@ -733,6 +1162,8 @@ def sync_receipt(
                 "modules": list(RECEIPT_MODULES),
             },
         }
+        if predecessor is not None:
+            receipt["predecessor"] = predecessor
         return receipt, _write_if_changed(receipt_path, receipt)
 
 
@@ -948,6 +1379,15 @@ def main(argv: list[str] | None = None) -> int:
     configure.add_argument("--reasoning-effort")
     configure.add_argument("--sandbox")
 
+    for command_name in ("successor-metadata", "configure-successor"):
+        successor = subparsers.add_parser(command_name)
+        if command_name == "configure-successor":
+            successor.add_argument("--path", type=Path, required=True)
+            successor.add_argument("--expected-receipt-sha256")
+        successor.add_argument("--predecessor-receipt", type=Path, required=True)
+        successor.add_argument("--runway-mode", choices=sorted(SUCCESSOR_RUNWAY_MODES), default="inherit")
+        successor.add_argument("--runway")
+
     # The STATIC half of validate-codex-launch, split out so a caller can reject an invalid sandbox
     # WITHOUT first resolving a codex binary. Argument validity is a property of the arguments, not
     # of what happens to be installed: CI (no codex) must reach the same verdict as a workstation
@@ -974,6 +1414,9 @@ def main(argv: list[str] | None = None) -> int:
     receipt.add_argument("--slug", required=True)
     receipt.add_argument("--branch", required=True)
     receipt.add_argument("--workstream")
+    receipt.add_argument("--predecessor-slug")
+    receipt.add_argument("--predecessor-branch")
+    receipt.add_argument("--predecessor-receipt-sha256")
     receipt.add_argument("--module", action="append", default=[], metavar="NAME=PATH")
 
     metadata = subparsers.add_parser("validate-receipt-metadata")
@@ -1013,6 +1456,29 @@ def main(argv: list[str] | None = None) -> int:
                 sandbox=args.sandbox,
             )
             print("changed" if changed else "unchanged")
+        elif args.command in {"successor-metadata", "configure-successor"}:
+            if args.command == "configure-successor":
+                contract, lineage, changed = configure_successor_contract(
+                    args.path,
+                    args.predecessor_receipt,
+                    runway_mode=args.runway_mode,
+                    requested=args.runway,
+                    expected_receipt_sha256=args.expected_receipt_sha256,
+                )
+                print("changed" if changed else "unchanged")
+                predecessor_head = ""
+            else:
+                contract, lineage, predecessor_head = successor_metadata(
+                    args.predecessor_receipt,
+                    runway_mode=args.runway_mode,
+                    requested=args.runway,
+                )
+            print(lineage["slug"])
+            print(lineage["branch"])
+            print(lineage["receipt_sha256"])
+            print(contract["runway"]["requested"])
+            if predecessor_head:
+                print(predecessor_head)
         elif args.command == "validate-codex-sandbox":
             # Raises ContractError on an unknown value; echo the accepted one, mirroring
             # validate-codex-launch printing its selected slug.
@@ -1055,6 +1521,9 @@ def main(argv: list[str] | None = None) -> int:
                     branch=args.branch,
                     workstream=args.workstream,
                     modules=modules,
+                    predecessor_slug=args.predecessor_slug,
+                    predecessor_branch=args.predecessor_branch,
+                    predecessor_receipt_sha256=args.predecessor_receipt_sha256,
                 )
                 print("changed" if changed else "unchanged")
             elif args.command == "sync-identity":

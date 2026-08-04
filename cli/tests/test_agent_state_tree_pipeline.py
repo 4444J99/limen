@@ -230,7 +230,8 @@ def test_custody_guard_uses_filesystem_identity_for_case_aliases(
     source = tmp_path / "Data"
     alias = tmp_path / "data"
     source.mkdir()
-    alias.mkdir()
+    if not alias.exists():
+        alias.mkdir()
     real_samefile = tree_pipeline.os.path.samefile
 
     def samefile(first, second):

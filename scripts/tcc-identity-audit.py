@@ -4,20 +4,24 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
 import re
 import sqlite3
 import subprocess
+import tomllib
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 
-SCHEMA = "limen.tcc_identity_audit.v1"
+SCHEMA = "limen.tcc_identity_audit.v2"
+BASELINE_SCHEMA = "limen.tcc_identity_baseline.v1"
 HOST_SCHEMA = "domus.agent_host_status.v1"
 HOST_BUNDLE_ID = "org.organvm.domus.agent-host"
+APP_MANAGEMENT_SERVICE = "kTCCServiceSystemPolicyAppBundles"
 TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 DISABLE_UPDATE_KEYS = (
     "DISABLE_AUTOUPDATER",
@@ -50,6 +54,35 @@ MANAGED_CLIENT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
             r"/\.local/share/limen/(?:current|runtimes/[^/]+)/"
             r".*/(?:python(?:[0-9.]*)?)(?:/|$)"
         ),
+    ),
+)
+CONFIGURED_INGRESSES: tuple[tuple[str, str, str, frozenset[str]], ...] = (
+    (
+        "claude_desktop",
+        "json",
+        "Library/Application Support/Claude/claude_desktop_config.json",
+        frozenset({"github", "serena", "filesystem", "sequential-thinking", "memory"}),
+    ),
+    (
+        "claude_code",
+        "json",
+        ".claude.json",
+        frozenset({"conductor", "voice-scorer", "github"}),
+    ),
+    (
+        "codex_desktop",
+        "toml",
+        ".local/share/codex/config.toml",
+        frozenset({"conductor", "voice-scorer"}),
+    ),
+    (
+        "cline",
+        "json",
+        (
+            "Library/Application Support/Code/User/globalStorage/"
+            "saoudrizwan.claude-dev/settings/cline_mcp_settings.json"
+        ),
+        frozenset({"github", "jupyter", "serena"}),
     ),
 )
 
@@ -179,20 +212,6 @@ def _is_limen_runtime_client(
     return False
 
 
-def _deployment_epoch(env: Mapping[str, str], application: Path) -> int | None:
-    override = env.get("LIMEN_TCC_HOST_DEPLOYED_AT")
-    if override:
-        try:
-            value = int(override)
-        except ValueError as exc:
-            raise AuditError("LIMEN_TCC_HOST_DEPLOYED_AT must be an integer") from exc
-        return value if value >= 0 else None
-    try:
-        return int(application.stat().st_birthtime)
-    except (AttributeError, OSError):
-        return None
-
-
 def _managed_pattern(
     client: str,
     env: Mapping[str, str],
@@ -214,11 +233,16 @@ def _client_exists(client: str) -> bool | None:
         return None
 
 
+def _identity_id(client: str, client_type: int) -> str:
+    material = f"limen.tcc.identity.v1\0{client_type}\0{client}".encode()
+    return "sha256:" + hashlib.sha256(material).hexdigest()
+
+
 def classify_client(
     client: str,
     *,
-    last_modified: int,
-    deployment_epoch: int | None,
+    client_type: int,
+    baseline_identities: frozenset[str] | None,
     application: Path,
     env: Mapping[str, str],
 ) -> tuple[str, str | None, bool | None]:
@@ -232,17 +256,20 @@ def classify_client(
     exists = _client_exists(client)
     if pattern is None:
         return "unrelated", None, exists
-    if deployment_epoch is not None:
-        if last_modified >= deployment_epoch:
-            return "versioned_leak", pattern, exists
-        return "legacy_stale", pattern, exists
-    return ("legacy_stale", pattern, exists) if exists is False else ("versioned_leak", pattern, exists)
+    if baseline_identities is None:
+        return "managed_unbaselined", pattern, exists
+    classification = (
+        "baseline_managed"
+        if _identity_id(client, client_type) in baseline_identities
+        else "new_managed"
+    )
+    return classification, pattern, exists
 
 
 def _read_clients(
     databases: Sequence[Path],
     *,
-    deployment_epoch: int | None,
+    baseline_identities: frozenset[str] | None,
     application: Path,
     env: Mapping[str, str],
 ) -> tuple[list[dict[str, Any]], int]:
@@ -270,10 +297,10 @@ def _read_clients(
     grouped: dict[tuple[str, int], dict[str, Any]] = {}
     unrelated = 0
     for client_raw, client_type_raw, service_raw, auth_raw, modified_raw in rows:
-        if int(auth_raw) == 0:
-            continue
         client = str(client_raw)
         client_type = int(client_type_raw)
+        service = str(service_raw)
+        authorization = int(auth_raw)
         modified = int(modified_raw)
         key = (client, client_type)
         item = grouped.setdefault(
@@ -282,34 +309,302 @@ def _read_clients(
                 "client": client,
                 "client_type": client_type,
                 "last_modified": modified,
-                "services": set(),
+                "decisions": {},
             },
         )
         item["last_modified"] = max(int(item["last_modified"]), modified)
-        item["services"].add(str(service_raw))
+        previous = item["decisions"].get(service)
+        if previous is None or modified >= int(previous["last_modified"]):
+            item["decisions"][service] = {
+                "service": service,
+                "auth_value": authorization,
+                "last_modified": modified,
+            }
 
     inventory: list[dict[str, Any]] = []
     for item in grouped.values():
         classification, pattern, exists = classify_client(
             str(item["client"]),
-            last_modified=int(item["last_modified"]),
-            deployment_epoch=deployment_epoch,
+            client_type=int(item["client_type"]),
+            baseline_identities=baseline_identities,
             application=application,
             env=env,
         )
         if classification == "unrelated":
             unrelated += 1
+        decisions = sorted(item["decisions"].values(), key=lambda value: value["service"])
+        active_services = [
+            decision["service"]
+            for decision in decisions
+            if int(decision["auth_value"]) != 0
+        ]
+        app_management_active = any(
+            decision["service"] == APP_MANAGEMENT_SERVICE
+            and int(decision["auth_value"]) != 0
+            for decision in decisions
+        )
         inventory.append(
             {
-                **item,
+                "client": item["client"],
+                "client_type": item["client_type"],
+                "identity": _identity_id(str(item["client"]), int(item["client_type"])),
+                "client_kind": (
+                    "path"
+                    if int(item["client_type"]) == 1 or str(item["client"]).startswith("/")
+                    else "bundle"
+                ),
+                "last_modified": item["last_modified"],
                 "classification": classification,
                 "pattern": pattern,
                 "exists": exists,
-                "services": sorted(item["services"]),
+                "active": bool(active_services),
+                "app_management_active": app_management_active,
+                "active_services": active_services,
+                "services": [decision["service"] for decision in decisions],
+                "decisions": decisions,
             }
         )
     inventory.sort(key=lambda value: (value["classification"], value["client"]))
     return inventory, unrelated
+
+
+def _identity_baseline_path(env: Mapping[str, str]) -> Path:
+    configured = env.get("LIMEN_TCC_IDENTITY_BASELINE")
+    if configured:
+        return _expand_user_path(configured, env)
+    return _home(env) / ".config/limen/tcc-identity-baseline.json"
+
+
+def _app_management_decision(item: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    return next(
+        (
+            decision
+            for decision in item.get("decisions", [])
+            if decision.get("service") == APP_MANAGEMENT_SERVICE
+        ),
+        None,
+    )
+
+
+def _app_management_bundle_grants(
+    clients: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    grants: list[dict[str, Any]] = []
+    for item in clients:
+        if int(item["client_type"]) != 0 or item["client"] == HOST_BUNDLE_ID:
+            continue
+        decision = _app_management_decision(item)
+        if decision is None:
+            continue
+        grants.append(
+            {
+                "client": str(item["client"]),
+                "auth_value": int(decision["auth_value"]),
+            }
+        )
+    return sorted(grants, key=lambda value: value["client"])
+
+
+def _baseline_digest(document: Mapping[str, Any]) -> str:
+    encoded = json.dumps(
+        document,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
+def _identity_baseline_document(
+    clients: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    body = {
+        "schema": BASELINE_SCHEMA,
+        "managed_identities": sorted(
+            {
+                str(item["identity"])
+                for item in clients
+                if item.get("pattern") is not None
+            }
+        ),
+        "app_management_bundle_grants": _app_management_bundle_grants(clients),
+    }
+    return {**body, "digest": _baseline_digest(body)}
+
+
+def _load_identity_baseline(path: Path) -> dict[str, Any]:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise AuditError("identity baseline is missing") from exc
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AuditError("identity baseline is unreadable") from exc
+    if not isinstance(document, dict) or document.get("schema") != BASELINE_SCHEMA:
+        raise AuditError("identity baseline schema is incompatible")
+    identities = document.get("managed_identities")
+    grants = document.get("app_management_bundle_grants")
+    if not isinstance(identities, list) or not all(
+        isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value)
+        for value in identities
+    ):
+        raise AuditError("identity baseline managed identities are malformed")
+    if not isinstance(grants, list) or not all(
+        isinstance(value, dict)
+        and isinstance(value.get("client"), str)
+        and not str(value["client"]).startswith("/")
+        and isinstance(value.get("auth_value"), int)
+        for value in grants
+    ):
+        raise AuditError("identity baseline App Management grants are malformed")
+    body = {
+        "schema": BASELINE_SCHEMA,
+        "managed_identities": sorted(set(identities)),
+        "app_management_bundle_grants": sorted(grants, key=lambda value: value["client"]),
+    }
+    digest = _baseline_digest(body)
+    if document.get("digest") != digest:
+        raise AuditError("identity baseline digest does not match its contents")
+    return {**body, "digest": digest}
+
+
+def _write_identity_baseline(path: Path, document: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(document, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise AuditError(
+                "identity baseline already exists; refusing to overwrite the cutover anchor"
+            ) from exc
+        path.chmod(0o600)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _apply_baseline_classification(
+    clients: Sequence[dict[str, Any]],
+    identities: frozenset[str],
+) -> None:
+    for item in clients:
+        if item.get("pattern") is None:
+            continue
+        item["classification"] = (
+            "baseline_managed"
+            if item["identity"] in identities
+            else "new_managed"
+        )
+
+
+def _redacted_item(item: Mapping[str, Any]) -> dict[str, Any]:
+    public = dict(item)
+    if item.get("client_kind") == "path":
+        public["client"] = f"<redacted:{str(item['identity']).removeprefix('sha256:')[:12]}>"
+    return public
+
+
+def _redacted_predicate_identity(item: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "identity": item["identity"],
+        "classification": item["classification"],
+        "pattern": item.get("pattern"),
+        "active": item["active"],
+        "active_services": item["active_services"],
+        "decisions": item["decisions"],
+    }
+
+
+def _configured_ingress_violations(
+    env: Mapping[str, str],
+) -> tuple[list[dict[str, str]], int]:
+    violations: list[dict[str, str]] = []
+    configured = 0
+    home = _home(env)
+    expected_host = (home / ".local/bin/domus-agent-host").resolve(strict=False)
+    for surface, format_name, relative, managed_names in CONFIGURED_INGRESSES:
+        path = home / relative
+        try:
+            raw = path.read_bytes()
+        except FileNotFoundError:
+            continue
+        except OSError:
+            violations.append(
+                {
+                    "surface": surface,
+                    "server": "<config>",
+                    "command": "",
+                    "reason": "config_unreadable",
+                }
+            )
+            continue
+        try:
+            if format_name == "toml":
+                document = tomllib.loads(raw.decode())
+                servers = document.get("mcp_servers", {})
+            else:
+                document = json.loads(raw)
+                servers = document.get("mcpServers", {})
+        except (UnicodeDecodeError, json.JSONDecodeError, tomllib.TOMLDecodeError):
+            violations.append(
+                {
+                    "surface": surface,
+                    "server": "<config>",
+                    "command": "",
+                    "reason": "config_unreadable",
+                }
+            )
+            continue
+        if not isinstance(servers, dict):
+            violations.append(
+                {
+                    "surface": surface,
+                    "server": "<config>",
+                    "command": "",
+                    "reason": "server_registry_malformed",
+                }
+            )
+            continue
+        for name in sorted(managed_names):
+            server = servers.get(name)
+            if not isinstance(server, dict) or "command" not in server:
+                continue
+            configured += 1
+            command = server.get("command")
+            arguments = server.get("args", [])
+            command_name = ""
+            command_path: Path | None = None
+            if isinstance(command, str) and command.strip():
+                command_value = command.strip()
+                command_name = Path(command_value).name
+                command_path = _expand_user_path(command_value, env).resolve(
+                    strict=False
+                )
+            hosted = (
+                command_name == "domus-agent-host"
+                and command_path == expected_host
+                and isinstance(arguments, list)
+                and arguments[:2] == ["ensure", "--"]
+                and len(arguments) >= 3
+            )
+            if not hosted:
+                violations.append(
+                    {
+                        "surface": surface,
+                        "server": name,
+                        "command": command_name,
+                        "reason": "missing_domus_agent_host_ensure",
+                    }
+                )
+    return violations, configured
 
 
 def _settings_paths(env: Mapping[str, str]) -> list[Path]:
@@ -517,6 +812,7 @@ def audit(
     platform_name: str | None = None,
     runner: Runner = subprocess.run,
     strict: bool = False,
+    write_baseline: Path | None = None,
 ) -> dict[str, Any]:
     values = dict(os.environ if env is None else env)
     observed_platform = platform_name or platform.system()
@@ -533,10 +829,31 @@ def audit(
             "clients": [],
             "summary": {
                 "stable_host": 0,
-                "legacy_stale": 0,
-                "versioned_leak": 0,
+                "baseline_managed": 0,
+                "managed_unbaselined": 0,
+                "new_managed": 0,
+                "active_leaks": 0,
+                "visible_app_management_path_rows": 0,
+                "unhosted_configured_ingresses": 0,
                 "unrelated": 0,
             },
+            "predicates": {
+                "active_leaks": {"ok": True, "count": 0, "identities": []},
+                "visible_app_management_path_rows": {
+                    "ok": True,
+                    "count": 0,
+                    "identities": [],
+                    "stable_host_row_count": 0,
+                    "stable_host_grant_count": 0,
+                },
+                "unhosted_configured_ingresses": {
+                    "ok": True,
+                    "count": 0,
+                    "configured_count": 0,
+                    "ingresses": [],
+                },
+            },
+            "identity_baseline": {"loaded": False, "not_applicable": True},
             "malformed_claude_helpers": [],
         }
 
@@ -547,14 +864,6 @@ def audit(
     except AuditError as exc:
         application = _default_stable_application(values)
         application_error = str(exc)
-    try:
-        deployment_epoch = _deployment_epoch(values, application)
-    except AuditError as exc:
-        deployment_epoch = None
-        deployment_error = str(exc)
-        failures.append("deployment_epoch_invalid")
-    else:
-        deployment_error = None
     if application_error:
         host = {"ok": False, "error": application_error}
     else:
@@ -569,10 +878,24 @@ def audit(
     if update_blockers:
         failures.append("automatic_updates_disabled")
 
+    baseline_path = write_baseline or _identity_baseline_path(values)
+    baseline: dict[str, Any] | None = None
+    baseline_error: str | None = None
+    baseline_written = False
+    if write_baseline is None:
+        try:
+            baseline = _load_identity_baseline(baseline_path)
+        except AuditError as exc:
+            baseline_error = str(exc)
+    baseline_identities = (
+        frozenset(baseline["managed_identities"])
+        if baseline is not None
+        else None
+    )
     try:
         clients, unrelated = _read_clients(
             _tcc_databases(values),
-            deployment_epoch=deployment_epoch,
+            baseline_identities=baseline_identities,
             application=application,
             env=values,
         )
@@ -583,15 +906,123 @@ def audit(
         database_error = str(exc)
     else:
         database_error = None
-    counts = {
-        classification: sum(1 for item in clients if item["classification"] == classification)
-        for classification in ("stable_host", "legacy_stale", "versioned_leak")
+
+    if write_baseline is not None and database_error is None:
+        baseline = _identity_baseline_document(clients)
+        try:
+            _write_identity_baseline(write_baseline, baseline)
+        except (AuditError, OSError) as exc:
+            baseline_error = f"identity baseline write failed: {exc}"
+            failures.append("identity_baseline_write_failed")
+            baseline = None
+        else:
+            baseline_written = True
+            baseline_error = None
+            baseline_identities = frozenset(baseline["managed_identities"])
+            _apply_baseline_classification(clients, baseline_identities)
+            clients.sort(key=lambda value: (value["classification"], value["client"]))
+
+    if baseline is None:
+        if baseline_error == "identity baseline is missing":
+            failures.append("identity_baseline_missing")
+        elif baseline_error:
+            failures.append("identity_baseline_invalid")
+
+    active_leaks = [
+        item
+        for item in clients
+        if item.get("pattern") is not None
+        and (
+            item["app_management_active"]
+            or item["classification"] == "new_managed"
+        )
+    ]
+    visible_path_rows = [
+        item
+        for item in clients
+        if item["client_kind"] == "path"
+        and _app_management_decision(item) is not None
+    ]
+    stable_host_rows = [
+        item
+        for item in clients
+        if item["client"] == HOST_BUNDLE_ID
+        and _app_management_decision(item) is not None
+    ]
+    stable_host_grants = [
+        item
+        for item in stable_host_rows
+        if int(_app_management_decision(item)["auth_value"]) != 0  # type: ignore[index]
+    ]
+    ingress_violations, configured_ingresses = _configured_ingress_violations(values)
+
+    predicates = {
+        "active_leaks": {
+            "ok": not active_leaks,
+            "count": len(active_leaks),
+            "identities": [_redacted_predicate_identity(item) for item in active_leaks],
+        },
+        "visible_app_management_path_rows": {
+            "ok": (
+                not visible_path_rows
+                and len(stable_host_rows) == 1
+                and len(stable_host_grants) == 1
+            ),
+            "count": len(visible_path_rows),
+            "identities": [
+                _redacted_predicate_identity(item) for item in visible_path_rows
+            ],
+            "stable_host_row_count": len(stable_host_rows),
+            "stable_host_grant_count": len(stable_host_grants),
+        },
+        "unhosted_configured_ingresses": {
+            "ok": not ingress_violations,
+            "count": len(ingress_violations),
+            "configured_count": configured_ingresses,
+            "ingresses": ingress_violations,
+        },
     }
-    counts["unrelated"] = unrelated
-    if counts["versioned_leak"]:
-        failures.append("versioned_tcc_client_after_host_deployment")
+
+    counts = {
+        classification: sum(
+            1 for item in clients if item["classification"] == classification
+        )
+        for classification in (
+            "stable_host",
+            "baseline_managed",
+            "managed_unbaselined",
+            "new_managed",
+        )
+    }
+    counts.update(
+        {
+            "active_leaks": len(active_leaks),
+            "visible_app_management_path_rows": len(visible_path_rows),
+            "unhosted_configured_ingresses": len(ingress_violations),
+            "unrelated": unrelated,
+        }
+    )
+    if active_leaks:
+        failures.append("active_managed_tcc_leak")
+    if visible_path_rows:
+        failures.append("visible_app_management_path_client")
+    if len(stable_host_rows) != 1 or len(stable_host_grants) != 1:
+        failures.append("stable_host_app_management_grant_missing")
+    if ingress_violations:
+        failures.append("unhosted_configured_ingress")
     if strict and not counts["stable_host"] and database_error is None:
         failures.append("stable_host_tcc_identity_missing")
+
+    current_bundle_grants = _app_management_bundle_grants(clients)
+    expected_bundle_grants = (
+        baseline["app_management_bundle_grants"] if baseline is not None else None
+    )
+    preservation_ok = (
+        expected_bundle_grants is not None
+        and current_bundle_grants == expected_bundle_grants
+    )
+    if expected_bundle_grants is not None and not preservation_ok:
+        failures.append("unrelated_app_management_grants_changed")
 
     try:
         malformed = _registered_claude_helpers(values, runner, strict=strict)
@@ -608,15 +1039,38 @@ def audit(
         "status": "ok" if not failures else "blocked",
         "platform": observed_platform,
         "platform_supported": True,
-        "host_deployed_at": deployment_epoch,
-        "host_deployment_error": deployment_error,
         "automatic_updates": {
             "enabled": not update_blockers,
             "blockers": update_blockers,
         },
         "stable_host": host,
-        "clients": clients,
+        "clients": [_redacted_item(item) for item in clients],
         "summary": counts,
+        "predicates": predicates,
+        "identity_baseline": {
+            "schema": BASELINE_SCHEMA,
+            "loaded": baseline is not None,
+            "written": baseline_written,
+            "digest": baseline.get("digest") if baseline is not None else None,
+            "managed_identity_count": (
+                len(baseline["managed_identities"]) if baseline is not None else 0
+            ),
+            "app_management_bundle_grant_count": (
+                len(baseline["app_management_bundle_grants"])
+                if baseline is not None
+                else 0
+            ),
+            "error": baseline_error,
+        },
+        "unrelated_app_management_preservation": {
+            "ok": preservation_ok,
+            "current_count": len(current_bundle_grants),
+            "baseline_count": (
+                len(expected_bundle_grants)
+                if expected_bundle_grants is not None
+                else 0
+            ),
+        },
         "malformed_claude_helpers": malformed,
         "tcc_database_error": database_error,
         "failures": failures,
@@ -632,8 +1086,20 @@ def print_human(payload: Mapping[str, Any]) -> None:
     print(
         "  identities: "
         f"{summary['stable_host']} stable host, "
-        f"{summary['legacy_stale']} legacy stale, "
-        f"{summary['versioned_leak']} versioned leak"
+        f"{summary['baseline_managed']} baseline managed, "
+        f"{summary['new_managed']} new managed"
+    )
+    predicates = payload["predicates"]
+    print(f"  active leaks: {predicates['active_leaks']['count']}")
+    visible = predicates["visible_app_management_path_rows"]
+    print(
+        "  App Management: "
+        f"{visible['count']} path row(s), "
+        f"{visible['stable_host_grant_count']} stable host grant(s)"
+    )
+    print(
+        "  unhosted configured ingresses: "
+        f"{predicates['unhosted_configured_ingresses']['count']}"
     )
     for item in payload.get("clients", []):
         print(f"  [{item['classification']}] {item['client']} ({len(item['services'])} service(s))")
@@ -648,11 +1114,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--db")
+    parser.add_argument("--baseline")
+    parser.add_argument("--write-baseline")
     args = parser.parse_args(argv)
     env = dict(os.environ)
     if args.db:
         env["LIMEN_TCC_DB"] = args.db
-    payload = audit(env, strict=args.strict)
+    if args.baseline:
+        env["LIMEN_TCC_IDENTITY_BASELINE"] = args.baseline
+    write_baseline = Path(args.write_baseline).expanduser() if args.write_baseline else None
+    if write_baseline is not None and args.baseline:
+        if write_baseline.resolve(strict=False) != Path(args.baseline).expanduser().resolve(
+            strict=False
+        ):
+            parser.error("--baseline and --write-baseline must name the same path")
+    payload = audit(
+        env,
+        strict=args.strict,
+        write_baseline=write_baseline,
+    )
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:

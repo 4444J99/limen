@@ -12,18 +12,44 @@ workstream --autonomous --agent auto --conduct --runway 8h --prompt-file /path/t
 Autonomous mode refuses a missing prompt. Its thin README index is passed to the selected native
 agent as the initial prompt and requires four cohesive Markdown modules (manifest, intent, runtime
 decision contract, and closeout) plus a machine-readable `workstream.json`. `--agent auto` derives an available installed CLI from the
-canonical Limen census; an explicit canonical lane such as `claude`, `opencode`, `agy`, `copilot`,
-or `codex` preserves that native identity. `--runway` accepts `Nm`, `Nh`, or `Nd` from 15 minutes
+canonical Limen census; an explicit canonical lane such as `claude`, `opencode`, `agy`, `gemini`,
+or `codex` preserves that native identity. Copilot is an issue-assignment lane: dispatch it by
+assigning an existing GitHub issue to `copilot-swe-agent`, not through `workstream --agent`.
+`--runway` accepts `Nm`, `Nh`, or `Nd` from 15 minutes
 through 30 days and defaults to one day. The clock starts on first kickstart, subsequent sessions
 inherit the same deadline, and an expired capsule fails closed instead of silently renewing.
 Runtime evidence derives `continue`, `switch`, `wait_relay`, `settled`, or `invalid`.
 
+To create a successor from a tracked receipt, point at its exact committed file:
+
+```bash
+workstream --predecessor-receipt /path/to/docs/continuations/prior/workstream.json \
+  --prompt-file /path/to/next-session.md danse successor
+```
+
+The default `--runway-mode inherit` copies the predecessor's admitted start and absolute deadline
+exactly; it refuses a new `--runway`. A deliberately distinct window uses
+`--runway-mode renew --runway <duration>` and starts unadmitted. The source receipt must match its
+checkout's committed `HEAD` bytes, that checkout must be on the receipt's declared branch, and its
+exact HEAD must be the live `origin` branch head. The successor worktree is based on that exact
+commit; an explicit `--from` is accepted only when it resolves to the same commit. Both successor
+modes use the provider-neutral `workspace-write` authorization contract; an old provider-specific
+launch profile is not inherited. The successor records only the predecessor slug, branch, and
+receipt SHA-256 digest—never a machine-local path—and never rewrites the predecessor.
+
+Re-rendering an existing successor must repeat the same exact `--predecessor-receipt` and
+`--runway-mode` arguments (and the same `--runway` for a renewal). The receipt path is intentionally
+not persisted, so omission or substitution fails the capsule identity check instead of guessing a
+local source.
+
 `--conduct` registers the direct session with the shared broker as `human_protected` before the
 agent starts. The generated launcher passes only session, capsule, lineage, task, lease-generation,
 and execution-hash context through environment variables. Broker credentials remain environment
-owned for the registration call: the launcher never writes or prints their values, and removes the
-conduct credential before the native agent process starts. If the broker cannot acknowledge the
-registration, the agent does not start.
+owned for the registration call. When a plain shell has not already exported the broker pair, the
+launcher imports only `LIMEN_CONDUCT_URL` and `LIMEN_CONDUCT_TOKEN` from the user-owned mode-`0600`
+`~/.limen.env` cache; it does not expose the cache's other values. The launcher never writes or
+prints broker values, and removes the conduct credential before the native agent process starts. If
+the cache is unsafe or the broker cannot acknowledge registration, the agent does not start.
 
 After the admitted receipt is published, a conductor-only background channel inherits the broker
 credential while the provider still receives none. It refreshes the same protected session every
@@ -33,7 +59,9 @@ deadline arrives. The channel closes its inherited capsule-lock descriptor and o
 bounded mode-`0600` private status object at
 `.limen-workstream/conduct-keepalive.json`; it creates no second session or local campaign store.
 
-After admission, a repository-backed non-Jules launcher commits only the synchronized public receipt
+Before admission or conduct registration, the launcher completes its bounded remote fetch and Git
+status preflights. Either failure leaves the private contract and tracked receipt byte-identical and
+starts no provider. After admission, a repository-backed non-Jules launcher commits only the synchronized public receipt
 and fast-forward-pushes that exact head to its topic branch before provider `exec`. Unrelated dirty
 state, remote branch drift, commit failure, or push failure denies provider launch. Re-entry at an
 already published exact head is byte-idempotent. Local-only repositories without an `origin` retain
@@ -78,6 +106,18 @@ Run it from any terminal with:
 ```bash
 bash <repo>/.worktrees/<slug>/.limen-workstream/kickstart.sh
 ```
+
+For a capsule rendered before private-cache hydration shipped, use the tracked compatibility
+wrapper. It validates and imports only the broker pair, then executes the identity-bound capsule
+without rewriting it:
+
+```bash
+bash scripts/run-workstream-kickstart.sh .limen-workstream/kickstart.sh
+```
+
+The command is safe to repeat. If that capsule already has a fresh, live protected session, it
+returns success with one plain message and starts no duplicate provider. Continue in the existing
+session; never kill or reap it just to relaunch the command.
 
 Autonomous Codex capsules preserve the interactive UI when standard input and output are attached
 to a terminal. In a shell runner without a terminal, the same command uses Codex's noninteractive

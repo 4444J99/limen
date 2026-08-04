@@ -169,9 +169,10 @@ people:
       - name: victoroff-os
         repo: 4444J99/victoroff-os
         keywords: [victoroff, victoroff-os]
-        stage: building
+        stage: mvp
         public_face_state: none
         dossier: null
+        notes: mostly complete; residuals remain external owner references — do not reopen a general build lane
       - name: social-media-auditor
         repo: null
         keywords: [social media auditor, social audit, pop culture]

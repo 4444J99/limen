@@ -31,6 +31,7 @@ from limen.conduct.campaign_relay import (
 )
 from limen.conduct.campaign_relay_state import _read_relay, _replace_relay
 from limen.conduct.models import CampaignRelayReceiptV1
+from limen.workstream_provider import workstream_binary_candidates, workstream_launchable
 
 
 def _live_relay_lanes(_root: Path) -> tuple[str, ...]:
@@ -51,27 +52,9 @@ def _live_relay_lanes(_root: Path) -> tuple[str, ...]:
         vendor = by_name(name)
         if vendor is None:
             continue
-        profile = getattr(vendor, "execution", None)
-        direct_native = (
-            vendor.local_checkout
-            if profile is None
-            else profile.transport == "native-cli" or profile.transport.startswith("ianva-")
-        )
-        if not direct_native:
+        if not workstream_launchable(vendor, autonomous=True):
             continue
-        env_key = f"LIMEN_{vendor.name.upper().replace('-', '_')}_BIN"
-        override = os.environ.get(env_key, "").strip()
-        candidates = tuple(
-            dict.fromkeys(
-                value
-                for value in (
-                    override,
-                    vendor.name,
-                    vendor.binary if vendor.binary == vendor.name else "",
-                )
-                if value
-            )
-        )
+        candidates = workstream_binary_candidates(vendor, os.environ)
         if any(shutil.which(candidate) for candidate in candidates):
             selected.append(vendor.name)
     if not selected:

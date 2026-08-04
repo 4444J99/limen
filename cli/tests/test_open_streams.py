@@ -15,12 +15,15 @@ machine view come from ONE builder, so a launcher can never run a command the op
 
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
+import limen.census as census
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -186,11 +189,9 @@ def test_the_resolved_lane_is_reported_before_anything_opens(launcher_env):
 def _live_lanes():
     """Ask the SCRIPT which lanes it accepts — never re-derive the rule here.
 
-    A second copy is exactly what broke: this test used `(vendor.name, vendor.binary)` while
-    start-worktree-session.sh uses `(override, name, binary if binary == name else "")`. `copilot`
-    declares binary `gh`, so the permissive copy listed a lane the launcher could not resolve. It
-    passed locally (a real `copilot` binary on PATH) and failed in CI (only `gh`) — a divergence
-    invisible on the machine that wrote it.
+    A second candidate rule is exactly what broke this path. The script and launcher now import the
+    same registry-derived helper, while the issue-assignment exclusion remains a separate
+    launchability predicate.
     """
     out = _open("--list-lanes")
     assert out.returncode == 0, out.stdout + out.stderr
@@ -214,6 +215,12 @@ def test_each_live_lane_can_be_selected(launcher_env):
         )
 
 
+def test_issue_assignment_lanes_are_never_listed_as_native_workstreams() -> None:
+    issue_assignment = {vendor.name for vendor in census.VENDORS if vendor.issue_assignment}
+
+    assert issue_assignment.isdisjoint(_live_lanes())
+
+
 def test_a_lane_that_is_not_live_is_refused_before_anything_opens(launcher_env):
     """Refused HERE, with the real alternatives named. Discovering it inside a tmux window means N
     panes each printing an error nobody is watching."""
@@ -224,6 +231,59 @@ def test_a_lane_that_is_not_live_is_refused_before_anything_opens(launcher_env):
     # answer to "what IS available".
     for lane in _live_lanes():
         assert lane in proc.stderr, "the refusal must name what IS available, not just what is not"
+
+
+def test_lane_listing_resolves_a_renamed_registry_id_through_its_distinct_binary(tmp_path: Path) -> None:
+    source = next(
+        vendor
+        for vendor in census.VENDORS
+        if vendor.status.available
+        and vendor.status.state == "live"
+        and (vendor.execution.transport == "native-cli" or vendor.execution.transport.startswith("ianva-"))
+    )
+    renamed = replace(
+        source,
+        name="fixture-stream-provider-renamed",
+        aliases=(),
+        binary="fixture-stream-provider-cli",
+    )
+    fixture_root = tmp_path / "fixture-limen"
+    (fixture_root / "scripts").mkdir(parents=True)
+    shutil.copy2(OPEN, fixture_root / "scripts" / "open-streams.sh")
+    shutil.copytree(ROOT / "cli" / "src", fixture_root / "cli" / "src")
+    census_path = fixture_root / "cli" / "src" / "limen" / "census.py"
+    registry_source = census_path.read_text(encoding="utf-8")
+    record_start = registry_source.index(f'    Vendor(\n        name="{source.name}",')
+    record_end = registry_source.find("\n    Vendor(", record_start + 1)
+    if record_end == -1:
+        record_end = len(registry_source)
+    source_record = registry_source[record_start:record_end]
+    renamed_record = source_record.replace(f'name="{source.name}"', f'name="{renamed.name}"', 1)
+    renamed_record = renamed_record.replace(f'binary="{source.binary}"', f'binary="{renamed.binary}"', 1)
+    alias_line = next(line for line in renamed_record.splitlines() if line.strip().startswith("aliases="))
+    renamed_record = renamed_record.replace(alias_line, "        aliases=(),", 1)
+    census_path.write_text(
+        registry_source[:record_start] + renamed_record + registry_source[record_end:],
+        encoding="utf-8",
+    )
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_provider = fake_bin / renamed.binary
+    fake_provider.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    fake_provider.chmod(0o755)
+
+    result = subprocess.run(
+        ["bash", str(fixture_root / "scripts" / "open-streams.sh"), "--list-lanes"],
+        cwd=fixture_root,
+        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert renamed.name in result.stdout.splitlines()
+    assert source.name not in result.stdout.splitlines()
 
 
 def test_the_registry_itself_stays_vendor_neutral(launcher_env):
