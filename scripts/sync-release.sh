@@ -34,7 +34,7 @@ BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
 # republishes it every beat and the collapse guard restores from the projection branch. Observed
 # park this closes: a local-only "fix validation errors in tasks.yaml" commit (2026-07-19) pinned
 # the live checkout 60 commits behind for 3 days of loud fail-open beats.
-RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json}"
+RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json docs/receipts/*.json logs/overnight-watch.md docs/branch-hygiene.md}"
 _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a receipt glob
   local f p matched any=0
   local -a globs
@@ -102,6 +102,33 @@ print(
     )
 )
 PY
+  exit 0
+fi
+
+# --check: a real predicate (unlike --census, which is always exit 0 and informational) — exit 0
+# ⟺ the live root RESTS ON the release branch, HEAD is exactly origin/$BRANCH, and every tracked
+# or untracked dirty path is regenerable daemon bookkeeping (the same RECEIPT_GLOBS / _only_receipts
+# tolerance this organ already trusts for its own reconcile valve at the patch-id check below —
+# routed through one canonical surface rather than a second hand-rolled dirty-tree definition).
+if [ "${1:-}" = "--check" ]; then
+  cd "$ROOT" 2>/dev/null || { echo "sync-release --check: FAIL — no LIMEN_ROOT ($ROOT)"; exit 1; }
+  git rev-parse --git-dir >/dev/null 2>&1 || { echo "sync-release --check: FAIL — not a git repo"; exit 1; }
+  git fetch --quiet origin "$BRANCH" 2>/dev/null || { echo "sync-release --check: FAIL — fetch failed"; exit 1; }
+  CUR="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)"
+  if [ "$CUR" != "$BRANCH" ]; then
+    echo "sync-release --check: FAIL — on '${CUR:-detached}' not '$BRANCH'"; exit 1
+  fi
+  LOCAL="$(git rev-parse HEAD 2>/dev/null || echo)"
+  REMOTE="$(git rev-parse "origin/$BRANCH" 2>/dev/null || echo)"
+  if [ -z "$REMOTE" ] || [ "$LOCAL" != "$REMOTE" ]; then
+    echo "sync-release --check: FAIL — HEAD ${LOCAL:0:7} != origin/$BRANCH ${REMOTE:0:7}"; exit 1
+  fi
+  dirty="$( { git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; \
+              git ls-files --others --exclude-standard 2>/dev/null; } | sort -u)"
+  if [ -n "$dirty" ] && ! printf '%s\n' "$dirty" | _only_receipts; then
+    echo "sync-release --check: FAIL — non-receipt dirt: $(printf '%s' "$dirty" | tr '\n' ' ')"; exit 1
+  fi
+  echo "sync-release --check: PASS — live root exact origin/$BRANCH and clean (or receipts-only)"
   exit 0
 fi
 

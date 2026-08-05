@@ -158,4 +158,34 @@ grep -Fq "with UNIQUE local work — fail open" <<<"$mixed_out" \
 grep -q "local-real-work" "$tmp/diverged-live/docs/real-work.md" \
   || { echo "FAIL: mixed divergence lost genuine local work"; echo "$mixed_out"; exit 1; }
 
-echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open"
+
+# --check: a real predicate, not the informational --census. Fresh clone at HEAD==origin/main
+# with default RECEIPT_GLOBS (no override) proves the shipped defaults, not just the test panel's.
+git clone -q "$tmp/origin.git" "$tmp/check-live" 2>/dev/null
+( cd "$tmp/check-live" && git checkout -q main )
+check_rc=0
+check_out="$(LIMEN_ROOT="$tmp/check-live" LIMEN_RELEASE_BRANCH=main bash "$script" --check 2>&1)" || check_rc=$?
+[ "$check_rc" = 0 ] || { echo "FAIL: --check on a clean live root at origin/main should PASS"; echo "$check_out"; exit 1; }
+
+# Genuine uncommitted source-tree work must FAIL --check.
+mkdir -p "$tmp/check-live/scripts"
+echo "wip" > "$tmp/check-live/scripts/wip.sh"
+dirty_rc=0
+dirty_out="$(LIMEN_ROOT="$tmp/check-live" LIMEN_RELEASE_BRANCH=main bash "$script" --check 2>&1)" || dirty_rc=$?
+[ "$dirty_rc" = 1 ] || { echo "FAIL: --check should FAIL on genuine untracked source dirt"; echo "$dirty_out"; exit 1; }
+rm -f "$tmp/check-live/scripts/wip.sh"
+
+# Regenerable bookkeeping churn (the default globs: branch-hygiene.md, overnight-watch.md) must
+# still PASS --check — this is the exact class that stranded the live root for 3+ days when the
+# tolerance list didn't cover it.
+echo "v3-dirty" >> "$tmp/check-live/docs/branch-hygiene.md"
+mkdir -p "$tmp/check-live/logs"
+echo "beat line" >> "$tmp/check-live/logs/overnight-watch.md"
+mkdir -p "$tmp/check-live/docs/receipts/some-lane"
+echo '{"ok":true}' > "$tmp/check-live/docs/receipts/some-lane/closeout-latest.json"
+bookkeeping_rc=0
+bookkeeping_out="$(LIMEN_ROOT="$tmp/check-live" LIMEN_RELEASE_BRANCH=main bash "$script" --check 2>&1)" || bookkeeping_rc=$?
+[ "$bookkeeping_rc" = 0 ] \
+  || { echo "FAIL: --check should PASS with only regenerable bookkeeping dirty"; echo "$bookkeeping_out"; exit 1; }
+
+echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + --check predicate"
