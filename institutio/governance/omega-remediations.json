@@ -70,6 +70,11 @@
       "owner": "continuity"
     },
     {
+      "id": "core.autonomy-acting",
+      "next_action": "Read `python3 scripts/autonomy-governor.py explain`'s maintenanceBlocker; a prose/empty resume_predicate needs a human to convert it to a runnable clause list, an unsatisfied clause needs its condition made true.",
+      "owner": "continuity"
+    },
+    {
       "id": "core.no-tasks-on-me",
       "next_action": "Run the owed-work homing predicate and route every residual to its tracked owner without editing tasks.yaml directly.",
       "owner": "tabularius"
