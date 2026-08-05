@@ -24,7 +24,7 @@
   },
   "completion": {
     "closed_at": "2026-08-05T14:14:23Z",
-    "closed_by": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+    "closed_by": "docs/receipts/tcc-track-c-1703/closeout-20260805T133718Z.json",
     "complete": true,
     "remaining_predicate": null,
     "status": "met"
@@ -84,7 +84,7 @@
       "exit_0_means": "external_vendor_wait (clean) OR track_c.met",
       "sensor": "tcc-track-c"
     },
-    "closeout_receipt": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+    "closeout_receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T133718Z.json",
     "doctrine": {
       "fixture_only_is_not_completion": true,
       "formula": "track_c_pass = non_noop_update AND normalized_inventory_green",

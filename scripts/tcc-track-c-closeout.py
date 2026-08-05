@@ -250,7 +250,13 @@ def latest_met_receipt(repo: Path) -> Path | None:
     root = receipt_dir(repo)
     if not root.is_dir():
         return None
-    candidates = sorted(root.glob("closeout-*.json"), reverse=True)
+    # Only immutable timestamped receipts qualify as discharge evidence: the
+    # closeout-latest.json alias is rewritten every beat, so pinning it lets a
+    # later regression silently invalidate an already-recorded discharge.
+    candidates = sorted(
+        (path for path in root.glob("closeout-*.json") if path.name != "closeout-latest.json"),
+        reverse=True,
+    )
     for path in candidates:
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))

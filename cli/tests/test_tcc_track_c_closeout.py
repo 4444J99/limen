@@ -260,6 +260,25 @@ def test_finalize_refuses_without_met_receipt(tmp_path: Path):
         closeout.finalize(repo=repo, write_lever=False)
 
 
+def test_latest_met_receipt_never_pins_the_mutable_alias(tmp_path: Path):
+    # closeout-latest.json sorts after closeout-2026… names, so an unfiltered
+    # glob pins the beat-rewritten alias as discharge evidence — the 2026-08-05
+    # defect where a later regression flipped the lever's cited receipt to
+    # blocked. Only immutable timestamped receipts may qualify.
+    repo = tmp_path / "repo"
+    receipts = repo / "docs" / "receipts" / "tcc-track-c-1703"
+    receipts.mkdir(parents=True)
+    met = {"schema": closeout.SCHEMA, "track_c": {"met": True}}
+    (receipts / "closeout-latest.json").write_text(json.dumps(met), encoding="utf-8")
+
+    assert closeout.latest_met_receipt(repo) is None
+
+    (receipts / "closeout-20260805T133718Z.json").write_text(json.dumps(met), encoding="utf-8")
+    picked = closeout.latest_met_receipt(repo)
+    assert picked is not None
+    assert picked.name == "closeout-20260805T133718Z.json"
+
+
 def test_finalize_discharges_lever_when_met(tmp_path: Path):
     repo = tmp_path / "repo"
     receipts = repo / "docs" / "receipts" / "tcc-track-c-1703"

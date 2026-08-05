@@ -243,7 +243,7 @@
     },
     {
       "id": "L-DOMUS-AGENT-HOST-TCC",
-      "label": "DISCHARGED: real Claude Code vendor update advanced to 2.1.222 through the fixed Domus host; normalized TCC inventory remained green (receipt closeout-latest.json).",
+      "label": "DISCHARGED: real Claude Code vendor update advanced to 2.1.222 through the fixed Domus host; normalized TCC inventory remained green (receipt closeout-20260805T133718Z.json).",
       "owner": "engineering",
       "cost": "local System Settings transaction spent with no authentication prompt; no remaining operator action while waiting for a real vendor version advance",
       "unlocks": "foreground agents, background PTYs/spares, MCP descendants, and Python control-plane commands retain protected access across executable version rotation with no repeated privacy prompts",
@@ -252,7 +252,7 @@
         "at": "2026-08-05T14:14:23Z",
         "by": "scripts/tcc-track-c-closeout.py --finalize",
         "issue": 1703,
-        "receipt": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+        "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T133718Z.json",
         "version": "2.1.222"
       },
       "gate": "external vendor availability: a future Claude Code update must advance beyond the cutover baseline 2.1.220, after which the normalized TCC inventory must remain unchanged",
@@ -262,9 +262,26 @@
         "Completed: prove one enabled host row, zero App Management path rows, zero active leaks, zero unhosted ingresses, and an unchanged twelve-entry unrelated bundle-grant map",
         "Completed: run the hosted update/delete fixture through renamed uvx, Node, Python, and portable Ruby paths and cold-start Claude Desktop without a new identity",
         "Completed: freeze Track C automation — `scripts/tcc-track-c-closeout.py` owns probe/run/beat/finalize; beat sensor `tcc-track-c` waits without re-litigating the gate; no-op update is wait evidence never completion",
-        "Pending external predicate: when a version newer than 2.1.220 is offered, `python3 scripts/tcc-track-c-closeout.py --beat` captures non-noop proof + green inventory, then `--finalize --write-lever` discharges this lever and closes #1703"
+        "Completed external predicate: Claude Code advanced 2.1.220 -> 2.1.222; normalized inventory remained green across the advance (immutable met receipts docs/receipts/tcc-track-c-1703/closeout-20260805T133037Z.json through closeout-20260805T160818Z.json; discharged 2026-08-05T14:14:23Z). The later same-day inventory regression is a NEW defect owned by L-TCC-VERSIONED-CLIENT-LEAK-2-1-222, not a reopening of this proof."
       ],
       "status": "discharged",
+      "issue": 1703
+    },
+    {
+      "id": "L-TCC-VERSIONED-CLIENT-LEAK-2-1-222",
+      "label": "Remove the two TCC grants that attached to the rotating versioned client `~/.local/share/claude/versions/2.1.222` on 2026-08-05 (kTCCServiceAppleEvents allowed 16:22Z, kTCCServiceSystemPolicyRemovableVolumes allowed 17:07Z) and re-land them on the fixed Domus Agent Host — the host's own AppleEvents decision is currently DENIED (auth_value 0), which is why the prompt fell through to the versioned binary.",
+      "owner": "yours",
+      "cost": "~2 min GUI, durable",
+      "unlocks": "beat sensor `tcc-track-c` returns green (active_leaks 0, new_managed 0); osascript/Mail automation and removable-volume access survive the next Claude Code version rotation without a fresh prompt",
+      "source_task": "post-discharge inventory regression · docs/receipts/tcc-track-c-1703/closeout-20260805T165301Z.json onward · L-DOMUS-AGENT-HOST-TCC",
+      "gate": "macOS TCC (GUI approval + per-row removal) — never automatable",
+      "steps": [
+        "Trigger the AppleEvents flow once THROUGH the host (`domus-agent-host run -- osascript ...`) and Allow the prompt so the grant lands on Domus Agent Host, not a versioned path (if no prompt appears, first flip Domus Agent Host back ON under System Settings -> Privacy & Security -> Automation)",
+        "In System Settings -> Privacy & Security -> Automation, remove the row for the versioned claude 2.1.222 client (per-row minus control)",
+        "In System Settings -> Privacy & Security -> Files & Folders (Removable Volumes), remove the same versioned client's row; re-grant through the host on next hosted use if needed",
+        "Verify: `python3 scripts/tcc-identity-audit.py --json --strict` exits 0 with active_leaks 0 and new_managed 0, and the next `python3 scripts/tcc-track-c-closeout.py --beat` receipt is green"
+      ],
+      "note": "Root cause of recurrence: any osascript/volume access run from an UNHOSTED claude session re-creates this leak after removal — route those flows through `domus-agent-host run --`. Un-redact any future leak hash with the identity formula in scripts/tcc-identity-audit.py (_identity_id).",
       "issue": 1703
     },
     {
