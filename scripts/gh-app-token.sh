@@ -20,6 +20,7 @@
 # Usage:
 #   GITHUB_TOKEN=$(bash scripts/gh-app-token.sh)            # drop-in for any gh/api caller
 #   bash scripts/gh-app-token.sh --which                    # report which path WOULD be used (no token printed)
+#   bash scripts/gh-app-token.sh --verify-app               # require a real App token mint, no fallback
 #
 # Credentials (set via scripts/set-credential.sh — never on a command line / in history):
 #   GITHUB_APP_ID                — the App's numeric id (Settings → Developer settings → GitHub Apps)
@@ -93,6 +94,13 @@ if [ "$MODE" = "--which" ]; then
   elif [ -n "${GITHUB_TOKEN:-}" ]; then echo "pat (GITHUB_TOKEN fallback)"
   elif command -v gh >/dev/null 2>&1 && gh auth token >/dev/null 2>&1; then echo "gh (gh auth token fallback)"
   else echo "none (no credential available)"; fi
+  exit 0
+fi
+
+if [ "$MODE" = "--verify-app" ]; then
+  app_creds_present || { log "missing GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY"; exit 2; }
+  mint_app_token >/dev/null || exit 1
+  echo "app verified (limen[bot] installation token mint succeeds)"
   exit 0
 fi
 

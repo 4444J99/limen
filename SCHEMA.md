@@ -65,6 +65,14 @@ tasks:
   target_agent: string          # "jules" | "gemini" | "claude" | "any" | "opencode" | "codex" | "copilot" | "goose"
   priority: string              # critical | high | medium | low | backlog
   budget_cost: integer          # How many runs this consumes (default 1)
+  origin: string                # obligation | human_prompt | agent_recommendation | system_debt
+  horizon: string               # past | present | future
+  value_case: string            # Explicit forecast value bought by this work loan
+  owner_surface: string         # Durable repo, issue, or other accountable owner surface
+  external_deadline: boolean    # True only when an external obligation owns the date
+  due_at: date | datetime       # Required when external_deadline is true
+  predicate: string             # One executable completion predicate
+  receipt_target: string        # Durable GitHub or repository-owned terminal receipt
   status: string                # See 2.3 State Machine
   labels: string[]              # Free-form labels (optional)
   urls: string[]                # Reference URLs (issue links, PRs, docs) (optional)
@@ -354,8 +362,10 @@ accepts active or attention work and records the QA decision as `done`,
 the archive-ready gate; attention results return it to recovery steering.
 
 Assignment is an explicit steering operation. `POST /api/tasks/{task_id}/assign`
-may update `target_agent`, `priority`, `budget_cost`, and `status`, and appends
-an `assigned` dispatch-log entry for audit. It does not dispatch work by itself.
+may update `target_agent`, `priority`, `budget_cost`, `status`, `predicate`,
+`receipt_target`, `origin`, `horizon`, `value_case`, `owner_surface`,
+`external_deadline`, and `due_at`, and appends an `assigned` dispatch-log entry
+for audit. It does not dispatch work by itself.
 
 Archive is the terminal closure operation. `POST /api/tasks/{task_id}/archive`
 only accepts tasks whose status is `done`, changes them to `archived`, appends

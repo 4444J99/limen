@@ -8,6 +8,7 @@ from typing import TypedDict, cast
 
 from limen.capacity import agent_status
 from limen.models import LimenFile, Task
+from limen.runtime_config import runtime_api_url
 
 
 class Check(TypedDict):
@@ -95,17 +96,9 @@ class QaReport(TypedDict):
 
 
 def _runtime_api_url() -> str:
-    """Single source of truth for the backend runtime URL: env override → committed runtime.config.json.
-    Mirrors web/app/next.config.js + generate-static-data.mjs so the doctor check and the deployed
-    dashboard agree on one value (env LIMEN_API_URL / NEXT_PUBLIC_API_URL wins for per-deploy overrides)."""
-    env = os.environ.get("NEXT_PUBLIC_API_URL") or os.environ.get("LIMEN_API_URL")
-    if env:
-        return env
+    """Backward-compatible wrapper around the shared runtime configuration resolver."""
     root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3])
-    try:
-        return json.loads((root / "runtime.config.json").read_text()).get("apiUrl", "") or ""
-    except (OSError, ValueError):
-        return ""
+    return runtime_api_url(root)
 
 
 def _ensure_aware(dt: datetime) -> datetime:

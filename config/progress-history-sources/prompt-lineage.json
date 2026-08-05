@@ -1,0 +1,38 @@
+{
+  "actual_field": null,
+  "ask_kind_values": [
+    "ask"
+  ],
+  "document_paths": [
+    "logs/progress-prompt-lineage-facts.json",
+    "docs/progress-prompt-lineage.json"
+  ],
+  "evidence_fields": [
+    "task_receipts",
+    "pull_request_receipts",
+    "worktree_receipts",
+    "durable_receipts",
+    "predicates"
+  ],
+  "identity_fields": [
+    "leaf_id",
+    "leaf_key"
+  ],
+  "kind_field": "kind",
+  "leaf_field": "leaves",
+  "reopened_values": [],
+  "schema": "limen.progress-history-adapter.v1",
+  "source_id": "prompt-lineage",
+  "state_fields": [
+    "disposition"
+  ],
+  "terminal_values": [
+    "done",
+    "superseded"
+  ],
+  "timestamp_fields": [
+    "created_at",
+    "updated_at"
+  ],
+  "verified_field": "verified_outcome"
+}

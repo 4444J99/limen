@@ -12,6 +12,32 @@ ROOT = Path(__file__).resolve().parents[2]
 USAGE = ROOT / "scripts" / "usage-telemetry.py"
 
 
+def test_help_is_read_only(tmp_path):
+    limen_root = tmp_path / "limen"
+    home = tmp_path / "home"
+    usage_path = limen_root / "logs" / "usage.json"
+    usage_path.parent.mkdir(parents=True)
+    home.mkdir()
+    sentinel = b'{"sentinel":"leave these exact bytes alone"}\n'
+    usage_path.write_bytes(sentinel)
+
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["LIMEN_ROOT"] = str(limen_root)
+    proc = subprocess.run(
+        [sys.executable, str(USAGE), "--help"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert "usage:" in proc.stdout
+    assert "logs/usage.json" in proc.stdout
+    assert usage_path.read_bytes() == sentinel
+
+
 def test_claude_rate_limit_in_recent_transcript_marks_lane_down(tmp_path):
     limen_root = tmp_path / "limen"
     home = tmp_path / "home"
@@ -114,25 +140,107 @@ def test_claude_5h_usage_filters_rows_by_timestamp(tmp_path):
     assert data["vendors"]["claude"]["messages"] == 1
 
 
-def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
-    """Run usage-telemetry.py with jules pre-consumed to `jules_consumed` (cap defaults to 100,
-    24h window) and return the parsed usage.json vendors map."""
+def test_codex_vendor_rate_limits_override_transcript_estimate(tmp_path):
     limen_root = tmp_path / "limen"
     home = tmp_path / "home"
     (limen_root / "logs").mkdir(parents=True)
+    session_dir = home / ".codex" / "sessions" / "2026" / "07" / "03"
+    session_dir.mkdir(parents=True)
     (home / ".claude" / "projects").mkdir(parents=True)
-    (home / ".codex" / "sessions").mkdir(parents=True)
     (limen_root / "tasks.yaml").write_text(
         yaml.safe_dump(
             {
                 "version": "1.0",
                 "portal": {
                     "budget": {
-                        "track": {"date": "2026-06-19", "spent": 0, "per_agent": {"jules": jules_consumed}},
+                        "track": {"date": "2026-07-03", "spent": 0, "per_agent": {"jules": 0}},
                         "per_agent": {"jules": 100},
                     }
                 },
                 "tasks": [],
+            }
+        )
+    )
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    (session_dir / "rollout-live.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": now,
+                "type": "event_msg",
+                "payload": {
+                    "type": "token_count",
+                    "info": {
+                        "total_token_usage": {"input_tokens": 250_000_000, "output_tokens": 1},
+                        "rate_limits": {
+                            "plan_type": "plus",
+                            "primary": {
+                                "used_percent": 14,
+                                "window_minutes": 300,
+                                "resets_at": "2026-07-03T12:00:00Z",
+                            },
+                            "secondary": {
+                                "used_percent": 57,
+                                "window_minutes": 10080,
+                                "resets_at": "2026-07-06T12:00:00Z",
+                            },
+                        },
+                    },
+                },
+            }
+        )
+        + "\n"
+    )
+
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["LIMEN_ROOT"] = str(limen_root)
+    proc = subprocess.run(
+        [sys.executable, str(USAGE)],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    codex = json.loads((limen_root / "logs" / "usage.json").read_text())["vendors"]["codex"]
+    assert codex["signal"] == "vendor-rate-limit"
+    assert codex["unit"] == "percent"
+    assert codex["possible"] == 100
+    assert codex["consumed"] == 14
+    assert codex["remaining"] == 86
+    assert codex["health"] == "ok"
+    assert codex["weekly_used_percent"] == 57
+
+
+def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
+    """Run usage-telemetry.py with jules pre-consumed to `jules_consumed` (cap defaults to 100,
+    24h window) and return the parsed usage.json vendors map.
+
+    jules consumption is measured from the LIVE dispatch-log count (today), like gemini/agy — NOT
+    the persisted per_agent accumulator (whose stale value once deadlocked the lane). So the fixture
+    injects `jules_consumed` today-dated `dispatched` events rather than a track counter."""
+    limen_root = tmp_path / "limen"
+    home = tmp_path / "home"
+    (limen_root / "logs").mkdir(parents=True)
+    (home / ".claude" / "projects").mkdir(parents=True)
+    (home / ".codex" / "sessions").mkdir(parents=True)
+    today = datetime.now(timezone.utc).date().isoformat()
+    jules_log = [
+        {"timestamp": f"{today}T12:00:00+00:00", "agent": "jules", "session_id": "sim", "status": "dispatched"}
+        for _ in range(jules_consumed)
+    ]
+    (limen_root / "tasks.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {"date": today, "spent": 0, "per_agent": {"jules": 0}},
+                        "per_agent": {"jules": 100},
+                    }
+                },
+                "tasks": [{"id": "jules-sim", "title": "sim", "status": "done", "dispatch_log": jules_log}],
             }
         )
     )

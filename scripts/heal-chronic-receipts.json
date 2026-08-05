@@ -1,0 +1,18 @@
+[
+  {
+    "repo": "organvm/domus-genoma",
+    "check": "Build, Test, and Lint",
+    "lever": "L-CARD-FRAUD-HOLD",
+    "issue": 182,
+    "reason": "GitHub Actions CI on private repos billing-blocked ('recent account payments have failed'). Root: card-0186 Santander fraud hold (lever L-CARD-FRAUD-HOLD, limen issue #182). Ordered local-gates-only runbook (Actions billing-blocked throughout): merge PR #181 (local-gates-green, applies cleanly to master) -> rebase+merge PR #187 (green after #181 lands; pre-existing ruff E501 fixed by #181) -> healer re-heals PR #183 (stale-base-veto, needs fresh HEAL-rebase dispatch). Receipt expires when L-CARD-FRAUD-HOLD is resolved and private-repo Actions CI re-arms.",
+    "added": "2026-07-16"
+  },
+  {
+    "repo": "organvm/growth-auditor",
+    "check": "build-and-test",
+    "lever": "L-CARD-FRAUD-HOLD",
+    "issue": 182,
+    "reason": "GitHub Actions CI on private repos billing-blocked (same root as domus-genoma: card-0186 Santander fraud hold, lever L-CARD-FRAUD-HOLD, limen issue #182). Receipt expires when L-CARD-FRAUD-HOLD is resolved and private-repo Actions CI re-arms.",
+    "added": "2026-07-16"
+  }
+]

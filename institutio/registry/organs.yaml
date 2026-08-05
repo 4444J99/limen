@@ -28,6 +28,13 @@ organs:
     role: "Naming institution (U>V…). CI gate already fails on bad names."
     residual: []
 
+  - name: mat
+    layer: somatic
+    home: "limen/scripts/mat-organ.py (beat C_MAT) -> private daily-engine tree (mode-700, off-repo)"
+    status: built
+    role: "Daily-engine keeper: idempotent ChatGPT-session pull, day-card pre-compose (iCloud mirror freshness), roadblocks-queue refresh. Counts-only state in logs/mat-organ-state.json; ~20h self-throttle."
+    residual: []
+
   - name: the-seat
     layer: spine
     home: limen/institutio/registry/organs.yaml
@@ -54,18 +61,25 @@ organs:
 
   - name: integrity
     layer: autonomic
-    home: "limen/cli/src/limen/vigilia/integrity.py (heartbeat) — governs the DISABLE_AUTOUPDATER lever"
+    home: "limen/cli/src/limen/vigilia/integrity.py (heartbeat) + scripts/tcc-identity-audit.py — governs enabled updates beneath the fixed DomusAgentHost identity"
     status: built
-    role: "app/binary/signature → don't self-corrupt. Pin + verify the operating apps."
-    evidence: "'Claude app is corrupt' dialog this session; CLI symlink flipped version dir 06-24. Signature verify + autoupdater governance built 2026-06-25."
-    residual: "codesign --verify INTEGRITY_VERIFY_TARGETS each beat + alert on drift / autoupdater not disabled. Alert-only (read-only); auto-remediation (re-pin/re-disable) is a deliberate next step, not silent."
+    role: "app/binary/signature → don't self-corrupt. Keep vendor updates enabled while one stable native responsible identity owns protected access."
+    evidence: "'Claude app is corrupt' dialog this session; repeated Claude/Python/Homebrew/uv version paths accumulated as TCC clients. Stable-host signature + executable TCC audit replace updater suppression."
+    residual: "The 2026-08-03 local cutover passed: fixed-host signature unchanged, App Management has one host row and zero path rows, and the unrelated grant map is preserved. Keep alerting if an updater is disabled, any managed identity appears outside the redacted baseline, or a path client returns. Final acceptance waits for a real Claude version advance beyond 2.1.220 with the inventory still green — owned by scripts/tcc-track-c-closeout.py + sensor tcc-track-c (no-op update is wait, never completion). Never re-pin/re-disable a rotating tool."
 
   - name: identity
     layer: autonomic
     home: limen (creds-hydrate.py, _load_limen_env, com.limen.creds-hydrate.plist)
     status: partial
-    role: "creds/secrets/env → don't break, don't re-ask. 1Password → ~/.limen.env → tools."
-    residual: "6 of 7 creds never minted/wired; Claude auth deliberately disabled; Gmail app-pw not in the map (op://Private/gmail-app-pw-2026-06-06 → GH secret GMAIL_APP_PASSWORD). Mostly his-lever mints + 2 wiring fixes."
+    role: "creds/secrets/env CONSUMPTION → don't break, don't re-ask. 1Password → ~/.limen.env → tools."
+    residual: "Consumption side. The upstream PROVISIONING (which vault the service account reads) is owned by the `clavis` organ below; creds-hydrate --verify (required-loud, PR #1061) surfaces a dead/absent materialized value; clavis check surfaces the vault-level cause."
+
+  - name: clavis
+    layer: autonomic
+    home: limen (scripts/creds-provision.py, institutio/governance/credentials.yaml, sensor 0a1)
+    status: partial
+    role: "credential + service-account PROVISIONING as code. Owns the fleet SA and the single vault it reads: every op-sourced secret must live in one SA-owned automation vault (1Password SA grants are IMMUTABLE, so one vault is the only stable shape). `check` = the forever-predicate (red until SA-homed); `bootstrap` = the one owner-op seed; `apply` = idempotent conformance."
+    residual: "The estate is not yet SA-homed: the fleet SA carries ZERO vault grants, so nothing hydrates from op (the floor coasts on a stale ~/.limen.env). One-time `creds-provision bootstrap` (owner op) mints the SA against the automation vault, migrates the secrets in, then the predicate is green forever. Homed Wall #320 (supersedes the mis-filed 'non-blocking' #288)."
 
   - name: authority
     layer: autonomic
@@ -96,6 +110,21 @@ organs:
     role: "The body feels whether its own organs are firing (9-rung liveness + self-heal)."
     residual: "Feed the-seat: organ-health.json should drive this registry's per-organ status."
 
+  - name: correspondence
+    layer: somatic
+    home: "limen (scripts/mail-beat.sh = C_MAIL effector; institutio/governance/mail-tiers.yaml = tier registry; scripts/check-mail-answered.py = the mail-answered sensor; scripts/creds-hydrate.py = the keyed gmail lanes) + universal-mail--automation (obligations_build/draft_writer/send_drafts; IMAPProvider.append/create_draft = the headless draft path)"
+    status: partial
+    role: "The inbound mail voice: sweep → obligations ledger → tiered draft (headless via keyed IMAP APPEND) → fail-closed SAFE-tier send. Answers reply-owed mail so the operator is never the default send button."
+    residual: "Sender ships DISARMED (LIMEN_MAIL_SEND=0); SAFE tier is opt-in and currently empty (grows on trust) — arming is the operator's valve. The keyed headless draft path is BUILT (UMA #168 + creds-hydrate gmail lanes, 2026-07-14): it designs out the macOS TCC grant for Gmail drafts, downgrading lever L-MAIL-AUTOMATION-GRANT #960 to an optional fallback (non-Gmail accounts only). status→full once a SAFE intent is deliberately opted in and armed."
+
+  - name: diurnal
+    layer: somatic
+    home: "limen (institutio/governance/diurnal.yaml = the section registry; scripts/diurnal.py = the organ; scripts/check-diurnal.py = the drift predicate; sensor `diurnal` on the beat; docs/diurnal/<date>.md = the dated emission; logs/diurnal/ = claims, scores, cuts)"
+    status: built
+    role: "The day's three phases as ONE organ reaching forward and backward: morning emits a full dashboard plus falsifiable claims; midday re-probes them mid-flight and pushes only on drift; evening scores every claim held/missed/noop, carries the remainder to tomorrow, and CUTS sections that scored noop for LIMEN_DIURNAL_CUT_THRESHOLD consecutive engaged days. Every line probes or wears its own staleness — a stale cache is withheld, a frozen registry is annotated, and neither is ever reported as current."
+    evidence: "Built against the measured defect (2026-07-31): ~198 runtime artifacts with no freshness index — organ-health.json 10d stale, omega.json 9d, money-view.json 10d, fleet-status.json 27d — while session-orientation.md reported 'Autonomy — PAUSED' after the marker was already gone. First dry-run withheld 5 of 15 sections as STALE and caught its own 6x board over-count (702 vs the true 109) by cross-checking handoff.json."
+    residual: "Fleet-wide cuts are proposals only — the evening names a stale producer but opening the retire-PR is still a hand step (scripts/ship-docs.sh). The `calendar` section is declared ABSENT: no calendar state exists on disk anywhere in the estate, only session-scoped MCP tools no beat is wired to; closing that is a real lever, not a render bug."
+
   # ----------------------------------------------------------------- FACE
   - name: face
     layer: face
@@ -103,6 +132,21 @@ organs:
     status: built
     role: "One pane onto the seat — how the operator sees & steers."
     residual: "Renders the C-suite from this registry (officers + organs) + logs/vigilia/status.json, deriving the officer list from the seat (no hardcode). Build order #4 done 2026-06-25. Next: surface in web/app + overlay organ-health.json."
+
+  - name: gitvs
+    layer: governance
+    home: "limen/institutio/github/estate.yaml + scripts/gitvs.py (census/doctor/reconcile) | the GitHub-custodian organ"
+    status: building
+    role: "GitHub as ONE declarative resource graph under ONE closed loop (observe→diff→reconcile, drift=∅) — the single owner of the ~301-repo estate."
+    residual: "Spine shipped 2026-07-10: estate.yaml (the SSOT) + gitvs.py census/doctor (#900) + remote reaper (#901, double-dark). THIS chunk: the reconcile dispatcher (the three total effector sinks, ships dark) + beat voice C_GITVS + rank-14 ladder seat + levers L-LIMENBOT-INSTALL (#910) / L-BRANCH-PROTECTION (#257) + omega det/live rungs; remote_branch flipped active (its reaper landed). Auto-discovered by organ-health.py via the C_GITVS cadence decl. Next: live posture classes A–G in the beat; the §3 integrations pillar (harness CodeRabbit/Trunk/Renovate as $0 labor); the envisioned resource types (release/webhook/team/…) promoted row-by-row."
+
+  - name: host-hygiene
+    layer: autonomic
+    home: "DomusAgentHost.app + limen (scripts/tcc-identity-audit.py; scripts/tcc-track-c-closeout.py; heal-claude-lsregister.sh + heal-hook-drift.sh + heal-claude-cask.sh; scripts/dialogs-silenced.sh; institutio/governance/sensors.yaml §0g8b + tcc-track-c)"
+    status: partial
+    role: "Every beat, verify auto-updates remain enabled beneath the fixed signed Domus responsibility host; reject new managed TCC identities, visible App Management path clients, and unhosted configured ingresses; heal the agent-curable Gatekeeper/LaunchServices estate; and prove the independent predicates."
+    evidence: "Born from the recurring 'ClaudeCode.app is damaged — move to Trash' modal (2026-07-17). R1 shipped the lsregister effector + 4b sensor (#1206); R2+R3 completed the effector family + registry-derived sensor + omega rung (#1219). --agent-curable-only → exit 0 on the live host."
+    residual: "Local predicates passed 2026-08-03: ten managed GUI ingresses enter through domus-agent-host ensure; App Management has one enabled host row, zero path rows, and the baseline's unrelated bundle grants unchanged; renamed-runner and cold-start matrices added no identity. The real Claude vendor-update predicate remains open because 2.1.220 was already current — scripts/tcc-track-c-closeout.py + sensor tcc-track-c own the wait and auto-capture when a non-noop advance appears. The three HEAL valves remain separately armed. No recurring cleanup, updater suppression, global TCC reset, direct database edit, or version pin is an accepted closure."
 
 # ============================ THE C-SUITE (officers) ============================
 # HIERARCHY.md rendered as data: which officer convenes which organs. Federation,
@@ -118,7 +162,7 @@ officers:
     organs: [vitals]
   CISO:
     mandate: "don't break · stop asking · don't self-corrupt"
-    organs: [identity, authority, integrity]
+    organs: [identity, authority, integrity, host-hygiene]
   CKO:
     mandate: "don't forget — continuity & memory"
     organs: [continuity]

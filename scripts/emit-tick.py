@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """emit-tick.py — append one structured heartbeat-tick record to logs/ticks.jsonl so
 the autonomic loop becomes chartable in the portal (instead of free-text logs)."""
+
 import datetime
 import json
 import os
@@ -21,6 +22,28 @@ def n(status):
     return sum(1 for t in tasks if t.get("status") == status)
 
 
+def last_tick(path):
+    """Return the previous tick record, or None. Bounded tail read — the file grows forever."""
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, 2)
+            f.seek(max(0, f.tell() - 8192))
+            lines = [ln for ln in f.read().decode("utf-8", "replace").splitlines() if ln.strip()]
+        return json.loads(lines[-1]) if lines else None
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def completed_count(record):
+    """done + archived — the monotonic completion counter ('done' alone drops on archival)."""
+    if not isinstance(record, dict):
+        return None
+    try:
+        return int(record.get("done", 0)) + int(record.get("archived", 0))
+    except (TypeError, ValueError):
+        return None
+
+
 rec = {
     "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
     "total": len(tasks),
@@ -36,6 +59,15 @@ rec = {
 
 logs = root / "logs"
 logs.mkdir(exist_ok=True)
-with open(logs / "ticks.jsonl", "a") as f:
+ticks_path = logs / "ticks.jsonl"
+prev_completed = completed_count(last_tick(ticks_path))
+now_completed = completed_count(rec)
+rec["done_delta"] = max(0, now_completed - prev_completed) if prev_completed is not None else None
+
+with open(ticks_path, "a") as f:
     f.write(json.dumps(rec) + "\n")
-print(f"tick emitted: {rec['ts']} total={rec['total']} open={rec['open']} spent={rec['daily_spent']}/{rec['daily_cap']}")
+delta = rec["done_delta"] if rec["done_delta"] is not None else "n/a"
+print(
+    f"tick emitted: {rec['ts']} total={rec['total']} open={rec['open']} "
+    f"spent={rec['daily_spent']}/{rec['daily_cap']} done_delta={delta}"
+)

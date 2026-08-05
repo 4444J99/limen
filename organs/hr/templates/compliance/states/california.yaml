@@ -1,0 +1,112 @@
+# California Employment Compliance — Rule Annotations
+# State supplement to federal obligations.
+# California imposes some of the strictest employer obligations in the US.
+
+obligations:
+  - name: "Paid Sick Leave (PSL)"
+    authority: "Healthy Workplaces, Healthy Families Act of 2014 (Labor Code § 245)"
+    applies_to: "all employers"
+    key_actions:
+      - "Provide 3 days (24 hours) accrued or front-loaded paid sick leave per year"
+      - "Allow carryover of unused leave (employer may cap at 48 hours)"
+      - "Track accrual and usage; provide on request"
+    posting_required: true
+    annual_filing: false
+    notes: "Local ordinances in some cities (e.g., SF, Oakland, San Diego, Los Angeles) may require more generous leave."
+
+  - name: "Paid Family Leave (PFL)"
+    authority: "California Unemployment Insurance Code § 2627"
+    applies_to: "all employers (employee-funded via SDI)"
+    key_actions:
+      - "Post notice of PFL availability"
+      - "Provide up to 8 weeks of partial wage replacement for family leave"
+      - "Coordinate with CFRA and FMLA leave entitlements"
+    posting_required: true
+    annual_filing: false
+
+  - name: "California Family Rights Act (CFRA)"
+    authority: "Gov. Code § 12945.2"
+    applies_to: "5+ employees"
+    key_actions:
+      - "Provide up to 12 weeks of unpaid job-protected leave per year"
+      - "Covered reasons: own serious health condition, family care, baby bonding, military family leave"
+      - "CFRA runs concurrently with FMLA when both apply"
+    posting_required: true
+    annual_filing: false
+
+  - name: "Pay Data Reporting"
+    authority: "Gov. Code § 12999 (SB 1162)"
+    applies_to: "100+ employees (or 100+ workers through labor contractors)"
+    key_actions:
+      - "File annual pay data report with Civil Rights Department by May"
+      - "Report by establishment, job category, sex, race/ethnicity, and median/hourly wage"
+      - "Include labor contractor employee data where applicable"
+    posting_required: false
+    annual_filing: true
+    filing_deadline: "Second Wednesday of May"
+
+  - name: "Pay Transparency"
+    authority: "Labor Code § 432.3 (SB 1162)"
+    applies_to: "15+ employees"
+    key_actions:
+      - "Include salary range in all job postings"
+      - "Provide pay scale to applicants on request"
+      - "Maintain records of job title and wage history for each employee (3 years)"
+    posting_required: false
+    annual_filing: false
+
+  - name: "Sexual Harassment Prevention Training"
+    authority: "Gov. Code § 12950.1 (AB 1825 / SB 1343)"
+    applies_to: "5+ employees"
+    key_actions:
+      - "Supervisors: 2 hours of training every 2 years"
+      - "Non-supervisors: 1 hour of training every 2 years"
+      - "Training must include bystander intervention and harassment prevention"
+    posting_required: false
+    annual_filing: false
+    notes: "New supervisors must be trained within 6 months of assuming a supervisory role."
+
+  - name: "Minimum Wage"
+    authority: "Labor Code § 1182.12"
+    applies_to: "all employers"
+    key_actions:
+      - "Pay at least state minimum wage (adjusted annually for inflation)"
+      - "Some cities have higher local minimum wages (e.g., SF, LA, Oakland, San Jose)"
+    posting_required: true
+    annual_filing: false
+
+  - name: "Paid Sick Leave — Local Ordinances"
+    authority: "Various municipal codes"
+    applies_to: "employers in covered cities"
+    key_actions:
+      - "Check local paid sick leave ordinances for each work location"
+      - "Accrual and usage rules may differ from state PSL"
+    posting_required: true
+    annual_filing: false
+
+  - name: "New Hire Reporting"
+    authority: "Unemployment Insurance Code § 1088.5"
+    applies_to: "all employers"
+    key_actions:
+      - "Report new hires within 20 days (faster than federal requirement)"
+      - "Report via California EDD online system"
+    posting_required: false
+    annual_filing: false
+
+  - name: "WARN Act (California)"
+    authority: "Labor Code §§ 1400-1408"
+    applies_to: "75+ employees"
+    key_actions:
+      - "Provide 60 days advance notice of mass layoff or relocation"
+      - "Trigger thresholds differ from federal WARN (more sensitive)"
+    posting_required: false
+    annual_filing: false
+
+  - name: "Annual Workers' Compensation Posting"
+    authority: "Labor Code § 3550"
+    applies_to: "all employers"
+    key_actions:
+      - "Post workers' compensation notice in conspicuous location"
+      - "Update annually or when carrier changes"
+    posting_required: true
+    annual_filing: false

@@ -1,0 +1,39 @@
+# Beat Log — Workflow orchestration record
+# Append-only, timestamped, one entry per reception event.
+# Tracks which workflows fired, triggers, artifacts produced, and sentinel status.
+
+- timestamp: "2026-07-05T10:00:00Z"
+  workflow: W1
+  trigger: "intake — case opened, initial posture captured"
+  artifact: "cases/01-post-injury/posture.md"
+  sentinel: pass
+
+- timestamp: "2026-07-05T11:30:00Z"
+  workflow: W2
+  trigger: "patient-reported state markers (initial daily beat)"
+  artifact: "cases/01-post-injury/state-log.yaml"
+  sentinel: pass
+
+- timestamp: "2026-07-05T11:30:15Z"
+  workflow: W3
+  trigger: "protocol prescribed — PT, cognitive pacing, medication schedule registered"
+  artifact: "cases/01-post-injury/protocol-log.md"
+  sentinel: pass
+
+- timestamp: "2026-07-05T11:30:30Z"
+  workflow: W5
+  trigger: "accommodation needs identified and correspondence trail imported"
+  artifact: "cases/01-post-injury/accommodation-log.md"
+  sentinel: pass
+
+- timestamp: "2026-07-05T11:30:45Z"
+  workflow: W6
+  trigger: "safety sentinel — batch check of all initial artifacts"
+  artifact: "(stamped on posture.md, state-log.yaml, protocol-log.md, accommodation-log.md)"
+  sentinel: pass
+
+- timestamp: "2026-07-05T12:00:00Z"
+  workflow: W4
+  trigger: "patient confirmed current appointment schedule across providers"
+  artifact: "cases/01-post-injury/calendar.md"
+  sentinel: pass

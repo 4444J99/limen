@@ -19,20 +19,32 @@ Pure + dependency-injected (the caller passes its own `gh`), so it carries no li
 trivially unit-testable. Every filesystem touch is atomic and FAIL-OPEN: a cursor read/write error
 degrades to "start at 0", never raising into the heartbeat. ([[no-never-happens-again]])
 """
+
 import fnmatch
 import json
 import os
+import subprocess
+import sys
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 
+QUEUE_ACTIVE = "active"
+QUEUE_ABSENT = "absent"
+QUEUE_UNKNOWN = "unknown"
 
-def enumerate_open_prs(owners, gh_fn, max_total=500, want_url=True):
+
+def enumerate_open_prs(owners, gh_fn, max_total=500, want_url=True, author="@me"):
     """One cheap `gh search prs` call → the FULL open-PR set across `owners`, stably sorted.
     Returns (repo, num, url) tuples when want_url else (repo, num). Empty list on any gh failure
-    (fail-open: the caller treats it as 'no PRs this beat')."""
+    (fail-open: the caller treats it as 'no PRs this beat'). ``author=None`` is the estate-wide
+    census mode; worker loops retain the narrower current-actor default."""
     fields = "number,repository,url" if want_url else "number,repository"
-    r = gh_fn(["search", "prs", "--author", "@me", "--state", "open", "--limit", str(max_total),
-               *sum([["--owner", o] for o in owners], []), "--json", fields])
+    cmd = ["search", "prs", "--state", "open", "--limit", str(max_total)]
+    if author:
+        cmd.extend(["--author", str(author)])
+    cmd.extend([*sum([["--owner", o] for o in owners], []), "--json", fields])
+    r = gh_fn(cmd)
     if getattr(r, "returncode", 1) != 0:
         return []
     try:
@@ -96,8 +108,11 @@ def avg_headroom_pct(root):
     try:
         fpath = Path(root) / "logs" / "usage.json"
         vendors = (json.loads(fpath.read_text()) or {}).get("vendors", {})
-        hs = [v["headroom_pct"] for v in vendors.values()
-              if isinstance(v, dict) and isinstance(v.get("headroom_pct"), (int, float))]
+        hs = [
+            v["headroom_pct"]
+            for v in vendors.values()
+            if isinstance(v, dict) and isinstance(v.get("headroom_pct"), (int, float))
+        ]
         return sum(hs) / len(hs) if hs else None
     except Exception:
         return None
@@ -112,6 +127,94 @@ def scaled_limit(base, root, lo=50.0, span=25.0, max_mult=3.0):
         return base
     mult = 1.0 + min(max_mult - 1.0, (hr - lo) / span)
     return int(round(base * mult))
+
+
+# ── MERGE-QUEUE CAPABILITY ─────────────────────────────────────────────────────────────────────
+# A queue is branch-specific live repository state. Never infer it from mergeStateStatus, local
+# configuration, workflow files, or a remembered plan: GitHub's Repository.mergeQueue field is the
+# authority. The result is deliberately tri-state so an API/schema/auth failure cannot accidentally
+# relax the stale-base guard.
+
+_MERGE_QUEUE_QUERY = """
+query($owner:String!,$repo:String!,$branch:String!){
+  repository(owner:$owner,name:$repo){
+    mergeQueue(branch:$branch){id}
+  }
+}
+""".strip()
+
+
+@lru_cache(maxsize=64)
+def merge_queue_capability(repo, branch, gh_fn):
+    """Return ``active``, ``absent``, or ``unknown`` for ``repo``'s target ``branch``.
+
+    ``active`` requires a positive GraphQL MergeQueue object. A clean ``null`` means the queue is
+    absent. Transport failures, GraphQL errors, malformed/partial payloads, missing repository
+    access, and invalid inputs are ``unknown`` so callers preserve their non-queue safety policy.
+    Results are cached only for the current bounded process so a drain beat pays one live probe per
+    repository/branch instead of one GraphQL request per pull request.
+    """
+    if not repo or "/" not in repo or not branch:
+        return QUEUE_UNKNOWN
+    owner, name = repo.split("/", 1)
+    if not owner or not name:
+        return QUEUE_UNKNOWN
+    try:
+        result = gh_fn(
+            [
+                "api",
+                "graphql",
+                "-f",
+                f"query={_MERGE_QUEUE_QUERY}",
+                "-F",
+                f"owner={owner}",
+                "-F",
+                f"repo={name}",
+                "-F",
+                f"branch={branch}",
+            ]
+        )
+        if getattr(result, "returncode", 1) != 0:
+            return QUEUE_UNKNOWN
+        payload = json.loads(getattr(result, "stdout", "") or "")
+    except Exception:
+        return QUEUE_UNKNOWN
+
+    if not isinstance(payload, dict) or payload.get("errors"):
+        return QUEUE_UNKNOWN
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return QUEUE_UNKNOWN
+    repository = data.get("repository")
+    if not isinstance(repository, dict) or "mergeQueue" not in repository:
+        return QUEUE_UNKNOWN
+    queue = repository["mergeQueue"]
+    if queue is None:
+        return QUEUE_ABSENT
+    if isinstance(queue, dict) and queue.get("id"):
+        return QUEUE_ACTIVE
+    return QUEUE_UNKNOWN
+
+
+def _gh_subprocess(args):
+    return subprocess.run(
+        ["gh", *args],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+def _main(argv):
+    if len(argv) == 4 and argv[1] == "merge-queue-capability":
+        print(merge_queue_capability(argv[2], argv[3], _gh_subprocess))
+        return 0
+    print(
+        "usage: _pr_scan.py merge-queue-capability OWNER/REPO BRANCH",
+        file=sys.stderr,
+    )
+    return 2
 
 
 # ── STALE-BASE GATE ───────────────────────────────────────────────────────────────────────────
@@ -137,7 +240,12 @@ def scaled_limit(base, root, lo=50.0, span=25.0, max_mult=3.0):
 # studium/docs/tasks.yaml). DERIVED default, env-overridable (LIMEN_PROTECTED_PATHS), so a relocation
 # or layout change re-tunes it without a hardcode edit ([[derive-never-pin-hardcodes]]).
 _DEFAULT_PROTECTED = (
-    "cli/src/limen/*", "mcp/src/*", "web/api/*", "scripts/*.py", "scripts/*.sh", "container/*",
+    "cli/src/limen/*",
+    "mcp/src/*",
+    "web/api/*",
+    "scripts/*.py",
+    "scripts/*.sh",
+    "container/*",
 )
 STALE_BASE_MAX_DEFAULT = 10
 
@@ -196,3 +304,7 @@ def stale_base_verdict(repo, paths, base, head, gh_fn, generic_max=None):
         return None if behind == 0 else "STALE-CORE"
     # generic PR: only flag when it branched FAR behind base. Unverifiable (-1) stays available.
     return "STALE-BASE" if behind >= generic_max else None
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main(sys.argv))

@@ -53,3 +53,25 @@ removal from HEAD is not deletion.
   (open-never-merge, the human keeps the publish click). Tracked under `L-PII-SWEEP-CONTAIN`.
 - **His lever:** the pilot-users.csv third-party-data review (your-fit); the external
   narratological fork (GitHub sensitive-data-removal); a-i--skills#32's required review.
+
+## 2026-07-15 — application-pipeline (PUBLIC): client engagement content on HEAD
+
+**Found while:** staging the Carbone/AFG Florida rendezvous pack. The session pushed
+`strategy/rendezvous-2026-07-tony-carbone.md` (client PII + internal price anchors) to
+`organvm/application-pipeline` via PR #77 **on the assumption the repo was private** — visibility
+was verified only after merge. The pre-existing `strategy/consulting-tony-carbone-altfunding.md`
+(client name/email/cell) had been on that public HEAD since 2026-03-23, undetected by the 07-01
+sweep (application-pipeline was not among the 15 sweep repos).
+
+**Disposition applied (same session, ~3-minute window for the new file):**
+`KEEP_OFF_PUBLIC_HEAD` — both files removed from HEAD via PR #78 (heal), content re-homed to the
+private people room (`_people-private/people/tony-carbone/`). Public HEAD verified clean.
+
+**Residue (accepted per the engine's 07-02 disposition):** the merged PR #77 and #78 diffs — like
+scraper PR #227 — remain publicly visible; history is preservation, not deletion. Standing
+client-facing rule: never link PRs #77/#227.
+
+**Lesson (root cause):** repo **visibility is checked BEFORE the push, never after** — one
+`gh api repos/<owner>/<repo> --jq .private` gate ahead of any engagement/PII/anchor content.
+application-pipeline should join the publication-policy engine's repo set so its disposition is
+computed, not assumed.

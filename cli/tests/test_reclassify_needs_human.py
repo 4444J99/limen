@@ -1,0 +1,134 @@
+"""reclassify-needs-human chronic handling under the OWNERSHIP rule (shared _human_signals):
+a machine-escalated chronic task with no human marker parks failed_blocked on --apply — never
+back to open (the flip-to-open leg of the reclassify<->heal-dispatch oscillation that refilled
+the queue 154→406 in 13h). A human-marked task stays KEEP even when chronic. Covers the three
+legacy pre-heal-dispatch escalation strings the `heal-dispatch:`-prefixed match would miss."""
+
+import importlib.util
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import yaml
+
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "reclassify-needs-human.py"
+CREATED = "2026-06-20T00:00:00+00:00"
+
+CHRONIC_EVIDENCE = "heal-dispatch: chronic (reopened ≥3×, never a PR) → escalated, stop re-looping"
+LEGACY_EVIDENCE = "chronic (reopened >=3x, never a PR, fails all lanes) -> escalated out of dispatch loop"
+
+
+def _task(tid, *, title=None, log=None):
+    return {
+        "id": tid,
+        "title": title or f"{tid} build the docs page",
+        "created": CREATED,
+        "status": "needs_human",
+        "type": "code",
+        "target_agent": "codex",
+        "repo": "x/y",
+        "labels": [],
+        "dispatch_log": log or [],
+    }
+
+
+def _entry(status, output=""):
+    return {
+        "timestamp": "2026-06-21T00:00:00+00:00",
+        "agent": "limen",
+        "session_id": "heal",
+        "status": status,
+        "output": output,
+    }
+
+
+def _run(root, tasks, *, apply=False):
+    path = root / "tasks.yaml"
+    path.write_text(yaml.safe_dump({"tasks": tasks}))
+    env = dict(os.environ, LIMEN_ROOT=str(root), LIMEN_TASKS=str(path))
+    args = [sys.executable, str(SCRIPT), "--tasks", str(path)] + (["--apply"] if apply else [])
+    r = subprocess.run(args, env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    return r.stdout, {t["id"]: t for t in yaml.safe_load(path.read_text())["tasks"]}
+
+
+def _load_module():
+    spec = importlib.util.spec_from_file_location("reclassify_needs_human_under_test", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_apply_parks_chronic_including_legacy_strings_and_still_flips_buildable(tmp_path):
+    tasks = [
+        _task("CHR1", log=[_entry("needs_human", CHRONIC_EVIDENCE)]),
+        _task("CHR2", log=[_entry("needs_human", LEGACY_EVIDENCE)]),  # legacy wording still counts
+        _task("FLIP1"),
+    ]
+    out, board = _run(tmp_path, tasks, apply=True)
+    assert "CHRONIC" in out
+    for tid in ("CHR1", "CHR2"):
+        assert board[tid]["status"] == "failed_blocked", board[tid]
+        assert "chronic-fleet-debt" in board[tid]["labels"], board[tid]
+        assert board[tid]["dispatch_log"][-1]["lifecycle_repair"] == "fleet-debt-park"
+        assert board[tid]["dispatch_log"][-1]["fleet_debt_source"] == "prior-chronic-log"
+        assert board[tid]["dispatch_log"][-1]["fleet_debt_count"] == 1
+    # the drain still works for genuinely mis-parked fleet-buildable work
+    assert board["FLIP1"]["status"] == "open", board["FLIP1"]
+    assert board["FLIP1"]["dispatch_log"][-1]["status"] == "open"
+
+
+def test_human_marked_chronic_stays_keep(tmp_path):
+    # ownership wins over chronic history (shared _human_signals rule, matching heal-dispatch):
+    # a chronic task carrying a human marker stays on the human surface, untouched by --apply
+    t = _task("CHR3", title="CHR3 wire the billing account token", log=[_entry("needs_human", CHRONIC_EVIDENCE)])
+    out, board = _run(tmp_path, [t], apply=True)
+    assert board["CHR3"]["status"] == "needs_human", board["CHR3"]
+    assert "chronic-fleet-debt" not in (board["CHR3"].get("labels") or [])
+
+
+def test_human_parked_after_chronic_is_not_treated_as_chronic(tmp_path):
+    # last-entry-wins: a human deliberately re-parking a once-chronic task overrides the machine
+    # stamp, so it is NOT parked failed_blocked as chronic. With no human marker it classifies as
+    # ordinary fleet-buildable work and FLIPs to open — the sanctioned drain, not the chronic park.
+    t = _task(
+        "HIS1",
+        log=[
+            _entry("needs_human", CHRONIC_EVIDENCE),
+            _entry("open", "operator: reopened for a fresh try"),
+            _entry("needs_human", "operator: hold for my review"),
+        ],
+    )
+    out, board = _run(tmp_path, [t], apply=True)
+    assert board["HIS1"]["status"] == "open", board["HIS1"]
+    assert "chronic-fleet-debt" not in (board["HIS1"].get("labels") or [])
+    assert "reclassified-from-needs-human" in board["HIS1"]["labels"]
+
+
+def test_apply_fresh_reload_respects_concurrent_successor_hold(tmp_path, monkeypatch):
+    path = tmp_path / "tasks.yaml"
+    path.write_text(yaml.safe_dump({"tasks": [_task("RACE")]}), encoding="utf-8")
+    module = _load_module()
+    real_load = module.load_limen_file
+    calls = 0
+
+    def load_with_successor_race(board_path):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            board = yaml.safe_load(path.read_text(encoding="utf-8"))
+            board["tasks"][0]["labels"] = ["workstream:successor-required"]
+            path.write_text(yaml.safe_dump(board), encoding="utf-8")
+        return real_load(board_path)
+
+    monkeypatch.setattr(module, "load_limen_file", load_with_successor_race)
+    monkeypatch.setattr(module, "_dispatch_is_live", lambda: False)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["reclassify-needs-human.py", "--tasks", str(path), "--apply"])
+
+    assert module.main() == 0
+    task = yaml.safe_load(path.read_text(encoding="utf-8"))["tasks"][0]
+    assert task["status"] == "needs_human"
+    assert task["labels"] == ["workstream:successor-required"]

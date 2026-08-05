@@ -17,7 +17,7 @@ PROTOCOLS = [
      "action": "apply weights", "reversible": "reversible", "branch": "executive"},
     {"id": "PROTO-RETIRE-PATTERN", "when": {"signal": "retire_pattern"},
      "action": "supersede", "reversible": "irreversible", "branch": "judicial"},
-    {"id": "PROTO-BEHAVIOURAL", "when": {"signal": "recurring_friction"},
+    {"id": "PROTO-BEHAVIOURAL", "when": {"signal": "recurring_friction", "codified": "no"},
      "action": "codify correction", "reversible": "gated", "branch": "judicial",
      "his_lever": "behavioural-rule"},
     {"id": "PROTO-ORGAN-STALE", "when": {"signal": "organ_health", "status_in": ["stale", "down"]},
@@ -133,3 +133,39 @@ def test_cascade_ignores_bad_outcome_precedent():
     precedents = [{"type": "novel_signal", "subject": "w", "outcome": "bad", "id": "PC-3"}]
     v = censor.cascade(sig, PROTOCOLS, precedents)
     assert v["branch"] == "exploration"   # a bad precedent is no precedent
+
+
+# ─── adjudicated behavioural corrections (amendment 2026-07-04) ──────
+
+def test_cascade_uncodified_friction_surfaces_to_him():
+    # a NEW recurring friction is still the behavioural-rule lever — surfaced, never auto
+    sig = {"type": "recurring_friction", "subject": "brand new habit", "codified": "no"}
+    v = censor.cascade(sig, PROTOCOLS, [])
+    assert v["branch"] == "protocol" and v["disposition"] == "surface"
+
+
+def test_cascade_codified_friction_resolves_via_precedent():
+    # once the correction is blessed + recorded as case law, the lever does not re-fire
+    sig = {"type": "recurring_friction", "subject": "settled habit", "codified": "yes"}
+    precedents = [{"type": "recurring_friction", "subject": "settled habit", "id": "PREC-X",
+                   "outcome": "applied-ok", "reversible": "reversible",
+                   "action": "standing correction in CLAUDE.md"}]
+    v = censor.cascade(sig, PROTOCOLS, precedents)
+    assert v["branch"] == "precedent" and v["disposition"] == "auto"
+
+
+def test_gather_weekly_annotates_codified(tmp_path):
+    # the weekly gatherer stamps each friction with codified yes/no from the case law
+    (tmp_path / "insights-drift.json").write_text(
+        '{"recurring": [{"label": "settled habit"}, {"label": "new habit"}]}')
+    prec = tmp_path / "precedents.jsonl"
+    prec.write_text('{"type": "recurring_friction", "subject": "settled habit", '
+                    '"outcome": "applied-ok"}\n')
+    old_logs, old_prec = censor.LOGS, censor.PRECEDENTS_PATH
+    censor.LOGS, censor.PRECEDENTS_PATH = tmp_path, prec
+    try:
+        sigs = censor.gather_signals("weekly", refresh=False)
+    finally:
+        censor.LOGS, censor.PRECEDENTS_PATH = old_logs, old_prec
+    flags = {s["subject"]: s["codified"] for s in sigs if s["type"] == "recurring_friction"}
+    assert flags == {"settled habit": "yes", "new habit": "no"}

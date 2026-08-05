@@ -118,6 +118,18 @@ def test_active_task_repo_is_kept(tmp_path):
     assert v.reason == "active-task"
 
 
+def test_process_owned_repo_is_kept(tmp_path, monkeypatch):
+    clone = _init_origin_and_clone(tmp_path, "process-owned")
+    nested_cwd = clone / "src"
+    nested_cwd.mkdir()
+    monkeypatch.setattr(reap, "_ACTIVE_PROCESS_CWDS", {nested_cwd.resolve(): 4242})
+
+    v = _verdict(clone, age_days=99, pressure=True)
+
+    assert v.reap is False
+    assert v.reason == "active-process-cwd:4242"
+
+
 def test_core_repo_is_kept(tmp_path, monkeypatch):
     clone = _init_origin_and_clone(tmp_path, "coremerepo")
     monkeypatch.setattr(reap, "CORE", {"coremerepo"})
@@ -192,6 +204,84 @@ def test_behind_origin_mirror_is_reaped_end_to_end(tmp_path):
     v = _verdict(clone, age_days=10)
     assert v.reap is True and v.reason == "pushed-mirror"
     assert reap.confirm_recloneable(clone) is True
+
+
+def test_clone_reap_requires_acceptance_event(tmp_path, monkeypatch):
+    # pin the standing grant OFF so this exercises the per-clone ledger gate (the grant is covered
+    # by test_clone_reap_standing_grant_accepts_pushed_mirror below).
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
+    clone = _init_origin_and_clone(tmp_path, "needsaccept")
+    slug = reap.origin_slug(clone)
+
+    ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", [])
+
+    assert ok is False
+    assert reason == "missing-clone-reap-acceptance"
+
+
+def test_clone_reap_standing_grant_accepts_pushed_mirror(tmp_path, monkeypatch):
+    """Standing grant (2026-07-09): the loss-free pushed-mirror class is pre-accepted with no ledger."""
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", True)
+    clone = _init_origin_and_clone(tmp_path, "standingmirror")
+    slug = reap.origin_slug(clone)
+
+    ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", [])
+    assert ok is True
+    assert reason == "standing-grant-2026-07-09"
+
+    # a non-loss-free reason is NOT covered by the grant → still needs the ledger
+    ok2, reason2 = reap.clone_reap_accepted(clone, slug, "dirty-or-untracked", [])
+    assert ok2 is False
+
+
+def test_clone_reap_acceptance_matches_remote_mirror(tmp_path, monkeypatch):
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
+    clone = _init_origin_and_clone(tmp_path, "acceptedmirror")
+    slug = reap.origin_slug(clone)
+    events = [
+        {
+            "accepted_at": "2026-07-06T06:00:00Z",
+            "root": "acceptedmirror",
+            "slug": slug,
+            "accepted": True,
+            "reason": "pushed-mirror",
+            "archive_status": "not_required_clean_remote_mirror",
+            "archive_proof": "fresh fetch proved the clone is remote-reachable",
+            "redaction_review": "not_required_remote_only",
+            "redaction_proof": "clean clone cache; no private-only data present",
+        }
+    ]
+
+    ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", events)
+
+    assert ok is True
+    assert reason == "clone-reap-accepted"
+
+
+def test_clone_reap_acceptance_requires_archive_and_redaction_proofs(tmp_path, monkeypatch):
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
+    clone = _init_origin_and_clone(tmp_path, "proofrequired")
+    slug = reap.origin_slug(clone)
+    base_event = {
+        "accepted_at": "2026-07-06T06:00:00Z",
+        "root": "proofrequired",
+        "slug": slug,
+        "accepted": True,
+        "reason": "pushed-mirror",
+        "archive_status": "not_required_clean_remote_mirror",
+        "archive_proof": "fresh fetch proved the clone is remote-reachable",
+        "redaction_review": "not_required_remote_only",
+        "redaction_proof": "clean clone cache; no private-only data present",
+    }
+
+    for required_field in reap.REQUIRED_ACCEPTANCE_PROOF_FIELDS:
+        event = dict(base_event)
+        event.pop(required_field)
+
+        ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", [event])
+
+        assert ok is False
+        assert reason == "missing-clone-reap-acceptance"
 
 
 def test_confirm_recloneable_false_when_our_branch_deleted_on_origin(tmp_path):

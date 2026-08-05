@@ -11,6 +11,7 @@ blocked workstreams that need their own owner, and writes:
 It never reads secret values and never attempts account, login, deploy, or
 credential repair.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,14 +25,13 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 
+from limen.runtime_config import RUNTIME_URL_ENV_ORDER
 from limen.worktree_debt import worktree_debt_report
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
 DOC_PATH = ROOT / "docs" / "session-lifecycle-blockers.md"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
 PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 CODEX_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
@@ -74,7 +74,7 @@ CLOUD_CREDENTIAL_FLAGS = (
     "NETLIFY_AUTH_TOKEN",
     "VERCEL_TOKEN",
 )
-RUNTIME_ENDPOINT_FLAGS = ("LIMEN_WORKER_URL", "NEXT_PUBLIC_API_URL")
+RUNTIME_ENDPOINT_FLAGS = RUNTIME_URL_ENV_ORDER
 
 CAPABILITY_ROOTS_ENV = "LIMEN_CAPABILITY_ROOTS"
 DEFAULT_CAPABILITY_ROOTS = (
@@ -120,6 +120,10 @@ def receipt_closes_remote_missing(receipt: dict[str, Any] | None) -> bool:
     lane = str(receipt.get("lane") or "")
     status = str(receipt.get("status") or "")
     return lane in REMOTE_MISSING_CLOSED_REASONS or status in REMOTE_MISSING_CLOSED_STATUSES
+
+
+def live_scanner_defers_remote_missing(reason: str) -> bool:
+    return reason in REMOTE_MISSING_CLOSED_REASONS or reason.startswith("active(<")
 
 
 def current_worktree_report(prompt: dict[str, Any]) -> dict[str, Any]:
@@ -394,7 +398,9 @@ def cloud_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> No
         )
 
 
-def unresolved_missing_remote_roots(prompt: dict[str, Any], worktree_report: dict[str, Any]) -> tuple[list[str], list[str]]:
+def unresolved_missing_remote_roots(
+    prompt: dict[str, Any], worktree_report: dict[str, Any]
+) -> tuple[list[str], list[str]]:
     worktrees = (prompt.get("remote") or {}).get("worktrees") or {}
     raw_missing = [
         str(receipt.get("name"))
@@ -422,9 +428,8 @@ def unresolved_missing_remote_roots(prompt: dict[str, Any], worktree_report: dic
         item = by_name.get(root)
         reason = str((item or {}).get("reason") or "")
         if (
-            (item and not item.get("debt") and reason in REMOTE_MISSING_CLOSED_REASONS)
-            or receipt_closes_remote_missing(receipts_by_root.get(root))
-        ):
+            item and not item.get("debt") and live_scanner_defers_remote_missing(reason)
+        ) or receipt_closes_remote_missing(receipts_by_root.get(root)):
             closed.append(root)
         else:
             unresolved.append(root)
@@ -576,15 +581,29 @@ def hook_and_pressure_blockers(
         settings_text = PROJECT_SETTINGS.read_text(encoding="utf-8", errors="replace")
     except OSError:
         pass
-    hook_wired = "session-lifecycle-pressure.sh" in settings_text
+    try:
+        heartbeat_text = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        heartbeat_text = ""
+    hook_wired = (
+        "session-closeout.sh" in settings_text
+        and "session-lifecycle-pressure.sh" not in settings_text
+        and (
+            "consume-session-end-breadcrumbs.py" in heartbeat_text
+            or "consume-session-end-breadcrumbs.py" in settings_text
+        )
+    )
     if not hook_wired:
         add_blocker(
             blockers,
             blocker_id="session-pressure-hook-not-wired",
             category="hook_lifecycle",
-            evidence="SessionEnd does not refresh local/remote lifecycle pressure.",
+            evidence="SessionEnd breadcrumb production or heartbeat lifecycle consumption is not fully wired.",
             owner="limen hooks",
-            route="Wire `scripts/hooks/session-lifecycle-pressure.sh` so sessions surface local disk and remote preservation drift.",
+            route=(
+                "Wire the constant-time `scripts/hooks/session-closeout.sh` producer and the heartbeat "
+                "`consume-session-end-breadcrumbs.py` drain; never run lifecycle pressure synchronously."
+            ),
             status="needs_repair",
             source=".claude/settings.json",
         )
@@ -596,7 +615,7 @@ def hook_and_pressure_blockers(
     worktree_remote = remote.get("worktrees") or {}
     missing_remote = int(worktree_remote.get("remote_branches_missing") or 0)
     debt = int(worktree_report.get("debt") or 0)
-    debt_cap = int(os.environ.get("LIMEN_WORKTREE_DEBT_MAX", "12"))
+    # Completion is exact zero debt — there is no tolerated count. Any nonzero debt is action-routed.
 
     if total_bytes:
         add_blocker(
@@ -615,7 +634,8 @@ def hook_and_pressure_blockers(
                 "worktree_bytes": worktree_bytes,
                 "private_corpus_bytes": private_bytes,
                 "worktree_debt": debt,
-                "worktree_debt_cap": debt_cap,
+                "worktree_debt_target": 0,
+                "worktree_debt_complete": debt == 0,
                 "remote_branches_missing": missing_remote,
                 "hook_wired": hook_wired,
             },
@@ -733,12 +753,12 @@ def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
             blocker_id="dispatch-health-not-refreshed",
             category="dispatch_lifecycle",
             status="needs_refresh",
-            evidence="No current heartbeat/dispatch-health receipt is available.",
-            owner="dispatch heartbeat substrate",
+            evidence="No current campaign-heartbeat health receipt is available.",
+            owner="campaign heartbeat substrate",
             route=(
-                "Run `python3 scripts/dispatch-health.py --write --probe-async`; "
+                "Run `python3 scripts/dispatch-health.py --write`; "
                 "then run `python3 scripts/live-root-gate.py --write`; "
-                "do not enable async or reload launchd from stale dispatch evidence."
+                "do not reload launchd from stale campaign evidence."
             ),
             source="dispatch-health",
             details={"path": str(DISPATCH_HEALTH_INDEX)},
@@ -757,20 +777,20 @@ def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
         needs_human = any(item in human_gate_ids for item in blocker_ids)
         add_blocker(
             blockers,
-            blocker_id="dispatch-heartbeat-substrate-unhealthy",
+            blocker_id="campaign-heartbeat-substrate-unhealthy",
             category="dispatch_lifecycle",
             status="needs_human_gate" if needs_human else "needs_refresh",
             evidence=(
-                f"Dispatch-health receipt is `{status}` with {len(receipt_blockers)} blocker(s): "
+                f"Campaign-heartbeat health receipt is `{status}` with {len(receipt_blockers)} blocker(s): "
                 f"{', '.join(blocker_ids) or 'unknown'}."
             ),
-            owner="dispatch heartbeat substrate",
+            owner="campaign heartbeat substrate",
             route=(
                 "Use `docs/live-root-gate.md` to preserve/reconcile the live Limen root and reload "
                 "launchd only under an explicit operator gate; stop before reset, branch switch, "
-                "task-board edits, or async enablement."
+                "task-board edits, or provider launch."
                 if needs_human
-                else "Refresh dispatch-health and repair heartbeat/async probes before trusting dispatch receipts."
+                else "Refresh campaign-heartbeat health and repair its exact runtime boundary before trusting receipts."
             ),
             source="dispatch-health",
             details={
@@ -824,6 +844,39 @@ def live_root_gate_summary() -> dict[str, Any]:
     }
 
 
+def consolidation_phase_text(source_repos: int, collisions: int, packet_complete: bool) -> tuple[str, str]:
+    if collisions:
+        evidence = (
+            f"{source_repos} source repos remain outside `organvm`; "
+            f"{collisions} name-collision groups block the transfer apply gate."
+        )
+        if packet_complete:
+            route = (
+                "Collision packet is complete; await an explicit human GitHub mutation gate to run "
+                "`docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and "
+                "require 0 collisions before transfer."
+            )
+        else:
+            route = (
+                "Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require "
+                "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions "
+                "before any transfer."
+            )
+        return evidence, route
+
+    evidence = (
+        f"{source_repos} source repos remain outside `organvm`; "
+        "0 name-collision groups remain, so transfer apply is ready only behind an explicit human gate."
+    )
+    route = (
+        "Name collisions are clear; under an explicit human transfer gate, run "
+        "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py --apply`, then refresh gates and run "
+        "`PYTHONPATH=cli/src python3 scripts/rewrite-owners.py --apply --emit-remotes /tmp/limen-remotes.sh` "
+        "after transfer."
+    )
+    return evidence, route
+
+
 def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
     gate = load_json(CONSOLIDATION_INDEX)
     if not gate:
@@ -852,27 +905,15 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
 
     if source_repos or collisions:
         packet_complete = bool(collision_packet.get("complete"))
+        evidence, route = consolidation_phase_text(source_repos, collisions, packet_complete)
         add_blocker(
             blockers,
             blocker_id="github-consolidation-collisions",
             category="github_consolidation",
             status="needs_human_gate",
-            evidence=(
-                f"{source_repos} source repos remain outside `organvm`; "
-                f"{collisions} name-collision groups block the transfer apply gate."
-            ),
+            evidence=evidence,
             owner="GitHub consolidation",
-            route=(
-                "Collision packet is complete; await an explicit human GitHub mutation gate to run "
-                "`docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and "
-                "require 0 collisions before transfer."
-                if packet_complete
-                else (
-                    "Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require "
-                    "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions "
-                    "before any transfer."
-                )
-            ),
+            route=route,
             source="consolidation-gates",
             details={
                 "source_repos": source_repos,
@@ -880,10 +921,9 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
                 "task_repo_refs_to_rewrite_post_transfer": task_refs,
                 "local_remotes_to_rewrite_post_transfer": remotes,
                 "collision_packet_complete": bool(collision_packet.get("complete")),
+                "transfer_apply_gate_open": bool((gates or {}).get("can_run_transfer_apply_after_human_gate")),
                 "collision_packet_missing_keepers": len(collision_packet.get("missing_keepers") or []),
-                "collision_packet_missing_rename_commands": len(
-                    collision_packet.get("missing_rename_commands") or []
-                ),
+                "collision_packet_missing_rename_commands": len(collision_packet.get("missing_rename_commands") or []),
                 "collision_packet_target_conflicts": len(collision_packet.get("target_conflicts") or []),
                 "collision_packet_target_unknown": len(collision_packet.get("target_unknown") or []),
                 "blocking": gates.get("blocking") or [],

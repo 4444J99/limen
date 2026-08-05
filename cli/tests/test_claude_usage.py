@@ -40,6 +40,40 @@ def test_all_avenues_dark_returns_unknown(tmp_path: Path) -> None:
     assert {a["avenue"] for a in report["avenues"]} == {"proxy", "ondisk", "poll", "counts", "reactive"}
 
 
+def test_malformed_freshness_env_falls_back(tmp_path: Path) -> None:
+    report = _run(tmp_path, {"LIMEN_CLAUDE_GAUGE_FRESH_S": "bad"})
+
+    assert report["resolved"] is None
+    assert report["trust"] == "unknown"
+
+
+def test_malformed_proxy_percent_is_visible_dark_avenue(tmp_path: Path) -> None:
+    import time
+
+    (tmp_path / "logs").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "logs" / "anthropic-ratelimit.json").write_text(
+        json.dumps({"captured_at": time.time(), "weekly": {"used_percent": "not-a-number"}})
+    )
+
+    report = _run(tmp_path)
+
+    proxy = next(a for a in report["avenues"] if a["avenue"] == "proxy")
+    assert proxy["used_percent"] is None
+    assert "malformed" in proxy["note"]
+
+
+def test_malformed_proxy_timestamp_does_not_abort(tmp_path: Path) -> None:
+    (tmp_path / "logs").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "logs" / "anthropic-ratelimit.json").write_text(
+        json.dumps({"captured_at": "not-a-time", "weekly": {"used_percent": 12}})
+    )
+
+    report = _run(tmp_path)
+
+    assert report["avenue"] == "proxy"
+    assert report["used_percent"] == 12.0
+
+
 def test_counts_avenue_uses_fleet_cap_not_a_fabricated_one(tmp_path: Path) -> None:
     _write_usage(
         tmp_path,
@@ -63,6 +97,15 @@ def test_explicit_cap_raises_trust_to_proxy(tmp_path: Path) -> None:
     assert report["avenue"] == "counts"
     assert report["used_percent"] == 50.0  # 25M / 50M human cap
     assert report["trust"] == "proxy"  # real numerator + human-set cap
+
+
+def test_counts_avenue_tolerates_string_numbers(tmp_path: Path) -> None:
+    _write_usage(tmp_path, {"consumed": "25000000", "possible": "50000000", "health": "ok"})
+
+    report = _run(tmp_path, {"LIMEN_CLAUDE_WEEKLY_TOKENS": "bad"})
+
+    assert report["avenue"] == "counts"
+    assert report["used_percent"] == 50.0
 
 
 def test_reactive_429_is_last_resort_hard_stop(tmp_path: Path) -> None:

@@ -1,0 +1,138 @@
+schema_version: 1
+_doc: >
+  Sources + thresholds registry for DECORVM (scripts/decorum-keeper.py), the professionalization
+  keeper — the guard against ever being "egg-faced" on a public surface. DECORVM owns NO surface
+  list of its own: it FEDERATES the estate's existing quality organs, reading each one's artifact
+  and rolling their sub-verdicts into a single "am I egg-faced right now?" answer (logs/decorum.json).
+  This file declares only (1) which departments feed the verdict + where each one's artifact lives,
+  (2) the severity each department's failures carry, (3) the estate-wide severity floor at which the
+  verdict flips red, and (4) the polish-lane + off-platform config for later phases. It NEVER lists
+  URLs or repos — the surface/repo sets are DERIVED from the department artifacts and value-repos.json
+  (derive-never-pin). This file PUBLISHES — no private URL, token, or secret here. Override the path
+  with LIMEN_DECORUM_SURFACES. Fail-open is law: a missing/unreadable/unmeasured department is a
+  `skip`, never a `fail` — a keeper that cries wolf because a dependency is absent is its own egg-face.
+
+# ── Departments DECORVM federates ─────────────────────────────────────────────
+# Each entry either names an `artifact:` (a JSON/YAML file DECORVM reads) or a `command:` (a
+# subprocess DECORVM runs, parsing stdout JSON). `severity` is the weight a failure in that
+# department carries. A department may set `scope: value` to count only value/portal repos
+# (the egg-face-critical set) rather than the estate's long tail.
+departments:
+  experience:
+    reads: mechanical
+    artifact: logs/experience-audit.json
+    severity: high
+    note: >
+      scripts/experience-audit.py — reachable/fast/light/no-console-errors rungs. A surface with a
+      probe_error or all-null rungs is UNMEASURED → skip (never fail); only a real rung failure counts.
+  visual:
+    reads: visual
+    artifact: institutio/observatory/experience-judgments.yaml
+    severity: high
+    note: experience-judge verdicts (layout/typography/coherence/trust). Latest row per surface; verdict==fail → finding.
+  seo:
+    reads: readme-standard
+    artifact: logs/seo-audit.json
+    scope: value
+    severity: medium
+    note: scripts/seo-audit.py README/SEO 10-rung standard, SCOPED to value-repos (not all 167 estate repos).
+  countenance:
+    reads: face-drift
+    artifact: logs/vvltvs-organ-state.json
+    severity: medium
+    note: VVLTVS — public numbers drifting from SSOT. at_true==false → each open_drift a finding.
+  links:
+    reads: dead-links
+    artifact: .limen-private/link-health/last.json
+    severity: high
+    note: scripts/link-health.py stamp. ok==false or total_dead>0 → finding (a dead link on the front door is egg-face).
+  moat:
+    reads: leak-lure
+    command: python3 scripts/moat-audit.py --json --no-visibility
+    severity: critical
+    lure_severity: low
+    timeout: 60
+    note: >
+      scripts/moat-audit.py — a MOAT LEAK (private value on a public repo) is the worst egg-face, so
+      it carries `critical`; a LURE GAP (dark repo, no positioning) is `low`. Run offline (--no-visibility);
+      fail-open on timeout/error.
+
+# ── The verdict rule ──────────────────────────────────────────────────────────
+verdict:
+  severity_order: [low, medium, high, critical]
+  # A finding at or above `floor` flips the estate verdict red (pass=false, non-zero exit).
+  # `high` means: broken experience, dead links, failed visual judgment, or a moat leak block a green;
+  # `medium`/`low` findings (SEO polish, face-drift, lure gaps) are recorded and ticketed but do not
+  # by themselves make the keeper red — they are backlog, not an active embarrassment.
+  floor: high
+
+# ── Scope sources (derived, never hand-listed) ────────────────────────────────
+scope_sources:
+  value_repos: value-repos.json   # {repos: ["organvm/<name>", ...]} — the egg-face-critical set
+
+# ── Polish lane (Phase 2 deterministic + Phase 3 LLM-judge) ───────────────────
+# The polish lane is the capability none of the six departments covered: does the public PROSE read
+# professionally? All Phase-2 checks are pure rules (zero tokens). Polish findings are `medium` by
+# default — below the `high` floor — so they inform + get ticketed but do not, by themselves, flip the
+# keeper red (a typo is backlog; a broken front door is an active egg-face).
+polish:
+  enabled: true
+  severity: medium
+  # Local PUBLIC prose DECORVM lints — never code, never the *.internal.md positioning drafts.
+  prose_globs:
+    - README.md
+    - docs/positioning/*.md
+  exclude_globs:
+    - "*.internal.md"
+  # Also lint the public-facing strings baked into repo descriptions / the front door.
+  seeds_text: positioning-seeds.json
+  spellcheck:
+    enabled: true
+    severity: medium             # a typo on the front door is the classic egg-face
+  # Prose whose AGE matters (bios/positioning): git last-commit older than N days → medium finding.
+  staleness_globs:
+    - docs/positioning/*.md
+  bio_staleness_days: 180
+  narrative_accuracy:
+    enabled: true
+    severity: medium             # profile claims vs contribution mix (vvltvs NVMERVS); fail-open when mix absent
+  # Phase 3 — tiered LLM-judge (Haiku-first per model policy), re-run only when a surface's content changes.
+  llm_judge:
+    enabled: true
+    tier: haiku
+    on: change
+    severity: medium
+
+# ── The effector (the mentor) — three sinks, each its own arming valve ─────────
+# DECORVM senses always and mutates only when armed. The sinks: board TASKS (dispatchable fleet work,
+# LIMEN_DECORUM_APPLY), GitHub ISSUES (the self-closing tracked-to-closure sink — the primary durable
+# home, LIMEN_DECORUM_ISSUES_APPLY), and recurrence PRECEDENTS (the 'ever' ratchet, shares the task valve).
+effector:
+  receipt_repo: organvm/limen     # where non-repo-scoped tickets/issues are homed (SEO findings name their own repo)
+  issue_floor: medium             # mirror findings at/above this severity to issues (low lure-gaps stay backlog-only)
+  recurrence_sweeps: 4            # a finding class persisting this many sweeps — or recurring after a clear — earns a precedent
+
+# ── Off-platform surfaces (Phase 5 slots) ─────────────────────────────────────
+# Text-available surfaces are LLM-judged; a surface that needs a human capture (no API) declares
+# `capture: human` + a `lever:` homed in his-hand-levers.json — never a chat ask (check-decorum enforces).
+off_platform:
+  linkedin_headline:
+    kind: bio
+    capture: human
+    lever: L-DECORUM-LINKEDIN-HEADLINE
+    note: "The LinkedIn headline/about — no write API without OAuth partner status; the current text is captured by the operator into the lever, then voice-judged like any prose surface."
+  x_bio:
+    kind: bio
+    capture: human
+    lever: L-DECORUM-X-BIO
+    note: "The X/Twitter bio (160 chars) — captured by the operator into the lever, then voice-judged."
+  email_signature:
+    kind: signature
+    capture: human
+    lever: L-DECORUM-EMAIL-SIGNATURE
+    note: "The outbound email signature block — captured into the lever; checked for stale title/links + voice."
+  resume_pdf:
+    kind: document
+    capture: human
+    lever: L-DECORUM-RESUME-PDF
+    note: "The public resume PDF — the current file/text captured into the lever; checked for stale dates + narrative match to the contribution mix."

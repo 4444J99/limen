@@ -40,5 +40,5 @@ LIMEN_ROOT="$LIVE" python3 "$LIVE/scripts/corpus-view.py" 2>&1 | tail -1 || true
 # 4. restart the daemon so heartbeat-loop.sh re-reads with the new voices wired in.
 launchctl kickstart -k "gui/$(id -u)/com.limen.heartbeat" && echo "[deploy] daemon restarted"
 
-echo "[deploy] DONE. Knowledge base: http://127.0.0.1:8787/corpus.html"
+echo "[deploy] DONE. Knowledge base: http://127.0.0.1:8788/corpus.html"
 echo "[deploy] The daemon now captures (off-disk) + converges his WORDS every beat, un-caged."

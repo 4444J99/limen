@@ -8,7 +8,7 @@
 
 - **Main question:** What is mystical eros — annihilation (fanā) and divine longing?
 - **Tradition / script:** persian / persian · **language lesson:** [`../../scripts/persian.md`](../../scripts/persian.md)
-- **Corpus:** `None` (translations only)
+- **Corpus:** `arabic-persian/rumi-hafez` (persian_original.txt)
 - **Source rail:** https://ganjoor.net/moulavi/
 - **Divisions:** 12 × Selection
 - **Progress:** 0/12 arcs authored

@@ -19,6 +19,68 @@
 set -uo pipefail
 SVC="Claude Code-credentials"
 keychain_present() { security find-generic-password -s "$SVC" >/dev/null 2>&1; }
+tmpcfg=""
+cleanup_done=0
+
+secret_temp_receipt() {
+  local path="$1"
+  local private_root="${LIMEN_PRIVATE_ROOT:-${LIMEN_ROOT:-$(pwd)}/.limen-private}"
+  local receipt_file="$private_root/secret-temp-cleanups.jsonl"
+  mkdir -p "$private_root" 2>/dev/null || return 1
+  SECRET_TEMP_PATH="$path" SECRET_TEMP_RECEIPT="$receipt_file" python3 - <<'PY'
+import datetime as dt
+import hashlib
+import json
+import os
+
+path = os.environ["SECRET_TEMP_PATH"]
+receipt = os.environ["SECRET_TEMP_RECEIPT"]
+file_count = 0
+byte_count = 0
+for root, _dirs, files in os.walk(path):
+    for name in files:
+        file_count += 1
+        try:
+            byte_count += os.path.getsize(os.path.join(root, name))
+        except OSError:
+            pass
+record = {
+    "timestamp": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+    "surface": "scripts/claude-fleet-auth-probe.sh",
+    "classification": "secret-temp-cleanup",
+    "path_sha256": hashlib.sha256(path.encode("utf-8")).hexdigest(),
+    "file_count": file_count,
+    "byte_count": byte_count,
+    "archive_proof": "raw secret-bearing Claude temp config is not archived; private redacted receipt only",
+    "redaction_proof": "receipt excludes token, content, filenames, and raw path; stores counts and path hash",
+    "planned_action": "delete temp config after receipt",
+}
+with open(receipt, "a", encoding="utf-8") as fh:
+    fh.write(json.dumps(record, sort_keys=True) + "\n")
+print(receipt)
+PY
+}
+
+cleanup_tmpcfg() {
+  [ "$cleanup_done" = 0 ] || return 0
+  cleanup_done=1
+  [ -n "${tmpcfg:-}" ] || return 0
+  [ -e "$tmpcfg" ] || return 0
+  local receipt_file
+  if receipt_file="$(secret_temp_receipt "$tmpcfg")"; then
+    if rm -rf -- "$tmpcfg"; then
+      echo "redacted secret-temp cleanup receipt: $receipt_file" >&2
+    else
+      echo "WARNING: redacted receipt written but secret temp config removal failed: $tmpcfg" >&2
+    fi
+  else
+    echo "WARNING: retained secret temp config because redacted receipt failed: $tmpcfg" >&2
+  fi
+}
+
+trap cleanup_tmpcfg EXIT
+trap 'cleanup_tmpcfg; exit 130' INT
+trap 'cleanup_tmpcfg; exit 143' TERM
 
 printf 'Paste the setup-token to probe (input hidden): ' >&2
 IFS= read -rs TOK; echo >&2
@@ -34,11 +96,18 @@ tmpcfg="$(mktemp -d)"
 out="$(${TO:+$TO 90} env -u CLAUDE_CODE_OAUTH_TOKEN -u ANTHROPIC_API_KEY \
         ANTHROPIC_AUTH_TOKEN="$TOK" CLAUDE_CONFIG_DIR="$tmpcfg" \
         claude -p 'reply with exactly: OK' 2>&1)"; rc=$?
-rm -rf "$tmpcfg"; unset TOK
+safe_out="$(PROBE_OUT="$out" TOK_TO_REDACT="$TOK" python3 - <<'PY'
+import os
+
+print(os.environ["PROBE_OUT"].replace(os.environ["TOK_TO_REDACT"], "[REDACTED_TOKEN]"), end="")
+PY
+)"
+unset TOK
+cleanup_tmpcfg
 
 keychain_present && after=present || after=absent
 echo "Keychain '$SVC' AFTER  probe: $after" >&2
-echo "probe call exit=$rc; reply=$(printf '%s' "$out" | tr '\n' ' ' | head -c 100)" >&2
+echo "probe call exit=$rc; reply=$(printf '%s' "$safe_out" | tr '\n' ' ' | head -c 100)" >&2
 echo >&2
 
 wiped=0; [ "$before" = present ] && [ "$after" = absent ] && wiped=1

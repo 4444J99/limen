@@ -1,0 +1,154 @@
+# DOCS-MANIFEST — every tracked top-level entry of docs/, DECLARED.
+#
+# docs/ is a curated surface, not a landing strip (the parameter-panel pattern, one surface
+# below the repo root). scripts/check-root-manifest.py --surface docs holds the tracked docs/
+# top level to this registry: an undeclared loose file is a red check, not a memory chore.
+# `sanctioned` loose files are pinned by exact-path consumers (scripts/tests/registries/board);
+# `grandfathered` rows are ADMITTED FAT carrying their target home — rehoming PRs delete the
+# row together with the move (deleting the row IS the receipt) and this block only shrinks.
+# Docs belong with their SUBJECT: a target_home may be cross-repo ("<org>/<repo>:<path>/") —
+# limen keeps only limen-subject docs + machinery-consumed surfaces; whole-estate governance
+# records live in organvm/portvs governance/records/, personal-office material in organvm/domus
+# (private). Export receipts: docs/receipts/docs-estate-exports-*.jsonl.
+# Founded on the measured defect: 177 loose files at docs/ top level beside 17 proper subdirs,
+# accumulated with no predicate watching the surface (operator directive, repeated 3+ sessions).
+
+schema_version: 0.1
+
+sanctioned:
+  - {path: architecture, kind: dir, owner: docs, why: "living subsystem/protocol design docs"}
+  - {path: consolidation, kind: dir, owner: docs, why: "consolidation lineage"}
+  - {path: continuations, kind: dir, owner: docs, why: "session continuation records"}
+  - {path: diurnal, kind: dir, owner: diurnal, why: "dated three-phase daily emissions (morning/midday/evening); registry institutio/governance/diurnal.yaml"}
+  - {path: convergence, kind: dir, owner: docs, why: "convergence lineage"}
+  - {path: current-session-fanout, kind: dir, owner: docs, why: "fanout plans + packets"}
+  - {path: every-ask, kind: dir, owner: docs, why: "ask-ledger snapshots"}
+  - {path: keys, kind: dir, owner: docs, why: "key ceremony docs"}
+  - {path: lane-checkups, kind: dir, owner: docs, why: "per-lane checkup records"}
+  - {path: lanes, kind: dir, owner: docs, why: "per-lane docs"}
+  - {path: moneta, kind: dir, owner: docs, why: "MONETA docs"}
+  - {path: needs-human-prep, kind: dir, owner: docs, why: "needs-human prep packets"}
+  - {path: plans, kind: dir, owner: docs, why: "dated plans (plan-discipline)"}
+  - {path: positioning, kind: dir, owner: docs, why: "positioning docs"}
+  - {path: receipts, kind: dir, owner: docs, why: "tracked receipts (logs/receipts is gitignored)"}
+  - {path: research, kind: dir, owner: docs, why: "research notes"}
+  - {path: reviews, kind: dir, owner: docs, why: "reviews, retros, dated audits"}
+  - {path: runbooks, kind: dir, owner: docs, why: "operational runbooks"}
+  - {path: AUG1-10K-GATE.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/aug1-gate.sh (+1 more)"}
+  - {path: CANON.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/evocator.py"}
+  - {path: CODEX-SESSION-LIFECYCLE.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_codex_quicken.py (+1 more)"}
+  - {path: DISPATCH-ARCHITECTURE.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/conductor-tranche.py"}
+  - {path: IDEAL-FORMS-LEDGER.md, kind: doc, owner: fleet, why: "consumed at this exact path by his-hand-levers.json (+7 more)"}
+  - {path: MERGE-READY.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/check-removal-acceptance.py (+1 more)"}
+  - {path: NEEDS-HUMAN-DIGEST.md, kind: doc, owner: fleet, why: "consumed at this exact path by container/launchd/com.limen.watchdog.plist (+2 more)"}
+  - {path: OFFSITE-DURABILITY-PROPOSAL-2026-06-19.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: PARALLEL-CELLS.md, kind: doc, owner: governance, why: "consumed at this exact path by institutio/governance/session-streams.yaml"}
+  - {path: PLAN-LONG-AND-WIDE.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: QUICKEN-RESIDUE.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/quicken.py"}
+  - {path: RECLASSIFY-PROPOSAL.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/parameters.yaml (+2 more)"}
+  - {path: RULESETS-DRYRUN.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/check-removal-acceptance.py"}
+  - {path: agent-board-log-review.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/agent-board-log-review.py"}
+  - {path: agent-code-diff-review.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/ship-docs.sh (+2 more)"}
+  - {path: agent-code-review-queue.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/agent-code-review-queue.py (+1 more)"}
+  - {path: agent-codex-review.md, kind: doc, owner: cli, why: "consumed at this exact path by cli/tests/test_corpus_command_center.py"}
+  - {path: agent-instruction-standard.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/gates.yaml (+1 more)"}
+  - {path: agent-reconstruction-review.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: agent-session-full-stack-review.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: always-working.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/parameters.yaml (+2 more)"}
+  - {path: antigravity-scratch-bridge-history.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: antigravity-scratch-bridge.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/estate-closeout-audit.py (+3 more)"}
+  - {path: antigravity-scratch-preservation.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py (+1 more)"}
+  - {path: antigravity-scratch-reap-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/reap_acceptance.py"}
+  - {path: antigravity-scratch-root-blockers.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: ask-gate-migration-2026-07-12.json, kind: data, owner: cli, why: "consumed at this exact path by cli/tests/test_ask_gate_migration.py (+1 more)"}
+  - {path: ask-gate-owner-contracts-2026-07-25.json, kind: data, owner: fleet, why: "consumed at this exact path by scripts/apply-ask-gate-owner-contracts.py"}
+  - {path: atomic-units-personal-media.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/media-atomize.py"}
+  - {path: avtopoiesis.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/avtopoiesis.py"}
+  - {path: branch-hygiene.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/clone-maintenance.sh (+3 more)"}
+  - {path: branch-reap-acceptance.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by cli/src/limen/dispatch.py (+7 more)"}
+  - {path: branch-reap-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/no-tasks-on-me.sh (+2 more)"}
+  - {path: capability-substrate-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/capability-substrate-ledger.py (+2 more)"}
+  - {path: capacity-fill.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/capacity-fill-ledger.py"}
+  - {path: clone-reap-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/reap_acceptance.py"}
+  - {path: conductor-tranche.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_session_lifecycle_pressure.py (+3 more)"}
+  - {path: corpus-command-center.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: credential-token-tombstone-audit.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+1 more)"}
+  - {path: current-session-fanout.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_current_session_fanout_conduct.py (+3 more)"}
+  - {path: deployment.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/check-agent-docs.py"}
+  - {path: dispatch-health.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_session_lifecycle_pressure.py (+2 more)"}
+  - {path: estate-audit-paired-custody.md, kind: doc, owner: governance, why: "consumed at this exact path by institutio/governance/gates.yaml"}
+  - {path: estate-closeout-audit.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/estate-closeout-audit.py"}
+  - {path: estate-custody-implementation-receipts.json, kind: data, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+1 more)"}
+  - {path: estate-custody-primitives.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_always_working.py (+2 more)"}
+  - {path: fable-allotment.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_check_session_streams.py (+9 more)"}
+  - {path: gatekeeper-boundary.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: github-actions-usage.json, kind: data, owner: governance, why: "consumed at this exact path by institutio/governance/sensors.yaml"}
+  - {path: github-app-architecture.md, kind: doc, owner: fleet, why: "consumed at this exact path by his-hand-levers.json (+3 more)"}
+  - {path: github-contribution-balance.md, kind: doc, owner: cli, why: "consumed at this exact path by cli/tests/test_always_working.py (+1 more)"}
+  - {path: github-estate-ledger.json, kind: data, owner: fleet, why: "consumed at this exact path by cli/src/limen/observatory/config.py (+3 more)"}
+  - {path: github-estate-runbook.md, kind: doc, owner: fleet, why: "consumed at this exact path by his-hand-levers.json (+3 more)"}
+  - {path: github-pr-debt-ledger.json, kind: data, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: his-hand-registry-mail-a290329e.md, kind: doc, owner: governance, why: "consumed at this exact path by his-hand-levers.json (+1 more)"}
+  - {path: hooks-excavation-and-plan.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: inbound-magnet-system.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/generate-positioning.py"}
+  - {path: jules-orphan-adoptions.jsonl, kind: data, owner: governance, why: "consumed at this exact path by institutio/governance/parameters.yaml (+1 more)"}
+  - {path: jules-supply-templates.yaml, kind: data, owner: fleet, why: "consumed at this exact path by cli/src/limen/jules_supply.py (+3 more)"}
+  - {path: live-root-gate.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_session_lifecycle_pressure.py (+4 more)"}
+  - {path: mail-story-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+1 more)"}
+  - {path: network-health.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/conductor-tranche.py"}
+  - {path: never-hang-permission-spec.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/dialogs-silenced.sh (+1 more)"}
+  - {path: opencode-db-corpus-intake.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: overnight-watch.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_async_dispatch.py (+2 more)"}
+  - {path: photos-universe-duplicate-proof-2026-06-29.json, kind: data, owner: fleet, why: "consumed at this exact path by scripts/continuation-beat.py"}
+  - {path: photos-universe-recovery-2026-06-29.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: photos-universe-sorting-2026-06-30.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/continuation-beat.py"}
+  - {path: pre-build-excavate.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: product-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_overnight_watch.py (+5 more)"}
+  - {path: prompt-atom-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/prompt-lifecycle-ledger.py"}
+  - {path: prompt-authority-seal.json, kind: data, owner: cli, why: "consumed at this exact path by cli/tests/test_progress.py"}
+  - {path: prompt-batch-resolution-receipts.json, kind: data, owner: fleet, why: "consumed at this exact path by scripts/resolve-codex-family-batch.py (+3 more)"}
+  - {path: prompt-batch-review-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: prompt-corpus-policy.json, kind: data, owner: fleet, why: "consumed at this exact path by cli/src/limen/prompt_corpus.py (+5 more)"}
+  - {path: prompt-lifecycle-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/current-session-fanout-plan.py (+2 more)"}
+  - {path: prompt-packet-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+4 more)"}
+  - {path: prompt-packet-resolution-receipts.json, kind: data, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: prompt-priority-map.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/prompt-priority-map.py (+1 more)"}
+  - {path: fleet-gate-branch-debt.json, kind: data, owner: fleet, why: "estate debt record for the 942 heal/fleet-gate-* branches — durable owner home per operator directive 2026-08-05 (no unique work reaped without due)"}
+  - {path: fleet-gate-branch-debt.txt, kind: data, owner: fleet, why: "enumerated 942 heal/fleet-gate-* branch list backing the fleet-gate-branch-debt.json manifest"}
+  - {path: remote-branch-reap-acceptance.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by his-hand-levers.json (+2 more)"}
+  - {path: remote-branch-reap-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/reap-remote-branches.py (+1 more)"}
+  - {path: removal-acceptance-covenant.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/parameters.yaml (+5 more)"}
+  - {path: repo-split-protocol.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/gates.yaml (+1 more)"}
+  - {path: repo-surface-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+2 more)"}
+  - {path: repository-evacuation-inventory-20260727.json, kind: data, owner: governance, why: "consumed at this exact path by institutio/governance/custody.yaml"}
+  - {path: research-backend.md, kind: doc, owner: cli, why: "consumed at this exact path by cli/tests/test_research.py"}
+  - {path: session-attack-paths.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_session_lifecycle_pressure.py (+5 more)"}
+  - {path: session-corpus-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_vltima_absorb_cadence.py (+6 more)"}
+  - {path: session-lifecycle-blockers.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_session_lifecycle_pressure.py (+4 more)"}
+  - {path: session-value-review.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: sovereign-inference-plan.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/token-value-gauge.py"}
+  - {path: storage-creep-2026-07-05.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_corpus_command_center.py (+1 more)"}
+  - {path: storage-endgame.md, kind: doc, owner: governance, why: "consumed at this exact path by institutio/governance/sensors.yaml (+1 more)"}
+  - {path: storage-evacuation-custody-receipts-20260727.jsonl, kind: data, owner: governance, why: "consumed at this exact path by institutio/governance/custody.yaml (+1 more)"}
+  - {path: storage-evacuation-inventory-20260727.json, kind: data, owner: cli, why: "consumed at this exact path by cli/tests/test_estate_audit_paired_custody.py (+2 more)"}
+  - {path: substrate-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
+  - {path: substrate-storage-pressure.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+1 more)"}
+  - {path: tabularius-record-keeper.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: tabularius-writer-audit.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py"}
+  - {path: vltima-absorb-cadence.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-absorb-cadence.py (+1 more)"}
+  - {path: vltima-prior-excavations.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py (+1 more)"}
+  - {path: vltima-result-digest.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-result-digest.py"}
+  - {path: worktree-lifecycle-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_session_lifecycle_pressure.py (+2 more)"}
+  - {path: worktree-preservation-receipts.json, kind: data, owner: fleet, why: "consumed at this exact path by cli/tests/test_always_working.py (+9 more)"}
+  - {path: worktree-reclaim-acceptance.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by cli/src/limen/dispatch.py (+8 more)"}
+  - {path: worktree-reclaim-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/estate-closeout-audit.py (+4 more)"}
+  - {path: worktree-reclaim-candidates.json, kind: data, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: worktree-reclaim-candidates.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
+  - {path: github-estate-census.json, kind: data, owner: fleet, why: "consumed at this exact path by config/progress-history-sources/github-estate.json (progress-history source config)"}
+  - {path: progress-prompt-lineage.json, kind: data, owner: fleet, why: "consumed at this exact path by config/progress-history-sources/prompt-lineage.json (progress-history source config)"}
+  - {path: work-loan-journal.json, kind: data, owner: fleet, why: "consumed at this exact path by config/progress-history-sources/work-loan.json (progress-history source config)"}
+
+grandfathered:
+  - {path: health-office, target_home: "organvm/domus:docs/health-office/", why: "personal-office records in a public repo — bound to scripts/health-organ.py + his-hand-levers.json; moves when the organ relocates"}
+  - {path: life-office, target_home: "organvm/domus:docs/life-office/", why: "personal-office records in a public repo — bound to scripts/life-organ.py; moves when the organ relocates"}
+  - {path: student-email-reply-grounding.md, target_home: "organvm/domus:docs/", why: "personal teaching-workflow doc in a public repo — bound by scripts/check-student-email-grounding.py + CLAUDE.md citation; export = patch predicate + charter in the same change"}

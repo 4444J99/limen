@@ -1,0 +1,81 @@
+{
+  "schema": "limen.work_loan_fixture.v1",
+  "due_at_cases": [
+    {
+      "value": "2026-08-01",
+      "valid": true
+    },
+    {
+      "value": "2026-08-01T12:00:00Z",
+      "valid": true
+    },
+    {
+      "value": "2026-08-01T12:00:00-04:00",
+      "valid": true
+    },
+    {
+      "value": "2026-02-30",
+      "valid": false
+    },
+    {
+      "value": "soon",
+      "valid": false
+    },
+    {
+      "value": "2026-08-01 12:00:00",
+      "valid": false
+    }
+  ],
+  "predicate_cases": [
+    {
+      "value": "pytest -q",
+      "valid": true
+    },
+    {
+      "value": "env MODE=test python3 scripts/check.py",
+      "valid": true
+    },
+    {
+      "value": "command -v gh",
+      "valid": true
+    },
+    {
+      "value": "pytest TODO",
+      "valid": false
+    },
+    {
+      "value": "pytest 'unterminated",
+      "valid": false
+    },
+    {
+      "value": "tests should pass",
+      "valid": false
+    }
+  ],
+  "receipt_target_cases": [
+    {
+      "value": "github:organvm/limen:pull-request:WL-1",
+      "valid": true
+    },
+    {
+      "value": "git:organvm/limen:logs/work-loan.json",
+      "valid": true
+    },
+    {
+      "value": "https://github.com/organvm/limen/pull/1325",
+      "valid": true
+    },
+    {
+      "value": "git:organvm/limen:TODO",
+      "valid": false
+    },
+    {
+      "value": "github:organvm/limen:issue:<number>",
+      "valid": false
+    },
+    {
+      "value": "git:organvm/limen:../outside.json",
+      "valid": false
+    }
+  ]
+}

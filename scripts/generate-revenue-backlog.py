@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 from collections import Counter
@@ -33,8 +34,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import select_lanes  # noqa: E402
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
+from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
+from limen.tabularius import submit_task_upsert  # noqa: E402
 
 # Stages that still have build work between here and a paying dollar. live/monetized are already
 # earning — don't generate build tasks for them.
@@ -45,7 +48,7 @@ _BUILD_STAGES = {"building", "deploy-ready"}
 _REVENUE_LABELS = {"revenue", "product", "ship-order"}
 
 # statuses that mean a (repo,lever) is already being worked — never duplicate those.
-_ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+_ACTIVE = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
 
 # Per-stage revenue levers. (key, priority, title, context-template). {product}/{repo}/{path} filled
 # per product. key = labels[0] (the per-(repo,lever) dedup handle); the win-class labels are appended.
@@ -89,10 +92,35 @@ _BUILDING_LEVERS = [
      "One focused PR; keep CI green."),
 ]
 
+# Deploy-ready funnel levers create durable artifacts. Once one lands, a later date suffix should not
+# regenerate the same work just because the revenue floor has capacity again.
+_COMPLETED_DEDUP_STATUSES = {"done", "archived"}
+_COMPLETED_DEDUP_LEVERS = {k for k, *_ in _DEPLOY_READY_LEVERS}
+
 
 def _ladder_path() -> Path:
     root = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
     return Path(os.environ.get("LIMEN_REVENUE_LADDER", str(root / "revenue-ladder.json")))
+
+
+def _positive_int(value: object, default: int) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return default
+    return n if n > 0 else default
+
+
+def _finite_float(value: object) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return None
+    return n if math.isfinite(n) else None
 
 
 def _products() -> list[dict]:
@@ -103,7 +131,14 @@ def _products() -> list[dict]:
     except Exception as e:  # noqa: BLE001
         print(f"  revenue-ladder unreadable ({e}) — nothing to generate.", file=sys.stderr)
         return []
-    prods = [p for p in (data.get("products") or [])
+    if not isinstance(data, dict):
+        print(f"  revenue-ladder root is {type(data).__name__}, not a mapping — nothing to generate.", file=sys.stderr)
+        return []
+    raw_products = data.get("products") or []
+    if not isinstance(raw_products, list):
+        print(f"  revenue-ladder products is {type(raw_products).__name__}, not a list — nothing to generate.", file=sys.stderr)
+        return []
+    prods = [p for p in raw_products
              if isinstance(p, dict) and p.get("repo") and (p.get("stage") in _BUILD_STAGES)]
     prods.sort(key=lambda p: p.get("rank", 999))
     return prods
@@ -116,8 +151,13 @@ def _avg_headroom_pct() -> float | None:
     fpath = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)) / "logs" / "usage.json"
     try:
         vendors = (json.loads(fpath.read_text()) or {}).get("vendors", {})
-        hs = [v["headroom_pct"] for v in vendors.values()
-              if isinstance(v, dict) and isinstance(v.get("headroom_pct"), (int, float))]
+        hs = [
+            h
+            for v in vendors.values()
+            if isinstance(v, dict)
+            for h in [_finite_float(v.get("headroom_pct"))]
+            if h is not None
+        ]
         return sum(hs) / len(hs) if hs else None
     except Exception:
         return None
@@ -162,8 +202,12 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
     existing = {t.id for t in tasks}
     lever_keys = {k for k, *_ in (_DEPLOY_READY_LEVERS + _BUILDING_LEVERS)}
     active_pairs = {
-        (t.repo, t.labels[0]) for t in tasks
-        if t.status in _ACTIVE and t.repo and t.labels and t.labels[0] in lever_keys
+        (t.repo, t.labels[0])
+        for t in tasks
+        if t.repo
+        and t.labels
+        and t.labels[0] in lever_keys
+        and (t.status in _ACTIVE or (t.status in _COMPLETED_DEDUP_STATUSES and t.labels[0] in _COMPLETED_DEDUP_LEVERS))
     }
     # feed least-loaded products first so we spread revenue work, not pile it on rank 1.
     load = Counter(t.repo for t in tasks if t.status in _ACTIVE and t.repo)
@@ -199,11 +243,14 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
             new.append(Task(
                 id=tid, title=title.format(**fmt), repo=repo, type="code",
                 target_agent="any", priority=prio, budget_cost=2, status="open",
+                origin="agent_recommendation", horizon="present",
+                value_case=f"Advance {product} along its recorded first-dollar path: {path}",
                 # labels[0] = lever key (dedup handle); the rest are win-classes (ride the accelerator).
                 labels=[key, "revenue", "product", "ship-order", "generated"], urls=[],
                 context=ctx.format(**fmt)
                 + f" [revenue-backlog {stamp}: rank {prod.get('rank','?')}, stage {prod['stage']} — "
                   f"spend tokens on income, not busywork]",
+                **contract_fields(github_pr_contract(repo, tid)),
                 depends_on=[], created=stamp, dispatch_log=[],
             ))
     return new, info
@@ -212,9 +259,9 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
-    ap.add_argument("--floor", type=int, default=int(os.environ.get("LIMEN_REVENUE_FLOOR", "12")),
+    ap.add_argument("--floor", type=int, default=_positive_int(os.environ.get("LIMEN_REVENUE_FLOOR"), 12),
                     help="keep at least this many routable OPEN revenue-class tasks; generate up to it")
-    ap.add_argument("--max-new", type=int, default=int(os.environ.get("LIMEN_REVENUE_MAX", "12")),
+    ap.add_argument("--max-new", type=int, default=_positive_int(os.environ.get("LIMEN_REVENUE_MAX"), 12),
                     help="hard cap on tasks generated in one run (anti-flood)")
     ap.add_argument("--apply", action="store_true",
                     help="append to tasks.yaml (validated, atomic, under the queue lock)")
@@ -260,9 +307,10 @@ def main() -> int:
     if not to_add:
         print("\n(all planned tasks already present after fresh re-read — nothing applied.)")
         return 0
-    fresh.tasks.extend(to_add)
-    save_limen_file(path, fresh)
-    print(f"\napplied: appended {len(to_add)} revenue tasks -> {path} (route+dispatch separately).")
+    session_id = os.environ.get("LIMEN_SESSION_ID", "generate-revenue-backlog")
+    for task in to_add:
+        submit_task_upsert(path, task, agent="generate-revenue-backlog", session_id=session_id)
+    print(f"\nsubmitted {len(to_add)} revenue upsert tickets to the keeper's inbox (folds onto {path} next beat).")
     return 0
 
 

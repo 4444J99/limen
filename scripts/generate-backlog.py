@@ -28,10 +28,12 @@ from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
+from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
+from limen.tabularius import submit_task_upsert  # noqa: E402
 from limen.capacity import select_lanes  # noqa: E402
-from limen.worktree_debt import worktree_debt_exceeded  # noqa: E402
+from limen.worktree_debt import worktree_debt_report  # noqa: E402
 
 # Useful, repo-agnostic but ACTIONABLE levers. The agent resolves the specifics in-repo.
 # (key, priority, title, context-template). {repo} is filled per product.
@@ -83,7 +85,7 @@ TEMPLATES = [
 ]
 
 # statuses that count as "this (repo,lever) is already being worked" — don't duplicate those.
-_ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+_ACTIVE = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
 
 
 def _org_repos() -> list[str]:
@@ -172,6 +174,87 @@ def _dispatch_lanes(board: object, dead: set[str]) -> set[str]:
     return set(select_lanes(selector, board, down_lanes=dead)) | {"any"}
 
 
+def _headroom_bucket(value: float | None) -> str:
+    if value is None:
+        return "unknown"
+    if value >= 90:
+        return "very_high"
+    if value >= 75:
+        return "high"
+    if value >= 50:
+        return "medium"
+    if value >= 25:
+        return "low"
+    return "very_low"
+
+
+def census(tasks_path: Path) -> dict:
+    """Redacted feed census: aggregate queue/gate shape only, never task text or repo names."""
+    report = {
+        "tasks_present": tasks_path.exists(),
+        "tasks_readable": False,
+        "task_count": 0,
+        "status_counts": {},
+        "routable_open_count": 0,
+        "active_buildout_count": 0,
+        "generated_buildout_count": 0,
+        "value_tier_count": len(_allowed_repos()),
+        "template_count": len(TEMPLATES),
+        "headroom_bucket": _headroom_bucket(_avg_headroom_pct()),
+        "worktree_debt_gate_enabled": os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") == "1",
+        "worktree_debt_readable": False,
+        "worktree_debt_count": 0,
+        "worktree_debt_complete": False,
+    }
+    try:
+        lf = load_limen_file(tasks_path)
+    except Exception:
+        return report
+    tasks = lf.tasks
+    report["tasks_readable"] = True
+    report["task_count"] = len(tasks)
+    report["status_counts"] = dict(sorted(Counter(str(t.status) for t in tasks).items()))
+
+    try:
+        from limen.dispatch import _down_lanes, _routine_generated_buildout_allowed
+
+        dead = _down_lanes()
+    except Exception:
+        dead = set()
+
+        def _routine_generated_buildout_allowed(_task):
+            return True
+
+    dispatch_lanes = _dispatch_lanes(lf, dead)
+    template_keys = {k for k, *_ in TEMPLATES}
+    report["routable_open_count"] = sum(
+        1
+        for t in tasks
+        if t.status == "open"
+        and (t.target_agent or "any") in dispatch_lanes
+        and (t.target_agent or "any") not in dead
+        and _routine_generated_buildout_allowed(t)
+    )
+    report["active_buildout_count"] = sum(
+        1
+        for t in tasks
+        if t.status in _ACTIVE and t.labels and t.labels[0] in template_keys
+    )
+    report["generated_buildout_count"] = sum(
+        1
+        for t in tasks
+        if t.labels and "generated" in t.labels and "build-out" in t.labels
+    )
+    try:
+        debt_report = worktree_debt_report()
+        report["worktree_debt_readable"] = True
+        report["worktree_debt_count"] = int(debt_report.get("debt", 0))
+        report["worktree_debt_complete"] = report["worktree_debt_count"] == 0
+    except Exception:
+        pass
+    return report
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
@@ -188,22 +271,21 @@ def main() -> int:
         help="hard cap on tasks generated in one run (anti-flood)",
     )
     ap.add_argument("--apply", action="store_true", help="append to tasks.yaml (validated, atomic)")
+    ap.add_argument("--census", action="store_true", help="print redacted feed queue/gate counts and exit")
     args = ap.parse_args()
 
     path = Path(args.tasks)
+    if args.census:
+        print(json.dumps(census(path), indent=2, sort_keys=True))
+        return 0
+
     lf = load_limen_file(path)
     tasks = lf.tasks
 
-    if os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") == "1":
-        debt_exceeded, report, limit = worktree_debt_exceeded()
-        if debt_exceeded:
-            print(
-                "lifecycle debt gate: "
-                f"{report['debt']} preserved worktree roots exceed cap {limit}; "
-                "generate no routine build-out until dirty/unpushed roots are landed, "
-                "reassigned, or preserved into explicit recovery tasks."
-            )
-            return 0
+    # NO normal-path estate scan and NO global stop on debt. The preserved-root count is available
+    # explicitly through ``--census``; classifying hundreds of roots here used to add ~51 seconds to
+    # every feed voice before it even checked whether the queue was already healthy. Per-task
+    # marginal admission owns launch safety, while this producer only keeps the routable queue fed.
 
     # Floor on ROUTABLE-BY-THE-FLEET open work, not total open. The dispatchable set is the same
     # selector heartbeat passes to dispatch; "any" is routable because route.py picks a live lane.
@@ -311,9 +393,13 @@ def main() -> int:
                     priority=prio,
                     budget_cost=1,
                     status="open",
+                    origin="agent_recommendation",
+                    horizon="present",
+                    value_case=f"Close the measured {key} product gap in {repo}",
                     labels=[key, "generated", "build-out"],
                     urls=[],
                     context=ctx.format(repo=repo) + f" [auto-generated {stamp} to keep the stream endless]",
+                    **contract_fields(github_pr_contract(repo, tid)),
                     depends_on=[],
                     created=stamp,
                     dispatch_log=[],
@@ -333,9 +419,10 @@ def main() -> int:
         print("\n(nothing new to generate — every (repo,lever) is already active)")
         return 0
     if args.apply:
-        lf.tasks.extend(new)
-        save_limen_file(path, lf)
-        print(f"\napplied: appended {len(new)} generated tasks -> {path} (route+dispatch separately)")
+        session_id = os.environ.get("LIMEN_SESSION_ID", "generate-backlog")
+        for task in new:
+            submit_task_upsert(path, task, agent="generate-backlog", session_id=session_id)
+        print(f"\nsubmitted {len(new)} upsert tickets to the keeper's inbox (folds onto {path} next beat).")
     else:
         print(f"\ndry-run — re-run with --apply to append {len(new)} tasks.")
     return 0

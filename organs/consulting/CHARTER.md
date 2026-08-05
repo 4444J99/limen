@@ -66,13 +66,15 @@ python organs/consulting/validate-consulting.py --fleet
 python organs/consulting/validate-consulting.py --fleet --quiet
 ```
 
-The micro instance is currently three named deployments that all pass validation:
+The micro instance is currently five named deployments that all pass validation:
 
-- **Maddie** (named context for one private client channel)
-- **Rob** (named context for another recurring channel)
-- **Derek** (named context for education-adjacent and narrative-facing work)
+- **Maddie** (wellness — scope stability under shifting priorities)
+- **Rob** (fitness + chess — cadence stability and funnel engineering)
+- **Derek** (education + narrative — cross-domain portability)
+- **Jessica** (HR + Styx — greenfield niche entry at DISCOVERY)
+- **John F.** (finance — minimal-signal capture at DISCOVERY)
 
-The same process is being proven against all three, with explicit manual checkpoints and no autonomous
+The same process is being proven against all five, with explicit manual checkpoints and no autonomous
 outward actions.
 
 ## Constraint note for this task state

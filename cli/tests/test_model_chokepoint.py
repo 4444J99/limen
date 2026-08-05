@@ -31,11 +31,15 @@ _TIER_ENV = (
     "LIMEN_CLAUDE_MODEL",
     "LIMEN_CLAUDE_TIER_SELECT",
     "LIMEN_CLAUDE_SHIM_FLOOR",
+    "LIMEN_CLAUDE_MAX_INHERITED_TIER",
+    "LIMEN_CLAUDE_FABLE_FALLBACK_TIER",
     "LIMEN_CLAUDE_HAIKU_MODEL",
     "LIMEN_CLAUDE_SONNET_MODEL",
     "LIMEN_CLAUDE_OPUS_MODEL",
     "LIMEN_CLAUDE_FABLE_MODEL",
     "LIMEN_FABLE_ACCEPTANCE",
+    "LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN",
+    "LIMEN_ALLOW_CLAUDE_1M_CONTEXT",
 )
 
 
@@ -74,7 +78,7 @@ def test_non_print_is_never_touched(monkeypatch):
 
 
 def test_pin_wins(monkeypatch):
-    """An explicit LIMEN_CLAUDE_MODEL pin always wins (mirrors dispatch._claude_model)."""
+    """An explicit cheap LIMEN_CLAUDE_MODEL pin wins (mirrors dispatch._claude_model)."""
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "pinned-x")
     assert model_for_argv(["-p", "hi"]) == "pinned-x"
@@ -87,15 +91,17 @@ def test_tiering_gated_off_yields_no_injection(monkeypatch):
     assert model_for_argv(["-p", "hi"]) is None
 
 
-def test_floor_is_tunable_and_guarded(monkeypatch):
-    """LIMEN_CLAUDE_SHIM_FLOOR tunes the floor; Fable is never an inherited floor."""
+def test_floor_is_tunable_and_capped(monkeypatch):
+    """LIMEN_CLAUDE_SHIM_FLOOR tunes the floor; Opus/Fable are never inherited floors."""
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "sonnet")
     assert model_for_argv(["-p", "hi"]) == "sonnet"
+    monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "opus")
+    assert model_for_argv(["-p", "hi"]) == "sonnet"
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "fable")
-    assert model_for_argv(["-p", "hi"]) == "opus"
+    assert model_for_argv(["-p", "hi"]) == "sonnet"
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", "1")
-    assert model_for_argv(["-p", "hi"]) == "opus"
+    assert model_for_argv(["-p", "hi"]) == "sonnet"
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "nonsense")
     assert model_for_argv(["-p", "hi"]) == "haiku"
 
@@ -111,9 +117,22 @@ def test_fable_model_pins_require_acceptance(monkeypatch):
     """Model-name pins cannot route Fable around the receipt-backed tier gate."""
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-fable-5")
-    assert model_for_argv(["-p", "hi"]) == "opus"
+    assert model_for_argv(["-p", "hi"]) == "sonnet"
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", "1")
     assert model_for_argv(["-p", "hi"]) == "claude-fable-5"
+
+
+def test_global_opus_and_1m_pins_require_explicit_override(monkeypatch):
+    """A global model pin is inherited by unrelated fan-out, so expensive pins are gated."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-opus-4-8[1m]")
+    assert model_for_argv(["-p", "hi"]) == "sonnet"
+
+    monkeypatch.setenv("LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN", "1")
+    assert model_for_argv(["-p", "hi"]) == "sonnet"
+
+    monkeypatch.setenv("LIMEN_ALLOW_CLAUDE_1M_CONTEXT", "1")
+    assert model_for_argv(["-p", "hi"]) == "claude-opus-4-8[1m]"
 
 
 # ── Layer 2: the shim (end-to-end, against a stub "real claude") ───────────────────────────
@@ -171,6 +190,7 @@ def test_shim_never_touches_non_print(stub_claude):
 def test_shim_honors_pin_and_floor_tune(stub_claude):
     assert _run_shim(stub_claude, ["-p", "hi"], LIMEN_CLAUDE_MODEL="pinned-x")[:2] == ["--model", "pinned-x"]
     assert _run_shim(stub_claude, ["-p", "hi"], LIMEN_CLAUDE_SHIM_FLOOR="sonnet")[:2] == ["--model", "sonnet"]
+    assert _run_shim(stub_claude, ["-p", "hi"], LIMEN_CLAUDE_SHIM_FLOOR="opus")[:2] == ["--model", "sonnet"]
     assert _run_shim(stub_claude, ["-p", "hi"], LIMEN_CLAUDE_TIER_SELECT="0") == ["-p", "hi"]
 
 

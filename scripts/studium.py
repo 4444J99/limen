@@ -106,12 +106,36 @@ def _esc(s):
 
 
 # ── state ───────────────────────────────────────────────────────────────────────
+def _positive_int(value, default):
+    if isinstance(value, bool):
+        return default
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return default
+    return n if n > 0 else default
+
+
 def load_state():
     st = _load_json(LOGS / "studium-state.json", {})
+    if not isinstance(st, dict):
+        st = {}
     merged = json.loads(json.dumps(DEFAULT_STATE))  # deep copy
-    merged.update({k: v for k, v in st.items() if k in merged})
+    for k in ("ordering", "pace", "language_depth", "last_advanced"):
+        if isinstance(st.get(k), str):
+            merged[k] = st[k]
+    if isinstance(st.get("history"), list):
+        merged["history"] = st["history"]
+    merged["streak"] = _positive_int(st.get("streak"), merged["streak"])
     pos = dict(DEFAULT_STATE["position"])
     pos.update(st.get("position", {}) if isinstance(st.get("position"), dict) else {})
+    if not isinstance(pos.get("work_id"), str):
+        pos["work_id"] = DEFAULT_STATE["position"]["work_id"]
+    pos["division"] = _positive_int(pos.get("division"), DEFAULT_STATE["position"]["division"])
+    pos["day_in_division"] = _positive_int(
+        pos.get("day_in_division"),
+        DEFAULT_STATE["position"]["day_in_division"],
+    )
     merged["position"] = pos
     return merged
 

@@ -17,6 +17,7 @@ misleading zero). Healing stays in recover.py / harvest.
 
 Usage:  python3 scripts/verify-dispatch.py [--limit N] [--quiet]
 """
+
 import json
 import os
 import re
@@ -27,13 +28,26 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
+
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 # A dispatch is RESERVED (status=dispatched, updated stamped, reserve log appended) before its
 # slow run. A freshly reserved local task still has no PR/session result, so only treat it as
 # STRANDED once it has sat longer than any run could take: lane_timeout (900s) +
 # fetch/worktree/push/PR overhead.
-GRACE = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
+
+
+def _int_or_default(raw, default):
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+GRACE = _int_or_default(os.environ.get("LIMEN_LANE_TIMEOUT"), 900) + 600
 
 
 def _parse_ts(v):
@@ -45,27 +59,37 @@ def _parse_ts(v):
         return None
 
 
+def _logical_session(entry):
+    return str(entry.get("logical_session_id") or entry.get("session_id") or "")
+
+
 def chronic_tasks(all_tasks, min_reopens=3, eligible_dispatched_ids=None):
-    """Tasks reopened by heal/recover >= min_reopens times that have NEVER produced a PR.
+    """Unowned tasks reopened by heal/recover >= min_reopens times without producing a PR.
+
     These churn across lanes (fail/orphan → reopen → fail again) burning capacity with zero
     output. Per 'stale = opportunity, not delete': SURFACE them for escalation (route to the
-    one capable lane / human eyes), don't silently re-loop and don't cancel real work."""
+    one capable lane / human eyes), don't silently re-loop and don't cancel real work. A terminal
+    failed attempt with an active typed owner for the same exact PR receipt is historical, not
+    chronic; the owner task remains accountable for the leaf."""
     eligible_dispatched_ids = set(eligible_dispatched_ids or [])
     out = []
     for t in all_tasks:
         status = t.get("status", "open")
         tid = t.get("id")
-        if status not in {"open", "failed"} and not (
-            status == "dispatched" and tid in eligible_dispatched_ids
-        ):
+        if status not in {"open", "failed"} and not (status == "dispatched" and tid in eligible_dispatched_ids):
+            continue
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.get("labels") or []):
             continue
         log = t.get("dispatch_log") or []
         # every reopen mechanism (release-stale / recover / heal-dispatch) appends a
         # status=="open" entry — count those, robust across all three.
         reopens = sum(1 for e in log if str(e.get("status")) == "open")
-        ever_pr = any(PR_RE.search(str(e.get("session_id", ""))) for e in log)
-        if reopens >= min_reopens and not ever_pr:
-            out.append((tid, t.get("target_agent"), reopens, t.get("repo")))
+        ever_pr = any(PR_RE.search(_logical_session(e)) for e in log)
+        if reopens < min_reopens or ever_pr:
+            continue
+        if active_typed_pr_owner_id(t, all_tasks) is not None:
+            continue
+        out.append((tid, t.get("target_agent"), reopens, t.get("repo")))
     return out
 
 
@@ -73,9 +97,10 @@ def gh_pr_state(owner, repo, num):
     """Return (exists, state) where state in MERGED/OPEN/CLOSED, or (False, None)."""
     try:
         out = subprocess.run(
-            ["gh", "pr", "view", num, "--repo", f"{owner}/{repo}",
-             "--json", "state,mergedAt"],
-            capture_output=True, text=True, timeout=30,
+            ["gh", "pr", "view", num, "--repo", f"{owner}/{repo}", "--json", "state,mergedAt"],
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if out.returncode != 0:
             return False, None  # PR not found / repo gone
@@ -99,16 +124,25 @@ def main():
     if limit:
         dispatched = dispatched[:limit]
 
-    cats = {k: [] for k in
-            ("PR_OPEN", "PR_MERGED", "PR_CLOSED", "PR_MISSING",
-             "DISPATCHED_NO_PR", "DISPATCHED_RUNNING", "JULES_ASYNC")}
+    cats = {
+        k: []
+        for k in (
+            "PR_OPEN",
+            "PR_MERGED",
+            "PR_CLOSED",
+            "PR_MISSING",
+            "DISPATCHED_NO_PR",
+            "DISPATCHED_RUNNING",
+            "JULES_ASYNC",
+        )
+    }
     now = datetime.now(timezone.utc)
 
     for t in dispatched:
         tid = t.get("id")
         agent = t.get("target_agent")
         log = t.get("dispatch_log") or []
-        sid = log[-1].get("session_id", "") if log else ""
+        sid = _logical_session(log[-1]) if log else ""
         m = PR_RE.search(str(sid))
         if m:
             owner, repo, num = m.group(1), m.group(2), m.group(3)
@@ -129,8 +163,9 @@ def main():
             upd = _parse_ts(t.get("updated"))
             # ASYNC engine: a live .running marker means a detached worker is still on it — never
             # reopen those (would dup). No-op in sync mode (no markers exist). See dispatch-async.py.
-            async_running = (ROOT / "logs" / "async-runs").exists() and \
-                any((ROOT / "logs" / "async-runs").glob(f"{tid}__*.running"))
+            async_running = (ROOT / "logs" / "async-runs").exists() and any(
+                (ROOT / "logs" / "async-runs").glob(f"{tid}__*.running")
+            )
             if async_running or (upd and (now - upd).total_seconds() < GRACE):
                 cats["DISPATCHED_RUNNING"].append((tid, agent))
             else:
@@ -143,15 +178,28 @@ def main():
     counts["CHRONIC"] = len(chronic)
     (ROOT / "logs").mkdir(exist_ok=True)
     (ROOT / "logs" / "dispatch-verify.json").write_text(
-        json.dumps({"counts": counts, "detail": report,
-                    "chronic": [{"id": i, "agent": a, "reopens": r, "repo": rp}
-                                for i, a, r, rp in chronic]}, indent=2))
+        json.dumps(
+            {
+                "counts": counts,
+                "detail": report,
+                "chronic": [{"id": i, "agent": a, "reopens": r, "repo": rp} for i, a, r, rp in chronic],
+            },
+            indent=2,
+        )
+    )
 
     if not quiet:
         print(f"=== DISPATCH VERIFICATION ({len(dispatched)} dispatched tasks) ===")
         healthy = ("PR_OPEN", "JULES_ASYNC", "DISPATCHED_RUNNING")
-        for k in ("PR_OPEN", "JULES_ASYNC", "DISPATCHED_RUNNING", "PR_MERGED",
-                  "PR_CLOSED", "PR_MISSING", "DISPATCHED_NO_PR"):
+        for k in (
+            "PR_OPEN",
+            "JULES_ASYNC",
+            "DISPATCHED_RUNNING",
+            "PR_MERGED",
+            "PR_CLOSED",
+            "PR_MISSING",
+            "DISPATCHED_NO_PR",
+        ):
             n = counts[k]
             flag = "  " if k in healthy else "⚠ "
             print(f"{flag}{k:18} {n}")
@@ -159,11 +207,13 @@ def main():
         for k in ("PR_MERGED", "PR_CLOSED", "PR_MISSING", "DISPATCHED_NO_PR"):
             for it in cats[k]:
                 print(f"    {k}: {it[0]}  {it[1]}")
-        actionable = sum(counts[k] for k in
-                         ("PR_MERGED", "PR_CLOSED", "PR_MISSING", "DISPATCHED_NO_PR"))
+        actionable = sum(counts[k] for k in ("PR_MERGED", "PR_CLOSED", "PR_MISSING", "DISPATCHED_NO_PR"))
         print(f"--- {actionable} actionable (merged→harvest, closed/missing→recover) ---")
         if chronic:
-            print(f"\n⚑ CHRONIC ({len(chronic)}) — reopened ≥3×, never a PR (escalate, don't re-loop):")
+            print(
+                f"\n⚑ CHRONIC ({len(chronic)}) — reopened ≥3×, never a PR, "
+                "no active typed owner (escalate, don't re-loop):"
+            )
             for i, a, r, rp in chronic:
                 print(f"    {i}  {a}  {r} reopens  {rp}")
     return 0

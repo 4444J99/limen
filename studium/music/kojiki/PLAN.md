@@ -8,7 +8,7 @@
 
 - **Main question:** What is mythic origin — how a people narrates its own beginning?
 - **Tradition / script:** japanese / kana-kanji · **language lesson:** [`../../scripts/japanese.md`](../../scripts/japanese.md)
-- **Corpus:** `None` (translations only)
+- **Corpus:** `japanese/kojiki` (japanese_original.txt)
 - **Source rail:** https://www.sacred-texts.com/shi/kj/
 - **Divisions:** 3 × Book
 - **Progress:** 0/3 arcs authored

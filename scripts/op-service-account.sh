@@ -32,6 +32,54 @@ SENTINEL_END="# <<< limen:op-sa-token <<<"
 ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 log() { echo "op-service-account: $*" >&2; }
 
+secret_file_removal_receipt() {
+  local path="$1"
+  local private_root="${LIMEN_PRIVATE_ROOT:-$ROOT/.limen-private}"
+  local receipt_file="$private_root/secret-removals.jsonl"
+  mkdir -p "$private_root" 2>/dev/null || return 1
+  SECRET_FILE_PATH="$path" SECRET_FILE_RECEIPT="$receipt_file" python3 - <<'PY'
+import datetime as dt
+import hashlib
+import json
+import os
+
+path = os.environ["SECRET_FILE_PATH"]
+receipt = os.environ["SECRET_FILE_RECEIPT"]
+try:
+    byte_count = os.path.getsize(path)
+except OSError:
+    byte_count = 0
+record = {
+    "timestamp": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+    "surface": "scripts/op-service-account.sh",
+    "classification": "credential-file-removal",
+    "path_sha256": hashlib.sha256(path.encode("utf-8")).hexdigest(),
+    "byte_count": byte_count,
+    "archive_proof": "raw 1Password service-account token is not archived; private redacted removal receipt only",
+    "redaction_proof": "receipt excludes token, content, and raw path; stores byte count and path hash",
+    "planned_action": "delete credential file after receipt",
+}
+with open(receipt, "a", encoding="utf-8") as fh:
+    fh.write(json.dumps(record, sort_keys=True) + "\n")
+print(receipt)
+PY
+}
+
+remove_secret_file() {
+  local path="$1"
+  local receipt_file
+  if receipt_file="$(secret_file_removal_receipt "$path")"; then
+    if rm -f -- "$path"; then
+      log "removed credential file; redacted receipt: $receipt_file"
+      return 0
+    fi
+    log "redacted receipt written but credential-file removal failed: $path"
+    return 1
+  fi
+  log "retained credential file because redacted removal receipt failed: $path"
+  return 1
+}
+
 promptless_ok() {
   # True iff `op` can authenticate with NO interactive prompt using the token in the file.
   # Runs op in a child with ONLY the token exported; never prints the value.
@@ -163,7 +211,8 @@ case "${1:-status}" in
     ;;
   remove)
     if [ -f "$SA_FILE" ]; then
-      rm -f "$SA_FILE"; log "removed $SA_FILE — op reverts to biometric (desktop-app) auth."
+      remove_secret_file "$SA_FILE" || exit 1
+      log "op reverts to biometric (desktop-app) auth."
     else
       log "nothing to remove ($SA_FILE absent)."
     fi

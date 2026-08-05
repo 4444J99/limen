@@ -1,0 +1,105 @@
+<!doctype html>
+<!-- MONETA Mint-as-a-Service — product landing (REV-organvm-limen-revenue-landing-0708).
+     Deploy-ready: one self-contained file, no build step, no external assets.
+     Every claim below is derived from moneta/README.md and the running instance —
+     no invented features, no invented numbers. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MONETA — sell Pro licences with no payment processor</title>
+<meta name="description" content="MONETA is a self-hosted Bitcoin licence mint: buyers pay sats to an address you control, the mint confirms against a keyless public explorer and signs an offline-verifiable ECDSA-P256 Pro licence. No Stripe, no Lemon Squeezy, no account, no KYC.">
+<style>
+  :root { --ink: #1a1712; --paper: #faf7f0; --accent: #b8860b; --dim: #6b6255; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 17px/1.65 Georgia, 'Times New Roman', serif; color: var(--ink); background: var(--paper); }
+  main { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  h1 { font-size: 2.3rem; line-height: 1.15; margin: 0 0 .5rem; }
+  h2 { font-size: 1.25rem; margin: 2.5rem 0 .75rem; border-bottom: 1px solid #ddd3c2; padding-bottom: .3rem; }
+  .tagline { font-size: 1.15rem; color: var(--dim); margin: 0 0 2rem; }
+  .rail { background: #14110c; color: #e8e0d0; padding: 1.1rem 1.3rem; border-radius: 6px; overflow-x: auto; font: 13.5px/1.7 ui-monospace, 'SF Mono', Menlo, monospace; white-space: pre; }
+  code { font: 15px ui-monospace, Menlo, monospace; background: #efe9dc; padding: .1em .35em; border-radius: 3px; }
+  .rail code { background: none; padding: 0; }
+  a { color: var(--accent); }
+  .cta { display: inline-block; margin: .35rem .5rem .35rem 0; padding: .65rem 1.2rem; border: 2px solid var(--ink); border-radius: 6px; color: var(--ink); text-decoration: none; font-weight: bold; }
+  .cta.primary { background: var(--ink); color: var(--paper); }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+  td, th { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid #e5dccb; vertical-align: top; }
+  .foot { margin-top: 3.5rem; font-size: .9rem; color: var(--dim); border-top: 1px solid #ddd3c2; padding-top: 1rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>MONETA</h1>
+  <p class="tagline">Sell Pro licences for your software with <strong>no payment processor
+  anywhere in the path</strong> — a self-hosted Bitcoin licence mint you run in one container.</p>
+
+  <p><a class="cta primary" href="https://github.com/organvm/limen/tree/main/moneta">Get the source</a>
+     <a class="cta" href="https://mint.4444j99.dev/">See a live mint</a></p>
+
+  <h2>What it does</h2>
+  <div class="rail">buyer ──pays sats──▶ your Bitcoin address
+                     │  (you hold the keys; MONETA never touches funds)
+buyer ──GET /order──▶ MONETA ──reads chain──▶ mempool.space  (read-only, no API key)
+                     │
+                     └─signs licence with MONETA's key─▶ buyer
+buyer pastes licence ─▶ your product verifies it OFFLINE against the public key</div>
+
+  <p>A buyer pays Bitcoin straight to an address <em>you</em> control. MONETA watches a
+  <strong>keyless public block explorer</strong> (mempool.space/Esplora — read-only, no API key,
+  swappable for your own self-hosted instance) and, on confirmed payment, signs your product's
+  own <strong>ECDSA-P256 Pro licence</strong> — the same offline-verifiable token your licence
+  core already checks. No Stripe, no Lemon Squeezy, no Ko-fi, no account, no KYC, nothing a
+  third party can freeze or revoke.</p>
+
+  <h2>What it never does</h2>
+  <p>MONETA is <strong>read-only against the chain</strong>. It holds no spending keys, signs no
+  transactions, and cannot move your funds — it only asks the explorer whether <code>N</code> sats
+  landed at your address. The only key it holds is the licence-signing key, a code-signing key
+  auto-generated on first boot.</p>
+
+  <h2>No sale is ever lost</h2>
+  <p>Unconfigured, it still takes orders: before a receive address is set, <code>/checkout</code>
+  pools each buyer as a <code>reserved</code> order and <code>/health</code> reports the waiting
+  count. The instant you set <code>MINT_BTC_ADDRESS</code>, every pooled order opens into a payable
+  one and mints on confirmation. The valve opens; demand was never turned away.</p>
+
+  <h2>Run it ($0 deploy)</h2>
+  <div class="rail">docker build -t moneta .
+docker run -p 8787:8787 --env-file .env -v "$PWD/.data:/app/.data" moneta
+# or: npm ci && npm start        → http://localhost:8787</div>
+  <p>One env value is sovereign: <code>MINT_BTC_ADDRESS</code>, from any wallet you control.
+  Everything else has working defaults.</p>
+
+  <h2>The endpoints</h2>
+  <table>
+    <tr><th><code>GET /</code></th><td>Self-contained buyer checkout page — BTC address, unique sat amount, BIP21 link, polls to confirmation, returns the buyer to your product with <code>?ce_license_key=…</code></td></tr>
+    <tr><th><code>GET /pubkey</code></th><td>The public JWK you embed in your product build</td></tr>
+    <tr><th><code>POST /checkout</code></th><td>New order (<code>201</code> payable, or <code>202</code> reserved while the valve is closed)</td></tr>
+    <tr><th><code>GET /order/:id</code></th><td>Poll; mints and returns the licence on confirmed payment</td></tr>
+    <tr><th><code>GET /health</code></th><td>Liveness, <code>configured</code> flag, pooled-demand count</td></tr>
+  </table>
+
+  <h2>Wire it to your product in three steps</h2>
+  <ol>
+    <li><code>npm run keygen</code> — prints the <strong>public</strong> JWK (the private half stays a deploy secret).</li>
+    <li>Set the public JWK in your product's build so it verifies licences offline.</li>
+    <li>Point your “Buy Pro” button at the mint's checkout; the buyer returns with the licence in the URL and your product captures it.</li>
+  </ol>
+  <p>First consumer in production: the
+  <a href="https://chatgpt-exporter-e08.pages.dev/">ChatGPT Exporter</a> — its Buy Pro button opens
+  a live MONETA mint, and purchased keys unlock Pro with zero network calls.</p>
+
+  <h2>Support the work</h2>
+  <p>MONETA is free and open source (part of <a href="https://github.com/organvm/limen">limen</a>).
+  If it saves you a processor's cut, you can pass a slice on:
+  <a href="https://github.com/sponsors/organvm">GitHub Sponsors</a> ·
+  <a href="https://ko-fi.com/4444j99">Ko-fi</a>.</p>
+
+  <p class="foot"><em>Juno Moneta: the Roman mint, the temple where coin was struck — the literal
+  root of “money” and “mint.”</em> Receiving money to a self-custodied wallet is the only rail a
+  private party can run end-to-end with no account, no KYC, and no middleman. MONETA supplies the
+  missing half: minting offline-verifiable licences on confirmed payment, instead of renting a processor.</p>
+</main>
+</body>
+</html>

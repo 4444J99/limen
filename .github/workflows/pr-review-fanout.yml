@@ -1,0 +1,42 @@
+name: PR Review Fanout
+
+# The REQUESTER half of the multi-agent review engine (estate.yaml integrations.review-fanout):
+# on PR open, post ONE idempotent marker comment that pings every installed mention-driven review
+# agent (Codex). CodeRabbit and Claude auto-trigger without a mention. The RESPONDER halves
+# are the babysit loop (GEMINI.md) and self-heal's REVIEW-FEEDBACK heal tasks — this workflow only
+# requests. ~10s on the hosted runner, cheap enough to run unconditionally, private repos included.
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  fanout:
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.actor != 'dependabot[bot]' &&
+      github.actor != 'renovate[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Post the review roll call (idempotent — the marker comment guards re-runs)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          marker='<!-- limen-review-fanout -->'
+          if gh api "/repos/$REPO/issues/$PR/comments" --paginate --jq '.[].body' | grep -qF "$marker"; then
+            echo "fanout comment already present — nothing to do"
+            exit 0
+          fi
+          gh pr comment "$PR" -R "$REPO" --body "$marker
+          **Multi-agent review roll call**
+          @codex review
+
+          (CodeRabbit and Claude review automatically. Reviewers: post substantive findings only. Authors/agents: address every thread, push fixes to this branch, reply and resolve, then re-request review.)"

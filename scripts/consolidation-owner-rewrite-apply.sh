@@ -7,6 +7,15 @@
 
 set -euo pipefail
 
+if [ "${LIMEN_CONSOLIDATION_GATE:-}" != "consolidation-gate-open" ]; then
+  cat >&2 <<EOF
+Refusing to run irreversible consolidation owner rewrite.
+Open the human consolidation gate first, then run:
+  LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash $0
+EOF
+  exit 2
+fi
+
 echo "⚠ GitHub mutation gate: rewrite is IRREVERSIBLE. Verify transfer completed before proceeding."
 echo ""
 echo "Running owner-rewrite (tasks.yaml refs + local remotes)..."

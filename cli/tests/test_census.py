@@ -83,6 +83,104 @@ def test_census_projections_match_the_historical_values():
     assert census.kinds() == _KINDS
 
 
+def test_vendor_tiering_is_derived():
+    """Per-vendor model-choice ownership is a projection of Vendor.tiering (Increment-1).
+
+    Claude routes through its tier authority; OpenCode uses live capability selection; Warp/Oz
+    delegate underlying model choice to provider Auto. The closed set catches unowned strategies.
+    """
+    t = census.tiering()
+    assert t["claude"] == "model_selection"
+    assert t["codex"] == "provider_auto"
+    assert t["opencode"] == "provider_selection"
+    assert t["warp"] == "provider_auto"
+    assert t["oz"] == "provider_auto"
+    for name in ("agy", "gemini", "ollama", "jules", "copilot", "github_actions"):
+        assert t[name] == "none", f"{name} should not own a model-choice layer"
+    # every vendor is projected, exactly once.
+    assert set(t) == set(census.paid_agent_order())
+    # closed sentinel set — no unmodeled tier value may leak in.
+    assert set(t.values()) == {
+        "model_selection",
+        "provider_selection",
+        "provider_auto",
+        "none",
+    }
+
+
+def test_execution_profiles_are_complete_model_neutral_conduct_metadata():
+    """Every canonical lane exposes one conduct-compatible profile with live-state references."""
+
+    profiles = census.execution_profiles()
+    assert set(profiles) == set(census.paid_agent_order())
+    assert set(profiles) == {vendor.name for vendor in census.VENDORS}
+    for name, profile in profiles.items():
+        assert "conduct" in profile.capabilities
+        assert "execute" in profile.capabilities
+        assert profile.transport
+        assert profile.harvest_method
+        assert profile.concurrency_ref.startswith("capacity:")
+        assert profile.meter_ref == f"logs/usage.json#/vendors/{name}"
+        assert profile.health_ref == f"limen.capacity:agent_status/{name}"
+        assert profile.auth_ref == f"limen.census:vendors/{name}/auth_mode"
+        assert not hasattr(profile, "model")
+        assert not hasattr(profile, "concurrency")
+
+
+def test_workstream_launch_protocols_are_registry_owned_and_closed():
+    profiles = census.execution_profiles()
+    adapters = {profile.workstream_adapter for profile in profiles.values()}
+    assert adapters <= {
+        "codex",
+        "jules",
+        "positional",
+        "prompt-flag",
+        "prompt-interactive",
+    }
+    assert {"codex", "jules", "prompt-flag"} <= adapters
+    assert all(isinstance(profile.workstream_model_flag, bool) for profile in profiles.values())
+    for vendor in census.VENDORS:
+        assert profiles[vendor.name].workstream_adapter == vendor.execution.workstream_adapter
+        assert profiles[vendor.name].workstream_model_flag == vendor.execution.workstream_model_flag
+
+
+def test_primary_peer_conductors_preserve_native_identity_and_fanout_contract():
+    profiles = census.execution_profiles()
+    assert {name: profiles[name].transport for name in ("codex", "claude", "opencode", "agy", "copilot")} == {
+        "codex": "ianva-http",
+        "claude": "ianva-http",
+        "opencode": "ianva-http",
+        "agy": "ianva-stdio",
+        "copilot": "ianva-stdio",
+    }
+    assert {name for name, profile in profiles.items() if profile.native_fanout} == {
+        "codex",
+        "claude",
+        "opencode",
+        "copilot",
+    }
+    for name in ("codex", "claude", "opencode", "agy", "copilot"):
+        assert {"conduct", "execute", "code", "review"} <= profiles[name].capabilities
+
+
+def test_conduct_capabilities_filter_by_live_health_without_fallback_order():
+    defaults = census.conduct_capabilities()
+    assert "gemini" not in defaults
+    assert "codex" in defaults
+
+    observed = census.conduct_capabilities({"codex": False, "gemini": True})
+    assert "codex" not in observed
+    assert "gemini" in observed
+    assert observed["gemini"] is census.by_name("gemini").execution
+
+
+def test_capacity_default_fill_agents_derive_from_execution_profiles():
+    expected = tuple(name for name, profile in census.execution_profiles().items() if profile.daily_fill)
+    assert census.default_fill_agents() == expected
+    assert capacity.DEFAULT_FILL_AGENTS == expected
+    assert set(expected) == {"codex", "claude", "opencode", "agy", "gemini", "jules", "copilot"}
+
+
 def test_capacity_canonical_agent_still_resolves_aliases():
     """capacity.canonical_agent reads AGENT_ALIASES; the derivation must keep it working."""
     assert capacity.canonical_agent("antigravity") == "agy"
@@ -93,7 +191,7 @@ def test_capacity_canonical_agent_still_resolves_aliases():
 
 
 def test_lane_cascade_drift_guard_against_dispatch():
-    """census.lane_cascade() must equal dispatch._LANE_CASCADE so they can't diverge again."""
+    """dispatch._LANE_CASCADE now DERIVES from census.lane_cascade(); assert they stay equal."""
     from limen import dispatch
 
     assert census.lane_cascade() == list(dispatch._LANE_CASCADE)
@@ -113,7 +211,7 @@ def test_every_vendor_record_is_well_formed():
         for alias in v.aliases:
             assert census.canonical(alias) == v.name
         # budget/status are always present (never a bare None record)
-        assert v.budget is not None and v.status is not None
+        assert v.budget is not None and v.status is not None and v.execution is not None
 
 
 def test_gemini_status_is_homed_in_the_register():
@@ -138,3 +236,91 @@ def test_healthy_fleet_has_no_other_dead_paths():
     """Only gemini is currently dark; guard against an accidental deprecation slipping in."""
     assert set(census.deprecated_paths()) == {"gemini"}
     assert set(census.unavailable()) == {"gemini"}
+
+
+def _load_usage_telemetry_module():
+    """Import scripts/usage-telemetry.py (hyphenated filename -> load by path) so its census
+    wiring can be inspected. Module-level code is side-effect-free at import (no file writes)."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "usage-telemetry.py"
+    spec = importlib.util.spec_from_file_location("usage_telemetry_under_test", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_usage_telemetry_limits_derive_from_census():
+    """Convergence roadmap item: usage-telemetry._DEFAULT_LIMITS DERIVES from census.budgets().
+
+    The vendor rows are a projection of the census register (filter: a real metering window,
+    Budget.window != "none" == the dispatchable metered lanes). The drift-guarded fallback literal
+    must equal that projection byte-for-byte, so it can never silently diverge from the umbrella.
+    """
+    ut = _load_usage_telemetry_module()
+    expected = {name: ut._budget_row(b) for name, b in census.budgets().items() if b.window != "none"}
+    # exactly the metered lanes — no non-metered (window == "none") lane leaks in.
+    assert set(expected) == {"codex", "claude", "opencode", "agy", "gemini", "jules"}
+    # the hand-typed fallback IS the census projection (drift guard).
+    assert ut._FALLBACK_VENDOR_LIMITS == expected
+    # the live derivation (limen importable) equals the fallback.
+    assert ut._census_vendor_limits() == expected
+    # _DEFAULT_LIMITS = derived vendor rows + the two app-plane rows (which have no Vendor record).
+    assert set(ut._DEFAULT_LIMITS) == set(expected) | {"chatgpt-app", "claude-app"}
+    # values preserved through the refactor (the swap changed nothing the consumers read).
+    for name, row in expected.items():
+        assert ut._DEFAULT_LIMITS[name] == row
+
+
+def test_route_vendor_health_derives_lane_set_from_census():
+    """scripts/route.py _vendor_health (the capacity_census fallback) derives its lane set from
+    census.lane_cascade(), so the fallback can never list a different vendor set than the main path."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "route.py"
+    spec = importlib.util.spec_from_file_location("route_under_test", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as exc:  # pragma: no cover - script-only deps absent in a minimal env
+        import pytest
+
+        pytest.skip(f"route.py not importable in this environment: {exc}")
+    health = mod._vendor_health()
+    assert set(health) == set(census.lane_cascade())
+
+
+def test_ianva_agent_keys_reconcile_with_census():
+    """Every dispatchable ianva MCP target is a canonical census vendor (guards naming drift, e.g.
+    'antigravity' vs 'agy'). 'cline' is the one MCP-only client that is not a dispatch lane."""
+    import pytest
+
+    agents_mod = pytest.importorskip("ianva.agents")
+    census_names = set(census.paid_agent_order())
+    non_census_mcp_targets = {"cline"}  # a valid MCP client, not a limen dispatch lane
+    for agent in agents_mod.AGENTS:
+        if agent.key in non_census_mcp_targets:
+            continue
+        assert agent.key in census_names, f"ianva agent {agent.key!r} is not a canonical census vendor"
+
+
+def test_agy_meter_is_honest_no_readable_source():
+    """agy (Antigravity) persists NO local usage — /usage is live-fetched from Google OAuth only —
+    so its census meter must NOT fake a measured number. It stays a calibrated dispatch-count board
+    cap, the same honest posture as gemini (also no readable vendor meter). Guards against a future
+    'graduate agy to a measured meter' edit that invents a number agy never actually exposes."""
+    agy = census.by_name("agy")
+    gem = census.by_name("gemini")
+    assert agy is not None and gem is not None
+    # no readable meter → dispatch_count, the same honest marker gemini carries (NOT a real meter).
+    assert agy.meter == "dispatch_count" == gem.meter
+    assert agy.meter != "vendor_ratelimit"  # must not falsely claim codex-style real rate-limit data
+    # trust is calibrated (an operator board cap), never "measured" (which would fake a real number).
+    assert agy.budget.trust == "calibrated"
+    assert agy.budget.trust != "measured"
+    # it still carries a concrete board cap (not None) so the pacing controller has a number to use.
+    assert agy.budget.limit == 100

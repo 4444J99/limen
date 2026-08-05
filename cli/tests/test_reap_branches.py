@@ -14,6 +14,7 @@ This is the executable predicate for the organ.
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 import time
@@ -81,9 +82,96 @@ def test_open_pr_beats_a_landed_proof():
     assert v.action == "keep" and v.reason == "inflight" and v.landed is False
 
 
+def test_numeric_env_knobs_fall_back(monkeypatch):
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_MAX", "bad")
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_EVERY_MIN", "nan")
+
+    assert reap._int_env("LIMEN_BRANCH_REAP_MAX", 100, minimum=1) == 100
+    assert reap._float_env("LIMEN_BRANCH_REAP_EVERY_MIN", 30.0, minimum=0.0) == 30.0
+
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_MAX", "0")
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_EVERY_MIN", "-1")
+    assert reap._int_env("LIMEN_BRANCH_REAP_MAX", 100, minimum=1) == 100
+    assert reap._float_env("LIMEN_BRANCH_REAP_EVERY_MIN", 30.0, minimum=0.0) == 30.0
+
+
+def test_git_can_target_external_repo_without_moving_control_root(tmp_path, monkeypatch):
+    target = tmp_path / "owner-repo"
+    target.mkdir()
+    _git(target, "init", "-q", "-b", "main")
+    control = tmp_path / "control"
+    control.mkdir()
+    monkeypatch.setattr(reap, "LIMEN_ROOT", control)
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_REPO_ROOT", str(target))
+
+    result = reap._git(["rev-parse", "--show-toplevel"])
+
+    assert result.returncode == 0
+    assert Path(result.stdout.strip()) == target.resolve()
+    assert reap.repository_root() != reap.LIMEN_ROOT
+
+
 def test_ancestor_reported_before_pr_merged():
     v = reap.classify(F(is_ancestor=True, pr_merged_safe=True))
     assert v.reason == "landed-ancestor"
+
+
+def test_exact_branch_allowlist_never_broadens_scope():
+    selected, missing = reap.exact_branch_allowlist(
+        ["main", "landed-one", "landed-two"],
+        ["landed-two", "missing", "landed-two"],
+    )
+
+    assert selected == ["landed-two"]
+    assert missing == ["missing"]
+
+
+def test_empty_branch_allowlist_preserves_default_scope():
+    branches = ["main", "landed-one", "landed-two"]
+
+    assert reap.exact_branch_allowlist(branches, []) == (branches, [])
+
+
+def test_targeted_apply_preserves_global_state_and_ledger(tmp_path, monkeypatch):
+    logs = tmp_path / "logs"
+    docs = tmp_path / "docs"
+    logs.mkdir()
+    docs.mkdir()
+    state = logs / "reap-branches-state.json"
+    ledger = docs / "branch-hygiene.md"
+    marker = logs / ".reap-branches-last"
+    state.write_text("global-state\n", encoding="utf-8")
+    ledger.write_text("global-ledger\n", encoding="utf-8")
+    monkeypatch.setattr(reap, "LOG", logs / "reap-branches.jsonl")
+    monkeypatch.setattr(reap, "STATE", state)
+    monkeypatch.setattr(reap, "MARKER", marker)
+    monkeypatch.setattr(reap, "LEDGER", ledger)
+    monkeypatch.setattr(reap, "local_branches", lambda: ["target", "unrelated-livework"])
+    monkeypatch.setattr(reap, "default_ref", lambda: "origin/main")
+    monkeypatch.setattr(reap, "default_name", lambda _ref: "main")
+    monkeypatch.setattr(reap, "checked_out_branches", set)
+    monkeypatch.setattr(reap, "gh_head_states", lambda: ({}, set(), True))
+    monkeypatch.setattr(reap, "gather_facts", lambda *_args: F(is_ancestor=True))
+    monkeypatch.setattr(reap, "load_branch_reap_acceptance", list)
+    monkeypatch.setattr(reap, "branch_reap_accepted", lambda *_args: (True, "accepted"))
+    monkeypatch.setattr(
+        reap,
+        "_git",
+        lambda args, timeout=30: subprocess.CompletedProcess(args, 0, "", ""),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["reap-branches.py", "--apply", "--force", "--branch", "target"],
+    )
+
+    assert reap.main() == 0
+    assert state.read_text(encoding="utf-8") == "global-state\n"
+    assert ledger.read_text(encoding="utf-8") == "global-ledger\n"
+    assert not marker.exists()
+    receipt = json.loads((logs / "reap-branches.jsonl").read_text())
+    assert receipt["scope"] == "targeted"
+    assert receipt["targets"] == ["target"]
 
 
 # ----------------------------------------------------------------- gather_facts() on real repos
@@ -130,6 +218,55 @@ def test_spent_branch_is_ancestor_and_reaped(repo):
     assert reap.classify(f).action == "reap"
 
 
+def test_branch_reap_requires_acceptance(repo):
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", [])
+
+    assert ok is False
+    assert reason == "missing-branch-reap-acceptance"
+
+
+def test_branch_reap_acceptance_matches_tip(repo):
+    tip = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "refs/heads/spent"], text=True).strip()
+    events = [
+        {
+            "accepted_at": "2026-07-06T06:30:00Z",
+            "branch": "spent",
+            "accepted": True,
+            "reason": "landed-ancestor",
+            "tip": tip,
+            "archive_status": "landed_on_default_verified",
+            "archive_proof": "tip is reachable from the default branch",
+            "redaction_review": "not_required_landed_ref",
+            "redaction_proof": "branch ref carries no additional content beyond landed git objects",
+        }
+    ]
+
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", events)
+
+    assert ok is True
+    assert reason == "branch-reap-accepted"
+
+
+def test_branch_reap_acceptance_requires_archive_and_redaction_proof(repo):
+    tip = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "refs/heads/spent"], text=True).strip()
+    events = [
+        {
+            "accepted_at": "2026-07-06T06:30:00Z",
+            "branch": "spent",
+            "accepted": True,
+            "reason": "landed-ancestor",
+            "tip": tip,
+            "archive_status": "landed_on_default_verified",
+            "redaction_review": "not_required_landed_ref",
+        }
+    ]
+
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", events)
+
+    assert ok is False
+    assert reason == "incomplete-branch-reap-acceptance"
+
+
 def test_livework_branch_is_kept(repo):
     f = reap.gather_facts("livework", "main", set(), {}, set(), "main")
     assert f.is_ancestor is False and f.pr_merged_raw is False
@@ -170,3 +307,113 @@ def test_default_branch_is_protected(repo):
     f = reap.gather_facts("main", "main", set(), {}, set(), "main")
     assert f.protected is True
     assert reap.classify(f).action == "keep"
+
+
+def test_open_pr_protects_only_its_exact_local_head(repo):
+    spent_tip = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "refs/heads/spent"], text=True).strip()
+
+    exact = reap.gather_facts("spent", "main", set(), {}, {"spent": spent_tip}, "main")
+    reused_name = reap.gather_facts("spent", "main", set(), {}, {"spent": "f" * 40}, "main")
+
+    assert exact.pr_open is True
+    assert reap.classify(exact).reason == "inflight"
+    assert reused_name.pr_open is False
+    assert reap.classify(reused_name).reason == "landed-ancestor"
+
+
+def test_github_open_head_snapshot_keeps_exact_oid(monkeypatch):
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    payload = [
+        {
+            "headRefName": "same-name",
+            "headRefOid": "a" * 40,
+            "state": "OPEN",
+            "mergedAt": None,
+        }
+    ]
+    monkeypatch.setattr(
+        reap.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
+    )
+
+    merged, open_heads, online = reap.gh_head_states()
+
+    assert merged == {}
+    assert open_heads == {"same-name": "a" * 40}
+    assert online is True
+
+
+# ----------------------------------------------------------------- --check grace window
+def test_landed_age_uses_merged_at():
+    now = time.time()
+    assert reap._landed_age_s("b", {"b": now - 120.0}, now) == pytest.approx(120.0, abs=1.0)
+
+
+def test_landed_age_unknown_is_stale():
+    # No gh mergedAt and no such ref → +inf: an unknowable age NEVER hides a branch.
+    assert reap._landed_age_s("zz-no-such-branch-grace-test", {}, time.time()) == float("inf")
+
+
+def test_lingering_excludes_young_landed_branches():
+    # A branch merged 1min ago is digesting; one merged 2h ago lingers. --apply is ungraced —
+    # only the --check assertion ages, so a live fleet can't redden every closeout.
+    now = time.time()
+    merged = {"young": now - 60.0, "old": now - 7200.0}
+    rows = [("young", "landed-pr-merged"), ("old", "landed-pr-merged")]
+    assert reap._lingering(rows, merged, now, grace_s=3600.0) == [("old", "landed-pr-merged")]
+
+
+def test_lingering_zero_grace_keeps_strict_semantics():
+    # grace=0 restores the original zero-at-any-instant assertion (age > 0 for any real branch).
+    now = time.time()
+    rows = [("young", "landed-pr-merged")]
+    assert reap._lingering(rows, {"young": now - 60.0}, now, grace_s=0.0) == rows
+
+
+def test_standing_grant_covers_landed_classes(repo):
+    events = [
+        {
+            "standing": True,
+            "branch": "*",
+            "accepted": True,
+            "accepted_at": "2026-07-09T13:00:00Z",
+            "archive_status": "not_required_landed_ref",
+            "archive_proof": "standing grant: covers only classifier-proven landed branches",
+            "redaction_review": "not_required_landed_ref",
+            "redaction_proof": "local ref deletion removes only a branch pointer; landed objects stay on default",
+        }
+    ]
+
+    for landed_reason in ("landed-ancestor", "landed-pr-merged"):
+        ok, reason = reap.branch_reap_accepted("spent", landed_reason, events)
+        assert ok is True
+        assert reason == "branch-reap-accepted"
+
+
+def test_standing_grant_never_covers_non_landed_classes(repo):
+    events = [
+        {
+            "standing": True,
+            "branch": "*",
+            "accepted": True,
+            "accepted_at": "2026-07-09T13:00:00Z",
+            "archive_status": "not_required_landed_ref",
+            "archive_proof": "standing grant: covers only classifier-proven landed branches",
+            "redaction_review": "not_required_landed_ref",
+            "redaction_proof": "local ref deletion removes only a branch pointer; landed objects stay on default",
+        }
+    ]
+
+    ok, reason = reap.branch_reap_accepted("spent", "livework", events)
+    assert ok is False
+    assert reason == "missing-branch-reap-acceptance"
+
+
+def test_standing_grant_requires_proof_fields(repo):
+    events = [{"standing": True, "branch": "*", "accepted": True, "accepted_at": "2026-07-09T13:00:00Z"}]
+
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", events)
+    assert ok is False
+    assert reason == "incomplete-branch-reap-acceptance"

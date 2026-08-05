@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "description": "Runtime-changeable, provider-neutral prompt atom priority policy. It contains no topic, provider, model, or catalog table.",
+  "weights": {
+    "operator_emphasis": 1.0,
+    "system_leverage": 1.0,
+    "magnitude": 1.0,
+    "recurrence": 1.0,
+    "dependency_impact": 1.0,
+    "preservation_risk": 1.0,
+    "recency": 1.0,
+    "cost_of_delay": 1.0
+  },
+  "authority_bands": {
+    "operator": {"floor": 0.67, "ceiling": 1.0},
+    "unknown": {"floor": 0.34, "ceiling": 0.66},
+    "derived": {"floor": 0.0, "ceiling": 0.33}
+  },
+  "confidence_thresholds": {
+    "semantic_atom": 0.5,
+    "lineage_edge": 0.65,
+    "structural_fallback": 0.25,
+    "command_timeout_seconds": 30.0
+  },
+  "owner_routing": {
+    "default_owner": "organvm/limen",
+    "default_route": "TABVLARIVS/prompt-atom-intake",
+    "default_next_command": "python3 scripts/prompt-atom-ledger.py --scan --all --write",
+    "sources": {
+      "agy-cli-conversations": {
+        "owner": "organvm/limen#641",
+        "route": "issue:641",
+        "failed_predicate": "agy-native-prompt-adapter-complete",
+        "next_command": "gh issue view 641 --repo organvm/limen"
+      }
+    }
+  },
+  "reclassification": {
+    "max_occurrences_per_run": 5
+  },
+  "recency_half_life_days": 30.0,
+  "unconverged_repeat_limit": 15
+}

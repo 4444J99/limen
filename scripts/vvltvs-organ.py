@@ -70,6 +70,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import subprocess
@@ -82,9 +83,38 @@ LOGS = ROOT / "logs"
 HOME = Path.home()
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE_ROOT", str(HOME / "Workspace")))
 
-REVIEW_FLOOR = float(os.environ.get("LIMEN_VVLTVS_REVIEW_FLOOR", "10"))  # review % below this ⇒ FDE-lane liability
+
+def _float_or_default(value, default: float, minimum: float | None = None) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(parsed):
+        return default
+    if minimum is not None and parsed < minimum:
+        return default
+    return parsed
+
+
+def _env_float(name: str, default: float, minimum: float | None = None) -> float:
+    return _float_or_default(os.environ.get(name, str(default)), default, minimum=minimum)
+
+
+def _int_or_none(value) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(parsed):
+        return None
+    return int(parsed)
+
+
+REVIEW_FLOOR = _env_float("LIMEN_VVLTVS_REVIEW_FLOOR", 10, minimum=0)  # review % below this ⇒ FDE-lane liability
 REFRESH_ON_BEAT = os.environ.get("LIMEN_VVLTVS_REFRESH", "0") == "1"  # may the beat hit gh api when the mix is stale
-MIX_STALE_DAYS = float(os.environ.get("LIMEN_VVLTVS_MIX_STALE_DAYS", "7"))  # cached mix older than this ⇒ stale
+MIX_STALE_DAYS = _env_float("LIMEN_VVLTVS_MIX_STALE_DAYS", 7, minimum=0)  # cached mix older than this ⇒ stale
 
 MIX_CACHE = LOGS / "vvltvs-contribution-mix.json"
 
@@ -247,9 +277,11 @@ def ssot(man: dict | None = _MAN) -> dict:
     count already derives from `gh api`); returns the computed block, PII-free. Never enumerates."""
     path = WORKSPACE / _ssot_rel(man)
     doc = _load_json(path)
-    if doc is None:
+    if not isinstance(doc, dict):
         return {"present": False, "path": str(path)}
     computed = doc.get(_ssot_block(man), doc)  # tolerate flat shape
+    if not isinstance(computed, dict):
+        return {"present": False, "path": str(path)}
     keys = (
         "total_repos",
         "active_repos",
@@ -273,6 +305,8 @@ def vena(src: dict, man: dict | None = _MAN) -> list[dict]:
     Loads and returns each register's doc so faces can resolve register-sourced values."""
     rows: list[dict] = []
     for reg in _registers_spec(man):
+        if not isinstance(reg, dict):
+            continue
         key = reg.get("key", "?")
         home = reg.get("home", "")
         doc = _load_json(WORKSPACE / home) if home else None
@@ -293,32 +327,45 @@ def vena(src: dict, man: dict | None = _MAN) -> list[dict]:
             row["detail"] = "register file not present here"
             rows.append(row)
             continue
+        if not isinstance(doc, dict):
+            row["detail"] = "register file is not a JSON object"
+            rows.append(row)
+            continue
 
         # tracked-value integrity: register value must equal the SSOT it tracks
         diverge = []
         for t in reg.get("tracks", []) or []:
-            rv = _dig(doc, t["locator"]) if "." in t["locator"] else doc.get(t["locator"])
-            sv = src.get(t.get("ssot_key")) if src.get("present") else None
+            if not isinstance(t, dict):
+                continue
+            locator = t.get("locator")
+            if not locator:
+                continue
+            locator_s = str(locator)
+            rv = _dig(doc, locator_s) if "." in locator_s else doc.get(locator_s)
+            sv = src.get(t.get("ssot_key")) if src.get("present") and t.get("ssot_key") else None
             if rv is not None and sv is not None and str(rv) != str(sv):
-                diverge.append({"key": t["key"], "register": rv, "ssot": sv})
+                diverge.append({"key": t.get("key", locator_s), "register": rv, "ssot": sv})
         row["diverge"] = diverge
 
         # freshness integrity: a dated register must be within its lag + coverage budget
         stale_bits = []
         fr = reg.get("freshness")
-        if fr:
-            age = _iso_age_days(
-                _dig(doc, fr["date_locator"]) if "." in fr["date_locator"] else doc.get(fr["date_locator"])
-            )
-            if age is not None and age > float(fr.get("max_lag_days", 1e9)):
-                stale_bits.append(f"audit {int(age)}d old (max {fr['max_lag_days']})")
+        if isinstance(fr, dict):
+            date_locator = fr.get("date_locator")
+            age = None
+            if date_locator:
+                age = _iso_age_days(_dig(doc, date_locator) if "." in date_locator else doc.get(date_locator))
+                max_lag_days = _float_or_default(fr.get("max_lag_days"), 1e9, minimum=0)
+                if age is not None and age > max_lag_days:
+                    stale_bits.append(f"audit {int(age)}d old (max {max_lag_days:g})")
             cov_n = doc.get(fr["coverage_locator"]) if fr.get("coverage_locator") else None
             cov_d = src.get(fr.get("coverage_of")) if src.get("present") and fr.get("coverage_of") else None
             if isinstance(cov_n, (int, float)) and isinstance(cov_d, (int, float)) and cov_d:
                 cov = cov_n / cov_d
-                if cov < float(fr.get("min_coverage", 0)):
+                min_coverage = _float_or_default(fr.get("min_coverage"), 0, minimum=0)
+                if cov < min_coverage:
                     stale_bits.append(
-                        f"coverage {cov_n}/{cov_d}={int(cov * 100)}% (min {int(float(fr['min_coverage']) * 100)}%)"
+                        f"coverage {cov_n}/{cov_d}={int(cov * 100)}% (min {int(min_coverage * 100)}%)"
                     )
 
         if diverge:
@@ -344,7 +391,7 @@ def vena(src: dict, man: dict | None = _MAN) -> list[dict]:
 
 def _register_state(pipes: list[dict], key: str) -> dict | None:
     for p in pipes:
-        if p["key"] == key:
+        if p.get("key") == key:
             return p
     return None
 
@@ -374,17 +421,39 @@ def _resolve_source(check: dict, src: dict, pipes: list[dict]):
 def mirror(src: dict, pipes: list[dict], man: dict | None = _MAN) -> dict:
     rows = []
     for face in _faces_spec(man):
-        path = WORKSPACE / face["path"]
+        if not isinstance(face, dict):
+            continue
+        face_key = face.get("key", "?")
+        face_path = face.get("path")
+        if not face_path:
+            rows.append({"face": face_key, "present": False, "checks": []})
+            continue
+        path = WORKSPACE / face_path
         if not path.exists():
-            rows.append({"face": face["key"], "present": False, "checks": []})
+            rows.append({"face": face_key, "present": False, "checks": []})
             continue
         crows = []
-        for c in face["checks"]:
-            fv = _face_value(path, face.get("format", "json"), c["locator"])
+        for c in face.get("checks", []) or []:
+            if not isinstance(c, dict):
+                continue
+            metric = c.get("metric", c.get("locator", "?"))
+            locator = c.get("locator")
+            if not locator:
+                crows.append(
+                    {
+                        "metric": metric,
+                        "state": "unmeasurable",
+                        "face": None,
+                        "src": None,
+                        "source": c.get("source", "ssot"),
+                    }
+                )
+                continue
+            fv = _face_value(path, face.get("format", "json"), str(locator))
             if fv is None:
                 crows.append(
                     {
-                        "metric": c["metric"],
+                        "metric": metric,
                         "state": "unmeasurable",
                         "face": None,
                         "src": None,
@@ -393,13 +462,13 @@ def mirror(src: dict, pipes: list[dict], man: dict | None = _MAN) -> dict:
                 )
                 continue
             if c.get("kind") == "fabricated":  # legacy default-face path: no declared source at all
-                crows.append({"metric": c["metric"], "state": "unbacked", "face": fv, "src": None, "source": None})
+                crows.append({"metric": metric, "state": "unbacked", "face": fv, "src": None, "source": None})
                 continue
             sv, fresh = _resolve_source(c, src, pipes)
             if sv is None:
                 crows.append(
                     {
-                        "metric": c["metric"],
+                        "metric": metric,
                         "state": "unmeasurable",
                         "face": fv,
                         "src": None,
@@ -409,8 +478,20 @@ def mirror(src: dict, pipes: list[dict], man: dict | None = _MAN) -> dict:
                 continue
             if c.get("kind") == "wordshort":
                 fn = _short_to_num(fv)
-                agree = fn is not None and abs(fn - int(sv)) <= 0.15 * int(sv)
-                disp = _num_to_short(int(sv))
+                sn = _int_or_none(sv)
+                if sn is None:
+                    crows.append(
+                        {
+                            "metric": metric,
+                            "state": "unmeasurable",
+                            "face": fv,
+                            "src": sv,
+                            "source": c.get("source", "ssot"),
+                        }
+                    )
+                    continue
+                agree = fn is not None and abs(fn - sn) <= 0.15 * sn
+                disp = _num_to_short(sn)
             else:
                 agree = str(fv) == str(sv)
                 disp = sv
@@ -421,9 +502,9 @@ def mirror(src: dict, pipes: list[dict], man: dict | None = _MAN) -> dict:
             else:
                 state = "source-stale"  # face differs from a target whose own pipe is severed/stale
             crows.append(
-                {"metric": c["metric"], "state": state, "face": fv, "src": disp, "source": c.get("source", "ssot")}
+                {"metric": metric, "state": state, "face": fv, "src": disp, "source": c.get("source", "ssot")}
             )
-        rows.append({"face": face["key"], "present": True, "checks": crows})
+        rows.append({"face": face_key, "present": True, "checks": crows})
     return {"faces": rows}
 
 

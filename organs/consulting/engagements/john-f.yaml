@@ -1,0 +1,47 @@
+# Engagement: John F. — the finance niche instance
+# Created 2026-07-04 from the principal's niche-institution directive.
+
+member:
+  name: "{{MEMBER_NAME}}"
+  context: >
+    {{NICHE_DOMAIN}}-niche collaborator and co-player on a collaborative game lane. The
+    {{NICHE_DOMAIN}} collaboration is real but thinly recorded — this record exists so
+    the niche has a durable home instead of living in chat memory.
+
+mandate:
+  description: >
+    Discover and scope the {{NICHE_DOMAIN}} niche instance of the funnel engine: what
+    the partner actually does, what audience it serves, and which pipeline stages
+    apply.
+  outcome: "A filled-in DISCOVERY record: the partner's niche, offer, channels, and whether a funnel instance is wanted"
+
+standing:
+  current: "DISCOVERY"
+next_standing: "PROPOSAL"
+
+human_gates:
+  - "Partner confirms interest and scope before any artifact is made"
+  - "Principal approves everything before it reaches the partner"
+
+standard:
+  quality_bar: "No invented facts: everything recorded here traces to a session, a repo, or the partner's own words"
+  evidence: >
+    Joint artifacts are recorded in dedicated repos; the {{NICHE_DOMAIN}} thread is named in the principal's
+    2026-07-04 directive and has no prior written record — closing that gap
+    is the DISCOVERY work itself.
+
+governance:
+  authority: "Engagement Partner (human)"
+  ethics: "No investment or money guidance to anyone; infrastructure and record-keeping only"
+  reversibility: "All external actions staged and surfaced for human action"
+
+scope:
+  boundary: "Discovery only: capture the {{NICHE_DOMAIN}} niche's real shape into this record"
+  exclusions:
+    - "No investment guidance"
+    - "No outreach in the partner's name"
+    - "No money movement of any kind"
+  changes:
+    - date: "2026-07-04"
+      description: "Engagement record created at DISCOVERY from the principal's niche-institution directive"
+      approved_by: "Principal (requesting party)"

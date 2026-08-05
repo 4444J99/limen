@@ -11,7 +11,8 @@ A **cell** is one parallel idea made concrete:
 - **one worktree** at `.claude/worktrees/<slug>` — a full, isolated checkout
 - **one branch** `cell/<slug>`, always cut from `origin/main` (never your drifted local HEAD)
 - **optionally one scoped conductor** — a heartbeat bound to that worktree, with its own
-  `LIMEN_ROOT`, tasks file, branch namespace (`cell-<slug>-`), pidfile, lock and log
+  `LIMEN_ROOT`, branch namespace (`cell-<slug>-`), identity receipt, lock and log; every
+  task/lease transition still goes through the canonical conduct broker
 
 Cells are isolated *by construction*, so N of them run side-by-side without racing each
 other or the live daemon. Each cell tears itself down loss-free when you're done.
@@ -35,9 +36,9 @@ cell new   <slug>            # create a cell (worktree off origin/main) → prin
 cell ls                      # list cells: branch · ahead/behind · dirty · conductor · size
 cell cd    <slug>            # print the cell path:  cd "$(cell cd foo)"
 cell conduct <slug> [--loop] # start this cell's scoped conductor (bg). --loop = continuous
-cell stop  <slug>            # stop this cell's conductor
+cell stop  <slug>            # request cooperative run stop, or gracefully stop a registration-only loop
 cell merge <slug>            # push + hand off to the standing merge grant (merge-policy.sh)
-cell reap  <slug> [--force]  # stop + LOSS-FREE remove (refuses if dirty or unpushed)
+cell reap  <slug>            # stop + hand off to receipt-backed reclaim/reap organs
 cell reap-dead               # preview every provably-dead cell (clean+content-preserved+idle)
 cell help
 ```
@@ -81,7 +82,14 @@ cell ls                           # see which cells have a live conductor (PID) 
 cell stop mail-digest             # stop it
 ```
 
-Logs land in `logs/cells/<slug>.conduct.log`; the PID in `logs/cells/<slug>.pid`.
+Logs land in `logs/cells/<slug>.conduct.log`. `logs/cells/<slug>.pid` is a structured
+`limen.cell_registration.v1` receipt, not a bare PID: it binds the PID to its process-start
+identity, unique command marker, cell/session, run owner, and protection flag.
+
+`cell stop` never sends `KILL`. For a conducted run it asks the broker for cooperative stop and
+leaves the registration loop alive for liveness/harvest. For a registration-only loop it sends
+`TERM` only after the PID, start identity, and command marker all match the receipt. Stale, reused,
+foreign, or human-protected identities are refused rather than signalled.
 
 **When to run multiple conductors:** when each idea has enough self-contained backlog to
 keep a loop busy (e.g. a big refactor with its own task list). For a quick one-off edit,
@@ -104,12 +112,14 @@ freely once CLEAN). See [[merge-authority-standing-grant]].
 
 ```sh
 cell reap spiral-bvh        # refuses if the cell is DIRTY or has UNPUSHED commits
-cell reap spiral-bvh --force   # only if you truly mean to discard
 ```
 
-`reap` removes the worktree, deletes the local branch, prunes, and clears the pidfile/logs.
-It will **not** silently drop work — an empty/unpushed cell is treated as an unfulfilled
-intention, not garbage. See [[empty-branch-is-a-todo-not-a-delete]].
+`reap` does not delete the worktree or branch directly. It stops the conductor, proves the cell is
+clean and content-preserved, then delegates physical removal to the receipt-backed organs:
+`docs/worktree-reclaim-acceptance.jsonl` + `reclaim-worktrees.py` for the root, and
+`docs/branch-reap-acceptance.jsonl` + `reap-branches.py` for the branch ref. It will **not**
+silently drop work — an empty/unpushed cell is treated as an unfulfilled intention, not garbage.
+See [[empty-branch-is-a-todo-not-a-delete]].
 
 ### 5 — Sweep the dead automatically
 
@@ -130,8 +140,9 @@ cell reap-dead --apply      # actually reclaim after operator acceptance
 |---|---|
 | Stale base reverting main | `new` always branches from freshly-fetched `origin/main` |
 | Conductors racing `main` | scoped conductor: own branch namespace, fleet merges OFF |
-| Conductors racing each other | own `LIMEN_ROOT` + tasks file + pidfile + lock per cell |
-| Losing uncommitted work | `reap` refuses dirty/unpushed; `--force` is explicit |
+| Conductors racing each other | isolated worktrees plus canonical broker leases; no cell-local board writer |
+| Stale PID signalling a peer | exact PID/start/command proof; foreign and protected processes are refused |
+| Losing uncommitted work | `reap` refuses dirty/unpushed; physical removal requires acceptance receipts |
 | Disk leak | known worktree roots swept; loss-free gates; live-session guard |
 | Hardcoded knobs | every `LIMEN_*` toggle declared in `institutio/governance/parameters.yaml` |
 
@@ -143,6 +154,7 @@ cell reap-dead --apply      # actually reclaim after operator acceptance
 | `LIMEN_RECLAIM_CLAUDE_AGE_H` | `24` | min idle hours before a cell is reclaim-eligible |
 | `LIMEN_RECLAIM_REPO_LOCAL_WT` | auto | also sweep repo-local `.worktrees/` roots under `LIMEN_RECLAIM_WORKSPACE_ROOTS` |
 | `LIMEN_RECLAIM_REGISTERED_WT` | auto | also sweep registered sibling worktrees from `LIMEN_RECLAIM_MAIN_REPOS` |
+| `LIMEN_RECLAIM_WORKSPACE_CHECKOUTS` | 0 | when explicitly armed, also sweep checkout roots themselves under `LIMEN_RECLAIM_WORKSPACE_ROOTS`; only clean exact-HEAD remote-preserved clones can be purged |
 | `LIMEN_RECLAIM_APPLY` | `1` | automated drain removes eligible roots by default; set `0` for preview-only |
 | `LIMEN_BRANCH_PREFIX` | (derived) | scoped conductor's branch namespace (`cell-<slug>-`) |
 

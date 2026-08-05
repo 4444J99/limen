@@ -21,13 +21,70 @@ stamp_voice() {
   printf '%s\n' "$(date -u +%FT%TZ)" > "$LIMEN_ROOT/logs/.voice/$1" 2>/dev/null || true
 }
 
+if [ "${1:-}" = "--census" ]; then
+  python3 - "$LIMEN_ROOT" "$LIMEN_TASKS" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+tasks_path = Path(sys.argv[2])
+
+
+def enabled(name: str, default: str) -> bool:
+    return os.environ.get(name, default) == "1"
+
+
+status_counts = {}
+try:
+    import yaml
+
+    data = yaml.safe_load(tasks_path.read_text()) or {}
+    tasks = data.get("tasks", []) if isinstance(data, dict) else []
+    for task in tasks:
+        if isinstance(task, dict):
+            status = str(task.get("status") or "unknown")
+            status_counts[status] = status_counts.get(status, 0) + 1
+except Exception:
+    try:
+        for line in tasks_path.read_text().splitlines():
+            stripped = line.strip()
+            if stripped.startswith("status:"):
+                status = stripped.split(":", 1)[1].strip() or "unknown"
+                status_counts[status] = status_counts.get(status, 0) + 1
+    except Exception:
+        status_counts = {}
+
+print(
+    json.dumps(
+        {
+            "tasks_present": tasks_path.exists(),
+            "task_status_counts": status_counts,
+            "logs_present": (root / "logs").exists(),
+            "voice_dir_present": (root / "logs" / ".voice").exists(),
+            "jules_land_enabled": enabled("LIMEN_JULES_LAND", "1"),
+            "merge_drain_enabled": enabled("LIMEN_MERGE_DRAIN", "1"),
+            "self_heal_enabled": enabled("LIMEN_SELF_HEAL", "1"),
+            "converge_enabled": enabled("LIMEN_CONVERGE", "0"),
+            "reclaim_enabled": enabled("LIMEN_RECLAIM", "1"),
+            "reclaim_apply_enabled": enabled("LIMEN_RECLAIM_APPLY", "1"),
+        },
+        indent=2,
+        sort_keys=True,
+    )
+)
+PY
+  exit 0
+fi
+
 echo "[drain] pulling completed Jules sessions…"
 python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py" 2>&1 | tail -4 || true
 
 # #18: LAND completed jules sessions as PRs (the jules→PR gap). Bounded per beat so it never
 # dominates the cycle; skips repos with no local checkout (clone-maintenance handles those).
-# Same isolation keystone as local dispatch (throwaway worktree). On by default for the live
-# daemon (already authorized to open PRs via dispatch); set LIMEN_JULES_LAND=0 to disable.
+# Same isolation keystone as local dispatch. The isolated root is retained after PR creation and
+# later reclaimed only by the receipt-backed reclaim/reap organs; set LIMEN_JULES_LAND=0 to disable.
 if [ "${LIMEN_JULES_LAND:-1}" = "1" ]; then
   echo "[drain] landing completed jules sessions as PRs (limit ${LIMEN_JULES_LAND_LIMIT:-3})…"
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/jules-land.py" --apply --recover \
@@ -54,10 +111,12 @@ fi
 # (cannot race tasks.yaml); bounded (limit 10) + idempotent (same id = no dup). ON by default — this
 # is what closes the HEAL rung (the dispatcher is already authorized to open PRs); set
 # LIMEN_SELF_HEAL=0 to disable, or run self-heal.py --dry-run to preview without writing.
-if [ "${LIMEN_SELF_HEAL:-1}" = "1" ]; then
+if [ "${LIMEN_SELF_HEAL:-1}" = "1" ] && [ "${LIMEN_QUEUE_LOCK_HELD:-0}" != "1" ]; then
   echo "[drain] emitting heal tasks for stuck PRs (scan ${LIMEN_HEAL_SCAN:-30}, limit ${LIMEN_HEAL_LIMIT:-10})…"
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/self-heal.py" \
       --scan "${LIMEN_HEAL_SCAN:-30}" --limit "${LIMEN_HEAL_LIMIT:-10}" 2>&1 | tail -3 || true
+elif [ "${LIMEN_SELF_HEAL:-1}" = "1" ]; then
+  echo "[drain] self-heal skipped under queue lock; heartbeat runs it after release"
 fi
 
 # CONVERGE — the alchemical rung that completes the self-* ladder. Finds "multiverses" (one idea a
@@ -77,9 +136,35 @@ fi
 # Visibility is ON by default. Safe removal is ON by default; set LIMEN_RECLAIM_APPLY=0 for
 # preview-only operation. ([[known-owned-pervasive-then-idgaf]], [[storage-autonomic-solve]])
 if [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
-  reclaim_args=()
-  [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
-  PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+  if [ "${LIMEN_QUEUE_LOCK_HELD:-0}" = "1" ]; then
+    echo "[drain] reclaim skipped under queue lock; heartbeat runs it after release"
+  else
+    # One controller owns both the exact-plan transaction and its total deadline. The full pass
+    # checks JSON, validates plan_sha256, and applies only that SHA; generated-only remains a valid
+    # one-pass cleanup. Any failure is visible and leaves the next beat free to derive a fresh plan.
+    reclaim_cycle() {  # reclaim_cycle <label> <timeout-seconds> [controller-args…]
+      local label="$1" timeout_seconds="$2" rc
+      shift 2
+      local apply_args=()
+      [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && apply_args+=(--apply)
+      # drain.sh is a fleet-wide lifecycle entrypoint, including when an already-running
+      # heartbeat reloads it after sync-release.  Its LaunchAgent carries an explicit scratch
+      # LIMEN_WORKTREE_ROOT, which intentionally narrows the library's "auto" inventory.  Opt
+      # this entrypoint back into the two live estate inventories while preserving an explicit
+      # operator 0; direct library callers retain worktree_roots.py's auto semantics.
+      LIMEN_RECLAIM_REPO_LOCAL_WT="${LIMEN_RECLAIM_REPO_LOCAL_WT:-1}" \
+        LIMEN_RECLAIM_REGISTERED_WT="${LIMEN_RECLAIM_REGISTERED_WT:-1}" \
+        PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-cycle.py" \
+          --timeout "$timeout_seconds" "${apply_args[@]}" "$@"
+      rc=$?
+      if [ "$rc" -ne 0 ]; then
+        echo "[drain] reclaim($label): cycle failed (rc=$rc) — next beat retries" >&2
+      fi
+      return 0
+    }
+    reclaim_cycle generated "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" --generated-only
+    reclaim_cycle full "${LIMEN_RECLAIM_TIMEOUT:-300}"
+  fi
 fi
 
 echo "[drain] board:"

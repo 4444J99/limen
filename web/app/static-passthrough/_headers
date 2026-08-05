@@ -1,0 +1,29 @@
+# Cache headers for Cloudflare Pages static hosting.
+# Next.js content-hashed static assets get max-age=1y immutable.
+# JSON feeds get a short TTL so the daemon's 60s-rebuild cycle keeps them fresh.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/dashboard.json
+  Cache-Control: public, max-age=30
+
+/done-tasks.json
+  Cache-Control: public, max-age=30
+
+/pr-status.json
+  Cache-Control: public, max-age=30
+
+/public-status.json
+  Cache-Control: public, max-age=30
+
+/surface-manifest.json
+  Cache-Control: public, max-age=30
+
+/public-surface-manifest.json
+  Cache-Control: public, max-age=30
+
+/logs/fleet-status.json
+  Cache-Control: public, max-age=10
+
+/*-insights.json
+  Cache-Control: public, max-age=30

@@ -198,9 +198,11 @@ def validate_roll(canon):
 
 
 def _estate_names():
-    """Discover names in the LIVING estate — the institutions under spec/ and the heartbeat organs.
-    This is the metabolize limb: the roll seeds, the estate is the source of truth. The institution
-    crawls itself rather than waiting to be hand-fed (the autopoiesis 'past' tense)."""
+    """Discover names in the LIVING estate — the institutions under spec/, the heartbeat organs, and
+    the pillar organs (organs/ dirs + organ-ladder pillars). This is the metabolize limb: the roll
+    seeds, the estate is the source of truth. The institution crawls itself rather than waiting to be
+    hand-fed (the autopoiesis 'past' tense). Widened 2026-07-09 to the organ estate so the roll can
+    become the complete census instead of seeing only spec/ + beat voices."""
     names = set()
     spec_root = ROOT / "spec"
     if spec_root.exists():
@@ -211,6 +213,22 @@ def _estate_names():
     if hb.exists():
         for m in re.finditer(r"^C_([A-Z][A-Z_]*)=", hb.read_text(), re.M):
             names.add(m.group(1).lower())
+    # the pillar organs — each authored organ dir is a name the surfaces display
+    organs_root = ROOT / "organs"
+    if organs_root.exists():
+        for d in organs_root.iterdir():
+            if d.is_dir():
+                names.add(d.name)
+    # organ-ladder pillars (the declarative organ census)
+    ladder = ROOT / "organ-ladder.json"
+    if ladder.exists():
+        try:
+            for o in (json.loads(ladder.read_text()).get("organs") or []):
+                p = (o.get("pillar") or "").strip().lower()
+                if p:
+                    names.add(p)
+        except (ValueError, OSError):
+            pass
     return sorted(names)
 
 

@@ -44,11 +44,13 @@ Live status verified 2026-06-28 from this checkout with read-only `gh` and scrip
    Review `/tmp/limen-remotes.sh`, then run it to repoint local checkouts. This is post-transfer only.
 6. Wire `limen[bot]` only after the GitHub App exists and its secrets are hydrated:
    ```bash
+   scripts/bootstrap-github-app.py
+   # or, for a manually created App:
    bash scripts/set-credential.sh GITHUB_APP_ID
    bash scripts/set-credential.sh GITHUB_APP_PRIVATE_KEY
-   bash scripts/gh-app-token.sh --which
+   bash scripts/gh-app-token.sh --verify-app
    ```
-   Required output: `app (limen[bot] installation token)`.
+   Required output: `app verified (limen[bot] installation token mint succeeds)`.
 
 ## Verification Receipts
 

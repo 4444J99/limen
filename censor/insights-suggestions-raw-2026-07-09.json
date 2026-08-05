@@ -1,0 +1,612 @@
+[
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "claude_md_addition",
+  "text": "## Verification Before Execution \u2014 Always verify on-disk state (file paths, IDs, existing entries) before generating plans that reference them to prevent ID collisions like IRF-PRT-047/048 from stale reads. When verifying claims, STOP at verification and do not proceed to push/commit/deploy unless explicitly asked."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "claude_md_addition",
+  "text": "## Communication Cadence \u2014 Relay progress continuously rather than batching handoff updates at the end (user has called out 'micro-manager' batching behavior). Prefer decisive action over repeated clarifying questions when user signals execution intent; ask at most one round of turn-1 questions, then proceed."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "claude_md_addition",
+  "text": "## Tool Usage Discipline \u2014 Always use Read tool before Edit rather than Bash cat substitutes. Avoid chained parallel bash calls where one failure short-circuits the rest; use separate tool calls for independent checks. For simple list/inventory requests, deliver directly without writing plan files or invoking plan mode."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "feature_to_try",
+  "text": "Custom Skills \u2014 Create /audit and /closeout skills encoding your verification-before-execution protocol and session handoff workflow to eliminate re-explaining the QA-audit pattern each session."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "feature_to_try",
+  "text": "Hooks \u2014 Tighten hook predicates (path filters, content checks) on existing LaunchAgent guard and gitleaks hooks to prevent false positives firing on markdown files and benign code."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "feature_to_try",
+  "text": "Task Agents \u2014 Default to launching N parallel subagents by domain (not repo) when user requests 'parallel domain waves' or multi-repo audits rather than re-asking how to partition."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "usage_pattern",
+  "text": "Stop at verification gates \u2014 Treat 'verify' as a terminal read-only action, not a prelude to push/commit/deploy. Audit_verification and session_audit are top goals across 94 sessions and by design are read-only."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "usage_pattern",
+  "text": "Pre-flight state read before planning \u2014 Before generating any plan referencing IDs/paths, read current state from disk first (IRF ledger, git log -20, directory listings). Build plans from fresh reads, not prior context."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "usage_pattern",
+  "text": "Default to parallel domain waves for multi-repo work \u2014 When work spans repos/domains, partition by domain (not repo) and launch parallel agents without re-asking for approval on the partition strategy."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "usage_pattern",
+  "text": "Resource-aware sessions \u2014 Periodically check machine resource state (df -h, vm_stat, du -sh on bloat dirs) not just task state, especially during long sessions averaging 30+ hours."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "horizon",
+  "text": "Self-Verifying Multi-Repo Audit Swarms \u2014 Replace manual QA-audit sessions with a persistent fleet of verification subagents that continuously cross-check claims against on-disk reality, IRF entries, and git history. Subagents detect stale state, ID collisions, and false-positive completions before you resume, producing a daily integrity report."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "horizon",
+  "text": "Test-Driven Autonomous Stream Execution \u2014 Convert cascading workstreams into fully autonomous loops where Claude writes failing tests for each domain handoff, then iterates parallel agents until green. Each workstream becomes a self-closing contract: spec \u2192 tests \u2192 parallel implementation \u2192 verification \u2192 commit."
+ },
+ {
+  "snap": "2026-04-29T2001",
+  "bucket": "horizon",
+  "text": "Predictive Resource & Context Guardian \u2014 Deploy an always-on guardian agent monitoring disk/swap/inode usage and context token consumption, pre-compacting and offloading to disk before degradation breaches thresholds. Also auto-prunes dead config entries, stale hooks, and orphaned chezmoi mirrors."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "claude_md_addition",
+  "text": "## Verification Before Action: Always verify claims and state on-disk before planning execution (read files, check git log, confirm IDs don't collide); re-read referenced reports/URLs/artifacts before writing any plan; check that file paths, IDs, and SOP locations actually exist on disk before referencing them."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "claude_md_addition",
+  "text": "## Scope Discipline: Do exactly what the user asked\u2014do not push commits, expand scope, or take follow-up actions unless explicitly requested; when asked to verify, only verify; when asked to commit, only commit; stop at human gates (merge, push, deploy) unless told otherwise."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "claude_md_addition",
+  "text": "## Workstream Structure: When partitioning work, organize by domain/parallel waves with explicit owners (not by repo); treat ledgers/IRF files as the live working surface, not as artifacts to be 'fixed'; relay handoff updates continuously rather than batching at the end."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "feature_to_try",
+  "text": "Custom Skills (/audit, /closeout, /verify): Reusable markdown-defined workflows to encode your top repeated goals (documentation_update, session_audit, verification_audit, session_closeout_audit) that appear 4-6+ times across sessions."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "feature_to_try",
+  "text": "Hooks (PreToolUse): Configure a PreToolUse hook that warns before any `git push` unless an env flag (ALLOW_PUSH=1) is set to formalize your stop-at-human-gates rule without false-positive churn."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "feature_to_try",
+  "text": "Task Agents: Explicitly frame agent tasks as 'verify against disk, return evidence not claims' when dispatching parallel sub-agents for verification, following your successful 1,083 agent uses and parallel surveys (cascading workstreams, 542-snapshot history recovery)."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "usage_pattern",
+  "text": "Codify the verify\u2192plan\u2192stop loop: Your most successful sessions follow verify-on-disk \u2192 produce plan \u2192 stop at human gate; friction sessions skip verification or overreach past the gate. Make this your explicit default pattern."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "usage_pattern",
+  "text": "Convert recurring audits into a /closeout skill workflow: Inventory artifacts \u2192 verify claims on disk \u2192 produce QA report \u2192 update MEMORY.md and IRF \u2192 atomic commits per domain \u2192 stop before push. Documentation updates, session audits, and verification audits account for 27+ of your top goals."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "usage_pattern",
+  "text": "Pre-empt the 'micro-manager' anti-pattern: When you give a concrete directive, Claude should default to decisive action with brief telemetry rather than asking scoping questions; batch ALL clarifying questions into a single AskUserQuestion call before starting, never trickle."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "horizon",
+  "text": "Parallel Domain-Sharded Agent Swarms: Dispatch parallel agent sessions sharded by domain with explicit owners, handoff envelopes, and verification gates; each agent operates autonomously on its domain wave, surfaces blockers via a shared ledger (like CASCADING_WORKSTREAMS.md), and the orchestrator merges results only after cross-checking claims against disk/git reality. Try: Use Claude Code's Task tool with concurrent subagents, pair with a shared markdown ledger, and run a verification pass before merging."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "horizon",
+  "text": "Self-Verifying Claim Audits Across Sessions: Build an autonomous QA pipeline where Claude ingests prior session transcripts, extracts every factual claim, and verifies each against on-disk/git/API ground truth before doing any new work. Try: Pair a transcript-parsing agent with parallel verification subagents using Read, Bash (git log), and Grep; output a structured YAML/JSON audit manifest with explicit false-positive/false-negative classifications."
+ },
+ {
+  "snap": "2026-04-30T0114",
+  "bucket": "horizon",
+  "text": "Test-Driven Autonomous Iteration Loops: Move from 'multi_file_changes succeed' to fully autonomous red-green-refactor loops where Claude writes failing tests from spec, iterates until all tests pass, runs mutation testing to catch weak assertions, and only then opens a PR. Try: Combine Claude Code with pytest/vitest in watch mode, pre-commit hooks for verification gates, and spawn an Agent iterator that doesn't return until the test suite is green."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "claude_md_addition",
+  "text": "Add Session Start Protocol: ALWAYS read .conductor/active-handoff.md at session start; verify disk and git state before planning; treat ledgers (IRF, TOTAL_RECORD, MEMORY.md) as live working surfaces, not artifacts to fix."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "claude_md_addition",
+  "text": "Add Scope Discipline: Execute EXACTLY what was requested; do not push/deploy beyond stated scope; verify with user before git push; do not defer batched tasks like 'verify AND commit AND push'."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "claude_md_addition",
+  "text": "Add Pre-commit Hook Awareness: gitleaks scans literal strings like `api_key:` even in comments/narrative\u2014reword to avoid trigger patterns; before installing hooks, run them against existing content to detect grep-pattern collisions."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "claude_md_addition",
+  "text": "Add Verification Before Trust: Do NOT incorporate prior agents' verification claims without independent parity check; cross-check claims against git history and disk state before building plans."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "feature_to_try",
+  "text": "Define custom /qa-audit, /init, /debug, /recap, /resume skills with required-argument templates so they fail fast with usage hints instead of prompting for clarification."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "feature_to_try",
+  "text": "Automate session closeout checks as a SessionEnd hook: uncommitted files check, unpushed commits test, .conductor/active-handoff.md staleness detection so audits start from verified state."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "feature_to_try",
+  "text": "Use Task Agents for read-only exploration (enumerating IRF entries, indexing .conductor/handoff*.md files in parallel) but independently verify findings via parity checks before acting."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "usage_pattern",
+  "text": "Create a /closeout skill with 6 steps: git status/diff check, commit pending work, push and verify 1:1 sync, archive stray exports, update .conductor/active-handoff.md, write CLOSEOUT_SUMMARY.md\u2014each step verifies before proceeding."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "usage_pattern",
+  "text": "Front-load all context reads at session start: list every provided file path/URL, read each one, confirm by quoting one line from each\u2014only then propose a plan."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "usage_pattern",
+  "text": "Add 'disk verification' phase before any plan creating IRF entries or files: run find IRF-*, ls on target dirs, git log for recency; quote results in plan."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "horizon",
+  "text": "Build an autonomous verification subagent using PreToolUse/PostToolUse hooks that monitors every commit and session claim, auto-triangulates against git log/file state/ledger entries, files IRFs with full triangle logs on discrepancies, and treats ledgers as live working surfaces."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "horizon",
+  "text": "Build parallel-wave orchestration system: create /partition-waves command decomposing goals into N self-contained handoff envelopes with scope gates and merge contracts; launch coordinator subagent that fires N agents via parallel Tasks, tracks DONE counters, enforces atomic commits, gates at human merge point."
+ },
+ {
+  "snap": "2026-05-05T1033",
+  "bucket": "horizon",
+  "text": "Implement autonomous TDD loop via /tdd-loop skill and headless mode (claude -p): decompose spec into testable units, write failing tests, implement to pass, refactor with green gate, run mutation testing, loop until backlog green or human input needed; wire to watch loop."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "claude_md_addition",
+  "text": "## Protocol-First Execution: Consult the protocol/skill library BEFORE composing actions from first principles; when user says 'proceed w all' or invokes a skill, verify state first then execute per protocol; never defer to user authorization when protocol already dictates the action (avoid 'energy-expense laziness')."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "claude_md_addition",
+  "text": "## Cross-Repo Parity: When editing memory/IRF/handoff artifacts, ALWAYS mirror to chezmoi-source AND push BOTH repos before declaring done; run a hall-monitor parity audit (git status + remote diff in each mirror) before close-out; never declare routing complete after pushing only one repo."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "claude_md_addition",
+  "text": "## Destructive Operations: NEVER use `chezmoi add` on files that already exist in the chezmoi repo without first diffing; before any overwrite of >50 lines, show a diff preview and require explicit confirmation; prefer `git restore` recovery paths and always verify file size/line count before and after writes."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "claude_md_addition",
+  "text": "## Handoff Document Output: Every substantive session ends with a structured handoff doc containing state verification, tasks completed, commits/PRs, remaining items, and relay phrases; include 1:1 parity status across mirrors; use existing handoff template and do not freelance the structure."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "feature_to_try",
+  "text": "Custom Skills (/handoff, /verify, /parity-audit): Define reusable markdown-based slash commands to standardize repeated verification audits, cross-agent handoffs, prompt atomization, and /init refreshes."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "feature_to_try",
+  "text": "Hooks (PreToolUse on Write/Edit for guardrails, Stop hook for parity enforcement): Auto-run shell commands at lifecycle events to block writes >200 lines without confirmation and enforce 'pushed to both mirrors' before session close."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "feature_to_try",
+  "text": "Task Agents for parallel exploration: Spawn focused sub-agents (one to inventory, one to classify, one to draft) to explore divergent strategies simultaneously instead of serializing rejections."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "usage_pattern",
+  "text": "Money-generation sessions need sharper opening prompts: Front-load shape constraints (no user action required, no extraction, leads-toward-money) and negative space (what shape is wrong) to save 14+ reframing cycles."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "usage_pattern",
+  "text": "Always verify state before declaring done: Before session close, run hall-monitor close-out audit to verify every claim against disk reality, check both repo mirrors are pushed and at parity, re-run test/build gates, and list any TODOs/regressions."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "usage_pattern",
+  "text": "Use /batch, /qa-audit, and /debug with arguments or update skill defaults: Always invoke these slash commands with a target, or modify skill definitions to default-to-state-report when no args are given."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "horizon",
+  "text": "Self-Healing Handoff Relay Network: Replace manual 'proceed w all' triggers with an autonomous relay daemon that watches handoff docs and IRF entries, dispatches Claude agents in parallel across multiple repos, and auto-runs hall-monitor parity checks before results surface."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "horizon",
+  "text": "Premortem-Gated Parallel Agent Swarms: For open-ended strategic tasks, spawn 4-6 divergent approach branches in parallel (extractive vs generative, internal vs external, etc.), run premortem sub-agents that score against friction-log anti-patterns, and prune branches below threshold before presenting."
+ },
+ {
+  "snap": "2026-05-21T1028",
+  "bucket": "horizon",
+  "text": "Test-Driven Autonomous Iteration Loops: Define acceptance tests upfront, then let Claude iterate edit\u2192test\u2192diagnose\u2192edit until green with no intermediate approvals; pair with hook-noise-classifier sub-agent that auto-triages pre-commit failures and suppresses false-positives with audit logging."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "claude_md_addition",
+  "text": "Before proposing or executing any plan, consult the existing protocol/doctrine library first; protocols dictate actions, do not compose merge options or strategy from first principles."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "claude_md_addition",
+  "text": "All cron schedules must use UTC, not local time. All RemoteTrigger/cloud-routine JSON must nest the 'type' field correctly per the schema before submitting."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "claude_md_addition",
+  "text": "When dispatching Explore/Task subagents, never trust subagent claims of tool prohibitions or missing files at face value; verify directly and fall back to direct reads if a subagent returns without doing assigned work."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "claude_md_addition",
+  "text": "For any git sync, run a checksum/manifest parity verification and confirm remote parity after push; verify all factual claims (counts, attributions) before writing digests or summaries."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "feature_to_try",
+  "text": "Codify your custom slash commands (/closeout, /goal, /cross-agent-handoff) as versioned SKILL.md files under .claude/skills/ to standardize your six-step protocols and reduce skill-invocation ambiguity."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "feature_to_try",
+  "text": "Set up Hooks (PreToolUse/pre-commit) to auto-validate schema and run verification checks before commits, catching pre-commit false-positives, secret-scanner errors, and memory log insertion errors."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "feature_to_try",
+  "text": "Use Task Agents with explicit verification instructions for parallel filesystem/ecosystem mapping and tool-directory research, requiring agents to verify file existence by direct Read before reporting findings."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "usage_pattern",
+  "text": "Front-load disambiguation on vague opening requests by giving Claude 2-3 examples of desired output shape (format, scope, file count) before he proceeds, preventing the clarify-miss-exit loop."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "usage_pattern",
+  "text": "Make context compaction deliberate by checkpointing durable artifacts early (write handoff pointer-file with current state, verified facts, next 3 steps, open questions) before context overflow forces compaction mid-task."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "usage_pattern",
+  "text": "Push broader, business-shaped thinking earlier by explicitly stating shape constraints in opening prompts: broad (not narrow tactics), automated (no manual action), revenue-oriented. Rank options and explain fit."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "horizon",
+  "text": "Build a fleet of specialized research agents that each declare their actual capabilities upfront, cross-check each other's findings against ground-truth file reads, and auto-redispatch any agent whose output fails verification gates. Try: spawn 4 parallel subagents with explicit capability contracts, then spawn a 5th verifier that flags hallucinations and re-dispatches failed agents automatically until zero unverified claims remain."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "horizon",
+  "text": "Build a fully autonomous closeout pipeline that loads your doctrine first, executes the six-step closeout, runs manifest checksum parity verification, self-corrects chronological/scope bugs, and pushes with verified remote parity\u2014all without human babysitting. Try: build a single slash-command or skill that reads protocol files into context before acting, chaining inventory \u2192 checksum \u2192 commit \u2192 push \u2192 verify with hard gates at each step."
+ },
+ {
+  "snap": "2026-06-03T0629",
+  "bucket": "horizon",
+  "text": "Create an autonomous test-and-deploy iteration loop that writes changes, runs the full test/deploy cycle, parses failures (cron timezone, JSON schema, secret-scanner false-positives), patches itself, and re-runs until green. Try: wrap edits in a Bash-driven harness and instruct Claude to iterate autonomously, treating each failure class as a known pattern to auto-remediate without surfacing partial errors."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "claude_md_addition",
+  "text": "Before declaring any audit/verification 'clean' or 'no-drift', re-derive every claim directly from disk/git reality and confirm full surface coverage; partial coverage is not 'done.'"
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "claude_md_addition",
+  "text": "Never enter repos or directories the user has marked off-limits/bound, and never run autonomous syncs that delete files (e.g., plan files) without explicit authorization."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "claude_md_addition",
+  "text": "Default to shipping fixes, not report-only deferrals: when a defect is found, fix it, verify live, and file the record \u2014 don't stop at diagnosis unless authorization is explicitly required."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "claude_md_addition",
+  "text": "Write Bash scripts to be POSIX/zsh-safe: quote variables (e.g., \"$OWNERS\"), avoid bash-only word-splitting, and redirect stdin when reading from non-tty (cat from non-tty hangs)."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "claude_md_addition",
+  "text": "For session closeout/handoff, verify git tracking reality against disk and produce a verified, pasteable cold-start resume prompt with zero follow-up questions required."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "feature_to_try",
+  "text": "Use Custom Skills to codify your session_closeout, session_archive, and session_handoff rituals (you already use /closeout and /s-09-archive) so the verify-then-write ritual runs consistently and repeatable every time."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "feature_to_try",
+  "text": "Configure Hooks at lifecycle events (e.g., SessionEnd hook running drift-checker against disk) to hard-enforce your boundaries and catch stale state before closeout instead of mid-frustration."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "feature_to_try",
+  "text": "Use Headless Mode to formalize your scheduled autonomous tasks (PR triage across 430 PRs, worktree cleanup across 189 repos) with scoped tools and audit logging."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "usage_pattern",
+  "text": "Before concluding any audit, enumerate every surface in scope, prove coverage of each against disk/git reality, and only then give a verdict; if coverage is partial, say so explicitly and list what remains."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "usage_pattern",
+  "text": "Don't just report findings \u2014 fix the root cause, verify the fix live, commit it, and file the record; stop only if a write requires explicit authorization, and clearly flag those cases."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "usage_pattern",
+  "text": "Operate only within authorized repos; never delete files or enter repos marked off-limits without asking first; if a sync would remove files, show the diff and wait for confirmation."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "horizon",
+  "text": "Stand up a continuously-running agent fleet that audits drift, orphaned commits, and worktree decay across all 189+ repos, then opens gated PRs to remediate each issue with full audit bookends. Try: Use scheduled Agent tasks with Bash-driven git enumeration, a TaskCreate/TaskUpdate ledger for audit logging, and explicit authorization gates before any destructive write or push."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "horizon",
+  "text": "Turn your heavily-repeated closeout/handoff/archive rituals into a single autonomous lifecycle agent that verifies disk state, files IRF records, archives the session, and emits a zero-question resume prompt all without you driving each step. Try: Compose a slash-command suite backed by Bash verification scripts and a Stop hook that self-checks for remaining gaps without looping."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "horizon",
+  "text": "Spawn multiple specialized agents working in parallel against a real test suite \u2014 one researching market/data sources, one implementing surfaces, one continuously verifying against live data \u2014 so features ship only when 243+ tests pass and real public-record data flows. Try: Launch parallel Agent subtasks with a shared test/verification harness, using ToolSearch to locate correct data sources and a dedicated reviewer agent that gates merges on live-data proof."
+ },
+ {
+  "snap": "2026-06-07T0955",
+  "bucket": "other_actionable",
+  "text": "Encode your closeout, archive, and handoff rituals as Custom Skills so the multi-step verification runs identically every time instead of being re-driven by hand, paired with Hooks at lifecycle events to hard-enforce your boundaries."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "claude_md_addition",
+  "text": "Add a top-level Closeout Definition section: 'A closeout means ZERO open/dangling items. Never end a closeout with caveats. Ensure every owner records remaining work, verify idempotent fixed point, commit loose work, then archive.'"
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "claude_md_addition",
+  "text": "Add Definition of Done section: 'When asked to define done or a goal, deliver an EXECUTABLE predicate (script/test), not hand-maintained prose. Done-criteria must be self-verifying and runnable.'"
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "claude_md_addition",
+  "text": "Add Never Over-Claim Completion section: 'Do not declare work done until verified: run all tests/CI gates locally, confirm loops/drivers actually run, check no regressions from merges. Reconcile branches against authoritative GitHub data, not heuristics.'"
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "claude_md_addition",
+  "text": "Add Edits Policy section: 'Prefer minimal in-place edits during closeouts; do not create new files unless asked. Be mindful of case-insensitive filesystems to prevent silent overwrites.'"
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "feature_to_try",
+  "text": "Create a custom Skill (reusable /closeout command) that captures your verify\u2192close-gaps\u2192archive\u2192handoff pattern, eliminating the need to re-type 'close gaps and closeout cleanly' five times per session."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "feature_to_try",
+  "text": "Use Hooks (PostToolUse Edit|Write matchers) to auto-run CI gate checks (npm run lint) before commits, catching lint/type/accessibility failures locally before push."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "feature_to_try",
+  "text": "Explicitly request Task Agents for parallel codebase exploration, launching focused subagents per domain to avoid token-limit blowups in long sessions."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "usage_pattern",
+  "text": "Fix permission prompts root-to-leaf by adding broad rule patterns instead of single exact commands (e.g., all Python invocations in repo) to prevent 10+ repeated re-prompts."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "usage_pattern",
+  "text": "Avoid token-limit blowups by requesting concise summaries from agents, avoiding full file dumps, and breaking giant closeouts into staged sub-tasks with checkpoints."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "usage_pattern",
+  "text": "Make closeouts demonstrably terminal by proving an idempotent fixed point (re-run verification shows zero changes), then archive\u2014never list open items as caveats."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "horizon",
+  "text": "Executable Done-Predicates as North Star: Write a machine-checkable 'definition of done' predicate at session start that Claude runs to gate its own completion claims. Use TaskCreate/TaskUpdate with a Bash-executable check script so 'done' becomes a verifiable exit code (done.sh exits 0) rather than judgment call."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "horizon",
+  "text": "Parallel Multi-Source Recon Swarm: Dispatch N independent Agent workers per search domain, each returning a structured JSON packet {found, not_found, confidence}, then auto-merge into single ground-truth report. Turns multi-hour archaeology sessions into minutes of parallel coverage without human babysitting."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "horizon",
+  "text": "Self-Healing Green-CI Iteration Loop: In an isolated worktree, run full CI gate matrix locally (lint, types, tests, build, accessibility, deploy), fixing root-to-leaf and re-running until all pass end-to-end. Launch PR only after every gate is green. Eliminates disruption to live fleet and proves clean before merge."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "other_actionable",
+  "text": "Widen permission allowlists from single exact commands to broad category-level patterns to stop repeated permission prompts in long-running verification flows."
+ },
+ {
+  "snap": "2026-06-23T1507",
+  "bucket": "other_actionable",
+  "text": "Resolve recurring 'Not logged in \u00b7 Please run /login' errors in daemon fleet by addressing root cause (Keychain global per-user contention, concurrent process issues) rather than treating as transient symptoms."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "claude_md_addition",
+  "text": "A closeout means ZERO dangling items. Never end a /closeout with 'but here's what's still open' caveats. If gaps exist, close them first, then confirm the closeout is a terminal, idempotent fixed point verified by green predicate runs."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "claude_md_addition",
+  "text": "Never declare work 'done' or 'fully achieved' until verified against ground truth (live git state, passing tests, running loop). Do not over-claim completion; if the core goal remains unfixed, say so plainly rather than reporting adjacent wins as success."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "claude_md_addition",
+  "text": "When defining 'done' or completion criteria, express it as an executable predicate (a runnable check), not hand-maintained prose."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "claude_md_addition",
+  "text": "For Python and recurring shell commands, apply broad root-to-leaf allow rules rather than allowlisting single exact commands, to avoid repeated permission prompts."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "claude_md_addition",
+  "text": "When a bridge/browser/connectivity check reports blocked, attempt the documented bootstrap that forces reconnection instead of passively re-reporting the blocked status."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "feature_to_try",
+  "text": "Custom Skills: Reusable markdown-defined prompts you invoke with a single /command. You already use /closeout heavily (10+ sessions); formalizing it as a skill with executable predicate gates baked in would prevent recurring caveat/premature-done friction."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "feature_to_try",
+  "text": "Hooks: Shell commands that auto-run at lifecycle events. You commit 39 times and repeatedly hit lint/CI blockers and accessibility failures before merge; a pre-commit hook running lint/type/a11y checks would catch these locally."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "feature_to_try",
+  "text": "Task Agents: Focused subagents for parallel exploration and complex system understanding. Many sessions involve fanning out multi-source sweeps and codebase recon; you already use Agent 45 times\u2014leaning on it explicitly for exploration will speed ground-truth gathering."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "usage_pattern",
+  "text": "Establish ground truth before claiming done: Your strongest sessions all start with read-only verification against live state; make read-only ground-truth checks the mandatory first step of any completion or closeout, then require green predicates before reporting success."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "usage_pattern",
+  "text": "Resolve blockers actively, not passively: Convert passive 'status: blocked' reports into an attempted bootstrap or fix. When a documented recovery path exists, attempt it before reporting. When genuinely gated on a human, state exactly the one action needed and stop cleanly."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "usage_pattern",
+  "text": "Fix permissions at the root: When a permission prompt recurs, broaden the allow rule instead of patching one command. Your workload is Bash-heavy (905 calls) and Python-recurring, so root-to-leaf allow rules pay off."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "horizon",
+  "text": "Predicate-Driven Autonomous Closeout Loops: Define completion as an executable predicate that the agent runs until it reaches a green, idempotent fixed point. The agent can then autonomously close gaps, verify zero dangling items, commit across repos, and archive cleanly without repeated nudging. How to try: Encode your definition of 'done' as a shell/Python predicate script and wrap it in a reusable /closeout skill that Claude re-runs after every change."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "horizon",
+  "text": "Parallel Multi-Agent Ground-Truth Sweeps: For root-cause hunts\u2014missing files, idle agent fleets, recurring auth errors\u2014launch parallel sub-agents that each independently establish ground truth from live sources (git, GitHub, filesystem, logs). Fan out across every remote and local location simultaneously, converge findings, and surface the single true root cause. How to try: Use Agent/Task tools to spawn multiple concurrent exploration agents scoped to distinct sources, then have a coordinator agent reconcile outputs."
+ },
+ {
+  "snap": "2026-07-03T0934",
+  "bucket": "horizon",
+  "text": "Isolated Worktree Test-Iteration Pipelines: Build and prove risky changes\u2014new CLI paths, migrations, mass branch reaps\u2014inside an isolated git worktree so the live fleet is never disrupted, then iterate against tests until every gate is green before merging. How to try: Have Claude create a worktree, run the full test/CI suite locally as a loop, and require adversarial verification (e.g. merge-reachability proofs) for any deletion."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "claude_md_addition",
+  "text": "When a task is complete and predicates are green, state 'CLOSEOUT COMPLETE \u2014 idempotent fixed point reached, zero dangling items' and STOP. Do not re-recite residual/caveat items as open work."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "claude_md_addition",
+  "text": "Define 'done' only as an executable predicate that exits green. Before declaring anything done, re-verify against live ground truth (git/GitHub/deploy state), not a cached or prior status."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "claude_md_addition",
+  "text": "At human-gated authorization gates (merge approval, installing launchd agents, PII visibility flips), do NOT stall or loop \u2014 clearly state 'BLOCKED: human authorization required for X' once, then continue driving reversible work."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "claude_md_addition",
+  "text": "Never guess or ask about decisions that a registry/source-of-truth already owns. Query the registry directly instead of using AskUserQuestion."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "claude_md_addition",
+  "text": "All work must happen in the isolated worktree, never the main checkout. Verify the current worktree/branch before committing."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "feature_to_try",
+  "text": "Custom Skills: You invoke /closeout constantly (7+ goals) but Claude keeps stalling \u2014 a hardened SKILL.md would encode the 'verify live, run predicate, stop when green' loop deterministically."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "feature_to_try",
+  "text": "Hooks: Claude committed to wrong checkout and hit lint/type/CI blockers repeatedly; a PreToolUse hook on commit can assert worktree isolation and run lint before every commit."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "feature_to_try",
+  "text": "MCP Servers: You hit repeated 'Not logged in', Chrome-bridge-blocked, and PR/CI friction \u2014 a GitHub MCP server gives reliable live PR/deploy status without shelling out and stalling."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "usage_pattern",
+  "text": "Break the closeout stall loop: Explicitly tell Claude to stop looping and treat repeated resume prompts as a signal the task is genuinely done."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "usage_pattern",
+  "text": "Force browser/auth bootstrap instead of passive status checks: Tell Claude to actively bootstrap blocked bridges rather than passively reporting them blocked."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "usage_pattern",
+  "text": "Parallelize recon with Task Agents up front: Explicitly request parallel exploration agents at session start for discovery/verification."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "horizon",
+  "text": "Predicate-Driven Autonomous Closeout Loops: Imagine a closeout that only terminates when a green executable predicate proves zero dangling items. Agent drives every reversible step to completion, pausing only at genuine human-gated boundaries it clearly surfaces. No stall loops, no reciting residuals as caveats \u2014 just verified done. Try: Codify /closeout skill to run gate predicates in a loop and refuse to declare completion without a green exit code."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "horizon",
+  "text": "Parallel Recon Agents For Ground-Truth Sweeps: Spawn multiple recon agents that fan out across every remote, local checkout, and log source simultaneously. Each sub-agent establishes verified ground truth in its domain, then synthesizes findings into single reconciled report. Try: Use Agent tool to launch parallel exploration agents scoped to distinct sources, have lead agent reconcile against live git/GitHub."
+ },
+ {
+  "snap": "2026-07-09T0607",
+  "bucket": "horizon",
+  "text": "Self-Healing CI-To-Merge Pipelines: Point Claude at a red build to autonomously diagnose root cause (parse error, masked type failures, accessibility blockers), fix each, verify all CI gates pass locally before pushing. Agent iterates against full test/lint suite until every gate is green end-to-end. Try: Have Claude run all CI gates locally via Bash, iterate fixes against them, build durable self-healing organs for recurring failure classes."
+ }
+]

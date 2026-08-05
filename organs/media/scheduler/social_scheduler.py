@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import subprocess
@@ -149,7 +150,8 @@ def _now_utc() -> dt.datetime:
 
 
 def _qid(asset: Path, platform: str) -> str:
-    return f"{platform}-{abs(hash((asset.name, platform))) % 10**8:08d}"
+    raw = f"{platform}\0{asset.expanduser().resolve(strict=False)}".encode("utf-8", "surrogateescape")
+    return f"{platform}-{hashlib.sha256(raw).hexdigest()[:8]}"
 
 
 def append_queue(item: QueueItem, queue_path: Path = QUEUE_PATH) -> None:
@@ -203,7 +205,8 @@ def plan(
             status="draft",
             ffmpeg=cmd,
         )
-        append_queue(item, queue_path)
+        if apply:
+            append_queue(item, queue_path)
         items.append(item)
     return items
 
@@ -273,7 +276,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"      caption: {it.caption}")
         if not items:
             print("  (no matching assets found)")
-        print(f"queue: {QUEUE_PATH}")
+        if args.apply:
+            print(f"queue: {QUEUE_PATH}")
+        else:
+            print(f"queue unchanged: {QUEUE_PATH} (pass --apply to transcode and append drafts)")
         return 0
     if args.cmd == "queue-list":
         for it in load_queue():

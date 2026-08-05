@@ -7,6 +7,15 @@
 
 set -euo pipefail
 
+if [ "${LIMEN_CONSOLIDATION_GATE:-}" != "consolidation-gate-open" ]; then
+  cat >&2 <<EOF
+Refusing to run irreversible GitHub consolidation transfer.
+Open the human consolidation gate first, then run:
+  LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash $0
+EOF
+  exit 2
+fi
+
 echo "⚠ GitHub mutation gate: transfers are IRREVERSIBLE. Verify you have admin:org + workflow."
 echo ""
 echo "Running consolidation transfer (--apply)..."

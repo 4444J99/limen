@@ -1,0 +1,29 @@
+id: etceter4-revival
+name: etceter4 revival (C3 synthesis)
+member:
+  body: The etceter4 origin fold-in
+  medium: written text and catalog
+  human_owner: Anthony J. Padavano
+  source: "2011 origin, Met4morfoses thesis, constructed phonetic-language chart, ET4L catalog"
+  series_type: exhibition
+mandate:
+  description: Render the origin fold-in (Met4morfoses thesis + phonetic chart + ET4L catalog) as ONE publishable studio artifact.
+  scope_boundary: Render three chapters as one published surface for artist review and staging.
+standing:
+  current: STAGED
+  since: "2026-07-08"
+next_standing: EXHIBITED
+standard:
+  rubric: The C3 synthesis is considered staged when the three chapters are rendered as ONE published artifact at a reachable URL.
+  evidence:
+    - docs/reviews/deep-history-2022-2026.md (provenance and validation)
+    - tasks.yaml (EXCAV-0708-ETCETER4-C3 tracking)
+governance:
+  artist_gate: true
+  forbidden_acts:
+    - publish without artist approval
+    - alter original source files
+human_gates:
+  - artist approval to publish the staged artifact
+artifacts:
+  next_reviewable_output: C3 synthesized artifact rendering

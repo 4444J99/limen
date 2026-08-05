@@ -1,0 +1,37 @@
+{
+  "failure_codes": [],
+  "loans": [],
+  "schema": "limen.work_loan_journal.v1",
+  "source_report": {
+    "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "cursor": {
+      "event_count": 0,
+      "failure_count": 0,
+      "last_event_id": null,
+      "loan_count": 0,
+      "scope": "post-adoption-v1"
+    },
+    "exhaustive": true,
+    "generated_at": "2026-07-22T01:43:55.434044Z",
+    "normalized_leaf_count": 0,
+    "schema": "limen.progress-source-report.v1",
+    "semantic_status": "ready",
+    "source_id": "work-loan"
+  },
+  "summary": {
+    "actual_dollars_usd": 0,
+    "actual_elapsed_seconds": 0,
+    "actual_host_local_seconds": 0,
+    "actual_runs": 0,
+    "actual_tokens": 0,
+    "earned_credit_count": 0,
+    "event_count": 0,
+    "failure_count": 0,
+    "loan_count": 0,
+    "settled_count": 0,
+    "unrepaid_debt_count": 0
+  },
+  "tracked_loan_count": 0,
+  "tracked_loan_limit": 256,
+  "tracked_loan_truncated_count": 0
+}

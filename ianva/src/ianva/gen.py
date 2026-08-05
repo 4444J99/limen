@@ -8,7 +8,8 @@ result is reviewable BEFORE anything touches a real config (installs are a separ
 Per-agent quirks confirmed by adversarial verification against each agent's real schema:
   * Codex: `url=` under [mcp_servers.NAME] (byte-identical to `codex mcp add --url`).
   * Gemini: streamable-HTTP key is `httpUrl` (the CLI's own `mcp add` writes the wrong key).
-  * opencode: `{type:"remote", url}` under top-level "mcp".
+  * opencode: `{type:"remote", url, headers}` under top-level "mcp"; its native
+    `{env:NAME}` expansion keeps the bearer out of generated config.
   * Copilot CLI: the installed binary REQUIRES a per-server `tools` field, else "Invalid input".
   * agy/Cline: stdio `{command,args}` validates.
 When a bearer is set (cloud face), the matching Authorization header / token-env is injected.
@@ -114,9 +115,11 @@ def _render_json_mcpservers(a: AgentTarget, ep: Endpoint) -> Entry:
 
 
 def _render_opencode(a: AgentTarget, ep: Endpoint) -> Entry:
-    server = {"type": "remote", "url": ep.url(), "enabled": True}
+    server: dict[str, object] = {"type": "remote", "url": ep.url()}
     if ep.bearer:
-        server["headers"] = ep.headers()
+        # OpenCode expands {env:NAME} in config values.  Reference the credential wall's
+        # environment owner instead of materializing a bearer in opencode.jsonc.
+        server["headers"] = {"Authorization": f"Bearer {{env:{BEARER_ENV}}}"}
     blob = {"mcp": {SERVER_NAME: server}}
     return Entry(
         key=a.key,
@@ -158,7 +161,7 @@ def build_entries(ep: Endpoint | None = None) -> list[Entry]:
             out.append(_render_opencode(a, ep))
         elif a.fmt == "claude_cli":
             out.append(_render_claude(ep))
-        elif a.fmt == "json_mcpservers":
+        elif a.fmt in {"json_mcpservers", "json_stdio_mcpservers"}:
             out.append(_render_json_mcpservers(a, ep))
     return out
 

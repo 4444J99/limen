@@ -16,7 +16,31 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
-import type { Order, OrderPersistence } from './orders'
+import type { Order, OrderPersistence, OrderStatus } from './orders'
+
+const ORDER_STATUSES = new Set<OrderStatus>(['reserved', 'pending', 'paid', 'expired'])
+
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value)
+}
+
+function optionalString(value: unknown): boolean {
+    return value === undefined || typeof value === 'string'
+}
+
+function isOrder(value: unknown): value is Order {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+    const order = value as Partial<Order>
+    return typeof order.id === 'string' && order.id.length > 0
+        && typeof order.address === 'string'
+        && isFiniteNumber(order.sats) && order.sats >= 0
+        && isFiniteNumber(order.createdAt)
+        && isFiniteNumber(order.expiresAt)
+        && ORDER_STATUSES.has(order.status as OrderStatus)
+        && optionalString(order.email)
+        && optionalString(order.license)
+        && optionalString(order.txid)
+}
 
 export class FileOrderPersistence implements OrderPersistence {
     constructor(private readonly file: string) {}
@@ -25,7 +49,7 @@ export class FileOrderPersistence implements OrderPersistence {
         if (!existsSync(this.file)) return []
         try {
             const parsed = JSON.parse(readFileSync(this.file, 'utf8')) as unknown
-            return Array.isArray(parsed) ? (parsed as Order[]) : []
+            return Array.isArray(parsed) ? parsed.filter(isOrder) : []
         }
         catch {
             // A corrupt or partially written file must never crash the mint —

@@ -110,11 +110,14 @@ def test_stale_tracking_ref_diverts_to_side_ref_not_stranded(tmp_path):
         f"(HEAD moved {victim_base[:8]} -> {victim_head[:8]}); the stale-@{{u}} guard regressed.\n{res.stdout}"
     )
 
-    # 2) the uncaptured work must be preserved on a pushable side ref on the remote.
+    # 2) the uncaptured work must be preserved on the stable, coalescing side ref.
     ls = _git("ls-remote", str(remote), cwd=tmp_path).stdout
-    assert "refs/heads/capture/main-" in ls, (
-        f"expected a capture/main-* side ref on origin; got:\n{ls}\ncapture output:\n{res.stdout}"
+    assert "refs/heads/capture/main-deferred" in ls, (
+        f"expected capture/main-deferred on origin; got:\n{ls}\ncapture output:\n{res.stdout}"
     )
+    side_sha = _git("rev-parse", "refs/heads/capture/main-deferred", cwd=remote).stdout.strip()
+    remote_main = _git("rev-parse", "refs/heads/main", cwd=remote).stdout.strip()
+    _git("merge-base", "--is-ancestor", remote_main, side_sha, cwd=victim)
 
 
 @pytest.mark.skipif(not _has_git(), reason="git not available")
@@ -138,7 +141,7 @@ def test_oversized_file_is_never_committed_so_push_succeeds(tmp_path):
     _git("commit", "-m", "seed", cwd=seed)
     _git("push", "origin", "main", cwd=seed)
 
-    # victim is up to date (behind=0) → takes the in-place commit path.
+    # victim is up to date; main still routes through the stable side branch.
     _git("clone", str(remote), str(victim), cwd=tmp_path)
     (victim / "small.txt").write_text("real captured work\n")
     # 101MB of zeros — compresses to ~nothing on the wire, but exceeds the 100MB pre-receive limit.
@@ -153,9 +156,11 @@ def test_oversized_file_is_never_committed_so_push_succeeds(tmp_path):
     )
     assert res.returncode == 0, f"capture.sh failed: {res.stderr}\n{res.stdout}"
 
-    # The push must have SUCCEEDED — the pushed tree contains the small file, never the oversized one.
-    tree = _git("ls-tree", "-r", "--name-only", "origin/main", cwd=victim).stdout
+    # Preservation must succeed off-main: side tree has the small file, never the oversized one.
+    main_before = _git("rev-parse", "origin/main", cwd=victim).stdout.strip()
+    tree = _git("ls-tree", "-r", "--name-only", "refs/heads/capture/main-deferred", cwd=remote).stdout
     assert "small.txt" in tree, f"real work was not pushed; tree=\n{tree}\n{res.stdout}"
     assert "big.bin" not in tree, (
         f"an oversized file was committed — push would be hard-rejected and stranded; tree=\n{tree}\n{res.stdout}"
     )
+    assert _git("rev-parse", "refs/heads/main", cwd=remote).stdout.strip() == main_before

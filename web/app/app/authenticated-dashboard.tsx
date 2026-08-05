@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DashboardClient, { type DashboardData, type PRStatusData } from "./dashboard-client";
+import DashboardClient, { type DashboardData, type PRStatusData, type Task } from "./dashboard-client";
 import SurfaceNav from "./surface-nav";
 
 type LoadState = {
@@ -14,17 +14,20 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
   const [token, setToken] = useState("");
   const [state, setState] = useState<LoadState>({ loading: false, error: "", data: null });
   const [prData, setPrData] = useState<PRStatusData | null>(null);
+  const [doneTasks, setDoneTasks] = useState<Task[] | null>(null);
+  const [doneLoading, setDoneLoading] = useState(false);
 
   // STATIC-FIRST (detach-safe): render the baked dashboard.json directly — no runtime
   // needed. The daemon's web voice regenerates it each cycle, so it stays near-real-time.
+  // dashboard.json is slim (active tasks only); done-tasks.json is lazy-fetched on demand.
   useEffect(() => {
     let alive = true;
     const pull = async () => {
       try {
-        const res = await fetch("/dashboard.json", { cache: "no-store" });
+        const res = await fetch("/dashboard.json");
         if (!res.ok) return;
         const d = await res.json();
-        const prRes = await fetch("/pr-status.json", { cache: "no-store" }).catch(() => null);
+        const prRes = await fetch("/pr-status.json").catch(() => null);
         const pr = prRes && prRes.ok ? await prRes.json() : null;
         if (!alive) return;
         if (pr) setPrData(pr);
@@ -34,9 +37,24 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
       } catch { /* fall back to the runtime gate below */ }
     };
     pull();
-    const id = setInterval(pull, 20000);  // live: re-pull every 20s (browser real-time)
+    const id = setInterval(pull, 60000);  // live: re-pull every 60s (ETag/304 friendly)
     return () => { alive = false; clearInterval(id); };
   }, []);
+
+  // Lazy-fetch done tasks only when requested (avoids loading them on every page load).
+  async function loadDoneTasks() {
+    if (doneLoading || doneTasks !== null) return;
+    setDoneLoading(true);
+    try {
+      const res = await fetch("/done-tasks.json");
+      if (res.ok) {
+        const d = await res.json();
+        setDoneTasks(d.tasks || []);
+      }
+    } catch { /* ignore */ } finally {
+      setDoneLoading(false);
+    }
+  }
 
   async function load() {
     if (!apiUrl || state.loading) return;
@@ -68,7 +86,15 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
   }
 
   if (state.data) {
-    return <DashboardClient data={state.data} prData={prData} apiUrl={apiUrl} initialToken={token} />;
+    return <DashboardClient
+      data={state.data}
+      prData={prData}
+      apiUrl={apiUrl}
+      initialToken={token}
+      doneTasks={doneTasks}
+      doneLoading={doneLoading}
+      onLoadDoneTasks={loadDoneTasks}
+    />;
   }
 
   return (

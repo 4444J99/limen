@@ -24,7 +24,7 @@
 ### Phase 1: Resolve Collisions (13 renames)
 
 ```bash
-bash scripts/consolidation-renames-apply.sh
+LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash scripts/consolidation-renames-apply.sh
 ```
 
 After renames complete, verify no collisions remain:
@@ -39,7 +39,7 @@ If any collision remains, **STOP** and update `docs/consolidation/COLLISION-RENA
 ### Phase 2: Transfer Repos to organvm
 
 ```bash
-bash scripts/consolidation-transfer-apply.sh
+LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash scripts/consolidation-transfer-apply.sh
 ```
 
 This moves all 34 repos from source owners to organvm and applies source-owner topics.  
@@ -48,7 +48,7 @@ Expected result: `organvm` now holds 298 repos (264 + 34).
 ### Phase 3: Rewrite Refs + Remotes
 
 ```bash
-bash scripts/consolidation-owner-rewrite-apply.sh
+LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash scripts/consolidation-owner-rewrite-apply.sh
 ```
 
 This:
@@ -122,7 +122,7 @@ If something breaks during Phase 1 (renames) or Phase 2 (transfer), **STOP and a
 
 ## Notes
 
-- **No autonomous execution:** These scripts will not run without the consolidation-gate open. This is a human-gated, explicit-authorization flow.
+- **No autonomous execution:** These scripts exit before mutation unless `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open` is set after the consolidation-gate opens. This is a human-gated, explicit-authorization flow.
 - **Read-only until gate opens:** All dry-runs and verification have passed. The gate is the only blocker.
 - **Order matters:** Phases must run in sequence. Renames → Transfer → Owner-rewrite.
 - **Storage:** After consolidation, the 182 source repos (old orgs) will be empty. They can be archived or left as-is depending on your preference.

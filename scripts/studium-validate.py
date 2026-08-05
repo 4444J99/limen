@@ -9,6 +9,7 @@ bookkeeping invariant (force_arc) so heal agents never have to transcribe a 13-e
   2. `dominant_force` is a VALID force
   3. `force_arc` length == number of tracks
   4. `force_arc[i] == tracks[i].force`  (the gold-standard invariant; see music/iliad/book-10.yaml)
+  5. music PLAN ledgers match the actual `book-NN.yaml` files they claim to track
 
 Forces are DERIVED from dominant-force.yaml (never pinned) per derive-never-pin-hardcodes.
 
@@ -58,6 +59,83 @@ def arc_files():
 def film_files():
     # per-work companions only — object-taxonomy.yaml is the tracked-object dictionary, not a companion
     return sorted(f for f in (STUDIUM / "film").glob("*.yaml") if f.name != "object-taxonomy.yaml")
+
+
+def work_plan_files():
+    return sorted((STUDIUM / "music").glob("*/PLAN.md"))
+
+
+def _book_number(path: Path):
+    match = re.fullmatch(r"book-(\d+)", path.stem)
+    return int(match.group(1)) if match else None
+
+
+def parse_work_plan(path: Path):
+    checked = set()
+    total_rows = 0
+    progress = None
+    row_re = re.compile(r"^\|\s*(\d+)\s*\|.*\|\s*([✓☐])\s*\|\s*$")
+    progress_re = re.compile(r"^- \*\*Progress:\*\*\s*(\d+)/(\d+)\s+arcs authored\s*$")
+    for line in path.read_text().splitlines():
+        if match := progress_re.match(line):
+            progress = (int(match.group(1)), int(match.group(2)))
+            continue
+        if match := row_re.match(line):
+            total_rows += 1
+            if match.group(2) == "✓":
+                checked.add(int(match.group(1)))
+    return {"checked": checked, "total_rows": total_rows, "progress": progress}
+
+
+def validate_music_plans():
+    violations = []
+    stats = {}
+
+    for plan in work_plan_files():
+        work = plan.parent.name
+        existing = {n for p in plan.parent.glob("book-*.yaml") if (n := _book_number(p)) is not None}
+        parsed = parse_work_plan(plan)
+        checked = parsed["checked"]
+        rel = plan.relative_to(STUDIUM)
+        if checked != existing:
+            missing = sorted(existing - checked)
+            stale = sorted(checked - existing)
+            bits = []
+            if missing:
+                bits.append(f"unchecked existing book(s) {missing}")
+            if stale:
+                bits.append(f"checked missing book(s) {stale}")
+            violations.append((rel, "; ".join(bits)))
+        if parsed["progress"]:
+            done, total = parsed["progress"]
+            if done != len(existing):
+                violations.append((rel, f"progress says {done} authored arc(s), but {len(existing)} book file(s) exist"))
+            if total != parsed["total_rows"]:
+                violations.append((rel, f"progress denominator {total} != {parsed['total_rows']} division row(s)"))
+        stats[work] = {"done": len(existing), "total": parsed["total_rows"], "rel": rel}
+
+    index = STUDIUM / "music" / "PLAN.md"
+    if index.exists():
+        line_re = re.compile(r"^- \[`([^`]+)`\]\([^)]*?\) — .* · (\d+)/(\d+) arcs(?: · staged)?$")
+        for line in index.read_text().splitlines():
+            match = line_re.match(line)
+            if not match:
+                continue
+            work, done_s, total_s = match.groups()
+            if work not in stats:
+                violations.append((index.relative_to(STUDIUM), f"index lists unknown work {work!r}"))
+                continue
+            done, total = int(done_s), int(total_s)
+            expected = stats[work]
+            if done != expected["done"] or total != expected["total"]:
+                violations.append(
+                    (
+                        index.relative_to(STUDIUM),
+                        f"{work}: index says {done}/{total}, plan/files say {expected['done']}/{expected['total']}",
+                    )
+                )
+
+    return violations
 
 
 def validate_film(valid, objs):
@@ -151,6 +229,7 @@ def main():
 
     # film layer (the fourth commentary system) — additive, non-breaking
     films = film_files()
+    violations.extend(validate_music_plans())
     violations.extend(validate_film(VALID, valid_objects()))
 
     if reconciled:
@@ -162,7 +241,7 @@ def main():
         for rel, msg in violations:
             print(f"  ✗ {rel}: {msg}")
         return 1
-    print(f"\n✓ all {len(files)} arcs valid (forces ∈ taxonomy; force_arc == track forces)"
+    print(f"\n✓ all {len(files)} arcs valid (forces ∈ taxonomy; force_arc == track forces; plans match files)"
           f" · {len(films)} film companion(s) valid (forces ∈ taxonomy)")
     return 0
 

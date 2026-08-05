@@ -220,6 +220,39 @@ def test_frontdoor_has_no_prices(tmp_path: Path):
     assert "$" not in fd and "/mo" not in fd
 
 
+def test_census_is_counts_only(tmp_path: Path):
+    fd = _frontdoor()
+    fd["contact"] = "secret-leads@example.com"
+    seed = _seed()
+    seed["search_topics"] = ["good-topic", "BadTopic"]
+    seed["seo_description"] = "Private buyer-search phrase."
+    env = _env_fd(tmp_path, seed, fd)
+
+    r = _run(env, "--census")
+    assert r.returncode == 0, r.stderr
+    census = json.loads(r.stdout)
+    encoded = json.dumps(census, sort_keys=True)
+
+    assert census["value_repo_count"] == 1
+    assert census["seed_repo_count"] == 1
+    assert census["publishable_seed_count"] == 1
+    assert census["contact_configured"] is True
+    assert census["repo_topic_seed_count"] == 1
+    assert census["valid_topic_count"] == 1
+    assert census["invalid_topic_count"] == 1
+    assert census["seo_description_count"] == 1
+    assert census["ladder_step_count"] == 2
+    assert census["internal_anchor_count"] == 2
+    assert REPO not in encoded
+    assert SLUG not in encoded
+    assert "Test Platform" not in encoded
+    assert "secret-leads@example.com" not in encoded
+    assert "Private buyer-search phrase" not in encoded
+    assert "good-topic" not in encoded
+    assert "BadTopic" not in encoded
+    assert "$3k" not in encoded
+
+
 def test_frontdoor_guard_refuses_price_leak(tmp_path: Path):
     env = _env_fd(tmp_path, _seed(extra_price_in_public=True), _frontdoor())
     r = _run(env, "--frontdoor", "--apply")

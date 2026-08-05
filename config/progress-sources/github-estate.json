@@ -1,0 +1,11 @@
+{
+  "schema": "limen.progress-source-registration.v1",
+  "source_id": "github-estate",
+  "owner": {
+    "id": "organvm/limen",
+    "surface": "github-estate-census"
+  },
+  "report_path": "logs/progress-sources/github-estate.json",
+  "required": true,
+  "max_age_seconds": 86400
+}

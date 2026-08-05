@@ -28,6 +28,32 @@
 set -uo pipefail
 
 log() { echo "cf-wrangler: $*" >&2; }
+ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
+
+find_local_wrangler() {
+  local dir candidate
+  dir="$PWD"
+  while [ -n "$dir" ] && [ "$dir" != "/" ]; do
+    candidate="$dir/node_modules/.bin/wrangler"
+    if [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  case "$PWD/" in
+    "$ROOT/"*)
+      for dir in "$ROOT/web/worker" "$ROOT"; do
+        candidate="$dir/node_modules/.bin/wrangler"
+        if [ -x "$candidate" ]; then
+          printf '%s\n' "$candidate"
+          return 0
+        fi
+      done
+      ;;
+  esac
+  return 1
+}
 
 # 1. Load the ONE credential home the same way the rest of the fleet does (chmod 600, never a shell rc).
 #    This reads a FILE — it NEVER pings 1Password. op is touched exactly once, by an explicit
@@ -64,7 +90,11 @@ if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
   exit 3
 fi
 
-# Prefer the repo-local wrangler (web/worker/node_modules) via npx; fall back to a global one.
+# Prefer the nearest repo-local wrangler, then Limen's worker-local wrangler, then global/npx.
+LOCAL_WRANGLER="$(find_local_wrangler || true)"
+if [ -n "$LOCAL_WRANGLER" ]; then
+  exec "$LOCAL_WRANGLER" "$@"
+fi
 if command -v wrangler >/dev/null 2>&1; then
   exec wrangler "$@"
 fi

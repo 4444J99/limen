@@ -28,6 +28,7 @@ LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-led
 # builder regenerates obligations-ledger.json every sweep, so any lever placed there is wiped.
 # These are unioned in below and survive regen. A his-hand task never hangs on him or in memory.
 HIS_HAND = Path(os.environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "his-hand-levers.json"))
+TERMINAL_LEVER_STATUSES = {"discharged", "retired", "done", "closed"}
 
 
 def _load_json(path, default):
@@ -37,13 +38,27 @@ def _load_json(path, default):
         return default
 
 
+def _lever_is_closed(lever):
+    """Read both the legacy flag and the normalized free-text lifecycle field."""
+    return bool(lever.get("discharged")) or str(lever.get("status", "")).strip().lower() in TERMINAL_LEVER_STATUSES
+
+
 def _union_levers(ledger):
     """His-hand levers (git, durable) first, then the mail ledger's levers; dedup by id.
     Fail-open: a missing/torn his-hand file just yields the ledger levers, never a crash."""
+    if not isinstance(ledger, dict):
+        ledger = {}
     his_hand = _load_json(HIS_HAND, {})
     his = his_hand.get("levers", []) if isinstance(his_hand, dict) else []
     out, seen = [], set()
-    for lev in list(his) + list(ledger.get("levers", [])):
+    ledger_levers = ledger.get("levers", [])
+    if not isinstance(ledger_levers, list):
+        ledger_levers = []
+    for lev in list(his) + list(ledger_levers):
+        if not isinstance(lev, dict):
+            continue
+        if _lever_is_closed(lev):
+            continue
         lid = lev.get("id")
         if lid in seen:
             continue
@@ -54,16 +69,33 @@ def _union_levers(ledger):
 
 def build_view():
     ledger = _load_json(LEDGER, {})
+    if not isinstance(ledger, dict):
+        ledger = {}
     obligations = ledger.get("obligations", [])
+    if not isinstance(obligations, list):
+        obligations = []
+    obligations = [o for o in obligations if isinstance(o, dict)]
+    verify_first = [o for o in obligations if isinstance(o, dict) and o.get("verify_first")]
+    accounts = ledger.get("accounts", [])
+    if not isinstance(accounts, list):
+        accounts = []
+    accounts = [a for a in accounts if isinstance(a, dict)]
+    totals = ledger.get("totals", {})
+    if not isinstance(totals, dict):
+        totals = {}
+    noise_killers = ledger.get("noise_killers", [])
+    if not isinstance(noise_killers, list):
+        noise_killers = []
+    noise_killers = [n for n in noise_killers if isinstance(n, dict)]
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "built_at": ledger.get("generated_at", ""),
         "spine": ledger.get("spine", ""),
-        "accounts": ledger.get("accounts", []),
-        "totals": ledger.get("totals", {}),
+        "accounts": accounts,
+        "totals": totals,
         "obligations": obligations,
-        "verify_first": [o for o in obligations if o.get("verify_first")],
-        "noise_killers": ledger.get("noise_killers", []),
+        "verify_first": verify_first,
+        "noise_killers": noise_killers,
         "levers": _union_levers(ledger),
     }
 
@@ -82,6 +114,12 @@ def _band(pri):
 _RUNG_BADGE = {"protocol": ("protocol", "#2ecc71"),
                "precedent": ("precedent", "#4a86e8"),
                "exploration": ("review", "#8a93a6")}
+
+# Warm inbound leads get a first-class badge on the face (the limen-side of the opportunity lane):
+# a recruiter/client/LinkedIn reach-out the UMA inbound-lead protocols classified. Just the door,
+# never a name — the row already carries the PII-clean provenance below it.
+_INBOUND_DOORS = {"inbound-lead-hire": "hire", "inbound-lead-deploy": "deploy",
+                  "inbound-linkedin": "linkedin"}
 
 
 def _esc(s):
@@ -127,6 +165,8 @@ def render_html(v):
         occ = o.get("occurrences", 1)
         occ_s = f'<span class="occ">×{occ}</span>' if occ > 1 else ""
         reply = '<span class="tag reply">reply</span>' if o.get("requires_reply") else ""
+        door = _INBOUND_DOORS.get(o.get("cls"))
+        warm = f'<span class="tag warm">🎯 warm lead · {door}</span>' if door else ""
         accts = ", ".join(a.split("@")[-1] for a in o.get("accounts", []))
         samples = o.get("sample_subjects", [])
         sample_s = (f'<div class="samples">{_esc(" · ".join(samples[:3]))}</div>'
@@ -141,7 +181,7 @@ def render_html(v):
           <td class="pri" style="color:{color}">{_esc(o.get('priority',''))}</td>
           <td>
             <b>{_esc(o.get('title',''))}</b> {occ_s}
-            <span class="rung" style="background:{rung_color}">{rung_label}</span> {reply}
+            <span class="rung" style="background:{rung_color}">{rung_label}</span> {reply} {warm}
             <div class="next">{_esc(o.get('next_step',''))}</div>
             {sample_s}
             {draft}
@@ -194,6 +234,7 @@ def render_html(v):
  .occ{{color:#e67e22;font-weight:700;font-size:13px;margin-left:2px}}
  .tag{{font-size:11px;border-radius:5px;padding:1px 6px;margin-left:3px}}
  .tag.reply{{background:#4a86e8;color:#fff}}
+ .tag.warm{{background:#e67e22;color:#fff}}
  .next{{color:#c9d1d9;font-size:13px;margin-top:3px}}
  .samples{{color:#6e7681;font-size:11.5px;margin-top:3px;font-style:italic}}
  .prov{{color:#6e7681;font-size:11px;margin-top:2px}}

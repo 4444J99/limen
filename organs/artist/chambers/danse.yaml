@@ -1,0 +1,30 @@
+id: danse
+name: Danse
+member:
+  body: The Thing Without A Name
+  medium: generative screendance
+  human_owner: Anthony J. Padavano
+  source: "2017 composite photography"
+  series_type: standalone
+mandate:
+  description: A generative WebGL screendance based on 161 photographs taken on June 20, 2017, algorithmically choreographed via spatial depth and strict variation form.
+  scope_boundary: Engine source code, offline renderer, spatial sound mechanics, and submission text packages.
+standing:
+  current: STAGED
+  since: "2026-07-31"
+next_standing: EXHIBITED
+standard:
+  rubric: The engine must remain deterministic and preserve all 39 portable invariants.
+  evidence:
+    - apps/danse/.work/submission/text/ files (6 text documents passing strict word counts)
+    - scripts/check-danse.py (pass 39 invariants)
+    - "Cloudflare Pages deployment"
+governance:
+  artist_gate: true
+  forbidden_acts:
+    - use of synthetic or AI-generated imagery
+    - removing the strict photographic provenance statements
+human_gates:
+  - artist_review
+artifacts:
+  next_reviewable_output: "https://danse.artist.domain/"

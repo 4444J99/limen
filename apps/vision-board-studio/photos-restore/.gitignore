@@ -1,0 +1,10 @@
+# Private / derived runtime data — never commit (your Photos library content)
+clip_cache.npz
+confirm/candidates.json
+confirm/thumbs/
+confirm/picks.json
+picks.json
+originals_staged/
+tiles_out/
+clipvenv/
+*.npz

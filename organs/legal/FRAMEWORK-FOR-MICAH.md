@@ -30,12 +30,14 @@ strategy and advocacy instead of document wrangling.
 
 ## What you'd actually receive (the deliverables)
 
-1. **Case-posture brief** — one page, always current: where the matter stands, what's due, what's open.
-2. **Evidence index** — every document and message catalogued with what element it supports.
+*See the first live examples in the `live-matter/` directory:*
+
+1. **[Case-posture brief](live-matter/posture.md)** — one page, always current: where the matter stands, what's due, what's open.
+2. **[Evidence index](live-matter/evidence-index.csv)** — every document and message catalogued with what element it supports.
 3. **Elements-to-evidence matrix** — the claim broken into its legal elements, each linked to the proof
    we have and flagged where proof is thin. (Matter type here: ADA failure-to-accommodate, employment —
    to be confirmed and corrected by you.)
-4. **Deadline calendar** — obligations and dates with alerts, nothing missed.
+4. **[Deadline calendar](live-matter/deadlines.md)** — obligations and dates with alerts, nothing missed.
 5. **Reviewable draft skeletons** — starting points you correct and own. Nothing is ever filed or sent
    by the system.
 

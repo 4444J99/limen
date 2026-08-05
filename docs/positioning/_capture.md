@@ -33,17 +33,30 @@ rendered into `obligations-ledger.json` here). A reply-owed thread becomes an ob
 voice-matched **draft** — `draft-only by design: there is no send` (`draft_writer.py:14`). You
 press send. The lead surfaces in the same ledger face you already review.
 
-## His-hand follow-up — the deeper wiring (separate repo, live mail organ)
+## The deeper wiring — BUILT (the inbound-lead lane is live, not a recipe anymore)
 
-To give inbound leads their own first-class lane (a badge, a level-picker draft hint), add an
-`inbound-lead` protocol class. This edits the **live mail organ** in a different repo, so it is
-deliberately left as a scoped, opt-in change — not made automatically here:
+Inbound leads now have their **own first-class lane**, end to end. What used to be a
+"deliberately left, opt-in" recipe here is now shipped across two repos:
 
-1. `universal-mail--automation/core/protocols.py` — add an `"inbound-lead"` class: `rung
-   "protocol"`, high `priority`, `requires_reply=True`, `draft_hint` = "acknowledge; confirm
-   which engagement level (1–4) fits; propose a next step."
-2. `universal-mail--automation/obligations_build.py` — recognize the `[… · deploy|hire] —
-   inbound` subject tag (or ingest an `audit/inbound-leads.json`) and route it through that class.
-3. (optional) `scripts/obligations-view.py` — a "🎯 warm lead — `<repo>`" badge in the face.
+1. `universal-mail--automation` — the **inbound-lead protocol family** (`inbound-lead-hire`,
+   `inbound-lead-deploy`, `inbound-linkedin`) classifies a first-touch recruiter / client /
+   LinkedIn reach-out and stamps `safe_intent: inbound-ack-hire | inbound-ack-deploy` on it, so
+   the armed sender can auto-send a complete, professional-direct first-touch ack (see the SAFE
+   intents in `institutio/governance/mail-tiers.yaml`). Recruiter mail no longer falls into the
+   `decline` intent (re-scoped to vendor/sales pitches only), and `careerbits.com` was dropped
+   from the `no_reply` suppressors so recruiting-CRM mail is lead-classified upstream, not muted.
+2. `scripts/opportunity-review-delta.py` + the **`opportunity-pipeline` beat sensor**
+   (`institutio/governance/sensors.yaml`, gate `LIMEN_OPPORTUNITY_PIPELINE`, cadence 12 beats) —
+   a lead is a pipeline, not a one-shot reply, so this read-only, fail-open, PII-clean sensor
+   surfaces the count-only review-due delta each cadence: any lead where the ball is on us > 24h
+   (RED), a stalled interview/offer, a LinkedIn row with no reply path (needs contact discovery /
+   a Chrome pass), or a counterparty demanding a portal/ATS form. Per-lead detail lands only in
+   the sealed `_people-private/opportunities` estate; the face sees `logs/opportunity-status.json`.
+3. `scripts/obligations-view.py` — a `🎯 warm lead · <door>` badge renders on every inbound-lead
+   row in the obligations face.
 
-Everything above preserves the never-send guarantee: capture and draft, never outreach.
+When `~/Workspace/application-pipeline` is present, the sensor also folds pipeline-state truth in
+via that repo's `opportunity_sync.py` (which upserts each lead into a submission package).
+
+Everything above preserves the never-send guarantee: the first-touch ack is SAFE-tier and only
+fires when the send valve is armed (`LIMEN_MAIL_SEND=1`); capture and draft, never cold outreach.

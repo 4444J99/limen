@@ -1,0 +1,26 @@
+schema_version: "1.0"
+organ: "social"
+repo: "organvm/limen"
+org: "organvm"
+metadata:
+  implementation_status: "INCUBATOR"
+  promotion_status: "INCUBATOR"
+description: >
+  Koinonia — the social organ of the VLTIMA body. Runs the relationship-posture
+  brief validator, maintains engagement records, and audits every relationship
+  against the six social organ rules. This seed.yaml is the social organ's own
+  assertion.
+produces:
+  - type: "relationship_posture_brief"
+    consumers:
+      - "organ-health"
+      - "conducting-report"
+  - type: "social_validation_result"
+    consumers:
+      - "organ-health"
+      - "evocator"
+consumes:
+  - type: "organ_ladder_census"
+    source: "organ-ladder.json"
+  - type: "engagement_declarations"
+    source: "organs/social/engagements/*.yaml"

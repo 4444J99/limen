@@ -57,9 +57,13 @@ export function satsToBtcString(sats: number): string {
     return (sats / SATS_PER_BTC).toFixed(8)
 }
 
+/** Fail-fast timeout for every explorer call: a stalled connection must abort (→ caught,
+ * fails closed) rather than hang the order endpoint forever. */
+const EXPLORER_TIMEOUT_MS = 8000
+
 /** Read BTC/USD from the explorer's keyless price oracle. */
 export async function fetchBtcUsd(explorerBase: string, fetchImpl: typeof fetch = fetch): Promise<number> {
-    const res = await fetchImpl(`${normalizeBase(explorerBase)}/api/v1/prices`)
+    const res = await fetchImpl(`${normalizeBase(explorerBase)}/api/v1/prices`, { signal: AbortSignal.timeout(EXPLORER_TIMEOUT_MS) })
     if (!res.ok) throw new Error(`price-oracle-http-${res.status}`)
     const data = await res.json() as { USD?: number }
     if (typeof data?.USD !== 'number' || !(data.USD > 0)) throw new Error('price-oracle-bad-response')
@@ -78,7 +82,7 @@ export async function checkAddressPayment(opts: CheckAddressPaymentOptions): Pro
     const unpaid: AddressPayment = { paid: false, matchedSats: 0, matchedTxid: null, confirmations: 0 }
 
     try {
-        const txsRes = await fetchImpl(`${base}/api/address/${encodeURIComponent(opts.address)}/txs`)
+        const txsRes = await fetchImpl(`${base}/api/address/${encodeURIComponent(opts.address)}/txs`, { signal: AbortSignal.timeout(EXPLORER_TIMEOUT_MS) })
         if (!txsRes.ok) return unpaid
         const txs = await txsRes.json() as EsploraTx[]
         if (!Array.isArray(txs)) return unpaid
@@ -86,7 +90,7 @@ export async function checkAddressPayment(opts: CheckAddressPaymentOptions): Pro
         // Confirmations need the chain tip — only fetched when more than 1 is required.
         let tipHeight: number | null = null
         if (minConfirmations > 1) {
-            const tipRes = await fetchImpl(`${base}/api/blocks/tip/height`)
+            const tipRes = await fetchImpl(`${base}/api/blocks/tip/height`, { signal: AbortSignal.timeout(EXPLORER_TIMEOUT_MS) })
             if (tipRes.ok) {
                 const parsed = Number(await tipRes.text())
                 if (Number.isFinite(parsed)) tipHeight = parsed

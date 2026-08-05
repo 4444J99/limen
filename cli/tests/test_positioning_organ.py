@@ -78,6 +78,46 @@ def test_orphaned_ladder_rung_is_flagged_not_silently_kept(monkeypatch):
     assert not fused["sustain"].get("_absent"), "a synthetic rung (no cadence_key) must not flag drift"
 
 
+def test_organ_health_discovers_arbitrarily_renamed_scheduled_sensor(tmp_path, monkeypatch):
+    governance = tmp_path / "institutio" / "governance"
+    scripts = tmp_path / "scripts"
+    governance.mkdir(parents=True)
+    scripts.mkdir(parents=True)
+    (governance / "sensors.yaml").write_text(
+        """\
+sensors:
+  arbitrary.future.id:
+    section: heartbeat
+    title: arbitrary future sensor
+    source: [heartbeat]
+    gate: TEST_ARBITRARY_GATE
+    default: "1"
+    cadence: {env: TEST_ARBITRARY_CADENCE, default: 5}
+    steps:
+      - command: "python3 scripts/arbitrary.py"
+        severity: silent
+        escalation: skipped
+""",
+        encoding="utf-8",
+    )
+    loop = (
+        'if [ "${LIMEN_BEAT_DERIVE:-0}" = "1" ]; then\n'
+        '  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source heartbeat --scheduled-only\n'
+        "fi\n"
+    )
+    (scripts / "heartbeat-loop.sh").write_text(loop, encoding="utf-8")
+    monkeypatch.delenv("LIMEN_BEAT_DERIVE", raising=False)
+    m = _load(monkeypatch, tmp_path)
+
+    discovered = {door["key"]: door for door in m._discover_doors(loop)}
+    door = discovered["arbitrary.future.id"]
+    assert door["cadence"] == 5
+    assert door["dormant"] is True
+    fused = {door["key"]: door for door in m._doors(loop)}
+    assert fused["arbitrary.future.id"]["cadence_beats"] == 5
+    assert fused["arbitrary.future.id"]["voice"] == "arbitrary.future.id"
+
+
 def test_fallback_patterns_mirror_canon(monkeypatch):
     """derive-never-pin: the degraded-mode inline patterns must equal the canon's — else the two
     discovery paths could silently diverge (a solid sneaking back in)."""

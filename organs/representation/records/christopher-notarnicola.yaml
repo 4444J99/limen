@@ -1,0 +1,465 @@
+schema_version: representation.v3
+kind: representation_record
+id: christopher-notarnicola
+name: Christopher Notarnicola source-backed representation record
+report_grade: true
+subject:
+  type: person
+  name: Christopher Notarnicola
+  short_handle: Chris
+  roles:
+    - creator
+    - collaborator
+  representation_modes:
+    - canon_dossier
+    - public_presence_draft
+    - authority_scorecard
+    - writer_submission
+    - creator_presence_preview
+    - public_page_draft
+    - collaboration_packet
+    - co_branded_page
+  organ_bridges:
+    - koinonia
+    - media
+    - positioning
+standing:
+  current: RESEARCHING
+  next: PACKET_REVIEW
+mandate:
+  description: Build a source-backed authority packet, private creator dossier, and mode previews before any public page or submission packet exists.
+artifacts:
+  next_reviewable_output: Chris authority packet, private dossier, and writer submission packet generated from one representation record
+authority_program:
+  goal: civilizational_gravitas
+  archetype_functions:
+    canonical_institution: Build a public record, editorial/theatre proof, submission readiness, and institutional dossier without claiming achieved canonical rank.
+    mass_readership: Build a discoverable writing and theatre presence that can grow readership over time without claiming mass readership as a present fact.
+  axes:
+    canonical_institution:
+      summary: Stages public writing, editorial, and theatre proof as the source-backed institutional record.
+      claim_ids:
+        - chris-public-writing
+        - chris-editorial-role
+        - chris-theatre
+      public_claim_ids:
+        - chris-public-writing
+        - chris-editorial-role
+        - chris-theatre
+      public_copy: Christopher can be presented from public writing, editorial, and theatre evidence as a writer with documented public proof.
+      output_gates:
+        - Submission or institution-facing packets remain blocked until candidate work metadata is complete.
+        - No public copy claims achieved canon status.
+    mass_readership:
+      summary: Stages public writing and theatre discoverability without asserting audience scale.
+      claim_ids:
+        - chris-public-writing
+        - chris-theatre
+      public_claim_ids:
+        - chris-public-writing
+        - chris-theatre
+      public_copy: The public presence can emphasize breadth across public writing and theatre proof without claiming readership scale.
+      output_gates:
+        - Public draft uses public profile evidence only.
+        - Public export approval remains locked before outward use.
+    hybrid_presence:
+      summary: Keeps collaboration and prototype context private while public copy stays anchored to public writing, editorial, and theatre proof.
+      claim_ids:
+        - chris-public-writing
+        - chris-editorial-role
+        - chris-theatre
+        - speech-score-lineage
+        - object-lessons-lineage
+        - message-research-authorized-later
+      public_claim_ids:
+        - chris-public-writing
+        - chris-editorial-role
+        - chris-theatre
+      public_copy: The public presence can remain anchored in public writing, editorial, and theatre proof while collaboration context stays private.
+      output_gates:
+        - Private collaboration claims stay inside review-only dossier and scorecard modes.
+        - No private message research is mined or rendered without a later authorized pass.
+works:
+  - id: chris-public-writing-body
+    type: authored_work
+    title: Christopher public writing body
+    relation: authored
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+  - id: chris-theatre-body
+    type: theatre_work
+    title: New City Players short-play record
+    relation: authored
+    claim_ids:
+      - chris-theatre
+  - id: speech-score-prototype
+    type: project_artifact
+    title: Speech Score prototype lineage
+    relation: collaborator_context
+    claim_ids:
+      - speech-score-lineage
+candidate_works:
+  - id: chris-public-profile-readiness
+    title: Public-profile submission readiness packet
+    genre:
+    form:
+    length:
+    status: readiness_only_no_candidate_selected
+    rights_status:
+    content_ref:
+    source_ids:
+      - web-christopher-writing
+      - web-christopher-about
+      - web-vestal-masthead
+      - web-new-city-lauder-made
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+    note: Public/profile evidence only; no manuscript pointer or raw creative text is tracked.
+  - id: chris-metadata-only-nonfiction-candidate
+    title: Metadata-only nonfiction candidate
+    genre: nonfiction
+    form: essay
+    length: 3200 words
+    status: READY_FOR_REVIEW
+    rights_status: available for first publication review
+    content_ref: source://private-manuscripts/chris/nonfiction-candidate-001
+    source_ids:
+      - subject-confirmed-candidate-work-001
+    claim_ids:
+      - chris-candidate-work-metadata
+    note: Metadata-only source pointer supplied by the subject; no creative text is tracked.
+relations:
+  - id: object-lessons-collaboration
+    relation_type: collaboration_surface
+    posture_source: koinonia
+    claim_ids:
+      - object-lessons-lineage
+      - message-research-authorized-later
+    consent_constraints:
+      - No public copy from private messages.
+      - No collaborator-facing page without subject approval.
+      - No outreach or submission action without human approval.
+claims:
+  - id: chris-public-writing
+    label: Public writing record
+    summary: Christopher maintains a public writing site with fiction, nonfiction, theatre, reviews, interviews, and publication links.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-christopher-writing
+      - web-christopher-about
+    public_ok: true
+  - id: chris-editorial-role
+    label: Editorial role
+    summary: Public sources identify Christopher as a Vestal Review contributing editor and a past Paris Review editorial intern.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-christopher-about
+      - web-vestal-masthead
+    public_ok: true
+  - id: chris-theatre
+    label: Theatre work
+    summary: New City Players pages list short plays by Christopher, including Lauder Made work.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-christopher-writing
+      - web-new-city-lauder-made
+    public_ok: true
+  - id: chris-candidate-work-metadata
+    label: Private candidate pointer
+    summary: A subject-confirmed metadata-only candidate work pointer is available for publication readiness review.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - subject-confirmed-candidate-work-001
+    public_ok: false
+  - id: speech-score-lineage
+    label: Speech Score lineage
+    summary: Local and remote repo evidence tie Chris to the Speech Score prototype lineage and collaborator research path.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - local-speech-score
+      - remote-speech-score-engine
+      - remote-sign-signal
+    public_ok: false
+  - id: object-lessons-lineage
+    label: Object Lessons lineage
+    summary: Authenticated remote planning evidence identifies Object Lessons and AMP Lab as a Chris collaboration surface.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - remote-object-lessons
+      - remote-issue-156
+      - remote-issue-158
+    public_ok: false
+  - id: message-research-authorized-later
+    label: Message research lane
+    summary: Private-message mining is a future authorized pass, not a current persona claim.
+    visibility: private
+    source_ids:
+      - local-relationship-pipeline
+    public_ok: false
+sources:
+  - id: local-speech-score
+    source_type: local_repo
+    privacy_level: private
+    source_ref: /Users/4jp/Workspace/studio/p/speech-score.html:159
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - speech-score-lineage
+    confidence: high
+    note: Local Studio page ties Chris to actor feedback and Speech Score prototype lineage.
+  - id: local-relationship-pipeline
+    source_type: local_repo
+    privacy_level: private
+    source_ref: /Users/4jp/Workspace/4444J99/relationship-pipeline/DISCOVERY.md:1
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - message-research-authorized-later
+    confidence: high
+    note: Local pipeline discovery defines the authorized message and persona research substrate.
+  - id: remote-object-lessons
+    source_type: remote_repo
+    privacy_level: private
+    source_ref: https://github.com/organvm/object-lessons
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - object-lessons-lineage
+    confidence: high
+    note: Authenticated GitHub repo is the canonical private Object Lessons surface.
+  - id: remote-speech-score-engine
+    source_type: remote_repo
+    privacy_level: private
+    source_ref: https://github.com/organvm/speech-score-engine
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - speech-score-lineage
+    confidence: high
+    note: Authenticated GitHub repo is the canonical private Speech Score design corpus.
+  - id: remote-sign-signal
+    source_type: remote_repo
+    privacy_level: private
+    source_ref: https://github.com/organvm/sign-signal--voice-synth
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - speech-score-lineage
+    confidence: high
+    note: Authenticated GitHub repo is the canonical private Speech Score engine surface.
+  - id: remote-issue-156
+    source_type: remote_repo
+    privacy_level: private
+    source_ref: https://github.com/organvm/organvm-corpvs-testamentvm/issues/156
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - object-lessons-lineage
+    confidence: high
+    note: Authenticated issue names AMP Lab, Object Lessons, and Chris collaboration context.
+  - id: remote-issue-158
+    source_type: remote_repo
+    privacy_level: private
+    source_ref: https://github.com/organvm/organvm-corpvs-testamentvm/issues/158
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - object-lessons-lineage
+    confidence: high
+    note: Authenticated issue frames Chris onboarding as first-collaborator architecture.
+  - id: web-christopher-writing
+    source_type: web
+    privacy_level: public
+    source_ref: https://www.christophernotarnicola.com/
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - chris-public-writing
+      - chris-theatre
+    confidence: high
+    note: Public site lists writing, publications, interviews, and New City theatre links.
+  - id: web-christopher-about
+    source_type: web
+    privacy_level: public
+    source_ref: https://www.christophernotarnicola.com/about
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+    confidence: high
+    note: Public about page lists editor role, MFA, Marine Corps, and Fort Lauderdale.
+  - id: web-vestal-masthead
+    source_type: web
+    privacy_level: public
+    source_ref: https://www.vestalreview.net/masthead
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - chris-editorial-role
+    confidence: high
+    note: Public Vestal masthead lists Christopher as a contributing editor.
+  - id: web-new-city-lauder-made
+    source_type: web
+    privacy_level: public
+    source_ref: https://newcityplayers.org/shows/lauder-made-2
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - chris-theatre
+    confidence: high
+    note: Public New City Players page lists Adieu by Christopher Notarnicola.
+  - id: subject-confirmed-candidate-work-001
+    source_type: subject_confirmed
+    privacy_level: private
+    source_ref: source://private-manuscripts/chris/nonfiction-candidate-001
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - chris-candidate-work-metadata
+    confidence: high
+    note: Subject-confirmed metadata-only candidate pointer; no creative text is tracked.
+approvals:
+  - id: public-export-not-requested
+    approval_type: public_export
+    status: not_requested
+    claim_ids: []
+    note: Public export is locked until Christopher approves copy.
+  - id: submission-not-requested
+    approval_type: submission
+    status: not_requested
+    claim_ids: []
+    note: Submission packets are drafts only.
+  - id: outreach-not-requested
+    approval_type: outreach
+    status: not_requested
+    claim_ids: []
+    note: Collaboration packets are review-only until outreach is separately approved.
+  - id: co-branded-page-not-requested
+    approval_type: co_branded_page
+    status: not_requested
+    claim_ids: []
+    note: Co-branded pages are drafts until subject and collaborator approval exist.
+outputs:
+  - id: chris-canon-dossier
+    mode: canon_dossier
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+      - speech-score-lineage
+      - object-lessons-lineage
+      - message-research-authorized-later
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms private collaboration context is summarized without raw private text.
+      - Reviewer confirms civilizational gravitas is a program goal, not an achieved status claim.
+  - id: chris-public-presence-draft
+    mode: public_presence_draft
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms public presence copy uses only public-source or claim-approved claims.
+      - Christopher approval remains locked before public export.
+  - id: chris-authority-scorecard
+    mode: authority_scorecard
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+      - speech-score-lineage
+      - object-lessons-lineage
+      - message-research-authorized-later
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms each axis reports BLOCKED, STAGED, or PUBLIC_READY.
+      - Reviewer confirms submission and approval blockers are reported instead of achieved literary status.
+  - id: chris-private-dossier
+    mode: private_dossier
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+      - speech-score-lineage
+      - object-lessons-lineage
+      - message-research-authorized-later
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms every private claim has source refs and no raw private text.
+      - Reviewer confirms the packet names no outward action.
+  - id: chris-public-page-draft
+    mode: public_page_draft
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms only public-source or approved claims render.
+      - Christopher approval is recorded before export.
+  - id: chris-creator-presence-preview
+    mode: creator_presence_preview
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the preview contains no private source refs.
+      - Public export approval remains locked before outward use.
+  - id: chris-writer-submission
+    mode: writer_submission
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the packet is draft-only and performs no submission action.
+      - Submission approval is recorded before any human sends.
+  - id: chris-collaboration-packet
+    mode: collaboration_packet
+    report_grade: true
+    claim_ids:
+      - speech-score-lineage
+      - object-lessons-lineage
+      - message-research-authorized-later
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms collaboration claims stay private.
+      - Outreach approval is recorded before any collaborator-facing send.
+  - id: chris-co-branded-page
+    mode: co_branded_page
+    report_grade: true
+    claim_ids:
+      - chris-public-writing
+      - chris-editorial-role
+      - chris-theatre
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the page draft uses only public-source or approved claims.
+      - Co-branded page approval is recorded before export.
+mention_index:
+  aliases:
+    - Chris
+    - Christopher Notarnicola
+    - Notarnicola
+  ambiguous_aliases:
+    - Christopher
+  deny_phrases:
+    - Christian
+    - Christopher Nolan
+    - Chris Marker
+  context_terms:
+    - Notarnicola
+    - Object Lessons
+    - Speech Score
+    - AMP Lab
+    - MFA collaborator

@@ -5,6 +5,7 @@ The tracked markdown is intentionally counts-only and receipt-oriented. The igno
 private index keeps source paths, stable hashes, and prompt-event hashes so the raw
 material can be found in the private cartridge without committing prompt text.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -14,9 +15,11 @@ import hashlib
 import json
 import os
 import re
+import sqlite3
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
@@ -26,17 +29,37 @@ from typing import Any
 import yaml
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+from limen.runtime_config import RUNTIME_URL_ENV_ORDER, runtime_api_url  # noqa: E402
+
+# Doc artifacts belong to the repo this script lives in — never to the runtime root — so a
+# dev/worktree run cannot silently dirty the live checkout (LIMEN_ROOT keeps owning the board).
+REPO = Path(__file__).resolve().parents[1]
 HOME = Path.home()
-DOC_PATH = ROOT / "docs" / "prompt-lifecycle-ledger.md"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+DOC_PATH = REPO / "docs" / "prompt-lifecycle-ledger.md"
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+EVERY_ASK_PATH = REPO / "EVERY-ASK-LEDGER.md"
+EVERY_ASK_CURATED_BEGIN = "<!-- CURATED:BEGIN -->"
+EVERY_ASK_CURATED_END = "<!-- CURATED:END -->"
 TASKS_PATH = ROOT / "tasks.yaml"
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
+OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
+AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
+AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"
+AGY_CLI_CONVERSATIONS = AGY_CLI_ROOT / "conversations"
 GITHUB_PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
-DISPATCH_GRACE_SECONDS = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
-GH_RETRIES = max(1, int(os.environ.get("LIMEN_GH_RECEIPT_RETRIES", "3")))
+
+
+def int_or_default(raw: Any, default: int) -> int:
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+DISPATCH_GRACE_SECONDS = int_or_default(os.environ.get("LIMEN_LANE_TIMEOUT"), 900) + 600
+GH_RETRIES = max(1, int_or_default(os.environ.get("LIMEN_GH_RECEIPT_RETRIES"), 3))
 TRANSIENT_GH_ERROR_BITS = (
     "connect: network is unreachable",
     "connection reset",
@@ -57,7 +80,20 @@ LOCAL_SOURCES = [
     ("claude-tasks", HOME / ".claude" / "tasks", ("*",)),
     ("claude-plans", HOME / ".claude" / "plans", ("*",)),
     ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
+    ("gemini-tmp-agy", HOME / ".gemini" / "tmp", ("capfill-agy-*/chats/*.jsonl", "*agy*/chats/*.jsonl")),
+    ("agy-cli-history", AGY_CLI_ROOT, ("history.jsonl",)),
 ]
+
+TASK_BODY_MARKERS = (
+    "Complete task ",
+    "## Current task",
+    "## Task",
+    "## Work packet",
+    "## Packet",
+    "### Task",
+    "TASK:",
+    "Task:",
+)
 
 VALID_STATUSES = {
     "open",
@@ -93,6 +129,10 @@ def stable_hash(text: str, length: int = 16) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()[:length]
 
 
+def full_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
 def relpath(path: Path) -> str:
     try:
         return "~/" + str(path.expanduser().resolve().relative_to(HOME))
@@ -109,6 +149,88 @@ def parse_ts(value: Any) -> dt.datetime | None:
         return None
 
 
+def iso_from_epoch_ms(value: Any) -> str | None:
+    if not isinstance(value, (int, float)) or value <= 0:
+        return None
+    try:
+        return dt.datetime.fromtimestamp(value / 1000, dt.timezone.utc).isoformat(timespec="seconds")
+    except (OSError, OverflowError, ValueError):
+        return None
+
+
+def maybe_decode_wrapped_string(text: str) -> str:
+    stripped = text.strip()
+    if len(stripped) >= 2 and stripped[0] == stripped[-1] == '"':
+        try:
+            decoded = json.loads(stripped)
+        except ValueError:
+            return text
+        if isinstance(decoded, str):
+            return decoded
+    return text
+
+
+def normalize_task_body(text: str) -> tuple[str, str]:
+    stripped = text.strip()
+    if stripped.startswith("<session_context>"):
+        return "", "session_context"
+    if stripped.startswith("# FLAME"):
+        positions = [(stripped.find(marker), marker) for marker in TASK_BODY_MARKERS if stripped.find(marker) >= 0]
+        if positions:
+            pos, _marker = min(positions, key=lambda item: item[0])
+            return stripped[pos:], "flame_with_task_body"
+        return "", "flame_scaffold"
+    return stripped, "direct"
+
+
+def prompt_fingerprint(text: str) -> dict[str, Any]:
+    text = maybe_decode_wrapped_string(text)
+    task_body, body_kind = normalize_task_body(text)
+    prompt_bytes = len(text.encode("utf-8", errors="replace"))
+    task_body_bytes = len(task_body.encode("utf-8", errors="replace"))
+    return {
+        "prompt_hash": full_hash(text),
+        "prompt_bytes": prompt_bytes,
+        "task_body_hash": full_hash(task_body) if task_body else None,
+        "task_body_bytes": task_body_bytes,
+        "body_kind": body_kind,
+    }
+
+
+def blob_text_spans(blob: bytes | None, *, min_len: int = 40) -> list[str]:
+    if not blob:
+        return []
+    decoded = blob.decode("utf-8", errors="ignore")
+    chars: list[str] = []
+    for ch in decoded:
+        if ch in "\n\r\t" or (ch.isprintable() and unicodedata.category(ch)[0] != "C"):
+            chars.append(ch)
+        else:
+            chars.append("\0")
+    out: list[str] = []
+    seen: set[str] = set()
+    for part in "".join(chars).split("\0"):
+        text = part.strip()
+        if len(text) < min_len or sum(c.isalpha() for c in text) < 12:
+            continue
+        if text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out
+
+
+def agy_prompt_from_spans(spans: list[str]) -> str | None:
+    prompt_markers = ("# FLAME", "## FLAME", "Complete task ", "/goal", "Repo:", "Rules:", "Context:")
+    candidates = [span for span in spans if any(marker in span for marker in prompt_markers)]
+    if not candidates:
+        candidates = [span for span in spans if len(span) >= 120]
+    if not candidates:
+        return None
+    text = max(candidates, key=len).strip()
+    return text.lstrip("#,- \n\t") or text
+
+
 def iter_source_files(days: int | None) -> list[dict[str, Any]]:
     cutoff = None if days is None else dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
     rows: list[dict[str, Any]] = []
@@ -116,11 +238,7 @@ def iter_source_files(days: int | None) -> list[dict[str, Any]]:
         if not root.exists():
             continue
         seen: set[Path] = set()
-        candidates = [root] if root.is_file() else [
-            path
-            for pattern in patterns
-            for path in root.rglob(pattern)
-        ]
+        candidates = [root] if root.is_file() else [path for pattern in patterns for path in root.rglob(pattern)]
         for path in candidates:
             if path in seen or not path.is_file():
                 continue
@@ -164,6 +282,20 @@ def text_from_content(value: Any) -> list[str]:
 def prompt_texts(source: str, obj: dict[str, Any]) -> list[str]:
     if source == "codex-history":
         return text_from_content(obj.get("text"))
+
+    if source == "gemini-tmp-agy":
+        texts: list[str] = []
+        if obj.get("type") == "user":
+            texts.extend(text_from_content(obj.get("content")))
+        set_obj = obj.get("$set")
+        if isinstance(set_obj, dict) and isinstance(set_obj.get("messages"), list):
+            for rec in set_obj["messages"]:
+                if isinstance(rec, dict) and rec.get("type") == "user":
+                    texts.extend(text_from_content(rec.get("content")))
+        return texts
+
+    if source == "agy-cli-history":
+        return text_from_content(obj.get("display"))
 
     payload = obj.get("payload")
     if isinstance(payload, dict):
@@ -228,7 +360,10 @@ def session_meta_from_records(source: str, row: dict[str, Any], records: list[di
     cwd: str | None = None
     event_times: list[str] = []
     prompt_hashes: list[str] = []
+    task_body_hashes: list[str] = []
+    body_kind_counts: Counter[str] = Counter()
     prompt_bytes = 0
+    task_body_bytes = 0
 
     for obj in records:
         timestamp = obj.get("timestamp") or obj.get("ts")
@@ -247,8 +382,13 @@ def session_meta_from_records(source: str, row: dict[str, Any], records: list[di
         if obj.get("cwd"):
             cwd = str(obj.get("cwd"))
         for text in prompt_texts(source, obj):
-            prompt_bytes += len(text.encode("utf-8", errors="replace"))
-            prompt_hashes.append(hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest())
+            fingerprint = prompt_fingerprint(text)
+            prompt_bytes += int(fingerprint["prompt_bytes"])
+            task_body_bytes += int(fingerprint["task_body_bytes"])
+            prompt_hashes.append(str(fingerprint["prompt_hash"]))
+            if fingerprint["task_body_hash"]:
+                task_body_hashes.append(str(fingerprint["task_body_hash"]))
+            body_kind_counts[str(fingerprint["body_kind"])] += 1
 
     if session_id is None:
         session_id = row["path"].stem
@@ -268,10 +408,240 @@ def session_meta_from_records(source: str, row: dict[str, Any], records: list[di
         "cwd_hash": stable_hash(cwd, 20) if cwd else None,
         "prompt_event_count": len(prompt_hashes),
         "prompt_bytes": prompt_bytes,
+        "task_body_bytes": task_body_bytes,
         "first_prompt_hash": prompt_hashes[0] if prompt_hashes else None,
         "last_prompt_hash": prompt_hashes[-1] if prompt_hashes else None,
         "prompt_hashes": prompt_hashes,
+        "task_body_hashes": task_body_hashes,
+        "body_kind_counts": dict(sorted(body_kind_counts.items())),
     }
+
+
+def opencode_part_texts(parts: list[sqlite3.Row]) -> list[str]:
+    texts: list[str] = []
+    for part in parts:
+        try:
+            data = json.loads(part["data"]) if part["data"] else {}
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        typ = data.get("type")
+        if typ in ("text", "compaction"):
+            text = data.get("text") or data.get("summary")
+            if isinstance(text, str) and text.strip():
+                texts.append(text)
+        elif typ == "subtask":
+            prompt = data.get("prompt") or data.get("description")
+            if isinstance(prompt, str) and prompt.strip():
+                texts.append(prompt)
+    return texts
+
+
+def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
+    if not OPENCODE_DB.exists():
+        return []
+    cutoff_ms = None
+    if days is not None:
+        cutoff_ms = int((dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400) * 1000)
+    try:
+        con = sqlite3.connect(f"file:{OPENCODE_DB}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return []
+    con.row_factory = sqlite3.Row
+    try:
+        where = "WHERE time_updated >= ?" if cutoff_ms is not None else ""
+        params: tuple[Any, ...] = (cutoff_ms,) if cutoff_ms is not None else ()
+        sessions = con.execute(
+            "SELECT id, title, directory, time_created, time_updated, summary_additions, "
+            "summary_deletions, summary_files, summary_diffs, cost, tokens_input, "
+            "tokens_output, tokens_reasoning, tokens_cache_read, tokens_cache_write, model "
+            f"FROM session {where} ORDER BY time_created, id",
+            params,
+        ).fetchall()
+    except sqlite3.Error:
+        con.close()
+        return []
+
+    out: list[dict[str, Any]] = []
+    db_display = relpath(OPENCODE_DB)
+    for session in sessions:
+        sid = str(session["id"])
+        try:
+            messages = con.execute(
+                "SELECT id, time_created, time_updated, data FROM message WHERE session_id=? ORDER BY time_created, id",
+                (sid,),
+            ).fetchall()
+            parts_by_message: dict[str, list[sqlite3.Row]] = defaultdict(list)
+            part_count = 0
+            for part in con.execute(
+                "SELECT message_id, time_created, time_updated, data FROM part WHERE session_id=? "
+                "ORDER BY time_created, id",
+                (sid,),
+            ):
+                parts_by_message[str(part["message_id"])].append(part)
+                part_count += 1
+        except sqlite3.Error:
+            continue
+
+        event_times = [
+            ts
+            for ts in (
+                iso_from_epoch_ms(row["time_created"])
+                for row in list(messages) + [p for ps in parts_by_message.values() for p in ps]
+            )
+            if ts
+        ]
+        prompt_hashes: list[str] = []
+        task_body_hashes: list[str] = []
+        body_kind_counts: Counter[str] = Counter()
+        prompt_bytes = 0
+        task_body_bytes = 0
+        for message in messages:
+            try:
+                data = json.loads(message["data"]) if message["data"] else {}
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(data, dict) or data.get("role") != "user":
+                continue
+            texts = opencode_part_texts(parts_by_message.get(str(message["id"]), []))
+            text = "\n\n".join(texts)
+            if not text.strip():
+                continue
+            fingerprint = prompt_fingerprint(text)
+            prompt_bytes += int(fingerprint["prompt_bytes"])
+            task_body_bytes += int(fingerprint["task_body_bytes"])
+            prompt_hashes.append(str(fingerprint["prompt_hash"]))
+            if fingerprint["task_body_hash"]:
+                task_body_hashes.append(str(fingerprint["task_body_hash"]))
+            body_kind_counts[str(fingerprint["body_kind"])] += 1
+
+        summary_diffs = []
+        try:
+            decoded = json.loads(session["summary_diffs"]) if session["summary_diffs"] else []
+            if isinstance(decoded, list):
+                summary_diffs = [stable_hash(str(item), 20) for item in decoded]
+        except (TypeError, ValueError):
+            summary_diffs = []
+
+        session_id = sid
+        out.append(
+            {
+                "session_key": stable_hash(f"opencode-db:{session_id}:{OPENCODE_DB}", 20),
+                "session_id_hash": stable_hash(session_id, 20),
+                "source": "opencode-db",
+                "path": str(OPENCODE_DB),
+                "display_path": f"{db_display}#{stable_hash(session_id, 12)}",
+                "source_file": str(OPENCODE_DB),
+                "virtual_source": True,
+                "size": 0,
+                "mtime": iso_from_epoch_ms(session["time_updated"]),
+                "event_count": len(messages) + part_count,
+                "first_event": min(event_times) if event_times else None,
+                "last_event": max(event_times) if event_times else None,
+                "cwd": session["directory"],
+                "cwd_hash": stable_hash(session["directory"], 20) if session["directory"] else None,
+                "prompt_event_count": len(prompt_hashes),
+                "prompt_bytes": prompt_bytes,
+                "task_body_bytes": task_body_bytes,
+                "first_prompt_hash": prompt_hashes[0] if prompt_hashes else None,
+                "last_prompt_hash": prompt_hashes[-1] if prompt_hashes else None,
+                "prompt_hashes": prompt_hashes,
+                "task_body_hashes": task_body_hashes,
+                "body_kind_counts": dict(sorted(body_kind_counts.items())),
+                "title_hash": stable_hash(session["title"], 20) if session["title"] else None,
+                "model_hash": stable_hash(session["model"], 20) if session["model"] else None,
+                "summary_files": session["summary_files"],
+                "summary_additions": session["summary_additions"],
+                "summary_deletions": session["summary_deletions"],
+                "summary_diff_hashes": summary_diffs,
+                "tokens": {
+                    "input": session["tokens_input"],
+                    "output": session["tokens_output"],
+                    "reasoning": session["tokens_reasoning"],
+                    "cache_read": session["tokens_cache_read"],
+                    "cache_write": session["tokens_cache_write"],
+                },
+                "cost": session["cost"],
+            }
+        )
+    con.close()
+    return out
+
+
+def agy_cli_conversation_sessions(days: int | None) -> list[dict[str, Any]]:
+    if not AGY_CLI_CONVERSATIONS.exists():
+        return []
+    cutoff = None if days is None else dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
+    out: list[dict[str, Any]] = []
+    for path in sorted(AGY_CLI_CONVERSATIONS.glob("*.db")):
+        try:
+            st = path.stat()
+        except OSError:
+            continue
+        if cutoff is not None and st.st_mtime < cutoff:
+            continue
+        try:
+            con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        except sqlite3.Error:
+            continue
+        con.row_factory = sqlite3.Row
+        try:
+            rows = con.execute(
+                "SELECT idx, step_type, status, step_payload, metadata, task_details, "
+                "error_details, render_info FROM steps ORDER BY idx"
+            ).fetchall()
+        except sqlite3.Error:
+            con.close()
+            continue
+        prompt_hashes: list[str] = []
+        task_body_hashes: list[str] = []
+        prompt_bytes = 0
+        task_body_bytes = 0
+        body_kind_counts: Counter[str] = Counter()
+        for row in rows:
+            if int(row["step_type"]) != 14:
+                continue
+            spans: list[str] = []
+            for column in ("step_payload", "metadata", "task_details", "error_details", "render_info"):
+                spans.extend(blob_text_spans(row[column]))
+            prompt = agy_prompt_from_spans(spans)
+            if not prompt:
+                continue
+            fingerprint = prompt_fingerprint(prompt)
+            prompt_bytes += int(fingerprint["prompt_bytes"])
+            task_body_bytes += int(fingerprint["task_body_bytes"])
+            prompt_hashes.append(str(fingerprint["prompt_hash"]))
+            if fingerprint["task_body_hash"]:
+                task_body_hashes.append(str(fingerprint["task_body_hash"]))
+            body_kind_counts[str(fingerprint["body_kind"])] += 1
+        con.close()
+        sid = path.stem
+        out.append(
+            {
+                "session_key": stable_hash(f"agy-cli-conversations:{sid}:{path}", 20),
+                "session_id_hash": stable_hash(sid, 20),
+                "source": "agy-cli-conversations",
+                "path": str(path),
+                "display_path": relpath(path),
+                "size": st.st_size,
+                "mtime": iso_from_ts(st.st_mtime),
+                "event_count": len(rows),
+                "first_event": None,
+                "last_event": None,
+                "cwd": None,
+                "cwd_hash": None,
+                "prompt_event_count": len(prompt_hashes),
+                "prompt_bytes": prompt_bytes,
+                "task_body_bytes": task_body_bytes,
+                "first_prompt_hash": prompt_hashes[0] if prompt_hashes else None,
+                "last_prompt_hash": prompt_hashes[-1] if prompt_hashes else None,
+                "prompt_hashes": prompt_hashes,
+                "task_body_hashes": task_body_hashes,
+                "body_kind_counts": dict(sorted(body_kind_counts.items())),
+            }
+        )
+    return out
 
 
 def current_worktree_report() -> dict[str, Any]:
@@ -507,12 +877,7 @@ def worktree_remote_receipts(worktrees: list[dict[str, Any]]) -> dict[str, Any]:
             receipt["remote_branch"] = "present" if ls.returncode == 0 and ls.stdout.strip() else "missing"
             receipt["prs"] = gh_prs_for_branch(repo, branch)
         receipts.append(receipt)
-    ok_prs = [
-        pr
-        for receipt in receipts
-        for pr in receipt.get("prs", [])
-        if pr.get("ok")
-    ]
+    ok_prs = [pr for receipt in receipts for pr in receipt.get("prs", []) if pr.get("ok")]
     return {
         "receipts": receipts,
         "git_roots": sum(1 for r in receipts if r["git"]),
@@ -588,12 +953,11 @@ def cloud_receipts() -> dict[str, Any]:
         f"{firebase_base}/qa",
         f"{firebase_base}/client",
     ]
-    runtime_url = os.environ.get("LIMEN_WORKER_URL") or os.environ.get("NEXT_PUBLIC_API_URL")
+    runtime_url = runtime_api_url(ROOT)
     env_flags = {
         name: bool(os.environ.get(name))
         for name in (
-            "LIMEN_WORKER_URL",
-            "NEXT_PUBLIC_API_URL",
+            *RUNTIME_URL_ENV_ORDER,
             "LIMEN_API_TOKEN",
             "LIMEN_CLIENT_TOKEN",
             "CLOUDFLARE_API_TOKEN",
@@ -607,10 +971,7 @@ def cloud_receipts() -> dict[str, Any]:
         runtime_probe = probe_url(runtime_url.rstrip("/") + "/health", expect_json=True)
     return {
         "public_site_url": firebase_base,
-        "public_surface_probes": [
-            probe_url(url, expect_json=url.endswith(".json"))
-            for url in public_surfaces
-        ],
+        "public_surface_probes": [probe_url(url, expect_json=url.endswith(".json")) for url in public_surfaces],
         "runtime_url_configured": bool(runtime_url),
         "runtime_health_probe": runtime_probe,
         "env_flags": env_flags,
@@ -650,11 +1011,7 @@ def codex_quicken_receipt() -> dict[str, Any]:
 def attach_worktree_slugs(sessions: list[dict[str, Any]], worktrees: list[dict[str, Any]]) -> None:
     slugs = [item["name"] for item in worktrees]
     for session in sessions:
-        haystack = " ".join(
-            str(x)
-            for x in (session.get("display_path"), session.get("path"), session.get("cwd"))
-            if x
-        )
+        haystack = " ".join(str(x) for x in (session.get("display_path"), session.get("path"), session.get("cwd")) if x)
         matched = next((slug for slug in slugs if slug in haystack), None)
         if matched is None:
             match = re.search(r"(?:limen-worktrees|--limen-worktrees-)[/-]?([A-Za-z0-9._-]+)", haystack)
@@ -687,23 +1044,16 @@ def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
             1
             for entry in log
             if isinstance(entry, dict)
-            and (
-                "reopened" in str(entry.get("output", "")).lower()
-                or str(entry.get("status", "")).lower() == "open"
-            )
+            and ("reopened" in str(entry.get("output", "")).lower() or str(entry.get("status", "")).lower() == "open")
         )
         failure_hits = sum(
-            1
-            for entry in log
-            if isinstance(entry, dict) and "failed" in str(entry.get("status", "")).lower()
+            1 for entry in log if isinstance(entry, dict) and "failed" in str(entry.get("status", "")).lower()
         )
         if reopen_hits >= 2 and failure_hits >= 2:
             chronic_reopen += 1
         urls = task.get("urls") or []
         has_pr = any("pull/" in str(url) for url in urls) or any(
-            "pull/" in str((entry or {}).get("session_id", ""))
-            for entry in log
-            if isinstance(entry, dict)
+            "pull/" in str((entry or {}).get("session_id", "")) for entry in log if isinstance(entry, dict)
         )
         if task.get("status") == "dispatched":
             if has_pr:
@@ -734,11 +1084,7 @@ def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
             continue
         log = task.get("dispatch_log") or []
         reopens = sum(1 for entry in log if isinstance(entry, dict) and str(entry.get("status")) == "open")
-        ever_pr = any(
-            "pull/" in str((entry or {}).get("session_id", ""))
-            for entry in log
-            if isinstance(entry, dict)
-        )
+        ever_pr = any("pull/" in str((entry or {}).get("session_id", "")) for entry in log if isinstance(entry, dict))
         if reopens >= 3 and not ever_pr:
             chronic_reopen += 1
     return {
@@ -763,6 +1109,8 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     for row in rows:
         records = read_json_records(row["path"])
         sessions.append(session_meta_from_records(row["source"], row, records))
+    sessions.extend(opencode_virtual_sessions(args.days))
+    sessions.extend(agy_cli_conversation_sessions(args.days))
 
     wt_report = current_worktree_report()
     worktrees = wt_report.get("items") or []
@@ -790,6 +1138,8 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
                 "files": 0,
                 "bytes": 0,
                 "prompt_events": 0,
+                "prompt_bytes": 0,
+                "task_body_bytes": 0,
                 "event_records": 0,
                 "newest": None,
             },
@@ -797,9 +1147,15 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         item["files"] += 1
         item["bytes"] += int(session["size"])
         item["prompt_events"] += int(session["prompt_event_count"])
+        item["prompt_bytes"] += int(session.get("prompt_bytes") or 0)
+        item["task_body_bytes"] += int(session.get("task_body_bytes") or 0)
         item["event_records"] += int(session["event_count"])
         if item["newest"] is None or (session["mtime"] or "") > item["newest"]:
             item["newest"] = session["mtime"]
+
+    body_kind_counts = Counter()
+    for session in sessions:
+        body_kind_counts.update(session.get("body_kind_counts") or {})
 
     sessions_by_worktree = Counter(s["worktree_slug"] for s in sessions if s.get("worktree_slug"))
     prompt_by_worktree = defaultdict(int)
@@ -811,6 +1167,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "horizon_days": args.days,
         "sources": sorted(by_source.values(), key=lambda x: (-x["prompt_events"], x["source"])),
+        "body_kind_counts": dict(sorted(body_kind_counts.items())),
         "sessions": sessions,
         "worktree_report": wt_report,
         "task_snapshot": task_snapshot_private,
@@ -823,12 +1180,112 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def load_curated_block(path: Path) -> str:
+    """Carry the judgment layer (ask-cluster themes/grades, LLM- or hand-authored) across
+    regenerations verbatim — the mechanical register refreshes around it."""
+    try:
+        text = path.read_text()
+    except OSError:
+        return ""
+    begin = text.find(EVERY_ASK_CURATED_BEGIN)
+    end = text.find(EVERY_ASK_CURATED_END)
+    if begin == -1 or end == -1 or end <= begin:
+        return ""
+    return text[begin + len(EVERY_ASK_CURATED_BEGIN) : end].strip("\n")
+
+
+def _redact_cwd(cwd: str | None) -> str:
+    if not cwd:
+        return "-"
+    name = Path(cwd).name or str(cwd)
+    if "private" in name.lower():
+        return "(private)"
+    return name
+
+
+def render_every_ask(snapshot: dict[str, Any], curated: str, *, max_rows: int = 120) -> str:
+    """The regenerable EVERY-ASK register: every session that carried operator asks in the
+    horizon, newest-first, receipts-oriented and redacted (hashes/counts, no prompt text).
+    Deterministic for a given snapshot — no wall-clock stamp — so a same-data re-run is a no-op."""
+    horizon = "all local history" if snapshot["horizon_days"] is None else f"last {snapshot['horizon_days']} days"
+    sources = snapshot["sources"]
+    newest = max((s["newest"] or "" for s in sources), default="") or "n/a"
+    total_prompts = sum(int(s["prompt_events"]) for s in sources)
+    ask_sessions = [s for s in snapshot["sessions"] if int(s.get("prompt_event_count") or 0) > 0]
+    ask_sessions.sort(key=lambda s: (s.get("mtime") or "", s["session_key"]), reverse=True)
+
+    lines = [
+        "# Prompt occurrence register (compatibility view)",
+        "",
+        "> Regenerated by `scripts/prompt-lifecycle-ledger.py --every-ask --write` (mechanical rows below,",
+        "> curated judgment block preserved between markers). Raw prompt text never lands here — hashes,",
+        "> counts, and receipts only; the full text lives in the private session corpus.",
+        ">",
+        f"> Horizon: `{horizon}` · newest source event `{newest}` · **{total_prompts}** prompt events across "
+        f"**{len(ask_sessions)}** prompt-carrying sessions. The canonical per-ask control plane is "
+        "`docs/prompt-atom-ledger.md`; a session row is not an ask or completion receipt.",
+        "",
+        "## Prompt-event session register (newest-first)",
+        "",
+        "`Direct` is the legacy non-scaffold bucket. It can contain operator text, transport echoes,",
+        "or directly fed frames and therefore does not prove operator authorship.",
+        "",
+        "| When | Source | Where | Prompt events | Legacy direct | Worktree |",
+        "|---|---|---|---:|---:|---|",
+    ]
+    for session in ask_sessions[:max_rows]:
+        when = (session.get("mtime") or "")[:10] or "n/a"
+        direct = int((session.get("body_kind_counts") or {}).get("direct") or 0)
+        lines.append(
+            f"| {when} | `{session['source']}` | `{_redact_cwd(session.get('cwd'))}` | "
+            f"{session['prompt_event_count']} | {direct} | `{session.get('worktree_slug') or '-'}` |"
+        )
+    if len(ask_sessions) > max_rows:
+        lines.append("")
+        lines.append(
+            f"_{len(ask_sessions) - max_rows} older prompt-carrying sessions not shown — full rows in the "
+            f"private index (`{relpath(PRIVATE_INDEX)}`)._"
+        )
+
+    by_source = {s["source"]: s for s in sources}
+    lines += [
+        "",
+        "## Source coverage",
+        "",
+        "| Source | Sessions | Prompt events |",
+        "|---|---:|---:|",
+    ]
+    for name, s in sorted(by_source.items(), key=lambda kv: -int(kv[1]["prompt_events"])):
+        lines.append(f"| `{name}` | {s['files']} | {s['prompt_events']} |")
+
+    lines += [
+        "",
+        "## Curated ask-clusters (judgment layer)",
+        "",
+        EVERY_ASK_CURATED_BEGIN,
+        curated
+        if curated
+        else "_No curated clusters yet — seed this block from the latest retrospective "
+        "(`docs/reviews/`); it is preserved verbatim across regenerations._",
+        EVERY_ASK_CURATED_END,
+        "",
+        "## Provenance",
+        "",
+        "- The original hand-curated session ledger (2026-06-19, session `9750bef7`) is preserved at "
+        "`docs/every-ask/2026-06-19-session-9750bef7.md`.",
+        "- Receipts, worktree links, and remote PR verification: `docs/prompt-lifecycle-ledger.md`.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def render_markdown(snapshot: dict[str, Any]) -> str:
     horizon = "all local history" if snapshot["horizon_days"] is None else f"last {snapshot['horizon_days']} days"
     sources = snapshot["sources"]
     total_files = sum(int(s["files"]) for s in sources)
     total_bytes = sum(int(s["bytes"]) for s in sources)
     total_prompts = sum(int(s["prompt_events"]) for s in sources)
+    total_task_body_bytes = sum(int(s.get("task_body_bytes") or 0) for s in sources)
     wt = snapshot["worktree_report"]
     tasks = snapshot["task_snapshot"]
     remote = snapshot.get("remote", {})
@@ -854,18 +1311,34 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Redacted Prompt Coverage",
         "",
         f"Indexed `{total_files}` app/session files, `{fmt_bytes(total_bytes)}`, with `{total_prompts}` prompt-like user events hashed into the private index.",
+        f"Normalized task-body payload covered `{fmt_bytes(total_task_body_bytes)}` after stripping recognized scaffold-only prompt frames.",
         "",
-        "| Source | Files | Prompt Events | Event Records | Size | Newest |",
-        "|---|---:|---:|---:|---:|---|",
+        "| Source | Files/Sessions | Prompt Events | Prompt Bytes | Task Body Bytes | Event Records | Size | Newest |",
+        "|---|---:|---:|---:|---:|---:|---:|---|",
     ]
     for source in sources:
         lines.append(
             f"| `{source['source']}` | {source['files']} | {source['prompt_events']} | "
+            f"{fmt_bytes(int(source.get('prompt_bytes') or 0))} | "
+            f"{fmt_bytes(int(source.get('task_body_bytes') or 0))} | "
             f"{source['event_records']} | {fmt_bytes(int(source['bytes']))} | "
             f"`{source['newest'] or 'n/a'}` |"
         )
     if not sources:
-        lines.append("| none | 0 | 0 | 0 | 0 B | n/a |")
+        lines.append("| none | 0 | 0 | 0 B | 0 B | 0 | 0 B | n/a |")
+
+    body_kind_counts = snapshot.get("body_kind_counts") or {}
+    lines += [
+        "",
+        "## Prompt Body Mix",
+        "",
+        "| Body Kind | Prompt Events |",
+        "|---|---:|",
+    ]
+    for kind, count in sorted(body_kind_counts.items(), key=lambda kv: (-kv[1], kv[0])):
+        lines.append(f"| `{kind}` | {count} |")
+    if not body_kind_counts:
+        lines.append("| none | 0 |")
 
     lines += [
         "",
@@ -975,7 +1448,9 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "- Codex has prompt-event coverage through `history.jsonl` and session JSONL, but no "
             "`codex-quicken.py` lifecycle journal was found yet."
         )
-    task_pr_errors = int(((remote.get("task_prs") or {}).get("counts") or {}).get("ERROR", 0)) if remote.get("enabled") else 0
+    task_pr_errors = (
+        int(((remote.get("task_prs") or {}).get("counts") or {}).get("ERROR", 0)) if remote.get("enabled") else 0
+    )
     if task_pr_errors:
         lines.append(
             f"- Remote task-board PR receipt scan has `{task_pr_errors}` GitHub/API errors; rerun before using those refs as closure proof."
@@ -1030,6 +1505,11 @@ def main() -> int:
     parser.add_argument("--no-cloud", action="store_true", help="skip public cloud/runtime probes")
     parser.add_argument("--remote-pr-limit", type=int, default=1000, help="maximum task PR refs to verify; 0 means all")
     parser.add_argument("--remote-workers", type=int, default=8, help="parallel GitHub PR receipt workers")
+    parser.add_argument(
+        "--every-ask",
+        action="store_true",
+        help="also regenerate the root EVERY-ASK-LEDGER.md register (curated block preserved)",
+    )
     args = parser.parse_args()
     if args.all:
         args.days = None
@@ -1038,16 +1518,23 @@ def main() -> int:
 
     snapshot = build_snapshot(args)
     markdown = render_markdown(snapshot)
+    every_ask_md = None
+    if args.every_ask:
+        every_ask_md = render_every_ask(snapshot, load_curated_block(EVERY_ASK_PATH))
     if args.write:
         write_outputs(snapshot, markdown)
+        if every_ask_md is not None:
+            EVERY_ASK_PATH.write_text(every_ask_md)
     else:
-        print(markdown)
+        print(every_ask_md if every_ask_md is not None else markdown)
     total_files = sum(int(s["files"]) for s in snapshot["sources"])
     total_prompts = sum(int(s["prompt_events"]) for s in snapshot["sources"])
     horizon = "all history" if args.days is None else f"{args.days}d"
     msg = f"prompt-lifecycle-ledger: {total_files} files, {total_prompts} prompt events over {horizon}"
     if args.write:
         msg += f"; wrote {DOC_PATH}"
+        if every_ask_md is not None:
+            msg += f" and {EVERY_ASK_PATH}"
     print(msg)
     return 0
 

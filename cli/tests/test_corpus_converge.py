@@ -13,6 +13,8 @@ from pathlib import Path
 
 import yaml
 
+from limen.tabularius import drain_once
+
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "corpus-converge.py"
 REPO = Path(__file__).resolve().parents[2]
 
@@ -102,6 +104,7 @@ def test_emit_gaps_bounded_idempotent(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
     added = m.emit_gaps(["explore: governance", "explore: governance"], "some-face", apply=True)
     assert added == 1  # duplicate collapsed
+    drain_once(tmp_path / "tasks.yaml")
     out = yaml.safe_load((tmp_path / "tasks.yaml").read_text())
     corp = [t for t in out["tasks"] if t["id"].startswith("CORP-")]
     assert len(corp) == 1 and corp[0]["type"] == "corpus-gap"
@@ -115,6 +118,50 @@ def test_gather_new_material_fail_open_on_missing_dirs(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_CORPUS_ROOT", str(tmp_path / "alsonope"))
     # no sources exist → empty list, no crash (never-NO)
     assert m.gather_new_material(2, with_graph=False, absorbed=set()) == []
+
+
+def test_collect_atoms_uses_bounded_newest_heap(monkeypatch):
+    m = _load(monkeypatch)
+    body = "substantive atom text " * 8
+    records = [
+        {
+            "atom_id": f"atom-{index}",
+            "text": body,
+            "source": "codex",
+            "ts": f"2026-07-23T12:{index // 60:02d}:{index % 60:02d}Z",
+        }
+        for index in range(120)
+    ]
+    monkeypatch.setattr(m, "iter_atoms", lambda: iter(records))
+
+    selected = m._collect_atoms(2, absorbed=set())
+
+    assert len(selected) == 40
+    assert selected[0]["id"] == "atom-119"
+    assert selected[-1]["id"] == "atom-80"
+
+
+def test_collect_atoms_applies_source_gate_during_stream(monkeypatch):
+    m = _load(monkeypatch)
+    monkeypatch.setenv("LIMEN_EXPORT_SOURCES", "claude")
+    body = "substantive atom text " * 8
+    monkeypatch.setattr(
+        m,
+        "iter_atoms",
+        lambda: iter(
+            [
+                {"atom_id": "codex", "text": body, "source": "codex", "ts": "2026-07-23T02:00:00Z"},
+                {
+                    "atom_id": "claude",
+                    "text": body,
+                    "source": "claude",
+                    "ts": "2026-07-23T01:00:00Z",
+                },
+            ]
+        ),
+    )
+
+    assert [item["id"] for item in m._collect_atoms(1, absorbed=set())] == ["claude"]
 
 
 def test_main_offline_preview_writes_nothing(tmp_path, monkeypatch):

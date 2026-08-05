@@ -1,0 +1,56 @@
+# State Log — Workflow 2 output
+# Append-only, timestamped, structured markers per beat.
+# The patient reviews and corrects all entries.
+# Trend: improving / stable / declining per marker.
+# No interpretation — recorded observation only.
+
+- timestamp: "2026-07-05T12:00:00Z"
+  posture: ACTIVE
+  markers:
+    pain:
+      level: 4
+      scale: "0-10"
+      location: "lower back / left hip"
+      quality: "dull ache, intermittent"
+      trend: stable
+      notes: "Spikes to 6 after prolonged sitting (2h+); managed with hourly position changes"
+    sleep:
+      quality: fair
+      hours: 6.5
+      interruptions: 2
+      notes: "Two wake-ups — one to urinate, one from back stiffness"
+      trend: stable
+    mood:
+      level: fair
+      trend: stable
+      notes: "Frustrated by pacing constraints but managing — therapy is helping with acceptance"
+    energy:
+      level: moderate
+      trend: stable
+      notes: "Morning best window; afternoon slump managed with rest interval"
+    cognition:
+      load_tolerance: moderate
+      trend: stable
+      notes: "Screen tolerance ~45min before fatigue requires break. Pacing protocol maintaining productivity"
+    functional_capacity:
+      mobility: "Tolerating weight-bearing limits per orthopedic directive"
+      sitting_tolerance: "60-90 minutes before discomfort requires stand/pace break"
+      standing_tolerance: "15-20 minutes with support"
+      walking_tolerance: "~10 minutes continuous, ~15 minutes with rest mid-point"
+      trend: stable
+    medication_effects:
+      - medication: "(per chart — no identifiers in organ artifacts)"
+        adherence: complete
+        side_effects: none reported
+        notes: "Taking as prescribed; no missed doses this period"
+  protocol_adherence:
+    physical_therapy: "3/3 sessions completed this week"
+    cognitive_pacing: "Maintained required rest intervals 5/7 days"
+    weight_bearing: "Compliant with all weight-bearing restrictions"
+  trend_summary: stable
+  review_status: pending_patient_review
+  next_beat_due: "2026-07-06T00:00:00Z"
+  sentinel:
+    status: pass
+    checked_at: "2026-07-05T12:00:05Z"
+    stamp: "Safety check passed: clinical boundary held, no contradictions with licensed directives, privacy scoped."

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+import json
 import stat
 import sys
 import os
@@ -12,6 +14,11 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import main
+import limen_intake
+import limen_work_loan
+
+
+REAL_SUBMIT_TASK_MUTATION = main.submit_task_mutation
 
 
 def write_board(path: Path, tasks: list[dict]) -> None:
@@ -36,6 +43,99 @@ def write_board(path: Path, tasks: list[dict]) -> None:
     )
 
 
+class FakeConductBroker:
+    """Test-only keeper projection; production code never receives a board write primitive."""
+
+    def __init__(self) -> None:
+        self.intents: list[dict] = []
+        self.receipts: list[dict] = []
+
+    def submit(
+        self,
+        intent: dict,
+        *,
+        work_discriminator: dict | None = None,
+    ) -> main.ConductMutation:
+        self.intents.append(copy.deepcopy(intent))
+        task_id = intent["task_id"]
+        board: dict | None = None
+        if main.storage_mode() == "file":
+            board = main.load_board()
+
+        if intent["kind"] == "task.upsert":
+            task = copy.deepcopy(intent["task"])
+            if board is not None:
+                if any(candidate.get("id") == task_id for candidate in board.get("tasks", [])):
+                    raise AssertionError(f"fake broker received duplicate upsert for {task_id}")
+                board.setdefault("tasks", []).append(task)
+        else:
+            if board is None:
+                raise AssertionError("fake broker requires a local projection for non-upsert tests")
+            task = next(candidate for candidate in board.get("tasks", []) if candidate.get("id") == task_id)
+            expected = intent.get("expected_status")
+            expected_statuses = expected if isinstance(expected, list) else [expected]
+            if task.get("status") not in expected_statuses:
+                raise AssertionError(
+                    f"fake broker expected {task_id} in {expected_statuses}, found {task.get('status')}"
+                )
+            if intent["kind"] == "task.claim":
+                debit = int(task.get("budget_cost", 0))
+                agent = intent.get("patch", {}).get("target_agent") or task.get("target_agent")
+                track = board["portal"]["budget"].setdefault("track", {"spent": 0, "per_agent": {}})
+                track["spent"] = int(track.get("spent", 0)) + debit
+                per_agent = track.setdefault("per_agent", {})
+                per_agent[agent] = int(per_agent.get(agent, 0)) + debit
+            elif (
+                intent["kind"] == "task.status"
+                and task.get("status") == "dispatched"
+                and intent.get("patch", {}).get("status") == "open"
+            ):
+                refund = int(task.get("budget_cost", 0))
+                agent = task.get("target_agent")
+                track = board["portal"]["budget"].setdefault("track", {"spent": 0, "per_agent": {}})
+                track["spent"] = max(0, int(track.get("spent", 0)) - refund)
+                per_agent = track.setdefault("per_agent", {})
+                per_agent[agent] = max(0, int(per_agent.get(agent, 0)) - refund)
+            task.update(copy.deepcopy(intent.get("patch", {})))
+
+        sequence = len(self.intents)
+        timestamp = main.now_iso()
+        log = intent.get("log", {})
+        task["updated"] = timestamp
+        task.setdefault("dispatch_log", []).append(
+            {
+                "timestamp": timestamp,
+                "agent": log.get("agent", "api"),
+                "session_id": log.get("session_id", "test-broker"),
+                "status": log.get("status", task.get("status", "updated")),
+                "output": log.get("output", ""),
+                "conduct_event_id": f"fake-event-{sequence}",
+                "conduct_run_id": f"fake-run-{sequence}",
+                "conduct_lease_id": f"fake-lease-{sequence}",
+                "conduct_generation": sequence,
+            }
+        )
+        if board is not None:
+            main.tasks_path().write_text(yaml.safe_dump(board, sort_keys=False))
+
+        receipt = {
+            "status": "applied",
+            "run_id": f"fake-run-{sequence}",
+            "event_id": f"fake-event-{sequence}",
+            "projection_status": "committed",
+            "work_discriminator": copy.deepcopy(work_discriminator),
+        }
+        self.receipts.append(receipt)
+        return main.ConductMutation(task=copy.deepcopy(task), receipt=receipt)
+
+
+@pytest.fixture(autouse=True)
+def broker(monkeypatch: pytest.MonkeyPatch) -> FakeConductBroker:
+    fake = FakeConductBroker()
+    monkeypatch.setattr(main, "submit_task_mutation", fake.submit)
+    return fake
+
+
 @pytest.fixture()
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     tasks_path = tmp_path / "tasks.yaml"
@@ -46,6 +146,8 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.delenv("LIMEN_API_TOKEN", raising=False)
     monkeypatch.delenv("LIMEN_OWNER_TOKEN", raising=False)
     monkeypatch.delenv("LIMEN_CLIENT_TOKEN", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
     return TestClient(main.app)
 
 
@@ -66,6 +168,12 @@ def test_dispatch_dry_run_does_not_mutate_board(client: TestClient, tmp_path: Pa
                 "budget_cost": 1,
                 "status": "open",
                 "created": "2026-06-03",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Dispatch the bounded Jules task",
+                "owner_surface": "4444J99/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "github:4444J99/limen:pull-request:LIMEN-001",
                 "dispatch_log": [],
             }
         ],
@@ -88,7 +196,7 @@ def test_release_stale_reopens_tasks_only_when_not_dry_run(client: TestClient, t
                 "id": "LIMEN-002",
                 "title": "Stale active task",
                 "repo": "4444J99/limen",
-                "target_agent": "jules",
+                "target_agent": "codex",
                 "priority": "high",
                 "budget_cost": 1,
                 "status": "dispatched",
@@ -119,6 +227,45 @@ def test_release_stale_reopens_tasks_only_when_not_dry_run(client: TestClient, t
     assert task["dispatch_log"][-1]["session_id"] == "release-stale"
 
 
+def test_release_stale_api_holds_jules_when_remote_probe_is_unavailable(
+    client: TestClient,
+    tmp_path: Path,
+) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "JULES-STALE",
+                "title": "Remote claim",
+                "repo": "organvm/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "dispatched",
+                "created": "2026-06-01",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-06-01T00:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "12345678901234567890",
+                        "status": "dispatched",
+                    }
+                ],
+            }
+        ],
+    )
+
+    response = client.post("/api/release-stale?hours=24&dry_run=false")
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+    assert response.json()["candidate_count"] == 1
+    assert response.json()["held"] == ["JULES-STALE"]
+    assert response.json()["released"] == []
+    assert response.json()["remote_probe"]["status"] == "unavailable"
+    assert read_board(tmp_path)["tasks"][0]["status"] == "dispatched"
+
+
 def test_live_dispatch_mutates_after_command_success(
     client: TestClient,
     tmp_path: Path,
@@ -140,6 +287,12 @@ def test_live_dispatch_mutates_after_command_success(
                 "budget_cost": 2,
                 "status": "open",
                 "created": "2026-06-03",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Dispatch the bounded Codex task",
+                "owner_surface": "4444J99/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "github:4444J99/limen:pull-request:LIMEN-003",
                 "dispatch_log": [],
             }
         ],
@@ -160,7 +313,92 @@ def test_live_dispatch_mutates_after_command_success(
     assert board["portal"]["budget"]["track"]["per_agent"]["codex"] == 2
 
 
-def test_github_storage_create_task_uses_contents_sha(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_live_dispatch_does_not_normalize_over_budget_unselected_sibling(
+    client: TestClient,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dispatch_bin = tmp_path / "agent-dispatch"
+    dispatch_bin.write_text("#!/bin/sh\nprintf 'ok\\n'\n")
+    dispatch_bin.chmod(dispatch_bin.stat().st_mode | stat.S_IXUSR)
+    monkeypatch.setenv("LIMEN_DISPATCH_CMD", str(dispatch_bin))
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "OVER-BUDGET",
+                "title": "Do not mutate this legacy sibling",
+                "repo": "4444J99/limen",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 11,
+                "status": "open",
+                "created": "2026-06-03",
+            },
+            {
+                "id": "AFFORDABLE",
+                "title": "Dispatch this task",
+                "repo": "4444J99/limen",
+                "target_agent": "codex",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "github:4444J99/limen:pull-request:AFFORDABLE",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Dispatch the affordable bounded task",
+                "owner_surface": "4444J99/limen",
+                "created": "2026-06-03",
+            },
+        ],
+    )
+
+    response = client.post("/api/dispatch", json={"agent": "codex", "limit": 1, "live": True})
+
+    assert response.status_code == 200
+    tasks = {task["id"]: task for task in read_board(tmp_path)["tasks"]}
+    assert tasks["AFFORDABLE"]["status"] == "dispatched"
+    assert "predicate" not in tasks["OVER-BUDGET"]
+    assert "receipt_target" not in tasks["OVER-BUDGET"]
+
+
+@pytest.mark.parametrize("branch", ["main", "master", "tabularius/board-projection", "feature/runtime"])
+def test_github_storage_refuses_every_branch_before_contents_access(
+    branch: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    def fake_github_request(method: str, _url: str, _payload: dict | None = None) -> dict:
+        calls.append(method)
+        raise AssertionError("GitHub-backed mutation reached the Contents adapter")
+
+    monkeypatch.setattr(main, "GITHUB_REPO", "organvm/limen")
+    monkeypatch.setattr(main, "GITHUB_TOKEN", "token")
+    monkeypatch.setattr(main, "GITHUB_BRANCH", branch)
+    monkeypatch.setattr(main, "GITHUB_PATH", "tasks.yaml")
+    monkeypatch.setattr(main, "github_request", fake_github_request)
+
+    with pytest.raises(main.HTTPException) as exc_info:
+        main.save_github_board({"tasks": []}, "abc123")
+
+    assert exc_info.value.status_code == 409
+    receipt = exc_info.value.detail
+    assert receipt["status"] == "mutation_deferred"
+    assert receipt["code"] == "board_mutation_deferred"
+    assert receipt["retryable"] is True
+    assert receipt["owner"] == "tabularius"
+    assert receipt["target"]["access"] == "read_only"
+    assert receipt["target"]["writable"] is False
+    assert receipt["target"]["branch"] == branch
+    assert receipt["target"]["mutation_route"] == "tabularius_ticket"
+    assert calls == []
+
+
+def test_github_storage_create_task_reads_projection_without_direct_put(monkeypatch: pytest.MonkeyPatch) -> None:
+    import base64
+
     calls: list[tuple[str, str, dict | None]] = []
     board = yaml.safe_dump(
         {
@@ -174,17 +412,14 @@ def test_github_storage_create_task_uses_contents_sha(monkeypatch: pytest.Monkey
     def fake_github_request(method: str, url: str, payload: dict | None = None) -> dict:
         calls.append((method, url, payload))
         if method == "GET":
-            import base64
-
-            return {"encoding": "base64", "content": base64.b64encode(board.encode()).decode(), "sha": "abc123"}
-        if method == "PUT":
-            assert payload is not None
-            assert payload["sha"] == "abc123"
-            assert payload["branch"] == "main"
-            return {"content": {"sha": "def456"}}
+            return {
+                "encoding": "base64",
+                "content": base64.b64encode(board.encode()).decode(),
+                "sha": "abc123",
+            }
         raise AssertionError(f"unexpected method {method}")
 
-    monkeypatch.setattr(main, "GITHUB_REPO", "4444J99/limen")
+    monkeypatch.setattr(main, "GITHUB_REPO", "organvm/limen")
     monkeypatch.setattr(main, "GITHUB_TOKEN", "token")
     monkeypatch.setattr(main, "GITHUB_BRANCH", "main")
     monkeypatch.setattr(main, "GITHUB_PATH", "tasks.yaml")
@@ -194,16 +429,214 @@ def test_github_storage_create_task_uses_contents_sha(monkeypatch: pytest.Monkey
     response = client.post(
         "/api/tasks",
         json={
-            "id": "LIMEN-004",
-            "title": "GitHub backed task",
-            "repo": "4444J99/limen",
-            "target_agent": "jules",
+            "id": "LIMEN-CONDUCT-COMPAT",
+            "title": "Route through the conduct keeper",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "predicate": "pytest -q web/api/tests/test_main.py",
+            "receipt_target": "github:organvm/limen:pull-request:LIMEN-CONDUCT-COMPAT",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Create the task through the authenticated conduct keeper",
+            "owner_surface": "organvm/limen",
+            "budget_cost": 1,
         },
     )
 
     assert response.status_code == 200
     assert response.json()["status"] == "created"
-    assert [call[0] for call in calls] == ["GET", "PUT"]
+    assert response.json()["broker_receipt"]["projection_status"] == "committed"
+    assert [call[0] for call in calls] == ["GET"]
+
+
+def test_github_live_dispatch_does_not_launch_when_broker_claim_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import base64
+
+    storage_calls: list[str] = []
+    dispatch_calls: list[list[str]] = []
+    board = yaml.safe_dump(
+        {
+            "version": "1.0",
+            "portal": {
+                "name": "Universal Task Intake",
+                "budget": {
+                    "daily": 100,
+                    "per_agent": {"codex": 10},
+                    "track": {"date": "", "spent": 0, "per_agent": {}},
+                },
+            },
+            "tasks": [
+                {
+                    "id": "LIMEN-SERIALIZED-DISPATCH",
+                    "title": "Claim before launch",
+                    "repo": "organvm/limen",
+                    "target_agent": "codex",
+                    "priority": "high",
+                    "budget_cost": 1,
+                    "status": "open",
+                    "predicate": "pytest -q web/api/tests/test_main.py",
+                    "receipt_target": "github:organvm/limen:pull-request:LIMEN-SERIALIZED-DISPATCH",
+                    "origin": "human_prompt",
+                    "horizon": "present",
+                    "value_case": "Claim the bounded task before native launch",
+                    "owner_surface": "organvm/limen",
+                    "created": "2026-07-18T00:00:00Z",
+                    "dispatch_log": [],
+                }
+            ],
+        },
+        sort_keys=False,
+    )
+
+    def fake_github_request(method: str, _url: str, _payload: dict | None = None) -> dict:
+        storage_calls.append(method)
+        if method == "GET":
+            return {
+                "encoding": "base64",
+                "content": base64.b64encode(board.encode()).decode(),
+                "sha": "abc123",
+            }
+        raise AssertionError("dispatch attempted a direct GitHub board write")
+
+    def reject_claim(_intent: dict, *, work_discriminator: dict | None = None) -> main.ConductMutation:
+        del work_discriminator
+        raise main.HTTPException(status_code=409, detail="busy")
+
+    def fake_dispatch(command: list[str]) -> tuple[bool, str]:
+        dispatch_calls.append(command)
+        raise AssertionError("live dispatch launched before the broker claim was accepted")
+
+    monkeypatch.setattr(main, "GITHUB_REPO", "organvm/limen")
+    monkeypatch.setattr(main, "GITHUB_TOKEN", "token")
+    monkeypatch.setattr(main, "GITHUB_BRANCH", "main")
+    monkeypatch.setattr(main, "github_request", fake_github_request)
+    monkeypatch.setattr(main, "submit_task_mutation", reject_claim)
+    monkeypatch.setattr(main, "run_dispatch_command", fake_dispatch)
+    client = TestClient(main.app)
+
+    response = client.post(
+        "/api/dispatch",
+        json={"agent": "codex", "limit": 1, "live": True, "session_id": "must-not-launch"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "partial_failure"
+    assert storage_calls == ["GET"]
+    assert dispatch_calls == []
+
+
+def test_real_conduct_submission_registers_and_returns_projection_receipt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, str, dict]] = []
+    projected = {
+        "id": "LIMEN-BROKER-001",
+        "title": "Projected task",
+        "status": "done",
+    }
+
+    def fake_conduct_request(method: str, path: str, payload: dict) -> dict:
+        calls.append((method, path, payload))
+        if path == "/api/conduct/sessions":
+            return payload
+        return {
+            "status": "applied",
+            "run_id": "run-projected",
+            "projection_receipts": [
+                {
+                    "status": "committed",
+                    "event_id": "event-projected",
+                    "task": projected,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(main, "conduct_request", fake_conduct_request)
+    intent = {
+        "kind": "task.status",
+        "task_id": "LIMEN-BROKER-001",
+        "expected_status": "in_progress",
+        "patch": {"status": "done"},
+        "log": {
+            "status": "done",
+            "agent": "qa",
+            "session_id": "qa-test",
+            "output": "predicate passed",
+        },
+    }
+    discriminator = {"prior": {"id": "LIMEN-BROKER-001", "status": "in_progress"}, "intent": intent}
+
+    mutation = REAL_SUBMIT_TASK_MUTATION(intent, work_discriminator=discriminator)
+
+    assert mutation.task == projected
+    assert mutation.receipt == {
+        "status": "applied",
+        "run_id": "run-projected",
+        "event_id": "event-projected",
+        "projection_status": "committed",
+    }
+    assert [path for _, path, _ in calls] == ["/api/conduct/sessions", "/api/conduct/runs"]
+    session = calls[0][2]
+    packet = calls[1][2]
+    assert session["identity"]["agent"] == "api"
+    assert session["capabilities"] == ["task-submit"]
+    assert packet["required_capabilities"] == ["board-write"]
+    assert packet["intent_hash"] == main.canonical_hash(intent)
+    assert packet["execution_hash"] == main.canonical_hash(packet["execution"])
+    assert packet["resource_claims"] == [
+        {
+            "schema_version": "limen.resource_claim.v1",
+            "key": "task/LIMEN-BROKER-001",
+            "mode": "exclusive",
+        }
+    ]
+    _, repeated = main.task_work_packet(intent, work_discriminator=discriminator)
+    assert repeated["work_id"] == packet["work_id"]
+
+
+def test_web_api_hashes_use_shared_rfc8785_vectors() -> None:
+    vectors_path = Path(__file__).resolve().parents[3] / "spec/contracts/conduct/rfc8785-vectors.json"
+    vectors = json.loads(vectors_path.read_text())["vectors"]
+    assert len(vectors) >= 2
+    for vector in vectors:
+        assert main.canonical_json(vector["value"]) == vector["canonical"]
+        assert main.canonical_hash(vector["value"]) == vector["sha256"]
+
+
+def test_mutation_fails_closed_without_conduct_broker_and_leaves_projection_unchanged(
+    client: TestClient,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tasks = tmp_path / "tasks.yaml"
+    write_board(tasks, [])
+    before = tasks.read_text()
+    monkeypatch.setattr(main, "submit_task_mutation", REAL_SUBMIT_TASK_MUTATION)
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
+
+    response = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-NO-BROKER",
+            "title": "Must fail closed",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "predicate": "pytest -q web/api/tests/test_main.py",
+            "receipt_target": "github:organvm/limen:pull-request:LIMEN-NO-BROKER",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Prove task creation fails closed without its broker",
+            "owner_surface": "organvm/limen",
+            "budget_cost": 1,
+        },
+    )
+
+    assert response.status_code == 503
+    assert "authenticated conduct broker is required" in response.json()["detail"]
+    assert tasks.read_text() == before
 
 
 def test_public_status_is_aggregate_only(client: TestClient, tmp_path: Path) -> None:
@@ -537,6 +970,14 @@ def test_assign_task_updates_steering_fields_and_logs(client: TestClient, tmp_pa
             "priority": "high",
             "budget_cost": 2,
             "status": "open",
+            "predicate": "pytest -q web/api/tests/test_main.py",
+            "receipt_target": "github:4444J99/limen:pull-request:LIMEN-011",
+            "origin": "obligation",
+            "horizon": "present",
+            "value_case": "Deliver the assigned external obligation",
+            "owner_surface": "github:4444J99/limen:pull-request:LIMEN-011",
+            "external_deadline": True,
+            "due_at": "2026-08-01",
             "note": "Route through Jules after QA steering",
             "session_id": "qa-panel",
         },
@@ -545,15 +986,51 @@ def test_assign_task_updates_steering_fields_and_logs(client: TestClient, tmp_pa
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "assigned"
-    assert set(payload["changed"]) == {"target_agent", "priority", "budget_cost", "status"}
+    assert set(payload["changed"]) == {
+        "target_agent",
+        "priority",
+        "budget_cost",
+        "status",
+        "origin",
+        "horizon",
+        "value_case",
+        "owner_surface",
+        "external_deadline",
+        "due_at",
+    }
     task = read_board(tmp_path)["tasks"][0]
     assert task["target_agent"] == "jules"
     assert task["priority"] == "high"
     assert task["budget_cost"] == 2
     assert task["status"] == "open"
+    assert task["external_deadline"] is True
+    assert task["due_at"] == "2026-08-01"
     assert task["dispatch_log"][-1]["status"] == "assigned"
     assert task["dispatch_log"][-1]["session_id"] == "qa-panel"
     assert "Route through Jules" in task["dispatch_log"][-1]["output"]
+
+
+def test_assign_task_rejects_boolean_budget_cost(client: TestClient, tmp_path: Path) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-011B",
+                "title": "Assignable task",
+                "repo": "4444J99/limen",
+                "target_agent": "any",
+                "priority": "low",
+                "budget_cost": 1,
+                "status": "needs_human",
+                "created": "2026-06-03",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    response = client.post("/api/tasks/LIMEN-011B/assign", json={"budget_cost": True})
+
+    assert response.status_code == 422
 
 
 def test_assign_task_respects_token(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -583,7 +1060,11 @@ def test_assign_task_respects_token(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     response = client.post(
         "/api/tasks/LIMEN-012/assign",
         headers={"Authorization": "Bearer secret"},
-        json={"target_agent": "jules"},
+        json={
+            "target_agent": "jules",
+            "predicate": "pytest -q web/api/tests/test_main.py",
+            "receipt_target": "github:4444J99/limen:pull-request:LIMEN-012",
+        },
     )
     assert response.status_code == 200
 
@@ -602,6 +1083,12 @@ def test_verify_task_moves_active_work_to_closure_gate(client: TestClient, tmp_p
                 "status": "in_progress",
                 "created": "2026-06-03",
                 "urls": ["https://github.com/4444J99/limen/pull/14"],
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Verify the bounded task with predicate and receipt evidence",
+                "owner_surface": "4444J99/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "https://github.com/4444J99/limen/pull/14",
                 "dispatch_log": [],
             }
         ],
@@ -609,7 +1096,15 @@ def test_verify_task_moves_active_work_to_closure_gate(client: TestClient, tmp_p
 
     response = client.post(
         "/api/tasks/LIMEN-014V/verify",
-        json={"status": "done", "note": "Evidence passed", "session_id": "qa-verify"},
+        json={
+            "status": "done",
+            "note": "Evidence passed",
+            "session_id": "qa-verify",
+            "predicate_exit_code": 0,
+            "receipt_target": "https://github.com/4444J99/limen/pull/14",
+            "receipt_verified": True,
+            "verification_context_digest": "a" * 64,
+        },
     )
 
     assert response.status_code == 200
@@ -840,6 +1335,86 @@ def test_readiness_reports_operator_next_actions(
     assert "dispatch_log" not in str(payload)
 
 
+def test_github_readiness_advertises_deferred_ticket_route_not_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import base64
+
+    board = yaml.safe_dump(
+        {
+            "version": "1.0",
+            "portal": {
+                "name": "Universal Task Intake",
+                "budget": {
+                    "daily": 100,
+                    "per_agent": {"codex": 10},
+                    "track": {"date": "", "spent": 0, "per_agent": {}},
+                },
+            },
+            "tasks": [
+                {
+                    "id": "STALE",
+                    "title": "Stale claim",
+                    "repo": "organvm/limen",
+                    "target_agent": "codex",
+                    "priority": "high",
+                    "budget_cost": 1,
+                    "status": "dispatched",
+                    "created": "2026-06-01",
+                    "dispatch_log": [],
+                },
+                {
+                    "id": "OPEN",
+                    "title": "Open task",
+                    "repo": "organvm/limen",
+                    "target_agent": "codex",
+                    "priority": "high",
+                    "budget_cost": 1,
+                    "status": "open",
+                    "created": "2026-06-03",
+                    "dispatch_log": [],
+                },
+            ],
+        },
+        sort_keys=False,
+    )
+    calls: list[str] = []
+
+    def fake_github_request(method: str, _url: str, _payload: dict | None = None) -> dict:
+        calls.append(method)
+        assert method == "GET"
+        return {
+            "encoding": "base64",
+            "content": base64.b64encode(board.encode()).decode(),
+            "sha": "abc123",
+        }
+
+    monkeypatch.setattr(main, "GITHUB_REPO", "organvm/limen")
+    monkeypatch.setattr(main, "GITHUB_TOKEN", "token")
+    monkeypatch.setattr(main, "GITHUB_BRANCH", "main")
+    monkeypatch.setattr(main, "GITHUB_PATH", "tasks.yaml")
+    monkeypatch.setattr(main, "github_request", fake_github_request)
+    client = TestClient(main.app)
+
+    response = client.get("/api/readiness?agent=codex")
+
+    assert response.status_code == 200
+    payload = response.json()
+    storage = next(check for check in payload["checks"] if check["id"] == "storage")
+    assert storage["status"] == "warn"
+    assert payload["mutation"] == {
+        "status": "deferred",
+        "code": "board_mutation_deferred",
+        "owner": "tabularius",
+        "route": "tabularius_ticket",
+        "next_action": main.TABULARIUS_TICKET_ACTION,
+    }
+    assert main.TABULARIUS_TICKET_ACTION in payload["next_actions"]
+    assert all("release-stale" not in action for action in payload["next_actions"])
+    assert all("live=true" not in action for action in payload["next_actions"])
+    assert calls == ["GET"]
+
+
 def test_create_task_rejects_malformed_untrusted_fields(client: TestClient, tmp_path: Path) -> None:
     write_board(tmp_path / "tasks.yaml", [])
 
@@ -877,12 +1452,205 @@ def test_create_task_rejects_malformed_untrusted_fields(client: TestClient, tmp_
     )
     assert bad_label.status_code == 422
 
+    bad_budget = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-SEC-003",
+            "title": "Bad budget",
+            "repo": "4444J99/limen",
+            "target_agent": "jules",
+            "budget_cost": True,
+        },
+    )
+    assert bad_budget.status_code == 422
+
+
+def test_create_and_open_update_enforce_typed_intake_contract(client: TestClient, tmp_path: Path) -> None:
+    assert main.TaskCreate.model_fields["predicate"].is_required()
+    assert main.TaskCreate.model_fields["receipt_target"].is_required()
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-CONTRACT-LEGACY",
+                "title": "Legacy terminal task",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "status": "needs_human",
+                "created": "2026-07-01",
+            }
+        ],
+    )
+
+    missing = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-CONTRACT-MISSING",
+            "title": "Missing typed contract",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+        },
+    )
+    assert missing.status_code == 422
+    assert {error["loc"][-1] for error in missing.json()["detail"]} == {"predicate", "receipt_target"}
+
+    created = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-CONTRACT-OK",
+            "title": "Typed task",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "predicate": "pytest -q web/api/tests/test_main.py",
+            "receipt_target": "github:organvm/limen:pull-request:LIMEN-CONTRACT-OK",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Create one fully underwritten API task",
+            "owner_surface": "organvm/limen",
+            "budget_cost": 1,
+        },
+    )
+    assert created.status_code == 200
+    assert created.json()["task"]["predicate"].startswith("pytest")
+
+    invalid_update = client.patch(
+        "/api/tasks/LIMEN-CONTRACT-OK",
+        json={"predicate": "tests should pass"},
+    )
+    assert invalid_update.status_code == 422
+
+    bypassed_dispatch = client.patch(
+        "/api/tasks/LIMEN-CONTRACT-LEGACY",
+        json={"status": "dispatched"},
+    )
+    assert bypassed_dispatch.status_code == 422
+
+
+def test_task_api_exposes_work_loan_fields_without_breaking_legacy_create_payloads() -> None:
+    base = {
+        "id": "LIMEN-WORK-LOAN-COMPAT",
+        "title": "Compatibility contract",
+        "repo": "organvm/limen",
+        "target_agent": "codex",
+        "predicate": "pytest -q web/api/tests/test_main.py",
+        "receipt_target": "github:organvm/limen:pull-request:LIMEN-WORK-LOAN-COMPAT",
+    }
+    legacy = main.TaskCreate.model_validate(base)
+    assert legacy.origin is None
+    assert legacy.horizon is None
+    assert legacy.value_case is None
+
+    adopted = main.TaskCreate.model_validate(
+        base
+        | {
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Deliver a bounded API contract with a durable owner receipt",
+            "owner_surface": "github:organvm/limen",
+        }
+    )
+    assert adopted.origin == "human_prompt"
+    assert adopted.horizon == "present"
+    assert adopted.owner_surface == "github:organvm/limen"
+
+    assert limen_work_loan.task_work_loan_missing_fields(base) == (
+        "source_origin",
+        "horizon",
+        "value_case",
+        "budget_cost",
+    )
+    assert limen_work_loan.work_loan_denial(("value_case", "source_origin")) == (
+        "task-not-underwritten:source_origin,value_case"
+    )
+
+
+def test_task_create_rejects_missing_work_loan_with_exact_stable_reason(
+    client: TestClient,
+    tmp_path: Path,
+) -> None:
+    write_board(tmp_path / "tasks.yaml", [])
+
+    response = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-WORK-LOAN-DENIED",
+            "title": "Readable request without underwriting",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "predicate": "pytest -q web/api/tests/test_main.py",
+            "receipt_target": "github:organvm/limen:pull-request:LIMEN-WORK-LOAN-DENIED",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == ("task-not-underwritten:source_origin,horizon,value_case,budget_cost")
+
+
+def test_done_credit_requires_predicate_and_durable_receipt_evidence(
+    client: TestClient,
+    tmp_path: Path,
+) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-CREDIT-EVIDENCE",
+                "title": "Do not credit intent alone",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "budget_cost": 1,
+                "status": "in_progress",
+                "created": "2026-07-21",
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Book credit only after predicate and receipt evidence",
+                "owner_surface": "organvm/limen",
+                "predicate": "pytest -q web/api/tests/test_main.py",
+                "receipt_target": "github:organvm/limen:pull-request:LIMEN-CREDIT-EVIDENCE",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    response = client.post("/api/tasks/LIMEN-CREDIT-EVIDENCE/verify", json={"status": "done"})
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "completion-not-verified:predicate"
+    assert read_board(tmp_path)["tasks"][0]["status"] == "in_progress"
+
+
+def test_work_loan_shared_fixtures_match_api_runtime() -> None:
+    fixtures_path = Path(__file__).resolve().parents[3] / "spec/contracts/work-loan-v1-fixtures.json"
+    fixtures = json.loads(fixtures_path.read_text(encoding="utf-8"))
+    task = {
+        "repo": "organvm/limen",
+        "budget_cost": 1,
+        "origin": "obligation",
+        "horizon": "present",
+        "value_case": "Meet the declared external deadline",
+        "predicate": "pytest -q",
+        "receipt_target": "git:organvm/limen:logs/deadline.json",
+        "external_deadline": True,
+    }
+    for case in fixtures["due_at_cases"]:
+        missing = limen_work_loan.task_work_loan_missing_fields(task | {"due_at": case["value"]})
+        assert ("due_at" not in missing) is case["valid"], case["value"]
+    for case in fixtures["predicate_cases"]:
+        assert limen_intake.is_executable_predicate(case["value"]) is case["valid"], case["value"]
+    for case in fixtures["receipt_target_cases"]:
+        assert limen_intake.is_durable_receipt_target(case["value"]) is case["valid"], case["value"]
+    assert limen_work_loan.task_work_loan_missing_fields(task | {"value_case": "\x00"}) == (
+        "value_case",
+        "due_at",
+    )
+
 
 def test_dispatch_rejects_invalid_agent_limit_and_task_id(client: TestClient, tmp_path: Path) -> None:
     write_board(tmp_path / "tasks.yaml", [])
 
     assert client.post("/api/dispatch", json={"agent": "any"}).status_code == 422
     assert client.post("/api/dispatch", json={"agent": "codex", "limit": 101}).status_code == 422
+    assert client.post("/api/dispatch", json={"agent": "codex", "limit": True}).status_code == 422
     assert client.post("/api/dispatch", json={"agent": "codex", "task_id": "../escape"}).status_code == 422
 
 

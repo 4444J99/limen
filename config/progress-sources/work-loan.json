@@ -1,0 +1,11 @@
+{
+  "max_age_seconds": 86400,
+  "owner": {
+    "id": "organvm/limen",
+    "surface": "work-loan-journal"
+  },
+  "report_path": "logs/progress-sources/work-loan.json",
+  "required": true,
+  "schema": "limen.progress-source-registration.v1",
+  "source_id": "work-loan"
+}

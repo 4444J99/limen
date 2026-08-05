@@ -102,9 +102,7 @@ def _spent(receipts: list[dict[str, Any]]) -> tuple[float, float]:
 def _validate_sources(sources: list[str], redacted_packets: list[str]) -> None:
     text = "\n".join(sources + redacted_packets)
     if SENSITIVE_RE.search(text):
-        raise PolicyError(
-            "receipt text mentions sensitive raw material; use source-indexed redacted packets"
-        )
+        raise PolicyError("receipt text mentions sensitive raw material; use source-indexed redacted packets")
     if not sources and not redacted_packets:
         raise PolicyError("at least one --source or --redacted-packet is required")
 
@@ -147,13 +145,10 @@ def _validate_receipt(
         week = str(receipt.get("week"))
         existing = _load_receipts(receipts_dir, week)
         deliberate, total = _spent(existing)
-        category_total = sum(
-            float(r.get("percent", 0)) for r in existing if r.get("category") == category
-        )
+        category_total = sum(float(r.get("percent", 0)) for r in existing if r.get("category") == category)
         if category_total + percent > cap:
             raise PolicyError(
-                f"{category} weekly spend would be {category_total + percent:g}%, "
-                f"above category cap {cap:g}%"
+                f"{category} weekly spend would be {category_total + percent:g}%, above category cap {cap:g}%"
             )
         if category == "reserve":
             total += percent
@@ -161,9 +156,7 @@ def _validate_receipt(
             deliberate += percent
             total += percent
         if deliberate > DELIBERATE_CAP:
-            raise PolicyError(
-                f"deliberate Fable spend would be {deliberate:g}%, above {DELIBERATE_CAP}%"
-            )
+            raise PolicyError(f"deliberate Fable spend would be {deliberate:g}%, above {DELIBERATE_CAP}%")
         if total > HARD_CAP:
             raise PolicyError(f"total Fable spend would be {total:g}%, above {HARD_CAP}%")
 
@@ -211,6 +204,141 @@ def cmd_validate(args: argparse.Namespace) -> int:
     receipt = json.loads(Path(args.receipt).read_text())
     _validate_receipt(receipt, receipts_dir=Path(args.receipts_dir), include_existing=False)
     print(json.dumps({"ok": True, "receipt": str(args.receipt)}, indent=2))
+    return 0
+
+
+# ── Live weekly Fable balance (the runtime backstop meter) ───────────────────────────────
+# The receipt ledger above records INTENDED spend (percent metadata at accept-time). The gate
+# also needs ACTUAL Fable tokens burned this ISO-week. organs/financial/token-usage.json is a
+# ROLLING 30-day window and CANNOT give the weekly figure, so the numerator comes from Claude
+# Code's own per-session transcripts (~/.claude/projects/**/*.jsonl). If Anthropic's weekly
+# unified rate-limit headers were captured (logs/anthropic-ratelimit.json), read the % directly —
+# that is the truest source. Fail-open: a dark meter writes over_cap=false (never blocks a run on
+# a measurement hiccup; the acceptance receipt organ remains the authorization).
+
+_FABLE_WEEKLY_BUDGET_TOKENS_DEFAULT = 1_000_000_000  # ≈ the observed weekly Fable allotment ceiling
+_WEEKLY_WIN_S = 7 * 86400
+
+
+def _finite_int(value: object, default: int) -> int:
+    try:
+        parsed = int(float(value))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed > 0 else default
+
+
+def _transcripts_dir() -> Path:
+    raw = os.environ.get("LIMEN_CLAUDE_TRANSCRIPTS_DIR")
+    return Path(raw) if raw else (Path.home() / ".claude" / "projects")
+
+
+def _iso_ts(value: str) -> float | None:
+    try:
+        return dt.datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+
+
+def _fable_ratelimit_pct() -> float | None:
+    """If the fleet captured Anthropic's weekly unified rate-limit headers, read the Fable weekly
+    used-percent directly. Truest source, zero measurement. Returns None if absent/malformed."""
+    p = ROOT / "logs" / "anthropic-ratelimit.json"
+    if not p.exists():
+        return None
+    try:
+        d = json.loads(p.read_text())
+    except Exception:
+        return None
+    for key in ("fable_weekly_used_percent", "unified_weekly_used_percent"):
+        v = d.get(key)
+        if isinstance(v, (int, float)):
+            return float(v)
+    wk = d.get("weekly")
+    if isinstance(wk, dict):
+        v = wk.get("fable_used_percent")
+        if isinstance(v, (int, float)):
+            return float(v)
+    return None
+
+
+def _fable_weekly_tokens() -> int:
+    """Sum Fable (claude-fable-5) billable tokens from Claude Code transcripts over the current
+    ISO-week window. Bounded by file mtime so the scan stays cheap. Fail-open to 0."""
+    import glob
+
+    root = _transcripts_dir()
+    if not root.exists():
+        return 0
+    now = dt.datetime.now(dt.timezone.utc).timestamp()
+    total = 0
+    try:
+        for f in glob.glob(str(root / "**" / "*.jsonl"), recursive=True):
+            try:
+                if now - os.path.getmtime(f) > _WEEKLY_WIN_S:
+                    continue
+            except OSError:
+                continue
+            with open(f, errors="ignore") as fh:
+                for line in fh:
+                    if "fable" not in line or '"usage"' not in line:
+                        continue
+                    try:
+                        o = json.loads(line)
+                    except Exception:
+                        continue
+                    msg = o.get("message") or {}
+                    model = str(msg.get("model") or o.get("model") or "")
+                    if "fable" not in model.lower():
+                        continue
+                    ts = _iso_ts(o.get("timestamp", "")) if o.get("timestamp") else None
+                    if ts is not None and now - ts > _WEEKLY_WIN_S:
+                        continue
+                    u = msg.get("usage") or o.get("usage")
+                    if not isinstance(u, dict):
+                        continue
+                    total += (
+                        int(u.get("input_tokens", 0) or 0)
+                        + int(u.get("output_tokens", 0) or 0)
+                        + int(u.get("cache_creation_input_tokens", 0) or 0)
+                    )
+    except Exception:
+        return total
+    return total
+
+
+def compute_balance() -> dict[str, Any]:
+    """The live weekly Fable balance: prefer a captured ratelimit % header, else token-sum vs a
+    derived weekly budget. Timestamps derive from data (week key), never wall-clock in the body."""
+    week = _week_key(_now())
+    pct = _fable_ratelimit_pct()
+    spent_tokens = _fable_weekly_tokens()
+    source = "ratelimit-header"
+    if pct is None:
+        budget = _finite_int(
+            os.environ.get("LIMEN_FABLE_WEEKLY_TOKENS"),
+            _FABLE_WEEKLY_BUDGET_TOKENS_DEFAULT,
+        )
+        pct = round(100.0 * spent_tokens / budget, 2) if budget > 0 else 0.0
+        source = "transcript-token-sum"
+    return {
+        "week": week,
+        "spent_tokens": spent_tokens,
+        "spent_pct": float(pct),
+        "deliberate_cap": DELIBERATE_CAP,
+        "hard_cap": HARD_CAP,
+        "over_cap": float(pct) >= HARD_CAP,
+        "source": source,
+    }
+
+
+def cmd_balance(args: argparse.Namespace) -> int:
+    balance = compute_balance()
+    out = Path(args.out) if args.out else ROOT / "logs" / "fable-allotment.json"
+    if not args.no_write:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(balance, indent=2, sort_keys=True) + "\n")
+    print(json.dumps(balance, indent=2, sort_keys=True))
     return 0
 
 
@@ -279,6 +407,11 @@ def main(argv: list[str] | None = None) -> int:
     audit.add_argument("--receipts-dir", default=str(DEFAULT_RECEIPTS))
     audit.add_argument("--week")
     audit.set_defaults(func=cmd_audit)
+
+    balance = sub.add_parser("balance")
+    balance.add_argument("--out")
+    balance.add_argument("--no-write", action="store_true")
+    balance.set_defaults(func=cmd_balance)
 
     args = parser.parse_args(argv)
     try:

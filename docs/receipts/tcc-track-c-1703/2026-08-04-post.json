@@ -1,0 +1,3491 @@
+{
+  "automatic_updates": {
+    "blockers": [],
+    "enabled": true
+  },
+  "clients": [
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.144",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779214174,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.145",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779296360,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.146",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779382835,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.147",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779406151,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.148",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779434504,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.149",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779493347,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.150",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779581559,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.161",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1780482401,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.167",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1780725994,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceFileProviderDomain"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.168",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1780842053,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.170",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1781094554,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.173",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1781170085,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceFileProviderDomain"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.186",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1782242469,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.190",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1784223815,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/Users/4jp/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/bin/python3.11",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1778451861,
+      "pattern": "uv_interpreter",
+      "services": [
+        "kTCCServiceFileProviderDomain"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/opt/homebrew/Cellar/bash/5.3.15/bin/bash",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1782149218,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceAppleEvents"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/opt/homebrew/Cellar/coreutils/9.11/bin/gtimeout",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1781267982,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/opt/homebrew/Cellar/python@3.14/3.14.2/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1767418534,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceAppleEvents"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1776774139,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceAppleEvents"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1780048930,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1782320986,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "legacy_stale",
+      "client": "/opt/homebrew/Cellar/tmux/3.6a/bin/tmux",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1769143148,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "stable_host",
+      "client": "org.organvm.domus.agent-host",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785810555,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppBundles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/Applications/Backblaze.app/Contents/MacOS/bzserv",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1779386602,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/AE.framework/Versions/A/Support/AEServer",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1766071946,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/System/Library/PrivateFrameworks/IntelligenceFlowRuntime.framework/Versions/A/intelligenceflowd",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1772735850,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/System/Library/PrivateFrameworks/VoiceShortcuts.framework/Versions/A/Support/siriactionsd",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1772736811,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/opt/homebrew/Caskroom/1password-cli/2.32.1/op",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1772449633,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/opt/homebrew/Caskroom/1password-cli/2.34.0/op",
+      "client_type": 1,
+      "exists": false,
+      "last_modified": 1780049586,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/usr/bin/env",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1781275472,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "/usr/libexec/duetexpertd",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1771850456,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "KeithBirdKTH.com.MCPDock",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "ai.perplexity.comet",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1765908125,
+      "pattern": null,
+      "services": [
+        "kTCCServiceBluetoothAlways",
+        "kTCCServiceCamera",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMicrophone"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "ai.perplexity.mac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "ai.perplexity.macv3",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1780325477,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAddressBook",
+        "kTCCServiceCalendar",
+        "kTCCServiceMicrophone",
+        "kTCCServiceReminders",
+        "kTCCServiceScreenCapture"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "ai.perplexity.macv3.perplexityd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1780325261,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "app.essayist.essayist",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766101844,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "ca.derivative.TouchDesigner",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766888815,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyDesktopFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.0804Team.KeyClu",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779423612,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.1password.1password",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceScreenCapture"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.1password.1password-installer",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779383987,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.1password.safari",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.BinaryFormations.UnderMyRoof",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.DigiDNA.iMazing3Mac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779379018,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.ableton.live",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785378611,
+      "pattern": null,
+      "services": [
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyDocumentsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.agilebits.onepassword7",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1776517040,
+      "pattern": null,
+      "services": [
+        "kTCCServiceCamera",
+        "kTCCServiceLiverpool",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.anthropic.claude-code",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779138440,
+      "pattern": null,
+      "services": [
+        "kTCCServiceMediaLibrary"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.anthropic.claudefordesktop",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779558485,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAddressBook",
+        "kTCCServiceAppleEvents",
+        "kTCCServiceBluetoothAlways",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMicrophone",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.ActivityMonitor",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.AddressBook",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.AppStore",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Automator",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.BluetoothFileExchange",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Chess",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.CloudDocs.iCloudDriveFileProvider",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284393,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.CloudSharingUI.AddParticipants",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1769081257,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.ColorSyncUtility",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Compressor",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Console",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Dictionary",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.DigitalColorMeter",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.DiskUtility",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.FaceTime",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.FinalCut",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.FolderActionsDispatcher",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763315612,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceSystemPolicyAppBundles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.FontBook",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.GenerativePlaygroundApp",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Home",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Image_Capture",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Keynote",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785208545,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Magnifier",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Maps",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1773935709,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.MigrateAssistant",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.MobileSMS",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771879474,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceFocusStatus",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Music",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772024204,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Notes",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772065155,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Numbers",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785379008,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Pages",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772945835,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Passbook",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Passwords",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.PhotoBooth",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Photos",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772760924,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.PlaygroundsMac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Preview",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771932724,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.QuickTimePlayerX",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1782918739,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Safari",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772901974,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSpeechRecognition",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Safari.WebApp",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772233955,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Safari.WebApp.0AD1506A-F3D2-4905-A750-777D5F39B5AB",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1762069700,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.ScreenContinuity",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.ScreenSharing",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.ScreenTimeAgent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.ScreenTimeSettingsAgent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771335813,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.ScriptEditor2",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Spotlight",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771784975,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.StatusKitAgent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Stickies",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.SystemProfiler",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.TV",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.Terminal",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1780931412,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAppleEvents",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.TestFlight",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.TextEdit",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771773714,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.UsageTrackingAgent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.VoiceMemos",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1782825367,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.VoiceOverUtility",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.accessibility.AccessibilityUIServer",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.accessibility.heard",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.aiml.mlpt.FedStats.MLHostPlugin",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763411349,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.airport.airportutility",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.amsaccountsd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.amsengagementd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.appleaccountd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1770557470,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.apps.launcher",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.assistant.assistantd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.audio.AudioMIDISetup",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.avatarsd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.backup.launcher",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.biomesyncd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763283444,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.bird",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.bluetoothuserd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.businessservicesd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763452248,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.calculator",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.callhistory.sync-helper",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.clock",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.cloudpaird",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.cloudphotod",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284020,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.contacts.postersyncd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.donotdisturbd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.dt.Xcode",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766407404,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.exposelauncher",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.facetime.debug",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763307744,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.facetimemessagestored",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763307744,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.finder",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771784975,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.finderkit.CloudSharingViewService",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1769079199,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.findmy",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.findmy.findmylocateagent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.frauddefensed",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764174450,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.freeform",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1782848908,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.gamed",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763283455,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.games",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.garageband10",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.grapher",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.helpviewer",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.homeenergyd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.homeeventsd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763460011,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iBooks.BookDataStoreService",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1769114279,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iBooksX",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771789407,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iCal",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iCloudNotificationAgent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iMovieApp",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iWork.Keynote",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iWork.Numbers",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iWork.Pages",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1769012347,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.iad-cloudkit",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284019,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.icloud.searchpartyuseragent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.identityservicesd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772028327,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.imagent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771784975,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.imtransferagent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284042,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.journal",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.knowledge-agent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.logic10",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMicrophone"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.mail",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771953371,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.mainstage3",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.mlhost.CloudWorker",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763289559,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.mobilephone",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.musicrecognition.mac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763287804,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.news",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.passd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.pixelmator",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1782816012,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.podcasts",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.printcenter",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.protectedcloudstorage.protectedcloudkeysyncing",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763283967,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.remindd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.reminders",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.routined",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.screenshot.launcher",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064858,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.security.cuttlefish",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763283967,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.securityd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.shortcuts",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.siri.launcher",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.siriknowledged",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.sociallayerd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.stickersd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763281096,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.stocks",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766113164,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.stocks.widget",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763333137,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.suggestd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.syncdefaultsd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280816,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.systemevents",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1770392887,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyDesktopFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.systempreferences",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.systempreferences.AppleIDSettings",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763294258,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.textinput.KeyboardServices",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.transparencyd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.triald",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763283796,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.universalcontrol",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771784975,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.upload-request-proxy.com.apple.photos.cloud",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763284020,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.voicememod",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1772576561,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.weather",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771773355,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.weather.menu",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771784975,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.weather.widget",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771991125,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.wifi.WiFiAgent",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771784979,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.apple.willowd",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1763280817,
+      "pattern": null,
+      "services": [
+        "kTCCServiceLiverpool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.axosoft.gitkraken",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1767237653,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyRemovableVolumes"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.backblaze.Backblaze",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766925479,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.backblaze.bzbmenu",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766925482,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.backblaze.bzdoinstall",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1774609915,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.barebones.bbedit",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.csv.prox",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.docker.docker",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1769143497,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder",
+        "kTCCServiceSystemPolicyRemovableVolumes"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.dropbox.DropboxUpdater",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1777036104,
+      "pattern": null,
+      "services": [
+        "kTCCServiceSystemPolicyAppBundles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.duckduckgo.mobile.ios",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.electron.goose",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.electron.ollama",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.appshredder",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.clipboard",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.diskdoctor",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMediaLibrary"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.downloadmanager",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.extractor",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.imageconverter",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.memoryclean2",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.shortcutbar",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.fiplab.tasktabmac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.generalarcade.flycut",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1780362375,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.getdropbox.dropbox",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.github.GitHubClient",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1767237913,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.Chrome",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1769476493,
+      "pattern": null,
+      "services": [
+        "kTCCServiceBluetoothAlways",
+        "kTCCServiceCamera",
+        "kTCCServiceMicrophone",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceWebBrowserPublicKeyCredential"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.Chrome.canary",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771202818,
+      "pattern": null,
+      "services": [
+        "kTCCServiceBluetoothAlways",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceWebBrowserPublicKeyCredential"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.GeminiMacOS",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779418033,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceScreenCapture"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.antigravity",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1775338156,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder",
+        "kTCCServiceSystemPolicyNetworkVolumes"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.antigravity-ide",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1780357888,
+      "pattern": null,
+      "services": [
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.drivefs",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyRemovableVolumes"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.drivefs.finderhelper",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764044153,
+      "pattern": null,
+      "services": [
+        "kTCCServiceFileProviderDomain"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.drivefs.shortcuts.docs",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.drivefs.shortcuts.sheets",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.google.drivefs.shortcuts.slides",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.googlecode.iterm2",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAddressBook",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceScreenCapture"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.googlecode.iterm2.iTermAI",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.googlecode.iterm2.iTermBrowserPlugin",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.hnc.Discord",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779418035,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceListenEvent"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.hotovo.aider-desk",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.ip18.Clone-in-VS-Code",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.jaqer.mac.plist",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.jetbrains.toolbox",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.laurentcolson.StepPolyArp-Unit",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.lemonmojo.RoyalTSX.App",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.manytricks.KeyCodes",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.microsoft.OneDrive-mac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceFocusStatus"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.microsoft.VSCode",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1777694704,
+      "pattern": null,
+      "services": [
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.microsoft.VSCodeInsiders",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785532158,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAppleEvents",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder",
+        "kTCCServiceSystemPolicyNetworkVolumes"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.microsoft.copilot-mac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.microsoft.edgemac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779582557,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.mitchellh.ghostty",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779582558,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceMicrophone",
+        "kTCCServicePhotos",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.okatbest.boop",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.oneminutegames.XcodeCleaner",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.openai.atlas",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779427845,
+      "pattern": null,
+      "services": [
+        "kTCCServiceBluetoothAlways",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceWebBrowserPublicKeyCredential"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.openai.chat",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785457789,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAudioCapture",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMicrophone",
+        "kTCCServicePhotos",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyRemovableVolumes"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.openai.codex",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1780459086,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceMicrophone",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.openai.sky.CUAService",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779418047,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceScreenCapture"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.pieces.os",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1765375594,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAppleEvents",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceScreenCapture"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.pieces.x",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.pixelmatorteam.pixelmator.touch.x.photo",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.plugdata.plugdata",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766113178,
+      "pattern": null,
+      "services": [
+        "kTCCServiceMicrophone"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.python.editor.macOS",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.quoteunquoteapps.highlandapp2",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.renfei.SnippetsLab",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.sindresorhus.Actions",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1777509008,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAddressBook",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceSystemPolicyAllFiles"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.tannerhodges.GitHub-Wiki-Search",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.termius-beta.mac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.todesktop.230313mzl4w4u92",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1777323726,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyRemovableVolumes"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.userscripts.macos",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "com.wiheads.paste",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771773355,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceLiverpool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "dev.warp.Warp-Preview",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1778764456,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceMicrophone",
+        "kTCCServicePhotos",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "dev.warp.Warp-Stable",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785699594,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAddressBook",
+        "kTCCServiceAppleEvents",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceMediaLibrary",
+        "kTCCServiceMicrophone",
+        "kTCCServicePhotos",
+        "kTCCServiceScreenCapture",
+        "kTCCServiceSystemPolicyAllFiles",
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDesktopFolder",
+        "kTCCServiceSystemPolicyDocumentsFolder",
+        "kTCCServiceSystemPolicyDownloadsFolder",
+        "kTCCServiceWebBrowserPublicKeyCredential"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "developer.apple.wwdc-Release",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771960400,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "fr.frapps.SingleFile-Safari",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "md.obsidian.Obsidian-Web-Clipper",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "net.kovidgoyal.kitty",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1779124823,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAccessibility",
+        "kTCCServiceAppleEvents",
+        "kTCCServiceDeveloperTool",
+        "kTCCServiceMediaLibrary",
+        "kTCCServicePhotos",
+        "kTCCServiceSystemPolicyAppBundles",
+        "kTCCServiceSystemPolicyAppData"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "net.ro-z.FitFileExplorer",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "net.sourceforge.supercollider",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1771177369,
+      "pattern": null,
+      "services": [
+        "kTCCServiceMicrophone"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "net.whatsapp.WhatsApp",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785772504,
+      "pattern": null,
+      "services": [
+        "kTCCServiceMicrophone",
+        "kTCCServiceSystemPolicyDownloadsFolder",
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "nl.jeffreykuiken.NoirApp.mac",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1774401039,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "nl.jeffreykuiken.NoirApp.mac.App-Intents",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1774409435,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "nl.jeffreykuiken.NoirApp.mac.Mac-Extension",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1774401048,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "nl.jeffreykuiken.NoirApp.mac.WebExtension",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1774401066,
+      "pattern": null,
+      "services": [
+        "kTCCServiceUbiquity"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "notion.id.NotionSafariExtension",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "org.grunenberg.WordService",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064880,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "org.klatexformula.klatexformula",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "org.puredata.pd.pd-gui",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1766111825,
+      "pattern": null,
+      "services": [
+        "kTCCServiceMicrophone"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "ru.obraztsov.codeSamplesJava",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1764064881,
+      "pattern": null,
+      "services": [
+        "kTCCServiceDeveloperTool"
+      ]
+    },
+    {
+      "classification": "unrelated",
+      "client": "us.zoom.xos",
+      "client_type": 0,
+      "exists": null,
+      "last_modified": 1785430625,
+      "pattern": null,
+      "services": [
+        "kTCCServiceAudioCapture",
+        "kTCCServiceCamera",
+        "kTCCServiceMicrophone"
+      ]
+    },
+    {
+      "classification": "versioned_leak",
+      "client": "/Users/4jp/.local/share/claude/versions/2.1.220",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1785506614,
+      "pattern": "claude_version",
+      "services": [
+        "kTCCServiceAppleEvents",
+        "kTCCServiceSystemPolicyRemovableVolumes"
+      ]
+    },
+    {
+      "classification": "versioned_leak",
+      "client": "/Users/4jp/Workspace/limen/.venv/bin/python3",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1785507881,
+      "pattern": "limen_venv",
+      "services": [
+        "kTCCServiceFileProviderDomain",
+        "kTCCServiceSystemPolicyAppData",
+        "kTCCServiceSystemPolicyDocumentsFolder"
+      ]
+    },
+    {
+      "classification": "versioned_leak",
+      "client": "/opt/homebrew/Cellar/uv/0.12.1/bin/uvx",
+      "client_type": 1,
+      "exists": true,
+      "last_modified": 1785755761,
+      "pattern": "homebrew_cellar",
+      "services": [
+        "kTCCServiceSystemPolicyDocumentsFolder"
+      ]
+    }
+  ],
+  "failures": [
+    "versioned_tcc_client_after_host_deployment"
+  ],
+  "host_deployed_at": 1785493946,
+  "host_deployment_error": null,
+  "malformed_claude_helpers": [],
+  "ok": false,
+  "platform": "Darwin",
+  "platform_supported": true,
+  "schema": "limen.tcc_identity_audit.v1",
+  "stable_host": {
+    "bundle_id": "org.organvm.domus.agent-host",
+    "bundle_path": "/Users/4jp/Applications/DomusAgentHost.app",
+    "cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
+    "contract_failures": [],
+    "deployment_identity_error": "",
+    "deployment_identity_matches": true,
+    "deployment_identity_receipt": "/Users/4jp/Applications/.DomusAgentHost.designated-requirement",
+    "designated_requirement": "cdhash H\"45556d6c709a4c307b4c189cd825587275343f05\"",
+    "executable_path": "/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost",
+    "ok": true,
+    "schema": "domus.agent_host_status.v1",
+    "signature_status": 0,
+    "signature_valid": true,
+    "signing_policy": "fixed-host-requirement",
+    "stable_path": true,
+    "supervision": {
+      "descendant_tracking": "recursive-children-and-lifetime-pipe",
+      "detached_lifetime": "inherited-pipe",
+      "detached_termination": "pipe-holder-discovery",
+      "fallback_census_ms": 250,
+      "job_control": "shell-stop-and-resume",
+      "launch_agent": false,
+      "lifetime_identity": "pipe-handle-device-inode",
+      "process_group": "dedicated-child",
+      "process_identity": "pid-start-time"
+    }
+  },
+  "status": "blocked",
+  "summary": {
+    "legacy_stale": 22,
+    "stable_host": 1,
+    "unrelated": 265,
+    "versioned_leak": 3
+  },
+  "tcc_database_error": null
+}

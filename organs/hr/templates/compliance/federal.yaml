@@ -1,0 +1,123 @@
+# Federal Employment Compliance — Rule Annotations
+# Reference data for compliance calendar generation (W3).
+# Every obligation is tagged by employer headcount threshold.
+
+obligations:
+  - name: "FLSA Minimum Wage & Overtime"
+    authority: "Fair Labor Standards Act (29 U.S.C. § 201)"
+    applies_to: "all employers"
+    key_actions:
+      - "Classify employees as exempt/non-exempt"
+      - "Post FLSA notice in workplace"
+      - "Maintain payroll records for 3 years"
+    posting_required: true
+    annual_filing: false
+    source: "https://www.dol.gov/agencies/whd/flsa"
+
+  - name: "EEO-1 Component 1 Report"
+    authority: "Title VII of the Civil Rights Act (42 U.S.C. § 2000e)"
+    applies_to: "100+ employees"
+    key_actions:
+      - "File EEO-1 report by March 31 annually"
+      - "Report workforce demographics by job category and ethnicity/sex"
+    posting_required: false
+    annual_filing: true
+    filing_deadline: "March 31"
+    source: "https://www.eeoc.gov/employers/eeo-1-data-collection"
+
+  - name: "OSHA Form 300 / 300A"
+    authority: "Occupational Safety and Health Act (29 U.S.C. § 651)"
+    applies_to: "all employers (certain low-hazard industries exempt)"
+    key_actions:
+      - "Maintain injury/illness log (Form 300)"
+      - "Post summary (Form 300A) Feb 1 – Apr 30 annually"
+      - "Submit via OSHA's Injury Tracking Application (250+ employees)"
+    posting_required: true
+    annual_filing: true
+    filing_deadline: "March 2 (ITA submission for 250+ employees)"
+    source: "https://www.osha.gov/recordkeeping"
+
+  - name: "FMLA Poster"
+    authority: "Family and Medical Leave Act (29 U.S.C. § 2601)"
+    applies_to: "50+ employees"
+    key_actions:
+      - "Post FMLA notice in workplace"
+      - "Distribute eligibility notice within 5 business days of leave request"
+      - "Maintain leave records for 3 years"
+    posting_required: true
+    annual_filing: false
+    source: "https://www.dol.gov/agencies/whd/fmla"
+
+  - name: "COBRA Notice"
+    authority: "Consolidated Omnibus Budget Reconciliation Act (29 U.S.C. § 1161)"
+    applies_to: "20+ employees (group health plan sponsors)"
+    key_actions:
+      - "Provide initial COBRA notice within 90 days of plan enrollment"
+      - "Provide election notice within 44 days of qualifying event"
+      - "Provide 60-day election period and 45-month maximum coverage period"
+    posting_required: false
+    annual_filing: false
+    source: "https://www.dol.gov/agencies/ebsa/laws-and-regulations/laws/cobra"
+
+  - name: "ACA Employer Mandate"
+    authority: "Affordable Care Act (26 U.S.C. § 4980H)"
+    applies_to: "50+ full-time equivalent employees"
+    key_actions:
+      - "Offer minimum essential coverage to full-time employees"
+      - "File Forms 1094-C and 1095-C annually"
+      - "Report to IRS by February 28 (paper) or March 31 (electronic)"
+    posting_required: false
+    annual_filing: true
+    filing_deadline: "March 31 (electronic)"
+    source: "https://www.irs.gov/affordable-care-act"
+
+  - name: "W-2 / W-3 Filing"
+    authority: "Internal Revenue Code"
+    applies_to: "all employers"
+    key_actions:
+      - "File W-2 and W-3 with Social Security Administration by January 31"
+      - "Provide W-2 to employees by January 31"
+    posting_required: false
+    annual_filing: true
+    filing_deadline: "January 31"
+    source: "https://www.irs.gov/forms-pubs/about-form-w-2"
+
+  - name: "I-9 & E-Verify"
+    authority: "Immigration Reform and Control Act (8 U.S.C. § 1324a)"
+    applies_to: "all employers"
+    key_actions:
+      - "Complete Form I-9 within 3 business days of hire"
+      - "Retain I-9 for 3 years after hire or 1 year after termination (whichever later)"
+      - "E-Verify: federal contractors and certain states require enrollment"
+    posting_required: true
+    annual_filing: false
+    source: "https://www.uscis.gov/i-9-central"
+
+  - name: "New Hire Reporting"
+    authority: "Personal Responsibility and Work Opportunity Reconciliation Act"
+    applies_to: "all employers"
+    key_actions:
+      - "Report new hires to state directory within 20 days (some states shorter)"
+    posting_required: false
+    annual_filing: false
+    source: "https://www.acf.hhs.gov/css/employers/new-hire-reporting"
+
+  - name: "WARN Notice"
+    authority: "Worker Adjustment and Retraining Notification Act (29 U.S.C. § 2101)"
+    applies_to: "100+ employees"
+    key_actions:
+      - "Provide 60 days advance notice of mass layoff or plant closing"
+      - "Notify affected employees, state dislocated worker unit, and local government"
+    posting_required: false
+    annual_filing: false
+    source: "https://www.dol.gov/agencies/eta/WARN"
+
+  - name: "Uniformed Services Employment and Reemployment Rights Act (USERRA)"
+    authority: "38 U.S.C. § 4301"
+    applies_to: "all employers"
+    key_actions:
+      - "Post USERRA notice in workplace"
+      - "Provide reemployment rights for military service members"
+    posting_required: true
+    annual_filing: false
+    source: "https://www.dol.gov/agencies/vets/programs/userra"

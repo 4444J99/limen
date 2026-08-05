@@ -1,6 +1,6 @@
 member:
-  name: "Maddie"
-  context: "Private client channel — scope capture under changing priorities"
+  name: "{{MEMBER_NAME}}"
+  context: "{{ENGAGEMENT_TYPE}} engagement — scope capture under changing priorities"
 mandate:
   description: "Engagement intake and delivery posture under changing scope"
   outcome: "Test engagement posture stability when requirements shift"

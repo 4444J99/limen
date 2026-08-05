@@ -34,8 +34,7 @@ def test_substrate_ledger_uses_env_roots_without_stale_drive_blocker(tmp_path: P
     snap = mod.build_snapshot(
         config_path=tmp_path / "missing-config.json",
         include_mounted=False,
-        free_floor_gib=0,
-        usage_ceiling_pct=100,
+        required_free_gib=0,
     )
 
     by_path = {Path(row["path"]).name: row for row in snap["roots"]}
@@ -56,6 +55,8 @@ def test_repo_surface_ledger_discovers_nested_repos_and_duplicate_remotes(tmp_pa
         _git("remote", "add", "origin", "git@example.invalid:owner/shared.git", cwd=repo)
         (repo / "package.json").write_text('{"scripts":{"test":"true"}}\n', encoding="utf-8")
 
+    for env_name in ("LIMEN_REPO_ROOTS", "LIMEN_WORKSPACE_ROOT", "LIMEN_WORKTREE_ROOT"):
+        monkeypatch.delenv(env_name, raising=False)
     monkeypatch.setenv("LIMEN_REPO_ROOTS", str(root))
     mod = _load("repo-surface-ledger.py", "repo_surface_ledger_under_test")
 
@@ -64,6 +65,11 @@ def test_repo_surface_ledger_discovers_nested_repos_and_duplicate_remotes(tmp_pa
     assert snap["repo_count"] == 2
     assert any(group["repo_count"] == 2 for group in snap["duplicate_remotes"])
     assert all("package:test" in row["test_surfaces"] for row in snap["repos"])
+    assert snap["classification_summary"]["unclassified_count"] == 0
+    assert snap["classification_summary"]["nested_repo_count"] == 1
+    assert snap["classification_summary"]["disposition_counts"]["consolidate"] == 2
+    assert {row["classification"]["location"] for row in snap["repos"]} == {"nested", "workspace"}
+    assert {row["classification"]["remote"] for row in snap["repos"]} == {"remote-other"}
 
     public = json.dumps(mod.public_snapshot(snap), sort_keys=True)
     assert "git@example.invalid" not in public
@@ -171,13 +177,13 @@ def test_product_ledger_keeps_global_work_active_when_one_product_blocks(tmp_pat
     assert all(not row["blocked"] for row in snap["next_unblocked"])
 
 
-def test_current_session_fanout_creates_ten_codex_planners_and_executor_packets(tmp_path: Path, monkeypatch) -> None:
+def test_current_session_fanout_creates_capability_selected_planners_and_executors(tmp_path: Path, monkeypatch) -> None:
     session = tmp_path / "session.jsonl"
     user_plan = "# Prior Product Plan\n\n## Summary\n- Build 1000 alpha omega products from every prompt.\n"
     assistant_plan = (
         "# Assistant Fanout Plan\n\n"
         "## Summary\n"
-        "- Use 10 Codex planner worktrees plus contrib mirror and no reset spend.\n"
+        "- Use 10 peer planner worktrees plus contrib mirror and no reset spend.\n"
     )
     duplicate_plan = assistant_plan
     newest_plan = (
@@ -241,13 +247,22 @@ def test_current_session_fanout_creates_ten_codex_planners_and_executor_packets(
     )
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     mod = _load("current-session-fanout.py", "current_session_fanout_under_test")
-    monkeypatch.setattr(mod, "lane_selection", lambda selector: ["codex", "opencode", "github_actions"])
+    monkeypatch.setattr(
+        mod,
+        "lane_selection",
+        lambda selector, rows=None, capability="execute": (
+            ["codex", "opencode"] if capability == "conduct" else ["opencode", "github_actions"]
+        ),
+    )
 
     snap = mod.build_snapshot(
         Namespace(
             session=str(session),
-            min_codex_planners=10,
+            source_agent="codex",
+            min_planners=10,
+            planner_lanes="auto",
             executor_lanes="auto",
+            conductor_agent="auto",
             include_contrib=True,
             allow_reset_spend=False,
         )
@@ -267,7 +282,7 @@ def test_current_session_fanout_creates_ten_codex_planners_and_executor_packets(
     assert snap["plan_events"][2]["duplicate"] is True
     expected_plan_hashes = [event["hash"] for event in snap["unique_plan_sources"]]
     assert len(snap["planner_packets"]) == 10
-    assert {packet["target_agent"] for packet in snap["planner_packets"]} == {"codex"}
+    assert {packet["target_agent"] for packet in snap["planner_packets"]} == {"codex", "opencode"}
     assert {packet["target_agent"] for packet in snap["executor_packets"]} == {"opencode", "github_actions"}
     assert snap["no_reset_spend"] is True
     assert all(packet["spend_guard"] == "no-reset-spend" for packet in snap["planner_packets"])
@@ -297,13 +312,14 @@ def test_current_session_fanout_creates_ten_codex_planners_and_executor_packets(
         assert plan_hash in markdown
 
 
-def test_current_session_fanout_keeps_explicit_executor_lane_list(monkeypatch) -> None:
+def test_current_session_fanout_keeps_explicit_executor_lane_list_without_inventing_all_fallback(
+    monkeypatch,
+) -> None:
     mod = _load("current-session-fanout.py", "current_session_fanout_lanes_under_test")
-    monkeypatch.setattr(mod, "resolve_lane_selector", None)
-    monkeypatch.setattr(mod, "_down_lanes", None)
 
     assert mod.lane_selection("opencode,agy,github-actions") == ["opencode", "agy", "github_actions"]
-    assert mod.lane_selection("all") == ["codex", "opencode", "agy", "gemini", "github_actions"]
+    expected = [agent for agent in mod.paid_agent_order() if "execute" in mod.execution_profiles()[agent].capabilities]
+    assert mod.lane_selection("all") == expected
 
 
 def test_current_session_fanout_task_seed_waterfalls_into_queue(tmp_path: Path, monkeypatch) -> None:
@@ -337,13 +353,22 @@ def test_current_session_fanout_task_seed_waterfalls_into_queue(tmp_path: Path, 
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_CURRENT_SESSION_FANOUT_REPO", "owner/fanout")
     mod = _load("current-session-fanout.py", "current_session_fanout_seed_under_test")
-    monkeypatch.setattr(mod, "lane_selection", lambda selector: ["codex", "opencode", "github_actions"])
+    monkeypatch.setattr(
+        mod,
+        "lane_selection",
+        lambda selector, rows=None, capability="execute": (
+            ["claude", "opencode"] if capability == "conduct" else ["opencode", "github_actions"]
+        ),
+    )
 
     snap = mod.build_snapshot(
         Namespace(
             session=str(session),
-            min_codex_planners=3,
+            source_agent="claude",
+            min_planners=3,
+            planner_lanes="auto",
             executor_lanes="auto",
+            conductor_agent="auto",
             include_contrib=False,
             allow_reset_spend=False,
             seed_tasks=True,
@@ -358,7 +383,7 @@ def test_current_session_fanout_task_seed_waterfalls_into_queue(tmp_path: Path, 
     executors = [task for task in snap["task_seed"] if task["packet_type"] == "executor_packet"]
     assert len(planners) == 3
     assert len(executors) == 2
-    assert all(task["target_agent"] == "codex" for task in planners)
+    assert {task["target_agent"] for task in planners} == {"claude", "opencode"}
     assert all(task["depends_on"] == [] for task in planners)
     assert all(task["depends_on"] for task in executors)
     assert all("no-reset-spend" in task["labels"] for task in planners)
@@ -367,21 +392,23 @@ def test_current_session_fanout_task_seed_waterfalls_into_queue(tmp_path: Path, 
     assert all(task["verification_predicates"] for task in snap["task_seed"])
     assert all("Executor criteria:" in task["context"] for task in snap["task_seed"])
     assert all("Verification predicates:" in task["context"] for task in snap["task_seed"])
+    assert all(task["root_run_id"] == snap["root_run_id"] for task in snap["task_seed"])
+    assert all(task["runtime_env"]["LIMEN_AGENT"] == task["target_agent"] for task in snap["task_seed"])
+    assert all(task["runtime_env"]["LIMEN_INITIATOR_AGENT"] == "claude" for task in snap["task_seed"])
 
     apply_result = mod.apply_task_seed(snap, tasks_path)
-    assert apply_result["status"] == "ready", apply_result
-    assert apply_result["appended"] == 5
+    assert apply_result["status"] == "blocked", apply_result
+    assert apply_result["appended"] == 0
     assert apply_result["skipped"] == 0
+    assert apply_result["mode"] == "conduct-required"
     second_apply = mod.apply_task_seed(snap, tasks_path)
     assert second_apply["appended"] == 0
-    assert second_apply["skipped"] == 5
+    assert second_apply["skipped"] == 0
 
     board = yaml.safe_load(tasks_path.read_text(encoding="utf-8"))
-    assert len(board["tasks"]) == 5
-    assert {task["status"] for task in board["tasks"]} == {"open"}
-    assert all(task["dispatch_log"] == [] for task in board["tasks"])
+    assert len(board["tasks"]) == 0
 
     markdown = mod.render_markdown(snap)
     assert "## Task Seed" in markdown
     assert "Seed tasks: 5" in markdown
-    assert "Task seeding appends only `open` queue items" in markdown
+    assert "Direct task-seed activation is retired" in markdown

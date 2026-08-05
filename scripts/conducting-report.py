@@ -129,11 +129,33 @@ def build_report() -> tuple[str, str, str]:
     return headline, body, day
 
 
+def census() -> dict:
+    """Counts-only public census for report liveness; no vendor names, task titles, or headlines."""
+    usage = _load(USAGE, {}) or {}
+    vendors = usage.get("vendors", {}) if isinstance(usage, dict) else {}
+    vendor_rows = [row for row in vendors.values() if isinstance(row, dict)] if isinstance(vendors, dict) else []
+    verdicts = [_verdict(row) for row in vendor_rows]
+    return {
+        "usage_present": USAGE.exists(),
+        "vendor_count": len(vendor_rows),
+        "vendors_with_headroom": sum(1 for row in vendor_rows if row.get("headroom_pct") is not None),
+        "vendors_burned": sum(1 for _verdict_text, burned in verdicts if burned),
+        "vendors_idle": sum(1 for verdict_text, _burned in verdicts if "IDLE" in verdict_text),
+        "value_verdict_present": _value_verdict() is not None,
+        "open_value_discovery": _discovery_count(),
+        "state_present": STATE.exists(),
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="emit now even if already sent today")
     ap.add_argument("--print", dest="print_only", action="store_true", help="print only; no push")
+    ap.add_argument("--census", action="store_true", help="print counts-only public census JSON")
     args = ap.parse_args()
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
 
     headline, body, day = build_report()
     print(body)

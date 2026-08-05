@@ -88,7 +88,6 @@ PY
 #    (Enumerate all branch refs and grep-filter: a for-each-ref glob does NOT
 #     cross the '/' in 'heal/...', so it would silently match nothing.)
 # ---------------------------------------------------------------------------
-reg_text="$(cat "$REGISTRY")"
 staged_refs="$(git for-each-ref --format='%(refname:short)' refs/heads/ | grep -- '-staged-' || true)"
 if [ -z "$staged_refs" ]; then
   ok "no '*-staged-*' preserve refs present (nothing to strand)"
@@ -98,7 +97,10 @@ else
     sha="$(git rev-parse "$name")"; short="$(git rev-parse --short "$name")"
     if git merge-base --is-ancestor "$sha" origin/main 2>/dev/null; then
       ok "preserve ref $name merged into origin/main"
-    elif printf '%s' "$reg_text" | grep -qiE -- "$name|${short}|${sha:0:7}"; then
+    # grep the file directly — a `printf | grep -q` pipeline under pipefail false-fails
+    # via SIGPIPE (exit 141) once the registry outgrows the pipe buffer: grep -q exits
+    # at first match and the still-writing printf poisons the pipeline's status.
+    elif grep -qiE -- "$name|${short}|${sha:0:7}" "$REGISTRY"; then
       ok "preserve ref $name cited by a registry lever (durable pointer)"
     else
       bad "preserve ref $name ($short) is STRANDED — not on origin/main and not cited by any lever. Merge it, cite it in a lever's source_task, or delete it."
@@ -188,14 +190,33 @@ PY
 #    LOCAL head ref behind, so squash-merged branches pile up as the "1 ahead /
 #    N behind housekeeping" that used to get hand-waved each session. The
 #    branch-reap organ (scripts/reap-branches.py) proves the fixed point — exit
-#    0 <=> no provably-landed branch lingers. Reaping is loss-free
+#    0 <=> no provably-landed branch lingers PAST the digestion grace window
+#    (LIMEN_BRANCH_REAP_GRACE_MIN; a branch spent seconds ago is the beat
+#    mid-digestion, not hanging debt). Reaping is loss-free
 #    (reflog-recoverable) so the organ self-heals it on the hygiene beat; here we
 #    only ASSERT it, so a closeout cannot pass with spent branches hanging.
 #    Fails safe offline (ancestor-only). Genuinely-unfinished branches live in
 #    their OWN git-tracked home (docs/branch-hygiene.md), never here.
 # ---------------------------------------------------------------------------
 if ! python3 "$ROOT/scripts/reap-branches.py" --check; then
-  bad "spent branches are lingering — run: python3 scripts/reap-branches.py --apply"
+  bad "spent branches are lingering — review docs/branch-reap-acceptance.md, then write docs/branch-reap-acceptance.jsonl with archive + redaction proof before any scripts/reap-branches.py --apply"
+fi
+
+# ---------------------------------------------------------------------------
+# 10: no un-homed personal fact hangs on the session. The personal-facts
+#     registry (institutio/governance/personal-facts.yaml) owns every durable
+#     PII atom; scripts/identity.py verify is its predicate. Neither §1-9 nor
+#     credential-wall.py covers unpopulated IDENTITY/PII — this is that arm. A
+#     blank applicable&required atom (DOB/address/phone) is fine ONLY if it is
+#     homed as a lever (L-IDENTITY-POPULATE) whose issue the operator owns; then
+#     the relay cites the lever, never the atom. Green iff the atoms are present
+#     OR the populate lever homes the gap — a closeout can no longer pass with a
+#     personal fact silently un-homed (the phi.pdf chat-ask defect).
+# ---------------------------------------------------------------------------
+if ! python3 "$ROOT/scripts/identity.py" verify >/dev/null 2>&1; then
+  if ! grep -q 'L-IDENTITY-POPULATE' "$ROOT/his-hand-levers.json" 2>/dev/null; then
+    bad "personal-fact atoms are unpopulated and no L-IDENTITY-POPULATE lever homes the gap — add the lever to his-hand-levers.json (or populate the store); never leave it as a chat ask"
+  fi
 fi
 
 echo

@@ -24,8 +24,11 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from limen.models import LimenFile, Task
+if TYPE_CHECKING:  # annotation-only (PEP 563) — keeps this module loadable by FILE PATH with no
+    # package deps, which is how institutio/governance/derive-domain-streams.py reads the roster.
+    from limen.models import LimenFile, Task
 
 
 @dataclass(frozen=True)
@@ -87,6 +90,15 @@ _META_CHANNELS: tuple[Channel, ...] = (
         "reach. Same shape as no-tasks-on-me.sh / the every-ask ledger.",
         ("prompts", "prompt", "parity"),
     ),
+    Channel(
+        "substrate",
+        "Substrate",
+        "meta",
+        "The machine lane — host admission, session lifecycle, worktree/beat tooling, the fleet "
+        "itself. Cross-cutting process, not an institutional organ; legitimizes the handle tasks "
+        "already carry.",
+        ("system", "tooling", "machine", "infra", "fleet"),
+    ),
 )
 
 # Aliases that are TOO generic for FREE-TEXT inference (a PR title / commit subject): in PR-land the
@@ -100,6 +112,7 @@ _GENERIC_TEXT_TOKENS: frozenset[str] = frozenset({"pr", "prs"})
 # pillar handle (his word works at the surface; the code converges underneath).
 _ORGAN_ALIASES: dict[str, tuple[str, ...]] = {
     "financial": ("revenue", "money", "cash", "finance"),
+    "representation": ("job", "career", "job-getting", "applications", "presence"),
 }
 
 UNASSIGNED = "(unassigned)"
@@ -201,6 +214,48 @@ def infer_channel(text: str, root: Path) -> str:
     for token in re.split(r"[^a-z0-9]+", str(text).lower()):
         if token and token in amap and token not in _GENERIC_TEXT_TOKENS:
             return amap[token]
+    return UNASSIGNED
+
+
+# Task-KIND → channel: structured fleet-task id prefixes whose PURPOSE is unambiguous even when the
+# title carries no purpose token. ``GEN-*`` are generated code contributions (test-coverage, docs,
+# typing, ci-green, simplify) → the code/PR lane; ``DISCOVER-*`` are idea/value probes → the intake
+# conductor. These are the ONLY kind-based fallbacks — everything else must earn its channel via an
+# explicit field, a matching label, or a purpose token, else it stays UNASSIGNED (the honest signal
+# that it has no channel yet). A named constant, like _META_CHANNELS/_ORGAN_ALIASES, so the rationale
+# travels with the rule rather than hiding as a literal in the assigner.
+_KIND_PREFIX_CHANNELS: tuple[tuple[str, str], ...] = (
+    ("gen-", "contributions"),
+    ("discover-", "conductor"),
+)
+
+
+def assign_channel(task: Task, root: Path) -> str:
+    """Derive the channel to STAMP onto a task during the beat's auto-partition (route.py --apply).
+
+    The projection's :func:`channel_of` only reads the explicit field + labels (so pre-field tasks
+    stay visibly UNASSIGNED); the assigner goes one step further so the board actually partitions:
+
+    1. explicit ``workstream`` field or a matching label (:func:`channel_of`) — honors intent;
+    2. a purpose token anywhere in ``id + title + repo`` (:func:`infer_channel`) — catches the
+       organ lanes (``ORG-financial-…`` → financial) whose id names the pillar but that carry no
+       label;
+    3. a task-KIND prefix (:data:`_KIND_PREFIX_CHANNELS`) — the structured GEN-*/DISCOVER-* fleet
+       tasks whose purpose is structural, not lexical.
+
+    Returns :data:`UNASSIGNED` only when nothing resolves — it never guesses a domain, so an
+    unclassifiable task stays honestly unassigned instead of being mis-lane'd.
+    """
+    explicit = channel_of(task, root)
+    if explicit != UNASSIGNED:
+        return explicit
+    inferred = infer_channel(f"{task.id} {task.title} {task.repo or ''}", root)
+    if inferred != UNASSIGNED:
+        return inferred
+    tid = (task.id or "").lower()
+    for prefix, handle in _KIND_PREFIX_CHANNELS:
+        if tid.startswith(prefix):
+            return handle
     return UNASSIGNED
 
 

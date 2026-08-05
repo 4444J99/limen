@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import time
 from pathlib import Path
@@ -38,8 +39,35 @@ from pathlib import Path
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 NOW = time.time()
 
+
+def _finite_float(
+    value: object,
+    default: float | None = None,
+    *,
+    minimum: float | None = None,
+) -> float | None:
+    try:
+        if isinstance(value, bool):
+            return default
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(parsed):
+        return default
+    if minimum is not None and parsed < minimum:
+        return default
+    return parsed
+
+
+def _first_number(entry: dict, keys: tuple[str, ...]) -> float | None:
+    for key in keys:
+        value = _finite_float(entry.get(key), None, minimum=0.0)
+        if value is not None:
+            return value
+    return None
+
 # Freshness ceiling: an avenue older than this is SKIPPED (the anti-"forgettable-hole" guard).
-FRESH_CEIL_S = float(os.environ.get("LIMEN_CLAUDE_GAUGE_FRESH_S", "1800"))  # 30 min
+FRESH_CEIL_S = _finite_float(os.environ.get("LIMEN_CLAUDE_GAUGE_FRESH_S"), 1800.0, minimum=1.0) or 1800.0
 
 # ── on-disk calibrated gauge (avenue 2) ───────────────────────────────────────
 # Window sizes for the two Claude rate limits (parity with codex primary/secondary).
@@ -107,11 +135,15 @@ def _weighted_cost_windows() -> dict | None:
                 u = (o.get("message") or {}).get("usage") or o.get("usage")
                 if not isinstance(u, dict):
                     continue
+                input_tokens = _finite_float(u.get("input_tokens"), 0.0, minimum=0.0) or 0.0
+                output_tokens = _finite_float(u.get("output_tokens"), 0.0, minimum=0.0) or 0.0
+                cache_read = _finite_float(u.get("cache_read_input_tokens"), 0.0, minimum=0.0) or 0.0
+                cache_creation = _finite_float(u.get("cache_creation_input_tokens"), 0.0, minimum=0.0) or 0.0
                 w = (
-                    _W_INPUT * (u.get("input_tokens", 0) or 0)
-                    + _W_OUTPUT * (u.get("output_tokens", 0) or 0)
-                    + _W_CACHE_READ * (u.get("cache_read_input_tokens", 0) or 0)
-                    + _W_CACHE_CREATION * (u.get("cache_creation_input_tokens", 0) or 0)
+                    _W_INPUT * input_tokens
+                    + _W_OUTPUT * output_tokens
+                    + _W_CACHE_READ * cache_read
+                    + _W_CACHE_CREATION * cache_creation
                 )
                 weekly += w
                 if age <= _SESSION_WIN_S:
@@ -133,9 +165,10 @@ def _read_calibration() -> dict | None:
 
 def _fresh(ts: float | None) -> float | None:
     """Seconds since ts (a POSIX time); None if unknown."""
-    if ts is None:
+    parsed = _finite_float(ts, None)
+    if parsed is None:
         return None
-    return max(0.0, NOW - float(ts))
+    return max(0.0, NOW - parsed)
 
 
 def _reading(avenue, used_percent, window, trust, fresh_s, note=""):
@@ -161,7 +194,10 @@ def av_proxy() -> dict:
         wk = d.get("unified_weekly_used_percent")
     if wk is None:
         return _reading("proxy", None, None, None, fresh, "captured but no weekly field")
-    return _reading("proxy", float(wk), "weekly", "measured", fresh, "vendor headers")
+    pct = _finite_float(wk, None, minimum=0.0)
+    if pct is None:
+        return _reading("proxy", None, None, None, fresh, "captured weekly field is malformed")
+    return _reading("proxy", pct, "weekly", "measured", fresh, "vendor headers")
 
 
 # ── avenue 2: calibrated on-disk windowed cost (zero auth, live numerator) ─────
@@ -186,8 +222,9 @@ def av_ondisk() -> dict:
     detail = []
     for key, label in (("session", "session"), ("weekly", "weekly")):
         c = cal.get(key) or {}
-        cost0, pct0 = c.get("cost"), c.get("pct")
-        if not (isinstance(cost0, (int, float)) and isinstance(pct0, (int, float)) and pct0 > 0 and cost0 > 0):
+        cost0 = _finite_float(c.get("cost"), None, minimum=0.0)
+        pct0 = _finite_float(c.get("pct"), None, minimum=0.0)
+        if not (pct0 and cost0 and pct0 > 0 and cost0 > 0):
             continue
         cap = cost0 / (pct0 / 100.0)
         pct = round(100 * win.get(key, 0.0) / cap, 1)
@@ -231,11 +268,10 @@ def av_poll() -> dict:
             if "ratelimit" in kl and ("week" in kl or "7d" in kl or "seven" in kl) and "remaining" in kl:
                 # remaining → used_percent needs the limit; best-effort if a paired limit exists
                 lim = hdrs.get(k.replace("remaining", "limit")) or hdrs.get(k.replace("remaining", "Limit"))
-                try:
-                    if lim and float(lim) > 0:
-                        wk = round(100 * (1 - float(v) / float(lim)), 1)
-                except Exception:
-                    pass
+                lim_num = _finite_float(lim, None, minimum=0.0)
+                remaining = _finite_float(v, None, minimum=0.0)
+                if lim_num and remaining is not None:
+                    wk = round(100 * (1 - remaining / lim_num), 1)
         if wk is None:
             return _reading("poll", None, None, None, 0.0, "call ok but no weekly header parsed")
         return _reading("poll", wk, "weekly", "measured", 0.0, "live authed headers")
@@ -260,17 +296,17 @@ def av_counts() -> dict:
     fresh = _fresh(d.get("updated_at_ts") or p.stat().st_mtime)
     if fresh is not None and fresh > FRESH_CEIL_S:
         return _reading("counts", None, None, None, fresh, f"STALE ({int(fresh)}s) — skipped")
-    used = next((entry[k] for k in ("consumed", "billable", "spent", "used_tokens", "tokens")
-                 if isinstance(entry.get(k), (int, float))), None)
+    used = _first_number(entry, ("consumed", "billable", "spent", "used_tokens", "tokens"))
     if used is None:
         return _reading("counts", None, None, None, fresh, "no token count field")
     # Cap precedence: an explicit human cap (real) → the fleet's own `possible` (don't mint a NEW
     # number). trust reflects the cap's provenance, never fabricated here.
     cap_env = os.environ.get("LIMEN_CLAUDE_WEEKLY_TOKENS")
-    if cap_env and cap_env.isdigit():
-        cap, trust, src = int(cap_env), "proxy", "env cap"  # real numerator + human-set cap
+    parsed_cap = _finite_float(cap_env, None, minimum=1.0)
+    if parsed_cap is not None:
+        cap, trust, src = parsed_cap, "proxy", "env cap"  # real numerator + human-set cap
     else:
-        cap = next((entry[k] for k in ("possible", "limit") if isinstance(entry.get(k), (int, float))), None)
+        cap = _first_number(entry, ("possible", "limit"))
         est = "estimate" in str(entry.get("limit_source", "")).lower()
         trust, src = ("estimate" if est else "measured"), f"usage.json {'ESTIMATE' if est else ''} cap"
     if not cap:
@@ -306,10 +342,14 @@ def calibrate(session_pct: float, weekly_pct: float) -> dict:
     win = _weighted_cost_windows()
     if not win:
         raise SystemExit("cannot calibrate: no transcripts found to measure current cost")
+    session = _finite_float(session_pct, None, minimum=0.0)
+    weekly = _finite_float(weekly_pct, None, minimum=0.0)
+    if not (session and weekly):
+        raise SystemExit("cannot calibrate: percentages must be finite and positive")
     cal = {
         "observed_at": NOW,
-        "session": {"cost": win["session"], "pct": float(session_pct)},
-        "weekly": {"cost": win["weekly"], "pct": float(weekly_pct)},
+        "session": {"cost": win["session"], "pct": session},
+        "weekly": {"cost": win["weekly"], "pct": weekly},
         "note": "cap = cost / (pct/100); numerator recomputed live each beat from transcripts",
     }
     p = _cal_path()
@@ -324,7 +364,11 @@ def resolve() -> dict:
     trail = []
     resolved = None
     for fn in AVENUES:
-        r = fn()
+        try:
+            r = fn()
+        except Exception as e:
+            avenue = fn.__name__.replace("av_", "", 1)
+            r = _reading(avenue, None, None, None, None, f"exception: {type(e).__name__}")
         trail.append(r)
         if resolved is None and r.get("used_percent") is not None:
             resolved = r

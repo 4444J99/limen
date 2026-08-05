@@ -11,12 +11,19 @@ build/
 pr-status.json
 
 # Local runtime secrets
+/.agent-runtime/
 .runtime/
 
+# Local MCP server runtime state (circuit breaker + task-loop counters)
+.mcp_state.json
+
 # Build and tooling artifacts
+.coverage
+error.log
 node_modules/
 **/node_modules
 **/node_modules/
+.serena/
 web/app/.next/
 web/app/out/
 .wrangler/
@@ -59,3 +66,34 @@ docs/positioning/*.internal.md
 # studium convergence logs are GENERATED and captured local worktree home paths (PII);
 # never track them in this public repo (studium re-derives them locally each run).
 studium/_converged/converge-log.jsonl
+.codex/worktrees/
+docs/prompt-atom-ledger.json
+# cross-vendor raw extraction packets (PII-risk; generated locally, fed to synthesis pass)
+logs/insight-cross-vendor/
+# sensitive publication-judgment rationale (shallow-merged into repo_overrides at load; arca-sealed)
+institutio/github/estate.private.yaml
+# whole-PR campaign census receipts (generated locally by scripts/conduct-pr-campaign.py; ~1.5MB
+# each — findings live in README.md, raw leaf dumps are regenerable and must not bloat the diff)
+docs/receipts/pr-campaign/*.json
+
+# Copilot coding-agent lane scratch — the --yolo issue-backlog lane dumps its
+# working state (clones, peer-audit generators + JSON) into the checkout root
+# instead of an isolated dir. These are generated artifacts, never repo source;
+# ignore so they stop surfacing as thousands of "uncommitted changes". The lane's
+# cwd-isolation fix is tracked separately (see the copilot-live-checkout censor issue).
+.copilot-work/
+scratch/
+issue_backlog_work/
+peer-audited--*/
+peer_audit_comments_*.json
+peer_audited_issues.json
+peer_audited_issues_summary.txt
+peer_audited_comment_map.json
+issue_backlog_peer_audited_*.json
+issue_audit_data.json
+issue_comment_plan.json
+build_peer_audited_comments.py
+generate_peer_audit_comments.py
+
+# constellation atlas — generated HTML register (regenerable via constellation-atlas.py)
+logs/constellation/

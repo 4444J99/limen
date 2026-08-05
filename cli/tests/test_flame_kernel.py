@@ -35,6 +35,25 @@ def test_kernel_rides_every_prompt(tmp_path, monkeypatch):
     assert "You are VLTIMA." in p  # the self rides along
     assert "YOUR TASK THIS BEAT" in p  # divider separates identity from work
     assert "do a thing" in p  # the concrete task is still there
+    assert "VALUE GATE" in p
+    assert "VERIFICATION DISCIPLINE" in p
+    assert "Do not run scripts/verify-whole.sh" in p
+
+
+def test_value_gate_carries_task_statistics(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_FLAME_KERNEL", "0")
+    monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
+    monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
+    (tmp_path / "value-repos.json").write_text('{"repos":["org/repo"]}', encoding="utf-8")
+    D._FLAME_CACHE.clear()
+    p = D._build_prompt(_task())
+    assert "VALUE GATE" in p
+    assert "priority=medium" in p
+    assert "budget_cost=1" in p
+    assert "repo_in_value_tier=true" in p
+    assert "value_tier_repo_count=1" in p
+    assert "warm leads" in p
 
 
 def test_kernel_disabled_is_bare_prompt(tmp_path, monkeypatch):
@@ -45,6 +64,7 @@ def test_kernel_disabled_is_bare_prompt(tmp_path, monkeypatch):
     p = D._build_prompt(_task())
     assert "VLTIMA" not in p
     assert p.startswith("Complete task T1")
+    assert "VERIFICATION DISCIPLINE" in p
 
 
 def test_missing_kernel_fails_open(tmp_path, monkeypatch):
@@ -123,9 +143,13 @@ def test_run_cmd_captures_jules_session_id(monkeypatch):
 
 def test_ollama_is_cascade_floor(monkeypatch):
     monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
     assert "ollama" in C.PAID_AGENT_ORDER
     assert "ollama" in C.LOCAL_CHECKOUT_AGENTS
     assert D._LANE_CASCADE[-1] == "ollama"  # the very last resort
+    monkeypatch.setattr(D, "select_lanes", lambda *a, **k: ["opencode", "agy", "jules"])
+    assert D._next_lane("jules") is None  # floor is not used until a model makes it reachable
+    monkeypatch.setattr(D, "select_lanes", lambda *a, **k: ["opencode", "agy", "jules", "ollama"])
     assert D._next_lane("jules") == "ollama"  # reached only after cloud-async too
     assert D._next_lane("ollama") is None  # nothing below the floor
 

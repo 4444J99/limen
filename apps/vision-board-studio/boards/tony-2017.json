@@ -1,0 +1,473 @@
+{
+  "schema": 1,
+  "id": "tony-2017-boca",
+  "name": "Boca Raton, 2017",
+  "banner": "WHAT ARE YOU GRATEFUL FOR?",
+  "aspect": 1.6343,
+  "origin": {
+    "photo": "assets/original-2017.png",
+    "note": "Reconstructed from the only surviving photo. Salvaged tiles are upscaled fragments; swap in high-res matches."
+  },
+  "tiles": [
+    {
+      "id": "01_arch_rendering",
+      "theme": "Home & Architecture",
+      "title": "Dream home, drawn",
+      "desc": "B&W architect's rendering of a modern home",
+      "salvage": "assets/salvage/01_arch_rendering.png",
+      "faithful": {
+        "img": "assets/salvage/01_arch_rendering.png",
+        "caption": "Dream home, drawn",
+        "search": "modern house architecture rendering black and white"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Home & Architecture\" look like now?"
+      },
+      "pos": {
+        "left": 2.12,
+        "top": 2.77,
+        "width": 12.46,
+        "height": 18.01
+      }
+    },
+    {
+      "id": "02_pagoda_autumn",
+      "theme": "Travel \u00b7 Japan",
+      "title": "Kyoto in fall",
+      "desc": "Red maples framing a multi-tier pagoda",
+      "salvage": "assets/salvage/02_pagoda_autumn.png",
+      "faithful": {
+        "img": "assets/salvage/02_pagoda_autumn.png",
+        "caption": "Kyoto in fall",
+        "search": "kyoto pagoda red maple autumn"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Travel \u00b7 Japan\" look like now?"
+      },
+      "pos": {
+        "left": 15.42,
+        "top": 0.55,
+        "width": 15.93,
+        "height": 23.55
+      }
+    },
+    {
+      "id": "03_tuscany_road",
+      "theme": "Travel \u00b7 Italy",
+      "title": "The cypress road",
+      "desc": "A Tuscan vineyard lane lined with cypress",
+      "salvage": "assets/salvage/03_tuscany_road.png",
+      "faithful": {
+        "img": "assets/salvage/03_tuscany_road.png",
+        "caption": "The cypress road",
+        "search": "tuscany cypress road vineyard"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Travel \u00b7 Italy\" look like now?"
+      },
+      "pos": {
+        "left": 37.71,
+        "top": 0.0,
+        "width": 21.19,
+        "height": 17.45
+      }
+    },
+    {
+      "id": "04_misty_lake",
+      "theme": "Peace \u00b7 Nature",
+      "title": "Still water",
+      "desc": "Misty lake and mountains",
+      "salvage": "assets/salvage/04_misty_lake.png",
+      "faithful": {
+        "img": "assets/salvage/04_misty_lake.png",
+        "caption": "Still water",
+        "search": "misty lake mountains fog serene"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Peace \u00b7 Nature\" look like now?"
+      },
+      "pos": {
+        "left": 59.49,
+        "top": 0.55,
+        "width": 15.76,
+        "height": 16.9
+      }
+    },
+    {
+      "id": "05_lake_structure",
+      "theme": "Nature",
+      "title": "Waterside",
+      "desc": "A dark structure by calm water",
+      "salvage": "assets/salvage/05_lake_structure.png",
+      "faithful": {
+        "img": "assets/salvage/05_lake_structure.png",
+        "caption": "Waterside",
+        "search": "cabin by lake water dusk"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Nature\" look like now?"
+      },
+      "pos": {
+        "left": 75.59,
+        "top": 1.11,
+        "width": 12.71,
+        "height": 18.84
+      }
+    },
+    {
+      "id": "06_night_city_bw",
+      "theme": "Ambition \u00b7 City",
+      "title": "City at night",
+      "desc": "Night lights, black and white",
+      "salvage": "assets/salvage/06_night_city_bw.png",
+      "faithful": {
+        "img": "assets/salvage/06_night_city_bw.png",
+        "caption": "City at night",
+        "search": "city skyline night black and white"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Ambition \u00b7 City\" look like now?"
+      },
+      "pos": {
+        "left": 88.64,
+        "top": 0.55,
+        "width": 11.02,
+        "height": 22.99
+      }
+    },
+    {
+      "id": "07_snow_aframe",
+      "theme": "Home",
+      "title": "Cabin in the snow",
+      "desc": "A modern/A-frame house in snow",
+      "salvage": "assets/salvage/07_snow_aframe.png",
+      "faithful": {
+        "img": "assets/salvage/07_snow_aframe.png",
+        "caption": "Cabin in the snow",
+        "search": "a-frame modern cabin snow black and white"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Home\" look like now?"
+      },
+      "pos": {
+        "left": 0.68,
+        "top": 22.44,
+        "width": 12.46,
+        "height": 22.85
+      }
+    },
+    {
+      "id": "08_wooden_pavilion",
+      "theme": "Travel \u00b7 Peace",
+      "title": "Winter shrine",
+      "desc": "A wooden pavilion in wintry light",
+      "salvage": "assets/salvage/08_wooden_pavilion.png",
+      "faithful": {
+        "img": "assets/salvage/08_wooden_pavilion.png",
+        "caption": "Winter shrine",
+        "search": "japanese wooden shrine pavilion winter"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Travel \u00b7 Peace\" look like now?"
+      },
+      "pos": {
+        "left": 13.73,
+        "top": 23.55,
+        "width": 10.0,
+        "height": 15.79
+      }
+    },
+    {
+      "id": "09_crowd_ceremony",
+      "theme": "Achievement",
+      "title": "The big day",
+      "desc": "A great crowd gathered under a pavilion",
+      "salvage": "assets/salvage/09_crowd_ceremony.png",
+      "faithful": {
+        "img": "assets/salvage/09_crowd_ceremony.png",
+        "caption": "The big day",
+        "search": "graduation ceremony crowd stadium"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Achievement\" look like now?"
+      },
+      "pos": {
+        "left": 24.41,
+        "top": 22.44,
+        "width": 18.81,
+        "height": 15.24
+      }
+    },
+    {
+      "id": "10_wine_cellar",
+      "theme": "The good life \u00b7 Craft",
+      "title": "The cellar",
+      "desc": "Rows of barrels in a wine cellar",
+      "salvage": "assets/salvage/10_wine_cellar.png",
+      "faithful": {
+        "img": "assets/salvage/10_wine_cellar.png",
+        "caption": "The cellar",
+        "search": "wine cellar oak barrels warm"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"The good life \u00b7 Craft\" look like now?"
+      },
+      "pos": {
+        "left": 37.12,
+        "top": 37.67,
+        "width": 16.69,
+        "height": 20.08
+      }
+    },
+    {
+      "id": "11_bw_interior_men",
+      "theme": "Mentors",
+      "title": "Conversation",
+      "desc": "Two men in an interior, mid-conversation",
+      "salvage": "assets/salvage/11_bw_interior_men.png",
+      "faithful": {
+        "img": "assets/salvage/11_bw_interior_men.png",
+        "caption": "Conversation",
+        "search": "two men talking interview black and white"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Mentors\" look like now?"
+      },
+      "pos": {
+        "left": 59.49,
+        "top": 20.78,
+        "width": 15.76,
+        "height": 17.17
+      }
+    },
+    {
+      "id": "12_bw_two_men",
+      "theme": "Mentors \u00b7 Icons",
+      "title": "The greats",
+      "desc": "Portraits of well-dressed men",
+      "salvage": "assets/salvage/12_bw_two_men.png",
+      "faithful": {
+        "img": "assets/salvage/12_bw_two_men.png",
+        "caption": "The greats",
+        "search": "portrait distinguished men black and white"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Mentors \u00b7 Icons\" look like now?"
+      },
+      "pos": {
+        "left": 75.59,
+        "top": 29.36,
+        "width": 13.39,
+        "height": 18.28
+      }
+    },
+    {
+      "id": "13_checkerboard",
+      "theme": "Strategy \u00b7 The long game",
+      "title": "The long game",
+      "desc": "A harlequin / chessboard pattern",
+      "salvage": "assets/salvage/13_checkerboard.png",
+      "faithful": {
+        "img": "assets/salvage/13_checkerboard.png",
+        "caption": "The long game",
+        "search": "harlequin checkerboard chess pattern"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Strategy \u00b7 The long game\" look like now?"
+      },
+      "pos": {
+        "left": 89.32,
+        "top": 29.36,
+        "width": 13.22,
+        "height": 18.28
+      }
+    },
+    {
+      "id": "14_snow_cabin",
+      "theme": "Solitude",
+      "title": "Quiet chapel",
+      "desc": "A small cabin or chapel deep in snow",
+      "salvage": "assets/salvage/14_snow_cabin.png",
+      "faithful": {
+        "img": "assets/salvage/14_snow_cabin.png",
+        "caption": "Quiet chapel",
+        "search": "small chapel cabin snow winter"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Solitude\" look like now?"
+      },
+      "pos": {
+        "left": 13.73,
+        "top": 42.11,
+        "width": 14.24,
+        "height": 20.5
+      }
+    },
+    {
+      "id": "15_statue_robed",
+      "theme": "Art \u00b7 Culture",
+      "title": "The classical",
+      "desc": "A standing robed classical statue",
+      "salvage": "assets/salvage/15_statue_robed.png",
+      "faithful": {
+        "img": "assets/salvage/15_statue_robed.png",
+        "caption": "The classical",
+        "search": "classical robed statue marble saint"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Art \u00b7 Culture\" look like now?"
+      },
+      "pos": {
+        "left": 1.27,
+        "top": 65.37,
+        "width": 12.46,
+        "height": 27.7
+      }
+    },
+    {
+      "id": "16_reclining_bronze",
+      "theme": "Art",
+      "title": "Repose",
+      "desc": "A reclining bronze / sculpted figure",
+      "salvage": "assets/salvage/16_reclining_bronze.png",
+      "faithful": {
+        "img": "assets/salvage/16_reclining_bronze.png",
+        "caption": "Repose",
+        "search": "reclining bronze sculpture figure"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Art\" look like now?"
+      },
+      "pos": {
+        "left": 14.41,
+        "top": 70.91,
+        "width": 16.95,
+        "height": 20.08
+      }
+    },
+    {
+      "id": "17_text_card",
+      "theme": "Creed",
+      "title": "The words",
+      "desc": "A printed card with a list / manifesto",
+      "salvage": "assets/salvage/17_text_card.png",
+      "faithful": {
+        "img": "assets/salvage/17_text_card.png",
+        "caption": "The words",
+        "search": "manifesto list card typography"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Creed\" look like now?"
+      },
+      "pos": {
+        "left": 32.88,
+        "top": 77.56,
+        "width": 13.9,
+        "height": 21.05
+      }
+    },
+    {
+      "id": "18_puppy",
+      "theme": "Companionship",
+      "title": "Best friend",
+      "desc": "A puppy",
+      "salvage": "assets/salvage/18_puppy.png",
+      "faithful": {
+        "img": "assets/salvage/18_puppy.png",
+        "caption": "Best friend",
+        "search": "puppy fawn close up"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Companionship\" look like now?"
+      },
+      "pos": {
+        "left": 47.29,
+        "top": 78.53,
+        "width": 9.32,
+        "height": 18.98
+      }
+    },
+    {
+      "id": "19_bw_small",
+      "theme": "Memory",
+      "title": "Moments",
+      "desc": "Small black-and-white photographs",
+      "salvage": "assets/salvage/19_bw_small.png",
+      "faithful": {
+        "img": "assets/salvage/19_bw_small.png",
+        "caption": "Moments",
+        "search": "vintage small photographs collage"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Memory\" look like now?"
+      },
+      "pos": {
+        "left": 57.46,
+        "top": 65.37,
+        "width": 13.73,
+        "height": 22.16
+      }
+    },
+    {
+      "id": "20_pencil_sketch",
+      "theme": "Craft",
+      "title": "The sketch",
+      "desc": "A faint pencil drawing",
+      "salvage": "assets/salvage/20_pencil_sketch.png",
+      "faithful": {
+        "img": "assets/salvage/20_pencil_sketch.png",
+        "caption": "The sketch",
+        "search": "pencil sketch drawing light"
+      },
+      "fork": {
+        "img": "",
+        "caption": "",
+        "prompt": "2026: what does \"Craft\" look like now?"
+      },
+      "pos": {
+        "left": 83.9,
+        "top": 62.6,
+        "width": 15.25,
+        "height": 24.93
+      }
+    }
+  ]
+}

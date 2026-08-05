@@ -1,0 +1,272 @@
+# The Collaborator Constellation Register — Niche-Funnel Engine, generalized.
+#
+# PUBLIC-SAFE HALF. This file is world-readable: first-name slugs only (pattern
+# `first` or `first-x` initial), no surnames, no handles, no contact data. The
+# private overlay (~/Workspace/_people-private/constellation/registry-private.yaml,
+# ARCA-sealed) carries protocol refs, channel state, interface budgets, and
+# boundaries, keyed by the same slugs.
+#
+# Ownership (reference, never duplicate):
+#   pipeline slugs/handles  -> relationship-pipeline people.json (private repo)
+#   paid engagement lanes   -> organs/consulting/engagements/<slug>.yaml
+#   funnel instances        -> organs/consulting/funnel/instances/
+#   repo visibility classes -> institutio/github/estate.yaml
+#
+# Validator: organs/consulting/constellation/validate-constellation.py
+# Seeder:    organs/consulting/constellation/seed-tasks.py  (CONST- board DAG)
+# Done:      organs/consulting/constellation/constellation-done.sh
+# Atlas:     organs/consulting/constellation/constellation-atlas.py  (one-page HTML
+#            register of people x project lanes; --private merges the overlay and
+#            refuses to write into any repo that has a remote)
+
+version: constellation.v1
+owner: consulting
+
+# tier semantics (operator-accepted 2026-07-22):
+#   T1 — active demand: build/funnel now, high priority
+#   T2 — exists, needs public face: medium priority
+#   T3 — protocol-first: conversation review before any build; low/backlog
+#
+# stage enum:  idea | dossier | building | mvp | live | funnelized
+# face enum:   none | pending-split | readme | portal | funnelized
+
+people:
+  - slug: maddie
+    tier: T1
+    engagement_ref: organs/consulting/engagements/maddie.yaml
+    funnel_instance_ref: null
+    projects:
+      - name: spiral
+        repo: 4444J99/sovereign-systems--elevate-align
+        keywords: [spiral, elevate align, hydration, water education, ionfaucet, multipure]
+        stage: live
+        public_face_state: readme
+        dossier: null
+        notes: build lane closed by owner record (open-asks 2026-07-16); funnel + contract only
+
+  - slug: jessica
+    tier: T1
+    engagement_ref: organs/consulting/engagements/jessica.yaml
+    funnel_instance_ref: null
+    projects:
+      - name: styx
+        repo: 4444J99/peer-audited--behavioral-blockchain
+        related_repos:
+          - 4444J99/styx-behavioral-art
+          - 4444J99/styx-behavioral-economics-theory
+        keywords: [styx, ask-styx, behavioral blockchain, peer-audited, behavioral economics]
+        stage: building
+        public_face_state: readme
+        dossier: null
+
+  - slug: rob
+    tier: T1
+    engagement_ref: organs/consulting/engagements/rob.yaml
+    funnel_instance_ref: organs/consulting/funnel/instances/rob-fitness.yaml
+    projects:
+      - name: hokage-chess
+        repo: 4444J99/hokage-chess
+        keywords: [hokage, chess, legion command center, gamified coach]
+        stage: building
+        public_face_state: readme
+        dossier: null
+      - name: fitness
+        repo: null
+        keywords: [bodi, beachbody, fitness funnel, affiliate, coach]
+        stage: live
+        public_face_state: funnelized
+        dossier: null
+        notes: daily-engine instance lane; the proven funnel shape (EXECUTION)
+      - name: micro-tato
+        repo: 4444J99/micro-tato
+        related_repos:
+          - 4444J99/micro-tato-play
+        keywords: [micro tato, brotato, bullet hell, godot, potato]
+        stage: mvp
+        public_face_state: readme
+        dossier: null
+      - name: sales-client-engine
+        repo: null
+        keywords: [sales engine, client management, crm, sales pipeline, book of business, client tracker, sales os]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-named lane (2026-07-22); brainstorms live in the chat-app corpus — dossier first, build on evidence
+
+  - slug: charles
+    tier: T2
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: mirror-mirror
+        repo: 4444J99/mirror-mirror
+        keywords: [mirror mirror, virtual try-on, beauty tech, salon, ar makeup]
+        stage: building
+        public_face_state: readme
+        dossier: null
+      - name: your-fit-tailored
+        repo: 4444J99/your-fit-tailored
+        keywords: [your-fit-tailored, circular apparel, weekly subscription, fit intelligence, tism]
+        stage: building
+        public_face_state: readme
+        dossier: null
+        notes: spec-complete, pilot-kit ready (Epoch 0 done); next rung is the Epoch-1 foundation build
+      - name: cosmetics-universe
+        repo: null
+        keywords: [cosmetics, beauty universe, evolving cosmetics]
+        stage: idea
+        public_face_state: none
+        dossier: null
+
+  - slug: scott
+    tier: T2
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: content-cannibalizer
+        repo: 4444J99/content-engine--asset-amplifier
+        keywords: [cronus metabolus, content cannibalizer, content yield, asset amplifier]
+        stage: building
+        public_face_state: pending-split
+        dossier: null
+
+  - slug: ari
+    tier: T2
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: podcast-suite
+        repo: organvm/hospes
+        keywords: [hospes, podcast, guest ops, unlicensed therapy, guest pipeline]
+        stage: mvp
+        public_face_state: pending-split
+        dossier: null
+        notes: transcripts are vault-class; public face is a split, never a flip
+
+  - slug: dustin
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: dsp-platform
+        repo: null
+        keywords: [dsp, music platform, post-dsp, streaming alternative]
+        stage: idea
+        public_face_state: none
+        dossier: null
+      - name: ai-consultation
+        repo: null
+        keywords: [ai audit, ai consultation, ai consulting]
+        stage: idea
+        public_face_state: none
+        dossier: null
+
+  - slug: david
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: victoroff-os
+        repo: 4444J99/victoroff-os
+        keywords: [victoroff, victoroff-os]
+        stage: mvp
+        public_face_state: none
+        dossier: null
+        notes: mostly complete; residuals remain external owner references — do not reopen a general build lane
+      - name: social-media-auditor
+        repo: null
+        keywords: [social media auditor, social audit, pop culture]
+        stage: idea
+        public_face_state: none
+        dossier: null
+
+  - slug: derek
+    tier: T3
+    engagement_ref: organs/education/engagements/derek.yaml
+    funnel_instance_ref: null
+    projects:
+      - name: narrative-workshop
+        repo: null
+        keywords: [narrative workshop, narrative coaching, writing mentorship, quest arc]
+        stage: live
+        public_face_state: none
+        dossier: null
+        notes: education-organ engagement (ACTIVE 2026-07-03) — register gap healed 2026-07-30; one-to-one mentorship lane, no build, no outreach
+
+  - slug: john-m
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: financial-gaming
+        repo: null
+        keywords: [financial app, gaming, fantasy finance]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: dormant channel; protocol review only — no build, no outreach
+
+  - slug: john-f
+    tier: T3
+    engagement_ref: organs/consulting/engagements/john-f.yaml
+    funnel_instance_ref: null
+    projects:
+      - name: financial-gaming
+        repo: null
+        keywords: [financial app, gaming, fantasy finance, finance niche]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-categorized with john-m (2026-07-22) — same project space; protocol review before any build
+
+  - slug: mike-s
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: security-firm
+        repo: null
+        keywords: [security firm, private security, investigations, executive protection, security consulting]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-named lane (2026-07-22); domain expertise is offline — dossier first, build on evidence
+
+  - slug: aaron
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: education-suite
+        repo: null
+        keywords: [education, student interactions, writing, teaching, tutoring, curriculum, composition]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: education/writing domain cluster (operator-named 2026-07-22); cluster is open-ended — the demand review surfaces further names from the corpus
+
+  - slug: chris
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: education-suite
+        repo: null
+        keywords: [education, student interactions, writing, teaching, tutoring, curriculum, composition]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: education/writing domain cluster (operator-named 2026-07-22); shares the cluster with aaron
+
+  - slug: shari
+    tier: T3
+    engagement_ref: null
+    funnel_instance_ref: null
+    projects:
+      - name: party-game-suite
+        repo: null
+        keywords: [party game, card game, game night, tabletop, social game, icebreaker]
+        stage: idea
+        public_face_state: none
+        dossier: null
+        notes: operator-named lane (2026-07-22); dossier first, build on evidence

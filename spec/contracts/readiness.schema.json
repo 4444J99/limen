@@ -4,7 +4,7 @@
   "title": "Limen Readiness",
   "type": "object",
   "additionalProperties": false,
-  "required": ["status", "generated_at", "agent", "counts", "budget", "checks", "next_actions"],
+  "required": ["status", "generated_at", "agent", "counts", "budget", "checks", "mutation", "next_actions"],
   "properties": {
     "status": { "type": "string", "enum": ["ready", "degraded", "blocked", "missing"] },
     "generated_at": { "type": "string" },
@@ -22,6 +22,18 @@
           "status": { "type": "string", "enum": ["pass", "warn", "fail"] },
           "detail": { "type": "string" }
         }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "owner"],
+      "properties": {
+        "status": { "type": "string", "enum": ["available", "deferred"] },
+        "owner": { "type": "string" },
+        "code": { "type": "string" },
+        "route": { "type": "string" },
+        "next_action": { "type": "string" }
       }
     },
     "next_actions": { "type": "array", "items": { "type": "string" } }

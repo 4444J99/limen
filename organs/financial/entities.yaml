@@ -23,6 +23,23 @@ entity_taxonomy:
     description: "Non-profit organization — mission vehicle"
     required_fields: [name, jurisdiction, ownership, accounts, ein]
 
+# ── Account classification (asset vs liability) ────────────────────────
+# Every account type maps to asset or liability for net worth calculation.
+#   asset -> positive contribution to net worth
+#   liability -> negative contribution to net worth
+account_classification:
+  checking: asset
+  savings: asset
+  credit: liability
+  investment: asset
+  cash: asset
+  receivable: asset
+  payable: liability
+  crypto: asset
+  loan: liability
+  mortgage: liability
+  retirement: asset
+
 # ── MACRO: The generic field template every entity follows ─────────────
 # When adding a new person/organization, copy the structure below.
 # Fields marked (A) are auto-populated; (H) need human input; (D) derived.
@@ -37,7 +54,7 @@ entity_template:
   accounts:                      # (H) financial accounts belonging to this entity
     - id: null                   #     account slug
       institution: null          #     bank / broker / platform name
-      type: null                 #     checking | savings | credit | investment | cash | receivable | payable | crypto
+      type: null                 #     asset: checking|savings|investment|cash|receivable|crypto  liability: credit|payable|loan|mortgage
       currency: USD
       balance_known: false       # (H) false = needs manual entry
       balance: null              # (H) current balance (null if unknown)
@@ -50,7 +67,7 @@ entity_template:
 #   - obligations-ledger.json → email accounts
 #   - his-hand-levers.json    → personal accounts, card-0186
 #   - revenue-ladder.json     → product entities
-#   - organ-ladder.json       → LLC (Sovereign Systems), NPO (Cind & Soul)
+#   - organ-ladder.json       → LLC (Sovereign Systems), NPO (Cind & Sol)
 #   - moneta/                 → the sovereign cash rail
 #   - FLAME.md canon          → MPO=NPO (Cind & Sol Foundation)
 #

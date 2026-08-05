@@ -1,0 +1,80 @@
+/* ORGANVM DESIGN TOKENS — the estate design language. Portfolio-led.
+   1 PRIMITIVES (raw scales) → 2 SEMANTIC aliases (surfaces consume THESE) →
+   3 REGISTER scopes [data-register=utility|editorial]. Dark + registers remap
+   ONLY §2, and both registers resolve from the same §1 primitives — one living
+   system, not one skin. Palette/type direction inherited from organvm/portfolio;
+   limen signal colors + MONETA ink/paper mapped onto it, not beside it.
+   Adopt: vendor a pinned copy per surface, remap surface vars onto §2 aliases;
+   never a runtime fetch. SSOT twin: organvm-tokens.json. See README.md. */
+
+:root {
+  /* ── 1 PRIMITIVES ── */
+  /* neutral: portfolio ground #f5f5f0 → ink #1a1a1b */
+  --o-neutral-0:#ffffff; --o-neutral-50:#f6f7f9; --o-neutral-100:#f5f5f0;
+  --o-neutral-200:#e5e7eb; --o-neutral-300:#d9dee7; --o-neutral-400:#98a2b3;
+  --o-neutral-500:#667085; --o-neutral-600:#4a4a4d; --o-neutral-700:#2a2b2e;
+  --o-neutral-800:#1a1a1b; --o-neutral-900:#0a0a0b;
+  /* warm editorial (MONETA) */
+  --o-paper:#faf7f0; --o-paper-line:#e5dccb; --o-ink-warm:#1a1712; --o-ink-dim:#6b6255;
+  /* accent: portfolio gold leads */
+  --o-gold-400:#e0b862; --o-gold-500:#d4a853; --o-gold-600:#b8922e;
+  --o-gold-700:#96760f; --o-gold-editorial:#b8860b;
+  /* signal (limen dashboard) */
+  --o-blue-500:#2563eb; --o-green-500:#16a34a; --o-green-400:#00e676;
+  --o-amber-500:#d97706; --o-red-500:#dc2626; --o-red-600:#c4463a;
+  --o-violet-500:#7c3aed; --o-slate-500:#64748b;
+  /* type — SYSTEM stacks only, no webfont */
+  --o-font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --o-font-serif:Georgia,"Times New Roman","Iowan Old Style",serif;
+  --o-font-mono:ui-monospace,"SF Mono",Menlo,"JetBrains Mono",monospace;
+  --o-text-xs:0.75rem; --o-text-sm:0.875rem; --o-text-md:1rem; --o-text-lg:1.25rem;
+  --o-text-xl:1.5rem; --o-text-2xl:clamp(1.5rem,3vw,2rem); --o-text-3xl:clamp(2rem,5vw,3rem);
+  --o-leading-tight:1.3; --o-leading-body:1.65;
+  --o-tracking-tight:-0.02em; --o-tracking-caps:0.08em;
+  /* spacing — Fibonacci-influenced (portfolio) */
+  --o-space-2xs:0.125rem; --o-space-xs:0.25rem; --o-space-sm:0.5rem; --o-space-md:0.875rem;
+  --o-space-lg:1.375rem; --o-space-xl:2.25rem; --o-space-2xl:3.5rem; --o-space-3xl:5.5rem;
+  /* radii + shadows */
+  --o-radius-sm:4px; --o-radius:8px; --o-radius-lg:16px; --o-radius-xl:24px;
+  --o-shadow-sm:0 1px 2px rgba(16,24,40,0.05);
+  --o-shadow:0 4px 12px rgba(16,24,40,0.12);
+  --o-shadow-lg:0 12px 32px rgba(16,24,40,0.18);
+
+  /* ── 2 SEMANTIC ALIASES (light default) — surfaces consume THESE ── */
+  --surface-bg:var(--o-neutral-50); --surface-panel:var(--o-neutral-0);
+  --ink:var(--o-neutral-800); --ink-muted:var(--o-neutral-500); --line:var(--o-neutral-300);
+  --accent:var(--o-gold-600); --ok:var(--o-green-500); --warn:var(--o-amber-500); --err:var(--o-red-500);
+  --font-ui:var(--o-font-sans); --font-head:var(--o-font-sans);
+  --font-read:var(--o-font-sans); --font-code:var(--o-font-mono);
+  --shadow:var(--o-shadow-sm);
+}
+
+/* ── 2b DARK — remaps ONLY the semantic layer ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-bg:var(--o-neutral-900); --surface-panel:var(--o-neutral-800);
+    --ink:var(--o-neutral-50); --ink-muted:var(--o-neutral-400); --line:var(--o-neutral-700);
+    --accent:var(--o-gold-500); --ok:var(--o-green-400); --warn:var(--o-amber-500); --err:var(--o-red-600);
+    --shadow:var(--o-shadow-lg);
+  }
+}
+
+/* ── 3 REGISTER MODES — attribute scopes, both from §1 primitives ── */
+/* utility: dashboard look — neutral panels, blue accent, sans reading */
+[data-register="utility"] {
+  --surface-bg:var(--o-neutral-50); --surface-panel:var(--o-neutral-0);
+  --ink:var(--o-neutral-800); --ink-muted:var(--o-neutral-500); --line:var(--o-neutral-300);
+  --accent:var(--o-blue-500);
+  --font-head:var(--o-font-sans); --font-read:var(--o-font-sans);
+  --shadow:var(--o-shadow-sm);
+}
+/* editorial: MONETA paper/ink — warm ground, serif reading, gold accent */
+[data-register="editorial"] {
+  --surface-bg:var(--o-paper); --surface-panel:var(--o-neutral-0);
+  --ink:var(--o-ink-warm); --ink-muted:var(--o-ink-dim); --line:var(--o-paper-line);
+  --accent:var(--o-gold-editorial);
+  --font-head:var(--o-font-serif); --font-read:var(--o-font-serif);
+  --shadow:var(--o-shadow);
+}
+/* Register scopes are self-contained — they do not follow the dark media query;
+   a surface wanting dark-editorial re-aliases inside its own vendored copy. */

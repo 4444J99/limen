@@ -22,6 +22,17 @@ cd "$LIMEN_ROOT" || exit 1
 
 # load local secrets (gemini key, etc.) from the single un-committed secrets file
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
+if [ -z "${LIMEN_WORKTREES:-}" ]; then
+  if [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
+    export LIMEN_WORKTREES="/Volumes/Scratch/limen-worktrees"
+  else
+    export LIMEN_WORKTREES="$LIMEN_WORKDIR/.limen-worktrees"
+  fi
+else
+  export LIMEN_WORKTREES
+fi
+export LIMEN_WORKTREE_ROOT="${LIMEN_WORKTREE_ROOT:-$LIMEN_WORKTREES}"
+mkdir -p "$LIMEN_WORKTREES" "$LIMEN_WORKTREE_ROOT" 2>/dev/null || true
 
 LANES="${LIMEN_LANES:-codex,opencode,agy,claude}"
 [ -n "${GEMINI_API_KEY:-}" ] && LANES="$LANES,gemini"

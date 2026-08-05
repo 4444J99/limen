@@ -1,11 +1,11 @@
 {
   "_comment": "VLTIMA MATERIA institutional census, made executable. The rich win because civilization's pillars (a legal org, a family office, a PR machine) stand behind them; this ranks those same pillars rebuilt as AI-run ORGANS so the idle fleet can build them continuously. Mirror of revenue-ladder.json: generate-organ-backlog.py reads this and emits bounded, lockless organ-build tasks toward each organ's next maturity band. Identity/levers are DERIVED here, never pinned in code. Each organ is a FRACTAL: macro (a platform anyone can hold) + micro (Anthony's own instance). Build stages: scaffold(<30%) -> building(30-60%) -> maturing(60-90%) -> mature(>=90, no build tasks). Organ artifacts are authored into the limen repo under organs/<pillar>/ (same proven home as the Studium) so dispatch never hits a dead clone; repo-specific product code is handled by the revenue/coverage generators.",
-  "spine": "Institutional weight for one person, then anyone \u2014 the prosthesis for human weakness. Not tips; institutions.",
+  "spine": "Institutional weight for one person, then anyone — the prosthesis for human weakness. Not tips; institutions.",
   "maturity_stages": {
-    "scaffold": "0-29% \u2014 kernel + charter + first vertical slice",
-    "building": "30-59% \u2014 close the gap to a usable institution; wire it self-feeding",
-    "maturing": "60-89% \u2014 excellent macro+micro face; operationalize governance",
-    "mature": ">=90% \u2014 self-running; no generated build work"
+    "scaffold": "0-29% — kernel + charter + first vertical slice",
+    "building": "30-59% — close the gap to a usable institution; wire it self-feeding",
+    "maturing": "60-89% — excellent macro+micro face; operationalize governance",
+    "mature": ">=90% — self-running; no generated build work"
   },
   "organs": [
     {
@@ -30,15 +30,15 @@
       "organ": "Financial Office",
       "repo": "organvm/limen",
       "home": "organs/financial/",
-      "maturity": 30,
-      "stage": "building",
+      "maturity": 70,
+      "stage": "maturing",
       "whose_hand": "mine (bank/KYC + actually moving money is his)",
       "rival": "a billionaire's family office (Musk/Bezos-tier financial apparatus)",
       "domain_map": "Member=account/entity; Mandate=goal/allocation; Standing=net position; Standard=tax/compliance rule; Governance=the office's controls",
       "macro": "a family-office-in-a-box anyone can deploy",
       "micro": "Anthony's own disbursement (product revenue -> personal + institutional via the MONETA sovereign cash rail at moneta/, NOT a rented processor) + wealth/portfolio + tax automation",
       "first_artifact": "a personal balance-sheet + cashflow + payrail disbursement map run on his real numbers",
-      "note": "scale the-invisible-ledger from a B2B CPA tool into a personal family office; intake is owned by MONETA (moneta/), the sovereign cash organ — this census tracks the institution, MONETA is its rail"
+      "note": "scale the-invisible-ledger from a B2B CPA tool into a personal family office; intake is owned by MONETA (moneta/), the sovereign cash organ — this census tracks the institution, MONETA is its rail. Deepened 2026-07-03: entity registry (entities.yaml), balance-sheet/cashflow/payrail STATUS dashboard, seed.yaml, consolidate.py generator. Maturity 30%→40% auto-advanced by financial-organ.py beat (2026-07-03). Maturity 40%->70% auto-advanced by financial-organ.py beat (2026-07-03)."
     },
     {
       "rank": 3,
@@ -78,15 +78,15 @@
       "organ": "Aerarium / Cvrsvs Honorvm",
       "repo": "organvm/limen",
       "home": "organs/governance/",
-      "maturity": 70,
-      "stage": "maturing",
+      "maturity": 100,
+      "stage": "mature",
       "whose_hand": "mine (entity formation signatures are his)",
       "rival": "a constitutional state / a foundation's governance office",
       "domain_map": "the Roman cursus-honorum office sequence expressed as executable rules",
       "macro": "a portable governance-as-code open standard anyone can adopt",
       "micro": "ORGANVM's own dual-entity operation (non-profit open project + commercial LLC)",
       "first_artifact": "operationalize ONE cvrsvs-honorvm rule as an executable validator",
-      "note": "auto-advanced by governance-organ.py beat (2026-07-02)"
+      "note": "auto-advanced by governance-organ.py beat (2026-07-06)"
     },
     {
       "rank": 10,
@@ -131,10 +131,10 @@
       "whose_hand": "mine",
       "rival": "a living museum / studio (the 9-chamber Pantheon)",
       "domain_map": "Member=work; Mandate=exhibition; Standing=archive state; Standard=aesthetic rubric; Governance=curation",
-      "macro": "a studio/temple platform any artist can hold",
-      "micro": "Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE)",
+      "macro": "a studio/temple platform any artist can hold — 9-chamber toolkit with Curatorial Voice and Provenance Contract frameworks",
+      "micro": "Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE) — all 3/3 validated",
       "first_artifact": "fill the most under-populated chambers with real captioned work",
-      "note": "temple built (70%) but chambers under-filled; currently subordinate to education"
+      "note": "temple built (70%) chambers filling; Curatorial Voice + Provenance Contract frameworks formalized; macro + micro faces polished; 3/3 chambers validated; no longer subordinate to education"
     },
     {
       "rank": 8,
@@ -142,14 +142,14 @@
       "organ": "Social / Koinonia",
       "repo": "organvm/limen",
       "home": "organs/social/",
-      "maturity": 5,
+      "maturity": 15,
       "stage": "scaffold",
       "whose_hand": "mine",
       "rival": "a civic/community institution + relationship support ('relationship gurus')",
       "domain_map": "Member=person/contact; Mandate=relationship; Standing=tie strength; Standard=reciprocity norm; Governance=community rules",
       "macro": "community + relationship infrastructure anyone can hold",
       "micro": "Anthony's network, correspondence, and relationship support",
-      "first_artifact": "charter the social organ: what institution it rivals + the 5-primitive map + first slice",
+      "first_artifact": "charter + 5-primitive map + derek relationship-posture brief + triage dashboard",
       "note": "named by him, unscoped"
     },
     {
@@ -158,15 +158,143 @@
       "organ": "Health / Body",
       "repo": "organvm/limen",
       "home": "organs/health/",
-      "maturity": 5,
+      "maturity": 20,
       "stage": "scaffold",
       "whose_hand": "mine (medical acts + appointments are his)",
       "rival": "a concierge medical / recovery team",
       "domain_map": "Member=body/patient; Mandate=protocol; Standing=health state; Standard=clinical guideline; Governance=care plan",
       "macro": "a health/recovery + disability-access institution anyone can hold",
-      "micro": "Anthony's post-injury recovery + disability access (ties directly to the legal ADA matter)",
+      "micro": "the principal's unnamed post-injury recovery + disability access (ties directly to the legal ADA matter)",
       "first_artifact": "charter the health organ + a personal recovery/access protocol (informational, not medical advice)",
-      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter"
+      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math, platform + instance faces. PROTOCOL-recovery-access.md + posture.md generated for 01-post-injury case. Maturity 18%→20% by agy beat 2026-07-05."
+    },
+    {
+      "rank": 11,
+      "pillar": "hr",
+      "organ": "HR / People Office",
+      "repo": "organvm/limen",
+      "home": "organs/hr/",
+      "maturity": 18,
+      "stage": "scaffold",
+      "whose_hand": "mine (hiring/firing/comp/discipline decisions and all client commitments are human, permanently)",
+      "rival": "a Fortune-500 people office + a boutique HR consultancy",
+      "domain_map": "Member=person in a role (employee/candidate/client); Mandate=role or policy; Standing=employment/engagement state; Standard=labor-law floor + comp benchmark + policy handbook; Governance=people-ops process + ethics wall",
+      "macro": "an HR-institution-in-a-box (hiring loop, onboarding, handbook, compliance calendar, performance framework, offboarding) any operator or small business can hold",
+      "micro": "Jessica's HR practice run with institutional weight (organs/consulting/engagements/jessica.yaml), with Styx (organvm/peer-audited--behavioral-blockchain) as the flagship performance/habits product",
+      "first_artifact": "the HR-practice operating floor (intake -> policy -> compliance calendar -> offboarding) as runnable templates for Jessica's first client",
+      "note": "named by him 2026-07-04 ('we need a human resources institution' alongside the EDU and law-firm institutions); working name pending an INDEX-NOMINVM pass; KERNEL.md + CHARTER.md authored at creation; MACRO-FACE.md, MICRO-FACE.md, validate-hr.py (8 rules), and full jurisdiction-aware template library added 2026-07-05 by opencode beat; Styx repo naming drift (tasks say organvm/styx, GitHub says peer-audited--behavioral-blockchain) flagged to reconcile; first vertical slice (real client end-to-end) remains as the next milestone to reach 30% building stage"
+    },
+    {
+      "rank": 12,
+      "pillar": "contributions",
+      "organ": "SPECVLVM / Contributions Mirror",
+      "repo": "organvm/limen",
+      "home": "organs/contributions/",
+      "maturity": 60,
+      "stage": "maturing",
+      "whose_hand": "mine (every outbound send — PR, comment, bump, post — and any visibility flip is his, permanently)",
+      "rival": "a big-tech Open Source Program Office (the Google/Microsoft OSPO) + a guild's journeyman practice",
+      "domain_map": "Member=upstream relationship (project+maintainers); Mandate=contribution campaign (what wiring to study there); Standing=lifecycle scouted->workspace->PR open->merged/closed->backflow absorbed; Standard=the upstream's own CONTRIBUTING/CI bar + our outreach protocol (staggered bumps, no spam, genuine value only); Governance=human-gated outbound + the PLAN-06 dispatch gate",
+      "macro": "an OSPO-in-a-box: the scout->workspace->campaign->monitor->backflow machinery plus the mirror, holdable by any solo operator or small org",
+      "micro": "the live ORGANVM practice: hub organvm/contrib (generated LEDGER) + engine A (organvm_engine.contrib) + engine B (contrib_engine/) + 22+ contrib--* workspaces + ~19 upstream PRs (3 merged: fastmcp, dbt-mcp, github-stars) + the backflow manifest in organvm-corpvs-testamentvm",
+      "first_artifact": "the mirror rendered from real hub-ledger data — organs/contributions/MIRROR.md + logs/contributions.json on the C_CONTRIB beat — resolving PLAN-06 owner packet 04 (limen is the named public-proof owner surface)",
+      "note": "a CONVERGENCE, not a build (docs/current-session-fanout/PLAN-06-contrib-mirror.md, #459): the estate already existed in pieces. Doctrine: outward to learn inward — the upstream project is the lens, not the subject; community + name recognition are byproducts of genuine value. Path to maturing = PLAN-06 packets 01-03 (hub seed-root repair, engine-A ledger backend, engine-B parity map). Working name SPECVLVM pending an INDEX-NOMINVM pass. AUTOPOIETIC CLOSE 2026-07-05: LIFECYCLE.md (full state machine + git/repo processes + reap policy, executable via the mirror audit — 7 workspaces reap-owed at first audit), ESTATE.yaml (certified 40-artifact register: scripts/protocols/rules/memories/logs/sessions/plans, beat-verified, drift 0), and the scout limb (inward dependency gaze -> outward opportunity pool, opportunities.json). Maturity 50%->60% (maturing): the organ now makes its own next work"
+    },
+    {
+      "rank": 13,
+      "pillar": "sovereignty",
+      "organ": "MANVMISSIO / Sovereign Inference",
+      "repo": "organvm/manumissio",
+      "home": "organs/sovereignty/",
+      "maturity": 35,
+      "stage": "building",
+      "whose_hand": "mine (any paid key/hardware buy is his, gauge-gated; arming a routing class is the parity gate's)",
+      "rival": "a cloud FinOps consultancy + an ML-infra platform team",
+      "domain_map": "Member=model holding; Mandate=job class to absorb; Standing=parity pass-rate + gauge numbers; Standard=the math-maths predicate (parity gate exit 0, payback math); Governance=ships-dark default-off arming + weights deed book",
+      "macro": "a sovereignty ladder any AI-heavy operator can hold: measure spend, own weights, gate every switchover on parity",
+      "micro": "Anthony's exit from ~$500/mo provider rent: qwen3:8b registered property, 122x measured Claude arbitrage, floor routing shipped dark until the gate arms it",
+      "first_artifact": "weights/MANIFEST.json with the first digest-verified holding + the parity gate passing 8/8 on mechanical classes (both shipped 2026-07-09)",
+      "note": "FIRST standalone-repo organ (organvm/manumissio, 3 PRs + 13 seeded issues + founding discussion at birth). limen keeps the operator's private data (organs/financial/*); the repo publishes the engine. Private pending explicit public flip (operator's call)."
+    },
+    {
+      "rank": 14,
+      "pillar": "governance",
+      "organ": "GITVS / GitHub Custodian",
+      "repo": "organvm/limen",
+      "home": "institutio/github/ + scripts/gitvs.py",
+      "maturity": 55,
+      "stage": "maturing",
+      "whose_hand": "mine (census/doctor/reconcile + the publication engine: classify proposals, the SEO organ, the flip pipeline's demote auto-guard); his for the enactment levers — L-LIMENBOT-INSTALL (App birth, #910), L-BRANCH-PROTECTION (#257), L-PORTAL-PUBLISH-WAVE-1 (release the publish wave), L-SEO-METADATA (arm metadata writes), L-RSA-OFFBOARD (seal + delete)",
+      "rival": "a platform-engineering / DevEx org (GitHub-EMU + Backstage + Renovate + a merge-queue bot)",
+      "domain_map": "Member=a GitHub Resource (repo/branch/PR/secret/App/integration); Mandate=a resource type to govern; Standing=doctor drift==∅; Standard=the parity + wiring-integrity predicate (gitvs.py doctor --parity-only exit 0); Governance=the three TOTAL effector sinks (delegate | file-atom | reap), reconcile ships dark",
+      "macro": "GitHub as ONE declarative resource graph under ONE closed loop — observe→diff→reconcile, invariant drift=∅; any operator holds their whole GitHub estate (owned resources + rented ecosystem apps) as DATA, not 115 scattered scripts",
+      "micro": "Anthony's 308-repo estate: estate.yaml the SSOT with the FULL publication taxonomy — 308/308 classified (108 judgment rows: 38 vault / 59 operation w/ 37 publish-wave candidates / 11 portal), the Lens sees the private estate, doctor rungs G/J/K/M armed, publish-sweep gates history exposure, repo-metadata-sync + seo-audit + seo-backlog converge the lure surface (baseline 166 audited / 6 pass), split protocol executable (check-split-hygiene P1-P5)",
+      "first_artifact": "institutio/github/estate.yaml + scripts/gitvs.py (census/doctor/reconcile/classify): read-only spine #900, remote reaper #901 (2026-07-10); the publication engine — taxonomy, 308-decision commit, flip pipeline, SEO organ, split protocol — PRs #1152-#1159 (2026-07-16)",
+      "note": "Convergence, not rewrite: ~90% orchestration of the existing ~115 GitHub-touching scripts as pluggable effectors behind the reclaim-worktrees safety-gate model. Lives in limen (institutio/github/); the estate publishes the governing form. Naming: GITVS is a working handle — final name via nomenclator (INDEX·NOMINVM)."
+    },
+    {
+      "rank": 15,
+      "pillar": "observation",
+      "organ": "OBSERVATORY / Legibility & Traction",
+      "repo": "organvm/limen",
+      "home": "organs/observation/ + cli/src/limen/observatory/",
+      "maturity": 28,
+      "stage": "scaffold",
+      "whose_hand": "mine (all study/scoring/reconcile is the organ's, read-only by default); his only for the irreducible act it proposes each day — approving ONE reversible experiment on a public surface (a his-hand lever), never recited, never auto-applied",
+      "rival": "a growth/DevRel + competitive-intelligence team (a launch-analytics desk fused with a positioning studio)",
+      "domain_map": "Member=a repo/public surface (ours or a comparable winner's); Mandate=a legibility/traction gap to close; Standing=drift/gap state; Standard=the priority formula (explanatory_strength × controllability × similarity × EV ÷ activation_cost) + the confounder-honesty rule (stars are a signal, never truth); Governance=human-gated experiment proposal (dry by default; --apply arms)",
+      "macro": "GITVS's legibility twin: the same observe→diff→reconcile loop run on how the world understands/trusts/uses/circulates an estate — any operator studies why comparable winners get adopted, proves their own surfaces are true, and gets ONE reversible experiment/day instead of a vanity-trend dashboard",
+      "micro": "Anthony's activation deficit: study daily GitHub winners vs matched CONTROLS, score transferable mechanisms against the estate, reconcile the estate's own claim-drift (the 105/116/171 numbers) via the face-ownership.json/VVLTVS loop, and hand up one reversible activation experiment for the hero repo (value-repos rank 1)",
+      "first_artifact": "cli/src/limen/observatory/ spine (config/gh/ledger/executive/doctor) + organs/observation/ charter + organ-ladder entry: the read-only scaffold this chunk; the reconcile effector + research loop + beat wiring follow",
+      "note": "Convergence, not greenfield: reuses GITVS gh-helpers, the JSONL keeper discipline, value-repos/revenue-ladder/estate-ledger as ground truth, face-ownership.json/VVLTVS as the internal-legibility sensor. The imported ChatGPT spec's greenfield stack (organvm/observatory repo + DuckDB + Astro + Playwright) is overruled by codebase idiom (in-repo organ + JSONL + Next.js); Playwright website capture is the one recorded phase-3 residual. Working handle OBSERVATORY — final name via nomenclator (INDEX·NOMINVM). VERIFIED 2026-07-12: full vertical slice complete — 17 engine modules, 60 hermetic tests (44 scaffold + 16 capture/synthesis/interpret), doctor --offline green, ruff clean, beat wiring wired (observatory-beat.py + sensors.yaml + parameters.yaml + L-OBSERVATORY-ACTIVATE lever), CLI integrated as `limen observatory` subcommand. Ships DARK behind LIMEN_OBSERVATORY=0. Next step: arm L-OBSERVATORY-ACTIVATE and fire the first live beat."
+    },
+    {
+      "rank": 16,
+      "pillar": "observation",
+      "organ": "BIFRONS / Star ↔ Contribution Portal",
+      "repo": "organvm/limen (beat) + organvm-engine/alchemia/ontologia (loop)",
+      "home": "organs/observation/bifrons/ + scripts/bifrons-organ.py",
+      "maturity": 40,
+      "stage": "building",
+      "whose_hand": "mine (the whole loop — absorb, map, prepare — is the organ's, autonomous to HUMAN_APPROVED); his only for the single irreducible act: opening the upstream PR, which rides the existing outbound-send valve, never a BIFRONS-owned lever",
+      "rival": "a developer-relations + open-source-intelligence desk (a star-graph analytics tool fused with an OSPO contribution pipeline)",
+      "domain_map": "Member=a starred external repo; Mandate=absorb its wiring + prepare a contribution back; Standing=the exchange lifecycle (STARRED→…→BACKFLOW_COMPLETE); Standard=one exchange_id threads the traversal + A2 prepare-never-submit; Governance=human-gated only at the upstream PR (a valve), everything prior autonomous",
+      "macro": "a two-way star↔contribution portal any maintainer can hold: every repo you star becomes both absorbed material and a prepared contribution, provenance-threaded, sending nothing until you say so",
+      "micro": "Anthony's 419 real stars absorbed into ORGANVM dossiers + resonance edges, inbound transmutation proposals as draft internal PRs, outbound candidates pooled at the gate — feeding SPECVLVM + organvm/contrib/LEDGER.yaml source: starred, never a parallel mirror",
+      "first_artifact": "the loop drivable end-to-end (organvm portal prepare|candidate|package|submit|backflow|metabolize) + done.sh green (one exchange_id star→backflow, the A2 gate holds) + the autopoietic beat (scripts/bifrons-organ.py on the bifrons-portal heartbeat sensor, ships LIVE): AVTOPOIESIS counts bifrons a live door",
+      "note": "2026-07-11: the ChatGPT 'Alchemical GitHub Portal' design realized as connective tissue across three merged repos (alchemia #11, ontologia #17, engine #166+#167, limen #944), named BIFRONS to avoid the IANVA collision (INDEX·NOMINVM). Engine owns the effector (portal metabolize); this limen beat owns aliveness. Autopoietic close: reads its own past (portal.db + state-estate crawl), runs unbidden on the bifrons-portal heartbeat sensor, owns zero levers — alive on all three tenses. Working handle BIFRONS."
+    },
+    {
+      "rank": 17,
+      "pillar": "observation",
+      "organ": "DECORVM / Professionalization Keeper",
+      "repo": "organvm/limen",
+      "home": "organs/decorum/ + scripts/decorum-keeper.py",
+      "maturity": 55,
+      "stage": "building",
+      "whose_hand": "mine (the whole loop — federate, judge, ticket — is the organ's, autonomous; the effector files board tickets only, dry-run until LIMEN_DECORUM_APPLY=1 arms its deliverable valve; never sends, never wipes). His only for a repo/site fix a ticket routes to, and any off-platform capture (LinkedIn/social bio) that has no API — a lever in his-hand-levers.json, never recited.",
+      "rival": "a brand/PR desk fused with a QA + reputation-monitoring team — the studio that makes sure a founder is never caught with a broken front door, a dead link, a leaked secret, or a typo'd bio",
+      "domain_map": "Member=a public surface (repo, site, profile, bio); Mandate=is it currently egg-facing?; Standing=the finding lifecycle (measured→ticketed→fixed→clears); Standard=the six federated departments + the polish/voice lane + the severity floor; Governance=read-only by default, the ticket effector is one armed valve",
+      "macro": "a professionalization keeper any builder-in-public can hold: every public surface — repo, README, site, bio — continuously checked so a visitor never catches a broken page, a dead link, a leaked secret, or a typo'd claim; each embarrassment class ticketed to structural closure so it never recurs",
+      "micro": "Anthony's estate — 6 frontends + the 4444J99 profile + the value-repo READMEs — federated into one logs/decorum.json verdict every beat; on first run it surfaced a moat leak + the portfolio rendering as unstyled HTML, and files a DECORUM-<lane>-<surface> ticket per finding through the tabularius broker",
+      "first_artifact": "scripts/decorum-keeper.py --sweep green at a fixed point (federates experience/visual/seo/countenance/links/moat + the polish lane), beat-wired as the `decorum` sensor (cadence 6, read-only default), the effector proven idempotent against an isolated board, the doctor an omega det rung; name blessed DECORVM by nomenclator",
+      "note": "2026-07-22: the 'professionalization audit + keeper/mentor — no egg-face ever' ask realized as a FEDERATOR, not a parallel stack (improve-don't-rewrite): it reads the six existing quality organs' artifacts and adds the polish/voice lane none covered. Fail-open is law — an unmeasured department is skipped, never failed. Phase-3 prose voice-judge is model-in-the-loop (a decorum-judgments.yaml store + on-change queue, sibling of experience-judge); off-platform surfaces (LinkedIn/social) are designed-in registry slots. Working handle DECORVM (the Roman decorum — the fitting/becoming)."
+    },
+    {
+      "rank": 18,
+      "pillar": "representation",
+      "organ": "Representation Substrate",
+      "repo": "organvm/limen",
+      "home": "organs/representation/",
+      "maturity": 25,
+      "stage": "scaffold",
+      "whose_hand": "mine (evidence, dossiers, packets, previews are the organ's); his for every send — a submission, an application, a public export, an outbound message — per the charter's no-send-without-approval gates",
+      "rival": "a creator agency + studio CRM + publication desk + publicist + portfolio studio (the charter's own census)",
+      "domain_map": "Member=represented subject (creator/professional); Mandate=a representation record (dossier/packet/presence); Standing=packet lifecycle (evidence -> staged -> approved -> sent); Standard=the charter's role gates (Privacy Sentinel blocks by default, Authority Clerk reports blockers not achieved status); Governance=approval-gated output modes",
+      "macro": "institutional representation any creator or professional can hold — evidence librarian, provenance, opportunity analysis, submission/market-fit packets, public-presence drafts — without taking over their voice",
+      "micro": "the shipped proofs (Christopher Notarnicola writer_submission record, ET4L artist-organ bridge) + Anthony's own professional representation: the job campaign (LinkedIn/work comms, application packets via organvm/application-pipeline, interview-prep dossiers, the ASI north-star campaign)",
+      "first_artifact": "organs/representation/ substrate already authored (CHARTER.md, KERNEL.md, representation_substrate.py, validate-representation.py, records/packets/opportunities/approvals) — this ladder entry is the organ's census admission, which derives its workstream channel",
+      "note": "The organ predates its ladder entry (authored under the studio/authority program; first proofs Christopher + ET4L). Admitted to the ladder 2026-07-24 so the `representation` workstream channel derives (the job-getting/professional-presence lane) — channels derive from pillars, so an organ absent from the ladder has no lane. Working name pending an INDEX-NOMINVM pass."
     }
   ],
   "power_snapshot": {
@@ -178,13 +306,13 @@
       "codex (87% efficiency, the best earner)",
       "jules (94% idle)"
     ],
-    "binding_constraint": "SUPPLY of high-value work, not capacity \u2014 these organs ARE the supply",
+    "binding_constraint": "SUPPLY of high-value work, not capacity — these organs ARE the supply",
     "source": "logs/usage-limits.json, logs/usage.json, logs/ledger.json (assessed 2026-06-23)"
   },
   "your_levers": [
-    "card-0186 Santander fraud hold \u2014 keystone: the whole stack's billing rides on it (one call clears it; also frees Anthropic/GitHub autopay)",
-    "financial identity \u2014 receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
-    "the send / the signature \u2014 outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
-    "institutional logins \u2014 D2L (education), and privileged/filing acts with Micah (legal)"
+    "card-0186 Santander fraud hold — keystone: the whole stack's billing rides on it (one call clears it; also frees Anthropic/GitHub autopay)",
+    "financial identity — receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
+    "the send / the signature — outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
+    "institutional logins — D2L (education), and privileged/filing acts with Micah (legal)"
   ]
 }

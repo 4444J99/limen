@@ -1,0 +1,19 @@
+{
+  "attempted_profiles": [
+    "pro_research"
+  ],
+  "blocked_at": "2026-07-18T12:31:51Z",
+  "blocker_code": "missing_capability",
+  "failed_predicate": "An attended private browser session must be controllable before prompt submission",
+  "next_action": "After explicit operator approval, open one fresh Chrome window for the active profile and retry the browser bridge once",
+  "outcome_type": "BlockedReceipt",
+  "owner_surface": "organvm/limen attended-browser-bridge",
+  "request_id": "SGO-REQ-2026-PPLX-PILOT-03",
+  "reversible_work_completed": [
+    "refreshed official provider documentation",
+    "prepared an isolated exact-owner output worktree",
+    "verified that the browser bridge exposed zero controllable sessions",
+    "preserved zero API and Computer usage"
+  ],
+  "schema_version": "1.0"
+}

@@ -1,0 +1,198 @@
+# STORAGE-ROLES registry — HORREVM (horreum · the granary): every storage rail's DECLARED role,
+# anti-roles, and trust gates, codified from the 2026-06-15 Archive4T endgame prose (see provenance).
+# STATUS IS NEVER PINNED HERE — scripts/cloud-storage-doctor.py derives actual-vs-declared each
+# scheduled beat and writes logs/cloud-storage-health.json (derive-never-pin, the pillars.yaml rule).
+#
+# declared_state:
+#   adopted             → rail is in service; automatable trust gates must hold (drift otherwise)
+#   dormant-by-design   → rail must be absent-and-quiet; accepted_remnants is its forensic baseline
+#   pending-trust-gates → rail is being adopted; unmet gates are advisory, never drift
+#
+# accepted_remnants: the recorded debris baseline — anything NEW beyond it is drift (advisory).
+#   These dirs are forensic leftovers of the pre-2026-06-15 provider churn: NEVER terminal-deleted
+#   (endgame rule; removal covenant), only baselined. Account-bearing paths are declared as GLOBS,
+#   never literals (PII rule — the doctor also masks account tokens in everything it emits).
+#
+# dormant_expectations: the desktop File Provider layer that caused the past breakage. For Dropbox /
+#   Google Drive these stay REQUIRED even after headless adoption — a desktop app appearing IS drift
+#   ("adopted without trust gates", the exact past failure). Custody, when it comes, is API-level
+#   (rclone via HORREVM custody, PR2), never a File Provider reinstall.
+schema_version: 0.1
+owner: horrevm
+provenance:
+  ported_doc: docs/storage-endgame.md
+  source_docs:   # mountable-volume originals; archive of record — not authoritative for live state
+    - /Volumes/Archive4T/_OPERATIONS/MASTER-STORAGE-BACKUP-ENDGAME-2026-06-15.md
+    - /Volumes/Archive4T/_OPERATIONS/CLOUD-INTEGRITY-AUDIT-2026-06-15.md
+    - /Volumes/Archive4T/_OPERATIONS/STORAGE-OPERATING-MANUAL-2026-06-15.md
+health_signal: logs/cloud-storage-health.json
+
+rails:
+  icloud:
+    service: "iCloud Drive (com.apple.CloudDocs)"
+    declared_state: adopted
+    role: "Apple-ecosystem documents + cross-device continuity; the Mac<->iPhone bridge (DailyEngine drop folder); local cache is system-owned (library-preserve.py per-unit copy->verify->brctl-evict)."
+    never:
+      - "sole/bulk backup of critical archives"
+      - "terminal deletion inside ~/Library/Mobile Documents or ~/Library/CloudStorage"
+      - "local mirror of entire cloud archives on the internal disk"
+    mount: "~/Library/Mobile Documents"
+    probes:
+      brctl_container: com.apple.CloudDocs
+      payload_band_gib: {min: 1, max: 60}
+      fileprovider_error_scan:
+        tokens: [missingLastKnownVersion, excludedFromSync, itemChangedDuringPropagation, serverUnreachable]
+        max: null            # null = report-only in v1 (6/15 audit: stale errors coexist with healthy state)
+    accepted_remnants:
+      - pattern: "~/Library/CloudStorage/iCloudDrive-iCloudDrive (*"
+        max_count: 3
+        note: "provider-churn debris 2/19-2/22 2026 — forensic; a 4th dated domain = NEW churn"
+    trust_gates:
+      - {id: brctl-caught-up,  gate: "brctl status reports caught-up",                    automatable: true}
+      - {id: web-access,       gate: "iCloud.com access works",                           automatable: false, proven: null}
+      - {id: finder-opens,     gate: "Mac Finder iCloud Drive opens",                     automatable: false, proven: null}
+      - {id: iphone-files,     gate: "iPhone Files app opens iCloud Drive",               automatable: false, proven: null}
+      - {id: roundtrip-mac,    gate: "small test file uploads Mac -> appears on iPhone",  automatable: false, proven: null}
+      - {id: roundtrip-iphone, gate: "small test file uploads iPhone -> appears on Mac",  automatable: false, proven: null}
+
+  googledrive:
+    service: "Google Drive"
+    declared_state: pending-trust-gates
+    role: "Headless ciphertext custody via HORREVM (second-vendor offsite for the arca-vault mirror + sealed inventories + sealed continuity kernel; rclone drive.file scope) + browser-first collaboration (Docs/Sheets). Flip to adopted when L-CLOUD-EGRESS-CONSENT is discharged and the custody lane is armed."
+    never:
+      - "desktop File Provider app install (the past failure vector — custody is API-level only)"
+      - "archive warehouse / uncontrolled local mirror of the archive"
+      - "sole backup of anything"
+      - "plaintext private egress (ciphertext + the one non-secret recovery card only)"
+    mount_globs: ["~/Library/CloudStorage/GoogleDrive-*"]   # glob, NEVER the account-bearing literal (PII)
+    dormant_expectations:
+      apps: ["/Applications/Google Drive.app"]
+      fileprovider_tokens: ["drivefs", "google.drive"]
+    custody_signal: logs/horrevm.json
+    accepted_remnants:
+      - pattern: "~/Library/CloudStorage/GoogleDrive-*"
+        max_count: 1
+        note: "0B stale dir — forensic; iPhone-side Drive/Files integration is a device check, not a Mac probe"
+      - pattern: "~/Library/Group Containers/EQHXZ8M8AV.group.com.google.drivefs"
+        max_count: 1
+        note: "~30M metadata remnant of the prior desktop-app iteration"
+    trust_gates:
+      - {id: token,        gate: "rclone about gdrive: succeeds (auth + quota recorded)",         automatable: true}
+      - {id: roundtrip,    gate: "nonce probe rcat->cat->sha256 roundtrip in limen-custody/.probe/", automatable: true}
+      - {id: integrity,    gate: "rclone check --one-way clean on every pushed payload",          automatable: true}
+      - {id: restore,      gate: "kernel pulled back + unsealed + byte-compared (monthly)",       automatable: true}
+      - {id: web-access,   gate: "drive.google.com browser access works",                         automatable: false, proven: null}
+      - {id: iphone-files, gate: "iPhone Files/Drive app reaches limen-custody/",                 automatable: false, proven: null}
+
+  dropbox:
+    service: "Dropbox"
+    declared_state: pending-trust-gates
+    role: "Headless break-glass grab bag via HORREVM (RECOVERY-CARD.md plaintext-no-secrets + sealed continuity kernel <100MB; reachable from any borrowed browser). Flip to adopted when L-CLOUD-EGRESS-CONSENT is discharged and the custody lane is armed."
+    never:
+      - "desktop File Provider app install (the past failure vector — custody is API-level only)"
+      - "primary archive warehouse"
+      - "silent full local mirror of the archive"
+      - "the only backup of anything"
+      - "plaintext private egress (ciphertext + the one non-secret recovery card only)"
+    mount_globs: ["~/Library/CloudStorage/Dropbox*"]
+    dormant_expectations:
+      apps: ["/Applications/Dropbox.app"]
+      fileprovider_tokens: ["getdropbox", "dropbox"]
+    custody_signal: logs/horrevm.json
+    accepted_remnants:
+      - pattern: "~/Library/CloudStorage/Dropbox"
+        max_count: 1
+        note: "0B stale dir — forensic"
+      - pattern: "~/Library/Group Containers/G7HH3F8CAK.com.getdropbox.dropbox.sync"
+        max_count: 1
+        note: "~33M metadata remnant of the prior desktop-app iteration"
+    trust_gates:
+      - {id: token,      gate: "rclone about dropbox: succeeds (auth + quota recorded)",          automatable: true}
+      - {id: roundtrip,  gate: "nonce probe rcat->cat->sha256 roundtrip in limen-custody/.probe/", automatable: true}
+      - {id: integrity,  gate: "rclone check --one-way clean on every pushed payload",            automatable: true}
+      - {id: restore,    gate: "kernel pulled back + unsealed + byte-compared (monthly)",         automatable: true}
+      - {id: web-access, gate: "dropbox.com browser access works",                                automatable: false, proven: null}
+
+  onedrive:
+    service: "OneDrive"
+    declared_state: dormant-by-design
+    role: "Nothing — ignore unless actively needed (6/15 audit verdict, recorded here so it never resurfaces as a question). Never counted as backup."
+    never: ["backup of anything", "silent adoption"]
+    mount_globs: ["~/Library/CloudStorage/OneDrive*"]
+    dormant_expectations:
+      apps: ["/Applications/OneDrive.app"]
+      fileprovider_tokens: ["onedrive"]
+    accepted_remnants:
+      - pattern: "~/Library/CloudStorage/OneDrive-Personal"
+        max_count: 1
+        note: "stale dir — forensic"
+    trust_gates:
+      - {id: ignore, gate: "ignore unless the operator actively needs it", automatable: false, proven: null}
+
+  backblaze:
+    service: "Backblaze (offsite/versioned backup)"
+    declared_state: adopted
+    role: "Primary offsite backup for / and /Volumes/Archive4T — the durability layer sync providers must never impersonate."
+    never:
+      - "backing up TM-Mac / Ingress / Scratch"
+      - "ANY doctor-initiated bztransmit/bzserv action — observation only (HIS-hand territory)"
+    probes:
+      processes: [bzserv, bztransmit, bzfilelist]   # read-only process census; any present = client live
+      bzvol_marker: "/Volumes/Archive4T/.bzvol"      # volume selected+recognized; newest ping mtime = recency (report-only)
+    trust_gates:
+      - {id: client-running,  gate: "a bz* client process visible in the process table",  automatable: true}
+      - {id: volume-selected, gate: ".bzvol marker present on Archive4T",                 automatable: true}
+      - {id: upload-complete, gate: "Archive4T remaining-upload reaches zero",            automatable: false, proven: null}
+      - {id: restore-proof,   gate: "one file restored from Backblaze",                   automatable: false, proven: null}
+
+  archive4t:
+    service: "Archive4T (APFS volume, 4TB SSD)"
+    declared_state: adopted
+    role: "PRIMARY local archive — system of record for curated recovered data, manifests, operating docs; Backblaze-backed; library-preserve.py preserve destination."
+    never: ["Time Machine-only safety", "scratch work", "unreviewed Downloads dumps", "living inside a consumer sync folder"]
+    mount: "/Volumes/Archive4T"
+    required_mounted: true    # the SSOT offline is drift the operator wants surfaced
+    trust_gates:
+      - {id: mounted, gate: "volume mounted", automatable: true}
+
+  t7recovery:
+    service: "T7Recovery (second local copy)"
+    declared_state: adopted
+    role: "Second local recovery copy of CleanUnique until offsite restore proof exists; then re-evaluate."
+    never: ["scratch", "active workspace", "new unsorted data", "deletion before offsite restore proof"]
+    mount: "/Volumes/T7Recovery"
+    required_mounted: false   # may be detached; report-only
+    trust_gates:
+      - {id: mounted, gate: "volume mounted when verification is due", automatable: true}
+
+  time-machine:
+    service: "Time Machine -> TM-Mac"
+    declared_state: adopted
+    role: "LOCAL rollback for the internal Mac only (optional convenience — data already has iCloud + Archive4T + Backblaze copies; stated once, not nagged)."
+    never: ["a backup of Archive4T", "a substitute for offsite backup", "a reason to erase T7Recovery"]
+    mount: "/Volumes/TM-Mac"
+    required_mounted: false
+    probes:
+      tmutil_latestbackup: true   # rc!=0 (e.g. no Full Disk Access) -> unknown, never drift
+    trust_gates:
+      - {id: latest-backup, gate: "tmutil latestbackup returns a backup path", automatable: true}
+
+  ingress:
+    service: "Ingress (intake volume)"
+    declared_state: adopted
+    role: "Intake zone: new imports, unpacking, review-before-promotion. Nothing archived until promoted to Archive4T."
+    never: ["long-term storage", "Backblaze selection"]
+    mount: "/Volumes/Ingress"
+    required_mounted: false
+    trust_gates:
+      - {id: mounted, gate: "volume mounted when verification is due", automatable: true}
+
+  scratch:
+    service: "Scratch (disposable volume)"
+    declared_state: adopted
+    role: "Disposable workspace: risky unpacking, transformations, one-off experiments."
+    never: ["only home of anything important", "Backblaze selection"]
+    mount: "/Volumes/Scratch"
+    required_mounted: false
+    trust_gates:
+      - {id: mounted, gate: "volume mounted when verification is due", automatable: true}

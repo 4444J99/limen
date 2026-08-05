@@ -1,0 +1,5 @@
+{"session": "12403084334729929897", "adopted_by": "https://github.com/organvm/victoroff-os/pull/18", "date": "2026-07-23", "note": "VIC-GOV-001 landed by hand; launch predated receipt recording"}
+{"session": "16053073851038878814", "adopted_by": "https://github.com/organvm/victoroff-os/pull/19", "date": "2026-07-23", "note": "VIC-CONTRACT-001 landed by hand; launch predated receipt recording"}
+{"session": "2000870116497032321", "adopted_by": "https://github.com/organvm/victoroff-os/pull/20", "date": "2026-07-23", "note": "VIC-DOMAIN-001 landed by hand; launch predated receipt recording"}
+{"session": "3847928461988920266", "adopted_by": "https://github.com/organvm/victoroff-os/pull/18", "date": "2026-07-23", "note": "duplicate vic-gov-001 capsule launch; superseded by the landed session"}
+{"session": "16224286851962470850", "adopted_by": "https://github.com/organvm/victoroff-os/pull/19", "date": "2026-07-23", "note": "duplicate vic-contract-001 capsule launch; superseded by the landed session"}

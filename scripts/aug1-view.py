@@ -45,6 +45,27 @@ def _load(path, default):
         return default
 
 
+def _dict(value):
+    return value if isinstance(value, dict) else {}
+
+
+def _list(value):
+    return value if isinstance(value, list) else []
+
+
+def _dict_rows(value):
+    return [row for row in _list(value) if isinstance(row, dict)]
+
+
+def _cents(row):
+    if not isinstance(row, dict):
+        return 0
+    try:
+        return int(row.get("cents", 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _parse_day(s):
     try:
         return datetime.strptime(str(s)[:10], "%Y-%m-%d").date()
@@ -54,17 +75,17 @@ def _parse_day(s):
 
 def build_view():
     today = date.today()
-    received = _load(STATE / "revenue-received.json", {}).get("received", []) or []
-    engagements = _load(STATE / "engagements.json", {}).get("engagements", []) or []
-    open_levers = _load(LEVERS_FILE, {}).get("levers", []) or []
+    received = _dict_rows(_dict(_load(STATE / "revenue-received.json", {})).get("received"))
+    engagements = _dict_rows(_dict(_load(STATE / "engagements.json", {})).get("engagements"))
+    open_levers = _list(_dict(_load(LEVERS_FILE, {})).get("levers"))
     life = _load(LIFE_FILE, None)
 
-    total_cents = sum(int(r.get("cents", 0) or 0) for r in received)
+    total_cents = sum(_cents(r) for r in received)
     wk_cutoff = today - timedelta(days=7)
-    trailing7 = sum(int(r.get("cents", 0) or 0) for r in received
-                    if (_parse_day(r.get("at")) or date.min) >= wk_cutoff)
+    trailing7 = sum(_cents(r) for r in received
+                    if isinstance(r, dict) and (_parse_day(r.get("at")) or date.min) >= wk_cutoff)
     signed = [e for e in engagements
-              if e.get("status") == "signed" and e.get("deposit_cleared") is True]
+              if isinstance(e, dict) and e.get("status") == "signed" and e.get("deposit_cleared") is True]
     open_lever_ids = {lev.get("id") for lev in open_levers if isinstance(lev, dict)}
     blocking_levers = sorted(open_lever_ids & set(REVENUE_LEVER_IDS))
 
@@ -87,7 +108,7 @@ def build_view():
         {"key": "rail", "label": "A rail has received a real dollar",
          "ok": total_cents > 0,
          "detail": f"${total_cents/100:,.0f} received to date" if total_cents else "$0 — no rail has collected yet",
-         "act": "Turn on ONE rail you control (Ko-fi or PayPal.me — ~20 min, no LLC) so a 'yes' can pay you today."},
+         "act": "Rails are LIVE (Ko-fi 4444j99 · MONETA BTC mint since 2026-07-12 · PromptScope USDC) — the gap is a payer, not a rail. Put a paid ask in front of one human today; Lemon Squeezy KYC (L-REVENUE-ACCT) only if card checkout is the blocker."},
         {"key": "signed", "label": "≥1 signed engagement, deposit cleared",
          "ok": len(signed) > 0,
          "detail": f"{len(signed)} signed+cleared" if signed else "0 signed — no client closed yet",

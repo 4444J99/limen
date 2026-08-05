@@ -24,17 +24,29 @@ CONVERGENCE ROADMAP (each remaining consumer records its own residual rewire, so
 head or a chat):
   * DONE  — ``capacity.py`` derives PAID_AGENT_ORDER / AGENT_ALIASES / LOCAL_CHECKOUT_AGENTS /
             ISSUE_ASSIGNMENT_AGENTS / _DEFAULT_BINARIES / _KINDS from :data:`VENDORS`.
-  * DONE  — ``test_census`` drift-guards ``dispatch._LANE_CASCADE`` against :func:`lane_cascade`,
-            so the two can never silently diverge again.
-  * TODO  — ``scripts/usage-telemetry.py`` ``_DEFAULT_LIMITS`` should derive from :func:`budgets`.
-  * TODO  — ``scripts/route.py`` ``_vendor_health`` should derive its vendor set from census.
-  * TODO  — ``ianva/src/ianva/agents.py`` MCP-target list should reconcile against census names.
-  * TODO  — unify per-vendor model choice: ``dispatch._codex_model``/``_opencode_model`` are the
-            non-Claude analogue of ``model_selection``; ``Vendor.tiering`` marks who owns each.
+  * DONE  — ``dispatch._LANE_CASCADE`` now DERIVES from :func:`lane_cascade` (was drift-guarded);
+            ``test_census`` still asserts the two are equal.
+  * DONE  — ``scripts/usage-telemetry.py`` ``_DEFAULT_LIMITS`` metered rows derive from :func:`budgets`
+            (filter: ``Budget.window != "none"``), with a drift-guarded fallback for launchd.
+  * DONE  — ``scripts/route.py`` ``_vendor_health`` fallback derives its lane set + binaries from
+            census (:func:`lane_cascade` + :func:`default_binaries`).
+  * DONE  — ``ianva/src/ianva/agents.py`` keys reconcile against census names (``test_census`` guards
+            that every dispatchable ianva target is a canonical vendor; ``cline`` is the one MCP-only
+            target, documented).
+  * DONE (Increment-1) — per-vendor model choice is homed on ``Vendor.tiering`` and projected by
+            :func:`tiering`; ``test_census`` drift-guards it against a closed sentinel set. Remaining
+            OpenCode consumes the provider-neutral live capability selector; Warp/Oz delegate the
+            changing underlying catalog to provider Auto.  Model names remain runtime outputs.
+  * DONE  — peer-conduct execution metadata is homed on ``Vendor.execution`` and projected by
+            :func:`execution_profiles`; health, auth, concurrency, and meters stay live references,
+            never cached model catalogs or numeric fallback tops.
+  * DONE  — ``capacity.DEFAULT_FILL_AGENTS`` derives from execution-profile eligibility, while ianva
+            transport drift tests reconcile every primary native adapter against the same profiles.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 
@@ -73,6 +85,31 @@ class Status:
 
 
 @dataclass(frozen=True)
+class ExecutionProfile:
+    """Provider-neutral execution and peer-conduct metadata for one native lane.
+
+    The profile deliberately records *references* for health, auth, concurrency, and metering.
+    Those values are live runtime state and must not become fixed catalog snapshots or numeric
+    fallback tops in this register.  The fields shared with ``ConductorSessionV1`` can be copied
+    directly when a healthy native session registers with the conduct broker.
+    """
+
+    capabilities: frozenset[str]
+    transport: str
+    native_fanout: bool
+    harvest_method: str
+    concurrency_ref: str
+    meter_ref: str
+    health_ref: str
+    auth_ref: str
+    daily_fill: bool = False
+    # Stable workstream invocation protocol. Provider IDs are registry data and may be renamed;
+    # launch behavior must therefore dispatch on this protocol rather than on ``Vendor.name``.
+    workstream_adapter: str = "positional"
+    workstream_model_flag: bool = False
+
+
+@dataclass(frozen=True)
 class Vendor:
     """One provider of dispatchable work-capacity, with every scattered fact homed here."""
 
@@ -88,7 +125,37 @@ class Vendor:
     tiering: str  # which model-selection layer owns its model choice
     budget: Budget
     status: Status
+    execution: ExecutionProfile
     doc: str = ""
+
+
+def _execution(
+    name: str,
+    *,
+    capabilities: tuple[str, ...],
+    transport: str,
+    native_fanout: bool,
+    harvest_method: str,
+    concurrency_scope: str,
+    daily_fill: bool = False,
+    workstream_adapter: str = "positional",
+    workstream_model_flag: bool = False,
+) -> ExecutionProfile:
+    """Build one profile while deriving every per-lane live-state reference from its name."""
+
+    return ExecutionProfile(
+        capabilities=frozenset(capabilities),
+        transport=transport,
+        native_fanout=native_fanout,
+        harvest_method=harvest_method,
+        concurrency_ref=f"capacity:{concurrency_scope}/{name}",
+        meter_ref=f"logs/usage.json#/vendors/{name}",
+        health_ref=f"limen.capacity:agent_status/{name}",
+        auth_ref=f"limen.census:vendors/{name}/auth_mode",
+        daily_fill=daily_fill,
+        workstream_adapter=workstream_adapter,
+        workstream_model_flag=workstream_model_flag,
+    )
 
 
 # ── THE REGISTER ─────────────────────────────────────────────────────────────────────────────
@@ -105,11 +172,21 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="chatgpt_oauth",  # ~/.codex/auth.json — no API key held
         cred_ref=None,
         meter="vendor_ratelimit",  # real rate_limits in ~/.codex/sessions/*.jsonl (5h + weekly)
-        tiering="dispatch_adhoc",  # _codex_model fails over to gpt-5.3-codex-spark under load
+        tiering="provider_auto",  # explicit override only; no built-in model-name fallback
         budget=Budget(
             100_000_000, "tokens", "5h rolling", "ESTIMATE - tune to plan (/status)", "estimate", "openai-plan"
         ),
         status=Status(True, "live", "ChatGPT-plan OAuth lane"),
+        execution=_execution(
+            "codex",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=True,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+            workstream_adapter="codex",
+        ),
     ),
     Vendor(
         name="claude",
@@ -126,6 +203,16 @@ VENDORS: tuple[Vendor, ...] = (
             100_000_000, "tokens", "5h rolling", "ESTIMATE - tune to plan (/status)", "estimate", "claude-plan"
         ),
         status=Status(True, "live", "Claude-plan OAuth lane; shim pins the per-spawn floor tier"),
+        execution=_execution(
+            "claude",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=True,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+            workstream_model_flag=True,
+        ),
     ),
     Vendor(
         name="opencode",
@@ -134,12 +221,23 @@ VENDORS: tuple[Vendor, ...] = (
         kind="local-cli",
         local_checkout=True,
         issue_assignment=False,
-        auth_mode="opencode_auth",  # own auth.json / free model
+        auth_mode="opencode_auth",  # own auth.json may expand the live reachable catalog
         cred_ref=None,
         meter="dispatch_count",
-        tiering="dispatch_adhoc",  # _opencode_model
+        tiering="provider_selection",  # provider_selection.py + live `opencode models --verbose`
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
-        status=Status(True, "live", "free-model lane; deploy/cloudflare specialty"),
+        status=Status(True, "live", "capabilities and pricing discovered from the live catalog"),
+        execution=_execution(
+            "opencode",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=True,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+            workstream_adapter="prompt-flag",
+            workstream_model_flag=True,
+        ),
     ),
     Vendor(
         name="agy",
@@ -150,13 +248,32 @@ VENDORS: tuple[Vendor, ...] = (
         issue_assignment=False,
         auth_mode="google_oauth",  # ~/.gemini/antigravity-cli; agy IS Google's Antigravity client
         cred_ref=None,
-        meter="dispatch_count",
+        meter="dispatch_count",  # no readable vendor meter — agy persists NO local usage; /usage is live-fetched from Google OAuth only
         tiering="none",
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
         # Antigravity is Google's DIRECTED migration target off the sunset Gemini Code-Assist OAuth
         # (see the gemini record). agy is healed, not archived: _bridge_agy_scratch carries its
         # scratch-dir work into the worktree; agy-noop-shim stops a mid-run browser sign-in.
         status=Status(True, "live", "Google Antigravity CLI; the migration target off Code-Assist OAuth"),
+        execution=_execution(
+            "agy",
+            capabilities=(
+                "conduct",
+                "execute",
+                "code",
+                "review",
+                "inspect",
+                "local-worktree",
+                "scratch-bridge",
+            ),
+            transport="ianva-stdio",
+            native_fanout=False,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+            workstream_adapter="prompt-interactive",
+            workstream_model_flag=True,
+        ),
     ),
     Vendor(
         name="gemini",
@@ -190,6 +307,17 @@ VENDORS: tuple[Vendor, ...] = (
             lever="L-FLEET-CAPACITY",  # upstream root: L-CARD-FRAUD-HOLD
             deprecated_paths=("oauth_code_assist",),
         ),
+        execution=_execution(
+            "gemini",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "local-worktree"),
+            transport="ianva-http",
+            native_fanout=False,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+            daily_fill=True,
+            workstream_adapter="prompt-interactive",
+            workstream_model_flag=True,
+        ),
     ),
     Vendor(
         name="ollama",
@@ -207,6 +335,14 @@ VENDORS: tuple[Vendor, ...] = (
         # that can produce. Self-activating: reachable only once a model is pulled.
         budget=Budget(None, "runs", "none", "local unmetered floor (no cap)", "measured"),
         status=Status(True, "live_if_model_pulled", "one `ollama pull` from a live floor lane"),
+        execution=_execution(
+            "ollama",
+            capabilities=("conduct", "execute", "review", "inspect", "local-worktree"),
+            transport="native-cli",
+            native_fanout=False,
+            harvest_method="conduct-report",
+            concurrency_scope="local-host-admission",
+        ),
     ),
     Vendor(
         name="jules",
@@ -221,6 +357,16 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="none",
         budget=Budget(100, "runs", "24h", "known hard cap", "measured"),
         status=Status(True, "live", "async cloud lane; first pick for genuine big-task horizons"),
+        execution=_execution(
+            "jules",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "github-remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="jules-remote",
+            concurrency_scope="provider-headroom",
+            daily_fill=True,
+            workstream_adapter="jules",
+        ),
     ),
     Vendor(
         name="copilot",
@@ -235,6 +381,15 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="none",
         budget=Budget(None, "runs", "none", "not modeled (issue-assignment lane)", "unmodeled"),
         status=Status(True, "live", "GitHub-issue assignment lane"),
+        execution=_execution(
+            "copilot",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "github-remote"),
+            transport="ianva-stdio",
+            native_fanout=True,
+            harvest_method="github-receipt",
+            concurrency_scope="provider-headroom",
+            daily_fill=True,
+        ),
     ),
     Vendor(
         name="warp",
@@ -246,9 +401,17 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="warp_key",  # WARP_API_KEY
         cred_ref=None,
         meter="none",
-        tiering="none",
+        tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
+        execution=_execution(
+            "warp",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="provider-receipt",
+            concurrency_scope="provider-headroom",
+        ),
     ),
     Vendor(
         name="oz",
@@ -260,9 +423,17 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="warp_key",  # WARP_API_KEY family
         cred_ref=None,
         meter="none",
-        tiering="none",
+        tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
+        execution=_execution(
+            "oz",
+            capabilities=("conduct", "execute", "code", "review", "inspect", "remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="provider-receipt",
+            concurrency_scope="provider-headroom",
+        ),
     ),
     Vendor(
         name="github_actions",
@@ -277,6 +448,14 @@ VENDORS: tuple[Vendor, ...] = (
         tiering="none",
         budget=Budget(None, "runs", "none", "not modeled (CI lane)", "unmodeled"),
         status=Status(True, "live", "GitHub Actions lane"),
+        execution=_execution(
+            "github_actions",
+            capabilities=("conduct", "execute", "review", "inspect", "verify", "github-remote"),
+            transport="provider-receipt-relay",
+            native_fanout=False,
+            harvest_method="provider-receipt",
+            concurrency_scope="provider-headroom",
+        ),
     ),
 )
 
@@ -330,6 +509,45 @@ def default_binaries() -> dict[str, str]:
 def kinds() -> dict[str, str]:
     """name -> lane kind (source of `capacity._KINDS`)."""
     return {v.name: v.kind for v in VENDORS}
+
+
+def tiering() -> dict[str, str]:
+    """name -> which model-selection layer owns its model choice (drift-guard for dispatch)."""
+    return {v.name: v.tiering for v in VENDORS}
+
+
+def execution_profiles() -> dict[str, ExecutionProfile]:
+    """Return every canonical lane's model-neutral execution/conduct profile.
+
+    This is an inventory, not a preference list.  Callers combine it with live health, auth,
+    provider headroom, ownership, and packet requirements before selecting an executor.
+    """
+
+    return {v.name: v.execution for v in VENDORS}
+
+
+def conduct_capabilities(
+    health: Mapping[str, bool] | None = None,
+) -> dict[str, ExecutionProfile]:
+    """Return the currently eligible peer-conduct profiles.
+
+    ``health`` is the live capacity/broker observation when a caller has one.  Without it the
+    register's fail-closed availability state is used; this never probes binaries or provider
+    catalogs at import time.  Capability matching and ranking remain runtime operations.
+    """
+
+    live = health or {}
+    return {
+        vendor.name: vendor.execution
+        for vendor in VENDORS
+        if "conduct" in vendor.execution.capabilities and bool(live.get(vendor.name, vendor.status.available))
+    }
+
+
+def default_fill_agents() -> tuple[str, ...]:
+    """Lanes included in daily capacity-fill reporting, derived from their profiles."""
+
+    return tuple(v.name for v in VENDORS if v.execution.daily_fill)
 
 
 def lane_cascade() -> list[str]:

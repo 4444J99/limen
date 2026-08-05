@@ -1,0 +1,53 @@
+# Canonical copy of the self-updating profile workflow. This file is DEPLOYED to
+# 4444J99/4444J99/.github/workflows/profile.yml (by scripts/profile-publish.sh). It keeps the
+# profile README + self-hosted assets regenerated daily from live GitHub data, using the engine
+# in organvm/limen as the single source of truth (no vendored copy — the profile repo checks the
+# engine out at run time). Every number is re-verified before any commit.
+name: profile
+
+on:
+  schedule:
+    - cron: '17 6 * * *'   # daily 06:17 UTC — after the contribution graph settles
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout profile repo
+        uses: actions/checkout@v4
+
+      - name: Checkout the engine (organvm/limen)
+        uses: actions/checkout@v4
+        with:
+          repository: organvm/limen
+          path: .engine
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Render provable, self-hosted profile
+        env:
+          # the default token can read public repos, users, contributions and the following
+          # list across GitHub; that is all the engine needs. Override with PROFILE_GH_TOKEN
+          # only if you want higher rate limits.
+          GH_TOKEN: ${{ secrets.PROFILE_GH_TOKEN || github.token }}
+          LIMEN_PROFILE_OUT: ${{ github.workspace }}
+        run: .engine/scripts/profile-build.sh "$LIMEN_PROFILE_OUT"
+
+      - name: Commit if changed
+        run: |
+          rm -rf .engine
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A README.md assets
+          git diff --cached --quiet || git commit -m 'chore(profile): regenerate provable profile [skip ci]'
+          git push

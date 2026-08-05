@@ -32,6 +32,7 @@ headlessly via `claude --resume <id> -p "<guardrailed continuation>"` — bounde
 worktree-contention-checked, and never fired against an ALIVE worktree or our own session. Every
 probe fails OPEN: a missing/garbled file yields "unknown", never a crash.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -55,43 +56,77 @@ LEDGER = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 _POSTURE = {"push": "ASK-5-open-merge-gate (the standing gate-hold)"}
 
 # ── the CLOSEOUT ritual, autonomic: a finished session leaves a spent isolation worktree behind.
-#    These are the only trees the reaper may touch (never a clone or the live main checkout). ────────
+#    QUICKEN identifies those roots, but terminal removal is delegated to the acceptance-gated
+#    worktree/branch reapers so archive + redaction proof stay in the shared covenant. ───────────────
 WORKTREE_MARKERS = ("/.claude/worktrees/", "/.worktrees/", "/.limen-worktrees/")
-# SessionEnd hook drops a breadcrumb here so a deliberately-ended session is reaped on the NEXT beat
-# instead of waiting out CLOSED_HRS. The reap itself still happens here (you can't remove your own cwd).
+# SessionEnd hook drops a breadcrumb here so a deliberately-ended session is classified on the NEXT beat
+# instead of waiting out CLOSED_HRS. Removal stays with the acceptance-gated reaper organs.
 CLOSEOUT_LOG = ROOT / "logs" / "session-closeout.jsonl"
-# the reaper is ON by default (it IS the requested behavior); kill-switch for a cautious operator.
+# the candidate detector is ON by default; physical removal is not performed here.
 REAP_ON = os.environ.get("LIMEN_QUICKEN_REAP", "1") == "1"
 
+
+def positive_int_env(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw in (None, ""):
+        return default
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
 # A session idle longer than this (and with pending work) is STALLED, not "working".
-STALE_MIN = int(os.environ.get("LIMEN_QUICKEN_STALE_MIN", "20"))
+STALE_MIN = positive_int_env("LIMEN_QUICKEN_STALE_MIN", 20)
 # Ignore FleetView sessions untouched for this many days (ancient/done history).
-HORIZON_DAYS = int(os.environ.get("LIMEN_QUICKEN_HORIZON_DAYS", "3"))
+HORIZON_DAYS = positive_int_env("LIMEN_QUICKEN_HORIZON_DAYS", 3)
 
 # ── the cascade's protocol layer: a pending blocker matching one of these is an irreducible
 #    human atom (his lever), NOT something to auto-do. Keyed signal -> cheapest-atom label. ──────
 PROTOCOL = [
-    ("settings",   re.compile(r"settings\.json|capture[- ]?hook|paste .*settings|proposed-?settings", re.I),
-     "paste the staged settings.json proposal (AI self-edit of settings is hard-denied)"),
-    ("login",      re.compile(r"setup-token|\bclaude (setup|/?login)\b|oauth login|set ?active|sign in|log ?in\b", re.I),
-     "one login/identity step (your hand: browser/OAuth/portal)"),
-    ("d2l",        re.compile(r"\bd2l\b|brightspace|set active|go-?live|cadence confirm", re.I),
-     "the D2L go-live click + cadence confirm (your login + judgment)"),
-    ("send",       re.compile(r"\bsend\b|\bemail\b|tell maddie|notify|announce|message the client|drip", re.I),
-     "send the drafted message (never auto-send)"),
-    ("delete",     re.compile(r"\bdelete\b|\bdrop \b|clear ~?/?downloads|\bwipe\b|\bpurge\b|rm -rf", re.I),
-     "approve the irreversible delete/clear (archived reversibly; purge is yours)"),
-    ("push",       re.compile(r"\bpush\b|\bdeploy\b|merge gate|ship to (main|prod|production)|open the gate", re.I),
-     "open the gate to push/deploy (standing gate-hold)"),
-    ("credential", re.compile(r"\bsecret\b|credential|api[ _-]?key|\btoken\b|password|gh secret set", re.I),
-     "land the credential/secret (your account/identity)"),
+    (
+        "settings",
+        re.compile(r"settings\.json|capture[- ]?hook|paste .*settings|proposed-?settings", re.I),
+        "paste the staged settings.json proposal (AI self-edit of settings is hard-denied)",
+    ),
+    (
+        "login",
+        re.compile(r"setup-token|\bclaude (setup|/?login)\b|oauth login|set ?active|sign in|log ?in\b", re.I),
+        "one login/identity step (your hand: browser/OAuth/portal)",
+    ),
+    (
+        "d2l",
+        re.compile(r"\bd2l\b|brightspace|set active|go-?live|cadence confirm", re.I),
+        "the D2L go-live click + cadence confirm (your login + judgment)",
+    ),
+    (
+        "send",
+        re.compile(r"\bsend\b|\bemail\b|tell maddie|notify|announce|message the client|drip", re.I),
+        "send the drafted message (never auto-send)",
+    ),
+    (
+        "delete",
+        re.compile(r"\bdelete\b|\bdrop \b|clear ~?/?downloads|\bwipe\b|\bpurge\b|rm -rf", re.I),
+        "approve the irreversible delete/clear (archived reversibly; purge is yours)",
+    ),
+    (
+        "push",
+        re.compile(r"\bpush\b|\bdeploy\b|merge gate|ship to (main|prod|production)|open the gate", re.I),
+        "open the gate to push/deploy (standing gate-hold)",
+    ),
+    (
+        "credential",
+        re.compile(r"\bsecret\b|credential|api[ _-]?key|\btoken\b|password|gh secret set", re.I),
+        "land the credential/secret (your account/identity)",
+    ),
 ]
 # precedent layer: the session already RECORDED the decision in a todo description.
 _PRECEDENT = re.compile(r"\bHELD\b|defer|on hold|resume only|awaiting|needs .* decision|blocked on|quiet window", re.I)
 # a session whose last user prompt asked for a handoff/closeout has already wrapped its purpose.
 _CLOSED = re.compile(r"prompt relay handoff|relay handoff|session report|full session report", re.I)
 # idle longer than this (hours) -> already-wrapped history, not tonight's sitting work.
-CLOSED_HRS = int(os.environ.get("LIMEN_QUICKEN_CLOSED_HRS", "18"))
+CLOSED_HRS = positive_int_env("LIMEN_QUICKEN_CLOSED_HRS", 18)
 
 # The guardrailed continuation injected to breathe a stalled session back to life. The cascade +
 # protocol travel WITH the prompt so the resumed session finishes correctly, not blindly.
@@ -157,6 +192,7 @@ def load_session(stream: Path) -> dict | None:
             # ISO 8601 -> epoch, fail-open
             try:
                 from datetime import datetime
+
                 last_ts = max(last_ts, datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp())
             except Exception:
                 pass
@@ -171,8 +207,13 @@ def load_session(stream: Path) -> dict | None:
     # dispatch run (those live under ~/Workspace/.limen-worktrees and have their own heal lifecycle).
     is_dispatch = (last_prompt or "").startswith("Complete task ") or "/.limen-worktrees/" in (cwd or "")
     return {
-        "sessionId": sid, "title": title or sid[:8], "last_prompt": last_prompt or "",
-        "perm": perm or "?", "cwd": cwd, "moved": move, "stream": str(stream),
+        "sessionId": sid,
+        "title": title or sid[:8],
+        "last_prompt": last_prompt or "",
+        "perm": perm or "?",
+        "cwd": cwd,
+        "moved": move,
+        "stream": str(stream),
         "fleetview": bool(has_title) and not is_dispatch,
     }
 
@@ -185,8 +226,14 @@ def load_todos(sid: str) -> list[dict]:
     for f in sorted(d.glob("*.json")):
         try:
             j = json.loads(f.read_text())
-            out.append({"subject": j.get("subject", ""), "status": j.get("status", "?"),
-                        "desc": j.get("description", ""), "blockedBy": j.get("blockedBy", [])})
+            out.append(
+                {
+                    "subject": j.get("subject", ""),
+                    "status": j.get("status", "?"),
+                    "desc": j.get("description", ""),
+                    "blockedBy": j.get("blockedBy", []),
+                }
+            )
         except Exception:
             continue
     return out
@@ -196,11 +243,11 @@ def classify_state(sess: dict, todos: list[dict], now: float) -> str:
     idle_min = (now - sess["moved"]) / 60.0 if sess["moved"] else 1e9
     pending = [t for t in todos if t["status"] in ("pending", "in_progress")]
     if idle_min < STALE_MIN:
-        return "ALIVE"         # moving — hands off (errs safe: mtime >= last msg)
+        return "ALIVE"  # moving — hands off (errs safe: mtime >= last msg)
     if todos and not pending:
-        return "DONE"          # purpose complete
+        return "DONE"  # purpose complete
     if _CLOSED.search(sess["last_prompt"]) or idle_min > CLOSED_HRS * 60:
-        return "CLOSED"        # already wrapped (handoff/report) or old history
+        return "CLOSED"  # already wrapped (handoff/report) or old history
     return "STALLED"
 
 
@@ -235,8 +282,14 @@ def cascade_decide(sess: dict, todos: list[dict]) -> dict:
     else:
         layer = "explore"
         action = "explore the session to recover its next step, then finish"
-    return {"layer": layer, "action": action, "residue": residue, "recorded": recorded,
-            "n_pending": len(pending), "n_done": len([t for t in todos if t["status"] == "completed"])}
+    return {
+        "layer": layer,
+        "action": action,
+        "residue": residue,
+        "recorded": recorded,
+        "n_pending": len(pending),
+        "n_done": len([t for t in todos if t["status"] == "completed"]),
+    }
 
 
 def _ended_sids() -> set[str]:
@@ -276,7 +329,7 @@ def gather(now: float, self_sid: str | None) -> list[dict]:
             sess["state"] = "CLOSED"
         sess["todos"] = todos
         sess["decision"] = cascade_decide(sess, todos)
-        sess["is_self"] = (sess["sessionId"] == self_sid)
+        sess["is_self"] = sess["sessionId"] == self_sid
         rows.append(sess)
     # dedupe by title — multiple resumed instances of one logical session show as one row
     # (FleetView shows one). Keep the most-recently-moved; count the superseded.
@@ -297,6 +350,8 @@ def fmt_report(rows: list[dict]) -> str:
     states = {}
     for r in rows:
         states.setdefault(r["state"], []).append(r)
+    counts = _breathe_counts()
+    escalate_after = positive_int_env("LIMEN_QUICKEN_ESCALATE_AFTER", 2)
     out = [f"# QUICKEN — session lifecycle  ({len(rows)} sessions, stale>{STALE_MIN}m, horizon {HORIZON_DAYS}d)", ""]
     for st in ("STALLED", "ALIVE", "DONE", "CLOSED"):
         bucket = states.get(st, [])
@@ -305,14 +360,20 @@ def fmt_report(rows: list[dict]) -> str:
             idle = (time.time() - r["moved"]) / 60.0 if r["moved"] else -1
             mark = " (self)" if r["is_self"] else ""
             sup = f" +{r['superseded']} superseded" if r.get("superseded") else ""
+            n = counts.get(r["sessionId"], 0)
+            br = ""
+            if st == "STALLED" and n:
+                br = f"  ·  breathed {n}x" + ("  ·  ESCALATES" if n >= escalate_after else "")
             d = r["decision"]
-            out.append(f"- **{r['title'][:54]}**{mark}  ·  idle {idle:.0f}m  ·  {d['n_done']}✓/{d['n_pending']}⏳{sup}")
+            out.append(
+                f"- **{r['title'][:54]}**{mark}  ·  idle {idle:.0f}m  ·  {d['n_done']}✓/{d['n_pending']}⏳{sup}{br}"
+            )
             if st == "STALLED":
                 out.append(f"    cascade[{d['layer']}]: {d['action']}")
                 if d["residue"]:
                     out.append(f"    → irreducible atom: {d['residue']}")
                 if r["last_prompt"]:
-                    out.append(f"    last-prompt: \"{r['last_prompt'][:80]}\"")
+                    out.append(f'    last-prompt: "{r["last_prompt"][:80]}"')
                 out.append(f"    resume: claude --resume {r['sessionId']} -p '<continuation>'   (cwd {r['cwd']})")
         out.append("")
     return "\n".join(out)
@@ -321,6 +382,10 @@ def fmt_report(rows: list[dict]) -> str:
 def _atom_key(atom: str) -> str:
     """The PROTOCOL key that produced this atom (stable id namespace), or 'misc'."""
     return next((k for k, _rx, a in PROTOCOL if a == atom), "misc")
+
+
+def _split_unblocks(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
 
 
 def _queue_residue_atoms() -> dict[str, list[str]]:
@@ -351,32 +416,29 @@ def _queue_residue_atoms() -> dict[str, list[str]]:
             match = re.search(r"Unblocks: ([^.]+)", task.context)
             if match:
                 unblocks = match.group(1).strip()
-        atoms.setdefault(atom, []).append(unblocks[:48])
+        for title in _split_unblocks(unblocks):
+            atoms.setdefault(atom, []).append(title[:48])
     return atoms
 
 
-def hang_residue(rows: list[dict]) -> dict:
-    """Hang each irreducible human atom in the PERMANENT needs_human queue — the running system of
-    record (obligations-view / organ-health / reclassify all read it), capture-pushed off-disk — so
-    no obligation ever lives only in a disposable worktree doc. Idempotent within QUICKEN's own
-    `ASK-quicken-<key>` namespace; written under the shared queue-lock via the atomic primitive so a
-    concurrent heartbeat can never see a torn queue. Posture atoms (gate-hold) are already homed once
-    and are never multiplied. Fail-open: a lock miss skips this beat and self-corrects next."""
-    by_key: dict[str, dict] = {}
-    for r in rows:
-        if r["state"] != "STALLED" or not r["decision"]["residue"]:
-            continue
-        atom = r["decision"]["residue"]
-        k = _atom_key(atom)
-        by_key.setdefault(k, {"atom": atom, "unblocks": set()})["unblocks"].add(r["title"][:48])
+def _hang_asks(entries: list[dict]) -> dict:
+    """Upsert `ASK-*` needs_human tasks in the PERMANENT queue — the running system of record
+    (obligations-view / organ-health / reclassify all read it), capture-pushed off-disk — so no
+    obligation ever lives only in a disposable worktree doc. Each entry: {tid, title, context,
+    labels}. Idempotent per tid; written under the shared queue-lock via the atomic primitive so a
+    concurrent heartbeat can never see a torn queue. Fail-open: a lock miss skips this beat and
+    self-corrects next."""
     res = {"created": [], "refreshed": [], "homed": [], "ledger": str(LEDGER)}
-    if not by_key:
+    if not entries:
         return res
     try:
         sys.path.insert(0, str(ROOT / "cli" / "src"))
         from datetime import date, datetime, timezone
-        from limen.io import load_limen_file, queue_lock, save_limen_file
-        from limen.models import Task
+        from limen.io import load_limen_file, queue_lock
+        from limen.intake import contract_fields, github_issue_owner_contract
+        from limen.models import Task, has_jules_landing_hold
+        from limen.tabularius import apply_limen_file_sync
+        from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
     except Exception as e:  # never dead-stop the apply if the cli pkg isn't importable
         res["error"] = f"ledger unavailable ({e}); residue digest still written"
         return res
@@ -390,27 +452,97 @@ def hang_residue(rows: list[dict]) -> dict:
         lf = load_limen_file(LEDGER)
         index = {t.id: t for t in lf.tasks}
         now = datetime.now(timezone.utc)
-        for k, info in sorted(by_key.items()):
-            if k in _POSTURE:
-                res["homed"].append(f"{info['atom']} → {_POSTURE[k]}")
-                continue
-            tid = f"ASK-quicken-{k}"
-            ctx = (f"Cheapest path → {info['atom']}. Unblocks: {', '.join(sorted(info['unblocks']))}. "
-                   f"Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.")
+        changed = False
+        for entry in entries:
+            tid = entry["tid"]
+            contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
+            collateral = {
+                "origin": "human_prompt",
+                "horizon": "present",
+                "value_case": f"Resolve the irreducible operator atom: {entry['title']}",
+                "owner_surface": "organvm/limen",
+            }
             ex = index.get(tid)
-            if ex and ex.status != "done":
-                ex.status, ex.context, ex.updated = "needs_human", ctx, now
+            if (
+                ex
+                and ex.status != "done"
+                and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (ex.labels or [])
+                and not has_jules_landing_hold(ex)
+            ):
+                refreshed = False
+                for key, value in collateral.items():
+                    if getattr(ex, key) != value:
+                        setattr(ex, key, value)
+                        refreshed = True
+                if ex.status != "needs_human":
+                    ex.status = "needs_human"
+                    refreshed = True
+                if ex.context != entry["context"]:
+                    ex.context = entry["context"]
+                    refreshed = True
                 if "quicken-residue" not in (ex.labels or []):
                     ex.labels = list(ex.labels or []) + ["quicken-residue"]
-                res["refreshed"].append(tid)
+                    refreshed = True
+                if refreshed:
+                    ex.updated = now
+                    changed = True
+                    res["refreshed"].append(tid)
+                else:
+                    res["homed"].append(f"{entry['title']} → {tid}")
             elif ex is None:
-                lf.tasks.append(Task(
-                    id=tid, title=info["atom"], type="ops", target_agent="human",
-                    priority="high", status="needs_human",
-                    labels=["user-ask", "quicken-residue", "needs-human"],
-                    context=ctx, created=date.today(), updated=now))
+                lf.tasks.append(
+                    Task(
+                        id=tid,
+                        title=entry["title"],
+                        repo="organvm/limen",
+                        type="ops",
+                        target_agent="human",
+                        priority="high",
+                        status="needs_human",
+                        labels=entry["labels"],
+                        context=entry["context"],
+                        **collateral,
+                        **contract,
+                        created=date.today(),
+                        updated=now,
+                    )
+                )
+                changed = True
                 res["created"].append(tid)
-        save_limen_file(LEDGER, lf)
+        if changed:
+            apply_limen_file_sync(LEDGER, lf, agent="quicken", session_id="hang-asks")
+    return res
+
+
+def hang_residue(rows: list[dict]) -> dict:
+    """Hang each irreducible human atom as `ASK-quicken-<key>` via _hang_asks. Posture atoms
+    (gate-hold) are already homed once and are never multiplied."""
+    by_key: dict[str, dict] = {}
+    for r in rows:
+        if r["state"] != "STALLED" or not r["decision"]["residue"]:
+            continue
+        atom = r["decision"]["residue"]
+        k = _atom_key(atom)
+        by_key.setdefault(k, {"atom": atom, "unblocks": set()})["unblocks"].add(r["title"][:48])
+    entries = []
+    homed_postures = []
+    for k, info in sorted(by_key.items()):
+        if k in _POSTURE:
+            homed_postures.append(f"{info['atom']} → {_POSTURE[k]}")
+            continue
+        entries.append(
+            {
+                "tid": f"ASK-quicken-{k}",
+                "title": info["atom"],
+                "labels": ["user-ask", "quicken-residue", "needs-human"],
+                "context": (
+                    f"Cheapest path → {info['atom']}. Unblocks: {', '.join(sorted(info['unblocks']))}. "
+                    f"Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act."
+                ),
+            }
+        )
+    res = _hang_asks(entries)
+    res["homed"] = homed_postures + res["homed"]
     return res
 
 
@@ -422,17 +554,21 @@ def write_residue(rows: list[dict]) -> str:
         if r["state"] == "STALLED" and r["decision"]["residue"]:
             atoms.setdefault(r["decision"]["residue"], []).append(r["title"][:48])
     for atom, titles in _queue_residue_atoms().items():
-        atoms.setdefault(atom, []).extend(titles)
-    lines = ["# QUICKEN residue — the irreducible human atoms (deduped)", "",
-             "> A VIEW, not the home. Each atom is hung in the PERMANENT `needs_human` queue as",
-             "> `ASK-quicken-<key>` (surfaced by obligations-view / organ-health / reclassify,",
-             "> capture-pushed off-disk) — so nothing waits in a disposable doc. Owner of every",
-             "> atom: you (identity / login / send / physical / gate). Everything else is",
-             "> daemon-owned and fires each beat; it is not hanging.", ""]
+        for title in titles:
+            atoms.setdefault(atom, []).extend(t[:48] for t in _split_unblocks(title))
+    lines = [
+        "# QUICKEN residue — the irreducible human atoms (deduped)",
+        "",
+        "> A VIEW, not the home. Each atom is hung in the PERMANENT `needs_human` queue as",
+        "> `ASK-quicken-<key>` (surfaced by obligations-view / organ-health / reclassify,",
+        "> capture-pushed off-disk) — so nothing waits in a disposable doc. Owner of every",
+        "> atom: you (identity / login / send / physical / gate). Everything else is",
+        "> daemon-owned and fires each beat; it is not hanging.",
+        "",
+    ]
     for atom, titles in sorted(atoms.items()):
         home = _POSTURE.get(_atom_key(atom)) or f"`ASK-quicken-{_atom_key(atom)}` (needs_human)"
-        lines.append(f"- **{atom}**  ·  owner: **you**  ·  hung: {home}  ·  "
-                     f"unblocks: {', '.join(sorted(set(titles)))}")
+        lines.append(f"- **{atom}**  ·  owner: **you**  ·  hung: {home}  ·  unblocks: {', '.join(sorted(set(titles)))}")
     if not atoms:
         lines.append("- (none — every stalled purpose was fully driveable; nothing waits on you)")
     return "\n".join(lines) + "\n"
@@ -441,6 +577,7 @@ def write_residue(rows: list[dict]) -> str:
 def _git(cwd: str, *args: str) -> tuple[int, str, str]:
     """git -C cwd … , fail-open: any exception → (1, '', msg). Bounded, offline (no fetch)."""
     import subprocess
+
     try:
         cp = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True, timeout=30)
         return cp.returncode, cp.stdout.strip(), cp.stderr.strip()
@@ -452,10 +589,15 @@ def _gh_merged(cwd: str, branch: str) -> bool:
     """Does a MERGED PR exist for this branch? Last-resort merge proof for squash merges whose
     patch-ids drifted during conflict resolution. Fail-open: any error → False (don't reap)."""
     import subprocess
+
     try:
         cp = subprocess.run(
-            ["gh", "pr", "list", "--head", branch, "--state", "merged", "--json", "number",
-             "-q", ".[].number"], cwd=cwd, capture_output=True, text=True, timeout=30)
+            ["gh", "pr", "list", "--head", branch, "--state", "merged", "--json", "number", "-q", ".[].number"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
         return cp.returncode == 0 and bool(cp.stdout.strip())
     except Exception:
         return False
@@ -479,16 +621,16 @@ def _branch_merged(cwd: str, branch: str) -> tuple[bool, str]:
 
 def reap_done(rows: list[dict], self_cwd: str, apply: bool) -> dict:
     """The CLOSEOUT ritual, autonomic. A session whose purpose is finished (DONE) or that was
-    deliberately ended (CLOSED) leaves a spent isolation worktree behind; drive it to its terminal
-    state by reversibly reaping the worktree + branch — but ONLY when verified safe on every axis:
+    deliberately ended (CLOSED) leaves a spent isolation worktree behind; identify its terminal
+    removal packet — but ONLY when verified safe on every axis:
       * the cwd is an isolation worktree (never a clone or the live main checkout);
       * not our own / a live / a contended tree (errs safe — skip on any doubt);
       * the tree is CLEAN — fail closed on a single uncommitted byte;
       * the branch is VERIFIED fully-merged into origin/main (see _branch_merged).
-    Reversible by construction: the content lives in main, the branch SHA stays in reflog ~90d, and the
-    working copy regenerates from the branch — this is reap, not data-delete. Fail-open: any error
-    leaves the tree intact and never crashes the beat. Without `apply` it only previews (no mutation)."""
-    res = {"reaped": [], "kept": [], "would": [], "on": REAP_ON}
+    Physical removal is delegated to reclaim-worktrees.py and reap-branches.py, whose acceptance
+    ledgers require archive/redaction proof. Fail-open: any error leaves the tree intact and never
+    crashes the beat. Without `apply` it only previews (no mutation)."""
+    res = {"reaped": [], "kept": [], "would": [], "delegated": [], "on": REAP_ON}
     if not REAP_ON:
         return res
     alive = {r["cwd"] for r in rows if r["state"] == "ALIVE"}
@@ -499,11 +641,11 @@ def reap_done(rows: list[dict], self_cwd: str, apply: bool) -> dict:
         cwd = r["cwd"] or ""
         title = r["title"][:40]
         if not any(m in cwd for m in WORKTREE_MARKERS):
-            continue                                          # only spent isolation worktrees
+            continue  # only spent isolation worktrees
         if r["is_self"] or cwd in (self_cwd, live_main, str(ROOT)) or cwd in alive:
-            continue                                          # live / self / contended — never reap
+            continue  # live / self / contended — never reap
         if not Path(cwd).is_dir():
-            continue                                          # already gone
+            continue  # already gone
         rc, st, _ = _git(cwd, "status", "--porcelain")
         if rc != 0 or st:
             res["kept"].append((title, "uncommitted changes"))
@@ -519,27 +661,34 @@ def reap_done(rows: list[dict], self_cwd: str, apply: bool) -> dict:
         if not apply:
             res["would"].append((title, branch, why))
             continue
-        rc1, _, e1 = _git(live_main, "worktree", "remove", cwd)     # refuses if dirty/locked
-        if rc1 != 0:
-            res["kept"].append((title, f"worktree remove failed: {e1[:60]}"))
-            continue
-        rc2, _, e2 = _git(live_main, "branch", "-D", branch)        # -D after OUR merge-verify
-        res["reaped"].append((title, branch, why))
-        if rc2 != 0:
-            res["kept"].append((title, f"worktree reaped; branch {branch} kept: {e2[:50]}"))
+        res["delegated"].append((title, branch, why))
     return res
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="QUICKEN — finish stalled sessions' purposes")
-    ap.add_argument("--apply", action="store_true",
-                    help="write the lifecycle journal + deduped residue digest (no session is resumed)")
-    ap.add_argument("--breathe", metavar="SID|all", default=None,
-                    help="resume stalled session(s) headlessly with a guardrailed continuation (bounded by cap)")
-    ap.add_argument("--dry-breathe", action="store_true",
-                    help="with --breathe: print which sessions WOULD be breathed, fire nothing")
-    ap.add_argument("--self", dest="self_sid", default=os.environ.get("CLAUDE_SESSION_ID"),
-                    help="our own session id — never acted upon")
+    ap.add_argument(
+        "--apply",
+        action="store_true",
+        help="write the lifecycle journal + deduped residue digest (no session is resumed)",
+    )
+    ap.add_argument(
+        "--breathe",
+        metavar="SID|all",
+        default=None,
+        help="resume stalled session(s) headlessly with a guardrailed continuation (bounded by cap)",
+    )
+    ap.add_argument(
+        "--dry-breathe",
+        action="store_true",
+        help="with --breathe: print which sessions WOULD be breathed, fire nothing",
+    )
+    ap.add_argument(
+        "--self",
+        dest="self_sid",
+        default=os.environ.get("CLAUDE_SESSION_ID"),
+        help="our own session id — never acted upon",
+    )
     args = ap.parse_args()
 
     now = time.time()
@@ -553,20 +702,33 @@ def main() -> int:
     elif reap["reaped"]:
         for t, b, why in reap["reaped"]:
             print(f"[reap] removed worktree+branch {b} ({t}) — {why}")
+    elif reap["delegated"]:
+        for t, b, why in reap["delegated"]:
+            print(
+                f"[reap] candidate worktree+branch {b} ({t}) — {why}; "
+                "physical removal delegated to reclaim-worktrees.py + reap-branches.py acceptance ledgers"
+            )
     elif reap["would"]:
         for t, b, why in reap["would"]:
-            print(f"[reap] WOULD remove worktree+branch {b} ({t}) — {why}  (run --apply)")
+            print(
+                f"[reap] WOULD delegate worktree+branch {b} ({t}) — {why}  "
+                "(run --apply to record the delegated candidate; removal still requires acceptance ledgers)"
+            )
     if reap["kept"]:
         for t, why in reap["kept"]:
             print(f"[reap] kept {t}: {why}")
 
     if args.apply or args.breathe:
         JOURNAL.parent.mkdir(parents=True, exist_ok=True)
-        rec = {"ts": int(now), "sessions": len(rows),
-               "stalled": [r["sessionId"] for r in rows if r["state"] == "STALLED"],
-               "alive": [r["sessionId"] for r in rows if r["state"] == "ALIVE"],
-               "done": [r["sessionId"] for r in rows if r["state"] == "DONE"],
-               "reaped": [b for _t, b, _w in reap["reaped"]]}
+        rec = {
+            "ts": int(now),
+            "sessions": len(rows),
+            "stalled": [r["sessionId"] for r in rows if r["state"] == "STALLED"],
+            "alive": [r["sessionId"] for r in rows if r["state"] == "ALIVE"],
+            "done": [r["sessionId"] for r in rows if r["state"] == "DONE"],
+            "reaped": [b for _t, b, _w in reap["reaped"]],
+            "delegated_reap": [b for _t, b, _w in reap["delegated"]],
+        }
         with JOURNAL.open("a") as fh:
             fh.write(json.dumps(rec) + "\n")
         RESIDUE_OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -575,12 +737,15 @@ def main() -> int:
         # hang each atom in the PERMANENT needs_human queue — the running system holds it, not a doc.
         h = hang_residue(rows)
         bits = []
-        if h["created"]:   bits.append(f"created {', '.join(h['created'])}")
-        if h["refreshed"]: bits.append(f"refreshed {', '.join(h['refreshed'])}")
-        if h["homed"]:     bits.append(f"already-homed {len(h['homed'])}")
-        if h.get("error"): bits.append(h["error"])
-        print(f"[apply] permanent ledger ({Path(h['ledger']).name}): "
-              f"{'; '.join(bits) or 'no residue to hang'}")
+        if h["created"]:
+            bits.append(f"created {', '.join(h['created'])}")
+        if h["refreshed"]:
+            bits.append(f"refreshed {', '.join(h['refreshed'])}")
+        if h["homed"]:
+            bits.append(f"already-homed {len(h['homed'])}")
+        if h.get("error"):
+            bits.append(h["error"])
+        print(f"[apply] permanent ledger ({Path(h['ledger']).name}): {'; '.join(bits) or 'no residue to hang'}")
 
     if args.breathe:
         breathe(rows, args.breathe, dry=args.dry_breathe)
@@ -592,25 +757,101 @@ def main() -> int:
 def _contended(cwd: str, alive_cwds: set[str]) -> bool:
     limen = str(ROOT).split("/.claude/worktrees/")[0]
     if cwd in (limen, str(ROOT)) or cwd in alive_cwds:
-        return True                                  # live checkout / a moving session's tree
+        return True  # live checkout / a moving session's tree
     if "/.claude/projects/" in cwd or not Path(cwd).is_dir():
-        return True                                  # not a real, present worktree → don't reach in
+        return True  # not a real, present worktree → don't reach in
     return False
+
+
+def _breathe_counts() -> dict[str, int]:
+    """Per-SID breathe history from this organ's own journal. Fail-open: unreadable → {}."""
+    counts: dict[str, int] = {}
+    for e in _read_jsonl(JOURNAL):
+        sid = e.get("breathed")
+        if isinstance(sid, str) and sid:
+            counts[sid] = counts.get(sid, 0) + 1
+    return counts
+
+
+def escalate(rows: list[dict], counts: dict[str, int], dry: bool) -> None:
+    """A session breathed >= N times that stalls AGAIN never receives the identical breath a third
+    time — identical input, identical stall. It escalates to its OWN needs_human atom carrying the
+    parked purpose and the exact resume command, so the census stays finish-not-park instead of an
+    infinite re-breathe loop."""
+    if not rows:
+        return
+    entries = []
+    for r in rows:
+        sid = r["sessionId"]
+        n = counts.get(sid, 0)
+        entries.append(
+            {
+                "tid": f"ASK-quicken-escalate-{sid[:8]}",
+                "title": f"finish stalled session '{r['title'][:44]}' (breathed {n}x, still stalling)",
+                "labels": ["quicken-residue", "quicken-escalate", "needs-human"],
+                "context": (
+                    f"Session {sid} ('{r['title'][:60]}') re-stalled after {n} guardrailed breathes — "
+                    f"the identical continuation will not move it. Parked purpose (last prompt): "
+                    f'"{r["last_prompt"][:120]}". Resume by hand or with a NEW instruction: '
+                    f"claude --resume {sid}   (cwd {r['cwd']}). Auto-escalated by QUICKEN."
+                ),
+            }
+        )
+        print(f"  ESCALATE {sid[:8]} ({r['title'][:38]}) — breathed {n}x, hanging its own atom")
+    if dry:
+        print(f"  DRY would escalate {len(entries)} session(s); no atom hung, no journal write")
+        return
+    h = _hang_asks(entries)
+    bits = [f"created {', '.join(h['created'])}" if h["created"] else "", h.get("error") or ""]
+    print(f"  [escalate] {'; '.join(b for b in bits if b) or 'already homed'}")
+    with JOURNAL.open("a") as fh:
+        for r in rows:
+            fh.write(
+                json.dumps(
+                    {
+                        "ts": int(time.time()),
+                        "escalated": r["sessionId"],
+                        "title": r["title"][:60],
+                        "breathes": counts.get(r["sessionId"], 0),
+                    }
+                )
+                + "\n"
+            )
 
 
 def breathe(rows: list[dict], sel: str, dry: bool) -> None:
     import subprocess
-    cap = int(os.environ.get("LIMEN_QUICKEN_BREATHE_CAP", "1"))     # bounded-work contract: small
-    to = int(os.environ.get("LIMEN_QUICKEN_BREATHE_TIMEOUT", "900"))
+
+    cap = positive_int_env("LIMEN_QUICKEN_BREATHE_CAP", 1)  # bounded-work contract: small
+    to = positive_int_env("LIMEN_QUICKEN_BREATHE_TIMEOUT", 900)
+    escalate_after = positive_int_env("LIMEN_QUICKEN_ESCALATE_AFTER", 2)
     # `all` breathes only STALLED (never auto-touch a moving session); a NAMED sid is an explicit
     # choice — honor it regardless of the flickery ALIVE/STALLED label (still skip contended trees).
-    targets = [r for r in rows if not r["is_self"]
-               and (r["sessionId"] == sel if sel != "all" else r["state"] == "STALLED")]
+    targets = [
+        r for r in rows if not r["is_self"] and (r["sessionId"] == sel if sel != "all" else r["state"] == "STALLED")
+    ]
+
     # contention = ANOTHER moving session shares the tree; a session never self-contends.
     def _others(sid):
         return {r["cwd"] for r in rows if r["state"] == "ALIVE" and r["sessionId"] != sid}
+
     targets = [r for r in targets if not _contended(r["cwd"], _others(r["sessionId"]))]
-    targets.sort(key=lambda r: r["moved"])                          # oldest-stalled first
+    # TERMINAL BLOCKED discipline: a session whose cascade landed on a reserved human lever
+    # (decision.residue set => PROTOCOL layer) already has its ONE irreducible atom filed by
+    # hang_residue(). Re-breathing it cannot help — the atom waits on a human, not on another breath —
+    # and re-breathing a filed-blocked session IS the endless-loop failure the charter's
+    # "BLOCKED once, then stop" rule forbids. Drop it from `all`-mode targets so it is filed once and
+    # left silent; an explicitly NAMED sid still honors the operator's deliberate choice (debugging).
+    if sel == "all":
+        targets = [r for r in targets if not (r["decision"] and r["decision"].get("residue"))]
+    targets.sort(key=lambda r: r["moved"])  # oldest-stalled first
+    # a repeat offender (breathed >= N and stalled again) escalates instead of re-breathing —
+    # only in `all` mode: an explicitly NAMED sid is a deliberate choice, honor it.
+    counts = _breathe_counts()
+    if sel == "all":
+        repeat = [r for r in targets if counts.get(r["sessionId"], 0) >= escalate_after]
+        targets = [r for r in targets if counts.get(r["sessionId"], 0) < escalate_after]
+        escalate(repeat, counts, dry=dry)
     targets = targets[:cap]
     print(f"\n[breathe] {len(targets)} session(s) within cap={cap}; contended/ALIVE worktrees skipped.")
     for r in targets:
@@ -626,8 +867,12 @@ def breathe(rows: list[dict], sel: str, dry: bool) -> None:
             ok = False
             print(f"    breathe failed: {e}")
         with JOURNAL.open("a") as fh:
-            fh.write(json.dumps({"ts": int(time.time()), "breathed": r["sessionId"],
-                                 "title": r["title"][:60], "ok": bool(ok)}) + "\n")
+            fh.write(
+                json.dumps(
+                    {"ts": int(time.time()), "breathed": r["sessionId"], "title": r["title"][:60], "ok": bool(ok)}
+                )
+                + "\n"
+            )
         print(f"    -> {'finished' if ok else 'errored'} (journaled)")
 
 

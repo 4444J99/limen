@@ -1,0 +1,33 @@
+id: derek-narrative-workshop
+name: Derek narrative workshop
+member:
+  learner_group: Derek narrative program
+  human_owner: Anthony J. Padavano
+  context: Private mentorship and narrative-facing output work.
+mandate:
+  description: Hold narrative coaching as a quest arc with explicit standing, standards, and artifact ledger.
+  scope_boundary: Brief structure, output ledger, feedback staging, and publication review.
+standing:
+  current: ACTIVE
+  since: "2026-07-03"
+next_standing: REVIEW
+standard:
+  rubric: Narrative work is review-ready only when brief, thesis, draft artifact, and publication gate are named.
+  evidence:
+    - KERNEL.md
+    - MACRO-FACE.md
+    - MICRO-FACE.md
+governance:
+  manual_mode: true
+  forbidden_acts:
+    - autonomous publication
+    - autonomous client outreach
+    - autonomous credential claim
+human_gates:
+  - brief confirmation
+  - feedback delivery approval
+  - publication approval
+artifacts:
+  next_reviewable_output: narrative brief and artifact ledger
+  wings_path: web/blog artifact plus community prompt
+

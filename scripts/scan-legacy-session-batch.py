@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """Build a metadata-only scan for a legacy prompt review batch.
+# Gate authority: organs/governance/PUBLICATION-POLICY.md — convergence table row 2 (SENSITIVE_PATTERNS).
+# The SENSITIVE_PATTERNS here are keyword-based classifiers for legacy session metadata; the
+# publication-policy engine supersedes with path-first classification for content disposition.
+# This file's classification is for SCAN METADATA, not disposition — if a keyword needs to gate
+# content safety, add it to the publication policy's classifier, not the patterns below.
 
 The scanner reads private Claude JSONL files, but it only writes derived
 metadata: session keys, source existence, cwd/branch names, public GitHub

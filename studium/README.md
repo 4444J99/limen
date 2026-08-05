@@ -58,7 +58,7 @@ studium/
   ledger/                     exported daily pages (handwriting log) — the solo data stream
 ```
 
-## Runtime — three faces at `127.0.0.1:8787`
+## Runtime — three faces at `127.0.0.1:8788`
 - `scripts/studium.py` → **`studium.html`** — today's passage (reading + script drill + glossed
   translation + force-matched music + a 🎬 **Film of the Day** — one *object-lesson* film for today's force,
   fitting + not obvious, with the rest of the companion below + day's-force films highlighted + Letterboxd

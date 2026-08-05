@@ -2,6 +2,7 @@
 """
 Autonomous, read-only, proposal-only organ that drafts insight reports at FOUR wall-clock cadences.
 """
+
 import argparse
 import json
 import os
@@ -16,6 +17,7 @@ LOGS = LIMEN_ROOT / "logs"
 TASKS = Path(os.environ.get("LIMEN_TASKS", LIMEN_ROOT / "tasks.yaml"))
 STATE_PATH = LOGS / "insight-cadence-state.json"
 OUT_DIR = LOGS / "insight-cadence"
+DRIFT_JSON = LOGS / "insights-drift.json"
 
 TIER_SECONDS = {"hourly": 3600, "daily": 86400, "weekly": 604800, "monthly": 2592000}
 
@@ -69,6 +71,32 @@ def _gen_id(source, subject):
     return f"{source}-{h}"
 
 
+def _refresh_lineage():
+    """Regenerate logs/insights-drift.json from the /insights snapshot archive.
+
+    This is the conduit the censor's weekly tier has been starving on: the
+    machine-readable lineage of every archived /insights report (friction
+    persistence, key-pattern timeline, area churn). Degrades silently when the
+    insights-drift tool isn't deployed — the gatherer then reads whatever file
+    already exists."""
+    import shutil
+    import subprocess
+
+    tool = shutil.which("insights-drift") or str(Path.home() / ".local" / "bin" / "insights-drift")
+    if not Path(tool).exists():
+        return False
+    try:
+        r = subprocess.run(
+            [tool, "--json", str(DRIFT_JSON)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        return r.returncode == 0
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+
+
 def _gather_insights():
     insights = []
 
@@ -76,16 +104,18 @@ def _gather_insights():
     health = _load_json(LOGS / "organ-health.json", {})
     for organ, data in health.items():
         if isinstance(data, dict) and data.get("status") in ("stale", "down"):
-            insights.append({
-                "id": _gen_id("organ-health", organ),
-                "severity": "warning",
-                "title": f"Organ {organ} is {data.get('status')}",
-                "detail": f"Organ {organ} reported status {data.get('status')} at {data.get('timestamp')}",
-                "owner": organ,
-                "source": "organ-health.json",
-                "suggested_action": "Check organ logs and heartbeat",
-                "healable": True
-            })
+            insights.append(
+                {
+                    "id": _gen_id("organ-health", organ),
+                    "severity": "warning",
+                    "title": f"Organ {organ} is {data.get('status')}",
+                    "detail": f"Organ {organ} reported status {data.get('status')} at {data.get('timestamp')}",
+                    "owner": organ,
+                    "source": "organ-health.json",
+                    "suggested_action": "Check organ logs and heartbeat",
+                    "healable": True,
+                }
+            )
 
     # 2. censor-decisions
     try:
@@ -96,76 +126,84 @@ def _gather_insights():
                 d = json.loads(line)
                 verdict = d.get("verdict", {})
                 if verdict.get("disposition") == "propose":
-                    insights.append({
-                        "id": _gen_id("censor", d.get("id", "unknown")),
-                        "severity": "info",
-                        "title": f"Censor proposes action for {d.get('id', 'unknown')}",
-                        "detail": f"Censor derived proposal from {d.get('branch', 'unknown')} branch",
-                        "owner": "censor",
-                        "source": "censor-decisions.jsonl",
-                        "suggested_action": "Review censor decision log",
-                        "healable": False
-                    })
+                    insights.append(
+                        {
+                            "id": _gen_id("censor", d.get("id", "unknown")),
+                            "severity": "info",
+                            "title": f"Censor proposes action for {d.get('id', 'unknown')}",
+                            "detail": f"Censor derived proposal from {d.get('branch', 'unknown')} branch",
+                            "owner": "censor",
+                            "source": "censor-decisions.jsonl",
+                            "suggested_action": "Review censor decision log",
+                            "healable": False,
+                        }
+                    )
     except (OSError, json.JSONDecodeError):
         pass
 
     # 3. self-improve-proposal
     sip = _load_json(LOGS / "self-improve-proposal.json", {})
     for prop in sip.get("proposals", []):
-        insights.append({
-            "id": _gen_id("self-improve", prop.get("target", "sys")),
-            "severity": "info",
-            "title": prop.get("title", "Self-improve proposal"),
-            "detail": prop.get("reasoning", ""),
-            "owner": "self-improve",
-            "source": "self-improve-proposal.json",
-            "suggested_action": prop.get("action", "review"),
-            "healable": False
-        })
+        insights.append(
+            {
+                "id": _gen_id("self-improve", prop.get("target", "sys")),
+                "severity": "info",
+                "title": prop.get("title", "Self-improve proposal"),
+                "detail": prop.get("reasoning", ""),
+                "owner": "self-improve",
+                "source": "self-improve-proposal.json",
+                "suggested_action": prop.get("action", "review"),
+                "healable": False,
+            }
+        )
 
     # 4. usage
     usage = _load_json(LOGS / "usage.json", {})
-    if usage.get("burn_rate", 0) > usage.get("budget", float('inf')):
-         insights.append({
-            "id": _gen_id("usage", "budget"),
-            "severity": "warning",
-            "title": "High token burn rate",
-            "detail": f"Burn rate {usage.get('burn_rate')} exceeds budget {usage.get('budget')}",
-            "owner": "anthony",
-            "source": "usage.json",
-            "suggested_action": "Review agent limits",
-            "healable": True
-        })
+    if usage.get("burn_rate", 0) > usage.get("budget", float("inf")):
+        insights.append(
+            {
+                "id": _gen_id("usage", "budget"),
+                "severity": "warning",
+                "title": "High token burn rate",
+                "detail": f"Burn rate {usage.get('burn_rate')} exceeds budget {usage.get('budget')}",
+                "owner": "anthony",
+                "source": "usage.json",
+                "suggested_action": "Review agent limits",
+                "healable": True,
+            }
+        )
 
     # 5. ledger
     ledger = _load_json(LOGS / "ledger.json", {})
     if "obligations" in ledger:
         for ob in ledger["obligations"]:
             if ob.get("status") == "overdue":
-                insights.append({
-                    "id": _gen_id("ledger", ob.get("id", "x")),
-                    "severity": "warning",
-                    "title": f"Overdue obligation: {ob.get('title', '')}",
-                    "detail": "Obligation past deadline",
-                    "owner": ob.get("owner", "anthony"),
-                    "source": "ledger.json",
-                    "suggested_action": "Complete obligation",
-                    "healable": False
-                })
+                insights.append(
+                    {
+                        "id": _gen_id("ledger", ob.get("id", "x")),
+                        "severity": "warning",
+                        "title": f"Overdue obligation: {ob.get('title', '')}",
+                        "detail": "Obligation past deadline",
+                        "owner": ob.get("owner", "anthony"),
+                        "source": "ledger.json",
+                        "suggested_action": "Complete obligation",
+                        "healable": False,
+                    }
+                )
 
     # 6. tasks.yaml dispatch_log
     try:
         if TASKS.exists():
             content = TASKS.read_text()
             # Simple stdlib regex parser for tasks.yaml failed dispatch logs
-            tasks = re.split(r'^-\s+id:\s+', content, flags=re.MULTILINE)[1:]
+            tasks = re.split(r"^-\s+id:\s+", content, flags=re.MULTILINE)[1:]
             for task_block in tasks:
-                task_id_match = re.match(r'([^\n]+)', task_block)
+                task_id_match = re.match(r"([^\n]+)", task_block)
                 if not task_id_match:
                     continue
                 task_id = task_id_match.group(1).strip()
 
-                repo_match = re.search(r'^\s+repo:\s+([^\n]+)', task_block, re.MULTILINE)
+                repo_match = re.search(r"^\s+repo:\s+([^\n]+)", task_block, re.MULTILINE)
                 repo = repo_match.group(1).strip() if repo_match else None
                 owner = repo if repo else "anthony"
 
@@ -174,44 +212,196 @@ def _gather_insights():
                 if log_idx != -1:
                     log_block = task_block[log_idx:]
                     # Extract status lines in the log block
-                    status_matches = re.findall(r'^\s+status:\s+([^\n]+)', log_block, re.MULTILINE)
+                    status_matches = re.findall(r"^\s+status:\s+([^\n]+)", log_block, re.MULTILINE)
                     if status_matches and status_matches[-1].strip().startswith("failed"):
-                        insights.append({
-                            "id": _gen_id("tasks", task_id),
-                            "severity": "warning",
-                            "title": f"Task failed: {task_id}",
-                            "detail": f"Last log status: {status_matches[-1].strip()}",
-                            "owner": owner,
-                            "source": "tasks.yaml",
-                            "suggested_action": "Investigate failure reason",
-                            "healable": True
-                        })
+                        insights.append(
+                            {
+                                "id": _gen_id("tasks", task_id),
+                                "severity": "warning",
+                                "title": f"Task failed: {task_id}",
+                                "detail": f"Last log status: {status_matches[-1].strip()}",
+                                "owner": owner,
+                                "source": "tasks.yaml",
+                                "suggested_action": "Investigate failure reason",
+                                "healable": True,
+                            }
+                        )
     except Exception:
         pass
 
+    # 7. insights lineage — recurring/resolved frictions across the archived
+    # /insights reports (logs/insights-drift.json, refreshed each due tier).
+    # Every new report is compared against every report before it; a friction
+    # present in >=2 reports including the latest is a standing-correction
+    # candidate for the censor's weekly cascade.
+    drift = _load_json(DRIFT_JSON, {})
+    for fr in (drift.get("recurring") or [])[:8]:
+        label = fr.get("label", "?")
+        insights.append(
+            {
+                "id": _gen_id("insights-lineage", label),
+                "severity": "warning",
+                "title": f"Recurring friction across {fr.get('reports', '?')} insights reports: {label}",
+                "detail": (
+                    f"First seen {fr.get('first_seen')}, still present in {fr.get('last_seen')}. "
+                    f"{fr.get('latest_description', '')}"
+                ),
+                "owner": "censor",
+                "source": "insights-drift.json",
+                "suggested_action": "Promote to a standing correction (CLAUDE.md/memory) via the censor cascade",
+                "healable": False,
+            }
+        )
+    for fr in (drift.get("resolved") or [])[:4]:
+        label = fr.get("label", "?")
+        insights.append(
+            {
+                "id": _gen_id("insights-lineage-resolved", label),
+                "severity": "info",
+                "title": f"Friction resolved since {fr.get('last_seen')}: {label}",
+                "detail": (
+                    f"Present in {fr.get('reports', '?')} report(s) "
+                    f"({fr.get('first_seen')} to {fr.get('last_seen')}), absent from the latest."
+                ),
+                "owner": "censor",
+                "source": "insights-drift.json",
+                "suggested_action": "None — confirm the correction that resolved it stays standing",
+                "healable": True,
+                # The warning twin this resolution clears. _gen_id hashes source+subject
+                # together, so the twin id is NOT derivable at the sink — the pairing must
+                # be stamped here at the source (PREC-2026-07-10: feed derived state at the
+                # source). insight-route uses it to remove the warning residual, which lets
+                # sync-censor-issues auto-close the mirrored issue (the empirical close).
+                "resolves": _gen_id("insights-lineage", label),
+            }
+        )
+
+    # 8. insights suggestion coverage — every archived /insights snapshot must be
+    # dispositioned in censor/insights-suggestions.jsonl (the suggestion ledger).
+    # Frictions have the drift lineage above; suggestions have this ledger. A
+    # snapshot missing from every `reports` list is an unaudited report and is
+    # surfaced every due tier until its suggestions are dispositioned. Fails open
+    # when the archive is absent (other hosts / CI).
+    try:
+        archive = Path(
+            os.environ.get(
+                "LIMEN_INSIGHTS_ARCHIVE",
+                str(Path.home() / "Workspace" / "organvm" / "claude-runtime-state" / "usage-data" / "snapshots"),
+            )
+        ).expanduser()
+        ledger_path = LIMEN_ROOT / "censor" / "insights-suggestions.jsonl"
+        if archive.is_dir():
+            covered = set()
+            if ledger_path.exists():
+                for line in ledger_path.read_text().splitlines():
+                    if not line.strip():
+                        continue
+                    try:
+                        covered.update(json.loads(line).get("reports") or [])
+                    except json.JSONDecodeError:
+                        continue
+            for snap in sorted(p.name for p in archive.iterdir() if p.is_dir()):
+                if snap not in covered:
+                    insights.append(
+                        {
+                            "id": _gen_id("insights-suggestions", snap),
+                            "severity": "warning",
+                            "title": f"Insights report {snap} has no suggestion disposition",
+                            "detail": (
+                                f"Snapshot {snap} exists in the archive but appears in no `reports` list in "
+                                "censor/insights-suggestions.jsonl — its suggestions were never dispositioned."
+                            ),
+                            "owner": "censor",
+                            "source": "insights-suggestions.jsonl",
+                            "suggested_action": "Sweep the report's suggestions and append disposition rows to the ledger",
+                            "healable": False,
+                        }
+                    )
+    except OSError:
+        pass
+
+    # 9. cross-vendor friction signals (OpenCode, Antigravity, Cline, Codex, Claude).
+    # Reads packet files written by scripts/insight-cross-vendor-ingest.py.
+    # Fails open: if no packets exist, no insights are generated from this source.
+    cross_vendor_dir = LOGS / "insight-cross-vendor"
+    for packet_path in sorted(cross_vendor_dir.glob("*.json")) if cross_vendor_dir.is_dir() else []:
+        if packet_path.name == "run-manifest.json":
+            continue
+        try:
+            packet = json.loads(packet_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        vendor = packet.get("vendor", packet_path.stem)
+        for sig in packet.get("friction_signals", []):
+            signal_key = sig.get("signal", "unknown")
+            count = sig.get("count", 0)
+            desc = sig.get("description", "")
+            # Threshold: only surface signals with count >= 1 (all of them), but tag
+            # high-count signals as warning vs. info
+            severity = "warning" if count >= 5 else "info"
+            insights.append(
+                {
+                    "id": _gen_id(f"cross-vendor-{vendor}", signal_key),
+                    "severity": severity,
+                    "title": f"[{vendor}] {signal_key}: {count}",
+                    "detail": desc,
+                    "owner": "insight-cadence",
+                    "source": f"insight-cross-vendor/{vendor}.json",
+                    "suggested_action": f"Review {vendor} session logs for {signal_key} pattern",
+                    "healable": True,
+                }
+            )
+
     # ensure at least one insight for tests if none found
     if not insights:
-        insights.append({
-            "id": _gen_id("system", "heartbeat"),
-            "severity": "low",
-            "title": "System nominal",
-            "detail": "No actionable insights derived during this window.",
-            "owner": "insight-cadence",
-            "source": "internal",
-            "suggested_action": "None",
-            "healable": True
-        })
+        insights.append(
+            {
+                "id": _gen_id("system", "heartbeat"),
+                "severity": "low",
+                "title": "System nominal",
+                "detail": "No actionable insights derived during this window.",
+                "owner": "insight-cadence",
+                "source": "internal",
+                "suggested_action": "None",
+                "healable": True,
+            }
+        )
 
     return insights
+
+
+def _derive_frictions(insights: list[dict]) -> list[dict]:
+    """Derive a structured frictions list from the gathered insights.
+
+    A friction is any warning-or-critical insight — it represents a system
+    condition worth promoting to the censor's standing-correction cascade.
+    Each friction record carries ``category`` (the insight's title) and
+    ``description`` (the detail field) so that the ``insights-drift`` lineage
+    tool can cluster them across successive snapshots by semantic similarity.
+    """
+    return [
+        {
+            "category": ins["title"],
+            "description": ins.get("detail", ""),
+            "owner": ins.get("owner", ""),
+            "source": ins.get("source", ""),
+            "severity": ins.get("severity", "warning"),
+        }
+        for ins in insights
+        if ins.get("severity") in ("critical", "warning")
+    ]
+
 
 def _generate_report(tier, start_iso, generated_iso, insights):
     report = {
         "tier": tier,
         "generated_at": generated_iso,
         "window_start": start_iso,
-        "insights": insights
+        "insights": insights,
+        "frictions": _derive_frictions(insights),
     }
     return report
+
 
 def _generate_markdown(report):
     lines = [f"# Insight Report: {report['tier']}"]
@@ -258,6 +448,9 @@ def main():
             _stamp_health()
         return 0
 
+    if not args.dry_run:
+        _refresh_lineage()
+
     insights = _gather_insights()
 
     for tier in tiers:
@@ -286,6 +479,7 @@ def main():
         _stamp_health()
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

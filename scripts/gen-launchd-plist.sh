@@ -26,10 +26,28 @@ resolve() {
   printf '%s' "$p"
 }
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="${LIMEN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"        # repo root = parent of scripts/
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# repo root = parent of scripts/. Canonicalize (resolve symlinks, physical pwd) so a session
+# that reached the repo via a symlink (e.g. ~/limen -> ~/Workspace/limen) cannot render a
+# plist whose paths drift from the committed copy.
+ROOT="$(cd "$(resolve "${LIMEN_ROOT:-$SCRIPT_DIR/..}")" && pwd -P)"
 HOME_DIR="${HOME:?HOME is unset}"
+AGENT_HOST="${LIMEN_AGENT_HOST_BIN:-${DOMUS_AGENT_HOST_BIN:-$HOME_DIR/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}}"
+case "$AGENT_HOST" in
+  \~) AGENT_HOST="$HOME_DIR" ;;
+  \~/*) AGENT_HOST="$HOME_DIR/${AGENT_HOST#\~/}" ;;
+esac
+AGENT_HOST="$(resolve "$AGENT_HOST")"
 WORKDIR="${LIMEN_WORKDIR:-$(cd "$ROOT/.." && pwd)}"        # parent of the repo
+SCRATCH_ROOT="${LIMEN_SCRATCH_ROOT:-/Volumes/Scratch}"
+if [ -n "${LIMEN_WORKTREES:-}" ]; then
+  WORKTREES="$LIMEN_WORKTREES"
+elif [ -d "$SCRATCH_ROOT" ] && [ -w "$SCRATCH_ROOT" ]; then
+  WORKTREES="$SCRATCH_ROOT/limen-worktrees"
+else
+  WORKTREES="$WORKDIR/.limen-worktrees"
+fi
+WORKTREE_ROOT="${LIMEN_WORKTREE_ROOT:-$WORKTREES}"
 TMPL="$ROOT/container/launchd/com.limen.heartbeat.plist.tmpl"
 [ -f "$TMPL" ] || { echo "template not found: $TMPL" >&2; exit 1; }
 
@@ -41,23 +59,25 @@ PY="${LIMEN_PYTHON:-$(command -v python3 || true)}"
 PY="$(resolve "$PY")"
 PYDIR="$(dirname "$PY")"
 PATH_VAL="$PYDIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"
-DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
-LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"
-DISPATCH_ASYNC="${LIMEN_DISPATCH_ASYNC:-0}"
-ASYNC_MAX="${LIMEN_ASYNC_MAX:-12}"
+CAMPAIGN_WAKE_TIMEOUT="${LIMEN_CAMPAIGN_WAKE_TIMEOUT:-300}"
+case "$CAMPAIGN_WAKE_TIMEOUT" in
+  ''|*[!0-9]*) echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 300 to 7200" >&2; exit 2 ;;
+esac
+if [ "$CAMPAIGN_WAKE_TIMEOUT" -lt 300 ] || [ "$CAMPAIGN_WAKE_TIMEOUT" -gt 7200 ]; then
+  echo "LIMEN_CAMPAIGN_WAKE_TIMEOUT must be an integer from 300 to 7200" >&2
+  exit 2
+fi
 VIGILIA="${LIMEN_VIGILIA:-1}"
 
 render() {
   sed -e "s|@@HOME@@|$HOME_DIR|g" \
+      -e "s|@@DOMUS_AGENT_HOST_BIN@@|$AGENT_HOST|g" \
       -e "s|@@LIMEN_ROOT@@|$ROOT|g" \
       -e "s|@@LIMEN_WORKDIR@@|$WORKDIR|g" \
+      -e "s|@@LIMEN_WORKTREES@@|$WORKTREES|g" \
+      -e "s|@@LIMEN_WORKTREE_ROOT@@|$WORKTREE_ROOT|g" \
       -e "s|@@LIMEN_PYTHON@@|$PY|g" \
-      -e "s|@@LIMEN_LANES@@|$LANES|g" \
-      -e "s|@@LIMEN_DISPATCH_LANES@@|$DISPATCH_LANES|g" \
-      -e "s|@@LIMEN_LOCAL_LIMIT@@|$LOCAL_LIMIT|g" \
-      -e "s|@@LIMEN_DISPATCH_ASYNC@@|$DISPATCH_ASYNC|g" \
-      -e "s|@@LIMEN_ASYNC_MAX@@|$ASYNC_MAX|g" \
+      -e "s|@@LIMEN_CAMPAIGN_WAKE_TIMEOUT@@|$CAMPAIGN_WAKE_TIMEOUT|g" \
       -e "s|@@LIMEN_VIGILIA@@|$VIGILIA|g" \
       -e "s|@@PATH@@|$PATH_VAL|g" \
       "$TMPL"

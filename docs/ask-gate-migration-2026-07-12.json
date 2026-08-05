@@ -1,0 +1,1499 @@
+{
+  "_doc": "Public-safe, receipt-only freeze of the 52 malformed open tasks observed at the source commit. This file defines future TABVLARIVS inputs but performs no board, ticket, issue, producer, or credential-store mutation.",
+  "schema_version": "limen.ask_gate_migration.v1",
+  "generated_at": "2026-07-12T17:05:51Z",
+  "source": {
+    "repo": "organvm/limen",
+    "commit": "04baa47d471f44a8faa3beb790f5636fe65d77ef",
+    "tasks_path": "tasks.yaml",
+    "gate_path": "scripts/ask-gate.py",
+    "commit_time": "2026-07-12T15:27:49Z",
+    "audit_window_days": 7,
+    "intake_window_tasks": 184,
+    "split_tasks": 52
+  },
+  "hash_contract": {
+    "algorithm": "sha256",
+    "sort": "LC_ALL=C bytewise ascending",
+    "serialization": "UTF-8 task IDs, one per line, including a trailing newline",
+    "sha256": "8882781adf152655150ac8d49b53b5d5b5a33762581e5fed9afaa2e8410c82da"
+  },
+  "prerequisites": {
+    "typed_intake": {
+      "pr": 978,
+      "url": "https://github.com/organvm/limen/pull/978",
+      "required_state": "MERGED",
+      "predicate": "test \"$(gh pr view 978 --repo organvm/limen --json state --jq .state)\" = MERGED",
+      "receipt_target": "https://github.com/organvm/limen/pull/978",
+      "reason": "Task predicate/receipt fields, keeper admission, dispatch normalization, and ordinary-conjunction boundedness must own the contract before tickets are submitted."
+    },
+    "terminal_discovery_dispositions": {
+      "pr": 982,
+      "url": "https://github.com/organvm/limen/pull/982",
+      "required_state": "MERGED",
+      "predicate": "test \"$(gh pr view 982 --repo organvm/limen --json state --jq .state)\" = MERGED",
+      "receipt_target": "https://github.com/organvm/limen/pull/982",
+      "reason": "Ranked and archival thesis outcomes require a durable ledger so archived board tasks cannot become dark and be rediscovered."
+    }
+  },
+  "counts": {
+    "frozen_ids": 52,
+    "actions": {
+      "split": 14,
+      "normalize": 31,
+      "done": 4,
+      "needs_human": 2,
+      "superseded": 1
+    },
+    "children": 29,
+    "thesis_children": 13,
+    "ranking_children": 13,
+    "gpg_children": 3
+  },
+  "frozen_ids": [
+    "DISCOVER-organvm-arca",
+    "DISCOVER-organvm-collaboratory",
+    "DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy",
+    "DISCOVER-organvm-daily-engine",
+    "DISCOVER-organvm-hokage-chess--4444j99",
+    "DISCOVER-organvm-micro-tato",
+    "DISCOVER-organvm-micro-tato-play",
+    "DISCOVER-organvm-organvm-iii-ergon.github.io",
+    "DISCOVER-organvm-pages--theoria-copy--kerygma",
+    "DISCOVER-organvm-pages--theoria-copy--koinonia",
+    "DISCOVER-organvm-pages--theoria-copy--poiesis",
+    "DISCOVER-organvm-pages--theoria-copy--taxis",
+    "DISCOVER-organvm-studium-generale",
+    "EXCAV-0708-BURIED-SWEEP",
+    "EXCAV-0708-THEONE-REFRAME",
+    "GEN-organvm-limen-ci-green-0709",
+    "GEN-organvm-manumissio-ci-green-0709",
+    "GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709",
+    "GEN-organvm-portfolio-ci-green-0709",
+    "GH-organvm-limen-685",
+    "GH-organvm-limen-686",
+    "GH-organvm-limen-687",
+    "GH-organvm-limen-688",
+    "GH-organvm-limen-719",
+    "GH-organvm-limen-761",
+    "GH-organvm-limen-762",
+    "GH-organvm-limen-763",
+    "GH-organvm-limen-764",
+    "GH-organvm-limen-766",
+    "GH-organvm-limen-774",
+    "GH-organvm-limen-775",
+    "GH-organvm-limen-784",
+    "GH-organvm-limen-793",
+    "GH-organvm-limen-817",
+    "GH-organvm-limen-827",
+    "GH-organvm-limen-829",
+    "GH-organvm-limen-833",
+    "GH-organvm-limen-872",
+    "GH-organvm-limen-890",
+    "HEAL-rebase-stale-organvm-limen-434",
+    "ORG-financial-organ-face-0706",
+    "RETRO-0708-CODEX-BUDGET-RESET",
+    "RETRO-0708-HEAL-GATE",
+    "RETRO-0708-RECEIPT-CLASSIFIER",
+    "REV-organvm-limen-revenue-readiness-0708",
+    "REV-organvm-limen-revenue-ship-0708",
+    "SOVEREIGN-0708-GPG-CURRENT",
+    "VOX-1",
+    "VOX-2",
+    "VOX-5",
+    "VOX-6",
+    "aw-agy-scratch-preserve-0709"
+  ],
+  "tasks": {
+    "DISCOVER-organvm-arca": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-arca-THESIS\",\"DISCOVER-organvm-arca-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-arca",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-arca-THESIS",
+        "DISCOVER-organvm-arca-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-collaboratory": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-collaboratory-THESIS\",\"DISCOVER-organvm-collaboratory-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-collaboratory",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-collaboratory-THESIS",
+        "DISCOVER-organvm-collaboratory-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS\",\"DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS",
+        "DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-daily-engine": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-daily-engine-THESIS\",\"DISCOVER-organvm-daily-engine-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-daily-engine",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-daily-engine-THESIS",
+        "DISCOVER-organvm-daily-engine-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-hokage-chess--4444j99": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-hokage-chess--4444j99-THESIS\",\"DISCOVER-organvm-hokage-chess--4444j99-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-hokage-chess--4444j99",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-hokage-chess--4444j99-THESIS",
+        "DISCOVER-organvm-hokage-chess--4444j99-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-micro-tato": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-micro-tato-THESIS\",\"DISCOVER-organvm-micro-tato-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-micro-tato",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-micro-tato-THESIS",
+        "DISCOVER-organvm-micro-tato-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-micro-tato-play": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-micro-tato-play-THESIS\",\"DISCOVER-organvm-micro-tato-play-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-micro-tato-play",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-micro-tato-play-THESIS",
+        "DISCOVER-organvm-micro-tato-play-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-organvm-iii-ergon.github.io": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS\",\"DISCOVER-organvm-organvm-iii-ergon.github.io-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-organvm-iii-ergon.github.io",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS",
+        "DISCOVER-organvm-organvm-iii-ergon.github.io-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-pages--theoria-copy--kerygma": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS\",\"DISCOVER-organvm-pages--theoria-copy--kerygma-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--kerygma",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS",
+        "DISCOVER-organvm-pages--theoria-copy--kerygma-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-pages--theoria-copy--koinonia": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS\",\"DISCOVER-organvm-pages--theoria-copy--koinonia-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--koinonia",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS",
+        "DISCOVER-organvm-pages--theoria-copy--koinonia-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-pages--theoria-copy--poiesis": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS\",\"DISCOVER-organvm-pages--theoria-copy--poiesis-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--poiesis",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS",
+        "DISCOVER-organvm-pages--theoria-copy--poiesis-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-pages--theoria-copy--taxis": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-pages--theoria-copy--taxis-THESIS\",\"DISCOVER-organvm-pages--theoria-copy--taxis-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--taxis",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-pages--theoria-copy--taxis-THESIS",
+        "DISCOVER-organvm-pages--theoria-copy--taxis-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "DISCOVER-organvm-studium-generale": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"DISCOVER-organvm-studium-generale-THESIS\",\"DISCOVER-organvm-studium-generale-RANK\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-studium-generale",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "DISCOVER-organvm-studium-generale-THESIS",
+        "DISCOVER-organvm-studium-generale-RANK"
+      ],
+      "note": "Archive the bundled legacy ask only after both bounded replacement definitions are admitted."
+    },
+    "EXCAV-0708-BURIED-SWEEP": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/limen --state merged --search 'EXCAV-0708-BURIED-SWEEP in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/limen:pull-request:EXCAV-0708-BURIED-SWEEP",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "EXCAV-0708-THEONE-REFRAME": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/knowledge-corpus --state merged --search 'EXCAV-0708-THEONE-REFRAME in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/knowledge-corpus:pull-request:EXCAV-0708-THEONE-REFRAME",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "GEN-organvm-limen-ci-green-0709": {
+      "source_status": "open",
+      "action": "done",
+      "predicate": "test \"$(gh run view 29198231301 --repo organvm/limen --json headSha,conclusion --jq '.headSha + \":\" + .conclusion')\" = \"04baa47d471f44a8faa3beb790f5636fe65d77ef:success\"",
+      "receipt_target": "https://github.com/organvm/limen/actions/runs/29198231301",
+      "terminal_disposition": "done_from_durable_receipt",
+      "status_patch": {
+        "status": "done"
+      },
+      "replacement_child_ids": [],
+      "note": "Exact source-head CI and the separately triggered Conductor Report were green; preserve the existing done reconciliation."
+    },
+    "GEN-organvm-manumissio-ci-green-0709": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "bash -lc 'test \"$(gh pr list --repo organvm/manumissio --state merged --search \"GEN-organvm-manumissio-ci-green-0709 in:body\" --json number --jq length)\" -gt 0 && test \"$(gh api repos/organvm/manumissio/commits/main --jq .sha)\" = \"$(gh run list --repo organvm/manumissio --workflow ci.yml --branch main --event push --status success --limit 1 --json headSha --jq \".[0].headSha\")\"'",
+      "receipt_target": "github:organvm/manumissio:pull-request:GEN-organvm-manumissio-ci-green-0709",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open: exact-head green is necessary, and the task-linked merged PR proves the fix or missing-check addition."
+    },
+    "GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "bash -lc 'test \"$(gh pr list --repo organvm/peer-audited--behavioral-blockchain --state merged --search \"GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709 in:body\" --json number --jq length)\" -gt 0 && test \"$(gh api repos/organvm/peer-audited--behavioral-blockchain/commits/main --jq .sha)\" = \"$(gh run list --repo organvm/peer-audited--behavioral-blockchain --workflow ci.yml --branch main --event push --status success --limit 1 --json headSha --jq \".[0].headSha\")\"'",
+      "receipt_target": "github:organvm/peer-audited--behavioral-blockchain:pull-request:GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open: exact-head green is necessary, and the task-linked merged PR proves the fix or missing-check addition."
+    },
+    "GEN-organvm-portfolio-ci-green-0709": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "bash -lc 'test \"$(gh pr list --repo organvm/portfolio --state merged --search \"GEN-organvm-portfolio-ci-green-0709 in:body\" --json number --jq length)\" -gt 0 && test \"$(gh api repos/organvm/portfolio/commits/main --jq .sha)\" = \"$(gh run list --repo organvm/portfolio --workflow ci.yml --branch main --event push --status success --limit 1 --json headSha --jq \".[0].headSha\")\"'",
+      "receipt_target": "github:organvm/portfolio:pull-request:GEN-organvm-portfolio-ci-green-0709",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open: exact-head green is necessary, and the task-linked merged PR proves the fix or missing-check addition."
+    },
+    "GH-organvm-limen-685": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 685 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/685",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-686": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 686 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/686",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-687": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 687 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/687",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-688": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 688 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/688",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-719": {
+      "source_status": "open",
+      "action": "needs_human",
+      "predicate": "test \"$(gh issue view 719 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/719",
+      "terminal_disposition": "routed_to_existing_human_owner",
+      "status_patch": {
+        "status": "needs_human"
+      },
+      "replacement_child_ids": [],
+      "note": "Existing L-ARCA-KEY-ESCROW owner was restored by PR #981; do not create another ask."
+    },
+    "GH-organvm-limen-761": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 761 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/761",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-762": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 762 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/762",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-763": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 763 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/763",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-764": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 764 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/764",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-766": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 766 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/766",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-774": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 774 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/774",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-775": {
+      "source_status": "open",
+      "action": "superseded",
+      "predicate": "python3 -c 'import json,subprocess; p=json.loads(subprocess.check_output([\"gh\",\"issue\",\"view\",\"775\",\"--repo\",\"organvm/limen\",\"--json\",\"state,stateReason\"])); l=json.load(open(\"his-hand-levers.json\")); assert p[\"state\"] == \"CLOSED\" and p[\"stateReason\"] == \"NOT_PLANNED\"; assert next(x[\"issue\"] for x in l[\"levers\"] if x[\"id\"] == \"L-ESTATE-MOUNT-4444J99\") == 790'",
+      "receipt_target": "https://github.com/organvm/limen/issues/790",
+      "terminal_disposition": "archived_to_canonical_owner",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [],
+      "note": "Archive only after duplicate #775 is closed NOT_PLANNED and the canonical marked owner remains #790."
+    },
+    "GH-organvm-limen-784": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 784 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/784",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-793": {
+      "source_status": "open",
+      "action": "done",
+      "predicate": "test \"$(gh issue view 793 --repo organvm/limen --json state,stateReason --jq '.state + \":\" + .stateReason')\" = CLOSED:COMPLETED",
+      "receipt_target": "https://github.com/organvm/limen/issues/793",
+      "terminal_disposition": "done_from_durable_receipt",
+      "status_patch": {
+        "status": "done"
+      },
+      "replacement_child_ids": [],
+      "note": "Remote issue is CLOSED with stateReason COMPLETED; reconcile the stale open board mirror."
+    },
+    "GH-organvm-limen-817": {
+      "source_status": "open",
+      "action": "done",
+      "predicate": "test \"$(gh issue view 817 --repo organvm/limen --json state,stateReason --jq '.state + \":\" + .stateReason')\" = CLOSED:COMPLETED",
+      "receipt_target": "https://github.com/organvm/limen/issues/817",
+      "terminal_disposition": "done_from_durable_receipt",
+      "status_patch": {
+        "status": "done"
+      },
+      "replacement_child_ids": [],
+      "note": "Remote issue is CLOSED with stateReason COMPLETED; reconcile the stale open board mirror."
+    },
+    "GH-organvm-limen-827": {
+      "source_status": "open",
+      "action": "needs_human",
+      "predicate": "test \"$(gh issue view 827 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/827",
+      "terminal_disposition": "routed_to_existing_human_owner",
+      "status_patch": {
+        "status": "needs_human"
+      },
+      "replacement_child_ids": [],
+      "note": "Existing L-FABLE-GUARD-ARM owner remains the single human surface; do not create another ask."
+    },
+    "GH-organvm-limen-829": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 829 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/829",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-833": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 833 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/833",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "GH-organvm-limen-872": {
+      "source_status": "open",
+      "action": "done",
+      "predicate": "test \"$(gh issue view 872 --repo organvm/limen --json state,stateReason --jq '.state + \":\" + .stateReason')\" = CLOSED:COMPLETED",
+      "receipt_target": "https://github.com/organvm/limen/issues/872",
+      "terminal_disposition": "done_from_durable_receipt",
+      "status_patch": {
+        "status": "done"
+      },
+      "replacement_child_ids": [],
+      "note": "Remote issue is CLOSED with stateReason COMPLETED; reconcile the stale open board mirror."
+    },
+    "GH-organvm-limen-890": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh issue view 890 --repo organvm/limen --json state --jq .state)\" = CLOSED",
+      "receipt_target": "https://github.com/organvm/limen/issues/890",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain open owner work; GitHub issue closure is the terminal predicate and durable receipt."
+    },
+    "HEAL-rebase-stale-organvm-limen-434": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr view 434 --repo organvm/limen --json state --jq .state)\" = MERGED",
+      "receipt_target": "https://github.com/organvm/limen/pull/434",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Ordinary conjunctions are not bundle separators under typed intake #978; retain this single PR rebase objective."
+    },
+    "ORG-financial-organ-face-0706": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/limen --state merged --search 'ORG-financial-organ-face-0706 in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/limen:pull-request:ORG-financial-organ-face-0706",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "RETRO-0708-CODEX-BUDGET-RESET": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/limen --state merged --search 'RETRO-0708-CODEX-BUDGET-RESET in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/limen:pull-request:RETRO-0708-CODEX-BUDGET-RESET",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "RETRO-0708-HEAL-GATE": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/limen --state merged --search 'RETRO-0708-HEAL-GATE in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/limen:pull-request:RETRO-0708-HEAL-GATE",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "RETRO-0708-RECEIPT-CLASSIFIER": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/limen --state merged --search 'RETRO-0708-RECEIPT-CLASSIFIER in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/limen:pull-request:RETRO-0708-RECEIPT-CLASSIFIER",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "REV-organvm-limen-revenue-readiness-0708": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/limen --state merged --search 'REV-organvm-limen-revenue-readiness-0708 in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/limen:pull-request:REV-organvm-limen-revenue-readiness-0708",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "REV-organvm-limen-revenue-ship-0708": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "bash -lc 'python3 scripts/ship-gate.py --check --task REV-organvm-limen-revenue-ship-0708 && test \"$(gh pr list --repo organvm/limen --state merged --search \"REV-organvm-limen-revenue-ship-0708 in:body\" --json number --jq length)\" -gt 0'",
+      "receipt_target": "github:organvm/limen:pull-request:REV-organvm-limen-revenue-ship-0708",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Product-facing completion requires both a reachable artifact and task-keyed merged custody."
+    },
+    "SOVEREIGN-0708-GPG-CURRENT": {
+      "source_status": "open",
+      "action": "split",
+      "predicate": "python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,\"cli/src\"); from limen.intake import validate_intake_contract; from limen.io import load_limen_file; b={t.id:t for t in load_limen_file(Path(\"tasks.yaml\")).tasks}; ids=(\"SOVEREIGN-0708-GPG-DISCOVERABILITY\",\"SOVEREIGN-0708-GPG-ESCROW\",\"SOVEREIGN-0708-GPG-UID\"); assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for i in ids]'",
+      "receipt_target": "git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#SOVEREIGN-0708-GPG-CURRENT",
+      "terminal_disposition": "replaced_by_children",
+      "status_patch": {
+        "status": "archived"
+      },
+      "replacement_child_ids": [
+        "SOVEREIGN-0708-GPG-ESCROW",
+        "SOVEREIGN-0708-GPG-DISCOVERABILITY",
+        "SOVEREIGN-0708-GPG-UID"
+      ],
+      "note": "Replace the four-part identity bundle with three separately owned human/outward gates."
+    },
+    "VOX-1": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/in-my-head --state merged --search 'VOX-1 in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/in-my-head:pull-request:VOX-1",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "VOX-2": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/vox --state merged --search 'VOX-2 in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/vox:pull-request:VOX-2",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "VOX-5": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/in-my-head --state merged --search 'VOX-5 in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/in-my-head:pull-request:VOX-5",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "VOX-6": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "test \"$(gh pr list --repo organvm/in-my-head --state merged --search 'VOX-6 in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/in-my-head:pull-request:VOX-6",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain one bounded owner objective; a task-keyed merged PR is its terminal custody proof."
+    },
+    "aw-agy-scratch-preserve-0709": {
+      "source_status": "open",
+      "action": "normalize",
+      "predicate": "bash -lc 'python3 scripts/antigravity-scratch-bridge.py --json | jq -e \"([.summary.by_disposition.bridge_required // 0, .summary.by_disposition.preserve_required // 0, .summary.by_disposition.container_review_required // 0, .summary.by_disposition.non_git_review_required // 0, .summary.by_disposition.safe_reap_candidate // 0] | add) == 0\" >/dev/null'",
+      "receipt_target": "git:organvm/limen:docs/antigravity-scratch-preservation.jsonl",
+      "terminal_disposition": "remain_open",
+      "status_patch": {},
+      "replacement_child_ids": [],
+      "note": "Retain until no unsafe, unowned, or accepted-reap scratch disposition remains."
+    }
+  },
+  "children": [
+    {
+      "id": "DISCOVER-organvm-arca-RANK",
+      "title": "Materialize the value disposition for organvm/arca",
+      "description": "After DISCOVER-organvm-arca-THESIS merges, record exactly one terminal disposition for organvm/arca. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-arca. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/arca\"; tid=\"DISCOVER-organvm-arca-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-arca-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-arca-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-arca-THESIS",
+      "title": "Write the value thesis for organvm/arca",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/arca",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-arca, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/arca --state merged --search 'DISCOVER-organvm-arca-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/arca:pull-request:DISCOVER-organvm-arca-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-collaboratory-RANK",
+      "title": "Materialize the value disposition for organvm/collaboratory",
+      "description": "After DISCOVER-organvm-collaboratory-THESIS merges, record exactly one terminal disposition for organvm/collaboratory. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-collaboratory. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/collaboratory\"; tid=\"DISCOVER-organvm-collaboratory-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-collaboratory-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-collaboratory-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-collaboratory-THESIS",
+      "title": "Write the value thesis for organvm/collaboratory",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/collaboratory",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-collaboratory, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/collaboratory --state merged --search 'DISCOVER-organvm-collaboratory-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/collaboratory:pull-request:DISCOVER-organvm-collaboratory-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK",
+      "title": "Materialize the value disposition for organvm/content-engine--asset-amplifier--a-organvm-legacy",
+      "description": "After DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS merges, record exactly one terminal disposition for organvm/content-engine--asset-amplifier--a-organvm-legacy. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/content-engine--asset-amplifier--a-organvm-legacy\"; tid=\"DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS",
+      "title": "Write the value thesis for organvm/content-engine--asset-amplifier--a-organvm-legacy",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/content-engine--asset-amplifier--a-organvm-legacy",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/content-engine--asset-amplifier--a-organvm-legacy --state merged --search 'DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/content-engine--asset-amplifier--a-organvm-legacy:pull-request:DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-daily-engine-RANK",
+      "title": "Materialize the value disposition for organvm/daily-engine",
+      "description": "After DISCOVER-organvm-daily-engine-THESIS merges, record exactly one terminal disposition for organvm/daily-engine. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-daily-engine. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/daily-engine\"; tid=\"DISCOVER-organvm-daily-engine-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-daily-engine-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-daily-engine-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-daily-engine-THESIS",
+      "title": "Write the value thesis for organvm/daily-engine",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/daily-engine",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-daily-engine, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/daily-engine --state merged --search 'DISCOVER-organvm-daily-engine-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/daily-engine:pull-request:DISCOVER-organvm-daily-engine-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-hokage-chess--4444j99-RANK",
+      "title": "Materialize the value disposition for organvm/hokage-chess--4444j99",
+      "description": "After DISCOVER-organvm-hokage-chess--4444j99-THESIS merges, record exactly one terminal disposition for organvm/hokage-chess--4444j99. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-hokage-chess--4444j99. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/hokage-chess--4444j99\"; tid=\"DISCOVER-organvm-hokage-chess--4444j99-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-hokage-chess--4444j99-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-hokage-chess--4444j99-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-hokage-chess--4444j99-THESIS",
+      "title": "Write the value thesis for organvm/hokage-chess--4444j99",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/hokage-chess--4444j99",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-hokage-chess--4444j99, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/hokage-chess--4444j99 --state merged --search 'DISCOVER-organvm-hokage-chess--4444j99-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/hokage-chess--4444j99:pull-request:DISCOVER-organvm-hokage-chess--4444j99-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-micro-tato-RANK",
+      "title": "Materialize the value disposition for organvm/micro-tato",
+      "description": "After DISCOVER-organvm-micro-tato-THESIS merges, record exactly one terminal disposition for organvm/micro-tato. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-micro-tato. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/micro-tato\"; tid=\"DISCOVER-organvm-micro-tato-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-micro-tato-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-micro-tato-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-micro-tato-THESIS",
+      "title": "Write the value thesis for organvm/micro-tato",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/micro-tato",
+      "type": "research",
+      "target_agent": "codex",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-micro-tato, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/micro-tato --state merged --search 'DISCOVER-organvm-micro-tato-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/micro-tato:pull-request:DISCOVER-organvm-micro-tato-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-micro-tato-play-RANK",
+      "title": "Materialize the value disposition for organvm/micro-tato-play",
+      "description": "After DISCOVER-organvm-micro-tato-play-THESIS merges, record exactly one terminal disposition for organvm/micro-tato-play. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-micro-tato-play. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/micro-tato-play\"; tid=\"DISCOVER-organvm-micro-tato-play-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-micro-tato-play-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-micro-tato-play-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-micro-tato-play-THESIS",
+      "title": "Write the value thesis for organvm/micro-tato-play",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/micro-tato-play",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-micro-tato-play, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/micro-tato-play --state merged --search 'DISCOVER-organvm-micro-tato-play-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/micro-tato-play:pull-request:DISCOVER-organvm-micro-tato-play-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-organvm-iii-ergon.github.io-RANK",
+      "title": "Materialize the value disposition for organvm/organvm-iii-ergon.github.io",
+      "description": "After DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS merges, record exactly one terminal disposition for organvm/organvm-iii-ergon.github.io. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-organvm-iii-ergon.github.io. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/organvm-iii-ergon.github.io\"; tid=\"DISCOVER-organvm-organvm-iii-ergon.github.io-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-organvm-iii-ergon.github.io-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS",
+      "title": "Write the value thesis for organvm/organvm-iii-ergon.github.io",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/organvm-iii-ergon.github.io",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-organvm-iii-ergon.github.io, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/organvm-iii-ergon.github.io --state merged --search 'DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/organvm-iii-ergon.github.io:pull-request:DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--kerygma-RANK",
+      "title": "Materialize the value disposition for organvm/pages--theoria-copy--kerygma",
+      "description": "After DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS merges, record exactly one terminal disposition for organvm/pages--theoria-copy--kerygma. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--kerygma. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/pages--theoria-copy--kerygma\"; tid=\"DISCOVER-organvm-pages--theoria-copy--kerygma-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--kerygma-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS",
+      "title": "Write the value thesis for organvm/pages--theoria-copy--kerygma",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/pages--theoria-copy--kerygma",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-pages--theoria-copy--kerygma, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/pages--theoria-copy--kerygma --state merged --search 'DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/pages--theoria-copy--kerygma:pull-request:DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--koinonia-RANK",
+      "title": "Materialize the value disposition for organvm/pages--theoria-copy--koinonia",
+      "description": "After DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS merges, record exactly one terminal disposition for organvm/pages--theoria-copy--koinonia. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--koinonia. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/pages--theoria-copy--koinonia\"; tid=\"DISCOVER-organvm-pages--theoria-copy--koinonia-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--koinonia-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS",
+      "title": "Write the value thesis for organvm/pages--theoria-copy--koinonia",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/pages--theoria-copy--koinonia",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-pages--theoria-copy--koinonia, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/pages--theoria-copy--koinonia --state merged --search 'DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/pages--theoria-copy--koinonia:pull-request:DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--poiesis-RANK",
+      "title": "Materialize the value disposition for organvm/pages--theoria-copy--poiesis",
+      "description": "After DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS merges, record exactly one terminal disposition for organvm/pages--theoria-copy--poiesis. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--poiesis. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/pages--theoria-copy--poiesis\"; tid=\"DISCOVER-organvm-pages--theoria-copy--poiesis-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--poiesis-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS",
+      "title": "Write the value thesis for organvm/pages--theoria-copy--poiesis",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/pages--theoria-copy--poiesis",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-pages--theoria-copy--poiesis, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/pages--theoria-copy--poiesis --state merged --search 'DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/pages--theoria-copy--poiesis:pull-request:DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--taxis-RANK",
+      "title": "Materialize the value disposition for organvm/pages--theoria-copy--taxis",
+      "description": "After DISCOVER-organvm-pages--theoria-copy--taxis-THESIS merges, record exactly one terminal disposition for organvm/pages--theoria-copy--taxis. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--taxis. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/pages--theoria-copy--taxis\"; tid=\"DISCOVER-organvm-pages--theoria-copy--taxis-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--taxis-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-pages--theoria-copy--taxis-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-pages--theoria-copy--taxis-THESIS",
+      "title": "Write the value thesis for organvm/pages--theoria-copy--taxis",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/pages--theoria-copy--taxis",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-pages--theoria-copy--taxis, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/pages--theoria-copy--taxis --state merged --search 'DISCOVER-organvm-pages--theoria-copy--taxis-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/pages--theoria-copy--taxis:pull-request:DISCOVER-organvm-pages--theoria-copy--taxis-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-studium-generale-RANK",
+      "title": "Materialize the value disposition for organvm/studium-generale",
+      "description": "After DISCOVER-organvm-studium-generale-THESIS merges, record exactly one terminal disposition for organvm/studium-generale. A ranked result must also enter value-repos.json; an archival result must remain outside it.",
+      "repo": "organvm/limen",
+      "type": "governance",
+      "target_agent": "codex",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-ranking",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Conditional Limen half of DISCOVER-organvm-studium-generale. It depends on the merged owner thesis and records the terminal ranked-or-archival decision so completed archival work cannot be rediscovered.",
+      "predicate": "python3 -c 'import json,subprocess; repo=\"organvm/studium-generale\"; tid=\"DISCOVER-organvm-studium-generale-RANK\"; prs=json.loads(subprocess.check_output([\"gh\",\"pr\",\"list\",\"--repo\",\"organvm/limen\",\"--state\",\"merged\",\"--search\",tid+\" in:body\",\"--json\",\"number\"])); assert prs; d=json.load(open(\"value-discovery-dispositions.json\")); rows=[x for x in d[\"dispositions\"] if x.get(\"repo\")==repo]; assert len(rows)==1 and rows[0].get(\"disposition\") in {\"ranked\",\"archival\"} and rows[0].get(\"receipt\"); ranked=set(json.load(open(\"value-repos.json\"))[\"repos\"]); assert (rows[0][\"disposition\"]==\"ranked\") == (repo in ranked)'",
+      "receipt_target": "github:organvm/limen:pull-request:DISCOVER-organvm-studium-generale-RANK",
+      "depends_on": [
+        "DISCOVER-organvm-studium-generale-THESIS"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "DISCOVER-organvm-studium-generale-THESIS",
+      "title": "Write the value thesis for organvm/studium-generale",
+      "description": "Inspect the owner repository and merge DISCOVERY.md with one explicit disposition (ranked or archival), one evidence-backed thesis, and one first task only when ranked.",
+      "repo": "organvm/studium-generale",
+      "type": "research",
+      "target_agent": "agy",
+      "workstream": "contributions",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "open",
+      "labels": [
+        "discover",
+        "value-thesis",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Owner-repo half of DISCOVER-organvm-studium-generale, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository thesis and its merged receipt.",
+      "predicate": "test \"$(gh pr list --repo organvm/studium-generale --state merged --search 'DISCOVER-organvm-studium-generale-THESIS in:body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/studium-generale:pull-request:DISCOVER-organvm-studium-generale-THESIS",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "SOVEREIGN-0708-GPG-DISCOVERABILITY",
+      "title": "Publish the current GPG public key to a discoverable surface",
+      "description": "Human/outward action: publish and verify the existing public fingerprint on the public key directory or WKD; never publish credential material.",
+      "repo": "organvm/limen",
+      "type": "ops",
+      "target_agent": "any",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "needs_human",
+      "labels": [
+        "needs-human",
+        "gpg",
+        "public-identity",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Public discoverability gate for fingerprint 205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E; outward identity action remains human-owned.",
+      "predicate": "bash -lc 'curl -fsS https://keys.openpgp.org/vks/v1/by-fingerprint/205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E >/dev/null && test \"$(gh issue list --repo organvm/limen --state closed --search \"SOVEREIGN-0708-GPG-DISCOVERABILITY in:title,body\" --json number --jq length)\" -gt 0'",
+      "receipt_target": "github:organvm/limen:issue:SOVEREIGN-0708-GPG-DISCOVERABILITY",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "SOVEREIGN-0708-GPG-ESCROW",
+      "title": "Escrow the current GPG private material off-machine",
+      "description": "Human owner action: attest that the current private export and recovery phrase are durably escrowed off-machine and that plaintext staging is removed, without exposing values or paths.",
+      "repo": "organvm/limen",
+      "type": "ops",
+      "target_agent": "any",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "needs_human",
+      "labels": [
+        "needs-human",
+        "gpg",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Secret-free human receipt for the public fingerprint 205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E. No credential material may enter the issue, task, commit, or dispatch log.",
+      "predicate": "test \"$(gh issue list --repo organvm/limen --state closed --search 'SOVEREIGN-0708-GPG-ESCROW in:title,body' --json number --jq length)\" -gt 0",
+      "receipt_target": "github:organvm/limen:issue:SOVEREIGN-0708-GPG-ESCROW",
+      "depends_on": [],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    },
+    {
+      "id": "SOVEREIGN-0708-GPG-UID",
+      "title": "Add the later recourse.email UID to the current GPG identity",
+      "description": "After the address exists, add the recourse.email UID and publish the updated public key. This later identity mutation remains human-owned.",
+      "repo": "organvm/limen",
+      "type": "ops",
+      "target_agent": "any",
+      "workstream": "governance",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "needs_human",
+      "labels": [
+        "needs-human",
+        "gpg",
+        "public-identity",
+        "ask-gate-migration"
+      ],
+      "urls": [],
+      "context": "Later UID gate for public fingerprint 205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E; no address value is fixed in this receipt.",
+      "predicate": "bash -lc 'set -o pipefail; curl -fsS https://keys.openpgp.org/vks/v1/by-fingerprint/205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E | gpg --batch --show-keys --with-colons 2>/dev/null | grep -Fq \"recourse.email\" && test \"$(gh issue list --repo organvm/limen --state closed --search \"SOVEREIGN-0708-GPG-UID in:title,body\" --json number --jq length)\" -gt 0'",
+      "receipt_target": "github:organvm/limen:issue:SOVEREIGN-0708-GPG-UID",
+      "depends_on": [
+        "SOVEREIGN-0708-GPG-DISCOVERABILITY"
+      ],
+      "created": "2026-07-12",
+      "dispatch_log": []
+    }
+  ],
+  "application_contract": {
+    "schema_version": "limen.ask_gate_migration.application.v1",
+    "helper": "scripts/apply-ask-gate-migration.py",
+    "canonical_verifier": "scripts/check-ask-gate-migration.py",
+    "default_mode": "dry-run",
+    "apply_identity": {
+      "timestamp": "required",
+      "session_id": "required",
+      "agent": "required"
+    },
+    "live_prerequisites": [
+      "typed_intake",
+      "terminal_discovery_dispositions"
+    ],
+    "phases": [
+      {
+        "name": "children",
+        "count": 29,
+        "intent": "task.upsert",
+        "patch": "full_task",
+        "append_log": true,
+        "precondition": "task_absent",
+        "completion_gate": "all deterministic child tickets archived by TABVLARIVS; all 29 exact typed child packets present; zero pending or rejected child tickets"
+      },
+      {
+        "name": "parents",
+        "count": 52,
+        "intent": "task.upsert",
+        "patch": "predicate + receipt_target + status_patch",
+        "append_log": true,
+        "precondition": "exact_current_task_sha256_and_status",
+        "requires": "children completion_gate",
+        "owner_state_gate": "re-execute all 52 predicates; done, superseded, and split must pass while normalize and needs_human must remain nonterminal",
+        "completion_gate": "all parent typed contracts and terminal status patches present with append-only migration logs"
+      }
+    ],
+    "rejection_policy": "fail_closed",
+    "batch_admission": "reject_exact_precondition_ticket_on_any_same_task_pending_state_event_regardless_of_timestamp_order",
+    "publication_failure": "shared_queue_lock_then_remove_only_this_invocation_exact_unconsumed_inbox_tickets",
+    "retry_identity": "semantic_ticket_id_independent_of_timestamp_agent_session; preserve_first_archived_event_identity",
+    "direct_board_write": "forbidden",
+    "deterministic_ticket_ids": true
+  },
+  "application_order": [
+    "Require byte equality with the canonical receipt and execute its canonical verifier before compiling any ticket; then execute the live MERGED predicates for prerequisite PR #978 and PR #982.",
+    "Compile and submit all 29 full child task.upsert tickets through TABVLARIVS, with explicit timestamp, agent, and session identity.",
+    "Drain the keeper, then require every deterministic child ticket in the archive, every exact typed child packet on the board, and zero pending or rejected child tickets.",
+    "Only after the child completion gate, re-execute all 52 owner predicates and abort stale dispositions; then compile all 52 parent tickets with exact task-state preconditions and publish them with exact-prefix cleanup on failure.",
+    "Drain the keeper again, verify all parent contracts/statuses/logs, validate board schema and frozen-set coverage, and require an empty ticket inbox."
+  ],
+  "safety": {
+    "board_mutation": "forbidden",
+    "ticket_creation": "forbidden_without_explicit_apply_and_live_gates",
+    "issue_mutation": "forbidden",
+    "producer_mutation": "forbidden",
+    "content_boundary": "Counts, public identifiers, executable predicates, and durable owner receipts only; no credential values or local corpus material."
+  }
+}

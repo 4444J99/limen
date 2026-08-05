@@ -56,14 +56,14 @@ human's hand.
 
 ## Fractal deployment
 
-- **MACRO** — a family-office-in-a-box anyone can deploy: multi-entity position tracking,
+- **MACRO** — [a family-office-in-a-box anyone can deploy](MACRO.md): multi-entity position tracking,
   cash-flow projection, tax-position estimation, disbursement scheduling, obligation ledger,
   goal-based allocation tracking, and customizable governance rules. Runs on
   the-invisible-ledger as its core accounting engine. The macro form is intentionally
   generic — no personal balances, no private entity names, no real account numbers at the
   template layer.
 
-- **MICRO** — Anthony's own family office: product revenue disbursement (institutional +
+- **MICRO** — [Anthony's own family office](MICRO.md): product revenue disbursement (institutional +
   personal via payrail), personal balance-sheet + cashflow, wealth/portfolio tracking,
   tax automation, obligations ledger, and ADA-matter-related financial planning. The micro
   instance proves the macro platform by running Anthony's real finances through the same

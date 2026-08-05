@@ -11,15 +11,15 @@
 - **Corpus:** `hebrew/tanakh` (hebrew_masoretic.txt)
 - **Source rail:** https://www.sefaria.org/texts/Tanakh
 - **Divisions:** 39 × Book
-- **Progress:** 1/39 arcs authored
+- **Progress:** 5/39 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
-| 2 | (author) | ☐ |
-| 3 | (author) | ☐ |
-| 4 | (author) | ☐ |
-| 5 | (author) | ☐ |
+| 2 | (author) | ✓ |
+| 3 | (author) | ✓ |
+| 4 | (author) | ✓ |
+| 5 | (author) | ✓ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |
 | 8 | (author) | ☐ |

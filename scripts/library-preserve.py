@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """library-preserve.py — process ~/Library toward ideal form: preserve the irreplaceable
-DURABLY, reclaim only regenerable cache as a byproduct, and PROPOSE (never auto-execute)
+DURABLY, census regenerable cache as a byproduct, and PROPOSE (never auto-execute)
 the irreversible. The personal-data analogue of clone-maintenance.sh.
 
 The user's directive (2026-06-22): "all of the above and more; reduction is laziness" and
@@ -11,20 +11,20 @@ The user's directive (2026-06-22): "all of the above and more; reduction is lazi
   PRESERVE   copy every at-risk irreplaceable class to /Volumes/Archive4T and CHECKSUM-verify
              — additive, copy->verify, NEVER move/delete. Closes the documented "only two
              local copies, no offsite 3rd" gap for the consciousness sliver.
-  RECLAIM    (byproduct, safe) purge only REGENERABLE dev/build caches. Reversible (re-fetch).
+  CENSUS     (byproduct, safe) report REGENERABLE dev/build cache candidates. Physical cache
+             removal still needs a separate archive/redaction acceptance surface.
   PROPOSE    the irreversible / big levers (iCloud Drive optimize ~34G, offsite 3rd copy,
              no-Time-Machine-backup) as KNOWN-OWNED-PERVASIVE levers — printed + written to a
              registry, executed only on the user's word.
 
 HARD RULES (allwheres): NEVER auto-delete personal DATA, NEVER auto-send. Reversible only.
-Dry-run by DEFAULT; set LIMEN_LIB_APPLY=1 to perform the SAFE phases (preserve + cache purge);
+Dry-run by DEFAULT; set LIMEN_LIB_APPLY=1 to perform the SAFE preserve phases;
 the PROPOSE phase is never auto-executed regardless.
 """
 from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -41,13 +41,32 @@ RECLAIM_BUDGET_SEC = int(os.environ.get("LIMEN_LIB_RECLAIM_BUDGET_SEC", "90"))
 RECLAIM_UNIT_TIMEOUT_SEC = int(os.environ.get("LIMEN_LIB_RECLAIM_UNIT_TIMEOUT_SEC", "240"))
 RECLAIM_LOCK = os.path.join(ROOT, "logs", ".library-reclaim.lock")
 UNIT_MIN_BYTES = 50 * 2**20
+# ── ~/Workspace estate off-disk backup ────────────────────────────────────────────────
+# The working estate (~40 repos) had NO 3rd copy: the PRESERVE rung backed up only the .claude
+# sliver, so ~/Workspace never reached Archive4T. Same guards as the sliver preserve — fail-open
+# on unmount, single-runner lock, additive-only rsync — plus a per-entry timeout so one wedged
+# repo can't hang the beat (the copy resumes next pass; rsync is additive so a killed transfer
+# just completes later).
+WORKSPACE = os.environ.get("LIMEN_WORKSPACE_ROOT", os.path.join(HOME, "Workspace"))
+WORKSPACE_DST = os.path.join(ARCHIVE, "workspace-backup")
+WORKSPACE_LOCK = os.path.join(ROOT, "logs", ".workspace-preserve.lock")
+WORKSPACE_UNIT_TIMEOUT_SEC = int(os.environ.get("LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC", "600"))
 
-# ── REGENERABLE caches — definitively safe to purge (re-fetch on next use) ─────────────
+# ── REGENERABLE caches — safe to report; physical removal needs acceptance ─────────────
 REGENERABLE = [
     "Library/Caches/Homebrew", "Library/Caches/node-gyp", "Library/Caches/go-build",
     "Library/Caches/ms-playwright", "Library/Caches/ms-playwright-go", "Library/Caches/dotslash",
     "Library/Caches/typescript", "Library/Caches/Yarn", "Library/Caches/pip",
     "Library/Caches/deno", "Library/pnpm/store", ".cache/puppeteer",
+]
+
+# ── ~/Workspace subtrees NEVER copied off-disk — regenerable / ephemeral / live scratch ─
+# They re-derive from source control (.git) or a package manager (node_modules/.venv), or are
+# live worktree scratch (.claude/worktrees), or throwaway build/test caches. This is the
+# REGENERABLE spirit applied to the ~/Workspace estate; the irreplaceable working files stay.
+WORKSPACE_EXCLUDES = [
+    "node_modules", ".venv", "venv", ".git", ".claude/worktrees",
+    "__pycache__", ".mypy_cache", ".pytest_cache", ".DS_Store",
 ]
 
 # ── IRREPLACEABLE sliver — small, high-value, documented as lacking an offsite 3rd copy ─
@@ -110,7 +129,7 @@ def _archive_mounted() -> bool:
 
 
 def reclaim_caches() -> int:
-    print("── reclaim regenerable caches (reversible: re-fetch on next use) ──")
+    print("── census regenerable caches (reversible, but removal requires acceptance) ──")
     freed = 0
     for rel in REGENERABLE:
         p = os.path.join(HOME, rel)
@@ -118,10 +137,8 @@ def reclaim_caches() -> int:
         if sz == 0:
             continue
         freed += sz
-        print(f"  {'purge' if APPLY else 'WOULD purge'}: ~/{rel}  ({_gb(sz)})")
-        if APPLY:
-            shutil.rmtree(p, ignore_errors=True) if os.path.isdir(p) else os.remove(p)
-    print(f"  {'' if APPLY else '(dry-run) '}caches: {_gb(freed)} {'freed' if APPLY else 'reclaimable'}.")
+        print(f"  WOULD purge: ~/{rel}  ({_gb(sz)})")
+    print(f"  (dry-run) caches: {_gb(freed)} reclaimable; physical cache removal requires acceptance.")
     return freed
 
 
@@ -169,6 +186,97 @@ def preserve_sliver() -> int:
     return copied
 
 
+def preserve_workspace() -> int:
+    """Get the WHOLE ~/Workspace estate (~40 repos) off-disk to Archive4T — the PRESERVE rung
+    previously covered only the .claude sliver, so the working estate had no offsite 3rd copy.
+    Per top-level entry: additive `rsync -a` (NEVER --delete) into workspace-backup/<entry>/, then a
+    CHECKSUM itemized dry-run (`rsync -anci`) whose pending lines are logged as mismatches. Ephemeral/
+    regenerable subtrees (node_modules/.venv/.git/.claude worktrees/pycaches) are excluded — they
+    re-derive from source control or a package manager. Additive + resumable: a re-run with no
+    changes transfers nothing (idempotent), a killed/timed-out transfer completes on a later pass,
+    and the backup only ever accumulates (never prunes). Fails OPEN if Archive4T is unmounted
+    (logs + skips, exit path returns 0) — never errors the beat."""
+    print(f"── preserve ~/Workspace estate → {WORKSPACE_DST} (per-entry copy→verify, additive) ──")
+    if not os.path.isdir(WORKSPACE):
+        print(f"  {WORKSPACE} absent — nothing to preserve.")
+        return 0
+    if not _archive_mounted():
+        print(f"  Archive4T not mounted/writable ({ARCHIVE}) — fail open; estate stays a KNOWN lever.")
+        return 0
+    try:
+        entries = sorted(e for e in os.listdir(WORKSPACE) if e != ".DS_Store")
+    except OSError as e:
+        print(f"  cannot list {WORKSPACE} ({e}) — fail open, skip.")
+        return 0
+    excludes: list[str] = []
+    for pat in WORKSPACE_EXCLUDES:
+        excludes += ["--exclude", pat]
+    # single-runner lock — a long first-pass copy must never race a later beat into the same dest
+    if APPLY and os.path.exists(WORKSPACE_LOCK):
+        try:
+            pid = int(open(WORKSPACE_LOCK).read().strip() or "0")
+            os.kill(pid, 0)                       # raises if the holder is dead
+            print(f"  another workspace-preserve in progress (pid {pid}) — skip this pass.")
+            return 0
+        except (OSError, ValueError):
+            pass                                  # stale lock — claim it
+    if APPLY:
+        os.makedirs(WORKSPACE_DST, exist_ok=True)
+        os.makedirs(os.path.dirname(WORKSPACE_LOCK), exist_ok=True)
+        open(WORKSPACE_LOCK, "w").write(str(os.getpid()))
+    copied = total = 0
+    try:
+        for entry in entries:
+            src = os.path.join(WORKSPACE, entry)
+            if not os.path.exists(src):
+                continue
+            sz = _du(src)
+            total += sz
+            dst = os.path.join(WORKSPACE_DST, entry)
+            print(f"  {'copy+verify' if APPLY else 'WOULD copy'}: ~/Workspace/{entry}  ({_gb(sz)})")
+            if not APPLY:
+                continue
+            is_dir = os.path.isdir(src)
+            if is_dir:
+                src_, dst_ = src + "/", dst + "/"
+                os.makedirs(dst, exist_ok=True)
+            else:
+                # a top-level FILE: rsync INTO the backup root dir (trailing slash). Naming an
+                # explicit dest filepath makes rsync's -anci dry-run perpetually re-list the file
+                # (a single-file verify artifact); placing it in the dir verifies clean.
+                src_, dst_ = src, WORKSPACE_DST + "/"
+            try:
+                # ADDITIVE rsync — no --delete: the estate backup only accumulates; source untouched.
+                rc = subprocess.run(["rsync", "-a", *excludes, src_, dst_], capture_output=True,
+                                    text=True, timeout=WORKSPACE_UNIT_TIMEOUT_SEC).returncode
+                # integrity: itemized CHECKSUM dry-run — no pending files == dst faithfully holds source
+                chk = subprocess.run(["rsync", "-anci", *excludes, src_, dst_], capture_output=True,
+                                    text=True, timeout=WORKSPACE_UNIT_TIMEOUT_SEC)
+            except subprocess.TimeoutExpired:
+                print(f"      → timed out ({WORKSPACE_UNIT_TIMEOUT_SEC}s) — partial copy kept, resume next pass")
+                continue
+            pending = [ln for ln in chk.stdout.splitlines() if ln[:1] in "<>"]
+            ok = rc == 0 and not pending
+            if ok:
+                copied += sz
+                print("      → verified ✓ (checksum)")
+            else:
+                print(f"      → VERIFY MISMATCH ({len(pending)} pending) — source untouched, resume next pass")
+                for ln in pending[:5]:
+                    print(f"        · {ln}")
+    finally:
+        if APPLY and os.path.exists(WORKSPACE_LOCK):
+            try:
+                if int(open(WORKSPACE_LOCK).read().strip() or "0") == os.getpid():
+                    os.remove(WORKSPACE_LOCK)
+            except (OSError, ValueError):
+                pass
+    print(f"  {'' if APPLY else '(dry-run) '}estate: {_gb(copied if APPLY else total)} "
+          f"{'preserved to Archive4T (3rd copy)' if APPLY else 'would preserve'} "
+          f"across {len(entries)} top-level entries.")
+    return copied
+
+
 def _local_bytes(path: str) -> int:
     """REAL on-disk footprint (st_blocks*512), NOT apparent size. A dataless/evicted iCloud file
     reports its apparent size but ~0 blocks — so this is the true reclaimable space, and it lets us
@@ -210,25 +318,13 @@ def _icloud_units(src: str):
 
 
 def _evict_unit(s: str, d: str) -> int:
-    """copy→verify→evict ONE unit (reversible). Returns real bytes freed, or 0 if not evicted.
-    Both rsyncs are timeout-bounded so a single large/contended unit can't hang the beat — rsync is
-    additive, so a killed transfer just resumes (and completes) on a later pass."""
-    is_dir = os.path.isdir(s)
-    s_, d_ = (s + "/", d + "/") if is_dir else (s, d)
-    os.makedirs(d if is_dir else os.path.dirname(d), exist_ok=True)
-    local = _local_bytes(s)                       # measure BEFORE evict (what we'll reclaim)
-    try:
-        subprocess.run(["rsync", "-a", s_, d_], capture_output=True, text=True,
-                       timeout=RECLAIM_UNIT_TIMEOUT_SEC)
-        chk = subprocess.run(["rsync", "-anc", s_, d_], capture_output=True, text=True,
-                             timeout=RECLAIM_UNIT_TIMEOUT_SEC)
-    except subprocess.TimeoutExpired:
-        return 0                                  # too slow this pass — partial copy kept, resume later
-    pending = [ln for ln in chk.stdout.splitlines() if ln[:2] in (">f", "<f")]
-    if pending:
-        return 0                                  # verify not clean — leave source untouched, retry
-    subprocess.run(["brctl", "evict", s], capture_output=True, text=True)
-    return local
+    """Reject the retired one-copy eviction path.
+
+    Physical File Provider eviction now requires a frozen-inventory plan, two
+    independent devices, restoration receipts, and the signed Domus adapter.
+    """
+    del s, d
+    raise RuntimeError("legacy-one-copy-file-provider-eviction-disabled")
 
 
 def reclaim_icloud() -> int:
@@ -240,6 +336,10 @@ def reclaim_icloud() -> int:
     heartbeat, and frees space incrementally over beats."""
     src = os.path.join(HOME, "Library/Mobile Documents/com~apple~CloudDocs")
     if not os.path.isdir(src):
+        return 0
+    if APPLY:
+        print("── iCloud Drive reclaim disabled in legacy mode ──")
+        print("  requires exact two-copy restoration proof plus the signed File Provider adapter.")
         return 0
     print("── iCloud Drive reclaim (per-unit copy→verify→evict; reversible, bounded, locked) ──")
     if not _archive_mounted():
@@ -328,6 +428,7 @@ def main() -> int:
     print(f"library-preserve [{'APPLY' if APPLY else 'DRY-RUN'}] — preserve-first, reclaim-byproduct, system-owned")
     reclaim_caches()
     preserve_sliver()
+    preserve_workspace()
     reclaim_icloud()
     status_report()
     print("done — irreplaceable preserved (3 copies); reversible reclaim only; nothing punted to your hand.")
@@ -335,4 +436,15 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    custody_commands = {
+        "custody-plan": "plan",
+        "custody-apply": "apply",
+        "custody-reclaim": "reclaim",
+    }
+    if sys.argv[1:2] and sys.argv[1] in custody_commands:
+        source_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, os.path.join(source_root, "cli", "src"))
+        from limen.personal_custody import main as custody_main
+
+        sys.exit(custody_main([custody_commands[sys.argv[1]], *sys.argv[2:]]))
     sys.exit(main())

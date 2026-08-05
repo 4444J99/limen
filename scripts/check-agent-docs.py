@@ -39,11 +39,39 @@ Checks (exit 0 iff all pass):
 
   J. Deployment operations stay in docs/deployment.md, not in AGENTS.md.
 
+  K. The 2026-07-09 insights standing corrections stay encoded: the closeout terminal
+     statement, the BLOCKED-once protocol, and the registry-owns-the-answer rule are present
+     in their owning CLAUDE.md sections and mirrored into the closeout skill.
+
+  L. The prompt corpus remains the concurrent control plane: ask/correction atoms are the unit,
+     completion is evidence-backed, and the human is not asked to restate settled intent.
+
+  M. The four session-discipline rules (derive/no-menu, bounded-CI-waits, durable-homing,
+     no-stall/BLOCKED-once) are present in the AGENTS.md shared layer (``## Session Discipline``
+     section), and the home-scope Layer-1 AGENTS.md template defers to that shared layer rather
+     than diverging.
+
+  N. The six standing corrections from insights reports 2026-06-23 → 2026-07-17 are present in
+     AGENTS.md under the ``### Standing Corrections`` subsection of ``## Session Discipline``:
+     (a) predicate-not-prose done, (b) terminal closeout / fixed-point, (c) derive-before-asking,
+     (d) durable-homing for all produced state, (e) active-unblocking, (f) triage-window anchor.
+
+  O. The Peer Conductor Contract stays symmetric across the shared layer and native adapters:
+     conductor is a capability rather than a rank, children are broker-reserved with attenuated
+     authority, native identity and protected human sessions survive, hidden fanout is rejected,
+     and no instruction surface tells an agent to write ``tasks.yaml`` directly.
+
+  P. Concurrent integration is a shared invariant: moving main does not rewrite every PR head,
+     queue mode uses ``merge_group``, and neither the shared nor tool-specific protocol permits an
+     admin bypass of the serialization rail.
+
 Run directly (``scripts/check-agent-docs.py``) or via ``scripts/verify-whole.sh``.
 """
+
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -51,6 +79,9 @@ ROOT = Path(__file__).resolve().parent.parent
 SERVER = ROOT / "mcp" / "src" / "limen_mcp" / "server.py"
 DOCS = [ROOT / "AGENTS.md", ROOT / "GEMINI.md", ROOT / "CLAUDE.md"]
 STANDARD = ROOT / "docs" / "agent-instruction-standard.md"
+AGY_SKILL = ROOT / ".agents" / "skills" / "agy_conductor" / "SKILL.md"
+COPILOT_PROFILE = ROOT / "integrations" / "copilot" / "limen-conductor.agent.md"
+COPILOT_REPO_OVERRIDE = ROOT / ".github" / "agents" / "limen-conductor.agent.md"
 REFERENCE_DOCS = DOCS + [ROOT / "CONTRIBUTING.md", STANDARD, ROOT / "docs" / "deployment.md"]
 TEMPLATE_DOCS = [
     ROOT / "domus-genoma" / "dot_config" / "ai-context" / "AGENTS.md.tmpl",
@@ -66,6 +97,12 @@ REQUIRED_SECTIONS = {
         "Operating Modes",
         "Startup Checklist (fast path)",
         "Precedence",
+        "Peer Conductor Contract",
+        "Correction Propagation",
+        "Engineering Ownership",
+        "Session Discipline",
+        "Prompt Corpus as the Control Plane",
+        "Full Lifecycle Closure",
         "Task States",
         "Where to Find Tasks",
         "Session Start Ritual",
@@ -78,6 +115,7 @@ REQUIRED_SECTIONS = {
         "Architecture & Orientation",
         "Closeout Definition",
         "Definition of Done",
+        "Engage the Real Problem First",
         "Credentials Are Organ-Owned (Never Recited in Chat)",
         "Standing Autonomy & Compliant Gate Reroute",
         "Merge & Branch Protocol",
@@ -132,8 +170,7 @@ def section(text: str, heading: str) -> str:
 def precedence_items(text: str) -> list[str]:
     """Extract normalized numbered-list items from the Precedence section."""
     return [
-        re.sub(r"\s+", " ", item).strip()
-        for item in re.findall(r"^\d+\.\s+(.+)$", section(text, "Precedence"), re.M)
+        re.sub(r"\s+", " ", item).strip() for item in re.findall(r"^\d+\.\s+(.+)$", section(text, "Precedence"), re.M)
     ]
 
 
@@ -187,6 +224,101 @@ def presented_status_tokens(text: str) -> set[str]:
     return tokens
 
 
+def peer_conductor_errors(documents: dict[str, str]) -> list[str]:
+    """Return symmetric-conduct doctrine violations in instruction surfaces."""
+
+    errors: list[str] = []
+    agents_text = documents.get("AGENTS.md", "")
+    try:
+        contract = section(agents_text, "Peer Conductor Contract")
+    except ValueError as exc:
+        return [str(exc)]
+    normalized_contract = re.sub(r"\s+", " ", contract)
+
+    for phrase, label in [
+        ("temporary capability, never a rank", "temporary-capability rule"),
+        ("no master agent or model hierarchy", "no-hierarchy rule"),
+        ("shared conduct broker", "shared-broker rule"),
+        ("only reduce its parent's authority", "authority-attenuation rule"),
+        ("Preserve native identity", "native-identity rule"),
+        ("human_protected: true", "protected-human-session rule"),
+        ("Hidden native fanout is rejected", "hidden-fanout rule"),
+        ("Never edit `tasks.yaml` directly", "single-writer projection rule"),
+    ]:
+        if phrase not in normalized_contract:
+            errors.append(f"AGENTS.md 'Peer Conductor Contract' lacks the {label}")
+
+    rank_patterns = [
+        (re.compile(r"\bmaster conductor\b", re.I), "master-conductor rank wording"),
+        (re.compile(r"\bprimary agent swarm\s*\(\s*`?conductor`?\s*\)", re.I), "primary-conductor wording"),
+        (re.compile(r"\bCodex(?:-only)?[- ]conductor\b", re.I), "fixed Codex-conductor wording"),
+        (re.compile(r"\bsimilar to Claude or Codex\b", re.I), "model-hierarchy comparison"),
+    ]
+    direct_board = re.compile(
+        r"\b(?:edit|editing|write|writing|rewrite|rewriting|read/write|commit(?:\s+and\s+push)?|push|"
+        r"mutate|update)\b[^\n]{0,60}\btasks\.yaml\b",
+        re.I,
+    )
+    negation = re.compile(r"\b(?:never|not|no|cannot|mustn't|must not|do not|does not|don't|doesn't)\b", re.I)
+    for name, text in documents.items():
+        for pattern, label in rank_patterns:
+            if pattern.search(text):
+                errors.append(f"{name} contains forbidden {label}")
+        lines = text.splitlines()
+        for line_number, line in enumerate(lines, start=1):
+            context = (lines[line_number - 2] + " " + line) if line_number > 1 else line
+            for match in direct_board.finditer(line):
+                context_match = direct_board.search(context)
+                if context_match and not negation.search(context[: context_match.start()]):
+                    errors.append(f"{name}:{line_number} contains direct tasks.yaml write guidance")
+                    break
+
+    adapters = {
+        name: documents.get(name, "")
+        for name in ("CLAUDE.md", "GEMINI.md", ".agents/skills/agy_conductor/SKILL.md",
+                     "integrations/copilot/limen-conductor.agent.md")
+    }
+    for name, text in adapters.items():
+        if not text:
+            errors.append(f"missing peer-conductor adapter: {name}")
+        elif "Peer Conductor Contract" not in text:
+            errors.append(f"{name} does not defer to AGENTS.md 'Peer Conductor Contract'")
+
+    lifecycle_patterns = [
+        re.compile(r"\bConductor Execution Loop\b", re.I),
+        re.compile(r"\bThe lifecycle is the durable contract\b", re.I),
+        re.compile(r"\b(?:Claude|Gemini|Agy|Copilot)\s+(?:owns|defines)\s+(?:the\s+)?(?:task\s+)?lifecycle\b", re.I),
+        re.compile(r"\bStatus Updates:\s+As work progresses\b", re.I),
+    ]
+    for name, text in adapters.items():
+        for pattern in lifecycle_patterns:
+            if pattern.search(text):
+                errors.append(f"{name} defines tool-specific lifecycle rules")
+                break
+
+    copilot = adapters["integrations/copilot/limen-conductor.agent.md"]
+    if COPILOT_REPO_OVERRIDE.exists():
+        errors.append(
+            "repository-level Copilot conductor profile overrides the organization profile; "
+            "keep only integrations/copilot/limen-conductor.agent.md as the publication source"
+        )
+    for phrase, label in [
+        ("target: github-copilot", "GitHub Copilot target"),
+        ("COPILOT_MCP_LIMEN_CONDUCT_URL", "Agents variable-owned remote MCP URL"),
+        ("COPILOT_MCP_LIMEN_CONDUCT_TOKEN", "Agents secret-owned bearer"),
+        ("limen-conductor/*", "conduct MCP tool namespace"),
+    ]:
+        if phrase not in copilot:
+            errors.append(f"Copilot conductor profile lacks {label}")
+    frontmatter = copilot.split("---", 2)[1] if copilot.count("---") >= 2 else copilot
+    if re.search(r"^model\s*:", frontmatter, re.M):
+        errors.append("Copilot conductor profile pins a model instead of using provider Auto")
+    if re.search(r"^\s*-\s*agent\s*$", frontmatter, re.M):
+        errors.append("Copilot conductor profile enables hidden native agent fanout")
+
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     valid = canonical_statuses()
@@ -211,7 +343,7 @@ def main() -> int:
             if not has_heading(text, heading):
                 errors.append(f"{doc.name} is missing required section: {heading}")
         for match in re.finditer(r"`completed`", text):
-            if not negation.search(text[max(0, match.start() - 30):match.start()]):
+            if not negation.search(text[max(0, match.start() - 30) : match.start()]):
                 errors.append(
                     f"{doc.name} presents `completed` as a status — limen has no 'completed' "
                     f"state; use `done` (canonical set: {', '.join(sorted(valid))})"
@@ -227,12 +359,73 @@ def main() -> int:
     if re.search(r"\broute around\b", claude_text, re.I):
         errors.append("CLAUDE.md should describe compliant reroutes, not 'route around' safety gates")
 
+    # 2026-07-09 insights standing corrections: terminal statement, BLOCKED-once, and
+    # registry-owns-the-answer are phrase-checked in their owning sections and mirrored
+    # into the closeout skill (censor precedents PREC-2026-07-09-*).
+    terminal = "CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items"
+    for heading, phrase, label in [
+        ("Closeout Definition", terminal, f"the terminal-statement rule ('{terminal}')"),
+        (
+            "Standing Autonomy & Compliant Gate Reroute",
+            "BLOCKED: <atom>",
+            "the BLOCKED-once protocol ('BLOCKED: <atom>' stated once, filed, never looped on)",
+        ),
+        ("Engage the Real Problem First", "The registry owns the answer", "the registry-owns-the-answer rule"),
+        (
+            "Merge & Branch Protocol",
+            "scripts/await-pr.sh",
+            "the sanctioned-waiter rule (never hand-roll a background PR poll loop; "
+            "scripts/await-pr.sh is the one bounded, loud waiter)",
+        ),
+        (
+            "Closeout Definition",
+            "merge-drain",
+            "the green-pending-PR-is-homed rule (the beat's merge rung owns it; cite it and end)",
+        ),
+    ]:
+        try:
+            if phrase not in section(claude_text, heading):
+                errors.append(f"CLAUDE.md '{heading}' lacks {label}")
+        except ValueError as exc:
+            errors.append(str(exc))
+    # 2026-07-14 standing correction: chronic fleet-debt (reopened ≥3×, never a PR) parks in
+    # failed_blocked, never needs_human — the human surface stays truthful. Bind the phrase so
+    # the Task States semantic can't silently drift back to escalating churn at the human.
+    try:
+        if "chronic fleet-debt" not in section(agents_text, "Task States"):
+            errors.append(
+                "AGENTS.md 'Task States' must bind failed_blocked to chronic fleet-debt "
+                "(heal-dispatch parks chronic churn there, not in needs_human)"
+            )
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    closeout_skill = ROOT / ".claude" / "skills" / "closeout" / "SKILL.md"
+    if closeout_skill.exists():
+        skill_text = closeout_skill.read_text(encoding="utf-8")
+        if terminal not in skill_text:
+            errors.append(".claude/skills/closeout/SKILL.md lacks the closeout terminal statement")
+        if "BLOCKED: <atom>" not in skill_text:
+            errors.append(".claude/skills/closeout/SKILL.md lacks the BLOCKED-once protocol")
+
     standard_text = STANDARD.read_text(encoding="utf-8")
     try:
         if precedence_items(agents_text) != precedence_items(standard_text):
             errors.append("AGENTS.md and docs/agent-instruction-standard.md have different Precedence ladders")
     except ValueError as exc:
         errors.append(str(exc))
+
+    prompt_control = section(agents_text, "Prompt Corpus as the Control Plane")
+    for phrase, label in [
+        ("individual ask or correction as the unit of intent", "ask-level intent unit"),
+        ("Corpus governance and execution run concurrently", "concurrent corpus/execution loop"),
+        ("Do not make the human restate settled intent", "no-restatement rule"),
+        ("`done` requires a durable owner receipt and a satisfied predicate", "strict done proof"),
+    ]:
+        if phrase not in prompt_control:
+            errors.append(f"AGENTS.md prompt-corpus control section lacks {label}")
+    if "Treat the full prompt corpus as a concurrent control plane" not in standard_text:
+        errors.append("agent instruction standard lacks the concurrent prompt-corpus rule")
 
     expected = expected_agents(agents_text)
     expected_canonical = valid_agents - {"any"}
@@ -243,9 +436,7 @@ def main() -> int:
         )
 
     missing_notes = {
-        agent
-        for agent in expected
-        if normalize_agent_label(agent) not in documented_agent_notes(agents_text)
+        agent for agent in expected if normalize_agent_label(agent) not in documented_agent_notes(agents_text)
     }
     if missing_notes:
         errors.append(f"AGENTS.md is missing Agent-Specific Notes for: {sorted(missing_notes)}")
@@ -272,6 +463,125 @@ def main() -> int:
             errors.append(
                 f"{template.relative_to(ROOT)} presents non-canonical status values: {sorted(invalid_presented)}"
             )
+
+    student_email_check = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "check-student-email-grounding.py")],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if student_email_check.returncode != 0:
+        output = (student_email_check.stdout + student_email_check.stderr).strip()
+        errors.append("student-email grounding predicate failed" + (f":\n{output}" if output else ""))
+
+    # M. Four session-discipline rules must be present in AGENTS.md ## Session Discipline section
+    # and the home-scope Layer-1 AGENTS.md template must defer to the shared layer.
+    try:
+        discipline_section = section(agents_text, "Session Discipline")
+        for phrase, label in [
+            ("scripts/verify-scoped.sh", "bounded-CI-waits rule (verify-scoped.sh is the default gate)"),
+            ("scripts/await-pr.sh", "bounded-CI-waits rule (await-pr.sh is the one sanctioned waiter)"),
+            ("BLOCKED: <atom>", "no-stall/BLOCKED-once rule"),
+            ("his-hand-levers.json", "durable-homing rule (human-gated atoms file in his-hand-levers.json)"),
+            ("registry already owns the answer", "derive/no-menu rule (registry owns the answer)"),
+        ]:
+            if phrase not in discipline_section:
+                errors.append(
+                    f"AGENTS.md 'Session Discipline' lacks the {label} "
+                    f"(fix: add the phrase '{phrase}' to ## Session Discipline)"
+                )
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    home_agents_tmpl = ROOT / "domus-genoma" / "dot_config" / "ai-context" / "AGENTS.md.tmpl"
+    if home_agents_tmpl.exists():
+        tmpl_text = home_agents_tmpl.read_text(encoding="utf-8")
+        for phrase, label in [
+            ("Session Discipline", "Session Discipline section pointer"),
+            ("verify-scoped.sh", "bounded-CI-waits rule"),
+            ("await-pr.sh", "bounded-CI-waits sanctioned-waiter rule"),
+            ("BLOCKED:", "no-stall/BLOCKED-once rule"),
+        ]:
+            if phrase not in tmpl_text:
+                errors.append(
+                    f"domus-genoma/dot_config/ai-context/AGENTS.md.tmpl lacks the {label} "
+                    f"(the home-scope Layer-1 template must defer to the shared-layer disciplines; "
+                    f"fix: ensure the Session Discipline summary block is present)"
+                )
+
+    # N. Six standing corrections from insights reports 2026-06-23 → 2026-07-17 must be present
+    # in the AGENTS.md ## Session Discipline section (### Standing Corrections subsection).
+    try:
+        discipline_section = section(agents_text, "Session Discipline")
+        for phrase, label in [
+            (
+                "owning predicate or tests pass on live state",
+                "N-a predicate-not-prose done rule "
+                "(no agent claims completion until the owning predicate or tests pass on live state)",
+            ),
+            (
+                "File residual work with its durable owner",
+                "N-b terminal-closeout / fixed-point rule "
+                "(file residual work with its durable owner; never hand it back as a list)",
+            ),
+            (
+                "A decision already answered by charter, registry, or precedent is queried and applied",
+                "N-c derive-before-asking rule "
+                "(a decision already answered by charter, registry, or precedent is queried and applied)",
+            ),
+            (
+                "Config, data, docs, and receipts produced in a session land in their git-tracked owner",
+                "N-d durable-homing-for-all-produced-state rule "
+                "(config, data, docs, and receipts produced in a session land in their git-tracked owner)",
+            ),
+            (
+                "attempt its documented bootstrap path once",
+                "N-e active-unblocking rule "
+                "(when a bridge/auth/gate is blocked, attempt its documented bootstrap path once)",
+            ),
+            (
+                "Triage windows start at the last human review",
+                "N-f triage-window-anchor rule "
+                "(triage windows start at the last human review, not the last automated run)",
+            ),
+        ]:
+            if phrase not in discipline_section:
+                errors.append(
+                    f"AGENTS.md 'Session Discipline' lacks {label} "
+                    f"(fix: add the phrase to the ### Standing Corrections subsection)"
+                )
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    peer_documents = {doc.name: doc.read_text(encoding="utf-8") for doc in DOCS}
+    peer_documents[str(AGY_SKILL.relative_to(ROOT))] = AGY_SKILL.read_text(encoding="utf-8")
+    peer_documents[str(COPILOT_PROFILE.relative_to(ROOT))] = COPILOT_PROFILE.read_text(encoding="utf-8")
+    errors.extend(peer_conductor_errors(peer_documents))
+
+    # P. 2026-07-18 concurrent-session correction: exact PR-head proof is immutable; latest-base
+    # composition belongs to the queue. Bind both the canonical shared rule and Claude's concrete
+    # merge cadence so a later doc edit cannot silently recreate the update-branch/full-CI loop.
+    try:
+        discipline_section = section(agents_text, "Session Discipline")
+        for phrase, label in [
+            ("moving `main` is normal", "moving-main-is-normal rule"),
+            ("synthetic `merge_group`", "merge-group composition rule"),
+            ("never `--admin`", "no-admin-bypass rule"),
+        ]:
+            if phrase not in discipline_section:
+                errors.append(f"AGENTS.md 'Session Discipline' lacks the concurrent-integration {label}")
+        merge_section = section(claude_text, "Merge & Branch Protocol")
+        for phrase, label in [
+            ("MERGE-MODE: queue|direct", "explicit merge-mode contract"),
+            ("synthetic latest-base merge group", "queue composition contract"),
+            ("repeated branch-rewrite/full-CI loop", "no branch-rewrite starvation rule"),
+        ]:
+            if phrase not in merge_section:
+                errors.append(f"CLAUDE.md 'Merge & Branch Protocol' lacks the concurrent-integration {label}")
+        if "moving `main` is integrated by the repository merge" not in standard_text:
+            errors.append("agent instruction standard lacks the concurrent-integration rule")
+    except ValueError as exc:
+        errors.append(str(exc))
 
     if errors:
         print("Agent-instruction doc drift detected:")

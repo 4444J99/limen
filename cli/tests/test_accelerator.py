@@ -3,8 +3,8 @@
 The daemon paced dispatch EVENLY and left 40–60% of usable headroom expiring unspent at every reset.
 These cover the fix: scale a lane's per-beat volume UP as it under-spends toward its cliff, but only
 on LEDGER-WON work-classes (never pour expiring budget into junk), lane-AWARE (async lanes burst, sync
-local lanes stay pool-bounded), with the reserve decaying to a floor near the cliff, codex failing over
-to the fresh Spark weekly pool, and routing draining the cliff-edge lane first. All fail-open + floored.
+local lanes stay pool-bounded), with the reserve decaying to a floor near the cliff and routing
+draining the cliff-edge lane first. All fail-open + floored.
 """
 
 from __future__ import annotations
@@ -12,11 +12,15 @@ from __future__ import annotations
 import datetime
 import importlib
 import json
+import os
 import sys
 from pathlib import Path
 
+import pytest
+
 import limen.dispatch as D
-from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task
+from limen.io import load_limen_file, save_limen_file
+from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task, dispatch_session_id
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 
@@ -127,6 +131,7 @@ def test_accel_allows_is_ledger_gated():
 
 # ── dispatch_parallel integration: the tail is win-class only ───────────────────────────────────
 def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
     monkeypatch.delenv("LIMEN_ACCEL", raising=False)
     # jules near its cliff with budget to burn; ledger: jules WINS revenue, WASTES coverage.
@@ -147,6 +152,12 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
             labels=["revenue"],
             status="open",
             created="2026-06-22",
+            origin="human_prompt",
+            horizon="present",
+            value_case="revenue-optimized dispatch task",
+            budget_cost=1,
+            predicate="python3 -m pytest -q",
+            receipt_target=f"github:x/y:pull-request:REV{i}",
         )
         for i in range(10)
     ] + [
@@ -159,69 +170,50 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
             labels=["coverage"],
             status="open",
             created="2026-06-22",
+            origin="human_prompt",
+            horizon="present",
+            value_case="coverage dispatch task",
+            budget_cost=1,
+            predicate="python3 -m pytest -q",
+            receipt_target=f"github:x/y:pull-request:COV{i}",
         )
         for i in range(10)
     ]
     lf = _lf({"jules": 100}, {"jules": 5}, reset)
     lf.tasks = tasks
     tp = tmp_path / "tasks.yaml"
-    picked: list[tuple[str, str]] = []
+    save_limen_file(tp, lf)
     monkeypatch.setattr(D, "_deps_met", lambda t, by: True)
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: True)
     # dry-run prints picks; capture by monkeypatching print is noisy — instead call and inspect status.
     D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=True)
     # The accelerated tail beyond the 3 base picks must be REVENUE (win) tasks, never COVERAGE (waste).
     # Re-run non-dry to see which got reserved=dispatched.
     D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=False)
-    disp = [t.id for t in lf.tasks if t.status == "dispatched"]
+    acknowledged = load_limen_file(tp)
+    dispatched = [t for t in acknowledged.tasks if t.status == "dispatched"]
+    disp = [t.id for t in dispatched]
     assert len(disp) > 3, "accelerator dispatched more than the base 3 toward the cliff"
     assert all(i.startswith("REV") for i in disp), f"tail must be win-class only, got {disp}"
-    assert all(t.dispatch_log[-1].status == "dispatched" for t in lf.tasks if t.status == "dispatched")
-    assert all(t.dispatch_log[-1].session_id == "reserve" for t in lf.tasks if t.status == "dispatched")
-    _ = picked
+    assert all(t.dispatch_log[0].status == "dispatched" for t in dispatched)
+    assert all(dispatch_session_id(t.dispatch_log[0]) == "reserve" for t in dispatched)
 
 
-# ── codex Spark failover ────────────────────────────────────────────────────────────────────────
-def _write_usage(root: Path, codex_health: str):
-    (root / "logs").mkdir(parents=True, exist_ok=True)
-    (root / "logs" / "usage.json").write_text(json.dumps({"vendors": {"codex": {"health": codex_health}}}))
-
-
-def test_codex_spark_failover_on_degraded_meter(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.delenv("LIMEN_CODEX_SPARK_FAILOVER", raising=False)
-    _write_usage(tmp_path, "throttle")
-    assert D._codex_model() == "gpt-5.3-codex-spark", "main pool spent ⇒ fail over to the fresh Spark pool"
-
-
-def test_codex_no_failover_when_healthy(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    _write_usage(tmp_path, "ok")
-    assert D._codex_model() is None, "healthy main pool ⇒ bare invocation (main model)"
-
-
-def test_codex_explicit_model_wins(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.setenv("LIMEN_CODEX_MODEL", "gpt-5.5")
-    _write_usage(tmp_path, "throttle")
-    assert D._codex_model() == "gpt-5.5", "an explicit pin always wins over auto-failover"
-
-
-def test_codex_failover_disabled(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_CODEX_SPARK_FAILOVER", "0")
-    _write_usage(tmp_path, "exhausted")
+# ── codex provider-auto selection ───────────────────────────────────────────────────────────────
+def test_codex_uses_provider_auto_without_override(monkeypatch):
+    for name in list(os.environ):
+        if name.startswith("LIMEN_CODEX_MODEL"):
+            monkeypatch.delenv(name, raising=False)
     assert D._codex_model() is None
-
-
-def test_codex_argv_injects_spark_model(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    _write_usage(tmp_path, "low")
     argv = D._agent_argv("codex")
-    assert "-m" in argv and "gpt-5.3-codex-spark" in argv, f"codex argv must carry the spark flag: {argv}"
+    assert "-m" not in argv, f"bare invocation must delegate to provider Auto: {argv}"
+
+
+def test_codex_explicit_model_override_blocks_without_live_catalog(monkeypatch):
+    monkeypatch.setenv("LIMEN_CODEX_MODEL", "future-provider-id")
+    with pytest.raises(D.ProviderSelectionError, match="no live model catalog"):
+        D._agent_argv("codex")
 
 
 # ── cliff-edge routing (route.py) ───────────────────────────────────────────────────────────────

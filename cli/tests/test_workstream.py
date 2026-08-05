@@ -11,7 +11,6 @@ from pathlib import Path
 
 from limen import tabularius
 from limen import workstream as ws
-from limen.io import load_limen_file
 from limen.models import LimenFile, Task
 
 
@@ -68,7 +67,7 @@ def test_roster_derives_meta_plus_organs(tmp_path):
 
 def test_roster_without_ladder_is_meta_only(tmp_path):
     handles = [c.handle for c in ws.derived_channels(tmp_path)]  # no organ-ladder.json here
-    assert handles == ["conductor", "contributions", "correspondence", "prompt-parity"]
+    assert handles == ["conductor", "contributions", "correspondence", "prompt-parity", "substrate"]
 
 
 def test_alias_resolves_revenue_to_financial(tmp_path):
@@ -105,20 +104,51 @@ def test_group_and_filter(tmp_path):
     assert [t.id for t in filtered.tasks] == ["B"]
 
 
-def test_workstream_survives_tabularius_single_writer(tmp_path):
-    # The whole design rests on this: the field flows through the ONE record-keeper untouched.
+def test_workstream_survives_tabularius_single_writer(tmp_path, monkeypatch):
+    # The broker receipt, not a local YAML rewrite, is the canonical projection proof.
     board = tmp_path / "tasks.yaml"
     board.write_text('version: "1.0"\nportal:\n  name: x\ntasks: []\n')
+    before = board.read_bytes()
+    acknowledged = []
+
+    class Owner:
+        def register(self, session):
+            return session
+
+        def submit(self, packet):
+            task = dict(packet.intent["task"])
+            acknowledged.append(task)
+            return {
+                "status": "accepted",
+                "projection_receipts": [{"task_id": task["id"], "task": task}],
+            }
+
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: Owner())
     tabularius.submit_task_upsert(
         board,
-        {"id": "W1", "title": "w", "target_agent": "any", "workstream": "Revenue", "created": "2026-07-01"},
+        {
+            "id": "W1",
+            "title": "w",
+            "repo": "organvm/limen",
+            "target_agent": "any",
+            "workstream": "Revenue",
+            "predicate": "pytest -q cli/tests/test_workstream.py",
+            "receipt_target": "github:organvm/limen:pull-request:W1",
+            "origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Deliver the bounded workstream task",
+            "owner_surface": "organvm/limen",
+            "created": "2026-07-01",
+        },
         agent="tester",
         session_id="s",
     )
     res = tabularius.drain_once(board)
-    assert res.wrote
-    got = {t.id: t for t in load_limen_file(board).tasks}
-    assert got["W1"].workstream == "revenue"  # normalized on submit, preserved through the seal
+    assert res.applied == 1
+    assert res.wrote is False
+    assert board.read_bytes() == before
+    assert acknowledged[0]["workstream"] == "revenue"
+    assert (tabularius._archive(board) / f"{res.applied_ids[0]}.json").exists()
 
 
 def _pr(number, title, branch="", draft=False):
@@ -165,3 +195,21 @@ def test_group_prs_by_channel_is_a_stable_scoreboard(tmp_path):
     assert summary["total_open"] == 4
     fin = next(c for c in summary["channels"] if c["handle"] == "financial")
     assert fin["total"] == 1 and fin["prs"][0]["number"] == 10
+
+
+def test_assign_channel_partitions_the_board(tmp_path):
+    """The beat's auto-partition derivation: the field/label/token ladder PLUS the task-KIND
+    fallback that actually resolves the fleet's GEN-*/DISCOVER-* backlog (the reason the board sat
+    100% unassigned). Unclassifiable tasks stay honestly UNASSIGNED — never guessed into a domain."""
+    root = _ladder(tmp_path)
+    # 1. explicit field wins, alias-resolved (revenue → financial)
+    assert ws.assign_channel(_task("A", workstream="revenue"), root) == "financial"
+    # 2. a matching label
+    assert ws.assign_channel(_task("B", labels=["legal"]), root) == "legal"
+    # 3. a purpose token in the id — the ORG-* organ lanes that carry no field/label
+    assert ws.assign_channel(_task("ORG-financial-organ-operationalize-0703"), root) == "financial"
+    # 4. task-KIND prefix — the structured fleet tasks whose purpose is structural, not lexical
+    assert ws.assign_channel(_task("GEN-organvm-limen-test-coverage-0620"), root) == "contributions"
+    assert ws.assign_channel(_task("DISCOVER-organvm-the-actual-news"), root) == "conductor"
+    # honest fallback: nothing resolves → stays unassigned (never mis-lane'd)
+    assert ws.assign_channel(_task("ZZZ-unknown-kind-0703"), root) == ws.UNASSIGNED

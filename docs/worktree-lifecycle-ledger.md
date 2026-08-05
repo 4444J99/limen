@@ -1,6 +1,6 @@
 # Canonical Worktree Lifecycle Ledger
 
-Last audited: 2026-07-02 from `/Users/4jp/Workspace/limen`.
+Last audited: 2026-07-06 from `/Users/4jp/Workspace/limen`.
 
 This is the canonical working ledger for roots under
 `/Users/4jp/Workspace/.limen-worktrees`. A root exits this ledger only through a
@@ -19,6 +19,145 @@ only after their local `HEAD` matched the fetched remote PR head exactly:
 The unique work remains preserved on the remote branches and open draft PRs.
 
 ## Current Scan
+
+2026-07-06 organvm-engine #136 dirty-owner blocker pass:
+
+- `python3 scripts/worktree-debt.py --json` reported 102 scanned roots with 1 debt-bearing root:
+  `heal-cifix-organvm-organvm-engine-136-c3d543d8`, classified as `dirty`.
+- Read-only owner-worktree inspection showed the root is on branch `limen/jules-limen-067-1688`
+  at local `HEAD` `48a61947641c392246ebb74a15945340fbc4a7af`, with dirty tracked changes in
+  `src/organvm_engine/cli/__init__.py`, `src/organvm_engine/cli/context.py`, and
+  `src/organvm_engine/contextmd/sync.py`.
+- Live remote/PR proof showed GitHub PR
+  [#136](https://github.com/organvm/organvm-engine/pull/136) and remote branch
+  `limen/jules-limen-067-1688` preserve `e137b6c3df27ec940f176f649f5bf5468166adde`, not the
+  local `HEAD` `48a61947641c392246ebb74a15945340fbc4a7af`.
+- Preserved the local-only commit patch and the dirty worktree patch under
+  `.limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-06T135343Z-heal-cifix-organvm-organvm-engine-136-c3d543d8/`.
+  Public SHA-256 evidence is recorded in `docs/worktree-preservation-receipts.json`.
+- Classified the root as `owner-blocker` / `private_patch_preserved`. No local reclaim, deletion,
+  force-push, merge, owner-repo source edit, or task-board mutation was performed.
+- During the same pass, `heal-cifix-organvm-organvm-engine-139-11d32b27` aged out of the active
+  grace window and appeared as `unpushed-commits` because the local checkout had not fetched the
+  remote PR ref. Live proof showed GitHub PR
+  [#139](https://github.com/organvm/organvm-engine/pull/139) is `OPEN`, non-draft, and its
+  `headRefOid` `81f218a1a83bc6fc623ee6242e824c8018fa2508` equals local `HEAD`; `git ls-remote`
+  also shows `refs/heads/limen/resolve-a-organvm-organvm-engine-112-c362` at the same commit.
+  Added a `remote-pr-open` receipt only. No local reclaim, deletion, force-push, merge,
+  owner-repo source edit, or task-board mutation was performed.
+
+2026-07-06 org-health first-slice residue pass:
+
+- Selected conductor packet `tranche-org-health-organ-firstslice-0704-aac2b482`.
+- Read-only inspection of
+  `/Users/4jp/Workspace/.limen-worktrees/org-health-organ-firstslice-0704-aac2b482`
+  found no `.git` metadata and no owner source files. The root contains only
+  `logs/session-lifecycle-pressure.json` (1,237 bytes, SHA-256
+  `4cad9d67c495f4bdd076b7fb985ab26b3f2d179ca998cd3577a216a3f134b399`) and
+  `logs/session-lifecycle-pressure.md` (193 bytes, SHA-256
+  `f7796610ac423010cd88a9a9e516eebf1ccfac4ffa09337a9e04502cfb1a0c3e`).
+- Added a `documented-residue` receipt for `org-health-organ-firstslice-0704-aac2b482` in
+  `docs/worktree-preservation-receipts.json`. This records a non-source residue proof only:
+  no local reclaim, deletion, force-push, merge, task-board mutation, or owner-repo source edit
+  was performed.
+- Continued under the regenerated `tranche-worktree-lifecycle-debt` packet and classified the
+  remaining visible debt roots by receipt only. Live GitHub PR inspection showed
+  `heal-cifix-organvm-organvm-engine-124-e0bb2d06` is preserved by merged PR
+  [#124](https://github.com/organvm/organvm-engine/pull/124), whose `headRefOid`
+  `1209c8b5e5c6539876d0188f5b1cd75a78884c2d` equals local `HEAD`; `pr-669-governance-deepen` is
+  preserved by merged PR [#669](https://github.com/organvm/limen/pull/669), whose `headRefOid`
+  `3dc75166a4a254a025c0f2e8f77b10d5956a3a3a` equals local `HEAD`; and
+  `heal-cifix-organvm-organvm-engine-130-8a6060e4` is preserved by open PR
+  [#130](https://github.com/organvm/organvm-engine/pull/130), whose `headRefOid`
+  `520a81385ac3049e8eb62e10d560dce04fe61c29` equals local `HEAD` but remains `DIRTY`.
+- Also classified `org-health-organ-firstslice-0704-caa4e142` as documented non-source residue
+  after read-only inspection found only `logs/session-lifecycle-pressure.json` (1,205 bytes,
+  SHA-256 `58efbe4718acd7127093a7cb079e3d41a9aa868fe55f40f3db33ba4454ede8f7`) and
+  `logs/session-lifecycle-pressure.md` (193 bytes, SHA-256
+  `d98e3edd238e252444d7f08b78508f4951d45bb78bbb9ea6d0e4e8bde4a61b0b`).
+- No local reclaim, deletion, force-push, merge, owner-repo source edit, or task-board mutation was
+  performed while closing these lifecycle debt receipts.
+- Later in the same gate-open pass, `heal-cifix-organvm-organvm-engine-130-ec1fdfaf` aged out of
+  the active window and was classified as a duplicate local checkout for the same open PR
+  [#130](https://github.com/organvm/organvm-engine/pull/130). Live PR inspection at
+  `2026-07-06T12:46:10Z` showed the PR remains `OPEN`, non-draft, merge state `DIRTY`, and
+  `headRefOid` `520a81385ac3049e8eb62e10d560dce04fe61c29` equals local `HEAD`. No local reclaim,
+  deletion, force-push, merge, owner-repo source edit, or task-board mutation was performed.
+
+2026-07-06 remote-supersession pass:
+
+- `python3 scripts/worktree-debt.py --json` initially reported 48 roots with 1 debt-bearing
+  root: `linear-conjuring-bear`, classified as `not-merged-to-default`.
+- Read-only inspection found branch `session/post-moneta-durability` at
+  `01c7773cd42adf2e9a3c4277bb635bc1a53eaf3f`, preserved by draft PR
+  [#635](https://github.com/organvm/limen/pull/635), but the PR is `CONFLICTING` and not
+  merge-ready.
+- The branch is superseded by current `origin/main`: commit `21ba3f3b` already staged the
+  consolidation execution packet under `docs/consolidation/EXECUTION-MANIFEST.md` and
+  `scripts/consolidation-*-apply.sh`; current main's scripts retain the explicit
+  `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open` hard gate, while the draft branch's copies
+  remove that guard. Main also carries the richer `docs/reviews/session-2026-07-03-audit-trail.md`.
+- Added a `remote-superseded` receipt for `linear-conjuring-bear` in
+  `docs/worktree-preservation-receipts.json`. No PR was merged or closed, no branch was deleted,
+  no local checkout was removed, and no GitHub consolidation command was run.
+- Re-run proof after the receipt: `python3 scripts/worktree-debt.py --fail-over-cap` reports
+  0 debt roots / 49 scanned roots, with `linear-conjuring-bear` classified as
+  `remote-superseded`.
+- Also classified active root `fluttering-twirling-abelson` as default-branch-preserved:
+  local `HEAD` `034ab5f61f364f4acd99266a10fc00de856698da` is an ancestor of current
+  `origin/main` `b80e782aa0c93f5d5cca4c57bed82bc8d390e993`, and
+  `git diff origin/main...HEAD` is empty. No PR was opened, no branch was pushed, and no local
+  checkout was removed.
+
+2026-07-04 lifecycle closeout pass:
+
+- `python3 scripts/worktree-debt.py --json`: 77 roots, 0 debt-bearing roots, cap 12.
+- Current class mix: 34 documented residue roots, 15 open-PR remote-preserved roots,
+  8 remote-merged/default-preserved roots, 8 owner-blocker roots, and 12 active roots under grace
+  windows.
+- Classified 34 `not-a-git-dir` roots as documented non-source residue after read-only inspection.
+  Every classified path contains exactly two files, `logs/session-lifecycle-pressure.json` and
+  `logs/session-lifecycle-pressure.md`, and no Git metadata or source files. Exact byte counts and
+  SHA-256 hashes are recorded in `docs/worktree-preservation-receipts.json`.
+- Classified `feat+workstream-channels` as remote-preserved by draft PR
+  [#634](https://github.com/organvm/limen/pull/634). Local `HEAD`
+  `dc0498d192c2aa76bf98d1b7fa0dda496baf3c8b` equals `origin/heal/revive-self-heal-beat`
+  and the PR `headRefOid`; the scanner now reports this root as `remote-pr-open`.
+- Classified `agent-aefc63d95daa3131b` as an owner blocker, not reclaimable lifecycle residue.
+  Local `HEAD` `d45b030d1427826c1c0c54b3cb54d552b94104a0` equals
+  `origin/work/photos-universe-20260629-182431`; PR
+  [#497](https://github.com/organvm/limen/pull/497) is closed unmerged. The private proof receipt
+  is recorded under
+  `.limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-04T184224Z-agent-aefc63d95daa3131b/receipt.json`.
+- Classified `gh-organvm-domus-genoma-170-bbbc` as default-branch-preserved. Local `HEAD`
+  `24a251c550c438f90d8e495fdb2b5e62b34a0d22` is an ancestor of `origin/master`
+  `97b3f2c6169b83a20e0d1a61ef95b6621d0e1533`; the only dirty item is untracked
+  `logs/agents/opencode.json` (293 bytes, SHA-256
+  `d476defb235606087f3a33c53eba2fb039086e0c3f91318b335cc7e658a460ff`).
+- Classified the final four debt roots:
+  `GEN-organvm-limen-ci-green-0702` is preserved by merged PR
+  [#574](https://github.com/organvm/limen/pull/574), whose `headRefOid`
+  `ced1164444df42fe8fd4b48924bd4f3f420291e7` equals local `HEAD`;
+  `peer-audited--behavioral-blockchain`, `review-avditor-billing-pr43`, and
+  `wf_29a15be5-9f8-2` have exact private patch receipts under
+  `.limen-private/session-corpus/lifecycle/worktree-preserve/` and are now owner blockers rather
+  than reclaimable lifecycle residue.
+- Closed the stale prompt-index reference `docs-file-fleet-dispatch-lever`: the recorded head
+  `1f71ebeffefda1a9f35e3869d9804564f125cf23` is an ancestor of current `origin/main`, and the local
+  path no longer exists.
+- Closed the stale prompt-index reference `org-social-organ-firstslice-0703-e618`: the recorded
+  head `954f36294540` is an ancestor of current `origin/main`, and the local path no longer exists.
+- Closed the stale prompt-index reference `org-hr-organ-charter-0704-2089`: the recorded head
+  `1f71ebeffefda1a9f35e3869d9804564f125cf23` is an ancestor of current `origin/main`, and the local
+  path no longer exists.
+- Reaped landed local branch refs `limen/org-hr-organ-charter-0704-2089` and
+  `limen/org-social-organ-firstslice-0703-e618` with `python3 scripts/reap-branches.py --apply --force`
+  after dry-run proof classified both as `landed-ancestor`.
+- Refreshed the prompt lifecycle ledger with remote/cloud receipts enabled:
+  `python3 scripts/prompt-lifecycle-ledger.py --write --all`. The private index now has
+  `remote.enabled: true` and checked 1000 task PR refs.
+- No worktree reclaim, force-push, merge, task-board mutation, or owner-repo source edit was
+  performed in this pass.
 
 2026-07-02 live-root reconciliation scan:
 

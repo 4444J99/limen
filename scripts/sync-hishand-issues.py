@@ -123,8 +123,30 @@ def existing_issues() -> dict[str, dict]:
     return out
 
 
+_SLUG: str | None = None
+
+
 def repo_slug() -> str:
-    return sh(["gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])
+    global _SLUG
+    if _SLUG is None:  # memoised — issue_by_number() calls this per unmatched-stamp lever
+        _SLUG = sh(["gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])
+    return _SLUG
+
+
+def issue_by_number(num: int) -> dict | None:
+    """A single issue by number (REST), or None if it's a PR or absent. Recognises a stamped
+    pointer that predates our marker/label — so a VALID pointer is never re-minted as a duplicate.
+    (The #892/#827 bug: a real issue lacking the `<!-- lever:… -->` marker was invisible to the
+    marker-scan, so every --apply re-minted a fresh marked issue and repointed the lever at it.)"""
+    raw = sh(["gh", "api", f"repos/{repo_slug()}/issues/{num}"], check=False)
+    try:
+        it = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(it, dict) or "number" not in it or "pull_request" in it:
+        return None
+    return {"number": it["number"], "state": (it.get("state") or "open").upper(),
+            "body": it.get("body") or ""}
 
 
 def create_issue(lever: dict) -> int:
@@ -251,6 +273,10 @@ def main() -> int:
         # Primary key: the registry's stamped issue number (durable, offline,
         # immune to search-index lag). Marker-scan is recovery for unstamped levers.
         found = by_number.get(stamped) if isinstance(stamped, int) else by_marker.get(lid)
+        if not found and isinstance(stamped, int):
+            # Stamped at a real issue that lacks our marker (manual/older, e.g. #892/#827):
+            # still a valid home — recognise it instead of minting a duplicate.
+            found = issue_by_number(stamped)
         if found:
             num = found["number"]
             if lev.get("issue") != num:

@@ -1,0 +1,15 @@
+# The toolchain DECLARATION — dynamic summoning, never pinning.
+#
+# Hot-flash-cache doctrine (CLAUDE.md, plan 2026-07-30): the local machine is disposable; a fresh
+# jack-in must be able to SUMMON the whole toolchain from this declaration alone (`mise install`).
+# Ranges/aliases only — an exact pin decays the day it ships (Rule #12: pins rot, live-verify),
+# while a range resolves to the live best at summon time. CI stays the parity authority: these
+# ranges must always CONTAIN the versions .github/workflows/ci.yml runs (python 3.12, node 22).
+#
+# This file is inert until a shell activates mise (or jack.sh / verify-hot-cache.sh invokes it
+# explicitly) — the existing .venv, uv, and CI toolchains are untouched by its presence.
+
+[tools]
+python = "3.12"   # range: latest 3.12.x at summon time — matches CI's python-version
+node = "22"       # range: latest 22.x (current LTS line) — matches CI's node-version
+uv = "latest"

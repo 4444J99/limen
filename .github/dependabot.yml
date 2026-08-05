@@ -1,3 +1,7 @@
+# SECURITY-ONLY since 2026-07-17: Renovate (installed org-wide, renovate.json at the root) owns
+# routine version updates — two engines opening the same bump PRs was the #934 coexistence hazard.
+# open-pull-requests-limit: 0 is the documented "disable version PRs, keep security updates" form;
+# ecosystems stay enumerated so Dependabot security alerts/PRs retain their directory map.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -6,36 +10,24 @@ updates:
       - "/web/worker"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    groups:
-      npm-deps:
-        patterns: ["*"]
+    open-pull-requests-limit: 0
   - package-ecosystem: "pip"
     directories:
       - "/"
       - "/web/api"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    groups:
-      pip-deps:
-        patterns: ["*"]
+    open-pull-requests-limit: 0
   - package-ecosystem: "github-actions"
     directories:
       - "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    groups:
-      github-actions-deps:
-        patterns: ["*"]
+    open-pull-requests-limit: 0
   - package-ecosystem: "docker"
     directories:
       - "/web/api"
       - "/web/app"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    groups:
-      docker-deps:
-        patterns: ["*"]
+    open-pull-requests-limit: 0

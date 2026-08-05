@@ -34,13 +34,15 @@ def _rec(task_id, lane, grade, repo, spent, sunk=0):
     }
 
 
-def _run(tmp: Path, records: list[dict], ladder: dict | None = None) -> dict:
+def _run(tmp: Path, records: list[dict], ladder: dict | None = None, extra_env: dict[str, str] | None = None) -> dict:
     logs = tmp / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     (logs / "ledger.jsonl").write_text("\n".join(json.dumps(r) for r in records))
     if ladder is not None:
         (tmp / "revenue-ladder.json").write_text(json.dumps(ladder))
     env = {**os.environ, "LIMEN_ROOT": str(tmp)}
+    if extra_env:
+        env.update(extra_env)
     r = subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True, timeout=60, env=env)
     assert r.returncode == 0, r.stderr
     return json.loads((logs / "ledger.json").read_text())
@@ -86,3 +88,19 @@ def test_revenue_attribution_maps_spend_to_products(tmp_path: Path):
     assert "ChatGPT Exporter" in attr
     assert attr["ChatGPT Exporter"]["spent"] == 4 and attr["ChatGPT Exporter"]["shipped"] == 1
     assert all(a["product"] != "organvm/unlisted" for a in rep["revenue_attribution"])
+
+
+def test_malformed_numeric_inputs_fall_back(tmp_path: Path):
+    records = [
+        _rec("a", "codex", "worth_it", "o/good", "bad"),
+        _rec("b", "jules", "wasted", "o/sink", True, sunk="bad"),
+    ]
+    rep = _run(
+        tmp_path,
+        records,
+        extra_env={"LIMEN_WASTE_RATE": "bad", "LIMEN_WIN_RATE": "nan", "LIMEN_WASTE_MIN": "bad"},
+    )
+
+    assert rep["records"] == 2
+    assert rep["totals"]["spent"] == 0
+    assert rep["totals"]["sunk"] == 0

@@ -1,6 +1,6 @@
 member:
-  name: "Derek"
-  context: "Cross-program work — education-adjacent and narrative-facing"
+  name: "{{MEMBER_NAME}}"
+  context: "Cross-program work — {{PROGRAM_DOMAIN}}-adjacent and narrative-facing"
 mandate:
   description: "Cross-program work with frequent context shifts, testing portability of the posture model"
   outcome: "Test one operating model across different working idioms"

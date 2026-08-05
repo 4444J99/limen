@@ -3,28 +3,50 @@ name: CI
 on:
   push:
     branches: [main]
+    # tasks.yaml is deliberately absent (the board fast lane): board merges are data,
+    # validated pre-merge by pr-gate's task-board/tasks-parse gates + validate.yaml;
+    # check-main-green's exact-head predicate is path-aware, so a board-only head
+    # inherits the newest green run instead of demanding a matrix run of its own.
     paths:
       - "cli/**"
       - "web/**"
-      - "tasks.yaml"
       - "firebase.json"
       - "scripts/**"
       - "spec/**"
+      - "mcp/**"
+      - "ianva/**"
+      - "institutio/governance/**"
       - ".github/workflows/**"
   pull_request:
+    # tasks.yaml is push-only here (the board fast lane): a board-projection PR
+    # implicates no code, so the matrix runs post-merge for check-main-green's
+    # exact-head evidence, not pre-merge on the PR's critical path.
     paths:
       - "cli/**"
       - "web/**"
-      - "tasks.yaml"
       - "firebase.json"
       - "scripts/**"
       - "spec/**"
+      - "mcp/**"
+      - "ianva/**"
+      - "institutio/governance/**"
       - ".github/workflows/**"
   workflow_dispatch:
+  schedule:
+    # Nightly compile-compat only (the `compat` job); every other job guards
+    # itself off this event so the schedule never runs the full matrix.
+    - cron: "43 7 * * *"
+
+# One live run per ref: a superseded push cancels its stale run instead of burning
+# paid private-repo minutes to completion (pr-gate.yml already does this; CI did not).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   python:
-    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -36,13 +58,14 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "mypy>=2.0" ruff -r web/api/requirements.txt -e "cli[test]"
+          python -m pip install "mypy>=2.0" -r web/api/requirements.txt -e "cli[test]"  # ruff pin rides cli[test] (#1658)
 
       - name: Lint Python with ruff
         run: python -m ruff check cli/src cli/tests web/api mcp ianva
 
+      # --diff stays fail-closed while printing the exact formatter patch.
       - name: Format check Python with ruff
-        run: python -m ruff format --check cli/src cli/tests web/api mcp ianva
+        run: python -m ruff format --diff cli/src cli/tests web/api mcp ianva
 
       - name: Type-check Python with mypy
         run: python -m mypy src/limen/
@@ -54,6 +77,11 @@ jobs:
       - name: Compile Python modules
         run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
 
+      - name: Audit Python dependencies (pip-audit)
+        run: |
+          python -m pip install pip-audit uv
+          python3 scripts/pip-audit-autofix.py --check
+
       - name: Shell syntax check (bash -n) on all shell scripts
         run: |
           find . -name "*.sh" \
@@ -62,9 +90,10 @@ jobs:
             -not -path "*/.git/*" \
             -exec bash -n {} +
 
+      # shellcheck ships preinstalled on the ubuntu-latest runner image — the
+      # former per-run apt-get install paid mirror latency for a present binary.
       - name: ShellCheck static analysis
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
           shellcheck -S error \
             $(find . -name "*.sh" \
               -not -path "*/node_modules/*" \
@@ -94,17 +123,28 @@ jobs:
       # validate:surfaces, after the full generation pipeline (including
       # pr-status.json) has produced every input the validator reads.
 
-      - name: Run API and CLI tests
-        run: python -m pytest web/api/tests cli/tests -q
-
+      # pytest ownership: on the PR event the suite runs once, in pr-gate's
+      # scoped resolver (gates pytest-cli/pytest-api); the push event's
+      # whole-proof runs it in `verify` below. This job lints/compiles/validates.
       - name: Probe local runtime adapter
         run: scripts/probe-local-runtime.sh
 
   verify:
+    # Post-merge whole-proof (feeds check-main-green's exact-head predicate) and
+    # manual escape — NOT a PR gate: on the PR event every proof it would rerun
+    # already ran in its owning job (docs/plans/ci-bounded-shards.md: the
+    # aggregate must never rerun a successful child).
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: [python, worker, web]
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
+      # Full history, matching pr-gate/fleet-gate. verify-whole.sh runs
+      # check-session-streams.py, whose settled_by check resolves each claim with
+      # `git cat-file -t <sha>`; under checkout's default depth-1 clone those
+      # commits are absent and every settled stream reports a false DRIFT.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
@@ -131,29 +171,29 @@ jobs:
         env:
           LIMEN_VERIFY_LIVE: "0"
 
-  python-311:
-    runs-on: ubuntu-latest
+  compat:
+    # Nightly floor/prod compile check: 3.11 is the published requires-python
+    # floor (cli/pyproject.toml), 3.14 matches web/api/Dockerfile's runtime
+    # image. The suite itself runs on 3.12 in pr-gate and `verify`; the former
+    # per-PR full second suite on 3.11 protected a version nothing deploys on.
+    if: github.event_name == 'schedule'
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
-          cache: "pip"
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r web/api/requirements.txt -e "cli[test]"
-
-      - name: Compile Python modules on 3.11
+      - name: Compile Python modules on ${{ matrix.python-version }}
         run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
 
-      - name: Run API and CLI tests on 3.11
-        run: python -m pytest web/api/tests cli/tests -q
-
   worker:
-    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -179,7 +219,8 @@ jobs:
         run: scripts/probe-local-worker.sh
 
   web:
-    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -206,6 +247,9 @@ jobs:
         working-directory: web/app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assemble bounded dashboard projection
+        run: python3 scripts/assemble-dashboard-data.py --app web/app
 
       - name: Check exported surface routes and contracts
         run: |

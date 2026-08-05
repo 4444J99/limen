@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 import os
 import re
 import sys
@@ -50,6 +51,27 @@ _FICTIONAL_TOKEN_CAP = 50_000_000
 # Windows the daemon's _window_hours() can actually parse today (Nh / today / day). Anything
 # else silently defaults to 24h — so a "weekly" label is WEEKLY-BLIND until the engine learns it.
 _PARSEABLE_WINDOW = re.compile(r"(\d+)\s*h|today|day", re.IGNORECASE)
+
+
+def _finite_number(value: object, default: float | None = None, *, minimum: float | None = None) -> float | None:
+    try:
+        if isinstance(value, bool):
+            return default
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(parsed):
+        return default
+    if minimum is not None and parsed < minimum:
+        return default
+    return parsed
+
+
+def _window_label_from_minutes(value: object) -> str | None:
+    minutes = _finite_number(value, None, minimum=1.0)
+    if minutes is None:
+        return None
+    return f"{int(minutes) // 60}h"
 
 
 def _load_default_limits() -> dict:
@@ -152,11 +174,15 @@ def build_gauge() -> dict:
         c["pool_cap"] = 100  # the gauge is a percentage — 100% IS the cap, per window
         c["unit"] = "percent"
         if primary:
-            c["used_percent"] = primary.get("used_percent")
-            c["window"] = f"{int(primary.get('window_minutes', 0)) // 60}h"
+            c["used_percent"] = _finite_number(primary.get("used_percent"), None, minimum=0.0)
+            window = _window_label_from_minutes(primary.get("window_minutes"))
+            if window:
+                c["window"] = window
         if secondary:
-            c["weekly_used_percent"] = secondary.get("used_percent")
-            c["weekly_window"] = f"{int(secondary.get('window_minutes', 0)) // 60}h"
+            c["weekly_used_percent"] = _finite_number(secondary.get("used_percent"), None, minimum=0.0)
+            weekly_window = _window_label_from_minutes(secondary.get("window_minutes"))
+            if weekly_window:
+                c["weekly_window"] = weekly_window
 
     # claude: resolve from the cascade (scripts/claude-usage.py). Always surface the % + which
     # avenue answered; only UPGRADE the row (clear the fictional-cap findings) when an avenue gives
@@ -281,9 +307,10 @@ def _print_human(report: dict) -> None:
     print("=== FLEET BUDGET GAUGE ===")
     print(f"{'lane':<12}{'plane':<8}{'unit':<8}{'cap':>16}  {'window':<12}{'trust':<10}{'pool':<12}{'board':>7}")
     for r in report["rows"]:
-        if r.get("used_percent") is not None:  # real vendor gauge: show %-used, not a fake cap
-            wk = r.get("weekly_used_percent")
-            cap = f"{r['used_percent']:g}%" + (f"/{wk:g}%wk" if wk is not None else "")
+        used_pct = _finite_number(r.get("used_percent"), None, minimum=0.0)
+        if used_pct is not None:  # real vendor gauge: show %-used, not a fake cap
+            wk = _finite_number(r.get("weekly_used_percent"), None, minimum=0.0)
+            cap = f"{used_pct:g}%" + (f"/{wk:g}%wk" if wk is not None else "")
         else:
             cap = f"{r['cap']:,}" if isinstance(r["cap"], (int, float)) else str(r["cap"])
         bc = "" if r["board_cap"] is None else str(r["board_cap"])

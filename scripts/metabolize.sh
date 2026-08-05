@@ -20,71 +20,45 @@ export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
+# macOS 26.6 fork-safety mitigation. Apple's Network.framework (loaded at startup into
+# EVERY python here — 3.14/3.13/3.9 alike) registers a pthread_atfork child handler
+# (nw_settings_child_has_forked) that SIGSEGVs in os_log on the child side of a
+# fork()+exec() — i.e. any subprocess call that passes cwd=/preexec_fn (~32 fleet files).
+# It's a timing race, so it kills a fraction of the thousands of fork+exec/beat. Quieting
+# os_activity defuses the os_log path the handler crashes in. Must be set BEFORE any python
+# launches (the framework loads before user code runs), so it lives here, above the first
+# python invocation. Mechanism-certain cure = keep subprocess on posix_spawn (no cwd=);
+# this env var is the zero-blast-radius mitigation. See fork-oslog crash report 2026-07-09.
+export OS_ACTIVITY_MODE="${OS_ACTIVITY_MODE:-disable}"
 cd "$LIMEN_ROOT" || exit 1
+if [ -z "${LIMEN_WORKTREES:-}" ]; then
+  if [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
+    export LIMEN_WORKTREES="/Volumes/Scratch/limen-worktrees"
+  else
+    export LIMEN_WORKTREES="$LIMEN_WORKDIR/.limen-worktrees"
+  fi
+else
+  export LIMEN_WORKTREES
+fi
+export LIMEN_WORKTREE_ROOT="${LIMEN_WORKTREE_ROOT:-$LIMEN_WORKTREES}"
+mkdir -p "$LIMEN_WORKTREES" "$LIMEN_WORKTREE_ROOT" 2>/dev/null || true
 
 echo "═══ metabolize $(date '+%F %T') — dispatch=${LIMEN_DISPATCH:-0} isolation=$LIMEN_ISOLATION ═══"
 
-echo "── 0a. hydrate credentials (1Password → ~/.limen.env → every lane; never re-login) ──"
-# Refresh fleet creds from the ONE source of truth so a one-time login never has to be repeated
-# (lapsed tokens / fresh worktrees self-heal). Fail-open: skips silently if op is locked/absent.
-if [ "${LIMEN_CREDS_HYDRATE:-1}" = "1" ]; then
-  python3 "$LIMEN_ROOT/scripts/creds-hydrate.py" --apply || echo "  (creds-hydrate skipped — op locked/absent)"
-  # PRESENCE is not VALIDITY: a stale/revoked/suspended token sits in the floor looking ✓ while every
-  # lane it feeds is dead. Probe each materialized cred against its service and surface the dead ones.
-  # Non-fatal (never breaks the beat) and fail-open offline; a re-mint into op self-heals on next --apply.
-  python3 "$LIMEN_ROOT/scripts/creds-hydrate.py" --verify || echo "  ↑ DEAD credential(s) above — re-mint into the op:// item, then they self-heal next beat"
-fi
-# Source the cred cache so THIS shell + every child (route.py, the agent CLIs) inherit the keys.
-if [ -f "$HOME/.limen.env" ]; then set -a; . "$HOME/.limen.env"; set +a; fi
-
-echo "── 0b. verify MCP connector consent (Lane B — surface lapsed claude.ai connectors in the log, never in chat) ──"
-# The op:// lane (0a) has a validity probe; this is the missing one for the OTHER credential lane —
-# the claude.ai hosted MCP connectors whose OAuth lives SERVER-SIDE (no local token to refresh). A
-# lapsed connector surfaces HERE in the beat log with its one-lever cure (L-IANVA-CLOUD), not as a
-# recurring /mcp chat nag. Non-fatal + fail-open offline (exit 0 unless a REQUIRED connector lapses).
-if [ "${LIMEN_MCP_VERIFY:-1}" = "1" ]; then
-  python3 "$LIMEN_ROOT/scripts/mcp-auth-verify.py" || echo "  ↑ REQUIRED MCP connector(s) unauthenticated — pull L-IANVA-CLOUD (#263) to end the class"
-fi
-
-echo "── 0c. verify the cartridge is plugged into the real source (host-is-factory invariant) ──"
-# The factory/cartridge law (memory: host-is-factory-system-is-cartridge) needs one check
-# nothing else performs: is chezmoi pointed at the REAL cartridge (organvm/domus-genoma), or at
-# a scratch/dummy source? chezmoi verify/status/health only validate WHATEVER source is wired, so
-# a disconnected cartridge returns a meaningless green. This runs regardless of chezmoi's state and
-# surfaces an unplugged cartridge HERE in the beat log — not months later by accident. Fail-open:
-# exit 0 when connected OR chezmoi absent; non-zero only on a genuine disconnection.
-if [ "${LIMEN_CARTRIDGE_CHECK:-1}" = "1" ]; then
-  python3 "$LIMEN_ROOT/scripts/cartridge-connected.py" || echo "  ↑ cartridge UNPLUGGED (above) — bring domus-genoma current, then re-point chezmoi at it"
-fi
-
-echo "── 0. refresh usage telemetry / lane health ──"
-python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
-
-# DEAD-LINK HYGIENE: a 404 on a public identity surface is silent demand-loss — it repels the exact
-# visitor the front door pulls, and nobody reports it. Probe the tracked surfaces (link-surfaces.json)
-# for broken links; self-throttled to ~6h so the beat never floods the network. Fail-open, never fatal.
-if [ "${LIMEN_LINK_HEALTH:-1}" = "1" ]; then
-  python3 "$LIMEN_ROOT/scripts/link-health.py" --verify --throttle 21600 || echo "  ↑ DEAD link(s) on a public surface above — fix at the source or add a remap in link-surfaces.json"
-  # SELF-HEAL: when a dead link has a verified-live replacement, the organ OPENS a reviewable
-  # fix-PR (reversible — never a merge; publishing stays the human's hand). Idempotent +
-  # self-limiting: one PR per distinct fix-set, skipped once a PR for it exists, so once merged
-  # the link resolves and no PR re-opens. Reuses the throttled probe above (near-zero extra work).
-  # Set LIMEN_LINK_HEAL=0 to keep detection but disable auto-opening PRs.
-  if [ "${LIMEN_LINK_HEAL:-1}" = "1" ]; then
-    python3 "$LIMEN_ROOT/scripts/link-health.py" --heal --apply --throttle 21600 || echo "  (link-health heal skipped/failed — non-fatal)"
-  fi
-fi
-
-# CODEX SKILL BUDGET HYGIENE (memory: distillation-not-reduction). Codex shortens skill
-# descriptions past its ~2% skills budget every session; the session-noise-containment doctrine
-# (Rule 1) BANS the disable-to-silence "fix" (that reduces capability). Instead distill every
-# plugin/skill description to a thin, meaning-preserving lead — keeping EVERY skill. The
-# marketplace cache reverts on refresh, so re-running each beat self-heals it. Idempotent +
-# reversible (--restore); silent when already thin, logs the re-heal when a refresh grew it
-# back — surfaced HERE, never hidden. Set LIMEN_CODEX_SLIM=0 to disable.
-if [ "${LIMEN_CODEX_SLIM:-1}" = "1" ]; then
-  python3 "$LIMEN_ROOT/scripts/codex-skill-slim.py" --apply --quiet || echo "  (codex-skill-slim skipped — no codex config/cache)"
-fi
+# ── beat sensors (continuous-runtime axis of the VIGILIA spine) ────────────────────────────────
+# The beat's sensors (0a … 0j) are declared data in institutio/governance/sensors.yaml; this DERIVES the
+# whole loop from that registry via one call to scripts/beat-sensors.py — adding a sensor is one registry
+# entry, not a shell edit in three places. The prior 20 hand-wired `── 0x ──` blocks were deleted once the
+# derive path was proven byte-equivalent (23-script equivalence test + an observed real-sensor run); it is
+# now the default. Parity held by scripts/check-sensors.py (its D-check accepts this derive-runner call).
+# LIMEN_BEAT_DERIVE=0 skips the sensor pass entirely — an escape hatch, not a fallback. See
+# docs/IDEAL-FORMS-LEDGER.md → IF-SENSOR-REGISTRY.
+if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source metabolize
+  # beat-sensors ran creds-hydrate + its declared reload_env internally; the PARENT shell still needs the
+  # cred cache sourced for the NON-sensor dispatch stages below (route.py, the agent CLIs).
+  if [ -f "$HOME/.limen.env" ]; then set -a; . "$HOME/.limen.env"; set +a; fi
+fi  # ── end beat sensors (derived from sensors.yaml; LIMEN_BEAT_DERIVE=0 to skip) ──
 
 echo "── 1. drain (close completed Jules) ──"
 bash "$LIMEN_ROOT/scripts/drain.sh" || echo "  (drain skipped/failed — continuing)"
@@ -120,6 +94,25 @@ echo "── 5b. insight-cadence (proposal-only auto-reporting) ──"
 # elapsed wall-clock time internally, but --once forces it to run if due.
 if [ "${LIMEN_INSIGHT_CADENCE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once || echo "  (insight-cadence skipped)"
+  # Route the latest report per tier to its durable owner (his-hand levers / keeper upsert
+  # tickets / organ residual inboxes). Armed by the same default as the heartbeat
+  # (LIMEN_INSIGHT_ROUTE_APPLY=1); board echoes are skipped, new tasks capped per pass.
+  LIMEN_INSIGHT_ROUTE_APPLY="${LIMEN_INSIGHT_ROUTE_APPLY:-1}" \
+    python3 "$LIMEN_ROOT/scripts/insight-route.py" | tail -3 || echo "  (insight-route skipped)"
+  # Mirror live censor residuals → public `censor` GitHub issues (auto-open/auto-close, capped).
+  # Observable before autonomous: dry-run until LIMEN_CENSOR_ISSUES_APPLY=1 arms it.
+  python3 "$LIMEN_ROOT/scripts/sync-censor-issues.py" \
+    $([ "${LIMEN_CENSOR_ISSUES_APPLY:-0}" = "1" ] && echo --apply) | tail -3 || echo "  (censor-issues skipped)"
+fi
+
+echo "── 5c. arca (encrypted private-estate vault) ──"
+# ARCA — off-machine durability for the private estate: every ~/Workspace/_*-private store,
+# AES-256-encrypted (key ONLY in the macOS Keychain, never in any repo or env file) and pushed
+# as ciphertext to a private GitHub repo (organvm/arca). The containment inverse of the public
+# lanes: GitHub never sees a plaintext byte. Change-detected + roundtrip-verified; no-ops in
+# seconds when nothing changed. Fails soft (headless Keychain / offline). LIMEN_ARCA=0 disables.
+if [ "${LIMEN_ARCA:-1}" = "1" ]; then
+  bash "$LIMEN_ROOT/scripts/arca.sh" backup || echo "  (arca skipped — keychain locked, offline, or vault unconfigured)"
 fi
 
 # ── 6. self-improve (LOW cadence) — the last rung of the self-* ladder ──
@@ -132,5 +125,10 @@ N="${LIMEN_SI_CADENCE:-10}"
 if [ "$(( $(date +%s) / 3600 % N ))" = "0" ]; then
   python3 "$LIMEN_ROOT/scripts/self-improve.py" || echo "  (self-improve skipped)"
 fi
+
+# ── 7. handoff-relay — write the seam-survival packet so the next session/vendor/beat
+# resumes WARM (open lanes, in-flight claims, board budget, provider headroom, truthful next). Keystone of
+# the walk-away loop (retro 2026-07-08). Read-only over the board; never writes tasks.yaml.
+python3 "$LIMEN_ROOT/scripts/handoff-relay.py" || echo "  (handoff-relay skipped)"
 
 echo "═══ metabolize done $(date '+%F %T') ═══"

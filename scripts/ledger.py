@@ -14,6 +14,7 @@ READ-ONLY on the fleet's data; writes only logs/ledger.json. Fail-open: prints w
 from __future__ import annotations
 
 import json
+import math
 import os
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -24,6 +25,26 @@ LOGS = ROOT / "logs"
 LEDGER_JSONL = LOGS / "ledger.jsonl"
 LEDGER_JSON = LOGS / "ledger.json"
 LADDER = ROOT / "revenue-ladder.json"
+
+
+def _int_or_default(value, default: int = 0) -> int:
+    try:
+        if isinstance(value, bool):
+            return default
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed >= 0 else default
+
+
+def _float_or_default(value, default: float) -> float:
+    try:
+        if isinstance(value, bool):
+            return default
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if math.isfinite(parsed) else default
 
 
 def _load_records() -> list[dict]:
@@ -61,8 +82,8 @@ def _scorecard(records: list[dict]) -> dict:
             continue
         lane = r.get("lane") or "?"
         repo = r.get("repo") or "?"
-        spent = int(r.get("spent", 0) or 0)
-        sunk = int(r.get("sunk", 0) or 0)
+        spent = _int_or_default(r.get("spent"), 0)
+        sunk = _int_or_default(r.get("sunk"), 0)
         # tally this record against each of its classes (type + every label)
         classes = {c for c in ([r.get("type")] + list(r.get("labels") or [])) if c}
         for c in classes:
@@ -92,9 +113,9 @@ def _scorecard(records: list[dict]) -> dict:
     # waste/win classes: a lane WASTES a class if its worth-it rate there is below WASTE_RATE over a
     # meaningful volume (>= WASTE_MIN); it WINS a class above WIN_RATE. Routing reads these to shed the
     # waste-classes off the lane while keeping its winners. Thresholds env-tunable; data-driven, no pins.
-    waste_rate = float(os.environ.get("LIMEN_WASTE_RATE", "0.34"))
-    win_rate = float(os.environ.get("LIMEN_WIN_RATE", "0.6"))
-    min_vol = int(os.environ.get("LIMEN_WASTE_MIN", "5"))
+    waste_rate = _float_or_default(os.environ.get("LIMEN_WASTE_RATE"), 0.34)
+    win_rate = _float_or_default(os.environ.get("LIMEN_WIN_RATE"), 0.6)
+    min_vol = _int_or_default(os.environ.get("LIMEN_WASTE_MIN"), 5) or 5
     for lane, board in lane_board.items():
         waste, win = [], []
         for c, (w, n) in klass.get(lane, {}).items():

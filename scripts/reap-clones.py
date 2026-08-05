@@ -22,24 +22,25 @@ force-push/ahead-of-origin, submodules, LFS, linked worktrees, TOCTOU — all no
   • no skip-worktree / assume-unchanged bit hiding a tracked-file edit, AND
   • not a submodule / LFS / linked-worktree parent (nested contexts outside the parent ref graph), AND
   • HEAD reachable from an origin ref, no active limen task, not CORE / live-root / worktree-root, AND
-  • idle >= min-age — UNLESS disk pressure >= high-water, which WAIVES the age gate (still loss-free), AND
+  • idle >= min-age — UNLESS the live resource envelope is negative, which waives the age gate, AND
   • the NETWORK BELT confirms against a fresh `git fetch --prune` that no local object is un-mirrored
     (catches stale/force-rewound remotes that make refs/heads commits merely LOOK pushed), re-checked
     a final time (porcelain + stash) at the instant before rmtree to close the TOCTOU window.
 
-Every gate is loss-free (re-cloneable from GitHub; nothing local unpushed or untracked), so removal
-is REVERSIBLE and therefore NOT a human-gated action — it runs autonomically. It NEVER deletes DATA:
-a clone with untracked files (possible hand-dropped inputs — the "7 genesis screenshots" rule) or with
-unpushed work is SKIPPED and reported as needs-capture, never removed. capture.sh pushes that work
-first; a later beat then finds a pure mirror and reaps it. It only ever touches STANDALONE clones
-(`.git` is a directory); registered worktrees (`.git` is a file) are reclaim-worktrees.py's job.
+Every data gate is loss-free (re-cloneable from GitHub; nothing local unpushed or untracked). As of
+2026-07-06, --apply still requires a matching human acceptance/redaction/archive event in
+docs/clone-reap-acceptance.jsonl before physical removal. It NEVER deletes DATA: a clone with
+untracked files (possible hand-dropped inputs — the "7 genesis screenshots" rule) or with unpushed
+work is SKIPPED and reported as needs-capture, never removed. capture.sh pushes that work first; a
+later beat then finds a pure mirror and proposes it. It only ever touches STANDALONE clones (`.git`
+is a directory); registered worktrees (`.git` is a file) are reclaim-worktrees.py's job.
 
 Dry-run by default; --apply removes (rmtree — a clone is not a registered worktree). Disk pressure is
 auto-detected via df on the workspace volume, or forced with --pressure / disabled with --no-pressure.
 Bounded per run (--max, default 50). Fails OPEN: any error on one clone is logged and skipped.
 
 Env: LIMEN_WORKSPACE (~/Workspace), LIMEN_ROOT, LIMEN_REAP_CORE, LIMEN_REAP_IDLE_DAYS (2),
-     LIMEN_DISK_HIGH_WATER (85), LIMEN_REAP_MAX (50), LIMEN_REAP_MAXDEPTH (3).
+     LIMEN_REAP_MAX (50), LIMEN_REAP_MAXDEPTH (3).
 """
 
 from __future__ import annotations
@@ -54,10 +55,26 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from reap_acceptance import (  # noqa: E402
+    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
+)
+from reap_acceptance import (
+    has_required_acceptance_proof,
+)
+
 HOME = os.environ.get("HOME", str(Path.home()))
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE", f"{HOME}/Workspace"))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
+sys.path.insert(0, str(LIMEN_ROOT / "cli" / "src"))
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
+
 LOG = LIMEN_ROOT / "logs" / "reap-clones.jsonl"
+CLONE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "clone-reap-acceptance.jsonl"
+CLONE_REAP_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "clone-reap-acceptance.md"
 
 # CORE repos the operator lives in / the conductor needs local — never reaped even if pushed-clean.
 DEFAULT_CORE = "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
@@ -78,9 +95,32 @@ REGENERABLE_DIRS = set(
 )
 REGENERABLE_SUFFIXES = (".pyc", ".pyo")
 REGENERABLE_FILES = {".DS_Store"}
+_ACTIVE_PROCESS_CWDS: dict[Path, int] = {}
 
 # Non-interactive git: fail (→ fail-safe KEEP) rather than block on a credential/GUI prompt.
 _GIT_ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+ACCEPTED_ARCHIVE_STATUSES = {
+    "verified",
+    "remote_mirror_verified",
+    "not_required_clean_remote_mirror",
+}
+ACCEPTED_REDACTION_REVIEWS = {
+    "accepted",
+    "private_archive_only",
+    "not_required_remote_only",
+}
+REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
+
+# Operator standing grant (2026-07-09) — round two of the removal-acceptance covenant, now for clones.
+# The worktree sibling (reclaim-worktrees.py STANDING_ACCEPTANCE) pre-accepts its loss-free class; the
+# clone organ was left gated on an unfed ledger AND never beat-wired, so ~/Workspace crept back every
+# time (the recurring "why is local storage full" pain). classify() already proves the loss-free gate
+# adversarially (14 data-loss paths guarded); its True verdict is "pushed-mirror[-under-pressure]" —
+# every local byte is on the live remote, re-cloneable, nothing unpushed/untracked. Pre-accept exactly
+# that class, matching the operator's rule "nothing deleted without being pushed; pushed IS enough."
+# Default ON; set LIMEN_CLONE_REAP_STANDING_ACCEPTANCE=0 to restore the per-clone ledger gate.
+CLONE_REAP_STANDING = os.environ.get("LIMEN_CLONE_REAP_STANDING_ACCEPTANCE", "1") != "0"
+CLONE_REAP_STANDING_REASONS = {"pushed-mirror", "pushed-mirror-under-pressure"}
 
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
@@ -90,6 +130,102 @@ def _run(args: list[str], cwd: Path | None = None) -> str:
         ).stdout.strip()
     except Exception:
         return ""
+
+
+def active_process_cwds() -> dict[Path, int]:
+    """Return observable process cwd roots; an unavailable probe fails closed."""
+    observed: dict[Path, int] = {}
+    proc = Path("/proc")
+    if proc.is_dir():
+        for entry in proc.iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                observed[(entry / "cwd").resolve(strict=True)] = int(entry.name)
+            except (OSError, ValueError):
+                continue
+        return observed
+    try:
+        result = subprocess.run(
+            ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return {Path("/"): -1}
+    pid: int | None = None
+    for line in result.stdout.splitlines():
+        if line.startswith("p"):
+            try:
+                pid = int(line[1:])
+            except ValueError:
+                pid = None
+        elif line.startswith("n/") and pid is not None:
+            try:
+                observed[Path(line[1:]).resolve()] = pid
+            except OSError:
+                continue
+    return observed
+
+
+def active_process_owner(repo: Path) -> int | None:
+    try:
+        root = repo.resolve()
+    except OSError:
+        return -1
+    for cwd, pid in _ACTIVE_PROCESS_CWDS.items():
+        if pid == -1 or cwd == root or root in cwd.parents:
+            return pid
+    return None
+
+
+def load_clone_reap_acceptance() -> list[dict]:
+    try:
+        lines = CLONE_REAP_ACCEPTANCE.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+    events = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    return events
+
+
+def clone_reap_accepted(repo: Path, slug: str, reason: str, acceptance_events: list[dict]) -> tuple[bool, str]:
+    if CLONE_REAP_STANDING and reason in CLONE_REAP_STANDING_REASONS:
+        return True, "standing-grant-2026-07-09"
+    try:
+        resolved = str(repo.resolve())
+    except OSError:
+        resolved = str(repo)
+    names = {repo.name, slug}
+    for event in reversed(acceptance_events):
+        if event.get("root") not in names and event.get("slug") != slug:
+            continue
+        if event.get("accepted") is not True:
+            continue
+        if event.get("reason") and event.get("reason") != reason:
+            continue
+        if event.get("path") and event.get("path") != resolved:
+            continue
+        archive_ok = event.get("archive_verified") is True or event.get("archive_status") in ACCEPTED_ARCHIVE_STATUSES
+        if not archive_ok:
+            continue
+        if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
+            continue
+        if not has_required_acceptance_proof(event):
+            continue
+        return True, "clone-reap-accepted"
+    return False, "missing-clone-reap-acceptance"
 
 
 def _ignored_is_all_regenerable(repo: Path) -> bool:
@@ -191,6 +327,9 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     sp = str(rp)
     if rp == LIMEN_ROOT or LIMEN_ROOT == rp:
         return Verdict(False, "live-root")
+    owner_pid = active_process_owner(repo)
+    if owner_pid is not None:
+        return Verdict(False, f"active-process-cwd:{owner_pid}")
     if any(m in sp + "/" for m in EXCLUDE_MARKERS):
         return Verdict(False, "excluded-root")
     # STANDALONE clone only: a registered worktree has a .git FILE, not a directory — leave those to
@@ -330,6 +469,15 @@ def disk_pct_used(path: Path) -> float:
         return 0.0
 
 
+def disk_free_gib(path: Path) -> float | None:
+    """Return observable free GiB; an unavailable probe is unknown, never green."""
+
+    try:
+        return shutil.disk_usage(str(path)).free / (1024**3)
+    except Exception:
+        return None
+
+
 def discover_clones(workspace: Path, maxdepth: int) -> list[Path]:
     """Every .git directory under the workspace (standalone clones + the top level), maxdepth-bounded."""
     out: list[Path] = []
@@ -351,6 +499,7 @@ def discover_clones(workspace: Path, maxdepth: int) -> list[Path]:
 
 
 def main() -> int:
+    global _ACTIVE_PROCESS_CWDS
     ap = argparse.ArgumentParser(description="Reap pure pushed-mirror clones (loss-free).")
     ap.add_argument("--apply", action="store_true", help="actually remove (default: dry-run)")
     ap.add_argument(
@@ -363,25 +512,37 @@ def main() -> int:
     ap.add_argument("--no-pressure", dest="pressure", action="store_false", help="force pressure OFF regardless of df")
     ap.add_argument("--max", type=int, default=int(os.environ.get("LIMEN_REAP_MAX", "50")))
     args = ap.parse_args()
+    _ACTIVE_PROCESS_CWDS = active_process_cwds()
 
     idle_days = float(os.environ.get("LIMEN_REAP_IDLE_DAYS", "2"))
-    high_water = float(os.environ.get("LIMEN_DISK_HIGH_WATER", "85"))
+    try:
+        required_free = current_required_free_gib()
+    except (RuntimeError, ValueError):
+        required_free = None
     maxdepth = int(os.environ.get("LIMEN_REAP_MAXDEPTH", "3"))
 
     pct = disk_pct_used(WORKSPACE)
-    pressure = args.pressure if args.pressure is not None else (pct >= high_water)
+    free_gib = disk_free_gib(WORKSPACE)
+    # Pressure waives only the idle age, never a preservation predicate. Percent
+    # remains display-only; the live envelope is the sole storage authority.
+    pressure = args.pressure if args.pressure is not None else (
+        required_free is None or free_gib is None or free_gib < required_free
+    )
     active = active_task_slugs(LIMEN_ROOT / "tasks.yaml")
     now = time.time()
 
     mode = "APPLY" if args.apply else "dry-run"
     print(
-        f"[reap-clones] disk {pct:.0f}% used (high-water {high_water:.0f}%) → "
+        f"[reap-clones] disk {pct:.0f}% used, "
+        f"{f'{free_gib:.0f}GiB' if free_gib is not None else 'unknown'} free "
+        f"(required {required_free if required_free is not None else 'unknown'}GiB) → "
         f"pressure={'ON' if pressure else 'off'}; mode={mode}; idle-gate={'waived' if pressure else f'{idle_days:g}d'}"
     )
 
     reaped = kept = 0
     freed = 0
     kept_reasons: dict[str, int] = {}
+    clone_reap_acceptance = load_clone_reap_acceptance()
     LOG.parent.mkdir(parents=True, exist_ok=True)
     logf = LOG.open("a") if args.apply else None
     try:
@@ -411,6 +572,12 @@ def main() -> int:
                 kept += 1
                 kept_reasons["raced-dirty"] = kept_reasons.get("raced-dirty", 0) + 1
                 continue
+            if args.apply:
+                accepted, accept_reason = clone_reap_accepted(repo, slug, v.reason, clone_reap_acceptance)
+                if not accepted:
+                    kept += 1
+                    kept_reasons[accept_reason] = kept_reasons.get(accept_reason, 0) + 1
+                    continue
             print(f"  {'REAP' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB, {v.reason})")
             if args.apply:
                 shutil.rmtree(repo, ignore_errors=True)

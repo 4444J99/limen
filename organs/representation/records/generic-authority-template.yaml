@@ -1,0 +1,212 @@
+schema_version: representation.v3
+kind: representation_record
+id: generic-authority-template
+name: Generic artist authority template record
+report_grade: true
+subject:
+  type: creator
+  name: Future artist authority template
+  roles:
+    - artist
+    - creator
+  representation_modes:
+    - canon_dossier
+    - public_presence_draft
+    - authority_scorecard
+    - private_dossier
+    - creator_presence_preview
+  organ_bridges:
+    - artist
+    - media
+    - publication_policy
+standing:
+  current: TEMPLATE_STAGED
+  next: SUBJECT_SPECIFIC_RECORD
+mandate:
+  description: Provide a reusable authority-program record shape for future artists without storing source work or claiming achieved status.
+artifacts:
+  next_reviewable_output: subject-specific authority packet generated from this reusable template structure
+authority_program:
+  goal: civilizational_gravitas
+  archetype_functions:
+    canonical_institution: Build a source-backed canon dossier, provenance file, and institution-facing packet over time without claiming final cultural rank.
+    mass_readership: Build a public proof and readership surface over time without claiming mass readership before evidence exists.
+  axes:
+    canonical_institution:
+      summary: Stages source-backed provenance, body-of-work evidence, and public proof for a future subject-specific canon dossier.
+      claim_ids:
+        - reusable-canon-apparatus
+        - reusable-public-proof
+      public_claim_ids:
+        - reusable-public-proof
+      public_copy: A future artist record can present only public proof that has been attached to the subject-specific source appendix.
+      output_gates:
+        - Replace template sources with subject-specific local, remote, and public web evidence.
+        - Subject approves provenance and institution-facing copy before outward use.
+    mass_readership:
+      summary: Stages public-proof and readership planning as evidence requirements, not audience claims.
+      claim_ids:
+        - reusable-public-proof
+      public_claim_ids:
+        - reusable-public-proof
+      public_copy: A future public presence can describe public proof once the subject-specific record supplies it.
+      output_gates:
+        - Public draft uses public-source or claim-approved claims only.
+        - Public export approval remains locked before outward use.
+    hybrid_presence:
+      summary: Joins artist, media, publication-policy, and representation records while preserving private and public boundaries.
+      claim_ids:
+        - reusable-hybrid-apparatus
+        - reusable-public-proof
+      public_claim_ids:
+        - reusable-public-proof
+      public_copy: A future hybrid presence can connect public proof to a review-only authority packet without exposing private sources.
+      output_gates:
+        - Private collaboration or provenance context remains internal unless claim-approved.
+        - No generated art, raw manuscript text, private messages, or contact data is stored as source work.
+works:
+  - id: future-body-of-work
+    type: record_template
+    title: Future subject body of work record
+    relation: template_slot
+    claim_ids:
+      - reusable-canon-apparatus
+  - id: future-public-proof
+    type: public_presence_template
+    title: Future subject public proof record
+    relation: template_slot
+    claim_ids:
+      - reusable-public-proof
+relations:
+  - id: reusable-organ-bridges
+    relation_type: organ_bridge_template
+    posture_source: representation
+    claim_ids:
+      - reusable-hybrid-apparatus
+    consent_constraints:
+      - Subject-specific records replace template claims before outward use.
+      - Public copy remains locked until subject approval.
+      - Private source material stays in source refs and non-sensitive notes.
+claims:
+  - id: reusable-canon-apparatus
+    label: Reusable canon apparatus
+    summary: The representation substrate can stage provenance, body-of-work, and institution-facing review packets from source-backed claims.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - local-representation-kernel
+      - remote-representation-kernel
+    public_ok: false
+  - id: reusable-public-proof
+    label: Reusable public proof requirement
+    summary: A future public presence must use public-source or claim-approved proof rather than private material or fabricated status.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-representation-organ
+    public_ok: true
+  - id: reusable-hybrid-apparatus
+    label: Reusable hybrid apparatus
+    summary: The authority program joins artist, media, publication-policy, and representation gates without becoming a new literary organ.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - local-representation-charter
+      - remote-representation-kernel
+    public_ok: false
+sources:
+  - id: local-representation-kernel
+    source_type: local_repo
+    privacy_level: private
+    source_ref: organs/representation/KERNEL.md
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - reusable-canon-apparatus
+    confidence: high
+    note: Local kernel defines representation records, no-send gates, and organ bridges.
+  - id: local-representation-charter
+    source_type: local_repo
+    privacy_level: private
+    source_ref: organs/representation/CHARTER.md
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - reusable-hybrid-apparatus
+    confidence: high
+    note: Local charter defines first proofs, privacy boundaries, and packet roles.
+  - id: remote-representation-kernel
+    source_type: remote_repo
+    privacy_level: public
+    source_ref: https://github.com/organvm/limen/blob/main/organs/representation/KERNEL.md
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - reusable-canon-apparatus
+      - reusable-hybrid-apparatus
+    confidence: high
+    note: Remote Limen repo is the canonical public repository source for the representation kernel.
+  - id: web-representation-organ
+    source_type: web
+    privacy_level: public
+    source_ref: https://github.com/organvm/limen/tree/main/organs/representation
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - reusable-public-proof
+    confidence: high
+    note: Public GitHub web surface exposes the representation organ files.
+approvals:
+  - id: public-export-not-requested
+    approval_type: public_export
+    status: not_requested
+    claim_ids: []
+    note: Public export is locked until a real subject approves copy.
+outputs:
+  - id: generic-canon-dossier
+    mode: canon_dossier
+    report_grade: true
+    claim_ids:
+      - reusable-canon-apparatus
+      - reusable-public-proof
+      - reusable-hybrid-apparatus
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms subject-specific evidence replaces template sources before use.
+      - Reviewer confirms no achieved canon status is claimed.
+  - id: generic-public-presence-draft
+    mode: public_presence_draft
+    report_grade: true
+    claim_ids:
+      - reusable-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms public copy uses only public-source or claim-approved claims.
+      - Public export approval remains locked before outward use.
+  - id: generic-authority-scorecard
+    mode: authority_scorecard
+    report_grade: true
+    claim_ids:
+      - reusable-canon-apparatus
+      - reusable-public-proof
+      - reusable-hybrid-apparatus
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms every axis reports BLOCKED, STAGED, or PUBLIC_READY.
+      - Reviewer confirms unresolved subject-specific evidence remains a blocker.
+  - id: generic-private-dossier
+    mode: private_dossier
+    report_grade: true
+    claim_ids:
+      - reusable-canon-apparatus
+      - reusable-public-proof
+      - reusable-hybrid-apparatus
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the template stores no raw source work.
+      - Reviewer confirms future subject approval remains required.
+  - id: generic-creator-presence-preview
+    mode: creator_presence_preview
+    report_grade: true
+    claim_ids:
+      - reusable-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms preview copy uses only public-proof requirements.
+      - Public export approval remains locked before outward use.
