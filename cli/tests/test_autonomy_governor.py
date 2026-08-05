@@ -295,7 +295,10 @@ def test_expired_maintenance_window_fails_loud_with_stable_receipt(tmp_path):
 
     receipt = logs / "autonomy-maintenance-blocker.json"
     blocker = json.loads(receipt.read_text())
-    assert blocker["state"] == "expired"
+    # A prose resume_predicate can NEVER auto-complete — distinct from the generic "expired"
+    # a window with real, still-unsatisfied clauses gets (see test_an_unsatisfied_clause_is_...
+    # and test_prose_predicate_state_differs_from_a_still_waiting_clause below).
+    assert blocker["state"] == "expired-unrunnable-predicate"
     assert blocker["owner"] == "whole-estate-custody-reset"
     assert blocker["resume_predicate"] == "host admission valid; live root exact and clean"
     first = receipt.read_bytes()
@@ -309,7 +312,7 @@ def test_expired_maintenance_window_fails_loud_with_stable_receipt(tmp_path):
     assert explained.returncode == 0
     payload = json.loads(explained.stdout)
     assert payload["mode"] == "paused"
-    assert payload["maintenanceBlocker"]["state"] == "expired"
+    assert payload["maintenanceBlocker"]["state"] == "expired-unrunnable-predicate"
     assert payload["maintenanceBlockerReceipt"] == str(receipt)
 
 
@@ -411,3 +414,40 @@ def test_an_unrunnable_clause_fails_closed(tmp_path):
     blocker standing rather than being read as satisfied."""
     _expired_window(tmp_path, ["definitely-not-a-real-command-xyz"])
     assert run_governor(tmp_path, "mode").stdout.strip() == "paused"
+
+
+def test_prose_predicate_state_differs_from_a_still_waiting_clause(tmp_path):
+    """The two ways a window stays paused past expiry are not the same failure: one is
+    unrunnable and needs a human edit no matter how long anyone waits; the other has a real
+    clause that just hasn't passed yet. Collapsing both into 'expired' is exactly what let a
+    prose predicate hold the estate for 15 days indistinguishably from a window still waiting
+    on legitimate conditions."""
+    (tmp_path / "prose").mkdir()
+    prose_logs = _expired_window(tmp_path / "prose", "host admission valid; live root clean")
+    run_governor(tmp_path / "prose", "mode")
+    prose_blocker = json.loads((prose_logs / "autonomy-maintenance-blocker.json").read_text())
+    assert prose_blocker["state"] == "expired-unrunnable-predicate"
+
+    (tmp_path / "waiting").mkdir()
+    waiting_logs = _expired_window(tmp_path / "waiting", ["true", "false # still pending", "true"])
+    run_governor(tmp_path / "waiting", "mode")
+    waiting_blocker = json.loads((waiting_logs / "autonomy-maintenance-blocker.json").read_text())
+    assert waiting_blocker["state"] == "expired"
+    assert waiting_blocker["unsatisfied_clauses"]
+
+
+def test_acting_subcommand_reflects_blocker_presence(tmp_path):
+    """The omega core.autonomy-acting rung's predicate: exit 0 with no blocker, exit 1 with one,
+    never the ambiguous 'paused' string `mode` prints for both a short pause and a stale one."""
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps({"mode": "observe", "dispatch_enabled": False, "reason": "no window"})
+    )
+    clear = run_governor(tmp_path, "acting")
+    assert clear.returncode == 0
+
+    _expired_window(tmp_path, "host admission valid; live root clean")
+    blocked = run_governor(tmp_path, "acting")
+    assert blocked.returncode == 1
+    assert "expired-unrunnable-predicate" in blocked.stdout

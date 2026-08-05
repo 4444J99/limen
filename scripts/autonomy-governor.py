@@ -111,6 +111,20 @@ def maintenance_blocker(policy: dict[str, Any], *, now: datetime.datetime | None
         if completed:
             return None
         unsatisfied = [{"clause": r["clause"], "detail": r["detail"]} for r in results if not r["passed"]]
+        if not _clauses(window):
+            # A prose sentence (or an empty/blank clause list) is not "still waiting on a
+            # condition" — it is UNRUNNABLE and will NEVER auto-complete, no matter how long the
+            # estate waits. That is a categorically different failure than a window with real
+            # clauses that simply haven't passed yet, and the generic "expired" state made the two
+            # indistinguishable. Measured 2026-07-21 → 08-05: this exact shape (a prose
+            # resume_predicate) held the estate paused for 15 days with no signal louder than
+            # "expired" to tell the two apart.
+            state = "expired-unrunnable-predicate"
+            reason = (
+                "finite autonomy maintenance window expired and its resume_predicate can never "
+                "self-complete (prose sentence or empty clause list) — a human must convert it to "
+                "a runnable list of shell clauses"
+            )
 
     predicate = window.get("resume_predicate")
     return {
@@ -573,6 +587,7 @@ def main() -> int:
     sub.add_parser("mode")
     sub.add_parser("dispatch-ok")
     sub.add_parser("explain")
+    sub.add_parser("acting")
     args = ap.parse_args()
 
     if args.cmd == "mode":
@@ -582,6 +597,17 @@ def main() -> int:
         ok, reason = dispatch_allowed()
         print(reason)
         return 0 if ok else 2
+    if args.cmd == "acting":
+        # The omega core.autonomy-acting rung's predicate: exit 0 ⟺ no maintenance blocker stands
+        # (the estate is a live actor, not a halted observer waiting on an owner). Distinct from
+        # `mode`, which reports "paused" as a normal string with no way for a shell predicate to
+        # tell a legitimate short pause from a stale one — this is the loud yes/no omega needs.
+        blocker = maintenance_blocker(load_policy())
+        if blocker is None:
+            print("autonomy-governor: acting — no maintenance blocker")
+            return 0
+        print(f"autonomy-governor: NOT acting — {blocker['state']}: {blocker['reason']}")
+        return 1
     policy = load_policy()
     blocker = maintenance_blocker(policy)
     ok, reason = dispatch_allowed()
