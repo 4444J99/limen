@@ -166,8 +166,28 @@ let e = await _jb() ?? process.execPath;
 disclaimed identity is a bundle that survives version rotation. It wraps `mkdir`,
 `writeFile`, `stat`, `unlink`, and `link` in a single bare `catch { return null }`;
 on any failure the identity falls back to `process.execPath` —
-`<store>/versions/<version>`, a new privacy client per update, named by its own
-filename. A dialog quoting a bare version number is that fallback, observed.
+`<store>/versions/<version>`. TCC resolves a client by the bundle enclosing the
+exec'd path, never by the bytes: the two paths are the **same inode**, but only
+the bundled one has an identity to resolve, so the other is named by its own
+filename. A dialog quoting a bare version number is a client with no bundle.
+
+**What this does not explain (verified 2026-08-05).** A dialog quoting a bare
+version number is *not* by itself evidence that `_jb()` failed. Observed with the
+keeper reporting `at-ideal` and the bundle inode-correct:
+
+```
+30699  ~/.local/bin/claude daemon run ...                 (launchd-rooted)
+  └─ 30721  ClaudeCode.app/…/claude --bg-pty-host … -- versions/2.1.222 …
+       └─ 30826  versions/2.1.222 --session-id …          ← disclaims here
+```
+
+The daemon runs its pty host **from the bundle**, then passes the session process
+its `versions/<version>` path as literal argv; that session is the one that
+disclaims, so it becomes its own privacy client regardless of the bundle's state.
+Four of five live processes ran from the versioned path. The argv is composed
+inside the vendor binary, so nothing outside it redirects the session onto the
+bundled path — this is an upstream defect, and the keeper below is a precondition
+for the stable identity, not a cure for per-version prompts.
 
 `_jb()` returns early when the hardlink already carries the running binary's
 inode, skipping the `unlink`/`link` pair that concurrent session starts can

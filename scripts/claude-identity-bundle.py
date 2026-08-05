@@ -13,11 +13,28 @@ Which identity it lands on is decided by one ``??`` in the vendor's own code::
 
 ``_jb()`` materializes ``<store>/ClaudeCode.app`` -- a stable bundle whose
 ``CFBundleIdentifier`` is ``com.anthropic.claude-code`` -- and hardlinks the
-running binary into it. When it succeeds the disclaimed identity is that bundle
-and survives every vendor update. When it throws it returns ``None`` and the
-identity becomes ``process.execPath``: ``<store>/versions/<version>``, a NEW TCC
-client for every version, named by its own filename -- which is why the consent
-dialog reads ``"2.1.222" would like to access ...`` instead of ``"Claude Code"``.
+running binary into it. When it succeeds that identity survives every vendor
+update. When it throws it returns ``None`` and the identity becomes
+``process.execPath``. TCC resolves a client by the bundle enclosing the path it
+was exec'd from, never by the bytes: the two paths are the SAME INODE, yet only
+the bundled one has an identity to resolve, so the unbundled one is named by its
+own filename.
+
+SCOPE -- what this organ does NOT fix (verified 2026-08-05 against a live process
+tree, after this keeper reported ``at-ideal``):
+
+    30699  ~/.local/bin/claude daemon run ...              (launchd-rooted)
+      +- 30721  ClaudeCode.app/.../claude --bg-pty-host ... -- versions/2.1.222 ...
+           +- 30826  versions/2.1.222 --session-id ...     <- disclaims; becomes "2.1.222"
+
+The daemon runs its pty host FROM the bundle, then hands the session process its
+``versions/<version>`` path as literal argv -- and that session is the one that
+disclaims into its own TCC identity. So per-version consent prompts persist with
+a perfectly kept bundle. That argv is composed inside the vendor binary; nothing
+outside it can redirect the session onto the bundled path without patching a
+signed 271MB Mach-O, which would break both its signature and auto-update. This
+organ keeps the bundle correct -- a real precondition, and demonstrably not the
+whole cure. Do not let a green reading here be read as "prompts are fixed."
 
 ``_jb()`` wraps ``mkdir`` + ``writeFile`` + ``stat`` + ``unlink`` + ``link`` in a
 single bare ``catch { return null }``, and it takes an EARLY RETURN when the

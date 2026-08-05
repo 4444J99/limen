@@ -814,8 +814,12 @@ sensors:
     # identity it lands on is one `??` in the vendor's code: `await _jb() ?? process.execPath`.
     # _jb() materializes <store>/ClaudeCode.app (CFBundleIdentifier com.anthropic.claude-code,
     # stable across versions); it returns null on ANY exception inside one bare catch, and the
-    # fallback identity is the versioned binary — a new consent client per update, named by its
-    # own filename, which is why the dialog reads "2.1.222" instead of "Claude Code".
+    # fallback identity is the versioned binary — the same inode, but with no enclosing bundle
+    # for TCC to resolve, so it is named by its own filename.
+    # SCOPE (verified 2026-08-05 with this sensor already at-ideal): keeping the bundle does NOT
+    # stop per-version consent dialogs. The daemon runs its pty host from the bundle but hands
+    # the session process its versions/<version> path as argv, and that session is what disclaims
+    # into its own TCC identity. Vendor-internal; a green reading here is not "prompts fixed".
     # _jb() takes an early return when the hardlink already carries the running binary's inode,
     # skipping the unlink/link pair that concurrent session starts can race into EEXIST. Keeping
     # the bundle inode-correct keeps every start on that early return. Idempotent; writes exactly
@@ -830,7 +834,7 @@ sensors:
     steps:
       - command: "python3 scripts/claude-identity-bundle.py --repair"
         severity: advisory
-        escalation: "Claude Code identity bundle could not be kept — every session start now falls back to a versioned TCC identity and re-prompts per update; check that ~/.local/bin/claude still resolves under the store's versions/ tree"
+        escalation: "Claude Code identity bundle could not be kept — the stable com.anthropic.claude-code identity is unavailable to anything that does exec through it; check that ~/.local/bin/claude still resolves under the store's versions/ tree. Does not by itself govern per-version consent prompts (see the scope note above)."
     omega_eligible:
       - label: "Claude Code stable identity bundle"
         rung_id: sensor.claude.identity-bundle

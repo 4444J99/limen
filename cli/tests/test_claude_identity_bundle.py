@@ -1,10 +1,17 @@
-"""Executable contracts for Claude Code's stable disclaimed TCC identity.
+"""Executable contracts for the `<store>/ClaudeCode.app` identity bundle.
 
-Claude Code disclaims its inherited TCC responsibility at startup, so the identity
-it lands on is decided entirely by whether `<store>/ClaudeCode.app` is present and
-inode-correct. Present -> `com.anthropic.claude-code`, stable across every version.
-Absent or stale -> `<store>/versions/<version>`, a new consent client per update.
-These tests hold that distinction, including the failure mode that produced it.
+TCC names a client by the bundle enclosing the path it was exec'd from -- never by
+the bytes. `<store>/ClaudeCode.app/Contents/MacOS/claude` and
+`<store>/versions/<version>` are the *same inode*, yet the first resolves to
+`com.anthropic.claude-code` (stable across every update) and the second, having no
+enclosing bundle, is named by its own filename -- a fresh consent client per version.
+
+Scope, stated honestly (verified 2026-08-05 against a live process tree): keeping this
+bundle present and inode-correct does NOT by itself stop per-version consent prompts.
+Claude Code's daemon runs its pty host from the bundle but hands the *session* process
+its `versions/<version>` path as literal argv, and that session is what disclaims into
+its own TCC identity. That argv is vendor-internal. What these contracts hold is the
+bundle's own correctness -- the precondition, not the whole cure.
 """
 
 from __future__ import annotations
@@ -13,6 +20,8 @@ import importlib.util
 import os
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/claude-identity-bundle.py"
@@ -20,6 +29,19 @@ SPEC = importlib.util.spec_from_file_location("claude_identity_bundle", SCRIPT)
 assert SPEC and SPEC.loader
 KEEPER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(KEEPER)
+
+
+@pytest.fixture(autouse=True)
+def _force_darwin(monkeypatch):
+    """Hold the keeper's real logic on every platform, not just the author's laptop.
+
+    Only the *gate* is platform-specific -- the bundle work underneath is ordinary
+    filesystem work that runs anywhere. Without this, CI (Linux) short-circuits to
+    `not-applicable` and every contract below silently asserts against the gate
+    instead of the behavior it exists to hold. The non-darwin test re-patches this
+    to Linux, which wins because a test's own monkeypatch runs after the autouse one.
+    """
+    monkeypatch.setattr(KEEPER.platform, "system", lambda: "Darwin")
 
 
 def _store(tmp_path: Path, version: str = "2.1.222", *, size: int = 64) -> dict[str, str]:

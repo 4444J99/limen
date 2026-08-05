@@ -530,20 +530,32 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   `CFBundleIdentifier: com.anthropic.claude-code`, a bundle whose identity survives every version —
   and hardlinks the running binary into it. It wraps `mkdir` + `writeFile` + `stat` + `unlink` +
   `link` in a **single bare `catch { return null }`**, and the fallback is `process.execPath`:
-  `<store>/versions/<version>`, a fresh TCC client per update, named by its own filename. That is
-  the whole explanation for a dialog reading `"2.1.222" would like to access ...` instead of
-  `"Claude Code"`. `_jb()` takes an early return when the hardlink already carries the running
+  `<store>/versions/<version>`. TCC resolves a client by the bundle enclosing the exec'd path, never
+  by the bytes: the two paths are the **same inode**, but only the bundled one has an identity to
+  resolve, so the other is named by its own filename. `_jb()` takes an early return when the hardlink already carries the running
   binary's inode, skipping the `unlink`/`link` pair — which concurrent session starts (bg jobs,
   spares, fleet lanes) can interleave into an `EEXIST` that silently demotes one session to a
   versioned identity. Keeping the bundle inode-correct keeps every start on that early return.
   `scripts/claude-identity-bundle.py` is the organ; sensor `0g8d` runs it every beat; contracts in
   `cli/tests/test_claude_identity_bundle.py`.
-- **Status:** PARTIAL — the measurement is honest, the mechanism is named, and the sprawl class has
-  a self-keeping organ. The remaining distance is three-part and each part has its own owner: the
-  host holds no Full Disk Access grant, so the probe cannot yet return anything but `unmeasured`
-  (operator, click 1); the host holds no App Management grant, which the fleet still needs
-  (operator, click 2); and two runnable versions remain in the store, whose differing inodes reopen
-  the race for concurrent starts of *both* — reported by the keeper, not repaired by it, because
+- **CORRECTION 2026-08-05 (second): the organ does not close the prompt class, and this row said it
+  did.** Verified against a live process tree *while the keeper reported `at-ideal`*, with the
+  dialogs still firing: `~/.local/bin/claude daemon run` (launchd-rooted) spawns its pty host **from
+  the bundle**, then hands the session process its `versions/<version>` path as literal argv — and
+  that session is what disclaims into its own TCC client. Four of five live processes ran from the
+  versioned path; only the pty host was bundled. Independently corroborated by lever 17, which
+  records real TCC rows bound to `versions/2.1.222`. The argv is composed inside the vendor binary,
+  so no external change reaches it. **Method error, and it is the same one twice: a mechanism was
+  named from reading vendor source and never confronted with the running system.** `ps -o args=` on
+  the live tree falsified it in one command — the same shape as the `PPID`/`verify-lifetime` error
+  in the bullet above. Naming a plausible mechanism is not evidence; the check was cheap both times.
+- **Status:** PARTIAL, and the distance is now correctly attributed. **Closed:** the bundle keeps
+  itself (organ + sensor + contracts), and both operator grants were already in place — the clicks
+  this row asked for were owed to the fleet, never to this prompt class. **Open, upstream:** the
+  per-version consent prompts are a vendor-side defect (disclaimed session exec'd by an unbundled
+  path); disposition is a report to Anthropic, not an operator action and not a local patch.
+  **Open, advisory:** two runnable versions remain in the store, whose differing inodes reopen the
+  race for concurrent starts of *both* — reported by the keeper, not repaired by it, because
   deleting a vendor version is not its authority.
 - **Owner:** Claude (the predicate) · the operator (the single grant).
 - **Why this row exists at all.** Its status previously lived in a hand-written `discharged:` field
