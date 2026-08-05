@@ -83,7 +83,7 @@ Relevant clients are classified as:
   available; and
 - `unrelated`: an application or path outside the managed runtime families.
 
-The audit reports three independent predicates:
+The audit reports four independent predicates:
 
 1. **Active-leak containment:** no enabled managed App Management path row and
    no new managed TCC identity absent from the baseline.
@@ -93,14 +93,41 @@ The audit reports three independent predicates:
    switch or `auth_value` is disabled.
 3. **Configured-ingress containment:** every tracked, managed local MCP command
    in a live GUI integration enters through `domus-agent-host ensure --`.
+4. **Rotating-identity containment:** zero path-keyed clients matching a
+   rotating-runtime pattern hold a live grant in **any** TCC service. Predicates
+   1 and 2 are scoped to `SystemPolicyAppBundles`; the dialog the operator
+   actually receives is `"<version>" would like to access files in your
+   Documents folder` — `kTCCServiceSystemPolicyDocumentsFolder` against a client
+   under `~/.local/share/claude/versions/<version>/`. Until 2026-08-05 nothing
+   judged that service, so the inventory could read fully green while every
+   vendor update minted a new identity and re-prompted. This predicate counts
+   the sprawl directly and names the services still pinned to a rotating path.
 
-A fourth preservation check requires the unrelated App Management bundle-grant
+A fifth preservation check requires the unrelated App Management bundle-grant
 map to remain byte-for-byte equivalent after normalization. Strict mode also
 fails if managed automatic updates are disabled, the host is absent or
 invalidly signed, its stable identity is absent from the readable TCC inventory,
 TCC cannot be read, the baseline is missing or invalid, or a malformed Claude
 helper remains registered. The audit never edits TCC, unregisters an
 application, pins a tool, or changes an updater.
+
+**Unmeasured is a third verdict.** Every database-derived predicate above reads
+an empty client list when TCC cannot be read, and emptiness otherwise reads as
+evidence — asserting zero leaks having observed nothing, while naming a missing
+grant and a changed bundle map nobody looked for. A blind run therefore reports
+`status: "unmeasured"` with `measured.tcc_database: false`, emits only
+`tcc_database_unavailable`, and still exits non-zero under `--strict` (fail
+toward caution: unmeasured is never green). A bare session cannot read the TCC
+database — run the audit **beneath the host**, which holds the required access.
+
+**Automatic updates are read from `.claude.json`, not inferred.** The blocker
+scan covers `DISABLE_*` environment keys, `settings.json` `env` blocks,
+`~/.limen.env`, and the `autoUpdates` field in every `.claude.json` root
+(`~/.claude.json`, the `LIMEN_ROOT` runtime copy, and any `CLAUDE_CONFIG_DIR`).
+That last source is load-bearing: a session under `CLAUDE_CONFIG_DIR` never
+reads the home file, so flipping only `~/.claude.json` leaves updates off where
+the session actually runs — the state in which the 2026-08-05 discharge of
+`L-DOMUS-AGENT-HOST-TCC` was produced against a version that could not advance.
 
 ## One supported App Management transaction
 

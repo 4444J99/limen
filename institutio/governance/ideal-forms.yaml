@@ -329,3 +329,20 @@ ideals:
         threshold has an actual observation runway behind it
       environment: host
       at_ideal_when: exit_zero
+  IF-AGENT-IDENTITY:
+    ideal: "The agent's protected-resource identity is a STABLE BUNDLE, never a rotating executable\
+      \ path. Every TCC grant the fleet depends on is held by org.organvm.domus.agent-host, whose\
+      \ identity survives vendor version rotation, so a Claude Code update mints no new client and\
+      \ re-prompts for nothing. The count of rotating-identity paths holding live grants is zero\
+      \ ACROSS EVERY SERVICE, not merely across App Management — the dialog the operator is shown\
+      \ is a Documents-folder grant, and a lens that judges one service scores the sprawl green.\
+      \ And the number is MEASURED: a run that could not read the TCC database reports unmeasured,\
+      \ never a clean bill of health and never a defect it did not observe.\n"
+    owner: Claude (scripts/tcc-identity-audit.py — the rotating_identity_active_grants predicate)
+      · the operator (one grant on the stable host, once, not once per version)
+    probe:
+      command: python3 scripts/tcc-identity-audit.py --strict
+      derives: zero rotating-identity paths hold live TCC grants against a READABLE database —
+        unmeasured and blocked both exit nonzero, so a blind read can never register as at-ideal
+      environment: host
+      at_ideal_when: exit_zero
