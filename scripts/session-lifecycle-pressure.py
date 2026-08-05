@@ -430,12 +430,13 @@ def main() -> int:
     args = parser.parse_args()
 
     # Throttle: if a recent snapshot exists, skip the O(worktrees × git) crawl entirely. On --write
-    # (the SessionEnd hook) this just leaves the fresh-enough snapshot in place; otherwise we echo the
-    # cached Markdown line so the SessionStart orientation still gets its pressure summary.
+    # (the SessionEnd hook) this just leaves the fresh-enough snapshot in place; either way we echo the
+    # cached Markdown line so the SessionStart orientation and done-session-orient.sh still get their
+    # pressure summary (the hook redirects stdout to /dev/null, so the echo is harmless there).
     if args.throttle > 0 and OUT_JSON.exists():
         age = time.time() - OUT_JSON.stat().st_mtime
         if age < args.throttle:
-            if not args.write and OUT_MD.exists():
+            if OUT_MD.exists():
                 print(OUT_MD.read_text(encoding="utf-8").rstrip("\n"))
             return 0
 
