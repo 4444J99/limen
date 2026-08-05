@@ -533,13 +533,33 @@ def main() -> int:
         young = len(reap) - len(lingering)
         young_note = f" ({young} younger than the grace window — digesting, not lingering)" if young else ""
         if lingering:
-            print(
-                f"[reap-branches] FAIL — {len(lingering)} landed branch(es) still lingering{young_note} "
-                f"(review docs/branch-reap-acceptance.md, write docs/branch-reap-acceptance.jsonl, "
-                "then scripts/reap-branches.py --apply):"
-            )
+            # The advice must derive from ledger state, not a static worst case: a branch whose
+            # class is already covered (standing grant or per-branch event) needs only --apply —
+            # prescribing "write the acceptance JSONL" for it misfiles authorized routine work as
+            # an operator gate (2026-08-05: a closeout filed a standing-grant-covered reap as a
+            # human-gated lever off this message).
+            acceptance_events = load_branch_reap_acceptance()
+            authorized = {b for b, why in lingering if branch_reap_accepted(b, why, acceptance_events)[0]}
+            if len(authorized) == len(lingering):
+                advice = (
+                    "every one already authorized on docs/branch-reap-acceptance.jsonl — "
+                    "run scripts/reap-branches.py --apply; no new ledger event needed"
+                )
+            elif authorized:
+                advice = (
+                    f"{len(authorized)} already authorized — scripts/reap-branches.py --apply reaps those; "
+                    "for the rest review docs/branch-reap-acceptance.md and write "
+                    "docs/branch-reap-acceptance.jsonl with archive + redaction proof first"
+                )
+            else:
+                advice = (
+                    "review docs/branch-reap-acceptance.md, write docs/branch-reap-acceptance.jsonl "
+                    "with archive + redaction proof, then scripts/reap-branches.py --apply"
+                )
+            print(f"[reap-branches] FAIL — {len(lingering)} landed branch(es) still lingering{young_note} ({advice}):")
             for b, why in sorted(lingering)[:20]:
-                print(f"  landed  {b}  ({why})")
+                mark = "authorized" if b in authorized else "needs-acceptance"
+                print(f"  landed  {b}  ({why}, {mark})")
             if len(lingering) > 20:
                 print(f"  … and {len(lingering) - 20} more (see scripts/reap-branches.py dry-run)")
             return 1

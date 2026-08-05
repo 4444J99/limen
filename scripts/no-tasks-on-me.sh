@@ -199,7 +199,7 @@ PY
 #    their OWN git-tracked home (docs/branch-hygiene.md), never here.
 # ---------------------------------------------------------------------------
 if ! python3 "$ROOT/scripts/reap-branches.py" --check; then
-  bad "spent branches are lingering — review docs/branch-reap-acceptance.md, then write docs/branch-reap-acceptance.jsonl with archive + redaction proof before any scripts/reap-branches.py --apply"
+  bad "spent branches are lingering — see the [reap-branches] lines above: branches marked 'authorized' are already covered by the acceptance ledger (standing grant or per-branch event) and need only scripts/reap-branches.py --apply; only 'needs-acceptance' branches require a new docs/branch-reap-acceptance.jsonl event"
 fi
 
 # ---------------------------------------------------------------------------
