@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `work/truth-session-breadcrumb-20260721` — 26a808ad fix: close SessionEnd review gaps
 - `worktree-feat-decorum-keeper` — 50145954 feat(decorum): complete the mentor loop — self-closing issues, recurrence ratchet, offline gate
 
-## Live-work branches (451) — decide each
+## Live-work branches (457) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `agent/codex-sessions-adapter-0713` — 4f56aa95 fix(prompt): adapt Codex session records exactly
@@ -108,6 +108,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `fix-bug-28` — b4c56d9d chore: fix validation errors in tasks.yaml
 - `fix-pr-680` — b8b2ea40 fix failing CI on organvm/limen#432
 - `fix/616-format` — e020757c style: ruff format test_corpus_command_center.py (CI format-check gate)
+- `fix/application-funnel-dormant` — 96477292 fix(funnel): the outbound job funnel was dormant on a path miss
 - `fix/autonomy-timegate-throughput-correction-v2` — 41ab3e91 fix: disable generated cleanup in reclaim tranche
 - `fix/dispatch-admission-ci-768` — 96f6c10b Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
 - `fix/fork-safety-predicate` — 09b6eb0c style(fork-safety): ruff format the predicate + its test
@@ -458,12 +459,17 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `work/laptop-wide-recovery-closeout-20260727-s17` — 29c7060d chore: preserve S17 institutional-Omega capsule
 - `work/lead-representation` — 2ae87712 chore(leads): publish lead-representation continuation receipt (capsule custody)
 - `work/lead-substrate` — 46bb367d chore(leads): publish lead-substrate continuation receipt (capsule custody)
+- `work/micro-tato` — 86e75528 docs: publish admitted micro-tato runway
 - `work/next-autonomous-epoch-20260714` — 9335337b docs(session): record restart capsule fixed point
+- `work/omega-substrate-convergence-next` — 66bb7c27 docs: seal final Omega producer closeout
 - `work/photos-universe-20260629-182431` — d45b030d photos: extend duplicate proof batch
 - `work/prima-materia-alpha-omega-universe-20260728-s15` — 5e09984c docs: relay Prima Materia S15 evidence
 - `work/prima-materia-alpha-omega-universe-20260728-s16` — a6fe53a7 docs: recalibrate Prima Materia campaign
 - `work/prima-materia-alpha-omega-universe-20260728-s17` — 36909af3 chore: admit Prima Materia S17 custody capsule
+- `work/representation` — 99088426 docs: publish admitted representation runway
 - `work/runaway-prevention-recovery-20260718-120912` — 0aa219ad Merge remote-tracking branch 'origin/main' into work/runaway-prevention-recovery-20260718-120912
+- `work/tcc-reap-closeout-20260801` — 57d5e7bf docs(closeout): preserve TCC reap fixed point
+- `work/tcc-stable-agent-host-cutover-20260730` — b6767943 docs: publish admitted tcc-stable-agent-host-cutover-20260730 runway
 - `work/three-pinned-conversations-20260721` — edc937ee chore: record requested Codex archive
 - `work/victoroff-external-custody-20260722` — 456a03a4 govern Victoroff external custody
 - `work/warp-agent-routing-20260629` — 6fb678e8 limen: audit warp notification provenance
