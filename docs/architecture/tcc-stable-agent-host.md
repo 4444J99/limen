@@ -117,8 +117,17 @@ evidence — asserting zero leaks having observed nothing, while naming a missin
 grant and a changed bundle map nobody looked for. A blind run therefore reports
 `status: "unmeasured"` with `measured.tcc_database: false`, emits only
 `tcc_database_unavailable`, and still exits non-zero under `--strict` (fail
-toward caution: unmeasured is never green). A bare session cannot read the TCC
-database — run the audit **beneath the host**, which holds the required access.
+toward caution: unmeasured is never green).
+
+**The instrument needs its own grant, under a different service.** Reading
+`~/Library/Application Support/com.apple.TCC/TCC.db` is gated by
+`kTCCServiceSystemPolicyAllFiles` (Full Disk Access) — not by the App Management
+service every predicate above judges. Running beneath the host is necessary but
+not sufficient: until `DomusAgentHost.app` itself appears under System Settings →
+Privacy & Security → **Full Disk Access**, a hosted run reports `unmeasured`
+exactly like a bare one (verified 2026-08-05). Grant it to the host bundle, never
+to a versioned path, or the measurement acquires the sprawl it exists to detect.
+`L-DOMUS-AGENT-HOST-TCC` owns both clicks.
 
 **Automatic updates are read from `.claude.json`, not inferred.** The blocker
 scan covers `DISABLE_*` environment keys, `settings.json` `env` blocks,
