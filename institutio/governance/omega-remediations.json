@@ -70,6 +70,11 @@
       "owner": "continuity"
     },
     {
+      "id": "core.autonomy-acting",
+      "next_action": "Read `python3 scripts/autonomy-governor.py explain`'s maintenanceBlocker; a prose/empty resume_predicate needs a human to convert it to a runnable clause list, an unsatisfied clause needs its condition made true.",
+      "owner": "continuity"
+    },
+    {
       "id": "core.no-tasks-on-me",
       "next_action": "Run the owed-work homing predicate and route every residual to its tracked owner without editing tasks.yaml directly.",
       "owner": "tabularius"
@@ -157,6 +162,11 @@
     {
       "id": "sensor.dialogs.agent-curable",
       "next_action": "Run the agent-curable dialog predicate and route each class through its named Domus-owned healer without broad host mutation.",
+      "owner": "tabularius"
+    },
+    {
+      "id": "sensor.tcc.track-c",
+      "next_action": "Run python3 scripts/tcc-track-c-closeout.py --beat; keep L-DOMUS-AGENT-HOST-TCC open on external_vendor_wait; never treat a no-op claude update as completion; finalize only from a met receipt.",
       "owner": "tabularius"
     },
     {

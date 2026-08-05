@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-08-04T10:20:00Z",
+  "track_b": {
+    "pr": "1803",
+    "merged": true,
+    "mergedAt": "2026-08-04T13:33:38Z",
+    "url": "https://github.com/organvm/limen/pull/1803",
+    "headRefOid": "4a342a504278ad6dbb96dc6e5ddb4a38ef43151f",
+    "mergeCommit": "c1b3bed08047dc8f522e91acbf3c5ff80e244d06",
+    "checks_passed": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "checks_total": 12,
+    "pr_json": {
+      "headRefOid": "4a342a504278ad6dbb96dc6e5ddb4a38ef43151f",
+      "mergeCommit": {
+        "oid": "c1b3bed08047dc8f522e91acbf3c5ff80e244d06"
+      },
+      "mergeStateStatus": "UNKNOWN",
+      "mergedAt": "2026-08-04T13:33:38Z",
+      "number": 1803,
+      "state": "MERGED",
+      "url": "https://github.com/organvm/limen/pull/1803"
+    }
+  },
+  "track_b_assumption_362": {
+    "pr": "362",
+    "merged": true,
+    "mergedAt": "2026-06-27T02:36:17Z",
+    "url": "https://github.com/organvm/limen/pull/362"
+  },
+  "track_c": {
+    "status": "external_vendor_wait",
+    "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline, then normalized v2 tcc-identity-audit predicates must remain green.",
+    "update_attempted": true,
+    "update_command": "domus-agent-host run -- claude update",
+    "baseline_strict_audit_snapshot": "docs/receipts/tcc-track-c-1703/2026-08-04-baseline.json",
+    "post_strict_audit_snapshot": "docs/receipts/tcc-track-c-1703/2026-08-04-post.json",
+    "closeout_owner": "scripts/tcc-track-c-closeout.py",
+    "doctrine": {
+      "formula": "track_c_pass = non_noop_update AND normalized_inventory_green",
+      "non_noop_means": "claude --version advances past cutover baseline",
+      "noop_is_not_completion": true
+    },
+    "normalized_inventory_diff": {
+      "met": true,
+      "failure_classification": {
+        "status": "external_vendor_wait",
+        "reason": "noop_update_proof_missing",
+        "classes": [
+          "noop_update_proof_missing"
+        ]
+      },
+      "stable_host_row_unchanged": true,
+      "managed_path_client_unchanged": true,
+      "versioned_leak_drift_allowed": true,
+      "unexpected_drift": [],
+      "notes": [
+        "strict baseline/post inventories are unchanged",
+        "host update attempt was a no-op; no non-noop deployment occurred",
+        "explicit failure class required: no-op update is wait evidence, never completion"
+      ]
+    },
+    "met": false,
+    "met_reason": "Blocked cleanly: domus-agent-host update was a no-op (Claude Code is up to date 2.1.220); strict diff is clean but non-noop proof is still missing. Owner: python3 scripts/tcc-track-c-closeout.py --beat"
+  },
+  "tcc": {
+    "baseline_sha256": "0a3c1ad9ba916d25b1d4c8574a6f8b25caf2c63e1c7a7e6db220b954b6123f40",
+    "post_sha256": "0a3c1ad9ba916d25b1d4c8574a6f8b25caf2c63e1c7a7e6db220b954b6123f40",
+    "baseline_summary": {
+      "legacy_stale": 22,
+      "stable_host": 1,
+      "unrelated": 265,
+      "versioned_leak": 3
+    },
+    "post_summary": {
+      "legacy_stale": 22,
+      "stable_host": 1,
+      "unrelated": 265,
+      "versioned_leak": 3
+    },
+    "summary_unchanged": true,
+    "status_unchanged": true,
+    "stable_host_row_unchanged": true,
+    "clients_identical": true
+  }
+}

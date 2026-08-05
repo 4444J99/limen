@@ -150,6 +150,12 @@ Acceptance is simultaneous:
 5. When Claude's vendor updater offers an update, `claude --version` advances
    while the normalized TCC inventory remains unchanged.
 
+`non_noop` means the version advances past the cutover baseline — not that
+`claude update` exited zero. A no-op "up to date" result is wait evidence,
+never completion. Executable owner:
+`python3 scripts/tcc-track-c-closeout.py --beat` (formula:
+`track_c_pass = non_noop_update AND normalized_inventory_green`).
+
 The owning issue remains open until the real vendor-update predicate in item 5
 passes. A passing test fixture, a toggled-off historical row, or an audit that
 stops counting disabled rows is not completion evidence.

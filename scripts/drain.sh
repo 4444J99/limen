@@ -66,6 +66,7 @@ print(
             "jules_land_enabled": enabled("LIMEN_JULES_LAND", "1"),
             "merge_drain_enabled": enabled("LIMEN_MERGE_DRAIN", "1"),
             "self_heal_enabled": enabled("LIMEN_SELF_HEAL", "1"),
+            "heal_dispatch_enabled": enabled("LIMEN_HEAL_DISPATCH", "1"),
             "converge_enabled": enabled("LIMEN_CONVERGE", "0"),
             "reclaim_enabled": enabled("LIMEN_RECLAIM", "1"),
             "reclaim_apply_enabled": enabled("LIMEN_RECLAIM_APPLY", "1"),
@@ -117,6 +118,22 @@ if [ "${LIMEN_SELF_HEAL:-1}" = "1" ] && [ "${LIMEN_QUEUE_LOCK_HELD:-0}" != "1" ]
       --scan "${LIMEN_HEAL_SCAN:-30}" --limit "${LIMEN_HEAL_LIMIT:-10}" 2>&1 | tail -3 || true
 elif [ "${LIMEN_SELF_HEAL:-1}" = "1" ]; then
   echo "[drain] self-heal skipped under queue lock; heartbeat runs it after release"
+fi
+
+# HEAL-DISPATCH — apply verify-dispatch.py's own findings (PR_MERGED/PR_CLOSED/DISPATCHED_NO_PR
+# status repair, CHRONIC→parked, chronic needs_human→failed_blocked re-homing). This is the
+# missing owner conductor-report.yml's "Preview dispatch heal" step exposed: that step only ever
+# runs heal-dispatch.py in DRY-RUN, so the drift it reports every 6 hours (CHRONIC: 10) was never
+# actually applied by anything — a report describing work nobody performs. Same lock discipline
+# as self-heal above (heal-dispatch.py acquires the shared queue-lock itself; skip under
+# LIMEN_QUEUE_LOCK_HELD so a beat already holding it never re-enters). ON by default — this is
+# what gives the drift a real owner; set LIMEN_HEAL_DISPATCH=0 to disable, or run
+# heal-dispatch.py with no --apply to preview.
+if [ "${LIMEN_HEAL_DISPATCH:-1}" = "1" ] && [ "${LIMEN_QUEUE_LOCK_HELD:-0}" != "1" ]; then
+  echo "[drain] applying dispatch-verify findings (PR_MERGED/PR_CLOSED/DISPATCHED_NO_PR, CHRONIC→parked)…"
+  PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/heal-dispatch.py" --apply 2>&1 | tail -3 || true
+elif [ "${LIMEN_HEAL_DISPATCH:-1}" = "1" ]; then
+  echo "[drain] heal-dispatch skipped under queue lock; heartbeat runs it after release"
 fi
 
 # CONVERGE — the alchemical rung that completes the self-* ladder. Finds "multiverses" (one idea a

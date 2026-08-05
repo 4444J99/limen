@@ -63,11 +63,21 @@ def test_only_an_anchored_claim_counts(body, expected):
 def test_the_trailer_is_read_from_the_body_not_gits_trailer_parser():
     """Locks in WHY this is a regex over %B and not `%(trailers:key=Settles)`.
 
-    GitHub's squash-merge appends its own `Co-authored-by:` paragraph, which pushes an
+    GitHub's squash-merge USUALLY appends its own `Co-authored-by:` paragraph, which pushes an
     author-written trailer out of the final paragraph — git's trailer parser then returns nothing.
-    Measured on this repo: 9 of 9 commits carrying a `Claude-Session:` line yield EMPTY from
-    `%(trailers:key=Claude-Session,valueonly)`. A body-regex survives that; the trailer parser does
-    not. If this ever starts failing, git's parser has changed and the choice can be revisited.
+    A body-regex survives that; the trailer parser does not.
+
+    This originally asserted the parser returns empty for *every* such commit ("9 of 9 measured").
+    That was stronger than the rationale needs, and it was falsified the first time a squash landed
+    WITHOUT an appended co-author paragraph (2ce472e2, #1817), leaving `Claude-Session:` in the
+    final paragraph where git duly parsed it. The test then failed on `origin/main` itself and
+    blocked every open PR in the repo — a red trunk caused by ordinary GitHub variance, not by any
+    change to git.
+
+    The property that actually justifies SETTLES_RE is UNRELIABILITY, not uniform failure: whether
+    the parser sees an author trailer depends on what GitHub chose to append, so it cannot be
+    depended on either way. One commit where it returns empty proves that. Asserting it never sees
+    the trailer is a claim about GitHub's merge behavior that this repo does not control.
     """
     out = subprocess.run(
         [
@@ -89,10 +99,18 @@ def test_the_trailer_is_read_from_the_body_not_gits_trailer_parser():
     records = [r for r in out.split("\x01") if r.count("\x00") >= 2]
     if not records:
         pytest.skip("no Claude-Session commits reachable here")
+    unseen_by_parser = 0
     for record in records:
         _sha, parsed, body = record.split("\x00", 2)
+        # The body always carries the line — which is exactly why a %B regex is dependable.
         assert "Claude-Session:" in body
-        assert parsed.strip() == "", "git's trailer parser now sees it — re-evaluate SETTLES_RE"
+        if not parsed.strip():
+            unseen_by_parser += 1
+
+    assert unseen_by_parser, (
+        "git's trailer parser saw the trailer on EVERY sampled commit — if that is now reliable, "
+        "re-evaluate whether SETTLES_RE still needs to be a body regex"
+    )
 
 
 # ── bookkeeping cannot settle a stream ─────────────────────────────────────────────

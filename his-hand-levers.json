@@ -243,20 +243,28 @@
     },
     {
       "id": "L-DOMUS-AGENT-HOST-TCC",
-      "label": "LOCAL CUTOVER COMPLETE 2026-08-03, ACCEPTANCE STILL OPEN: all managed GUI/MCP ingresses now enter through the fixed Domus host; App Management has one enabled host row, zero path rows, and an unchanged unrelated bundle-grant map. The hosted disposable update/delete and cold-start Claude Desktop matrices passed. Do not discharge this lever yet: the real vendor-update predicate remains red because 2.1.220 was already current and no version advance was available.",
+      "label": "DISCHARGED: real Claude Code vendor update advanced to 2.1.222 through the fixed Domus host; normalized TCC inventory remained green (receipt closeout-latest.json).",
       "owner": "engineering",
       "cost": "local System Settings transaction spent with no authentication prompt; no remaining operator action while waiting for a real vendor version advance",
       "unlocks": "foreground agents, background PTYs/spares, MCP descendants, and Python control-plane commands retain protected access across executable version rotation with no repeated privacy prompts",
       "source_task": "Auto-Updates Without TCC Permission Sprawl · docs/architecture/tcc-stable-agent-host.md",
+      "discharged": {
+        "at": "2026-08-05T14:14:23Z",
+        "by": "scripts/tcc-track-c-closeout.py --finalize",
+        "issue": 1703,
+        "receipt": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+        "version": "2.1.222"
+      },
       "gate": "external vendor availability: a future Claude Code update must advance beyond the cutover baseline 2.1.220, after which the normalized TCC inventory must remain unchanged",
       "steps": [
         "Completed: route all ten live managed GUI/MCP ingresses through `domus-agent-host ensure --` without replacing the native host",
         "Completed: add and enable DomusAgentHost.app and remove exactly eight path rows through the pane's per-row minus control; no bundle row changed",
         "Completed: prove one enabled host row, zero App Management path rows, zero active leaks, zero unhosted ingresses, and an unchanged twelve-entry unrelated bundle-grant map",
         "Completed: run the hosted update/delete fixture through renamed uvx, Node, Python, and portable Ruby paths and cold-start Claude Desktop without a new identity",
-        "Pending external predicate: when a version newer than 2.1.220 is offered, update through the host and require the normalized inventory to remain green"
+        "Completed: freeze Track C automation — `scripts/tcc-track-c-closeout.py` owns probe/run/beat/finalize; beat sensor `tcc-track-c` waits without re-litigating the gate; no-op update is wait evidence never completion",
+        "Pending external predicate: when a version newer than 2.1.220 is offered, `python3 scripts/tcc-track-c-closeout.py --beat` captures non-noop proof + green inventory, then `--finalize --write-lever` discharges this lever and closes #1703"
       ],
-      "status": "open",
+      "status": "discharged",
       "issue": 1703
     },
     {

@@ -242,6 +242,30 @@ sensors:
           - {path: scripts/gitvs.py, normalization: raw}
           - {path: logs/omega-owner-receipts/sensor.github.actions-budget.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
+  plans-lifecycle:
+    section: "heartbeat"
+    title: "plans-lifecycle — the drain docs/plans + per-agent scratch corpora never had: census -> stale report -> bounded archival (dry until armed)"
+    gate: LIMEN_PLANS_LIFECYCLE
+    default: "1"
+    source: [heartbeat]
+    owner: lifecycle
+    cadence:
+      env: LIMEN_BEAT_PLANS_LIFECYCLE
+      default: 24
+    timeout:
+      env: LIMEN_PLANS_LIFECYCLE_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/plans-lifecycle-audit.py"
+        args_when:
+          - env: LIMEN_PLANS_LIFECYCLE_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "plans-lifecycle audit skipped or exceeded its bound"
+
   seo-drift:
     section: "heartbeat"
     title: "SEO drift — public-portal surface: audit sweep -> metadata drift check -> bounded task filing (dry until armed)"
@@ -750,6 +774,37 @@ sensors:
         semantic_inputs:
           - {path: scripts/disk-capacity.py, normalization: raw}
           - {path: logs/omega-owner-receipts/sensor.disk.capacity.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  tcc-track-c:
+    section: "0g8c"
+    title: "Track C vendor-update proof — real Claude Code advance past cutover baseline under fixed Domus host, or clean external wait"
+    # Owns the finite external vendor wait for #1703 / L-DOMUS-AGENT-HOST-TCC.
+    # Exit 0 means external_vendor_wait (still at 2.1.220, inventory not regressing)
+    # OR track_c.met. Exit 1 means inventory/host regression after a real advance path.
+    # Never treats no-op "up to date" as completion. Finalize/discharge is a separate
+    # --finalize --write-lever step after a met receipt exists.
+    gate: LIMEN_TCC_TRACK_C
+    default: "1"
+    source: [heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_TCC_TRACK_C
+      default: 8
+    timeout:
+      env: LIMEN_TCC_TRACK_C_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/tcc-track-c-closeout.py --beat --json"
+        severity: advisory
+        escalation: "Track C closeout blocked (inventory regression or host failure) — read logs/tcc-track-c-status.json; never pin/suppress the Claude updater or discharge L-DOMUS-AGENT-HOST-TCC on a no-op update"
+    omega_eligible:
+      - label: "Track C vendor-update wait-or-met"
+        rung_id: sensor.tcc.track-c
+        tier: live
+        command: "python3 scripts/tcc-track-c-closeout.py --probe --json"
+        semantic_inputs:
+          - {path: scripts/tcc-track-c-closeout.py, normalization: raw}
+          - {path: logs/tcc-track-c-status.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 86400}
 
   dialogs-silenced:
     section: "0g8b"
@@ -1369,6 +1424,29 @@ sensors:
             armed_valve_type: deliverable
         severity: advisory
         escalation: "Dispatchable Jules supply is below floor and minting is unarmed — arm LIMEN_JULES_SUPPLY_APPLY=1 or extend docs/jules-supply-templates.yaml"
+
+  funnel-integrity:
+    section: 0z3
+    title: "application funnel honesty — the funnel claims nothing it cannot evidence"
+    gate: LIMEN_FUNNEL_INTEGRITY
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    # On 2026-08-04/05 the funnel recorded SIMULATED job applications as provider-CONFIRMED ones
+    # against six real employers, and separately drove an agent through a 27h32m retry loop whose
+    # exit condition was unreachable by construction. NEITHER announced itself: every stage exited
+    # 0, and the fabricated receipts were schema-valid DeliveryReceiptV1 rows — the only tell was
+    # that the "evidence" was the entry's own id and the provider response said "simulated".
+    #
+    # A defect that survives schema validation and exits 0 is not caught by the next reader being
+    # careful. The predicate asserts it every beat instead. Read-only and idempotent; the root
+    # cause it watches hardest is a live application-pipeline checkout parked behind main, which is
+    # where every fabricated record in that incident came from.
+    # Full record: docs/plans/2026-08-05-application-funnel-healing.md
+    steps:
+      - command: "bash scripts/funnel-integrity.sh"
+        severity: advisory
+        escalation: "Application funnel integrity FAILED — a confirmation without provider evidence, corrupt funnel state, or an application-pipeline checkout parked off main (the 2026-08-05 fabrication cause). Run `bash scripts/funnel-integrity.sh` bare for the failing invariant"
 
   decorum:
     section: "heartbeat"

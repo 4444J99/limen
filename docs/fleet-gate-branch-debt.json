@@ -1,0 +1,22 @@
+{
+  "schema": "limen.fleet_gate_branch_debt.v1",
+  "description": "Durable owner record for the 942 origin/heal/fleet-gate-* remote branches from the 2026-07-03 heal loop. User directive 2026-08-05: no unique work or plans deleted without their due in life \u2014 these branches hold unique auto-fix content and must be dispositioned (folded into the params panel or recorded as abandoned), never silently reaped.",
+  "generated_at": "2026-08-05T13:45:00Z",
+  "owner_repo": "4444J99/limen",
+  "surface": "institutio/governance/undeclared-params-baseline.txt",
+  "class": "unfinished-intention-kept",
+  "count": 942,
+  "branch_list_file": "logs/reap-remote-branches-state.json (livework) and docs/fleet-gate-branch-debt.txt",
+  "disposition_rule": "for each branch: fold its baseline delta into parameters.yaml via scripts/check-params.py --update, or record an explicit abandoned-intention entry in docs/branch-hygiene.md; only then may the remote ref be reaped loss-free",
+  "disposition_status": "dispositioned",
+  "disposition": {
+    "campaign": "organvm/limen#1818",
+    "dispositioned_at": "2026-08-05T17:21:01Z",
+    "uniform_disposition": "abandoned-superseded",
+    "rationale": "Each of the 942 heal/fleet-gate-* branches is a single non-equivalent 2026-07-03 heal-loop auto-fix commit. Main fleet-gate is green, so the red target no longer reproduces; every tip is preserved as ancestry of the archive ref below, so no unique content is lost when the live refs are reaped.",
+    "archive_ref": "refs/archive/fleet-gate-20260703",
+    "archive_sha": "43951a2dabb581c658474be672bf09264af0224f",
+    "per_branch_ledger": "docs/fleet-gate-disposition-20260703.jsonl",
+    "reap_rule": "after the archive ref is verified on origin, delete refs/heads/heal/fleet-gate-*; each deletion logged to logs/fleet-gate-reap-20260703.jsonl"
+  }
+}

@@ -2409,6 +2409,12 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  LIMEN_HEAL_DISPATCH:
+    default: 1                  # default-ON: apply verify-dispatch.py's findings each HEAL beat
+    env: LIMEN_HEAL_DISPATCH
+    self_update: none
+    owner: heal
+    note: "Toggle for scripts/heal-dispatch.py --apply wired into the HEAL beat. 1=on. Applies verify-dispatch.py's own findings (PR_MERGED/PR_CLOSED/DISPATCHED_NO_PR status repair, CHRONIC reopened-tasks→parked, chronic needs_human→failed_blocked re-homing) — the owner conductor-report.yml's dry-run-only preview step never had, so its reported drift was never actually applied by anything. Self-acquires the queue-lock (skips cleanly when the daemon holds it), only flips status + a heal log entry, never deletes/pushes/merges/dispatches. 0=off."
   # --- LANE FITNESS (dispatch proactive reroute): per-(agent, class) conversion evidence ---
   LIMEN_FITNESS_MIN_N:
     default: 5                  # minimum dispatch_log attempts before a pair is judged fit/unfit
@@ -2659,6 +2665,18 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Beat gate for the jules-supply sensor (sensors.yaml jules-supply): dispatchable-supply-vs-floor gauge; the armed valve LIMEN_JULES_SUPPLY_APPLY owns minting."
+  LIMEN_FUNNEL_INTEGRITY:
+    default: "1"
+    env: LIMEN_FUNNEL_INTEGRITY
+    self_update: none
+    owner: mail
+    note: "Beat gate for the funnel-integrity sensor (sensors.yaml funnel-integrity): asserts the application funnel claims no confirmation it cannot evidence — no simulated or self-referential confirmation in the delivery ledger, no corrupt funnel state read as a true zero, and no application-pipeline checkout parked off main. Read-only and idempotent."
+  LIMEN_PIPELINE_PY:
+    default: ""
+    env: LIMEN_PIPELINE_PY
+    self_update: none
+    owner: mail
+    note: "Optional interpreter override for funnel-integrity.sh's pipeline-entry audit, which needs the application-pipeline venv's pyyaml. Empty selects that checkout's own .venv/bin/python; an unusable interpreter SKIPs the invariant rather than failing it, so a missing venv never reds the beat."
   LIMEN_JULES_SUPPLY_APPLY:
     default: "1"
     env: LIMEN_JULES_SUPPLY_APPLY
@@ -3425,6 +3443,49 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Armed valve for generate-seo-backlog.py task filing on the beat: 0 (default) prints the plan; 1 appends bounded SEO-* tasks to the board (floor/cap/dedup guarded). Arming order: this first (tasks flow), then L-SEO-METADATA (metadata writes), then the publish wave."
+  # --- PLANS-LIFECYCLE: the drain docs/plans + per-agent scratch corpora never had ---
+  LIMEN_PLANS_LIFECYCLE:
+    default: "1"
+    env: LIMEN_PLANS_LIFECYCLE
+    self_update: none
+    owner: lifecycle
+    note: "Master on/off for the plans-lifecycle beat sensor (scripts/plans-lifecycle-audit.py). Read-only census + report; the archival --apply step is its own separate valve (LIMEN_PLANS_LIFECYCLE_APPLY). 0 disables the pass."
+  LIMEN_BEAT_PLANS_LIFECYCLE:
+    default: 24
+    env: LIMEN_BEAT_PLANS_LIFECYCLE
+    self_update: none
+    owner: lifecycle
+    note: "Cadence (every N beats) of the plans-lifecycle sensor. Plans move on human timescales; a slow cadence is honest."
+  LIMEN_PLANS_LIFECYCLE_TIMEOUT:
+    default: 60
+    env: LIMEN_PLANS_LIFECYCLE_TIMEOUT
+    self_update: none
+    owner: lifecycle
+    note: "Per-run timeout (seconds) for the plans-lifecycle sensor; the runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_PLANS_LIFECYCLE_APPLY:
+    default: "0"
+    env: LIMEN_PLANS_LIFECYCLE_APPLY
+    self_update: none
+    owner: lifecycle
+    note: "Armed valve for plans-lifecycle-audit.py --apply on the beat: 0 (default) reports stale candidates only; 1 archives (never deletes — moves into a same-directory archive/ subfolder) stale entries in the UNTRACKED per-agent scratch corpora only (~/.claude/plans, ~/.codex/plans). docs/plans/ (git-tracked) is never touched by --apply regardless of this valve — relocating a tracked plan needs a normal branch/PR."
+  LIMEN_PLANS_STALE_DAYS:
+    default: 30
+    env: LIMEN_PLANS_STALE_DAYS
+    self_update: none
+    owner: lifecycle
+    note: "Age threshold (days, by mtime) past which plans-lifecycle-audit.py flags a plan document as stale. A plan is a working document, not a beat-rewritten receipt, so a human timescale is the honest default."
+  LIMEN_CLAUDE_PLANS_DIR:
+    default: "~/.claude/plans"
+    env: LIMEN_CLAUDE_PLANS_DIR
+    self_update: none
+    owner: lifecycle
+    note: "Override path for the Claude Code per-agent plans scratch directory plans-lifecycle-audit.py census/archives. Test-only override in practice; the shipped default is correct for the live host."
+  LIMEN_CODEX_PLANS_DIR:
+    default: "~/.codex/plans"
+    env: LIMEN_CODEX_PLANS_DIR
+    self_update: none
+    owner: lifecycle
+    note: "Override path for the Codex per-agent plans scratch directory plans-lifecycle-audit.py census/archives. Test-only override in practice; the shipped default is correct for the live host."
   LIMEN_SEO_FLOOR:
     default: 6
     env: LIMEN_SEO_FLOOR
@@ -3995,6 +4056,26 @@ parameters:
     self_update: none
     owner: tabularius
     note: "The effector for the recurring Gatekeeper 'claude is an app downloaded from the Internet' dialog (scripts/heal-claude-cask.sh, sensed by dialogs-silenced.sh class 4, beat-wired on the heartbeat hygiene cadence). A duplicate Homebrew *cask* install of claude-code is re-quarantined on every brew upgrade (casks stamp com.apple.quarantine), creating an independent rotating Gatekeeper principal beside the sanctioned native updater-managed install. Dry-run by default. When 1, the beat runs 'brew uninstall --cask claude-code' ONLY when the cask is present and verifies the native ~/.local/bin/claude (the one sanctioned install) survives; it never touches the native install. macOS-only; fails OPEN off-darwin or without brew. Arm once in ~/.limen.env. Set 0 to silence."
+
+  # --- Track C vendor-update closeout sensor (0g8c): wait cleanly or meet on non-noop ---
+  LIMEN_TCC_TRACK_C:
+    default: "1"
+    env: LIMEN_TCC_TRACK_C
+    self_update: none
+    owner: tabularius
+    note: "Gate for the tcc-track-c sensor (sensors.yaml 0g8c). When 1, each cadence tick runs scripts/tcc-track-c-closeout.py --beat. Exit 0 is external_vendor_wait (Claude still at cutover baseline 2.1.220) OR track_c.met after a real version advance with green normalized inventory. Exit 1 is inventory/host regression. No-op 'up to date' is never completion. Set 0 to silence."
+  LIMEN_BEAT_TCC_TRACK_C:
+    default: 8
+    env: LIMEN_BEAT_TCC_TRACK_C
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the tcc-track-c sensor (sensors.yaml 0g8c). 8 matches the hygiene cadence used by dialogs-silenced so vendor-offer detection rides the same beat family without monopolizing the hot path."
+  LIMEN_TCC_TRACK_C_TIMEOUT:
+    default: 300
+    env: LIMEN_TCC_TRACK_C_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for Track C closeout beat step: hosted claude --version, optional claude update, and two strict tcc-identity-audit passes. 300 covers a real vendor download without stalling the beat forever; the runner kills the command group on overrun and continues fail-open."
 
   # --- dialogs-silenced sensor (0g8b): the agent-curable dialog estate, self-healed + verified on the beat ---
   LIMEN_DIALOGS_SILENCED:

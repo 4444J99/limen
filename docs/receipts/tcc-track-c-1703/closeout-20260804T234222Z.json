@@ -1,0 +1,157 @@
+{
+  "architecture": "docs/architecture/tcc-stable-agent-host.md#live-acceptance",
+  "baseline_audit": {
+    "exit_code": 0,
+    "normalized": {
+      "active_leaks": 0,
+      "automatic_updates_enabled": true,
+      "failures": [],
+      "new_managed_identities": 0,
+      "ok": true,
+      "schema": "limen.tcc_identity_audit.v2",
+      "stable_host_app_management_grants": 1,
+      "stable_host_cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
+      "stable_host_ok": true,
+      "status": "ok",
+      "summary": {
+        "active_leaks": 0,
+        "baseline_managed": 28,
+        "managed_unbaselined": 0,
+        "new_managed": 0,
+        "stable_host": 1,
+        "unhosted_configured_ingresses": 0,
+        "unrelated": 268,
+        "visible_app_management_path_rows": 0
+      },
+      "unhosted_configured_ingresses": 0,
+      "unrelated_grants_preserved": true,
+      "visible_app_management_path_rows": 0
+    },
+    "ok": true
+  },
+  "doctrine": {
+    "fixture_only_is_not_completion": true,
+    "formula": "track_c_pass = non_noop_update AND normalized_inventory_green",
+    "non_noop_means": "claude --version advances past cutover baseline",
+    "noop_is_not_completion": true
+  },
+  "issue": 1703,
+  "lever_id": "L-DOMUS-AGENT-HOST-TCC",
+  "mode": "beat",
+  "next_commands": [
+    "python3 scripts/tcc-track-c-closeout.py --finalize --write-lever",
+    "gh issue close 1703 --repo organvm/limen --comment 'Track C met: vendor version advanced; normalized TCC inventory green. Receipt: docs/receipts/tcc-track-c-1703/'",
+    "python3 scripts/tcc-identity-audit.py --json --strict"
+  ],
+  "normalized_inventory": {
+    "active_leaks": 0,
+    "automatic_updates_enabled": true,
+    "failures": [],
+    "new_managed_identities": 0,
+    "ok": true,
+    "schema": "limen.tcc_identity_audit.v2",
+    "stable_host_app_management_grants": 1,
+    "stable_host_cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
+    "stable_host_ok": true,
+    "status": "ok",
+    "summary": {
+      "active_leaks": 0,
+      "baseline_managed": 28,
+      "managed_unbaselined": 0,
+      "new_managed": 0,
+      "stable_host": 1,
+      "unhosted_configured_ingresses": 0,
+      "unrelated": 268,
+      "visible_app_management_path_rows": 0
+    },
+    "unhosted_configured_ingresses": 0,
+    "unrelated_grants_preserved": true,
+    "visible_app_management_path_rows": 0
+  },
+  "observed_at": "2026-08-04T23:42:22Z",
+  "paths": {
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260804T234222Z.json",
+    "status": "logs/tcc-track-c-status.json"
+  },
+  "post_audit": {
+    "exit_code": 0,
+    "normalized": {
+      "active_leaks": 0,
+      "automatic_updates_enabled": true,
+      "failures": [],
+      "new_managed_identities": 0,
+      "ok": true,
+      "schema": "limen.tcc_identity_audit.v2",
+      "stable_host_app_management_grants": 1,
+      "stable_host_cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
+      "stable_host_ok": true,
+      "status": "ok",
+      "summary": {
+        "active_leaks": 0,
+        "baseline_managed": 28,
+        "managed_unbaselined": 0,
+        "new_managed": 0,
+        "stable_host": 1,
+        "unhosted_configured_ingresses": 0,
+        "unrelated": 268,
+        "visible_app_management_path_rows": 0
+      },
+      "unhosted_configured_ingresses": 0,
+      "unrelated_grants_preserved": true,
+      "visible_app_management_path_rows": 0
+    },
+    "ok": true
+  },
+  "schema": "limen.tcc_track_c_closeout.v1",
+  "track_c": {
+    "cutover_baseline_version": "2.1.220",
+    "failure_classes": [],
+    "met": true,
+    "met_reason": "Track C met: Claude Code advanced beyond 2.1.220 to 2.1.222 and normalized inventory is green.",
+    "non_noop": true,
+    "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline, then normalized v2 tcc-identity-audit predicates must remain green.",
+    "status": "met",
+    "update_attempted": true,
+    "version_after": "2.1.222",
+    "version_before": "2.1.220"
+  },
+  "update": {
+    "command": [
+      "domus-agent-host",
+      "run",
+      "--",
+      "claude",
+      "update"
+    ],
+    "exit_code": 0,
+    "noop_text_signal": false,
+    "ok": true,
+    "output": "Current version: 2.1.220\nChecking for updates to latest version...\nUpdating to 2.1.222...\nSuccessfully updated from 2.1.220 to version 2.1.222"
+  },
+  "version_probe_after": {
+    "command": [
+      "domus-agent-host",
+      "run",
+      "--",
+      "claude",
+      "--version"
+    ],
+    "exit_code": 0,
+    "ok": true,
+    "output": "2.1.222 (Claude Code)",
+    "version": "2.1.222"
+  },
+  "version_probe_before": {
+    "command": [
+      "domus-agent-host",
+      "run",
+      "--",
+      "claude",
+      "--version"
+    ],
+    "exit_code": 0,
+    "ok": true,
+    "output": "2.1.220 (Claude Code)",
+    "version": "2.1.220"
+  }
+}

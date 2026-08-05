@@ -106,6 +106,18 @@
       "tier": "det"
     },
     {
+      "id": "core.autonomy-acting",
+      "label": "autonomy-acting (no stuck maintenance blocker)",
+      "predicate": "python3 scripts/autonomy-governor.py acting",
+      "semantic_inputs": [
+        {
+          "normalization": "raw",
+          "path": "logs/autonomy-policy.json"
+        }
+      ],
+      "tier": "det"
+    },
+    {
       "id": "core.no-tasks-on-me",
       "label": "no-tasks-on-me (owed work homed)",
       "predicate": "bash scripts/no-tasks-on-me.sh",
