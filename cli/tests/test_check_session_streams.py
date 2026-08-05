@@ -12,6 +12,7 @@ lie had simply relocated into a commit message.
 """
 
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -60,14 +61,26 @@ def test_only_an_anchored_claim_counts(body, expected):
     assert M.SETTLES_RE.findall(body) == expected
 
 
+_CLAUDE_SESSION_RE = re.compile(r"^Claude-Session:[ \t]*(\S.*)$", re.MULTILINE)
+
+
 def test_the_trailer_is_read_from_the_body_not_gits_trailer_parser():
     """Locks in WHY this is a regex over %B and not `%(trailers:key=Settles)`.
 
     GitHub's squash-merge appends its own `Co-authored-by:` paragraph, which pushes an
-    author-written trailer out of the final paragraph — git's trailer parser then returns nothing.
-    Measured on this repo: 9 of 9 commits carrying a `Claude-Session:` line yield EMPTY from
-    `%(trailers:key=Claude-Session,valueonly)`. A body-regex survives that; the trailer parser does
-    not. If this ever starts failing, git's parser has changed and the choice can be revisited.
+    author-written trailer out of the final paragraph — git's trailer parser then returns nothing
+    for that commit. A body-regex survives that; the trailer parser does not.
+
+    Not every commit gets reordered this way: one that writes `Claude-Session:` as the message's
+    own literal last line (nothing after it, no trailing Co-authored-by paragraph) keeps it in
+    git's own final-paragraph trailer block, so git's parser finds it too — for THAT commit. That
+    is a fact about one commit's shape, not a disproof of the premise. The premise this test
+    actually locks in is narrower and still true: the body-regex must find the value in EVERY
+    sampled commit (universal), while git's trailer parser only needs to fail on AT LEAST ONE
+    (existence) to prove the failure mode this design defends against is real. If git's parser
+    ever finds it on every sampled commit — meaning squash-merge stopped reordering trailers
+    entirely — the whole justification for reading Settles via a body-regex is gone and
+    SETTLES_RE should be revisited.
     """
     out = subprocess.run(
         [
@@ -89,10 +102,18 @@ def test_the_trailer_is_read_from_the_body_not_gits_trailer_parser():
     records = [r for r in out.split("\x01") if r.count("\x00") >= 2]
     if not records:
         pytest.skip("no Claude-Session commits reachable here")
+    trailer_parser_missed = 0
     for record in records:
         _sha, parsed, body = record.split("\x00", 2)
         assert "Claude-Session:" in body
-        assert parsed.strip() == "", "git's trailer parser now sees it — re-evaluate SETTLES_RE"
+        assert _CLAUDE_SESSION_RE.search(body), "body-regex must find it even when git's trailer parser doesn't"
+        if parsed.strip() == "":
+            trailer_parser_missed += 1
+    assert trailer_parser_missed > 0, (
+        "git's trailer parser found the value on EVERY sampled commit — squash-merge no longer "
+        "reorders trailers this way, and the whole justification for SETTLES_RE reading Settles "
+        "via a body-regex instead of git's own trailer parser needs to be revisited"
+    )
 
 
 # ── bookkeeping cannot settle a stream ─────────────────────────────────────────────
