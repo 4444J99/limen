@@ -9,7 +9,7 @@
   },
   "issue": 1703,
   "lever_id": "L-DOMUS-AGENT-HOST-TCC",
-  "mode": "beat",
+  "mode": "run",
   "next_commands": [
     "python3 scripts/tcc-track-c-closeout.py --finalize --write-lever",
     "gh issue close 1703 --repo organvm/limen --comment 'Track C met: vendor version advanced; normalized TCC inventory green. Receipt: docs/receipts/tcc-track-c-1703/'",
@@ -40,9 +40,9 @@
     "unrelated_grants_preserved": true,
     "visible_app_management_path_rows": 0
   },
-  "observed_at": "2026-08-05T13:37:18Z",
+  "observed_at": "2026-08-04T23:42:20Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T133718Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260804T234220Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": {

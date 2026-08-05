@@ -11,21 +11,23 @@
   "lever_id": "L-DOMUS-AGENT-HOST-TCC",
   "mode": "beat",
   "next_commands": [
-    "python3 scripts/tcc-track-c-closeout.py --finalize --write-lever",
-    "gh issue close 1703 --repo organvm/limen --comment 'Track C met: vendor version advanced; normalized TCC inventory green. Receipt: docs/receipts/tcc-track-c-1703/'",
-    "python3 scripts/tcc-identity-audit.py --json --strict"
+    "python3 scripts/tcc-track-c-closeout.py --beat",
+    "python3 scripts/tcc-track-c-closeout.py --run",
+    "# wait until Claude Code > 2.1.220; do not discharge L-DOMUS-AGENT-HOST-TCC on no-op"
   ],
   "normalized_inventory": {
     "active_leaks": 0,
     "automatic_updates_enabled": true,
-    "failures": [],
+    "failures": [
+      "claude_helper_registration_unreadable"
+    ],
     "new_managed_identities": 0,
-    "ok": true,
+    "ok": false,
     "schema": "limen.tcc_identity_audit.v2",
     "stable_host_app_management_grants": 1,
     "stable_host_cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
     "stable_host_ok": true,
-    "status": "ok",
+    "status": "blocked",
     "summary": {
       "active_leaks": 0,
       "baseline_managed": 28,
@@ -40,24 +42,26 @@
     "unrelated_grants_preserved": true,
     "visible_app_management_path_rows": 0
   },
-  "observed_at": "2026-08-05T13:37:18Z",
+  "observed_at": "2026-08-05T05:18:10Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T133718Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T051810Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": {
-    "exit_code": 0,
+    "exit_code": 1,
     "normalized": {
       "active_leaks": 0,
       "automatic_updates_enabled": true,
-      "failures": [],
+      "failures": [
+        "claude_helper_registration_unreadable"
+      ],
       "new_managed_identities": 0,
-      "ok": true,
+      "ok": false,
       "schema": "limen.tcc_identity_audit.v2",
       "stable_host_app_management_grants": 1,
       "stable_host_cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
       "stable_host_ok": true,
-      "status": "ok",
+      "status": "blocked",
       "summary": {
         "active_leaks": 0,
         "baseline_managed": 28,
@@ -72,17 +76,19 @@
       "unrelated_grants_preserved": true,
       "visible_app_management_path_rows": 0
     },
-    "ok": true
+    "ok": false
   },
   "schema": "limen.tcc_track_c_closeout.v1",
   "track_c": {
     "cutover_baseline_version": "2.1.220",
-    "failure_classes": [],
-    "met": true,
-    "met_reason": "Track C met: Claude Code advanced beyond 2.1.220 to 2.1.222 and normalized inventory is green.",
+    "failure_classes": [
+      "strict_audit_not_ok"
+    ],
+    "met": false,
+    "met_reason": "Track C blocked: strict_audit_not_ok",
     "non_noop": true,
     "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline, then normalized v2 tcc-identity-audit predicates must remain green.",
-    "status": "met",
+    "status": "blocked",
     "update_attempted": false,
     "version_after": "2.1.222",
     "version_before": "2.1.222"

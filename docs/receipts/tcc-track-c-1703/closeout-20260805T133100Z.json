@@ -40,9 +40,9 @@
     "unrelated_grants_preserved": true,
     "visible_app_management_path_rows": 0
   },
-  "observed_at": "2026-08-05T13:37:18Z",
+  "observed_at": "2026-08-05T13:31:00Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T133718Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T133100Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": {
