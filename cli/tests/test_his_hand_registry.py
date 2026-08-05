@@ -25,9 +25,10 @@ def test_tcc_app_management_cutover_stays_open_for_real_vendor_update():
 
     assert len(rows) == 1
     assert rows[0]["issue"] == 1703
-    assert rows[0]["status"] == "open"
-    assert "discharged" not in rows[0]
+    assert rows[0]["status"] == "discharged"
+    assert "discharged" in rows[0]
+    assert rows[0]["discharged"]["version"] == "2.1.222"
+    assert rows[0]["discharged"]["receipt"] == "docs/receipts/tcc-track-c-1703/closeout-latest.json"
     assert rows[0]["owner"] == "engineering"
     assert "external vendor availability" in rows[0]["gate"]
-    assert "zero path rows" in rows[0]["label"]
-    assert "newer than 2.1.220" in rows[0]["steps"][-1]
+    assert any("zero App Management path rows" in step for step in rows[0]["steps"])
