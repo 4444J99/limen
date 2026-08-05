@@ -123,6 +123,7 @@ correction (censor precedent `PREC-2026-07-04-friction-shallow-first`):
 Do **not** declare work "done" or "fully done" until verified end-to-end:
 
 - **Run the real gates locally**, never from memory: `python -m ruff check cli/src cli/tests web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.
+- **Read the predicate's OWN exit code, never a pipeline's.** `predicate | tail` makes `$?` report *tail's* status — which is essentially always `0` — so a gate that printed `FAIL` is read as green. Run the predicate bare and filter a saved copy, or use `${PIPESTATUS[0]}`. (2026-08-05: a closeout reported `EXIT=0` from a `scripts/no-tasks-on-me.sh` run that had printed `FAIL` and truly exited `1`.) The committed scripts get this right; the defect enters through **ad-hoc verification shell**, which is precisely where a false green has no second reader to catch it — so this is a standing behavioral rule, not a lint.
 - **Confirm the loop/driver actually runs** — that the entrypoint executes, not merely that files compile.
 - **Check for regressions introduced by merges**: dropped imports, dumped/abandoned lanes, silently overwritten files. After any branch reconcile, diff against the prior green state.
 - **Reconcile divergent branches against authoritative data** — GitHub redirect/PR state via `gh`, or `scripts/verify-dispatch.py` — never against heuristics or guesses.
@@ -136,6 +137,17 @@ confidently-wrong message analyses from a received-only export and a too-narrow 
 domain instances are `docs/student-email-reply-grounding.md` and the outreach sent-state memory —
 this section is their generalization):
 
+- **Enumerate the CHANNELS before analyzing any one of them.** A missing channel does not widen
+  the error bars — it **inverts the conclusion's sign**. Before concluding anything about an
+  interaction, a relationship, or a sequence of events, list every channel that could carry it
+  (text messages, voice/video calls, a second messaging app, email, transfers, in-person) and
+  state in the output which you queried and which you did not. (2026-08-05: "three hours of
+  silence" and "detonating into an empty room" were both produced by never opening the call
+  database — it held seven calls inside that window, three of them minutes before the message
+  being interpreted; in the same analysis a second messaging app carrying the day's most decisive
+  exchange went unopened. Both conclusions reversed on contact with the missing channel.) **No
+  scope, window, or count check catches this**, because every count *within* the queried channel
+  was correct — which is why channel enumeration precedes all of them.
 - **State the scope up front, in the output**: the exact date/window boundaries, the direction of
   the records (sent AND received? one side only?), any export filters, and the **total record
   count** — before the first conclusion, so a scope error surfaces immediately.
