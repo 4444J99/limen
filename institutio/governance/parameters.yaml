@@ -2409,6 +2409,12 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  LIMEN_HEAL_DISPATCH:
+    default: 1                  # default-ON: apply verify-dispatch.py's findings each HEAL beat
+    env: LIMEN_HEAL_DISPATCH
+    self_update: none
+    owner: heal
+    note: "Toggle for scripts/heal-dispatch.py --apply wired into the HEAL beat. 1=on. Applies verify-dispatch.py's own findings (PR_MERGED/PR_CLOSED/DISPATCHED_NO_PR status repair, CHRONIC reopened-tasks→parked, chronic needs_human→failed_blocked re-homing) — the owner conductor-report.yml's dry-run-only preview step never had, so its reported drift was never actually applied by anything. Self-acquires the queue-lock (skips cleanly when the daemon holds it), only flips status + a heal log entry, never deletes/pushes/merges/dispatches. 0=off."
   # --- LANE FITNESS (dispatch proactive reroute): per-(agent, class) conversion evidence ---
   LIMEN_FITNESS_MIN_N:
     default: 5                  # minimum dispatch_log attempts before a pair is judged fit/unfit

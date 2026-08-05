@@ -34,6 +34,11 @@ run_step "Pull completed Jules sessions" python3 "$LIMEN_ROOT/scripts/harvest-pu
 run_step "Harvest local Jules results" env PYTHONPATH="$PY" python3 -m limen.cli harvest --agent jules || {
   echo "limen harvest skipped or failed; see report above" | tee -a "$REPORT"
 }
+# This is a PREVIEW only (no --apply — this workflow is read-only: contents: read) and
+# reports what the beat's own heal-dispatch rung (scripts/drain.sh, LIMEN_HEAL_DISPATCH)
+# already applies every cycle. CHRONIC is excluded from the drift gate below for exactly
+# that reason: gating this report on drift its own preview step cannot fix left it red on
+# the same unowned count every 6-hour run — the beat is CHRONIC's real owner now.
 run_step "Preview dispatch heal" python3 "$LIMEN_ROOT/scripts/heal-dispatch.py" || {
   echo "heal-dispatch preview skipped or failed; see report above" | tee -a "$REPORT"
 }
@@ -48,14 +53,18 @@ root = Path(os.environ["LIMEN_ROOT"])
 path = root / "logs" / "dispatch-verify.json"
 data = json.loads(path.read_text())
 counts = data.get("counts", {})
-bad_keys = ("PR_MERGED", "PR_CLOSED", "PR_MISSING", "DISPATCHED_NO_PR", "CHRONIC")
+# CHRONIC is reported (it's still in `counts` below) but does not gate: scripts/drain.sh's
+# heal-dispatch rung owns applying it every beat, and this report cannot apply anything
+# itself (contents: read). The remaining keys are genuine drift this report's own preview
+# step cannot repair either, so they still gate.
+bad_keys = ("PR_MERGED", "PR_CLOSED", "PR_MISSING", "DISPATCHED_NO_PR")
 bad = {key: int(counts.get(key, 0)) for key in bad_keys if int(counts.get(key, 0))}
 print("\n==> Dispatch drift gate")
 print(json.dumps(counts, sort_keys=True))
 if bad:
     print(f"actionable dispatch drift detected: {bad}", file=sys.stderr)
     sys.exit(1)
-print("no actionable dispatch drift")
+print("no actionable dispatch drift (gated keys); CHRONIC reported above, owned by the beat")
 PY
 drift_status="${PIPESTATUS[0]}"
 if [ "$drift_status" -ne 0 ]; then
