@@ -35,6 +35,12 @@ FABLE_ACCEPTANCE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Phase-tier law (docs/fable-allotment.md: "Fable plans, cheaper tiers build") — the audit-side
+# backstop. Mutation TOOLS are the harness's real write paths; the Bash regex is deliberately
+# conservative (no redirect matching — false-positive-prone; hooks are the enforcement).
+_MUTATION_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+_MUTATING_BASH_RE = re.compile(r"\bgit\s+(add|commit|push|apply|merge|rebase)\b|\bgh\s+pr\s+(create|merge|edit)\b")
+
 # pytest at command position, in any of its shapes (mirrors scripts/hooks/pytest-scope-guard.sh).
 _PYTEST_CMD_RE = re.compile(
     r"(?:^|[;&|(]\s*|`\s*)\s*(?:command\s+)?"
@@ -182,6 +188,17 @@ def _current_fable_acceptance_present() -> bool:
         return False
 
 
+def _build_from_plan_label() -> str:
+    """The build-phase mode label, from the one vocabulary home (fail-open to the literal)."""
+    mod = _model_selection()
+    try:
+        if mod is not None:
+            return str(mod._BUILD_FROM_PLAN_CLASS)
+    except Exception:
+        pass
+    return "mode:build-from-plan"
+
+
 def _structured_fable_acceptance(value: Any) -> bool:
     text = _as_text(value).strip()
     return bool(text and FABLE_ACCEPTANCE_RE.search(text))
@@ -262,6 +279,15 @@ def _workflow_violations(
     fable_acceptance_ok = _structured_fable_acceptance(wf.get("fableAcceptance"))
     if fable_agents and not fable_acceptance_ok and os.environ.get("LIMEN_ALLOW_UNACCEPTED_FABLE") != "1":
         violations.append(f"{name}: Fable run lacks written acceptance command")
+    if (
+        _build_from_plan_label() in scan
+        and (opus_agents or fable_agents)
+        and os.environ.get("LIMEN_ALLOW_EXPENSIVE_BUILD") != "1"
+    ):
+        violations.append(
+            f"{name}: build-from-plan ran on an expensive tier — build is capped "
+            "(LIMEN_CLAUDE_BUILD_MAX_TIER, default sonnet; docs/fable-allotment.md)"
+        )
     if BAD_TARGET_RE.search(scan):
         violations.append(f"{name}: undefined PR target detected")
 
@@ -407,6 +433,7 @@ def audit_transcript(
     fable_billable = 0
     user_unbounded: list[dict[str, Any]] = []
     full_suite_pytest: list[dict[str, Any]] = []
+    fable_build_evidence: list[dict[str, Any]] = []
     models: dict[str, int] = {}
     # A fan-out of subagents each riding the expensive tier is the exact shape of the
     # verify-studio-launch incident (6 trivial verifiers on Opus). Count subagent transcripts
@@ -457,6 +484,14 @@ def audit_transcript(
                         bash_cmd = str((item.get("input") or {}).get("command") or "")
                         if _full_suite_pytest(bash_cmd):
                             full_suite_pytest.append({"path": str(path), "line": line_no, "command": bash_cmd[:200]})
+                        if _FABLE in model.lower() and _MUTATING_BASH_RE.search(bash_cmd):
+                            fable_build_evidence.append(
+                                {"path": str(path), "line": line_no, "tool": "Bash", "command": bash_cmd[:200]}
+                            )
+                    if item.get("name") in _MUTATION_TOOLS and _FABLE in model.lower():
+                        # Building on Fable — mutation tool call on a Fable-model turn
+                        # (docs/fable-allotment.md: Fable is PLAN-ONLY).
+                        fable_build_evidence.append({"path": str(path), "line": line_no, "tool": str(item.get("name"))})
             usage = msg.get("usage") or {}
             if not usage:
                 continue
@@ -499,6 +534,11 @@ def audit_transcript(
             "scoped-verification law: run scripts/verify-scoped.sh "
             "(2026-07-15 host-thrash incident; the PreToolUse hook is the gate, this audit is the backstop)"
         )
+    if fable_build_evidence and os.environ.get("LIMEN_ALLOW_FABLE_BUILD") != "1":
+        violations.append(
+            f"building on Fable ({len(fable_build_evidence)} mutation tool call(s) on a {_FABLE} turn) — "
+            "docs/fable-allotment.md: Fable is PLAN-ONLY; hand the build to a cheaper tier"
+        )
 
     return {
         "ok": not violations,
@@ -520,6 +560,8 @@ def audit_transcript(
         "unboundedGoalEvidence": user_unbounded[:10],
         "fullSuitePytestCalls": len(full_suite_pytest),
         "fullSuitePytestEvidence": full_suite_pytest[:10],
+        "fableBuildToolCalls": len(fable_build_evidence),
+        "fableBuildEvidence": fable_build_evidence[:10],
         "violations": violations,
     }
 
