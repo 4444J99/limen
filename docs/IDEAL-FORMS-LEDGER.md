@@ -511,11 +511,52 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   `unmeasured` verdict shipped above is currently the *only* verdict this probe can return, on this
   machine, until an operator click lands — an ungranted human atom hiding inside a step that looked
   like a command. Now homed as click 1 of 2 in `L-DOMUS-AGENT-HOST-TCC`.
-- **Status:** PARTIAL — the measurement is honest now, and the probe is the status. The remaining
-  distance is real and in three parts: the host holds no Full Disk Access grant, so the probe cannot
-  yet return anything but `unmeasured`; the host holds no App Management grant; and the interactive
-  `claude` lane still resolves through `~/.local/bin/claude` → `versions/<version>/` rather than
-  through the host — which is what makes those two clicks a one-time act rather than one per version.
+- **CORRECTION — a supervising host cannot hold this identity at all, and the fix is elsewhere.**
+  The third distance claimed above ("the interactive lane is not hosted") was wrong, and the way it
+  was wrong is the finding. The lane *is* hosted: `claude()` in `~/.config/zsh/25-agent-runtime.zsh`
+  enters `domus-agent-runtime` → `DomusAgentHost`, and PID 30699 carried `DOMUS_AGENT_HOST_ACTIVE=1`
+  with a real lifetime FD and ID. Claude Code then re-execs itself with
+  `process.execve(..., {macDisclaimResponsibility: true})` — `responsibility_spawnattrs_setdisclaim()`
+  — which **deliberately severs inherited TCC responsibility** so a consent dialog names "Claude Code"
+  rather than the terminal that launched it. That is a correct vendor design, and it means **no
+  wrapper, host, or launcher can carry an identity across it**: `domus-agent-host verify-lifetime`
+  exits 1 downstream, precisely as the host's own safeguard specifies. Hosting still owns the fleet
+  (LaunchAgents, the ten MCP ingresses); it was never going to own the interactive prompts. The
+  method error was reading a *process tree* (`PPID 1`) as evidence of an *identity* — the host tracks
+  detached descendants by inherited pipe, so PPID proves nothing here, and the shipped predicate
+  (`verify-lifetime`) was one command away the whole time.
+- **The real mechanism is one `??`, and it fails silently.** The disclaimed identity is chosen by
+  `let e = await _jb() ?? process.execPath`. `_jb()` materializes `<store>/ClaudeCode.app` —
+  `CFBundleIdentifier: com.anthropic.claude-code`, a bundle whose identity survives every version —
+  and hardlinks the running binary into it. It wraps `mkdir` + `writeFile` + `stat` + `unlink` +
+  `link` in a **single bare `catch { return null }`**, and the fallback is `process.execPath`:
+  `<store>/versions/<version>`. TCC resolves a client by the bundle enclosing the exec'd path, never
+  by the bytes: the two paths are the **same inode**, but only the bundled one has an identity to
+  resolve, so the other is named by its own filename. `_jb()` takes an early return when the hardlink already carries the running
+  binary's inode, skipping the `unlink`/`link` pair — which concurrent session starts (bg jobs,
+  spares, fleet lanes) can interleave into an `EEXIST` that silently demotes one session to a
+  versioned identity. Keeping the bundle inode-correct keeps every start on that early return.
+  `scripts/claude-identity-bundle.py` is the organ; sensor `0g8d` runs it every beat; contracts in
+  `cli/tests/test_claude_identity_bundle.py`.
+- **CORRECTION 2026-08-05 (second): the organ does not close the prompt class, and this row said it
+  did.** Verified against a live process tree *while the keeper reported `at-ideal`*, with the
+  dialogs still firing: `~/.local/bin/claude daemon run` (launchd-rooted) spawns its pty host **from
+  the bundle**, then hands the session process its `versions/<version>` path as literal argv — and
+  that session is what disclaims into its own TCC client. Four of five live processes ran from the
+  versioned path; only the pty host was bundled. Independently corroborated by lever 17, which
+  records real TCC rows bound to `versions/2.1.222`. The argv is composed inside the vendor binary,
+  so no external change reaches it. **Method error, and it is the same one twice: a mechanism was
+  named from reading vendor source and never confronted with the running system.** `ps -o args=` on
+  the live tree falsified it in one command — the same shape as the `PPID`/`verify-lifetime` error
+  in the bullet above. Naming a plausible mechanism is not evidence; the check was cheap both times.
+- **Status:** PARTIAL, and the distance is now correctly attributed. **Closed:** the bundle keeps
+  itself (organ + sensor + contracts), and both operator grants were already in place — the clicks
+  this row asked for were owed to the fleet, never to this prompt class. **Open, upstream:** the
+  per-version consent prompts are a vendor-side defect (disclaimed session exec'd by an unbundled
+  path); disposition is a report to Anthropic, not an operator action and not a local patch.
+  **Open, advisory:** two runnable versions remain in the store, whose differing inodes reopen the
+  race for concurrent starts of *both* — reported by the keeper, not repaired by it, because
+  deleting a vendor version is not its authority.
 - **Owner:** Claude (the predicate) · the operator (the single grant).
 - **Why this row exists at all.** Its status previously lived in a hand-written `discharged:` field
   in `his-hand-levers.json` carrying `"version": "2.1.222"` — a status pinned to a version, in a

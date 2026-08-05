@@ -4077,6 +4077,32 @@ parameters:
     owner: tabularius
     note: "Per-run timeout (seconds) for Track C closeout beat step: hosted claude --version, optional claude update, and two strict tcc-identity-audit passes. 300 covers a real vendor download without stalling the beat forever; the runner kills the command group on overrun and continues fail-open."
 
+  # --- Claude Code stable-identity bundle keeper (0g8d): keep the disclaimed identity off versioned paths ---
+  LIMEN_CLAUDE_IDENTITY_BUNDLE:
+    default: "1"
+    env: LIMEN_CLAUDE_IDENTITY_BUNDLE
+    self_update: none
+    owner: tabularius
+    note: "Gate for the claude-identity-bundle sensor (sensors.yaml 0g8d). Claude Code re-execs itself with macDisclaimResponsibility:true, so no supervising host can carry a TCC identity into it; the identity it adopts is `await _jb() ?? process.execPath`. When 1, each beat runs scripts/claude-identity-bundle.py --repair, keeping <store>/ClaudeCode.app present with a hardlink whose inode matches the running binary — the condition for _jb()'s early return, which skips the unlink/link pair that concurrent session starts can race into EEXIST and thereby demote a session to a versioned identity (a new consent client per update). Idempotent; writes exactly the vendor's own bytes; never signs, never deletes a version, never edits TCC. Set 0 to silence."
+  LIMEN_CLAUDE_STORE:
+    default: "~/.local/share/claude"
+    env: LIMEN_CLAUDE_STORE
+    self_update: none
+    owner: tabularius
+    note: "Override for the Claude Code data store (the directory holding versions/ and ClaudeCode.app) read by scripts/claude-identity-bundle.py. Unset in production — it exists so the keeper's contracts in cli/tests/test_claude_identity_bundle.py can build a miniature store under tmp_path instead of mutating the real one."
+  LIMEN_CLAUDE_LAUNCHER:
+    default: "~/.local/bin/claude"
+    env: LIMEN_CLAUDE_LAUNCHER
+    self_update: none
+    owner: tabularius
+    note: "Override for the launcher symlink whose target names the running Claude Code binary, read by scripts/claude-identity-bundle.py. Unset in production; test-injection sibling of LIMEN_CLAUDE_STORE."
+  LIMEN_CLAUDE_IDENTITY_BUNDLE_TIMEOUT:
+    default: 60
+    env: LIMEN_CLAUDE_IDENTITY_BUNDLE_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for the claude-identity-bundle beat step. The work is a stat, a small write, and one hardlink, so 60 is generous; the runner kills the command group on overrun and continues fail-open."
+
   # --- dialogs-silenced sensor (0g8b): the agent-curable dialog estate, self-healed + verified on the beat ---
   LIMEN_DIALOGS_SILENCED:
     default: "1"               # ON — the sensor gate; each cadence tick runs the heal pass + --agent-curable-only verify.
