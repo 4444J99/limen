@@ -3431,6 +3431,49 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Armed valve for generate-seo-backlog.py task filing on the beat: 0 (default) prints the plan; 1 appends bounded SEO-* tasks to the board (floor/cap/dedup guarded). Arming order: this first (tasks flow), then L-SEO-METADATA (metadata writes), then the publish wave."
+  # --- PLANS-LIFECYCLE: the drain docs/plans + per-agent scratch corpora never had ---
+  LIMEN_PLANS_LIFECYCLE:
+    default: "1"
+    env: LIMEN_PLANS_LIFECYCLE
+    self_update: none
+    owner: lifecycle
+    note: "Master on/off for the plans-lifecycle beat sensor (scripts/plans-lifecycle-audit.py). Read-only census + report; the archival --apply step is its own separate valve (LIMEN_PLANS_LIFECYCLE_APPLY). 0 disables the pass."
+  LIMEN_BEAT_PLANS_LIFECYCLE:
+    default: 24
+    env: LIMEN_BEAT_PLANS_LIFECYCLE
+    self_update: none
+    owner: lifecycle
+    note: "Cadence (every N beats) of the plans-lifecycle sensor. Plans move on human timescales; a slow cadence is honest."
+  LIMEN_PLANS_LIFECYCLE_TIMEOUT:
+    default: 60
+    env: LIMEN_PLANS_LIFECYCLE_TIMEOUT
+    self_update: none
+    owner: lifecycle
+    note: "Per-run timeout (seconds) for the plans-lifecycle sensor; the runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_PLANS_LIFECYCLE_APPLY:
+    default: "0"
+    env: LIMEN_PLANS_LIFECYCLE_APPLY
+    self_update: none
+    owner: lifecycle
+    note: "Armed valve for plans-lifecycle-audit.py --apply on the beat: 0 (default) reports stale candidates only; 1 archives (never deletes — moves into a same-directory archive/ subfolder) stale entries in the UNTRACKED per-agent scratch corpora only (~/.claude/plans, ~/.codex/plans). docs/plans/ (git-tracked) is never touched by --apply regardless of this valve — relocating a tracked plan needs a normal branch/PR."
+  LIMEN_PLANS_STALE_DAYS:
+    default: 30
+    env: LIMEN_PLANS_STALE_DAYS
+    self_update: none
+    owner: lifecycle
+    note: "Age threshold (days, by mtime) past which plans-lifecycle-audit.py flags a plan document as stale. A plan is a working document, not a beat-rewritten receipt, so a human timescale is the honest default."
+  LIMEN_CLAUDE_PLANS_DIR:
+    default: "~/.claude/plans"
+    env: LIMEN_CLAUDE_PLANS_DIR
+    self_update: none
+    owner: lifecycle
+    note: "Override path for the Claude Code per-agent plans scratch directory plans-lifecycle-audit.py census/archives. Test-only override in practice; the shipped default is correct for the live host."
+  LIMEN_CODEX_PLANS_DIR:
+    default: "~/.codex/plans"
+    env: LIMEN_CODEX_PLANS_DIR
+    self_update: none
+    owner: lifecycle
+    note: "Override path for the Codex per-agent plans scratch directory plans-lifecycle-audit.py census/archives. Test-only override in practice; the shipped default is correct for the live host."
   LIMEN_SEO_FLOOR:
     default: 6
     env: LIMEN_SEO_FLOOR

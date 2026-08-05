@@ -242,6 +242,30 @@ sensors:
           - {path: scripts/gitvs.py, normalization: raw}
           - {path: logs/omega-owner-receipts/sensor.github.actions-budget.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
+  plans-lifecycle:
+    section: "heartbeat"
+    title: "plans-lifecycle — the drain docs/plans + per-agent scratch corpora never had: census -> stale report -> bounded archival (dry until armed)"
+    gate: LIMEN_PLANS_LIFECYCLE
+    default: "1"
+    source: [heartbeat]
+    owner: lifecycle
+    cadence:
+      env: LIMEN_BEAT_PLANS_LIFECYCLE
+      default: 24
+    timeout:
+      env: LIMEN_PLANS_LIFECYCLE_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/plans-lifecycle-audit.py"
+        args_when:
+          - env: LIMEN_PLANS_LIFECYCLE_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "plans-lifecycle audit skipped or exceeded its bound"
+
   seo-drift:
     section: "heartbeat"
     title: "SEO drift — public-portal surface: audit sweep -> metadata drift check -> bounded task filing (dry until armed)"
