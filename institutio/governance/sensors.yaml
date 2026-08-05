@@ -1401,6 +1401,29 @@ sensors:
         severity: advisory
         escalation: "Dispatchable Jules supply is below floor and minting is unarmed — arm LIMEN_JULES_SUPPLY_APPLY=1 or extend docs/jules-supply-templates.yaml"
 
+  funnel-integrity:
+    section: 0z3
+    title: "application funnel honesty — the funnel claims nothing it cannot evidence"
+    gate: LIMEN_FUNNEL_INTEGRITY
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    # On 2026-08-04/05 the funnel recorded SIMULATED job applications as provider-CONFIRMED ones
+    # against six real employers, and separately drove an agent through a 27h32m retry loop whose
+    # exit condition was unreachable by construction. NEITHER announced itself: every stage exited
+    # 0, and the fabricated receipts were schema-valid DeliveryReceiptV1 rows — the only tell was
+    # that the "evidence" was the entry's own id and the provider response said "simulated".
+    #
+    # A defect that survives schema validation and exits 0 is not caught by the next reader being
+    # careful. The predicate asserts it every beat instead. Read-only and idempotent; the root
+    # cause it watches hardest is a live application-pipeline checkout parked behind main, which is
+    # where every fabricated record in that incident came from.
+    # Full record: docs/plans/2026-08-05-application-funnel-healing.md
+    steps:
+      - command: "bash scripts/funnel-integrity.sh"
+        severity: advisory
+        escalation: "Application funnel integrity FAILED — a confirmation without provider evidence, corrupt funnel state, or an application-pipeline checkout parked off main (the 2026-08-05 fabrication cause). Run `bash scripts/funnel-integrity.sh` bare for the failing invariant"
+
   decorum:
     section: "heartbeat"
     title: "professionalization keeper — no public surface is currently egg-faced"
