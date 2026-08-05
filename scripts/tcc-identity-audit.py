@@ -22,6 +22,14 @@ BASELINE_SCHEMA = "limen.tcc_identity_baseline.v1"
 HOST_SCHEMA = "domus.agent_host_status.v1"
 HOST_BUNDLE_ID = "org.organvm.domus.agent-host"
 APP_MANAGEMENT_SERVICE = "kTCCServiceSystemPolicyAppBundles"
+# Failures that mean "the instrument could not read", never "the system is wrong".
+# A run whose failures are all in this set is UNMEASURED: not green, but not a finding.
+MEASUREMENT_BLIND_FAILURES = frozenset(
+    {
+        "tcc_database_unavailable",
+        "claude_helper_registration_unreadable",
+    }
+)
 TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 DISABLE_UPDATE_KEYS = (
     "DISABLE_AUTOUPDATER",
@@ -629,11 +637,59 @@ def _settings_paths(env: Mapping[str, str]) -> list[Path]:
     return result
 
 
+def _config_paths(env: Mapping[str, str]) -> list[Path]:
+    """The `.claude.json` files that carry the real `autoUpdates` switch.
+
+    Sibling of `_settings_paths`: same three roots, but the config document sits
+    *beside* `~/.claude/` rather than inside it, and beside `settings.json` under an
+    explicit `CLAUDE_CONFIG_DIR`. Both are live on this host simultaneously — a session
+    under `CLAUDE_CONFIG_DIR` reads the runtime copy and never sees the home one, so
+    flipping only `~/.claude.json` leaves updates off where it counts.
+    """
+    home = _home(env)
+    limen_root = _expand_user_path(
+        env.get("LIMEN_ROOT", str(home / "Workspace/limen")),
+        env,
+    )
+    candidates = [
+        home / ".claude.json",
+        limen_root / ".agent-runtime/claude/.claude.json",
+    ]
+    if config := env.get("CLAUDE_CONFIG_DIR"):
+        candidates.append(_expand_user_path(config, env) / ".claude.json")
+    seen: set[Path] = set()
+    result: list[Path] = []
+    for path in candidates:
+        resolved = path.resolve(strict=False)
+        if resolved not in seen:
+            seen.add(resolved)
+            result.append(path)
+    return result
+
+
 def _disabled_updates(env: Mapping[str, str]) -> list[dict[str, str]]:
     blockers: list[dict[str, str]] = []
     for key in DISABLE_UPDATE_KEYS:
         if _truthy(env.get(key)):
             blockers.append({"key": key, "source": "environment"})
+    # The switch the vendor actually honours. Scanning only for *disable* env keys and
+    # `env` blocks reported "automatic updates: enabled" on 2026-08-05 while `autoUpdates`
+    # was literally false in BOTH config roots — which is how inventory_green()'s
+    # `automatic_updates_disabled` guard passed vacuously and discharged
+    # L-DOMUS-AGENT-HOST-TCC against a version that could never advance.
+    # Absent means enabled (vendor default); only an explicit false is a blocker.
+    for path in _config_paths(env):
+        try:
+            document = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            continue
+        except (OSError, json.JSONDecodeError):
+            blockers.append({"key": "config_unreadable", "source": str(path)})
+            continue
+        if not isinstance(document, dict):
+            continue
+        if document.get("autoUpdates") is False:
+            blockers.append({"key": "autoUpdates_false", "source": str(path)})
     for path in _settings_paths(env):
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
@@ -823,6 +879,8 @@ def audit(
             "status": "not_applicable",
             "platform": observed_platform,
             "platform_supported": False,
+            # Key always present so consumers can read payload["measured"] unconditionally.
+            "measured": {"tcc_database": False, "not_applicable": True, "blind_failures": []},
             "failures": [],
             "automatic_updates": {"enabled": True, "blockers": []},
             "stable_host": {"ok": True, "not_applicable": True},
@@ -835,12 +893,14 @@ def audit(
                 "active_leaks": 0,
                 "visible_app_management_path_rows": 0,
                 "unhosted_configured_ingresses": 0,
+                "rotating_identity_active_grants": 0,
                 "unrelated": 0,
             },
             "predicates": {
-                "active_leaks": {"ok": True, "count": 0, "identities": []},
+                "active_leaks": {"ok": True, "measured": False, "count": 0, "identities": []},
                 "visible_app_management_path_rows": {
                     "ok": True,
+                    "measured": False,
                     "count": 0,
                     "identities": [],
                     "stable_host_row_count": 0,
@@ -848,9 +908,17 @@ def audit(
                 },
                 "unhosted_configured_ingresses": {
                     "ok": True,
+                    "measured": False,
                     "count": 0,
                     "configured_count": 0,
                     "ingresses": [],
+                },
+                "rotating_identity_active_grants": {
+                    "ok": True,
+                    "measured": False,
+                    "count": 0,
+                    "identities": [],
+                    "services": [],
                 },
             },
             "identity_baseline": {"loaded": False, "not_applicable": True},
@@ -954,20 +1022,53 @@ def audit(
         for item in stable_host_rows
         if int(_app_management_decision(item)["auth_value"]) != 0  # type: ignore[index]
     ]
+    # THE SPRAWL ITSELF, measured directly.
+    #
+    # Every predicate below `active_leaks` judges exactly one service —
+    # APP_MANAGEMENT_SERVICE. The dialog the operator actually gets is
+    # `"<version>" would like to access files in your Documents folder`, i.e.
+    # kTCCServiceSystemPolicyDocumentsFolder against a path-keyed client under
+    # ~/.local/share/claude/versions/<version>/. The audit already READS those rows
+    # (they land in `services`/`active_services`) and already knows the path shape
+    # (MANAGED_CLIENT_PATTERNS "claude_version") — it simply never judged them. So the
+    # whole Track C inventory could report green while every vendor update minted a new
+    # identity and re-prompted, because nothing counted the thing that was sprawling.
+    #
+    # A path-keyed client matching a rotating pattern and holding ANY live grant is one
+    # future re-prompt, whatever the service. The ideal is zero: grants belong to the
+    # stable bundle identity, which survives version rotation.
+    rotating_grants = [
+        item
+        for item in clients
+        if item.get("pattern") is not None
+        and item["client_kind"] == "path"
+        and item["active_services"]
+    ]
     ingress_violations, configured_ingresses = _configured_ingress_violations(values)
+
+    # Every database-derived predicate below reads an EMPTY `clients` when the TCC
+    # database could not be read, and emptiness then reads as evidence: `active_leaks`
+    # would report ok/0 (asserting zero leaks having observed nothing) while the grant
+    # checks would name a missing grant and a changed bundle map (defects nobody looked
+    # for). Unmeasured is a third verdict, never a green and never a named red.
+    # See docs/IDEAL-FORMS-LEDGER.md → IF-AGENT-IDENTITY.
+    db_measured = database_error is None
 
     predicates = {
         "active_leaks": {
-            "ok": not active_leaks,
+            "ok": db_measured and not active_leaks,
+            "measured": db_measured,
             "count": len(active_leaks),
             "identities": [_redacted_predicate_identity(item) for item in active_leaks],
         },
         "visible_app_management_path_rows": {
             "ok": (
-                not visible_path_rows
+                db_measured
+                and not visible_path_rows
                 and len(stable_host_rows) == 1
                 and len(stable_host_grants) == 1
             ),
+            "measured": db_measured,
             "count": len(visible_path_rows),
             "identities": [
                 _redacted_predicate_identity(item) for item in visible_path_rows
@@ -976,10 +1077,29 @@ def audit(
             "stable_host_grant_count": len(stable_host_grants),
         },
         "unhosted_configured_ingresses": {
+            # Config-derived, not database-derived: measurable even when TCC is blind.
             "ok": not ingress_violations,
+            "measured": True,
             "count": len(ingress_violations),
             "configured_count": configured_ingresses,
             "ingresses": ingress_violations,
+        },
+        "rotating_identity_active_grants": {
+            "ok": db_measured and not rotating_grants,
+            "measured": db_measured,
+            "count": len(rotating_grants),
+            "identities": [
+                _redacted_predicate_identity(item) for item in rotating_grants
+            ],
+            # Every distinct TCC service still pinned to a rotating path — the exact
+            # set of dialogs the operator will be shown again on the next update.
+            "services": sorted(
+                {
+                    service
+                    for item in rotating_grants
+                    for service in item["active_services"]
+                }
+            ),
         },
     }
 
@@ -999,18 +1119,24 @@ def audit(
             "active_leaks": len(active_leaks),
             "visible_app_management_path_rows": len(visible_path_rows),
             "unhosted_configured_ingresses": len(ingress_violations),
+            "rotating_identity_active_grants": len(rotating_grants),
             "unrelated": unrelated,
         }
     )
+    if db_measured and rotating_grants:
+        failures.append("rotating_identity_active_grants")
     if active_leaks:
         failures.append("active_managed_tcc_leak")
     if visible_path_rows:
         failures.append("visible_app_management_path_client")
-    if len(stable_host_rows) != 1 or len(stable_host_grants) != 1:
+    # Guarded on db_measured: with no database read, stable_host_rows is empty for want
+    # of looking, and naming `..._grant_missing` would report a defect never observed.
+    # `tcc_database_unavailable` is already the honest failure in that case.
+    if db_measured and (len(stable_host_rows) != 1 or len(stable_host_grants) != 1):
         failures.append("stable_host_app_management_grant_missing")
     if ingress_violations:
         failures.append("unhosted_configured_ingress")
-    if strict and not counts["stable_host"] and database_error is None:
+    if strict and not counts["stable_host"] and db_measured:
         failures.append("stable_host_tcc_identity_missing")
 
     current_bundle_grants = _app_management_bundle_grants(clients)
@@ -1018,10 +1144,12 @@ def audit(
         baseline["app_management_bundle_grants"] if baseline is not None else None
     )
     preservation_ok = (
-        expected_bundle_grants is not None
+        db_measured
+        and expected_bundle_grants is not None
         and current_bundle_grants == expected_bundle_grants
     )
-    if expected_bundle_grants is not None and not preservation_ok:
+    # Same guard: an empty grant map read from an unreadable database is not a change.
+    if db_measured and expected_bundle_grants is not None and not preservation_ok:
         failures.append("unrelated_app_management_grants_changed")
 
     try:
@@ -1033,10 +1161,19 @@ def audit(
         failures.append("malformed_claude_helper_registration")
 
     failures = list(dict.fromkeys(failures))
+    # Three verdicts, not two. `ok` stays False when blind (fail toward caution, so
+    # --strict still exits 1 and nothing turns green on a failed read), but the STATUS
+    # distinguishes "we looked and it is wrong" from "we could not look" — otherwise
+    # indistinguishable in the output, which is how a blind run gets read as a finding.
+    unmeasured = bool(failures) and set(failures) <= MEASUREMENT_BLIND_FAILURES
     return {
         "schema": SCHEMA,
         "ok": not failures,
-        "status": "ok" if not failures else "blocked",
+        "status": "ok" if not failures else ("unmeasured" if unmeasured else "blocked"),
+        "measured": {
+            "tcc_database": db_measured,
+            "blind_failures": sorted(set(failures) & MEASUREMENT_BLIND_FAILURES),
+        },
         "platform": observed_platform,
         "platform_supported": True,
         "automatic_updates": {
@@ -1079,6 +1216,11 @@ def audit(
 
 def print_human(payload: Mapping[str, Any]) -> None:
     print(f"TCC identity audit: {payload['status']}")
+    if payload.get("status") == "unmeasured":
+        blind = ", ".join(payload.get("measured", {}).get("blind_failures") or []) or "unknown"
+        print(f"  UNMEASURED — the instrument could not read ({blind}).")
+        print("  This is NOT a finding: no grant state was observed. Re-run beneath the")
+        print("  stable host, which holds the Full Disk Access this read requires.")
     print("  automatic updates: " + ("enabled" if payload["automatic_updates"]["enabled"] else "DISABLED"))
     host = payload["stable_host"]
     print("  stable host: " + ("valid" if host.get("ok") else "INVALID"))
@@ -1091,6 +1233,12 @@ def print_human(payload: Mapping[str, Any]) -> None:
     )
     predicates = payload["predicates"]
     print(f"  active leaks: {predicates['active_leaks']['count']}")
+    rotating = predicates.get("rotating_identity_active_grants")
+    if rotating is not None:
+        line = f"  rotating-identity grants: {rotating['count']}"
+        if rotating["services"]:
+            line += " across " + ", ".join(rotating["services"])
+        print(line + ("" if rotating["measured"] else "  (unmeasured)"))
     visible = predicates["visible_app_management_path_rows"]
     print(
         "  App Management: "

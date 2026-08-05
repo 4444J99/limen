@@ -154,6 +154,8 @@ def test_disabled_baseline_versions_are_visible_but_not_active_leaks(tmp_path: P
         "active_leaks": 0,
         "visible_app_management_path_rows": 0,
         "unhosted_configured_ingresses": 0,
+        # Revoked (auth_value 0) version-path grants are not future re-prompts.
+        "rotating_identity_active_grants": 0,
         "unrelated": 1,
     }
     assert {item["classification"] for item in payload["clients"]} == {
@@ -566,6 +568,8 @@ def test_configured_local_ingresses_fail_until_every_command_uses_ensure(
     }
     assert after["predicates"]["unhosted_configured_ingresses"] == {
         "ok": True,
+        # Config-derived, so it stays measurable even when the TCC database is blind.
+        "measured": True,
         "count": 0,
         "configured_count": 3,
         "ingresses": [],
@@ -1039,3 +1043,118 @@ def test_strict_cli_returns_failure_and_emits_json(
     payload = json.loads(capsys.readouterr().out)
     assert payload["ok"] is False
     assert payload["summary"]["active_leaks"] == 1
+
+
+# --- Regression contracts: the two blind spots that discharged L-DOMUS-AGENT-HOST-TCC ---
+#
+# On 2026-08-05 the Track C closeout finalized `met` and discharged the lever while
+# Claude Code auto-updates were OFF, so the version could never advance and the
+# "survives a vendor update" proof could never be exercised. inventory_green() DOES
+# guard on automatic_updates_disabled — but _disabled_updates() only scanned env vars,
+# settings.json `env` blocks and ~/.limen.env, and never read `autoUpdates` in
+# .claude.json. The guard was blind to the field it guarded.
+
+
+def test_auto_updates_false_in_claude_json_is_an_update_blocker(tmp_path: Path):
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".claude.json").write_text(json.dumps({"autoUpdates": False}))
+    blockers = AUDIT._disabled_updates({"HOME": str(home), "LIMEN_ROOT": str(tmp_path / "absent")})
+    assert [item["key"] for item in blockers] == ["autoUpdates_false"]
+
+
+def test_auto_updates_absent_means_enabled(tmp_path: Path):
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".claude.json").write_text(json.dumps({"numStartups": 3}))
+    assert AUDIT._disabled_updates({"HOME": str(home), "LIMEN_ROOT": str(tmp_path / "absent")}) == []
+
+
+def test_auto_updates_read_from_claude_config_dir_not_only_home(tmp_path: Path):
+    """The split-brain case: a session under CLAUDE_CONFIG_DIR never reads ~/.claude.json.
+
+    Flipping only the home copy leaves updates off where the session actually runs,
+    which is exactly the state the 2026-08-05 discharge was produced in.
+    """
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".claude.json").write_text(json.dumps({"autoUpdates": True}))
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    (runtime / ".claude.json").write_text(json.dumps({"autoUpdates": False}))
+    blockers = AUDIT._disabled_updates(
+        {
+            "HOME": str(home),
+            "LIMEN_ROOT": str(tmp_path / "absent"),
+            "CLAUDE_CONFIG_DIR": str(runtime),
+        }
+    )
+    assert [item["key"] for item in blockers] == ["autoUpdates_false"]
+    assert str(runtime) in blockers[0]["source"]
+
+
+def test_unreadable_tcc_database_is_unmeasured_not_a_finding(tmp_path: Path):
+    """An unreadable database must not manufacture verdicts in either direction.
+
+    Before this contract an empty `clients` list produced one false green
+    (active_leaks ok/0 — asserting zero leaks having observed nothing) and two
+    false reds (stable_host_app_management_grant_missing,
+    unrelated_app_management_grants_changed — naming defects nobody looked for).
+    """
+    env = _environment(tmp_path, [])
+    env["LIMEN_TCC_DB"] = str(tmp_path / "does-not-exist.db")
+    payload = AUDIT.audit(env, platform_name="Darwin")
+
+    assert payload["status"] == "unmeasured"
+    assert payload["measured"]["tcc_database"] is False
+    # Fail toward caution: unmeasured is never green.
+    assert payload["ok"] is False
+    # ...but the only failure is the honest one.
+    assert payload["failures"] == ["tcc_database_unavailable"]
+    assert "stable_host_app_management_grant_missing" not in payload["failures"]
+    assert "unrelated_app_management_grants_changed" not in payload["failures"]
+    # The database-derived predicates report unmeasured, never a clean bill of health.
+    assert payload["predicates"]["active_leaks"]["measured"] is False
+    assert payload["predicates"]["active_leaks"]["ok"] is False
+    assert payload["predicates"]["visible_app_management_path_rows"]["measured"] is False
+    # The config-derived predicate stays measurable — blindness is scoped, not global.
+    assert payload["predicates"]["unhosted_configured_ingresses"]["measured"] is True
+
+
+def test_documents_grant_on_a_version_path_is_caught_though_app_management_is_clean(tmp_path: Path):
+    """The operator's actual dialog, which every prior predicate scored as green.
+
+    `"2.1.222" would like to access files in your Documents folder` is a
+    kTCCServiceSystemPolicyDocumentsFolder grant against a path-keyed client under
+    ~/.local/share/claude/versions/<version>/. App Management is spotless in this
+    fixture — the stable host holds its one bundle grant and no path row carries an
+    App Management decision — so `active_leaks` and
+    `visible_app_management_path_rows` both report ok. Only the rotating-identity
+    predicate sees the sprawl.
+    """
+    home = tmp_path / "home"
+    rows = [
+        (
+            str(home / ".local/share/claude/versions/2.1.222/claude"),
+            1,
+            "kTCCServiceSystemPolicyDocumentsFolder",
+            2,  # granted, not revoked
+            1100,
+        ),
+    ]
+    payload = AUDIT.audit(_environment(tmp_path, rows), platform_name="Darwin")
+
+    # The old lens: clean.
+    assert payload["predicates"]["active_leaks"]["ok"] is True
+    assert payload["predicates"]["visible_app_management_path_rows"]["ok"] is True
+
+    # The new lens: the re-prompt is visible, and named by service.
+    rotating = payload["predicates"]["rotating_identity_active_grants"]
+    assert rotating["measured"] is True
+    assert rotating["ok"] is False
+    assert rotating["count"] == 1
+    assert rotating["services"] == ["kTCCServiceSystemPolicyDocumentsFolder"]
+
+    assert "rotating_identity_active_grants" in payload["failures"]
+    assert payload["ok"] is False
+    assert payload["status"] == "blocked"  # a real finding, never "unmeasured"
