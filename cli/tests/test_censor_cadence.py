@@ -158,3 +158,62 @@ protocols:
     assert "private precedent" not in encoded
     assert "private signal" not in encoded
     assert "private residual" not in encoded
+
+
+def test_weekly_signals_report_absent_stores_not_zero_drift(tmp_path, monkeypatch):
+    """A missing friction store and a genuinely quiet one must not read the same: the caller
+    needs to know an input was never read, not just that nothing was found in it."""
+    module = _load_censor("censor_absent_stores")
+    logs = tmp_path / "logs"
+    censor_dir = tmp_path / "censor"
+    logs.mkdir()
+    censor_dir.mkdir()
+    monkeypatch.setattr(module, "LOGS", logs)
+    monkeypatch.setattr(module, "PRECEDENTS_PATH", censor_dir / "precedents.jsonl")
+
+    sigs, absent = module.gather_signals("weekly")
+    assert sigs == []
+    assert sorted(absent) == ["friction-federation.json", "insights-drift.json"]
+
+
+def test_weekly_signals_present_store_is_not_reported_absent(tmp_path, monkeypatch):
+    module = _load_censor("censor_present_store")
+    logs = tmp_path / "logs"
+    censor_dir = tmp_path / "censor"
+    logs.mkdir()
+    censor_dir.mkdir()
+    (logs / "friction-federation.json").write_text(json.dumps({"recurring": ["some-real-friction"]}), encoding="utf-8")
+    monkeypatch.setattr(module, "LOGS", logs)
+    monkeypatch.setattr(module, "PRECEDENTS_PATH", censor_dir / "precedents.jsonl")
+
+    sigs, absent = module.gather_signals("weekly")
+    assert absent == ["insights-drift.json"]
+    assert [s["subject"] for s in sigs] == ["some-real-friction"]
+
+
+def test_main_disp_str_names_absent_stores_not_no_signals(tmp_path, monkeypatch, capsys):
+    """The final summary line the beat actually reads: 'no signals' when a store is absent
+    would impersonate a clean sweep, exactly the silent-absence-as-zero class this repo's
+    Data Grounding doctrine warns against."""
+    module = _load_censor("censor_main_absent")
+    logs = tmp_path / "logs"
+    censor_dir = tmp_path / "censor"
+    logs.mkdir()
+    censor_dir.mkdir()
+    monkeypatch.setattr(module, "LOGS", logs)
+    monkeypatch.setattr(module, "PROTOCOLS", censor_dir / "protocols.yaml")
+    monkeypatch.setattr(module, "PRECEDENTS_PATH", censor_dir / "precedents.jsonl")
+    monkeypatch.setattr(module, "STATE_PATH", logs / "censor-state.json")
+    monkeypatch.setattr(module, "LAST_PATH", logs / "censor-last.json")
+    monkeypatch.setattr(module, "LEDGER_PATH", logs / "censor-ledger.jsonl")
+    monkeypatch.setattr("sys.argv", ["censor.py", "--tier", "weekly"])
+
+    rc = module.main()
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "store(s) absent" in out
+    assert "friction-federation.json" in out
+    assert "insights-drift.json" in out
+
+    summary = json.loads((logs / "censor-last.json").read_text())
+    assert sorted(summary["absent_sources"]) == ["friction-federation.json", "insights-drift.json"]
