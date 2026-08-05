@@ -170,6 +170,11 @@
       "owner": "tabularius"
     },
     {
+      "id": "sensor.claude.identity-bundle",
+      "next_action": "Run python3 scripts/claude-identity-bundle.py --repair; it is idempotent and writes the vendor's own bytes. On launcher_unresolvable the store moved — fix ~/.local/bin/claude before repairing, never fabricate a bundle for a binary outside versions/. Never sign the bundle, delete a version, or edit TCC; more than one runnable version stays a reported race risk.",
+      "owner": "tabularius"
+    },
+    {
       "id": "sensor.storage.parity",
       "next_action": "Run storage registry parity and repair only declared rail-role or producer-contract drift.",
       "owner": "continuity"

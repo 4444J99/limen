@@ -138,6 +138,66 @@ reads the home file, so flipping only `~/.claude.json` leaves updates off where
 the session actually runs — the state in which the 2026-08-05 discharge of
 `L-DOMUS-AGENT-HOST-TCC` was produced against a version that could not advance.
 
+## What the host cannot hold: a disclaimed identity
+
+Claude Code re-execs itself once at startup with
+`process.execve(..., {macDisclaimResponsibility: true})` —
+`responsibility_spawnattrs_setdisclaim()` — guarded by `CLAUDE_BG_TCC_DISCLAIMED`
+so it happens exactly once. This **deliberately severs inherited TCC
+responsibility**, so a consent dialog names Claude Code rather than the terminal
+that launched it. It is a correct design, and it is absolute: no wrapper, host,
+or launcher can carry an identity across it. `domus-agent-host verify-lifetime`
+exits non-zero downstream of the re-exec, exactly as this document's own
+lifetime-pipe safeguard specifies. Do not read a process tree as evidence here —
+the host tracks detached descendants by inherited pipe, so `PPID` proves nothing;
+run the predicate.
+
+The host therefore owns the **fleet** identity — every committed `com.limen.*`
+LaunchAgent, the tracked GUI/MCP ingresses, dispatch boundaries — and never the
+interactive Claude Code session's own consent prompts. Those are decided by one
+expression in the vendor's code:
+
+```js
+let e = await _jb() ?? process.execPath;
+```
+
+`_jb()` materializes `<store>/ClaudeCode.app` (`CFBundleIdentifier`
+`com.anthropic.claude-code`) and hardlinks the running binary into it, so the
+disclaimed identity is a bundle that survives version rotation. It wraps `mkdir`,
+`writeFile`, `stat`, `unlink`, and `link` in a single bare `catch { return null }`;
+on any failure the identity falls back to `process.execPath` —
+`<store>/versions/<version>`. TCC resolves a client by the bundle enclosing the
+exec'd path, never by the bytes: the two paths are the **same inode**, but only
+the bundled one has an identity to resolve, so the other is named by its own
+filename. A dialog quoting a bare version number is a client with no bundle.
+
+**What this does not explain (verified 2026-08-05).** A dialog quoting a bare
+version number is *not* by itself evidence that `_jb()` failed. Observed with the
+keeper reporting `at-ideal` and the bundle inode-correct:
+
+```
+30699  ~/.local/bin/claude daemon run ...                 (launchd-rooted)
+  └─ 30721  ClaudeCode.app/…/claude --bg-pty-host … -- versions/2.1.222 …
+       └─ 30826  versions/2.1.222 --session-id …          ← disclaims here
+```
+
+The daemon runs its pty host **from the bundle**, then passes the session process
+its `versions/<version>` path as literal argv; that session is the one that
+disclaims, so it becomes its own privacy client regardless of the bundle's state.
+Four of five live processes ran from the versioned path. The argv is composed
+inside the vendor binary, so nothing outside it redirects the session onto the
+bundled path — this is an upstream defect, and the keeper below is a precondition
+for the stable identity, not a cure for per-version prompts.
+
+`_jb()` returns early when the hardlink already carries the running binary's
+inode, skipping the `unlink`/`link` pair that concurrent session starts can
+interleave into an `EEXIST`. `scripts/claude-identity-bundle.py` keeps the bundle
+present and inode-correct so every start takes that early return; sensor `0g8d`
+(`LIMEN_CLAUDE_IDENTITY_BUNDLE`) runs it each beat. The keeper writes exactly the
+vendor's own bytes, is idempotent, and never signs, never edits TCC, and never
+deletes a version — so more than one runnable version in the store stays a
+**reported** race risk rather than a repaired one.
+
 ## One supported App Management transaction
 
 The transaction is deliberately narrow:
