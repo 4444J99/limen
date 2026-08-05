@@ -597,6 +597,25 @@ def _load_json(path: Path) -> Any:
         return None
 
 
+def _delivery_ledger_configured() -> bool:
+    """Whether a canonical delivery ledger is actually wired up.
+
+    ``LIMEN_DELIVERY_RECEIPTS`` is optional by design, but when it is unset
+    ``_canonical_delivery_rows()`` returns ``[]`` — and an empty ledger is then
+    counted as *zero confirmations*, which is a measurement the coordinator never
+    made. The two are not the same fact, and conflating them is what makes the daily
+    shortage permanent: ``confirmed`` can never rise, so ``status`` is ``blocked`` on
+    every run no matter how many applications genuinely succeeded.
+
+    That is an exit condition no amount of retrying can satisfy. On 2026-08-04/05 an
+    agent retried it for 27 hours straight and exhausted its entire quota. An
+    unreachable predicate must announce itself as a configuration defect, not
+    masquerade as a shortfall of work.
+    """
+
+    return bool(os.environ.get(DELIVERY_RECEIPT_ENV))
+
+
 def _canonical_delivery_rows() -> list[dict[str, Any]]:
     """Read the one provider-owned delivery ledger.
 
@@ -731,20 +750,38 @@ def _application_summary(
     pipeline_census = _application_pipeline_census()
     confirmed = len(confirmed_rows)
     eligible = max(qualified, staged)
+    ledger_configured = _delivery_ledger_configured()
     shortage_reason: str | None
-    if eligible < DAILY_APPLICATION_TARGET:
+    if not ledger_configured:
+        # Confirmations are UNMEASURED, not zero. Reporting a shortage here would
+        # invite retry against a predicate that cannot move.
+        shortage = 0
+        shortage_reason = None
+    elif eligible < DAILY_APPLICATION_TARGET:
         shortage = DAILY_APPLICATION_TARGET - eligible
         shortage_reason = "fewer than three live, nonduplicate eligible roles were verified"
     else:
         shortage = max(0, DAILY_APPLICATION_TARGET - confirmed)
         shortage_reason = "provider confirmation evidence is below the daily target" if shortage else None
     blockers: list[str] = []
+    if not ledger_configured:
+        blockers.append(
+            f"delivery receipt ledger is not configured ({DELIVERY_RECEIPT_ENV}) — "
+            "confirmation counts are unmeasured, not zero; retrying cannot change this"
+        )
     attempted = sum(1 for row in current_rows if row.get("state") in {"attempted", "delivered"})
     ambiguous = sum(1 for row in current_rows if row.get("state") == "attempted")
     blocked_receipts = sum(1 for row in current_rows if row.get("state") == "blocked")
     superseded = sum(1 for row in current_rows if row.get("state") == "superseded")
     if (submitted or attempted) and not confirmed:
-        blockers.append("application engine reported submitted, but no portal/mailbox confirmation receipt was found")
+        # Never suppressed: an engine claiming submissions it cannot evidence is the
+        # fabrication guard. Only the stated REASON changes, so that "we looked and
+        # found none" is not confused with "there was nowhere to look".
+        blockers.append(
+            "application engine reported submitted, but the confirmation receipt ledger is not configured"
+            if not ledger_configured
+            else "application engine reported submitted, but no portal/mailbox confirmation receipt was found"
+        )
     if ambiguous:
         blockers.append("ambiguous application attempts are retry-locked until provider state is reconciled")
     if summary.get("notes"):
@@ -774,6 +811,9 @@ def _application_summary(
         ],
         "historical_reconciliation": pipeline_census,
         "current_receipt_count": len(current_rows),
+        # Lets a caller tell "we counted zero" from "we could not count" without
+        # parsing prose, so a scheduler never retries an unreachable predicate.
+        "confirmation_measured": ledger_configured,
     }
 
 

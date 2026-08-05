@@ -179,11 +179,30 @@ def _launch(orchestrator: Path, py: str, phases: list[str]) -> None:
     )
 
 
-def _last_result() -> dict | None:
+def _last_result() -> tuple[dict | None, str | None]:
+    """Return ``(result, defect)`` for the last completed cycle.
+
+    Collapsing "no file" and "unreadable file" into a bare ``None`` made a CORRUPT
+    result indistinguishable from a cycle that has simply never run: both produced an
+    all-zero summary and the reassuring note "no completed cycle yet". On 2026-08-05
+    ``funnel-last-result.json`` held the literal five-byte string ``test``; every
+    subsequent read reported zero sourced, zero staged, zero submitted, and nothing
+    anywhere said the state file was garbage.
+
+    A silent zero is the worst possible reading of a broken sensor, because it is
+    indistinguishable from a true zero. Absence stays quiet; corruption is named.
+    """
     try:
-        return json.loads(RESULT.read_text())
-    except (OSError, ValueError):
-        return None
+        raw = RESULT.read_text()
+    except OSError:
+        return None, None  # genuinely absent — the pre-first-cycle state, not a defect
+    try:
+        value = json.loads(raw)
+    except ValueError:
+        return None, f"last-cycle result is unreadable ({RESULT.name}) — counts below are NOT a true zero"
+    if not isinstance(value, dict):
+        return None, f"last-cycle result is not an object ({RESULT.name}) — counts below are NOT a true zero"
+    return value, None
 
 
 def _summary(
@@ -315,10 +334,15 @@ def run(*, wait: bool = False) -> dict:
             "&& python3 -m venv .venv && .venv/bin/pip install -e . "
             "(or set LIMEN_APPLICATION_PIPELINE_PYTHON)"
         )
-        return _summary(_last_result(), False, False, notes, cycle_completed=False)
+        stale, stale_defect = _last_result()
+        if stale_defect:
+            notes.append(stale_defect)
+        return _summary(stale, False, False, notes, cycle_completed=False)
 
     armed = os.environ.get("LIMEN_APPLY_FIRE") == "1"
-    last = _last_result()
+    last, last_defect = _last_result()
+    if last_defect:
+        notes.append(last_defect)
     state, pid, age = _lock_state()
     if state == "running":
         notes.append(f"cycle already running (pid {pid}, {age}s) — not relaunched")
@@ -345,7 +369,7 @@ def run(*, wait: bool = False) -> dict:
         )
     else:
         notes.append("apply disarmed — staged only, nothing submitted; arm via lever L-APPLY-FIRE")
-    if last is None:
+    if last is None and not last_defect:
         notes.append("no completed cycle yet — counts populate after the first cycle finishes")
     return _summary(last, armed, True, notes, cycle_completed=False)
 
