@@ -9,11 +9,11 @@
   },
   "issue": 1703,
   "lever_id": "L-DOMUS-AGENT-HOST-TCC",
-  "mode": "probe",
+  "mode": "beat",
   "next_commands": [
-    "python3 scripts/tcc-track-c-closeout.py --beat",
-    "python3 scripts/tcc-track-c-closeout.py --run",
-    "# wait until Claude Code > 2.1.220; do not discharge L-DOMUS-AGENT-HOST-TCC on no-op"
+    "python3 scripts/tcc-track-c-closeout.py --finalize --write-lever",
+    "gh issue close 1703 --repo organvm/limen --comment 'Track C met: vendor version advanced; normalized TCC inventory green. Receipt: docs/receipts/tcc-track-c-1703/'",
+    "python3 scripts/tcc-identity-audit.py --json --strict"
   ],
   "normalized_inventory": {
     "active_leaks": 0,
@@ -40,9 +40,9 @@
     "unrelated_grants_preserved": true,
     "visible_app_management_path_rows": 0
   },
-  "observed_at": "2026-08-04T21:55:16Z",
+  "observed_at": "2026-08-05T13:37:18Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260804T215516Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T133718Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": {
@@ -77,17 +77,15 @@
   "schema": "limen.tcc_track_c_closeout.v1",
   "track_c": {
     "cutover_baseline_version": "2.1.220",
-    "failure_classes": [
-      "noop_update_proof_missing"
-    ],
-    "met": false,
-    "met_reason": "Blocked cleanly: Claude Code remains at 2.1.220 (cutover baseline 2.1.220); non-noop vendor update proof is missing. No-op 'up to date' is wait evidence, never completion.",
-    "non_noop": false,
+    "failure_classes": [],
+    "met": true,
+    "met_reason": "Track C met: Claude Code advanced beyond 2.1.220 to 2.1.222 and normalized inventory is green.",
+    "non_noop": true,
     "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline, then normalized v2 tcc-identity-audit predicates must remain green.",
-    "status": "external_vendor_wait",
+    "status": "met",
     "update_attempted": false,
-    "version_after": "2.1.220",
-    "version_before": "2.1.220"
+    "version_after": "2.1.222",
+    "version_before": "2.1.222"
   },
   "update": null,
   "version_probe_after": {
@@ -100,8 +98,8 @@
     ],
     "exit_code": 0,
     "ok": true,
-    "output": "2.1.220 (Claude Code)",
-    "version": "2.1.220"
+    "output": "2.1.222 (Claude Code)",
+    "version": "2.1.222"
   },
   "version_probe_before": {
     "command": [
@@ -113,7 +111,7 @@
     ],
     "exit_code": 0,
     "ok": true,
-    "output": "2.1.220 (Claude Code)",
-    "version": "2.1.220"
+    "output": "2.1.222 (Claude Code)",
+    "version": "2.1.222"
   }
 }

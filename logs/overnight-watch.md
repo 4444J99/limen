@@ -1,39 +1,40 @@
 # Overnight Watch
 
 - Status: `alert`
-- Updated: `2026-07-18T08:13:08+00:00`
-- Log age: `30` seconds
+- Updated: `2026-08-05T13:59:34+00:00`
+- Log age: `117` seconds
 - Launchd: `active`
-- Latest tick: `tick emitted: 2026-07-18T08:03:46+00:00 total=2668 open=402 spent=4/600`
-- Latest async: `async: reaped 0 dead · harvested 0 · 0 still running · launched 0`
-- Stale tick samples: `0`
+- Latest tick: `None`
+- Latest async: `None`
+- Stale tick samples: `918`
 - Active workers: `0`
-- Heartbeat child processes: `2`
+- Heartbeat child processes: `1`
 
 ## Overnight Summary
 
 - Launched: `0`; harvested: `0`; reaped: `0`.
 - Done: `0`; failed: `0`; no-op: `0`; timed out: `0`.
-- Stale handoff: `false`.
+- Stale handoff: `true`.
 - Gate action: `stop_no_durable_progress` (exit `20`).
 - Dispatch allowed: `false`.
 - Lane switch: `blocked`; owner packet: `none`; tickets: `0`.
-- Lane blocker: `overnight-owner-packets-gated`.
-- Next command: `python3 scripts/always-working.py --write`.
+- Lane blocker: `overnight-handoff-blocked`.
+- Next command: `python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check`.
 
 ## Gate Checks
 
-- Handoff refresh: `0`; check: `0`.
+- Handoff refresh: `0`; check: `1`.
 - Value gate: `20`; action: `stop_no_durable_progress`.
-- Dispatch control: all bounded owner packets are closed by current capability, lifecycle, owner gate(s).
+- Dispatch control: handoff relay is not fresh enough to transfer one owner packet.
 - Selected owner: `organvm/limen`.
 
 ## Throughput
 
-- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0`).
+- Recent per-60min completions: `None` (derived floor `None`, median `None`).
 - Below floor: `false`; suppressed: `no`.
-  - child `65112` `R` `00:30` `/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python -m limen release-stale --agent jules --hours 24 --apply`
-  - child `65113` `S` `00:30` `tail -1`
+  - child `2720` `S` `02-02:43:35` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
 
 ## WATCH_ALERT
-- `overnight-lane-switch-blocked`: blocker=overnight-owner-packets-gated owner=organvm/limen reason=all bounded owner packets are closed by current capability, lifecycle, owner gate(s)
+- `heartbeat-tick-missing`: no tick emitted line found in recent heartbeat log
+- `handoff-relay-stale`: handoff-relay --check: FAIL — provider headroom stale (4363m > 90m)
+- `overnight-lane-switch-blocked`: blocker=overnight-handoff-blocked owner=organvm/limen reason=handoff relay is not fresh enough to transfer one owner packet
