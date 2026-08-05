@@ -448,3 +448,71 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   consistency and NONE that scores whether the declared thing is doing anything. This ledger's own
   **Distance** field is hand-maintained prose; DIVRNAL's evening pass is its executable form. Do
   not start that generalization until a live day has proven the scoring rule on one registry.
+
+### IF-AGENT-IDENTITY — protected-resource identity is a stable bundle, not a rotating path
+- **Ideal form:** every TCC grant the fleet depends on is held by `org.organvm.domus.agent-host`,
+  a bundle whose identity survives vendor version rotation — so a Claude Code update mints no new
+  client and re-prompts for nothing. The count of rotating-identity paths holding live grants is
+  zero **across every service**, and that number is *measured*: a run that could not read the TCC
+  database reports `unmeasured`, never a clean bill of health.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** the architecture shipped 2026-07-31 (`docs/architecture/tcc-stable-agent-host.md`);
+  the host is valid and signed under a fixed-host requirement, and all ten configured GUI/MCP
+  ingresses route through `domus-agent-host ensure --`. What was missing was the *measurement*, and
+  on 2026-08-05 the gap produced a false discharge of `L-DOMUS-AGENT-HOST-TCC`. Three defects, all
+  in the instrument rather than the architecture:
+  1. **The update guard was blind to the update switch.** `inventory_green()` refuses a green when
+     `automatic_updates_disabled`, but `_disabled_updates()` scanned only `DISABLE_*` env vars,
+     `settings.json` `env` blocks and `~/.limen.env` — never `autoUpdates` in `.claude.json`. That
+     field was `false` in **both** config roots (`~/.claude.json` and the `CLAUDE_CONFIG_DIR` copy
+     the live session actually reads), so the version could not advance, the "survives a vendor
+     update" proof could never be exercised, and the audit printed `automatic updates: enabled`
+     while they were off. The lever was discharged pinned to `version: 2.1.222`.
+  2. **Unmeasured rendered as measured, in both directions.** With the TCC database unreadable
+     `clients` is empty, which produced one false green (`active_leaks` ok/0 — asserting zero leaks
+     having observed nothing) and two false reds (`stable_host_app_management_grant_missing`,
+     `unrelated_app_management_grants_changed` — naming defects nobody looked for). The codebase
+     already had the right instinct once: `stable_host_tcc_identity_missing` was guarded on
+     `database_error is None`. It simply was not applied to its four siblings.
+  3. **One service was judged; a different one was prompting.** `APP_MANAGEMENT_SERVICE` was the
+     only service any predicate filtered on, while the operator's dialog reads
+     `"<version>" would like to access files in your Documents folder` —
+     `kTCCServiceSystemPolicyDocumentsFolder` against a path client under
+     `~/.local/share/claude/versions/<version>/`. The audit already *read* those rows and already
+     knew the path shape (`MANAGED_CLIENT_PATTERNS` → `claude_version`); nothing judged them. Track
+     C could be perfectly green while every update re-prompted.
+  All three are closed by executable contract in `cli/tests/test_tcc_identity_audit.py`, including
+  the exact operator case: App Management spotless, `rotating_identity_active_grants` red.
+- **A concurrent lane reached the opposite verdict, and the disagreement is instructive.** PR #1833
+  (a parallel Fable 5 session, landed while this work was in flight) fixed a **real and separate**
+  defect: `latest_met_receipt()` reverse-globbed and selected `closeout-latest.json`, the mutable
+  beat-rewritten alias, so the lever's own discharge pointer flipped to `blocked` when the inventory
+  regressed at 16:53Z. Pinning discharge evidence to an immutable timestamped receipt is correct and
+  is **retained** — the test now guards the *retracted* discharge with it. But #1833 concluded the
+  discharge stood, on the premise that "Track C's formula was met on immutable evidence 13:30Z–16:08Z."
+  That premise is falsifiable and false: the pinned receipt
+  (`closeout-20260805T133718Z.json`) records `normalized_inventory.automatic_updates_enabled: true`
+  while `autoUpdates` was `false` in both config roots — so the guard passed on an unread field, and
+  the same receipt records `update_attempted: false` with `version_before == version_after`.
+  `non_noop: true` only because the current version exceeds the 2.1.220 cutover baseline, never
+  because an update was observed. Defect 1 is upstream of the pin: no receipt, however immutable,
+  can carry a proof that was never exercised.
+- **#1833 also corroborates defect 3 empirically, and shows the sprawl reproducing itself.** It found
+  that grants attached to `versions/2.1.222` at 16:22Z (AppleEvents) and 17:07Z (Removable Volumes) —
+  *after* the 14:14Z discharge — and filed them as `L-TCC-VERSIONED-CLIENT-LEAK-2-1-222`. That is
+  exactly the class `rotating_identity_active_grants` now detects automatically, found by hand; and a
+  lever **named for a version** is the sprawl pattern migrating from the TCC database into the lever
+  registry. Routing the interactive lane through the host retires the pattern, not just the instance.
+- **Status:** PARTIAL — the measurement is honest now, and the probe is the status. The remaining
+  distance is real and in two parts: the interactive `claude` lane still resolves through
+  `~/.local/bin/claude` → `versions/<version>/` rather than through the host, and the host holds no
+  App Management grant yet (`L-DOMUS-AGENT-HOST-TCC`, the operator's one click — **once**, not once
+  per version).
+- **Owner:** Claude (the predicate) · the operator (the single grant).
+- **Why this row exists at all.** Its status previously lived in a hand-written `discharged:` field
+  in `his-hand-levers.json` carrying `"version": "2.1.222"` — a status pinned to a version, in a
+  field with nothing to check it. That is precisely the shape this registry exists to abolish
+  (*no row may carry a distance or a status; there is no field to lie in*). The lever now cites
+  this row and the probe decides. Precedent: the same defect class as the funnel's
+  `confirmed = 0`-from-an-unwired-ledger reported as a shortage — an unmeasured condition
+  reported as a measured one, in both cases discovered only because the operator got angry.
