@@ -138,6 +138,46 @@ reads the home file, so flipping only `~/.claude.json` leaves updates off where
 the session actually runs — the state in which the 2026-08-05 discharge of
 `L-DOMUS-AGENT-HOST-TCC` was produced against a version that could not advance.
 
+## What the host cannot hold: a disclaimed identity
+
+Claude Code re-execs itself once at startup with
+`process.execve(..., {macDisclaimResponsibility: true})` —
+`responsibility_spawnattrs_setdisclaim()` — guarded by `CLAUDE_BG_TCC_DISCLAIMED`
+so it happens exactly once. This **deliberately severs inherited TCC
+responsibility**, so a consent dialog names Claude Code rather than the terminal
+that launched it. It is a correct design, and it is absolute: no wrapper, host,
+or launcher can carry an identity across it. `domus-agent-host verify-lifetime`
+exits non-zero downstream of the re-exec, exactly as this document's own
+lifetime-pipe safeguard specifies. Do not read a process tree as evidence here —
+the host tracks detached descendants by inherited pipe, so `PPID` proves nothing;
+run the predicate.
+
+The host therefore owns the **fleet** identity — every committed `com.limen.*`
+LaunchAgent, the tracked GUI/MCP ingresses, dispatch boundaries — and never the
+interactive Claude Code session's own consent prompts. Those are decided by one
+expression in the vendor's code:
+
+```js
+let e = await _jb() ?? process.execPath;
+```
+
+`_jb()` materializes `<store>/ClaudeCode.app` (`CFBundleIdentifier`
+`com.anthropic.claude-code`) and hardlinks the running binary into it, so the
+disclaimed identity is a bundle that survives version rotation. It wraps `mkdir`,
+`writeFile`, `stat`, `unlink`, and `link` in a single bare `catch { return null }`;
+on any failure the identity falls back to `process.execPath` —
+`<store>/versions/<version>`, a new privacy client per update, named by its own
+filename. A dialog quoting a bare version number is that fallback, observed.
+
+`_jb()` returns early when the hardlink already carries the running binary's
+inode, skipping the `unlink`/`link` pair that concurrent session starts can
+interleave into an `EEXIST`. `scripts/claude-identity-bundle.py` keeps the bundle
+present and inode-correct so every start takes that early return; sensor `0g8d`
+(`LIMEN_CLAUDE_IDENTITY_BUNDLE`) runs it each beat. The keeper writes exactly the
+vendor's own bytes, is idempotent, and never signs, never edits TCC, and never
+deletes a version — so more than one runnable version in the store stays a
+**reported** race risk rather than a repaired one.
+
 ## One supported App Management transaction
 
 The transaction is deliberately narrow:
