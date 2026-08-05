@@ -232,17 +232,29 @@ def _summary(
 def _parse_json(stdout: str) -> dict | None:
     try:
         value = json.loads(stdout)
+        if isinstance(value, dict):
+            return value
     except json.JSONDecodeError:
-        value = None
-    if isinstance(value, dict):
-        return value
+        pass
+
+    # Extract JSON object bounded by outermost '{' and '}'
+    start = stdout.find("{")
+    end = stdout.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            value = json.loads(stdout[start : end + 1])
+            if isinstance(value, dict):
+                return value
+        except json.JSONDecodeError:
+            pass
+
     for line in reversed(stdout.splitlines()):
         try:
             value = json.loads(line)
+            if isinstance(value, dict):
+                return value
         except json.JSONDecodeError:
             continue
-        if isinstance(value, dict):
-            return value
     return None
 
 
