@@ -50,6 +50,27 @@ def _enabled(enabled: bool | None) -> bool:
     return os.environ.get("LIMEN_NOTIFY", "1") not in ("0", "false", "False")
 
 
+def _root_may_speak(root: Path | str) -> bool:
+    """Only the live organism reaches the phone.
+
+    2026-08-05: four "LIMEN · morning — ABSENT" notifications in one afternoon, all real
+    osascript pops, none from the live root. cli/tests calls diurnal's ``emit()`` directly
+    (bypassing main()'s has_body guard) against a pytest tmp root whose relief-state is
+    deleted with the root — so onset dedup can never dedupe, and every test run fires. The
+    per-caller convention (each test remembers LIMEN_NOTIFY=0) is exactly the kind of guard
+    a single omission defeats; this gates the EFFECTOR instead, at the one chokepoint every
+    notifier shares. Bookkeeping still writes for any root — only the osascript call is
+    withheld. Fail-open: if the predicate itself is unavailable, keep the loud path (the
+    live beat's escalations must not die of an import error).
+    """
+    try:
+        import _root
+
+        return bool(_root.has_body(Path(root))[0])
+    except Exception:
+        return True
+
+
 def notify_once(
     root: Path | str,
     key: str,
@@ -67,7 +88,7 @@ def notify_once(
         return False
     state[key] = {"first_seen": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "message": message[:300]}
     _save(root, state)
-    if _enabled(enabled):
+    if _enabled(enabled) and _root_may_speak(root):
         try:
             msg = message.replace('"', "'")
             ttl = title.replace('"', "'")

@@ -61,6 +61,10 @@ def _restore_os_environ(tmp_path, _stable_agent_host_fixture):
     os.environ.pop("LIMEN_CONDUCT_URL", None)
     os.environ.pop("LIMEN_CONDUCT_TOKEN", None)
     os.environ["LIMEN_CONDUCT_STATE"] = str(tmp_path / "conduct.sqlite3")
+    # Hermetic runs never reach the phone. _notify's body-gate already withholds osascript
+    # for non-organism roots; this belt keeps the suite silent even for a future notifier
+    # that bypasses _notify or a test handed an organism-shaped fixture root.
+    os.environ["LIMEN_NOTIFY"] = "0"
     # Test processes model the already-supervised runtime. Dedicated stable-host
     # tests pass explicit environment mappings to exercise first-entry behavior;
     # the rest of the suite must not depend on a machine-global app installation.
