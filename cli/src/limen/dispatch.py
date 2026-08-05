@@ -100,6 +100,7 @@ from limen.remote_execution import (
     verification_context_for_task,
 )
 from limen.model_selection import (  # the shared model vocabulary — also used by the non-bypassable `claude` shim
+    _BUILD_FROM_PLAN_CLASS,
     _CLAUDE_TIER_ORDER,
     _claude_fable_acceptance_present,
     _claude_fable_classes,
@@ -5983,8 +5984,12 @@ def _bump_tier(tier: str, task: Task | None) -> str:
         return tier
     i = _CLAUDE_TIER_ORDER.index(tier)
     bumped = _CLAUDE_TIER_ORDER[min(i + 1, len(_CLAUDE_TIER_ORDER) - 1)]
-    if bumped == "fable" and not (
-        os.environ.get("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE") == "1" and _claude_fable_acceptance_present()
+    if bumped == "fable" and (
+        # Building on Fable is prohibited (docs/fable-allotment.md) — the earned bump may exceed
+        # the build cap up to opus (a DETECTED failure is where the cheap-tier rationale expires),
+        # but never onto the plan-only rung.
+        _BUILD_FROM_PLAN_CLASS in _task_classes(task)
+        or not (os.environ.get("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE") == "1" and _claude_fable_acceptance_present())
     ):
         return "opus"
     return bumped

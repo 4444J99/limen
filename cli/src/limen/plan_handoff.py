@@ -10,12 +10,15 @@ from typing import Any, Mapping, Sequence
 
 from limen import census
 from limen.capacity import CapacityRow, capacity_census, canonical_agent
+from limen.model_selection import _BUILD_FROM_PLAN_CLASS, _PLAN_ONLY_CLASS
 from limen.models import Task
 
 
 PLAN_RECEIPT_SCHEMA = "limen.plan_receipt.v1"
-PLAN_ONLY_LABEL = "mode:plan-only"
-BUILD_FROM_PLAN_LABEL = "mode:build-from-plan"
+# The mode-label vocabulary has ONE home — model_selection (the ladder consumes it for the
+# plan-floor/build-cap phase rules); these public names stay for existing importers.
+PLAN_ONLY_LABEL = _PLAN_ONLY_CLASS
+BUILD_FROM_PLAN_LABEL = _BUILD_FROM_PLAN_CLASS
 DEFAULT_BUILDER_CAPABILITIES = ("code", "execute", "local-worktree")
 MAX_PLAN_CHARS = 262_144
 _PLAN_CONTEXT_MARKER = "--- VALIDATED PLAN RECEIPT ---"

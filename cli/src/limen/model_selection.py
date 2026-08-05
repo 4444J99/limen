@@ -42,6 +42,22 @@ _CLAUDE_FABLE_CLASSES_DEFAULT = (
     "final-canonical-decision",
 )
 
+# Phase (mode:*) labels — planning is the Opus-reserved phase; building is capped cheap
+# (docs/fable-allotment.md: "Fable plans, cheaper tiers build"). plan_handoff.py imports these
+# two so the label vocabulary has ONE home; this module is pure-stdlib and imports nothing,
+# so the dependency direction is legal. Deliberately NOT members of _CLAUDE_OPUS_CLASSES_DEFAULT:
+# that set is work-DOMAIN vocabulary (check-session-streams gate G validates job_class against
+# it), and an LIMEN_CLAUDE_OPUS_CLASSES override must not be able to drop the phase guarantee.
+_PLAN_ONLY_CLASS = "mode:plan-only"
+_BUILD_FROM_PLAN_CLASS = "mode:build-from-plan"
+
+
+def _build_max_tier() -> str:
+    """The CEILING for mode:build-from-plan work. Env-tunable (LIMEN_CLAUDE_BUILD_MAX_TIER,
+    default sonnet) but hard-capped at opus: building on Fable is prohibited by doctrine —
+    no env value can grant it."""
+    return _cap_tier(os.environ.get("LIMEN_CLAUDE_BUILD_MAX_TIER", "sonnet"), "opus")
+
 
 def _claude_opus_classes() -> set[str]:
     """The reserved-Opus class set — env override (LIMEN_CLAUDE_OPUS_CLASSES, comma-separated)
@@ -194,16 +210,34 @@ def tier_for_classes(
     reaching for them: ``waste_classes`` (ledger-DISCOVERED) and ``overrides``
     (``logs/model-tiers.json``). ``dispatch`` keeps its per-task pin and its ``Task`` plumbing and
     calls this for the sort, so there is exactly one ladder, not a second copy.
+
+    Phase rules (docs/fable-allotment.md — "Fable plans, cheaper tiers build"):
+    ``mode:plan-only`` floors the sort at opus (Fable still needs its acceptance receipt; an
+    un-accepted fable class on PLANNING lands on opus, the plan rung, not the cheap fallback).
+    ``mode:build-from-plan`` caps the result at :func:`_build_max_tier` (default sonnet, hard
+    cap opus) — cap-wins unconditionally, even over plan-only residue or an ACCEPTED fable
+    class, because build authorization means execution and building above the ceiling is the
+    doctrine violation this sort exists to prevent.
     """
     wanted = set(classes)
     override = dict(overrides or {})
+    plan_only = _PLAN_ONLY_CLASS in wanted
     if wanted & (_claude_fable_classes() | set(override.get("fable") or [])):
-        return _fable_or_downgrade() if _claude_fable_acceptance_present() else _fable_fallback_tier()
-    if wanted & (_claude_opus_classes() | set(override.get("opus") or [])):
-        return "opus"
-    if wanted & (set(waste_classes) | set(override.get("sonnet") or [])):
-        return "sonnet"
-    return "haiku"
+        if _claude_fable_acceptance_present():
+            tier = _fable_or_downgrade()
+        else:
+            # Un-accepted fable-class PLANNING still belongs on the plan-phase rung; the cheap
+            # fallback is for build-ish work that overstated its class.
+            tier = "opus" if plan_only else _fable_fallback_tier()
+    elif plan_only or wanted & (_claude_opus_classes() | set(override.get("opus") or [])):
+        tier = "opus"
+    elif wanted & (set(waste_classes) | set(override.get("sonnet") or [])):
+        tier = "sonnet"
+    else:
+        tier = "haiku"
+    if _BUILD_FROM_PLAN_CLASS in wanted:
+        tier = _cap_tier(tier, _build_max_tier())  # cap-wins, unconditionally
+    return tier
 
 
 def _claude_model_is_fable(model: str | None) -> bool:

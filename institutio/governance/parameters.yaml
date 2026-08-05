@@ -2786,6 +2786,24 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Emergency override for claude-workflow-guard's Fable fan-out check. Default 0 enforces one bounded accepted Fable objective instead of broad Fable worker pools."
+  LIMEN_CLAUDE_BUILD_MAX_TIER:
+    default: "sonnet"
+    env: LIMEN_CLAUDE_BUILD_MAX_TIER
+    self_update: none
+    owner: arms-agents
+    note: "Ceiling for mode:build-from-plan tier derivation (docs/fable-allotment.md: Fable plans, cheaper tiers build). Default Sonnet caps residual reserved classes on builder tasks; the value itself is hard-capped at Opus in model_selection._build_max_tier, so no setting can grant Fable for build work. Derived tiers only — a manual per-task claude_tier pin stays sovereign."
+  LIMEN_ALLOW_FABLE_BUILD:
+    default: "0"
+    env: LIMEN_ALLOW_FABLE_BUILD
+    self_update: none
+    owner: arms-agents
+    note: "Emergency override for claude-workflow-guard's building-on-Fable check (mutation tool calls on a Fable-model turn). Default 0 enforces the plan-only Fable doctrine; evidence is still reported when waived."
+  LIMEN_ALLOW_EXPENSIVE_BUILD:
+    default: "0"
+    env: LIMEN_ALLOW_EXPENSIVE_BUILD
+    self_update: none
+    owner: arms-agents
+    note: "Emergency override for claude-workflow-guard's workflow-lane check that mode:build-from-plan work ran on an Opus/Fable model. Default 0 keeps plan fulfillment on the capped cheap tiers (LIMEN_CLAUDE_BUILD_MAX_TIER)."
   LIMEN_MAX_FABLE_SESSION_TOKENS:
     default: "1000000"
     env: LIMEN_MAX_FABLE_SESSION_TOKENS

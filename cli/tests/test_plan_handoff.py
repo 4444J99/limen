@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 import limen.dispatch as D
+import limen.model_selection as M
 from limen import census
 from limen.models import BudgetTrack, Task
 from limen.plan_handoff import (
@@ -220,3 +221,28 @@ def test_plan_only_prompt_forbids_mutation_and_pr_creation() -> None:
     assert "PLAN-ONLY AUTHORITY" in prompt
     assert "Do not edit, create, delete" in prompt
     assert "do not commit, push, open a PR" in prompt
+
+
+def test_mode_labels_have_one_source() -> None:
+    """The mode-label vocabulary lives in model_selection (the ladder consumes it for the
+    plan-floor/build-cap phase rules); plan_handoff re-exports, never re-spells."""
+    assert PLAN_ONLY_LABEL is M._PLAN_ONLY_CLASS
+    assert BUILD_FROM_PLAN_LABEL is M._BUILD_FROM_PLAN_CLASS
+
+
+def test_builder_task_from_canon_plan_resolves_within_build_cap(tmp_path, monkeypatch) -> None:
+    """End-to-end phase-tier proof: a canon-labelled plan task derives opus (the plan rung), and
+    the builder task minted from its receipt — canon residue and all — derives sonnet (the build
+    cap), closing the residual-class opus leak."""
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    for key in ("LIMEN_CLAUDE_MODEL", "LIMEN_CLAUDE_BUILD_MAX_TIER", "LIMEN_FABLE_ACCEPTANCE"):
+        monkeypatch.delenv(key, raising=False)
+    plan_task = _task(labels=[PLAN_ONLY_LABEL, "canon"])
+    assert D._claude_tier_for(plan_task) == "opus"
+
+    receipt = build_plan_receipt(plan_task, "1. Patch one module.\n2. Run its tests.", planner_agent="claude")
+    builder = builder_task_from_receipt(plan_task, receipt, builder="claude")
+
+    assert BUILD_FROM_PLAN_LABEL in builder.labels
+    assert "canon" in builder.labels  # the residue that used to resolve opus
+    assert D._claude_tier_for(builder) == "sonnet"

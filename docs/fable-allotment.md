@@ -3,10 +3,23 @@
 ## Primary control: Fable plans, cheaper tiers build
 
 **Fable is PLAN-ONLY.** Its role is planning + handoff: it does the deep analysis, emits a build
-packet into an isolated worktree, and hands off to a cheaper tier (Opus/Sonnet/Haiku) that builds.
-**Building on Fable is prohibited** — no coding grind, no coverage sweeps, no PR babysitting, no
-detached async dispatch on the Fable rung. A Fable session's deliverable is a *plan a non-Fable
-builder can execute*, not the implementation itself.
+packet into an isolated worktree, and hands off to a cheaper build tier (Sonnet/Haiku by default —
+the `mode:build-from-plan` ceiling is `LIMEN_CLAUDE_BUILD_MAX_TIER`, default Sonnet, hard-capped at
+Opus; Fable is unreachable for build work under any env value). **Building on Fable is prohibited**
+— no coding grind, no coverage sweeps, no PR babysitting, no detached async dispatch on the Fable
+rung. A Fable session's deliverable is a *plan a non-Fable builder can execute*, not the
+implementation itself.
+
+The phase split is enforced in the one ladder (`model_selection.tier_for_classes`), not by memory:
+`mode:plan-only` **derives Opus by default** (planning is the Opus-reserved phase; Fable still
+requires this document's written acceptance receipt), and `mode:build-from-plan` **caps** the
+derived tier — even over residual reserved classes on a builder task, and even over an accepted
+Fable class. The retry bump (`dispatch._bump_tier`) may escalate a *failed* build one rung up to
+Opus (a detected failure is where the cheap-tier rationale expires) but never onto Fable. A manual
+per-task `claude_tier` pin stays sovereign by policy — builder tasks are minted with the pin
+cleared, so a pin is operator-deliberate — and `scripts/claude-workflow-guard.py` audits the
+residue: mutation tools on a Fable turn (`building on Fable`, escape `LIMEN_ALLOW_FABLE_BUILD`)
+and build-from-plan workflows on an expensive tier (escape `LIMEN_ALLOW_EXPENSIVE_BUILD`).
 
 This role separation is the root control (Fable at ~111× Opus per-token cost cannot be an
 implementation tier). The weekly runtime cap below is the **backstop / safety net**, not the primary

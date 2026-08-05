@@ -91,6 +91,9 @@ PYTHONPATH="$PYTHONPATH_VALUE" python3 scripts/tests/worktree-pr-receipts.test.p
 step "Verify the trusted-Bash hook decision matrix (permission-hang killer, hermetic)"
 bash scripts/tests/allow-trusted-cd-git.test.sh
 
+step "Verify the phase-tier law (Fable plans, cheaper tiers build — guard audit lanes, hermetic)"
+python3 scripts/tests/claude-workflow-guard-phase.test.py
+
 step "Verify the resolver selection fixtures (verify.py implicates exactly the registered gates)"
 bash scripts/tests/verify-resolver.test.sh
 
