@@ -14,6 +14,9 @@ pr-status.json
 /.agent-runtime/
 .runtime/
 
+# Local MCP server runtime state (circuit breaker + task-loop counters)
+.mcp_state.json
+
 # Build and tooling artifacts
 .coverage
 error.log
