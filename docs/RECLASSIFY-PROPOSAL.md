@@ -1,12 +1,12 @@
-# Reclassify needs_human — 2026-07-14
+# Reclassify needs_human — 2026-08-05
 
-`needs_human` holds **98** tasks. By signal (not by hand-picked id) they split into:
+`needs_human` holds **109** tasks. By signal (not by hand-picked id) they split into:
 
-- **KEEP — 84** genuinely need your hand (secret / account / admin / merge gate / irreversible cutover / Cloudflare-credential-gated deploy).
+- **KEEP — 94** genuinely need your hand (secret / account / admin / merge gate / irreversible cutover / Cloudflare-credential-gated deploy).
 - **CHRONIC — 0** churned ≥3 reopens with zero PRs and carry no human atom — fleet debt. `--apply` parks these `failed_blocked` (honest terminal state; flipping them to `open` is the ping-pong that refills this queue). Reversible.
 - **FLIP — 0** are fleet-buildable code/docs parked behind a false gate. `--apply` flips these to `open` so the fleet does them. Reversible.
-- **STALE — 1** precondition already met — recommend close, don't re-queue.
-- **REVIEW — 13** one quick triage call (skip vs *kill* — kill is irreversible, never auto-flipped).
+- **STALE — 0** precondition already met — recommend close, don't re-queue.
+- **REVIEW — 15** one quick triage call (skip vs *kill* — kill is irreversible, never auto-flipped).
 
 > `--apply` changes ONLY the FLIP and CHRONIC buckets; KEEP / STALE / REVIEW are never auto-touched. Both flips are status-only + a provenance label — fully reversible.
 
@@ -24,12 +24,12 @@
 
 | id | type | repo | title |
 |---|---|---|---|
-| `ASK-7-dispatch-drain-open` | code | — | Live-dispatch across all 6 vendors to clear the 255 open tasks; keep o |
 
 ## REVIEW — irreversible/ambiguous (skip-vs-kill) — one human triage pass
 
 | id | type | repo | title |
 |---|---|---|---|
+| `ASK-7-dispatch-drain-open` | code | — | Live-dispatch across all 6 vendors to clear the 255 open tasks; keep o |
 | `ASK-quicken-d2l` | ops | — | the D2L go-live click + cadence confirm (your login + judgment) |
 | `ASK-quicken-delete` | ops | — | approve the irreversible delete/clear (archived reversibly; purge is y |
 | `ORG-financial-organ-deepen-0703` | content | organvm/limen | Deepen the financial organ toward a usable institution |
@@ -43,6 +43,7 @@
 | `ASK-quicken-escalate-0bd3a5ed` | ops | — | finish stalled session 'Design movement ontology and workout composi'  |
 | `SOVEREIGN-0708-GPG-UID` | ops | organvm/limen | Add the later recourse.email UID to the current GPG identity |
 | `ASK-quicken-escalate-9feaa902` | ops | organvm/limen | finish stalled session 'Complete chat tasks with appropriate model a'  |
+| `ASK-quicken-escalate-9c934372` | ops | organvm/limen | finish stalled session 'Complete chat tasks with appropriate model a'  |
 
 ## KEEP — real human atom (secret/account/admin/merge-gate/cutover/credential-gated deploy)
 
@@ -86,13 +87,9 @@
 | `GH-organvm-limen-254` | code | organvm/limen | needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth |
 | `GH-organvm-limen-253` | code | organvm/limen | needs-human (L-REVENUE-ACCT): Revenue first-dollar accounts |
 | `ASK-quicken-credential` | ops | — | land the credential/secret (your account/identity) |
-| `REV-organvm-a-i-chat--exporter-revenue-funding-0628` | code | organvm/a-i-chat--exporter | Stage the donation funnel for ChatGPT Exporter |
 | `REV-organvm-public-record-data-scrapper-revenue-ship-0628` | code | organvm/public-record-data-scrapper | Drive Public Record Data Scraper to deploy-ready |
-| `REV-organvm-a-i-chat--exporter-revenue-pro-tier-0628` | code | organvm/a-i-chat--exporter | Make the Pro-tier checkout merge-ready for ChatGPT Exporter |
 | `REV-organvm-universal-mail--automation-revenue-readiness-0628` | code | organvm/universal-mail--automation | First-paying-customer readiness pass on Universal Mail Automation |
 | `REV-organvm-the-invisible-ledger-revenue-readiness-0628` | code | organvm/the-invisible-ledger | First-paying-customer readiness pass on The Invisible Ledger |
-| `REV-organvm-a-i-chat--exporter-revenue-landing-0628` | code | organvm/a-i-chat--exporter | Ship a landing page for ChatGPT Exporter |
-| `REV-organvm-a-i-chat--exporter-revenue-launch-post-0628` | code | organvm/a-i-chat--exporter | Draft the build-in-public launch post for ChatGPT Exporter |
 | `REV-organvm-public-record-data-scrapper-revenue-readiness-0629` | code | organvm/public-record-data-scrapper | First-paying-customer readiness pass on Public Record Data Scraper |
 | `REV-organvm-universal-mail--automation-revenue-ship-0630` | code | organvm/universal-mail--automation | Drive Universal Mail Automation to deploy-ready |
 | `REV-organvm-the-invisible-ledger-revenue-ship-0630` | code | organvm/the-invisible-ledger | Drive The Invisible Ledger to deploy-ready |
@@ -132,6 +129,20 @@
 | `GH-organvm-limen-910` | code | organvm/limen | needs-human (L-LIMENBOT-INSTALL): Create + install the limen[bot] GitH |
 | `SOVEREIGN-0708-GPG-ESCROW` | ops | organvm/limen | Escrow the current GPG private material off-machine |
 | `SOVEREIGN-0708-GPG-DISCOVERABILITY` | ops | organvm/limen | Publish the current GPG public key to a discoverable surface |
+| `SUBSTRATE-REMOTE-EXECUTOR-0712` | code | organvm/limen | Build provider-neutral cloud execution and terminal harvesting |
+| `GH-organvm-limen-1057` | code | organvm/limen | needs-human (L-DAILY-ENGINE-PHONE-LEAVES): Install the two daily-engin |
+| `GH-organvm-limen-1053` | code | organvm/limen | needs-human (L-REMOTE-REAP-APPLY): Arm the remote-branch reaper's seco |
+| `GH-organvm-limen-1046` | code | organvm/limen | needs-human (L-LAUNCHAGENT-HEAL): Arm the launch-agent self-heal effec |
+| `GH-organvm-limen-1090` | code | organvm/limen | needs-human (L-REVENUE-ACCT): Create Ko-fi account + Lemon Squeezy sto |
+| `GH-organvm-limen-1087` | code | organvm/limen | needs-human (L-BACKBLAZE-EXCLUDE): Backblaze exclusions — one Settings |
+| `GH-organvm-limen-1202` | code | organvm/limen | needs-human (L-ORG-TEAM-UPGRADE): Upgrade the `organvm` org to Team (~ |
+| `GH-organvm-limen-1191` | code | organvm/limen | needs-human (L-SEO-METADATA): Arm the repo-metadata effector |
+| `GH-organvm-limen-1190` | code | organvm/limen | needs-human (L-RSA-OFFBOARD): Offboard organvm/render-second-amendment |
+| `GH-organvm-limen-1189` | code | organvm/limen | needs-human (L-PORTAL-PUBLISH-WAVE-1): Release publish wave 1 |
+| `GH-organvm-limen-1188` | code | organvm/limen | needs-human (L-LINKEDIN-TESTAMENT): Publish the refreshed LinkedIn tes |
+| `GH-organvm-limen-1227` | code | organvm/limen | needs-human (L-CLOSEOUT-OBSERVE-ARM): Arm the closeout-reconciliation  |
+| `GH-organvm-limen-1261` | code | organvm/limen | needs-human (L-TOKENS-SIGNOFF): Approve web/tokens/organvm-tokens.* as |
+| `GH-organvm-limen-1258` | code | organvm/limen | needs-human (L-URL-HIERARCHY-SIGNOFF): Approve the declared URL map (i |
 
 ---
 *Generated by `scripts/reclassify-needs-human.py`. Re-run `--apply` to flip the FLIP bucket and park the CHRONIC bucket, or say the word and I will.*
