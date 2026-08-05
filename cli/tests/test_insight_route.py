@@ -22,7 +22,12 @@ spec.loader.exec_module(insight_route)
 
 
 @pytest.fixture
-def test_env(tmp_path):
+def test_env(tmp_path, monkeypatch):
+    # Isolate from the fleet env: a leaked LIMEN_TICKETS_PRODUCE=1 would silently
+    # flip the repo route onto the keeper path and break the legacy-path asserts.
+    monkeypatch.delenv("LIMEN_TICKETS_PRODUCE", raising=False)
+    monkeypatch.delenv("LIMEN_INSIGHT_ROUTE_APPLY", raising=False)
+    monkeypatch.delenv("LIMEN_INSIGHT_ROUTE_MAX", raising=False)
     # Setup test environment with paths inside tmp_path
     logs_dir = tmp_path / "logs"
     logs_dir.mkdir()
@@ -85,16 +90,19 @@ def test_insight_routing_repo(test_env):
         insight_route.process_report(report_file, apply=True)
 
         limen_file = load_limen_file(test_env["tasks"])
-        assert len(limen_file.tasks) == 1
-        task = limen_file.tasks[0]
-        assert task.id == "TASK-INS-REPO-1"
-        assert task.repo == "test-org/test-repo"
-        assert task.title == "Heal insight: Repo Insight"
+        assert len(limen_file.tasks) == 0
+        inbox = test_env["root"] / "logs" / "tickets" / "inbox"
+        tickets = list(inbox.glob("*.json"))
+        assert len(tickets) == 1
+        ticket = json.loads(tickets[0].read_text())
+        assert ticket["task_id"] == "TASK-INS-REPO-1"
+        assert ticket["intent"] == "task.upsert"
+        assert ticket["patch"]["repo"] == "test-org/test-repo"
+        assert ticket["patch"]["title"] == "Heal insight: Repo Insight"
 
         # Test idempotency
         insight_route.process_report(report_file, apply=True)
-        limen_file = load_limen_file(test_env["tasks"])
-        assert len(limen_file.tasks) == 1  # Still 1
+        assert len(list(inbox.glob("*.json"))) == 1
 
 
 def test_insight_routing_organ(test_env):
@@ -197,3 +205,162 @@ def test_dry_run(test_env):
 
         residual_file = test_env["logs"] / "test-organ-residual.json"
         assert not residual_file.exists()
+
+
+def test_resolution_clears_organ_residual(test_env):
+    # A resolution insight (severity=info, `resolves` naming its warning twin —
+    # stamped at the source by insight-cadence, since _gen_id hashes source+subject
+    # and the twin id is not derivable at the sink) must REMOVE the warning from
+    # the organ's residual inbox instead of appending an info marker. That removal
+    # is what lets sync-censor-issues auto-close the mirrored issue.
+    warning = {
+        "id": "insights-lineage-aaaa1111",
+        "severity": "warning",
+        "title": "Recurring friction: status stalls",
+        "detail": "Detail",
+        "owner": "censor",
+        "source": "insights-drift.json",
+        "suggested_action": "Promote to a standing correction",
+    }
+    resolution = {
+        "id": "insights-lineage-resolved-bbbb2222",
+        "severity": "info",
+        "title": "Friction resolved: status stalls",
+        "detail": "Absent from the latest report.",
+        "owner": "censor",
+        "source": "insights-drift.json",
+        "suggested_action": "None",
+        "resolves": "insights-lineage-aaaa1111",
+    }
+
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        # Round 1: the warning lands in the inbox.
+        report_file = test_env["cadence"] / "weekly-r1.json"
+        report_file.write_text(json.dumps({"insights": [warning]}))
+        insight_route.process_report(report_file, apply=True)
+
+        residual_file = test_env["logs"] / "censor-residual.json"
+        data = json.loads(residual_file.read_text())
+        assert [item["id"] for item in data] == ["insights-lineage-aaaa1111"]
+
+        # Dry-run of the resolution touches nothing.
+        report_file.write_text(json.dumps({"insights": [resolution]}))
+        insight_route.process_report(report_file, apply=False)
+        data = json.loads(residual_file.read_text())
+        assert len(data) == 1
+
+        # Applied resolution clears the warning and appends no info marker.
+        insight_route.process_report(report_file, apply=True)
+        data = json.loads(residual_file.read_text())
+        assert data == []
+
+        # Idempotent: re-applying the resolution is a no-op.
+        insight_route.process_report(report_file, apply=True)
+        data = json.loads(residual_file.read_text())
+        assert data == []
+
+
+def _repo_insight(iid, source="test"):
+    return {
+        "id": iid,
+        "severity": "warning",
+        "title": f"Insight {iid}",
+        "detail": "Detail",
+        "owner": "test-org/test-repo",
+        "source": source,
+        "suggested_action": "Fix it",
+    }
+
+
+def test_board_echo_skipped(test_env):
+    # An insight sourced from the board itself is an echo of a task the board
+    # already records — it must never become a heal-twin task.
+    report = {"insights": [_repo_insight("INS-ECHO-1", source="tasks.yaml")]}
+    report_file = test_env["cadence"] / "hourly-echo.json"
+    report_file.write_text(json.dumps(report))
+
+    stats = {"cap_left": 5, "created": 0, "echo": 0, "deferred": 0}
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        insight_route.process_report(report_file, apply=True, stats=stats)
+
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 0
+    assert stats["echo"] == 1
+    assert stats["created"] == 0
+
+
+def test_cap_defers_overflow(test_env, monkeypatch):
+    report = {"insights": [_repo_insight(f"INS-CAP-{i}") for i in range(3)]}
+    report_file = test_env["cadence"] / "hourly-cap.json"
+    report_file.write_text(json.dumps(report))
+
+    stats = {"cap_left": 1, "created": 0, "echo": 0, "deferred": 0}
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        insight_route.process_report(report_file, apply=True, stats=stats)
+
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 0
+    inbox = test_env["root"] / "logs" / "tickets" / "inbox"
+    assert len(list(inbox.glob("*.json"))) == 1
+    from limen.tabularius import drain_once
+
+    drain_once(test_env["tasks"])
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 1
+    assert stats["created"] == 1
+    assert stats["deferred"] == 2
+
+
+def test_keeper_path_submits_ticket_not_board_write(test_env, monkeypatch):
+    # With the TABVLARIVS producer flag on, a repo insight becomes an upsert
+    # ticket in the inbox and the board file itself stays untouched.
+    monkeypatch.setenv("LIMEN_TICKETS_PRODUCE", "1")
+    report = {"insights": [_repo_insight("INS-KEEPER-1")]}
+    report_file = test_env["cadence"] / "hourly-keeper.json"
+    report_file.write_text(json.dumps(report))
+
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        insight_route.process_report(report_file, apply=True)
+
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 0
+    inbox = test_env["root"] / "logs" / "tickets" / "inbox"
+    tickets = list(inbox.glob("*.json"))
+    assert len(tickets) == 1
+    ticket = json.loads(tickets[0].read_text())
+    assert ticket["task_id"] == "TASK-INS-KEEPER-1"
+    assert ticket["intent"] == "task.upsert"
+
+
+def test_latest_reports_picks_true_latest_per_tier(test_env):
+    # Stamp formats changed over time; lexical sort would pick 20260626T135356
+    # over 2026-07-03T133909+0000. The selector must order on the digit prefix.
+    cadence = test_env["cadence"]
+    for name in (
+        "hourly-20260626T135356.json",
+        "hourly-2026-07-03T133909+0000.json",
+        "daily-20260625T223909.json",
+    ):
+        (cadence / name).write_text(json.dumps({"insights": []}))
+
+    picked = {p.name for p in insight_route.latest_reports(cadence)}
+    assert picked == {
+        "hourly-2026-07-03T133909+0000.json",
+        "daily-20260625T223909.json",
+    }

@@ -4,12 +4,13 @@
 The posture this organ exists to hold: *the Mac stays FACTORY; the system I'm building lives in
 an ejectable CARTRIDGE (chezmoi → organvm/domus-genoma).* Nothing should be truly on the PATH or
 local. CVSTOS (custos = the keeper/guardian) owns the TERMINAL stage of the local-artifact
-lifecycle — **eviction** — the stage that today never fires, which is why the host accretes:
+lifecycle — **eviction readiness** — the stage that today never becomes accepted cleanup, which is
+why the host accretes:
 
-    spawn → work → preserve-to-cartridge → EVICT-from-host → factory restored
+    spawn → work → preserve-to-cartridge → accepted eviction from host → factory restored
 
-Three departments, each fail-open, none blocking another, all READ-ONLY on the host by default
-(they size and classify; the reclaim of regenerable cache runs only under --apply):
+Three departments, each fail-open, none blocking another, all READ-ONLY on the host
+(they size and classify; regenerable cache is reported, not physically removed):
 
   EVICTVS  — the debt the chat/agent apps leave on the host, for EVERY vendor, not just Claude:
              ChatGPT, Cursor, Windsurf, Copilot, the Claude desktop app, and Claude Code's own
@@ -29,11 +30,10 @@ Three departments, each fail-open, none blocking another, all READ-ONLY on the h
              They run inline in the hygiene + backup voices with no health face of their own, so a
              stale or broken reaper is invisible and creep goes unbounded. Here it becomes visible.
 
-DATA / SAFETY (the whole point — this organ can delete, so the rails matter):
-  - READ-ONLY on the host by default. It never deletes without --apply, and even then only the
-    allowlisted regenerable classes. Irreplaceable / unsynced app state is never an eviction
-    candidate — it is surfaced so the human decides, matching library-preserve.py's "never
-    auto-delete personal data" precedent.
+DATA / SAFETY (the whole point — this organ must not become a side-door deletion surface):
+  - READ-ONLY on the host. Physical cache removal needs a separate archive/redaction acceptance
+    surface. Irreplaceable / unsynced app state is never an eviction candidate — it is surfaced so
+    the human decides, matching library-preserve.py's "never auto-delete personal data" precedent.
   - Writes a COUNTS-ONLY liveness stamp to logs/cvstos-organ-state.json (bytes + counts only; no
     file contents, no per-file paths beyond app/dir names) so organ-health.py sees it fired.
   - Fail-open everywhere + lockless: a missing app, absent chezmoi, unreadable dir → a "skipped"
@@ -44,14 +44,15 @@ DATA / SAFETY (the whole point — this organ can delete, so the rails matter):
   --check : the executable Definition of Done (exit 0 ⟺ the host is at factory). Composes the
             already-shipped cartridge-connected.py and worktree-debt.py predicates and adds the
             chat-app-debt + bin-orphan measures. exit 1 names each unmet invariant.
-  --apply : the owner's opt-in — reclaim the regenerable chat-app caches (regenerates on next use).
-            The beat never passes this; it stays a human lever until he classifies what is safe.
+  --apply : compatibility flag — report the regenerable chat-app cache bytes that an accepted
+            cache-reap organ could reclaim. It does not physically remove files.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -64,11 +65,38 @@ LOGS = ROOT / "logs"
 HOME = Path.home()
 
 GB = 1024**3
-DEBT_CAP_GB = float(os.environ.get("LIMEN_CVSTOS_DEBT_CAP_GB", "5"))  # evictable chat-app cache over this ⇒ over cap
-REAPER_STALE_H = float(os.environ.get("LIMEN_CVSTOS_REAPER_STALE_H", "48"))  # a reaper stamp older than this ⇒ stale
-SCAN_ENTRY_CAP = int(
-    os.environ.get("LIMEN_CVSTOS_SCAN_CAP", "600000")
-)  # bound the walk so a pathological tree can't hang the beat
+
+
+def _env_positive_float(name: str, default: float) -> float:
+    try:
+        value = float(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if math.isfinite(value) and value > 0 else default
+
+
+def _env_positive_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+DEBT_CAP_GB = _env_positive_float("LIMEN_CVSTOS_DEBT_CAP_GB", 5)  # evictable chat-app cache over this ⇒ over cap
+REAPER_STALE_H = _env_positive_float("LIMEN_CVSTOS_REAPER_STALE_H", 48)  # a reaper stamp older than this ⇒ stale
+SCAN_ENTRY_CAP = _env_positive_int("LIMEN_CVSTOS_SCAN_CAP", 600000)  # bound the walk so a pathological tree can't hang the beat
+AGY_SCRATCH_ROOT = Path(
+    os.environ.get("LIMEN_AGY_SCRATCH_ROOT", HOME / ".gemini" / "antigravity-cli" / "scratch")
+)
+AGY_SCRATCH_MIN_IDLE_H = _env_positive_float("LIMEN_AGY_SCRATCH_MIN_IDLE_H", 24)
+AGY_SCRATCH_PRESERVATION_LEDGER = ROOT / "docs" / "antigravity-scratch-preservation.jsonl"
+AGY_UNSAFE_DISPOSITIONS = {
+    "bridge_required",
+    "preserve_required",
+    "container_review_required",
+    "non_git_review_required",
+}
 
 # Chromium/Electron subdirectories that regenerate on next launch — safe eviction candidates.
 _REGEN_SUBDIRS = {
@@ -124,6 +152,8 @@ _PM_PREFIXES = (
     "/usr/local/Cellar",
     "/usr/local/opt",
     str(HOME / ".local" / "pipx"),
+    str(HOME / ".local" / "opt"),
+    str(HOME / ".local" / "share" / "claude"),
     str(HOME / ".local" / "share" / "pipx"),
     str(HOME / ".local" / "share" / "uv"),
     str(HOME / ".cargo"),
@@ -226,9 +256,11 @@ def census_debt() -> dict:
 
 
 def reclaim_debt(census: dict) -> int:
-    """--apply: delete the *contents* of the regenerable eviction candidates (they regenerate).
-    Only regen/electron-cache classes are ever removed; retained paths are never touched. Returns
-    bytes reclaimed. Fail-open per item."""
+    """--apply compatibility: report regenerable eviction candidates without removing them.
+
+    Only regen/electron-cache classes are counted; retained paths are never touched. Physical cache
+    removal belongs to a future acceptance-gated cache reaper.
+    """
     reclaimed = 0
     for _app, glob_rel, kind in _TARGETS:
         if kind == "retained":
@@ -237,18 +269,7 @@ def reclaim_debt(census: dict) -> int:
             targets = [path] if kind == "regen" else [path / s for s in _REGEN_SUBDIRS if (path / s).is_dir()]
             for t in targets:
                 b, _ = _dir_bytes(t)
-                try:
-                    for child in t.iterdir():
-                        if child.is_dir() and not child.is_symlink():
-                            shutil.rmtree(child, ignore_errors=True)
-                        else:
-                            try:
-                                child.unlink()
-                            except OSError:
-                                pass
-                    reclaimed += b
-                except OSError:
-                    continue
+                reclaimed += b
     return reclaimed
 
 
@@ -327,6 +348,8 @@ def bin_orphans() -> dict:
         return {"measured": False, "count": 0, "names": []}
     for e in entries:
         try:
+            if e.name == "__pycache__" and e.is_dir():
+                continue  # generated bytecode cache, not a hand-dropped PATH script
             if str(e) in managed:
                 continue  # chezmoi backs it (target path, before resolving symlinks)
             real = e.resolve()
@@ -396,14 +419,120 @@ def reaper_proprioception() -> dict:
     return {"reapers": rows, "fresh": fresh, "stale": stale, "unknown": unknown, "stale_after_h": REAPER_STALE_H}
 
 
-def _worktree_over_cap() -> bool | None:
+def _worktree_has_debt() -> bool | None:
     script = ROOT / "scripts" / "worktree-debt.py"
     if not script.exists():
         return None
-    rc, _ = _run([sys.executable, str(script), "--fail-over-cap"])
+    rc, _ = _run([sys.executable, str(script), "--fail-on-debt"])
     if rc == 127:
         return None
     return rc != 0
+
+
+def _load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    events = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    return events
+
+
+def _matching_preservation(row: dict, history: list[dict]) -> dict | None:
+    name = str(row.get("name") or "")
+    head = row.get("head")
+    disposition = row.get("disposition")
+    size_bytes = row.get("size_bytes")
+    for event in reversed(history):
+        if event.get("root") != name:
+            continue
+        if not event.get("archive_verified"):
+            continue
+        if not event.get("archive_path"):
+            continue
+        if not event.get("private_receipt") or not event.get("private_receipt_sha256"):
+            continue
+        if head and event.get("head") and event.get("head") != head:
+            continue
+        if disposition and event.get("disposition") and event.get("disposition") != disposition:
+            continue
+        if size_bytes is not None and event.get("size_bytes") is not None:
+            try:
+                if int(event["size_bytes"]) != int(size_bytes):
+                    continue
+            except (TypeError, ValueError):
+                continue
+        return event
+    return None
+
+
+def _count_by_disposition(rows: list[dict]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        key = str(row.get("disposition") or "unknown")
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def antigravity_scratch() -> dict:
+    script = ROOT / "scripts" / "antigravity-scratch-bridge.py"
+    if not script.exists():
+        return {"measured": False, "reason": "bridge-missing"}
+    rc, out = _run(
+        [
+            sys.executable,
+            str(script),
+            "--root",
+            str(AGY_SCRATCH_ROOT),
+            "--min-idle-hours",
+            str(AGY_SCRATCH_MIN_IDLE_H),
+            "--json",
+        ],
+        timeout=180,
+    )
+    if rc != 0:
+        return {"measured": False, "reason": "bridge-failed", "returncode": rc}
+    try:
+        report = json.loads(out)
+    except ValueError:
+        return {"measured": False, "reason": "invalid-json"}
+    summary = report.get("summary") or {}
+    by_disp = summary.get("by_disposition") or {}
+    unsafe_rows = [row for row in report.get("roots", []) if row.get("disposition") in AGY_UNSAFE_DISPOSITIONS]
+    preservation_history = _load_jsonl(AGY_SCRATCH_PRESERVATION_LEDGER)
+    preserved_unsafe = []
+    unpreserved_unsafe = []
+    for row in unsafe_rows:
+        if _matching_preservation(row, preservation_history):
+            preserved_unsafe.append(row)
+        else:
+            unpreserved_unsafe.append(row)
+    return {
+        "measured": True,
+        "root": str(AGY_SCRATCH_ROOT),
+        "total_roots": int(summary.get("total_roots") or 0),
+        "total_bytes": int(summary.get("total_bytes") or 0),
+        "total_gb": round(int(summary.get("total_bytes") or 0) / GB, 2),
+        "safe_reap_bytes": int(summary.get("safe_reap_bytes") or 0),
+        "safe_reap_gb": round(int(summary.get("safe_reap_bytes") or 0) / GB, 2),
+        "by_disposition": by_disp,
+        "unsafe_dispositions": _count_by_disposition(unsafe_rows),
+        "unsafe_preserved_dispositions": _count_by_disposition(preserved_unsafe),
+        "unsafe_unpreserved_dispositions": _count_by_disposition(unpreserved_unsafe),
+        "unsafe_unpreserved_roots": [row.get("name") for row in unpreserved_unsafe if row.get("name")],
+    }
 
 
 # ── assembly ─────────────────────────────────────────────────────────────────────────────────
@@ -412,7 +541,8 @@ def assess() -> dict:
         "debt": census_debt(),
         "factory": factory_invariant(),
         "reapers": reaper_proprioception(),
-        "worktree_over_cap": _worktree_over_cap(),
+        "worktree_has_debt": _worktree_has_debt(),
+        "antigravity_scratch": antigravity_scratch(),
     }
 
 
@@ -427,13 +557,20 @@ def failures(a: dict) -> list[str]:
         out.append(f"{fac['bin_orphans']['count']} hand-dropped script(s) on ~/.local/bin not backed by the cartridge")
     if a["reapers"]["stale"] > 0:
         out.append(f"{a['reapers']['stale']} reaper(s) stale (no fire in {REAPER_STALE_H:g}h)")
-    if a["worktree_over_cap"] is True:
-        out.append("worktree debt over cap (worktree-debt.py --fail-over-cap)")
+    if a["worktree_has_debt"] is True:
+        out.append("worktree lifecycle debt not at zero (worktree-debt.py --fail-on-debt)")
     if a["debt"]["over_cap"]:
         out.append(
             f"chat-app evictable cache {a['debt']['evictable_gb']}GB over the {a['debt']['cap_gb']:g}GB cap "
             "(eviction stage has not fired — run --apply or arm the reclaimer)"
         )
+    agy = a.get("antigravity_scratch") or {}
+    unpreserved_unsafe = agy.get("unsafe_unpreserved_dispositions")
+    if unpreserved_unsafe is None:
+        unpreserved_unsafe = agy.get("unsafe_dispositions")
+    if agy.get("measured") and unpreserved_unsafe:
+        unsafe = ", ".join(f"{key}={count}" for key, count in sorted(unpreserved_unsafe.items()))
+        out.append(f"Antigravity scratch roots need bridge/preserve/review before local deletion ({unsafe})")
     return out
 
 
@@ -455,12 +592,21 @@ def write_stamp(a: dict, reclaimed: int | None = None) -> None:
         "domus_pkg_drift": fac["domus_packages"]["drift"] if fac["domus_packages"]["measured"] else None,
         "reapers_fresh": a["reapers"]["fresh"],
         "reapers_stale": a["reapers"]["stale"],
-        "worktree_over_cap": a["worktree_over_cap"],
+        "worktree_has_debt": a["worktree_has_debt"],
+        "antigravity_scratch": {
+            "measured": a["antigravity_scratch"].get("measured"),
+            "total_roots": a["antigravity_scratch"].get("total_roots"),
+            "total_gb": a["antigravity_scratch"].get("total_gb"),
+            "safe_reap_gb": a["antigravity_scratch"].get("safe_reap_gb"),
+            "by_disposition": a["antigravity_scratch"].get("by_disposition"),
+            "unsafe_preserved_dispositions": a["antigravity_scratch"].get("unsafe_preserved_dispositions"),
+            "unsafe_unpreserved_dispositions": a["antigravity_scratch"].get("unsafe_unpreserved_dispositions"),
+        },
         "at_factory": not failures(a),
         "open_invariants": failures(a),
     }
     if reclaimed is not None:
-        rec["reclaimed_gb"] = round(reclaimed / GB, 2)
+        rec["reclaimable_gb"] = round(reclaimed / GB, 2)
     (LOGS / "cvstos-organ-state.json").write_text(json.dumps(rec, indent=2))
     try:
         vd = LOGS / ".voice"
@@ -475,17 +621,21 @@ def _oneliner(a: dict) -> str:
     cart = {True: "ok", False: "UNPLUGGED", None: "?"}[fac["cartridge_connected"]]
     binc = fac["bin_orphans"]["count"] if fac["bin_orphans"]["measured"] else "?"
     pkg = "drift" if fac["domus_packages"].get("drift") else ("clean" if fac["domus_packages"]["measured"] else "?")
-    return (
+    line = (
         f"cvstos: debt {d['evictable_gb']}GB evictable / {d['retained_gb']}GB retained "
         f"across {len(d['apps'])} apps · factory: cartridge {cart}, {binc} bin-orphans, domus {pkg} · "
         f"reapers {r['fresh']}/{r['fresh'] + r['stale'] + r['unknown']} fresh"
     )
+    agy = a.get("antigravity_scratch") or {}
+    if agy.get("measured"):
+        line += f" · agy-scratch {agy.get('total_gb', 0)}GB / safe {agy.get('safe_reap_gb', 0)}GB"
+    return line
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="CVSTOS — keeper of the host (factory ⇄ cartridge).")
     ap.add_argument("--check", action="store_true", help="Definition of Done: exit 0 iff the host is at factory")
-    ap.add_argument("--apply", action="store_true", help="reclaim the regenerable chat-app caches (owner opt-in)")
+    ap.add_argument("--apply", action="store_true", help="report accepted-reaper candidate cache bytes")
     ap.add_argument("--json", action="store_true", help="print the full assessment as JSON")
     args = ap.parse_args()
 
@@ -494,7 +644,6 @@ def main() -> int:
     reclaimed = None
     if args.apply:
         reclaimed = reclaim_debt(a["debt"])
-        a = assess()  # re-measure so the stamp reflects post-eviction truth
 
     write_stamp(a, reclaimed)
 
@@ -505,7 +654,7 @@ def main() -> int:
     if args.check:
         fails = failures(a)
         if not fails:
-            print("cvstos --check: host at factory ✓ (cartridge connected, no orphans, reapers fresh, debt under cap)")
+            print("cvstos --check: host at factory ✓ (cartridge connected, no orphans, reapers fresh, worktree debt zero)")
             return 0
         print("cvstos --check: NOT at factory — open invariants:")
         for f in fails:

@@ -1,9 +1,10 @@
 import os
 import base64
+import copy
+import hashlib
 import json
 import re
 import subprocess
-import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -15,9 +16,13 @@ import shutil
 from typing import Any
 
 import yaml
+import rfc8785
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
+
+from limen_intake import IntakeContractError, validate_intake_contract
+from limen_work_loan import task_work_loan_missing_fields, work_loan_denial
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
@@ -73,6 +78,12 @@ def validate_label_list(value: list[str] | None) -> list[str] | None:
     return value
 
 
+def reject_bool_integer(value: Any, field_name: str) -> Any:
+    if isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer, not a boolean")
+    return value
+
+
 def validate_url_list(value: list[str] | None) -> list[str] | None:
     if value is None:
         return None
@@ -116,6 +127,10 @@ GITHUB_REPO = os.environ.get("LIMEN_GITHUB_REPO", "")
 GITHUB_BRANCH = os.environ.get("LIMEN_GITHUB_BRANCH", "main")
 GITHUB_PATH = os.environ.get("LIMEN_GITHUB_PATH", "tasks.yaml")
 GITHUB_TOKEN = os.environ.get("LIMEN_GITHUB_TOKEN", "")
+DEFAULT_BRANCH_WRITE_BLOCK = (
+    "GitHub-backed board mutations are keeper-owned and cannot be written by the FastAPI adapter"
+)
+TABULARIUS_TICKET_ACTION = "Submit a TABVLARIVS ticket and let the keeper publish the board projection PR"
 
 
 def is_valid_url(url: str) -> bool:
@@ -139,11 +154,25 @@ class TaskCreate(BaseModel):
     type: str = Field(default="code", max_length=64, pattern=LABEL_PATTERN)
     target_agent: str = Field(default="jules", pattern=r"^[a-z][a-z_]*$")
     priority: str = "medium"
-    budget_cost: int = Field(default=1, ge=1, le=100)
+    budget_cost: int | None = Field(default=None, ge=1, le=100)
     status: str = "open"
     labels: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
     urls: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
     context: str = Field(default="", max_length=10000)
+    predicate: str = Field(max_length=2000)
+    receipt_target: str = Field(max_length=2048)
+    # Optional at the compatibility boundary so historical clients remain
+    # readable during adoption. Sanctioned producers populate these fields;
+    # admission is activated by the follow-on enforcement change.
+    origin: str | None = Field(
+        default=None,
+        pattern=r"^(obligation|human_prompt|agent_recommendation|system_debt)$",
+    )
+    horizon: str | None = Field(default=None, pattern=r"^(past|present|future)$")
+    value_case: str | None = Field(default=None, max_length=8192)
+    owner_surface: str | None = Field(default=None, max_length=512)
+    external_deadline: bool = False
+    due_at: str | None = Field(default=None, max_length=128)
 
     @field_validator("priority")
     @classmethod
@@ -159,6 +188,11 @@ class TaskCreate(BaseModel):
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
 
+    @field_validator("budget_cost", mode="before")
+    @classmethod
+    def validate_budget_cost(cls, v: Any) -> Any:
+        return reject_bool_integer(v, "budget_cost")
+
     @field_validator("target_agent")
     @classmethod
     def validate_target_agent(cls, v: str) -> str:
@@ -166,9 +200,19 @@ class TaskCreate(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
-    @field_validator("title", "context")
+    @field_validator(
+        "title",
+        "context",
+        "predicate",
+        "receipt_target",
+        "value_case",
+        "owner_surface",
+        "due_at",
+    )
     @classmethod
-    def validate_text(cls, v: str) -> str:
+    def validate_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         return reject_control_chars(v, "text")
 
     @field_validator("repo")
@@ -195,6 +239,17 @@ class TaskUpdate(BaseModel):
     context: str | None = Field(default=None, max_length=10000)
     urls: list[str] | None = Field(default=None, max_length=MAX_TASK_LIST_LENGTH)
     labels: list[str] | None = Field(default=None, max_length=MAX_TASK_LIST_LENGTH)
+    predicate: str | None = Field(default=None, max_length=2000)
+    receipt_target: str | None = Field(default=None, max_length=2048)
+    origin: str | None = Field(
+        default=None,
+        pattern=r"^(obligation|human_prompt|agent_recommendation|system_debt)$",
+    )
+    horizon: str | None = Field(default=None, pattern=r"^(past|present|future)$")
+    value_case: str | None = Field(default=None, max_length=8192)
+    owner_surface: str | None = Field(default=None, max_length=512)
+    external_deadline: bool | None = None
+    due_at: str | None = Field(default=None, max_length=128)
 
     @field_validator("status")
     @classmethod
@@ -203,7 +258,17 @@ class TaskUpdate(BaseModel):
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
 
-    @field_validator("output", "agent", "session_id", "context")
+    @field_validator(
+        "output",
+        "agent",
+        "session_id",
+        "context",
+        "predicate",
+        "receipt_target",
+        "value_case",
+        "owner_surface",
+        "due_at",
+    )
     @classmethod
     def validate_text(cls, v: str | None) -> str | None:
         if v is None:
@@ -228,6 +293,17 @@ class AssignmentRequest(BaseModel):
     status: str | None = "open"
     note: str = Field(default="", max_length=2000)
     session_id: str = Field(default="assignment", max_length=128)
+    predicate: str | None = Field(default=None, max_length=2000)
+    receipt_target: str | None = Field(default=None, max_length=2048)
+    origin: str | None = Field(
+        default=None,
+        pattern=r"^(obligation|human_prompt|agent_recommendation|system_debt)$",
+    )
+    horizon: str | None = Field(default=None, pattern=r"^(past|present|future)$")
+    value_case: str | None = Field(default=None, max_length=8192)
+    owner_surface: str | None = Field(default=None, max_length=512)
+    external_deadline: bool | None = None
+    due_at: str | None = Field(default=None, max_length=128)
 
     @field_validator("priority")
     @classmethod
@@ -243,6 +319,13 @@ class AssignmentRequest(BaseModel):
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
 
+    @field_validator("budget_cost", mode="before")
+    @classmethod
+    def validate_budget_cost(cls, v: Any) -> Any:
+        if v is None:
+            return None
+        return reject_bool_integer(v, "budget_cost")
+
     @field_validator("target_agent")
     @classmethod
     def validate_target_agent(cls, v: str | None) -> str | None:
@@ -250,9 +333,19 @@ class AssignmentRequest(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
-    @field_validator("note", "session_id")
+    @field_validator(
+        "note",
+        "session_id",
+        "predicate",
+        "receipt_target",
+        "value_case",
+        "owner_surface",
+        "due_at",
+    )
     @classmethod
-    def validate_text(cls, v: str) -> str:
+    def validate_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         return reject_control_chars(v, "text")
 
 
@@ -270,11 +363,22 @@ class VerifyRequest(BaseModel):
     status: str = Field(default="done", pattern="^(done|needs_human|failed|failed_blocked)$")
     note: str = Field(default="", max_length=2000)
     session_id: str = Field(default="qa-verify", max_length=128)
+    predicate_exit_code: int | None = None
+    receipt_target: str | None = Field(default=None, max_length=2048)
+    receipt_verified: bool = False
+    verification_context_digest: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
-    @field_validator("note", "session_id")
+    @field_validator("note", "session_id", "receipt_target")
     @classmethod
-    def validate_text(cls, v: str) -> str:
+    def validate_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         return reject_control_chars(v, "text")
+
+    @field_validator("predicate_exit_code", mode="before")
+    @classmethod
+    def validate_exit_code(cls, value: Any) -> Any:
+        return reject_bool_integer(value, "predicate_exit_code") if value is not None else None
 
 
 class DispatchRequest(BaseModel):
@@ -291,6 +395,11 @@ class DispatchRequest(BaseModel):
             raise ValueError(f"agent must be one of {', '.join(sorted(VALID_DISPATCH_AGENTS))}")
         return v
 
+    @field_validator("limit", mode="before")
+    @classmethod
+    def validate_limit(cls, v: Any) -> Any:
+        return reject_bool_integer(v, "limit")
+
     @field_validator("session_id")
     @classmethod
     def validate_text(cls, v: str) -> str:
@@ -302,6 +411,12 @@ class LoadedBoard:
     data: dict[str, Any]
     sha: str | None = None
     storage: str = "file"
+
+
+@dataclass(frozen=True)
+class ConductMutation:
+    task: dict[str, Any]
+    receipt: dict[str, Any]
 
 
 def now_iso() -> str:
@@ -333,12 +448,41 @@ def storage_status() -> dict[str, Any]:
     if storage_mode() == "github":
         return {
             "mode": "github",
+            "access": "read_only",
             "repo": GITHUB_REPO,
             "branch": GITHUB_BRANCH,
             "path": GITHUB_PATH,
             "configured": bool(GITHUB_REPO and GITHUB_TOKEN),
+            "writable": False,
+            "mutation_owner": "tabularius",
+            "mutation_route": "tabularius_ticket",
+            "next_action": TABULARIUS_TICKET_ACTION,
         }
-    return {"mode": "file", "path": str(tasks_path()), "configured": True}
+    return {
+        "mode": "file",
+        "access": "read_write",
+        "path": str(tasks_path()),
+        "configured": True,
+        "writable": True,
+        "mutation_owner": "local_file",
+    }
+
+
+def board_mutation_deferred_receipt() -> dict[str, Any]:
+    return {
+        "status": "mutation_deferred",
+        "code": "board_mutation_deferred",
+        "retryable": True,
+        "owner": "tabularius",
+        "target": storage_status(),
+        "detail": DEFAULT_BRANCH_WRITE_BLOCK,
+        "next_action": TABULARIUS_TICKET_ACTION,
+    }
+
+
+def require_mutable_board() -> None:
+    if storage_mode() == "github":
+        raise HTTPException(status_code=409, detail=board_mutation_deferred_receipt())
 
 
 def empty_board(message: str) -> dict[str, Any]:
@@ -399,19 +543,12 @@ def load_github_board() -> LoadedBoard:
 
 
 def save_github_board(data: dict[str, Any], sha: str | None = None) -> None:
-    if sha is None:
-        sha = load_github_board().sha
-    message = os.environ.get("LIMEN_GITHUB_COMMIT_MESSAGE", "Update Limen task board")
-    payload: dict[str, Any] = {
-        "message": message,
-        "content": base64.b64encode(yaml.safe_dump(data, sort_keys=False, allow_unicode=True).encode("utf-8")).decode(
-            "ascii"
-        ),
-        "branch": GITHUB_BRANCH,
-    }
-    if sha:
-        payload["sha"] = sha
-    github_request("PUT", github_contents_url(), payload)
+    # GitHub is a read-only projection for this adapter on every branch. Keep
+    # the arguments in the signature for compatibility with callers, but fail
+    # before a SHA lookup or Contents PUT so no alternate branch can become a
+    # second board writer.
+    del data, sha
+    require_mutable_board()
 
 
 def load_board_doc() -> LoadedBoard:
@@ -428,16 +565,218 @@ def load_board() -> dict[str, Any]:
     return load_board_doc().data
 
 
-def save_board(data: dict[str, Any], sha: str | None = None) -> None:
-    if storage_mode() == "github":
-        save_github_board(data, sha)
-        return
-    path = tasks_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", delete=False, dir=path.parent) as handle:
-        yaml.safe_dump(data, handle, sort_keys=False, allow_unicode=True)
-        tmp = Path(handle.name)
-    tmp.replace(path)
+def canonical_json(value: Any) -> str:
+    return rfc8785.dumps(value).decode("utf-8")
+
+
+def canonical_hash(value: Any) -> str:
+    return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
+
+
+def task_revision(task: dict[str, Any]) -> str:
+    value = (
+        task.get("updated")
+        or ((task.get("dispatch_log") or [{}])[-1].get("timestamp"))
+        or task.get("created")
+        or task.get("status")
+    )
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    if isinstance(value, date):
+        return value.isoformat()
+    rendered = str(value)
+    if re.match(r"^\d{4}-\d{2}-\d{2}T", rendered):
+        try:
+            parsed = datetime.fromisoformat(rendered.replace("Z", "+00:00"))
+            return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        except ValueError:
+            pass
+    return rendered
+
+
+def conduct_endpoint() -> tuple[str, str]:
+    endpoint = os.environ.get("LIMEN_CONDUCT_URL", "").strip().rstrip("/")
+    token = os.environ.get("LIMEN_CONDUCT_TOKEN", "").strip()
+    if not endpoint or not token:
+        raise HTTPException(
+            status_code=503,
+            detail="authenticated conduct broker is required; set LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN",
+        )
+    parsed = urllib.parse.urlparse(endpoint)
+    loopback_http = parsed.scheme == "http" and parsed.hostname == "127.0.0.1"
+    if parsed.scheme != "https" and not loopback_http:
+        raise HTTPException(status_code=503, detail="conduct broker must use HTTPS (loopback HTTP is allowed)")
+    if not parsed.netloc or parsed.query or parsed.fragment:
+        raise HTTPException(status_code=503, detail="LIMEN_CONDUCT_URL is invalid")
+    return endpoint, token
+
+
+def conduct_request(method: str, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    endpoint, token = conduct_endpoint()
+    request = urllib.request.Request(
+        f"{endpoint}{path}",
+        data=json.dumps(payload).encode("utf-8"),
+        method=method,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")[:1000]
+        status = exc.code if 400 <= exc.code < 500 else 502
+        raise HTTPException(status_code=status, detail=f"conduct broker rejected request: {detail}") from exc
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise HTTPException(status_code=503, detail=f"conduct broker unavailable: {exc}") from exc
+    try:
+        parsed = json.loads(raw) if raw else {}
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=502, detail="conduct broker returned invalid JSON") from exc
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=502, detail="conduct broker response must be an object")
+    return parsed
+
+
+def board_owner() -> str:
+    candidate = GITHUB_REPO.strip()
+    return candidate if REPO_RE.fullmatch(candidate) and "/" in candidate else "organvm/limen"
+
+
+def conduct_identity() -> dict[str, Any]:
+    session_id = os.environ.get("LIMEN_API_CONDUCT_SESSION_ID", "limen-web-api-compat").strip()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}", session_id):
+        raise HTTPException(status_code=503, detail="LIMEN_API_CONDUCT_SESSION_ID is invalid")
+    return {
+        "schema_version": "limen.agent_identity.v1",
+        "agent": "api",
+        "surface": "web-api",
+        "session_id": session_id,
+        "native_run_id": None,
+        "provider_identity": None,
+    }
+
+
+def task_work_packet(
+    intent: dict[str, Any],
+    *,
+    work_discriminator: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    task_id = str(intent.get("task_id") or "")
+    validate_task_id(task_id)
+    kind = str(intent.get("kind") or "")
+    if kind not in {"task.upsert", "task.status", "task.claim", "task.mutate"}:
+        raise HTTPException(status_code=500, detail=f"unsupported task compatibility intent: {kind}")
+    timestamp = now_iso()
+    identity = conduct_identity()
+    owner = board_owner()
+    execution = {
+        "adapter": "tabularius",
+        "projection": "tasks.yaml",
+        "observed_heads": {},
+    }
+    digest = canonical_hash(intent)[:20]
+    action = kind.replace(".", "-")
+    work_id = f"web-api-{action}-{task_id}-{digest}"
+    packet = {
+        "schema_version": "limen.work_packet.v1",
+        "work_id": work_id,
+        "work_key": work_id,
+        "root_run_id": None,
+        "parent_run_id": None,
+        "intent": intent,
+        "execution": execution,
+        "intent_hash": canonical_hash(intent),
+        "execution_hash": canonical_hash(execution),
+        "initiator": identity,
+        "conductor": identity,
+        "preferred_agent": "tabularius",
+        "required_capabilities": ["board-write"],
+        "resource_claims": [
+            {
+                "schema_version": "limen.resource_claim.v1",
+                "key": f"task/{task_id}",
+                "mode": "exclusive",
+            }
+        ],
+        "predicate": "python3 scripts/validate-task-board.py --tasks tasks.yaml",
+        "receipt_target": f"git:{owner}:tasks.yaml#{task_id}",
+        "authority": {
+            "schema_version": "limen.authority_envelope.v1",
+            "actions": [kind],
+            "repositories": [owner],
+            "path_prefixes": ["tasks.yaml"],
+            "external_effects": [],
+            "may_delegate": False,
+        },
+        "deadline": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+        "spend": {
+            "schema_version": "limen.spend_envelope.v1",
+            "unit": "runs",
+            "limit": 0,
+            "reserve": 0,
+        },
+        "retry": {
+            "schema_version": "limen.retry_policy.v1",
+            "max_attempts": 1,
+            "transient_only": True,
+        },
+        "depth": 0,
+        "fanout": {
+            "schema_version": "limen.fanout_bounds.v1",
+            "max_children": 0,
+            "max_depth": 0,
+        },
+        "effect": "write",
+        "task_id": task_id,
+    }
+    session = {
+        "schema_version": "limen.conductor_session.v1",
+        "session_id": identity["session_id"],
+        "identity": identity,
+        "origin": "relay",
+        "native_session_id": None,
+        "native_run_id": None,
+        "worktree": None,
+        "capabilities": ["task-submit"],
+        "transport": "web-api",
+        "native_fanout": False,
+        "harvest_method": "receipt",
+        "concurrency": 1,
+        "meter": None,
+        "registered_at": timestamp,
+        "heartbeat_at": timestamp,
+        "human_protected": False,
+        "accepting_work": True,
+    }
+    return session, packet
+
+
+def submit_task_mutation(
+    intent: dict[str, Any],
+    *,
+    work_discriminator: dict[str, Any] | None = None,
+) -> ConductMutation:
+    session, packet = task_work_packet(intent, work_discriminator=work_discriminator)
+    conduct_request("POST", "/api/conduct/sessions", session)
+    result = conduct_request("POST", "/api/conduct/runs", packet)
+    receipts = result.get("projection_receipts")
+    receipt = receipts[-1] if isinstance(receipts, list) and receipts else None
+    task = receipt.get("task") if isinstance(receipt, dict) else None
+    if not isinstance(task, dict):
+        raise HTTPException(status_code=502, detail="conduct broker response lacks a task projection receipt")
+    return ConductMutation(
+        task=task,
+        receipt={
+            "status": result.get("status"),
+            "run_id": result.get("run_id"),
+            "event_id": receipt.get("event_id"),
+            "projection_status": receipt.get("status"),
+        },
+    )
 
 
 def configured_persona_tokens() -> dict[str, set[str]]:
@@ -501,14 +840,6 @@ def maybe_reset_budget(data: dict[str, Any]) -> None:
         track["date"] = today
         track["spent"] = 0
         track["per_agent"] = {agent: 0 for agent in budget(data).get("per_agent", {})}
-
-
-def spend_budget(data: dict[str, Any], agent: str, cost: int) -> None:
-    maybe_reset_budget(data)
-    track = budget(data)["track"]
-    track["spent"] = int(track.get("spent", 0)) + cost
-    per_agent = track.setdefault("per_agent", {})
-    per_agent[agent] = int(per_agent.get(agent, 0)) + cost
 
 
 def remaining_budget(data: dict[str, Any], agent: str) -> int:
@@ -785,7 +1116,7 @@ def qa_status(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
 def surface_manifest(data: dict[str, Any], persona: str = "owner") -> dict[str, Any]:
     raw = summary(data)
     stale_count = len(release_stale_candidates(data, 24))
-    manifest = {
+    manifest: dict[str, Any] = {
         "status": "ok",
         "persona": persona,
         "generated_at": now_iso(),
@@ -882,6 +1213,8 @@ def surface_manifest(data: dict[str, Any], persona: str = "owner") -> dict[str, 
 def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
     raw = summary(data)
     stale = release_stale_candidates(data, 24)
+    storage = storage_status()
+    storage_writable = bool(storage.get("writable"))
     open_tasks = [
         task
         for task in data.get("tasks", [])
@@ -900,8 +1233,12 @@ def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
     checks = [
         {
             "id": "storage",
-            "status": "pass" if storage_status().get("configured") else "fail",
-            "detail": storage_status().get("mode", "unknown"),
+            "status": ("fail" if not storage.get("configured") else "pass" if storage_writable else "warn"),
+            "detail": (
+                storage.get("mode", "unknown")
+                if storage_writable
+                else "read-only GitHub projection; mutations defer to TABVLARIVS"
+            ),
         },
         {"id": "task_count", "status": "pass" if raw["total"] else "warn", "detail": f"{raw['total']} tasks"},
         {
@@ -933,11 +1270,13 @@ def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
     else:
         status = "ready"
     next_actions: list[str] = []
-    if stale:
+    if not storage_writable:
+        next_actions.append(TABULARIUS_TICKET_ACTION)
+    elif stale:
         next_actions.append("POST /api/release-stale?hours=24&dry_run=false")
-    if open_tasks and remaining > 0 and agent_path:
+    if storage_writable and open_tasks and remaining > 0 and agent_path:
         next_actions.append(f"POST /api/dispatch live=true limit={min(len(open_tasks), remaining)}")
-    if not agent_path:
+    if storage_writable and not agent_path:
         next_actions.append(f"Install or configure {agent} dispatch CLI")
     if remaining <= 0:
         next_actions.append(f"Wait for {agent} budget reset or lower dispatch volume")
@@ -958,6 +1297,20 @@ def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
             "remaining": remaining,
         },
         "checks": checks,
+        "mutation": (
+            {
+                "status": "available",
+                "owner": storage.get("mutation_owner"),
+            }
+            if storage_writable
+            else {
+                "status": "deferred",
+                "code": "board_mutation_deferred",
+                "owner": "tabularius",
+                "route": "tabularius_ticket",
+                "next_action": TABULARIUS_TICKET_ACTION,
+            }
+        ),
         "next_actions": next_actions or ["No immediate action required"],
     }
 
@@ -975,19 +1328,6 @@ def find_task(data: dict[str, Any], task_id: str) -> dict[str, Any]:
         if task.get("id") == task_id:
             return task
     raise HTTPException(status_code=404, detail=f"task {task_id} not found")
-
-
-def append_log(task: dict[str, Any], agent: str, session_id: str, status: str, output: str = "") -> None:
-    task.setdefault("dispatch_log", []).append(
-        {
-            "timestamp": now_iso(),
-            "agent": agent,
-            "session_id": session_id,
-            "status": status,
-            **({"output": output} if output else {}),
-        }
-    )
-    task["updated"] = now_iso()
 
 
 def build_prompt(task: dict[str, Any]) -> str:
@@ -1158,127 +1498,259 @@ def get_task(task_id: str, authorization: str | None = Header(None)) -> dict[str
 @app.post("/api/tasks")
 def create_task(req: TaskCreate, authorization: str | None = Header(None)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
-    doc = load_board_doc()
-    data = doc.data
+    data = load_board()
     if any(task.get("id") == req.id for task in data.get("tasks", [])):
         raise HTTPException(status_code=409, detail=f"task {req.id} already exists")
-    task = req.model_dump()
+    task = req.model_dump(exclude_none=True)
     task["created"] = now_iso()
     task["updated"] = task["created"]
     task["dispatch_log"] = []
-    data.setdefault("tasks", []).append(task)
-    save_board(data, doc.sha)
-    return {"status": "created", "task": task}
+    try:
+        validate_intake_contract(task, is_new=True)
+    except IntakeContractError as exc:
+        raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
+    missing = task_work_loan_missing_fields(task)
+    if missing:
+        raise HTTPException(status_code=422, detail=work_loan_denial(missing))
+    intent = {
+        "kind": "task.upsert",
+        "task_id": req.id,
+        "task": task,
+        "expected_absent": True,
+        "log": {
+            "status": task["status"],
+            "agent": "api",
+            "session_id": "web-api-create",
+            "output": "Created through the authenticated conduct broker",
+        },
+    }
+    mutation = submit_task_mutation(intent, work_discriminator={"expected_absent": True, "task": task})
+    return {"status": "created", "task": mutation.task, "broker_receipt": mutation.receipt}
 
 
 @app.patch("/api/tasks/{task_id}")
 def update_task(task_id: str, req: TaskUpdate, authorization: str | None = Header(None)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
-    doc = load_board_doc()
-    data = doc.data
-    task = find_task(data, task_id)
+    task = find_task(load_board(), task_id)
+    prospective = copy.deepcopy(task)
     update = req.model_dump(exclude_none=True)
     status = update.pop("status", None)
     output = update.pop("output", "")
     agent = update.pop("agent", task.get("target_agent", "api"))
     session_id = update.pop("session_id", "api")
     for key, value in update.items():
-        task[key] = value
+        prospective[key] = value
     if status:
-        task["status"] = status
-        append_log(task, agent, session_id, status, output)
-    else:
-        task["updated"] = now_iso()
-    save_board(data, doc.sha)
-    return {"status": "updated", "task": task}
+        prospective["status"] = status
+    try:
+        validate_intake_contract(prospective)
+    except IntakeContractError as exc:
+        raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
+    if prospective.get("status") in {"dispatched", "in_progress"}:
+        missing = task_work_loan_missing_fields(prospective)
+        if missing:
+            raise HTTPException(status_code=409, detail=work_loan_denial(missing))
+    patch = {key: value for key, value in prospective.items() if task.get(key) != value and key != "id"}
+    intent = {
+        "kind": "task.status" if status else "task.mutate",
+        "task_id": task_id,
+        "expected_status": task.get("status"),
+        "expected_revision": task_revision(task),
+        "patch": patch,
+        "log": {
+            "status": status or "updated",
+            "agent": agent,
+            "session_id": session_id,
+            "output": output or "Updated through the authenticated conduct broker",
+        },
+    }
+    mutation = submit_task_mutation(intent, work_discriminator={"prior": task, "intent": intent})
+    return {"status": "updated", "task": mutation.task, "broker_receipt": mutation.receipt}
 
 
 @app.post("/api/tasks/{task_id}/assign")
 def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
-    doc = load_board_doc()
-    data = doc.data
-    task = find_task(data, task_id)
+    task = find_task(load_board(), task_id)
+    prospective = copy.deepcopy(task)
     before = {
         "target_agent": task.get("target_agent"),
         "priority": task.get("priority"),
         "budget_cost": task.get("budget_cost"),
         "status": task.get("status"),
+        "origin": task.get("origin"),
+        "horizon": task.get("horizon"),
+        "value_case": task.get("value_case"),
+        "owner_surface": task.get("owner_surface"),
+        "external_deadline": task.get("external_deadline"),
+        "due_at": task.get("due_at"),
     }
     if req.target_agent is not None:
-        task["target_agent"] = req.target_agent
+        prospective["target_agent"] = req.target_agent
     if req.priority is not None:
-        task["priority"] = req.priority
+        prospective["priority"] = req.priority
     if req.budget_cost is not None:
-        task["budget_cost"] = req.budget_cost
+        prospective["budget_cost"] = req.budget_cost
+    if req.predicate is not None:
+        prospective["predicate"] = req.predicate
+    if req.receipt_target is not None:
+        prospective["receipt_target"] = req.receipt_target
+    if req.origin is not None:
+        prospective["origin"] = req.origin
+    if req.horizon is not None:
+        prospective["horizon"] = req.horizon
+    if req.value_case is not None:
+        prospective["value_case"] = req.value_case
+    if req.owner_surface is not None:
+        prospective["owner_surface"] = req.owner_surface
+    if req.external_deadline is not None:
+        prospective["external_deadline"] = req.external_deadline
+    if req.due_at is not None:
+        prospective["due_at"] = req.due_at
     if req.status is not None:
-        task["status"] = req.status
+        prospective["status"] = req.status
+    try:
+        validate_intake_contract(prospective)
+    except IntakeContractError as exc:
+        raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
+    if prospective.get("status") in {"dispatched", "in_progress"}:
+        missing = task_work_loan_missing_fields(prospective)
+        if missing:
+            raise HTTPException(status_code=409, detail=work_loan_denial(missing))
     after = {
-        "target_agent": task.get("target_agent"),
-        "priority": task.get("priority"),
-        "budget_cost": task.get("budget_cost"),
-        "status": task.get("status"),
+        "target_agent": prospective.get("target_agent"),
+        "priority": prospective.get("priority"),
+        "budget_cost": prospective.get("budget_cost"),
+        "status": prospective.get("status"),
+        "origin": prospective.get("origin"),
+        "horizon": prospective.get("horizon"),
+        "value_case": prospective.get("value_case"),
+        "owner_surface": prospective.get("owner_surface"),
+        "external_deadline": prospective.get("external_deadline"),
+        "due_at": prospective.get("due_at"),
     }
     changed = [key for key, value in after.items() if before.get(key) != value]
     output = req.note or f"Assigned via steering controls: {', '.join(changed) if changed else 'no field changes'}"
-    append_log(task, "api", req.session_id, "assigned", output)
-    save_board(data, doc.sha)
+    patch = {key: value for key, value in prospective.items() if task.get(key) != value and key != "id"}
+    intent = {
+        "kind": "task.mutate",
+        "task_id": task_id,
+        "expected_status": task.get("status"),
+        "expected_revision": task_revision(task),
+        "patch": patch,
+        "log": {
+            "status": "assigned",
+            "agent": "api",
+            "session_id": req.session_id,
+            "output": output,
+        },
+    }
+    mutation = submit_task_mutation(intent, work_discriminator={"prior": task, "intent": intent})
     return {
         "status": "assigned",
-        "task": task,
+        "task": mutation.task,
         "changed": changed,
+        "broker_receipt": mutation.receipt,
     }
 
 
 @app.post("/api/tasks/{task_id}/archive")
 def archive_task(task_id: str, req: ArchiveRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
-    doc = load_board_doc()
-    data = doc.data
-    task = find_task(data, task_id)
+    task = find_task(load_board(), task_id)
     if task.get("status") not in ("done", "archived"):
         raise HTTPException(status_code=409, detail="only done tasks can be archived")
-    if task.get("status") != "archived":
-        task["status"] = "archived"
-        append_log(task, "api", req.session_id, "archived", req.note or "Archived from QA steering")
-        save_board(data, doc.sha)
+    if task.get("status") == "archived":
+        return {"status": "archived", "task": task, "broker_receipt": None}
+    intent = {
+        "kind": "task.status",
+        "task_id": task_id,
+        "expected_status": "done",
+        "expected_revision": task_revision(task),
+        "patch": {"status": "archived"},
+        "log": {
+            "status": "archived",
+            "agent": "api",
+            "session_id": req.session_id,
+            "output": req.note or "Archived from QA steering",
+        },
+    }
+    mutation = submit_task_mutation(intent, work_discriminator={"prior": task, "intent": intent})
     return {
         "status": "archived",
-        "task": task,
+        "task": mutation.task,
+        "broker_receipt": mutation.receipt,
     }
 
 
 @app.post("/api/tasks/{task_id}/verify")
 def verify_task(task_id: str, req: VerifyRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
-    doc = load_board_doc()
-    data = doc.data
-    task = find_task(data, task_id)
+    task = find_task(load_board(), task_id)
     if task.get("status") not in ("dispatched", "in_progress", "needs_human", "failed", "failed_blocked", "done"):
         raise HTTPException(status_code=409, detail="only active, attention, or done tasks can be verified")
-    task["status"] = req.status
-    append_log(task, "qa", req.session_id, req.status, req.note or f"QA verified task as {req.status}")
-    save_board(data, doc.sha)
+    patch: dict[str, Any] = {"status": req.status}
+    log: dict[str, Any] = {
+        "status": req.status,
+        "agent": "qa",
+        "session_id": req.session_id,
+        "output": req.note or f"QA verified task as {req.status}",
+    }
+    if req.status == "done":
+        missing = task_work_loan_missing_fields(task)
+        if missing:
+            raise HTTPException(status_code=409, detail=work_loan_denial(missing))
+        if req.predicate_exit_code != 0:
+            raise HTTPException(status_code=409, detail="completion-not-verified:predicate")
+        if req.receipt_verified is not True or req.receipt_target != task.get("receipt_target"):
+            raise HTTPException(status_code=409, detail="completion-not-verified:receipt_target")
+        if req.verification_context_digest is None:
+            raise HTTPException(status_code=409, detail="completion-not-verified:verification_context_digest")
+        patch["receipt_verified"] = True
+        log["predicate_exit_code"] = 0
+        log["verification_context_digest"] = req.verification_context_digest
+        log["remote_receipt"] = req.receipt_target
+    intent = {
+        "kind": "task.status",
+        "task_id": task_id,
+        "expected_status": task.get("status"),
+        "expected_revision": task_revision(task),
+        "patch": patch,
+        "log": log,
+    }
+    mutation = submit_task_mutation(intent, work_discriminator={"prior": task, "intent": intent})
     return {
         "status": "verified",
-        "task": task,
+        "task": mutation.task,
         "verified_status": req.status,
+        "broker_receipt": mutation.receipt,
     }
 
 
 @app.post("/api/dispatch")
 def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
-    doc = load_board_doc()
-    data = doc.data
+    data = load_board()
     maybe_reset_budget(data)
-    remaining = remaining_budget(data, req.agent)
+    available = remaining_budget(data, req.agent)
+    remaining = available
     selected: list[dict[str, Any]] = []
+    intake_blocked: list[dict[str, str]] = []
     for task in dispatch_candidates(data, req):
         cost = int(task.get("budget_cost", 1))
         if cost > remaining:
             continue
-        selected.append(task)
+        candidate = copy.deepcopy(task)
+        missing = task_work_loan_missing_fields(candidate)
+        if missing:
+            intake_blocked.append({"id": str(task.get("id") or "unknown"), "reason": work_loan_denial(missing)})
+            continue
+        try:
+            validate_intake_contract(candidate)
+        except IntakeContractError as exc:
+            intake_blocked.append({"id": str(task.get("id") or "unknown"), "reason": str(exc)})
+            continue
+        selected.append(candidate)
         remaining -= cost
         if len(selected) >= max(1, min(req.limit, 100)):
             break
@@ -1302,32 +1774,83 @@ def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> 
             "candidates": previews,
             "count": len(previews),
             "live": False,
+            "intake_blocked": intake_blocked,
         }
 
     dispatched: list[dict[str, Any]] = []
     failed: list[dict[str, Any]] = []
+    broker_receipts: list[dict[str, Any]] = []
+    claimed_cost = 0
     for task in selected:
+        cost = int(task.get("budget_cost", 1))
+        claim_intent = {
+            "kind": "task.claim",
+            "task_id": task["id"],
+            "expected_status": "open",
+            "expected_revision": task_revision(task),
+            "patch": {
+                "status": "dispatched",
+                "target_agent": req.agent,
+                "predicate": task["predicate"],
+                "receipt_target": task["receipt_target"],
+            },
+            "log": {
+                "status": "dispatched",
+                "agent": req.agent,
+                "session_id": req.session_id,
+                "output": "Reserved for native dispatch through the authenticated conduct broker",
+            },
+        }
+        try:
+            claim = submit_task_mutation(claim_intent, work_discriminator={"intent": claim_intent, "task": task})
+        except HTTPException as exc:
+            if exc.status_code != 409:
+                raise
+            failed.append({"id": task.get("id"), "title": task.get("title"), "error": str(exc.detail)})
+            continue
+        broker_receipts.append(claim.receipt)
         command = dispatch_command(req.agent, task)
         ok, output = run_dispatch_command(command)
         if ok:
-            task["status"] = "dispatched"
-            append_log(task, req.agent, req.session_id, "dispatched", output or "Dispatched via Limen API")
-            spend_budget(data, req.agent, int(task.get("budget_cost", 1)))
-            dispatched.append(task)
+            claimed_cost += cost
+            dispatched.append(claim.task)
         else:
-            task["status"] = "failed"
-            append_log(task, req.agent, req.session_id, "failed", output)
-            failed.append({"id": task.get("id"), "title": task.get("title"), "error": output})
-
-    save_board(data, doc.sha)
+            failure_intent = {
+                "kind": "task.status",
+                "task_id": task["id"],
+                "expected_status": "dispatched",
+                "expected_revision": task_revision(claim.task),
+                "patch": {"status": "open"},
+                "log": {
+                    "status": "open",
+                    "agent": req.agent,
+                    "session_id": req.session_id,
+                    "output": output,
+                },
+            }
+            failure = submit_task_mutation(
+                failure_intent,
+                work_discriminator={"claim_run_id": claim.receipt.get("run_id"), "intent": failure_intent},
+            )
+            broker_receipts.append(failure.receipt)
+            failed.append(
+                {
+                    "id": failure.task.get("id"),
+                    "title": failure.task.get("title"),
+                    "error": output,
+                    "task": failure.task,
+                }
+            )
     return {
         "status": "ok" if not failed else "partial_failure",
         "agent": req.agent,
         "dispatched": dispatched,
         "failed": failed,
+        "intake_blocked": intake_blocked,
         "count": len(dispatched),
         "live": True,
-        "remaining_budget": remaining_budget(data, req.agent),
+        "remaining_budget": max(0, available - claimed_cost),
+        "broker_receipts": broker_receipts,
     }
 
 
@@ -1338,21 +1861,67 @@ def release_stale(
     dry_run: bool = True,
 ) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
-    doc = load_board_doc()
-    data = doc.data
+    data = load_board()
     candidates = release_stale_candidates(data, hours)
-    candidate_ids = {candidate["id"] for candidate in candidates}
-    if not dry_run:
-        for task in data.get("tasks", []):
-            if task.get("id") in candidate_ids:
-                task["status"] = "open"
-                append_log(task, "api", "release-stale", "open", f"Released stale claim after {hours}h")
-    if not dry_run:
-        save_board(data, doc.sha)
+    # The deployed API image intentionally has no Jules CLI.  Without a successful remote catalog
+    # it cannot prove a Jules session absent, so it must fail closed and leave those claims for the
+    # CLI heartbeat's shared remote-aware release/harvest/recover path.
+    routed_candidates = [
+        {
+            **candidate,
+            "action": (
+                "hold" if candidate.get("agent") == "jules" or candidate.get("status") != "dispatched" else "release"
+            ),
+            "remote_status": (
+                "cli_unavailable"
+                if candidate.get("agent") == "jules"
+                else "active_requires_cooperative_stop"
+                if candidate.get("status") != "dispatched"
+                else "not_jules"
+            ),
+        }
+        for candidate in candidates
+    ]
+    release_ids = {candidate["id"] for candidate in routed_candidates if candidate.get("action") == "release"}
+    held = [candidate["id"] for candidate in routed_candidates if candidate.get("action") == "hold"]
+    released: list[str] = []
+    projected_tasks: list[dict[str, Any]] = []
+    broker_receipts: list[dict[str, Any]] = []
+    if not dry_run and release_ids:
+        by_id = {task.get("id"): task for task in data.get("tasks", [])}
+        for task_id in sorted(release_ids):
+            task = by_id[task_id]
+            intent = {
+                "kind": "task.status",
+                "task_id": task_id,
+                "expected_status": task.get("status"),
+                "expected_revision": task_revision(task),
+                "patch": {"status": "open"},
+                "log": {
+                    "status": "open",
+                    "agent": "api",
+                    "session_id": "release-stale",
+                    "output": f"Released stale claim after {hours}h",
+                },
+            }
+            mutation = submit_task_mutation(intent, work_discriminator={"prior": task, "intent": intent})
+            released.append(task_id)
+            projected_tasks.append(mutation.task)
+            broker_receipts.append(mutation.receipt)
     return {
         "status": "dry_run" if dry_run else "released",
-        "released": [candidate["id"] for candidate in candidates],
-        "candidates": candidates,
-        "count": len(candidates),
+        "released": sorted(release_ids) if dry_run else released,
+        "held": held,
+        "harvest_ready": [],
+        "recover_ready": [],
+        "remote_probe": {
+            "status": "unavailable" if held else "not_requested",
+            "session_count": 0,
+        },
+        "candidates": routed_candidates,
+        "candidate_count": len(routed_candidates),
+        "count": len(routed_candidates) if dry_run else len(released),
         "dry_run": dry_run,
+        "tasks": projected_tasks,
+        "broker_receipts": broker_receipts,
     }

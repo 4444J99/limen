@@ -15,6 +15,36 @@ def _load():
     return mod
 
 
+def test_malformed_lane_timeout_uses_default_dispatch_grace(monkeypatch):
+    monkeypatch.setenv("LIMEN_LANE_TIMEOUT", "not-an-int")
+    monkeypatch.setenv("LIMEN_GH_RECEIPT_RETRIES", "also-bad")
+    pll = _load()
+
+    assert pll.DISPATCH_GRACE_SECONDS == 1500
+    assert pll.GH_RETRIES == 3
+
+
+def test_cloud_receipts_uses_configured_runtime_fallback(tmp_path: Path, monkeypatch):
+    pll = _load()
+    pll.ROOT = tmp_path
+    (tmp_path / "runtime.config.json").write_text('{"apiUrl":"https://runtime.example"}')
+    for name in ("LIMEN_WORKER_URL", "NEXT_PUBLIC_API_URL", "LIMEN_API_URL"):
+        monkeypatch.delenv(name, raising=False)
+    seen = []
+
+    def fake_probe(url, **_kwargs):
+        seen.append(url)
+        return {"url": url, "ok": True}
+
+    monkeypatch.setattr(pll, "probe_url", fake_probe)
+
+    receipt = pll.cloud_receipts()
+
+    assert receipt["runtime_url_configured"] is True
+    assert "https://runtime.example/health" in seen
+    assert receipt["env_flags"]["LIMEN_API_URL"] is False
+
+
 def test_task_snapshot_distinguishes_jules_async_from_stranded_no_pr(tmp_path: Path):
     pll = _load()
     pll.ROOT = tmp_path

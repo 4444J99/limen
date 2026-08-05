@@ -1,0 +1,307 @@
+{
+  "schema": "limen.storage_evacuation_inventory.v1",
+  "inventory_id": "laptop-evacuation-20260727T213714Z",
+  "frozen_at": "2026-07-27T21:37:14Z",
+  "scope": "whole_internal_data_volume",
+  "critical_path": "internal_storage_only",
+  "source": {
+    "repository": "organvm/limen",
+    "branch": "work/finish-laptop-evacuation-20260727",
+    "head": "94a4097130077380b95bfb795f4ffde111feb219",
+    "remote_main_observed": "129cbf708f9a391a19474f971bf16ee619cce379",
+    "generated_reclaim_enabled": false
+  },
+  "success_predicate": {
+    "stop_physical_reclaim_at_or_above_bytes": 236223201280,
+    "formal_free_space_bytes": 214748364800,
+    "formal_readings_required": 2,
+    "formal_reading_interval_seconds": 1800,
+    "automatic_safe_roots_required": 0
+  },
+  "internal_volume": {
+    "device": "/dev/disk3s5",
+    "physical_device": "/dev/disk0",
+    "total_kib": 482746452,
+    "used_kib": 396775960,
+    "available_kib": 57446080,
+    "available_bytes": 58824785920,
+    "available_gib": 54.78485107421875,
+    "shortfall_to_stop_bytes": 177398415360,
+    "shortfall_to_stop_gib": 165.21514892578125
+  },
+  "custody_devices": [
+    {
+      "name": "Archive4T",
+      "mount": "/Volumes/Archive4T",
+      "device": "/dev/disk5s1",
+      "physical_device": "/dev/disk4",
+      "volume_uuid": "45C8AA30-307B-41E2-908D-5112E93B4AF5",
+      "independence_class": "copy_a"
+    },
+    {
+      "name": "T7Recovery",
+      "mount": "/Volumes/T7Recovery",
+      "device": "/dev/disk7s1",
+      "physical_device": "/dev/disk6",
+      "volume_uuid": "0287E02B-989A-419B-A7CA-B4BCE4ECA1FF",
+      "independence_class": "copy_b"
+    }
+  ],
+  "copy_counting_rule": {
+    "independent_physical_devices_required": 2,
+    "archive4t_and_t7recovery_are_independent": true,
+    "archive4t_ingress_scratch_tm_mac_count_as_one_copy": true,
+    "backblaze_is_separate_repair_lane": true
+  },
+  "frozen_denominator": {
+    "selected_root_count": 18,
+    "selected_root_kib": 205108988,
+    "selected_root_bytes": 210031603712,
+    "selected_root_gib": 195.60717391967773,
+    "minimum_classified_gib": 183,
+    "minimum_classified_satisfied": true,
+    "margin_over_stop_shortfall_gib": 30.392024993896484,
+    "new_unrelated_discoveries_expand_this_denominator": false
+  },
+  "roots": [
+    {
+      "root": "/System/Volumes/Data/Library/Backblaze.bzpkg",
+      "size_kib": 64663396,
+      "size_bytes": 66215317504,
+      "owner": "domus-genoma/backblaze-client",
+      "class": "provider_runtime",
+      "active_state": "client_stopped_package_present",
+      "custody_evidence": "provider_reinstallable; personal backup payload is external, not stored in this package",
+      "selected_action": "vendor_supported_uninstall_or_reset_after_owner_receipt",
+      "gate": "signed_host_action",
+      "status": "pending_owner_gate"
+    },
+    {
+      "root": "~/Library/Mobile Documents",
+      "size_kib": 25670712,
+      "size_bytes": 26286809088,
+      "owner": "domus-genoma/file-provider-eviction",
+      "class": "file_provider_material",
+      "active_state": "CloudDocs provider active",
+      "custody_evidence": "existing Archive4T preservation receipt; T7Recovery and restoration proof must be rebound to this inventory",
+      "selected_action": "supported_file_provider_evict",
+      "gate": "two_independent_copies_and_restore",
+      "status": "pending_custody"
+    },
+    {
+      "root": "~/.gemini/antigravity-cli",
+      "size_kib": 14158604,
+      "size_bytes": 14498410496,
+      "owner": "agent-runtime-custody",
+      "class": "agent_runtime_bulk",
+      "active_state": "no_process_cwd_observed",
+      "custody_evidence": "generated/runtime portions remote-reproducible; sessions and authentication require partitioned custody",
+      "selected_action": "preserve_runtime_owned_state_then_reclaim_generated_and_remote_owned_material",
+      "gate": "runtime_partition_receipt",
+      "status": "pending_classification"
+    },
+    {
+      "root": "~/.local/share",
+      "size_kib": 10114640,
+      "size_bytes": 10357391360,
+      "owner": "hot-cache-manifest",
+      "class": "local_tools_and_runtime_state",
+      "active_state": "no_process_cwd_observed",
+      "custody_evidence": "tool packages are reinstallable; credentials, databases, and sessions are excluded",
+      "selected_action": "retain_small_active_tools_and_reclaim_reinstallable_packages",
+      "gate": "runtime_partition_receipt",
+      "status": "pending_classification"
+    },
+    {
+      "root": "~/.claude/projects",
+      "size_kib": 3185844,
+      "size_bytes": 3262304256,
+      "owner": "agent-state-custody",
+      "class": "agent_session_history",
+      "active_state": "no_process_cwd_observed",
+      "custody_evidence": "existing agent-state archive surface; current digest and second-copy restore are required",
+      "selected_action": "copy_verify_restore_then_remove_local_history",
+      "gate": "two_independent_copies_and_restore",
+      "status": "pending_custody"
+    },
+    {
+      "root": "~/.cache",
+      "size_kib": 5274696,
+      "size_bytes": 5401288704,
+      "owner": "generated-cache-reclaimer",
+      "class": "generated_cache",
+      "active_state": "no_process_cwd_observed",
+      "custody_evidence": "reproduction proof required per selected child root",
+      "selected_action": "exact_plan_generated_reclaim",
+      "gate": "canonical_plan_sha",
+      "status": "ready_for_child_inventory"
+    },
+    {
+      "root": "~/Library/Caches",
+      "size_kib": 3867888,
+      "size_bytes": 3960717312,
+      "owner": "generated-cache-reclaimer",
+      "class": "generated_cache",
+      "active_state": "no_process_cwd_observed",
+      "custody_evidence": "reproduction proof required per selected child root",
+      "selected_action": "exact_plan_generated_reclaim",
+      "gate": "canonical_plan_sha",
+      "status": "ready_for_child_inventory"
+    },
+    {
+      "root": "/private/var/folders",
+      "size_kib": 12515960,
+      "size_bytes": 12816343040,
+      "owner": "macos-temporary-storage",
+      "class": "generated_temporary_data",
+      "active_state": "active process cwd exists under root",
+      "custody_evidence": "none required for inactive generated children",
+      "selected_action": "reclaim_only_inactive_exact_children",
+      "gate": "active_process_exclusion_and_canonical_plan_sha",
+      "status": "pending_child_inventory"
+    },
+    {
+      "root": "~/Workspace/.limen-worktrees",
+      "size_kib": 9776224,
+      "size_bytes": 10010853376,
+      "owner": "remote-receipt-or-local-custody",
+      "class": "worktrees_and_checkouts",
+      "active_state": "mixed dirty unpushed active locked and remote-preserved",
+      "custody_evidence": "remote-preserved subset reached zero-safe-target fixed point under plan 4677b937f2a7ac1590cfe8c8eda96bc272ec816881a984cdd7e85d514a393520",
+      "selected_action": "preserve_or_push_retained_heads_then_rerun_canonical_reclaimer",
+      "gate": "exact_remote_or_two_copy_custody",
+      "status": "owner_routing_required"
+    },
+    {
+      "root": "~/Workspace/organvm",
+      "size_kib": 4610768,
+      "size_bytes": 4721426432,
+      "owner": "github-estate-custody",
+      "class": "repository_checkouts",
+      "active_state": "mixed dirty unpushed and registered owners",
+      "custody_evidence": "remote state must be queried per checkout; unique diffs require preservation",
+      "selected_action": "push_or_archive_unique_state_then_remove_local_checkouts",
+      "gate": "exact_remote_or_two_copy_custody",
+      "status": "owner_routing_required"
+    },
+    {
+      "root": "~/Workspace/session-meta",
+      "size_kib": 5478768,
+      "size_bytes": 5610258432,
+      "owner": "organvm/session-meta",
+      "class": "repository_checkout",
+      "active_state": "unpushed commits and registered siblings",
+      "custody_evidence": "Archive4T agent-state receipts exist; exact current head still requires remote or second-copy proof",
+      "selected_action": "preserve_current_head_then_remove_local_checkout",
+      "gate": "exact_remote_or_two_copy_custody",
+      "status": "pending_custody"
+    },
+    {
+      "root": "~/Pictures/Photos Library.photoslibrary",
+      "size_kib": 11046484,
+      "size_bytes": 11311599616,
+      "owner": "personal-media-custody",
+      "class": "unique_personal_data",
+      "active_state": "Photos services active",
+      "custody_evidence": "must be freshly copied to Archive4T and T7Recovery and restore-tested",
+      "selected_action": "copy_verify_restore_then_remove_internal_copy",
+      "gate": "two_independent_copies_and_restore",
+      "status": "protected_pending_custody"
+    },
+    {
+      "root": "~/Library/Messages",
+      "size_kib": 8686348,
+      "size_bytes": 8894820352,
+      "owner": "personal-communications-custody",
+      "class": "unique_personal_data",
+      "active_state": "Messages services active",
+      "custody_evidence": "must be freshly copied to Archive4T and T7Recovery and restore-tested",
+      "selected_action": "copy_verify_restore_then_remove_internal_copy",
+      "gate": "two_independent_copies_and_restore",
+      "status": "protected_pending_custody"
+    },
+    {
+      "root": "~/Downloads",
+      "size_kib": 1560228,
+      "size_bytes": 1597673472,
+      "owner": "personal-bulk-custody",
+      "class": "mixed_personal_data",
+      "active_state": "no_process_cwd_observed",
+      "custody_evidence": "must be copied to both independent devices and sampled for restoration",
+      "selected_action": "copy_verify_restore_then_remove_internal_copy",
+      "gate": "two_independent_copies_and_restore",
+      "status": "protected_pending_custody"
+    },
+    {
+      "root": "~/Desktop",
+      "size_kib": 1302896,
+      "size_bytes": 1334165504,
+      "owner": "personal-bulk-custody",
+      "class": "mixed_personal_data",
+      "active_state": "no_process cwd observed",
+      "custody_evidence": "must be copied to both independent devices and sampled for restoration",
+      "selected_action": "copy_verify_restore_then_remove_internal_copy",
+      "gate": "two_independent_copies_and_restore",
+      "status": "protected_pending_custody"
+    },
+    {
+      "root": "~/Library/Group Containers",
+      "size_kib": 10004672,
+      "size_bytes": 10244784128,
+      "owner": "application-state-custody",
+      "class": "mixed_application_and_personal_data",
+      "active_state": "application services may hold children open",
+      "custody_evidence": "unique children require two-copy restoration proof; regenerable children require reproduction proof",
+      "selected_action": "partition_preserve_and_reclaim_inactive_children",
+      "gate": "child_level_custody_and_active_process_exclusion",
+      "status": "pending_child_inventory"
+    },
+    {
+      "root": "~/Library/Containers",
+      "size_kib": 7048268,
+      "size_bytes": 7217426432,
+      "owner": "application-state-custody",
+      "class": "mixed_application_and_personal_data",
+      "active_state": "many active process cwd owners observed",
+      "custody_evidence": "active children retained; unique inactive children require two-copy proof",
+      "selected_action": "partition_preserve_and_reclaim_inactive_children",
+      "gate": "child_level_custody_and_active_process_exclusion",
+      "status": "active_partition_required"
+    },
+    {
+      "root": "~/Library/Application Support",
+      "size_kib": 6142592,
+      "size_bytes": 6290014208,
+      "owner": "application-state-custody",
+      "class": "mixed_application_and_personal_data",
+      "active_state": "no_process cwd observed at inventory time; open-file audit still required",
+      "custody_evidence": "unique children require two-copy restoration proof; regenerable children require reproduction proof",
+      "selected_action": "partition_preserve_and_reclaim_inactive_children",
+      "gate": "child_level_custody_and_active_process_exclusion",
+      "status": "pending_child_inventory"
+    }
+  ],
+  "completed_reclaim_receipts": [
+    {
+      "plan_sha256": "c5665a5567c9ff1230ae5f77deeeba2ec0c2dba5da79053047fb947d8e27559f",
+      "class": "generated_custody_proven",
+      "roots_reclaimed": 12
+    },
+    {
+      "plan_sha256": "cbd1f31019a3e73e19c935a224eae05036bc537332913039bd7462059a6555f6",
+      "class": "exact_head_remote_preserved",
+      "roots_reclaimed": 72
+    }
+  ],
+  "planner_fixed_point": {
+    "plan_sha256": "4677b937f2a7ac1590cfe8c8eda96bc272ec816881a984cdd7e85d514a393520",
+    "scanned_roots": 339,
+    "automatic_safe_roots": 0,
+    "generated_reclaim_enabled": false
+  },
+  "admission_fence": {
+    "omega_successor_admission": false,
+    "campaign_infrastructure_admission": false,
+    "release_condition": "zero automatic safe roots and two internal free-space readings at or above 200 GiB separated by 1800 seconds"
+  }
+}

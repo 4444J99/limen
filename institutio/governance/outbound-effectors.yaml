@@ -1,0 +1,117 @@
+# OUTBOUND-EFFECTORS registry — which outward-facing actions require PROOF OF OBSERVATION first.
+#
+# The fifth VIGILIA-shaped panel beside GATES (gates.yaml), PARAMETERS (parameters.yaml),
+# SENSORS (sensors.yaml) and MAIL-TIERS (mail-tiers.yaml).
+#
+# WHY THIS EXISTS (the measurement, not an opinion):
+#   Between 2026-03-24 and 2026-07-31 the estate recorded 33 instances of one failure class —
+#   an agent derives a claim or takes an action from an ARTIFACT THAT DESCRIBES REALITY instead
+#   of querying reality, when the direct check was cheap. Ten PROSE rules were written for that
+#   class. All ten were followed by a recurrence of their own class: a 100% failure rate. The
+#   most recent, CLAUDE.md § Data Grounding (PR #1514, 2026-07-24), was written specifically for
+#   this class and was violated five times in the following six days.
+#
+#   On 2026-07-31 it produced the first COMPLETED outward escape: a redundant reply sent to a
+#   live recruiter three hours after the operator had already answered the thread himself. The
+#   inbox was read; [Gmail]/Sent Mail was not.
+#
+#   Proximity was never the missing variable. ~/.claude/settings.json ALREADY carries a
+#   PreToolUse hook on `gh pr comment` that fires at the exact moment of the action and opens
+#   with "AUDIT: Did you read the full PR thread ... BEFORE composing this comment?" — it emits
+#   `additionalContext`, so the model answers itself "yes" and proceeds. A sibling hook labelled
+#   "HARD BLOCK" blocks nothing. A checklist the model self-certifies is a mirror, not a gate.
+#   CONSEQUENCE is the missing variable.
+#
+# THE CONTRACT: an effector below may not run until a fresh, digest-bound owner receipt proves
+# its ground-truth predicate was actually EXECUTED against the specific target. The check is
+# os.stat() plus a SHA-256 comparison — it cannot be self-certified, asserted, or reasoned past.
+#
+# Receipts reuse cli/src/limen/omega_owner_receipt.py UNCHANGED (schema
+# limen.omega_owner_receipt.v1): `predicate_digest` binding means a receipt minted for one
+# target can never satisfy another; `max_age_seconds` makes a stale look worthless; the payload
+# is content-free (digests only), so a recipient address never enters a committed file. The
+# rung_id pattern ^[a-z0-9][a-z0-9_.-]*$ already admits the `action.*` ids used here.
+#
+# Producer:  scripts/preflight-receipt.py --action <id> --target <target>
+# Enforcer:  scripts/hooks/outbound-preflight-guard.py  (PreToolUse, emits permissionDecision)
+# Drift:     scripts/tests/outbound-preflight-guard.test.sh  (gates.yaml: outbound-preflight-test)
+#
+# FAIL-CLOSED WITHIN THE MATCH, FAIL-OPEN OUTSIDE IT. A command that does not match any
+# `match` pattern passes silently (the guard never emits "allow", so it cannot widen the
+# permission surface). A command that DOES match but whose target cannot be extracted is
+# DENIED — for an irreversible outward action, an unparseable target is not a reason to proceed.
+# This inverts the fail-open posture of worktree-commit-guard.sh deliberately: that guard
+# protects a reversible local commit, this one protects a message to a real human.
+#
+# Escape hatch: LIMEN_ALLOW_UNVERIFIED_OUTBOUND=1 (declared in parameters.yaml, per the
+# check-params.py contract that every hatch is a declared parameter).
+
+schema_version: 0.1
+
+# Where receipts land. Under logs/ (gitignored) — receipts are runtime state, never committed.
+receipts_dir: logs/preflight-receipts
+
+effectors:
+
+  mail.send:
+    title: "outbound email — prove the thread's SENT state was read before replying"
+    # Every known transport that puts a message on the wire. send_drafts.py's beat lane is NOT
+    # matched: it is already gated by mail-tiers.yaml + LIMEN_MAIL_SEND and carries its own
+    # idempotency (audit/drafts_sent.json). What is matched is the ad-hoc human/agent send —
+    # exactly the lane that escaped on 2026-07-31.
+    match:
+      - 'smtplib\.SMTP'
+      - 'send_message\s*\('
+      - '\bscripts/mail-send\b'
+      - '\bmail_send\.py\b'
+      - 'send_drafts\.py[^|;]*--fire\b'
+      - 'osascript[^|;]*\bMail\b[^|;]*\bsend\b'
+    # DECLARED GAP (measured 2026-07-31, not assumed): the MTA/CLI transports — `sendmail`,
+    # `msmtp`, `mutt`, `curl smtp[s]://` — have no pattern here. A grep of the whole estate finds
+    # ZERO occurrences of any of them, so this is a ratchet gap, not a live hole. It is left open
+    # rather than guessed shut because a `match:` regex is evaluated against EVERY command an agent
+    # runs, and the naive form is actively harmful: `\bsendmail\b` also matches
+    # `grep -rn sendmail .`, which — fail-closed inside the match, with no extractable recipient —
+    # would be DENIED. A gate that refuses to let you read about email is the noisy-gate failure
+    # the class-C docstring warns about, one step from being reclassified as advisory. Closing this
+    # needs separator-anchored patterns (`(?:^|[;&|]\s*)sendmail\s`) plus fixtures in
+    # scripts/tests/outbound-preflight-guard.test.sh proving the read forms still pass — the test is
+    # the deliverable, the regex is the easy half. Owner: organvm/limen#1737.
+    # Contrast SMTP_MODULES in scripts/check-effectors.py,
+    # which CAN be widened before first use — an AST import check has no false-positive surface.
+    target:
+      kind: email
+      # The FIRST recipient address found in the command text. A send whose recipient cannot be
+      # read from the command is denied — see the fail-closed note above.
+      pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+    predicate: "python3 scripts/preflight-sent-state.py --recipient {target}"
+    max_age_seconds: 900
+    reason: >-
+      An outbound email needs proof that [Gmail]/Sent Mail was searched for this recipient
+      within the last 15 minutes. On 2026-07-31 a redundant reply reached a live recruiter
+      because the inbox was read and Sent was not — the operator had already answered.
+
+  github.comment:
+    title: "public GitHub comment — prove the thread was read before commenting"
+    # The advisory version of this check already exists in ~/.claude/settings.json and is
+    # ignored because it only prints. This is the same question with a consequence attached.
+    match:
+      - '\bgh\s+pr\s+comment\b'
+      - '\bgh\s+issue\s+comment\b'
+    target:
+      kind: gh_ref
+      # The number, and ONLY when no repo flag is in play. `{target}` is a single string
+      # substitution and this can capture one group, so a repo cannot be folded into the target —
+      # which means a naive `(?:--repo\s+\S+\s+)?([0-9]+)` would check the AMBIENT repo's #N while
+      # the command addresses another repo's #N. Silently checking the wrong thread is worse than
+      # refusing: the trailing lookahead rejects `gh pr comment 5 -R o/r`, and requiring digits
+      # immediately after `comment` rejects `gh pr comment --repo o/r 5`. Both then reach the
+      # guard's "matched but no extractable target" branch and are DENIED — the safe direction.
+      # `-R` is the form actually used in this estate (.github/workflows/pr-review-fanout.yml:38),
+      # so omitting the alias was not a hypothetical gap.
+      pattern: '\bgh\s+(?:pr|issue)\s+comment\s+([0-9]+)(?![^;&|]*(?:--repo\b|-R\b))'
+    predicate: "python3 scripts/preflight-thread-state.py --number {target}"
+    max_age_seconds: 900
+    reason: >-
+      A public comment needs proof the existing thread was actually fetched — so a reply never
+      repeats, contradicts, or ignores what is already there.

@@ -26,10 +26,20 @@ class AgentTarget:
     key: str
     label: str
     path: Path
-    fmt: str  # "toml_codex" | "json_mcpservers" | "json_opencode" | "claude_cli"
-    transport: str  # how ianva is wired into THIS agent: "http" | "stdio"
-    creates_file: bool  # True if the config file may be absent and we create it
+    fmt: str  # renderer contract; json_stdio_mcpservers is the stdio-proxy variant
     note: str = ""
+
+    @property
+    def transport(self) -> str:
+        """Derive transport from the renderer contract instead of duplicating it per target."""
+
+        return "stdio" if self.fmt == "json_stdio_mcpservers" else "http"
+
+    @property
+    def creates_file(self) -> bool:
+        """JSON adapters can be installed into a previously absent user-scope config."""
+
+        return self.fmt in {"json_mcpservers", "json_stdio_mcpservers", "json_opencode"}
 
 
 # server name ianva registers under, inside each agent's config
@@ -41,8 +51,6 @@ AGENTS: list[AgentTarget] = [
         label="Claude Code",
         path=HOME / ".claude.json",
         fmt="claude_cli",
-        transport="http",
-        creates_file=False,
         note="Installed via `claude mcp add --transport http`; first-class streamable-HTTP support.",
     ),
     AgentTarget(
@@ -50,8 +58,6 @@ AGENTS: list[AgentTarget] = [
         label="Codex (OpenAI)",
         path=HOME / ".codex" / "config.toml",
         fmt="toml_codex",
-        transport="http",
-        creates_file=False,
         note="TOML [mcp_servers.NAME]; supports url= + bearer_token_env_var for HTTP servers.",
     ),
     AgentTarget(
@@ -59,8 +65,6 @@ AGENTS: list[AgentTarget] = [
         label="Gemini CLI",
         path=HOME / ".gemini" / "settings.json",
         fmt="json_mcpservers",
-        transport="http",
-        creates_file=True,
         note="settings.json mcpServers; httpUrl key for streamable HTTP. User-scope file created if absent.",
     ),
     AgentTarget(
@@ -68,35 +72,27 @@ AGENTS: list[AgentTarget] = [
         label="opencode",
         path=HOME / ".config" / "opencode" / "opencode.jsonc",
         fmt="json_opencode",
-        transport="http",
-        creates_file=False,
-        note='Unique shape: top-level "mcp" with {type:"remote", url}.',
+        note='Native shape: top-level "mcp" with {type:"remote", url, headers}; create if absent.',
     ),
     AgentTarget(
         key="agy",
         label="antigravity (agy)",
         path=HOME / ".gemini" / "config" / "mcp_config.json",
-        fmt="json_mcpservers",
-        transport="stdio",
-        creates_file=True,
+        fmt="json_stdio_mcpservers",
         note="agy has no `mcp` subcommand → file edit only. stdio via mcp-proxy avoids guessing its HTTP key.",
     ),
     AgentTarget(
         key="copilot",
         label="GitHub Copilot CLI",
         path=HOME / ".copilot" / "mcp-config.json",
-        fmt="json_mcpservers",
-        transport="stdio",
-        creates_file=True,
+        fmt="json_stdio_mcpservers",
         note="Standard mcpServers JSON; HTTP support unconfirmed → stdio via mcp-proxy.",
     ),
     AgentTarget(
         key="cline",
         label="Cline",
         path=HOME / ".cline" / "data" / "settings" / "cline_mcp_settings.json",
-        fmt="json_mcpservers",
-        transport="stdio",
-        creates_file=True,
+        fmt="json_stdio_mcpservers",
         note="Standard mcpServers JSON; stdio via mcp-proxy for maximum compatibility.",
     ),
 ]

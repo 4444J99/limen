@@ -10,9 +10,6 @@ set -euo pipefail
 IANVA_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 export PYTHONPATH="$IANVA_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
-# Load fleet secrets the same way the daemon does (upstream creds / fleet auth live here).
-[ -f "$HOME/.limen.env" ] && set -a && . "$HOME/.limen.env" && set +a
-
 PORT="$(python3 - <<'PY'
 from ianva.config import load_config
 print(load_config().port)
@@ -23,7 +20,11 @@ export CLAUDE_CODE_OAUTH_TOKEN=""   # never let the backend inherit it (#37512);
 unset CLAUDE_CODE_OAUTH_TOKEN
 
 # Materialize settings and derive the exact backend command from config.
-mapfile -t ARGV < <(python3 - <<'PY'
+# launchd runs this under macOS /bin/bash 3.2; keep this read loop Bash-3-safe.
+ARGV=()
+while IFS= read -r arg; do
+  ARGV[${#ARGV[@]}]="$arg"
+done < <(python3 - <<'PY'
 from ianva.config import load_config
 from ianva.upstreams import load_upstreams
 from ianva.mcphub import materialize_settings
@@ -33,7 +34,18 @@ for a in cfg.backend_argv(sp):
     print(a)
 PY
 )
+if [ "${#ARGV[@]}" -eq 0 ]; then
+  echo "ianva-serve: backend command resolved empty" >&2
+  exit 127
+fi
 
-cd "${IANVA_HOME:-$HOME/.config/ianva}"
+IANVA_RUNTIME_HOME="${IANVA_HOME:-$HOME/.config/ianva}"
+mkdir -p "$IANVA_RUNTIME_HOME/run"
+printf '%s\n' "$$" > "$IANVA_RUNTIME_HOME/run/backend.pid"
+export MCPHUB_SETTING_PATH="$IANVA_RUNTIME_HOME/mcp_settings.json"
+cd "$IANVA_RUNTIME_HOME"
 echo "ianva-serve: exec ${ARGV[*]} (PORT=$PORT, cwd=$PWD)"
-exec "${ARGV[@]}"
+# The exec boundary removes every key owned by ~/.limen.env.  Do not source that cache in
+# this supervisor: MCPHub is long-lived, and upstream credentials must be scoped to their
+# explicit server entries rather than inherited wholesale by the router.
+exec python3 -m ianva.backend_exec "${ARGV[@]}"

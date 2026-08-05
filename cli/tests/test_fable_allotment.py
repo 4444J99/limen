@@ -124,3 +124,51 @@ def test_audit_fails_when_deliberate_cap_is_exceeded(tmp_path):
     report = json.loads(audit.stdout)
     assert report["deliberate_percent"] == 40
     assert report["total_percent"] == 40
+
+
+def _this_monday() -> str:
+    now = datetime.now(timezone.utc)
+    return (now - timedelta(days=now.weekday())).date().isoformat()
+
+
+def test_balance_writes_current_week_report(tmp_path):
+    """`balance` writes logs/fable-allotment.json with the cap fields for the current ISO-week."""
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    empty_transcripts = tmp_path / "no-transcripts"
+    empty_transcripts.mkdir()
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "balance"],
+        capture_output=True,
+        text=True,
+        env={
+            "LIMEN_ROOT": str(root),
+            "LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(empty_transcripts),
+            "PATH": __import__("os").environ.get("PATH", ""),
+        },
+    )
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout)
+    assert out["week"] == _this_monday()
+    assert out["deliberate_cap"] == 40 and out["hard_cap"] == 50
+    assert out["spent_tokens"] == 0 and out["spent_pct"] == 0.0
+    assert out["over_cap"] is False
+    written = json.loads((root / "logs" / "fable-allotment.json").read_text())
+    assert written == out
+
+
+def test_balance_is_idempotent(tmp_path):
+    """Re-running balance on the same inputs produces an identical file (fixed point)."""
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    empty = tmp_path / "t"
+    empty.mkdir()
+    env = {
+        "LIMEN_ROOT": str(root),
+        "LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(empty),
+        "PATH": __import__("os").environ.get("PATH", ""),
+    }
+    subprocess.run([sys.executable, str(SCRIPT), "balance"], capture_output=True, text=True, env=env)
+    first = (root / "logs" / "fable-allotment.json").read_text()
+    subprocess.run([sys.executable, str(SCRIPT), "balance"], capture_output=True, text=True, env=env)
+    assert (root / "logs" / "fable-allotment.json").read_text() == first

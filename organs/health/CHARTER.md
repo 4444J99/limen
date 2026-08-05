@@ -39,8 +39,9 @@ capacity into ongoing health operations. The mapping:
 
 The binding constraint is not capacity — it is **a recovery to manage**. One active recovery
 consumes approximately 15-30 workunits/month in steady-state operations. A fleet of 14K+ idle
-workunits can sustain hundreds of concurrent recoveries. The first instance (Anthony's post-injury
-recovery + ADA accommodation matter) proves the pipeline; scaling means adding cases, not capacity.
+workunits can sustain hundreds of concurrent recoveries. The first instance (the principal's
+unnamed post-injury recovery + ADA accommodation matter) proves the pipeline; scaling means adding
+cases, not capacity.
 
 ## The org-chart (AI roles, human-supervised)
 
@@ -256,9 +257,9 @@ would do: track, record, schedule, document, and verify.
 
 ## First proof: the micro instance
 
-The micro instance — Anthony's post-injury recovery and ADA accommodation matter — is the first
-deployment. The anchor event is a 4th-story fall (~2024). No personal name is used in the record;
-documented capability-focused.
+The micro instance — the principal's unnamed post-injury recovery and ADA accommodation matter — is
+the first deployment. The anchor event is a 4th-story fall (~2024). No personal name is used in the
+case record; documentation stays capability-focused.
 
 The rollout order, matching the workflows above:
 
@@ -319,3 +320,9 @@ licensed professionals, and the patient remains the decision-maker for their own
 | Accommodation records feed legal, not replace it | The ADA matter is a legal proceeding directed by counsel | Accommodation outputs are structured records — the legal organ consumes them; the health organ does not give legal advice |
 
 All constraints are non-negotiable. They are the load-bearing walls of this organ.
+
+---
+
+*Companion documents: [`KERNEL.md`](KERNEL.md) (architecture + 5-primitive map + hard guardrails),
+[`MACRO-FACE.md`](MACRO-FACE.md) (the health institution platform pitch),
+[`MICRO-FACE.md`](MICRO-FACE.md) (the unnamed post-injury recovery instance).*

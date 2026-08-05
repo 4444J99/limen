@@ -1,0 +1,30 @@
+{
+  "_README": [
+    "STAGED settings.json snippet for the Fable runtime cap (do NOT let an agent arm settings.json).",
+    "Apply BOTH pieces below into $HOME/.claude/settings.json (or the project .claude/settings.json)",
+    "by hand. This closes the interactive Fable bypass: it pins the default model off Fable (Opus) and",
+    "arms the SessionStart guard that loudly warns when an interactive session is on Fable over-cap.",
+    "",
+    "1) Set the top-level default model off Fable:",
+    "     \"model\": \"opus\"",
+    "",
+    "2) ADD the guard command to the EXISTING SessionStart hook array (append, do not replace the",
+    "   session-orient entry already there). The command below is the exact validated block.",
+    "",
+    "After pasting, verify with: scripts/verify-fable-gate.sh"
+  ],
+  "model": "opus",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/fable-session-guard.py\" ] && python3 \"$LIMEN_ROOT/scripts/fable-session-guard.py\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}

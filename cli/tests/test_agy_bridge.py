@@ -66,6 +66,26 @@ def test_bridge_carries_only_delta(tmp_path, monkeypatch):
     assert (wt / "untouched.py").read_text() == "a fresh-main file agy never touched\n"  # NOT clobbered
 
 
+def test_bridge_carries_untracked_directory_delta(tmp_path, monkeypatch):
+    repo = "organvm/limen"
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: home))
+    scratch = _make_scratch(home, repo)
+
+    # git status reports a fully untracked directory as one "?? dir/" porcelain record. The bridge
+    # must copy the directory contents, not silently skip the path because it is not a regular file.
+    (scratch / "new_suite").mkdir()
+    (scratch / "new_suite" / "test_case.py").write_text("def test_new():\n    assert True\n")
+
+    wt = tmp_path / "wt"
+    wt.mkdir()
+    t = Task(id="AGY-DIR", title="x", repo=repo, target_agent="agy", created=date(2026, 6, 25))
+    D._bridge_agy_scratch(t, wt)
+
+    assert (wt / "new_suite" / "test_case.py").read_text() == "def test_new():\n    assert True\n"
+
+
 def test_bridge_no_delta_carries_nothing(tmp_path, monkeypatch, capsys):
     # a clean scratch (agy committed or did nothing) must carry NOTHING — never the whole tree.
     repo = "organvm/limen"

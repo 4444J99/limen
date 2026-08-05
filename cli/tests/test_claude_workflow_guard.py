@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import subprocess
@@ -185,6 +186,29 @@ def test_audit_transcript_blocks_unbounded_expensive_opus_fanout(tmp_path):
     assert "unbounded goal phrase detected" in violations
 
 
+def test_audit_transcript_redacts_unbounded_prompt_text(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    prompt = "keep going until ideal form with private local details"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "message": {"content": prompt},
+            }
+        )
+        + "\n"
+    )
+
+    proc = run_guard("audit-transcript", str(transcript), "--max-billable-tokens", "1000000")
+    assert proc.returncode == 2
+    assert prompt not in proc.stdout
+    report = json.loads(proc.stdout)
+    evidence = report["unboundedGoalEvidence"][0]
+    assert "text" not in evidence
+    assert evidence["textSha256"] == hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    assert evidence["chars"] == len(prompt)
+
+
 def test_audit_transcript_flags_opus_subagent_fanout(tmp_path):
     """The verify-studio-launch shape: a cheap orchestrator that fans out expensive-tier
     subagents. The guard reads each subagent's REAL model field and flags the fan-out."""
@@ -234,6 +258,56 @@ def test_audit_transcript_flags_opus_subagent_fanout(tmp_path):
     report = json.loads(proc.stdout)
     assert report["expensiveSubagents"] == 2
     assert report["expensiveTier"] == "opus"
+    assert "subagent fanout" in "\n".join(report["violations"])
+
+
+def test_audit_transcript_recurses_workflow_subagent_dirs(tmp_path):
+    main = tmp_path / "session.jsonl"
+    main.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-sonnet-4-6",
+                    "content": [{"type": "text", "text": "orchestrating"}],
+                    "usage": {"input_tokens": 5, "output_tokens": 5},
+                },
+            }
+        )
+        + "\n"
+    )
+    nested = tmp_path / "session" / "subagents" / "workflows" / "wf_123" / "agent-a.jsonl"
+    nested.parent.mkdir(parents=True)
+    nested.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-opus-4-8[1m]",
+                    "content": [{"type": "text", "text": "nested verifier"}],
+                    "usage": {"input_tokens": 5, "output_tokens": 5},
+                },
+            }
+        )
+        + "\n"
+    )
+
+    proc = run_guard(
+        "audit-transcript",
+        str(main),
+        "--max-billable-tokens",
+        "1000000",
+        "--max-opus-billable-tokens",
+        "1000000",
+        "--max-agent-calls",
+        "100",
+        "--max-opus-agents",
+        "0",
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    report = json.loads(proc.stdout)
+    assert report["files"] == [str(main), str(nested)]
+    assert report["expensiveSubagents"] == 1
     assert "subagent fanout" in "\n".join(report["violations"])
 
 
@@ -365,3 +439,54 @@ def test_audit_transcript_allows_small_bounded_sonnet_session(tmp_path):
     proc = run_guard("audit-transcript", str(transcript), "--max-billable-tokens", "100")
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert json.loads(proc.stdout)["ok"] is True
+
+
+def _bash_transcript(tmp_path, command):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-sonnet-4-6",
+                    "content": [{"type": "tool_use", "name": "Bash", "input": {"command": command}}],
+                    "usage": {"input_tokens": 10, "output_tokens": 20},
+                },
+            }
+        )
+        + "\n"
+    )
+    return transcript
+
+
+def test_audit_transcript_flags_full_suite_pytest(tmp_path):
+    # The 2026-07-15 host-thrash incident command, verbatim.
+    transcript = _bash_transcript(tmp_path, "cd cli && uv run python -m pytest tests/ -q 2>&1 | tail -15")
+    proc = run_guard("audit-transcript", str(transcript), env={"LIMEN_ALLOW_FULL_PYTEST": "0"})
+    report = json.loads(proc.stdout)
+    assert proc.returncode != 0
+    assert report["fullSuitePytestCalls"] == 1
+    assert any("scoped-verification law" in v for v in report["violations"])
+
+
+def test_audit_transcript_allows_scoped_pytest_and_verify_wrappers(tmp_path):
+    for command in (
+        "pytest cli/tests/test_dispatch.py -q",
+        "python3 -m pytest cli/tests/test_dispatch.py::test_x",
+        "bash scripts/verify-scoped.sh",
+        "pip install pytest",
+        "grep -r pytest tests/",
+    ):
+        transcript = _bash_transcript(tmp_path, command)
+        proc = run_guard("audit-transcript", str(transcript), env={"LIMEN_ALLOW_FULL_PYTEST": "0"})
+        report = json.loads(proc.stdout)
+        assert report["fullSuitePytestCalls"] == 0, command
+        assert proc.returncode == 0, command
+
+
+def test_audit_transcript_full_pytest_escape_hatch(tmp_path):
+    transcript = _bash_transcript(tmp_path, "python3 -m pytest cli/tests -q")
+    proc = run_guard("audit-transcript", str(transcript), env={"LIMEN_ALLOW_FULL_PYTEST": "1"})
+    report = json.loads(proc.stdout)
+    assert report["fullSuitePytestCalls"] == 1  # still counted — only the violation is waived
+    assert proc.returncode == 0

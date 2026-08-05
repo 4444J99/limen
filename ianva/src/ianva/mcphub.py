@@ -81,9 +81,9 @@ def start(cfg: GatewayConfig, settings_path: Path) -> tuple[bool, str]:
     if pid and _alive(pid):
         return True, f"backend already running (pid {pid})"
     argv = cfg.backend_argv(settings_path)
-    # sanitize_child_env strips CLAUDE_CODE_OAUTH_TOKEN (#37512) and applies the fleet auth
-    # precedence (LIMEN_CLAUDE_* -> ANTHROPIC_*), so the backend never touches the Keychain.
-    env = creds.sanitize_child_env(fleet_claude=True)
+    # The gateway backend is a long-lived router, not a credential consumer.  Strip every
+    # private-cache key before launch; each upstream owns any narrower credential injection.
+    env = creds.sanitize_backend_env()
     env.setdefault("PORT", str(cfg.port))
     # Robust settings discovery — MCPHub honors MCPHUB_SETTING_PATH before its fragile cwd fallback.
     env["MCPHUB_SETTING_PATH"] = str(settings_path)
@@ -129,11 +129,18 @@ def stop(cfg: GatewayConfig) -> str:
 
 def status(cfg: GatewayConfig) -> dict:
     pid = _read_pid()
+    pid_alive = bool(pid and _alive(pid))
+    endpoint_reachable = reachable(cfg.host, cfg.port, timeout=1.5)
     return {
         "pid": pid,
-        "running": bool(pid and _alive(pid)),
+        "pid_alive": pid_alive,
+        "pidfile_state": "tracked" if pid_alive else ("stale" if pid else "missing"),
+        # launchd owns the foreground backend without going through ``ianva up``.
+        # A reachable endpoint is therefore running truth even when an old
+        # interactive pidfile remains after the custody transition.
+        "running": pid_alive or endpoint_reachable,
         "endpoint": f"http://{cfg.host}:{cfg.port}{cfg.path}",
-        "endpoint_reachable": reachable(cfg.host, cfg.port, timeout=1.5),
+        "endpoint_reachable": endpoint_reachable,
         "settings": str(paths.MCPHUB_SETTINGS),
         "log": str(LOGFILE),
     }

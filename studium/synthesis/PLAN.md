@@ -10,7 +10,7 @@
   nearest dominant force (coloring anchor) + the counter-system pairings. Derived from `../canon.yaml` +
   `../dominant-force.yaml`.
 - [`scripts/studium-synthesis.py`](../../scripts/studium-synthesis.py) — the face renderer →
-  `web/app/out/synthesis.html` (mirrored to `public/`), served at `127.0.0.1:8787/synthesis.html`.
+  `web/app/out/synthesis.html` (mirrored to `public/`), served at `127.0.0.1:8788/synthesis.html`.
   Fail-open, atomic write, meta-refresh — same limen face idiom as `studium.py`.
 - `<concept>.md` — one prose essay per concept, tracing it across the works (the file the face links to).
 - [`counter-systems.md`](counter-systems.md) — the Eastern↔Western pairings as a single essay

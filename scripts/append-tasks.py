@@ -3,10 +3,9 @@ import yaml
 from pathlib import Path
 from datetime import date
 
-# route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
-# concurrent heartbeat read can never observe a truncated/empty queue.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import atomic_write_text
+from limen.intake import contract_fields, github_issue_contract, github_pr_contract
+from limen.tabularius import pending_task_ids, submit_task_upsert
 
 tasks_to_add = [
     {"id": "LIMEN-060", "title": "feat: implement MCP tool wrappers for all 5 organvm CLIs", "repo": "a-organvm/organvm-engine", "urls": ["https://github.com/a-organvm/organvm-engine/issues/89"]},
@@ -63,8 +62,9 @@ if not tasks_path.exists():
 with open(tasks_path) as f:
     data = yaml.safe_load(f)
 
-existing_ids = {t['id'] for t in data['tasks']}
+existing_ids = {t['id'] for t in data['tasks']} | pending_task_ids(tasks_path)
 added_count = 0
+session_id = "append-tasks"
 for t in tasks_to_add:
     if t['id'] not in existing_ids:
         new_task = {
@@ -76,15 +76,22 @@ for t in tasks_to_add:
             "priority": "medium",
             "budget_cost": 2 if "feat" in t['title'] else 1,
             "status": "dispatched",
+            "origin": "obligation",
+            "horizon": "present",
+            "value_case": f"Close the audited source obligation {t['id']} in {t['repo']}",
             "labels": ["batch-2026-06-01"],
             "urls": t['urls'],
             "context": f"Audited 2026-06-01 from Jules-ready batch. {t['title']}",
             "created": date.today().isoformat(),
             "dispatch_log": []
         }
-        data['tasks'].append(new_task)
+        if t["urls"]:
+            issue_number = t["urls"][0].rsplit("/", 1)[-1]
+            new_task.update(contract_fields(github_issue_contract(t["repo"], issue_number)))
+        else:
+            new_task.update(contract_fields(github_pr_contract(t["repo"], t["id"])))
+        submit_task_upsert(tasks_path, new_task, agent="append-tasks", session_id=session_id)
+        existing_ids.add(t["id"])
         added_count += 1
 
-atomic_write_text(tasks_path, yaml.dump(data, default_flow_style=False, sort_keys=False))
-
-print(f"Added {added_count} tasks. Total: {len(data['tasks'])}")
+print(f"Submitted {added_count} task upsert ticket(s). Total after keeper fold: {len(data['tasks']) + added_count}")

@@ -1,0 +1,107 @@
+{
+  "$defs": {
+    "RestorationProofV1": {
+      "additionalProperties": false,
+      "properties": {
+        "custody_target_ref": {
+          "title": "Custody Target Ref",
+          "type": "string"
+        },
+        "device_id": {
+          "title": "Device Id",
+          "type": "string"
+        },
+        "passed": {
+          "const": true,
+          "default": true,
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "predicate_digest": {
+          "title": "Predicate Digest",
+          "type": "string"
+        },
+        "restored_at": {
+          "format": "date-time",
+          "title": "Restored At",
+          "type": "string"
+        },
+        "restored_output_digest": {
+          "title": "Restored Output Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "custody_target_ref",
+        "device_id",
+        "restored_at",
+        "restored_output_digest",
+        "predicate_digest"
+      ],
+      "title": "RestorationProofV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "chunk_manifest_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 4096,
+      "minItems": 1,
+      "title": "Chunk Manifest Digests",
+      "type": "array"
+    },
+    "custody_id": {
+      "title": "Custody Id",
+      "type": "string"
+    },
+    "encryption_profile_digest": {
+      "title": "Encryption Profile Digest",
+      "type": "string"
+    },
+    "independent_device_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 32,
+      "minItems": 2,
+      "title": "Independent Device Ids",
+      "type": "array"
+    },
+    "remote_refs": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 256,
+      "title": "Remote Refs",
+      "type": "array"
+    },
+    "restoration_proofs": {
+      "items": {
+        "$ref": "#/$defs/RestorationProofV1"
+      },
+      "maxItems": 32,
+      "minItems": 2,
+      "title": "Restoration Proofs",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "limen.custody_receipt.v1",
+      "default": "limen.custody_receipt.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "custody_id",
+    "encryption_profile_digest",
+    "chunk_manifest_digests",
+    "independent_device_ids",
+    "restoration_proofs"
+  ],
+  "title": "CustodyReceiptV1",
+  "type": "object"
+}

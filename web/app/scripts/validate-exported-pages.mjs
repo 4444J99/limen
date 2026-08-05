@@ -6,6 +6,9 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const appDir = join(__dirname, "..", "app");
 const outDir = join(__dirname, "..", "out");
+const dashboardExportPolicy = JSON.parse(
+  readFileSync(join(__dirname, "..", "dashboard-export-policy.json"), "utf8"),
+);
 
 function fail(message) {
   console.error(`exported page validation failed: ${message}`);
@@ -64,6 +67,7 @@ const ownerOnlyUiNeedles = [
   "/api/status",
   "/api/qa-status",
   "/api/readiness",
+  "/corpus-status.json",
   "/api/tasks/",
   "/api/release-stale",
   "/api/dispatch",
@@ -73,8 +77,10 @@ const ownerOnlyUiNeedles = [
 ];
 
 assertLabels("index.html", ["Public"]);
-assertLabels("internal.html", ["Internal", "QA", "Insights", "Client", "Public"]);
-assertLabels("qa.html", ["Internal", "QA", "Insights", "Client", "Public"]);
+assertLabels("internal.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+assertLabels("qa.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+assertLabels("corpus.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+assertLabels("observatory.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
 assertLabels("client.html", ["Client", "Public"]);
 assertLabels("public.html", ["Public"]);
 
@@ -85,24 +91,26 @@ if (runtimeAttached) {
   assertIncludes("client.html", ["Client token required", "Load client"]);
   assertIncludes("public.html", ["Public runtime refresh", "Unrecorded capacity", "Pull requests"]);
   assertIncludes("qa.html", ["Owner token required", "Load QA"]);
+  assertIncludes("corpus.html", ["Corpus Command Center", "Prompt atlas"]);
   assertNotIncludes("client.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
   assertNotIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
 } else {
   assertIncludes("index.html", ["Limen is tracking", "Run plan", "Unrecorded capacity"]);
   assertIncludes("internal.html", ["Runtime unavailable"]);
   assertIncludes("qa.html", ["Runtime unavailable"]);
+  assertIncludes("corpus.html", ["Corpus Command Center", "Prompt atlas"]);
   assertIncludes("client.html", ["Runtime unavailable"]);
   assertIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
 }
 assertIncludes("public.html", ["/public-surface-manifest.json"]);
 
 assertNotIncludes("index.html", [">Internal</a>", ">QA</a>", ">Client</a>", "Client token", "Load internal", "Load QA"]);
-assertNotIncludes("client.html", [">Internal</a>", ">QA</a>", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
-assertNotIncludes("public.html", [">Internal</a>", ">QA</a>", ">Client</a>", "Client token", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
+assertNotIncludes("client.html", [">Internal</a>", ">QA</a>", ">Corpus</a>", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
+assertNotIncludes("public.html", [">Internal</a>", ">QA</a>", ">Corpus</a>", ">Client</a>", "Client token", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
 assertNotIncludes("client.html", ['href="/surface-manifest.json"']);
 assertNotIncludes("public.html", ['href="/surface-manifest.json"']);
-for (const page of ["index.html", "internal.html", "qa.html", "client.html", "public.html"]) {
-  assertNotIncludes(page, ["LIMEN-015", "Propagate PR #234 completions", "dispatch_log", "/tasks.json", "/qa-status.json", "/client-status.json", "/internal-status.json", "/owner-surface-manifest.json", "/readiness.json"]);
+for (const page of ["index.html", "internal.html", "qa.html", "corpus.html", "observatory.html", "client.html", "public.html"]) {
+  assertNotIncludes(page, ["LIMEN-015", "Propagate PR #234 completions", "dispatch_log", "/tasks.json", "/qa-status.json", "/client-status.json", "/internal-status.json", "/owner-surface-manifest.json", "/readiness.json", "/corpus-status.json", "/observatory-status.json"]);
 }
 assertSourceNotIncludes("lib/data.ts", [
   "tasks.json",
@@ -180,5 +188,56 @@ for (const needle of ["lifecycleGates", "getLifecycleGate", "getLifecycleGateLab
   }
 }
 
+const corpusSource = readSource("corpus/corpus-command-center-client.tsx");
+for (const needle of ['"body_preview"', '"body_object"', '"private_source_path"', "dispatch_log"]) {
+  if (corpusSource.includes(needle)) {
+    fail(`corpus client source unexpectedly references private field ${needle}`);
+  }
+}
 console.log("Exported page persona/runtime checks verified");
-assertLabels("insights.html", ["Internal", "QA", "Insights", "Client", "Public"]);
+assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+
+// Payload-size ratchet: the shared export policy bounds the static-first projection.
+import { statSync as _statSync, existsSync as _existsSync } from "fs";
+const dashboardJsonPath = join(outDir, "dashboard.json");
+if (_existsSync(dashboardJsonPath)) {
+  const dashboardBytes = _statSync(dashboardJsonPath).size;
+  const LIMIT_BYTES = dashboardExportPolicy.max_dashboard_bytes;
+  const limitKb = Math.floor(LIMIT_BYTES / 1024);
+  const maxLogs = dashboardExportPolicy.max_dispatch_log_entries;
+  if (dashboardBytes > LIMIT_BYTES) {
+    fail(`dashboard.json exceeds ${limitKb}KB ratchet: ${Math.round(dashboardBytes / 1024)}KB > ${limitKb}KB. Slim the payload (active tasks only, dispatch_log<=${maxLogs}) before merging.`);
+  }
+  console.log(`dashboard.json size: ${Math.round(dashboardBytes / 1024)}KB (limit ${limitKb}KB)`);
+}
+// Assert every exported page has a non-empty, unique <title> tag.
+// This catches regressions where a route loses its per-route metadata.
+const exportedPages = [
+  "index.html",
+  "qa.html",
+  "client.html",
+  "public.html",
+  "internal.html",
+  "insights.html",
+  "corpus.html",
+  "observatory.html",
+];
+
+function extractTitle(html) {
+  const m = html.match(/<title>([^<]*)<\/title>/);
+  return m ? m[1].trim() : "";
+}
+
+const seenTitles = new Map();
+for (const page of exportedPages) {
+  const html = readHtml(page);
+  const title = extractTitle(html);
+  if (!title) {
+    fail(`${page} has an empty <title>`);
+  }
+  if (seenTitles.has(title)) {
+    fail(`${page} has duplicate <title> "${title}" (already seen in ${seenTitles.get(title)})`);
+  }
+  seenTitles.set(title, page);
+}
+console.log(`Page title uniqueness verified: ${exportedPages.length} pages, ${seenTitles.size} unique titles`);

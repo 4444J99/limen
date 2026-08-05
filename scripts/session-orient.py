@@ -17,6 +17,7 @@ medical literal — it reads numeric liveness counts by field NAME from the alre
 counts-only logs/health-organ-state.json, and lever IDs/titles that already live PII-free in
 the committed registry. The firewall guards this generator, not just its output.
 """
+
 import json
 import os
 import re
@@ -31,14 +32,8 @@ except Exception:  # pragma: no cover - dependency absence is a fail-open hook p
 ROOT = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
 # The auto-memory index lives outside the repo (per-user projects dir); resolve it from
 # this repo's identity so the lookup is derived, never pinned to a machine path.
-MEMORY_INDEX = (
-    Path.home()
-    / ".claude"
-    / "projects"
-    / "-Users-4jp-Workspace-limen"
-    / "memory"
-    / "MEMORY.md"
-)
+MEMORY_INDEX = Path.home() / ".claude" / "projects" / "-Users-4jp-Workspace-limen" / "memory" / "MEMORY.md"
+TERMINAL_LEVER_STATUSES = {"discharged", "retired", "done", "closed"}
 
 
 def _read_text(path, limit_bytes=None):
@@ -64,6 +59,11 @@ def _trunc(s, n):
     return s if len(s) <= n else s[: n - 1].rstrip() + "…"
 
 
+def _lever_is_closed(lever):
+    """Read both the legacy flag and the normalized free-text lifecycle field."""
+    return bool(lever.get("discharged")) or str(lever.get("status", "")).strip().lower() in TERMINAL_LEVER_STATUSES
+
+
 # ── sections ──────────────────────────────────────────────────────────────────
 
 
@@ -85,9 +85,12 @@ def section_levers():
     """Open his-hand levers: count + the top few IDs (all PII-free in the registry)."""
     d = _read_json(ROOT / "his-hand-levers.json", {})
     levers = d.get("levers") if isinstance(d, dict) else (d if isinstance(d, list) else [])
-    if not isinstance(levers, list) or not levers:
+    if not isinstance(levers, list):
         return ""
-    ids = [str(lev.get("id") or lev.get("label", "?")) for lev in levers if isinstance(lev, dict)]
+    levers = [lev for lev in levers if isinstance(lev, dict) and not _lever_is_closed(lev)]
+    if not levers:
+        return ""
+    ids = [str(lev.get("id") or lev.get("label", "?")) for lev in levers]
     head = ", ".join(ids[:4])
     more = f" +{len(ids) - 4} more" if len(ids) > 4 else ""
     return f"**His-hand levers** — {len(levers)} open · {head}{more} (detail: his-hand-levers.json)"
@@ -138,8 +141,9 @@ def section_board():
     if yaml is None:
         return ""
     counts = {}
+    tasks_path = Path(os.environ.get("LIMEN_ORIENT_TASKS") or ROOT / "tasks.yaml")
     try:
-        data = yaml.safe_load((ROOT / "tasks.yaml").read_text(encoding="utf-8", errors="replace"))
+        data = yaml.safe_load(tasks_path.read_text(encoding="utf-8", errors="replace"))
     except Exception:
         return ""
     tasks = data.get("tasks") if isinstance(data, dict) else []
@@ -152,7 +156,7 @@ def section_board():
     if not counts:
         return ""
     parts = []
-    for k in ("open", "dispatched", "in_progress", "done", "needs_human"):
+    for k in ("open", "dispatched", "in_progress", "done", "needs_human", "failed_blocked"):
         if counts.get(k):
             parts.append(f"{counts[k]} {k}")
     return "**Board** — " + " · ".join(parts) if parts else ""
@@ -160,11 +164,16 @@ def section_board():
 
 def section_git():
     """Current branch, ahead/behind main, dirty flag."""
+    if "LIMEN_ORIENT_GIT_SECTION" in os.environ:
+        return os.environ.get("LIMEN_ORIENT_GIT_SECTION", "")
+
     def _git(*args):
         try:
             return subprocess.run(
                 ["git", "-C", str(ROOT), *args],
-                capture_output=True, text=True, timeout=4,
+                capture_output=True,
+                text=True,
+                timeout=4,
             ).stdout.strip()
         except Exception:
             return ""
@@ -225,9 +234,77 @@ def section_pointers():
 # ── main ────────────────────────────────────────────────────────────────────
 
 
+def section_handoff() -> str:
+    """Inject the seam-survival handoff (scripts/handoff-relay.py) so a resuming session picks up
+    WARM — open lanes, in-flight/stale claims, budget, and the single next action — instead of
+    cold-deriving. Silent if no fresh handoff exists."""
+    data = _read_json(ROOT / "logs" / "handoff.json", {})
+    if not isinstance(data, dict) or not data.get("generated"):
+        return ""
+    lanes = data.get("open_lanes") or {}
+    inflight = data.get("in_flight_claims") or {}
+    blk = data.get("last_blocker") or {}
+    b = data.get("budget_remaining") or {}
+    na = data.get("next_action") or {}
+    line = (
+        f"**Resume (handoff)** — {lanes.get('total_open', 0)} open / "
+        f"{len(lanes.get('by_lane', {}))} lanes · {inflight.get('count', 0)} in-flight "
+        f"({inflight.get('stale', 0)} stale) · needs_human {blk.get('needs_human_count', 0)}"
+    )
+    if b.get("overnight_remaining") is not None:
+        line += f" · beat budget {b.get('overnight_spent')}/{b.get('overnight_cap')}"
+    if na.get("id"):
+        line += f"\n  next → `{na.get('id')}` [{na.get('priority')}] {na.get('title', '')}"
+    return line
+
+
+def section_omega() -> str:
+    """Inject the autonomic fixed-point verdict (scripts/omega.sh → logs/omega.json) so a resuming
+    session sees at a glance whether the WHOLE holds — not just that individual gates are green. A
+    SKIP count is honest unverified-rungs, not failure. Silent if no stamp exists."""
+    data = _read_json(ROOT / "logs" / "omega.json", {})
+    if not isinstance(data, dict) or not data.get("verdict"):
+        return ""
+    verdict = data.get("verdict")
+    line = (
+        f"**Omega** — {verdict} · {data.get('pass', 0)} PASS / "
+        f"{data.get('fail', 0)} FAIL / {data.get('skip', 0)} SKIP"
+        f"{' (offline subset)' if data.get('offline') else ''}"
+    )
+    if data.get("fail"):
+        broken = [r.get("rung") for r in data.get("rungs", []) if isinstance(r, dict) and r.get("status") == "FAIL"]
+        if broken:
+            line += f"\n  off fixed-point: {', '.join(filter(None, broken))[:160]}"
+    return line
+
+
+def section_autonomy() -> str:
+    """Surface a live autonomy pause so a session honors it — the marker's prohibitions bind
+    interactive sessions too (2026-07-15 endless-watcher incident: sessions armed auto-merge
+    watchers while the marker prohibited merges, because orientation never showed it).
+    Silent when no marker exists."""
+    marker = ROOT / "logs" / "AUTONOMY_PAUSED"
+    try:
+        lines = marker.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ""
+
+    def field(name: str) -> str:
+        return next((ln.split(":", 1)[1].strip() for ln in lines if ln.strip().startswith(f"{name}:")), "")
+
+    line = f"**Autonomy** — PAUSED: {(field('reason') or 'see logs/AUTONOMY_PAUSED')[:140]}"
+    prohibitions = field("prohibitions")
+    if prohibitions:
+        line += f"\n  prohibitions (bind THIS session too): {prohibitions[:140]}"
+    return line
+
+
 def main():
     sections = (
         section_north_star,
+        section_autonomy,
+        section_omega,
+        section_handoff,
         section_levers,
         section_organs,
         section_health,
@@ -251,6 +328,8 @@ def main():
     print(digest, end="")
 
     out_path = ROOT / "logs" / "session-orientation.md"
+    if os.environ.get("LIMEN_ORIENT_NO_WRITE") == "1":
+        return
     try:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(digest, encoding="utf-8")

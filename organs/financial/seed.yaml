@@ -3,8 +3,9 @@ organ: "financial"
 repo: "organvm/limen"
 org: "organvm"
 metadata:
-  implementation_status: "BUILDING"
-  maturity: 40
+  implementation_status: "BETA"
+  promotion_status: "BETA"
+  maturity: 70
   last_consolidated: "2026-07-03T00:00:00Z"
 description: >
   Aerarium — the Financial Office. Runs the personal family-office engine for the VLTIMA body.
@@ -13,6 +14,16 @@ description: >
   own assertion. Macro: a family-office-in-a-box anyone can deploy. Micro: Anthony's personal
   balance-sheet + cashflow + payrail disbursement map run on his real numbers.
 produces:
+  - type: "macro_family_office_face"
+    path: "organs/financial/MACRO.md"
+    consumers:
+      - "principal"
+      - "public positioning"
+  - type: "micro_principal_instance_face"
+    path: "organs/financial/MICRO.md"
+    consumers:
+      - "principal"
+      - "conducting-report"
   - type: "consolidated_balance_sheet"
     consumers:
       - "organ-health"

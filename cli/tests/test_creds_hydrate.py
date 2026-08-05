@@ -111,7 +111,8 @@ def test_hydrate_write_env_idempotent(tmp_path, monkeypatch):
 def test_scrub_redacts_key_shapes():
     """A provider error must never carry a live key into our logs."""
     mod = _hydrate_module()
-    s = mod._scrub("Consumer 'api_key:AIzaSyCO8P_ooVY6dCYzNm7rPK15WdRrPYR63F0' suspended; ghp_abcd1234EFGH5678ijkl")
+    # obviously-synthetic key SHAPES (matches _SECRET_RX so the scrubber must redact them) — never a real credential
+    s = mod._scrub("Consumer 'api_key:AIzaSyFAKEFIXTURE0000000000000000000000' suspended; ghp_abcd1234EFGH5678ijkl")
     assert "AIzaSy" not in s and "ghp_abcd1234" not in s and "api_key:AIza" not in s
     assert "<redacted>" in s
 
@@ -231,6 +232,29 @@ def test_verify_cli_no_creds_materialized_exits_zero(tmp_path):
     )
     assert r.returncode == 0
     assert "not materialized" in r.stdout
+
+
+def test_verify_required_missing_on_populated_floor_exits_one(tmp_path):
+    """A `required` lane absent while the floor is OTHERWISE configured is a LOUD defect (exit 1) —
+    the silent-skip failure mode that let GMAIL_APP_PASSWORD rot green (op:// read fails, --apply
+    fail-open skips, --verify used to shrug '?'). Distinct from an EMPTY floor (fresh/CI), which
+    stays quiet at exit 0 (test above): this is the configured-but-broken case that must scream."""
+    env_file = tmp_path / ".limen.env"
+    env_file.write_text("CONFIGURED_KEY=present\n")  # floor populated — but NOT with the required key
+    map_file = tmp_path / "map.json"
+    map_file.write_text(
+        '[{"lane":"other","env":["CONFIGURED_KEY"]},'
+        '{"lane":"gmail req","ref":"op://V/I/password","env":["REQ_KEY"],"required":true}]'
+    )
+    r = subprocess.run(
+        [sys.executable, str(HYDRATE), "--verify"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        env={**os.environ, "LIMEN_ENV": str(env_file), "LIMEN_CREDS_MAP": str(map_file)},
+    )
+    assert r.returncode == 1
+    assert "REQUIRED, NOT materialized" in r.stdout
 
 
 # --- OP IS OPT-IN: the root-to-leaf fix for the 1Password Touch-ID prompt storm -------------------
@@ -399,6 +423,177 @@ def test_gh_sinks_normalizes_dict_list_and_none():
     assert mod._gh_sinks({"gh_secret": one}) == [one]
     two = [{"repo": "o/a", "name": "K"}, {"repo": "o/b", "name": "K"}]
     assert mod._gh_sinks({"gh_secret": two}) == two
+
+
+# --- ONE-PROMPT BATCH: all op:// lanes in a single `op inject` pass ---------------------------------
+
+
+def test_op_read_batch_one_subprocess_and_multiline_values(monkeypatch):
+    """op_read_batch renders EVERY ref through ONE `op inject` subprocess (one biometric prompt
+    total) and the sentinel template survives multi-line values (the rclone.conf class) verbatim —
+    the reason the template is sentinels, not JSON."""
+    mod = _hydrate_module("creds_hydrate_batch")
+    calls = []
+
+    class _R:
+        returncode = 0
+
+        def __init__(self, stdout):
+            self.stdout = stdout
+
+    def _fake_run(cmd, **kw):
+        calls.append(cmd)
+        template = kw["input"]
+        # substitute like `op inject` does: plain text, no escaping
+        import re as _re
+
+        def _sub(m):
+            ref = m.group(1).strip()
+            if ref.endswith("notesPlain"):
+                return '[gdrive]\ntype = drive\ntoken = {"x":"y"}'
+            return f"VAL::{ref}"
+
+        return _R(_re.sub(r"\{\{\s*(op://[^}]+?)\s*\}\}", _sub, template))
+
+    monkeypatch.setattr(mod.subprocess, "run", _fake_run)
+    refs = ["op://Personal/Gemini API Key/credential", "op://Limen-Automation/rclone.conf/notesPlain"]
+    out = mod.op_read_batch(refs)
+    assert len(calls) == 1 and calls[0][:2] == ["op", "inject"]  # exactly ONE op process
+    assert out["op://Personal/Gemini API Key/credential"] == "VAL::op://Personal/Gemini API Key/credential"
+    assert out["op://Limen-Automation/rclone.conf/notesPlain"].splitlines()[0] == "[gdrive]"  # newlines survive
+    assert "token = " in out["op://Limen-Automation/rclone.conf/notesPlain"]
+
+
+def test_op_read_batch_fail_open(monkeypatch):
+    """`op inject` is all-or-nothing: nonzero exit or a missing binary → None, so the caller falls
+    back to sequential per-entry op_read and per-entry fail-open is preserved."""
+    mod = _hydrate_module("creds_hydrate_batch_fail")
+
+    class _Fail:
+        returncode = 1
+        stdout = ""
+
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: _Fail())
+    assert mod.op_read_batch(["op://V/I/credential", "op://V/J/credential"]) is None
+
+    def _missing(*a, **k):
+        raise FileNotFoundError("op")
+
+    monkeypatch.setattr(mod.subprocess, "run", _missing)
+    assert mod.op_read_batch(["op://V/I/credential", "op://V/J/credential"]) is None
+    assert mod.op_read_batch([]) == {}  # empty input never touches a subprocess
+
+
+def test_op_read_batch_real_shim_round_trip(tmp_path, monkeypatch):
+    """End-to-end through a REAL subprocess: a fake `op` on PATH counts invocations and renders the
+    template. Three refs → ONE invocation, every value parsed back by sentinel."""
+    mod = _hydrate_module("creds_hydrate_batch_shim")
+    shim_dir = tmp_path / "bin"
+    shim_dir.mkdir()
+    count_file = tmp_path / "op-calls"
+    shim = shim_dir / "op"
+    shim.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys, re, pathlib\n"
+        f"cf = pathlib.Path({str(count_file)!r})\n"
+        "cf.open('a').write('x\\n')\n"
+        "t = sys.stdin.read()\n"
+        "sys.stdout.write(re.sub(r'\\{\\{\\s*(op://[^}]+?)\\s*\\}\\}', lambda m: 'S::' + m.group(1).strip(), t))\n"
+    )
+    shim.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{shim_dir}:{os.environ['PATH']}")
+    refs = ["op://V/A/credential", "op://V/B/password", "op://V/C/credential"]
+    out = mod.op_read_batch(refs)
+    assert out == {r: f"S::{r}" for r in refs}
+    assert count_file.read_text().count("x") == 1  # one op process for all three refs
+
+
+def _batch_wiring_module(tmp_path, monkeypatch, name, map_json):
+    """Common setup for main()-level batch wiring tests: module + tmp env file + map + no silent op."""
+    mod = _hydrate_module(name)
+    env_file = tmp_path / ".limen.env"
+    mod.ENV_FILE = env_file
+    map_file = tmp_path / "map.json"
+    map_file.write_text(map_json)
+    monkeypatch.setenv("LIMEN_CREDS_MAP", str(map_file))
+    monkeypatch.delenv("LIMEN_CREDS_BATCH", raising=False)
+    for v in ("OP_SERVICE_ACCOUNT_TOKEN", "OP_CONNECT_HOST", "OP_CONNECT_TOKEN"):
+        monkeypatch.delenv(v, raising=False)
+    monkeypatch.setattr(mod, "have_op", lambda: True)
+    monkeypatch.setattr(mod, "SA_TOKEN_FILE", tmp_path / "absent-token")
+    return mod, env_file
+
+
+_THREE_OP_LANES = (
+    '[{"lane":"a","ref":"op://V/A/credential","env":["A_KEY"]},'
+    '{"lane":"b","ref":"op://V/B/credential","env":["B_KEY"]},'
+    '{"lane":"c","ref":"op://V/C/credential","env":["C_KEY"]}]'
+)
+
+
+def test_apply_op_reads_all_lanes_in_one_batch(tmp_path, monkeypatch):
+    """--apply --op with several op:// lanes goes through op_read_batch ONCE (all refs) and never
+    touches per-entry op_read — the one-prompt contract."""
+    mod, env_file = _batch_wiring_module(tmp_path, monkeypatch, "creds_hydrate_wire1", _THREE_OP_LANES)
+    batches, reads = [], []
+    monkeypatch.setattr(
+        mod,
+        "op_read_batch",
+        lambda refs, timeout=120: (batches.append(list(refs)), {r: f"v-{i}" for i, r in enumerate(refs)})[1],
+    )
+    monkeypatch.setattr(mod, "op_read", lambda ref, timeout=15: (reads.append(ref), "SEQ")[1])
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--apply", "--op"])
+    assert mod.main() == 0
+    assert batches == [["op://V/A/credential", "op://V/B/credential", "op://V/C/credential"]]
+    assert reads == [], "per-entry op_read fired despite a successful batch — that's a prompt per lane again"
+    text = env_file.read_text()
+    assert "export A_KEY=v-0" in text and "export B_KEY=v-1" in text and "export C_KEY=v-2" in text
+
+
+def test_apply_batch_failure_falls_back_to_sequential(tmp_path, monkeypatch):
+    """A failed batch (None) degrades to the old per-entry op_read reads — fail-open, never a lost lane."""
+    mod, env_file = _batch_wiring_module(tmp_path, monkeypatch, "creds_hydrate_wire2", _THREE_OP_LANES)
+    reads = []
+    monkeypatch.setattr(mod, "op_read_batch", lambda refs, timeout=120: None)
+    monkeypatch.setattr(mod, "op_read", lambda ref, timeout=15: (reads.append(ref), "SEQ")[1])
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--apply", "--op"])
+    assert mod.main() == 0
+    assert reads == ["op://V/A/credential", "op://V/B/credential", "op://V/C/credential"]
+    assert "export A_KEY=SEQ" in env_file.read_text()
+
+
+def test_apply_batch_disabled_by_env(tmp_path, monkeypatch):
+    """LIMEN_CREDS_BATCH=0 is the escape hatch: no batch call at all, sequential reads as before."""
+    mod, _env_file = _batch_wiring_module(tmp_path, monkeypatch, "creds_hydrate_wire3", _THREE_OP_LANES)
+    monkeypatch.setenv("LIMEN_CREDS_BATCH", "0")
+    batches, reads = [], []
+    monkeypatch.setattr(mod, "op_read_batch", lambda refs, timeout=120: (batches.append(list(refs)), {})[1])
+    monkeypatch.setattr(mod, "op_read", lambda ref, timeout=15: (reads.append(ref), "SEQ")[1])
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--apply", "--op"])
+    assert mod.main() == 0
+    assert batches == []
+    assert len(reads) == 3
+
+
+def test_apply_batch_excludes_derive_lanes(tmp_path, monkeypatch):
+    """Derive-first lanes never enter the batch — their op:// ref is a last-resort fallback, and
+    pre-reading it would touch 1Password for a value the keyring already mints."""
+    map_json = (
+        '[{"lane":"gh","ref":"op://V/GH/password","env":["T_GH"],"derive":["gh","auth","token"]},'
+        '{"lane":"a","ref":"op://V/A/credential","env":["A_KEY"]},'
+        '{"lane":"b","ref":"op://V/B/credential","env":["B_KEY"]}]'
+    )
+    mod, env_file = _batch_wiring_module(tmp_path, monkeypatch, "creds_hydrate_wire4", map_json)
+    batches = []
+    monkeypatch.setattr(mod, "derive_value", lambda cmd, timeout=15: "keyring_tok")
+    monkeypatch.setattr(
+        mod, "op_read_batch", lambda refs, timeout=120: (batches.append(list(refs)), {r: "V" for r in refs})[1]
+    )
+    monkeypatch.setattr(mod, "op_read", lambda ref, timeout=15: "SEQ")
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--apply", "--op"])
+    assert mod.main() == 0
+    assert batches == [["op://V/A/credential", "op://V/B/credential"]]  # derive lane's ref NOT pre-read
+    assert "export T_GH=keyring_tok" in env_file.read_text()
 
 
 def test_gh_secret_list_fans_out_to_every_repo_in_verify(tmp_path):

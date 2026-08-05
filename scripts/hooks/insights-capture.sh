@@ -5,7 +5,7 @@
 #
 # Safe by construction:
 #   - no-op if there is no NEW report     (insights-snapshot --only-if-newer)
-#   - no-op if the tool isn't deployed yet (feat/insights-diff-rescue unmerged)
+#   - no-op if the tool isn't deployed    (chezmoi dot_local/bin, applied)
 #   - never blocks session end             (always exit 0)
 # Idempotent: the snapshot dir is stamped by report.html's mtime, so repeated
 # runs (incl. concurrent fleet sessions) converge on one snapshot per report.
@@ -14,8 +14,9 @@ set -u
 REPORT="$HOME/.claude/usage-data/report.html"
 LOG="$HOME/.claude/usage-data/.capture.log"
 
-# Locate the tool: prefer the chezmoi-deployed path, else PATH. Silent no-op if
-# absent (it ships on the feat/insights-diff-rescue branch, not yet applied).
+# Locate the tool: prefer the chezmoi-deployed path, else PATH. Silent no-op
+# if absent on this host. The tool also auto-commits the archive repo, so a
+# captured snapshot is durable off-disk without further wiring here.
 TOOL="$HOME/.local/bin/insights-snapshot"
 if [ ! -x "$TOOL" ]; then
   TOOL="$(command -v insights-snapshot 2>/dev/null || true)"

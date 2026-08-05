@@ -171,27 +171,27 @@ film:
   proof_of_form: "studium/film/iliad.yaml (10 force-matched films, per-film object lessons, divisions, Letterboxd slugs + the set-aside Troy overlay)"
   bridge: "studium-objectlessons.py joins picks to his 253-film objectlessons.film DB by Letterboxd slug; films not in_object_db are candidate catalogue additions (staged on object-lessons branch feat/studium-force-bridge, his gate)"
   first_pass:
-    note: "one companion per first-pass work (19 remaining; Iliad done). Reuse the work's force_arc from its arcs."
+    note: "one companion per first-pass work; Metamorphoses and Journey to the West remain. Reuse the work's force_arc from its arcs."
     tasks:
-      - {id: studium-film-odyssey,            title: "Odyssey film companion (return/exile/recognition)",        class: content}
-      - {id: studium-film-aeneid,             title: "Aeneid film companion (empire/fate/sacrifice)",            class: content}
+# - {id: studium-film-odyssey,            title: "Odyssey film companion (return/exile/recognition)",        class: content} # DONE
+      # - {id: studium-film-aeneid,             title: "Aeneid film companion (empire/fate/sacrifice)",            class: content} # DONE
       - {id: studium-film-metamorphoses,      title: "Metamorphoses film companion (metamorphosis)",             class: content}
-      - {id: studium-film-divine-comedy,      title: "Divine Comedy film companion (descent/ascent/beatitude)",  class: content}
-      - {id: studium-film-tanakh,             title: "Tanakh film companion (covenant/law/exile)",               class: content}
-      - {id: studium-film-quran,              title: "Qur'an film companion (revelation/law/the straight path)", class: content}
-#     - {id: studium-film-gilgamesh,          title: "Gilgamesh film companion (mortality/grief)",               class: content} # DONE
-      - {id: studium-film-beowulf,            title: "Beowulf film companion (wyrd/heroic doom)",                 class: content}
-      - {id: studium-film-canterbury-tales,   title: "Canterbury Tales film companion (the human comedy)",       class: content}
-      - {id: studium-film-mahabharata,        title: "Mahabharata film companion (dharma/war)",                  class: content}
-      - {id: studium-film-bhagavad-gita,      title: "Bhagavad Gita film companion (right action/renunciation)", class: content}
-#     - {id: studium-film-ramayana,           title: "Ramayana film companion (fidelity/return)",                class: content} # DONE
-      - {id: studium-film-analects,           title: "Analects film companion (ritual order/the rectified self)", class: content}
+      # - {id: studium-film-divine-comedy,      title: "Divine Comedy film companion (descent/ascent/beatitude)",  class: content} # DONE
+      # - {id: studium-film-tanakh,             title: "Tanakh film companion (covenant/law/exile)",               class: content} # DONE
+      # - {id: studium-film-quran,              title: "Qur'an film companion (revelation/law/the straight path)", class: content} # DONE
+      # - {id: studium-film-gilgamesh,          title: "Gilgamesh film companion (mortality/grief)",               class: content} # DONE
+      # - {id: studium-film-beowulf,            title: "Beowulf film companion (wyrd/heroic doom)",                class: content} # DONE
+      # - {id: studium-film-canterbury-tales,   title: "Canterbury Tales film companion (the human comedy)",       class: content} # DONE
+      # - {id: studium-film-mahabharata,        title: "Mahabharata film companion (dharma/war)",                  class: content} # DONE
+      # - {id: studium-film-bhagavad-gita,      title: "Bhagavad Gita film companion (right action/renunciation)", class: content} # DONE
+      # - {id: studium-film-ramayana,           title: "Ramayana film companion (fidelity/return)",                class: content} # DONE
+      # - {id: studium-film-analects,           title: "Analects film companion (ritual order/the rectified self)", class: content} # DONE
       # - {id: studium-film-tao-te-ching,       title: "Dao De Jing film companion (wu wei/the Way)",              class: content} # DONE
       - {id: studium-film-journey-to-the-west, title: "Journey to the West film companion (pilgrimage/comic transcendence)", class: content}
-      - {id: studium-film-tale-of-genji,      title: "Tale of Genji film companion (desire/impermanence)",       class: content}
-      - {id: studium-film-heike,              title: "Tale of the Heike film companion (mono no aware)",          class: content}
-      - {id: studium-film-conference-of-birds, title: "Conference of the Birds film companion (the seven valleys/fanā)", class: content}
-      - {id: studium-film-shahnameh,          title: "Shahnameh film companion (kingship/the farr)",             class: content}
+      # - {id: studium-film-tale-of-genji,      title: "Tale of Genji film companion (desire/impermanence)",       class: content} # DONE
+      # - {id: studium-film-heike,              title: "Tale of the Heike film companion (mono no aware)",          class: content} # DONE
+      # - {id: studium-film-conference-of-birds, title: "Conference of the Birds film companion (the seven valleys/fana)", class: content} # DONE
+      # - {id: studium-film-shahnameh,          title: "Shahnameh film companion (kingship/the farr)",             class: content} # DONE
   tier2:
     note: "film companions for the 5 staged works — after the first pass, his gate"
     tasks:

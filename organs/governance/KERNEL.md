@@ -35,13 +35,15 @@ That is the fractal: one structure, every pillar.
 ## Fractal deployment
 
 - **MACRO** — a portable governance-as-code open standard anyone can adopt: seed-contract validation,
-  promotion state-machine enforcement, dependency-DAG integrity, and a standing-record registry. Any
-  multi-repo ecosystem or dual-entity organization can adopt it as its governance floor.
+  promotion state-machine enforcement, entity-register integrity, dual-entity boundary enforcement,
+  and a standing-record registry. Any multi-repo ecosystem or dual-entity organization can adopt it
+  as its governance floor. See [`MACRO-FACE.md`](MACRO-FACE.md).
 
 - **MICRO** — ORGANVM's own dual-entity operation: the open-project commons (non-profit Cind & Sol
   Foundation, Panama) and the commercial vehicle (Sovereign Systems LLC). The organ tracks their
   respective mandates, ensures the entities do not blur fiduciary roles, and runs the cursus-honorum
-  sequence for every contributor repo.
+  sequence for every contributor repo. Both entities pass the entity-integrity validator on every
+  beat. See [`MICRO-FACE.md`](MICRO-FACE.md).
 
 ## The cursus honorum (the sequence of offices)
 
@@ -66,3 +68,20 @@ cannot hold an authority without the prerequisite standing. The machine checks; 
   not chat memory. What is not written down does not count.
 - Do not skip stages, even under pressure. A skipped stage in the cursus honorum is a governance
   failure. Surface it; do not paper over it.
+
+## Validation
+
+```bash
+# Rules #1-2: cursus office integrity + structured edges
+python organs/governance/validate-seed.py --fleet --strict-graph
+
+# Rules #3-4: entity register integrity + repo registration
+python organs/governance/validate-entities.py --fleet
+```
+
+Both validators exit 0 when the organ's own house is in order. Run them on every governance beat.
+
+---
+
+*Faces: [`MACRO-FACE.md`](MACRO-FACE.md) (portable standard) · [`MICRO-FACE.md`](MICRO-FACE.md)
+(ORGANVM's instance) · [`CHARTER.md`](CHARTER.md) (roles + workflows).*

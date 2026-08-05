@@ -85,7 +85,10 @@ def test_queue_lock_is_mutually_exclusive(tmp_path):
     tp.write_text("x")
     with D._queue_lock(tp) as got1:
         assert got1 is True
-        assert (tmp_path / "logs" / ".queue.lock.d").exists()
+        lockd = tmp_path / "logs" / ".queue.lock.d"
+        assert lockd.exists()
+        assert (lockd / "pid").read_text().strip() == str(os.getpid())
+        assert (lockd / "created_at").read_text().strip()
         with D._queue_lock(tp, timeout=1) as got2:  # held → second acquire fails fast
             assert got2 is False
     assert not (tmp_path / "logs" / ".queue.lock.d").exists()  # released on exit
@@ -103,6 +106,57 @@ def test_queue_lock_reenters_when_outer_heartbeat_lock_is_held(tmp_path, monkeyp
         assert got is True
 
     assert lockd.exists(), "inner queue_lock must not release the heartbeat's outer lock"
+
+
+def test_queue_lock_does_not_steal_fresh_anonymous_lock(tmp_path, monkeypatch):
+    tp = tmp_path / "tasks.yaml"
+    tp.write_text("x")
+    lockd = tmp_path / "logs" / ".queue.lock.d"
+    lockd.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_QUEUE_LOCK_STALE_SEC", "3600")
+
+    with D._queue_lock(tp, timeout=1) as got:
+        assert got is False
+
+    assert lockd.exists()
+
+
+def test_queue_lock_reaps_old_anonymous_lock(tmp_path, monkeypatch):
+    tp = tmp_path / "tasks.yaml"
+    tp.write_text("x")
+    lockd = tmp_path / "logs" / ".queue.lock.d"
+    lockd.mkdir(parents=True)
+    old = time.time() - 60
+    os.utime(lockd, (old, old))
+    monkeypatch.setenv("LIMEN_QUEUE_LOCK_STALE_SEC", "1")
+
+    with D._queue_lock(tp, timeout=2) as got:
+        assert got is True
+        assert (lockd / "pid").read_text().strip() == str(os.getpid())
+
+    assert not lockd.exists()
+
+
+def test_queue_lock_reaps_dead_pid_lock(tmp_path, monkeypatch):
+    tp = tmp_path / "tasks.yaml"
+    tp.write_text("x")
+    lockd = tmp_path / "logs" / ".queue.lock.d"
+    lockd.mkdir(parents=True)
+    (lockd / "pid").write_text("424242\n")
+    (lockd / "created_at").write_text("2026-07-03T00:00:00Z\n")
+
+    def fake_kill(pid, sig):
+        assert pid == 424242
+        assert sig == 0
+        raise ProcessLookupError
+
+    monkeypatch.setattr(D.os, "kill", fake_kill)
+
+    with D._queue_lock(tp, timeout=2) as got:
+        assert got is True
+        assert (lockd / "pid").read_text().strip() == str(os.getpid())
+
+    assert not lockd.exists()
 
 
 def test_deps_met_gates_on_merged_predecessor():
@@ -205,10 +259,10 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
         json.dumps(
             {
                 "detail": {
-                    "PR_MERGED": [{"id": "M"}],
+                    "PR_MERGED": [{"id": "M", "ref": "x/y#11"}],
                     "PR_CLOSED": [{"id": "C"}],
                     "DISPATCHED_NO_PR": [{"id": "N"}],
-                    "PR_OPEN": [{"id": "O"}],
+                    "PR_OPEN": [{"id": "O", "ref": "x/y#12"}],
                 }
             }
         )
@@ -225,9 +279,15 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert "1 merged→done, 1 open-pr→done, 2 stuck→open" in result.stdout
-    st = {t.id: t.status for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
-    assert st["M"] == "done" and st["O"] == "done", st  # merged / open-PR → done
-    assert st["C"] == "open" and st["N"] == "open", st  # closed / no-PR → reopened
+    tasks_by_id = {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+    assert tasks_by_id["M"].status == "done" and tasks_by_id["O"].status == "done"
+    assert tasks_by_id["C"].status == "open" and tasks_by_id["N"].status == "open"
+    assert tasks_by_id["M"].dispatch_log[-1].lifecycle_repair == "pr-observed-terminal"
+    assert tasks_by_id["M"].dispatch_log[-1].pr_observed_state == "merged"
+    assert tasks_by_id["M"].dispatch_log[-1].pr_observed_ref == "x/y#11"
+    assert tasks_by_id["O"].dispatch_log[-1].lifecycle_repair == "pr-observed-terminal"
+    assert tasks_by_id["O"].dispatch_log[-1].pr_observed_state == "open"
+    assert tasks_by_id["O"].dispatch_log[-1].pr_observed_ref == "x/y#12"
 
 
 def test_reload_fresh_commit_preserves_concurrent_write(tmp_path):

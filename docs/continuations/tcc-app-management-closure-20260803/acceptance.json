@@ -1,0 +1,116 @@
+{
+  "automatic_updates": {
+    "enabled": true,
+    "vendor_probe": {
+      "advanced": false,
+      "baseline_version": "2.1.220",
+      "current_version": "2.1.220",
+      "result": "Claude Code is up to date (2.1.220)"
+    }
+  },
+  "baseline": {
+    "app_management_bundle_grants": 12,
+    "digest": "sha256:5eef31923d4a5de72e048c528b90a546a5925f903d4bbf946fc4757b08c7f41b",
+    "managed_identities": 29,
+    "paths_redacted": true,
+    "schema": "limen.tcc_identity_baseline.v1"
+  },
+  "cold_start": {
+    "claude_desktop_version": "1.24012.9",
+    "configured_ingresses": 10,
+    "mcp_processes_entered_ensure": true,
+    "new_managed_identities": 0,
+    "passed": true
+  },
+  "completion": {
+    "closed_at": "2026-08-05T14:14:23Z",
+    "closed_by": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+    "complete": true,
+    "remaining_predicate": null,
+    "status": "met"
+  },
+  "fixture": {
+    "deleted": true,
+    "host_interface": "ensure",
+    "passed": true,
+    "runner_labels": [
+      "uvx-renamed",
+      "node-renamed",
+      "python-renamed",
+      "portable-ruby-renamed"
+    ],
+    "schema": "limen.tcc_app_management_fixture.v1"
+  },
+  "issue": "https://github.com/organvm/limen/issues/1703",
+  "observed_at": "2026-08-04T02:38:21Z",
+  "post_cutover": {
+    "active_leaks": 0,
+    "audit_ok": true,
+    "new_managed_identities": 0,
+    "stable_host_app_management_grants": 1,
+    "stable_host_app_management_rows": 1,
+    "unhosted_configured_ingresses": 0,
+    "unrelated_app_management_bundle_grants_preserved": true,
+    "visible_app_management_path_rows": 0
+  },
+  "pre_cutover": {
+    "active_managed_leaks": 6,
+    "configured_ingresses": 10,
+    "plan_estimate_superseded": "The supplied estimate was three active managed leaks; the live TCC store and pane showed six recognized managed leaks and all eight visible path switches enabled.",
+    "stable_host_app_management_grants": 0,
+    "unhosted_configured_ingresses": 10,
+    "visible_app_management_path_rows": 8
+  },
+  "schema": "limen.tcc_app_management_acceptance.v1",
+  "stable_host_identity": {
+    "bundle_id": "org.organvm.domus.agent-host",
+    "cdhash_after": "45556d6c709a4c307b4c189cd825587275343f05",
+    "cdhash_before": "45556d6c709a4c307b4c189cd825587275343f05",
+    "designated_requirement_after": "cdhash H\"45556d6c709a4c307b4c189cd825587275343f05\"",
+    "designated_requirement_before": "cdhash H\"45556d6c709a4c307b4c189cd825587275343f05\"",
+    "unchanged": true
+  },
+  "system_settings_transaction": {
+    "authentication_requested": false,
+    "bundle_rows_altered": 0,
+    "host_added_and_enabled": true,
+    "path_rows_removed": 8,
+    "supported_per_row_minus_control": true,
+    "whole_service_reset": false
+  },
+  "tcc_track_c": {
+    "beat": {
+      "command": "python3 scripts/tcc-track-c-closeout.py --beat --json",
+      "exit_0_means": "external_vendor_wait (clean) OR track_c.met",
+      "sensor": "tcc-track-c"
+    },
+    "closeout_receipt": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+    "doctrine": {
+      "fixture_only_is_not_completion": true,
+      "formula": "track_c_pass = non_noop_update AND normalized_inventory_green",
+      "non_noop_means": "claude --version advances past cutover baseline",
+      "noop_is_not_completion": true
+    },
+    "met": true,
+    "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline 2.1.220, then normalized v2 tcc-identity-audit predicates must remain green.",
+    "status": "met",
+    "strict_audit": {
+      "baseline_snapshot": "docs/receipts/tcc-track-c-1703/2026-08-04-baseline.json",
+      "closeout_latest": "docs/receipts/tcc-track-c-1703/closeout-latest.json",
+      "immutable_attempt_receipt": "docs/receipts/tcc-track-c-1703/acceptance-2026-08-04.json",
+      "normalized_inventory_diff_met": true,
+      "post_snapshot": "docs/receipts/tcc-track-c-1703/2026-08-04-post.json",
+      "schema_preference": "limen.tcc_identity_audit.v2",
+      "status_file": "logs/tcc-track-c-status.json"
+    },
+    "update_flow": {
+      "baseline_version": "2.1.220",
+      "current_version": "2.1.220",
+      "failure_classification": "noop_update_proof_missing",
+      "non_noop": false,
+      "result": "Claude Code is up to date (2.1.220)",
+      "update_attempted": true,
+      "update_command": "domus-agent-host run -- claude update"
+    }
+  }
+}

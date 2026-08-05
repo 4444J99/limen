@@ -1,7 +1,11 @@
 import "./globals.css";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Limen | Universal Task Intake",
+export const metadata: Metadata = {
+  title: {
+    template: "%s | Limen",
+    default: "Limen — Universal Task Intake",
+  },
   description: "Operational dashboard for cross-agent task dispatch and PR health.",
 };
 

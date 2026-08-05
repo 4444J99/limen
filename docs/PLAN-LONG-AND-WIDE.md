@@ -1,5 +1,12 @@
 # Plan — Long and Wide
 
+> **SUPERSEDED (2026-07-08).** This is a June-19 snapshot: its live numbers and bottleneck
+> analysis are stale (merge is now a standing grant, the GitHub App shipped, the corpus is
+> converged). The operating speech lives in `FLAME.md`; the live plan is the board
+> (`tasks.yaml`) plus the current retro/excavation heal lists under `docs/reviews/`. Kept as
+> historical record — the diverge→converge→ship spine and the human-atom gate-ledger shape
+> remain correct. (Consolidation decision: `docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md`.)
+
 _The standing multi-horizon plan. Built around the actual telos surfaced by the weigh-in:_
 _**you take many divergent shots and want them alchemically distilled into the better version.**_
 

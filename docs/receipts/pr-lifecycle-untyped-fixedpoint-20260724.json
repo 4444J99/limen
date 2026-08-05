@@ -1,0 +1,11 @@
+{
+  "disposition": "lifecycle:blocked",
+  "effect": "add-label:lifecycle:blocked",
+  "generated_at": "2026-07-24T04:11:37.487943Z",
+  "items": [],
+  "plan_sha256": "93c55944dc8b3b2d3fdf0db67c4520b810d6d22d3017a7d59c86c10f634e7528",
+  "repository": "organvm/limen",
+  "review_basis": "Post-apply fixed-point census only; zero items means every current open Limen PR has an explicit lifecycle disposition.",
+  "schema": "limen.pr_lifecycle_manifest.v2",
+  "status": "planned"
+}

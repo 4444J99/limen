@@ -181,6 +181,24 @@ def test_missing_source_fails_open(tmp_path):
     assert not (tmp_path / "atoms").exists()
 
 
+def test_malformed_numeric_env_falls_back(tmp_path):
+    src = _docs(tmp_path / "src", {"a.md": "# A\n\n" + "word " * 80})
+    env = _env(tmp_path, src)
+    env.update(
+        {
+            "LIMEN_MEDIA_MAX_CHARS": "bad",
+            "LIMEN_MEDIA_MIN_CHARS": "bad",
+            "LIMEN_MEDIA_PDF_TIMEOUT": "bad",
+            "LIMEN_MEDIA_LIMIT": "bad",
+        }
+    )
+    r = subprocess.run([sys.executable, str(SCRIPT)], env=env, capture_output=True, text=True)
+
+    assert r.returncode == 0, r.stderr
+    assert "preview" in r.stdout
+    assert not (tmp_path / "atoms").exists()
+
+
 def test_photos_metadata_preview_writes_nothing(tmp_path):
     db = _photos_db(tmp_path / "Photos Library.photoslibrary" / "database" / "Photos.sqlite")
     r = subprocess.run(

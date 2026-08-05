@@ -1,0 +1,84 @@
+# Client posture record — TEMPLATE
+# W1 output from the HR organ intake workflow.
+# Copy this directory (organs/hr/clients/_template/ -> organs/hr/clients/<client-id>/)
+# and fill each field. Delete fields that don't apply.
+#
+# Every field is a draft for practitioner review. Nothing is binding until the
+# practitioner confirms scope and the client signs the engagement letter.
+
+member:
+  entity:
+    name: ""                          # Client legal entity / DBA
+    jurisdiction: ""                  # Primary: state, country. Secondary: locality.
+    industry: ""                      # NAICS code or industry label
+    headcount: 0                      # Current W-2 + contractor count
+    year_founded: 0
+    entity_type: ""                   # LLC / C-Corp / S-Corp / Nonprofit / Sole Proprietor
+
+  key_contacts:
+    - role: ""                        # CEO / Founder / HR lead / Office Manager
+      name: ""
+      email: ""
+      phone: ""                       # Optional
+    - role: ""
+      name: ""
+      email: ""
+      phone: ""                       # Optional
+
+mandate:
+  engagement_scope:
+    services: []                      # e.g. ["handbook_drafting", "compliance_calendar", "comp_benchmarking", "onboarding_design", "performance_framework", "offboarding_support"]
+    exclusions: []                    # e.g. ["employee_handbook_enforcement", "termination_execution", "benefits_admin"]
+
+  known_gaps: []                      # Practitioner-identified gaps from intake conversation
+
+  desired_outcomes: []                # Client-stated goals: e.g. "reduce time-to-onboard by 40%", "pass joint commission audit"
+
+standing:
+  current: "DISCOVERY"                # DISCOVERY → PROPOSAL → ACTIVE → TRANSITIONING → CLOSED
+  opened: ""                          # ISO-8601 date
+  last_reviewed: ""                   # ISO-8601 date
+  next_milestone: ""                  # e.g. "proposal_delivery", "first_handbook_draft"
+  next_milestone_date: ""             # ISO-8601 date
+
+standard:
+  jurisdiction_rules:
+    - jurisdiction: ""                # e.g. "California"
+      applies: []                     # e.g. ["at-will_employment", "paid_sick_leave", "anti-discrimination", "wage_hour"]
+    - jurisdiction: ""                # e.g. "Federal"
+      applies: []                     # e.g. ["FLSA", "FMLA", "ADA", "COBRA", "Title VII", "OSHA"]
+
+  quality_bar: ""                     # Practitioner's standard: e.g. "All drafts reviewed by practitioner before client delivery; every policy traces to a jurisdiction rule"
+
+  third_party_tools: []               # Tools the client already uses: e.g. ["Gusto", "Rippling", "BambooHR", "Lever"]
+
+governance:
+  authority: "Practitioner (human)"   # The named human who owns the client relationship
+  ethics:
+    - "No employment decisions made by the organ"
+    - "No legal or benefits counsel — handbooks are templates, not advice"
+    - "No outbound communication to employees or third parties by the organ"
+    - "Every output is a draft for practitioner review, correction, and delivery"
+    - "Employee/candidate PII never stored outside the client's own systems"
+  consent:
+    practitioner_confirmed: false     # Practitioner has reviewed and accepted scope
+    client_engaged: false             # Client has signed engagement letter
+
+scope:
+  boundary: ""                         # Exact service scope from engagement letter
+  exclusions: []                       # Anything explicitly out of scope
+  changes:                             # Scope change log
+    - date: ""
+      description: "Initial posture record created"
+      approved_by: ""
+
+# Metadata — the HR organ tracks which workflow outputs exist for this client
+workflow_state:
+  handbook_drafted: false
+  policies_drafted: false
+  compliance_calendar_built: false
+  comp_benchmark_built: false
+  performance_framework_built: false
+  onboarding_plans: []
+  offboarding_plans: []
+  ethics_log_entries: 0

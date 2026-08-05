@@ -1,0 +1,190 @@
+{
+  "$defs": {
+    "AgentIdentityV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "title": "Agent",
+          "type": "string"
+        },
+        "native_run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Run Id"
+        },
+        "provider_identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Identity"
+        },
+        "schema_version": {
+          "const": "limen.agent_identity.v1",
+          "default": "limen.agent_identity.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "surface": {
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "surface",
+        "session_id"
+      ],
+      "title": "AgentIdentityV1",
+      "type": "object"
+    },
+    "ResourceClaimV1": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "mode": {
+          "default": "exclusive",
+          "enum": [
+            "shared",
+            "exclusive"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.resource_claim.v1",
+          "default": "limen.resource_claim.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "title": "ResourceClaimV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "acquired_at": {
+      "format": "date-time",
+      "title": "Acquired At",
+      "type": "string"
+    },
+    "capability_token_hash": {
+      "title": "Capability Token Hash",
+      "type": "string"
+    },
+    "executor": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "executor_principal_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Executor Principal Id"
+    },
+    "generation": {
+      "minimum": 1,
+      "title": "Generation",
+      "type": "integer"
+    },
+    "hard_deadline": {
+      "format": "date-time",
+      "title": "Hard Deadline",
+      "type": "string"
+    },
+    "heartbeat_at": {
+      "format": "date-time",
+      "title": "Heartbeat At",
+      "type": "string"
+    },
+    "lease_id": {
+      "title": "Lease Id",
+      "type": "string"
+    },
+    "observed_heads": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Observed Heads",
+      "type": "object"
+    },
+    "resource_generations": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Resource Generations",
+      "type": "object"
+    },
+    "resources": {
+      "items": {
+        "$ref": "#/$defs/ResourceClaimV1"
+      },
+      "title": "Resources",
+      "type": "array"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.lease.v1",
+      "default": "limen.lease.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "state": {
+      "default": "reserved",
+      "enum": [
+        "reserved",
+        "active",
+        "released",
+        "expired",
+        "fenced"
+      ],
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "required": [
+    "lease_id",
+    "run_id",
+    "executor",
+    "resources",
+    "generation",
+    "capability_token_hash",
+    "acquired_at",
+    "heartbeat_at",
+    "hard_deadline"
+  ],
+  "title": "LeaseV1",
+  "type": "object"
+}

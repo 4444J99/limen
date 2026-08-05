@@ -1,4 +1,5 @@
 import contextlib
+import math
 import os
 import re
 import sys
@@ -13,12 +14,124 @@ import yaml
 from limen.models import LimenFile
 
 _DLOG_REQUIRED = {"timestamp", "agent", "session_id", "status"}
+_QUEUE_LOCK_STALE_SEC = 900
 
 
 class BoardCollapseError(RuntimeError):
     """Raised when a save would catastrophically shrink the board — a clobber. The existing
     good board is left INTACT and the rejected payload is preserved to a `.rejected-<stamp>`
     sidecar (never lost). See save_limen_file's collapse-guard."""
+
+
+def _int_or_default(raw: object, default: int, *, minimum: int | None = None) -> int:
+    if isinstance(raw, bool):
+        return default
+    if isinstance(raw, int):
+        value = raw
+    elif isinstance(raw, float):
+        value = int(raw)
+    elif isinstance(raw, str | bytes | bytearray):
+        try:
+            value = int(raw)
+        except ValueError:
+            return default
+    else:
+        return default
+    if not math.isfinite(float(value)):
+        return default
+    if minimum is not None and value < minimum:
+        return default
+    return value
+
+
+def _float_or_default(raw: object, default: float, *, minimum: float | None = None) -> float:
+    if isinstance(raw, bool):
+        return default
+    if isinstance(raw, int | float | str | bytes | bytearray):
+        try:
+            value = float(raw)
+        except ValueError:
+            return default
+    else:
+        return default
+    if not math.isfinite(value):
+        return default
+    if minimum is not None and value < minimum:
+        return default
+    return value
+
+
+def _queue_lock_stale_seconds() -> int:
+    return _int_or_default(
+        os.environ.get("LIMEN_QUEUE_LOCK_STALE_SEC"),
+        _QUEUE_LOCK_STALE_SEC,
+        minimum=1,
+    )
+
+
+def _lock_age_seconds(lockd: Path) -> float:
+    try:
+        return max(0.0, time.time() - lockd.stat().st_mtime)
+    except OSError:
+        return 0.0
+
+
+def _pid_is_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def _read_lock_pid(lockd: Path) -> int | None:
+    try:
+        raw = (lockd / "pid").read_text().strip()
+    except OSError:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def _write_lock_metadata(lockd: Path) -> None:
+    try:
+        (lockd / "pid").write_text(f"{os.getpid()}\n")
+        (lockd / "created_at").write_text(datetime.now(timezone.utc).isoformat() + "\n")
+    except OSError:
+        pass
+
+
+def _clear_lock_metadata(lockd: Path) -> None:
+    for name in ("pid", "created_at"):
+        try:
+            (lockd / name).unlink()
+        except OSError:
+            pass
+
+
+def _try_reap_stale_queue_lock(lockd: Path) -> bool:
+    """Remove a stale queue lock if it is provably dead.
+
+    PID-bearing locks are safe to reap as soon as their process is gone. Metadata-free locks can be
+    created by older shell holders, so only reap them after a conservative age threshold.
+    """
+    pid = _read_lock_pid(lockd)
+    if pid is not None and _pid_is_alive(pid):
+        return False
+    if pid is None and _lock_age_seconds(lockd) < _queue_lock_stale_seconds():
+        return False
+    _clear_lock_metadata(lockd)
+    try:
+        lockd.rmdir()
+        return True
+    except OSError:
+        return False
 
 
 @contextlib.contextmanager
@@ -40,15 +153,54 @@ def queue_lock(tasks_path: Path, timeout: int = 90) -> Iterator[bool]:
     for _ in range(timeout):
         try:
             lockd.mkdir()
+            _write_lock_metadata(lockd)
             got = True
             break
         except FileExistsError:
+            _try_reap_stale_queue_lock(lockd)
             time.sleep(1)
     try:
         yield got
     finally:
         if got:
             try:
+                _clear_lock_metadata(lockd)
+                lockd.rmdir()
+            except OSError:
+                pass
+
+
+@contextlib.contextmanager
+def local_conduct_projection_lock(conduct_state: Path, timeout: float = 20.0) -> Iterator[bool]:
+    """Serialize one local keeper submit plus its temporary cache refresh.
+
+    This lock is deliberately distinct from ``queue_lock``: the keeper must
+    protect its SQLite projection even when a producer does not hold the legacy
+    board mutex. It never signals or reaps a live owner.
+    """
+
+    state = Path(conduct_state).expanduser().resolve()
+    lockd = state.with_name(f".{state.name}.projection.lock.d")
+    lockd.parent.mkdir(parents=True, exist_ok=True)
+    got = False
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        try:
+            lockd.mkdir()
+            _write_lock_metadata(lockd)
+            got = True
+            break
+        except FileExistsError:
+            _try_reap_stale_queue_lock(lockd)
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(0.05)
+    try:
+        yield got
+    finally:
+        if got:
+            try:
+                _clear_lock_metadata(lockd)
                 lockd.rmdir()
             except OSError:
                 pass
@@ -176,14 +328,12 @@ def _board_guard_config() -> tuple[bool, int, float]:
     """(enabled, floor, fraction) — declared in institutio/governance/parameters.yaml as
     LIMEN_BOARD_GUARD / LIMEN_BOARD_SHRINK_FLOOR / LIMEN_BOARD_SHRINK_FRACTION."""
     on = os.environ.get("LIMEN_BOARD_GUARD", "1") != "0"
-    try:
-        floor = int(os.environ.get("LIMEN_BOARD_SHRINK_FLOOR", "5"))
-    except ValueError:
-        floor = 5
-    try:
-        fraction = float(os.environ.get("LIMEN_BOARD_SHRINK_FRACTION", "0.10"))
-    except ValueError:
-        fraction = 0.10
+    floor = _int_or_default(os.environ.get("LIMEN_BOARD_SHRINK_FLOOR"), 5, minimum=1)
+    fraction = _float_or_default(
+        os.environ.get("LIMEN_BOARD_SHRINK_FRACTION"),
+        0.10,
+        minimum=0.0,
+    )
     return on, floor, fraction
 
 
@@ -217,3 +367,77 @@ def save_limen_file(path: Path, limen: LimenFile, *, allow_shrink: bool = False)
             )
 
     atomic_write_text(path, text)
+
+
+def save_derived_limen_projection(
+    path: Path,
+    limen: LimenFile,
+    *,
+    canonical_path: Path,
+) -> None:
+    """Serialize a noncanonical read-only projection.
+
+    This seam exists only for exports such as ``limen channels --emit``. It
+    cannot target the configured canonical board, so it carries no lifecycle
+    authority and cannot become a second TABVLARIVS writer.
+    """
+
+    target = Path(path).expanduser().resolve()
+    canonical_targets = {Path(canonical_path).expanduser().resolve()}
+    if configured := os.environ.get("LIMEN_TASKS", "").strip():
+        canonical_targets.add(Path(configured).expanduser().resolve())
+    if configured_root := os.environ.get("LIMEN_ROOT", "").strip():
+        canonical_targets.add((Path(configured_root).expanduser() / "tasks.yaml").resolve())
+    if target in canonical_targets:
+        raise ValueError(
+            "derived projection target resolves to the canonical tasks.yaml; "
+            "submit lifecycle work through the authenticated conduct keeper"
+        )
+    save_limen_file(target, limen, allow_shrink=True)
+
+
+def save_local_conduct_projection(
+    path: Path,
+    limen: LimenFile,
+    *,
+    conduct_state: Path,
+) -> None:
+    """Refresh a temporary board cache after the explicit local keeper commits.
+
+    Remote conduct never enters this serializer. The configured SQLite adapter
+    must exactly match ``conduct_state`` and live beside the target projection,
+    which confines this compatibility path to one isolated test/development
+    workspace rather than granting another writer for the repository board.
+    """
+
+    if os.environ.get("LIMEN_CONDUCT_URL", "").strip():
+        raise ValueError("remote conduct projections are owned by the authenticated keeper")
+    configured = os.environ.get("LIMEN_CONDUCT_STATE", "").strip()
+    if not configured:
+        raise ValueError("local conduct projection requires explicit LIMEN_CONDUCT_STATE")
+    state = Path(conduct_state).expanduser().resolve()
+    if Path(configured).expanduser().resolve() != state:
+        raise ValueError("local conduct projection state does not match the configured keeper")
+    target = Path(path).expanduser().resolve()
+    temporary_root = Path(tempfile.gettempdir()).resolve()
+    fixed_temporary_roots = tuple(
+        Path(root).resolve()
+        for root in (
+            "/tmp",
+            "/var/tmp",
+            "/private/tmp",
+            "/private/var/folders",
+        )
+    )
+    under_fixed_temporary_root = any(
+        state.is_relative_to(root) and target.is_relative_to(root) for root in fixed_temporary_roots
+    )
+    if (
+        not state.is_relative_to(temporary_root)
+        or not target.is_relative_to(temporary_root)
+        or not under_fixed_temporary_root
+    ):
+        raise ValueError("local conduct projection is restricted to the operating-system temporary root")
+    if not target.is_relative_to(state.parent):
+        raise ValueError("local conduct projection must stay inside its isolated keeper directory")
+    save_limen_file(target, limen, allow_shrink=True)

@@ -2,8 +2,8 @@
 
 Operating discipline for every Claude Code session in this repo. Complements (does **not** duplicate):
 
-- `AGENTS.md` — the dispatch/task contract and `dispatch_log` done-recording.
-- `GEMINI.md` — the swarm worktree-isolation and PR-babysitting lifecycle.
+- `AGENTS.md` — the dispatch/task contract, Peer Conductor Contract, and receipt rules.
+- `GEMINI.md` — Gemini's native transport adapter.
 
 When a rule below also lives in those files, **they are the source of truth** and this charter points to them.
 If prose and executable predicates disagree, the executable predicate wins; update the prose to match
@@ -11,11 +11,11 @@ the script/schema/code rather than trusting memory.
 
 ## Instruction File Maintenance
 
-- `AGENTS.md` owns operating modes, task states, dispatch protocol, budget semantics, safety, and
-  `dispatch_log` shape.
+- `AGENTS.md` owns operating modes, task states, the Peer Conductor Contract, budget semantics,
+  safety, and receipt/projection rules.
 - `CLAUDE.md` owns Claude-specific execution discipline: closeout, merge cadence, credential
   handling, output style, worktree isolation, and compliant gate reroutes.
-- `GEMINI.md` owns conductor/MCP workflow details and PR babysitting mechanics.
+- `GEMINI.md` owns only Gemini-specific conduct/MCP transport details.
 - `CONTRIBUTING.md` owns human contributor guidance.
 - `docs/agent-instruction-standard.md` owns the rationale and cross-surface standard.
 - If you change task states, precedence, agent names, referenced scripts, or status examples, update
@@ -26,13 +26,24 @@ How the agent-instruction files (this charter, `AGENTS.md`, `GEMINI.md`, and the
 
 ## Architecture & Orientation
 
-Limen is a **cross-agent, cross-repo, budget-capped task intake system**. The single source of truth is `tasks.yaml` at `$LIMEN_ROOT` (fallback `./tasks.yaml`); every AI agent reads it at session start, claims a task, executes, and writes results back via a `dispatch_log` (the contract is `AGENTS.md`). Around that core file are a CLI, a published SaaS surface, and a fleet of self-keeping "organs."
+Limen is a **cross-agent, cross-repo, budget-capped task intake system**. TABVLARIVS is the
+deterministic state, lease, and budget authority; `tasks.yaml` at `$LIMEN_ROOT` (fallback
+`./tasks.yaml`) is its local read-only projection. Every native lane submits bounded work and
+receipts through the authenticated conduct broker under `AGENTS.md` → **Peer Conductor Contract**.
+Around that kernel are a CLI, a published SaaS surface, and a fleet of self-keeping "organs."
 
-In a direct human-request session, do not claim unrelated queue work or mutate `tasks.yaml` unless
-the request explicitly asks for Limen queue execution. `AGENTS.md` → **Operating Modes** is the
-authoritative rule.
+In a direct human-request session, do not claim unrelated queue work. Submit any requested task
+transition through the broker; never change the projection directly. `AGENTS.md` → **Operating
+Modes** is the authoritative rule.
 
-**The lifecycle is the durable contract — providers are replaceable adapters.** A task moves `open → dispatched → in_progress → done → archived`; from `in_progress` it may instead go `failed`, `failed_blocked`, or `needs_human`, and a stale claim is released back to `open`. The canonical state set, the cross-agent precedence ladder, and the startup checklist live in `AGENTS.md` (**Task States** / **Precedence** / **Startup Checklist**) and are enforced by `scripts/check-agent-docs.py`. Surfaces are gated by persona (owner / client / public) via bearer tokens. Firebase hosting serves only public-safe static shells + public contracts; everything internal loads at runtime from a Cloudflare Worker (or the FastAPI adapter). Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud Run/Next.js/FastAPI can be swapped.
+**The lifecycle and peer-conductor protocol are durable; providers are native adapters.** The
+canonical states, transitions, authority attenuation, protected-session rules, and startup
+checklist live in `AGENTS.md` and are enforced by `scripts/check-agent-docs.py`. Claude has no
+special rank: conductor is a temporary capability. Surfaces are gated by persona (owner / client /
+public) via bearer tokens. Firebase hosting serves only public-safe static shells + public
+contracts; everything internal loads at runtime from a Cloudflare Worker (or the FastAPI adapter).
+Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud
+Run/Next.js/FastAPI can be swapped.
 
 **Components** (each owns its remaining work — see [Closeout Definition](#closeout-definition)):
 
@@ -41,15 +52,18 @@ authoritative rule.
 | `cli/` | The `limen` CLI (`limen.cli:main`, Click). Core verbs: `init`, `dispatch`, `release-stale`, `doctor`, `qa`, `status`, `harvest`. Logic in `dispatch.py`, `harvest.py`, `capacity.py`, `model_selection.py`, `converge.py`; data shapes in `models.py`; YAML I/O in `io.py`. The autonomic institution lives under `cli/src/limen/vigilia/`. | `pip install -e 'cli[test]'`; tests in `cli/tests/` |
 | `web/api/` | FastAPI runtime adapter (`main.py`). Same HTTP contract as the Worker. | `uvicorn main:app` / Docker; tests in `web/api/tests/` |
 | `web/worker/` | Cloudflare Worker — the **live** runtime, GitHub-Contents storage. Deploys on-demand via wrangler (not on merge). | `npm run dev` / `npm run deploy`; lint `npm run check` |
-| `web/app/` | Next.js dashboard (static export → Firebase Hosting). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
-| `mcp/` | MCP server exposing limen over the Model Context Protocol (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
+| `web/app/` | Next.js dashboard (static export → Cloudflare Pages `limen-dashboard.pages.dev`; the Firebase Hosting step is dormant — its GCP credential exists nowhere, road-not-taken). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
+| `mcp/` | MCP adapter exposing the same authenticated conduct protocol and task-compatibility events (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
 | `ianva/` | MCP doorway/aggregator package. | `pip install -e ianva/` |
 | `moneta/` | **MONETA** — the sovereign cash organ (sibling of `quaestor`: quaestor *finds* money, MONETA *intakes* it). Self-hosted Bitcoin licence mint: takes BTC to an owner-controlled address, confirms against a **keyless** public explorer (mempool.space/Esplora), and signs each product's own offline ECDSA-P256 Pro licence — **no processor in the path**. Unconfigured, it *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set. `Dockerfile`-ready for a $0 deploy. | `cd moneta && npm test` (vitest + `tsc`); tests in `moneta/src/__tests__/` |
 | `spec/contracts/` + `spec/*.schema.json` | Portable JSON Schemas the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
 | `scripts/` (~120 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
 | `organs/`, `organ-ladder.json`, `pillars.yaml`, `his-hand-levers.json` | Declarative registries: the self-* organ ladder, platform pillars, and the owned human-gated lever registry. | data files |
 
-**Storage modes** (`io.py`): local file (`LIMEN_TASKS=/path`) for dev; GitHub Contents (`LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_TOKEN`, optional `_BRANCH`/`_PATH`) for the hosted runtime. Persona tokens: `LIMEN_OWNER_TOKEN`/`LIMEN_API_TOKEN`, `LIMEN_CLIENT_TOKEN`; absent → local owner-scoped dev mode.
+**Storage modes** (`io.py`): local files are development projections; the authenticated Worker
+plus GitHub Contents projection is the durable hosted keeper. Agents never treat a local
+`LIMEN_TASKS` file as an independent writer. Persona tokens: `LIMEN_OWNER_TOKEN`/
+`LIMEN_API_TOKEN`, `LIMEN_CLIENT_TOKEN`; absent → local owner-scoped dev mode.
 
 **Common commands** (beyond the [CI Gate Matrix](#worktree-isolation--ci-gate-matrix)):
 
@@ -70,7 +84,7 @@ A *closeout* means **ZERO open or dangling items introduced by this task/session
 2. **An idempotent fixed point is reached** — re-running the full verification produces **no changes** (see [Definition of Done](#definition-of-done)). If a re-run still mutates state, you are not done.
 3. **All loose work you introduced or touched is committed across every affected repo** — no uncommitted diffs, no stranded branches; `git status` is clean wherever you touched.
 
-If gaps remain, **close them first**, then archive and hand off. A genuinely human-gated item is **filed in its own git-tracked owner** — a lever in `his-hand-levers.json`, or (for any token/secret/login/env atom) the credential organ + Wall #320 — **never recited back to the operator in a closeout, and never appended as a "but also this" tail.** The relay cites the registry and the green predicate; it does **not** enumerate his atoms. He reads owed work in the registry on his own cadence — **a closeout that hands him a list has failed, even when every item is technically homed.** If an atom is *already* filed, that is DONE: do not re-surface it. Run `/closeout` to execute this discipline.
+If gaps remain, **close them first**, then archive and hand off. A genuinely human-gated item is **filed in its own git-tracked owner** — a lever in `his-hand-levers.json`, or (for any token/secret/login/env atom) the credential organ + Wall #320 — **never recited back to the operator in a closeout, and never appended as a "but also this" tail.** The relay cites the registry and the green predicate; it does **not** enumerate his atoms. He reads owed work in the registry on his own cadence — **a closeout that hands him a list has failed, even when every item is technically homed.** If an atom is *already* filed, that is DONE: do not re-surface it. Likewise a green-but-pending PR is a **homed** item, not a dangling one: its owner is the beat's merge rung (`scripts/merge-drain.py` via `scripts/drain.sh`) — cite that owner and end, or run the one bounded waiter (`scripts/await-pr.sh`); never babysit CI with a hand-rolled watcher shell. When the predicates are green at the fixed point, end with the terminal statement — **"CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items"** — and **stop**: nothing follows it. A closeout that keeps talking past the terminal statement — any caveat tail — has failed. Run `/closeout` to execute this discipline.
 
 Point 1 has a shipped predicate — **`scripts/no-tasks-on-me.sh`** (exit `0` ⟺ nothing hangs on the ephemeral session). It proves every human-gated item lives in the git-tracked registry with a real owner (recall-only memory at `~/.claude/…` is **not** a durable home), that no preserved work is stranded on a local-only `*-staged-*` ref (each must be merged or cited by a lever), and that the registry stays PII-clean (it publishes). Credential/secret atoms live in a **separate** git-tracked home (the credential organ), so the closeout gate is **both** `scripts/no-tasks-on-me.sh` **and** `scripts/credential-wall.py --check` (exit `0` ⟺ every secret in use is homed). Both green ⟺ nothing hangs, and the relay then names the registry, never the atoms. Run them instead of re-auditing ownership by hand each session; a chat audit you have to repeat next session — or a "here's what's still open" list handed to the operator — *is* leaving the discipline hanging on him.
 
@@ -81,17 +95,87 @@ When asked to define "done" or a "goal", deliver an **executable predicate** —
 - **Write the predicate first.** Before doing the work, author a `done.sh` (or a test) that checks every concrete completion criterion: tests pass, build green, no dangling items, each owner records its own remaining work. Commit it (durable predicates only — not one-off throwaways; see [Edits Policy](#edits-policy)).
 - **It must be self-verifying, runnable, and idempotent.** Exit `0` ⟺ done.
 - **Do not claim completion — or write any closeout — until it exits 0.** Run it and summarize the output as proof. If it fails, keep iterating until it passes. If a higher-priority harness rule prevents running it, report the blocker rather than claiming verified completion.
-- For whole-system "done" in this repo, the predicate is already shipped: **`scripts/verify-whole.sh`** (lint → compile → contracts → `pytest web/api/tests cli/tests -q` → runtime/worker probes → dashboard build → `git diff --check`; prints `Whole-system verification passed`). A task-level `done.sh` should call it or a scoped subset — don't reinvent it.
+- For whole-system "done" in this repo, the predicate is already shipped: **`scripts/verify-whole.sh`** (lint → compile → contracts → `pytest web/api/tests cli/tests -q` → runtime/worker probes → dashboard build → `git diff --check`; prints `Whole-system verification passed`). A task-level `done.sh` should call it or a scoped subset — `scripts/verify-scoped.sh` is the shipped scoped subset; don't reinvent either.
+
+## Engage the Real Problem First
+
+The insights lineage's most-persistent friction (4 consecutive reports, 2026-05-21 → 2026-07-03):
+fixating on trivial mechanics, or offering a menu of reporting options, instead of engaging the
+actual design problem — forcing the requester to repeat or reframe until it converges. The standing
+correction (censor precedent `PREC-2026-07-04-friction-shallow-first`):
+
+- **Commit to the substantive problem on the first pass.** Name the real objective behind the
+  request and work at that altitude; a seemingly trivial chore usually implies the engine behind it
+  ("find X" = build the portal that finds X; "import this" = the auto-rebuild engine, not the one
+  import; "define done" = the executable predicate, not prose).
+- **Deliver executable, durable forms by default** — a predicate, an organ, a register — never
+  hand-maintained prose where a runnable check belongs (see [Definition of Done](#definition-of-done)).
+- **Options are a decision, not a deliverable.** Pick the reversible best by the cascade
+  (protocol → precedent → exploration → ideal-form) and proceed; present alternatives only when a
+  genuine human-gated lever forces the choice.
+- **The registry owns the answer.** Never ask the operator — or guess — about a fact or framing a
+  registry already owns (`his-hand-levers.json`, `organ-ladder.json`, `pillars.yaml`, `tasks.yaml`,
+  `censor/precedents.jsonl`): query it and proceed. (Precedent: the "8 vs 10 organs" question was
+  asked while `organ-ladder.json` held the count.)
 
 ## Never Over-Claim Completion
 
 Do **not** declare work "done" or "fully done" until verified end-to-end:
 
 - **Run the real gates locally**, never from memory: `python -m ruff check cli/src cli/tests web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.
+- **Read the predicate's OWN exit code, never a pipeline's.** `predicate | tail` makes `$?` report *tail's* status — which is essentially always `0` — so a gate that printed `FAIL` is read as green. Run the predicate bare and filter a saved copy, or use `${PIPESTATUS[0]}`. (2026-08-05: a closeout reported `EXIT=0` from a `scripts/no-tasks-on-me.sh` run that had printed `FAIL` and truly exited `1`.) The committed scripts get this right; the defect enters through **ad-hoc verification shell**, which is precisely where a false green has no second reader to catch it — so this is a standing behavioral rule, not a lint.
 - **Confirm the loop/driver actually runs** — that the entrypoint executes, not merely that files compile.
 - **Check for regressions introduced by merges**: dropped imports, dumped/abandoned lanes, silently overwritten files. After any branch reconcile, diff against the prior green state.
 - **Reconcile divergent branches against authoritative data** — GitHub redirect/PR state via `gh`, or `scripts/verify-dispatch.py` — never against heuristics or guesses.
 - Report status terse and factual: if tests fail, say so with the output; if a step was skipped, say so; call something done only when the predicate proves it.
+
+## Data Grounding
+
+Before drawing ANY conclusion from a dataset — a message export, a mail archive, a review window,
+a log trawl — establish the ground truth of the *input* first (2026-07-24 insights lineage: two
+confidently-wrong message analyses from a received-only export and a too-narrow window; the
+domain instances are `docs/student-email-reply-grounding.md` and the outreach sent-state memory —
+this section is their generalization):
+
+- **Enumerate the CHANNELS before analyzing any one of them.** A missing channel does not widen
+  the error bars — it **inverts the conclusion's sign**. Before concluding anything about an
+  interaction, a relationship, or a sequence of events, list every channel that could carry it
+  (text messages, voice/video calls, a second messaging app, email, transfers, in-person) and
+  state in the output which you queried and which you did not. (2026-08-05: "three hours of
+  silence" and "detonating into an empty room" were both produced by never opening the call
+  database — it held seven calls inside that window, three of them minutes before the message
+  being interpreted; in the same analysis a second messaging app carrying the day's most decisive
+  exchange went unopened. Both conclusions reversed on contact with the missing channel.) **No
+  scope, window, or count check catches this**, because every count *within* the queried channel
+  was correct — which is why channel enumeration precedes all of them.
+- **State the scope up front, in the output**: the exact date/window boundaries, the direction of
+  the records (sent AND received? one side only?), any export filters, and the **total record
+  count** — before the first conclusion, so a scope error surfaces immediately.
+- **Window = the last human review point, never the last automated run.** An automation's
+  timestamp is not evidence a human saw anything.
+- **Suspicious-count self-check**: if a count looks too low or too high against the requester's
+  stated expectation or the surrounding evidence, treat that as a data-scope bug in YOUR input
+  until proven otherwise — re-derive it by a second independent method before presenting.
+- **When a file could be a queue or a record, assume RECORD** — verify live sent-state/channel
+  state before acting on a file's title or presence.
+- **A conversation corpus records SPEECH ACTS, not EVENTS.** "I sent you $150" is evidence that a
+  sentence was typed. Ideas floated, contracts drafted, plans proposed, dates agreed and amounts
+  negotiated are *conversation* — most are never executed. A claim of the form "X happened"
+  sourced only from message text is **asserted-in-conversation**, never **occurred**, unless a
+  NON-conversational channel corroborates it: commits, transactions, calendar, filesystem
+  artifacts, or the operator. Mark the distinction in the output. (2026-07-31: summing every
+  dollar figure in a thread was reported as "$103,309 funded" and a proposed arrangement as an
+  executed one; the contracts went unsigned and the job was never left.)
+- **A window is not the corpus — never state a sample's finding in the corpus's language.** Report
+  the denominator you actually read, next to the denominator that exists, every time. The failure
+  is silent and it scales: a 435-message / 10-day slice of a 65,872-message / 34-month record is
+  0.7% of it, and conclusions drawn there were written as "never once" and "in six months." If the
+  full extent is unknown, that is itself the first finding — establish it before analyzing.
+- **Corpus retrieval fails silently and looks like absence.** Before concluding a corpus holds
+  nothing about a subject, verify the resolver reached a real store: `python3
+  scripts/corpus_resolve.py` must name a populated home. The estate has now twice reported "no
+  populated corpus" with hundreds of MB on disk (registry header, and again 2026-07-31 from a
+  relocated store) — "I found nothing" and "I read nothing" are indistinguishable in the output.
 
 ## Edits Policy
 
@@ -119,6 +203,10 @@ Tokens, secrets, API keys, logins, env vars are **system burden, not the human o
 
 For any search or recon whose scope spans multiple domains, **fan out parallel read-only workers — one per distinct domain** (each remote, each local floor, each repo), launched in a single batch.
 
+- **Reserve every child before launch.** Call `limen conduct split` or `conduct_split` before
+  invoking Task/Workflow subagents, teams, or any separate capacity. Pass the returned root,
+  parent, run, lease generation, task, conductor, and execution-hash identities into the native
+  child. Hidden fanout is rejected; native tooling does not broaden the parent's authority.
 - Give each worker a **strict read-only scope** and require a **structured packet**: `{ found: [...], not_found: [...], confidence }`.
 - **Wait for ALL workers**, then **merge into one ground-truth report that flags conflicts** between packets.
 - **Never park the search early, and never guess a timeframe** — verify every location and timeframe explicitly before reporting. Default to ~3 parallel explorers for non-trivial recon.
@@ -127,23 +215,26 @@ For any search or recon whose scope spans multiple domains, **fan out parallel r
 
 ## Worktree Isolation & CI Gate Matrix
 
-Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.md` for the swarm protocol). Then run the **full local gate matrix** before pushing:
+Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.md` for the swarm protocol). Then verify before pushing — **scoped to the diff, never the whole world by default**:
 
-| Gate | Command |
-|------|---------|
-| Lint | `python -m ruff check cli/src cli/tests web/api mcp ianva` |
-| Format | `python -m ruff format --check cli/src cli/tests web/api mcp ianva` |
-| Type-check | `python -m mypy src/limen/` (from `cli/`) and `python -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/` |
-| Compile | `python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py` |
-| Tests | `python -m pytest web/api/tests cli/tests -q` |
-| Contracts / surfaces | `node scripts/validate-contract-schemas.mjs` |
-| Worker | `npm run check` (in `web/worker`) |
-| Build | `npm run build` (in `web/app`) |
-| Whole-system | `scripts/verify-whole.sh` |
+**Session streams** (the operator's declared work domains) have their own launcher: `limen streams`
+(→ `scripts/open-streams.sh`) opens and **reopens** every openable domain, one tmux window each;
+`limen streams --status` shows each stream's derived state. The rows and cartridges are owned by
+[`institutio/governance/session-streams.yaml`](institutio/governance/session-streams.yaml) — the
+constellation lanes in it are DERIVED from the constellation register (check M holds parity; edit
+the register and rerun `organs/consulting/constellation/derive-streams.py --write`, never the rows).
 
-- For each failure, **fix root-to-leaf and re-run the full matrix** — loop until every gate passes end-to-end. Do not chase one gate green while another regresses.
+- **`scripts/verify-scoped.sh` is the default push gate.** It maps the changed paths (branch diff vs `origin/main` plus uncommitted/untracked work) to only the gates they implicate, runs those, and names every gate it skipped. A docs append must never pay for a Next.js build, a wrangler boot, and 1,200+ tests.
+- **The full matrix below is a pre-merge event, not a per-session tax.** Run it — or let CI run it — only when the diff touches deploy-trigger paths (the website guardrail `merge-policy.sh` enforces at merge time), when scoping cannot attribute the change, or on explicit request.
+- **`verify-whole.sh` is machine-serialized** via a lock file (`LIMEN_VERIFY_LOCK_FILE`; opt-out `LIMEN_VERIFY_NO_LOCK=1` for single-purpose CI runners): concurrent runs from parallel sessions wait instead of stampeding the host with simultaneous npm installs, workerd boots, and production builds.
+
+**The gate estate is declared data, not a hand-maintained table.** Every gate — command, implicating paths, cost tier, machine-serialization — lives in [`institutio/governance/gates.yaml`](institutio/governance/gates.yaml) (the GATES registry, the parameter-panel pattern one domain over). `scripts/verify.py --list` prints the live matrix; `scripts/verify.py --changed` is what the scoped wrapper runs; `scripts/verify-whole.sh` remains the whole-system predicate and derives its file lists from the same registry. `scripts/check-gates.py` (wired into pr-gate on every PR) holds the registry to the workflows and consumers — adding a gate = adding **one registry entry**, and a drifted copy anywhere is a red check, not a memory chore.
+
+**The beat sensor estate is declared data too.** The heartbeat's continuous-runtime sensors live in [`institutio/governance/sensors.yaml`](institutio/governance/sensors.yaml) (the SENSORS registry, VIGILIA's third axis beside GATES and PARAMETERS), and `scripts/metabolize.sh` **derives** its whole sensor pass from it via one `scripts/beat-sensors.py --run --source metabolize` call (`--list` prints the matrix; `LIMEN_BEAT_DERIVE=0` skips the pass — an escape hatch; the hand-wired `── 0x ──` blocks are gone). `scripts/check-sensors.py` (wired into pr-gate) holds it in parity with the scripts, the parameter panel, and the beat sources — its D-check accepts the derive-runner call in place of literal gate strings. **Adding a beat sensor = adding one `sensors.yaml` entry** — never a hand-wired shell block. Every consumer that reads a sensor fact derives it from the registry, not the shell: `check-params.py`'s `registry_referenced_tokens`, `armed-valve-audit.py`'s `discover_sensor_valves` (gate + `armed_valve_type`), and `omega.sh`, which derives its registry-declared fixed-point rungs (`omega_eligible`) via `beat-sensors.py --list-omega`/`--run-omega`. Sensor capabilities (`omega_eligible`, `armed_valve_type`, `args_when`, `cadence`/`timeout`) are read by capability, never by sensor id — consumers work unchanged if an id is renamed. See `docs/IDEAL-FORMS-LEDGER.md` → IF-SENSOR-REGISTRY.
+
+- For each failure, **fix root-to-leaf and re-run the implicated gates** — loop until they pass end-to-end (the full matrix only when the diff implicates it). Do not chase one gate green while another regresses.
 - **Surface masked failures from dependency bumps** — a green that only passes because a check was skipped or a dependency silently changed behavior.
-- **Only after every gate is green locally**, push and open the PR, pasting the full green run as proof. **Then merge it yourself** the moment `scripts/merge-policy.sh <PR#>` exits `0` (CLEARED) — that predicate enforces the website guardrail; never merge on a HOLD/BLOCKED. See [Merge & Branch Protocol](#merge--branch-protocol).
+- **Only after the implicated gates are green locally**, push and open the PR, pasting the green run as proof. **Then merge it yourself** the moment `scripts/merge-policy.sh <PR#>` exits `0` (CLEARED) — that predicate enforces the website guardrail; never merge on a HOLD/BLOCKED. See [Merge & Branch Protocol](#merge--branch-protocol).
 
 ## Standing Autonomy & Compliant Gate Reroute
 
@@ -164,6 +255,20 @@ Concretely, from precedent:
 - **`settings.json` / hook-arming blocked** (self-modification boundary) → stage the exact
   validated file, hand the human the one required copy-paste, and do the surrounding branch,
   commit, rebase, push, PR, and merge work yourself.
+- **A permission prompt recurs** → broaden the allow rule to the whole class of command
+  (root-to-leaf), never re-approve the same literal string one prompt at a time. (Insights
+  lineage: a too-narrow allowlist caused 10+ repeat prompts in one session.)
+- **A bridge / connectivity / auth check reports blocked** → attempt the documented bootstrap or
+  reconnection path once before reporting; a passive re-report of a known-blocked status is a
+  parked blocker, not a finding. The Chrome-bridge bootstrap, concretely: `tabs_context_mcp` → if
+  no browser attaches, relaunch Chrome (`open -a "Google Chrome"`) and retry once; a background
+  job that cannot pair with the extension does not fight it — fall back to headless Playwright
+  (token/magic-link URLs carry their own identity), dry-run → screenshot → act, verify via the
+  server's observed effect (never the acting session's optimistic DOM), and abort on any captcha.
+- **A genuinely human-gated gate is hit** → state **`BLOCKED: <atom>`** exactly **once**, file the
+  atom in its registry owner (a lever in `his-hand-levers.json`; credential atoms → the credential
+  organ + Wall #320), then leave it — **never loop on, poll, or re-surface a filed gate** — and
+  keep driving every other reversible lane to its verified end in the same session.
 
 Never present a reroutable gate as human work. Reduce every blocker to its single irreducible atom
 (if any), clear the rest through compliant mechanisms, and report what was done. The
@@ -186,23 +291,56 @@ Authoritative and permanent. Claude **owns the branch cadence and the merge deci
 | `refactor/` | behavior-preserving restructure |
 | `worktree-*` | auto-named isolation branches (fleet / bg jobs) |
 
-One PR per branch → `main`. Squash-merge, delete the branch. `main` is the trunk **and** the live deploy source.
+One PR per branch → `main`. Squash-merge; branch cleanup is a separate receipt-backed reap, not an
+automatic delete. `main` is the trunk **and** the live deploy source.
+
+**Chunking.** A branch is **one concern, not one session.** When a session produces multiple concerns, cut a fresh branch per concern off `origin/main` — finish → push → PR → next branch — never accumulate heterogeneous commits on a single session branch. And the **live checkout rests on `main`**: parking it on a work branch pins the running fleet to stale code and entangles every autonomic capture into that branch (the 2026-06-29 jules-capfill park: 5 days, 65 behind, a feature slice + daemon receipts fused onto one ref). `scripts/sync-release.sh` auto-unparks a fully-pushed, clean park each beat and fails open loudly otherwise — do session work in a worktree, never in the live checkout.
+
+**Settling a session stream.** If a PR completes a domain declared in
+[`institutio/governance/session-streams.yaml`](institutio/governance/session-streams.yaml), claim it
+with an anchored trailer at **column 0** of the merge commit message — `Settles: <stream-id>` (comma-separated
+for several). That claim is the *only* thing that marks a domain settled, and the claiming commit must
+change something outside the registry and `docs/{plans,continuations}/`: bookkeeping records an outcome,
+it cannot produce one. A passing mention no longer counts — the old unanchored `git log --grep=<id>` rule
+settled `s10-axis-coverage` off a docs commit whose whole subject was that s10 owns work a plan should
+*not* do. `scripts/check-session-streams.py` is the predicate.
+
+**No side doors — docs included.** The branch cadence applies to *every* tracked change, including
+one-file docs appends (the `docs: review … run` class, which was landing as direct `main` commits —
+35 of 40 at its worst). Ship those with **`scripts/ship-docs.sh <slug> "<msg>" <file…>`**: it stages
+only the named files onto a fresh branch cut from `origin/main` in an isolated reclaim-tracked
+worktree (your checkout is never touched), opens the PR, and self-merges the moment
+`merge-policy.sh` clears while retaining the branch/root for later accepted cleanup — one command,
+so the PR path is never harder than the side door. The system's own findings are
+githubbed the same way: **`scripts/sync-censor-issues.py`** (beat-wired, dry-run until
+`LIMEN_CENSOR_ISSUES_APPLY=1` arms it) mirrors live censor residuals to public `censor`-labelled
+issues and auto-closes them when the lineage clears — so insight→correction work arrives as an
+issue and leaves as a PR that cites it. TABVLARIVS is the only logical board-projection writer:
+the keeper commits accepted events with SHA compare-and-swap and publishes only through the stable
+`tabularius/board-projection` branch, whose exact head enters the normal merge queue. Agent sessions
+never push `tasks.yaml`, and the keeper never pushes `main`; the remote no-bypass `pull_request`
+rule rejects every direct default-branch push, including automation and admins.
 
 **Merge authority (standing grant).** Claude merges its own PRs into `main` *without asking*, the moment they are green and mergeable. Do not defer routine merges to the human operator. The grant has exactly one guardrail.
 
-**The website guardrail.** A merge to `main` **auto-deploys** the live public site/API — but *only* when the diff touches a deploy-trigger path:
-
-- **Dashboard** (`deploy.yml` → Firebase Hosting): `web/app/**`, `firebase.json`, `tasks.yaml`, `.github/workflows/deploy.yml`
-- **API** (`deploy-api.yml` → Cloud Run / Worker): `web/api/**`, `cli/**`, `scripts/preflight-cloud-run.sh`, `.github/workflows/deploy-api.yml`
+**The website guardrail.** A merge to `main` **auto-deploys** the live public site/API — but *only* when the diff touches a deploy-trigger path. The trigger paths are **declared once** in the `deploy_triggers` block of [`institutio/governance/gates.yaml`](institutio/governance/gates.yaml) (dashboard → `deploy.yml` → Cloudflare Pages, Firebase step dormant; API → `deploy-api.yml` → Cloud Run / Worker); `merge-policy.sh` derives its classification from that registry, and `check-gates.py` holds the registry in exact parity with the workflows on every PR — do not restate the path list here or anywhere else.
 
 For a **website-sensitive** PR, merging *is* the deploy — so it requires **green CI first** (plus a local `web/app` build for dashboard changes). Never blind-merge a live deploy. For every **other** PR (docs, corpus, mcp, ianva, memory, `web/worker`, most of `scripts/**`), merge freely once CLEAN. (`web/worker` is the live runtime but deploys on-demand via wrangler, not on merge — so its merges don't auto-deploy.)
 
 **The predicate decides — not your memory.** Run `scripts/merge-policy.sh <PR#>` (or no arg for the current branch):
 
-- exit **0 CLEARED** → `gh pr merge <PR#> --squash --delete-branch`. Do it; don't ask.
-- exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or non-deploy checks still running. Wait for green, then merge.
-- exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), stale base (BEHIND), or a branch-protection gate unsatisfied (BLOCKED — e.g. the required `pr-gate` check never ran on a PR opened before that check existed). Rebase onto current `main` first (the PR#111 silent-revert guard; a rebase also retriggers the required checks), then re-run. If BLOCKED persists after a clean green rebase, a required review or admin merge is needed — surface it, don't force it.
+- exit **0 CLEARED** → run `scripts/await-pr.sh <PR#> --merge`. The predicate prints
+  `MERGE-MODE: queue|direct` and an exact `MERGE-HEAD`; the waiter binds the effect to both. When
+  the queue is active it enqueues once and reports success only after GitHub reports `MERGED`.
+  Branch cleanup is receipt-backed and separate from the merge.
+- exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or **required** checks still running/failing. Non-deploy verdicts count only the checks branch protection actually requires (derived live via `gh pr checks --required`; fail-toward-caution falls back to all-checks when underivable) — an advisory check never holds a non-deploy merge (2026-07-24 insights lineage: deliverables held hostage behind non-required checks). Website-sensitive PRs still demand the FULL rollup green: merging is the deploy. Wait for green, then merge.
+- exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), a stale base without a
+  proven queue rail, or an unsatisfied protection gate. Repair a real conflict or missing check.
+  Do not turn `BEHIND` into a repeated branch-rewrite/full-CI loop; queue-capable stale heads are
+  exit 0, while a missing/unknown queue is one exact owner-routed infrastructure blocker.
 
-The script carries a **staleness guard**: if the deploy-trigger paths in `deploy*.yml` ever drift from its hardcoded list, it warns and fails *toward caution* (treats the PR as website-sensitive). Keep the path list in the script and in this section in lockstep with the workflows.
+The script **derives** its deploy classification from the GATES registry at run time and fails *toward caution*: if derivation is impossible (broken python/PyYAML/registry), it forces website-sensitive, so a broken environment can only HOLD, never blind-deploy. There is no path list to keep in lockstep — `check-gates.py` enforces registry↔workflow parity on every PR.
+
+**Waiting on a gate.** Never hand-roll a background poll loop on a PR gate (`for … gh pr … sleep … done` is banned — the 2026-07-15 endless-watcher incident: bespoke pollers, silent on FAIL, outliving their sessions). The one sanctioned synchronous waiter is **`scripts/await-pr.sh <PR#> [--merge]`** — hard deadline, loud CLEARED/QUEUED/MERGED/FAILED/TIMEOUT verdicts, single instance per PR, and it refuses to start under a merge-prohibiting pause marker. Queue mode never rewrites the PR head when `main` moves: GitHub creates a synthetic latest-base merge group and the always-on `pr-gate` verifies only that integration composition. Anything longer than the deadline belongs to the beat's merge rung (`scripts/merge-drain.py` via `scripts/drain.sh`) — hand off and end. Before arming any watcher or merging, read `logs/AUTONOMY_PAUSED`: its `prohibitions:` bind interactive sessions too — a marker that prohibits merges means no watcher and no merge until the operator releases it.
 
 **Still human-gated levers** (unchanged): mass cross-org/fleet merges, anything that **sends** (email) or **wipes/deletes**, and **large spends**. Those stay human-gated; routine code merges do not.

@@ -1,0 +1,11 @@
+{
+  "max_age_seconds": 86400,
+  "owner": {
+    "id": "organvm/limen",
+    "surface": "prompt-work-lineage"
+  },
+  "report_path": "logs/progress-sources/prompt-lineage.json",
+  "required": true,
+  "schema": "limen.progress-source-registration.v1",
+  "source_id": "prompt-lineage"
+}

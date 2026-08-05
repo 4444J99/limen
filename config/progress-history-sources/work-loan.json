@@ -1,0 +1,33 @@
+{
+  "actual_field": "actual",
+  "ask_kind_values": [],
+  "document_paths": [
+    "logs/work-loan-facts.json",
+    "docs/work-loan-journal.json"
+  ],
+  "evidence_fields": [
+    "collateral.predicate",
+    "collateral.receipt_target",
+    "verification_digest"
+  ],
+  "identity_fields": [
+    "loan_id",
+    "loan_key"
+  ],
+  "kind_field": null,
+  "leaf_field": "loans",
+  "reopened_values": [],
+  "schema": "limen.progress-history-adapter.v1",
+  "source_id": "work-loan",
+  "state_fields": [
+    "earned_credit"
+  ],
+  "terminal_values": [
+    "true"
+  ],
+  "timestamp_fields": [
+    "created_at",
+    "updated_at"
+  ],
+  "verified_field": "earned_credit"
+}

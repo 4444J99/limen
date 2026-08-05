@@ -1,14 +1,30 @@
 import os
 import re
 import subprocess
-from datetime import date, datetime
+import sys
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import yaml
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from limen.conduct.client import client_from_env
+from limen.conduct.models import (
+    AgentIdentityV1,
+    AuthorityEnvelopeV1,
+    ConductorSessionV1,
+    ResourceClaimV1,
+    RunReceiptV1,
+    SpendEnvelopeV1,
+    WorkPacketV1,
+    canonical_hash,
+)
+from limen.work_loan import WorkLoanV1, task_work_loan_readiness
+from limen_mcp import runtime_requirements
+from limen_mcp.intake import normalize_selected_legacy_task, validate_intake_contract
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
@@ -26,7 +42,10 @@ VALID_AGENTS = {
     "any",
 }
 CLAIMABLE_AGENTS = VALID_AGENTS - {"any"}
+VALID_WORK_ORIGINS = {"obligation", "human_prompt", "agent_recommendation", "system_debt"}
+VALID_WORK_HORIZONS = {"past", "present", "future"}
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
 
 
 def _reject_control_chars(value: str, field_name: str) -> str:
@@ -63,7 +82,40 @@ class DispatchLogEntry(BaseModel):
     agent: str
     session_id: str
     status: str
+    route_to: Optional[str] = None
+    execution_profile: Optional[Dict[str, Any]] = None
+    selected_model: Optional[str] = None
+    selection_source: Optional[str] = None
+    catalog_hash: Optional[str] = None
+    health_snapshot_hash: Optional[str] = None
+    provider_terminal_class: Optional[str] = None
+    provider_retry_count: Optional[int] = None
+    provider_cooldown_until: Optional[datetime] = None
+    provider_health_evidence: Optional[Dict[str, Any]] = None
     output: Optional[str] = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_event_status(cls, v: str) -> str:
+        if v in VALID_STATUSES or v in {"noop", "pr_open"} or "->" in v:
+            return v
+        raise ValueError("dispatch event status must be canonical (legacy composite rows are read-only)")
+
+
+class ExecutionRequirement(BaseModel):
+    """A live control-host prerequisite that must clear before dispatch."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["mount"]
+    path: str = Field(min_length=1, max_length=4096)
+
+    @field_validator("path")
+    @classmethod
+    def validate_absolute_path(cls, value: str) -> str:
+        if "\x00" in value or not os.path.isabs(value):
+            raise ValueError("execution requirement path must be absolute")
+        return value
 
 
 class Task(BaseModel):
@@ -81,6 +133,16 @@ class Task(BaseModel):
     labels: List[str] = Field(default_factory=list)
     urls: List[str] = Field(default_factory=list)
     context: Optional[str] = None
+    predicate: Optional[str] = None
+    receipt_target: Optional[str] = None
+    origin: Optional[str] = None
+    horizon: Optional[str] = None
+    value_case: Optional[str] = None
+    owner_surface: Optional[str] = None
+    external_deadline: bool = False
+    due_at: Optional[str] = None
+    receipt_verified: Optional[bool] = None
+    execution_requirements: Optional[List[ExecutionRequirement]] = None
     claude_tier: Optional[str] = None
     depends_on: List[str] = Field(default_factory=list)
     created: date
@@ -202,40 +264,105 @@ def _load_data() -> LimenFile:
     return LimenFile(**data)
 
 
-def _save_data(data: LimenFile, commit_msg: str = "chore: mcp task update"):
-    path = _get_tasks_path()
-    repo_dir = path.parent
+def _conduct_client():
+    """Resolve the authenticated broker for each call; never cache credentials in process state."""
 
-    # Write file locally first
-    with open(path, "w") as f:
-        yaml.dump(data.model_dump(mode="json"), f, default_flow_style=False, sort_keys=False)
+    return client_from_env()
 
-    # Layer 1: Concurrency Sync (Git Pull --Rebase wrapper)
-    if (repo_dir / ".git").exists():
-        try:
-            # 1. Stash any uncommitted changes. Capture the result so we ONLY drop the stash we
-            #    actually created — an unconditional `git stash drop` would discard an unrelated
-            #    pre-existing stash whenever there was nothing to stash ("No local changes to save").
-            stash = subprocess.run(["git", "stash"], cwd=repo_dir, capture_output=True, text=True)
-            created_stash = "No local changes to save" not in ((stash.stdout or "") + (stash.stderr or ""))
-            # 2. Pull rebase to resolve remote conflicts
-            subprocess.run(["git", "pull", "--rebase"], cwd=repo_dir, capture_output=True)
 
-            # 3. RE-WRITE the file from memory to resolve any conflicts in tasks.yaml automatically
-            with open(path, "w") as f:
-                yaml.dump(data.model_dump(mode="json"), f, default_flow_style=False, sort_keys=False)
+def _mcp_identity(agent: str | None = None, *, session_suffix: str = "mcp") -> AgentIdentityV1:
+    resolved_agent = os.environ.get("LIMEN_AGENT") or agent or "opencode"
+    session_id = os.environ.get("LIMEN_SESSION_ID") or f"{session_suffix}-{resolved_agent}"
+    return AgentIdentityV1(
+        agent=resolved_agent,
+        surface="mcp",
+        session_id=session_id,
+        native_run_id=os.environ.get("LIMEN_RUN_ID"),
+    )
 
-            # 4. Drop the now-superseded stash (the memory re-write above is authoritative) so stash
-            #    entries don't accumulate on every save.
-            if created_stash:
-                subprocess.run(["git", "stash", "drop"], cwd=repo_dir, capture_output=True)
 
-            # 5. Commit and Push
-            subprocess.run(["git", "add", path.name], cwd=repo_dir, capture_output=True)
-            subprocess.run(["git", "commit", "-m", commit_msg], cwd=repo_dir, capture_output=True)
-            subprocess.run(["git", "push"], cwd=repo_dir, capture_output=True)
-        except Exception as e:
-            print(f"Git sync failed: {e}")
+def _register_submitter(client, identity: AgentIdentityV1) -> None:
+    client.register(
+        ConductorSessionV1(
+            session_id=identity.session_id,
+            identity=identity,
+            origin="relay",
+            native_session_id=os.environ.get("LIMEN_NATIVE_SESSION_ID"),
+            native_run_id=identity.native_run_id,
+            worktree=os.environ.get("LIMEN_WORKTREE"),
+            capabilities=frozenset({"task-submit"}),
+            transport="mcp",
+            heartbeat_at=datetime.now(timezone.utc),
+        )
+    )
+
+
+def _board_owner() -> str:
+    repo = os.environ.get("LIMEN_GITHUB_REPO", "organvm/limen").strip()
+    return repo if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo) else "organvm/limen"
+
+
+def _task_packet(
+    *,
+    action: str,
+    task_id: str,
+    payload: dict[str, Any],
+    identity: AgentIdentityV1,
+    work_discriminator: dict[str, Any],
+) -> WorkPacketV1:
+    digest = canonical_hash(work_discriminator)[:20]
+    owner = _board_owner()
+    work_id = f"mcp-{action.replace('.', '-')}-{task_id}-{digest}"
+    return WorkPacketV1(
+        work_id=work_id,
+        work_key=work_id,
+        intent={"kind": action, "task_id": task_id, **payload},
+        execution={
+            "adapter": "tabularius",
+            "projection": "tasks.yaml",
+            "observed_heads": {},
+        },
+        initiator=identity,
+        conductor=identity,
+        preferred_agent="tabularius",
+        required_capabilities=frozenset({"board-write"}),
+        resource_claims=(ResourceClaimV1(key=f"task/{task_id}", mode="exclusive"),),
+        predicate="python3 scripts/validate-task-board.py --tasks tasks.yaml",
+        receipt_target=f"git:{owner}:tasks.yaml#{task_id}",
+        authority=AuthorityEnvelopeV1(
+            actions=frozenset({action}),
+            repositories=frozenset({owner}),
+            path_prefixes=frozenset({"tasks.yaml"}),
+            may_delegate=False,
+        ),
+        deadline=datetime.now(timezone.utc) + timedelta(minutes=5),
+        spend=SpendEnvelopeV1(limit=0),
+        effect="write",
+        task_id=task_id,
+    )
+
+
+def _task_revision(task: Task) -> str:
+    value: Any = task.updated
+    if value is None and task.dispatch_log:
+        value = task.dispatch_log[-1].timestamp
+    if value is None:
+        value = task.created or task.status
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return value.isoformat() if isinstance(value, date) else str(value)
+
+
+def _submit_task_event(packet: WorkPacketV1) -> dict[str, Any]:
+    client = _conduct_client()
+    _register_submitter(client, packet.conductor)
+    return client.submit(packet)
+
+
+def _submission_message(action: str, task_id: str, result: dict[str, Any]) -> str:
+    status = str(result.get("status") or "unknown")
+    receipt = result.get("run_id") or result.get("busy_receipt_id") or "unavailable"
+    return f"{action} {task_id} via conduct broker (status={status}, receipt={receipt})"
 
 
 @mcp.tool()
@@ -254,6 +381,117 @@ def reset_circuit_breaker() -> str:
     CIRCUIT_BREAKER_TRIPPED = False
     _save_state()
     return "Circuit breaker RESET. System online."
+
+
+# -- Symmetric conduct protocol ---------------------------------------------------------------
+
+
+@mcp.tool()
+def conduct_capabilities() -> dict:
+    """Return live broker-derived lane capabilities and health."""
+
+    _check_circuit_breaker()
+    return _conduct_client().capabilities()
+
+
+@mcp.tool()
+def conduct_register(session: Dict[str, Any]) -> dict:
+    """Register a direct, dispatched, or relay conductor session."""
+
+    _check_circuit_breaker()
+    return _conduct_client().register(ConductorSessionV1.model_validate(session))
+
+
+@mcp.tool()
+def conduct_submit(packet: Dict[str, Any]) -> dict:
+    """Submit one bounded root work packet to the shared keeper."""
+
+    _check_circuit_breaker()
+    return _conduct_client().submit(WorkPacketV1.model_validate(packet))
+
+
+@mcp.tool()
+def conduct_split(parent_run: str, packet: Dict[str, Any]) -> dict:
+    """Submit one authority-attenuated child packet under an existing run."""
+
+    _check_circuit_breaker()
+    return _conduct_client().split(parent_run, WorkPacketV1.model_validate(packet))
+
+
+@mcp.tool()
+def conduct_graph(root_run: str) -> dict:
+    """Inspect the bounded delegation DAG for one root run."""
+
+    _check_circuit_breaker()
+    return _conduct_client().graph(root_run)
+
+
+@mcp.tool()
+def conduct_heartbeat(
+    lease: str,
+    generation: int,
+    capability_token: str,
+    observed_heads: Optional[Dict[str, str]] = None,
+) -> dict:
+    """Renew a lease while fencing any moved exact Git heads."""
+
+    _check_circuit_breaker()
+    return _conduct_client().heartbeat(
+        lease,
+        capability_token,
+        generation=generation,
+        observed_heads=observed_heads or {},
+    )
+
+
+@mcp.tool()
+def conduct_report(
+    lease: str,
+    generation: int,
+    capability_token: str,
+    receipt: Dict[str, Any],
+) -> dict:
+    """Submit a schema-validated terminal receipt; late results remain evidence-only."""
+
+    _check_circuit_breaker()
+    return _conduct_client().report(
+        lease,
+        capability_token,
+        RunReceiptV1.model_validate(receipt),
+        generation=generation,
+    )
+
+
+@mcp.tool()
+def conduct_harvest(root_run: str) -> dict:
+    """Collect graph outcomes and unharvested children for a root run."""
+
+    _check_circuit_breaker()
+    return _conduct_client().harvest(root_run)
+
+
+@mcp.tool()
+def conduct_adopt(run: str, session_id: str) -> dict:
+    """Adopt a graph only after the broker proves the prior conductor absent."""
+
+    _check_circuit_breaker()
+    return _conduct_client().adopt(run, session_id)
+
+
+@mcp.tool()
+def conduct_cancel(run: str, session_id: str) -> dict:
+    """Cancel only reserved, not-started work."""
+
+    _check_circuit_breaker()
+    return _conduct_client().cancel(run, session_id)
+
+
+@mcp.tool()
+def conduct_request_stop(run: str, session_id: str) -> dict:
+    """Request cooperative stop for started work; this never signals a peer process."""
+
+    _check_circuit_breaker()
+    return _conduct_client().request_stop(run, session_id)
 
 
 @mcp.tool()
@@ -293,14 +531,46 @@ def get_task(task_id: str) -> dict:
 
 
 @mcp.tool()
-def add_task(title: str, repo: str, agent: str = "jules", priority: str = "medium", budget_cost: int = 1) -> str:
+def add_task(
+    title: str,
+    repo: str,
+    predicate: str,
+    receipt_target: str,
+    value_case: str,
+    agent: str = "jules",
+    priority: str = "medium",
+    budget_cost: int = 1,
+    origin: str = "human_prompt",
+    horizon: str = "present",
+    owner_surface: str | None = None,
+    external_deadline: bool = False,
+    due_at: str | None = None,
+) -> str:
     """Add a new task to the pipeline."""
     title = _validate_text(title, "title", 512)
     repo = _validate_text(repo, "repo", 256)
+    value_case = _validate_text(value_case, "value_case", 8192)
     agent = _validate_optional_enum(agent, VALID_AGENTS, "agent") or "jules"
     priority = _validate_optional_enum(priority, VALID_PRIORITIES, "priority") or "medium"
+    origin = _validate_optional_enum(origin, VALID_WORK_ORIGINS, "origin") or "human_prompt"
+    horizon = _validate_optional_enum(horizon, VALID_WORK_HORIZONS, "horizon") or "present"
+    if owner_surface is not None:
+        owner_surface = _validate_text(owner_surface, "owner_surface", 8192)
+    if due_at is not None:
+        due_at = _validate_text(due_at, "due_at", 128)
+    if type(external_deadline) is not bool:
+        raise ValueError("external_deadline must be a boolean")
     if type(budget_cost) is not int or budget_cost < 1 or budget_cost > 100:
         raise ValueError("budget_cost must be an integer between 1 and 100")
+    WorkLoanV1(
+        source_origin=origin,
+        horizon=horizon,
+        value_case=value_case,
+        budget_cost=budget_cost,
+        owner_surface=owner_surface or repo,
+        external_deadline=external_deadline,
+        due_at=due_at,
+    )
     _check_circuit_breaker()
     data = _load_data()
 
@@ -323,15 +593,38 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
         priority=priority,
         budget_cost=budget_cost,
         status="open",
+        predicate=predicate,
+        receipt_target=receipt_target,
+        origin=origin,
+        horizon=horizon,
+        value_case=value_case,
+        owner_surface=owner_surface,
+        external_deadline=external_deadline,
+        due_at=due_at,
         created=date.today(),
     )
-    data.tasks.append(new_task)
-    _save_data(data, commit_msg=f"feat: add task {new_id}")
-    return f"Created task {new_id}"
+    validate_intake_contract(new_task, is_new=True)
+    identity = _mcp_identity(agent, session_suffix="mcp-add")
+    fields = new_task.model_dump(mode="json", exclude_none=True)
+    packet = _task_packet(
+        action="task.upsert",
+        task_id=new_id,
+        payload={"task": fields, "expected_absent": True},
+        identity=identity,
+        work_discriminator=fields,
+    )
+    result = _submit_task_event(packet)
+    return _submission_message("submitted task upsert", new_id, result)
 
 
 @mcp.tool()
-def update_task_status(task_id: str, status: str, context: Optional[str] = None) -> str:
+def update_task_status(
+    task_id: str,
+    status: str,
+    context: Optional[str] = None,
+    predicate: Optional[str] = None,
+    receipt_target: Optional[str] = None,
+) -> str:
     """Update the status and context of a task. Allows 'failed_blocked' to evict dependencies."""
     task_id = _validate_task_id(task_id)
     status = _validate_optional_enum(status, VALID_STATUSES, "status") or status
@@ -342,17 +635,44 @@ def update_task_status(task_id: str, status: str, context: Optional[str] = None)
 
     for t in data.tasks:
         if t.id == task_id:
+            prior_fields = t.model_dump(mode="json", exclude_none=True)
+            updated_fields: dict[str, Any] = {"status": status}
+            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or []) and status not in {"failed", "done", "archived"}:
+                return (
+                    f"Task {task_id} requires a separately admitted successor; "
+                    f"cannot transition expired row to {status}"
+                )
             # Layer 1: Dynamic Costing - Double budget cost on failure
             if status in ["failed", "failed_blocked", "needs_human"] and t.status == "in_progress":
-                t.budget_cost = min(t.budget_cost * 2, 8)
-
-            t.status = status
+                updated_fields["budget_cost"] = min(t.budget_cost * 2, 8)
             if context:
-                t.context = context
-            t.updated = datetime.now()
-
-            _save_data(data, commit_msg=f"chore: update {task_id} to {status}")
-            return f"Updated {task_id} to {status}. New budget cost: {t.budget_cost}"
+                updated_fields["context"] = context
+            if predicate is not None:
+                updated_fields["predicate"] = predicate
+            if receipt_target is not None:
+                updated_fields["receipt_target"] = receipt_target
+            prospective = t.model_copy(update=updated_fields)
+            validate_intake_contract(prospective)
+            identity = _mcp_identity(session_suffix="mcp-status")
+            packet = _task_packet(
+                action="task.status",
+                task_id=task_id,
+                payload={
+                    "expected_status": t.status,
+                    "expected_revision": _task_revision(t),
+                    "patch": updated_fields,
+                    "log": {
+                        "status": status,
+                        "agent": identity.agent,
+                        "session_id": identity.session_id,
+                        "output": context,
+                    },
+                },
+                identity=identity,
+                work_discriminator={"prior": prior_fields, "patch": updated_fields},
+            )
+            result = _submit_task_event(packet)
+            return _submission_message(f"submitted status {status} for", task_id, result)
 
     raise ValueError(f"Task {task_id} not found")
 
@@ -401,9 +721,7 @@ def agent_available(agent: Optional[str] = None) -> List[dict]:
 
 @mcp.tool()
 def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
-    """Proactively claim a task from the pipeline. Agent writes its ID to the
-    task's target_agent and updates its own presence beacon. Prevents double-claim
-    by checking the task is still open. Returns confirmation or error."""
+    """Submit one atomically leased task claim through the shared broker."""
     task_id = _validate_task_id(task_id)
     agent_name = _validate_optional_enum(agent_name, CLAIMABLE_AGENTS, "agent_name") or agent_name
     _check_circuit_breaker()
@@ -413,30 +731,132 @@ def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
         if t.id == task_id:
             if t.status != "open":
                 return f"Task {task_id} is not open (current status: {t.status}) - cannot claim"
+            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or []):
+                return f"Task {task_id} requires a separately admitted successor - cannot claim expired row"
             if t.target_agent not in (agent_name, "any"):
                 return f"Task {task_id} targets {t.target_agent}, not {agent_name} - cannot claim"
 
-            now = datetime.now()
-            t.status = "dispatched"
-            t.target_agent = agent_name
-            t.updated = now
-            track = data.portal.budget.track
-            track.spent += t.budget_cost
-            track.per_agent[agent_name] = track.per_agent.get(agent_name, 0) + t.budget_cost
+            underwriting = task_work_loan_readiness(t)
+            if not underwriting.ready:
+                return f"{underwriting.reason_code} - cannot claim"
 
-            entry = DispatchLogEntry(
-                timestamp=now,
-                agent=agent_name,
-                session_id="mcp-agent-claim",
-                status="dispatched",
-                output=f"Claimed by {agent_name} via MCP",
+            readiness = runtime_requirements.evaluate_execution_requirements(t)
+            if not readiness.ready:
+                reason = "; ".join(readiness.blockers)
+                return f"Task {task_id} runtime requirements unavailable: {reason} - cannot claim"
+
+            normalize_selected_legacy_task(t)
+            identity = _mcp_identity(agent_name, session_suffix="mcp-claim")
+            prior_fields = t.model_dump(mode="json", exclude_none=True)
+            patch = {
+                "status": "dispatched",
+                "target_agent": agent_name,
+                "predicate": t.predicate,
+                "receipt_target": t.receipt_target,
+            }
+            packet = _task_packet(
+                action="task.claim",
+                task_id=task_id,
+                payload={
+                    "expected_status": "open",
+                    "expected_revision": _task_revision(t),
+                    "patch": patch,
+                    "log": {
+                        "status": "dispatched",
+                        "agent": agent_name,
+                        "session_id": identity.session_id,
+                        "output": f"Claimed by {agent_name} via MCP conduct broker",
+                    },
+                },
+                identity=identity,
+                work_discriminator={"prior": prior_fields, "patch": patch},
             )
-            t.dispatch_log.append(entry)
-
-            _save_data(data, commit_msg=f"feat: {agent_name} claim task {task_id}")
-            return f"{agent_name} claimed task {task_id} (status=dispatched)"
+            result = _submit_task_event(packet)
+            return _submission_message(f"submitted claim for {agent_name} on", task_id, result)
 
     raise ValueError(f"Task {task_id} not found")
+
+
+@mcp.tool()
+def application_funnel(fire: bool = False, timeout_seconds: int = 120) -> dict:
+    """Run the outbound job-application funnel; optionally submit staged applications.
+
+    The cross-agent entry point for the funnel that ``scripts/application-funnel.py``
+    drives. Exposed over MCP so ANY assigned agent — opencode, Codex, Copilot, Gemini —
+    invokes the same effector the beat does, instead of each one reinventing a submitter.
+
+    Disarmed (default) the cycle is reversible end to end: it sources roles from ATS and
+    public boards, scores them (>=9.0), builds tailored materials, stages complete
+    application packages, and prepares follow-up dates. Nothing leaves the machine.
+
+    ``fire=True`` adds the ``apply`` phase, which SUBMITS staged applications to real ATS
+    portals on the operator's behalf. That is outward-facing and irreversible: a submitted
+    application cannot be recalled. It stays capped by the engine's own precision limits
+    (<=2/week, 1 per organization, <=10 active) and by per-entry readiness, and
+    operator-gated portals are never auto-submitted. Pass it only on explicit instruction
+    from the operator — never to "catch up" a backlog on your own initiative.
+
+    Args:
+        fire: Include the submit phase. Default False (stage only).
+        timeout_seconds: Cap on the launch call. The cycle itself runs detached; counts
+            from the previous completed cycle are returned immediately.
+
+    Returns:
+        The driver's JSON summary: sourced, qualified, staged, submitted, armed,
+        launched, and human-readable notes.
+    """
+    repo_root = Path(__file__).resolve().parents[3]
+    driver = repo_root / "scripts" / "application-funnel.py"
+    if not driver.exists():
+        return {"error": f"driver not found: {driver}", "launched": False}
+
+    env = dict(os.environ)
+    if fire:
+        # Per-invocation arm. Deliberately NOT written to ~/.limen.env: persistence-arming
+        # is the operator's lever (L-APPLY-FIRE), while a single armed run is a bounded act.
+        env["LIMEN_APPLY_FIRE"] = "1"
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(driver), "--json"],
+            capture_output=True,
+            text=True,
+            timeout=max(10, min(int(timeout_seconds), 600)),
+            env=env,
+            cwd=str(repo_root),
+        )
+    except subprocess.TimeoutExpired:
+        return {"error": "funnel driver timed out", "launched": False, "armed": fire}
+
+    try:
+        return json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        return {
+            "error": "driver produced non-JSON output",
+            "returncode": proc.returncode,
+            "stderr": (proc.stderr or "")[-800:],
+            "launched": False,
+        }
+
+
+@mcp.tool()
+def daily_execution(fire: bool = False, timeout_seconds: int = 1800) -> dict:
+    """Run the shared daily communications/application loop.
+
+    This is the provider-neutral MCP twin of ``limen daily-execute`` and the
+    existing heartbeat voice. It composes the canonical mail, opportunity,
+    correspondence, and application owners. ``fire`` is invocation-local and
+    does not persist an arm or treat generated templates/forms as delivery.
+    """
+    _check_circuit_breaker()
+    from limen.daily_execution import run_daily_execution
+
+    repo_root = Path(__file__).resolve().parents[3]
+    return run_daily_execution(
+        fire=bool(fire),
+        root=repo_root,
+        timeout_seconds=max(1, min(int(timeout_seconds), 1800)),
+    )
 
 
 if __name__ == "__main__":

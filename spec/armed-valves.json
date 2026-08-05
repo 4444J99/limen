@@ -1,0 +1,49 @@
+{
+  "_doc": "Classification registry for armed-valve-audit.py (RETRO-0708-ARMED-VALVE-AUDIT; PREC-2026-07-08-armed-valve-outcome). The audit derives valves from beat-source gates and generic sensors.yaml capabilities. This file holds only non-sensor classifications and external probes (a URL that must serve, an artifact that must carry the rail). A discovered gate classified nowhere surfaces as UNCLASSIFIED — new valves self-surface, the registry never silently lags the code.",
+  "deliverable": [
+    {
+      "id": "LIMEN_DISPATCH",
+      "kind": "env",
+      "expected": "1",
+      "what": "outward dispatch of queued tasks to vendor lanes — the queue's entire purpose; permanently off means the board pools work nothing executes",
+      "lever": "L-FLEET-CAPACITY"
+    },
+    {
+      "id": "LIMEN_CENSOR_ISSUES_APPLY",
+      "kind": "env",
+      "expected": "1",
+      "what": "censor residuals mirrored to public GitHub issues (retro finding 8: ran every beat in permanent dry-run; 4 residuals never mirrored)"
+    },
+    {
+      "id": "MONETA_MINT_LIVE",
+      "kind": "url",
+      "url": "https://mint.4444j99.dev/pubkey",
+      "expect_status": 200,
+      "what": "the sovereign mint reachable and serving its licence pubkey — the Buy-Pro rail's origin (retro finding 4: deployed URL returned nothing)"
+    },
+    {
+      "id": "EXPORTER_MINT_WIRED",
+      "kind": "url_contains",
+      "url": "https://chatgpt-exporter-e08.pages.dev/chatgpt.user.js",
+      "needle": "mint.4444j99.dev",
+      "what": "the public exporter install artifact carries the mint checkout — the user-reachable half of the rail (EXCAV-0708-EXPORTER-ARM ship-gate)"
+    }
+  ],
+  "safety": [
+    "LIMEN_SI_RETIRE",
+    "LIMEN_LIB_APPLY",
+    "LIMEN_CORPUS_CONVERGE",
+    "LIMEN_NOMENCLATOR",
+    "LIMEN_POSITIONING",
+    "LIMEN_AVTOPOIESIS",
+    "LIMEN_CENSOR_APPLY",
+    "LIMEN_MEDIA_ATOMIZE",
+    "LIMEN_QUICKEN_BREATHE",
+    "LIMEN_STUDIUM",
+    "LIMEN_OBSERVATORY",
+    "LIMEN_PROMPT_ATOM_CONTROL",
+    "LIMEN_SESSION_CLOSEOUT",
+    "LIMEN_DAILY_EXECUTION_FIRE"
+  ],
+  "_safety_note": "LIMEN_CENSOR_APPLY / LIMEN_MEDIA_ATOMIZE are armed in the daemon environment, which this audit cannot read from a shell. Promoting one to deliverable requires a probe of daemon truth; enactment-audit.py owns declared-vs-live for fleet flags. Provider admission belongs to the keeper-backed campaign supervisor, not a heartbeat dispatch-mode valve. LIMEN_DAILY_EXECUTION_FIRE remains safe-off by default: only an explicit, invocation-scoped fire lever may authorize routine professional sends."
+}

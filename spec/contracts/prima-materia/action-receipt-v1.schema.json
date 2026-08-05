@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "action_id": {
+      "title": "Action Id",
+      "type": "string"
+    },
+    "authority_ref": {
+      "title": "Authority Ref",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "observed_at": {
+      "format": "date-time",
+      "title": "Observed At",
+      "type": "string"
+    },
+    "postcondition_digest": {
+      "title": "Postcondition Digest",
+      "type": "string"
+    },
+    "precondition_digest": {
+      "title": "Precondition Digest",
+      "type": "string"
+    },
+    "provider_evidence_digest": {
+      "title": "Provider Evidence Digest",
+      "type": "string"
+    },
+    "provider_object_id": {
+      "title": "Provider Object Id",
+      "type": "string"
+    },
+    "provider_version": {
+      "title": "Provider Version",
+      "type": "string"
+    },
+    "replay_class": {
+      "const": "observable_only",
+      "default": "observable_only",
+      "title": "Replay Class",
+      "type": "string"
+    },
+    "reversibility": {
+      "enum": [
+        "reversible",
+        "compensating",
+        "irreversible"
+      ],
+      "title": "Reversibility",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.action_receipt.v1",
+      "default": "limen.action_receipt.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "undo_evidence_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Undo Evidence Digest"
+    }
+  },
+  "required": [
+    "action_id",
+    "authority_ref",
+    "idempotency_key",
+    "precondition_digest",
+    "provider_object_id",
+    "provider_version",
+    "provider_evidence_digest",
+    "postcondition_digest",
+    "reversibility",
+    "observed_at"
+  ],
+  "title": "ActionReceiptV1",
+  "type": "object"
+}

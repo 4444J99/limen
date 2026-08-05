@@ -27,12 +27,20 @@ on:
         options:
           - warp
           - oz
+      model:
+        description: Optional live-validated Warp model override; blank delegates to Warp Auto
+        required: false
+        type: string
+      execution_profile:
+        description: Provider-neutral JSON capability request derived from the live task
+        required: true
+        type: string
 
 jobs:
   run-agent:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run Oz agent
         uses: warpdotdev/oz-agent-action@v1
@@ -41,5 +49,7 @@ jobs:
             ${{ inputs.prompt }}
 
             Target repository: ${{ inputs.repo }}
+            Execution profile: ${{ inputs.execution_profile }}
           name: limen-${{ inputs.agent }}-${{ inputs.task_id }}
+          model: ${{ inputs.model }}
           warp_api_key: ${{ secrets.WARP_API_KEY }}

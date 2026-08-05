@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PRESSURE_SCRIPT = ROOT / "scripts" / "session-lifecycle-pressure.py"
+PRESSURE_HOOK = ROOT / "scripts" / "hooks" / "session-lifecycle-pressure.sh"
 CAPABILITY_SCRIPT = ROOT / "scripts" / "capability-substrate-ledger.py"
 BLOCKERS_SCRIPT = ROOT / "scripts" / "session-blockers-ledger.py"
 ATTACK_PATHS_SCRIPT = ROOT / "scripts" / "session-attack-paths.py"
@@ -181,6 +186,91 @@ DRY-RUN - nothing written.
     assert "Collision packet complete | `True`" in markdown
 
 
+def test_consolidation_gates_treats_zero_collision_dry_run_as_resolved_packet(tmp_path: Path):
+    gates = _load(CONSOLIDATION_GATES_SCRIPT, "consolidation_gates_zero_collisions")
+    gates.ROOT = tmp_path
+    gates.DOC_PATH = tmp_path / "docs" / "consolidation" / "GATES.md"
+    gates.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    gates.PRIVATE_INDEX = gates.PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+    gates.RUNBOOK = tmp_path / "docs" / "consolidation" / "RUNBOOK.md"
+    gates.COLLISION_RENAMES = tmp_path / "docs" / "consolidation" / "COLLISION-RENAMES.md"
+    gates.SCOPE_AND_APP = tmp_path / "docs" / "consolidation" / "SCOPE-AND-APP.md"
+    gates.COLLISION_RENAMES.parent.mkdir(parents=True)
+    gates.COLLISION_RENAMES.write_text(
+        """# Collision Rename Packet
+
+| Collision | Keeper |
+|---|---|
+| `demo-repo` | `keeper-org/demo-repo` |
+
+```bash
+gh repo rename demo-repo--source-org-legacy --repo source-org/demo-repo
+```
+""",
+        encoding="utf-8",
+    )
+
+    def fake_run_command(args, *, env=None, timeout=180):
+        text = " ".join(args)
+        if args[:3] == ["gh", "repo", "view"]:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": '{"nameWithOwner":"source-org/demo-repo--source-org-legacy"}',
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "consolidate-github.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """=== consolidation plan -> organvm ===
+  2 repos across 2 owners
+  name collisions (must rename before transfer): 0
+
+DRY-RUN - nothing executed.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "rewrite-owners.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """[1] tasks.yaml repo: refs to rewrite = 0
+[2] deploy-api.yml LIMEN_GITHUB_REPO literal: none (already organvm or absent)
+[3] git checkouts under /tmp with origin on an OLD owner = 0 (emit-only, never run)
+DRY-RUN - nothing written.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "gh-app-token.sh" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": "app (limen[bot] installation token)\n",
+                "stderr": "",
+                "timed_out": False,
+            }
+        return {"args": args, "returncode": 0, "stdout": "limen-bot\n", "stderr": "", "timed_out": False}
+
+    gates.run_command = fake_run_command
+
+    snapshot = gates.build_snapshot()
+    markdown = gates.render_markdown(snapshot)
+
+    assert snapshot["consolidation"]["collision_groups"] == 0
+    assert snapshot["collision_packet"]["complete"] is True
+    assert snapshot["collision_packet"]["rename_commands"] == 1
+    assert snapshot["collision_packet"]["required_rename_commands"] == 0
+    assert snapshot["collision_packet"]["target_conflicts"] == []
+    assert "collision-packet-incomplete" not in snapshot["gates"]["blocking"]
+    assert "Rename target conflicts: `0`" in markdown
+    assert "Collision names are resolved" in markdown
+    assert "1. Resolve collision names" not in markdown
+
+
 def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp_path: Path):
     pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure")
     pressure.ROOT = tmp_path
@@ -193,7 +283,6 @@ def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp
     pressure.run_worktree_debt = lambda: {
         "total": 2,
         "debt": 2,
-        "limit": 1,
         "by_reason": {"dirty": 1, "not-merged-to-default": 1},
     }
 
@@ -221,12 +310,38 @@ def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp
     pressure.write_outputs(snapshot, rendered)
 
     assert snapshot["worktrees"]["debt"] == 2
-    assert snapshot["worktrees"]["over_cap"] is True
+    assert snapshot["worktrees"]["debt_target"] == 0
+    assert snapshot["worktrees"]["complete"] is False  # exact-zero completion; any nonzero debt is open
     assert snapshot["remote"]["remote_branches_missing"] == 1
     assert "Lifecycle pressure" in rendered
+    assert "debt 2 (target 0)" in rendered
     assert "remote branches present/missing 1/1" in rendered
     assert pressure.OUT_JSON.exists()
     assert pressure.OUT_MD.exists()
+
+
+def test_session_lifecycle_pressure_records_worktree_debt_timeout(monkeypatch, tmp_path: Path):
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_timeout")
+    pressure.ROOT = tmp_path
+    pressure.WORKTREE_ROOT = tmp_path / ".limen-worktrees"
+    pressure.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    pressure.PROMPT_INDEX = pressure.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    pressure.CORPUS_INVENTORY = pressure.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.WORKTREE_DEBT_TIMEOUT = 2
+
+    def timeout_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=kwargs.get("args") or args[0], timeout=2)
+
+    monkeypatch.setattr(pressure.subprocess, "run", timeout_run)
+
+    snapshot = pressure.build_snapshot()
+    rendered = pressure.render(snapshot)
+
+    assert snapshot["worktrees"]["error"] == "worktree-debt timed out after 2s"
+    assert "worktree debt scan unavailable" in snapshot["pressure"]
+    assert rendered.endswith("state: runtime unconfigured, worktree debt scan unavailable")
 
 
 def test_session_lifecycle_pressure_closes_raw_remote_missing_with_live_scanner_receipt(tmp_path: Path):
@@ -241,7 +356,6 @@ def test_session_lifecycle_pressure_closes_raw_remote_missing_with_live_scanner_
     pressure.run_worktree_debt = lambda: {
         "total": 1,
         "debt": 0,
-        "limit": 12,
         "by_reason": {"owner-blocker": 1},
         "items": [{"name": "owner-blocked-root", "reason": "owner-blocker", "debt": False}],
     }
@@ -298,7 +412,6 @@ def test_session_lifecycle_pressure_counts_scanned_worktree_targets(tmp_path: Pa
     pressure.run_worktree_debt = lambda: {
         "total": 3,
         "debt": 0,
-        "limit": 12,
         "by_reason": {"clean+merged+idle": 3},
         "items": [
             {"name": "old-root", "path": str(old_root), "reason": "clean+merged+idle", "debt": False},
@@ -318,6 +431,112 @@ def test_session_lifecycle_pressure_counts_scanned_worktree_targets(tmp_path: Pa
     assert snapshot["worktrees"]["bytes"] == 15
 
 
+def test_session_lifecycle_pressure_reports_partial_bounded_size_data(
+    tmp_path: Path,
+):
+    pressure = _load(
+        PRESSURE_SCRIPT,
+        "session_lifecycle_pressure_partial_size",
+    )
+    pressure.ROOT = tmp_path
+    pressure.WORKTREE_ROOT = tmp_path / ".limen-worktrees"
+    pressure.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    pressure.PROMPT_INDEX = pressure.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    pressure.CORPUS_INVENTORY = pressure.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    pressure.SIZE_SCAN_MAX_ROOTS = 2
+    paths = []
+    for index, size in enumerate((3, 5, 7), start=1):
+        path = pressure.WORKTREE_ROOT / f"root-{index}"
+        path.mkdir(parents=True)
+        (path / "payload.bin").write_bytes(b"x" * size)
+        paths.append(path)
+    pressure.run_worktree_debt = lambda: {
+        "total": 3,
+        "debt": 0,
+        "limit": 12,
+        "by_reason": {"clean+merged+idle": 3},
+        "items": [
+            {
+                "name": path.name,
+                "path": str(path),
+                "reason": "clean+merged+idle",
+                "debt": False,
+            }
+            for path in paths
+        ],
+    }
+
+    snapshot = pressure.build_snapshot()
+    rendered = pressure.render(snapshot)
+
+    assert snapshot["worktrees"]["roots"] == 3
+    assert snapshot["worktrees"]["bytes"] == 8
+    assert snapshot["worktrees"]["size_scan_partial"] is True
+    assert snapshot["worktrees"]["size_scan_scanned_roots"] == 2
+    assert "worktree size scan partial" in snapshot["pressure"]
+    assert "partial size scan 2/3" in rendered
+
+
+def test_session_lifecycle_pressure_hook_declares_singleton_timeout_and_nice():
+    hook = PRESSURE_HOOK.read_text(encoding="utf-8")
+
+    assert 'mkdir "$LOCK_DIR"' in hook
+    assert "LIMEN_SESSION_LIFECYCLE_TIMEOUT" in hook
+    assert "LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT" in hook
+    assert "start_new_session=True" in hook
+    assert "nice -n 10" in hook
+
+
+def test_session_lifecycle_pressure_hook_second_invocation_is_singleton(
+    tmp_path: Path,
+):
+    project = tmp_path / "limen"
+    generator = project / "scripts" / "session-lifecycle-pressure.py"
+    generator.parent.mkdir(parents=True)
+    log = tmp_path / "generator.log"
+    generator.write_text(
+        "\n".join(
+            (
+                "import os",
+                "import time",
+                "from pathlib import Path",
+                "path = Path(os.environ['PRESSURE_TEST_LOG'])",
+                "with path.open('a', encoding='utf-8') as stream:",
+                "    stream.write('started\\n')",
+                "time.sleep(1)",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "CLAUDE_PROJECT_DIR": str(project),
+            "PRESSURE_TEST_LOG": str(log),
+            "TMPDIR": str(tmp_path),
+            "LIMEN_SESSION_LIFECYCLE_TIMEOUT": "5",
+            "LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT": "2",
+        }
+    )
+
+    subprocess.run(["bash", str(PRESSURE_HOOK)], check=True, env=env)
+    lock_dir = tmp_path / "limen-session-lifecycle-pressure.lock"
+    deadline = time.time() + 3
+    while time.time() < deadline and not lock_dir.exists():
+        time.sleep(0.05)
+    assert lock_dir.exists()
+
+    subprocess.run(["bash", str(PRESSURE_HOOK)], check=True, env=env)
+    deadline = time.time() + 3
+    while time.time() < deadline:
+        if log.exists() and not lock_dir.exists():
+            break
+        time.sleep(0.05)
+
+    assert log.read_text(encoding="utf-8").splitlines() == ["started"]
+
+
 def test_session_lifecycle_pressure_closes_reclaimed_remote_missing_from_receipt(tmp_path: Path):
     pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_reclaimed_receipt")
     pressure.ROOT = tmp_path
@@ -331,7 +550,6 @@ def test_session_lifecycle_pressure_closes_reclaimed_remote_missing_from_receipt
     pressure.run_worktree_debt = lambda: {
         "total": 0,
         "debt": 0,
-        "limit": 12,
         "by_reason": {},
         "items": [],
     }
@@ -374,6 +592,48 @@ def test_session_lifecycle_pressure_closes_reclaimed_remote_missing_from_receipt
     assert snapshot["remote"]["remote_branches_missing"] == 1
     assert snapshot["remote"]["remote_branches_unresolved_missing"] == 0
     assert snapshot["remote"]["remote_branches_closed_roots"] == ["reclaimed-root"]
+
+
+def test_session_lifecycle_pressure_throttle_skips_census_when_snapshot_fresh(tmp_path: Path, monkeypatch):
+    """The SessionEnd hook runs this every session and its census shells out to git per worktree —
+    on a large estate that grinds the CPU (the machine 'crawls'). With a fresh snapshot and a throttle
+    window, main() must SKIP the expensive build_snapshot() entirely and echo the cached line."""
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_throttle_skip")
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.OUT_JSON.parent.mkdir(parents=True)
+    pressure.OUT_JSON.write_text('{"cached": true}', encoding="utf-8")  # age ≈ 0 < throttle
+    pressure.OUT_MD.write_text("**Lifecycle pressure** — cached line", encoding="utf-8")
+
+    def boom():
+        raise AssertionError("build_snapshot() must NOT run when the snapshot is fresh within the throttle")
+
+    monkeypatch.setattr(pressure, "build_snapshot", boom)
+    monkeypatch.setattr(sys, "argv", ["session-lifecycle-pressure.py", "--throttle", "3600"])
+
+    assert pressure.main() == 0  # short-circuits; boom never raised
+
+
+def test_session_lifecycle_pressure_throttle_zero_always_runs_census(tmp_path: Path, monkeypatch):
+    """--throttle 0 (or LIMEN_LIFECYCLE_PRESSURE_THROTTLE=0) restores the old always-run behavior."""
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_throttle_zero")
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.OUT_JSON.parent.mkdir(parents=True)
+    pressure.OUT_JSON.write_text('{"cached": true}', encoding="utf-8")
+
+    ran = {"build": False}
+
+    def fake_build():
+        ran["build"] = True
+        return {"stub": True}
+
+    monkeypatch.setattr(pressure, "build_snapshot", fake_build)
+    monkeypatch.setattr(pressure, "render", lambda _snap: "rendered")
+    monkeypatch.setattr(sys, "argv", ["session-lifecycle-pressure.py", "--throttle", "0"])
+
+    assert pressure.main() == 0
+    assert ran["build"] is True  # throttle 0 → census always runs
 
 
 def test_capability_substrate_ledger_indexes_names_without_skill_bodies(tmp_path: Path):
@@ -506,7 +766,7 @@ t "tick switching can be explicitly opted in" "_st_tick_switch_optin"
     assert network.PRIVATE_INDEX.exists()
 
 
-def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
+def test_dispatch_health_records_live_root_and_campaign_runtime_drift(tmp_path: Path):
     dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health")
     dispatch.ROOT = tmp_path
     dispatch.HOME = tmp_path
@@ -521,14 +781,14 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
         "path": str(path),
         "keep_alive": True,
         "run_at_load": True,
-        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT), "LIMEN_DISPATCH_ASYNC": "0"},
+        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
     }
     dispatch.launchd_snapshot = lambda: {
         "present": True,
         "running": True,
         "state": "running",
         "pid": "123",
-        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT)},
+        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120"},
     }
 
     def fake_git_snapshot(path: Path):
@@ -566,12 +826,28 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
 
     dispatch.git_snapshot = fake_git_snapshot
     dispatch.watchdog_snapshot = lambda: {"healthy": True, "first_line": "[watchdog] HEALTHY"}
-    dispatch.async_probe_snapshot = lambda enabled: {
+    dispatch.async_probe_snapshot = lambda enabled, **kwargs: {
         "requested": enabled,
         "ok": True,
         "timed_out": False,
         "last_line": "would launch 0",
         "skipped_down_lanes": ["gemini", "jules"],
+        "skipped_down_reasons": {
+            "gemini": {
+                "source": "usage",
+                "health": "exhausted",
+                "signal": "dispatch-count",
+                "remaining": 0,
+                "possible": 10,
+            },
+            "jules": {
+                "source": "usage",
+                "health": "exhausted",
+                "signal": "count",
+                "remaining": 0,
+                "possible": 100,
+            },
+        },
     }
 
     snapshot = dispatch.build_snapshot(type("Args", (), {"probe_async": True})())
@@ -583,10 +859,164 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert "live-root-not-at-origin-main" in blocker_ids
     assert "live-root-dirty" in blocker_ids
     assert "heartbeat-loaded-env-drift" in blocker_ids
-    assert "Dispatch/heartbeat health is not proven by tests in a detached worktree alone." in markdown
+    assert "Campaign-heartbeat health is not proven by tests in a detached worktree alone." in markdown
     assert "Async skipped down lanes: `gemini, jules`" in markdown
+    assert "`gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`." in markdown
+    assert "`jules`: usage health `exhausted`; signal `count`; remaining `0` of `100`." in markdown
     assert dispatch.DOC_PATH.exists()
     assert dispatch.PRIVATE_INDEX.exists()
+
+
+def test_dispatch_health_blocks_when_generated_plist_drifts_from_installed(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_generated_plist_drift")
+    live_root = tmp_path / "live-limen"
+    scratch = tmp_path / "Scratch" / "limen-worktrees"
+    local = tmp_path / "Workspace" / ".limen-worktrees"
+    snapshot = {
+        "generated_heartbeat_plist": {
+            "present": True,
+            "env": {
+                "LIMEN_ROOT": str(live_root),
+                "LIMEN_WORKTREES": str(scratch),
+                "LIMEN_WORKTREE_ROOT": str(scratch),
+                "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300",
+            },
+        },
+        "heartbeat_plist": {
+            "present": True,
+            "keep_alive": True,
+            "env": {
+                "LIMEN_ROOT": str(live_root),
+                "LIMEN_WORKTREES": str(local),
+                "LIMEN_WORKTREE_ROOT": str(local),
+                "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120",
+            },
+        },
+        "launchd": {
+            "running": True,
+            "state": "running",
+            "env": {
+                "LIMEN_WORKTREES": str(local),
+                "LIMEN_WORKTREE_ROOT": str(local),
+                "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120",
+            },
+        },
+        "live_root_git": {
+            "present": True,
+            "branch": "main",
+            "head": "abc",
+            "origin_main": "abc",
+            "matches_origin_main": True,
+            "dirty_entries": 0,
+        },
+        "watchdog": {"healthy": True},
+        "async_probe": {"requested": False},
+        "prompt_packets": {"conductor_required_packets": 0},
+        "always_working": {"present": True, "required_open_count": 0},
+    }
+
+    blockers = dispatch.derive_blockers(snapshot)
+
+    drift = [item for item in blockers if item["id"] == "heartbeat-generated-plist-env-drift"]
+    assert drift
+    assert "LIMEN_WORKTREES" in drift[0]["evidence"]
+    assert "LIMEN_CAMPAIGN_WAKE_TIMEOUT" in drift[0]["evidence"]
+
+
+def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_prompt_gate")
+    dispatch.ROOT = tmp_path
+    dispatch.HOME = tmp_path
+    dispatch.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    dispatch.PRIVATE_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
+    dispatch.PROMPT_PACKET_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+    dispatch.PROMPT_PACKET_DOC = tmp_path / "docs" / "prompt-packet-ledger.md"
+    dispatch.ALWAYS_WORKING_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "always-working.json"
+    dispatch.ALWAYS_WORKING_DOC = tmp_path / "docs" / "always-working.md"
+    dispatch.DOC_PATH = tmp_path / "docs" / "dispatch-health.md"
+    dispatch.LIVE_ROOT = tmp_path
+    dispatch.HEARTBEAT_PLIST = tmp_path / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist"
+
+    dispatch.PROMPT_PACKET_INDEX.parent.mkdir(parents=True)
+    dispatch.PROMPT_PACKET_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-06T00:00:00+00:00",
+                "recorded_packets": [],
+                "open_packets": [
+                    {
+                        "id": "packet-prompt-batch-critical-stalled-review-001-github_review",
+                        "family": "github_review",
+                        "dispatchability": "needs-owner-repo",
+                        "agent_fit": "codex conducts; opencode/gemini inspect bounded PR evidence",
+                        "verification": "python3 scripts/prompt-packet-ledger.py --write",
+                    },
+                    {
+                        "id": "packet-prompt-batch-critical-stalled-review-001-technical_debt_ci",
+                        "family": "technical_debt_ci",
+                        "dispatchability": "ready-after-predicate",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    dispatch.ALWAYS_WORKING_INDEX.write_text(
+        json.dumps(
+            {
+                "status": "clear",
+                "required_open_count": 0,
+                "blocked_count": 0,
+                "done_count": 1,
+                "next_item_id": None,
+                "items": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    dispatch.read_plist = lambda path: {
+        "present": True,
+        "path": str(path),
+        "keep_alive": True,
+        "run_at_load": True,
+        "env": {"LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
+    }
+    dispatch.launchd_snapshot = lambda: {
+        "present": True,
+        "running": True,
+        "state": "running",
+        "pid": "123",
+        "env": {"LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
+    }
+    dispatch.git_snapshot = lambda path: {
+        "path": str(path),
+        "present": True,
+        "is_git": True,
+        "branch": "main",
+        "head": "abc",
+        "origin_main": "abc",
+        "matches_origin_main": True,
+        "ahead_origin_main": 0,
+        "behind_origin_main": 0,
+        "status_summary": "## main...origin/main",
+        "dirty_entries": 0,
+        "dirty_paths": [],
+        "dirty_truncated": False,
+    }
+    dispatch.watchdog_snapshot = lambda: {"healthy": True, "first_line": "[watchdog] HEALTHY"}
+    dispatch.async_probe_snapshot = lambda enabled, **_: {"requested": enabled, "ok": True, "timed_out": False}
+
+    snapshot = dispatch.build_snapshot(type("Args", (), {"probe_async": False})())
+    markdown = dispatch.render_markdown(snapshot)
+
+    assert snapshot["status"] == "blocked"
+    assert snapshot["prompt_packets"]["open_packets"] == 2
+    assert snapshot["prompt_packets"]["conductor_required_packets"] == 1
+    assert {item["id"] for item in snapshot["blockers"]} == {"prompt-packets-need-conductor"}
+    assert "Prompt Packet Gate" in markdown
+    assert "packet-prompt-batch-critical-stalled-review-001-github_review" in markdown
+    assert "prompt-packets-need-conductor" in markdown
 
 
 def test_dispatch_health_parses_async_skipped_down_lanes():
@@ -597,6 +1027,47 @@ def test_dispatch_health_parses_async_skipped_down_lanes():
     assert dispatch.parse_async_skipped_down_lanes(output) == ["gemini", "jules"]
 
 
+def test_dispatch_health_explains_skipped_down_lanes_from_live_artifacts(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_async_skip_reasons")
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "lanes-down.txt").write_text("agy  # oauth browser preflight\n", encoding="utf-8")
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "gemini": {
+                        "health": "exhausted",
+                        "signal": "dispatch-count",
+                        "unit": "runs",
+                        "remaining": 0,
+                        "possible": 10,
+                    },
+                    "codex": {
+                        "health": "ok",
+                        "signal": "vendor-rate-limit",
+                        "remaining": 85,
+                        "possible": 100,
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    reasons = dispatch.skipped_down_lane_reasons(["agy", "gemini", "jules"], tmp_path)
+
+    assert reasons["agy"] == {
+        "source": "manual",
+        "path": "logs/lanes-down.txt",
+        "note": "oauth browser preflight",
+    }
+    assert reasons["gemini"]["source"] == "usage"
+    assert reasons["gemini"]["health"] == "exhausted"
+    assert reasons["gemini"]["remaining"] == 0
+    assert reasons["jules"] == {"source": "unknown"}
+
+
 def test_dispatch_health_ignores_generated_receipt_dirty_paths():
     dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_receipt_dirty_filter")
 
@@ -604,8 +1075,11 @@ def test_dispatch_health_ignores_generated_receipt_dirty_paths():
         "\n".join(
             [
                 "## main...origin/main",
+                " M docs/conductor-tranche.md",
                 " M docs/dispatch-health.md",
                 " M docs/live-root-gate.md",
+                " M docs/session-attack-paths.md",
+                " M docs/session-lifecycle-blockers.md",
                 " M tasks.yaml",
             ]
         ),
@@ -614,7 +1088,7 @@ def test_dispatch_health_ignores_generated_receipt_dirty_paths():
 
     assert dirty["dirty_entries"] == 1
     assert dirty["dirty_paths"] == ["tasks.yaml"]
-    assert dirty["ignored_dirty_entries"] == 2
+    assert dirty["ignored_dirty_entries"] == 5
 
 
 def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
@@ -655,13 +1129,13 @@ def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
     gate.read_plist = lambda path: {
         "present": True,
         "path": str(path),
-        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT), "LIMEN_DISPATCH_ASYNC": "0"},
+        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "300"},
     }
     gate.launchd_snapshot = lambda: {
         "running": True,
         "state": "running",
         "pid": "123",
-        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT)},
+        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT), "LIMEN_CAMPAIGN_WAKE_TIMEOUT": "120"},
     }
 
     snapshot = gate.build_snapshot(type("Args", (), {"fetch": False})())
@@ -687,8 +1161,11 @@ def test_live_root_gate_ignores_generated_receipt_dirty_paths():
         "\n".join(
             [
                 "## main...origin/main",
+                " M docs/conductor-tranche.md",
                 " M docs/dispatch-health.md",
                 " M docs/live-root-gate.md",
+                " M docs/session-attack-paths.md",
+                " M docs/session-lifecycle-blockers.md",
                 " M tasks.yaml",
             ]
         ),
@@ -697,7 +1174,7 @@ def test_live_root_gate_ignores_generated_receipt_dirty_paths():
 
     assert dirty["dirty_entries"] == 1
     assert dirty["tracked_dirty"] == ["tasks.yaml"]
-    assert dirty["ignored_dirty_entries"] == 2
+    assert dirty["ignored_dirty_entries"] == 5
 
 
 def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_path: Path):
@@ -714,6 +1191,7 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
     blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
     capability_root = tmp_path / "capabilities"
     blockers.DEFAULT_CAPABILITY_ROOTS = (capability_root,)
+    blockers.worktree_debt_report = lambda root: {"debt": 1, "total": 2, "items": []}
 
     blockers.PROMPT_INDEX.parent.mkdir(parents=True)
     blockers.PROMPT_INDEX.write_text(
@@ -762,7 +1240,7 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
         encoding="utf-8",
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     (capability_root / "skills" / "local-skill").mkdir(parents=True)
     (capability_root / "skills" / "local-skill" / "SKILL.md").write_text("# Local Skill\n", encoding="utf-8")
     (capability_root / "plugin" / ".claude-plugin").mkdir(parents=True)
@@ -778,6 +1256,11 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
     assert "cloud-credential-handles-unconfigured" in ids
     assert "capability-substrate-not-resurfaced" in ids
     assert "local-lifecycle-disk-pressure" in ids
+    local_pressure = next(item for item in snapshot["blockers"] if item["id"] == "local-lifecycle-disk-pressure")
+    assert local_pressure["details"]["worktree_debt"] == 1
+    assert local_pressure["details"]["worktree_debt_target"] == 0
+    assert local_pressure["details"]["worktree_debt_complete"] is False
+    assert "worktree_debt_cap" not in local_pressure["details"]
     assert "session-pressure-hook-not-wired" not in ids
     assert snapshot["coverage"]["session_pressure_hook_wired"] is True
     assert snapshot["coverage"]["capability_substrate"]["skill_files"] == 1
@@ -802,10 +1285,11 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
     blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
     blockers.DEFAULT_CAPABILITY_ROOTS = ()
     blockers.worktree_debt_report = lambda root: {
-        "total": 2,
+        "total": 3,
         "debt": 1,
         "items": [
             {"name": "owner-blocked-root", "reason": "owner-blocker", "debt": False},
+            {"name": "active-root", "reason": "active(<24h)", "debt": False},
             {"name": "dirty-root", "reason": "dirty", "debt": True},
         ],
     }
@@ -819,9 +1303,10 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
                 "remote": {
                     "enabled": True,
                     "worktrees": {
-                        "remote_branches_missing": 2,
+                        "remote_branches_missing": 3,
                         "receipts": [
                             {"name": "owner-blocked-root", "remote_branch": "missing"},
+                            {"name": "active-root", "remote_branch": "missing"},
                             {"name": "dirty-root", "remote_branch": "missing"},
                         ],
                     },
@@ -840,15 +1325,15 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
 
     snapshot = blockers.build_snapshot()
     paths = {item["id"]: item for item in snapshot["blockers"]}
     blocker = paths["worktree-remote-branches-missing"]
 
     assert blocker["details"]["remote_branches_missing"] == 1
-    assert blocker["details"]["raw_remote_branches_missing"] == 2
-    assert blocker["details"]["closed_by_live_scanner"] == ["owner-blocked-root"]
+    assert blocker["details"]["raw_remote_branches_missing"] == 3
+    assert blocker["details"]["closed_by_live_scanner"] == ["owner-blocked-root", "active-root"]
     assert blocker["details"]["unresolved_roots"] == ["dirty-root"]
 
 
@@ -914,7 +1399,7 @@ def test_session_blockers_filter_remote_missing_branches_with_preservation_recei
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
 
     snapshot = blockers.build_snapshot()
     ids = {item["id"] for item in snapshot["blockers"]}
@@ -957,7 +1442,7 @@ def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_pat
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     (capability_root / "skills" / "artifact-resurfacing").mkdir(parents=True)
     (capability_root / "skills" / "artifact-resurfacing" / "SKILL.md").write_text("# Body not read\n", encoding="utf-8")
     (capability_root / ".claude-plugin").mkdir()
@@ -1026,7 +1511,7 @@ def test_session_blockers_promotes_unhealthy_network_receipt(tmp_path: Path):
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
     blockers.NETWORK_HEALTH_INDEX.write_text(
         json.dumps(
@@ -1090,7 +1575,7 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
     blockers.NETWORK_HEALTH_INDEX.write_text(
         json.dumps(
@@ -1138,7 +1623,7 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
                     "dirty_entries": 2,
                 },
                 "launchd": {"state": "running"},
-                "launchd_env_drift": [{"key": "LIMEN_DISPATCH_ASYNC"}],
+                "launchd_env_drift": [{"key": "LIMEN_CAMPAIGN_WAKE_TIMEOUT"}],
             }
         ),
         encoding="utf-8",
@@ -1148,7 +1633,7 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
     markdown = blockers.render_markdown(snapshot)
 
     ids = {item["id"] for item in snapshot["blockers"]}
-    assert "dispatch-heartbeat-substrate-unhealthy" in ids
+    assert "campaign-heartbeat-substrate-unhealthy" in ids
     assert snapshot["coverage"]["dispatch_substrate"]["status"] == "blocked"
     assert snapshot["coverage"]["live_root_gate"]["status"] == "blocked"
     assert "Dispatch substrate: status `blocked`, launchd `running`, live root `feature/live`" in markdown
@@ -1190,7 +1675,7 @@ def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: P
         json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
     )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
-    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.PROJECT_SETTINGS.write_text("session-closeout.sh consume-session-end-breadcrumbs.py", encoding="utf-8")
     blockers.CONSOLIDATION_INDEX.parent.mkdir(parents=True, exist_ok=True)
     blockers.CONSOLIDATION_INDEX.write_text(
         json.dumps(
@@ -1219,6 +1704,50 @@ def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: P
     assert snapshot["coverage"]["github_consolidation"]["collision_groups"] == 13
     assert snapshot["coverage"]["github_consolidation"]["app_token_wired"] is False
     assert "GitHub consolidation gate: `34` source repos, `13` collision groups" in markdown
+
+
+def test_session_blockers_points_to_transfer_after_collisions_clear(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_post_collision_clear")
+    blockers.CONSOLIDATION_INDEX = (
+        tmp_path / ".limen-private" / "session-corpus" / "lifecycle" / "consolidation-gates.json"
+    )
+    blockers.CONSOLIDATION_INDEX.parent.mkdir(parents=True)
+    blockers.CONSOLIDATION_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-06T12:00:00+00:00",
+                "consolidation": {"source_repos": 36, "collision_groups": 0},
+                "owner_rewrite": {"task_repo_refs_to_rewrite": 62, "local_remotes_to_rewrite": 23},
+                "app_identity": {
+                    "gh_app_token_which": "pat (GITHUB_TOKEN fallback)",
+                    "app_token_wired": False,
+                    "limen_app_installed": False,
+                    "installed_app_slugs": ["claude", "google-labs-jules"],
+                },
+                "collision_packet": {"complete": True},
+                "gates": {
+                    "blocking": [
+                        "limen-bot-token-not-wired",
+                        "limen-bot-app-not-installed",
+                        "post-transfer-owner-rewrite-pending",
+                    ],
+                    "can_run_transfer_apply_after_human_gate": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    collected: list[dict[str, object]] = []
+    coverage = blockers.consolidation_gate_blockers(collected)
+    route = str(collected[0]["route"])
+
+    assert coverage["collision_groups"] == 0
+    assert collected[0]["id"] == "github-consolidation-collisions"
+    assert collected[0]["details"]["transfer_apply_gate_open"] is True
+    assert "0 name-collision groups remain" in str(collected[0]["evidence"])
+    assert "consolidate-github.py --apply" in route
+    assert "COLLISION-RENAMES.md" not in route
 
 
 def test_session_attack_paths_prioritize_system_clogs_before_delegation(tmp_path: Path):
@@ -1473,8 +2002,8 @@ def test_session_attack_paths_parks_cloud_runtime_until_deploy_task(tmp_path: Pa
     assert paths["remote-task-pr-receipt-errors"]["lane"] == "blocker"
 
 
-def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(tmp_path: Path):
-    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_under_cap")
+def test_session_attack_paths_parks_local_pressure_when_worktree_debt_zero(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_zero_debt")
     attack.ROOT = tmp_path
     attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
     attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
@@ -1484,11 +2013,11 @@ def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(
     attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
     attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
     attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
-    attack.worktree_debt_report = lambda root: {"total": 4, "debt": 2, "items": []}
+    attack.worktree_debt_report = lambda root: {"total": 4, "debt": 0, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
     attack.PROMPT_INDEX.write_text(
-        json.dumps({"sources": [], "worktree_report": {"debt": 2, "items": []}}), encoding="utf-8"
+        json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8"
     )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
@@ -1500,7 +2029,7 @@ def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(
                         "category": "local_lean",
                         "status": "parked",
                         "route": "Keep visible, but drain only after preservation proof.",
-                        "details": {"worktree_debt": 2, "worktree_debt_cap": 12},
+                        "details": {"worktree_debt": 0, "worktree_debt_target": 0, "worktree_debt_complete": True},
                     },
                     {
                         "id": "worktree-lifecycle-debt",
@@ -1525,8 +2054,8 @@ def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(
     assert ids_by_rank.index("worktree-lifecycle-debt") < ids_by_rank.index("local-lifecycle-disk-pressure")
 
 
-def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_over_cap(tmp_path: Path):
-    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_over_cap")
+def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_nonzero(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_nonzero_debt")
     attack.ROOT = tmp_path
     attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
     attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
@@ -1536,11 +2065,11 @@ def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_
     attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
     attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
     attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
-    attack.worktree_debt_report = lambda root: {"total": 20, "debt": 13, "items": []}
+    attack.worktree_debt_report = lambda root: {"total": 11, "debt": 7, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
     attack.PROMPT_INDEX.write_text(
-        json.dumps({"sources": [], "worktree_report": {"debt": 13, "items": []}}), encoding="utf-8"
+        json.dumps({"sources": [], "worktree_report": {"debt": 7, "items": []}}), encoding="utf-8"
     )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
@@ -1552,7 +2081,7 @@ def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_
                         "category": "local_lean",
                         "status": "parked",
                         "route": "Drain after preservation proof.",
-                        "details": {"worktree_debt": 13, "worktree_debt_cap": 12},
+                        "details": {"worktree_debt": 7, "worktree_debt_target": 0, "worktree_debt_complete": False},
                     }
                 ]
             }
@@ -2310,8 +2839,46 @@ tasks:
     assert board == "**Board** — 1 open · 1 in_progress · 1 done"
 
 
+def test_session_orientation_board_can_read_pinned_snapshot(tmp_path: Path, monkeypatch):
+    orient = _load(ORIENT_SCRIPT, "session_orient_board_snapshot")
+    orient.ROOT = tmp_path
+    (tmp_path / "tasks.yaml").write_text(
+        """
+tasks:
+  - id: live
+    status: open
+""",
+        encoding="utf-8",
+    )
+    snapshot = tmp_path / "snapshot-tasks.yaml"
+    snapshot.write_text(
+        """
+tasks:
+  - id: snap-a
+    status: open
+  - id: snap-b
+    status: done
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_ORIENT_TASKS", str(snapshot))
+
+    board = orient.section_board()
+
+    assert board == "**Board** — 1 open · 1 done"
+
+
+def test_session_orientation_git_section_can_be_pinned(monkeypatch):
+    orient = _load(ORIENT_SCRIPT, "session_orient_git_snapshot")
+    monkeypatch.setenv("LIMEN_ORIENT_GIT_SECTION", "**Git** — pinned · clean")
+
+    assert orient.section_git() == "**Git** — pinned · clean"
+
+
 def test_done_session_orient_pins_generators_to_checkout_root():
     script = DONE_ORIENT_SCRIPT.read_text(encoding="utf-8")
 
     assert 'LIMEN_ROOT="$ROOT" python3 "$PRESSURE_GEN" --write' in script
     assert 'LIMEN_ROOT="$ROOT" python3 "$GEN")' in script
+    assert 'LIMEN_ORIENT_TASKS="$tasks_snapshot"' in script
+    assert 'LIMEN_ORIENT_GIT_SECTION="$git_section"' in script

@@ -1,0 +1,5 @@
+{
+  "_doc": "Durable terminal output of value discovery. Each repo appears once with disposition ranked or archival and a merged owner receipt. Ranked rows must also appear in value-repos.json; archival rows must not. This ledger prevents completed theses from being rediscovered after active-board compaction.",
+  "schema_version": "limen.value_discovery_dispositions.v1",
+  "dispositions": []
+}

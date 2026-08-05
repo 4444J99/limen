@@ -10,6 +10,8 @@ from pathlib import Path
 
 import yaml
 
+from limen.tabularius import drain_once
+
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "converge-organ.py"
 
 
@@ -92,6 +94,7 @@ def test_gap_writer_emits_bounded_idempotent_tasks(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
     added = m._emit_gaps(["support widget export", "support widget export"], "MULTI", apply=True)
     assert added == 1  # idempotent: the duplicate gap is collapsed
+    drain_once(tmp_path / "tasks.yaml")
     out = yaml.safe_load((tmp_path / "tasks.yaml").read_text())
     conv = [t for t in out["tasks"] if t["id"].startswith("CONV-")]
     assert len(conv) == 1 and conv[0]["type"] == "converge-gap"

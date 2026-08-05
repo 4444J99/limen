@@ -8,6 +8,8 @@ from types import ModuleType
 import pytest
 import yaml
 
+from limen.tabularius import drain_once
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -58,6 +60,11 @@ def write_board(path: Path, tasks: list[dict], daily: int = 100) -> None:
 
 def read_board(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
+
+
+def isolate_value_tier(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
 
 
 def test_auto_scale_requires_github_token(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
@@ -121,6 +128,7 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
         daily=3,
     )
     calls = []
+    isolate_value_tier(monkeypatch, tmp_path)
 
     def fake_get(url: str, *, params: dict, headers: dict, timeout: int) -> FakeResponse:
         calls.append({"url": url, "params": params, "headers": headers, "timeout": timeout})
@@ -146,13 +154,37 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
     assert auto_scale.main() == 0
 
     board = read_board(tasks_path)
+    assert len(board["tasks"]) == 1
+    tickets = list((tmp_path / "logs" / "tickets" / "inbox").glob("*.json"))
+    assert len(tickets) == 2
+    drain_once(tasks_path)
+    board = read_board(tasks_path)
     assert len(board["tasks"]) == 3
     assert len(calls) == 1
     assert calls[0]["url"] == "https://api.github.com/search/issues"
     assert calls[0]["params"]["q"] == "org:a-organvm is:issue is:open label:jules-ready"
     assert calls[0]["headers"]["Authorization"] == "token test-token"
     assert calls[0]["timeout"] == 30
-    assert board["tasks"][1:] == [
+    projected = [
+        {
+            k: task[k]
+            for k in (
+                "id",
+                "title",
+                "repo",
+                "type",
+                "target_agent",
+                "priority",
+                "budget_cost",
+                "status",
+                "labels",
+                "urls",
+                "created",
+            )
+        }
+        for task in board["tasks"][1:]
+    ]
+    assert projected == [
         {
             "id": "LIMEN-100",
             "title": "First issue",
@@ -165,7 +197,6 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
             "labels": ["jules-ready"],
             "urls": ["https://github.com/a-organvm/repo-one/issues/2"],
             "created": "2026-06-06",
-            "updated": "2026-06-06",
         },
         {
             "id": "LIMEN-101",
@@ -179,9 +210,124 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
             "labels": ["jules-ready"],
             "urls": ["https://github.com/a-organvm/repo-two/issues/3"],
             "created": "2026-06-06",
-            "updated": "2026-06-06",
         },
     ]
+
+
+def test_auto_scale_reloads_under_queue_lock_before_writing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auto_scale = load_auto_scale()
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-001",
+                "title": "Existing",
+                "repo": "a-organvm/existing",
+                "type": "code",
+                "target_agent": "jules",
+                "priority": "medium",
+                "budget_cost": 1,
+                "status": "open",
+                "urls": ["https://github.com/a-organvm/existing/issues/1"],
+                "created": "2026-06-01",
+            }
+        ],
+        daily=3,
+    )
+    isolate_value_tier(monkeypatch, tmp_path)
+    inserted_concurrent = False
+
+    def fake_get(url: str, *, params: dict, headers: dict, timeout: int) -> FakeResponse:
+        nonlocal inserted_concurrent
+        if not inserted_concurrent:
+            board = read_board(tasks_path)
+            board["tasks"].append(
+                {
+                    "id": "LIMEN-002",
+                    "title": "Concurrent heartbeat task",
+                    "repo": "a-organvm/concurrent",
+                    "type": "code",
+                    "target_agent": "codex",
+                    "priority": "high",
+                    "budget_cost": 1,
+                    "status": "open",
+                    "urls": ["https://github.com/a-organvm/concurrent/issues/9"],
+                    "created": "2026-06-06",
+                }
+            )
+            tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+            inserted_concurrent = True
+        return FakeResponse(
+            200,
+            {
+                "items": [
+                    {"html_url": "https://github.com/a-organvm/repo-one/issues/2", "title": "First issue"},
+                ]
+            },
+        )
+
+    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
+    monkeypatch.setattr(auto_scale, "TASKS_FILE", tasks_path)
+    monkeypatch.setattr(auto_scale, "ORGS", ["a-organvm"])
+    monkeypatch.setattr(auto_scale, "date", FrozenDate)
+    monkeypatch.setattr(auto_scale.requests, "get", fake_get)
+
+    assert auto_scale.main() == 0
+
+    drain_once(tasks_path)
+    tasks = read_board(tasks_path)["tasks"]
+    assert [task["id"] for task in tasks] == ["LIMEN-001", "LIMEN-002", "LIMEN-003"]
+    assert tasks[1]["title"] == "Concurrent heartbeat task"
+    assert tasks[2]["urls"] == ["https://github.com/a-organvm/repo-one/issues/2"]
+
+
+def test_auto_scale_stops_repeated_duplicate_pages(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    auto_scale = load_auto_scale()
+    tasks_path = tmp_path / "tasks.yaml"
+    duplicate_url = "https://github.com/a-organvm/existing/issues/1"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-001",
+                "title": "Existing",
+                "repo": "a-organvm/existing",
+                "type": "code",
+                "target_agent": "jules",
+                "priority": "medium",
+                "budget_cost": 1,
+                "status": "open",
+                "urls": [duplicate_url],
+                "created": "2026-06-01",
+            }
+        ],
+        daily=2,
+    )
+    isolate_value_tier(monkeypatch, tmp_path)
+    calls = []
+
+    def fake_get(url: str, *, params: dict, headers: dict, timeout: int) -> FakeResponse:
+        calls.append(params["page"])
+        return FakeResponse(200, {"items": [{"html_url": duplicate_url, "title": "Duplicate"}]})
+
+    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
+    monkeypatch.setattr(auto_scale, "TASKS_FILE", tasks_path)
+    monkeypatch.setattr(auto_scale, "ORGS", ["a-organvm"])
+    monkeypatch.setattr(auto_scale.requests, "get", fake_get)
+
+    assert auto_scale.main() == 0
+
+    assert calls == [1, 2]
+    assert len(read_board(tasks_path)["tasks"]) == 1
+    assert "repeated page 2" in capsys.readouterr().err
 
 
 def test_auto_scale_continues_after_search_failures(
@@ -213,6 +359,7 @@ def test_auto_scale_continues_after_search_failures(
     def fake_get(url: str, *, params: dict, headers: dict, timeout: int) -> FakeResponse:
         return FakeResponse(500, {})
 
+    isolate_value_tier(monkeypatch, tmp_path)
     monkeypatch.setenv("GITHUB_TOKEN", "test-token")
     monkeypatch.setattr(auto_scale, "TASKS_FILE", tasks_path)
     # Pin the searched org so the failure-path assertion matches the configured input, not the

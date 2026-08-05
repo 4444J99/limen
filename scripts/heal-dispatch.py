@@ -15,6 +15,7 @@ between the verify pass and now). Dry-run by default; --apply to write.
 
 Usage:  python3 scripts/heal-dispatch.py [--apply]
 """
+
 import argparse
 import datetime
 import json
@@ -25,13 +26,114 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import DispatchLogEntry  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _human_signals
+from limen.chronic import CHRONIC_FLEET_DEBT_LABEL, chronic_escalated_to_needs_human  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
+from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
+from limen.intake import contract_fields, github_issue_owner_contract  # noqa: E402
+from limen.models import DispatchLogEntry, Task, dispatch_session_id, has_jules_landing_hold  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
+
+from _human_signals import is_human_gated, lever_ids  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
 PR_RE = re.compile(r"github\.com/[^/]+/[^/]+/pull/\d+")
 CASCADE_TOP = "codex"
+# Active states where a HEAL singleton is already being worked — do not duplicate.
+_ACTIVE_STATES = frozenset({"open", "dispatched", "in_progress", "needs_human", "failed_blocked"})
+
+
+def heal_task_key(repo: str, symptom: str) -> str:
+    """Canonical HEAL-<repo>-<symptom> singleton id (mirrors check-main-green._emit_heal_task).
+
+    The id is scoped to the SYMPTOM, not the individual task, so every invocation
+    for the same repo+symptom converges on ONE entry rather than spawning duplicates
+    (PREC-2026-07-10-same-repair-raced-by-two-sessions).
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", repo.lower()).strip("-")
+    sym = re.sub(r"[^a-z0-9]+", "-", symptom.lower()).strip("-")
+    return f"HEAL-{slug}-{sym}"
+
+
+def ensure_heal_singleton(
+    lf,
+    repo: str,
+    symptom: str,
+    title: str,
+    context: str,
+    now: datetime.datetime,
+) -> str | None:
+    """Upsert a keyed HEAL-<repo>-<symptom> singleton in the loaded LimenFile (in-memory only).
+
+    Mirrors the pattern from check-main-green._emit_heal_task:
+      - If the singleton is ACTIVE (already being worked), return None (converge silently).
+      - If the singleton exists but is done/archived/failed, RE-OPEN it so recurrences are visible.
+      - If absent, CREATE it.
+
+    The caller holds the queue-lock and owns the save_limen_file call; this function
+    is pure in-memory so it is directly testable without touching tasks.yaml.
+    Returns the task id when it (re)opened, else None.
+    """
+    tid = heal_task_key(repo, symptom)
+    stamp = now.date().isoformat()
+    contract = contract_fields(github_issue_owner_contract(repo, tid))
+    collateral = {
+        "origin": "system_debt",
+        "horizon": "past",
+        "value_case": f"Resolve the recurring {symptom} lifecycle defect for {repo}",
+        "owner_surface": repo,
+        **contract,
+    }
+    existing = next((t for t in lf.tasks if t.id == tid), None)
+    if existing is not None:
+        if has_jules_landing_hold(existing):
+            return None
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (existing.labels or []):
+            return None
+        if existing.status in _ACTIVE_STATES:
+            for key, value in collateral.items():
+                setattr(existing, key, value)
+            return None  # already being worked — converge, idempotent
+        # prior episode closed; reopen the canonical singleton
+        existing.status = "open"
+        existing.title = title
+        existing.context = context
+        for key, value in collateral.items():
+            setattr(existing, key, value)
+        existing.updated = now
+        existing.dispatch_log.append(
+            DispatchLogEntry(
+                timestamp=now,
+                agent="limen",
+                session_id="heal",
+                status="open",
+                output=f"heal-dispatch: symptom recurred → reopened singleton {tid} [{stamp}]",
+            )
+        )
+        return tid
+    # New singleton — create it
+    lf.tasks.append(
+        Task(
+            id=tid,
+            title=title,
+            repo=repo,
+            type="code",
+            target_agent=CASCADE_TOP,
+            priority="high",
+            budget_cost=1,
+            status="open",
+            labels=["lifecycle", "heal-dispatch"],
+            urls=[],
+            context=context,
+            **collateral,
+            depends_on=[],
+            created=stamp,
+            dispatch_log=[],
+        )
+    )
+    return tid
 
 
 def acquire_lock(timeout=15):
@@ -46,7 +148,7 @@ def acquire_lock(timeout=15):
 
 def last_session(t):
     log = t.dispatch_log or []
-    return str(log[-1].session_id) if log else ""
+    return dispatch_session_id(log[-1]) if log else ""
 
 
 def main():
@@ -60,14 +162,23 @@ def main():
         return 1
     verify = json.loads(vf.read_text())
     det = verify.get("detail", {})
-    merged_ids = {x["id"] for x in det.get("PR_MERGED", [])}
+    merged_refs = {x["id"]: str(x.get("ref") or "") for x in det.get("PR_MERGED", [])}
+    merged_ids = set(merged_refs)
     closed_ids = {x["id"] for x in det.get("PR_CLOSED", [])}
     nopr_ids = {x["id"] for x in det.get("DISPATCHED_NO_PR", [])}
-    open_pr_ids = {x["id"] for x in det.get("PR_OPEN", [])}
+    open_pr_refs = {x["id"]: str(x.get("ref") or "") for x in det.get("PR_OPEN", [])}
+    open_pr_ids = set(open_pr_refs)
     # CHRONIC: reopened >=3x, never produced a PR (verify-dispatch surfaces these). Re-looping them
-    # just burns capacity with zero output, so ESCALATE to needs_human (surface to the human, the
-    # cheapest path) instead of silently recycling. Reversible status flip. ([[no-never-happens-again]])
-    chronic_ids = {x["id"] for x in verify.get("chronic", [])}
+    # just burns capacity with zero output — stop them, routed by OWNERSHIP: a human-gated task
+    # (lever tag / registered lever / BLD2 / credential cluster — _human_signals, shared with
+    # reclassify-needs-human.py so both sides of the truth loop agree — or the exact `needs-human`
+    # label, heal-board's rule) stays on the human surface; everything else parks in failed_blocked
+    # (fleet debt; nothing recycles it). The active-owner predicate is re-checked on the freshly
+    # loaded board under the lock so a successor created after verification cannot be falsely parked.
+    # Reversible status flips. ([[no-never-happens-again]])
+    chronic_rows = {x["id"]: x for x in verify.get("chronic", [])}
+    chronic_ids = set(chronic_rows)
+    levers = lever_ids(ROOT)
 
     if not acquire_lock():
         print("queue lock held by daemon — skipping this pass (will retry next tick)")
@@ -76,28 +187,107 @@ def main():
         path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
         lf = load_limen_file(path)
         now = datetime.datetime.now(datetime.timezone.utc)
-        merged_done, open_pr_done, reopened, escalated = [], [], [], []
+        merged_done, open_pr_done, reopened, parked, rehomed = [], [], [], [], []
+
+        def park_chronic(t, why: str, *, source: str, count: int):
+            """Park chronic fleet-debt in failed_blocked; a human-gated task (his-hand signals or
+            the exact `needs-human` label) stays on the human surface. The kept write says "kept",
+            never "escalat…", so chronic_escalated_to_needs_human() can never re-home it later."""
+            if "needs-human" in (t.labels or []) or is_human_gated(t, levers):
+                t.status = "needs_human"
+                if "needs-human" not in (t.labels or []):
+                    t.labels = list(t.labels or []) + ["needs-human"]
+                lifecycle_repair = "human-gate-reconcile"
+                out = f"heal-dispatch: {why} → needs_human (kept: human-gated)"
+            else:
+                t.status = "failed_blocked"
+                if CHRONIC_FLEET_DEBT_LABEL not in (t.labels or []):
+                    t.labels = list(t.labels or []) + [CHRONIC_FLEET_DEBT_LABEL]
+                lifecycle_repair = "fleet-debt-park"
+                out = f"heal-dispatch: {why} → failed_blocked (fleet-debt, off the human surface)"
+            t.updated = now
+            t.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="limen",
+                    session_id="heal",
+                    status=t.status,
+                    lifecycle_repair=lifecycle_repair,
+                    fleet_debt_source=source,
+                    fleet_debt_count=count,
+                    output=out,
+                )
+            )
+            parked.append(f"{t.id} → {t.status}")
 
         for t in lf.tasks:
-            # CHRONIC escalation runs on the churning (open/failed) chronic tasks, NOT the dispatched
-            # ones the loop below handles — stop them re-looping; surface for a human. Idempotent
-            # (skips ones already needs_human). Reversible.
-            if t.id in chronic_ids and t.status in ("open", "failed"):
-                t.status = "needs_human"
-                t.updated = now
-                t.dispatch_log.append(DispatchLogEntry(
-                    timestamp=now, agent="limen", session_id="heal", status="needs_human",
-                    output="heal-dispatch: chronic (reopened ≥3×, never a PR) → escalated, stop re-looping"))
-                escalated.append(t.id)
+            if has_jules_landing_hold(t):
                 continue
-            if t.status != "dispatched":   # re-check fresh state under lock
+            # CHRONIC parking runs on the churning (open/failed) chronic tasks, NOT the dispatched
+            # ones the loop below handles — stop them re-looping without polluting the human
+            # surface. Idempotent (a parked task is neither open/failed nor chronic-listed again).
+            if (
+                t.id in chronic_ids
+                and t.status in ("open", "failed")
+                and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (t.labels or [])
+            ):
+                if active_typed_pr_owner_id(t, lf.tasks) is not None:
+                    continue
+                park_chronic(
+                    t,
+                    "chronic (reopened ≥3×, never a PR)",
+                    source="dispatch-verify",
+                    count=max(1, int(chronic_rows[t.id].get("reopens") or 1)),
+                )
+                continue
+            # SELF-MIGRATION: a task the machine previously escalated to needs_human for chronic
+            # churn is fleet-debt mis-homed on the human surface — re-home it to failed_blocked,
+            # unless it is human-gated (same ownership rule as the inflow above). Log-evidence
+            # predicate, not the verify chronic list (chronic_tasks() never scans needs_human).
+            # Structurally idempotent: once moved, no branch matches it again.
+            if (
+                t.status == "needs_human"
+                and "needs-human" not in (t.labels or [])
+                and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (t.labels or [])
+                and not is_human_gated(t, levers)
+                and chronic_escalated_to_needs_human(t)
+            ):
+                t.status = "failed_blocked"
+                t.updated = now
+                if CHRONIC_FLEET_DEBT_LABEL not in (t.labels or []):
+                    t.labels = list(t.labels or []) + [CHRONIC_FLEET_DEBT_LABEL]
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="failed_blocked",
+                        lifecycle_repair="fleet-debt-park",
+                        fleet_debt_source="prior-chronic-log",
+                        fleet_debt_count=1,
+                        output="heal-dispatch: chronic escalation re-homed needs_human → failed_blocked "
+                        "(fleet-debt, not a human atom)",
+                    )
+                )
+                rehomed.append(t.id)
+                continue
+            if t.status != "dispatched":  # re-check fresh state under lock
                 continue
             if t.id in merged_ids:
                 t.status = "done"
                 t.updated = now
-                t.dispatch_log.append(DispatchLogEntry(
-                    timestamp=now, agent="limen", session_id="heal",
-                    status="done", output="heal-dispatch: PR merged → done"))
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="done",
+                        lifecycle_repair="pr-observed-terminal",
+                        pr_observed_state="merged",
+                        pr_observed_ref=merged_refs[t.id],
+                        output="heal-dispatch: PR merged → done",
+                    )
+                )
                 merged_done.append(t.id)
             elif t.id in open_pr_ids:
                 # work produced an OPEN PR (awaiting merge) — mark done at the dispatch level
@@ -105,46 +295,71 @@ def main():
                 # itself is tracked separately (PR-close backlog), gated on CI/billing.
                 t.status = "done"
                 t.updated = now
-                t.dispatch_log.append(DispatchLogEntry(
-                    timestamp=now, agent="limen", session_id="heal",
-                    status="done", output="heal-dispatch: PR open (awaiting merge) → done"))
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="done",
+                        lifecycle_repair="pr-observed-terminal",
+                        pr_observed_state="open",
+                        pr_observed_ref=open_pr_refs[t.id],
+                        output="heal-dispatch: PR open (awaiting merge) → done",
+                    )
+                )
                 open_pr_done.append(t.id)
             elif t.id in closed_ids or t.id in nopr_ids:
+                if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or []):
+                    continue
                 # NO_PR: only reopen if STILL no PR url (daemon may have re-dispatched)
                 if t.id in nopr_ids and PR_RE.search(last_session(t)):
                     continue
                 if t.id in chronic_ids:
-                    t.status = "needs_human"
-                    t.updated = now
-                    t.dispatch_log.append(DispatchLogEntry(
-                        timestamp=now, agent="limen", session_id="heal",
-                        status="needs_human",
-                        output="heal-dispatch: dispatched with no PR and chronic (reopened ≥3×) → escalated, stop re-looping"))
-                    escalated.append(t.id)
+                    park_chronic(
+                        t,
+                        "dispatched with no PR and chronic (reopened ≥3×)",
+                        source="dispatch-verify",
+                        count=max(1, int(chronic_rows[t.id].get("reopens") or 1)),
+                    )
                     continue
+                # Reopening the SAME task id is already convergent — two sessions flipping
+                # t.status to "open" land on one canonical entry. The keyed-singleton helpers
+                # above (heal_task_key / ensure_heal_singleton) are the shared primitive for
+                # lanes that EMIT a new repair task for a symptom (gap-route, check-main-green)
+                # (PREC-2026-07-10-same-repair-raced-by-two-sessions).
                 t.status = "open"
                 t.target_agent = t.target_agent or CASCADE_TOP
                 t.labels = [x for x in t.labels if not x.startswith("tried:")]
                 t.updated = now
                 why = "PR closed unmerged" if t.id in closed_ids else "dispatched but no PR (silent no-op)"
-                t.dispatch_log.append(DispatchLogEntry(
-                    timestamp=now, agent="limen", session_id="heal",
-                    status="open", output=f"heal-dispatch: {why} → reopened"))
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="open",
+                        output=f"heal-dispatch: {why} → reopened",
+                    )
+                )
                 reopened.append(t.id)
 
-        print(f"heal-dispatch: {len(merged_done)} merged→done, "
-              f"{len(open_pr_done)} open-pr→done, {len(reopened)} stuck→open, "
-              f"{len(escalated)} chronic→needs_human")
+        print(
+            f"heal-dispatch: {len(merged_done)} merged→done, "
+            f"{len(open_pr_done)} open-pr→done, {len(reopened)} stuck→open, "
+            f"{len(parked)} chronic→parked, {len(rehomed)} needs_human→failed_blocked re-homed"
+        )
         for i in merged_done:
             print(f"    merged: {i}")
         for i in open_pr_done:
             print(f"    open:   {i}")
         for i in reopened:
             print(f"    reopen: {i}")
-        for i in escalated:
-            print(f"    escalate: {i}")
+        for i in parked:
+            print(f"    park:   {i}")
+        for i in rehomed:
+            print(f"    rehome: {i}")
         if args.apply:
-            save_limen_file(path, lf)
+            apply_limen_file_sync(path, lf, agent="heal-dispatch", session_id="heal")
             print("  APPLIED -> tasks.yaml")
         else:
             print("  dry-run (pass --apply)")

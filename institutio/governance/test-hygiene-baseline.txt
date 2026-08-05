@@ -1,0 +1,7 @@
+# Grandfathered direct os.environ writes in tests (test-hygiene ratchet).
+# New entries here mean a NEW direct write slipped in — prefer pytest's monkeypatch.
+# Regenerate with: python3 scripts/check-test-hygiene.py --update
+cli/tests/test_async_dispatch.py::LIMEN_DISPATCH_ADMISSION
+cli/tests/test_async_dispatch.py::LIMEN_ROOT
+cli/tests/test_async_dispatch.py::LIMEN_TASKS
+cli/tests/test_async_dispatch.py::LIMEN_WORKTREE_DEBT_GATE

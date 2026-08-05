@@ -1,0 +1,214 @@
+# ATOM-HOMING — where each kind of harvested semantic atom is allowed to land.
+#
+# The sixth VIGILIA axis, beside GATES + SENSORS + PARAMETERS + CORPORA + CONVERGENCE.
+# It exists because measurement found the drain's product un-owned: of 4,099 atoms in
+# 8 kinds, exactly one kind (`projects-to-start`) ever reached a git-tracked owner. The
+# other 3,658 had no declared home at all, and they rested in a store that
+# `corpora.yaml` declares `remote: none` — a store the publish gate can never reach and
+# which has since been cold-archived off this host. An un-homed atom is a vacuum
+# (Rule #1), and a vacuum whose only copy lives on an offline volume is a vacuum with a
+# clock on it.
+#
+# THE LOAD-BEARING CONSTRAINT — homing is DISTILLATION, never transfer.
+# Atom statement text may never enter the public organvm/limen tree. Every brainstorm
+# corpus is `redacted: false` ⇒ "never leaves its store". So 518 `functionality-to-repeat`
+# atoms become a handful of IF-* entries; 877 `decisions` do not become 877 rows anywhere.
+# What crosses into the public tree is a GENERALIZATION, a COUNT, or an ID — never a
+# statement. `scripts/check-atom-homing.py` check D is the executable form of that rule.
+#
+# UNIT is the honest granularity of a homing decision. Most kinds home as a `cluster`
+# (many atoms distil to one durable entry); `projects-to-start` homes per `stream`
+# (the IRF already works that way); only genuinely 1:1 kinds home per `atom`.
+#
+# ADMITS is the gate an atom must clear to reach the home. It is deliberately narrow:
+# the failure mode for every one of these homes is FLOODING, not starvation. Precedents
+# stop being case law if you dump 877 rows into them; the board's signal is destroyed by
+# bulk task submission; the operator's lever registry is not a place to park questions.
+# A kind whose atoms mostly fail its `admits` gate is working as designed — the residue
+# is dispositioned, not force-fitted.
+#
+# RESIDUE_BASELINE is a ratchet, in atoms, and may only ever shrink (check E). It is
+# seeded CONSERVATIVELY at the kind's full atom count — including for
+# `projects-to-start`, whose 165 recorded stream-level decisions cannot be mapped back to
+# atom ids while the store is archived. A ratchet seeded too high is safe; one seeded too
+# low silently forgives real residue.
+#
+# Consumers DERIVE from this file rather than keeping their own copy of the kind list:
+# scripts/brainstorm-harvest.py (ATOM_KINDS), scripts/check-atom-homing.py (the predicate).
+# organs/consulting/constellation/constellation-streams.py reads atom kinds off the
+# extracts themselves, not from a literal list, so it needs no conversion.
+
+schema_version: 0.1
+
+# Field defaults: none — every field below is required on every row (parameters.yaml
+# discipline). `deferred` is the single optional block, and declaring it is what check G
+# polices: a kind may defer PART of its population with a named owner and a release
+# condition, but a kind that defers ALL of it is a fake home and is RED.
+kinds:
+
+  projects-to-start:
+    # `repo::path` — the same reference form convergence.yaml uses for out-of-tree owners,
+    # so check-convergence's resolver can verify the repo against the estate census. A bare
+    # `repo/path` string is indistinguishable from prose and resolves to nothing.
+    home: "organvm/organvm-corpvs-testamentvm::INST-INDEX-RERUM-FACIENDARUM.md"
+    home_class: private
+    unit: stream
+    admits: >
+      A stream (never a bare atom) naming a deliverable that does not already carry an
+      IRF-BRC row. The IRF is the canonical answer to "what needs doing" — a duplicate
+      row there is worse than no row.
+    verify: irf_row_exists
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 441
+    owner_of_record: "IRF (organvm-corpvs-testamentvm)"
+    note: >
+      The only kind that ever reached a git-tracked owner: 165 IRF-BRC rows under
+      "PERSONAL — Brainstorm Drain Candidates". Its private homing map lives beside the
+      extracts and is itself local-only, so the stream→row mapping does not survive the
+      store's evacuation — regenerating the census is what re-establishes it.
+
+  functionality-to-repeat:
+    home: "docs/IDEAL-FORMS-LEDGER.md"
+    home_class: public
+    unit: cluster
+    admits: >
+      A pattern observed in at least two independent streams, restatable as a general
+      IF-* ideal form with zero reference to any source conversation. If it cannot be
+      stated without the conversation, it is not an ideal form — it is a memory.
+    verify: ledger_entry_exists
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 518
+    owner_of_record: "IDEAL-FORMS-LEDGER"
+    note: >
+      The largest genuinely public-bound kind, and the cleanest distillation case: 518
+      atoms are expected to yield single-digit IF-* entries. The ledger currently has 13
+      entries and no validator of its own — that validator is the first thing this kind's
+      homing branch owes.
+
+  schema-proposals:
+    home: "spec/"
+    home_class: public
+    unit: cluster
+    admits: >
+      A proposal that names the existing registry, schema, or contract file it amends.
+      A free-floating "there should be a schema for X" is a private candidate, not a
+      public spec — spec/ holds portable contracts that generated surfaces must satisfy.
+    verify: spec_file_exists
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 676
+    owner_of_record: "spec/contracts"
+    note: >
+      Second-largest kind and the one most likely to be over-homed. The admits gate is
+      deliberately strict: most of these 676 describe shapes for private work and belong
+      as IRF design rows, not as public JSON Schemas.
+    deferred:
+      count: 400
+      owner: "IRF (organvm-corpvs-testamentvm)"
+      until: >
+        The census is regenerated and each proposal is matched to a named amendable file;
+        unmatched proposals home privately as design rows rather than entering spec/.
+
+  decisions:
+    home: "censor/precedents.jsonl"
+    home_class: public
+    unit: cluster
+    admits: >
+      A decision that generalizes to governance case law — one that would change a future
+      agent's DEFAULT behaviour. Stream-local design decisions ("we chose Postgres for
+      that one thing") are private IRF rows.
+    verify: precedent_row_exists
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 877
+    owner_of_record: "CENSOR (censor/precedents.jsonl)"
+    note: >
+      The largest kind, and the one where flooding is most destructive: precedents are
+      read as case law, and case law that contains 877 undifferentiated entries is read
+      by nobody. Expect a curated handful public, the long tail private.
+    deferred:
+      count: 700
+      owner: "IRF (organvm-corpvs-testamentvm)"
+      until: >
+        Each decision is classified stream-local vs governance-general; only the latter
+        may reach precedents.jsonl.
+
+  vacuums:
+    home: "institutio/governance/convergence.yaml"
+    home_class: public
+    unit: cluster
+    admits: >
+      A vacuum that is CAPABILITY-shaped — a named capability with no owner — which is
+      exactly what an `unresolved` convergence row is (status: unresolved, owner: null).
+      Everything else is an IRF-VAC row.
+    verify: registry_row_exists
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 466
+    owner_of_record: "CONVERGENCE (institutio/governance/convergence.yaml)"
+    note: >
+      Rule #1 made executable: a vacuum is never a resting state, and convergence.yaml is
+      already the register that counts them loudly. The IRF-VAC family (55 rows today) is
+      the private half of the same discipline.
+
+  questions-unresolved:
+    home: "his-hand-levers.json"
+    home_class: public
+    unit: atom
+    admits: >
+      A question ONLY the operator can answer AND that blocks a named lane. Everything
+      else is design work the system owes itself, not a lever. The charter is explicit
+      that handing the operator a list is a failed closeout — this gate is what keeps the
+      lever registry from becoming that list.
+    verify: lever_row_exists
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 316
+    owner_of_record: "his-hand-levers.json"
+    note: >
+      Homes per atom because a lever is irreducibly one question with one owner. The
+      registry already carries 60 open levers; the admits gate exists so this kind adds
+      single digits to that, not 316.
+    deferred:
+      count: 280
+      owner: "IRF (organvm-corpvs-testamentvm)"
+      until: >
+        Each question is tested against "can any agent resolve this?" — if yes it is IRF
+        design work and never becomes a lever.
+
+  tasks:
+    home: "limen conduct submit --packet"
+    home_class: broker
+    unit: atom
+    admits: >
+      Demand exists NOW and capacity is available. Tasks are submitted through the
+      authenticated conduct broker, never written to the projection. The board currently
+      carries 808 open items — bulk-submitting 751 more destroys the signal that makes
+      the board worth reading.
+    verify: broker_receipt
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 751
+    owner_of_record: "TABVLARIVS (conduct broker)"
+    note: >
+      The only `broker` home: its landing act is a submission with a receipt, not a file
+      write. Deliberately the most-deferred kind — demand-gated homing is the correct
+      resting state for a task atom, not a backlog.
+    deferred:
+      count: 700
+      owner: "TABVLARIVS (conduct broker)"
+      until: >
+        Demand for the specific lane exists and the daily dispatch cap allows it. This
+        deferral is permanent-by-design and re-evaluated per beat, not a one-time triage.
+
+  client-offerings:
+    home: "organs/consulting/constellation"
+    home_class: public
+    unit: cluster
+    admits: >
+      An offering with a named audience and a concrete deliverable. Surname-free without
+      exception — the constellation public register bans surnames, and an offering atom
+      is the most likely place for a real person's name to leak into a public surface.
+    verify: funnel_entry_exists
+    consumers: ["brainstorm-harvest.py", "check-atom-homing.py"]
+    residue_baseline: 54
+    owner_of_record: "organs/consulting"
+    note: >
+      Smallest kind and the highest-leverage one: it doubles as the G1 demand evidence
+      that repo-genesis requires before any new repo may be minted (IF-AMALGAMATION —
+      mints never outpace lifts).

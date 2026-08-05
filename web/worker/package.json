@@ -6,12 +6,20 @@
   "scripts": {
     "dev": "bash ../../scripts/cf-wrangler.sh dev",
     "deploy": "bash ../../scripts/cf-wrangler.sh deploy",
-    "check": "node --check src/index.js"
+    "check": "node --check src/index.js && node --check src/conduct/*.js && node --test"
   },
   "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "json-canonicalize": "2.0.0",
     "yaml": "2.9.0"
   },
   "devDependencies": {
-    "wrangler": "^4.104.0"
+    "wrangler": "^4.110.0"
+  },
+  "overrides": {
+    "sharp": ">=0.35.0",
+    "fast-uri": ">=3.1.5 <4.0.0",
+    "undici": ">=7.29.0 <8.0.0"
   }
 }

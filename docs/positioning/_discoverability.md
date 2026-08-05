@@ -35,6 +35,20 @@ gh api -X PUT repos/organvm/public-record-data-scrapper/topics \
 gh repo edit organvm/public-record-data-scrapper --description "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI."
 ```
 
+## Styx Peer-Audited Behavioral Market — `organvm/peer-audited--behavioral-blockchain`
+
+- **Recommended topics:** behavioral-economics, accountability, corporate-wellness, peer-review, fintech, stripe, escrow, double-entry-ledger, privacy, proof-of-completion, habit-tracking, incentive-design
+- **Recommended description:** Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests.
+
+```sh
+# apply topics (his hand — outward-facing public change):
+gh api -X PUT repos/organvm/peer-audited--behavioral-blockchain/topics \
+  -H 'Accept: application/vnd.github+json' \
+  -f 'names[]=behavioral-economics' -f 'names[]=accountability' -f 'names[]=corporate-wellness' -f 'names[]=peer-review' -f 'names[]=fintech' -f 'names[]=stripe' -f 'names[]=escrow' -f 'names[]=double-entry-ledger' -f 'names[]=privacy' -f 'names[]=proof-of-completion' -f 'names[]=habit-tracking' -f 'names[]=incentive-design'
+# apply description:
+gh repo edit organvm/peer-audited--behavioral-blockchain --description "Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests."
+```
+
 ## Autonomous Inbox-Triage & Draft System — `organvm/universal-mail--automation`
 
 - **Recommended topics:** email-automation, inbox-zero, gmail-automation, email-triage, productivity, workflow-automation, cloudflare-workers, email-management
@@ -49,18 +63,18 @@ gh api -X PUT repos/organvm/universal-mail--automation/topics \
 gh repo edit organvm/universal-mail--automation --description "Autonomous inbox triage for Gmail + Apple Mail — classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends."
 ```
 
-## Universal Agent Task Intake & Dispatch System — `organvm/limen`
+## Self-Healing Agent Fleet Infrastructure — `organvm/limen`
 
-- **Recommended topics:** task-orchestration, agent-dispatch, multi-agent, mcp, model-context-protocol, agent-tools, self-healing, autonomic, workflow, task-queue, distributed-systems, api, saas, python, typescript, firebase, cloud-run
-- **Recommended description:** MCP-accessible multi-agent task orchestration: cross-repo task intake, universal dispatch schema, self-healing fleet-scale coordination over the Model Context Protocol.
+- **Recommended topics:** agent-orchestration, autonomous-systems, fleet-management, self-healing, infrastructure-automation, zero-ops, heartbeat-driven, organ-architecture, agent-reliability
+- **Recommended description:** Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.
 
 ```sh
 # apply topics (his hand — outward-facing public change):
 gh api -X PUT repos/organvm/limen/topics \
   -H 'Accept: application/vnd.github+json' \
-  -f 'names[]=task-orchestration' -f 'names[]=agent-dispatch' -f 'names[]=multi-agent' -f 'names[]=mcp' -f 'names[]=model-context-protocol' -f 'names[]=agent-tools' -f 'names[]=self-healing' -f 'names[]=autonomic' -f 'names[]=workflow' -f 'names[]=task-queue' -f 'names[]=distributed-systems' -f 'names[]=api' -f 'names[]=saas' -f 'names[]=python' -f 'names[]=typescript' -f 'names[]=firebase' -f 'names[]=cloud-run'
+  -f 'names[]=agent-orchestration' -f 'names[]=autonomous-systems' -f 'names[]=fleet-management' -f 'names[]=self-healing' -f 'names[]=infrastructure-automation' -f 'names[]=zero-ops' -f 'names[]=heartbeat-driven' -f 'names[]=organ-architecture' -f 'names[]=agent-reliability'
 # apply description:
-gh repo edit organvm/limen --description "MCP-accessible multi-agent task orchestration: cross-repo task intake, universal dispatch schema, self-healing fleet-scale coordination over the Model Context Protocol."
+gh repo edit organvm/limen --description "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat."
 ```
 
 ## Portfolio & Case Studies — 16 Production Systems — `organvm/portfolio`

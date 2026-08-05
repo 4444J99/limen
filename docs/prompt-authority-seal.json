@@ -1,0 +1,192 @@
+{
+  "adapter_gaps_digest": "78c633157f9a2d8182ab6a4683bfb33d35593728096472666e4b059cd8a4346c",
+  "authority_ready": false,
+  "content_hash": "e9df53b4478f342330929d77eaebcf2a6d85540159df8d2cd8ec6c8a05c4a5a6",
+  "coverage": {
+    "assessed_atoms": 0,
+    "atoms": 741827,
+    "current_intents": 741827,
+    "current_unresolved_atoms": 741827,
+    "derived_occurrences": 61856,
+    "excluded_occurrences": 47731,
+    "lineages": 164048,
+    "occurrences": 81644,
+    "operator_occurrences": 7125
+  },
+  "hashes": {
+    "adapted_unit_receipts": "77f1f77bd337b1e3edad897f65e0fbb94ec2ef7848150d9f8eaf3baf16c6e259",
+    "all_source_manifest": null,
+    "excluded_unit_receipts": "03793212bffba039796be63ea35359821a592e2b5ce7bf4c35bbf81a63c8d551",
+    "policy": "085f51203feb1e70a82bc8e7d55c134b33c7f03399f71444a500878a62a7719a",
+    "semantic": "4be3599771560ffaa0725e289082a2c3744370a5604a35612c4f3f8802c461d4",
+    "source_adapter_contract": "c8888c39d346dc862d75419d1645d235230c8575139abd675ffd037f52c964f9",
+    "source_cursor": "5cd33a8731bd6001b9febbb8f02bf90363b55bd9bbf9daeaba734b071286fe62",
+    "source_families": "6e0b58de2838c36bf03205db00262d355441feb9a9c19169fcf828dc6af1aa89",
+    "source_manifest": "9b395c7a562e5117093cb803c13f49fb40758c816b0cb36d4b584aa65fba4580",
+    "source_scan_payload": null,
+    "source_scan_receipt": null,
+    "source_scanner_code": null,
+    "source_units": "3af766fad6016c40303e09401867ed33cf9aa580d53b8897477c9009b866b0dd",
+    "unresolved_units": "b8712da0690bddec14871ac06fe4dc2fbbaa9eb061104fa676a2666b518fc22a",
+    "unsupported_units": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "public_projection_digest": "0deb933163e23f287e31c6b4050e9434fe964dc4734bcf27f54696833f126e80",
+  "schema": "limen.prompt-authority-seal.v1",
+  "schema_version": 1,
+  "scope": {
+    "all_baseline_complete": false,
+    "horizon_days": null,
+    "scanner_version": 4,
+    "scope": "partial:all",
+    "target_scope": "all"
+  },
+  "source_alias_blocker_counts": {
+    "alias_ancestor_symlink": 0,
+    "alias_changed": 0,
+    "alias_dangling_target": 0,
+    "alias_isolated_home_escape": 0,
+    "alias_link_chain": 0,
+    "alias_outside_root": 0,
+    "alias_target_mismatch": 0,
+    "alias_target_not_regular": 0,
+    "alias_wrong_role": 0,
+    "other": 0
+  },
+  "source_error_reason_counts": {
+    "adapter_missing": 0,
+    "bounded_ceiling_exceeded": 0,
+    "containment_violation": 0,
+    "malformed_source": 0,
+    "other": 0,
+    "prompt_grounding_failed": 0,
+    "source_changed": 0,
+    "source_unavailable": 3
+  },
+  "source_families": {
+    "agy-cli-conversations": {
+      "adapted": 0,
+      "converged": 0,
+      "discovered": 501,
+      "errors": 1,
+      "excluded": 0,
+      "pending": 501,
+      "unsupported": 0
+    },
+    "agy-cli-history": {
+      "adapted": 0,
+      "converged": 1,
+      "discovered": 1,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 0,
+      "unsupported": 0
+    },
+    "claude-file-history": {
+      "adapted": 0,
+      "converged": 0,
+      "discovered": 7395,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 7395,
+      "unsupported": 0
+    },
+    "claude-plans": {
+      "adapted": 0,
+      "converged": 0,
+      "discovered": 108,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 108,
+      "unsupported": 0
+    },
+    "claude-projects": {
+      "adapted": 13,
+      "converged": 16,
+      "discovered": 9003,
+      "errors": 1,
+      "excluded": 16,
+      "pending": 8987,
+      "unsupported": 0
+    },
+    "claude-tasks": {
+      "adapted": 0,
+      "converged": 0,
+      "discovered": 246,
+      "errors": 1,
+      "excluded": 0,
+      "pending": 246,
+      "unsupported": 0
+    },
+    "codex-attachments": {
+      "adapted": 0,
+      "converged": 0,
+      "discovered": 4,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 4,
+      "unsupported": 0
+    },
+    "codex-history": {
+      "adapted": 0,
+      "converged": 0,
+      "discovered": 1,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 1,
+      "unsupported": 0
+    },
+    "codex-sessions": {
+      "adapted": 16,
+      "converged": 16,
+      "discovered": 2288,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 2272,
+      "unsupported": 0
+    },
+    "gemini-tmp": {
+      "adapted": 0,
+      "converged": 16,
+      "discovered": 403,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 387,
+      "unsupported": 0
+    },
+    "gemini-tmp-agy": {
+      "adapted": 0,
+      "converged": 15,
+      "discovered": 15,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 0,
+      "unsupported": 0
+    },
+    "opencode-db": {
+      "adapted": 1,
+      "converged": 16,
+      "discovered": 1767,
+      "errors": 0,
+      "excluded": 0,
+      "pending": 1751,
+      "unsupported": 0
+    }
+  },
+  "source_family_overflow": {
+    "count": 0,
+    "labels_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "totals": {
+    "adapted": 30,
+    "adapter_gaps": 3,
+    "converged": 80,
+    "errors": 3,
+    "excluded": 16,
+    "pending": 21652,
+    "source_units": 21732,
+    "unresolved": 21698,
+    "unsupported": 0,
+    "validation_errors": 2220
+  },
+  "validation_ok": false
+}

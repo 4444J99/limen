@@ -1,0 +1,42 @@
+# ACCESS — per-repo collaborator grants (the partner-partition registry).
+#
+# One row per human grant decision: login + constellation person slug + role + why. Partner
+# partitioning: each partner sees exactly their project repo(s) and nothing else — engine repos
+# never carry grants, and no partner ever holds a role above the ceiling. GITVS is the consumer:
+# `parity()` validates this file offline (the PR gate), and the `repo_collaborators` resource
+# (PR 2) observes live collaborators and diffs them against these rows — an undeclared live grant
+# is RED drift, a declared-but-absent row is a staged invite cited on the L-PARTNER-GRANTS lever
+# (invites send email = outward-facing = his hand; removal of UNDECLARED access is the
+# exposure-reducing direction, double-dark armable only).
+#
+# GitHub logins are public identities, but they encode surnames — so this file lives beside the
+# estate (where private repo names are already accepted precedent), NEVER in the constellation
+# registry's public half (its Rule #2 bans surnames; its Rule #7 cross-checks the `person` slugs
+# declared here against registered people).
+schema_version: 0.1
+owner: gitvs
+note: "Partner partitioning: grants, not transfers. Each partner sees exactly their project repo(s). A new grant row requires a moat-guard.json entry for the repo (PR 3 wires the cite)."
+
+policy:
+  role_ceiling: push                      # anything above push = drift, even if declared
+  never_grant_classes: [vault_private, conductor]
+  never_grant_repos:                      # engine/system repos in otherwise-grantable classes
+    - organvm/limen
+    - organvm/relationship-pipeline
+    - organvm/arca
+    - organvm-i-theoria/conversation-corpus-engine
+    - organvm/collaboratory
+    - organvm-vii-kerygma/portfolio
+    - organvm/4444J99.github.io
+  owner: gitvs
+  note: "vault/conductor classes are structurally ungrantable; the repo list covers engine repos sitting in otherwise-grantable classes. The ceiling is push: partners contribute through review-gated branches, never administer."
+
+grants:
+  4444J99/peer-audited--behavioral-blockchain:
+    - {login: jtenen, person: jessica, role: push, granted: 2026-07-23, why: "styx co-founder build lane — contributes to exactly this repo (pre-existing grant, documented at audit; re-keyed 2026-07-30, custody v4.0.0 transfer — lane verified intact post-move)"}
+  4444J99/content-engine--asset-amplifier:
+    - {login: LeflerDesign, person: scott, role: push, granted: 2026-07-23, why: "content-cannibalizer build lane (pre-existing grant, documented at audit; re-keyed 2026-07-30, custody v4.0.0 transfer — lane verified intact post-move)"}
+  4444J99/sovereign-systems--elevate-align:
+    - {login: eauco-mads, person: maddie, role: push, granted: 2026-07-23, why: "spiral funnel/content lane (pre-existing grant, confirmed at audit: this is the one repo the login holds; re-keyed 2026-07-30, custody v4.0.0 transfer — lane verified intact post-move)"}
+  4444J99/victoroff-os:
+    - {login: davidvictoroff85-collab, person: david, role: push, granted: 2026-07-29, why: "victoroff-os build lane on the personal estate — pre-existing access documented at the dual-estate custody audit (live role verified write 2026-07-29); undeclared, it sat exposed to the undeclared-removal direction"}

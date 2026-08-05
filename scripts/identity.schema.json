@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Core Identity Store — SSOT for the operator's durable personal atoms",
+  "description": "Encrypted-at-rest (ARCA-sealed under _life-private/, mode 700), git-tracked, private. Live upstream: 1Password op://Private/Identity. This mirror is authoritative when op is unreachable. NEVER recited in chat; consumed by form-fillers via identity.py.",
+  "type": "object",
+  "required": ["legal_name", "dob", "addresses", "phones", "provenance"],
+  "properties": {
+    "legal_name": {
+      "type": "object",
+      "required": ["first", "last"],
+      "properties": {
+        "first":  {"type": "string"},
+        "middle": {"type": "string"},
+        "last":   {"type": "string"},
+        "suffix": {"type": "string"}
+      }
+    },
+    "dob": {"type": "string", "pattern": "^(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/(19|20)[0-9]{2}$", "description": "MM/DD/YYYY"},
+    "ssn": {"type": "string", "description": "Full SSN — most sensitive atom; only in the ARCA-sealed mirror / op, never emitted to any output that leaves the machine unredacted."},
+    "ssn_last4": {"type": "string", "pattern": "^[0-9]{4}$"},
+    "addresses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "street", "city", "state", "zip"],
+        "properties": {
+          "type":   {"enum": ["home", "mailing", "prior"]},
+          "street": {"type": "string"},
+          "unit":   {"type": "string"},
+          "city":   {"type": "string"},
+          "state":  {"type": "string"},
+          "zip":    {"type": "string"},
+          "current": {"type": "boolean"}
+        }
+      }
+    },
+    "phones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "number"],
+        "properties": {
+          "type":   {"enum": ["mobile", "home", "work"]},
+          "number": {"type": "string"},
+          "primary": {"type": "boolean"}
+        }
+      }
+    },
+    "emails": {"type": "array", "items": {"type": "string"}},
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source":     {"type": "string", "description": "op://Private/Identity | operator-entered"},
+        "updated_at": {"type": "string"},
+        "verified":   {"type": "boolean"}
+      }
+    }
+  }
+}

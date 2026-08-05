@@ -1,0 +1,1084 @@
+import YAML from "yaml";
+import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
+
+const GITHUB_API = "https://api.github.com";
+const inlineBoards = new WeakMap();
+const PROJECTION_YAML_OPTIONS = {
+  defaultKeyType: "PLAIN",
+  defaultStringType: "QUOTE_SINGLE",
+  indentSeq: false,
+  lineWidth: 0,
+};
+const VALID_STATUSES = new Set([
+  "open",
+  "dispatched",
+  "in_progress",
+  "done",
+  "failed",
+  "failed_blocked",
+  "needs_human",
+  "archived",
+]);
+const PATCHABLE_TASK_FIELDS = new Set([
+  "title",
+  "description",
+  "repo",
+  "type",
+  "target_agent",
+  "workstream",
+  "priority",
+  "budget_cost",
+  "status",
+  "labels",
+  "urls",
+  "context",
+  "predicate",
+  "receipt_target",
+  "origin",
+  "horizon",
+  "value_case",
+  "owner_surface",
+  "external_deadline",
+  "due_at",
+  "receipt_verified",
+  "execution_requirements",
+  "workstream_contract",
+  "claude_tier",
+  "depends_on",
+]);
+const STRUCTURED_LOG_FIELDS = new Set([
+  "route_to",
+  "execution_profile",
+  "selected_model",
+  "selection_source",
+  "catalog_hash",
+  "provider_run_id",
+  "provider_url",
+  "base_sha",
+  "control_repo",
+  "control_ref",
+  "control_ref_kind",
+  "control_sha",
+  "workflow_id",
+  "workflow_path",
+  "workflow_event",
+  "predicate_exit_code",
+  "verification_context_digest",
+  "remote_state",
+  "remote_request_id",
+  "remote_receipt",
+  "landing_event",
+  "landing_terminal",
+  "landing_outcome",
+  "landing_session_id",
+  "landing_branch",
+  "landing_intent_token",
+  "landing_claim_sha256",
+  "landing_prior_status",
+  "landing_prior_updated",
+  "landing_attempt_count",
+  "landing_attempt",
+  "lifecycle_repair",
+  "fleet_debt_source",
+  "fleet_debt_count",
+  "pr_observed_state",
+  "pr_observed_ref",
+  "routine_name",
+  "routine_observed_state",
+  "execution_started",
+  "execution_contract_hash",
+  "execution_reservation_id",
+  "execution_result_kind",
+  "liveness_evidence",
+  "liveness_reservation_id",
+  "liveness_pid",
+  "liveness_age_seconds",
+  "recurrence_source",
+  "recurrence_head_sha",
+]);
+const STRING_STRUCTURED_LOG_FIELDS = new Set([
+  "route_to",
+  "selected_model",
+  "selection_source",
+  "catalog_hash",
+  "provider_run_id",
+  "provider_url",
+  "base_sha",
+  "control_repo",
+  "control_ref",
+  "control_ref_kind",
+  "control_sha",
+  "workflow_path",
+  "workflow_event",
+  "verification_context_digest",
+  "remote_state",
+  "remote_request_id",
+  "remote_receipt",
+  "landing_event",
+  "landing_outcome",
+  "landing_session_id",
+  "landing_branch",
+  "landing_intent_token",
+  "landing_claim_sha256",
+  "landing_prior_status",
+  "lifecycle_repair",
+  "fleet_debt_source",
+  "pr_observed_state",
+  "pr_observed_ref",
+  "routine_name",
+  "routine_observed_state",
+  "execution_contract_hash",
+  "execution_reservation_id",
+  "execution_result_kind",
+  "liveness_evidence",
+  "liveness_reservation_id",
+  "recurrence_source",
+  "recurrence_head_sha",
+]);
+const ENUM_STRUCTURED_LOG_FIELDS = new Map([
+  ["lifecycle_repair", new Set([
+    "prior-done",
+    "human-gate-reconcile",
+    "fleet-debt-park",
+    "pr-observed-terminal",
+    "routine-recovered",
+    "provider-terminal",
+    "stale-successor-hold",
+    "recurrence-reopen",
+  ])],
+  ["fleet_debt_source", new Set(["dispatch-verify", "prior-chronic-log", "repeated-noop"])],
+  ["pr_observed_state", new Set(["open", "merged"])],
+  ["routine_observed_state", new Set(["down", "recovered"])],
+  ["execution_result_kind", new Set(["done", "failed", "failed_blocked"])],
+  ["liveness_evidence", new Set([
+    "dead-process",
+    "defunct-process",
+    "markerless-expired",
+    "launch-failed",
+  ])],
+  ["recurrence_source", new Set(["main-green"])],
+]);
+const CANONICAL_TRANSITIONS = new Map([
+  ["open", new Set(["open", "dispatched"])],
+  ["dispatched", new Set(["open", "dispatched", "in_progress"])],
+  ["in_progress", new Set(["in_progress", "done", "failed", "failed_blocked", "needs_human"])],
+  ["failed", new Set(["failed", "open"])],
+  ["failed_blocked", new Set(["failed_blocked", "open"])],
+  ["needs_human", new Set(["needs_human", "open"])],
+  ["done", new Set(["done", "archived"])],
+  ["archived", new Set(["archived"])],
+]);
+
+export class ConductProjectionError extends Error {
+  constructor(message, status = 503) {
+    super(message);
+    this.name = "ConductProjectionError";
+    this.status = status;
+  }
+}
+
+function clone(value) {
+  return structuredClone(value);
+}
+
+function decodeBase64(value) {
+  const binary = atob(String(value || "").replace(/\n/g, ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return new TextDecoder().decode(bytes);
+}
+
+function inlineBoardSource(env) {
+  if (env.LIMEN_INLINE_TASKS_YAML) return String(env.LIMEN_INLINE_TASKS_YAML);
+  if (env.LIMEN_INLINE_TASKS_YAML_B64) return decodeBase64(env.LIMEN_INLINE_TASKS_YAML_B64);
+  return "";
+}
+
+function eventAlreadyApplied(board, eventId) {
+  return (board.tasks || []).some((task) =>
+    (task.dispatch_log || []).some((entry) => entry?.conduct_event_id === eventId));
+}
+
+function validateStructuredLog(log) {
+  if (log == null) return;
+  if (typeof log !== "object" || Array.isArray(log)) {
+    throw new ConductProjectionError("task dispatch log must be an object", 422);
+  }
+  for (const [field, value] of Object.entries(log)) {
+    if (!STRUCTURED_LOG_FIELDS.has(field) || value == null) continue;
+    if (STRING_STRUCTURED_LOG_FIELDS.has(field) && typeof value !== "string") {
+      throw new ConductProjectionError(`task dispatch log ${field} must be a string`, 422);
+    }
+    const allowed = ENUM_STRUCTURED_LOG_FIELDS.get(field);
+    if (allowed && !allowed.has(value)) {
+      throw new ConductProjectionError(`task dispatch log ${field} has an unsupported value`, 422);
+    }
+  }
+  if (log.execution_profile != null
+      && (typeof log.execution_profile !== "object" || Array.isArray(log.execution_profile))) {
+    throw new ConductProjectionError("task dispatch log execution_profile must be an object", 422);
+  }
+  for (const field of ["landing_terminal", "execution_started"]) {
+    if (log[field] != null && typeof log[field] !== "boolean") {
+      throw new ConductProjectionError(`task dispatch log ${field} must be a boolean`, 422);
+    }
+  }
+  for (const field of ["workflow_id", "landing_attempt_count", "landing_attempt"]) {
+    if (log[field] != null && !Number.isInteger(log[field])) {
+      throw new ConductProjectionError(`task dispatch log ${field} must be an integer`, 422);
+    }
+  }
+  if (log.fleet_debt_count != null
+      && (!Number.isInteger(log.fleet_debt_count) || log.fleet_debt_count < 1)) {
+    throw new ConductProjectionError("task dispatch log fleet_debt_count must be a positive integer", 422);
+  }
+  if (log.liveness_pid != null
+      && (!Number.isInteger(log.liveness_pid) || log.liveness_pid < 1)) {
+    throw new ConductProjectionError("task dispatch log liveness_pid must be a positive integer", 422);
+  }
+  if (log.liveness_age_seconds != null
+      && (typeof log.liveness_age_seconds !== "number"
+        || !Number.isFinite(log.liveness_age_seconds)
+        || log.liveness_age_seconds < 0)) {
+    throw new ConductProjectionError("task dispatch log liveness_age_seconds must be nonnegative", 422);
+  }
+  if (log.execution_contract_hash != null
+      && !/^[0-9a-f]{64}$/.test(log.execution_contract_hash)) {
+    throw new ConductProjectionError("task dispatch log execution_contract_hash must be a lowercase SHA-256", 422);
+  }
+  if (log.recurrence_head_sha != null
+      && !/^[0-9a-f]{40}$/.test(log.recurrence_head_sha)) {
+    throw new ConductProjectionError("task dispatch log recurrence_head_sha must be a lowercase Git SHA", 422);
+  }
+  if (log.landing_prior_updated != null
+      && (typeof log.landing_prior_updated !== "string"
+        || Number.isNaN(Date.parse(log.landing_prior_updated)))) {
+    throw new ConductProjectionError("task dispatch log landing_prior_updated must be an ISO timestamp", 422);
+  }
+}
+
+function conductLog(event, log, fallbackStatus, fallbackOutput) {
+  validateStructuredLog(log);
+  const structured = Object.fromEntries(
+    Object.entries(log || {})
+      .filter(([field, value]) => STRUCTURED_LOG_FIELDS.has(field) && value != null),
+  );
+  return {
+    timestamp: event.timestamp,
+    agent: String(event.agent),
+    session_id: String(event.session_id),
+    logical_agent: String(log?.agent ?? event.agent),
+    logical_session_id: String(log?.session_id ?? event.session_id),
+    status: String(fallbackStatus),
+    output: String(log?.output ?? fallbackOutput ?? ""),
+    ...clone(structured),
+    conduct_event_id: event.event_id,
+    conduct_run_id: event.run_id,
+    conduct_lease_id: event.lease_id,
+    conduct_generation: event.generation,
+  };
+}
+
+function requireReceiptCredit(taskId, prior, patch, log = {}) {
+  if (patch.receipt_verified !== true) return;
+  if ((patch.status ?? prior.status) !== "done") {
+    throw new ConductProjectionError(`task ${taskId} completion-not-verified:status`, 409);
+  }
+  if (log.predicate_exit_code !== 0) {
+    throw new ConductProjectionError(`task ${taskId} completion-not-verified:predicate`, 409);
+  }
+  const receiptTarget = String(patch.receipt_target ?? prior.receipt_target ?? "");
+  if (!receiptTarget || log.remote_receipt !== receiptTarget) {
+    throw new ConductProjectionError(`task ${taskId} completion-not-verified:receipt_target`, 409);
+  }
+  if (typeof log.verification_context_digest !== "string"
+      || !/^[0-9a-f]{64}$/.test(log.verification_context_digest)) {
+    throw new ConductProjectionError(
+      `task ${taskId} completion-not-verified:verification_context_digest`,
+      409,
+    );
+  }
+}
+
+function validateTaskShape(task, taskId) {
+  if (!task || typeof task !== "object" || Array.isArray(task)) {
+    throw new ConductProjectionError(`task ${taskId} projection must be an object`, 422);
+  }
+  if (task.id !== taskId) {
+    throw new ConductProjectionError(`task projection id ${task.id} does not match ${taskId}`, 422);
+  }
+  if (!task.title || typeof task.title !== "string") {
+    throw new ConductProjectionError(`task ${taskId} requires a title`, 422);
+  }
+  if (!task.status || typeof task.status !== "string") {
+    throw new ConductProjectionError(`task ${taskId} requires a status`, 422);
+  }
+  if (!VALID_STATUSES.has(task.status)) {
+    throw new ConductProjectionError(`task ${taskId} has unsupported status ${task.status}`, 422);
+  }
+}
+
+function resetBudgetWindow(budget, event) {
+  budget.track ||= { date: "", spent: 0, per_agent: {} };
+  const currentDate = String(event.timestamp).slice(0, 10);
+  if (budget.track.date === currentDate) return;
+  budget.track.date = currentDate;
+  budget.track.spent = 0;
+  budget.track.per_agent = Object.fromEntries(
+    Object.keys(budget.per_agent || {}).map((agent) => [agent, 0]),
+  );
+}
+
+function canonicalClaimAgent(task, event) {
+  const agent = String(event.agent || "");
+  if (!agent || agent === "any") {
+    throw new ConductProjectionError(`task ${task.id} claim requires one concrete authenticated agent`, 422);
+  }
+  const latest = task.dispatch_log?.at(-1);
+  const routeTo = latest?.status === "open" ? String(latest?.route_to || "") : "";
+  if (task.target_agent && task.target_agent !== "any" && task.target_agent !== agent && routeTo !== agent) {
+    throw new ConductProjectionError(
+      `task ${task.id} targets ${task.target_agent}, not claim agent ${agent}`,
+      409,
+    );
+  }
+  return agent;
+}
+
+function applyCanonicalBudgetDebit(board, task, event, patch) {
+  const amount = Number(task.budget_cost || 0);
+  if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0) {
+    throw new ConductProjectionError(`task ${task.id} has invalid canonical budget_cost`, 422);
+  }
+  const agent = canonicalClaimAgent(task, event);
+  const budget = board.portal?.budget;
+  if (!budget || !amount) return;
+  resetBudgetWindow(budget, event);
+  budget.track.per_agent ||= {};
+  const priorTotal = Number(budget.track.spent || 0);
+  const priorAgent = Number(budget.track.per_agent[agent] || 0);
+  const dailyLimit = Number(budget.daily ?? Number.POSITIVE_INFINITY);
+  const agentLimit = Number(budget.per_agent?.[agent] ?? dailyLimit);
+  if (priorTotal + amount > dailyLimit || priorAgent + amount > agentLimit) {
+    throw new ConductProjectionError(`task ${task.id} exceeds live ${agent} compatibility budget`, 409);
+  }
+  budget.track.spent = priorTotal + amount;
+  budget.track.per_agent[agent] = priorAgent + amount;
+}
+
+function applyCanonicalBudgetRefund(board, task, event) {
+  const amount = Number(task.budget_cost || 0);
+  const latest = task.dispatch_log?.at(-1);
+  const agent = String(latest?.logical_agent || latest?.agent || "");
+  if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0 || !agent || agent === "any") {
+    throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund`, 422);
+  }
+  const budget = board.portal?.budget;
+  if (!budget || !amount) return;
+  resetBudgetWindow(budget, event);
+  budget.track.per_agent ||= {};
+  budget.track.spent = Math.max(0, Number(budget.track.spent || 0) - amount);
+  budget.track.per_agent[agent] = Math.max(
+    0,
+    Number(budget.track.per_agent[agent] || 0) - amount,
+  );
+}
+
+function canonicalRevision(task) {
+  const value = String(
+    task.updated
+    || task.dispatch_log?.at(-1)?.timestamp
+    || task.created
+    || task.status,
+  );
+  return /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value))
+    ? new Date(value).toISOString()
+    : value;
+}
+
+function validatePatch(patch, taskId) {
+  if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+    throw new ConductProjectionError(`task ${taskId} compatibility patch must be an object`, 422);
+  }
+  const forbidden = Object.keys(patch).filter((field) => !PATCHABLE_TASK_FIELDS.has(field));
+  if (forbidden.length) {
+    throw new ConductProjectionError(
+      `task ${taskId} compatibility patch contains server-owned or unsupported fields: ${forbidden.sort().join(", ")}`,
+      422,
+    );
+  }
+  if ("status" in patch && !VALID_STATUSES.has(patch.status)) {
+    throw new ConductProjectionError(`task ${taskId} has unsupported status ${patch.status}`, 422);
+  }
+  if ("budget_cost" in patch
+      && (!Number.isInteger(patch.budget_cost) || patch.budget_cost < 1 || patch.budget_cost > 1000)) {
+    throw new ConductProjectionError(`task ${taskId} has invalid budget_cost`, 422);
+  }
+}
+
+function validateTransition(taskId, fromStatus, toStatus, kind) {
+  if (kind === "task.claim" && (fromStatus !== "open" || toStatus !== "dispatched")) {
+    throw new ConductProjectionError(`task ${taskId} claim requires open -> dispatched`, 409);
+  }
+  if (!CANONICAL_TRANSITIONS.get(fromStatus)?.has(toStatus)) {
+    throw new ConductProjectionError(
+      `task ${taskId} cannot transition from ${fromStatus} to ${toStatus}`,
+      409,
+    );
+  }
+}
+
+function isHeldJulesLandingRecovery(task, nextStatus, log) {
+  return task.status === "failed"
+    && (task.labels || []).includes("jules:landing-held")
+    && log?.landing_event === "terminal"
+    && log?.landing_terminal === true
+    && typeof log?.landing_intent_token === "string"
+    && log.landing_intent_token.length > 0
+    && ["done", "failed", "failed_blocked"].includes(nextStatus);
+}
+
+function logicalLogSession(entry) {
+  return String(entry?.logical_session_id || entry?.session_id || "");
+}
+
+function priorChronicEvidence(task) {
+  const latest = [...(task.dispatch_log || [])]
+    .reverse()
+    .find((entry) => entry?.status === "needs_human");
+  return Boolean(latest && /(chronic.*escalat|repeated no-op failures)/is.test(String(latest.output || "")));
+}
+
+function repeatedNoopEvidence(task) {
+  return (task.dispatch_log || []).filter((entry) =>
+    entry?.status === "failed" && /(no-op|noop)/i.test(String(entry.output || ""))).length;
+}
+
+function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
+  const marker = String(log?.lifecycle_repair || "");
+  const priorStatus = String(task.status || "");
+  const labels = new Set(patch.labels ?? task.labels ?? []);
+  if (marker === "prior-done") {
+    return nextStatus === "done"
+      && priorStatus !== "archived"
+      && (task.dispatch_log || []).some((entry) => entry?.status === "done");
+  }
+  if (marker === "human-gate-reconcile") {
+    return ["open", "dispatched", "failed"].includes(priorStatus)
+      && nextStatus === "needs_human"
+      && labels.has("needs-human");
+  }
+  if (marker === "fleet-debt-park") {
+    const count = log?.fleet_debt_count;
+    const source = String(log?.fleet_debt_source || "");
+    const evidenceOk = Number.isInteger(count) && (
+      (source === "dispatch-verify" && count >= 3)
+      || (source === "prior-chronic-log" && count >= 1 && priorChronicEvidence(task))
+      || (source === "repeated-noop" && count >= 2 && repeatedNoopEvidence(task) >= count)
+    );
+    return ["open", "dispatched", "failed", "needs_human"].includes(priorStatus)
+      && nextStatus === "failed_blocked"
+      && labels.has("chronic-fleet-debt")
+      && evidenceOk;
+  }
+  if (marker === "pr-observed-terminal") {
+    const match = String(log?.pr_observed_ref || "")
+      .match(/^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)#[1-9][0-9]*$/);
+    const taskRepo = String(patch.repo ?? task.repo ?? "");
+    return priorStatus === "dispatched"
+      && nextStatus === "done"
+      && ["open", "merged"].includes(String(log?.pr_observed_state || ""))
+      && Boolean(match)
+      && (!taskRepo || match[1] === taskRepo);
+  }
+  if (marker === "routine-recovered") {
+    const name = String(log?.routine_name || "");
+    return priorStatus === "needs_human"
+      && nextStatus === "done"
+      && labels.has("routine-freshness")
+      && log?.routine_observed_state === "recovered"
+      && Boolean(name)
+      && task.id === `ASK-routine-${name}`;
+  }
+  const priorEntry = (task.dispatch_log || []).at(-1) || {};
+  const priorReservation = logicalLogSession(priorEntry);
+  if (marker === "provider-terminal") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && ["done", "failed", "failed_blocked"].includes(nextStatus)
+      && log?.execution_started === true
+      && log?.execution_result_kind === nextStatus
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
+  if (marker === "stale-successor-hold") {
+    const evidence = String(log?.liveness_evidence || "");
+    const age = log?.liveness_age_seconds;
+    const pid = log?.liveness_pid;
+    return priorStatus === "dispatched"
+      && nextStatus === "failed"
+      && labels.has("workstream:successor-required")
+      && String(log?.liveness_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched"
+      && ["dead-process", "defunct-process", "markerless-expired", "launch-failed"].includes(evidence)
+      && typeof age === "number"
+      && Number.isFinite(age)
+      && age >= 0
+      && (
+        (["dead-process", "defunct-process"].includes(evidence) && Number.isInteger(pid) && pid > 0)
+        || (["markerless-expired", "launch-failed"].includes(evidence) && pid == null)
+      );
+  }
+  if (marker === "recurrence-reopen") {
+    const head = String(log?.recurrence_head_sha || "");
+    const predicate = String(patch.predicate ?? task.predicate ?? "");
+    const title = String(patch.title ?? task.title ?? "");
+    return ["done", "archived"].includes(priorStatus)
+      && nextStatus === "open"
+      && log?.recurrence_source === "main-green"
+      && /^[0-9a-f]{40}$/.test(head)
+      && String(task.id || "").startsWith("HEAL-mainred-")
+      && labels.has("ci")
+      && labels.has("mainred")
+      && predicate.includes(head)
+      && title.includes(head.slice(0, 8));
+  }
+  return false;
+}
+
+export function applyTaskPacketProjectionEvent(input, event) {
+  const board = clone(input);
+  const intent = event.intent || {};
+  const kind = String(intent.kind || "");
+  const taskId = String(intent.task_id || event.task_id || "");
+  if (!taskId) throw new ConductProjectionError("compatibility event requires task_id", 422);
+  const existing = (board.tasks || []).find((candidate) => candidate.id === taskId);
+  if (existing && eventAlreadyApplied(board, event.event_id)) {
+    return { board, task: clone(existing), duplicate: true, changed: false };
+  }
+
+  if (kind === "task.upsert") {
+    if (intent.expected_absent && existing) {
+      throw new ConductProjectionError(`task ${taskId} already exists`, 409);
+    }
+    const supplied = clone(intent.task || {});
+    validateTaskShape(supplied, taskId);
+    if (supplied.receipt_verified === true) {
+      throw new ConductProjectionError(
+        `task ${taskId} receipt credit requires an evidence-bound status transition`,
+        422,
+      );
+    }
+    const task = existing || {
+      ...supplied,
+      dispatch_log: [],
+    };
+    if (existing) {
+      if (supplied.status !== existing.status) {
+        throw new ConductProjectionError(
+          `task ${taskId} upsert cannot change lifecycle status; submit task.status`,
+          409,
+        );
+      }
+      const history = existing.dispatch_log || [];
+      const created = existing.created;
+      const patch = Object.fromEntries(
+        Object.entries(supplied).filter(([field]) => PATCHABLE_TASK_FIELDS.has(field)),
+      );
+      validatePatch(patch, taskId);
+      Object.assign(task, patch);
+      task.dispatch_log = history;
+      if (created !== undefined) task.created = created;
+    }
+    if (!existing) {
+      const missing = taskWorkLoanMissingFields(task);
+      if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 422);
+    }
+    board.tasks ||= [];
+    if (!existing) board.tasks.push(task);
+    task.updated = event.timestamp;
+    task.dispatch_log ||= [];
+    task.dispatch_log.push(conductLog(
+      event,
+      intent.log,
+      task.status,
+      `Created by ${event.agent} through the conduct keeper`,
+    ));
+    return { board, task: clone(task), duplicate: false, changed: true };
+  }
+
+  if (!["task.status", "task.claim", "task.mutate"].includes(kind)) {
+    throw new ConductProjectionError(`unsupported task compatibility intent: ${kind}`, 422);
+  }
+  if (!existing) throw new ConductProjectionError(`task ${taskId} not found in canonical board`, 409);
+  if (intent.expected_revision !== undefined
+      && String(intent.expected_revision) !== canonicalRevision(existing)) {
+    throw new ConductProjectionError(`task ${taskId} exact revision moved`, 409);
+  }
+  const expected = intent.expected_status;
+  const expectedStatuses = Array.isArray(expected) ? expected : [expected];
+  if (!expectedStatuses.includes(existing.status)) {
+    throw new ConductProjectionError(
+      `task ${taskId} is ${existing.status}; compatibility event requires ${expectedStatuses.join(" or ")}`,
+      409,
+    );
+  }
+  const patch = intent.patch || {};
+  validatePatch(patch, taskId);
+  if (kind === "task.status" && !Object.prototype.hasOwnProperty.call(patch, "status")) {
+    throw new ConductProjectionError(`task ${taskId} status intent requires a status patch`, 422);
+  }
+  const nextStatus = patch.status ?? existing.status;
+  requireReceiptCredit(taskId, existing, patch, intent.log);
+  if (["dispatched", "in_progress"].includes(nextStatus)) {
+    const missing = taskWorkLoanMissingFields({ ...existing, ...patch });
+    if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
+  }
+  if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log)
+      && !(kind === "task.status"
+        && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch))) {
+    validateTransition(taskId, existing.status, nextStatus, kind);
+  }
+  if (kind === "task.claim") applyCanonicalBudgetDebit(board, existing, event, patch);
+  if (kind === "task.status" && existing.status === "dispatched" && nextStatus === "open") {
+    applyCanonicalBudgetRefund(board, existing, event);
+  }
+  Object.assign(existing, clone(patch));
+  existing.updated = event.timestamp;
+  existing.dispatch_log ||= [];
+  existing.dispatch_log.push(conductLog(
+    event,
+    intent.log,
+    existing.status,
+    `${kind} applied through the conduct keeper`,
+  ));
+  validateTaskShape(existing, taskId);
+  return { board, task: clone(existing), duplicate: false, changed: true };
+}
+
+function ensureBudget(board, task, event) {
+  const budget = board.portal?.budget;
+  if (!budget || event.budget_action === "none") return;
+  resetBudgetWindow(budget, event);
+  budget.track.per_agent ||= {};
+  const cost = Number(task.budget_cost ?? event.budget_cost ?? 1);
+  if (!Number.isFinite(cost) || cost < 0) {
+    throw new ConductProjectionError(`task ${task.id} has invalid budget_cost`, 409);
+  }
+  const priorTotal = Number(budget.track.spent || 0);
+  const priorAgent = Number(budget.track.per_agent[event.agent] || 0);
+  if (event.budget_action === "debit") {
+    const dailyLimit = Number(budget.daily ?? Number.POSITIVE_INFINITY);
+    const agentLimit = Number(budget.per_agent?.[event.agent] ?? dailyLimit);
+    if (priorTotal + cost > dailyLimit || priorAgent + cost > agentLimit) {
+      throw new ConductProjectionError(`task ${task.id} exceeds live ${event.agent} conduct budget`, 409);
+    }
+    budget.track.spent = priorTotal + cost;
+    budget.track.per_agent[event.agent] = priorAgent + cost;
+  } else if (event.budget_action === "refund") {
+    budget.track.spent = Math.max(0, priorTotal - cost);
+    budget.track.per_agent[event.agent] = Math.max(0, priorAgent - cost);
+  }
+}
+
+export function applyTaskCompatibilityEvent(input, event) {
+  if (event.schema_version === "limen.task_packet_projection_event.v1") {
+    return applyTaskPacketProjectionEvent(input, event);
+  }
+  const board = clone(input);
+  if (eventAlreadyApplied(board, event.event_id)) {
+    return { board, task: clone((board.tasks || []).find((task) => task.id === event.task_id)), duplicate: true, changed: false };
+  }
+  const task = (board.tasks || []).find((candidate) => candidate.id === event.task_id);
+  if (!task) throw new ConductProjectionError(`task ${event.task_id} not found in canonical board`, 409);
+  if (["dispatched", "in_progress"].includes(event.status)) {
+    const missing = taskWorkLoanMissingFields(task);
+    if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
+  }
+  if (!event.from_statuses.includes(task.status)) {
+    throw new ConductProjectionError(
+      `task ${event.task_id} is ${task.status}; conduct event ${event.kind} requires ${event.from_statuses.join(" or ")}`,
+      409,
+    );
+  }
+  ensureBudget(board, task, event);
+  task.status = event.status;
+  task.updated = event.timestamp;
+  task.dispatch_log ||= [];
+  task.dispatch_log.push({
+    timestamp: event.timestamp,
+    agent: event.agent,
+    session_id: event.session_id,
+    status: event.status,
+    output: event.output,
+    conduct_event_id: event.event_id,
+    conduct_run_id: event.run_id,
+    conduct_lease_id: event.lease_id,
+    conduct_generation: event.generation,
+  });
+  return { board, task: clone(task), duplicate: false, changed: true };
+}
+
+function githubContentsUrl(env) {
+  const repo = String(env.LIMEN_GITHUB_REPO || "");
+  const path = encodeURIComponent(env.LIMEN_GITHUB_PATH || "tasks.yaml").replaceAll("%2F", "/");
+  return `${GITHUB_API}/repos/${repo}/contents/${path}`;
+}
+
+function githubRepositoryUrl(env) {
+  return `${GITHUB_API}/repos/${String(env.LIMEN_GITHUB_REPO || "")}`;
+}
+
+const BOARD_PUBLICATION_BRANCH = "tabularius/board-projection";
+
+function githubProjectionBranch(env) {
+  const configured = String(env.LIMEN_GITHUB_BRANCH || "").trim();
+  return !configured || configured === "main" ? BOARD_PUBLICATION_BRANCH : configured;
+}
+
+function githubHeaders(env, withBody = false, raw = false) {
+  return {
+    authorization: `Bearer ${env.LIMEN_GITHUB_TOKEN}`,
+    accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
+    "user-agent": "limen-conduct-keeper",
+    "x-github-api-version": "2022-11-28",
+    ...(withBody ? { "content-type": "application/json" } : {}),
+  };
+}
+
+function githubRefUrl(env) {
+  const branch = githubProjectionBranch(env)
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `${githubRepositoryUrl(env)}/git/refs/heads/${branch}`;
+}
+
+async function reconcileProjectionBranch(env, fetchImpl) {
+  const branch = githubProjectionBranch(env);
+  const response = await fetchImpl(`${githubRepositoryUrl(env)}/merges`, {
+    method: "POST",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      base: branch,
+      head: String(env.LIMEN_GITHUB_DEFAULT_BRANCH || "main"),
+      commit_message: "tabularius: reconcile projection branch with current main",
+    }),
+  });
+  const text = await response.text();
+  if (![201, 204].includes(response.status)) {
+    throw new ConductProjectionError(
+      `GitHub projection reconciliation failed (${response.status}): ${text.slice(0, 300)}`,
+      response.status === 409 ? 409 : 503,
+    );
+  }
+}
+
+function renderedTaskBlock(task, indent = "") {
+  const rendered = YAML.stringify({ tasks: [task] }, PROJECTION_YAML_OPTIONS);
+  const marker = "tasks:\n";
+  if (!rendered.startsWith(marker)) {
+    throw new ConductProjectionError("task projection serializer emitted an invalid document");
+  }
+  return rendered.slice(marker.length).split("\n").map((line) => line ? `${indent}${line}` : line).join("\n");
+}
+
+function taskBlockRanges(yamlText) {
+  const header = /^tasks:\s*(?:#.*)?$/m.exec(yamlText);
+  if (!header) throw new ConductProjectionError("canonical board has no top-level tasks sequence", 409);
+  const bodyStart = header.index + header[0].length;
+  const candidates = [];
+  const pattern = /^( *)- id:\s*(.+?)\r?$/gm;
+  pattern.lastIndex = bodyStart;
+  for (let match = pattern.exec(yamlText); match; match = pattern.exec(yamlText)) {
+    let id;
+    try {
+      id = YAML.parse(`id: ${match[2]}`).id;
+    } catch (error) {
+      throw new ConductProjectionError(`canonical board task id could not be parsed: ${error.message}`, 409);
+    }
+    candidates.push({ id: String(id), start: match.index, indent: match[1] });
+  }
+  const minimumIndent = Math.min(...candidates.map((entry) => entry.indent.length));
+  const starts = candidates.filter((entry) => entry.indent.length === minimumIndent);
+  return starts.map((entry, index) => ({
+    ...entry,
+    end: starts[index + 1]?.start ?? yamlText.length,
+  }));
+}
+
+function minimalBoardFromSource(yamlText, taskId) {
+  const tasksHeader = /^tasks:\s*(?:#.*)?$/m.exec(yamlText);
+  if (!tasksHeader) throw new ConductProjectionError("canonical board has no top-level tasks sequence", 409);
+  const prefix = YAML.parse(yamlText.slice(0, tasksHeader.index)) || {};
+  const range = taskBlockRanges(yamlText).find((candidate) => candidate.id === String(taskId));
+  let task = null;
+  if (range) {
+    const parsed = YAML.parse(`tasks:\n${yamlText.slice(range.start, range.end)}`) || {};
+    task = parsed.tasks?.[0] || null;
+    if (!task || String(task.id) !== String(taskId)) {
+      throw new ConductProjectionError(`canonical task ${taskId} could not be parsed from source text`, 409);
+    }
+  }
+  return {
+    portal: prefix.portal || {},
+    tasks: task ? [task] : [],
+  };
+}
+
+function replacePortal(yamlText, portal) {
+  const portalHeader = /^portal:\s*(?:#.*)?$/m.exec(yamlText);
+  const tasksHeader = /^tasks:\s*(?:#.*)?$/m.exec(yamlText);
+  if (!portalHeader || !tasksHeader || portalHeader.index >= tasksHeader.index) {
+    throw new ConductProjectionError("canonical board top-level portal/tasks layout is invalid", 409);
+  }
+  const rendered = YAML.stringify({ portal }, PROJECTION_YAML_OPTIONS);
+  return `${yamlText.slice(0, portalHeader.index)}${rendered}${yamlText.slice(tasksHeader.index)}`;
+}
+
+export function renderTaskBoardProjection(yamlText, before, after, taskId) {
+  let rendered = String(yamlText);
+  if (JSON.stringify(before.portal) !== JSON.stringify(after.portal)) {
+    rendered = replacePortal(rendered, after.portal);
+  }
+
+  const ranges = taskBlockRanges(rendered);
+  const range = ranges.find((candidate) => candidate.id === String(taskId));
+  const task = (after.tasks || []).find((candidate) => candidate.id === String(taskId));
+  if (!task) throw new ConductProjectionError(`projected task ${taskId} is missing`, 409);
+  const block = renderedTaskBlock(task, range?.indent ?? ranges[0]?.indent ?? "");
+  if (range) {
+    rendered = `${rendered.slice(0, range.start)}${block}${rendered.slice(range.end)}`;
+  } else {
+    if ((before.tasks || []).some((candidate) => candidate.id === String(taskId))) {
+      throw new ConductProjectionError(`canonical task ${taskId} could not be located in source text`, 409);
+    }
+    rendered = `${rendered.endsWith("\n") ? rendered : `${rendered}\n`}${block}`;
+  }
+
+  const reparsed = minimalBoardFromSource(rendered, taskId);
+  const expected = { portal: after.portal || {}, tasks: [task] };
+  if (JSON.stringify(reparsed) !== JSON.stringify(expected)) {
+    throw new ConductProjectionError(`surgical projection for ${taskId} changed canonical board semantics`, 409);
+  }
+  return rendered;
+}
+
+async function githubGet(env, fetchImpl, taskId) {
+  const refResponse = await fetchImpl(githubRefUrl(env), {
+    method: "GET",
+    headers: githubHeaders(env),
+  });
+  const refText = await refResponse.text();
+  if (!refResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection ref read failed (${refResponse.status}): ${refText.slice(0, 300)}`,
+    );
+  }
+  const headSha = String((refText ? JSON.parse(refText) : {})?.object?.sha || "");
+  if (!headSha) {
+    throw new ConductProjectionError("GitHub projection ref returned no head SHA");
+  }
+
+  const commitResponse = await fetchImpl(
+    `${githubRepositoryUrl(env)}/git/commits/${encodeURIComponent(headSha)}`,
+    {
+      method: "GET",
+      headers: githubHeaders(env),
+    },
+  );
+  const commitText = await commitResponse.text();
+  if (!commitResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection commit read failed (${commitResponse.status}): ${commitText.slice(0, 300)}`,
+    );
+  }
+  const treeSha = String((commitText ? JSON.parse(commitText) : {})?.tree?.sha || "");
+  if (!treeSha) {
+    throw new ConductProjectionError("GitHub projection commit returned no tree SHA");
+  }
+
+  const url = `${githubContentsUrl(env)}?ref=${encodeURIComponent(headSha)}`;
+  const response = await fetchImpl(url, {
+    method: "GET",
+    headers: githubHeaders(env),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new ConductProjectionError(`GitHub projection read failed (${response.status}): ${text.slice(0, 300)}`);
+  }
+  const raw = text ? JSON.parse(text) : {};
+  let yamlText;
+  if (raw.content) {
+    yamlText = decodeBase64(raw.content);
+  } else {
+    const rawResponse = await fetchImpl(url, {
+      method: "GET",
+      headers: githubHeaders(env, false, true),
+    });
+    yamlText = await rawResponse.text();
+    if (!rawResponse.ok) {
+      throw new ConductProjectionError(
+        `GitHub raw projection read failed (${rawResponse.status}): ${yamlText.slice(0, 300)}`,
+      );
+    }
+  }
+  return {
+    board: minimalBoardFromSource(yamlText, taskId),
+    headSha,
+    treeSha,
+    yamlText,
+  };
+}
+
+async function githubPut(env, fetchImpl, yamlText, document, event) {
+  const blobResponse = await fetchImpl(`${githubRepositoryUrl(env)}/git/blobs`, {
+    method: "POST",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      content: yamlText,
+      encoding: "utf-8",
+    }),
+  });
+  const blobText = await blobResponse.text();
+  if (!blobResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection blob write failed (${blobResponse.status}): ${blobText.slice(0, 300)}`,
+    );
+  }
+  const blobSha = String((blobText ? JSON.parse(blobText) : {})?.sha || "");
+  if (!blobSha) throw new ConductProjectionError("GitHub projection blob write returned no SHA");
+
+  const treeResponse = await fetchImpl(`${githubRepositoryUrl(env)}/git/trees`, {
+    method: "POST",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      base_tree: document.treeSha,
+      tree: [{
+        path: String(env.LIMEN_GITHUB_PATH || "tasks.yaml"),
+        mode: "100644",
+        type: "blob",
+        sha: blobSha,
+      }],
+    }),
+  });
+  const treeText = await treeResponse.text();
+  if (!treeResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection tree write failed (${treeResponse.status}): ${treeText.slice(0, 300)}`,
+    );
+  }
+  const treeSha = String((treeText ? JSON.parse(treeText) : {})?.sha || "");
+  if (!treeSha) throw new ConductProjectionError("GitHub projection tree write returned no SHA");
+
+  const commitResponse = await fetchImpl(`${githubRepositoryUrl(env)}/git/commits`, {
+    method: "POST",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      message: `limen conduct: ${event.kind} ${event.task_id}`,
+      tree: treeSha,
+      parents: [document.headSha],
+    }),
+  });
+  const commitText = await commitResponse.text();
+  if (!commitResponse.ok) {
+    throw new ConductProjectionError(
+      `GitHub projection commit write failed (${commitResponse.status}): ${commitText.slice(0, 300)}`,
+    );
+  }
+  const commitSha = String((commitText ? JSON.parse(commitText) : {})?.sha || "");
+  if (!commitSha) throw new ConductProjectionError("GitHub projection commit write returned no SHA");
+
+  const refResponse = await fetchImpl(githubRefUrl(env), {
+    method: "PATCH",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({
+      sha: commitSha,
+      force: false,
+    }),
+  });
+  const text = await refResponse.text();
+  return {
+    ok: refResponse.ok,
+    status: refResponse.status,
+    text,
+    sha: commitSha,
+  };
+}
+
+export async function commitTaskCompatibilityEvent(env, event, { fetchImpl = fetch, maxAttempts = 4 } = {}) {
+  if (!event) return { status: "not_applicable" };
+  const inline = inlineBoardSource(env);
+  if (inline) {
+    const current = inlineBoards.get(env) || inline;
+    const parsed = YAML.parse(current) || { portal: {}, tasks: [] };
+    const applied = applyTaskCompatibilityEvent(parsed, event);
+    inlineBoards.set(env, YAML.stringify(applied.board));
+    return {
+      status: applied.duplicate ? "duplicate" : "committed",
+      mode: "inline",
+      task: applied.task,
+      event_id: event.event_id,
+    };
+  }
+  if (!env.LIMEN_GITHUB_REPO || !env.LIMEN_GITHUB_TOKEN) {
+    throw new ConductProjectionError(
+      "task-backed conduct transitions require LIMEN_GITHUB_REPO and LIMEN_GITHUB_TOKEN",
+    );
+  }
+  let lastConflict = "";
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    await reconcileProjectionBranch(env, fetchImpl);
+    const document = await githubGet(env, fetchImpl, event.task_id);
+    const applied = applyTaskCompatibilityEvent(document.board, event);
+    if (applied.duplicate) {
+      return {
+        status: "duplicate",
+        mode: "github",
+        sha: document.headSha,
+        task: applied.task,
+        event_id: event.event_id,
+      };
+    }
+    const yamlText = renderTaskBoardProjection(
+      document.yamlText,
+      document.board,
+      applied.board,
+      event.task_id,
+    );
+    const written = await githubPut(env, fetchImpl, yamlText, document, event);
+    if (written.ok) {
+      return {
+        status: "committed",
+        mode: "github",
+        sha: written.sha,
+        task: applied.task,
+        event_id: event.event_id,
+      };
+    }
+    if (written.status === 409
+        || (written.status === 422
+          && /fast[- ]forward|sha|does not match|conflict|reference update failed/i.test(written.text))) {
+      lastConflict = written.text.slice(0, 300);
+      continue;
+    }
+    throw new ConductProjectionError(
+      `GitHub projection write failed (${written.status}): ${written.text.slice(0, 300)}`,
+    );
+  }
+  throw new ConductProjectionError(
+    `GitHub projection CAS did not converge after ${maxAttempts} attempts: ${lastConflict}`,
+    409,
+  );
+}
+
+export function readInlineProjection(env) {
+  const text = inlineBoards.get(env) || inlineBoardSource(env);
+  return YAML.parse(text) || { portal: {}, tasks: [] };
+}
+
+export const readInlineProjectionForTest = readInlineProjection;

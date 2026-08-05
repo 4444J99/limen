@@ -26,6 +26,16 @@ TARGET_SOURCES = {
 KNOWN_GAPS = {"copilot", "ollama", "workbench", "perplexity"}
 
 
+def _nonnegative_int(value, default: int = 0) -> int:
+    try:
+        if isinstance(value, bool):
+            return default
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed >= 0 else default
+
+
 def main() -> int:
     try:
         lines = MANIFEST.read_text().splitlines()
@@ -42,8 +52,8 @@ def main() -> int:
             r = json.loads(ln)
         except ValueError:
             continue
-        n = int(r.get("atom_count", 0) or 0)
-        src = r.get("source") or "?"
+        n = _nonnegative_int(r.get("atom_count"), 0)
+        src = str(r.get("source") or "?")
         atoms += n
         by_source[src] = by_source.get(src, 0) + 1
         atoms_by_source[src] = atoms_by_source.get(src, 0) + n

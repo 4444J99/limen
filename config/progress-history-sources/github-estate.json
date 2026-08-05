@@ -1,0 +1,34 @@
+{
+  "actual_field": null,
+  "ask_kind_values": [],
+  "document_paths": [
+    "logs/github-estate-census-facts.json",
+    "docs/github-estate-census.json"
+  ],
+  "evidence_fields": [
+    "url",
+    "owner",
+    "predicate",
+    "merge_condition"
+  ],
+  "identity_fields": [
+    "leaf_id",
+    "leaf_key"
+  ],
+  "kind_field": "kind",
+  "leaf_field": "leaves",
+  "reopened_values": [],
+  "schema": "limen.progress-history-adapter.v1",
+  "source_id": "github-estate",
+  "state_fields": [
+    "status"
+  ],
+  "terminal_values": [
+    "owned"
+  ],
+  "timestamp_fields": [
+    "created_at",
+    "updated_at"
+  ],
+  "verified_field": null
+}

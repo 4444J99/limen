@@ -2,7 +2,7 @@
 #    uv pip compile pyproject.toml -o requirements.txt
 annotated-types==0.7.0
     # via pydantic
-click==8.4.1
+click==8.4.2
     # via limen (pyproject.toml)
 pydantic==2.13.4
     # via limen (pyproject.toml)
@@ -10,7 +10,9 @@ pydantic-core==2.46.4
     # via pydantic
 pyyaml==6.0.3
     # via limen (pyproject.toml)
-typing-extensions==4.15.0
+rfc8785==0.1.4
+    # via limen (pyproject.toml)
+typing-extensions==4.16.0
     # via
     #   pydantic
     #   pydantic-core

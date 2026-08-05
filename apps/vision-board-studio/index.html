@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vision Board Studio</title>
+<meta name="description" content="Recreate a lost vision board from a single photo — restore it faithfully, then fork it forward. Export as poster, reprint kit, or editable canvas." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar no-print">
+  <div class="brand">
+    <span class="logo">◲</span>
+    <div>
+      <h1>Vision Board Studio</h1>
+      <p class="tagline">Recreate a board from one photo — restore it, then fork it forward.</p>
+    </div>
+  </div>
+  <div class="board-meta">
+    <input id="boardName" class="board-name" value="" aria-label="Board name" />
+  </div>
+</header>
+
+<nav class="toolbar no-print" aria-label="Studio controls">
+  <div class="seg" role="tablist" aria-label="Layer">
+    <button class="seg-btn is-active" data-layer="faithful" title="The restored 2017 board">Faithful</button>
+    <button class="seg-btn" data-layer="fork" title="Your 2026 re-imagining">2026 Fork</button>
+    <button class="seg-btn" data-layer="split" title="See both at once">Split</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="seg" role="group" aria-label="Output">
+    <button id="btnPoster" title="Print / save as a single poster (PDF)">Poster</button>
+    <button id="btnKit" title="Reprint kit: each tile at cut size + layout map">Reprint kit</button>
+    <button id="btnCanvas" class="is-active" title="Editable canvas">Canvas</button>
+  </div>
+  <div class="spacer"></div>
+  <label class="btn-file" title="Start a new board from a photo of any board">
+    + New from photo<input id="ingestFile" type="file" accept="image/*" hidden />
+  </label>
+  <button id="btnExport" title="Download this board as a .json file">Save</button>
+  <label class="btn-file" title="Load a board .json">Load<input id="importFile" type="file" accept="application/json" hidden /></label>
+</nav>
+
+<main>
+  <!-- CANVAS / POSTER -->
+  <section id="stage" class="stage">
+    <div id="boardWrap" class="board-wrap">
+      <div id="board" class="board" aria-label="Vision board"></div>
+      <div id="banner" class="banner" contenteditable="true" spellcheck="false"></div>
+    </div>
+    <p class="origin-note no-print" id="originNote"></p>
+  </section>
+
+  <!-- REPRINT KIT -->
+  <section id="kit" class="kit" hidden></section>
+
+  <!-- INGEST -->
+  <section id="ingest" class="ingest no-print" hidden>
+    <div class="ingest-head">
+      <h2>Map tiles from your photo</h2>
+      <p>Drag a rectangle over each picture on the board. Each box becomes a tile you can title and swap. Press <b>Done</b> when finished.</p>
+      <div>
+        <button id="ingestDone" class="primary">Done — build board</button>
+        <button id="ingestCancel">Cancel</button>
+        <span id="ingestCount" class="muted">0 tiles</span>
+      </div>
+    </div>
+    <div id="ingestCanvasWrap" class="ingest-canvas-wrap"></div>
+  </section>
+</main>
+
+<!-- TILE EDITOR -->
+<aside id="editor" class="editor no-print" hidden aria-label="Tile editor">
+  <div class="editor-head">
+    <h3 id="edTitle">Tile</h3>
+    <button id="edClose" aria-label="Close">✕</button>
+  </div>
+  <div class="editor-body">
+    <div class="ed-preview"><img id="edImg" alt="" /></div>
+    <label class="ed-row">Layer showing
+      <span id="edLayer" class="pill"></span>
+    </label>
+    <label class="ed-row">Caption
+      <input id="edCaption" type="text" />
+    </label>
+    <label class="ed-row">Theme
+      <input id="edTheme" type="text" />
+    </label>
+    <label class="ed-row">Image URL
+      <input id="edUrl" type="text" placeholder="paste a high-res image URL…" />
+    </label>
+    <label class="btn-file wide" title="Upload a replacement image">
+      Upload image<input id="edUpload" type="file" accept="image/*" hidden />
+    </label>
+    <a id="edSearch" class="ed-search" target="_blank" rel="noopener">🔎 Find a high-res match ↗</a>
+    <button id="edRevert" class="ghost">Revert to salvaged fragment</button>
+    <p class="ed-desc" id="edDesc"></p>
+  </div>
+</aside>
+
+<div id="toast" class="toast no-print" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

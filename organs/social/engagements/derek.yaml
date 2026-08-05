@@ -1,0 +1,81 @@
+# Relationship-Posture Brief: Derek
+# Koinonia social organ — first engagement
+
+member:
+  name: "Derek"
+  identifier: "derek-creative"
+  context: >
+    Creative collaborator, narrative partner, and Sovereign Systems client.
+    Co-creator on long-form narrative work (Beowulf Fitts). Recipient of
+    consulting services through the Sovereign Systems engagement.
+  note: >
+    Multi-dimensional tie: the relationship holds creative partnership,
+    professional service delivery, and mutual creative respect. Each
+    dimension is tracked, but the person is not reduced to the sum of
+    transactions.
+
+mandate:
+  relationship: "creative collaborator and client"
+  why_it_matters: >
+    Derek is a rare collaborator who shares Anthony's creative sensibility and
+    can receive the full weight of the work. The tie is both a professional
+    engagement (consulting delivery) and a creative partnership (shared
+    authorship). Losing this tie would mean losing a creative peer, not just
+    a client.
+
+standing:
+  current: ACTIVE
+  warmth: "high — frequent recent contact with mutual investment"
+  history:
+    - period: "2025 — present"
+      state: ACTIVE
+      notes: "Active collaboration on narrative work and consulting delivery"
+    - period: "2024 — 2025"
+      state: WARM
+      notes: "Initial connection and early collaboration"
+
+standard:
+  reciprocity_norm: "collaborator — high mutuality"
+  expected_cadence: "weekly check-in during active projects; monthly touch-base otherwise"
+  reply_window: "within 24 hours on active threads"
+  boundaries:
+    - "No contact about personal matters outside agreed creative scope"
+    - "Project deliverables reviewed before delivery — never sent draft-direct"
+  owed_replies:
+    - "Review latest narrative draft and send feedback"
+  care_pattern: >
+    Annual gratitude note marking significant collaboration milestones.
+    Prompt reply with full attention during active threads.
+    Advocacy: refer Derek to opportunities that match his creative voice.
+
+governance:
+  manual_mode: true
+  human: "Anthony"
+  consent:
+    - "Derek has consented to this posture record being held by the social organ"
+    - "Personal relationship data is private and never shared outside the organ"
+    - "Project-specific data lives in the consulting organ, not here"
+  requires_human:
+    - "Every creative deliverable before external delivery"
+    - "Every introduction or referral to a third party"
+    - "Any conflict, repair attempt, or boundary change"
+  never_autonomous:
+    - "Sending messages, invitations, or introductions"
+    - "Sharing Derek's personal data outside the organ"
+    - "Claiming to speak for Derek or make commitments on his behalf"
+  human_gates:
+    - "creative-deliverable-review"
+    - "referral-or-introduction"
+    - "conflict-or-repair"
+    - "boundary-change"
+
+artifacts:
+  next_reviewable_output: "relationship-posture-report for brief review with Anthony"
+  evidence:
+    - "member: name, identifier, context, and privacy note recorded"
+    - "mandate: relationship type and why_it_matters documented"
+    - "standing: ACTIVE with warmth and history — manually confirmed"
+    - "standard: reciprocity norm, cadence, reply window, boundaries, owed replies, and care pattern all named"
+    - "governance: manual_mode=true, 4 human gates, 3 explicit never_autonomous rules"
+
+updated: "2026-07-04T09:35:00Z"

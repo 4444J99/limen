@@ -1,0 +1,21 @@
+{
+  "schema": "limen.estate_audit_paired_custody_targets.v1",
+  "inventory": "docs/storage-evacuation-inventory-20260727.json",
+  "inventory_id": "laptop-evacuation-20260727T213714Z",
+  "inventory_sha256": "5034e1ca795fd1900f05f34068edb028da569bebc28d020e211a35f7abfa5be6",
+  "targets": [
+    {
+      "ref": "archive4t",
+      "inventory_name": "Archive4T",
+      "custody_root": "/Volumes/Archive4T/limen-private/estate-audit-git-custody",
+      "stable_physical_identity": null
+    },
+    {
+      "ref": "t7recovery",
+      "inventory_name": "T7Recovery",
+      "custody_root": "/Volumes/T7Recovery/limen-private/estate-audit-git-custody",
+      "stable_physical_identity": null
+    }
+  ],
+  "proof_status": "registered_not_live_verified"
+}

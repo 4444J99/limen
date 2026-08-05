@@ -1,0 +1,369 @@
+# Analects — Book X — curated music arc
+# 鄉黨 Xiang Dang — "In the Village" (Virtue Embodied in Gesture and Habit)
+# Score the actual movement of the ~31 chapters — not "teachings" but "behaviors witnessed."
+# Book X is an exhaustive behavioral manual of the Master encoded as memory: what he wore, how he sat,
+# what he ate, how he moved. The format is "When [situation], the Master would [gesture]."
+# This is virtue made visible, learnable, and transmissible through embodied practice.
+work: analects
+book: 10
+title: "Analects Book X: Memory, Gesture, Virtue Made Visible"
+length_minutes: 93
+principle: >
+  Do not score Book X as "ethical teachings." Score it as a living archive of observed behavior,
+  transmitted as memory. The book is almost entirely constructed from the disciples' testimony: the
+  Master wore a robe of dark silk; his mat was never placed diagonally; he made such a sound eating
+  rice; he comforted the bereaved in this manner. These are not rules but patterns, and they function
+  as an embodied manual for how to carry oneself through the ordinary activities of life. The book
+  transforms virtue from idea into gesture, from doctrine into the muscle-memory of how to sit, stand,
+  speak, and mourn. The dominant force is memory because every chapter IS an act of remembering — the
+  disciples preserving what they observed, storing it in memory so that future students can learn by
+  imitation. The force arc moves through memory, law, ascent, and return because proper gesture (memory
+  informed by law) ascends toward a kind of effortlessness (ascent) that eventually becomes so natural
+  it seems like the simplest return. This is how virtue propagates: not through teaching but through
+  witnessed behavior become remembered, remembered behavior become imitated, imitated behavior become
+  automatic, automatic behavior become character. The book is choreography made eternal.
+force_arc: [memory, law, memory, return, memory, law, memory, ascent, memory, law, return, memory, ascent, law, memory, return, memory, law, memory, ascent, law, memory, return, law, memory, ascent, memory, return, law, memory, ascent]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "Opening — the Master in his daily robes"
+    force: memory
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor, D. 810 ('Death and the Maiden') — I. Allegro"
+    decision: added
+    why: >
+      The book opens with the most intimate detail: the Master's private dress, his garments for home.
+      This is memory at its most literal — preserving the texture of lived life. Schubert's Death and
+      the Maiden quartet begins in the domain of the private self, a conversation overheard. Memory
+      preserves the ordinary as sacred.
+  - n: 2
+    scene: "The setting of the mat — propriety in placement"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude No. 1 in C major, BWV 846"
+    decision: added
+    why: >
+      Even the angle of the mat matters. Law here is not written but embodied: there is a right way to
+      place things, and that rightness is legible to the watching eye. Bach's prelude is the music of
+      rightness itself: each note in its proper place, not by coercion but by the internal logic of the
+      form. The mat placed correctly IS the prelude — both are acts of setting in order.
+  - n: 3
+    scene: "The Master eating — the sound and manner of ingestion"
+    force: memory
+    composer: Satie
+    work: "Gymnopédies No. 1 — full"
+    decision: added
+    why: >
+      Even in eating (the most private and animal of acts), the Master maintained perfect form. Memory
+      here captures the embodied discipline that transforms the base into the refined. Satie's sparse,
+      clear gestures are the music of eating transformed into ritual: each note a morsel, placed with
+      intention, never rushed.
+  - n: 4
+    scene: "Return from official duty — the shape of homecoming"
+    force: return
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor ('From the New World') — IV. Allegro con fuoco"
+    decision: added
+    why: >
+      When the Master returned home after service, his bearing changed — he relaxed from the formal to
+      the intimate. Return here is the cyclical movement of the day: morning departure, evening return,
+      yet each return changes the person returning because they have lived in the world. Dvořák's finale
+      is the sound of coming home: the instruments return to familiar material but the journey has
+      transformed it.
+  - n: 5
+    scene: "In the presence of the lord — formality and restraint"
+    force: memory
+    composer: Fauré
+    work: "Requiem — I. Introitus"
+    decision: added
+    why: >
+      The Master's bearing in formal settings was grave, measured, responsive to the hierarchical
+      moment. Memory here is the precise recollection of posture and tone. Fauré's Introitus is formal
+      yet warm — it holds the space of formal ritual without coldness, the way the Master's gravity was
+      never harsh.
+  - n: 6
+    scene: "Respectful approach — how to enter a room"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Alla Marcia"
+    decision: added
+    why: >
+      When approaching his lord, the Master would lift his skirts carefully, step cautiously, move
+      with precise intention. Law here is the protocol of relation: there is a proper way to be in
+      each space. Handel's march is formal without heaviness — orderly movement that serves the
+      occasion.
+  - n: 7
+    scene: "Speaking to the lord — what he said and how he said it"
+    force: memory
+    composer: Gluck
+    work: "Orfeo ed Euridice — 'Che farò senza Euridice?' (opening)"
+    decision: added
+    why: >
+      The Master's speech to his lord was deferential but not servile — measured, clear, responsive.
+      Memory preserves the exact tone: neither cringing nor arrogant. Gluck's aria opens with a
+      specific emotional register: vulnerability without weakness, honesty without exposure.
+  - n: 8
+    scene: "Ascending the platform — physical grace made visible"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 1 in D major — III. Feierlich und gemessen"
+    decision: added
+    why: >
+      Even the simple act of climbing stairs was transformed into grace by the Master's presence.
+      Ascent here is literal: the movement upward enacts what is learned from witnessing. Mahler's
+      movement traces an ascent from the base march through funeral bells to a transcendent height.
+      The physical act becomes metaphysical.
+  - n: 9
+    scene: "In the company of the nine noble families — restraint among equals"
+    force: memory
+    composer: Mozart
+    work: "Eine kleine Nachtmusik — I. Allegro"
+    decision: added
+    why: >
+      Among peers, the Master was composed and moderate. Memory records the shift from formal duty to
+      collegial exchange. Mozart's Nachtmusik is the music of sophisticated ease — the form is
+      complete, but the spirit is playful. The memory is of being at home without losing form.
+  - n: 10
+    scene: "The ordering of the household — governance through example"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      In his own house, the Master maintained an order so natural it seemed unforced. Law here is the
+      structure that enables freedom. Bach's fugal subject multiplies across voices, each bound by law
+      yet each free to be itself. The Master's household was like this: a composition where everyone
+      knew their part.
+  - n: 11
+    scene: "The approach of guests — hospitality and presence"
+    force: return
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — I. Allegro ma non troppo"
+    decision: added
+    why: >
+      When guests approached, the Master's manner would shift — opening, welcoming, yet never losing
+      dignity. Return here is the movement toward the other: the home receives what comes from beyond
+      it. Schubert's quintet opens with a greeting: the cello rises to meet the violins, and the
+      whole fabric expands to receive new presences.
+  - n: 12
+    scene: "Sitting and standing — the geometry of presence"
+    force: memory
+    composer: Brahms
+    work: "Intermezzo in A major, Op. 118 No. 2"
+    decision: added
+    why: >
+      The Master's posture — how he sat, how he stood — was never careless. Memory preserves this
+      attentiveness to the body as the vessel of the self. Brahms's Intermezzo is physically precise:
+      the hand knows exactly how much tension to hold, where to release. The music is the memory of
+      a body perfectly present to itself.
+  - n: 13
+    scene: "The refusal of excess — not eating past fullness"
+    force: ascent
+    composer: Chopin
+    work: "Prelude in E minor, Op. 28 No. 4"
+    decision: added
+    why: >
+      The Master would not eat until satisfied, nor until the hour was improper. This is ascent
+      through discipline: the body mastered, appetite refined into something higher. Chopin's prelude
+      is restraint so intense it becomes beauty; the refusal to indulge becomes a form of abundance.
+  - n: 14
+    scene: "In mourning — grief with form"
+    force: law
+    composer: Fauré
+    work: "Requiem — IV. Pie Jesu"
+    decision: added
+    why: >
+      Even in the deepest sorrow, the Master maintained the form of mourning. Law here is the
+      container that allows grief to be grief without becoming despair. Fauré's Pie Jesu holds sorrow
+      in the shape of prayer — the emotion is real, but it moves within the architecture of ritual.
+  - n: 15
+    scene: "The color of his garments — aesthetic restraint"
+    force: memory
+    composer: Debussy
+    work: "Clair de lune"
+    decision: added
+    why: >
+      The Master would not wear purple or brilliant colors, yet he was not drab. Memory here captures
+      the exactness of aesthetic judgment: the color that is right, not because it is prescribed but
+      because it is true. Debussy's moonlight has this quality: not bright, not dark, but exactly the
+      tone that is fitting.
+  - n: 16
+    scene: "The return home from a journey — the exhaustion and ease of homecoming"
+    force: return
+    composer: Elgar
+    work: "Salut d'Amour"
+    decision: added
+    why: >
+      When the Master returned from journeys, he would rest at home, his bearing changing from formal
+      to relaxed. Return here is both physical and emotional: the body comes home and the spirit
+      relaxes into familiar rhythms. Elgar's gentle miniature is the music of ease won through
+      completion of effort.
+  - n: 17
+    scene: "In conversation — the attentiveness of listening"
+    force: memory
+    composer: Schumann
+    work: "Waldszenen — No. 1 'Eintritt'"
+    decision: added
+    why: >
+      The Master's whole demeanor would change when listening to others: his face would open, his
+      attention would deepen. Memory here is the record of what deep listening looks like when
+      embodied. Schumann's opening to Waldszenen is an entrance into a space where every sound is
+      heard with precision — this is how the Master listened.
+  - n: 18
+    scene: "The ordering of his chamber — the refusal of luxury"
+    force: law
+    composer: Telemann
+    work: "Tafelmusik — Concerto in D major — I. Largo"
+    decision: added
+    why: >
+      The Master's chamber was orderly and plain: no unnecessary ornament, but perfect in its
+      simplicity. Law here is the principle that manifests as clarity. Telemann's Largo is stately and
+      measured — every element necessary, nothing excessive, yet the totality is complete.
+  - n: 19
+    scene: "In the presence of the bereaved — the compassion of silence"
+    force: memory
+    composer: Mahler
+    work: "Das Lied von der Erde — 'Der Trunkene im Frühling'"
+    decision: added
+    why: >
+      When someone was grieving, the Master would sit with them, his own bearing transformed by
+      sympathy. Memory here is the compassion embodied as presence. Mahler's song captures this: the
+      melody droops with grief, yet beneath it is the sustaining harmony of presence that does not
+      flee the sorrow.
+  - n: 20
+    scene: "In eating — the tempo and manner of consumption"
+    force: ascent
+    composer: Bach
+    work: "Cello Suite No. 1 in G major — Prelude"
+    decision: added
+    why: >
+      Even the act of eating was refined by the Master — the pace deliberate, never rushed, never
+      greedy. Ascent here is the transformation of the most base act into something refined. Bach's
+      cello prelude is the single line of the self climbing toward something higher — slow, measured,
+      without haste.
+  - n: 21
+    scene: "The arrangement of utensils — the language of propriety"
+    force: law
+    composer: Hindemith
+    work: "Mathis der Maler — I. Engelkonzert"
+    decision: added
+    why: >
+      Even objects were arranged according to law: the mat in place, the utensils in order, everything
+      positioned with intention. Law here is made visible in the arrangement of things. Hindemith's
+      angel concert is the vision of a perfect order where every element is in its place and the whole
+      radiates divine proportion.
+  - n: 22
+    scene: "In his own room — the privacy of virtue"
+    force: memory
+    composer: Satie
+    work: "Gymnopédies No. 2"
+    decision: added
+    why: >
+      When alone in his chamber, the Master's manner was the same as in public: there was no difference
+      between the observed and the unobserved self. Memory here is the most precious form: the
+      preservation of what no one sees, maintained by the self for the self. Satie's second Gymnopédie
+      is solitude that is not lonely — it is company with oneself.
+  - n: 23
+    scene: "At table with inferiors — dignity without condescension"
+    force: return
+    composer: Ravel
+    work: "Pavane for a Dead Princess"
+    decision: added
+    why: >
+      Even when dining with those of lower rank, the Master maintained perfect ease and respect.
+      Return here is the movement toward the other: the superior who returns the dignity of his
+      presence to those beneath him. Ravel's pavane is measured grace — movement that honors what it
+      moves through.
+  - n: 24
+    scene: "The refinement of movement — step, gesture, proportion"
+    force: law
+    composer: Palestrina
+    work: "Stabat Mater — 'Eja, Mater'"
+    decision: added
+    why: >
+      The Master's movements were never abrupt or crude; they were refined, proportioned, moving with
+      an inner logic. Law here becomes the grammar of the body. Palestrina's polyphony is the law of
+      music made visible: every voice moving in relation, every gesture constrained by the whole.
+      The Master's body was like this: a composition.
+  - n: 25
+    scene: "In ritual contexts — the embodiment of propriety"
+    force: memory
+    composer: Gluck
+    work: "Orfeo ed Euridice — Overture"
+    decision: added
+    why: >
+      When performing ritual, the Master's bearing became almost ceremonial. Memory here preserves
+      the transformation of the ordinary person into the vessel of tradition. Gluck's overture moves
+      with ceremonial dignity — not stiff, but alive with the weight of what it carries.
+  - n: 26
+    scene: "The pace of his walk — the signature of his presence"
+    force: ascent
+    composer: Beethoven
+    work: "Symphony No. 7 in A major — II. Allegretto"
+    decision: added
+    why: >
+      The Master's gait had a characteristic quality — not hurried, yet not slow. Ascent here is the
+      upward movement of the body through space, each step a gesture. Beethoven's Allegretto is the
+      music of a procession that never reaches its destination yet is always moving toward it.
+  - n: 27
+    scene: "The ordering of his room when ill — continuity despite infirmity"
+    force: memory
+    composer: Brahms
+    work: "Alto Rhapsody, Op. 53"
+    decision: added
+    why: >
+      Even when sick, the Master would not abandon the form of propriety. Memory here is the
+      preservation of virtue even in diminishment. Brahms's rhapsody is the voice of the soul speaking
+      through the infirmity of the body — the form remains even as the vessel weakens.
+  - n: 28
+    scene: "At the ancestral temple — reverence made physical"
+    force: return
+    composer: Fauré
+    work: "Requiem — III. Offertorium"
+    decision: added
+    why: >
+      In the temple, the Master's bearing was transformed into something sacred. Return here is the
+      movement backward through time to meet the ancestors. Fauré's Offertorium is the sound of what
+      is being offered: the present moment returned to its source.
+  - n: 29
+    scene: "In speaking of others — the charity of the observed word"
+    force: law
+    composer: Mozart
+    work: "Clarinet Concerto in A major — II. Adagio"
+    decision: added
+    why: >
+      When speaking of others, the Master was careful and kind, never harsh. Law here is the protocol
+      of speech: there is a right way to speak of those not present. Mozart's Adagio is the music of
+      speech refined into something precious — each note a word chosen with care.
+  - n: 30
+    scene: "The arrangement of his seat — the positioning of hierarchy"
+    force: memory
+    composer: Mahler
+    work: "Symphony No. 2 in C minor — I. Allegro maestoso"
+    decision: added
+    why: >
+      The Master would take his seat in a way that acknowledged the hierarchy of the space while
+      remaining easy. Memory here is the precise knowledge of where to stand in relation to others.
+      Mahler's opening is the establishment of position: the master-theme stated, all other elements
+      orbiting around it.
+  - n: 31
+    scene: "Closing — the Master's gesture as eternal form"
+    force: ascent
+    composer: Schubert
+    work: "String Quartet No. 15 in G major, D. 887 — IV. Allegro assai"
+    decision: added
+    why: >
+      Book X closes where it began: with the observation that in every gesture, the Master manifests
+      virtue. The disciples' memory of these small gestures becomes the curriculum for all future
+      students. Ascent here is the movement upward from the particular gesture to the universal form
+      it exemplifies. Schubert's finale is the acceleration of memory into wisdom — the many moments
+      of observation becoming a single blazing clarity about what a human being can become.
+demoted:
+  - composer: Bartók
+    work: "Allegro barbaro"
+    status: "too primitive for Book X; save for conflict or disruption"
+    why: "Book X is about the refinement of gesture, not the primitive or crude."
+  - composer: Webern
+    work: "Symphony, Op. 21"
+    status: "too crystalline and austere; save for moments of extreme reduction"
+    why: "Memory needs texture; Webern's abstraction is too far from the embodied lived moment."

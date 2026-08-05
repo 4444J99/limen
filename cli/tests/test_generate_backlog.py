@@ -8,12 +8,15 @@ generate-backlog.py runs autonomously in the heartbeat, so its safety properties
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 
 import yaml
+
+from limen.tabularius import drain_once
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "generate-backlog.py"
@@ -59,7 +62,6 @@ def _run(
     *args: str,
     value_repos: str | None = None,
     worktree_root: Path | None = None,
-    debt_cap: str = "12",
 ) -> str:
     # LIMEN_ORGS="" disables the live-org repo source so the test is deterministic against the
     # repos in its temp tasks.yaml (the generator falls back to the queue set when no org is given).
@@ -83,16 +85,73 @@ def _run(
             "LIMEN_VALUE_REPOS": value_repos,
             "LIMEN_VALUE_REPOS_FILE": str(path.parent / "no-such-tier.json"),
             "LIMEN_WORKTREE_ROOT": str(worktree_root or path.parent / "empty-worktrees"),
-            "LIMEN_WORKTREE_DEBT_MAX": debt_cap,
+            # Pin the gate flag so tests are hermetic against LIMEN_WORKTREE_DEBT_GATE=0
+            # leaking in from test_async_dispatch._load() when the suite runs together.
+            "LIMEN_WORKTREE_DEBT_GATE": "1",
         },
     )
     assert p.returncode == 0, p.stderr
+    if "--apply" in args:
+        # Producers submit immutable tickets; the keeper owns the canonical
+        # transition and only then refreshes this isolated test projection.
+        drained = drain_once(path)
+        assert not drained.deferred, drained.note
+        assert drained.rejected == 0, drained.note
     return p.stdout
 
 
 def _count_generated(path: Path) -> int:
     doc = yaml.safe_load(path.read_text())
     return sum(1 for t in doc["tasks"] if str(t["id"]).startswith("GEN-"))
+
+
+def test_census_is_counts_only(tmp_path: Path):
+    p = tmp_path / "tasks.yaml"
+    p.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {"name": "t"},
+                "tasks": [
+                    {
+                        "id": "SECRET-FEED-1",
+                        "title": "confidential launch task",
+                        "repo": "secret-owner/private-repo",
+                        "type": "code",
+                        "target_agent": "codex",
+                        "priority": "medium",
+                        "budget_cost": 1,
+                        "status": "open",
+                        "labels": ["test-coverage", "secret-label", "generated", "build-out"],
+                        "context": "private customer context",
+                        "created": "2026-06-01",
+                        "dispatch_log": [],
+                    }
+                ],
+            },
+            sort_keys=False,
+        )
+    )
+
+    census = json.loads(_run(p, "--census"))
+    encoded = json.dumps(census, sort_keys=True)
+
+    assert census["tasks_present"] is True
+    assert census["tasks_readable"] is True
+    assert census["task_count"] == 1
+    assert census["status_counts"] == {"open": 1}
+    assert census["value_tier_count"] == 1
+    assert census["generated_buildout_count"] == 1
+    assert census["worktree_debt_count"] == 0
+    assert census["worktree_debt_complete"] is True
+    assert "worktree_debt_limit" not in census
+    assert "worktree_debt_exceeded" not in census
+    assert "SECRET-FEED-1" not in encoded
+    assert "confidential" not in encoded
+    assert "secret-owner" not in encoded
+    assert "private-repo" not in encoded
+    assert "secret-label" not in encoded
+    assert "private customer" not in encoded
 
 
 def test_noop_when_queue_healthy(tmp_path: Path):
@@ -140,11 +199,14 @@ def test_value_tier_gate_fail_closed_and_filters(tmp_path: Path):
     assert gen_repos == {"o/r3"}, f"gate leaked to non-tier repos: {gen_repos}"
 
 
-def test_worktree_debt_gate_suppresses_generated_buildout(tmp_path: Path):
+def test_high_legacy_debt_does_not_scan_or_stop_normal_generation(tmp_path: Path):
+    # Normal feed must not classify the estate at all. The explicit --census surface owns that
+    # diagnostic; per-task admission owns launch safety. A worktree inventory here used to cost
+    # roughly 51 seconds on the live estate before the generator even checked the queue floor.
     p = tmp_path / "tasks.yaml"
     _board(p, [f"o/r{i}" for i in range(20)], n_open_per_repo=1)
     debt_root = tmp_path / "debt"
-    for i in range(3):
+    for i in range(7):  # arbitrary nonzero debt (non-git residue roots), never 12
         (debt_root / f"residue-{i}").mkdir(parents=True)
 
     out = _run(
@@ -155,8 +217,9 @@ def test_worktree_debt_gate_suppresses_generated_buildout(tmp_path: Path):
         "12",
         "--apply",
         worktree_root=debt_root,
-        debt_cap="2",
     )
 
-    assert "lifecycle debt gate" in out
-    assert _count_generated(p) == 0
+    # No hot-path diagnostic scan/output, and no kill switch — generation continues to the cap.
+    assert "lifecycle debt diagnostic" not in out
+    assert "lifecycle debt gate" not in out
+    assert _count_generated(p) == 12

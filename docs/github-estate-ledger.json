@@ -1,0 +1,334 @@
+{
+  "app": {
+    "installations": null,
+    "installed": null,
+    "slug": "limen[bot]",
+    "token_path": "app"
+  },
+  "app_estate": {
+    "all_apps": [
+      "agentic-search",
+      "chatgpt-codex-connector",
+      "chatgptbot",
+      "claude",
+      "codacy-production",
+      "coderabbitai",
+      "cursor",
+      "docker",
+      "gemini-code-assist",
+      "gitguardian",
+      "google-ai-studio",
+      "google-cloud-build",
+      "google-labs-jules",
+      "ivviiviivvi-semgrep-code-011226",
+      "komment-ai",
+      "labores-crux-semgrep-011226",
+      "limen-conductor",
+      "linear-code",
+      "llamapreview",
+      "meta-organvm-cross-org",
+      "netlify",
+      "omni-dromenon-semgrep-code-011226",
+      "oz-by-warp",
+      "qodo-free-for-open-source-projects",
+      "renovate",
+      "semgrep-app",
+      "semgrep-code-ivviiviivvi",
+      "socket-security",
+      "sourcery-ai",
+      "trunk-io",
+      "vercel"
+    ],
+    "by_org": {
+      "a-organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "oz-by-warp"
+      ],
+      "meta-organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "linear-code",
+        "meta-organvm-cross-org",
+        "oz-by-warp",
+        "vercel"
+      ],
+      "organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "coderabbitai",
+        "gemini-code-assist",
+        "google-labs-jules",
+        "limen-conductor",
+        "oz-by-warp",
+        "renovate"
+      ],
+      "organvm-i-theoria": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "chatgptbot",
+        "claude",
+        "codacy-production",
+        "coderabbitai",
+        "cursor",
+        "docker",
+        "gemini-code-assist",
+        "gitguardian",
+        "google-ai-studio",
+        "google-cloud-build",
+        "google-labs-jules",
+        "ivviiviivvi-semgrep-code-011226",
+        "komment-ai",
+        "llamapreview",
+        "netlify",
+        "oz-by-warp",
+        "qodo-free-for-open-source-projects",
+        "renovate",
+        "semgrep-app",
+        "semgrep-code-ivviiviivvi",
+        "socket-security",
+        "sourcery-ai",
+        "trunk-io",
+        "vercel"
+      ],
+      "organvm-ii-poiesis": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "omni-dromenon-semgrep-code-011226",
+        "oz-by-warp",
+        "semgrep-app",
+        "sourcery-ai"
+      ],
+      "organvm-iii-ergon": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "labores-crux-semgrep-011226",
+        "oz-by-warp",
+        "semgrep-app",
+        "sourcery-ai"
+      ],
+      "organvm-iv-taxis": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-v-logos": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-vi-koinonia": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-vii-kerygma": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ]
+    },
+    "orgs": 10
+  },
+  "branches": {
+    "conductor_by_reason": {
+      "checked-out": 77,
+      "inflight": 73,
+      "landed-pr-merged": 1,
+      "livework": 356,
+      "pr-merged-but-advanced": 7,
+      "protected": 1
+    }
+  },
+  "collaborators": {
+    "by_repo": {
+      "organvm/4444J99.github.io": {
+        "invitations": [],
+        "outside": []
+      },
+      "organvm/arca": {
+        "invitations": [],
+        "outside": []
+      },
+      "organvm/collaboratory": {
+        "invitations": [],
+        "outside": []
+      },
+      "organvm/content-engine--asset-amplifier": {
+        "invitations": [],
+        "outside": [
+          {
+            "login": "LeflerDesign",
+            "role": "maintain"
+          }
+        ]
+      },
+      "organvm/conversation-corpus-engine": {
+        "invitations": [],
+        "outside": []
+      },
+      "organvm/limen": {
+        "invitations": [],
+        "outside": []
+      },
+      "organvm/peer-audited--behavioral-blockchain": {
+        "invitations": [],
+        "outside": [
+          {
+            "login": "jtenen",
+            "role": "admin"
+          }
+        ]
+      },
+      "organvm/portfolio": {
+        "invitations": [],
+        "outside": []
+      },
+      "organvm/relationship-pipeline": {
+        "invitations": [],
+        "outside": []
+      },
+      "organvm/sovereign-systems--elevate-align": {
+        "invitations": [],
+        "outside": [
+          {
+            "login": "eauco-mads",
+            "role": "maintain"
+          }
+        ]
+      }
+    },
+    "complete": true,
+    "org_outside": {
+      "4444J99": null,
+      "organvm": [
+        "LeflerDesign",
+        "eauco-mads",
+        "jtenen"
+      ]
+    }
+  },
+  "integrations": {
+    "config_present": {
+      "claude-review": true,
+      "codecov": false,
+      "coderabbit": true,
+      "dependabot": true,
+      "mergify": false,
+      "renovate": true,
+      "review-fanout": true,
+      "semgrep": false,
+      "sonarcloud": false,
+      "trunk": false
+    },
+    "declared": 10,
+    "installed_slugs": [
+      "chatgpt-codex-connector",
+      "claude",
+      "coderabbitai",
+      "gemini-code-assist",
+      "google-labs-jules",
+      "limen-conductor",
+      "oz-by-warp",
+      "renovate"
+    ]
+  },
+  "online": true,
+  "orgs": {
+    "by_org": {
+      "a-organvm": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "meta-organvm": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "organvm": {
+        "class": "canonical",
+        "plan": "team",
+        "repos": 309
+      },
+      "organvm-i-theoria": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "organvm-ii-poiesis": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "organvm-iii-ergon": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "organvm-iv-taxis": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "organvm-v-logos": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "organvm-vi-koinonia": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      },
+      "organvm-vii-kerygma": {
+        "class": "reserved",
+        "plan": "free",
+        "repos": 0
+      }
+    }
+  },
+  "prs": {
+    "by_repo": {},
+    "complete": false,
+    "open_total": null
+  },
+  "repos": {
+    "archived": 12,
+    "by_class": {
+      "conductor": 1,
+      "contrib_fork": 29,
+      "frozen": 11,
+      "governed_public": 154,
+      "operation_private": 61,
+      "portal_public": 11,
+      "private_unreviewed": 5,
+      "vault_private": 38
+    },
+    "by_visibility": {
+      "private": 70,
+      "public": 240
+    },
+    "complete": true,
+    "forks": 29,
+    "total": 310
+  },
+  "schema": "limen.github_estate.v1",
+  "secrets": {
+    "homed": true
+  },
+  "seo": {
+    "audited": null,
+    "failing": null,
+    "passing": null
+  },
+  "usage": {
+    "rate_limit_headroom_pct": 100
+  }
+}

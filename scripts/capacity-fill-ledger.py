@@ -8,6 +8,7 @@ The command writes:
 It is intentionally read-only with respect to tasks/credentials/auth/deploy gates: this only
 re-derives reachability and remaining lane headroom from local receipts and configuration.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,9 +24,7 @@ from typing import Any
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
 DOC_PATH = ROOT / "docs" / "capacity-fill.md"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "capacity-fill.json"
 TASKS_PATH = ROOT / "tasks.yaml"
 USAGE_PATH = ROOT / "logs" / "usage.json"
@@ -35,16 +34,15 @@ RATE_LIMIT_TAIL_LINES = 400
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.capacity import capacity_census  # noqa: E402
-
+from limen.dispatch import _down_lanes, _reset_budget_if_needed, _weak_proxy_exhaustion  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 
 
 def load_tasks_board() -> dict[str, Any]:
     try:
-        import yaml
-    except ModuleNotFoundError:
-        return {}
-    try:
-        return yaml.safe_load(TASKS_PATH.read_text(encoding="utf-8")) or {}
+        lf = load_limen_file(TASKS_PATH)
+        _reset_budget_if_needed(lf, dt.datetime.now(dt.timezone.utc))
+        return lf.model_dump(mode="json", exclude_none=True)
     except Exception:
         return {}
 
@@ -144,6 +142,14 @@ def usage_signal_detail(agent: str) -> str | None:
     if headroom is not None:
         parts.append(f"headroom={headroom}%")
 
+    weekly = vendor.get("weekly_used_percent")
+    if weekly is not None:
+        parts.append(f"weekly={weekly}%")
+
+    limit_source = str(vendor.get("limit_source") or "").strip()
+    if limit_source:
+        parts.append(f"source={limit_source}")
+
     signal = vendor.get("signal")
     if signal and not parts:
         parts.append(f"usage signal={signal}")
@@ -204,16 +210,33 @@ def signal_use(agent: str, fallback: str) -> str:
     return f"{usage}; {fallback}"
 
 
+def codex_signal_quality() -> dict[str, str]:
+    vendor = usage_vendor("codex")
+    signal = str((vendor or {}).get("signal") or "").strip()
+    if signal == "vendor-rate-limit":
+        return {
+            "signal": "vendor rate-limit meter",
+            "trust": "measured",
+            "use": signal_use(
+                "codex",
+                "usable for pacing from provider rate_limits; weekly plan headroom is a steering input",
+            ),
+            "next_build": "Keep harvesting Codex vendor rate_limits into usage telemetry.",
+        }
+    return {
+        "signal": "transcript-token estimate",
+        "trust": "estimate",
+        "use": signal_use("codex", "usable for pacing; tune cap against plan status"),
+        "next_build": "Calibrate OpenAI plan pool cap from a trusted account meter.",
+    }
+
+
 def signal_quality(agent: str) -> dict[str, str]:
     agy_usage = usage_signal_detail("agy")
     gemini_usage = usage_signal_detail("gemini")
+    jules_usage = usage_signal_detail("jules")
     rows: dict[str, dict[str, str]] = {
-        "codex": {
-            "signal": "transcript-token estimate",
-            "trust": "estimate",
-            "use": signal_use("codex", "usable for pacing; tune cap against plan status"),
-            "next_build": "Calibrate OpenAI plan pool cap from a trusted account meter.",
-        },
+        "codex": codex_signal_quality(),
         "claude": {
             "signal": "transcript-token estimate",
             "trust": "estimate",
@@ -255,10 +278,13 @@ def signal_quality(agent: str) -> dict[str, str]:
             "next_build": ollama_next_build(),
         },
         "jules": {
-            "signal": "dispatch-count cap",
-            "trust": "known cap",
-            "use": "down locally until CLI/service path is available",
-            "next_build": "Restore Jules CLI/service reachability.",
+            "signal": "usage-telemetry proxy" if jules_usage else "dispatch-count cap",
+            "trust": "proxy + known cap" if jules_usage else "known cap",
+            "use": signal_use(
+                "jules",
+                f"remote async service; {rate_limit_watch('jules')}; use for remote batch fill",
+            ),
+            "next_build": "Keep Jules remote-launch receipts and harvest status fresh.",
         },
         "copilot": {
             "signal": "assignability probe",
@@ -290,9 +316,63 @@ def signal_quality(agent: str) -> dict[str, str]:
     )
 
 
+def apply_usage_to_census_row(row: dict[str, Any]) -> dict[str, Any]:
+    agent = str(row.get("agent") or "")
+    vendor = usage_vendor(agent)
+    if not vendor:
+        return row
+
+    health = str(vendor.get("health") or "").strip()
+    weak_proxy = _weak_proxy_exhaustion(agent, vendor)
+    remaining = vendor.get("remaining")
+    live_remaining: int | None = None
+    if remaining is not None:
+        try:
+            live_remaining = max(0, int(float(remaining)))
+        except (TypeError, ValueError):
+            live_remaining = None
+    if live_remaining is not None and not weak_proxy:
+        row["remaining"] = live_remaining
+    possible = vendor.get("possible")
+    if possible is not None:
+        try:
+            row["limit"] = int(float(possible))
+        except (TypeError, ValueError):
+            pass
+
+    if not weak_proxy and (health in {"exhausted", "rate-limited", "low"} or live_remaining == 0):
+        row["reachable"] = False
+        detail = str(row.get("detail") or "")
+        suffix = f"usage health={health or 'unknown'}"
+        if live_remaining is not None:
+            suffix = f"{suffix}; live remaining={live_remaining}"
+        row["detail"] = f"{detail}; {suffix}" if detail else suffix
+    return row
+
+
+def apply_dispatch_down_gate_to_census_row(row: dict[str, Any], down_lanes: set[str] | None = None) -> dict[str, Any]:
+    agent = str(row.get("agent") or "")
+    aliases = {agent}
+    if agent == "agy":
+        aliases.add("antigravity")
+    down = down_lanes if down_lanes is not None else _down_lanes()
+    if not aliases.intersection(down):
+        return row
+
+    row["reachable"] = False
+    row["remaining"] = 0
+    detail = str(row.get("detail") or "")
+    suffix = "dispatch down-lane gate"
+    row["detail"] = f"{detail}; {suffix}" if detail else suffix
+    return row
+
+
 def build_snapshot(board: dict[str, Any]) -> dict[str, Any]:
     census = [dict(row) for row in capacity_census(board)]
+    down_lanes = _down_lanes()
     for row in census:
+        apply_usage_to_census_row(row)
+        apply_dispatch_down_gate_to_census_row(row, down_lanes)
         if row.get("agent") == "ollama" and not row.get("reachable"):
             row["detail"] = ollama_capacity_detail(str(row.get("detail", "unreachable")))
     blocked = [row for row in census if not row["reachable"]]
@@ -344,14 +424,14 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     signals = snapshot.get("signals") or {}
     for row in census:
         signal = signals.get(row["agent"]) or {}
-        lines.append(
-            "| "
-            f"`{row['agent']}` | "
-            f"{str(signal.get('signal', 'unknown')).replace('|', '\\|')} | "
-            f"{str(signal.get('trust', 'unknown')).replace('|', '\\|')} | "
-            f"{str(signal.get('use', '')).replace('|', '\\|')} | "
-            f"{str(signal.get('next_build', '')).replace('|', '\\|')} |"
-        )
+        # Hoist the pipe-escape out of the f-string braces (matches the census loop
+        # above): a backslash inside an f-string expression is a SyntaxError on
+        # Python 3.11 (PEP 701 only lifts that on 3.12+), and CI runs both.
+        sig = str(signal.get("signal", "unknown")).replace("|", "\\|")
+        trust = str(signal.get("trust", "unknown")).replace("|", "\\|")
+        use = str(signal.get("use", "")).replace("|", "\\|")
+        nxt = str(signal.get("next_build", "")).replace("|", "\\|")
+        lines.append(f"| `{row['agent']}` | {sig} | {trust} | {use} | {nxt} |")
 
     lines += [
         "",
@@ -379,7 +459,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
 
     if blocked_count:
         route = (
-            "Run `python3 scripts/dispatch-health.py --write --probe-async` for a heartbeat/operator snapshot,"
+            "Run `python3 scripts/dispatch-health.py --write` for a campaign-heartbeat/operator snapshot,"
             " then re-run `python3 scripts/capacity-fill-ledger.py --write` after repairs."
         )
     else:
@@ -397,7 +477,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Commands",
         "",
         "- Refresh this ledger: `python3 scripts/capacity-fill-ledger.py --write`",
-        "- Refresh dispatch heartbeat: `python3 scripts/dispatch-health.py --write --probe-async`",
+        "- Refresh campaign heartbeat: `python3 scripts/dispatch-health.py --write`",
     ]
 
     return "\n".join(lines) + "\n"

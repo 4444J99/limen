@@ -21,6 +21,13 @@ assistants, chiefs of staff, clubs, churches, alumni offices, social calendars, 
 operators standing behind them. Everyone else is expected to remember every birthday, debt, promise,
 boundary, introduction, conflict, and opportunity from an exhausted private mind.
 
+The rival institution is a **civic/community institution plus relationship-support office**: the
+relational memory, correspondence triage, care-cadence, boundary enforcement, and community
+governance that today only the wealthy can afford through human staff (assistants, social
+secretaries, community operators, alumni offices, mutual-aid networks). This organ delivers that
+institutional weight — the **Koinonia standard** — as a consent-aware, human-gated infrastructure
+that augments one person's capacity to hold a community's worth of ties.
+
 This organ gives one person, and then anyone, the infrastructure of a civic/community institution
 plus relationship support: a living memory of people, ties, obligations, norms, and rules, with the
 human still deciding what care, contact, repair, or distance is right.
@@ -72,6 +79,22 @@ The first usable slice is a **relationship-posture brief**:
 
 That brief becomes the seed for later workflows: correspondence triage, care cadence, introductions,
 community moderation, repair planning, and boundary protection.
+
+The first brief is in [`engagements/derek.yaml`](engagements/derek.yaml) — a complete
+five-primitive posture record for a multi-dimensional tie (collaborator, client, creative
+partner). The brief generator (`scripts/relationship-brief.py`) produces a human-readable
+report, and `validate-social.py` enforces the six organ rules against every engagement.
+
+```bash
+# Validate the fleet
+python organs/social/validate-social.py --fleet
+
+# Generate a relationship-posture report
+python organs/social/scripts/relationship-brief.py organs/social/engagements/derek.yaml
+```
+
+The full charter, roles, workflows, and platform faces are in the companion documents:
+[`CHARTER.md`](CHARTER.md), [`MACRO-FACE.md`](MACRO-FACE.md), [`MICRO-FACE.md`](MICRO-FACE.md).
 
 ## Hard guardrails (every contributor + every dispatched task)
 

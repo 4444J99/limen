@@ -12,8 +12,11 @@
 # committed .claude/settings.json (limen-scoped); a clean no-op in any other project.
 set -uo pipefail
 
+SCRIPT_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel 2>/dev/null || true)"
 ROOT="${CLAUDE_PROJECT_DIR:-}"
-[ -z "$ROOT" ] && ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$ROOT" ] || [ ! -f "$ROOT/scripts/session-orient.py" ]; then
+  ROOT="$SCRIPT_ROOT"
+fi
 [ -z "$ROOT" ] && exit 0                        # not in a project -> no-op
 GEN="$ROOT/scripts/session-orient.py"
 DIGEST="$ROOT/logs/session-orientation.md"

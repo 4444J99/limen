@@ -24,14 +24,26 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: tabularius-board-publication
+  cancel-in-progress: false
 
 jobs:
   operate:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      LIMEN_ROOT: ${{ github.workspace }}
+      LIMEN_TASKS: ${{ github.workspace }}/tasks.yaml
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: main
 
       - uses: actions/setup-python@v6
         with:
@@ -42,6 +54,22 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e "cli[test]"
+
+      - name: Preflight board publication
+        id: board-preflight
+        if: inputs.mode == 'release-stale-apply'
+        run: |
+          set +e
+          python scripts/tabularius-organ.py --preflight
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          elif [ "$rc" -eq 75 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            exit "$rc"
+          fi
 
       - name: Doctor
         if: inputs.mode == 'doctor'
@@ -56,7 +84,7 @@ jobs:
         run: limen release-stale --agent "${{ inputs.agent }}" --hours "${{ inputs.hours }}" --report-file .limen-reports/release-stale-preview.json
 
       - name: Apply stale release
-        if: inputs.mode == 'release-stale-apply'
+        if: inputs.mode == 'release-stale-apply' && steps.board-preflight.outputs.ready == 'true'
         run: limen release-stale --agent "${{ inputs.agent }}" --hours "${{ inputs.hours }}" --apply --report-file .limen-reports/release-stale-apply.json
 
       - name: Upload operation report
@@ -67,27 +95,10 @@ jobs:
           path: .limen-reports/*.json
           if-no-files-found: warn
 
-      - name: Self-healing gate (ruff fix + check-params update)
-        if: inputs.mode == 'release-stale-apply'
-        run: |
-          python -m pip install ruff
-          python -m ruff check --fix cli/src cli/tests web/api mcp ianva 2>&1 || true
-          python -m ruff format cli/src cli/tests web/api mcp ianva 2>&1 || true
-          python scripts/check-params.py --update 2>&1 || true
-
       - name: Show task diff
-        if: inputs.mode == 'release-stale-apply'
+        if: inputs.mode == 'release-stale-apply' && steps.board-preflight.outputs.ready == 'true'
         run: git diff -- tasks.yaml
 
-      - name: Commit stale release
-        if: inputs.mode == 'release-stale-apply'
-        run: |
-          if git diff --quiet -- tasks.yaml && git diff --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Release stale Limen claims"
-          git push
+      - name: Publish stale release through board PR
+        if: inputs.mode == 'release-stale-apply' && steps.board-preflight.outputs.ready == 'true'
+        run: python scripts/tabularius-organ.py --require-published

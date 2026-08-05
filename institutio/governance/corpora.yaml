@@ -1,0 +1,228 @@
+# CORPORA registry — where the conversation corpora live, as declared data.
+#
+# The fourth axis beside GATES (gates.yaml), PARAMETERS (parameters.yaml) and SENSORS
+# (sensors.yaml). Same parameter-panel pattern, one domain over: adding a corpus is one
+# registry entry, and a drifted copy is a red check (check-corpora.py), not a memory chore.
+#
+# Why this exists: two consumers each carried their own copy of "where the corpora live",
+# and both copies were wrong in the same two ways — the home resolved to the repo root
+# (which holds none) instead of the sibling store, and the CCE package was imported from a
+# nested path that does not exist. `constellation-dossier.py --all` reported "no populated
+# corpus" while 371 MB sat on disk, and nothing failed, because nothing was checking.
+#
+# Volatile facts are DERIVED, never written here: existence, file counts, thread counts and
+# freshness all come from disk and from the store's own `federation/corpora-summary.json` at
+# check time. This file declares only what disk cannot tell you — provenance, redaction
+# status, whether a corpus is a legitimate brainstorm-harvest source, and who owns it.
+#
+# Consumers: scripts/corpus_resolve.py (the single resolver — every other consumer imports
+# it rather than re-deriving paths), scripts/constellation-dossier.py, and
+# organs/consulting/constellation/check.py (`corpus-refresh`).
+# Drift-check: scripts/check-corpora.py.
+
+schema_version: 0.1
+
+# Consumers-derive flags, armed per-PR as each consumer converts off its own hardcoded copy.
+ratchets:
+  dossier_derives_resolver: true
+  # scripts/constellation-dossier.py imports corpus_resolve instead of resolving paths itself.
+  check_derives_resolver: true
+  # organs/consulting/constellation/check.py `corpus-refresh` likewise.
+  ledger_derives_registry: false
+  # scripts/session-corpus-ledger.py still carries its own source list and its own
+  # `ORGANS` table (which names `conversation-corpus-engine`, a directory that does not
+  # exist under that name). Arm when it reads this registry instead.
+
+# ── stores ───────────────────────────────────────────────────────────────────────────────
+# A store is a filesystem root holding one or more corpora. `remote: none` is load-bearing:
+# it is what makes a store safe to hold unredacted conversation content, and it is why the
+# publish gate can never reach it.
+stores:
+  conversations-private:
+    root: "~/Workspace/_conversations-private"
+    remote: none
+    git: true
+    owner: cce
+    note: >
+      The registered CCE corpus-store root. Local-only by design, single commit, no remote —
+      minted specifically to hold chat corpora that had been sitting in the public limen tree.
+      Sibling of the live checkout, NOT inside it; assuming otherwise is the original defect.
+
+  limen-private-session-corpus:
+    root: "~/Workspace/limen/.limen-private/session-corpus/local-memory"
+    remote: none
+    git: false
+    owner: cce
+    note: >
+      Where the session-memory corpora ACTUALLY live as of 2026-07-31. Inside the live
+      checkout but under `.limen-private/`, which .gitignore excludes (line 51) — so it is
+      remote-less by construction, the same property that makes `conversations-private` safe
+      to hold unredacted content. Declared because the store had moved twice and no
+      candidate list knew: `corpus_resolve.corpus_home()` searched only
+      `_conversations-private` (absent) and `<repo>/source-drop` (absent), then fell back to
+      the repo root and reported `docs`, `scripts` and `web` as conversation corpora. That
+      is the SECOND occurrence of the defect this registry's header describes — same shape,
+      new path — which is why the resolver now derives its ids from this file rather than
+      from CCE alone. Adding a store here is what makes a relocation a one-line change.
+
+  session-meta:
+    root: "~/Workspace/session-meta"
+    remote: "github.com/organvm/session-meta"
+    git: true
+    owner: session-meta
+    note: >
+      The exhaustive raw-transcript archive and its own atomization pipeline. Has a remote,
+      so everything in it passes that repo's own redaction pass before commit. A second,
+      older ingestion system than CCE — declared here so it is addressable, deliberately not
+      merged into CCE.
+
+# ── corpora ──────────────────────────────────────────────────────────────────────────────
+# kind:        session-memory | raw-archive | atom-stream | brainstorm-extract
+# harvestable: may the brainstorm harvester read this as a source of brainstorm sessions?
+# redacted:    has content passed a redaction pass? (false ⇒ never leaves its store)
+# cce_id:      only when CCE's provider catalog declares a DIFFERENT id than the directory
+#              name on disk — a real, load-bearing drift, not a nicety.
+corpora:
+  chatgpt-local-session-memory:
+    store: limen-private-session-corpus
+    provider: chatgpt
+    kind: session-memory
+    cce_declared: true
+    harvestable: true
+    redacted: false
+    owner: cce
+    note: >
+      ~107 threads imported of 129 available; 22 failed detail-fetch on the last import and
+      were dropped silently. Freshness derives from the store's federation summary, which
+      currently reports `stale` — the local session has changed since the last snapshot.
+      Recovery path is `cce provider refresh --provider chatgpt --mode local-session`,
+      blocked on one login atom (chatgpt.com session in the desktop app or Chrome) —
+      filed as organvm/limen#1545, indexed on the Wall (#320).
+
+  claude-local-session-memory:
+    store: limen-private-session-corpus
+    provider: claude
+    kind: session-memory
+    cce_declared: true
+    harvestable: true
+    redacted: false
+    owner: cce
+    note: >
+      The largest CCE corpus (~426 threads imported, 397 families after federation, 36
+      projects). Reported fresh at last federation build.
+
+  perplexity-local-session-memory:
+    store: conversations-private
+    provider: perplexity
+    kind: session-memory
+    cce_declared: true
+    cce_id: perplexity-history-memory
+    harvestable: true
+    redacted: false
+    owner: cce
+    note: >
+      DRIFT RESOLVED (2026-07-26) by teaching the catalog: CCE's corpus registry maps the
+      declared id `perplexity-history-memory` to this directory's root, so declared-id
+      consumers reach it (verified via `cce corpus list` and `provider readiness`, which
+      select this root). The cce_id field remains load-bearing — the directory name and
+      the declared id still differ, and any consumer that CONSTRUCTS a path from the id
+      instead of resolving roots through the registry will still miss. `corpus_resolve`
+      keeps sweeping undeclared corpus dirs as the belt to this suspender.
+
+  brainstorm-extracts:
+    store: conversations-private
+    provider: multi
+    kind: brainstorm-extract
+    cce_declared: false
+    harvestable: false
+    redacted: false
+    owner: consulting
+    note: >
+      OUTPUT of scripts/brainstorm-harvest.py, never an input — one verbatim extract per
+      thread across every harvestable corpus, stream-clustered, each carrying a
+      semantic_atoms state (pending → done as the eight-kind atom pass drains the queue).
+      The generalization of the brainstorm-20260423 shape to the whole estate. Rebuildable
+      at any time from the session-memory corpora; lives in the remote-less store because
+      extracts quote raw conversation text.
+
+  session-transcripts:
+    store: session-meta
+    provider: multi
+    kind: raw-archive
+    cce_declared: false
+    harvestable: true
+    redacted: true
+    path: data/session-transcripts
+    owner: session-meta
+    note: >
+      ~3.5 GB of raw per-agent transcripts (Claude sessions, Codex rollouts, ChatGPT/Gemini/
+      Copilot/browser exports). Far larger than the CCE side and structurally invisible to
+      it — any brainstorm existing only here is unreachable by the dossier tooling until the
+      harvester reads this registry.
+
+  session-atoms:
+    store: session-meta
+    provider: multi
+    kind: atom-stream
+    cce_declared: false
+    harvestable: true
+    redacted: true
+    path: ingest/atoms.jsonl
+    owner: session-meta
+    harvest_sources:
+      - copilot-captures-2026-03
+      - gemini-export-2025-10
+      - browser
+      - misc-vendor-captures
+      - chatgpt-gap-pull-2026-07-14
+    note: >
+      The atomized, redacted flat stream over the whole raw archive (~1.36 GB, ~336k
+      records, 4,020 sessions). Already one record per conversation turn, so it is the
+      cheapest harvest source — no re-parsing of provider-native shapes required.
+      harvest_sources is the brainstorm-harvest allowlist: only sessions whose `source`
+      is listed mint extracts. The listed five (~17 sessions, measured 2026-07-26) are
+      conversational material no CCE corpus covers — they fill the copilot/gemini
+      vacuums with real content. Deliberately excluded, with reasons: `codex` (2,469
+      agent rollouts, work logs not brainstorms), `claude-projects` (1,222, overlaps
+      claude-local-session-memory), `chatgpt-export-2026-04` (150, overlaps
+      chatgpt-local-session-memory; reconcile at Phase-C convergence),
+      `knowledge-base-canonical-sources` (162, reference documents not conversations).
+
+# ── declared-but-unpopulated ─────────────────────────────────────────────────────────────
+# CCE's provider catalog names a corpus id for each of these; none has ever been populated.
+# Recorded as counted vacuums rather than absences — Rule #1: an N/A is never a resting state.
+unpopulated:
+  - {id: chatgpt-history, provider: chatgpt, owner: cce, note: "CCE fallback id; the local-session corpus is used instead."}
+  - {id: claude-history-memory, provider: claude, owner: cce, note: "CCE fallback id; local-session corpus used instead."}
+  - {id: gemini-history-memory, provider: gemini, owner: cce, note: "No Gemini corpus has ever been imported."}
+  - {id: grok-history-memory, provider: grok, owner: cce, note: "No Grok corpus has ever been imported."}
+  - {id: copilot-history-memory, provider: copilot, owner: cce, note: "No Copilot corpus has ever been imported; raw captures exist under session-meta."}
+  - {id: deepseek-history-memory, provider: deepseek, owner: cce, note: "No DeepSeek corpus has ever been imported."}
+  - {id: mistral-history-memory, provider: mistral, owner: cce, note: "No Mistral corpus has ever been imported."}
+
+# ── extracts ─────────────────────────────────────────────────────────────────────────────
+# Corpora that are already HARVEST OUTPUT rather than raw input. The precedent the harvester
+# generalizes.
+extracts:
+  brainstorm-20260423:
+    repo: organvm/brainstorm-20260423
+    kind: brainstorm-extract
+    source_export: "~/Downloads/brainstorm-export-20260423"
+    streams: [machina-mundi-canonici, income-engine, theory-seeds]
+    atom_kinds:
+      - projects-to-start
+      - decisions
+      - tasks
+      - vacuums
+      - questions-unresolved
+      - client-offerings
+      - schema-proposals
+      - functionality-to-repeat
+    owner: consulting
+    note: >
+      The precedent: 24 conversations → 934 atoms (149 of them projects-to-start), in the
+      shape the harvester must reproduce — conversations/<stream>/NN-topic.md plus atoms/,
+      streams/, entities/, schemas/, cross-refs/ and raw-source/ audits. Its extractor
+      (tools/synthesize.py) is hardcoded to one Downloads path; generalizing it is the
+      harvest phase. Self-described as "canonical staging for downstream personae-registry /
+      IRF atoms / repo seeds".

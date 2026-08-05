@@ -1,11 +1,14 @@
-import os
+import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import click
 
+from limen.conduct.cli import conduct_group
+from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import (
     print_qa_report,
     print_readiness,
@@ -13,20 +16,41 @@ from limen.doctor import (
     readiness_report,
     write_report,
 )
-from limen.dispatch import dispatch_tasks, release_stale_tasks
+from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
-from limen.io import load_limen_file, load_limen_text
+from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
+from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
+from limen.opencode_smoke import run_opencode_smoke
+from limen.progress import build_progress_snapshot, render_progress
+from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
 
 
 def resolve_root() -> Path:
+    """The board root: $LIMEN_ROOT, else the first candidate that actually holds tasks.yaml.
+
+    Discovery mirrors resolve_limen_repo_root() below, so a board-reading verb works from
+    any directory the way `limen workstream` already does. Without the fallbacks, `limen
+    dispatch` refused to run outside a checkout while the package could locate its own repo
+    two other ways ($LIMEN_TASKS' parent, and the __file__-relative root).
+    """
     root = os.environ.get("LIMEN_ROOT")
     if root:
         return Path(root).expanduser().resolve()
-    cwd = Path.cwd()
-    if (cwd / "tasks.yaml").exists():
-        return cwd
-    click.echo("LIMEN_ROOT not set and no tasks.yaml in current directory", err=True)
+    candidates = [Path.cwd()]
+    tasks_env = os.environ.get("LIMEN_TASKS")
+    if tasks_env:
+        # Same derivation _root_for_dispatch() applies: a projection names its own root.
+        candidates.append(Path(tasks_env).expanduser().parent)
+    candidates.append(Path(__file__).resolve().parents[3])
+    candidates.append(Path.home() / "Workspace" / "limen")
+    for candidate in candidates:
+        if (candidate / "tasks.yaml").exists():
+            return candidate.resolve()
+    click.echo(
+        "LIMEN_ROOT not set and no tasks.yaml found in: " + ", ".join(str(candidate) for candidate in candidates),
+        err=True,
+    )
     sys.exit(2)
 
 
@@ -56,11 +80,130 @@ def main():
     pass
 
 
+main.add_command(conduct_group)
+main.add_command(fanout_group)
+
+
+def _host_owner() -> tuple[str, int]:
+    pid = os.getppid()
+    label = os.environ.get("LIMEN_HOST_ADMISSION_OWNER") or os.environ.get("LIMEN_SESSION_ID")
+    if not label:
+        identity = process_identity(pid) or str(pid)
+        label = f"limen-cli-{hashlib.sha256(identity.encode()).hexdigest()[:24]}"
+    return label, pid
+
+
+def _emit_host_decision(decision: dict, *, json_output: bool) -> None:
+    if json_output:
+        click.echo(json.dumps(decision, indent=2, sort_keys=True))
+        return
+    state = "allowed" if decision.get("allowed") else "denied"
+    reasons = ",".join(decision.get("reasons") or [])
+    suffix = f" ({reasons})" if reasons else ""
+    click.echo(f"host-admission {decision.get('operation')}: {state}{suffix}")
+
+
+@click.group("host-admission")
+def host_admission_group():
+    """Inspect or mutate the machine-wide writer/heavy lease store."""
+
+
+@host_admission_group.command("acquire")
+@click.argument("kind", type=click.Choice(["execution", "heavy"]))
+@click.option("--cwd", type=click.Path(path_type=Path), default=None)
+@click.option("--json", "json_output", is_flag=True)
+def host_admission_acquire(kind: str, cwd: Path | None, json_output: bool) -> None:
+    owner, pid = _host_owner()
+    controller = AdmissionController()
+    try:
+        if kind == "execution":
+            scope = worktree_scope(cwd or Path.cwd())
+            if not scope.linked:
+                decision = {
+                    "schema": "limen.host_admission_decision.v1",
+                    "operation": "acquire",
+                    "allowed": False,
+                    "reasons": ["shared-checkout-write"],
+                    "lease": None,
+                    "leases": controller.status(probe=False).get("leases") or [],
+                }
+            else:
+                decision = controller.acquire(
+                    scope.lease_kind,
+                    owner=owner,
+                    surface="limen-host-admission-cli",
+                    pid=pid,
+                )
+        else:
+            decision = controller.acquire(kind, owner=owner, surface="limen-host-admission-cli", pid=pid)
+    except (AdmissionStateError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_host_decision(decision, json_output=json_output)
+    if not decision.get("allowed"):
+        raise click.exceptions.Exit(3)
+
+
+@host_admission_group.command("status")
+@click.option("--cwd", type=click.Path(path_type=Path), default=None)
+@click.option("--json", "json_output", is_flag=True)
+def host_admission_status(cwd: Path | None, json_output: bool) -> None:
+    controller = AdmissionController()
+    try:
+        decision = controller.status(probe=True)
+        if cwd is not None:
+            scope = worktree_scope(cwd)
+            decision["scope"] = {
+                "scope_hash": scope.scope_hash,
+                "linked": scope.linked,
+                "writer_held": any(lease.get("kind") == scope.lease_kind for lease in decision.get("leases") or []),
+            }
+    except (AdmissionStateError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_host_decision(decision, json_output=json_output)
+
+
+@host_admission_group.command("release")
+@click.argument("kind", type=click.Choice(["execution", "heavy"]))
+@click.option("--cwd", type=click.Path(path_type=Path), default=None)
+@click.option("--json", "json_output", is_flag=True)
+def host_admission_release(kind: str, cwd: Path | None, json_output: bool) -> None:
+    owner, pid = _host_owner()
+    controller = AdmissionController()
+    try:
+        lease_kind = worktree_scope(cwd or Path.cwd()).lease_kind if kind == "execution" else kind
+        decision = controller.release_owned(lease_kind, owner=owner, pid=pid)
+    except (AdmissionStateError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_host_decision(decision, json_output=json_output)
+    if not decision.get("allowed"):
+        raise click.exceptions.Exit(3)
+
+
+main.add_command(host_admission_group)
+
+
+@main.command("opencode-smoke")
+@click.option(
+    "--require-reentry",
+    is_flag=True,
+    help="Refuse a healthy model; smoke only a post-cooldown model awaiting re-entry proof.",
+)
+def opencode_smoke(require_reentry: bool) -> None:
+    """Run one bounded read-only OpenCode tool smoke and append its health outcome."""
+
+    result = run_opencode_smoke(allow_healthy=not require_reentry)
+    click.echo(json.dumps(result.as_dict(), indent=2, sort_keys=True))
+    if result.status == "blocked":
+        raise click.exceptions.Exit(3)
+    if not result.succeeded:
+        raise click.exceptions.Exit(1)
+
+
 @main.command()
 @click.option("--root", default=None, help="Where to create the portal")
 @click.option("--budget", default=100, type=int, help="Daily run budget")
 def init(root, budget):
-    """Scaffold a new tasks.yaml in LIMEN_ROOT or current directory."""
+    """Report the remote-owner bootstrap required for a new portal."""
     target = Path(root).expanduser().resolve() if root else resolve_root()
     tasks_file = target / "tasks.yaml"
 
@@ -68,27 +211,11 @@ def init(root, budget):
         click.echo(f"tasks.yaml already exists at {tasks_file}")
         return
 
-    target.mkdir(parents=True, exist_ok=True)
-    content = f"""version: "1.0"
-portal:
-  name: "Universal Task Intake"
-  description: "One file to aim every agent you have"
-  budget:
-    daily: {budget}
-    unit: "runs"
-    per_agent: {{}}
-    track:
-      date: ""
-      spent: 0
-      per_agent: {{}}
-tasks: []
-"""
-    tasks_file.write_text(content)
-    click.echo(f"Created {tasks_file} with daily budget of {budget}")
-    ag = target / "AGENTS.md"
-    if not ag.exists():
-        ag.write_text("# Limen Agent Protocol\n\nSee https://github.com/4444J99/limen\n")
-        click.echo(f"Created {ag}")
+    del budget
+    raise click.ClickException(
+        "local tasks.yaml bootstrap is retired: initialize the GitHub-backed "
+        "board through the authenticated conduct owner, then hydrate this cache"
+    )
 
 
 @main.command()
@@ -120,7 +247,7 @@ def dispatch(agent, budget, dry_run, task, limit):
 @click.option("--json-output", "json_output", is_flag=True, help="Print machine-readable JSON")
 @click.option("--report-file", default=None, help="Write machine-readable JSON to this path")
 def release_stale(hours, agent, dry_run, json_output, report_file):
-    """Reopen dispatched/in-progress tasks whose latest event is stale."""
+    """Route stale claims; Jules claims reopen only after confirmed remote absence."""
     root = resolve_root()
     tasks_path = resolve_tasks_path(root)
     limen = load_limen_file(tasks_path)
@@ -167,6 +294,95 @@ def qa(agent, json_output, report_file):
         print_qa_report(report)
 
 
+@main.command("apply")
+@click.option("--fire", is_flag=True, help="Include the submit phase — SUBMITS to real ATS portals")
+@click.option("--json", "json_output", is_flag=True, help="Emit the raw driver summary")
+def apply_cmd(fire, json_output):
+    """Run the outbound job-application funnel (stage only unless --fire).
+
+    The CLI twin of the ``application_funnel`` MCP tool and the beat's
+    ``application-funnel`` sensor — one effector, three front doors, so an agent
+    without MCP still drives the same funnel instead of writing its own submitter.
+
+    Disarmed this is reversible: source, score, build materials, stage packages,
+    prepare follow-ups. Nothing leaves the machine. ``--fire`` adds the submit
+    phase, which sends real applications and cannot be undone.
+    """
+    root = Path(__file__).resolve().parents[3]
+    driver = root / "scripts" / "application-funnel.py"
+    if not driver.exists():
+        click.echo(f"funnel driver not found: {driver}", err=True)
+        sys.exit(1)
+
+    env = dict(os.environ)
+    if fire:
+        env["LIMEN_APPLY_FIRE"] = "1"
+
+    proc = subprocess.run(
+        [sys.executable, str(driver), "--json"],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(root),
+    )
+    if json_output:
+        click.echo(proc.stdout.strip() or proc.stderr.strip())
+        sys.exit(proc.returncode)
+
+    try:
+        summary = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        click.echo(proc.stderr.strip() or "funnel produced no summary", err=True)
+        sys.exit(proc.returncode or 1)
+
+    click.echo(
+        f"sourced {summary.get('sourced', 0)} · qualified {summary.get('qualified', 0)} · "
+        f"staged {summary.get('staged', 0)} · submitted {summary.get('submitted', 0)}"
+    )
+    for note in summary.get("notes", []):
+        click.echo(f"  - {note}")
+    sys.exit(proc.returncode)
+
+
+@main.command("daily-execute")
+@click.option("--fire", is_flag=True, help="Arm routine professional applications and follow-ups for this invocation")
+@click.option("--json", "json_output", is_flag=True, help="Emit the bounded PII-clean execution receipt")
+@click.option("--timeout", default=1800, type=click.IntRange(min=1, max=1800), show_default=True)
+@click.option("--receipt", type=click.Path(path_type=Path), default=None, help="Write the private receipt here")
+def daily_execute(fire: bool, json_output: bool, timeout: int, receipt: Path | None) -> None:
+    """Run the shared daily communications and application loop.
+
+    This is the same implementation exposed through MCP ``daily_execution`` and
+    the existing heartbeat. ``--fire`` is invocation-local; generated templates,
+    staged forms, and unconfirmed submissions never count as delivered.
+    """
+    from limen.daily_execution import run_daily_execution
+
+    prior = os.environ.get("LIMEN_DAILY_EXECUTION_RECEIPT")
+    if receipt is not None:
+        os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = str(receipt.expanduser())
+    try:
+        result = run_daily_execution(fire=fire, root=resolve_limen_repo_root(), timeout_seconds=timeout)
+    finally:
+        if prior is None:
+            os.environ.pop("LIMEN_DAILY_EXECUTION_RECEIPT", None)
+        else:
+            os.environ["LIMEN_DAILY_EXECUTION_RECEIPT"] = prior
+
+    if json_output:
+        click.echo(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        click.echo(
+            f"daily-execute: {result['status']} · applications "
+            f"{result['applications']['confirmed']}/{result['applications']['target']} confirmed · "
+            f"follow-ups {result['follow_ups']['confirmed']} confirmed"
+        )
+        for blocker in result["blockers"]:
+            click.echo(f"  - {blocker}")
+    if result["status"] == "blocked":
+        raise click.exceptions.Exit(3)
+
+
 @main.command()
 @click.option("--agent", default=None, help="Filter by agent")
 @click.option("--status", default=None, help="Filter by status")
@@ -179,6 +395,134 @@ def status(agent, status):
         sys.exit(1)
     limen = load_limen_file(tasks_path)
     print_status(limen, agent_filter=agent, status_filter=status)
+
+
+@main.command()
+@click.option(
+    "--view",
+    type=click.Choice(["workstream", "source_lineage", "origin", "horizon", "agent", "repo", "status"]),
+    default="workstream",
+    show_default=True,
+    help="Macro grouping and micro drill-down dimension.",
+)
+@click.option(
+    "--scope",
+    default=None,
+    help="Show one value from --view (for example financial or past).",
+)
+@click.option(
+    "--level",
+    type=click.Choice(["macro", "micro", "all"]),
+    default="all",
+    show_default=True,
+    help="Zoom level.",
+)
+@click.option(
+    "--limit",
+    default=50,
+    type=click.IntRange(min=0),
+    show_default=True,
+    help="Micro rows to print.",
+)
+@click.option("--all", "show_all", is_flag=True, help="Print every matching active debt leaf.")
+@click.option("--ascii", "ascii_only", is_flag=True, help="Use ASCII progress bars.")
+@click.option(
+    "--json-output",
+    "json_output",
+    is_flag=True,
+    help="Print the bounded machine-readable board and source-coverage lens.",
+)
+@click.option(
+    "--report-file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write the bounded board and source-coverage lens to a JSON receipt.",
+)
+def progress(view, scope, level, limit, show_all, ascii_only, json_output, report_file):
+    """Filter the partial task-board projection and source-coverage lens.
+
+    Dark, stale, partial, capped, unavailable, failed, or incomplete source
+    contracts remain visible as coverage debt.  Source-owned leaves are not
+    imported.  Origin and horizon are explicit metadata only; Limen never
+    guesses whether a task is a human prompt, obligation, recommendation, or
+    past/present/future work from title resemblance.
+    """
+
+    root = resolve_root()
+    tasks_path = resolve_tasks_path(root)
+    if not tasks_path.exists():
+        click.echo("tasks.yaml not found", err=True)
+        raise click.ClickException("cannot build board-progress lens")
+    limen = load_limen_file(tasks_path)
+    snapshot = build_progress_snapshot(limen, root)
+    if report_file:
+        output = Path(report_file).expanduser()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(snapshot, indent=2) + "\n", encoding="utf-8")
+    if json_output:
+        click.echo(json.dumps(snapshot, indent=2))
+        return
+    click.echo(
+        render_progress(
+            snapshot,
+            view=view,
+            scope=scope,
+            level=level,
+            limit=None if show_all else limit,
+            ascii_only=ascii_only,
+        ),
+        nl=False,
+    )
+
+
+@main.command("progress-sources")
+@click.option(
+    "--registry-dir",
+    "registry_dirs",
+    multiple=True,
+    type=click.Path(path_type=Path),
+    help="Use an explicit registration root; repeat to combine roots.",
+)
+@click.option("--json-output", is_flag=True, help="Print the normalized source registry as JSON.")
+@click.option(
+    "--report-file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write the normalized registry to an explicit receipt path.",
+)
+def progress_sources(registry_dirs, json_output, report_file):
+    """Discover and validate work-universe source owner reports."""
+
+    root = resolve_root()
+    registry = build_source_registry(
+        root,
+        registration_dirs=[Path(path).expanduser() for path in registry_dirs] or None,
+    )
+    if report_file:
+        output = Path(report_file).expanduser()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8")
+    if json_output:
+        click.echo(json.dumps(registry, indent=2))
+        return
+    summary = registry["summary"]
+    discovery = registry["discovery"]
+    click.echo(
+        "WORK-UNIVERSE SOURCES "
+        f"status={registry['semantic_status']} "
+        f"sources={summary['source_count']} "
+        f"ready={summary['ready_required_source_count']}/{summary['required_source_count']} "
+        f"coverage_debt={summary['coverage_debt']} "
+        f"unknown_counts={summary['unknown_leaf_count_sources']} "
+        f"discovery_exhaustive={str(discovery['exhaustive']).lower()}"
+    )
+    for source in registry["sources"]:
+        count = source["normalized_leaf_count"]
+        click.echo(
+            f"{source['source_id']}\t{source['semantic_status']}\t"
+            f"owner={source['owner']['id']}:{source['owner']['surface']}\t"
+            f"exhaustive={str(source['exhaustive']).lower()}\tleaves={count if count is not None else 'unknown'}"
+        )
 
 
 def _open_prs_via_gh(limit: int = 200):
@@ -229,7 +573,11 @@ def _open_prs_via_gh(limit: int = 200):
 
 
 @main.command()
-@click.option("--scope", default=None, help="Show only one channel (accepts an alias, e.g. 'revenue').")
+@click.option(
+    "--scope",
+    default=None,
+    help="Show only one channel (accepts an alias, e.g. 'revenue').",
+)
 @click.option(
     "--emit",
     default=None,
@@ -242,7 +590,12 @@ def _open_prs_via_gh(limit: int = 200):
     is_flag=True,
     help="Project OPEN PRs (via gh) by channel instead of the task board — makes PR sprawl legible.",
 )
-@click.option("--json-output", "json_output", is_flag=True, help="Machine-readable roster + per-channel counts.")
+@click.option(
+    "--json-output",
+    "json_output",
+    is_flag=True,
+    help="Machine-readable roster + per-channel counts.",
+)
 def channels(scope, emit, prs_mode, json_output):
     """Project the board by workstream channel — the purpose partition above vendor lanes.
 
@@ -253,13 +606,15 @@ def channels(scope, emit, prs_mode, json_output):
     channel taxonomy to bucket the open-PR pile, so session/PR sprawl reads on the purpose axis too.
     """
     from limen import workstream as ws
-    from limen.io import save_limen_file
 
     root = resolve_root()
 
     if prs_mode:
         if emit:
-            click.echo("--emit projects the task board, not PRs; drop --prs or --emit", err=True)
+            click.echo(
+                "--emit projects the task board, not PRs; drop --prs or --emit",
+                err=True,
+            )
             sys.exit(2)
         prs = _open_prs_via_gh()
         if json_output:
@@ -281,7 +636,11 @@ def channels(scope, emit, prs_mode, json_output):
         filtered = ws.filter_board(limen, scope, root)
         out = Path(emit).expanduser()
         out.parent.mkdir(parents=True, exist_ok=True)
-        save_limen_file(out, filtered, allow_shrink=True)  # a single channel is legitimately small
+        save_derived_limen_projection(
+            out,
+            filtered,
+            canonical_path=tasks_path,
+        )  # a single channel is an explicitly noncanonical read-only projection
         click.echo(f"wrote {len(filtered.tasks)} tasks for channel '{ws.canonical_handle(scope, root)}' to {out}")
         return
 
@@ -302,25 +661,128 @@ def harvest(agent):
 
 
 @main.command("workstream")
-@click.option("--codex", "launch_codex", is_flag=True, help="Open Codex in the worktree after creating the packet.")
 @click.option(
-    "--shell", "launch_shell", is_flag=True, help="Open a login shell in the worktree after creating the packet."
+    "--autonomous",
+    is_flag=True,
+    help="Require a prompt and pass the modular live contract to the selected native agent.",
 )
-@click.option("--from", "from_ref", default=None, help="Branch or ref to create the worktree branch from.")
-@click.option("--prompt", "prompt_text", default=None, help="Inline prompt packet for .limen-workstream/README.md.")
 @click.option(
-    "--prompt-file", default=None, type=click.Path(exists=True), help="Prompt packet file to embed in README.md."
+    "--agent",
+    "agent_name",
+    default=None,
+    metavar="auto|LANE",
+    help="Select and launch a canonical native lane; auto derives an available installed CLI.",
 )
-@click.option("--no-readme", is_flag=True, help="Create/reuse the worktree without writing the private kickoff packet.")
+@click.option(
+    "--conduct",
+    is_flag=True,
+    help="Register the launched direct session with the conduct broker as human-protected.",
+)
+@click.option(
+    "--model",
+    "launch_model",
+    default=None,
+    help="With --reasoning-effort and --sandbox: the exact human-selected Codex model. Alone: a lane tier pin for a registry profile that declares model-flag support; requires --agent.",
+)
+@click.option(
+    "--reasoning-effort",
+    "launch_reasoning_effort",
+    default=None,
+    help="Exact reasoning effort supported by the selected live Codex model.",
+)
+@click.option(
+    "--sandbox",
+    "launch_sandbox",
+    default=None,
+    help="Codex sandbox for the explicit primary launch profile.",
+)
+@click.option(
+    "--shell",
+    "launch_shell",
+    is_flag=True,
+    help="Open a login shell in the worktree after creating the packet.",
+)
+@click.option(
+    "--from",
+    "from_ref",
+    default=None,
+    help="Branch or ref to create the worktree branch from.",
+)
+@click.option(
+    "--prompt",
+    "prompt_text",
+    default=None,
+    help="Inline prompt packet for .limen-workstream/intent.md.",
+)
+@click.option(
+    "--prompt-file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Prompt packet file to copy into intent.md.",
+)
+@click.option(
+    "--predecessor-receipt",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="Create a validated successor from one committed tracked workstream receipt.",
+)
+@click.option(
+    "--runway-mode",
+    type=click.Choice(["inherit", "renew"]),
+    default=None,
+    help="Inherit the predecessor deadline exactly, or renew with an explicit --runway.",
+)
+@click.option(
+    "--runway",
+    default=None,
+    help="Finite workstream runway (for example 90m, 8h, or 7d); defaults to 1d.",
+)
+@click.option(
+    "--no-readme",
+    is_flag=True,
+    help="Create/reuse the worktree without writing the private kickoff packet.",
+)
+@click.option("--workstream", "workstream_handle", default=None, help="Pin the capsule to one purpose channel.")
 @click.argument("repo")
 @click.argument("slug")
-def workstream(launch_codex, launch_shell, from_ref, prompt_text, prompt_file, no_readme, repo, slug):
-    """Create/reuse a repo worktree plus a private kickoff README and kickstart command."""
+def workstream(
+    autonomous,
+    agent_name,
+    conduct,
+    launch_model,
+    launch_reasoning_effort,
+    launch_sandbox,
+    launch_shell,
+    from_ref,
+    prompt_text,
+    prompt_file,
+    predecessor_receipt,
+    runway_mode,
+    runway,
+    workstream_handle,
+    no_readme,
+    repo,
+    slug,
+):
+    """Create/reuse a repo worktree plus a modular kickoff capsule and command."""
+    if predecessor_receipt is None and runway_mode is not None:
+        raise click.UsageError("--runway-mode requires --predecessor-receipt")
+    effective_runway_mode = runway_mode or "inherit"
     root = resolve_limen_repo_root()
     script = root / "scripts" / "start-worktree-session.sh"
     args = ["bash", str(script)]
-    if launch_codex:
-        args.append("--codex")
+    if autonomous:
+        args.append("--autonomous")
+    if agent_name:
+        args.extend(["--agent", agent_name])
+    if conduct:
+        args.append("--conduct")
+    if launch_model:
+        args.extend(["--model", launch_model])
+    if launch_reasoning_effort:
+        args.extend(["--reasoning-effort", launch_reasoning_effort])
+    if launch_sandbox:
+        args.extend(["--sandbox", launch_sandbox])
     if launch_shell:
         args.append("--shell")
     if from_ref:
@@ -329,10 +791,16 @@ def workstream(launch_codex, launch_shell, from_ref, prompt_text, prompt_file, n
         args.extend(["--prompt", prompt_text])
     if prompt_file:
         args.extend(["--prompt-file", prompt_file])
+    if predecessor_receipt:
+        args.extend(["--predecessor-receipt", predecessor_receipt, "--runway-mode", effective_runway_mode])
+    if runway:
+        args.extend(["--runway", runway])
+    if workstream_handle:
+        args.extend(["--workstream", workstream_handle])
     if no_readme:
         args.append("--no-readme")
     args.extend([repo, slug])
-    if launch_codex or launch_shell:
+    if agent_name or launch_shell:
         result = subprocess.run(args)
     else:
         result = subprocess.run(args, text=True, capture_output=True)
@@ -343,8 +811,59 @@ def workstream(launch_codex, launch_shell, from_ref, prompt_text, prompt_file, n
     raise SystemExit(result.returncode)
 
 
+@main.command("streams")
+@click.option(
+    "--status",
+    "show_status",
+    is_flag=True,
+    help="One line per stream with its derived state (live/dormant/ready/blocked/stale/settled); touches nothing.",
+)
+@click.option(
+    "--family",
+    default=None,
+    type=click.Choice(["domain", "constellation", "governance", "all"]),
+    help="Which rows to open. Default domain — the operator's life/work domains (correspondence, "
+    "financial, representation, …); constellation (the consulting domain's collaborator interior) "
+    "and governance rows are named as elided and opened deliberately.",
+)
+@click.option("--lane", default=None, metavar="LANE", help="Native lane to open on (claude|codex|agy|opencode|…).")
+@click.option("--dry-run", "dry_run", is_flag=True, help="Print exactly what would open; touch nothing.")
+@click.option("--max-parallel", "max_parallel", default=None, type=int, help="Override the RAM-derived bound.")
+@click.option("--unbounded", is_flag=True, help="Waive the RAM-derived bound (you accept the jetsam risk).")
+@click.option("--session", "tmux_session", default=None, help="tmux session name (default limen-streams).")
+def streams(show_status, family, lane, dry_run, max_parallel, unbounded, tmux_session):
+    """Open (and REOPEN) the session streams, each in its own tmux window.
+
+    The advertised form of scripts/open-streams.sh — a pure delegate, so the CLI can never tell a
+    different story than the script. The round trip: open → work → exit the agent (the tmux window
+    is kept) → `limen streams` again reopens the dormant stream; `limen streams --status` shows
+    every lane's derived state at a glance.
+    """
+    root = resolve_limen_repo_root()
+    args = ["bash", str(root / "scripts" / "open-streams.sh")]
+    if show_status:
+        args.append("--status")
+    if family:
+        args.extend(["--family", family])
+    if lane:
+        args.extend(["--lane", lane])
+    if dry_run:
+        args.append("--dry-run")
+    if max_parallel is not None:
+        args.extend(["--max-parallel", str(max_parallel)])
+    if unbounded:
+        args.append("--all")
+    if tmux_session:
+        args.extend(["--session", tmux_session])
+    raise SystemExit(subprocess.run(args).returncode)
+
+
 @main.command()
-@click.option("--verify", is_flag=True, help="Prove the fold reproduces the board byte-for-byte (exit 1 if not).")
+@click.option(
+    "--verify",
+    is_flag=True,
+    help="Prove the fold reproduces the board byte-for-byte (exit 1 if not).",
+)
 @click.option(
     "--emit-events",
     "emit_events",
@@ -386,7 +905,9 @@ def materialize(verify, emit_events):
         # canonical serialization = exactly what save_limen_file writes (mode=json, exclude_none,
         # sort_keys=False). Compare against the snapshot we loaded from — not a fresh read.
         rebuilt_bytes = yaml.dump(
-            rebuilt.model_dump(mode="json", exclude_none=True), sort_keys=False, default_flow_style=False
+            rebuilt.model_dump(mode="json", exclude_none=True),
+            sort_keys=False,
+            default_flow_style=False,
         )
         identical = rebuilt_bytes == on_disk
         click.echo(
@@ -400,6 +921,236 @@ def materialize(verify, emit_events):
                 err=True,
             )
             sys.exit(1)
+
+
+@main.command()
+@click.option("--once", is_flag=True, help="One frame then exit")
+@click.option("--compact", is_flag=True, help="One-line compact mode")
+@click.option("-n", "--interval", default=2.0, type=float, help="Refresh interval in seconds")
+def watch(once, compact, interval):
+    """Show the real-time fleet dashboard."""
+    from limen.watch import run
+
+    run(once=once, compact=compact, interval=interval)
+
+
+@main.group("research")
+def research():
+    """Prepare attended research and verify exported evidence."""
+
+
+@research.command("prepare")
+@click.argument("request_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--catalog",
+    "catalog_source",
+    default=lambda: os.environ.get("LIMEN_RESEARCH_CATALOG"),
+    help="Studium profile registry path or URL (defaults to its canonical remote).",
+)
+@click.option("--work-dir", required=True, type=click.Path(file_okay=False, path_type=Path))
+@click.option("--profile", default=None, help="Explicit owner profile; no fallback if unavailable.")
+@click.option("--launch", is_flag=True, help="Open the attended research surface after writing the handoff.")
+def research_prepare(request_file, catalog_source, work_dir, profile, launch):
+    """Render a typed ManualHandoff or fail-closed BlockedReceipt."""
+    from limen.research import (
+        DEFAULT_CATALOG_URL,
+        BlockedReceipt,
+        ResearchRequest,
+        launch_attended_research,
+        load_document,
+        prepare_research,
+        write_json,
+    )
+
+    request = ResearchRequest.from_mapping(load_document(request_file))
+    if profile:
+        request = request.with_profile(profile)
+    catalog = load_document(catalog_source or DEFAULT_CATALOG_URL)
+    work_dir = work_dir.expanduser().resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path = work_dir / f"{request.request_id}.prompt.md"
+    outcome_path = work_dir / f"{request.request_id}.outcome.json"
+    receipt_path = work_dir / f"{request.request_id}.receipt.json"
+    outcome, receipt = prepare_research(request, catalog, prompt_ref=prompt_path.name)
+    if hasattr(outcome, "rendered_prompt"):
+        prompt_path.write_text(outcome.rendered_prompt, encoding="utf-8")
+    write_json(outcome_path, outcome.public_dict())
+    write_json(receipt_path, receipt.public_dict())
+    if launch and not isinstance(outcome, BlockedReceipt):
+        launch_attended_research(outcome)
+    click.echo(
+        json.dumps(
+            {
+                "outcome": outcome.outcome_type,
+                "outcome_ref": str(outcome_path),
+                "prompt_ref": str(prompt_path) if prompt_path.exists() else None,
+                "receipt_ref": str(receipt_path),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    if isinstance(outcome, BlockedReceipt):
+        raise click.exceptions.Exit(1)
+
+
+@research.command("ingest")
+@click.argument("export_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("request_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--catalog",
+    "catalog_source",
+    default=lambda: os.environ.get("LIMEN_RESEARCH_CATALOG"),
+    help="Studium profile registry path or URL (defaults to its canonical remote).",
+)
+@click.option("--owner-root", required=True, type=click.Path(file_okay=False, path_type=Path))
+@click.option(
+    "--handoff-receipt",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Manual-pending receipt emitted by research prepare.",
+)
+@click.option(
+    "--verification-file",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Studium Source Verifier attestation for every claim and source.",
+)
+@click.option(
+    "--sanitization-file",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Studium Output Sanitization attestation bound to the exact Markdown export.",
+)
+@click.option(
+    "--raw-owner-root",
+    default=None,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="Designated root named by a private-owner:// raw_export_ref.",
+)
+@click.option("--observed-provider", default=None, help="Record only when the export exposes it.")
+@click.option("--observed-model", default=None, help="Record only when the export exposes it.")
+@click.option(
+    "--operator-handling-seconds",
+    required=True,
+    type=click.IntRange(min=0),
+    help="Measured attended handling time for the durable usage receipt.",
+)
+def research_ingest(
+    export_file,
+    request_file,
+    catalog_source,
+    owner_root,
+    handoff_receipt,
+    verification_file,
+    sanitization_file,
+    raw_owner_root,
+    observed_provider,
+    observed_model,
+    operator_handling_seconds,
+):
+    """Normalize a Markdown export and write verified owner-repo outputs."""
+    from limen.research import (
+        DEFAULT_CATALOG_URL,
+        BlockedReceipt,
+        ResearchRequest,
+        ingest_markdown_export,
+        load_document,
+        owner_path,
+        render_evidence_markdown,
+        stable_hash,
+        verify_owner_root,
+        verify_raw_export_custody,
+        write_json,
+    )
+
+    request = ResearchRequest.from_mapping(load_document(request_file))
+    catalog = load_document(catalog_source or DEFAULT_CATALOG_URL)
+    handoff = load_document(handoff_receipt)
+    verification = load_document(verification_file)
+    sanitization = load_document(sanitization_file)
+    owner_root = verify_owner_root(owner_root, request)
+    verify_raw_export_custody(
+        export_file,
+        owner_root,
+        request,
+        raw_owner_root=raw_owner_root,
+    )
+    markdown = export_file.read_text(encoding="utf-8")
+    outcome, receipt = ingest_markdown_export(
+        markdown,
+        request,
+        catalog,
+        handoff_receipt=handoff,
+        verification_attestation=verification,
+        sanitization_attestation=sanitization,
+        observed_provider=observed_provider,
+        observed_model=observed_model,
+        operator_handling_seconds=operator_handling_seconds,
+    )
+    receipt_path = owner_path(owner_root, request.receipt_ref)
+    if isinstance(outcome, BlockedReceipt):
+        blocked_path = receipt_path.with_suffix(".blocked.json")
+        write_json(blocked_path, outcome.public_dict())
+        if not blocked_path.is_file() or not blocked_path.read_bytes():
+            raise click.ClickException("blocked outcome write did not produce a durable owner artifact")
+        write_json(receipt_path, receipt.public_dict())
+        click.echo(json.dumps({"outcome": outcome.outcome_type, "blocked_ref": str(blocked_path)}, indent=2))
+        raise click.exceptions.Exit(1)
+
+    report_path = owner_path(owner_root, request.report_ref)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    if request.output_format == "json":
+        write_json(report_path, outcome)
+    else:
+        report_path.write_text(render_evidence_markdown(outcome), encoding="utf-8")
+    if not report_path.is_file() or not report_path.read_bytes():
+        raise click.ClickException("report write did not produce a durable owner artifact")
+    report_hash = stable_hash(report_path.read_text(encoding="utf-8"))
+    write_json(receipt_path, receipt.public_dict())
+    click.echo(
+        json.dumps(
+            {
+                "outcome": outcome["outcome_type"],
+                "report_ref": str(report_path),
+                "report_hash": report_hash,
+                "receipt_ref": str(receipt_path),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+
+
+@main.group("observatory")
+def observatory():
+    """OBSERVATORY — read-only daily GitHub success analysis (GITVS's legibility twin)."""
+
+
+@observatory.command("doctor")
+@click.option("--offline", is_flag=True, help="Skip the live gh probe")
+def observatory_doctor(offline):
+    """Self-verifying predicate: exit 0 ⟺ the organ is wired and safe."""
+    from limen.observatory import doctor as obs_doctor
+
+    report = obs_doctor.run(offline=offline)
+    click.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report.get("ok"):
+        sys.exit(1)
+
+
+@observatory.command("run")
+@click.option(
+    "--apply/--dry-run",
+    default=False,
+    help="Default: dry-run (proposes; writes no lever/task)",
+)
+def observatory_run(apply):
+    """Run the whole loop (collect → analyze → reconcile → brief) for one beat."""
+    from limen.observatory import executive as obs_exec
+
+    status = obs_exec.run_beat(apply=apply)
+    click.echo(obs_exec.summary_line(status))
 
 
 if __name__ == "__main__":

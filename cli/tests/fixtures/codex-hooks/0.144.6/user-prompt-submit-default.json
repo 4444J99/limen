@@ -1,0 +1,8 @@
+{
+  "hook_event_name": "UserPromptSubmit",
+  "permission_mode": "default",
+  "session_id": "redacted-session-execute",
+  "source": "codex",
+  "transcript_path": "<redacted>",
+  "turn_id": "redacted-turn-execute"
+}

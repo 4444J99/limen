@@ -5,6 +5,7 @@ Dry-run by default. With --write, this records a private JSON receipt and a
 tracked redacted summary. Missing configured roots are receipts, not global
 blockers, unless a caller makes them required in its own gate.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,18 +13,42 @@ import datetime as dt
 import json
 import os
 import shutil
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+CODE_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
+from limen.resource_envelope import current_required_free_gib  # noqa: E402
+
+STATE_ROOT = Path(os.environ.get("LIMEN_STATE_ROOT", os.environ.get("LIMEN_ROOT", CODE_ROOT))).expanduser()
+
+
+def writable_output_root() -> Path:
+    explicit = os.environ.get("LIMEN_OUTPUT_ROOT")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    env_root = os.environ.get("LIMEN_ROOT")
+    if env_root:
+        candidate = Path(env_root).expanduser()
+        docs = candidate / "docs"
+        if os.access(candidate, os.W_OK) and (docs.exists() or os.access(candidate, os.W_OK)):
+            return candidate.resolve()
+    return CODE_ROOT
+
+
+OUTPUT_ROOT = writable_output_root()
 HOME = Path.home()
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
+STATE_PRIVATE_ROOT = Path(
+    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", STATE_ROOT / ".limen-private" / "session-corpus")
 )
-PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "substrate-ledger.json"
-DOC_PATH = ROOT / "docs" / "substrate-ledger.md"
-CONFIG_PATH = Path(os.environ.get("LIMEN_SUBSTRATE_CONFIG", ROOT / ".limen-private" / "substrate-roots.json"))
+OUTPUT_PRIVATE_ROOT = Path(
+    os.environ.get("LIMEN_OUTPUT_PRIVATE_SESSION_CORPUS", OUTPUT_ROOT / ".limen-private" / "session-corpus")
+)
+PRIVATE_INDEX = OUTPUT_PRIVATE_ROOT / "lifecycle" / "substrate-ledger.json"
+DOC_PATH = OUTPUT_ROOT / "docs" / "substrate-ledger.md"
+CONFIG_PATH = Path(os.environ.get("LIMEN_SUBSTRATE_CONFIG", STATE_ROOT / ".limen-private" / "substrate-roots.json"))
 
 ENV_ROOTS = {
     "storage_roots": "LIMEN_STORAGE_ROOTS",
@@ -76,15 +101,18 @@ def mounted_volumes() -> list[Path]:
 
 
 def default_roots() -> list[tuple[str, str, Path]]:
-    return [
-        ("repo-default", "limen-root", ROOT),
+    rows = [
+        ("repo-default", "limen-root", STATE_ROOT),
         ("repo-default", "workspace", HOME / "Workspace"),
-        ("repo-default", "workspace-parent", ROOT.parent),
+        ("repo-default", "workspace-parent", STATE_ROOT.parent),
         ("prompt-default", "codex-sessions", HOME / ".codex" / "sessions"),
         ("prompt-default", "codex-history", HOME / ".codex" / "history.jsonl"),
         ("prompt-default", "claude-projects", HOME / ".claude" / "projects"),
-        ("private-default", "private-session-corpus", PRIVATE_ROOT),
+        ("private-default", "private-session-corpus", STATE_PRIVATE_ROOT),
     ]
+    if OUTPUT_ROOT != STATE_ROOT:
+        rows.append(("repo-default", "output-root", OUTPUT_ROOT))
+    return rows
 
 
 def configured_roots(config: dict[str, Any]) -> list[tuple[str, str, Path]]:
@@ -109,7 +137,7 @@ def root_key(path: Path) -> str:
         return str(path.expanduser().absolute())
 
 
-def classify_path(path: Path, *, free_floor_gib: float, usage_ceiling_pct: float) -> dict[str, Any]:
+def classify_path(path: Path, *, required_free_gib: float) -> dict[str, Any]:
     exists = path.exists()
     detail = "missing"
     status = "missing"
@@ -133,12 +161,9 @@ def classify_path(path: Path, *, free_floor_gib: float, usage_ceiling_pct: float
         elif not write_ok:
             status = "read_only"
             detail = "exists but is not writable"
-        elif free_gib is not None and free_gib < free_floor_gib:
+        elif free_gib is not None and free_gib < required_free_gib:
             status = "full"
-            detail = f"free {free_gib} GiB below {free_floor_gib} GiB floor"
-        elif usage_pct is not None and usage_pct > usage_ceiling_pct:
-            status = "full"
-            detail = f"usage {usage_pct}% above {usage_ceiling_pct}% ceiling"
+            detail = f"free {free_gib} GiB below dynamic required {required_free_gib:.3f} GiB"
         else:
             status = "active"
             detail = "exists and is usable"
@@ -160,9 +185,10 @@ def build_snapshot(
     *,
     config_path: Path = CONFIG_PATH,
     include_mounted: bool = True,
-    free_floor_gib: float = 10.0,
-    usage_ceiling_pct: float = 95.0,
+    required_free_gib: float | None = None,
 ) -> dict[str, Any]:
+    if required_free_gib is None:
+        required_free_gib = current_required_free_gib()
     config = load_private_config(config_path)
     candidates = configured_roots(config)
     candidates.extend(default_roots())
@@ -173,7 +199,7 @@ def build_snapshot(
     for source, label, path in candidates:
         key = root_key(path)
         if key not in by_key:
-            row = classify_path(path, free_floor_gib=free_floor_gib, usage_ceiling_pct=usage_ceiling_pct)
+            row = classify_path(path, required_free_gib=required_free_gib)
             row.update({"sources": [], "labels": []})
             by_key[key] = row
         by_key[key]["sources"].append(source)
@@ -236,17 +262,15 @@ def main() -> int:
     parser.add_argument("--refresh", action="store_true", help="accepted for operator symmetry")
     parser.add_argument("--write", action="store_true", help="write tracked summary and private index")
     parser.add_argument("--no-mounted", action="store_true", help="skip /Volumes discovery")
-    parser.add_argument("--free-floor-gib", type=float, default=float(os.environ.get("LIMEN_STORAGE_FREE_FLOOR_GIB", "10")))
     parser.add_argument(
-        "--usage-ceiling-pct",
+        "--required-free-gib",
         type=float,
-        default=float(os.environ.get("LIMEN_STORAGE_USAGE_CEILING_PCT", "95")),
+        help="diagnostic override; the live resource envelope is the default",
     )
     args = parser.parse_args()
     snapshot = build_snapshot(
         include_mounted=not args.no_mounted,
-        free_floor_gib=args.free_floor_gib,
-        usage_ceiling_pct=args.usage_ceiling_pct,
+        required_free_gib=args.required_free_gib,
     )
     markdown = render_markdown(snapshot)
     if args.write:

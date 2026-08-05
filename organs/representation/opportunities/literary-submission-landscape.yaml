@@ -1,0 +1,321 @@
+schema_version: representation.v3
+kind: representation_opportunity
+id: literary-submission-landscape-v3
+name: Literary submission landscape V3
+report_grade: true
+subject:
+  type: opportunity
+  name: Literary submission market
+  roles:
+    - writer_submission
+    - market_fit
+  representation_modes:
+    - market_fit
+    - writer_submission
+standing:
+  current: SEEDED
+  next: RESEARCHING
+mandate:
+  description: Model submission routes, AI-policy risk, and no-send packet staging for writer-specific fit work.
+artifacts:
+  next_reviewable_output: literary market-fit and no-send writer submission packet generated from one opportunity record
+works:
+  - id: submission-packet
+    type: packet_template
+    title: No-send writer submission packet
+    relation: staged_output
+    claim_ids:
+      - submittable-market
+      - non-submittable-gap
+      - ai-policy-risk
+relations:
+  - id: positioning-market-fit
+    relation_type: opportunity_fit_bridge
+    posture_source: positioning
+    claim_ids:
+      - submittable-market
+      - non-submittable-gap
+      - ai-policy-risk
+    consent_constraints:
+      - Writer chooses where to submit.
+      - Human sends only after approving the packet.
+      - AI-process disclosure is venue-specific and must be explicit.
+claims:
+  - id: submittable-market
+    label: Submittable market
+    summary: Submittable Discover is a broad opportunity marketplace, but it is only one submission route.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-submittable
+    public_ok: true
+  - id: non-submittable-gap
+    label: Non-Submittable gap
+    summary: The representation substrate must track email, Google Forms, custom forms, Moksha, Duosuma, and other ad hoc flows.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - local-representation-kernel
+      - remote-issue-156
+      - web-duotrope
+      - web-chill-subs
+      - web-submission-grinder
+    public_ok: false
+  - id: ai-policy-risk
+    label: AI policy risk
+    summary: Submission strategy needs explicit AI-process tracking because journals and prize partners are diverging on acceptable use and disclosure.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-yale-ai-policy
+      - web-guardian-granta-ai
+    public_ok: true
+  - id: venue-guideline-examples
+    label: Venue guideline examples
+    summary: Venue-specific routes are included only when public guideline pages source the route fields and policy posture.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-yale-submissions
+      - web-masters-review-submissions
+    public_ok: true
+opportunity:
+  ai_policy_tracking: true
+  no_send_packet_staging: true
+  submission_routes:
+    - id: submittable-discover-route
+      route_type: marketplace
+      platform: submittable
+      guidelines_url: https://www.submittable.com/discover
+      deadline:
+      word_limits:
+      fee:
+      pay:
+      ai_policy_disclosure_status: venue_specific_unresolved
+      ai_policy_source_ids: []
+      adapter_kind: submittable
+      ai_policy_risk: venue-specific disclosure required
+      note: Marketplace route; do not assume all venues use it.
+    - id: yale-review-nonfiction-route
+      route_type: venue
+      platform: direct_email
+      venue: The Yale Review
+      guidelines_url: https://yalereview.org/about/submissions
+      guidelines_source_ids:
+        - web-yale-submissions
+      deadline: nonfiction opens 2026-08-26; poetry opens 2026-09-01; fiction closed until 2027
+      word_limits: pitches up to three paragraphs; prose pieces typically 2000-5000 words
+      fee: poetry Submittable fee $3; nonfiction fee not declared
+      pay: prose $250-$1000; poems $150
+      ai_policy_disclosure_status: human_authorship_required_process_ai_allowed_with_transparency
+      ai_policy_source_ids:
+        - web-yale-submissions
+        - web-yale-ai-policy
+      adapter_kind: venue_guideline_snapshot
+      ai_policy_risk: visible or meaningful AI-generated language or structure requires disclosure
+      note: Sourced from the public TYR submissions page; no submission channel is copied into this record.
+    - id: masters-review-summer-short-story-route
+      route_type: venue
+      platform: submittable
+      venue: The Masters Review
+      guidelines_url: https://mastersreview.com/submissions/
+      guidelines_source_ids:
+        - web-masters-review-submissions
+      deadline: 2026-08-30 23:59 PDT
+      word_limits: fiction or narrative nonfiction under 6000 words
+      fee: $20
+      pay: $3000 first prize; $300/$200 finalists; agency review
+      ai_policy_disclosure_status: ai_generated_or_assisted_submissions_disqualified
+      ai_policy_source_ids:
+        - web-masters-review-submissions
+      adapter_kind: submittable
+      ai_policy_risk: AI-generated or assisted submissions are disqualified by the public guidelines.
+      note: Sourced from the public Masters Review submissions page; route remains no-send.
+    - id: journal-email-route
+      route_type: direct_email
+      platform: journal_email
+      guidelines_url:
+      deadline:
+      word_limits:
+      fee:
+      pay:
+      ai_policy_disclosure_status: venue_specific_unresolved
+      ai_policy_source_ids: []
+      adapter_kind: email
+      ai_policy_risk: editor-specific policy may be absent or divergent
+      note: Stage packet only; human sends if approved.
+    - id: custom-journal-form-route
+      route_type: custom_form
+      platform: custom_journal_form
+      guidelines_url:
+      deadline:
+      word_limits:
+      fee:
+      pay:
+      ai_policy_disclosure_status: venue_specific_unresolved
+      ai_policy_source_ids: []
+      adapter_kind: custom_form
+      ai_policy_risk: policy often hidden in guidelines page
+      note: Capture fields and disclosure copy before submission.
+    - id: duosuma-route
+      route_type: platform
+      platform: duosuma
+      guidelines_url:
+      deadline:
+      word_limits:
+      fee:
+      pay:
+      ai_policy_disclosure_status: venue_specific_unresolved
+      ai_policy_source_ids: []
+      adapter_kind: duosuma
+      ai_policy_risk: platform route still needs venue-specific policy capture
+      note: Treat as a separate adapter from Duotrope research listings.
+    - id: google-forms-route
+      route_type: google_form
+      platform: google_forms
+      guidelines_url:
+      deadline:
+      word_limits:
+      fee:
+      pay:
+      ai_policy_disclosure_status: venue_specific_unresolved
+      ai_policy_source_ids: []
+      adapter_kind: google_forms
+      ai_policy_risk: form-level policy may differ from guidelines page
+      note: Preserve form URL and deadline snapshot.
+  fit_scoring:
+    creator_profile: required
+    work_metadata: required
+    editor_taste: required
+    rights_fees_response_rules: required
+    prior_submission_history: required
+  packet_outputs:
+    - fit report
+    - cover-letter options
+    - AI-process disclosure note
+    - outreach draft
+    - rights and fee checklist
+sources:
+  - id: local-representation-kernel
+    source_type: local_repo
+    privacy_level: private
+    source_ref: organs/representation/KERNEL.md
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - non-submittable-gap
+    confidence: high
+    note: Local representation kernel defines the no-send and multi-adapter packet contract.
+  - id: remote-issue-156
+    source_type: remote_repo
+    privacy_level: private
+    source_ref: https://github.com/organvm/organvm-corpvs-testamentvm/issues/156
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - non-submittable-gap
+    confidence: medium
+    note: Authenticated remote planning issue anchors market-gap work to studio strategy.
+  - id: web-submittable
+    source_type: web
+    privacy_level: public
+    source_ref: https://www.submittable.com/discover
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - submittable-market
+    confidence: high
+    note: Public Submittable page describes Discover as a searchable opportunity marketplace.
+  - id: web-yale-submissions
+    source_type: web
+    privacy_level: public
+    source_ref: https://yalereview.org/about/submissions
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - venue-guideline-examples
+      - ai-policy-risk
+    confidence: high
+    note: Public Yale Review submissions page lists genre openings, route fields, rates, and AI guidelines.
+  - id: web-masters-review-submissions
+    source_type: web
+    privacy_level: public
+    source_ref: https://mastersreview.com/submissions/
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - venue-guideline-examples
+      - ai-policy-risk
+    confidence: high
+    note: Public Masters Review submissions page lists contest deadline, limits, fee, prizes, and AI disqualification.
+  - id: web-duotrope
+    source_type: web
+    privacy_level: public
+    source_ref: https://duotrope.com/
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - non-submittable-gap
+    confidence: high
+    note: Public Duotrope page lists publisher search, trackers, statistics, and Duosuma.
+  - id: web-chill-subs
+    source_type: web
+    privacy_level: public
+    source_ref: https://www.chillsubs.com/
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - non-submittable-gap
+    confidence: high
+    note: Public Chill Subs page presents writer opportunities and tracked submissions.
+  - id: web-submission-grinder
+    source_type: web
+    privacy_level: public
+    source_ref: https://thegrinder.diabolicalplots.com/
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - non-submittable-gap
+    confidence: medium
+    note: Public Submission Grinder site is a separate market-research surface.
+  - id: web-yale-ai-policy
+    source_type: web
+    privacy_level: public
+    source_ref: https://yalereview.org/ai-policy
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - ai-policy-risk
+    confidence: high
+    note: Public Yale Review page gives a detailed generative AI submission policy.
+  - id: web-guardian-granta-ai
+    source_type: web
+    privacy_level: public
+    source_ref: https://www.theguardian.com/books/2026/jun/20/granta-magazine-commonwealth-short-story-prize-ai
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - ai-policy-risk
+    confidence: high
+    note: Public Guardian report shows AI-authorship controversy affecting literary publication.
+approvals:
+  - id: submission-not-requested
+    approval_type: submission
+    status: not_requested
+    claim_ids: []
+    note: Market-fit packets are drafts only.
+outputs:
+  - id: literary-market-fit
+    mode: market_fit
+    report_grade: true
+    claim_ids:
+      - submittable-market
+      - non-submittable-gap
+      - ai-policy-risk
+      - venue-guideline-examples
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms route coverage includes non-Submittable paths.
+      - Reviewer confirms AI-policy risk is surfaced before any venue action.
+  - id: literary-writer-submission
+    mode: writer_submission
+    report_grade: true
+    claim_ids:
+      - submittable-market
+      - non-submittable-gap
+      - ai-policy-risk
+      - venue-guideline-examples
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the packet is no-send and draft-only.
+      - Submission approval is recorded before any human sends.

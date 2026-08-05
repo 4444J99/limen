@@ -1,0 +1,42 @@
+{
+  "failure_reasons": [
+    "prompt-authority-not-exact-all-all"
+  ],
+  "leaves": [],
+  "schema": "limen.progress-prompt-lineage.v1",
+  "source_report": {
+    "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "cursor": {
+      "authority_ready": false,
+      "authority_scope": "partial:all",
+      "expected_atom_count": 738547,
+      "expected_current_unresolved_count": 738547,
+      "failure_count": 1,
+      "known_atom_count": 0,
+      "known_current_unresolved_count": 0,
+      "reconciled_current_unresolved_count": 0
+    },
+    "exhaustive": false,
+    "generated_at": "2026-07-22T01:26:13.964785Z",
+    "normalized_leaf_count": 0,
+    "schema": "limen.progress-source-report.v1",
+    "semantic_status": "partial",
+    "source_id": "prompt-lineage"
+  },
+  "summary": {
+    "authority_ready": false,
+    "correction_count": 0,
+    "current_unresolved_count": 0,
+    "disposition_counts": {},
+    "expected_atom_count": 738547,
+    "failure_count": 1,
+    "kind_counts": {},
+    "known_atom_count": 0,
+    "matched_atom_count": 0,
+    "unmatched_atom_count": 0,
+    "verified_outcome_count": 0
+  },
+  "tracked_leaf_count": 0,
+  "tracked_leaf_limit": 256,
+  "tracked_leaf_truncated_count": 0
+}

@@ -12,21 +12,23 @@
 #                     or a non-deploy PR still has checks running. Wait for green; never
 #                     blind-merge a live deploy.
 #   exit 3  BLOCKED — GitHub itself refuses the merge right now: conflicts (DIRTY), stale base
-#                     (BEHIND), or a branch-protection gate not satisfied (BLOCKED — e.g. the
-#                     required `pr-gate` check hasn't run on a pre-existing PR). Rebase onto
-#                     current main (the PR#111 silent-revert guard; also retriggers required
-#                     checks), then re-run. Distinct from HOLD: HOLD means GitHub would allow
-#                     the merge but the website-safety policy says wait; BLOCKED means it can't.
+#                     without an active merge queue (BEHIND), or a branch-protection gate not
+#                     satisfied (BLOCKED — e.g. the required `pr-gate` check hasn't run on a
+#                     pre-existing PR). An active queue may accept an exact-head-green BEHIND PR
+#                     because GitHub validates it against current base in a merge group; absent or
+#                     unknown queue capability preserves the PR#111 stale-base guard.
 #
-# Usage:  scripts/merge-policy.sh [PR_NUMBER] [--repo OWNER/NAME]
+# Usage:  scripts/merge-policy.sh [PR_NUMBER] [--repo OWNER/NAME] [--expected-head SHA]
 #         (no PR number → resolves the PR open for the current branch)
 set -euo pipefail
 
-PR=""; REPO=""
+PR=""; REPO=""; EXPECTED_HEAD=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO="${2:-}"; shift 2 ;;
     --repo=*) REPO="${1#*=}"; shift ;;
+    --expected-head) EXPECTED_HEAD="${2:-}"; shift 2 ;;
+    --expected-head=*) EXPECTED_HEAD="${1#*=}"; shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) PR="$1"; shift ;;
   esac
@@ -37,42 +39,22 @@ repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
 # array-plus idiom at each call site below, which expands to nothing for an empty array and to
 # the elements otherwise — safe in bash 3.2 and 4+.
 
-# Deploy-trigger paths — kept in lockstep with .github/workflows/deploy*.yml `on.push.paths`.
-# A push/merge to `main` that touches one of these auto-deploys the live public site/API.
-DASHBOARD_RE='^web/app/|^firebase\.json$|^tasks\.yaml$|^\.github/workflows/deploy\.yml$'
-API_RE='^web/api/|^cli/|^scripts/preflight-cloud-run\.sh$|^\.github/workflows/deploy-api\.yml$'
-DEPLOY_RE="(${DASHBOARD_RE}|${API_RE})"
-
-# --- staleness guard: never let this hardcoded list silently rot away from the workflows. ---
-# Re-read each deploy workflow's `paths:` globs; if one isn't covered by DEPLOY_RE, warn AND
-# fail toward caution (force website-sensitive) — a bad live deploy is the irreversible risk.
+# Deploy-trigger classification — DERIVED from the GATES registry (institutio/governance/
+# gates.yaml). check-gates.py holds the registry in exact set-parity with the deploy*.yml
+# `on.push.paths` on every PR, so the old hardcoded regexes and their awk staleness guard
+# are gone: one source of truth, one drift predicate. A push/merge to `main` touching a
+# derived path auto-deploys the live public site/API.
+#
+# Fail toward caution: if derivation fails (missing python3/PyYAML/registry), STALE=1
+# forces website-sensitive — a broken environment can only HOLD, never blind-deploy.
 STALE=0
-_check_workflow_paths() {
-  local wf="$1"
-  [ -f "$wf" ] || return 0
-  local globs g sample
-  globs=$(awk '
-    /^[[:space:]]*paths:[[:space:]]*$/ {f=1; next}
-    f && /^[[:space:]]*-[[:space:]]*/ {gsub(/["'\'' ]/,""); sub(/^-/,""); print; next}
-    f && /^[[:space:]]*[A-Za-z_]+:/ {f=0}
-  ' "$wf")
-  while IFS= read -r g; do
-    [ -z "$g" ] && continue
-    case "$g" in
-      *'/**') sample="${g%/**}/_probe" ;;
-      *'**')  sample="${g%\**}_probe" ;;
-      *)      sample="$g" ;;
-    esac
-    if ! printf '%s\n' "$sample" | grep -qE "$DEPLOY_RE"; then
-      echo "merge-policy: STALE GUARD — $wf lists deploy path '$g' not covered by DEPLOY_RE; update both together." >&2
-      STALE=1
-    fi
-  done <<< "$globs"
-}
-# Resolve workflow dir relative to this script so it works from any CWD.
-_wf_dir="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)/.github/workflows"
-_check_workflow_paths "$_wf_dir/deploy.yml"
-_check_workflow_paths "$_wf_dir/deploy-api.yml"
+_root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
+DEPLOY_RE="$(python3 "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
+if [ -z "$DEPLOY_RE" ]; then
+  echo "merge-policy: cannot derive the deploy regex from the GATES registry — treating the PR as website-sensitive (fail toward caution)." >&2
+  STALE=1
+  DEPLOY_RE='^$'
+fi
 
 # Resolve the PR for the current branch when not given.
 if [ -z "$PR" ]; then
@@ -82,7 +64,7 @@ fi
 
 j="$(mktemp)"; trap 'rm -f "$j"' EXIT
 gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
-  --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,files,statusCheckRollup \
+  --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,headRefOid,files,statusCheckRollup \
   > "$j" 2>/dev/null || { echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2; exit 3; }
 
 title=$(jq -r '.title' "$j")
@@ -91,6 +73,25 @@ state=$(jq -r '.state' "$j")
 base=$(jq -r '.baseRefName' "$j")
 mss=$(jq -r '.mergeStateStatus' "$j")
 draft=$(jq -r '.isDraft' "$j")
+head=$(jq -r '.headRefOid // empty' "$j")
+
+# Merge-queue capability is live, branch-specific repository state. Only a positive GraphQL
+# Repository.mergeQueue object is authoritative enough to route through the queue. An unavailable
+# API/schema/permission or malformed response is "unknown" and preserves the direct-merge
+# stale-base guard. Derive the repository from --repo first, then the canonical PR URL.
+queue_repo="$REPO"
+if [ -z "$queue_repo" ]; then
+  queue_repo=$(printf '%s' "$url" | sed -nE 's#^https://github\.com/([^/]+/[^/]+)/pull/[0-9]+.*#\1#p')
+fi
+queue_capability="unknown"
+if [ -n "$queue_repo" ]; then
+  queue_capability=$(python3 "$_root/scripts/_pr_scan.py" merge-queue-capability \
+    "$queue_repo" "$base" 2>/dev/null || true)
+fi
+case "$queue_capability" in
+  active|absent|unknown) ;;
+  *) queue_capability="unknown" ;;
+esac
 
 # Only an OPEN PR can be merged — guard against a false CLEARED on an already-merged/closed PR.
 if [ "$state" != "OPEN" ]; then
@@ -100,35 +101,79 @@ if [ "$state" != "OPEN" ]; then
   exit 3
 fi
 
+# Bind the rollup above to one exact PR head. A push racing this predicate invalidates the
+# association between the checks we inspected and the code GitHub would merge; fail closed and let
+# the next invocation inspect the new head. Missing head identity is equally non-authoritative.
+if [ -z "$head" ]; then
+  echo "VERDICT: HOLD — PR head identity is unavailable; cannot associate checks with exact code."
+  exit 2
+fi
+if [ -n "$EXPECTED_HEAD" ] && [ "$head" != "$EXPECTED_HEAD" ]; then
+  echo "VERDICT: HOLD — expected PR head $EXPECTED_HEAD but GitHub reports $head; re-run on the new head."
+  exit 2
+fi
+head_now=$(gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" --json headRefOid -q .headRefOid 2>/dev/null || true)
+if [ -z "$head_now" ] || [ "$head_now" != "$head" ]; then
+  echo "VERDICT: HOLD — PR head changed while checks were inspected; re-run on the new exact head."
+  exit 2
+fi
+
 deploy_hits=$(jq -r '.files[].path' "$j" | grep -E "$DEPLOY_RE" || true)
 sensitive=0
 [ -n "$deploy_hits" ] && sensitive=1
 [ "$STALE" = 1 ] && sensitive=1   # fail-safe: uncertain classification ⇒ treat as a live deploy
 
 # CI rollup: count failing / pending across CheckRuns (conclusion/status) and StatusContexts (state).
-failing=$(jq '[.statusCheckRollup[]? | (.conclusion // .state // "" | ascii_upcase)
+# Dedupe to the LATEST run per check name first. GitHub attaches every re-run of a check (a
+# concurrency-cancel, a flaky-test retry, a manual re-run) to the same commit, so the rollup can
+# carry both a stale CANCELLED/FAILURE run and a fresh SUCCESS run of the same check name. GitHub's
+# own mergeability uses latest-run-per-check; without this dedupe merge-policy is stricter in the
+# WRONG direction — a superseded failure counts forever and false-HOLDs a genuinely green PR (the
+# claude-review self-cancel jam, #1218 era: review=[CANCELLED@t0, SUCCESS@t1] read as 1 failing).
+# Key on .name (CheckRun) or .context (StatusContext); recency by .completedAt then .startedAt.
+LATEST='[.statusCheckRollup[]? | . + {_k:(.name // .context // ""), _t:(.completedAt // .startedAt // "")}]
+        | group_by(._k) | map(max_by(._t))'
+failing=$(jq "$LATEST"' | [.[] | (.conclusion // .state // "" | ascii_upcase)
              | select(.=="FAILURE" or . =="CANCELLED" or . =="TIMED_OUT" or . =="ERROR"
                       or . =="ACTION_REQUIRED" or . =="STARTUP_FAILURE")] | length' "$j")
-pending=$(jq '[.statusCheckRollup[]?
+pending=$(jq "$LATEST"' | [.[]
              | ((.status // "" | ascii_upcase) as $s | (.state // "" | ascii_upcase) as $st
                 | select($s=="QUEUED" or $s=="IN_PROGRESS" or $s=="PENDING" or $st=="PENDING" or $st=="EXPECTED"))]
              | length' "$j")
-total_checks=$(jq '[.statusCheckRollup[]?] | length' "$j")
+total_checks=$(jq "$LATEST"' | length' "$j")
+
+# Required-vs-advisory discrimination (2026-07-24 insights lineage: deliverables held
+# hostage behind non-required checks). The rollup above carries EVERY check; branch
+# protection enforces only the required subset. For NON-DEPLOY verdicts the hold/clear
+# decision counts required checks alone — advisory checks are reported, never blocking.
+# Website-sensitive PRs still demand the FULL rollup green: merging IS the deploy, so
+# the standing guardrail deliberately stays stricter than the required set.
+# Fail toward caution: when the required set cannot be derived (older gh, API hiccup,
+# stubbed environment), req_* falls back to the all-checks counts above.
+req_scope="all"; req_failing=$failing; req_pending=$pending
+req_json="$(gh pr checks "$PR" "${repo_args[@]+"${repo_args[@]}"}" --required --json name,state,bucket 2>/dev/null || true)"
+if [ -n "$req_json" ] && printf '%s' "$req_json" | jq -e 'type == "array"' >/dev/null 2>&1; then
+  req_scope="required"
+  req_failing=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length')
+  req_pending=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "pending")] | length')
+fi
 
 echo "PR #$PR — $title"
 echo "  $url"
-echo "  base=$base  mergeState=$mss  draft=$draft"
+echo "  base=$base  head=${head:0:12}  mergeState=$mss  draft=$draft"
+echo "  merge-queue=$queue_capability"
 if [ "$sensitive" = 1 ]; then
   if [ -n "$deploy_hits" ]; then
     echo "  WEBSITE-SENSITIVE — diff touches deploy-trigger paths:"
     printf '%s\n' "$deploy_hits" | sed 's/^/      /'
   else
-    echo "  WEBSITE-SENSITIVE — forced by staleness guard (deploy path list may have drifted)"
+    echo "  WEBSITE-SENSITIVE — forced: deploy classification could not be derived from the GATES registry"
   fi
 else
   echo "  non-deploy — merging will NOT trigger a live website/API deploy"
 fi
 echo "  checks: total=$total_checks failing=$failing pending=$pending"
+echo "  required checks: scope=$req_scope failing=$req_failing pending=$req_pending"
 
 # --- verdict ---
 # GitHub's mergeStateStatus is authoritative on whether a merge is even POSSIBLE. Handle every
@@ -136,13 +181,18 @@ echo "  checks: total=$total_checks failing=$failing pending=$pending"
 # state (an UNKNOWN-during-recompute or a future enum value must not read as "safe to merge").
 case "$mss" in
   DIRTY)  echo "VERDICT: BLOCKED — merge conflicts. Rebase onto origin/$base, then re-run."; exit 3 ;;
-  BEHIND) echo "VERDICT: BLOCKED — stale base (branch is behind $base). Rebase onto current $base first (PR#111 silent-revert guard), then re-run."; exit 3 ;;
+  BEHIND)
+    if [ "$queue_capability" != "active" ]; then
+      echo "VERDICT: BLOCKED — stale base (branch is behind $base) and merge queue capability is $queue_capability. Rebase onto current $base first (PR#111 silent-revert guard), then re-run."
+      exit 3
+    fi
+    ;;
   BLOCKED)
     # BLOCKED means branch protection won't merge yet — but it covers two cases. If a required
     # check is still RUNNING, the remedy is simply to wait (HOLD); only when nothing is pending is
     # it genuinely stuck (required check never ran, or a required review is missing → action needed).
-    if [ "$pending" -gt 0 ]; then
-      echo "VERDICT: HOLD — branch protection is waiting on $pending required check(s) still running. Wait for green, then re-run."; exit 2
+    if [ "$req_pending" -gt 0 ]; then
+      echo "VERDICT: HOLD — branch protection is waiting on $req_pending required check(s) still running ($req_scope scope). Wait for green, then re-run."; exit 2
     fi
     echo "VERDICT: BLOCKED — branch protection won't allow the merge: a required check never ran, or a required review is missing. For a PR opened before a required check was added this is almost always the missing 'pr-gate' context, which only runs after the head is pushed/rebased — rebase onto origin/$base to retrigger it, then re-run. If it persists after a rebase with green checks, a required review or admin merge is needed: surface to human, don't force it."; exit 3 ;;
   UNKNOWN) echo "VERDICT: HOLD — GitHub is still computing mergeability (mergeState=UNKNOWN); this is transient. Re-run in a few seconds."; exit 2 ;;
@@ -150,12 +200,36 @@ esac
 if [ "$draft" = "true" ]; then
   echo "VERDICT: HOLD — PR is a draft. Mark ready, then re-run."; exit 2
 fi
-if [ "$failing" -gt 0 ]; then
-  echo "VERDICT: HOLD — $failing CI check(s) failing. Fix before merge."; exit 2
+if [ "$sensitive" = 1 ] && [ "$failing" -gt 0 ]; then
+  echo "VERDICT: HOLD — $failing CI check(s) failing and the merge deploys the live site. Fix before merge."; exit 2
+fi
+if [ "$sensitive" != 1 ] && [ "$req_failing" -gt 0 ]; then
+  echo "VERDICT: HOLD — $req_failing required check(s) failing ($req_scope scope). Fix before merge."; exit 2
+fi
+# --- optional review gate (LIMEN_REVIEW_GATE=1; DEFAULT OFF) ---
+# The merge half of the multi-agent review engine: HOLD while unresolved review threads remain.
+# Ships dark — 300 repos of unresolved bot threads would jam the estate; flip conductor-first once
+# self-heal's REVIEW-FEEDBACK tasks demonstrably drain threads. Fail-OPEN on any read error: the
+# gate is advisory until proven, and a GraphQL hiccup must never freeze the merge lane.
+if [ "${LIMEN_REVIEW_GATE:-0}" = "1" ]; then
+  nwo=$(printf '%s' "$url" | sed -E 's#https://github.com/([^/]+/[^/]+)/pull/.*#\1#')
+  if [ -n "$nwo" ] && [ "$nwo" != "$url" ]; then
+    unresolved=$(gh api graphql \
+      -f query='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){reviewThreads(first:100){nodes{isResolved}}}}}' \
+      -F o="${nwo%%/*}" -F r="${nwo##*/}" -F n="$PR" \
+      --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved|not)] | length' 2>/dev/null || true)
+    if [ -n "$unresolved" ] && [ "$unresolved" -gt 0 ] 2>/dev/null; then
+      echo "VERDICT: HOLD — $unresolved unresolved review thread(s) (LIMEN_REVIEW_GATE=1). Address + resolve them (self-heal's REVIEW-FEEDBACK tasks own the loop), then re-run."; exit 2
+    fi
+  fi
 fi
 # Past the not-mergeable states: only an explicitly mergeable state may proceed toward CLEARED.
 case "$mss" in
   CLEAN|UNSTABLE|HAS_HOOKS) : ;;  # GitHub will permit the merge
+  BEHIND)
+    # BEHIND reaches this point only with a positively detected active queue. It is queueable,
+    # never direct-merge safe: GitHub must synthesize + validate the current-base merge group.
+    ;;
   *) echo "VERDICT: HOLD — unrecognized merge state '$mss'; refusing to clear on an unhandled state. Re-run, or inspect the PR manually."; exit 2 ;;
 esac
 if [ "$sensitive" = 1 ]; then
@@ -163,11 +237,34 @@ if [ "$sensitive" = 1 ]; then
     echo "VERDICT: HOLD — website-sensitive: a live deploy fires on merge and CI is not GREEN+COMPLETE (${pending} pending, ${total_checks} total). Wait for green; never blind-merge a deploy."
     exit 2
   fi
+  if [ "$queue_capability" = "active" ]; then
+    echo "VERDICT: CLEARED — website-sensitive and exact-head CI is green. Queueable; the merge queue must validate current-base integration before merge."
+    echo "MERGE-MODE: queue"
+    echo "MERGE-HEAD: $head (enqueue with exact-head protection)"
+    exit 0
+  fi
   echo "VERDICT: CLEARED — website-sensitive, but CI is fully green. Safe to self-merge; the live deploy is verified."
+  echo "MERGE-MODE: direct"
+  echo "MERGE-HEAD: $head (use gh pr merge --match-head-commit $head)"
   exit 0
 fi
+if [ "$req_pending" -gt 0 ]; then
+  echo "VERDICT: HOLD — ${req_pending} required check(s) still running ($req_scope scope). Merge once green."; exit 2
+fi
 if [ "$pending" -gt 0 ]; then
-  echo "VERDICT: HOLD — ${pending} non-deploy check(s) still running. Merge once green."; exit 2
+  echo "  note: $pending advisory (non-required) check(s) still running — reported, not blocking."
+fi
+if [ "$queue_capability" = "active" ]; then
+  if [ "$total_checks" -eq 0 ]; then
+    echo "VERDICT: HOLD — merge queue is active but exact-head CI has no completed check receipt. Wait for green before enqueueing."
+    exit 2
+  fi
+  echo "VERDICT: CLEARED — exact-head CI is green. Queueable; the merge queue must validate current-base integration before merge."
+  echo "MERGE-MODE: queue"
+  echo "MERGE-HEAD: $head (enqueue with exact-head protection)"
+  exit 0
 fi
 echo "VERDICT: CLEARED — non-deploy PR, mergeable, no failing checks. Self-merge per the standing grant."
+echo "MERGE-MODE: direct"
+echo "MERGE-HEAD: $head (use gh pr merge --match-head-commit $head)"
 exit 0

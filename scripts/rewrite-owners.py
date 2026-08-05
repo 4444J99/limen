@@ -37,7 +37,8 @@ from pathlib import Path
 # tasks.yaml is written through the project's ONE atomic writer — never a hand-rolled open().
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(LIMEN_ROOT / "cli" / "src"))
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
+from limen.tabularius import apply_limen_file_sync  # noqa: E402
 
 TARGET = "organvm"
 
@@ -103,8 +104,8 @@ def plan_tasks() -> tuple[int, list[tuple[str, str, str]], object]:
 
 
 def apply_tasks(lf) -> None:
-    """Persist via the atomic writer (temp file + fsync + os.replace). NEVER a raw write."""
-    save_limen_file(TASKS_PATH, lf)
+    """Submit the owner projection through the single record keeper."""
+    apply_limen_file_sync(TASKS_PATH, lf, agent="rewrite-owners", session_id="apply")
 
 
 # ----------------------------------------------------------------- deploy-api.yml literal ----

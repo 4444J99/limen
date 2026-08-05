@@ -31,13 +31,24 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import os
 import subprocess
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-WALL_ISSUE = int(os.environ.get("LIMEN_CRED_WALL_ISSUE", "320"))
+
+
+def _positive_int_env(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, ""))
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+WALL_ISSUE = _positive_int_env("LIMEN_CRED_WALL_ISSUE", 320)
 WALL_MARKER = "<!-- wall:credentials -->"
 
 
@@ -63,6 +74,7 @@ LANE_META: dict[str, dict] = {
     "claude": {"issue": "—", "hand": "none — owned by the Rung-0 credential-race self-heal"},
     "codex/opencode (openai)": {"issue": "—", "hand": "none — codex authenticates via ChatGPT OAuth"},
     "opencode (openrouter)": {"issue": "—", "hand": "none — free model / own auth"},
+    "vox (elevenlabs voice clone)": {"issue": "#898", "hand": "his — vendor MINT (create ElevenLabs API key); parked enabled=False until minted (vox mock is default)"},
 }
 
 # CI / runtime secrets — NOT hydration lanes; their home is GitHub Actions / GCP Secret Manager /
@@ -104,6 +116,27 @@ CI_SECRETS: list[dict] = [
         "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (fleet); `~/.zshenv` exports it so every shell's `op` is promptless too (no Touch-ID anywhere)",
         "hand": "INSTALLED ✓ — op is promptless forever (fleet + every shell), verified via `op whoami`. Scope residual: the saved SA token carries zero vault grants, so op *re-reads* return nothing — the fleet runs off the already-valid `~/.limen.env` (see `creds-hydrate.py --verify`). For op itself to re-read/rotate secrets (true full sweep), grant the SA read access to the vault(s) holding them in the 1Password console (service accounts read shared vaults; personal-vault items may need moving into one). Non-blocking.",
         "issue": "#288",
+    },
+    {
+        "name": "LIMEN_CONDUCT_TOKEN / LIMEN_CONDUCT_PRINCIPAL_REGISTRY / LIMEN_CONDUCT_CAPABILITY_SECRET",
+        "home": "1Password credential organ + Cloudflare Worker secret rotation set",
+        "used": "authenticated peer-conductor endpoint; one principal-bound credential per native lane plus a keeper-only HMAC capability secret",
+        "hand": "gated — mint/install only after principal binding and executor-only lease delivery are exact-head green",
+        "issue": "#320",
+    },
+    {
+        "name": "LIMEN_GITHUB_TOKEN",
+        "home": "Cloudflare Worker secret with least-authority access to the GitHub-owned task projection",
+        "used": "TABVLARIVS Contents API SHA compare-and-swap for `tasks.yaml`",
+        "hand": "gated — credential-wall installation; value never enters repository or chat",
+        "issue": "#320",
+    },
+    {
+        "name": "COPILOT_MCP_LIMEN_CONDUCT_TOKEN",
+        "home": "organization Agents secret backed by the Copilot principal entry in the credential organ",
+        "used": "organization-level `limen-conductor` custom-agent authenticated remote MCP header",
+        "hand": "gated — install after the remote endpoint is deployed; no paid seat or secret mint is automatic",
+        "issue": "#320",
     },
 ]
 
@@ -187,6 +220,22 @@ def check() -> int:
     return 0
 
 
+def census() -> dict:
+    """Counts-only public census; no env names, homes, secret names, or issue prose."""
+    default_map = _load_default_map()
+    return {
+        "wall_issue": WALL_ISSUE,
+        "hydration_lanes": len(default_map),
+        "enabled_lanes": sum(1 for entry in default_map if entry.get("enabled")),
+        "derived_lanes": sum(1 for entry in default_map if entry.get("derive")),
+        "probed_lanes": sum(1 for entry in default_map if entry.get("verify")),
+        "parked_lanes": sum(1 for entry in default_map if not entry.get("enabled")),
+        "ci_runtime_secrets": len(CI_SECRETS),
+        "homeless_secret_atoms": sum(1 for entry in default_map if not (entry.get("ref") or entry.get("derive")))
+        + sum(1 for secret in CI_SECRETS if not str(secret.get("home", "")).strip()),
+    }
+
+
 def sync() -> int:
     body = wall_body()
     with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
@@ -204,11 +253,15 @@ def main() -> int:
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--check", action="store_true", help="exit 1 if any secret atom lacks a home")
     g.add_argument("--sync", action="store_true", help="write the generated body into issue #320 + pin it")
+    g.add_argument("--census", action="store_true", help="print counts-only public census JSON")
     args = ap.parse_args()
     if args.check:
         return check()
     if args.sync:
         return sync()
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
     print(wall_body())
     return 0
 

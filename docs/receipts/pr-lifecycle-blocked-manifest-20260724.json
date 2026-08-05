@@ -1,0 +1,1168 @@
+{
+  "apply_receipt": {
+    "applied_at": "2026-07-24T04:11:17.122195Z",
+    "close_effects": 0,
+    "effect_count": 164,
+    "merge_effects": 0,
+    "postcondition": "Every manifest PR remains open at its exact planned head with exactly the reviewed lifecycle label.",
+    "verified_count": 164
+  },
+  "disposition": "lifecycle:blocked",
+  "effect": "add-label:lifecycle:blocked",
+  "generated_at": "2026-07-24T04:06:38.381406Z",
+  "items": [
+    {
+      "draft": false,
+      "head_oid": "ba2428faed59aefc7e172a6456a56d5611359399",
+      "number": 367,
+      "title": "[limen jules studium-film-odyssey] Odyssey film companion (return/exile/recognition)",
+      "url": "https://github.com/organvm/limen/pull/367"
+    },
+    {
+      "draft": false,
+      "head_oid": "8573c3f887003c6fd93e61058e2678152976da17",
+      "number": 375,
+      "title": "[limen jules studium-film-beowulf] Beowulf film companion (wyrd/heroic doom)",
+      "url": "https://github.com/organvm/limen/pull/375"
+    },
+    {
+      "draft": false,
+      "head_oid": "2470b06f11844201b8e76d95135de14c09b63d5f",
+      "number": 377,
+      "title": "docs: fix dispatch --budget flag in CLI reference table",
+      "url": "https://github.com/organvm/limen/pull/377"
+    },
+    {
+      "draft": false,
+      "head_oid": "41739e3b9c2bd9906ffe02e9b22cc6a9fee02b17",
+      "number": 379,
+      "title": "[limen jules GEN-organvm-limen-test-coverage-0626] Raise test coverage in organvm/limen",
+      "url": "https://github.com/organvm/limen/pull/379"
+    },
+    {
+      "draft": false,
+      "head_oid": "e37847dd790b0a994dba8e1016988e18abbe8d67",
+      "number": 384,
+      "title": "[limen jules ORG-social-organ-kernel-0628] Map the VLTIMA 5-primitive kernel to the social organ",
+      "url": "https://github.com/organvm/limen/pull/384"
+    },
+    {
+      "draft": false,
+      "head_oid": "d4d3c7f008378f024e7684ef07348e412261befe",
+      "number": 385,
+      "title": "[limen jules ORG-legal-organ-kernel-0628] Map the VLTIMA 5-primitive kernel to the legal organ",
+      "url": "https://github.com/organvm/limen/pull/385"
+    },
+    {
+      "draft": false,
+      "head_oid": "9cc1e7d2e6ae15d0a76bbbf4cdc2349b59d4a031",
+      "number": 386,
+      "title": "limen: governance organ KERNEL+CHARTER+promotion validator",
+      "url": "https://github.com/organvm/limen/pull/386"
+    },
+    {
+      "draft": false,
+      "head_oid": "a99db3a6cc42eb02e200ef52ca06d75a71b8d8cb",
+      "number": 387,
+      "title": "feat(artist): polish macro + micro face for A-MAVS-OLEVM",
+      "url": "https://github.com/organvm/limen/pull/387"
+    },
+    {
+      "draft": false,
+      "head_oid": "05596a461bd3c7bc417dd16496c89267fcbcfe27",
+      "number": 394,
+      "title": "[limen jules ORG-financial-organ-deepen-0628] Deepen the financial organ toward a usable institution",
+      "url": "https://github.com/organvm/limen/pull/394"
+    },
+    {
+      "draft": false,
+      "head_oid": "ca076bfe0123d98108e5a62fa59895a83d683c27",
+      "number": 401,
+      "title": "[limen jules GEN-organvm-limen-test-coverage-0628] Raise test coverage in organvm/limen",
+      "url": "https://github.com/organvm/limen/pull/401"
+    },
+    {
+      "draft": false,
+      "head_oid": "945b05d15d95a7a13b5a99d68a3c6aa82bb48aa1",
+      "number": 402,
+      "title": "[limen GEN-organvm-limen-test-coverage-0629] Raise test coverage in organvm/limen",
+      "url": "https://github.com/organvm/limen/pull/402"
+    },
+    {
+      "draft": false,
+      "head_oid": "98415581cbd928f5592005da34a871c1ee4d61c9",
+      "number": 404,
+      "title": "[limen GEN-organvm-limen-typing-0629] Tighten types in organvm/limen",
+      "url": "https://github.com/organvm/limen/pull/404"
+    },
+    {
+      "draft": false,
+      "head_oid": "21b10df2f2422e8e3ad281b1268549de27c68692",
+      "number": 405,
+      "title": "[limen CAPFILL-opencode-20260629-04] OpenCode daily capacity-fill packet 04",
+      "url": "https://github.com/organvm/limen/pull/405"
+    },
+    {
+      "draft": false,
+      "head_oid": "41bd5a66b4c40294c213cf49ccd3eecffac982db",
+      "number": 406,
+      "title": "[limen CAPFILL-opencode-20260629-06] OpenCode daily capacity-fill packet 06",
+      "url": "https://github.com/organvm/limen/pull/406"
+    },
+    {
+      "draft": false,
+      "head_oid": "3709110824da4236854b54926b97f9cea7fd244d",
+      "number": 407,
+      "title": "[limen CAPFILL-claude-20260629-01] Claude daily capacity-fill packet 01",
+      "url": "https://github.com/organvm/limen/pull/407"
+    },
+    {
+      "draft": false,
+      "head_oid": "a5bb3adcf1874f250065551a89393ac5c6ecb333",
+      "number": 408,
+      "title": "[limen CAPFILL-agy-20260629-13] Agy daily capacity-fill packet 13",
+      "url": "https://github.com/organvm/limen/pull/408"
+    },
+    {
+      "draft": false,
+      "head_oid": "86690a1fa6bc1e4d36256c7f4b78eee869a1b8ce",
+      "number": 409,
+      "title": "[limen CAPFILL-opencode-20260629-08] OpenCode daily capacity-fill packet 08",
+      "url": "https://github.com/organvm/limen/pull/409"
+    },
+    {
+      "draft": false,
+      "head_oid": "15b3ab839e84c0c9b8c2c881d19c618c07fc6d66",
+      "number": 410,
+      "title": "[limen CAPFILL-agy-20260629-11] Agy daily capacity-fill packet 11",
+      "url": "https://github.com/organvm/limen/pull/410"
+    },
+    {
+      "draft": false,
+      "head_oid": "52fe67bac4d8753155be1edfc3e06d4d2a3e5c00",
+      "number": 411,
+      "title": "[limen jules CAPFILL-claude-20260629-06] Claude daily capacity-fill packet 06",
+      "url": "https://github.com/organvm/limen/pull/411"
+    },
+    {
+      "draft": false,
+      "head_oid": "179b2e4f4edfbef992535ae884e65010f288b3cf",
+      "number": 412,
+      "title": "[limen jules CAPFILL-gemini-20260629-04] Gemini daily capacity-fill packet 04",
+      "url": "https://github.com/organvm/limen/pull/412"
+    },
+    {
+      "draft": false,
+      "head_oid": "91ab4a768f7c9a8036558dfbbc0420df8dd881f6",
+      "number": 413,
+      "title": "[limen jules CAPFILL-gemini-20260629-02] Gemini daily capacity-fill packet 02",
+      "url": "https://github.com/organvm/limen/pull/413"
+    },
+    {
+      "draft": false,
+      "head_oid": "24f367f9d3a5ff146d42a06a707ab38c2f5c5fef",
+      "number": 415,
+      "title": "[limen CAPFILL-opencode-20260629-01] OpenCode daily capacity-fill packet 01",
+      "url": "https://github.com/organvm/limen/pull/415"
+    },
+    {
+      "draft": false,
+      "head_oid": "b5c28a304df0e9a2aa3581640f38caacc823b6ec",
+      "number": 416,
+      "title": "[limen CAPFILL-agy-20260629-02] Agy daily capacity-fill packet 02",
+      "url": "https://github.com/organvm/limen/pull/416"
+    },
+    {
+      "draft": false,
+      "head_oid": "af398882bdd68343aeafe4b94d6cbf75f9da9ddb",
+      "number": 417,
+      "title": "[limen CAPFILL-agy-20260629-04] Agy daily capacity-fill packet 04",
+      "url": "https://github.com/organvm/limen/pull/417"
+    },
+    {
+      "draft": false,
+      "head_oid": "1153c76c96c92eab3c7f5b188e3020a56123db7e",
+      "number": 418,
+      "title": "[limen jules CAPFILL-jules-20260629-05] Jules daily capacity-fill packet 05",
+      "url": "https://github.com/organvm/limen/pull/418"
+    },
+    {
+      "draft": false,
+      "head_oid": "199ec2ac7ba1f879f04f0dbb3d9dccba0d14aeb8",
+      "number": 419,
+      "title": "[limen jules CAPFILL-jules-20260629-02] Jules daily capacity-fill packet 02",
+      "url": "https://github.com/organvm/limen/pull/419"
+    },
+    {
+      "draft": false,
+      "head_oid": "8da3918e3d1799b8bcdd53c68aeb4e1c22162474",
+      "number": 420,
+      "title": "[limen CAPFILL-agy-20260629-21] Agy daily capacity-fill packet 21",
+      "url": "https://github.com/organvm/limen/pull/420"
+    },
+    {
+      "draft": false,
+      "head_oid": "ab2ba0cec304c89302ee7a55e0241405ccdf06e4",
+      "number": 421,
+      "title": "[limen CAPFILL-opencode-20260629-18] OpenCode daily capacity-fill packet 18",
+      "url": "https://github.com/organvm/limen/pull/421"
+    },
+    {
+      "draft": false,
+      "head_oid": "52d4cbd2ff79fbe816a21f9d8441f2e0978ba7c8",
+      "number": 422,
+      "title": "[limen CAPFILL-claude-20260629-07] Claude daily capacity-fill packet 07",
+      "url": "https://github.com/organvm/limen/pull/422"
+    },
+    {
+      "draft": false,
+      "head_oid": "7edb24aa9ae5034d2ce3bceea14f13d69e092f98",
+      "number": 424,
+      "title": "[limen CAPFILL-opencode-20260629-12] OpenCode daily capacity-fill packet 12",
+      "url": "https://github.com/organvm/limen/pull/424"
+    },
+    {
+      "draft": false,
+      "head_oid": "f37e2c7674b97e3120abc7ee80ee6cdac8fe717d",
+      "number": 425,
+      "title": "[limen CAPFILL-gemini-20260629-08] Gemini daily capacity-fill packet 08",
+      "url": "https://github.com/organvm/limen/pull/425"
+    },
+    {
+      "draft": false,
+      "head_oid": "4817ba4083ea7169d1ca6f2f85a9910a900fa4f2",
+      "number": 426,
+      "title": "[limen jules CAPFILL-opencode-20260629-15] OpenCode daily capacity-fill packet 15",
+      "url": "https://github.com/organvm/limen/pull/426"
+    },
+    {
+      "draft": false,
+      "head_oid": "8bbcfb2311288b0091ec92ce035e913d782040cf",
+      "number": 427,
+      "title": "[limen jules CAPFILL-opencode-20260629-11] OpenCode daily capacity-fill packet 11",
+      "url": "https://github.com/organvm/limen/pull/427"
+    },
+    {
+      "draft": false,
+      "head_oid": "d7bb7ecd35abc5d6db7fceb4f5887b1451d2f516",
+      "number": 428,
+      "title": "[limen jules CAPFILL-jules-20260629-09] Jules daily capacity-fill packet 09",
+      "url": "https://github.com/organvm/limen/pull/428"
+    },
+    {
+      "draft": false,
+      "head_oid": "8c49afd4e4fcf4b197eb12ac49b86d73fbf2b1d7",
+      "number": 429,
+      "title": "[limen CAPFILL-agy-20260629-22] Agy daily capacity-fill packet 22",
+      "url": "https://github.com/organvm/limen/pull/429"
+    },
+    {
+      "draft": false,
+      "head_oid": "f8984854e9bc76e466c7c006e235f64583fd5469",
+      "number": 431,
+      "title": "[limen CAPFILL-agy-20260629-08] Agy daily capacity-fill packet 08",
+      "url": "https://github.com/organvm/limen/pull/431"
+    },
+    {
+      "draft": false,
+      "head_oid": "8169d561eac64343addd5e4ed7d5894b9bc1b839",
+      "number": 432,
+      "title": "[limen CAPFILL-opencode-20260629-01] OpenCode daily capacity-fill packet 01",
+      "url": "https://github.com/organvm/limen/pull/432"
+    },
+    {
+      "draft": false,
+      "head_oid": "d9ac2393b569276bca6083808d5036043ad4947f",
+      "number": 433,
+      "title": "[limen jules CAPFILL-jules-20260629-15] Jules daily capacity-fill packet 15",
+      "url": "https://github.com/organvm/limen/pull/433"
+    },
+    {
+      "draft": false,
+      "head_oid": "b1a12a512628383df37fe85257233d25a6a0174e",
+      "number": 434,
+      "title": "[limen jules CAPFILL-jules-20260629-14] Jules daily capacity-fill packet 14",
+      "url": "https://github.com/organvm/limen/pull/434"
+    },
+    {
+      "draft": false,
+      "head_oid": "d32010d4be026a9adf02a4fbd8bc4c5b82e8656b",
+      "number": 436,
+      "title": "[limen CAPFILL-agy-20260629-12] Agy daily capacity-fill packet 12",
+      "url": "https://github.com/organvm/limen/pull/436"
+    },
+    {
+      "draft": false,
+      "head_oid": "bac5c9b9293f191a59a98ddd5a9194b744bc82af",
+      "number": 437,
+      "title": "[limen CAPFILL-agy-20260629-20] Agy daily capacity-fill packet 20",
+      "url": "https://github.com/organvm/limen/pull/437"
+    },
+    {
+      "draft": false,
+      "head_oid": "3b9fbe7c89f0e368cd368f22a5ec3b428541679d",
+      "number": 438,
+      "title": "[limen CAPFILL-agy-20260629-01] Agy daily capacity-fill packet 01",
+      "url": "https://github.com/organvm/limen/pull/438"
+    },
+    {
+      "draft": false,
+      "head_oid": "6775009fea9cb41d703b891c7e1d301937c077ff",
+      "number": 440,
+      "title": "[limen CAPFILL-agy-20260629-03] Agy daily capacity-fill packet 03",
+      "url": "https://github.com/organvm/limen/pull/440"
+    },
+    {
+      "draft": false,
+      "head_oid": "f37dbb8b6b370df1987f7e0a6f56d15aaeb11c2c",
+      "number": 441,
+      "title": "[limen CAPFILL-agy-20260629-25] Agy daily capacity-fill packet 25",
+      "url": "https://github.com/organvm/limen/pull/441"
+    },
+    {
+      "draft": false,
+      "head_oid": "143aed357a8986d4d7bf3588062a3b8653cc9a39",
+      "number": 442,
+      "title": "[limen jules CAPFILL-claude-20260629-15] Claude daily capacity-fill packet 15",
+      "url": "https://github.com/organvm/limen/pull/442"
+    },
+    {
+      "draft": false,
+      "head_oid": "e745ddcf827a67f2865059c9048729f28bfcf094",
+      "number": 443,
+      "title": "[limen jules CAPFILL-jules-20260629-08] Jules daily capacity-fill packet 08",
+      "url": "https://github.com/organvm/limen/pull/443"
+    },
+    {
+      "draft": false,
+      "head_oid": "c600716fce3cb95f23c2941a571c69e6ab6f5bd7",
+      "number": 444,
+      "title": "[limen jules CAPFILL-agy-20260629-02] Agy daily capacity-fill packet 02",
+      "url": "https://github.com/organvm/limen/pull/444"
+    },
+    {
+      "draft": false,
+      "head_oid": "520b2001df18e760de6e4c996c1e57a1c5729272",
+      "number": 447,
+      "title": "[limen CAPFILL-gemini-20260629-10] Gemini daily capacity-fill packet 10",
+      "url": "https://github.com/organvm/limen/pull/447"
+    },
+    {
+      "draft": false,
+      "head_oid": "257255152a6b633937f6c91904c00407f3529697",
+      "number": 448,
+      "title": "[limen CAPFILL-opencode-20260629-17] OpenCode daily capacity-fill packet 17",
+      "url": "https://github.com/organvm/limen/pull/448"
+    },
+    {
+      "draft": false,
+      "head_oid": "48984004e5b505aedad6bcb978e5a340eac62e25",
+      "number": 449,
+      "title": "[limen jules CAPFILL-claude-20260629-14] Claude daily capacity-fill packet 14",
+      "url": "https://github.com/organvm/limen/pull/449"
+    },
+    {
+      "draft": false,
+      "head_oid": "a4790df519e30f3c434b6b5e232380b9b903a78c",
+      "number": 450,
+      "title": "[limen jules CAPFILL-agy-20260629-07] Agy daily capacity-fill packet 07",
+      "url": "https://github.com/organvm/limen/pull/450"
+    },
+    {
+      "draft": false,
+      "head_oid": "6c1f3c48d4ace935bd0d30ee22823945916f4089",
+      "number": 451,
+      "title": "[limen jules CAPFILL-jules-20260629-01] Jules daily capacity-fill packet 01",
+      "url": "https://github.com/organvm/limen/pull/451"
+    },
+    {
+      "draft": false,
+      "head_oid": "793e4afea31f655de008937082cfd512d21a0866",
+      "number": 452,
+      "title": "[limen jules GEN-organvm-limen-ci-green-0630] Make organvm/limen CI green",
+      "url": "https://github.com/organvm/limen/pull/452"
+    },
+    {
+      "draft": false,
+      "head_oid": "d0d947687552b3f709550ec06bd77a1ab2d35371",
+      "number": 453,
+      "title": "[limen jules CAPFILL-gemini-20260629-05] Gemini daily capacity-fill packet 05",
+      "url": "https://github.com/organvm/limen/pull/453"
+    },
+    {
+      "draft": false,
+      "head_oid": "3d475ee2a740cb2f5fd21f90ca1e9349011e130f",
+      "number": 454,
+      "title": "[limen jules CAPFILL-opencode-20260629-13] OpenCode daily capacity-fill packet 13",
+      "url": "https://github.com/organvm/limen/pull/454"
+    },
+    {
+      "draft": false,
+      "head_oid": "56f9a013aede1ffd1e4d14f7722d489f551bcff2",
+      "number": 455,
+      "title": "[limen jules CAPFILL-jules-20260629-04] Jules daily capacity-fill packet 04",
+      "url": "https://github.com/organvm/limen/pull/455"
+    },
+    {
+      "draft": false,
+      "head_oid": "917357bd4c069ade60a32342ec73ee1ceb9b663f",
+      "number": 456,
+      "title": "[limen jules CAPFILL-jules-20260629-13] Jules daily capacity-fill packet 13",
+      "url": "https://github.com/organvm/limen/pull/456"
+    },
+    {
+      "draft": false,
+      "head_oid": "15dc861898fd67cf83dee00fbf17b37612ed72f5",
+      "number": 457,
+      "title": "[limen jules CAPFILL-claude-20260629-11] Claude daily capacity-fill packet 11",
+      "url": "https://github.com/organvm/limen/pull/457"
+    },
+    {
+      "draft": false,
+      "head_oid": "536bfa7ff569a6bb72f6c21f3d07db0a1c98e031",
+      "number": 476,
+      "title": "[limen CAPFILL-opencode-20260630-03] OpenCode daily capacity-fill packet 03",
+      "url": "https://github.com/organvm/limen/pull/476"
+    },
+    {
+      "draft": false,
+      "head_oid": "cb66115ffadedae8c03e8eabaa39fae5d8d9d5db",
+      "number": 478,
+      "title": "[limen CAPFILL-claude-20260630-08] Claude daily capacity-fill packet 08",
+      "url": "https://github.com/organvm/limen/pull/478"
+    },
+    {
+      "draft": false,
+      "head_oid": "2d9504b576b1a4a64adb2897536fda28042dd7a3",
+      "number": 479,
+      "title": "[limen CAPFILL-agy-20260630-05] Agy daily capacity-fill packet 05",
+      "url": "https://github.com/organvm/limen/pull/479"
+    },
+    {
+      "draft": false,
+      "head_oid": "e65addc2f2e6e65c23c0eecb93ed34dca6693d15",
+      "number": 480,
+      "title": "[limen CAPFILL-opencode-20260630-04] OpenCode daily capacity-fill packet 04",
+      "url": "https://github.com/organvm/limen/pull/480"
+    },
+    {
+      "draft": false,
+      "head_oid": "3c8cf25909266617e807d00791b3cb8d59f95f07",
+      "number": 484,
+      "title": "[limen FORCE-route-all-services] Router fans across ALL paid services, not just the 6 vendors",
+      "url": "https://github.com/organvm/limen/pull/484"
+    },
+    {
+      "draft": false,
+      "head_oid": "4fd78795c695ae1eeca393b5f8b49bc3a0992e2a",
+      "number": 485,
+      "title": "[limen RECOVER-FORCE-route-all-services] Recover closed PR task: Router fans across ALL paid services, not just the 6 vendors",
+      "url": "https://github.com/organvm/limen/pull/485"
+    },
+    {
+      "draft": false,
+      "head_oid": "7f17d103efdbebfd2fa6e2a71cb4e92b7fd41250",
+      "number": 486,
+      "title": "feat(cli): wire watch subcommand with --compact/--once modes",
+      "url": "https://github.com/organvm/limen/pull/486"
+    },
+    {
+      "draft": false,
+      "head_oid": "f70008a7e2bc021f8069357194a6068656310d59",
+      "number": 490,
+      "title": "[limen RECOVER-FORCE-copilot-lane] Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane",
+      "url": "https://github.com/organvm/limen/pull/490"
+    },
+    {
+      "draft": false,
+      "head_oid": "af3b7d8312e2750d08a9128a5f6afdc03c2bdb7f",
+      "number": 492,
+      "title": "Map the VLTIMA 5-primitive kernel to the health organ",
+      "url": "https://github.com/organvm/limen/pull/492"
+    },
+    {
+      "draft": true,
+      "head_oid": "c5fb867f3044fb0ff60b253f8f8dc869c4002ac5",
+      "number": 493,
+      "title": "Limen main trench autonomous receipt checkpoint",
+      "url": "https://github.com/organvm/limen/pull/493"
+    },
+    {
+      "draft": true,
+      "head_oid": "5ba52e5d06c1dffc9f9adc3e717db1b5d29b6cbf",
+      "number": 494,
+      "title": "Limen network substrate healing checkpoint",
+      "url": "https://github.com/organvm/limen/pull/494"
+    },
+    {
+      "draft": true,
+      "head_oid": "6fb678e85d253274845136753ce670768b6c6f3d",
+      "number": 495,
+      "title": "Limen Warp agent routing checkpoint",
+      "url": "https://github.com/organvm/limen/pull/495"
+    },
+    {
+      "draft": false,
+      "head_oid": "59d881d460f5252d54b747d8df12cc395cfed750",
+      "number": 516,
+      "title": "[limen GEN-organvm-limen-test-coverage-0701] Raise test coverage in organvm/limen",
+      "url": "https://github.com/organvm/limen/pull/516"
+    },
+    {
+      "draft": false,
+      "head_oid": "ed186e9e00ea95710415f41490be41831c747179",
+      "number": 590,
+      "title": "[limen ORG-financial-organ-deepen-0703] Deepen the financial organ toward a usable institution",
+      "url": "https://github.com/organvm/limen/pull/590"
+    },
+    {
+      "draft": false,
+      "head_oid": "0c7967297795980b932e6a76258dc83dbb458587",
+      "number": 617,
+      "title": "[limen jules ORG-social-organ-firstslice-0703] Build the first working vertical slice of the social ",
+      "url": "https://github.com/organvm/limen/pull/617"
+    },
+    {
+      "draft": false,
+      "head_oid": "fa95be1d55a21e03fdc1372b2b4b8c68ff0d53a0",
+      "number": 619,
+      "title": "[limen jules ORG-health-organ-firstslice-0703] Build the first working vertical slice of the health ",
+      "url": "https://github.com/organvm/limen/pull/619"
+    },
+    {
+      "draft": false,
+      "head_oid": "af456827ee05333383e4a9fb57221d1017dd065e",
+      "number": 621,
+      "title": "[limen ORG-health-organ-firstslice-0703] Build the first working vertical slice of the health organ",
+      "url": "https://github.com/organvm/limen/pull/621"
+    },
+    {
+      "draft": false,
+      "head_oid": "15a1111a0d06fe71bb6ef91eb2b9b6581913a5ab",
+      "number": 622,
+      "title": "[limen ORG-governance-organ-selffeed-0703] Wire the governance organ to advance autonomously",
+      "url": "https://github.com/organvm/limen/pull/622"
+    },
+    {
+      "draft": false,
+      "head_oid": "d3bf919b02c9f809792d91366dc43e86c473487f",
+      "number": 623,
+      "title": "[limen ORG-social-organ-charter-0703] Charter the social organ as an institution rivaling a civic/community institution + relationship support ('relationship gurus')",
+      "url": "https://github.com/organvm/limen/pull/623"
+    },
+    {
+      "draft": false,
+      "head_oid": "6014b9201bee0ce387cde75463fbf423b8687095",
+      "number": 624,
+      "title": "[limen ORG-financial-organ-deepen-0703] Deepen the financial organ toward a usable institution",
+      "url": "https://github.com/organvm/limen/pull/624"
+    },
+    {
+      "draft": false,
+      "head_oid": "d6a00057f8aff44f7ce5ff1921a9947d02724879",
+      "number": 625,
+      "title": "[limen ORG-financial-organ-face-0703] Make the financial organ's macro + micro face excellent",
+      "url": "https://github.com/organvm/limen/pull/625"
+    },
+    {
+      "draft": false,
+      "head_oid": "6428878259b0069cca0c0ad9ba4d563447d39faa",
+      "number": 626,
+      "title": "[limen ORG-legal-organ-firstslice-0703] Build the first working vertical slice of the legal organ",
+      "url": "https://github.com/organvm/limen/pull/626"
+    },
+    {
+      "draft": false,
+      "head_oid": "4f728f367e48258729b0d46ac336fecd45581576",
+      "number": 627,
+      "title": "[limen ORG-social-organ-firstslice-0703] Build the first working vertical slice of the social organ",
+      "url": "https://github.com/organvm/limen/pull/627"
+    },
+    {
+      "draft": false,
+      "head_oid": "b05433e22b7b52f0b98df8476533147941c894a7",
+      "number": 628,
+      "title": "[limen ORG-social-organ-charter-0704] Charter the social organ as an institution rivaling a civic/community institution + relationship support ('relationship gurus')",
+      "url": "https://github.com/organvm/limen/pull/628"
+    },
+    {
+      "draft": false,
+      "head_oid": "111d812bb30ab667be032a9826ab71f51fc8788e",
+      "number": 629,
+      "title": "[limen ORG-health-organ-charter-0704] Charter the health organ as an institution rivaling a concierge medical / recovery team",
+      "url": "https://github.com/organvm/limen/pull/629"
+    },
+    {
+      "draft": false,
+      "head_oid": "51bfc3fa4ad299e0489608eae46500febc46481b",
+      "number": 630,
+      "title": "[limen ORG-financial-organ-face-0703] Make the financial organ's macro + micro face excellent",
+      "url": "https://github.com/organvm/limen/pull/630"
+    },
+    {
+      "draft": true,
+      "head_oid": "dc0498d192c2aa76bf98d1b7fa0dda496baf3c8b",
+      "number": 634,
+      "title": "feat+workstream-channels lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/634"
+    },
+    {
+      "draft": true,
+      "head_oid": "01c7773cd42adf2e9a3c4277bb635bc1a53eaf3f",
+      "number": 635,
+      "title": "linear-conjuring-bear lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/635"
+    },
+    {
+      "draft": true,
+      "head_oid": "65f20fcb29a12d52fd2dc3767f0dcfbb55e9000f",
+      "number": 639,
+      "title": "[codex] Add financial obligation action plan",
+      "url": "https://github.com/organvm/limen/pull/639"
+    },
+    {
+      "draft": true,
+      "head_oid": "1fe7be061102f551b2878f443db4fe6a97c84192",
+      "number": 665,
+      "title": "limen: route records through tabularius and vltima kernel",
+      "url": "https://github.com/organvm/limen/pull/665"
+    },
+    {
+      "draft": true,
+      "head_oid": "be50bf2ca7732a08aabdcffdd7b5b8f6b1c5bc0a",
+      "number": 676,
+      "title": "[codex] vltima: add owner-certified absorption organ",
+      "url": "https://github.com/organvm/limen/pull/676"
+    },
+    {
+      "draft": false,
+      "head_oid": "70689bf3d42c50a9db77f074b4038fb3a8b88363",
+      "number": 677,
+      "title": "[limen HEAL-cifix-organvm-limen-427] fix failing CI on organvm/limen#427",
+      "url": "https://github.com/organvm/limen/pull/677"
+    },
+    {
+      "draft": false,
+      "head_oid": "308ec256edb7983108a24859e24c23ff077d9568",
+      "number": 678,
+      "title": "[limen HEAL-cifix-organvm-limen-425] fix failing CI on organvm/limen#425",
+      "url": "https://github.com/organvm/limen/pull/678"
+    },
+    {
+      "draft": false,
+      "head_oid": "6bc6d1282e84c5e21acb445e061d5dc0d3fdfd15",
+      "number": 679,
+      "title": "[limen HEAL-cifix-organvm-limen-434] fix failing CI on organvm/limen#434",
+      "url": "https://github.com/organvm/limen/pull/679"
+    },
+    {
+      "draft": false,
+      "head_oid": "b8b2ea4051b5439760b456a80fd155bf3460e68a",
+      "number": 680,
+      "title": "[limen HEAL-cifix-organvm-limen-432] fix failing CI on organvm/limen#432",
+      "url": "https://github.com/organvm/limen/pull/680"
+    },
+    {
+      "draft": false,
+      "head_oid": "08e60a1f84c9f09f66f7a438ef87e5869146c16b",
+      "number": 683,
+      "title": "DISCOVER: latent value of organvm/cind-and-sol-foundation",
+      "url": "https://github.com/organvm/limen/pull/683"
+    },
+    {
+      "draft": false,
+      "head_oid": "97aff27a78f4441d683a4d6a5ea821fb4bf7de27",
+      "number": 684,
+      "title": "[limen jules ORG-contributions-organ-deepen-0704] Deepen the contributions organ toward a usable ins",
+      "url": "https://github.com/organvm/limen/pull/684"
+    },
+    {
+      "draft": false,
+      "head_oid": "d5649a5574d34fc63b194327982dee1b1995c1df",
+      "number": 695,
+      "title": "[limen jules RETRO-0708-PII-PREMERGE-GATE] pr-gate PII containment scan for person-adjacent organ pa",
+      "url": "https://github.com/organvm/limen/pull/695"
+    },
+    {
+      "draft": false,
+      "head_oid": "42d75f7e1a4b37d91c38fa1ebc19fe6b370873ce",
+      "number": 696,
+      "title": "[limen jules HEAL-cifix-organvm-limen-375] fix failing CI on organvm/limen#375",
+      "url": "https://github.com/organvm/limen/pull/696"
+    },
+    {
+      "draft": false,
+      "head_oid": "742f6330fd77ae4100fe779431126127625e0d41",
+      "number": 703,
+      "title": "[limen jules RETRO-0708-HANDOFF-RELAY] handoff-relay.py: cross-session/cross-vendor warm-resume pack",
+      "url": "https://github.com/organvm/limen/pull/703"
+    },
+    {
+      "draft": true,
+      "head_oid": "46f5fdf30168f8b4c27ce2c0d1d791d2f17ca636",
+      "number": 705,
+      "title": "aw-estate-custody-1bf70c8a lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/705"
+    },
+    {
+      "draft": true,
+      "head_oid": "3dc1a73c72226197b5c1283c08d919e57fe5c53b",
+      "number": 781,
+      "title": "tabularius: cut over board writers",
+      "url": "https://github.com/organvm/limen/pull/781"
+    },
+    {
+      "draft": true,
+      "head_oid": "49bd86b75bd684bf44d11a6163b37ad54d8af11f",
+      "number": 810,
+      "title": "reclaim: preserve and reap safe storage roots",
+      "url": "https://github.com/organvm/limen/pull/810"
+    },
+    {
+      "draft": false,
+      "head_oid": "94246f98a4296f0acea0eedd600130ab7f403fe9",
+      "number": 814,
+      "title": "limen: guard worktree session launches",
+      "url": "https://github.com/organvm/limen/pull/814"
+    },
+    {
+      "draft": true,
+      "head_oid": "17c418a83cd4b788cddeffe13966e3b41bb133cc",
+      "number": 820,
+      "title": "aw-credential-wall-token-hygiene-2c076ba3 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/820"
+    },
+    {
+      "draft": true,
+      "head_oid": "b3a3c1ba2c179a5fcd10bb0ea370d7e719f4254b",
+      "number": 821,
+      "title": "aw-repo-boil-up-eb66c5ab lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/821"
+    },
+    {
+      "draft": false,
+      "head_oid": "c4bace4cb9d460d87fe5493d1d9174b904894228",
+      "number": 825,
+      "title": "fix(hooks): scope task sessions to worktree",
+      "url": "https://github.com/organvm/limen/pull/825"
+    },
+    {
+      "draft": false,
+      "head_oid": "c07a342cd523d65c3634930c81a636af0d789eff",
+      "number": 843,
+      "title": "limen: promote organvm/fetch-familiar-friends to the value tier",
+      "url": "https://github.com/organvm/limen/pull/843"
+    },
+    {
+      "draft": true,
+      "head_oid": "d76726f3738da3b908928db2bb1672e1b0bcaf90",
+      "number": 844,
+      "title": "mail-story-mining-20260706 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/844"
+    },
+    {
+      "draft": true,
+      "head_oid": "617c5005cd349c904785356c27165a935ed028b1",
+      "number": 845,
+      "title": "aw-mail-active-flagged-dad69fe3 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/845"
+    },
+    {
+      "draft": true,
+      "head_oid": "e37847dd790b0a994dba8e1016988e18abbe8d67",
+      "number": 847,
+      "title": "heal-cifix-organvm-limen-384-947d7bcc lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/847"
+    },
+    {
+      "draft": true,
+      "head_oid": "ca076bfe0123d98108e5a62fa59895a83d683c27",
+      "number": 848,
+      "title": "heal-cifix-organvm-limen-401-a2ea349b lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/848"
+    },
+    {
+      "draft": true,
+      "head_oid": "793e4afea31f655de008937082cfd512d21a0866",
+      "number": 849,
+      "title": "heal-cifix-organvm-limen-452-32c5a00b lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/849"
+    },
+    {
+      "draft": true,
+      "head_oid": "56f9a013aede1ffd1e4d14f7722d489f551bcff2",
+      "number": 850,
+      "title": "heal-cifix-organvm-limen-455-09792942 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/850"
+    },
+    {
+      "draft": true,
+      "head_oid": "15dc861898fd67cf83dee00fbf17b37612ed72f5",
+      "number": 851,
+      "title": "heal-cifix-organvm-limen-457-fa165ce1 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/851"
+    },
+    {
+      "draft": true,
+      "head_oid": "3c8cf25909266617e807d00791b3cb8d59f95f07",
+      "number": 852,
+      "title": "heal-cifix-organvm-limen-484-6c85e505 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/852"
+    },
+    {
+      "draft": true,
+      "head_oid": "e071bf5c46d1291f4b42cc99c9e957190e1825c9",
+      "number": 853,
+      "title": "aw-tabvlarivs-status-writers-c37d2df5 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/853"
+    },
+    {
+      "draft": true,
+      "head_oid": "945b05d15d95a7a13b5a99d68a3c6aa82bb48aa1",
+      "number": 854,
+      "title": "heal-cifix-organvm-limen-402-140f5ba7 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/854"
+    },
+    {
+      "draft": true,
+      "head_oid": "21b10df2f2422e8e3ad281b1268549de27c68692",
+      "number": 855,
+      "title": "heal-cifix-organvm-limen-405-cba906fe lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/855"
+    },
+    {
+      "draft": true,
+      "head_oid": "86690a1fa6bc1e4d36256c7f4b78eee869a1b8ce",
+      "number": 856,
+      "title": "heal-cifix-organvm-limen-409-93c549df lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/856"
+    },
+    {
+      "draft": true,
+      "head_oid": "91ab4a768f7c9a8036558dfbbc0420df8dd881f6",
+      "number": 857,
+      "title": "heal-cifix-organvm-limen-413-491f6092 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/857"
+    },
+    {
+      "draft": true,
+      "head_oid": "41bd5a66b4c40294c213cf49ccd3eecffac982db",
+      "number": 858,
+      "title": "heal-cifix-organvm-limen-406-fce333e5 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/858"
+    },
+    {
+      "draft": true,
+      "head_oid": "03883783439d342a2faa69a4e0d32fda2ef6d308",
+      "number": 859,
+      "title": "heal-cifix-organvm-limen-414-4e02d6f1 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/859"
+    },
+    {
+      "draft": true,
+      "head_oid": "af398882bdd68343aeafe4b94d6cbf75f9da9ddb",
+      "number": 860,
+      "title": "heal-cifix-organvm-limen-417-980ffa89 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/860"
+    },
+    {
+      "draft": true,
+      "head_oid": "1153c76c96c92eab3c7f5b188e3020a56123db7e",
+      "number": 861,
+      "title": "heal-cifix-organvm-limen-418-81791685 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/861"
+    },
+    {
+      "draft": true,
+      "head_oid": "199ec2ac7ba1f879f04f0dbb3d9dccba0d14aeb8",
+      "number": 862,
+      "title": "heal-cifix-organvm-limen-419-e59a4529 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/862"
+    },
+    {
+      "draft": true,
+      "head_oid": "917357bd4c069ade60a32342ec73ee1ceb9b663f",
+      "number": 863,
+      "title": "heal-cifix-organvm-limen-456-f80ad47a lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/863"
+    },
+    {
+      "draft": true,
+      "head_oid": "945b05d15d95a7a13b5a99d68a3c6aa82bb48aa1",
+      "number": 888,
+      "title": "heal-cifix-organvm-limen-402-f000515e lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/888"
+    },
+    {
+      "draft": true,
+      "head_oid": "03883783439d342a2faa69a4e0d32fda2ef6d308",
+      "number": 889,
+      "title": "heal-cifix-organvm-limen-414-361fb12b lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/889"
+    },
+    {
+      "draft": true,
+      "head_oid": "1153c76c96c92eab3c7f5b188e3020a56123db7e",
+      "number": 902,
+      "title": "heal-cifix-organvm-limen-418-5676e703 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/902"
+    },
+    {
+      "draft": true,
+      "head_oid": "199ec2ac7ba1f879f04f0dbb3d9dccba0d14aeb8",
+      "number": 903,
+      "title": "heal-cifix-organvm-limen-419-7987cca2 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/903"
+    },
+    {
+      "draft": true,
+      "head_oid": "39a07d4d81bb639c01144c730a55e142bd1350a8",
+      "number": 975,
+      "title": "heal-cifix-organvm-limen-620-091fdee6 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/975"
+    },
+    {
+      "draft": true,
+      "head_oid": "6f2c93979101e16a1ac5eeaebae8e905218ac113",
+      "number": 993,
+      "title": "codex-discovery-disposition-ledger-20260712 lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/993"
+    },
+    {
+      "draft": true,
+      "head_oid": "6f0307fc60edbf70f42e3bfbfb74a58dbf95bcae",
+      "number": 1004,
+      "title": "fix: retry transient runtime probe failures",
+      "url": "https://github.com/organvm/limen/pull/1004"
+    },
+    {
+      "draft": true,
+      "head_oid": "9934e3e62c13ad8a247c854ab6ea4f5b94ee422e",
+      "number": 1033,
+      "title": "fix(dispatch): isolate verify and heal runtime roots",
+      "url": "https://github.com/organvm/limen/pull/1033"
+    },
+    {
+      "draft": true,
+      "head_oid": "ca4a3df41e6ac42cae315d3338a40e2eecaec986",
+      "number": 1112,
+      "title": "feat+observatory-scaffold lifecycle checkpoint",
+      "url": "https://github.com/organvm/limen/pull/1112"
+    },
+    {
+      "draft": true,
+      "head_oid": "261ad25236a42c4ebfd8c468f9ffbcee504f0e25",
+      "number": 1161,
+      "title": "feat: build truth-first governance memory cadence",
+      "url": "https://github.com/organvm/limen/pull/1161"
+    },
+    {
+      "draft": true,
+      "head_oid": "536bf494d502a4f65a3959f32f059469497c97a1",
+      "number": 1162,
+      "title": "fix: reaccept host-pressure observation without peer control",
+      "url": "https://github.com/organvm/limen/pull/1162"
+    },
+    {
+      "draft": true,
+      "head_oid": "b32a52377ad49b6ba461b7b624e8f5ad2892841d",
+      "number": 1163,
+      "title": "recovery: fail-closed shared-keeper reacceptance controls",
+      "url": "https://github.com/organvm/limen/pull/1163"
+    },
+    {
+      "draft": false,
+      "head_oid": "fcefa3aba13e4400094fdefefbefb4a3272dff27",
+      "number": 1164,
+      "title": "fix: enforce execution authority and preserve trailing operator intent",
+      "url": "https://github.com/organvm/limen/pull/1164"
+    },
+    {
+      "draft": true,
+      "head_oid": "fb2143f8b2ced7e6fe518fd8b3df56c9a520402d",
+      "number": 1165,
+      "title": "fix: make recovery preview state truthful",
+      "url": "https://github.com/organvm/limen/pull/1165"
+    },
+    {
+      "draft": true,
+      "head_oid": "ae56ffc7583b5b86a09685f3808f34cfcacbfa0c",
+      "number": 1166,
+      "title": "recovery: separate immediate containment from protection",
+      "url": "https://github.com/organvm/limen/pull/1166"
+    },
+    {
+      "draft": true,
+      "head_oid": "997ae136e9662795d9db9e33fa4771cf5469ccae",
+      "number": 1167,
+      "title": "recovery: derive provider routing and execution value from live evidence",
+      "url": "https://github.com/organvm/limen/pull/1167"
+    },
+    {
+      "draft": true,
+      "head_oid": "560a4fdf5138b71063965bca53a32dadbf7094e8",
+      "number": 1168,
+      "title": "recovery: replace unreachable acceptance ledger with evidence-derived v2",
+      "url": "https://github.com/organvm/limen/pull/1168"
+    },
+    {
+      "draft": true,
+      "head_oid": "7a2666e8338777545a98bb16825410d7cd102aee",
+      "number": 1169,
+      "title": "recovery: bind prompt, Fable, and relationship authority",
+      "url": "https://github.com/organvm/limen/pull/1169"
+    },
+    {
+      "draft": true,
+      "head_oid": "5dc912ab58d14fc96e7755d20fd6602e9046f87a",
+      "number": 1170,
+      "title": "recovery: make mail and storage effects race-safe",
+      "url": "https://github.com/organvm/limen/pull/1170"
+    },
+    {
+      "draft": true,
+      "head_oid": "c9332a431da447074f03bf5ff1aa38ecaaba6706",
+      "number": 1171,
+      "title": "recovery: bind peer review and merge authority to exact-head proof",
+      "url": "https://github.com/organvm/limen/pull/1171"
+    },
+    {
+      "draft": false,
+      "head_oid": "b7bdd22cd775eb519f8236f839cb68c1f8b0cb37",
+      "number": 1181,
+      "title": "chore(deps): bump the uv group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm/limen/pull/1181"
+    },
+    {
+      "draft": false,
+      "head_oid": "1851d9c2da7f837176b1ef6e9b344ff0af3f131f",
+      "number": 1195,
+      "title": "feat(covenant): board writer audit becomes a baseline-ratcheted gate \u2014 no new direct writers",
+      "url": "https://github.com/organvm/limen/pull/1195"
+    },
+    {
+      "draft": false,
+      "head_oid": "ac0489077298636582fde83b36443fd72d7518f0",
+      "number": 1196,
+      "title": "feat(covenant): attribution sensor \u2014 every memory write must carry a keeper receipt",
+      "url": "https://github.com/organvm/limen/pull/1196"
+    },
+    {
+      "draft": false,
+      "head_oid": "c677f71a05ff6d845ff612c9133199eea17d9f26",
+      "number": 1198,
+      "title": "docs(covenant): keeper law on every agent surface \u2014 AGENTS/GEMINI clauses + parity assertions + IF entry",
+      "url": "https://github.com/organvm/limen/pull/1198"
+    },
+    {
+      "draft": false,
+      "head_oid": "0abce446c3d93229b20f75bfe004bd5242a81bfc",
+      "number": 1199,
+      "title": "feat(memoria): the memory ticket lane \u2014 submit CLI + keeper drain, dark behind LIMEN_MEMORIA",
+      "url": "https://github.com/organvm/limen/pull/1199"
+    },
+    {
+      "draft": false,
+      "head_oid": "360b4edfe6d20b0fd46b5a0177c3fe24f14f0999",
+      "number": 1200,
+      "title": "feat(covenant): the record-keeper covenant \u2014 registry, parity checker, charter doc",
+      "url": "https://github.com/organvm/limen/pull/1200"
+    },
+    {
+      "draft": false,
+      "head_oid": "de487e7ba1591a61ef8ca7981cd2de93f7dd50f6",
+      "number": 1208,
+      "title": "fix(autonomy): a peer-coordination pause is a fence, not a wall (+ catch un-clearable markers)",
+      "url": "https://github.com/organvm/limen/pull/1208"
+    },
+    {
+      "draft": false,
+      "head_oid": "1aade249bd7cdff2a85c3960d2c4da14daa87bf4",
+      "number": 1236,
+      "title": "feat(censor): reconcile-closeouts effector \u2014 home HARD findings via insight-route",
+      "url": "https://github.com/organvm/limen/pull/1236"
+    },
+    {
+      "draft": false,
+      "head_oid": "574d16028ed6f126a03c68a36018797e4df056bb",
+      "number": 1244,
+      "title": "feat(vigilia): lever sovereignty classifier \u2014 prove his head is not a backlog",
+      "url": "https://github.com/organvm/limen/pull/1244"
+    },
+    {
+      "draft": false,
+      "head_oid": "e48e9360220f098fd180b3e740b730320024bdf0",
+      "number": 1246,
+      "title": "feat: github-universe mission \u2014 never-dismiss cross-repo doctrine",
+      "url": "https://github.com/organvm/limen/pull/1246"
+    },
+    {
+      "draft": false,
+      "head_oid": "29326f020b786bbfadd8c1c9ddb19d00d1188ddb",
+      "number": 1303,
+      "title": "chore: Ingest peer-audited--behavioral-blockchain issues into Limen pipeline",
+      "url": "https://github.com/organvm/limen/pull/1303"
+    },
+    {
+      "draft": false,
+      "head_oid": "1c04a6aa19b17fa96061a14f8e4684acc3cad9e9",
+      "number": 1307,
+      "title": "chore: distill blocked handoff issues from #785",
+      "url": "https://github.com/organvm/limen/pull/1307"
+    },
+    {
+      "draft": false,
+      "head_oid": "2cab6d7f1b723442c969df959f5279601f8afbb9",
+      "number": 1309,
+      "title": "chore: supersede issue 774 with 785 in board tracker",
+      "url": "https://github.com/organvm/limen/pull/1309"
+    },
+    {
+      "draft": true,
+      "head_oid": "d3bc064eb3ba9ebb72853768182ed184eef26277",
+      "number": 1311,
+      "title": "fix: make seven-agent estate review evidence-backed",
+      "url": "https://github.com/organvm/limen/pull/1311"
+    },
+    {
+      "draft": false,
+      "head_oid": "f332bd6655a25719d3b9e2a71bb906de4db290d7",
+      "number": 1332,
+      "title": "feat(consulting): gate BBNC Phase 0 authority",
+      "url": "https://github.com/organvm/limen/pull/1332"
+    },
+    {
+      "draft": false,
+      "head_oid": "c99d0d135d338ec20f471b14187ac6a2f5c9acb0",
+      "number": 1354,
+      "title": "feat(pip-audit): Python tier of the estate dependency-audit model + fix mcp's live advisories",
+      "url": "https://github.com/organvm/limen/pull/1354"
+    },
+    {
+      "draft": false,
+      "head_oid": "fe7b1b2185efe2caa041bb133899c46838445aeb",
+      "number": 1381,
+      "title": "fix(sync-release): tasks.yaml-only parks self-heal via the regenerable-paths valve",
+      "url": "https://github.com/organvm/limen/pull/1381"
+    },
+    {
+      "draft": false,
+      "head_oid": "076a37cea174693941bc73dc44b69241077d4acb",
+      "number": 1406,
+      "title": "heal(vvltvs): measure the published face (origin blob), not a stale local clone",
+      "url": "https://github.com/organvm/limen/pull/1406"
+    },
+    {
+      "draft": false,
+      "head_oid": "6cc5e03deb4cdcc5ec982057f0fcf532ea181f56",
+      "number": 1492,
+      "title": "feat(experience): re-judge public-record PASS (demo fallback shipped)",
+      "url": "https://github.com/organvm/limen/pull/1492"
+    }
+  ],
+  "plan_sha256": "083dc30799e49e9e7590e8f24a22b1ba5cabcb11a248c3c2ed84e357c0ff6182",
+  "repository": "organvm/limen",
+  "review_basis": "Every currently untyped exact open head is fail-closed pending individual delivery, preservation, supersession, or human-ownership review. This effect only adds lifecycle:blocked; it never merges or closes a PR.",
+  "schema": "limen.pr_lifecycle_manifest.v2",
+  "status": "applied_verified"
+}

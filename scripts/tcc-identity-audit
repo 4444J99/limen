@@ -1,0 +1,58 @@
+#!/bin/sh
+set -eu
+
+root="$(
+  unset CDPATH
+  cd -- "$(dirname "$0")/.." && pwd -P
+)"
+implementation="$root/scripts/tcc-identity-audit.py"
+strict=0
+for argument in "$@"; do
+  if [ "$argument" = "--strict" ]; then
+    strict=1
+    break
+  fi
+done
+python="$(command -v python3 2>/dev/null || true)"
+if [ -z "$python" ]; then
+  if [ "$strict" -eq 1 ]; then
+    printf 'tcc-identity-audit: Python 3 is unavailable\n' >&2
+    exit 69
+  fi
+  printf 'tcc-identity-audit: SKIP: Python 3 is unavailable\n' >&2
+  exit 0
+fi
+if [ "$(uname -s)" != "Darwin" ]; then
+  exec "$python" "$implementation" "$@"
+fi
+home="${HOME:?HOME is unset}"
+host="${LIMEN_AGENT_HOST_BIN:-${DOMUS_AGENT_HOST_BIN:-$home/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost}}"
+case "$host" in
+  "~") host="$home" ;;
+  "~/"*) host="$home/${host#\~/}" ;;
+esac
+if [ ! -x "$host" ]; then
+  printf 'tcc-identity-audit: stable Domus agent host is unavailable: %s\n' "$host" >&2
+  exit 69
+fi
+host_status="$("$host" status --json 2>/dev/null)" || {
+  printf 'tcc-identity-audit: stable Domus agent host contract is invalid: %s\n' "$host" >&2
+  exit 69
+}
+if ! printf '%s\n' "$host_status" |
+  /usr/bin/grep -Eq '"schema"[[:space:]]*:[[:space:]]*"domus\.agent_host_status\.v1"' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"bundle_id"[[:space:]]*:[[:space:]]*"org\.organvm\.domus\.agent-host"' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"stable_path"[[:space:]]*:[[:space:]]*true' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"signature_valid"[[:space:]]*:[[:space:]]*true' ||
+  ! printf '%s\n' "$host_status" |
+    /usr/bin/grep -Eq '"ok"[[:space:]]*:[[:space:]]*true'; then
+  printf 'tcc-identity-audit: stable Domus agent host contract is invalid: %s\n' "$host" >&2
+  exit 69
+fi
+if "$host" verify-lifetime >/dev/null 2>&1; then
+  exec "$python" "$implementation" "$@"
+fi
+exec "$host" run -- "$python" "$implementation" "$@"

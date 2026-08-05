@@ -1,0 +1,25 @@
+name: Deploy Danse
+
+on:
+  push:
+    paths:
+      - "apps/danse/**"
+      - ".github/workflows/deploy-danse.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_PAGES_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure Cloudflare Pages Project Exists
+        if: env.CF_PAGES_TOKEN_SET == 'true'
+        run: npx wrangler@4 pages project create danse --production-branch main || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Deploy to Cloudflare Pages
+        if: env.CF_PAGES_TOKEN_SET == 'true'
+        run: npx wrangler@4 pages deploy apps/danse --project-name danse --branch main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

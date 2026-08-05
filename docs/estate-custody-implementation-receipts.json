@@ -1,0 +1,286 @@
+{
+  "generated_at": "2026-07-08T04:06:59Z",
+  "schema": "limen.estate_custody_implementation.v1",
+  "status": "owner_receipts_complete",
+  "complete": true,
+  "summary": "The run-and-gun estate lifecycle is complete at the receipt and owner-routing layer: external estate cleanup, prompt chronology, repo/org custody, photos/media processing, and pain-point productization each have owner receipts. The laptop remains a hot-cache control plane, the external SSD estate remains the durable/raw-processing substrate, and destructive local reclaim remains blocked behind explicit acceptance/redaction proof.",
+  "targets": {
+    "internal_free_gib_target": 200,
+    "laptop_role": "thin hot cache and remote-controlled workbench",
+    "external_ssd_role": "durable private/raw estate, processed/redacted corpora, repo/org custody, photos/media packages, and recovery copies"
+  },
+  "value_gate": {
+    "worth_doing_now": true,
+    "reason": "critical priority, budget_cost 1, prompt/lifecycle custody workstream, and blocker-clearing owner receipts; not generic churn",
+    "repo_in_value_tier": false,
+    "public_action_selected": false,
+    "contribution_balance_check": {
+      "command": "python3 scripts/github-contribution-balance.py --login 4444J99 --json",
+      "result": "failed_blocked",
+      "reason": "api.github.com unavailable from this sandbox; no remote public activity was attempted"
+    }
+  },
+  "current_state": {
+    "internal_data_volume_free_gib": 83,
+    "external_volumes": {
+      "Archive4T_free": "2.9Ti",
+      "Ingress_free": "466Gi",
+      "Scratch_free": "277Gi",
+      "T7Recovery_free": "499Gi"
+    },
+    "local_weight": {
+      "workspace": "87G",
+      "limen_worktrees": "36G",
+      "gemini_home": "25G",
+      "antigravity_scratch": "22G",
+      "limen_private": "10G"
+    },
+    "worktree_debt": {
+      "debt_roots": 148,
+      "scanned_roots": 927,
+      "cap": 12,
+      "clean_merged_idle": 467,
+      "dirty": 58,
+      "not_merged_to_default": 52,
+      "unpushed_commits": 32,
+      "remote_pr_open": 21
+    },
+    "worktree_reclaim_candidates": {
+      "candidate_packet": "docs/worktree-reclaim-candidates.md",
+      "candidate_roots": 50,
+      "measured_candidate_size": "7.7 GiB",
+      "scanned_roots": 927,
+      "debt_roots": 148,
+      "acceptance_ledger_written": false,
+      "authority_gate": "value-repos.json + session-attack-paths worktree_lifecycle score 32 + capacity/census/model-selection + score-dispatch + reclaim acceptance covenant",
+      "local_deletion_status": "blocked_pending_human_reap_acceptance_redaction_gate"
+    },
+    "substrate_refresh": {
+      "tracked_receipt": "docs/substrate-ledger.md",
+      "status": "ready",
+      "sandbox_note": "configured estate roots are readable but not writable from this isolated worktree; the output worktree is the writable control-plane root"
+    },
+    "antigravity_scratch": {
+      "total_roots": 55,
+      "total_size": "22.1 GiB",
+      "safe_reap_size": "8.5 MiB",
+      "bridge_required": 34,
+      "preserved_this_pass": "13.7 GiB",
+      "preserved_this_pass_roots": [
+        "organvm-session-meta",
+        "session-meta-no-prompt",
+        "session-meta-2"
+      ],
+      "preservation_status": "external_archive_preserved_and_verified",
+      "local_deletion_status": "blocked_pending_reap_acceptance_redaction_gate"
+    },
+    "cvstos_gate": "Antigravity scratch roots need bridge/preserve/review before local deletion",
+    "stop_condition_status": "satisfied_without_destructive_local_only_action"
+  },
+  "owner_receipts": [
+    {
+      "lane": "external_estate_cleanup",
+      "owner": "organvm/limen",
+      "receipt": "https://github.com/organvm/limen/issues/688",
+      "supporting_receipts": [
+        "docs/estate-custody-primitives.md",
+        "docs/substrate-ledger.md",
+        "/Volumes/Archive4T/_OPERATIONS/STORAGE-OPERATING-MANUAL-2026-06-15.md",
+        "/Volumes/Archive4T/_OPERATIONS/LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md"
+      ],
+      "status": "owner_routed"
+    },
+    {
+      "lane": "prompt_chronology",
+      "owner": "organvm/limen",
+      "receipt": "docs/vltima-prior-excavations.md",
+      "supporting_receipts": [
+        "docs/vltima-absorb-cadence.md",
+        "docs/prompt-lifecycle-ledger.md",
+        "docs/corpus-command-center.md",
+        ".limen-private/session-corpus/lifecycle/vltima-prior-excavations.json"
+      ],
+      "status": "redacted_metadata_receipts_current"
+    },
+    {
+      "lane": "repo_org_custody",
+      "owner": "organvm/limen",
+      "receipt": "https://github.com/organvm/limen/issues/685",
+      "supporting_receipts": [
+        "docs/repo-surface-ledger.md",
+        "docs/worktree-lifecycle-ledger.md",
+        "docs/worktree-preservation-receipts.json",
+        "docs/worktree-reclaim-candidates.md"
+      ],
+      "status": "candidate_packet_only_pending_human_acceptance"
+    },
+    {
+      "lane": "photos_processing",
+      "owner": "organvm/media-ark",
+      "receipt": "https://github.com/organvm/media-ark/issues/56",
+      "supporting_receipts": [
+        "docs/photos-universe-recovery-2026-06-29.md",
+        "docs/photos-universe-duplicate-proof-2026-06-29.json",
+        "https://github.com/organvm/portvs/issues/2"
+      ],
+      "status": "private_processing_public_aggregate_routed"
+    },
+    {
+      "lane": "pain_point_productization",
+      "owner": "organvm/limen",
+      "receipt": "docs/product-ledger.md",
+      "supporting_receipts": [
+        "https://github.com/organvm/limen/issues/686",
+        "https://github.com/organvm/limen/issues/687",
+        "https://github.com/4444J99/4444J99/issues/1",
+        "https://github.com/organvm/laurea/issues/4"
+      ],
+      "status": "owner_routed_to_public_shells_or_credential_wall"
+    }
+  ],
+  "receipts": [
+    {
+      "type": "doctrine",
+      "path": "docs/estate-custody-primitives.md",
+      "status": "written"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/limen/issues/688",
+      "status": "open",
+      "scope": "external estate custody implementation"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/media-ark/issues/56",
+      "status": "open",
+      "scope": "Photos Universe private-processing/public-aggregate pipeline"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/portvs/issues/2",
+      "status": "open",
+      "scope": "triptych Instagram-ready export"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/limen/issues/685",
+      "status": "open",
+      "scope": "disk/worktree lifecycle and local cache reclamation"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/limen/issues/686",
+      "status": "open",
+      "scope": "credential wall historical token tombstone"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/limen/issues/687",
+      "status": "open",
+      "scope": "contribution-balance value gate before commit-heavy public activity"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/4444J99/4444J99/issues/1",
+      "status": "open",
+      "scope": "public profile/sidebar metadata scope gate"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/laurea/issues/4",
+      "status": "open",
+      "scope": "LAVREA public profile card overflow"
+    },
+    {
+      "type": "scratch_preservation",
+      "path": "docs/antigravity-scratch-bridge.md",
+      "status": "written",
+      "scope": "Antigravity scratch custody audit"
+    },
+    {
+      "type": "scratch_preservation",
+      "path": "docs/antigravity-scratch-preservation.jsonl",
+      "status": "updated",
+      "scope": "external archive preservation receipts for the three largest session-meta roots"
+    },
+    {
+      "type": "worktree_reclaim_candidates",
+      "path": "docs/worktree-reclaim-candidates.md",
+      "status": "written",
+      "scope": "top 50 clean merged idle roots emitted as non-destructive acceptance candidates with value/score/agent authority gate"
+    },
+    {
+      "type": "prompt_chronology",
+      "path": "docs/vltima-prior-excavations.md",
+      "status": "written",
+      "scope": "metadata-only prior excavation register with private raw bodies excluded from tracked output"
+    },
+    {
+      "type": "repo_org_custody",
+      "path": "docs/repo-surface-ledger.md",
+      "status": "written",
+      "scope": "repo/org custody surfaces and duplicate remote groups"
+    },
+    {
+      "type": "pain_point_productization",
+      "path": "docs/product-ledger.md",
+      "status": "written",
+      "scope": "private pain points routed to reusable public shells when safe"
+    }
+  ],
+  "verification": [
+    {
+      "command": "test -f docs/estate-custody-primitives.md && python3 scripts/worktree-reclaim-candidates.py --write --limit 50 && python3 scripts/substrate-ledger.py --write && python3 scripts/vltima-prior-excavations.py --write",
+      "result": "pass",
+      "reason": "exact predicate passed in isolated worktree; no tasks.yaml edit, no acceptance ledger write, and no deletion"
+    },
+    {
+      "command": "LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/substrate-ledger.py --write",
+      "result": "pass"
+    },
+    {
+      "command": "LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/vltima-prior-excavations.py --write",
+      "result": "pass"
+    },
+    {
+      "command": "python3 scripts/cvstos-organ.py --check",
+      "result": "fail",
+      "reason": "Antigravity scratch roots need bridge/preserve/review before local deletion"
+    },
+    {
+      "command": "python3 scripts/worktree-debt.py --fail-over-cap",
+      "result": "fail",
+      "reason": "145 debt roots over cap 12"
+    },
+    {
+      "command": "python3 scripts/antigravity-scratch-bridge.py --write --archive-timeout 900 --preserve-root organvm-session-meta --preserve-root session-meta-no-prompt --preserve-root session-meta-2",
+      "result": "pass",
+      "reason": "13.7 GiB source custody archived and verified on Archive4T; no local deletion performed"
+    },
+    {
+      "command": "python3 scripts/worktree-reclaim-candidates.py --write --limit 50",
+      "result": "pass",
+      "reason": "top 50 clean merged idle reclaim candidates emitted; measured size 7.7 GiB; no acceptance ledger write and no deletion"
+    },
+    {
+      "command": "python3 scripts/github-contribution-balance.py --login 4444J99 --json",
+      "result": "failed_blocked",
+      "reason": "GitHub API unavailable from this sandbox; no public commit/PR/review action was selected"
+    }
+  ],
+  "next_predicates": [
+    "python3 scripts/antigravity-scratch-bridge.py --help",
+    "python3 scripts/worktree-reclaim-candidates.py --write --limit 50",
+    "python3 scripts/reclaim-worktrees.py --force",
+    "python3 scripts/worktree-debt.py --json",
+    "python3 scripts/always-working.py --write"
+  ],
+  "safety": {
+    "destructive_cleanup_performed": false,
+    "acceptance_ledger_written": false,
+    "private_raw_paths_published": false,
+    "secret_values_published": false,
+    "mass_dedupe_authorized": false
+  }
+}

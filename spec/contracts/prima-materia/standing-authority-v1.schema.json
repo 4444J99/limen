@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_id": {
+      "title": "Authority Id",
+      "type": "string"
+    },
+    "credential_references": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 256,
+      "title": "Credential References",
+      "type": "array"
+    },
+    "issued_at": {
+      "format": "date-time",
+      "title": "Issued At",
+      "type": "string"
+    },
+    "migrated_signed_authority_digest": {
+      "title": "Migrated Signed Authority Digest",
+      "type": "string"
+    },
+    "permitted_actions": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 256,
+      "minItems": 1,
+      "title": "Permitted Actions",
+      "type": "array",
+      "uniqueItems": true
+    },
+    "principal_ref": {
+      "title": "Principal Ref",
+      "type": "string"
+    },
+    "revocation_receipt_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revocation Receipt Digest"
+    },
+    "revoked_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revoked At"
+    },
+    "schema_version": {
+      "const": "limen.standing_authority.v1",
+      "default": "limen.standing_authority.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "authority_id",
+    "principal_ref",
+    "migrated_signed_authority_digest",
+    "permitted_actions",
+    "issued_at"
+  ],
+  "title": "StandingAuthorityV1",
+  "type": "object"
+}

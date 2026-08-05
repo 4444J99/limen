@@ -23,10 +23,11 @@ from pathlib import Path
 import requests
 import yaml
 
-# route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
-# concurrent heartbeat read can never observe a truncated/empty queue.
+# Producers never write tasks.yaml directly; they submit upsert tickets and Tabularius seals the
+# projection. The auto-scale workflow runs scripts/tabularius-organ.py after this producer.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import atomic_write_text
+from limen.intake import contract_fields, github_issue_contract
+from limen.tabularius import pending_task_ids, pending_upsert_patches, submit_task_upsert
 
 TASKS_FILE = Path(__file__).resolve().parent.parent / "tasks.yaml"
 # Post-move: all repos were consolidated into the single `organvm` org (was
@@ -34,6 +35,39 @@ TASKS_FILE = Path(__file__).resolve().parent.parent / "tasks.yaml"
 # future re-home is a config change, not a code edit.
 ORGS = [o.strip() for o in os.environ.get("LIMEN_ORGS", "organvm").split(",") if o.strip()]
 DEFAULT_DEPTH = 100
+MAX_PAGES_PER_ORG = 10
+
+
+def _load_board() -> dict:
+    return yaml.safe_load(TASKS_FILE.read_text()) or {}
+
+
+def _tasks(data: dict) -> list[dict]:
+    return data.get("tasks") or []
+
+
+def _depth(data: dict) -> int:
+    return ((data.get("portal") or {}).get("budget") or {}).get("daily", DEFAULT_DEPTH)
+
+
+def _existing_urls(tasks: list[dict]) -> set[str]:
+    return {u for t in tasks for u in (t.get("urls") or [])}
+
+
+def _pending_urls() -> set[str]:
+    return {u for patch in pending_upsert_patches(TASKS_FILE) for u in (patch.get("urls") or [])}
+
+
+def _next_task_num(tasks: list[dict]) -> int:
+    pending_ids = pending_task_ids(TASKS_FILE)
+    return 1 + max(
+        (
+            int(m.group(1))
+            for tid in [*(t.get("id", "") for t in tasks), *pending_ids]
+            if (m := re.match(r"LIMEN-(\d+)$", tid))
+        ),
+        default=0,
+    )
 
 
 def _allowed_repos() -> set[str]:
@@ -64,9 +98,9 @@ def main() -> int:
         "Accept": "application/vnd.github.v3+json",
     }
 
-    data = yaml.safe_load(TASKS_FILE.read_text()) or {}
-    tasks = data.get("tasks") or []
-    depth = ((data.get("portal") or {}).get("budget") or {}).get("daily", DEFAULT_DEPTH)
+    data = _load_board()
+    tasks = _tasks(data)
+    depth = _depth(data)
 
     if len(tasks) >= depth:
         print(f"Task depth {len(tasks)} already at or above {depth}.")
@@ -75,21 +109,14 @@ def main() -> int:
     needed = depth - len(tasks)
     print(f"Fetching up to {needed} tasks...")
 
-    existing_urls = {u for t in tasks for u in (t.get("urls") or [])}
-    next_num = 1 + max(
-        (
-            int(m.group(1))
-            for t in tasks
-            if (m := re.match(r"LIMEN-(\d+)$", t.get("id", "")))
-        ),
-        default=0,
-    )
+    existing_urls = _existing_urls(tasks) | _pending_urls()
 
     today = date.today().isoformat()
-    new_tasks = []
+    candidates = []
     for org in ORGS:
         page = 1
-        while needed > 0:
+        seen_search_urls: set[str] = set()
+        while needed > 0 and page <= MAX_PAGES_PER_ORG:
             resp = requests.get(
                 "https://api.github.com/search/issues",
                 params={
@@ -106,6 +133,11 @@ def main() -> int:
             items = resp.json().get("items", [])
             if not items:
                 break
+            page_urls = {issue.get("html_url") for issue in items if issue.get("html_url")}
+            if page_urls and page_urls <= seen_search_urls:
+                print(f"Search for {org} repeated page {page}; stopping pagination", file=sys.stderr)
+                break
+            seen_search_urls.update(page_urls)
             for issue in items:
                 if needed <= 0:
                     break
@@ -114,40 +146,64 @@ def main() -> int:
                     continue
                 # html_url shape: https://github.com/<owner>/<repo>/issues/<n>
                 owner_repo = "/".join(url.split("/")[3:5])
-                new_tasks.append(
-                    {
-                        "id": f"LIMEN-{next_num:03d}",
-                        "title": issue["title"],
-                        "repo": owner_repo,
-                        "type": "code",
-                        "target_agent": "jules",
-                        "priority": "medium",
-                        "budget_cost": 1,
-                        # SCHEMA.md §2.3: the state machine starts at `open`;
-                        # `dispatched` requires an agent claim (+ dispatch_log).
-                        "status": "open",
-                        "labels": ["jules-ready"],
-                        "urls": [url],
-                        "created": today,
-                        "updated": today,
-                    }
-                )
+                candidates.append({"title": issue["title"], "repo": owner_repo, "url": url})
                 existing_urls.add(url)
-                next_num += 1
                 needed -= 1
             page += 1
+        if needed > 0 and page > MAX_PAGES_PER_ORG:
+            print(f"Search for {org} stopped at page cap {MAX_PAGES_PER_ORG}", file=sys.stderr)
 
     # VALUE-TIER GATE: only auto-scale work for revenue/conductor repos (never the dead estate).
     allowed = _allowed_repos()
     if allowed:
-        before = len(new_tasks)
-        new_tasks = [t for t in new_tasks if t.get("repo") in allowed]
-        print(f"  value-tier gate: {before} mined → {len(new_tasks)} in tier")
+        before = len(candidates)
+        candidates = [c for c in candidates if c.get("repo") in allowed]
+        print(f"  value-tier gate: {before} mined → {len(candidates)} in tier")
 
-    tasks.extend(new_tasks)
-    data["tasks"] = tasks
-    atomic_write_text(TASKS_FILE, yaml.dump(data, sort_keys=False, allow_unicode=True))
-    print(f"Added {len(new_tasks)} new tasks. Total: {len(tasks)}")
+    data = _load_board()
+    tasks = _tasks(data)
+    pending_ids = pending_task_ids(TASKS_FILE)
+    remaining = max(0, _depth(data) - len(tasks) - len(pending_ids))
+    if remaining <= 0:
+        print(f"Task depth {len(tasks)} plus {len(pending_ids)} pending already at or above {_depth(data)} after refresh.")
+        return 0
+    existing_urls = _existing_urls(tasks) | _pending_urls()
+    next_num = _next_task_num(tasks)
+    new_tasks = []
+    for candidate in candidates:
+        if len(new_tasks) >= remaining:
+            break
+        url = candidate["url"]
+        if url in existing_urls:
+            continue
+        new_tasks.append(
+            {
+                "id": f"LIMEN-{next_num:03d}",
+                "title": candidate["title"],
+                "repo": candidate["repo"],
+                "type": "code",
+                "target_agent": "jules",
+                "priority": "medium",
+                "budget_cost": 1,
+                # SCHEMA.md §2.3: the state machine starts at `open`;
+                # `dispatched` requires an agent claim (+ dispatch_log).
+                "status": "open",
+                "origin": "obligation",
+                "horizon": "present",
+                "value_case": f"Close the source-owned GitHub issue at {url}",
+                "labels": ["jules-ready"],
+                "urls": [url],
+                "created": today,
+                "updated": today,
+                **contract_fields(github_issue_contract(candidate["repo"], url.rsplit("/", 1)[-1])),
+            }
+        )
+        existing_urls.add(url)
+        next_num += 1
+    session_id = os.environ.get("LIMEN_SESSION_ID", "auto-scale")
+    for task in new_tasks:
+        submit_task_upsert(TASKS_FILE, task, agent="auto-scale", session_id=session_id)
+    print(f"Submitted {len(new_tasks)} task upsert ticket(s). Total after keeper fold: {len(tasks) + len(pending_ids) + len(new_tasks)}")
     return 0
 
 

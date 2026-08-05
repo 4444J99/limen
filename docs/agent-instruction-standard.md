@@ -17,9 +17,11 @@ layers. The job is to **converge on them, not rebuild** them.
 
 | Surface | Owns | Must not own |
 |---------|------|--------------|
-| `AGENTS.md` | Cross-agent protocol: operating modes, task states, budget/claim rules, safety, `dispatch_log` | Tool-specific personality or merge cadence |
+| `AGENTS.md` | Cross-agent protocol: operating modes, task states, Peer Conductor Contract, authority/lease rules, safety | Tool-specific personality or transport |
 | `CLAUDE.md` | Claude Code execution discipline, closeout, credential handling, merge policy, output style | Canonical status vocabulary or task-state schema |
-| `GEMINI.md` | Conductor/Gemini MCP workflow, worktree spawning, PR babysitting mechanics | Independent task lifecycle rules |
+| `GEMINI.md` | Gemini's native conduct/MCP transport adapter | Independent task lifecycle or conductor hierarchy |
+| `.agents/skills/agy_conductor/SKILL.md` | Agy's thin adapter to the shared conduct CLI/MCP protocol | Self-claim, board writes, or a privileged conductor role |
+| `integrations/copilot/limen-conductor.agent.md` | Canonical source for the organization-level Copilot cloud adapter to authenticated remote ianva | Repository placement that overrides the organization profile, provider/model pinning, or direct lifecycle rules |
 | `CONTRIBUTING.md` | Human setup, style, gates, branch/PR requirements | Agent dispatch protocol |
 | `docs/deployment.md` | Production deployment variables, commands, and safety checks | Agent task claiming or lifecycle state |
 | Generated templates | Starter guidance for other tools/editors | Repo-specific truth copied out of date |
@@ -33,9 +35,42 @@ back to `AGENTS.md` instead.
 1. Update the owning source file, not every surface by hand.
 2. If the change touches states, precedence, agent names, referenced scripts, or examples, update
    `scripts/check-agent-docs.py`.
-3. Keep examples machine-checkable where practical.
-4. Keep direct-session behavior distinct from dispatch-mode behavior.
-5. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
+3. If the human correction changes workflow, priority, ownership, cadence, evidence, or acceptance
+   criteria, propagate it through a durable surface future agents read: protocol doc, TABVLARIVS
+   ticket, task packet, PR body, receipt, or explicit blocker. A chat-only apology is not enough.
+4. Do not gate routine engineering mechanics on the human. The human owns ideal forms, priorities,
+   taste, and human-risk decisions; agents own implementation choices, tests, cleanup mechanics, and
+   best-practice tradeoffs when the repo evidence supports a path.
+5. Preserve full lifecycle closure. A prompt, idea, viewpoint, branch, worktree, scratch root, or
+   lane closes only as shipped, open PR, pushed plan/task, preservation receipt with next owner, or
+   explicit blocker. No-diff, timeout, stale, or context-loss is not closure by itself.
+6. Keep examples machine-checkable where practical.
+7. Keep direct-session behavior distinct from dispatch-mode behavior.
+8. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
+9. Treat the full prompt corpus as a concurrent control plane, not a competing work lane. Preserve
+   individual ask/correction lineage, rank unresolved atoms by operator emphasis and systemic impact,
+   prove completion from owner receipts, and keep sound in-flight execution moving within resource
+   bounds while the corpus is refreshed. Do not require the human to restate settled intent.
+10. End every closeout and begin every autonomous initiative with one continuation capsule. Use the
+    canonical worktree launcher for repository-backed work; when no repository is the logical owner,
+    use an isolated owner-native workspace or remote receipt rather than manufacturing a fake
+    worktree. Its README fixes intent, authorities, prohibitions, predicates, and owner lineage; live
+    environment probes derive the lane and ending. The closeout must print one launch command and
+    make the capsule remotely durable. Carry one validated finite configurable runway that successor
+    sessions inherit; never hard-code a future model, provider table, task count, or desired terminal
+    verdict into the capsule.
+11. Apply `AGENTS.md` → Bounded Composition to campaigns, CI, generated artifacts, and handoffs.
+    Aggregate entrypoints are thin fan-in layers over independently runnable modules with finite
+    retries, bounded output, and durable receipts; they never duplicate successful children.
+12. Apply `AGENTS.md` → Peer Conductor Contract to every agent surface. Conductor is a temporary
+    capability, never a rank; all child work is broker-reserved, authority attenuates, native
+    identity survives, protected human sessions are untouchable, hidden fanout is rejected, and
+    agents never write the `tasks.yaml` projection.
+13. Treat concurrent sessions as the normal operating condition. Each mutation lane owns an
+    isolated worktree and immutable PR head; moving `main` is integrated by the repository merge
+    queue and its synthetic `merge_group`, not by repeatedly rewriting every branch and rerunning
+    successful head CI. Direct `main` writers yield to active integration. The executable contract
+    is `AGENTS.md` → Session Discipline rule 5 plus `docs/architecture/concurrent-integration.md`.
 
 ## Home-scope generated surfaces
 
@@ -60,23 +95,29 @@ defer to that project contract and must not redefine Limen task states or dispat
 - **Source of truth:** `contextmd/templates.py` (REPO / AGENTS / ORGAN / WORKSPACE sections);
   rendered by `generator.py`, applied by `sync.py::sync_all()`.
 - **Run:** `organvm context sync --write`
-- **Drift check:** `organvm ecosystem sync --dry-run` (`fossil/drift.py` +
-  `.github/workflows/ecosystem-sync-check.yml`, on push to `main`).
+- **Drift check:** `organvm context sync --dry-run` (`cli/context.py::cmd_context_sync` →
+  `contextmd/sync.py::sync_all()`). The separate
+  `.github/workflows/ecosystem-sync-check.yml` runs `organvm ecosystem sync --dry-run` for
+  `ecosystem.yaml` scaffolds; it is not the contextmd marker-section drift gate.
 - **Coverage:** manages `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` across ~190 files at
   workspace / organ / repo level (~73–85% auto-generated).
 - **What it injects:** shared org/ecosystem context (system library, handoff status,
   network/ontology, variables). It does **not** define the limen task lifecycle.
 
-### Layer 2 — task-lifecycle + dispatch-protocol (lives in limen)
+### Layer 2 — task-lifecycle + peer-conduct protocol (lives in limen)
 
-- **Where:** this repo's root — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`.
+- **Where:** this repo's root instruction files plus the Agy and Copilot native adapters.
 - **Provenance:** **hand-authored sources** (no `ORGANVM:AUTO` markers). They are canonical
   for *how a task moves* and how each agent behaves.
   - `AGENTS.md` — the cross-agent dispatch contract: **Startup Checklist**, **Precedence**,
-    **Task States**, the session rituals, the `dispatch_log` format.
+    **Peer Conductor Contract**, **Task States**, session rituals, and receipt/projection rules.
   - `CLAUDE.md` — the Claude Code operating charter (merge/branch protocol, closeout,
     credentials-are-organ-owned, gate matrix).
-  - `GEMINI.md` — the conductor swarm's MCP integration + worktree/PR-babysitting lifecycle.
+  - `GEMINI.md` — Gemini's native conduct/MCP transport.
+  - `.agents/skills/agy_conductor/SKILL.md` — Agy's thin conduct adapter.
+  - `integrations/copilot/limen-conductor.agent.md` — canonical source published to the
+    organization `.github` repository's `/agents` directory; Limen does not install a same-name
+    repository profile because repository-level profiles override organization-level profiles.
 - **Bound to code:** the task-state vocabulary is defined once in
   `mcp/src/limen_mcp/server.py` (`VALID_STATUSES`) and the docs are verified against it by
   `scripts/check-agent-docs.py`.
@@ -103,10 +144,22 @@ Mirror of `AGENTS.md → Precedence`, repeated here so the portal is self-contai
 
 1. System / developer / runtime constraints (the harness)
 2. The human's explicit instructions for this session
-3. `tasks.yaml` — the single source of truth for task **state**
+3. TABVLARIVS broker events and their `tasks.yaml` projection — the source of truth for task **state**
 4. `AGENTS.md` — the cross-agent dispatch **protocol**
 5. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) — per-agent behavior
 6. General repository docs (`README.md`, `docs/**`)
+
+---
+
+## Peer conductor invariant
+
+Every tool-specific instruction surface defers to `AGENTS.md` → **Peer Conductor Contract**.
+Conduct authority is a bounded capability carried by a registered session and `WorkPacketV1`, not a
+provider rank. TABVLARIVS serializes leases, budget, idempotency, and the `tasks.yaml` projection.
+Children reserve through the broker and may only attenuate authority; native identity is preserved,
+protected human sessions are not autonomous control targets, and hidden native fanout fails closed.
+`scripts/check-agent-docs.py` rejects old master/Codex-conductor wording, direct board-write
+guidance, and tool-specific lifecycle ownership.
 
 ---
 
@@ -138,6 +191,14 @@ There is **no** `completed` state — use `done`.
 asserts the `AGENTS.md` **Task States** table equals it exactly, and forbids the `completed`
 token in all three docs. **Exit 0 ⟺ docs and code agree.** This is the autopoietic guarantee:
 the instruction files can no longer silently drift from the code.
+
+**Check M (added 2026-07-15):** The four cross-agent session-discipline rules — (1) derive/no-menu,
+(2) bounded CI waits and scoped verification, (3) durable homing, (4) no-stall/BLOCKED-once — must
+be present in the `AGENTS.md` **`## Session Discipline`** section (the canonical shared layer), and
+the home-scope Layer-1 `AGENTS.md.tmpl` must carry a matching summary that defers to that section
+rather than diverging. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) extend or cite these rules;
+they must not define divergent versions. Phrase assertions: `scripts/verify-scoped.sh`,
+`scripts/await-pr.sh`, `BLOCKED: <atom>`, `his-hand-levers.json`, `registry already owns the answer`.
 
 ---
 

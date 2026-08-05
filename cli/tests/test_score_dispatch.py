@@ -81,6 +81,36 @@ def test_chronic_needs_human_is_wasted(tmp_path: Path):
     assert recs["CHRONIC"]["sunk"] > 0
 
 
+def test_broker_logical_pr_receipt_is_shipped(tmp_path: Path):
+    task = _task("BROKER-PR", "done")
+    task["dispatch_log"].append(
+        {
+            "status": "done",
+            "session_id": "keeper-session",
+            "logical_session_id": "https://github.com/o/r/pull/42",
+        }
+    )
+
+    records = _records(_run(tmp_path, [task], "--backfill", "--print"))
+
+    assert records[0]["grade"] == "worth_it"
+    assert records[0]["pr"] == "o/r#42"
+
+
+def test_chronic_failed_blocked_is_wasted_nonchronic_not_weighed(tmp_path: Path):
+    # heal-dispatch now parks chronic fleet-debt in failed_blocked (off the human surface);
+    # the sunk-cost accounting must follow it there. A genuinely externally-blocked task
+    # (non-chronic) stays unweighed — it may still resolve.
+    tasks = [
+        _task("PARKED", "failed_blocked", reopens=3, attempts=3),
+        _task("EXT", "failed_blocked", attempts=1),
+    ]
+    recs = {r["task_id"]: r for r in _records(_run(tmp_path, tasks, "--backfill", "--print"))}
+    assert recs["PARKED"]["grade"] == "wasted", "chronic parked debt is sunk cost"
+    assert recs["PARKED"]["sunk"] > 0
+    assert "EXT" not in recs, "non-chronic failed_blocked is not yet weighable"
+
+
 def test_idempotent_append(tmp_path: Path):
     tasks = [_task("D1", "done", pr="o/r/pull/9"), _task("D2", "archived", labels=["cancelled"])]
     _run(tmp_path, tasks)  # first pass appends 2
@@ -88,3 +118,16 @@ def test_idempotent_append(tmp_path: Path):
     assert "0 newly-weighed" in out2
     lines = (tmp_path / "logs" / "ledger.jsonl").read_text().splitlines()
     assert len(lines) == 2, "no duplicate records on re-run"
+
+
+def test_malformed_budget_cost_falls_back_per_task(tmp_path: Path):
+    tasks = [
+        _task("bad", "done", pr="o/r/pull/1", cost="bad"),
+        _task("bool", "archived", cost=True, attempts=2, labels=["cancelled"]),
+    ]
+    recs = {r["task_id"]: r for r in _records(_run(tmp_path, tasks, "--backfill", "--print"))}
+
+    assert recs["bad"]["budget_cost"] == 1
+    assert recs["bad"]["spent"] == 1
+    assert recs["bool"]["budget_cost"] == 1
+    assert recs["bool"]["sunk"] == 2

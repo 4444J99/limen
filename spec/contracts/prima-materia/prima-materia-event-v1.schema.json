@@ -1,0 +1,217 @@
+{
+  "$defs": {
+    "EncryptedPayloadRefV1": {
+      "additionalProperties": false,
+      "properties": {
+        "chunk_manifest_digest": {
+          "title": "Chunk Manifest Digest",
+          "type": "string"
+        },
+        "ciphertext_bytes": {
+          "minimum": 0,
+          "title": "Ciphertext Bytes",
+          "type": "integer"
+        },
+        "ciphertext_sha256": {
+          "title": "Ciphertext Sha256",
+          "type": "string"
+        },
+        "encryption_profile_digest": {
+          "title": "Encryption Profile Digest",
+          "type": "string"
+        },
+        "object_id": {
+          "title": "Object Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.encrypted_payload_ref.v1",
+          "default": "limen.encrypted_payload_ref.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "object_id",
+        "ciphertext_sha256",
+        "encryption_profile_digest",
+        "chunk_manifest_digest",
+        "ciphertext_bytes"
+      ],
+      "title": "EncryptedPayloadRefV1",
+      "type": "object"
+    },
+    "PrivacyConsentPolicyV1": {
+      "additionalProperties": false,
+      "properties": {
+        "access_scope": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "consent_receipt_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Consent Receipt Ref"
+        },
+        "policy_digest": {
+          "title": "Policy Digest",
+          "type": "string"
+        },
+        "publication_requires_receipt": {
+          "default": true,
+          "title": "Publication Requires Receipt",
+          "type": "boolean"
+        },
+        "purpose": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Purpose",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.privacy_consent_policy.v1",
+          "default": "limen.privacy_consent_policy.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_digest",
+        "purpose",
+        "access_scope"
+      ],
+      "title": "PrivacyConsentPolicyV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actor_id": {
+      "title": "Actor Id",
+      "type": "string"
+    },
+    "adapter_digest": {
+      "title": "Adapter Digest",
+      "type": "string"
+    },
+    "authority_ref": {
+      "title": "Authority Ref",
+      "type": "string"
+    },
+    "causal_event_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1024,
+      "title": "Causal Event Ids",
+      "type": "array"
+    },
+    "domain_tags": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 256,
+      "title": "Domain Tags",
+      "type": "array"
+    },
+    "effective_at": {
+      "format": "date-time",
+      "title": "Effective At",
+      "type": "string"
+    },
+    "encrypted_payloads": {
+      "items": {
+        "$ref": "#/$defs/EncryptedPayloadRefV1"
+      },
+      "maxItems": 1024,
+      "title": "Encrypted Payloads",
+      "type": "array"
+    },
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "input_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1024,
+      "title": "Input Digests",
+      "type": "array"
+    },
+    "intent_event_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1024,
+      "title": "Intent Event Ids",
+      "type": "array"
+    },
+    "observed_at": {
+      "format": "date-time",
+      "title": "Observed At",
+      "type": "string"
+    },
+    "output_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1024,
+      "title": "Output Digests",
+      "type": "array"
+    },
+    "privacy": {
+      "$ref": "#/$defs/PrivacyConsentPolicyV1"
+    },
+    "replay_class": {
+      "enum": [
+        "exact",
+        "semantic",
+        "observable_only"
+      ],
+      "title": "Replay Class",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.prima_materia_event.v1",
+      "default": "limen.prima_materia_event.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_id": {
+      "title": "Source Id",
+      "type": "string"
+    },
+    "source_schema_digest": {
+      "title": "Source Schema Digest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "source_id",
+    "adapter_digest",
+    "source_schema_digest",
+    "observed_at",
+    "effective_at",
+    "actor_id",
+    "authority_ref",
+    "privacy",
+    "replay_class"
+  ],
+  "title": "PrimaMateriaEventV1",
+  "type": "object"
+}

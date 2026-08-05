@@ -1,0 +1,739 @@
+# STREAMS — the declared work-domain registry (VIGILIA's fourth axis beside GATES, SENSORS, PARAMETERS)
+#
+# WHY THIS EXISTS
+#   A session stream is one work DOMAIN: an umbrella worktree an operator opens and interacts with,
+#   which spawns bounded children under its own lineage (`limen conduct split`, never a nested
+#   worktree — see the note on containment below).
+#
+#   The defect this closes: the arc's dependency graph and its "open these today" answer lived as
+#   PROSE in docs/plans/2026-07-29-session-stream-cartridges.md. Prose decays the moment a branch
+#   merges, and a human then re-derives it by hand every session. Here the graph is declared data and
+#   the ready-set is DERIVED:
+#
+#       python3 scripts/check-session-streams.py --ready
+#
+#   prints, per openable domain, the exact `workstream` command. The question "which streams do I
+#   open?" is a command's output, not a table somebody maintains.
+#
+#   And ACTING on that answer is one command too — the printer alone still left the operator reading
+#   blocks and retyping them into terminal tabs, which is the same hand-loop one level up:
+#
+#       scripts/open-streams.sh              # open every ready domain, each in its own tmux window
+#       scripts/open-streams.sh --dry-run    # show exactly what would open, touch nothing
+#
+#   It consumes `--ready --json` (each row carries the resolved argv, from the SAME builder the text
+#   view renders), bounds concurrency against this machine's real memory, and names every stream it
+#   defers. Re-running opens only what is not already open.
+#
+# THE ENGINE IS NOT NEW (IF-LEARNING-ENGINE, subject/cartridge contract)
+#   `limen workstream <repo> <slug>` (-> scripts/start-worktree-session.sh) is the estate's only
+#   worktree-creating CLI verb and the single owner of lane creation. A stream is a SUBJECT loaded
+#   into that engine — a row here, never a second launcher. Adding a domain = adding ONE row.
+#
+# CONTAINMENT IS BY LINEAGE, NOT BY DIRECTORY
+#   Children are reserved with `limen conduct split <parent_run> --packet` and bounded by
+#   FanoutBoundsV1{max_children, max_depth}. A child worktree is NEVER nested inside its parent's
+#   directory: worktree_roots.iter_worktree_targets() sweeps ROOTS, so a nested child is invisible to
+#   the SPRAWL-RECLAIM organ and leaks (the ~50GB blind spot, docs/PARALLEL-CELLS.md).
+#
+# HOW A DOMAIN SETTLES (the state is derived; this is the ONLY way to write it)
+#   Put an anchored trailer at column 0 of the merge commit message:
+#
+#       Settles: <stream-id>[, <stream-id>…]
+#
+#   and make that commit change something outside this registry and docs/{plans,continuations}/ —
+#   bookkeeping records an outcome, it cannot produce one. There is no `settled:` field, and a
+#   passing mention of an id does NOT settle it: the rule used to be an unanchored
+#   `git log --grep=<id>`, which settled `s10-axis-coverage` off a docs commit whose entire subject
+#   was that s10 owns work a plan should not do. `settled_by:` is a bounded, checked backfill for
+#   the two domains that settled before this convention existed — not a second path.
+#
+# FIELDS
+#   id                 stable slug; also the worktree slug and the docs/continuations/<id>/ key
+#   family             which registry this row PROJECTS. `domain` rows are DERIVED from the
+#                      workstream channel roster (cli/src/limen/workstream.py meta lanes +
+#                      organ-ladder.json pillars) — the operator's LIFE/WORK DOMAINS
+#                      (2026-07-30: email/comms=correspondence, finance=financial, job
+#                      applications=representation), the streams he actually opens — by
+#                      derive-domain-streams.py, held in parity by check N; they carry
+#                      `open_rank` (launch order — the RAM-bounded launcher opens the first N).
+#                      `constellation` rows are DERIVED from
+#                      organs/consulting/constellation/registry.yaml — the collaborator
+#                      person-streams, the consulting DOMAIN's interior — by derive-streams.py,
+#                      held in parity by check M (hand-editing either family is drift).
+#                      `governance` rows are hand-authored estate work. Operator-facing views
+#                      list domain first; the launcher's default family is domain.
+#   title              one line, human-facing
+#   branch_prefix      from the CLAUDE.md branch-cadence table (feat|fix|heal|chore|docs|refactor)
+#   intent             the --prompt-file payload; must exist (check A)
+#   requires           stream ids that must be SETTLED first; [] means openable now
+#   unblocks           inverse of requires; held mutually consistent + acyclic (check B)
+#   job_class          feeds tier derivation. NEVER a model or a vendor: the capsule contract
+#                      declares `lane_selection: derive_from_live_capabilities` and "never pin a
+#                      future provider or model". Classes that claim reserved-Opus standing are
+#                      validated against model_selection._CLAUDE_OPUS_CLASSES_DEFAULT (check G) —
+#                      derived from the tier authority, never a second copy of the ladder.
+#   predicate          the executable that decides this stream's DONE
+#   predicate_status   existing     — the predicate exists today and must resolve
+#                      to_be_built  — this stream BUILDS its own predicate; it must NOT exist yet,
+#                                     and the stream may not be `settled` while it is missing.
+#                                     Flipping this field without shipping the file is caught both
+#                                     ways (check C) — the anti-fake rung.
+#   runway             finite workstream runway handed to --runway (15m..30d)
+#   owner_of_record    the git-tracked surface that owns this domain's result
+#   max_children       IF-AMALGAMATION bound on the umbrella's fan-out
+#   predicate_command  OPTIONAL: the argv actually RUN to prove this domain done — distinct from
+#                      `predicate`, which is only the FILE whose existence check C validates. A file
+#                      existing proves nothing about the work.
+#                      `null` is an HONEST value meaning "not provable yet", and most rows are null
+#                      on purpose: 7 of 11 share a `predicate` with another row
+#                      (check-convergence.py -> s3/s6/s7, check-atom-homing.py -> s1/s2,
+#                      no-tasks-on-me.sh -> s4/s5), and a shared probe green says "some axis is
+#                      healthy", never "THIS domain is done". Check J refuses a duplicate outright.
+#                      Constrained STATICALLY by check I: argv[0] must be a runner
+#                      (python3 | bash | scripts/run-pytest-hermetic.sh) and no --apply/--live/
+#                      --write/--force/--execute token may appear anywhere. That guard is why
+#                      s8's `predicate` (scripts/repo-genesis.py, which MINTS A REAL GITHUB REPO
+#                      when told to act) can never become a settlement probe with real arguments.
+#   settled_by         OPTIONAL, migration-only: the SHA that settled this domain BEFORE the
+#                      `Settles:` convention existed. Check H proves it is a real commit reachable
+#                      from origin/main that changed paths outside this registry, and bounds how
+#                      many rows may carry one. A new domain never gets this — it claims its own.
+#   note               the measured defect this domain closes — never a wish
+#
+# Provenance: the nine domains and their measured ground truth come from
+# docs/plans/2026-07-29-session-stream-cartridges.md, itself instantiating the a->w roadmap approved
+# 2026-07-26 (zero phases of which landed; the session stopped on a spend limit).
+
+schema_version: 0.1
+
+streams:
+
+  # ── open now: no unmet precondition ──────────────────────────────────────────
+  s0-corpus-custody:
+    family: governance
+    title: "Corpus custody — teach the registry where the store actually lives"
+    branch_prefix: heal
+    intent: docs/continuations/s0-corpus-custody/intent.md
+    requires: []
+    # DIRECT edges only — `unblocks` is the exact inverse of the other row's `requires` (check B).
+    # s0 gates the four DISTILLATION domains directly, not through s1: the spine (s1) shipped
+    # deliberately store-free (#1608, "runs in CI where the corpus can never exist"), but you
+    # cannot distill atoms whose statement text you cannot read.
+    unblocks:
+      - s2-public-distillation
+      - s3-governance-case-law
+      - s4-operator-routing
+      - s5-commercial-offerings
+    # `canon` not `governance`: the tier authority has never heard of `governance`, so it derived
+    # the cheapest default tier in silence (check G was a no-op and never said so). This is the same
+    # act as s6 — correcting a registry to describe reality — and s6 is already `canon`.
+    job_class: canon
+    predicate: scripts/check-corpora.py
+    # Stream-distinguishing on purpose: check-corpora.py green means "the corpus axis is healthy",
+    # not "s0 is done". This asserts s0's THREE mission items specifically — the custody record in
+    # custody.yaml, the UNACCOUNTED-fails rule in check-corpora.py, and the documented reclaim verb.
+    # Store-free, so it holds in CI where the archived corpus is absent.
+    predicate_command: bash scripts/run-pytest-hermetic.sh cli/tests/test_stream_s0_custody.py -q
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: institutio/governance/corpora.yaml
+    max_children: 4
+    note: >-
+      RE-MEASURED 2026-07-29: the defect this row was filed over is CLOSED, and this note used to
+      assert the opposite. check-corpora.py:122-131 now resolves every root through
+      reference_state.ReferenceResolver and FAILS on UNACCOUNTED, degrading to an advisory only when
+      the root is declared ARCHIVED with receipts (#1615). The store is addressable as declared data
+      (custody.yaml roots.conversations-private, class archive, vault arca) and reclaimable by verb
+      (arca.sh restore). The path still does not resolve on disk, which is now EXPLAINED rather than
+      merely unnoticed. Settled on its predicate, not on this sentence.
+
+  s6-registry-correction:
+    family: governance
+    title: "Registry correction — make convergence.yaml describe the code it names"
+    branch_prefix: heal
+    intent: docs/continuations/s6-registry-correction/intent.md
+    requires: []
+    unblocks: [s7-smallest-lifts]
+    job_class: canon
+    predicate: scripts/check-convergence.py
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: institutio/governance/convergence.yaml
+    max_children: 4
+    note: >-
+      RE-COUNTED 2026-07-29: convergence.yaml holds FOURTEEN capability rows (8 converged, 5
+      lifting, 1 unresolved), not twelve — the set moved twice since authoring, so re-count before
+      citing any total. Claim 4 is HALF-addressed: #1611 added mirror-drift-detection as a counted
+      vacuum, but docs/convergence/learning-engine.md:102 still asserts the control it says does not
+      exist, and mirrors.yaml + check-mirrors.py remain unbuilt. Of the four measured false on
+      2026-07-26 (worker-toolkit names no seam though organvm/payrail exists; data-export claims
+      near-identical copies that share zero function names; text-quality-scoring names a frontmatter
+      validator as a quality scorer; learning-engine.md claims a mirror-drift control that does not
+      exist), claims 1-3 stand unchanged. Declared data that
+      misdescribes ground truth routes work at the wrong target.
+
+  s9-lane-tier-pin:
+    family: governance
+    title: "Lane tier pin — stop launched lanes inheriting a prohibited tier"
+    branch_prefix: heal
+    # Settled before the `Settles:` convention existed. 7ba07525 is #1619, whose diff is the fix
+    # itself (cli/src/limen/workstream_contract.py, cli.py, tests) — check H proves it is reachable
+    # from origin/main and changed paths outside this registry.
+    settled_by: 7ba07525
+    intent: docs/continuations/s9-lane-tier-pin/intent.md
+    requires: []
+    unblocks: []
+    job_class: kernel
+    predicate: cli/tests/test_workstream_contract.py
+    # Dispatched through the hermetic runner, the estate convention for a test-as-gate: it scrubs
+    # LIMEN_*/GIT_CONFIG_* first. A bare `pytest` here fails with `ModuleNotFoundError: No module
+    # named 'limen'`, which would resolve to NOT PROVEN — correct, but for the wrong reason.
+    predicate_command: bash scripts/run-pytest-hermetic.sh cli/tests/test_workstream_contract.py -q
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: cli/src/limen/workstream_contract.py
+    max_children: 2
+    note: >-
+      Measured 2026-07-29 while building this registry: the capsule's non-Codex branch execs the lane
+      binary with no --model, and start-worktree-session.sh gates --model behind the Codex triple. So
+      a claude umbrella inherits ~/.claude/settings.json's interactive default — currently
+      claude-fable-5[1m] — and docs/fable-allotment.md declares Fable PLAN-ONLY with building on it
+      prohibited. Its own domain because workstream_contract.py models primary_launch as strictly
+      Codex and is SHA-bound over nine modules on both build and re-entry.
+
+  s10-axis-coverage:
+    family: governance
+    title: "Axis coverage — make \"every axis is green\" one command, not a hand-loop"
+    branch_prefix: feat
+    intent: docs/continuations/s10-axis-coverage/intent.md
+    requires: []
+    unblocks: []
+    # `canon`: making the axis SET declared data is work on the registries themselves.
+    job_class: canon
+    predicate: scripts/check-gates.py
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: institutio/governance/gates.yaml
+    max_children: 2
+    note: >-
+      Measured 2026-07-29 on 6bac5cad: 27 scripts/check-*.py on disk, 19 registered in gates.yaml,
+      9 in sensors.yaml (4 in both) — 3 wired nowhere. verify-whole.sh invokes 4 of the 27
+      literally; pr-gate.yml's LIMEN_PRGATE_SCOPED=0 full-literal-matrix lists 7, omitting corpora,
+      convergence, atom-homing, custody, ideal-forms and session-streams. check-gates.py check F
+      covers only verify-whole.sh's file_set derivation, not its check invocations, and no axis
+      predicate appears in sensors.yaml so omega.sh misses them too. Each axis prevents drift in
+      its own domain while the SET of axes drifts unchecked — the CORPORA founding defect (two
+      consumers, two wrong copies of one list) one level up. Also folds in the axis->ideal
+      coupling: CUSTODY (#1615) and STREAMS (#1612) each shipped a registry, predicate and gate
+      row with no IF-* entry, the same gap IF-ATOM-HOMING had at the 6th axis.
+
+  # ── settled: the spine landed as #1608 while this registry was being authored ──
+  s1-homing-spine:
+    family: governance
+    title: "The homing spine — declared data before any homing"
+    branch_prefix: feat
+    # Settled before the `Settles:` convention existed. Under the OLD unanchored rule this row read
+    # settled only because the registry's own bookkeeping commit b5d7909f said "record
+    # s1-homing-spine settled by #1608" — the real work commit never names the id. 9a319395 IS that
+    # real work (institutio/governance/atom-homing.yaml, atom-census.yaml, the residue baseline).
+    settled_by: 9a319395
+    intent: docs/continuations/s1-homing-spine/intent.md
+    # NOT [s0]: the spine was authored store-free on purpose, so it never needed the corpus.
+    # Measured by its own landing — #1608 shipped with the store cold-archived off this host.
+    requires: []
+    unblocks:
+      - s2-public-distillation
+      - s3-governance-case-law
+      - s4-operator-routing
+      - s5-commercial-offerings
+    job_class: kernel
+    predicate: scripts/check-atom-homing.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: institutio/governance/atom-homing.yaml
+    max_children: 6
+    note: >-
+      SETTLED by #1608 (9a319395), landed 2026-07-29 by a parallel session while this registry was
+      being authored — measured by check C of this very registry, which refused the row that still
+      claimed the predicate was to-be-built. What shipped is exactly this domain's ask: atom-homing.yaml
+      (one row per kind), the statement-free atom-census.yaml, the residue baseline, and
+      check-atom-homing.py checks A-G — including D, the executable form of `redacted:false ⇒ never
+      leaves its store`. The DECLARATION is done; all 4,099 atoms remain residual, which is the work
+      of s2..s5 and is why they gate on s0 rather than on this row.
+
+  # ── blocked on s1 — the seven kinds, one domain per destination ───────────────
+  s2-public-distillation:
+    family: governance
+    title: "Public distillation — 1,194 atoms into ideal forms and schemas"
+    branch_prefix: feat
+    intent: docs/continuations/s2-public-distillation/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/check-atom-homing.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: docs/IDEAL-FORMS-LEDGER.md
+    max_children: 8
+    note: >-
+      functionality-to-repeat 518 + schema-proposals 676 — declared homed by the s1 spine (#1608),
+      all still RESIDUAL against the committed baseline. Success is INVERSE to volume: if
+      output is proportional to input this transferred rather than distilled. A 518-entry ideal-forms
+      ledger is worse than no homing, because it looks done.
+
+  s3-governance-case-law:
+    family: governance
+    title: "Governance case law — 1,343 atoms into precedents and counted vacuums"
+    branch_prefix: feat
+    intent: docs/continuations/s3-governance-case-law/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: []
+    job_class: canon
+    predicate: scripts/check-convergence.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: censor/precedents.jsonl
+    max_children: 8
+    note: >-
+      decisions 877 + vacuums 466, un-homed. Precedents stay curated — a precedent is consulted, and
+      a corpus nobody can read is consulted by nobody. convergence.yaml asserting 0 unresolved while
+      466 vacuum atoms sit un-homed is the same declared-data defect s6 corrects one file over.
+
+  s4-operator-routing:
+    family: governance
+    title: "Operator routing — 1,067 atoms without handing him a list"
+    branch_prefix: feat
+    intent: docs/continuations/s4-operator-routing/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: []
+    # `synthesis`: this domain distills 1,067 atoms into routing WITHOUT enlarging the operator's
+    # burden — its success metric is inverted, which is judgement work, not bookkeeping.
+    job_class: synthesis
+    predicate: scripts/no-tasks-on-me.sh
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: his-hand-levers.json
+    max_children: 6
+    note: >-
+      questions-unresolved 316 + tasks 751, un-homed. Success metric is INVERTED: routing 1,067 atoms
+      at the human is the failure mode. The charter is explicit that a closeout handing him a list has
+      failed even when every item is technically homed. Baseline to beat: 62 levers, 11 unresolved.
+
+  s5-commercial-offerings:
+    family: governance
+    title: "Commercial offerings — 54 atoms into the funnel"
+    branch_prefix: feat
+    intent: docs/continuations/s5-commercial-offerings/intent.md
+    requires: [s0-corpus-custody, s1-homing-spine]
+    unblocks: [s8-mint-by-demand]
+    job_class: synthesis
+    predicate: scripts/no-tasks-on-me.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organs/consulting
+    max_children: 4
+    note: >-
+      client-offerings 54 — the smallest kind, the only one with direct revenue consequence, and the
+      sole input to s8's G1 demand gate. Bundled into a bulk homing pass it gets buried under 877
+      decisions and never resurfaces.
+
+  # ── blocked on s6 ────────────────────────────────────────────────────────────
+  s7-smallest-lifts:
+    family: governance
+    title: "The smallest real lifts — de-risked by measurement, one branch each"
+    branch_prefix: refactor
+    intent: docs/continuations/s7-smallest-lifts/intent.md
+    requires: [s6-registry-correction]
+    unblocks: []
+    job_class: irreversible
+    predicate: scripts/check-convergence.py
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: institutio/governance/convergence.yaml
+    max_children: 4
+    note: >-
+      Blocked on s6 because lifting against uncorrected rows lifts the wrong seam — it would extract
+      a toolkit that organvm/payrail already is, and unify an export_all() sharing zero function
+      names. De-risked by a measured fact: no Worker repo deploys on merge, so a merged lift is a
+      reviewable code change and deploy stays a human action.
+
+  # ── blocked on s5 ────────────────────────────────────────────────────────────
+  s8-mint-by-demand:
+    family: governance
+    title: "Mint by demand — the scaffolding gate the estate never had"
+    branch_prefix: feat
+    intent: docs/continuations/s8-mint-by-demand/intent.md
+    requires: [s5-commercial-offerings]
+    unblocks: []
+    job_class: irreversible
+    predicate: scripts/repo-genesis.py
+    predicate_status: existing
+    runway: 8h
+    # institutio/GITHUB/estate.yaml — the governance/ path never existed. Its own predicate proves
+    # it (repo-genesis.py reads the github/ one). Nothing checked owner_of_record resolved; check K
+    # does now, and this is the row that motivated it.
+    owner_of_record: institutio/github/estate.yaml
+    max_children: 2
+    note: >-
+      The gate EXISTS — scripts/repo-genesis.py landed in PR #1535 with four gates
+      (gate_evidence, gate_name, gate_class, gate_seed). Measured 2026-07-29 by check C of this very
+      registry, which caught the plans doc claiming it was still to-be-built. What is genuinely
+      missing is the demand half: no gate asks WHICH repo-only affordance is required, none queries
+      convergence.yaml for an existing owner, and none enforces IF-AMALGAMATION (mints must not
+      outpace lifts). 149 repos minted from one export date is what that absence produced.
+
+  # ── BEGIN DERIVED: constellation lanes — generated by organs/consulting/constellation/derive-streams.py; hand-edits are drift (check M) ──
+  #
+  # These rows are PROJECTIONS of organs/consulting/constellation/registry.yaml —
+  # ONE ROW PER T1/T2 PERSON: a stream is a collaborator's whole domain, every one
+  # of their lanes inside the one cartridge (T3 is protocol-first and gets no
+  # launch surface). Change the register, rerun `derive-streams.py --write`.
+
+  jessica:
+    family: constellation
+    register_tier: T1
+    title: "jessica's domain (T1, 1 lane)"
+    branch_prefix: feat
+    intent: docs/continuations/jessica/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: organs/consulting/constellation/constellation-done.sh
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: organs/consulting/constellation/registry.yaml
+    max_children: 4
+    note: "Derived from the constellation register (T1, tiers operator-accepted 2026-07-22): jessica's whole collaboration domain — lanes: styx (stage building)."
+
+  maddie:
+    family: constellation
+    register_tier: T1
+    title: "maddie's domain (T1, 1 lane)"
+    branch_prefix: feat
+    intent: docs/continuations/maddie/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: organs/consulting/constellation/constellation-done.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organs/consulting/constellation/registry.yaml
+    max_children: 2
+    note: "Derived from the constellation register (T1, tiers operator-accepted 2026-07-22): maddie's whole collaboration domain — lanes: spiral (stage live)."
+
+  rob:
+    family: constellation
+    register_tier: T1
+    title: "rob's domain (T1, 4 lanes)"
+    branch_prefix: feat
+    intent: docs/continuations/rob/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: organs/consulting/constellation/constellation-done.sh
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: organs/consulting/constellation/registry.yaml
+    max_children: 4
+    note: "Derived from the constellation register (T1, tiers operator-accepted 2026-07-22): rob's whole collaboration domain — lanes: hokage-chess (stage building), fitness (stage live), micro-tato (stage mvp), sales-client-engine (stage idea)."
+
+  ari:
+    family: constellation
+    register_tier: T2
+    title: "ari's domain (T2, 1 lane)"
+    branch_prefix: feat
+    intent: docs/continuations/ari/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: organs/consulting/constellation/constellation-done.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organs/consulting/constellation/registry.yaml
+    max_children: 2
+    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): ari's whole collaboration domain — lanes: podcast-suite (stage mvp)."
+
+  charles:
+    family: constellation
+    register_tier: T2
+    title: "charles's domain (T2, 3 lanes)"
+    branch_prefix: feat
+    intent: docs/continuations/charles/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: organs/consulting/constellation/constellation-done.sh
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: organs/consulting/constellation/registry.yaml
+    max_children: 3
+    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): charles's whole collaboration domain — lanes: mirror-mirror (stage building), your-fit-tailored (stage building), cosmetics-universe (stage idea)."
+
+  scott:
+    family: constellation
+    register_tier: T2
+    title: "scott's domain (T2, 1 lane)"
+    branch_prefix: feat
+    intent: docs/continuations/scott/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: organs/consulting/constellation/constellation-done.sh
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: organs/consulting/constellation/registry.yaml
+    max_children: 2
+    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): scott's whole collaboration domain — lanes: content-cannibalizer (stage building)."
+  # ── END DERIVED: constellation lanes ──
+
+  # ── BEGIN DERIVED: domain streams — generated by institutio/governance/derive-domain-streams.py; hand-edits are drift (check N) ──
+  #
+  # These rows are PROJECTIONS of the workstream channel roster (workstream.py meta
+  # lanes + one channel per organ-ladder.json pillar) — the operator's LIFE/WORK
+  # DOMAINS (2026-07-30: email/comms=correspondence, finance=financial, job
+  # applications=representation; collaborator projects live INSIDE consulting).
+  # `open_rank` is the launch order — the RAM-bounded launcher opens the first N.
+  # Machinery lanes get no launch surface: prompt-parity, observation, sovereignty.
+  # Change the roster (or the policy constants), rerun `derive-domain-streams.py --write`.
+
+  correspondence:
+    family: domain
+    open_rank: 1
+    title: "correspondence — the operator's correspondence domain (mail, email, comms, inbox)"
+    branch_prefix: feat
+    intent: docs/continuations/correspondence/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: cli/src/limen/workstream.py
+    max_children: 3
+    note: "Derived from the workstream channel roster (cli/src/limen/workstream.py): the operator's correspondence life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  financial:
+    family: domain
+    open_rank: 2
+    title: "financial — the operator's financial domain (revenue, money, cash, finance)"
+    branch_prefix: feat
+    intent: docs/continuations/financial/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's financial life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  representation:
+    family: domain
+    open_rank: 3
+    title: "representation — the operator's representation domain (job, career, job-getting, applications)"
+    branch_prefix: feat
+    intent: docs/continuations/representation/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's representation life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  consulting:
+    family: domain
+    open_rank: 4
+    title: "consulting — the operator's consulting domain"
+    branch_prefix: feat
+    intent: docs/continuations/consulting/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 4
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's consulting life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes). The constellation family is this domain's interior: one stream per collaborator."
+
+  legal:
+    family: domain
+    open_rank: 5
+    title: "legal — the operator's legal domain"
+    branch_prefix: feat
+    intent: docs/continuations/legal/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's legal life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  health:
+    family: domain
+    open_rank: 6
+    title: "health — the operator's health domain"
+    branch_prefix: feat
+    intent: docs/continuations/health/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's health life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  education:
+    family: domain
+    open_rank: 7
+    title: "education — the operator's education domain"
+    branch_prefix: feat
+    intent: docs/continuations/education/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's education life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  governance:
+    family: domain
+    open_rank: 8
+    title: "governance — the operator's governance domain"
+    branch_prefix: feat
+    intent: docs/continuations/governance/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's governance life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  contributions:
+    family: domain
+    open_rank: 9
+    title: "contributions — the operator's contributions domain (contrib, contribution, code, prs)"
+    branch_prefix: feat
+    intent: docs/continuations/contributions/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: cli/src/limen/workstream.py
+    max_children: 3
+    note: "Derived from the workstream channel roster (cli/src/limen/workstream.py): the operator's contributions life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  media:
+    family: domain
+    open_rank: 10
+    title: "media — the operator's media domain"
+    branch_prefix: feat
+    intent: docs/continuations/media/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's media life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  artist:
+    family: domain
+    open_rank: 11
+    title: "artist — the operator's artist domain"
+    branch_prefix: feat
+    intent: docs/continuations/artist/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's artist life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  social:
+    family: domain
+    open_rank: 12
+    title: "social — the operator's social domain"
+    branch_prefix: feat
+    intent: docs/continuations/social/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's social life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  hr:
+    family: domain
+    open_rank: 13
+    title: "hr — the operator's hr domain"
+    branch_prefix: feat
+    intent: docs/continuations/hr/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: organ-ladder.json
+    max_children: 3
+    note: "Derived from the workstream channel roster (organ-ladder.json): the operator's hr life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes)."
+
+  conductor:
+    family: domain
+    open_rank: 14
+    title: "conductor — the operator's conductor domain (intake, brainstorm)"
+    branch_prefix: feat
+    intent: docs/continuations/conductor/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: cli/src/limen/workstream.py
+    max_children: 3
+    note: "Derived from the workstream channel roster (cli/src/limen/workstream.py): the operator's conductor life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes). On-demand meta lane: openable, ranked after every life/work domain."
+
+  substrate:
+    family: domain
+    open_rank: 15
+    title: "substrate — the operator's substrate domain (system, tooling, machine, infra)"
+    branch_prefix: feat
+    intent: docs/continuations/substrate/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: scripts/verify-scoped.sh
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: cli/src/limen/workstream.py
+    max_children: 3
+    note: "Derived from the workstream channel roster (cli/src/limen/workstream.py): the operator's substrate life/work domain. Closes the 2026-07-30 defect — session streams are life/work domains, and this registry twice shipped without them (governance phases, then per-project collaborator lanes). On-demand meta lane: openable, ranked after every life/work domain."
+  # ── END DERIVED: domain streams ──

@@ -8,7 +8,7 @@
 
 - **Main question:** What is desire, illusion, and the totality of a world in decline?
 - **Tradition / script:** chinese / hanzi · **language lesson:** [`../../scripts/chinese.md`](../../scripts/chinese.md)
-- **Corpus:** `None` (translations only)
+- **Corpus:** `chinese-classical/dream-of-red-chamber` (chinese_original.txt)
 - **Source rail:** https://ctext.org/hongloumeng
 - **Divisions:** 120 × Chapter
 - **Progress:** 0/120 arcs authored

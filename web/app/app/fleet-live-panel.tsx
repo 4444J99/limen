@@ -79,7 +79,7 @@ function sortedLanes(lanes: Record<string, FleetLane> = {}) {
   });
 }
 
-export default function FleetLivePanel({ pollMs = 2000 }: { pollMs?: number }) {
+export default function FleetLivePanel({ pollMs = 10000 }: { pollMs?: number }) {
   const [state, setState] = useState<FeedState>({
     data: null,
     updatedAt: null,
@@ -93,7 +93,7 @@ export default function FleetLivePanel({ pollMs = 2000 }: { pollMs?: number }) {
 
     async function load() {
       try {
-        const response = await fetch(`${feedPath}?t=${Date.now()}`, { cache: "no-store" });
+        const response = await fetch(feedPath);
         if (!response.ok) {
           throw new Error(response.status === 404 ? "Feed not found" : `Feed returned ${response.status}`);
         }

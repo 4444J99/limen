@@ -31,7 +31,7 @@ thinking — does not exist. A strong worker that crashed the machine, forgot it
 and threw a corrupt dialog, all in one day.
 
 Each fault already had a *diagnosis* and a *lever* on file (`_diagnostics` FIND-005 "16 GB is
-a budget, not a floor"; the `DISABLE_AUTOUPDATER` TCC lever; the corpus/session-meta thread).
+a budget, not a floor"; the stable-responsibility-host TCC lever; the corpus/session-meta thread).
 None had a **hand**. Diagnosis without an executive is what crashed the machine.
 
 ## The non-appeasing distinction — federation, not fusion

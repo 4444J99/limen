@@ -109,3 +109,38 @@ def test_round5():
     assert health_organ._round5(13) == 15
     assert health_organ._round5(0) == 0
     assert health_organ._round5(17.5) == 20
+
+
+def test_malformed_env_knobs_fail_open(monkeypatch):
+    monkeypatch.setenv("LIMEN_HEALTH_OVERDUE_DAYS", "bad")
+    monkeypatch.setenv("LIMEN_HEALTH_LEARN_DAYS", "0")
+    monkeypatch.setenv("LIMEN_HEALTH_MIN_OBS", "-3")
+
+    health_organ = _load()
+
+    assert health_organ.OVERDUE_DAYS == 14
+    assert health_organ.LEARN_WINDOW_DAYS == 21
+    assert health_organ.MIN_OBSERVATIONS == 3
+
+
+def test_public_census_is_counts_only(tmp_path):
+    health_organ = _load()
+    health_home = tmp_path / "organs" / "health"
+    case_dir = health_home / "cases" / "case-a"
+    case_dir.mkdir(parents=True)
+    (health_home / "CHARTER.md").write_text("charter")
+    (health_home / "safety-sentinel.sh").write_text("#!/bin/sh\n")
+    (health_home / "workflow-runner.sh").write_text("#!/bin/sh\n")
+    (case_dir / "calendar.md").write_text("redacted")
+
+    health_organ.HEALTH_HOME = health_home
+
+    census = health_organ._health_public_census()
+
+    assert census == {
+        "public_artifacts": 3,
+        "case_dirs": 1,
+        "case_files": 1,
+        "has_safety_sentinel": True,
+        "has_workflow_runner": True,
+    }

@@ -11,7 +11,7 @@
 - **Corpus:** `classical/odyssey` (greek_original.txt)
 - **Source rail:** https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0135
 - **Divisions:** 24 × Book
-- **Progress:** 24/24 arcs authored ✓ (Iliad-parity: 24 arcs + 24 essays)
+- **Progress:** 24/24 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
@@ -24,18 +24,18 @@
 | 7 | (author) | ✓ |
 | 8 | (author) | ✓ |
 | 9 | (author) | ✓ |
-| 10 | metamorphosis | ✓ |
-| 11 | grief | ✓ |
-| 12 | fate | ✓ |
-| 13 | return | ✓ |
-| 14 | law | ✓ |
-| 15 | return | ✓ |
-| 16 | revelation | ✓ |
-| 17 | grief | ✓ |
-| 18 | desire | ✓ |
-| 19 | memory | ✓ |
-| 20 | fate | ✓ |
-| 21 | fate | ✓ |
-| 22 | wrath | ✓ |
-| 23 | return | ✓ |
-| 24 | grief | ✓ |
+| 10 | (author) | ✓ |
+| 11 | (author) | ✓ |
+| 12 | (author) | ✓ |
+| 13 | (author) | ✓ |
+| 14 | (author) | ✓ |
+| 15 | (author) | ✓ |
+| 16 | (author) | ✓ |
+| 17 | (author) | ✓ |
+| 18 | (author) | ✓ |
+| 19 | (author) | ✓ |
+| 20 | (author) | ✓ |
+| 21 | (author) | ✓ |
+| 22 | (author) | ✓ |
+| 23 | (author) | ✓ |
+| 24 | (author) | ✓ |

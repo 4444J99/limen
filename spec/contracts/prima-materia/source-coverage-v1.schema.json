@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "missing_adapter_source_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Missing Adapter Source Ids",
+      "type": "array"
+    },
+    "observed_source_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Observed Source Ids",
+      "type": "array"
+    },
+    "registered_source_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Registered Source Ids",
+      "type": "array"
+    },
+    "registry_digest": {
+      "title": "Registry Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.source_coverage.v1",
+      "default": "limen.source_coverage.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "registry_digest",
+    "observed_source_ids",
+    "registered_source_ids",
+    "missing_adapter_source_ids"
+  ],
+  "title": "SourceCoverageV1",
+  "type": "object"
+}

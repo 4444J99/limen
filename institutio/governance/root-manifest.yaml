@@ -1,0 +1,82 @@
+# ROOT-MANIFEST — every sanctioned top-level entry of the limen repo, DECLARED.
+#
+# The root is a curated surface, not a landing strip (the parameter-panel pattern — GATES/
+# SENSORS/PARAMETERS/MAIL-TIERS, one domain over). scripts/check-root-manifest.py holds the
+# tracked root (git ls-tree HEAD) to this registry: an undeclared entry is a red check, not a
+# memory chore. Adding a root entry = adding ONE row here, with its kind, owner, and why.
+#
+# `grandfathered` rows are ADMITTED FAT: each carries the target home it will be rehomed to
+# (or DELETE, with the receipt authority in its why). Rehoming PRs delete the row together
+# with the entry — deleting the row IS the receipt — and this block only ever shrinks toward
+# zero. Untracked root noise (caches, .venv, nested repos) is outside the gate: git ls-tree
+# judges committed truth only; untracked bloat is owned by the board (e.g. issue #1260).
+
+schema_version: 0.1
+
+sanctioned:
+  - {path: .agents, kind: dir, owner: conduct, why: "agent-lane definitions"}
+  - {path: .claude, kind: dir, owner: conduct, why: "Claude lane config + skills + agents"}
+  - {path: .coderabbit.yaml, kind: config, owner: fleet, why: "review bot config"}
+  - {path: .codex, kind: dir, owner: conduct, why: "Codex lane config"}
+  - {path: .env.example, kind: config, owner: fleet, why: "env template (public)"}
+  - {path: .env.template, kind: config, owner: fleet, why: "env template (public)"}
+  - {path: .gemini, kind: dir, owner: conduct, why: "Gemini lane config"}
+  - {path: .github, kind: dir, owner: fleet, why: "workflows + templates"}
+  - {path: .gitignore, kind: config, owner: fleet, why: "ignore rules"}
+  - {path: .ruff.toml, kind: config, owner: fleet, why: "lint config (py311, line-length 120)"}
+  - {path: AGENTS.md, kind: doc, owner: docs, why: "dispatch/task contract — agent-instruction standard requires root placement"}
+  - {path: CLAUDE.md, kind: doc, owner: docs, why: "Claude operating charter — agent-instruction standard requires root placement"}
+  - {path: CONTRIBUTING.md, kind: doc, owner: docs, why: "human contributor guidance"}
+  - {path: EVERY-ASK-LEDGER.md, kind: doc, owner: docs, why: "live ask ledger — prompt-lifecycle-ledger.py consumes it at this path"}
+  - {path: FLAME.md, kind: doc, owner: docs, why: "dispatch flame doc — cli dispatch.py + evocator.py consume it at this path"}
+  - {path: GEMINI.md, kind: doc, owner: docs, why: "Gemini transport adapter — agent-instruction standard requires root placement"}
+  - {path: NAMING.md, kind: doc, owner: docs, why: "the styling canon"}
+  - {path: QUICKSTART.md, kind: doc, owner: docs, why: "install/first-run path"}
+  - {path: README.md, kind: doc, owner: docs, why: "front door"}
+  - {path: SCHEMA.md, kind: doc, owner: docs, why: "data-shape reference"}
+  - {path: START-HERE.md, kind: doc, owner: docs, why: "orientation index"}
+  - {path: apps, kind: dir, owner: apps, why: "standalone app surfaces"}
+  - {path: censor, kind: dir, owner: censor, why: "insight/correction lineage store"}
+  - {path: cli, kind: dir, owner: cli, why: "the limen CLI package"}
+  - {path: cloud-routines.json, kind: registry, owner: governance, why: "cloud routine registry (parameters.yaml + freshness audit consume)"}
+  - {path: config, kind: dir, owner: governance, why: "declared always-discovered tracked root (parameters.yaml)"}
+  - {path: container, kind: dir, owner: fleet, why: "launchd/container assets — verify-whole plutil-lints container/launchd/*.plist"}
+  - {path: corpus, kind: dir, owner: corpus, why: "creative/reference corpora store"}
+  - {path: docker-compose.yml, kind: config, owner: fleet, why: "local compose stack"}
+  - {path: docs, kind: dir, owner: docs, why: "documentation + reviews + continuations"}
+  - {path: experience-surfaces.json, kind: registry, owner: observation, why: "experience audit surface registry"}
+  - {path: face-ownership.json, kind: registry, owner: observation, why: "estate face-ownership registry (organ-ladder cites)"}
+  - {path: firebase.json, kind: config, owner: fleet, why: "firebase hosting config (deploy-trigger path)"}
+  - {path: his-hand-levers.json, kind: registry, owner: governance, why: "owned human-gated lever registry"}
+  - {path: ianva, kind: dir, owner: mcp, why: "MCP doorway/aggregator package"}
+  - {path: install.sh, kind: tooling, owner: fleet, why: "installer entry point"}
+  - {path: institutio, kind: dir, owner: governance, why: "the registry estate (GATES/SENSORS/PARAMETERS/...)"}
+  - {path: integrations, kind: dir, owner: conduct, why: "cross-agent integration surfaces (AGENTS.md names it)"}
+  - {path: limen.rb, kind: tooling, owner: fleet, why: "Homebrew formula"}
+  - {path: mise.toml, kind: config, owner: continuity, why: "toolchain declaration — ranges not pins; verify-hot-cache.sh R4 + the jack-in summon from it"}
+  - {path: link-surfaces.json, kind: registry, owner: observation, why: "link surface registry (sensors.yaml consumes)"}
+  - {path: logs, kind: dir, owner: fleet, why: "beat + autonomy logs with tracked receipts"}
+  - {path: marketing, kind: dir, owner: launch, why: "outgrown seed of the launch organ (CHARTER cites it)"}
+  - {path: mcp, kind: dir, owner: mcp, why: "MCP adapter package"}
+  - {path: moat-guard.json, kind: registry, owner: governance, why: "moat guard registry (parameters.yaml + access.yaml consume)"}
+  - {path: moneta, kind: dir, owner: moneta, why: "sovereign cash organ"}
+  - {path: organ-ladder.json, kind: registry, owner: governance, why: "the organ pillar ladder — domain-stream roster derives from it"}
+  - {path: organs, kind: dir, owner: governance, why: "self-* organ registries"}
+  - {path: package-lock.json, kind: package, owner: fleet, why: "root npm lockfile"}
+  - {path: pillars.yaml, kind: registry, owner: governance, why: "platform pillars registry"}
+  - {path: positioning-seeds.json, kind: registry, owner: launch, why: "positioning seed registry (gates.yaml + seo-seeds consume)"}
+  - {path: public-portal, kind: dir, owner: observation, why: "named target of the planned dashboard consolidation"}
+  - {path: renovate.json, kind: config, owner: fleet, why: "dependency update bot config"}
+  - {path: revenue-ladder.json, kind: registry, owner: financial, why: "revenue ladder registry (organ-ladder cites)"}
+  - {path: runtime.config.json, kind: registry, owner: cli, why: "runtime adapter config — doctor.py consumes it at this path"}
+  - {path: scripts, kind: dir, owner: fleet, why: "the operational script fleet"}
+  - {path: session-meta, kind: dir, owner: corpus, why: "declared corpus-feed root (pillars.yaml beat anchoring)"}
+  - {path: spec, kind: dir, owner: spec, why: "portable JSON Schemas + contracts"}
+  - {path: state, kind: dir, owner: governance, why: "live gate input (aug1-view.py / AUG1-10K-GATE)"}
+  - {path: studium, kind: dir, owner: studium, why: "first-class component with its own scripts/studium-* family"}
+  - {path: tasks.yaml, kind: registry, owner: tabularius, why: "the board projection (TABVLARIVS keeper)"}
+  - {path: value-discovery-dispositions.json, kind: registry, owner: governance, why: "value-discovery dispositions (parameters.yaml consumes)"}
+  - {path: value-repos.json, kind: registry, owner: observation, why: "value-repo census (65 referents)"}
+  - {path: web, kind: dir, owner: web, why: "worker + api + dashboard"}
+
+grandfathered: []

@@ -74,6 +74,22 @@ def test_healthy_all_green(tmp_path, monkeypatch):
     assert not m.ALERT.exists()  # dry-run writes nothing
 
 
+def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
+    m = _fresh_module(
+        tmp_path,
+        monkeypatch,
+        LIMEN_LOOP_MAX="bad",
+        LIMEN_LANE_TIMEOUT="bad",
+        LIMEN_DISPATCH_CEILING="bad",
+        LIMEN_WATCHDOG_OVERHEAD_SEC="bad",
+        LIMEN_WATCHDOG_STALE_SEC="bad",
+        LIMEN_WATCHDOG_MAX_FAILS="bad",
+    )
+
+    assert m.STALE_SEC == 1800 + 2400 + 600
+    assert m.MAX_FAILS == 3
+
+
 def test_dead_daemon_detected(tmp_path, monkeypatch):
     m = _fresh_module(tmp_path, monkeypatch)
     _write_logs(m)

@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from .. import harness_paths
 from . import params
 
 
@@ -137,7 +138,13 @@ def _out_dir() -> Path:
 def beat() -> dict:
     """Per-beat scan: if the latest transcript's handoff is degenerate, write a
     reconstruction. Best-effort, fail-open."""
-    pattern = params.get("CONTINUITY_TRANSCRIPT_GLOB", "~/.claude/projects/*/*.jsonl")
+    pattern = params.get("CONTINUITY_TRANSCRIPT_GLOB", "auto")
+    if not pattern or pattern == "auto":
+        # Resolve the harness root instead of hard-coding it. The previous literal
+        # (~/.claude/projects/*/*.jsonl) kept matching zero files after the harness moved its
+        # tree, and this organ went on reporting "ok" against a transcript that no longer
+        # existed — blind, but green. See limen.harness_paths.
+        pattern = harness_paths.transcript_glob()
     min_chars = params.get("CONTINUITY_MIN_SUMMARY_CHARS", 400, cast=int)
     result: dict = {"organ": "continuity", "min_chars": min_chars}
     try:
@@ -145,7 +152,9 @@ def beat() -> dict:
     except Exception as exc:
         return {**result, "status": "scan-error", "error": str(exc)[:200]}
     if not paths:
-        return {**result, "status": "no-transcripts"}
+        # Name the glob that came up empty. "no-transcripts" against an unnamed pattern is
+        # indistinguishable from a quiet host; against a named one it reads as a relocation.
+        return {**result, "status": "no-transcripts", "pattern": pattern}
 
     latest = paths[0]
     rows = parse_rows(latest)

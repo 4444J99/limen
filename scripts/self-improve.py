@@ -402,7 +402,8 @@ def apply_proposal(proposal: dict, tasks_path: Path) -> int:
     Lane weights + 're-route' are consumed by route.py's weighting (NOT rewritten here — clearing
     target_agent would just thrash the router every beat)."""
     sys.path.insert(0, str(ROOT / "cli" / "src"))
-    from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+    from limen.io import load_limen_file, queue_lock  # noqa: E402
+    from limen.tabularius import apply_limen_file_sync  # noqa: E402
 
     boost = {r["pattern"] for r in proposal.get("rerank", []) if r.get("move") == "boost"}
     deprio = {r["pattern"] for r in proposal.get("rerank", []) if r.get("move") == "deprioritise"}
@@ -432,7 +433,7 @@ def apply_proposal(proposal: dict, tasks_path: Path) -> int:
                 if "superseded" not in t.labels:
                     t.labels.append("superseded")
                 ch["retire"] += 1
-        save_limen_file(tasks_path, lf)
+        apply_limen_file_sync(tasks_path, lf, agent="self-improve", session_id="apply")
     held = "" if allow_retire else f" ({len(retire)} retire patterns HELD — set LIMEN_SI_RETIRE=1)"
     print(f"[self-improve] applied: {ch['boost']} boosted→high, {ch['deprio']} →low, "
           f"{ch['retire']} retired→archived/superseded{held}")

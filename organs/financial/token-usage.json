@@ -1,0 +1,82 @@
+{
+  "decision_parameters": {
+    "claude_arbitrage_multiple": 111.1,
+    "claude_usage_at_open_weight_rates_usd_month": 1134,
+    "hardware_payback_months": {
+      "mac-128gb": 27.4,
+      "mac-512gb": 70.4
+    },
+    "local_absorbable_open_usd_month": 134.98,
+    "local_absorbable_share_tokens": 0.104
+  },
+  "rates_source": "claude-api skill cache 2026-06-04; open-weight = DeepSeek-class list",
+  "schema": 1,
+  "vendors": {
+    "claude": {
+      "api_equivalent_usd_month": 24198,
+      "api_equivalent_usd_window": 18615,
+      "arbitrage_multiple": 111.1,
+      "observed_days": 23.1,
+      "per_model": {
+        "claude-fable-5": {
+          "messages": 5836,
+          "tokens": 1097621831,
+          "usd": 1963.6
+        },
+        "claude-haiku-4-5-20251001": {
+          "messages": 40860,
+          "tokens": 2063986419,
+          "usd": 456.89
+        },
+        "claude-opus-4-8": {
+          "messages": 113067,
+          "tokens": 14999376696,
+          "usd": 15104.69
+        },
+        "claude-sonnet-4-6": {
+          "messages": 33887,
+          "tokens": 1716461470,
+          "usd": 1089.87
+        }
+      },
+      "subscription_usd_month": 217.75,
+      "tokens": {
+        "cache_read": 18736977501,
+        "cache_write": 864895359,
+        "input": 73800265,
+        "output": 201773291
+      },
+      "trust": "measured",
+      "window": [
+        "2026-06-15",
+        "2026-07-09"
+      ]
+    },
+    "codex": {
+      "note": "vendor persists rate-limit % only; Pro->Plus lever keeps its revisit-on-starvation guard",
+      "trust": "unmodeled"
+    },
+    "gemini": {
+      "note": "no local token accounting",
+      "trust": "unmodeled"
+    },
+    "ollama": {
+      "note": "local floor, unmetered by design",
+      "trust": "unmodeled"
+    },
+    "opencode": {
+      "arbitrage_multiple": 8.5,
+      "observed_days": 21.0,
+      "open_weight_equivalent_usd_month": 85,
+      "subscription_usd_month": 10.0,
+      "tokens_total": 735818593,
+      "trust": "measured",
+      "vendor_reported_cost_usd": 0.0,
+      "window": [
+        "2026-06-16",
+        "2026-07-07"
+      ]
+    }
+  },
+  "window_days": 30
+}

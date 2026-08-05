@@ -1,0 +1,85 @@
+schema_version: limen.collaboration_operations.v1
+owner: organvm/limen
+
+platform:
+  repository: organvm-iii-ergon/collaboration-operations-platform
+  state: prepared_not_created
+  estate_class: operation_private
+  audience: self
+  collaborator_grants: []
+  fixture_policy: synthetic_only
+  purpose: universal_private_collaboration_operations_and_records
+  scope: all_current_and_future_collaborations_and_clients
+  record_model: central_private_hub_with_owner_partitions
+  bootstrap:
+    evidence: docs/continuations/collaboration-operations-platform-genesis-20260802/workstream.json
+    required_lever: L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS
+    required_receipt: his-hand-levers.json plus its needs-human issue receipt
+    dry_run_command: >-
+      python3 scripts/repo-genesis.py --name collaboration-operations-platform
+      --org organvm-iii-ergon --class operation_private
+      --evidence docs/continuations/collaboration-operations-platform-genesis-20260802/workstream.json
+      --seed-extract institutio/collaboration-operations/platform.yaml
+      --why 'universal private collaboration operations and records hub; no collaborator grants; client records stay partitioned; synthetic fixtures only'
+      --dry-run
+
+flow_policy:
+  studio_code: reusable_across_lanes
+  collaboration_records: private_platform_owner_partition_only
+  client_content: private_platform_owner_partition_only
+  cross_client_content: forbidden
+  public_release: audited_sanitized_split_only
+  live_client_fixtures: forbidden
+
+# The named lanes below are current boundary examples, not the full scope of the platform.
+# The platform is the owner's private place to capture and retrieve important information across
+# every current and future collaboration or client. Each collaboration's records retain a distinct
+# owner partition; central storage never grants cross-client disclosure.
+
+lanes:
+  david:
+    owner: persona:david
+    project: project:victoroff-os
+    repository: 4444J99/victoroff-os
+    state: mostly_complete_external
+    platform_role: external_reference_source
+    mutation_authority: external_owner_lane_only
+    source_references:
+      github_issues:
+        - {number: 2, state: open, disposition: custody_hold}
+        - {number: 3, state: open, disposition: custody_hold}
+        - {number: 17, state: open, disposition: historical_campaign_receipt}
+        - {number: 27, state: open, disposition: preserved_residual_work}
+      packet_series:
+        first: RW-001
+        last: RW-010
+        count: 10
+        disposition: external_source_reference
+      blocked_packet_ids:
+        disposition: external_source_reference
+        identifiers: []
+        coverage: pending_typed_owner_export
+    prohibitions:
+      - do_not_enter_or_edit_repository_from_platform_genesis
+      - do_not_duplicate_github_issues
+      - do_not_change_github_assignments
+      - do_not_reopen_general_build_lane
+
+  maddie:
+    owner: persona:maddie
+    project: project:spiral
+    repository: 4444J99/sovereign-systems--elevate-align
+    state: build_lane_closed
+    platform_role: external_reference_source
+    access_contract: push_only
+    mutation_authority: external_owner_lane_only
+
+  ari:
+    owner: persona:ari
+    project: project:podcast-suite
+    repository: organvm/hospes
+    state: vault_split_required
+    platform_role: external_reference_source
+    content_class: vault_private
+    mutation_authority: external_owner_lane_only
+    custody_gate: transcript_vault_split_before_movement

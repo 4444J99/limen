@@ -1,0 +1,29 @@
+# ungated-effectors-baseline — outward actions performed in-process, where a
+# PreToolUse(Bash) hook cannot reach them. Known and owned rather than silently
+# tolerated. The gate fails on any NEW finding; this list may only shrink.
+# Route the sender through the receipt check, then run:
+#   python3 scripts/check-effectors.py --update
+C ungated-effector: cli/src/limen/dispatch.py performs `gh pr create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: cli/src/limen/dispatch.py performs `gh pr merge` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: cli/src/limen/fanout_executor.py performs `gh pr create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: cli/src/limen/jules_landing_custody.py performs `gh pr create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: organs/representation/representation_substrate.py performs `import smtplib` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/apply-visibility.py performs `gh repo edit` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/autonomy-governor.py performs `gh pr merge` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/consolidate-github.py performs `gh api -X POST` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/consolidate-github.py performs `gh api -X PUT` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/contributions-organ.py performs `gh pr comment` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/credential-wall.py performs `gh issue edit` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/creds-hydrate.py performs `gh secret set` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/npm-audit-autofix.py performs `gh pr create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/npm-audit-autofix.py performs `gh pr merge` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/overnight-watch.py performs `gh issue create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/pip-audit-autofix.py performs `gh pr create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/pip-audit-autofix.py performs `gh pr merge` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/profile-bio-sync.py performs `gh api -X PATCH` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/reap-remote-branches.py performs `gh api -X DELETE` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/repo-genesis.py performs `gh repo create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/sync-censor-issues.py performs `gh issue close` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/sync-censor-issues.py performs `gh issue create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/sync-hishand-issues.py performs `gh issue create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
+C ungated-effector: scripts/sync-hishand-issues.py performs `gh issue edit` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists

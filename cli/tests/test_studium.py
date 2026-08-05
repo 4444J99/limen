@@ -129,6 +129,35 @@ def test_fail_open_without_curriculum(tmp_path, monkeypatch):
     assert "<!doctype html>" in html
 
 
+def test_load_state_fail_open_on_wrong_json_shape(tmp_path, monkeypatch):
+    m = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "studium-state.json").write_text('["not", "a", "state"]')
+
+    state = m.load_state()
+    assert state["position"] == m.DEFAULT_STATE["position"]
+    assert state["streak"] == 0
+
+
+def test_load_state_normalizes_poisoned_cursor(tmp_path, monkeypatch):
+    m = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "studium-state.json").write_text(
+        json.dumps(
+            {
+                "streak": "nope",
+                "position": {"work_id": 42, "division": "x", "day_in_division": 0},
+            }
+        )
+    )
+
+    state = m.load_state()
+    assert state["streak"] == 0
+    assert state["position"] == m.DEFAULT_STATE["position"]
+
+
 def test_main_writes_outputs_and_ledger(tmp_path, monkeypatch):
     m = _load(monkeypatch, tmp_path)
     _fixtures(tmp_path)

@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import limen.dispatch as D
+import limen.model_selection as M
 from limen.model_selection import _CLAUDE_TIER_ORDER
 from limen.models import Task
 
@@ -67,14 +68,59 @@ def _clear(monkeypatch):
         "LIMEN_CLAUDE_RETRY_BUMP",
         "LIMEN_CLAUDE_OPUS_CLASSES",
         "LIMEN_CLAUDE_FABLE_CLASSES",
+        "LIMEN_CLAUDE_MAX_INHERITED_TIER",
+        "LIMEN_CLAUDE_FABLE_FALLBACK_TIER",
         "LIMEN_CLAUDE_HAIKU_MODEL",
         "LIMEN_CLAUDE_SONNET_MODEL",
         "LIMEN_CLAUDE_OPUS_MODEL",
         "LIMEN_CLAUDE_FABLE_MODEL",
         "LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE",
         "LIMEN_FABLE_ACCEPTANCE",
+        "LIMEN_FABLE_BALANCE_PATH",
+        "LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN",
+        "LIMEN_ALLOW_CLAUDE_1M_CONTEXT",
     ):
         monkeypatch.delenv(k, raising=False)
+
+
+def _this_monday() -> str:
+    now = datetime.now(timezone.utc)
+    return (now - timedelta(days=now.weekday())).date().isoformat()
+
+
+def _write_balance(root: Path, spent_pct: float, week: str | None = None) -> Path:
+    (root / "logs").mkdir(parents=True, exist_ok=True)
+    path = root / "logs" / "fable-allotment.json"
+    path.write_text(
+        json.dumps(
+            {
+                "week": week if week is not None else _this_monday(),
+                "spent_tokens": 0,
+                "spent_pct": spent_pct,
+                "deliberate_cap": 40,
+                "hard_cap": 50,
+                "over_cap": spent_pct >= 50,
+            }
+        )
+    )
+    return path
+
+
+def _write_reserve_acceptance(root: Path) -> Path:
+    path = root / "fable-reserve.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema": "limen.fable_acceptance.v1",
+                "week": _this_monday(),
+                "category": "reserve",
+                "percent": 5,
+                "sources": ["docs/fable-allotment.md"],
+                "verification": ["python3 scripts/fable-allotment.py audit"],
+            }
+        )
+    )
+    return path
 
 
 def test_haiku_default_for_verifiable_class(tmp_path, monkeypatch):
@@ -114,7 +160,7 @@ def test_fable_is_reserved_above_opus_and_requires_acceptance(tmp_path, monkeypa
 
     _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
     task = _task(type_="final-canonical-decision")
-    assert D._claude_model(task) == "opus"
+    assert D._claude_model(task) == "sonnet"
 
     acceptance = _write_fable_acceptance(tmp_path)
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(acceptance))
@@ -125,12 +171,27 @@ def test_fable_is_reserved_above_opus_and_requires_acceptance(tmp_path, monkeypa
 
 
 def test_env_override_wins(tmp_path, monkeypatch):
-    """An explicit LIMEN_CLAUDE_MODEL pin always wins over class derivation."""
+    """An explicit cheap LIMEN_CLAUDE_MODEL pin wins over class derivation."""
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-opus-4-8")
+    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-sonnet-4-6")
     _write_ledger(tmp_path, {"waste_classes": []})
-    assert D._claude_model(_task(type_="code")) == "claude-opus-4-8"
+    assert D._claude_model(_task(type_="code")) == "claude-sonnet-4-6"
+
+
+def test_global_opus_and_large_context_pin_is_guarded(tmp_path, monkeypatch):
+    """A global Opus/1M pin would become inherited fan-out, so it needs explicit gates."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-opus-4-8[1m]")
+    _write_ledger(tmp_path, {"waste_classes": []})
+    assert D._claude_model(_task(type_="code")) == "sonnet"
+
+    monkeypatch.setenv("LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN", "1")
+    assert D._claude_model(_task(type_="code")) == "sonnet"
+
+    monkeypatch.setenv("LIMEN_ALLOW_CLAUDE_1M_CONTEXT", "1")
+    assert D._claude_model(_task(type_="code")) == "claude-opus-4-8[1m]"
 
 
 def test_env_fable_pin_is_guarded_by_acceptance(tmp_path, monkeypatch):
@@ -139,7 +200,7 @@ def test_env_fable_pin_is_guarded_by_acceptance(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": []})
     monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-fable-5")
-    assert D._claude_model(_task(type_="code")) == "opus"
+    assert D._claude_model(_task(type_="code")) == "sonnet"
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
     assert D._claude_model(_task(type_="code")) == "claude-fable-5"
 
@@ -223,6 +284,7 @@ def test_failed_claude_escalates_via_existing_cascade(monkeypatch):
     """Escalate-on-failure also rides the EXISTING lane cascade unchanged: a failed claude
     attempt re-routes to the next lane. Documents the cross-lane escalate rung (no new code)."""
     monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
+    monkeypatch.setattr(D, "_lane_cascade", lambda: ["codex", "opencode", "agy", "claude", "gemini", "jules", "ollama"])
     assert D._next_lane("claude") == "gemini"
 
 
@@ -268,6 +330,76 @@ def test_agent_type_pins_match_the_earned_tier_ladder(tmp_path, monkeypatch):
         )
 
 
+# ── Live weekly Fable cap: the runtime backstop layered on the accept-time receipt gate ────────
+# A valid acceptance receipt is necessary-not-sufficient. Once the week's Fable spend crosses the
+# caps in logs/fable-allotment.json, even an accepted Fable selection downgrades to Opus.
+
+
+def test_fable_over_hard_cap_downgrades_even_with_receipt(tmp_path, monkeypatch):
+    """spent_pct ≥ 50 → hard downgrade to opus, no exception (even a valid receipt)."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    task = _task(type_="final-canonical-decision")
+    # Under cap → fable.
+    _write_balance(tmp_path, 10.0)
+    assert D._claude_tier_for(task) == "fable"
+    assert D._claude_model(task) == "fable"
+    # Over the hard cap → opus, receipt notwithstanding.
+    _write_balance(tmp_path, 60.0)
+    assert D._claude_tier_for(task) == "opus"
+    assert D._claude_model(task) == "opus"
+
+
+def test_fable_reserve_band_passes_only_reserve_receipt(tmp_path, monkeypatch):
+    """40 ≤ spent_pct < 50 → only a current-week reserve receipt passes; else opus."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
+    task = _task(type_="final-canonical-decision")
+    _write_balance(tmp_path, 45.0)
+    # A non-reserve receipt is valid for acceptance but does not pass the 40–50% band.
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    assert D._claude_tier_for(task) == "opus"
+    # A reserve receipt passes the band.
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_reserve_acceptance(tmp_path)))
+    assert D._claude_tier_for(task) == "fable"
+    # …but not at/over the hard cap.
+    _write_balance(tmp_path, 55.0)
+    assert D._claude_tier_for(task) == "opus"
+
+
+def test_fable_cap_fails_open_when_no_balance_or_stale(tmp_path, monkeypatch):
+    """No balance file, or a stale (prior-week) one → the receipt gate alone decides (fail-open)."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    task = _task(type_="final-canonical-decision")
+    # No balance file at all → fable (receipt gate only).
+    assert D._claude_tier_for(task) == "fable"
+    # A stale prior-week balance is ignored, even if over cap.
+    _write_balance(tmp_path, 99.0, week="2020-01-06")
+    assert D._claude_tier_for(task) == "fable"
+
+
+def test_fable_per_task_pin_is_also_capped(tmp_path, monkeypatch):
+    """A per-task claude_tier='fable' pin is subject to the same live cap."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    task = _task(type_="code", claude_tier="fable")
+    _write_balance(tmp_path, 10.0)
+    assert D._claude_tier_for(task) == "fable"
+    _write_balance(tmp_path, 70.0)
+    assert D._claude_tier_for(task) == "opus"
+
+
 def test_all_agent_type_models_are_valid_tier_aliases():
     """Every .claude/agents/ pin is a bare tier alias (or `inherit`) drawn from the one vocabulary —
     never a dated model id (derive-never-pin). The membership assert on a known rung kills a vacuous
@@ -282,3 +414,43 @@ def test_all_agent_type_models_are_valid_tier_aliases():
             f"{md.name} pins model={pinned!r} ∉ {sorted(valid)} — use a bare tier alias so "
             f"_resolve_claude_model resolves it to today's model (derive-never-pin)"
         )
+
+
+# ── the extracted ladder (model_selection.tier_for_classes) ──────────────────────────
+# The sort moved OUT of _claude_tier_for so the STREAMS registry can derive a job_class's
+# tier without importing dispatch (which would break model_selection's pure-stdlib contract).
+#
+# Read the agreement test honestly: while dispatch DELEGATES, the two can never disagree, so
+# equality alone proves nothing. What pins behavior is the `expected` column — verified by
+# mutation (forcing a reserved class to return "sonnet" fails these). The equality half earns
+# its keep only LATER, the day somebody reinstates a local sort inside _claude_tier_for; that
+# is the second-copy-of-the-ladder defect the charter forbids, and this is where it surfaces.
+
+
+def test_extracted_ladder_agrees_with_the_per_task_ladder(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": ["chore"]})
+    for cls, expected in (("canon", "opus"), ("kernel", "opus"), ("chore", "sonnet"), ("code", "haiku")):
+        via_task = D._claude_tier_for(_task(type_=cls))
+        via_classes = M.tier_for_classes({cls}, waste_classes=["chore"])
+        assert via_task == via_classes == expected, f"{cls}: task={via_task} classes={via_classes}"
+
+
+def test_extracted_ladder_defaults_to_haiku_not_the_account_default():
+    # No waste classes, no overrides, an unreserved class: the cheapest rung, so the existing
+    # escalation cascade does the work rather than a pre-assigned expensive tier.
+    assert M.tier_for_classes({"code"}) == "haiku"
+    assert M.tier_for_classes(set()) == "haiku"
+
+
+def test_extracted_ladder_honours_the_operator_override_map():
+    assert M.tier_for_classes({"docs"}, overrides={"opus": ["docs"]}) == "opus"
+    assert M.tier_for_classes({"docs"}, overrides={"sonnet": ["docs"]}) == "sonnet"
+
+
+def test_extracted_ladder_never_returns_fable_without_acceptance(monkeypatch):
+    # Fable is reserved above Opus and PLAN-ONLY; a reserved-Fable class must degrade, never
+    # silently select the top rung. Mirrors the acceptance gate the per-task ladder enforces.
+    monkeypatch.setattr(M, "_claude_fable_acceptance_present", lambda: False)
+    for cls in M._claude_fable_classes():
+        assert M.tier_for_classes({cls}) != "fable"

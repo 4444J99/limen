@@ -1,0 +1,11 @@
+{
+  "schema": "limen.fleet_gate_branch_debt.v1",
+  "description": "Durable owner record for the 942 origin/heal/fleet-gate-* remote branches from the 2026-07-03 heal loop. User directive 2026-08-05: no unique work or plans deleted without their due in life — these branches hold unique auto-fix content and must be dispositioned (folded into the params panel or recorded as abandoned), never silently reaped.",
+  "generated_at": "2026-08-05T13:45:00Z",
+  "owner_repo": "4444J99/limen",
+  "surface": "institutio/governance/undeclared-params-baseline.txt",
+  "class": "unfinished-intention-kept",
+  "count": 942,
+  "branch_list_file": "logs/reap-remote-branches-state.json (livework) and docs/fleet-gate-branch-debt.txt",
+  "disposition_rule": "for each branch: fold its baseline delta into parameters.yaml via scripts/check-params.py --update, or record an explicit abandoned-intention entry in docs/branch-hygiene.md; only then may the remote ref be reaped loss-free"
+}

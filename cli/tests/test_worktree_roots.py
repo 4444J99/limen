@@ -10,16 +10,20 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.worktree_roots import (
+    WorktreeInventoryError,
     WorktreeTarget,
     _children,
     _dedupe_targets,
     _discover_repo_local_roots,
+    _discover_workspace_checkouts,
     _flag,
     _float_env,
     _git_worktree_paths,
     _int_env,
+    _legacy_dispatch_roots,
     _path_list,
     _registered_repo_roots,
+    dispatch_clone_cache_root,
     iter_worktree_targets,
 )
 
@@ -168,6 +172,15 @@ def test_children_handles_permission_denied(monkeypatch, tmp_path):
     assert _children(tmp_path, 1.0, "x") == []
 
 
+def test_children_permission_denied_is_error_in_strict_inventory(monkeypatch, tmp_path):
+    def denied(_path):
+        raise PermissionError("configured root is unreadable")
+
+    monkeypatch.setattr(Path, "iterdir", denied)
+    with pytest.raises(WorktreeInventoryError, match="cannot enumerate x"):
+        _children(tmp_path, 1.0, "x", strict=True)
+
+
 # ---------------------------------------------------------------- _discover_repo_local_roots
 def test_discover_repo_local_roots_finds_worktrees(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(tmp_path))
@@ -205,6 +218,33 @@ def test_discover_respects_max_depth(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH", "3")
     roots = _discover_repo_local_roots(tmp_path)
     assert deep not in roots
+
+
+def test_discover_workspace_checkouts_stops_at_git_roots(tmp_path, monkeypatch):
+    checkout = tmp_path / "owner" / "repo"
+    nested = checkout / "nested"
+    (checkout / ".git").mkdir(parents=True)
+    (nested / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(tmp_path))
+
+    roots = _discover_workspace_checkouts(strict=True)
+
+    assert roots == [checkout]
+
+
+def test_discover_workspace_checkouts_skips_symlinked_checkout(tmp_path, monkeypatch):
+    external = tmp_path / "external"
+    (external / ".git").mkdir(parents=True)
+    inventory = tmp_path / "inventory"
+    inventory.mkdir()
+    linked = inventory / "package-manager-project"
+    linked.symlink_to(external, target_is_directory=True)
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(inventory))
+
+    roots = _discover_workspace_checkouts(strict=True)
+
+    assert roots == []
+    assert linked.exists()
 
 
 # ---------------------------------------------------------------- _git_worktree_paths
@@ -255,6 +295,15 @@ def test_git_worktree_paths_not_a_repo(tmp_path):
     assert _git_worktree_paths(tmp_path / "nope") == []
 
 
+def test_git_worktree_paths_failed_configured_repo_is_error_in_strict_mode(tmp_path):
+    nonrepo = tmp_path / "configured-but-not-a-repo"
+    nonrepo.mkdir()
+
+    assert _git_worktree_paths(nonrepo) == []
+    with pytest.raises(WorktreeInventoryError, match="git worktree inventory failed"):
+        _git_worktree_paths(nonrepo, strict=True)
+
+
 # ---------------------------------------------------------------- _registered_repo_roots
 def test_registered_repo_roots_finds_sibling_worktrees(tmp_path, monkeypatch):
     main = tmp_path / "main-repo"
@@ -287,6 +336,20 @@ def test_registered_repo_roots_none_found(tmp_path, monkeypatch):
     assert _registered_repo_roots(tmp_path) == []
 
 
+# ---------------------------------------------------------------- _legacy_dispatch_roots
+def test_legacy_dispatch_roots_skips_current_dispatch_root(tmp_path, monkeypatch):
+    dispatch = tmp_path / "scratch" / "limen-worktrees"
+    legacy = tmp_path / "Workspace" / ".limen-worktrees"
+    dispatch.mkdir(parents=True)
+    legacy.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_RECLAIM_LEGACY_WORKTREE_ROOTS", f"{dispatch}:{legacy}")
+
+    roots = _legacy_dispatch_roots(dispatch)
+
+    assert legacy in roots
+    assert dispatch not in roots
+
+
 # ---------------------------------------------------------------- iter_worktree_targets
 def test_iter_worktree_targets_dispatch_root_children(tmp_path, monkeypatch):
     dispatch = tmp_path / ".limen-worktrees"
@@ -300,6 +363,113 @@ def test_iter_worktree_targets_dispatch_root_children(tmp_path, monkeypatch):
     targets = iter_worktree_targets(tmp_path)
     names = {t.path.name for t in targets}
     assert "active-task" in names
+
+
+def test_iter_worktree_targets_workspace_checkouts_are_explicitly_armed(tmp_path, monkeypatch):
+    dispatch = tmp_path / ".limen-worktrees"
+    dispatch.mkdir()
+    checkout = tmp_path / "owner" / "repo"
+    (checkout / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(tmp_path))
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_CHECKOUTS", "1")
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H", "0")
+
+    targets = iter_worktree_targets(tmp_path)
+
+    assert any(target.path == checkout and target.source == "workspace-checkout" for target in targets)
+
+
+def test_dispatch_clone_cache_root_requires_same_device_parent(tmp_path, monkeypatch):
+    worktrees = tmp_path / "scratch" / "worktrees"
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
+    monkeypatch.setattr(
+        "limen.worktree_roots._filesystem_device",
+        lambda path: 2 if path == worktrees else 1,
+    )
+    assert dispatch_clone_cache_root() is None
+
+
+def test_iter_worktree_targets_owns_flat_dispatch_clone_cache_children(tmp_path, monkeypatch):
+    dispatch = tmp_path / "worktrees"
+    cache = tmp_path / ".worktrees-repo-cache"
+    clone = cache / "owner--repo-deadbeef"
+    dispatch.mkdir()
+    clone.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_MIN_AGE_H", "2")
+
+    targets = iter_worktree_targets(tmp_path)
+    target = next(item for item in targets if item.path == clone)
+    assert target.source == "dispatch-clone-cache"
+    assert target.min_age_h == 2.0
+
+
+def test_inventory_modes_diverge_on_unreadable_configured_dispatch_root(tmp_path, monkeypatch):
+    dispatch = tmp_path / ".limen-worktrees"
+    dispatch.mkdir()
+    original_iterdir = Path.iterdir
+
+    def deny_dispatch(path: Path):
+        if path == dispatch:
+            raise PermissionError("configured dispatch root is unreadable")
+        return original_iterdir(path)
+
+    monkeypatch.setattr(Path, "iterdir", deny_dispatch)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+
+    # Operational reaping remains best-effort and can still drain every readable scope.
+    assert iter_worktree_targets(tmp_path) == []
+    # Admission cannot prove the inventory is empty, so the strict mode preserves the fault.
+    with pytest.raises(WorktreeInventoryError, match="dispatch-root"):
+        iter_worktree_targets(tmp_path, strict=True)
+
+
+def test_iter_worktree_targets_scans_legacy_dispatch_root_when_scratch_is_default(tmp_path, monkeypatch):
+    scratch = tmp_path / "Scratch" / "limen-worktrees"
+    legacy = tmp_path / "Workspace" / ".limen-worktrees"
+    (scratch / "new-task").mkdir(parents=True)
+    (legacy / "old-task").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("LIMEN_WORKTREE_ROOT", raising=False)
+    monkeypatch.setenv("LIMEN_WORKTREES", str(scratch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_AGY_SCRATCH", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+
+    targets = iter_worktree_targets(tmp_path)
+    by_name = {target.path.name: target for target in targets}
+
+    assert by_name["new-task"].source == "dispatch-root"
+    assert by_name["old-task"].source.startswith("legacy-dispatch-root:")
+
+
+def test_iter_worktree_targets_explicit_dispatch_root_suppresses_legacy_default(tmp_path, monkeypatch):
+    scratch = tmp_path / "Scratch" / "limen-worktrees"
+    legacy = tmp_path / "Workspace" / ".limen-worktrees"
+    (scratch / "new-task").mkdir(parents=True)
+    (legacy / "old-task").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(scratch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_AGY_SCRATCH", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+
+    names = {target.path.name for target in iter_worktree_targets(tmp_path)}
+
+    assert "new-task" in names
+    assert "old-task" not in names
 
 
 def test_iter_worktree_targets_claude_worktrees(tmp_path, monkeypatch):
@@ -319,6 +489,24 @@ def test_iter_worktree_targets_claude_worktrees(tmp_path, monkeypatch):
     session = next(t for t in targets if t.path.name == "session-1")
     assert session.min_age_h == 2.0
     assert session.source == "claude-worktrees"
+
+
+def test_iter_worktree_targets_agy_scratch_children(tmp_path, monkeypatch):
+    agy_scratch = tmp_path / "agy-scratch"
+    (agy_scratch / "mirror-mirror").mkdir(parents=True)
+    dispatch = tmp_path / ".limen-worktrees"
+    dispatch.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_AGY_SCRATCH", "1")
+    monkeypatch.setenv("LIMEN_AGY_SCRATCH_ROOT", str(agy_scratch))
+    monkeypatch.setenv("LIMEN_AGY_SCRATCH_MIN_IDLE_H", "3")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+    targets = iter_worktree_targets(tmp_path)
+    target = next(t for t in targets if t.path.name == "mirror-mirror")
+    assert target.min_age_h == 3.0
+    assert target.source == "agy-scratch"
 
 
 def test_iter_worktree_targets_deduplicates(tmp_path, monkeypatch):

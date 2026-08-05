@@ -13,26 +13,32 @@ Default behavior is read-only. Use --write to refresh the tracked ledger plus an
 private inventory. Use --materialize with --write to copy the last N days of raw local
 session files into the ignored object store.
 """
+
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import fnmatch
 import hashlib
 import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser().resolve()
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "cli" / "src"))
+
+from limen.session_atoms import atoms_summary, session_meta_root  # noqa: E402
+
 HOME = Path.home()
 WORKSPACE = ROOT.parent
 DOC_PATH = ROOT / "docs" / "session-corpus-ledger.md"
 LOG_PATH = ROOT / "logs" / "session-corpus-ledger.json"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 
 LOCAL_SOURCES = [
@@ -48,7 +54,83 @@ LOCAL_SOURCES = [
     ("claude-tasks", HOME / ".claude" / "tasks", ("*",)),
     ("claude-plans", HOME / ".claude" / "plans", ("*",)),
     ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
+    (
+        "chatgpt-desktop-app-support",
+        HOME / "Library" / "Application Support" / "com.openai.chat",
+        ("*.data", "*.json", "*.jsonl", "*.md", "*.txt"),
+    ),
+    (
+        "chatgpt-atlas-app-support",
+        HOME / "Library" / "Application Support" / "OpenAI" / "ChatGPT Atlas",
+        ("*.data", "*.json", "*.jsonl", "*.md", "*.txt"),
+    ),
+    (
+        "claude-desktop-indexeddb",
+        HOME / "Library" / "Application Support" / "Claude" / "IndexedDB",
+        ("*.ldb", "*.log", "*.sqlite", "*.db", "*.json", "*.jsonl"),
+    ),
+    (
+        "gemini-desktop-stores",
+        HOME / "Library" / "Application Support" / "com.google.GeminiMacOS",
+        (
+            "*.data",
+            "*.json",
+            "*.jsonl",
+            "*.ldb",
+            "*.log",
+            "*.sqlite",
+            "*.db",
+            "*.store",
+            "*.store-*",
+            "*.md",
+            "*.txt",
+        ),
+    ),
+    (
+        "perplexity-desktop-stores",
+        HOME / "Library" / "Application Support" / "ai.perplexity.macv3",
+        ("*.data", "*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.plist", "*.md", "*.txt"),
+    ),
 ]
+
+EXTERNAL_SOURCE_PREFIX = "external-session"
+EXTERNAL_PATTERNS = (
+    "*.data",
+    "*.json",
+    "*.jsonl",
+    "*.md",
+    "*.txt",
+    "*.log",
+    "*.sqlite",
+    "*.sqlite-*",
+    "*.db",
+    "*.db-*",
+    "*.csv",
+    "*.yaml",
+    "*.yml",
+)
+EXTERNAL_SKIP_DIRS = {
+    ".Trash",
+    ".Spotlight-V100",
+    ".TemporaryItems",
+    ".Trashes",
+    ".fseventsd",
+    ".git",
+    ".hg",
+    ".svn",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    "node_modules",
+    ".next",
+    ".turbo",
+    "dist",
+    "build",
+    "target",
+    "DerivedData",
+    "Library",
+}
 
 ORGANS = [
     {
@@ -94,18 +176,124 @@ def relpath(path: Path) -> str:
         return str(path)
 
 
-def iter_local_files(days: int | None) -> list[dict[str, Any]]:
+def env_positive_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return default
+    try:
+        val = int(raw)
+    except ValueError:
+        return default
+    return val if val > 0 else default
+
+
+def external_session_sources() -> list[tuple[str, Path, tuple[str, ...]]]:
+    raw = os.environ.get("LIMEN_EXTERNAL_SESSION_ROOTS", "")
+    roots = [part for part in raw.split(os.pathsep) if part.strip()]
+    sources: list[tuple[str, Path, tuple[str, ...]]] = []
+    for idx, part in enumerate(roots, start=1):
+        root = Path(part.strip()).expanduser()
+        name = root.name or f"root-{idx}"
+        sources.append((f"{EXTERNAL_SOURCE_PREFIX}:{name}", root, EXTERNAL_PATTERNS))
+    return sources
+
+
+def local_sources() -> list[tuple[str, Path, tuple[str, ...]]]:
+    return [*LOCAL_SOURCES, *external_session_sources()]
+
+
+def is_external_source(source: str) -> bool:
+    return source.startswith(f"{EXTERNAL_SOURCE_PREFIX}:")
+
+
+def external_match(path: Path, patterns: tuple[str, ...]) -> bool:
+    name = path.name.lower()
+    return any(fnmatch.fnmatch(name, pattern.lower()) for pattern in patterns)
+
+
+def external_candidates(root: Path, patterns: tuple[str, ...]) -> tuple[list[Path], dict[str, Any]]:
+    max_files = env_positive_int("LIMEN_EXTERNAL_SESSION_MAX_FILES_PER_ROOT", 2000)
+    max_dirs = env_positive_int("LIMEN_EXTERNAL_SESSION_MAX_DIRS_PER_ROOT", 5000)
+    max_depth = env_positive_int("LIMEN_EXTERNAL_SESSION_MAX_DEPTH", 5)
+    try:
+        resolved = root.expanduser().resolve()
+    except OSError:
+        resolved = root.expanduser()
+    limit = {
+        "root": relpath(resolved),
+        "max_files": max_files,
+        "max_dirs": max_dirs,
+        "max_depth": max_depth,
+        "dirs_seen": 0,
+        "candidate_files": 0,
+        "truncated": False,
+        "reason": None,
+    }
+    if not resolved.exists():
+        limit["reason"] = "missing-root"
+        return [], limit
+    if resolved.is_file():
+        candidates = [resolved] if external_match(resolved, patterns) else []
+        limit["candidate_files"] = len(candidates)
+        return candidates, limit
+
+    candidates: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(resolved):
+        current = Path(dirpath)
+        limit["dirs_seen"] += 1
+        try:
+            depth = len(current.relative_to(resolved).parts)
+        except ValueError:
+            depth = 0
+        if limit["dirs_seen"] >= max_dirs:
+            limit["truncated"] = True
+            limit["reason"] = "dir-cap"
+            dirnames[:] = []
+        else:
+            dirnames[:] = sorted(
+                name for name in dirnames if name not in EXTERNAL_SKIP_DIRS and not name.endswith(".noindex")
+            )
+            if depth >= max_depth:
+                dirnames[:] = []
+
+        for filename in sorted(filenames):
+            path = current / filename
+            if not external_match(path, patterns):
+                continue
+            candidates.append(path)
+            if len(candidates) >= max_files:
+                limit["candidate_files"] = len(candidates)
+                limit["truncated"] = True
+                limit["reason"] = "file-cap"
+                return candidates, limit
+
+    limit["candidate_files"] = len(candidates)
+    return candidates, limit
+
+
+def source_candidates(
+    source: str,
+    root: Path,
+    patterns: tuple[str, ...],
+) -> tuple[list[Path], dict[str, Any] | None]:
+    if is_external_source(source):
+        return external_candidates(root, patterns)
+    if not root.exists():
+        return [], None
+    if root.is_file():
+        return [root], None
+    return [path for pattern in patterns for path in root.rglob(pattern)], None
+
+
+def scan_local_files(days: int | None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     cutoff = None if days is None else dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
     rows: list[dict[str, Any]] = []
-    for source, root, patterns in LOCAL_SOURCES:
-        if not root.exists():
-            continue
+    scan_limits: list[dict[str, Any]] = []
+    for source, root, patterns in local_sources():
         seen: set[Path] = set()
-        candidates = [root] if root.is_file() else [
-            path
-            for pattern in patterns
-            for path in root.rglob(pattern)
-        ]
+        candidates, scan_limit = source_candidates(source, root, patterns)
+        source_files = 0
+        source_bytes = 0
         for path in candidates:
             if path in seen or not path.is_file():
                 continue
@@ -119,24 +307,40 @@ def iter_local_files(days: int | None) -> list[dict[str, Any]]:
             rows.append(
                 {
                     "source": source,
+                    "root": str(root),
                     "path": str(path),
                     "display_path": relpath(path),
                     "size": st.st_size,
                     "mtime": iso_from_ts(st.st_mtime),
                 }
             )
+            source_files += 1
+            source_bytes += st.st_size
+        if scan_limit:
+            scan_limit["source"] = source
+            scan_limit["accepted_files"] = source_files
+            scan_limit["accepted_bytes"] = source_bytes
+            scan_limits.append(scan_limit)
     rows.sort(key=lambda r: (r["mtime"] or "", r["source"], r["path"]), reverse=True)
+    return rows, scan_limits
+
+
+def iter_local_files(days: int | None) -> list[dict[str, Any]]:
+    rows, _scan_limits = scan_local_files(days)
     return rows
 
 
 def summarize_local(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_source: dict[str, dict[str, Any]] = {}
     for row in rows:
+        root = row.get("root")
+        if root is None:
+            root = next(root for name, root, _ in local_sources() if name == row["source"])
         item = by_source.setdefault(
             row["source"],
             {
                 "source": row["source"],
-                "root": relpath(next(root for name, root, _ in LOCAL_SOURCES if name == row["source"])),
+                "root": relpath(Path(root)),
                 "files": 0,
                 "bytes": 0,
                 "newest": None,
@@ -147,6 +351,23 @@ def summarize_local(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if item["newest"] is None or (row["mtime"] or "") > item["newest"]:
             item["newest"] = row["mtime"]
     return sorted(by_source.values(), key=lambda r: (-r["bytes"], r["source"]))
+
+
+def missing_local_sources(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    present = {str(row.get("source")) for row in rows}
+    missing: list[dict[str, Any]] = []
+    for source, root, _patterns in local_sources():
+        if is_external_source(source) or source in present:
+            continue
+        expanded = root.expanduser()
+        reason = "missing-root"
+        try:
+            if expanded.exists():
+                reason = "no-matching-files"
+        except OSError:
+            reason = "unreadable-root"
+        missing.append({"source": source, "root": relpath(expanded), "reason": reason})
+    return missing
 
 
 def sha256_file(path: Path) -> str:
@@ -271,17 +492,18 @@ def count_jsonl(path: Path, *, source_counts: bool = False) -> dict[str, Any]:
 
 
 def substrate_snapshot() -> dict[str, Any]:
-    sm = WORKSPACE / "session-meta"
+    sm = session_meta_root()
     kc = WORKSPACE / "knowledge-corpus"
     one = kc / "00-THE-ONE.md"
     reduced = kc / "reduced"
+    atom_store = atoms_summary()
+    if atom_store.get("mtime") is not None:
+        atom_store["mtime"] = iso_from_ts(float(atom_store["mtime"]))
     return {
-        "organs": [
-            {**organ, "path": str(organ["path"]), "git": git_status(organ["path"])} for organ in ORGANS
-        ],
+        "organs": [{**organ, "path": str(organ["path"]), "git": git_status(organ["path"])} for organ in ORGANS],
         "session_meta": {
             "manifest": count_jsonl(sm / "ingest" / "manifest.jsonl", source_counts=True),
-            "atoms": count_jsonl(sm / "ingest" / "atoms.jsonl", source_counts=False),
+            "atoms": atom_store,
         },
         "knowledge_corpus": {
             "the_one_present": one.is_file(),
@@ -311,9 +533,11 @@ def quicken_snapshot() -> dict[str, Any]:
                 if not line:
                     continue
                 try:
-                    last = json.loads(line)
+                    event = json.loads(line)
                 except ValueError:
                     continue
+                if "sessions" in event:
+                    last = event
     except OSError:
         return {"present": False, "path": str(path)}
     if not last:
@@ -422,7 +646,7 @@ def infer_roadblocks(snapshot: dict[str, Any], rows: list[dict[str, Any]]) -> li
         )
     atoms = snapshot["session_meta"]["atoms"]
     if not atoms.get("present"):
-        roadblocks.append("session-meta atoms.jsonl is missing, so corpus-converge has no atom substrate.")
+        roadblocks.append("session-meta atoms-store/CURRENT is missing, so corpus-converge has no atom substrate.")
     manifest = snapshot["session_meta"]["manifest"]
     if manifest.get("present"):
         try:
@@ -445,8 +669,9 @@ def infer_roadblocks(snapshot: dict[str, Any], rows: list[dict[str, Any]]) -> li
     return roadblocks
 
 
-def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: argparse.Namespace,
-                    mat: dict[str, Any] | None) -> str:
+def render_markdown(
+    snapshot: dict[str, Any], rows: list[dict[str, Any]], args: argparse.Namespace, mat: dict[str, Any] | None
+) -> str:
     generated = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     local = summarize_local(rows)
     total_files = sum(int(r["files"]) for r in local)
@@ -468,6 +693,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "`./.limen-private/session-corpus/` when materialized, never in public Git history.",
         "- The app screenshots are coverage hints, not canonical input. Canonical input is the local "
         "Claude/Codex/session-meta filesystem state.",
+        "- External/archive roots are opt-in through `LIMEN_EXTERNAL_SESSION_ROOTS`; they are bounded "
+        "inventory inputs, not deletion targets.",
         "",
         "## Local Session Sources",
         "",
@@ -483,6 +710,40 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         )
     if not local:
         lines.append("| none | n/a | 0 | 0 B | n/a |")
+
+    missing_sources = missing_local_sources(rows)
+    if missing_sources:
+        lines += [
+            "",
+            "## Missing Local App Sources",
+            "",
+            "These are known local app/store adapters with no matched files in this scan. This is a "
+            "coverage signal only; roots are not deletion targets.",
+            "",
+            "| Source | Root | Reason |",
+            "|---|---|---|",
+        ]
+        for item in missing_sources:
+            lines.append(f"| `{item['source']}` | `{item['root']}` | `{item['reason']}` |")
+
+    scan_limits = snapshot.get("scan_limits") or []
+    if scan_limits:
+        lines += [
+            "",
+            "## External Scan Bounds",
+            "",
+            "| Source | Root | Accepted | Size | Dirs Seen | Caps | Truncated |",
+            "|---|---|---:|---:|---:|---|---|",
+        ]
+        for item in scan_limits:
+            caps = f"files {item.get('max_files')}, dirs {item.get('max_dirs')}, depth {item.get('max_depth')}"
+            truncated = item.get("reason") if item.get("truncated") else "no"
+            lines.append(
+                f"| `{item.get('source')}` | `{item.get('root')}` | "
+                f"{item.get('accepted_files', 0)} | "
+                f"{fmt_bytes(int(item.get('accepted_bytes', 0)))} | "
+                f"{item.get('dirs_seen', 0)} | `{caps}` | `{truncated}` |"
+            )
 
     lines += [
         "",
@@ -510,18 +771,15 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "",
         f"- `session-meta/ingest/manifest.jsonl`: "
         f"{manifest.get('lines', 0):,} records, mtime `{manifest.get('mtime', 'missing')}`.",
-        f"- `session-meta/ingest/atoms.jsonl`: "
+        f"- `session-meta/ingest/atoms-store/CURRENT` "
+        f"(`{atoms.get('format') or 'missing'}`): "
         f"{atoms.get('lines', 0):,} atoms, mtime `{atoms.get('mtime', 'missing')}`.",
         f"- `knowledge-corpus`: `{kc['reduced_faces']}` reduced faces; "
         f"`00-THE-ONE.md` present: `{kc['the_one_present']}`.",
     ]
     if manifest.get("by_source"):
         top = list(manifest["by_source"].items())[:8]
-        lines.append(
-            "- Top manifest sources: "
-            + ", ".join(f"`{src}` {count:,}" for src, count in top)
-            + "."
-        )
+        lines.append("- Top manifest sources: " + ", ".join(f"`{src}` {count:,}" for src, count in top) + ".")
 
     q = snapshot.get("quicken", {})
     lines += [
@@ -541,17 +799,14 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         lines.append("- No `quicken.py` journal found yet.")
     cq = snapshot.get("codex_quicken", {})
     if cq.get("present"):
-        states = ", ".join(
-            f"`{state}` {count}" for state, count in sorted((cq.get("by_state") or {}).items())
-        )
+        states = ", ".join(f"`{state}` {count}" for state, count in sorted((cq.get("by_state") or {}).items()))
         families = ", ".join(
             f"`{family}` {count}"
             for family, count in sorted((cq.get("by_family") or {}).items(), key=lambda kv: (-kv[1], kv[0]))[:6]
         )
         lines += [
             f"- Last `codex-quicken.py` journal: `{cq.get('ts')}`.",
-            f"- Codex sessions classified: `{cq.get('sessions', 0)}` total"
-            f"{'; ' + states if states else ''}.",
+            f"- Codex sessions classified: `{cq.get('sessions', 0)}` total{'; ' + states if states else ''}.",
             f"- Top Codex lifecycle families: {families or 'none'}.",
         ]
     else:
@@ -587,9 +842,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
 
     screenshots = snapshot.get("private_screenshots", {})
     if screenshots.get("files"):
-        batch_bits = ", ".join(
-            f"`{batch}` {count}" for batch, count in screenshots.get("batches", {}).items()
-        )
+        batch_bits = ", ".join(f"`{batch}` {count}" for batch, count in screenshots.get("batches", {}).items())
         lines += [
             f"- Private screenshot evidence: `{screenshots['files']}` PNG artifacts, "
             f"`{fmt_bytes(int(screenshots.get('bytes', 0)))}`, newest `{screenshots.get('newest')}`.",
@@ -603,6 +856,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
     blocker_receipts = sorted((ROOT / "docs").glob("session-lifecycle-blockers.md"))
     attack_paths = sorted((ROOT / "docs").glob("session-attack-paths.md"))
     priority_maps = sorted((ROOT / "docs").glob("prompt-priority-map.md"))
+    atom_ledgers = sorted((ROOT / "docs").glob("prompt-atom-ledger.md"))
     batch_review_ledgers = sorted((ROOT / "docs").glob("prompt-batch-review-ledger.md"))
     packet_ledgers = sorted((ROOT / "docs").glob("prompt-packet-ledger.md"))
     packet_resolution_receipts = sorted((ROOT / "docs").glob("prompt-packet-resolution-receipts.json"))
@@ -613,6 +867,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         or blocker_receipts
         or attack_paths
         or priority_maps
+        or atom_ledgers
         or batch_review_ledgers
         or packet_ledgers
         or packet_resolution_receipts
@@ -633,6 +888,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
             lines.append(f"- Session attack paths: `{path.relative_to(ROOT)}`.")
         for path in priority_maps:
             lines.append(f"- Prompt priority map: `{path.relative_to(ROOT)}`.")
+        for path in atom_ledgers:
+            lines.append(f"- Canonical ask-atom control ledger: `{path.relative_to(ROOT)}`.")
         for path in batch_review_ledgers:
             lines.append(f"- Prompt batch review ledger: `{path.relative_to(ROOT)}`.")
         for path in packet_ledgers:
@@ -658,12 +915,12 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "- Refresh a bounded ledger: `python3 scripts/session-corpus-ledger.py --write --days 7`",
         "- Absorb raw local objects into the ignored cartridge: "
         "`python3 scripts/session-corpus-ledger.py --write --all --materialize`",
-        "- Refresh local/remote/cloud prompt lifecycle: "
-        "`python3 scripts/prompt-lifecycle-ledger.py --write --all`",
+        "- Refresh local/remote/cloud prompt lifecycle: `python3 scripts/prompt-lifecycle-ledger.py --write --all`",
         "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
         "- Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`",
         "- Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`",
         "- Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`",
+        "- Refresh prompt ask atoms: `python3 scripts/prompt-atom-ledger.py --scan --write`",
         "- Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`",
         "- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`",
         "- Rebuild session-meta atoms after preserving its dirty work: "
@@ -676,12 +933,13 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
 
 
 def build_snapshot(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any] | None]:
-    rows = iter_local_files(args.days)
+    rows, scan_limits = scan_local_files(args.days)
     mat = materialize(rows) if args.materialize else None
     snapshot = substrate_snapshot()
     snapshot["generated_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     snapshot["horizon_days"] = args.days
     snapshot["local_summary"] = summarize_local(rows)
+    snapshot["scan_limits"] = scan_limits
     snapshot["private_root"] = str(PRIVATE_ROOT)
     snapshot["materialization"] = mat
     snapshot["object_store"] = object_store_snapshot()

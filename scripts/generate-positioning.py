@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """generate-positioning — step 1 of the inbound-magnet system (docs/inbound-magnet-system.md).
+# Gate authority: organs/governance/PUBLICATION-POLICY.md — convergence table row 4 (awaiting_publish).
+# The `awaiting_publish` flag IS the `PUBLISH`→his_lever manifestation: the publication-policy engine
+# decides content disposition; this flag gates whether the fully-authored content actually renders
+# (his hand to flip). Changes to the publish gate start in the publication policy, not here.
 
 A repo pulls a warm inbound lead by *existing* only if its surface tells the right buyer,
 in their own language, that (a) it solves an expensive problem of theirs and (b) the person
@@ -91,6 +95,53 @@ def _slug(repo: str) -> str:
 # is live; clearing the flag (his switch, one line) is all that stands between it and rendering.
 def _awaiting_publish(seed: dict) -> bool:
     return bool(seed.get("awaiting_publish"))
+
+
+# --- constellation showcase -----------------------------------------------------------------
+# "Built with partners" — the monument layer. Entries are DERIVED from the constellation
+# register (organs/consulting/constellation/registry.yaml), never hand-listed: a project joins
+# the front door the moment its face lands (public_face_state ≥ readme — the register's own
+# declared "a public face exists" truth; `pending-split`/`none` exactly cover the private/unbuilt
+# cases, so the derivation is fail-closed offline with no live visibility probe). First-name
+# slugs only — the register's Rule #2 already bans surnames from its public half.
+
+def _constellation_registry_path() -> Path:
+    return Path(
+        os.environ.get(
+            "LIMEN_CONSTELLATION_REGISTRY",
+            LIMEN_ROOT / "organs" / "consulting" / "constellation" / "registry.yaml",
+        )
+    )
+
+
+_SHOWCASE_FACES = {"readme", "portal", "funnelized"}
+
+
+def _constellation_showcase_entries() -> list[dict]:
+    """{name, repo, slug} per showcasable project — face landed AND a repo to link. Degrades to
+    [] when the register (or PyYAML) is absent so the front door renders without the section."""
+    path = _constellation_registry_path()
+    if not path.exists():
+        return []
+    try:
+        import yaml
+
+        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return []
+    entries: list[dict] = []
+    for person in doc.get("people") or []:
+        if not isinstance(person, dict):
+            continue
+        for project in person.get("projects") or []:
+            if not isinstance(project, dict):
+                continue
+            repo = project.get("repo")
+            if project.get("public_face_state") in _SHOWCASE_FACES and isinstance(repo, str) and repo:
+                entries.append(
+                    {"name": str(project.get("name") or _slug(repo)), "repo": repo, "slug": str(person.get("slug") or "")}
+                )
+    return sorted(entries, key=lambda e: (e["slug"], e["name"]))
 
 
 # --- capture funnel -------------------------------------------------------------------------
@@ -270,6 +321,21 @@ def render_frontdoor(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> st
         cta = seed.get("cta_client", "Deploy this for your shop")
         lines.append(f"→ **{cta}** · see [the ways to work together](docs/positioning/{_slug(repo)}.md)")
         lines.append("")
+    showcase = fd.get("showcase") or {}
+    if showcase:
+        entries = _constellation_showcase_entries()
+        if entries:
+            lines.append("---")
+            lines.append("")
+            lines.append(f"## {showcase.get('heading', 'Built with partners')}")
+            lines.append("")
+            if showcase.get("blurb"):
+                lines.append(showcase["blurb"])
+                lines.append("")
+            for e in entries:
+                suffix = f" — with {e['slug']}" if e["slug"] else ""
+                lines.append(f"- **[{e['name']}](https://github.com/{e['repo']})**{suffix}")
+            lines.append("")
     if fd.get("closing"):
         lines.append("---")
         lines.append("")
@@ -392,6 +458,84 @@ def _atomic_write(path: Path, text: str) -> None:
             os.unlink(tmp)
 
 
+def census() -> dict:
+    """Redacted positioning census: aggregate seed/artifact shape only, never repo names or copy."""
+    report = {
+        "value_repos_present": _value_repos_path().exists(),
+        "value_repos_readable": False,
+        "value_repo_count": 0,
+        "seeds_present": _seeds_path().exists(),
+        "seeds_readable": False,
+        "seed_repo_count": 0,
+        "seeded_value_repo_count": 0,
+        "publishable_seed_count": 0,
+        "awaiting_publish_count": 0,
+        "missing_seed_count": 0,
+        "frontdoor_configured": False,
+        "contact_configured": False,
+        "repo_topic_seed_count": 0,
+        "valid_topic_count": 0,
+        "invalid_topic_count": 0,
+        "seo_description_count": 0,
+        "ladder_step_count": 0,
+        "internal_anchor_count": 0,
+        "out_dir_present": _out_dir().exists(),
+        "public_artifact_count": 0,
+        "internal_artifact_count": 0,
+        "system_artifact_count": 0,
+    }
+    try:
+        value_repos = _value_repos(_value_repos_path())
+        report["value_repos_readable"] = True
+        report["value_repo_count"] = len(value_repos)
+    except Exception:
+        value_repos = []
+
+    try:
+        doc = _load_json(_seeds_path())
+        seeds = doc.get("repos", {}) if isinstance(doc.get("repos", {}), dict) else {}
+        frontdoor = doc.get("frontdoor", {}) if isinstance(doc.get("frontdoor", {}), dict) else {}
+        report["seeds_readable"] = True
+        report["seed_repo_count"] = len(seeds)
+        report["frontdoor_configured"] = bool(frontdoor)
+        report["contact_configured"] = bool(frontdoor.get("contact"))
+    except Exception:
+        seeds = {}
+
+    seeded_value_repos = [repo for repo in value_repos if repo in seeds]
+    report["seeded_value_repo_count"] = len(seeded_value_repos)
+    report["awaiting_publish_count"] = sum(1 for repo in seeded_value_repos if _awaiting_publish(seeds[repo]))
+    report["publishable_seed_count"] = report["seeded_value_repo_count"] - report["awaiting_publish_count"]
+    report["missing_seed_count"] = max(0, report["value_repo_count"] - report["seeded_value_repo_count"])
+
+    for seed in seeds.values():
+        if not isinstance(seed, dict):
+            continue
+        topics = seed.get("search_topics") if isinstance(seed.get("search_topics"), list) else []
+        if topics:
+            report["repo_topic_seed_count"] += 1
+            good, bad = _validate_topics([str(topic) for topic in topics])
+            report["valid_topic_count"] += len(good)
+            report["invalid_topic_count"] += len(bad)
+        if seed.get("seo_description"):
+            report["seo_description_count"] += 1
+        ladder = seed.get("ladder") if isinstance(seed.get("ladder"), list) else []
+        report["ladder_step_count"] += len(ladder)
+        report["internal_anchor_count"] += sum(1 for step in ladder if isinstance(step, dict) and step.get("internal_anchor"))
+
+    out_dir = _out_dir()
+    if out_dir.is_dir():
+        for path in out_dir.glob("*.md"):
+            name = path.name
+            if name.endswith(".internal.md"):
+                report["internal_artifact_count"] += 1
+            elif name.startswith("_"):
+                report["system_artifact_count"] += 1
+            else:
+                report["public_artifact_count"] += 1
+    return report
+
+
 def generate_for(repo: str, seed: dict, *, apply: bool, fetch: bool, out_dir: Path,
                  contact: str | None = None) -> dict:
     signals = _fetch_signals(repo) if fetch else {}
@@ -418,11 +562,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--repo", help="one repo (owner/name); default = all seeded value-repos")
     ap.add_argument("--apply", action="store_true", help="write artifacts (default: dry-run)")
     ap.add_argument("--fetch", action="store_true", help="best-effort live signal overlay via gh")
+    ap.add_argument("--out-profile", action="store_true",
+                    help="with --frontdoor: also stage the org-profile README artifact (org hub)")
     ap.add_argument("--frontdoor", action="store_true",
                     help="render the aggregate two-door front door over all seeded value-repos")
     ap.add_argument("--discoverability", action="store_true",
                     help="render buyer-search topics + SEO + apply-commands per repo (recommends, never mutates)")
+    ap.add_argument("--census", action="store_true", help="print redacted positioning seed/artifact counts and exit")
     args = ap.parse_args(argv)
+
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
 
     doc = _load_json(_seeds_path())
     seeds = doc.get("repos", {})
@@ -443,6 +594,18 @@ def main(argv: list[str] | None = None) -> int:
             _atomic_write(fd_path, page)
         verb = "WROTE" if args.apply else "would write"
         print(f"=== FRONTDOOR — {verb} {fd_path} ({len(ordered)} systems) ===")
+        if args.out_profile:
+            # the org-hub artifact: same front door, headed for organvm/.github/profile/README.md
+            # (the one README GitHub renders on the org page — the hub of the hub-and-spoke lure
+            # graph). A fleet task ships it by PR on the .github repo; this only stages the copy.
+            profile = (
+                "<!-- generated by scripts/generate-positioning.py --frontdoor --out-profile -->\n"
+                "<!-- SHIP TO: organvm/.github/profile/README.md (by PR on that repo) -->\n\n" + page
+            )
+            pf_path = out_dir / "org-profile-README.md"
+            if args.apply:
+                _atomic_write(pf_path, profile)
+            print(f"=== ORG PROFILE — {verb} {pf_path} ===")
         if not args.apply:
             print(page)
         return 0

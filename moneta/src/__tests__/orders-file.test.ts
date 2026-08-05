@@ -64,6 +64,23 @@ describe('FileOrderPersistence', () => {
         expect(new OrderStore(sink).all()).toEqual([]) // corrupt → empty, no throw
     })
 
+    it('drops malformed saved rows without losing valid pooled demand', () => {
+        writeFileSync(file, JSON.stringify([
+            null,
+            'not-an-order',
+            { id: 'bad-sats', address: ADDR, sats: '15000', createdAt: 1_000, expiresAt: 61_000, status: 'pending' },
+            { id: 'bad-status', address: ADDR, sats: 15_000, createdAt: 1_000, expiresAt: 61_000, status: 'waiting' },
+            { id: 'r1', address: '', sats: 0, createdAt: 1_000, expiresAt: 0, status: 'reserved', email: 'buyer@x.io' },
+        ]), 'utf8')
+
+        const store = new OrderStore(new FileOrderPersistence(file))
+
+        expect(store.countReserved()).toBe(1)
+        expect(store.get('r1')?.email).toBe('buyer@x.io')
+        expect(store.get('bad-sats')).toBeUndefined()
+        expect(store.get('bad-status')).toBeUndefined()
+    })
+
     it('leaves the in-memory store (no sink) unchanged — no file is written', () => {
         const store = new OrderStore()
         store.create({ id: 'o1', address: ADDR, baseSats: 15_000, now: 1_000, ttlMs: TTL })

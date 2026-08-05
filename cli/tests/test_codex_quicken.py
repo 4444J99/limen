@@ -95,3 +95,22 @@ def test_classifies_codex_sessions_without_raw_prompt_leakage(tmp_path: Path):
     assert marker not in private_index
     assert "auth_credentials" in digest
     assert cq.JOURNAL.exists()
+
+
+def test_malformed_stale_env_falls_back(monkeypatch):
+    monkeypatch.setenv("LIMEN_CODEX_QUICKEN_STALE_MIN", "not-an-int")
+    assert _load().STALE_MIN == 20
+
+    monkeypatch.setenv("LIMEN_CODEX_QUICKEN_STALE_MIN", "0")
+    assert _load().STALE_MIN == 20
+
+    monkeypatch.setenv("LIMEN_CODEX_QUICKEN_STALE_MIN", "7")
+    assert _load().STALE_MIN == 7
+
+
+def test_parse_ts_ignores_nonfinite_numbers():
+    cq = _load()
+
+    assert cq.parse_ts(float("nan")) is None
+    assert cq.parse_ts(float("inf")) is None
+    assert cq.parse_ts("-infinity") is None
