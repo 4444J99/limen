@@ -2665,6 +2665,18 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Beat gate for the jules-supply sensor (sensors.yaml jules-supply): dispatchable-supply-vs-floor gauge; the armed valve LIMEN_JULES_SUPPLY_APPLY owns minting."
+  LIMEN_FUNNEL_INTEGRITY:
+    default: "1"
+    env: LIMEN_FUNNEL_INTEGRITY
+    self_update: none
+    owner: mail
+    note: "Beat gate for the funnel-integrity sensor (sensors.yaml funnel-integrity): asserts the application funnel claims no confirmation it cannot evidence — no simulated or self-referential confirmation in the delivery ledger, no corrupt funnel state read as a true zero, and no application-pipeline checkout parked off main. Read-only and idempotent."
+  LIMEN_PIPELINE_PY:
+    default: ""
+    env: LIMEN_PIPELINE_PY
+    self_update: none
+    owner: mail
+    note: "Optional interpreter override for funnel-integrity.sh's pipeline-entry audit, which needs the application-pipeline venv's pyyaml. Empty selects that checkout's own .venv/bin/python; an unusable interpreter SKIPs the invariant rather than failing it, so a missing venv never reds the beat."
   LIMEN_JULES_SUPPLY_APPLY:
     default: "1"
     env: LIMEN_JULES_SUPPLY_APPLY
