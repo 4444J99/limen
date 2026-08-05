@@ -503,11 +503,19 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   exactly the class `rotating_identity_active_grants` now detects automatically, found by hand; and a
   lever **named for a version** is the sprawl pattern migrating from the TCC database into the lever
   registry. Routing the interactive lane through the host retires the pattern, not just the instance.
+- **The measurement needs a grant of its own, and nothing said so.** Reading the TCC database is
+  gated by `kTCCServiceSystemPolicyAllFiles` (Full Disk Access) — a *different* service from the
+  `SystemPolicyAppBundles` every predicate judges. The lever's verification step read as automated
+  ("run it beneath the host"), but a hosted run returns `tcc_database_unavailable` exactly like a
+  bare one until `DomusAgentHost.app` holds FDA (verified 2026-08-05 by running both). So the honest
+  `unmeasured` verdict shipped above is currently the *only* verdict this probe can return, on this
+  machine, until an operator click lands — an ungranted human atom hiding inside a step that looked
+  like a command. Now homed as click 1 of 2 in `L-DOMUS-AGENT-HOST-TCC`.
 - **Status:** PARTIAL — the measurement is honest now, and the probe is the status. The remaining
-  distance is real and in two parts: the interactive `claude` lane still resolves through
-  `~/.local/bin/claude` → `versions/<version>/` rather than through the host, and the host holds no
-  App Management grant yet (`L-DOMUS-AGENT-HOST-TCC`, the operator's one click — **once**, not once
-  per version).
+  distance is real and in three parts: the host holds no Full Disk Access grant, so the probe cannot
+  yet return anything but `unmeasured`; the host holds no App Management grant; and the interactive
+  `claude` lane still resolves through `~/.local/bin/claude` → `versions/<version>/` rather than
+  through the host — which is what makes those two clicks a one-time act rather than one per version.
 - **Owner:** Claude (the predicate) · the operator (the single grant).
 - **Why this row exists at all.** Its status previously lived in a hand-written `discharged:` field
   in `his-hand-levers.json` carrying `"version": "2.1.222"` — a status pinned to a version, in a
