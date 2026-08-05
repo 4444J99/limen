@@ -322,3 +322,47 @@ def test_cli_daily_execute_uses_the_same_coordinator(monkeypatch):
 
     assert result.exit_code == 0
     assert json.loads(result.output) == expected
+
+
+def test_unconfigured_delivery_ledger_reports_unmeasured_not_zero(monkeypatch):
+    """An unwired ledger must not masquerade as a shortfall of work.
+
+    ``LIMEN_DELIVERY_RECEIPTS`` is optional, but when unset the canonical ledger reads
+    empty and ``confirmed`` counts zero — a measurement that was never taken. Emitting
+    a shortage there produces an exit condition no retry can satisfy, which is exactly
+    what burned 27 hours of agent quota on 2026-08-04/05.
+    """
+    monkeypatch.delenv("LIMEN_DELIVERY_RECEIPTS", raising=False)
+
+    summary = daily_execution._application_summary(
+        {"summary": {"qualified": 5, "staged": 4, "submitted": 4}},
+        run_id="daily_test",
+        delivery_rows=[],
+    )
+
+    assert summary["confirmation_measured"] is False
+    assert summary["shortage"] == 0
+    assert summary["shortage_reason"] is None
+    assert any("not configured" in blocker for blocker in summary["blockers"])
+    # The fabrication guard still fires — an engine claiming submissions it cannot
+    # evidence is always a blocker. Only the reason differs: "there was nowhere to
+    # look" must not be reported as "we looked and found none".
+    assert any("confirmation receipt" in blocker for blocker in summary["blockers"])
+    assert not any("no portal/mailbox confirmation receipt" in b for b in summary["blockers"])
+
+
+def test_configured_ledger_still_reports_a_real_shortage(monkeypatch, tmp_path):
+    """With the ledger wired, a genuine confirmation shortfall is still surfaced."""
+    ledger = tmp_path / "delivery-receipts.json"
+    ledger.write_text(json.dumps({"receipts": []}), encoding="utf-8")
+    monkeypatch.setenv("LIMEN_DELIVERY_RECEIPTS", str(ledger))
+
+    summary = daily_execution._application_summary(
+        {"summary": {"qualified": 5, "staged": 4, "submitted": 4}},
+        run_id="daily_test",
+        delivery_rows=[],
+    )
+
+    assert summary["confirmation_measured"] is True
+    assert summary["shortage"] == 3
+    assert summary["shortage_reason"] == "provider confirmation evidence is below the daily target"
