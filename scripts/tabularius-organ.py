@@ -105,6 +105,22 @@ def main(argv: list[str] | None = None) -> int:
                 + (f" at PR #{result.pr_number}" if result.pr_number else "")
             )
             return 75
+        if result.reason == "remote-keeper-preflight-required":
+            # The local publication writer this preflight used to gate is retired — the kernel
+            # (board_publication_preflight) correctly fails closed rather than reviving it, since
+            # it has no way to ask the remote conduct broker whether IT is ready. That is a
+            # "cannot answer" for a WORKFLOW-level preflight, not a "not ready": nothing this
+            # adapter could ever do makes the kernel's answer different, so treating it as a hard
+            # failure (exit 2) parked a scheduled workflow permanently red — the deferred path
+            # (exit 75) is the honest one, same as any other "not this beat" skip. The kernel
+            # itself is untouched; only this adapter's interpretation of its fixed answer changes.
+            print(
+                f"tabularius: publication preflight deferred to the remote keeper ({result.reason})"
+                " — the retired local writer no longer answers this; the workflow step is"
+                " honestly skipped, not failed",
+                file=sys.stderr,
+            )
+            return 75
         print(f"tabularius: remote keeper preflight failed ({result.reason})", file=sys.stderr)
         return 2
 
