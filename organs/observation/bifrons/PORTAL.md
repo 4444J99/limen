@@ -9,13 +9,14 @@
 
 | stars | dossiers | resonance edges | transmutation proposals |
 |---:|---:|---:|---:|
-| 419 | 101 | 0 | 0 |
+| 419 | 107 | 12 | 11 |
 
 ## Exchange lifecycle
 
 | state | count |
 |---|---:|
-| STARRED | 419 |
+| INTERNAL_PR_OPEN | 11 |
+| STARRED | 408 |
 
 ## The human gate (a valve, not a wall)
 
