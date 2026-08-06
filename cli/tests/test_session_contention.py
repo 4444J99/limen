@@ -40,10 +40,21 @@ def occupancy(monkeypatch):
     """Drive live_checkout_occupant from a synthetic process table."""
 
     def configure(cwds, *, linked=(NESTED,), lineage=(), sessions=True, ignored=()):
-        monkeypatch.setattr(liveness, "_process_cwds", lambda: dict(cwds))
+        # A cwd's value may be one pid or several. That the fixture ONCE took only a single int is
+        # why the collision below shipped: the fixture mirrored the production dict[Path, int], so
+        # no test could express two processes in one directory — the shape of the test data made
+        # the failing state unrepresentable rather than merely untested.
+        table = {path: ({v} if isinstance(v, int) else set(v)) for path, v in dict(cwds).items()}
+        monkeypatch.setattr(liveness, "_process_cwds", lambda: {p: set(v) for p, v in table.items()})
         monkeypatch.setattr(liveness, "_ancestor_pids", lambda: set(lineage))
         monkeypatch.setattr(liveness, "linked_worktree_roots", lambda root: set(linked))
-        monkeypatch.setattr(liveness, "_is_session", lambda pid: sessions)
+
+        # `sessions` is a blanket bool or the explicit set of pids that are sessions — needed once
+        # a directory can hold both a service and a session.
+        def is_session(pid):
+            return sessions if isinstance(sessions, bool) else pid in set(sessions)
+
+        monkeypatch.setattr(liveness, "_is_session", is_session)
         monkeypatch.setattr(liveness, "_is_ignored", lambda root, cwd: cwd in set(ignored))
         # NB: no patch of Path.resolve. The synthetic paths are already absolute and
         # `resolve(strict=False)` does not require existence, so the real method is correct here —
@@ -95,6 +106,56 @@ def test_an_unavailable_probe_fails_OPEN(occupancy):
 def test_a_process_outside_the_checkout_is_irrelevant(occupancy):
     occupancy({Path("/elsewhere"): 4242})
     assert liveness.live_checkout_occupant(ROOT) is None
+
+
+# ── one directory, several processes ──────────────────────────────────────────────
+#
+# The guard shipped inert and every test above still passed. `sync-release.sh` does `cd "$ROOT"`
+# before it probes, so the probe stands in the directory it is asking about; the process table
+# kept ONE pid per directory, the probe's own pid won the slot, and the very next line excluded it
+# as the caller's lineage. Free. Found by running sync-release.sh against a live occupant — it
+# unparked HEAD and pushed — never by reading the code, and never by CI.
+#
+# Each case below is a filter that can reject the pid the dict happened to keep.
+
+
+def test_the_caller_sharing_the_occupants_cwd_does_not_mask_it(occupancy):
+    """THE regression. Caller and session in the same directory: the lineage filter must reject
+    only the caller, not the whole directory."""
+    occupancy({ROOT: (4242, 99441)}, lineage=(99441,))
+    assert liveness.live_checkout_occupant(ROOT) == 4242
+
+
+def test_a_service_sharing_the_cwd_does_not_mask_a_session(occupancy):
+    """The session-ness filter is per-process too — stopping at the first pid finds the MCP
+    server sitting in the same directory and calls the checkout free."""
+    occupancy({ROOT: (100, 4242)}, sessions=(4242,))
+    assert liveness.live_checkout_occupant(ROOT) == 4242
+
+
+def test_a_shared_cwd_does_not_mask_a_foreign_worktree_occupant(occupancy):
+    """The sibling consumer filters by lineage as well, so it loses the same way — and its caller
+    registers from INSIDE the worktree it probes, which is precisely the colliding case."""
+    occupancy({NESTED: (4242, 99441)}, lineage=(99441,))
+    assert liveness.foreign_worktree_occupant(NESTED) == 4242
+
+
+def test_several_foreign_sessions_at_one_cwd_resolve_deterministically(occupancy):
+    """Which one is reported is arbitrary; that it is STABLE is not — the receipt's onset dedup
+    keys on (root, pid), so a pid that flapped per beat would manufacture an incident each beat."""
+    occupancy({ROOT: (4243, 4242)})
+    assert liveness.live_checkout_occupant(ROOT) == 4242
+    assert liveness.live_checkout_occupant(ROOT) == 4242
+
+
+def test_the_process_table_maps_a_directory_to_every_pid(occupancy):
+    """The contract itself, asserted against the REAL enumerator: values are sets of pids. A
+    revert to one-pid-per-directory reinstates the defect silently, and every filtering test above
+    would keep passing on its own synthetic table."""
+    observed = liveness._process_cwds()
+    assert observed, "the probe observed no process at all — it cannot be exercised here"
+    assert all(isinstance(pids, set) for pids in observed.values())
+    assert all(isinstance(pid, int) for pids in observed.values() for pid in pids)
 
 
 # ── the receipt ───────────────────────────────────────────────────────────────────
