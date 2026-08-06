@@ -65,7 +65,22 @@ Checks (exit 0 iff all pass):
      queue mode uses ``merge_group``, and neither the shared nor tool-specific protocol permits an
      admin bypass of the serialization rail.
 
+  Q. The closure covenant is lane-neutral: AGENTS.md ``## Full Lifecycle Closure`` binds every
+     lane (CLI, desktop, IDE, fleet, MCP) to the predicate-backed fixed point
+     (``no-tasks-on-me.sh`` + ``credential-wall.py --check``), the terminal statement, and the
+     rule that menus/caveat-tails/transcript-parked items are not closure forms. (2026-08-06:
+     three consecutive insights runs found the same defect in different lanes — the rule lived
+     only in CLAUDE.md, the one file the other lanes never read.)
+
+  R. Session-discipline rules 6/7 stay encoded in the AGENTS.md shared layer: read the
+     predicate's own exit code, never a pipeline's (rule 6), and one command per judged
+     invocation on hook-judged rails, with the scripts-chain-freely carve-out (rule 7).
+
 Run directly (``scripts/check-agent-docs.py``) or via ``scripts/verify-whole.sh``.
+
+Checks that read the domus-genoma templates run only when that repo is NESTED at
+``./domus-genoma``; in the sibling-clone layout they are SKIPPED, and main() announces the
+skip loudly instead of silently passing (the 8 dead-check incident, 2026-08-06).
 """
 
 from __future__ import annotations
@@ -275,8 +290,12 @@ def peer_conductor_errors(documents: dict[str, str]) -> list[str]:
 
     adapters = {
         name: documents.get(name, "")
-        for name in ("CLAUDE.md", "GEMINI.md", ".agents/skills/agy_conductor/SKILL.md",
-                     "integrations/copilot/limen-conductor.agent.md")
+        for name in (
+            "CLAUDE.md",
+            "GEMINI.md",
+            ".agents/skills/agy_conductor/SKILL.md",
+            "integrations/copilot/limen-conductor.agent.md",
+        )
     }
     for name, text in adapters.items():
         if not text:
@@ -452,6 +471,17 @@ def main() -> int:
             if not (ROOT / path).exists():
                 errors.append(f"{doc.relative_to(ROOT)} references missing path: {path}")
 
+    # Template checks require the domus-genoma clone NESTED at ./domus-genoma. In the
+    # sibling-clone layout every one of these silently never ran (8 dead checks,
+    # 2026-08-06) — a skipped check must announce itself so absence of findings is
+    # never mistaken for a green.
+    skipped_templates = [t for t in TEMPLATE_DOCS if not t.exists()]
+    if skipped_templates:
+        print(
+            f"NOTE: {len(skipped_templates)} domus-genoma template check(s) SKIPPED — "
+            "no nested clone at ./domus-genoma (sibling-clone layout); these run only "
+            "when the clone is nested"
+        )
     for template in TEMPLATE_DOCS:
         if not template.exists():
             continue
@@ -494,6 +524,11 @@ def main() -> int:
         errors.append(str(exc))
 
     home_agents_tmpl = ROOT / "domus-genoma" / "dot_config" / "ai-context" / "AGENTS.md.tmpl"
+    if not home_agents_tmpl.exists():
+        print(
+            "NOTE: home-scope Layer-1 AGENTS.md.tmpl deferral check SKIPPED — "
+            "no nested domus-genoma clone (sibling-clone layout)"
+        )
     if home_agents_tmpl.exists():
         tmpl_text = home_agents_tmpl.read_text(encoding="utf-8")
         for phrase, label in [
@@ -580,6 +615,39 @@ def main() -> int:
                 errors.append(f"CLAUDE.md 'Merge & Branch Protocol' lacks the concurrent-integration {label}")
         if "moving `main` is integrated by the repository merge" not in standard_text:
             errors.append("agent instruction standard lacks the concurrent-integration rule")
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    # Q. 2026-08-06 universal-covenant correction: the closure covenant binds every lane, so it
+    # lives in AGENTS.md ## Full Lifecycle Closure — phrase-bound here so a doc edit cannot
+    # quietly demote it back to a single lane's charter.
+    try:
+        closure_section = section(agents_text, "Full Lifecycle Closure")
+        for phrase, label in [
+            ("Closure is a covenant", "lane-neutral covenant framing ('Closure is a covenant, not one lane's ritual')"),
+            ("scripts/no-tasks-on-me.sh", "nothing-hangs predicate citation"),
+            ("scripts/credential-wall.py", "credential-wall predicate citation"),
+            (terminal, f"closure terminal statement ('{terminal}')"),
+            ("are not closure forms", "non-closure-forms rule (menus, caveat tails, transcript-parked items)"),
+        ]:
+            if phrase not in closure_section:
+                errors.append(f"AGENTS.md 'Full Lifecycle Closure' lacks the {label}")
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    # R. Session-discipline rules 6/7 (2026-08-06 covenant additions): pipeline exit-code honesty
+    # and one-command-per-judged-invocation, including the scripts-chain-freely carve-out that
+    # keeps the rule from being misread as a ban on composition inside committed scripts.
+    try:
+        discipline_section = section(agents_text, "Session Discipline")
+        for phrase, label in [
+            ("Read the predicate's own exit code", "rule-6 pipeline-exit-code rule"),
+            ("PIPESTATUS", "rule-6 PIPESTATUS mechanism"),
+            ("One command per judged invocation", "rule-7 one-command-per-judged-invocation rule"),
+            ("Shell **scripts** chain freely", "rule-7 scripts-chain-freely carve-out"),
+        ]:
+            if phrase not in discipline_section:
+                errors.append(f"AGENTS.md 'Session Discipline' lacks the {label}")
     except ValueError as exc:
         errors.append(str(exc))
 

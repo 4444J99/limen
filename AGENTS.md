@@ -129,7 +129,7 @@ be derived from existing doctrine.
 
 ## Session Discipline
 
-Cross-agent disciplines enforced by `scripts/check-agent-docs.py` (checks M and N). Each is
+Cross-agent disciplines enforced by `scripts/check-agent-docs.py` (checks M, N, Q, R). Each is
 stated once here — the canonical shared layer. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`)
 extend or cite these; they must not contradict them.
 
@@ -182,6 +182,20 @@ the live queue rail is proven active; without that proof it remains fail-closed.
 and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
 `pull_request` rule makes that boundary remote-enforced. The full executable contract is
 [`docs/architecture/concurrent-integration.md`](docs/architecture/concurrent-integration.md).
+
+**6. Read the predicate's own exit code — never a pipeline's.**
+`predicate | tail` reports the filter's exit status, not the predicate's, so a gate that printed
+FAIL reads as green (observed 2026-08-05: a closeout reported `EXIT=0` from a run that had truly
+exited 1). Run each gate bare and read its own exit code; when output must be filtered, capture to
+a file and filter the copy, or read `PIPESTATUS`. The defect enters through ad-hoc verification
+shell, where a false green has no second reader — committed runners already get this right, so the
+rule binds the shell you improvise, in every lane.
+
+**7. One command per judged invocation on hook-judged rails.**
+Where a policy hook judges shell commands, compose nothing on the judged rail: one bare command
+per invocation. A `&&`/`;`/pipe chain forces the judge to guess about the whole composition, and a
+chain also short-circuits — hiding which member failed. Shell **scripts** chain freely inside
+their own bodies; the rule binds the top-level judged invocation, not script internals.
 
 ### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
 
@@ -402,6 +416,15 @@ or was pushed to a remote branch. Once a clean, inactive exact HEAD is pushed, r
 local checkout; the branch, PR, plan, task, or blocker remains the durable lifecycle owner. If a
 worktree produced no usable code, emit and push the plan/owner task that captures the prompt's intent
 before reaping it.
+
+Closure is a covenant, not one lane's ritual: every lane — native CLI, desktop app, IDE extension,
+dispatched fleet, MCP client — ends a claimed task at an idempotent fixed point with zero dangling
+items, then stops. The shipped predicates are `scripts/no-tasks-on-me.sh` (nothing hangs on the
+ephemeral session) and `scripts/credential-wall.py` `--check` (every secret in use is homed); both
+green is the closure bar for any lane that can run them, and the terminal statement —
+"CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items" — ends the closeout: nothing
+follows it. Option menus, caveat tails, "here's what's still open" lists, and items parked only in
+the transcript are not closure forms; they are the failure this covenant exists to prevent.
 
 ## Continuation Capsules
 

@@ -100,6 +100,8 @@ read the durable state (paths relative to `$LIMEN_ROOT`, default `~/Workspace/li
 2. Read the state above. Find the next honest step that moves a pillar forward.
 3. Obey the invariants. If the step is irreducibly his, surface it and pick another.
 4. Do the work. Leave the body greener than you found it. Write down what changed.
+   End at the closure covenant's fixed point (`AGENTS.md` → Full Lifecycle Closure):
+   receipts filed with their owners — never a caveat tail.
 5. The next beat may be a different model. Leave the trail it needs to continue.
 
 <!-- EVOCATOR:canon START — auto-generated from spec/evocator/canon.yaml; do not edit by hand -->
