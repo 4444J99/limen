@@ -201,10 +201,18 @@ def select(registry: dict, changed: list[str]) -> tuple[list[str], list[tuple[st
     return selected, skipped
 
 
+def trigger_globs(trigger: dict) -> list[str]:
+    """A deploy-trigger path is a bare glob, or a {path, note} mapping when it sits OUTSIDE
+    the trigger's build_source and therefore has to justify itself (check-gates J). Both forms
+    mean the same glob to every consumer — the note is review material, not matching material.
+    Same idiom as file_sets.exclude."""
+    return [p.get("path") if isinstance(p, dict) else p for p in trigger.get("paths") or []]
+
+
 def deploy_hits(registry: dict, changed: list[str]) -> list[str]:
     hits = []
     for trigger in (registry.get("deploy_triggers") or {}).values():
-        for g in trigger.get("paths") or []:
+        for g in trigger_globs(trigger):
             regex = glob_to_regex(g)
             hits.extend(p for p in changed if regex.match(p))
     return sorted(set(hits))
@@ -224,7 +232,7 @@ def expand_file_set(registry: dict, name: str) -> list[str]:
 def deploy_regex(registry: dict) -> str:
     parts = []
     for trigger in (registry.get("deploy_triggers") or {}).values():
-        for g in trigger.get("paths") or []:
+        for g in trigger_globs(trigger):
             parts.append(glob_to_regex(g).pattern)
     return "(" + "|".join(parts) + ")" if parts else ""
 
