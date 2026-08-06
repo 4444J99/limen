@@ -162306,3 +162306,36 @@ tasks:
     conduct_lease_id: 'lease-547-3d95486df0ec62fd'
     conduct_generation: 547
   updated: '2026-08-06T19:22:52.137Z'
+- id: 'GH-organvm-limen-1884'
+  title: 'flaky: test_autonomous_jules_workstream_uses_remote_cloud_transport fails ~50% under full-suite xdist'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1884'
+  context: 'GitHub issue organvm/limen#1884. Observed 2026-08-06 across three branches (incl. one carrying no local changes): `cli/tests/test_workstream_command.py::test_autonomous_jules_workstream_uses_remote_cloud_transport` fails under `run-pytest-hermetic.sh cli/tests -q -n auto` with varying messages (''durable session receipt'' missing; ''unbound Jules launch reservation requires recovery'') yet passes every time in isolation and sometimes'
+  predicate: 'test "$(gh issue view 1884 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1884'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1884'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:01.057Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-5c69959651e51d70b0a4bf255d671a8c:548:compatibility'
+    conduct_run_id: 'run-5c69959651e51d70b0a4bf255d671a8c'
+    conduct_lease_id: 'lease-548-5c69959651e51d70'
+    conduct_generation: 548
+  updated: '2026-08-06T19:23:01.057Z'
