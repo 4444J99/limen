@@ -82,6 +82,10 @@
           {
             "type": "command",
             "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/pytest-scope-guard.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/pytest-scope-guard.sh\" || true"
+          },
+          {
+            "type": "command",
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/no-hand-poll-guard.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/no-hand-poll-guard.sh\" || true"
           }
         ]
       }

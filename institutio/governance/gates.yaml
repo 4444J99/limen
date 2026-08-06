@@ -356,6 +356,12 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Live-main commit deny matrix (hermetic fixture); transcribed when the hook landed on main in parallel with PR1."
+  no-hand-poll-guard-test:
+    command: "bash scripts/tests/no-hand-poll-guard.test.sh"
+    paths: ["scripts/hooks/no-hand-poll-guard.sh", "scripts/tests/no-hand-poll-guard.test.sh"]
+    scoped: false
+    owner: lifecycle
+    note: "Hand-rolled PR poll-loop deny matrix (G6, 2026-08-06): the charter's `for … gh pr … sleep … done` ban made mechanical — deny requires loop+gh-probe+sleep co-occurring in ONE command string; the sanctioned waiter, bounded retries, build sleeps, and multi-PR iteration all pass (the negative cases are the deliverable). Wired into .claude/settings.json AND .codex/hooks.json — covenant, not Claude rule. Escape hatch LIMEN_ALLOW_PR_POLL."
   outbound-preflight-test:
     command: "bash scripts/tests/outbound-preflight-guard.test.sh && bash scripts/tests/preflight-thread-state.test.sh"
     paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]

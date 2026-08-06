@@ -2556,6 +2556,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Break-glass for scripts/hooks/worktree-commit-guard.sh: 1 disables the PreToolUse deny of git commit in the live checkout on main. Mirrors the LIMEN_ALLOW_OPUS_FANOUT escape-hatch precedent; leave 0 — the deny is the charter's no-direct-main-commit rule made mechanical."
+  LIMEN_ALLOW_PR_POLL:
+    default: "0"
+    env: LIMEN_ALLOW_PR_POLL
+    self_update: none
+    owner: limen-daemon
+    note: "Break-glass for scripts/hooks/no-hand-poll-guard.sh: 1 disables the PreToolUse deny of hand-rolled PR/CI poll loops (loop + gh state probe + sleep in one command). Mirrors LIMEN_ALLOW_LIVE_COMMIT; leave 0 — the deny is the charter's sanctioned-waiter rule (scripts/await-pr.sh; 2026-07-15 endless-watcher incident) made mechanical, for every lane whose hooks run the guard."
   LIMEN_OUTBOUND_REGISTRY:
     default: "institutio/governance/outbound-effectors.yaml"
     env: LIMEN_OUTBOUND_REGISTRY
