@@ -4,19 +4,25 @@
   com.limen.claude-stub-heal — INSTANT effector for the recurring macOS Gatekeeper
   "ClaudeCode.app is damaged and can't be opened. You should move it to the Trash." dialog.
 
-  ROOT: Claude Code's updater periodically re-drops a malformed, Gatekeeper-rejected stub at
-  ~/.local/share/claude/ClaudeCode.app (bundle seal: "code has no resources but signature
-  indicates they must be present"). The every-8-beats hygiene sensor (dialogs-silenced 0g8b)
-  cures it, but the updater re-drops it FASTER than that cadence — observed live 2026-07-18,
-  the dialog reappeared within minutes of a one-time heal. This WatchPaths agent closes that
-  window: it runs heal-claude-lsregister.sh in apply mode the INSTANT the stub lands, so Gatekeeper
-  (and the human) never see the dialog.
+  ROOT — corrected 2026-08-05. This agent was built on the premise that "the updater periodically
+  re-drops a malformed stub" and that reaping it converges. Both halves were false. The LIVE binary
+  materializes ~/.local/share/claude/ClaudeCode.app on EVERY start (the vendor's own _jb()), and the
+  bundle is Gatekeeper-invalid BY CONSTRUCTION — a bare-Mach-O signature seals no resources, so
+  strict bundle-form codesign can never pass. Reaping it therefore guaranteed the next recreate AND
+  destroyed the stable TCC identity sensor 0g8d exists to keep.
 
-  Apply mode self-arms the heal (scripts/heal-claude-lsregister.sh:48), so this cures with NO
-  ~/.limen.env change required. Idempotent + self-settling: the heal removes the stub, which
-  re-fires WatchPaths once, finds nothing malformed, exits clean, and quiesces. Darwin-only;
-  the script fails OPEN off-darwin. Registered as load-bearing in spec/critical-launch-agents.json
-  so the liveness organ restores it if a launchd quiesce ever disables it.
+  It also could never win the race it was named for. `lsregister -dump` alone takes ~2.85s and this
+  agent carries ThrottleInterval 10, against a three-syscall vendor write — a >=12.85s exposure
+  window on every start. "Instant" was never achievable by tuning.
+
+  So the effector now UNREGISTERS instead of removing, and the race stops being load-bearing: losing
+  it means "briefly registered", not "identity destroyed". Reaching the fixed point sooner is nice;
+  it is no longer the difference between working and not. Ideal form: IF-GATEKEEPER-INERT.
+
+  Apply mode self-arms the heal, so this cures with NO ~/.limen.env change required. Idempotent +
+  self-settling: unregistration re-fires WatchPaths once, finds nothing registered, exits inert, and
+  quiesces. Darwin-only; the script fails OPEN off-darwin. Registered as load-bearing in
+  spec/critical-launch-agents.json so the liveness organ restores it if a quiesce ever disables it.
 -->
 <plist version="1.0">
 <dict>
