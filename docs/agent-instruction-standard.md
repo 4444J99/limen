@@ -71,6 +71,14 @@ back to `AGENTS.md` instead.
     queue and its synthetic `merge_group`, not by repeatedly rewriting every branch and rerunning
     successful head CI. Direct `main` writers yield to active integration. The executable contract
     is `AGENTS.md` → Session Discipline rule 5 plus `docs/architecture/concurrent-integration.md`.
+14. Instruction surfaces are byte-budgeted. The weakest consumer's default cap is the budget
+    (codex truncates project docs at 32,768 bytes SILENTLY — the 2026-08-06 incident dropped
+    every AGENTS.md section past ~line 499, including codex's own Agent-Specific Note); the
+    declared registry is `institutio/governance/gates.yaml` → `instruction_surfaces`, and
+    `scripts/check-agent-docs.py` check S enforces it as a shrink-only ratchet with a named
+    debt line while any surface exceeds the budget. Doctrine that outgrows the budget relocates
+    to a Tier-1 home (`docs/architecture/`) behind a pointer stub — the budget law lives HERE,
+    in the uncapped standard, never inside the capped file it governs.
 
 ## Home-scope generated surfaces
 
