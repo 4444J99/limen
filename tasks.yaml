@@ -162639,3 +162639,36 @@ tasks:
     conduct_lease_id: 'lease-557-d7869f8a33acf4f5'
     conduct_generation: 557
   updated: '2026-08-06T19:23:53.442Z'
+- id: 'GH-organvm-limen-1818'
+  title: 'Campaign: disposition 1,343 stale branches (942 fleet-gate + 451 live-work) loss-free'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1818'
+  context: 'GitHub issue organvm/limen#1818. ## Scope Execute the recorded branch-disposition debt end-to-end, loss-free, in bounded shards with receipts. - **942 remote `heal/fleet-gate-*`** — 2026-07-03 heal-loop `undeclared-params-baseline.txt` snapshots. Ledger: `docs/fleet-gate-branch-debt.{json,txt}`. Rule: fold delta into `parameters.yaml` via `scripts/check-params.py --update`, or record abandoned, then reap remote ref. - **451 local'
+  predicate: 'test "$(gh issue view 1818 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1818'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1818'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:59.254Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6162c2b4856eaaa772809e20d5f78c45:558:compatibility'
+    conduct_run_id: 'run-6162c2b4856eaaa772809e20d5f78c45'
+    conduct_lease_id: 'lease-558-6162c2b4856eaaa7'
+    conduct_generation: 558
+  updated: '2026-08-06T19:23:59.254Z'
