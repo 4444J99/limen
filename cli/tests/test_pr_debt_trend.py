@@ -300,8 +300,12 @@ def test_the_real_ledger_writes_no_distance_by_hand_on_any_probed_row(tmp_path):
 
 # ---------------------------------------------------------------------------
 # The recorder's change basis and its two clocks. Every test below fails against
-# the first cut (#1854); PR #1859 is what that failure looked like in production —
-# a 2,461-line diff recording 1293 -> 1293, opened fourteen minutes after #1857.
+# the first cut (#1854). PR #1859 is what the CLOCK half looked like in production:
+# a second census fourteen minutes after #1857, under a twenty-hour interval.
+# It is NOT evidence for the change-basis half — #1858 opened between those two
+# censuses, so the PR set really had moved and 1293 held by coincidence. The
+# change-basis defect is proven instead by advancing only the clock fields of the
+# real ledger, which is what test_only_the_clock_moving_is_not_an_observation does.
 # ---------------------------------------------------------------------------
 
 
@@ -364,6 +368,47 @@ def test_a_recent_observation_blocks_a_checkout_that_has_never_swept(mod, repo, 
     out = capsys.readouterr().out
     assert "not due" in out, "a fresh checkout must still see the clock every checkout shares"
     assert "an observation was recorded" in out
+
+
+def test_the_digest_is_stable_on_the_REAL_ledger_not_just_a_fixture(mod):
+    """The synthetic fixture above proves the idea; this proves it against the shipped artifact.
+
+    A hand-built census carries exactly the volatile fields its author already knew about, so it
+    cannot fail the way the real thing does — which is precisely how the original defect survived
+    review. This walks the committed ledger (~1,300 records, every field gitvs actually emits),
+    advances ONLY the clock, and requires the digest to hold.
+    """
+    raw = (ROOT / LEDGER_REL).read_text(encoding="utf-8")
+    data = json.loads(raw)
+    assert len(data["pull_requests"]) > 100, "the real ledger, not a stub"
+
+    def advance_clock(node):
+        if isinstance(node, dict):
+            out = {}
+            for k, v in node.items():
+                if k in ("generated_at", "disposition_observed_at"):
+                    out[k] = "2099-01-01T00:00:00.000000Z"
+                elif k == "age_hours":
+                    out[k] = (v + 999.0) if isinstance(v, (int, float)) else v
+                elif k == "content_sha256":
+                    out[k] = "deadbeef" * 8
+                else:
+                    out[k] = advance_clock(v)
+            return out
+        if isinstance(node, list):
+            return [advance_clock(v) for v in node]
+        return node
+
+    later = json.dumps(advance_clock(data))
+    assert raw != later, "the bytes must differ, or this test proves nothing"
+    assert data["content_sha256"] != json.loads(later)["content_sha256"], (
+        "the ledger's own hash moves on a clock-only change — the defect, pinned against real data"
+    )
+    assert mod._stable_digest(raw) == mod._stable_digest(later), "only time passed; nothing ships"
+
+    moved = json.loads(raw)
+    moved["open_pr_count"] -= 1
+    assert mod._stable_digest(raw) != mod._stable_digest(json.dumps(moved)), "one PR left; that ships"
 
 
 def test_a_stale_shared_clock_does_not_block_a_checkout_that_has_never_swept(mod, repo, capsys):
