@@ -162774,3 +162774,36 @@ tasks:
     conduct_lease_id: 'lease-561-cd0f259e3977ee22'
     conduct_generation: 561
   updated: '2026-08-06T19:24:17.106Z'
+- id: 'GH-organvm-limen-1780'
+  title: 'publication-policy has no partner-disclosure axis: third-party engagement content classifies public_safe -> PUBLISH'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1780'
+  context: 'GitHub issue organvm/limen#1780. ## Condition `scripts/publication-policy.py` — the ONE disposition engine, which 13 scripts derive from — has content signals for **secrets**, **internal strategy**, **product content**, and **owner PII**. It has no signal for *someone else''s engagement*. Consequence, reproducible: ``` $ python3 scripts/publication-policy.py classify docs/jules-supply-templates.yaml --visibility PUBLIC "class": "p'
+  predicate: 'test "$(gh issue view 1780 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1780'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1780'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:22.864Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-b3c704005a073ed585dbc3038eadc7da:562:compatibility'
+    conduct_run_id: 'run-b3c704005a073ed585dbc3038eadc7da'
+    conduct_lease_id: 'lease-562-b3c704005a073ed5'
+    conduct_generation: 562
+  updated: '2026-08-06T19:24:22.864Z'
