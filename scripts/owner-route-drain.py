@@ -21,17 +21,24 @@ Posture:
 
 Enumeration is live via gh search (author app/google-labs-jules plus "[limen jules" titles);
 the privacy-redacted PR-debt ledger under docs/ is the scoreboard, never the worklist.
-
-NB: that ledger's filename is deliberately not spelled out above. check-ledger-custody.py's
-B-check asserts that only declared roles NAME the path anywhere in a production source file,
-and it matches the raw substring over the whole file — docstrings included. So a sentence
-saying this organ does not use the ledger reads to the gate exactly like code that writes it,
-and naming it here turned main red the moment #1881 landed beside #1880. Declaring this file
-a `reader` would have been the other way out and it would have been false: nothing here opens
-that document. Same prose-false-positive this estate already dodges in check-session-contention.py
-(which keeps `git` and `push` off one line for direct-main-writer-audit.py) — see issue #1905
-for teaching the B-check to skip comments and docstrings, which is the real fix.
 """
+
+# NB: the PR-debt ledger's filename is deliberately not spelled out in the docstring above, and
+# this note lives in comments rather than in that docstring. Both are gate-shaped, and the pair
+# is a small lesson in how two audits in this estate read source.
+#
+# check-ledger-custody.py's B-check asserts that only declared roles NAME the ledger path in a
+# production source file, matching the raw substring over the whole file — docstrings included.
+# So a sentence stating this organ does NOT use the ledger reads to that gate exactly like code
+# that writes it, and naming it turned main red the moment #1881 landed beside #1880. Declaring
+# this file a `reader` was the other way out and it would have been false: nothing here opens
+# that document; receipts go to logs/owner-route-drain.jsonl.
+#
+# direct-main-writer-audit.py then draws the line one step further in: it skips lines starting
+# with `#` but NOT docstring lines, so an explanation of the first gate, written as prose, trips
+# the second — which is exactly what happened to the first cut of this note. Hence a comment.
+#
+# Issue #1905 carries the real fix for the class: teach a gate to read code, not text.
 
 from __future__ import annotations
 
