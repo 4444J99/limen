@@ -28,6 +28,12 @@ parameters:
     self_update: none
     owner: vigilia
     note: "When 1 (default), autonomy-governor.current_mode() auto-clears an AUTONOMY_PAUSED 'integration drain' marker once its owner: branch has a MERGED PR (fail-closed via gh). Prevents the 2026-07-10 21h respawn-spin freeze (owner codex/dynamic-routing-closeout-20260710, PR #921 merged, marker never cleaned up). 0 = never auto-clear (a marker outlives its owner PR)."
+  LIMEN_AUTONOMY_WINDOW_RESTORE:
+    default: "1"
+    env: LIMEN_AUTONOMY_WINDOW_RESTORE
+    self_update: none
+    owner: vigilia
+    note: "Auto-restore switch for finite maintenance windows: when a window's declared resume predicate passes (recorded at logs/autonomy-maintenance-resume.json), the governor flips the policy observe->dispatch with a receipt (logs/autonomy-policy-restore.json) instead of waiting on a manual policy edit. 0 restores the old manual-restore contract. Founded on the 2026-07-21->08-06 incident: all resume clauses passing since 08-05 while the estate sat at observe with zero dispatch — satisfying the predicate cleared the blocker but nothing rewrote mode. Indefinite observe (no window), `restore: manual` windows, and the pause marker are never overridden."
   LIMEN_AUTONOMY_CLAUSE_RECHECK_SECS:
     default: 300
     env: LIMEN_AUTONOMY_CLAUSE_RECHECK_SECS
