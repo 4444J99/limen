@@ -2671,6 +2671,24 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Daily Jules task target override. Unset derives from capacity.DEFAULT_DAILY_TASK_TARGETS (vendor quota 100/day; operator mandate is full daily consumption)."
+  LIMEN_JULES_FLYWHEEL:
+    default: "1"
+    env: LIMEN_JULES_FLYWHEEL
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the jules-flywheel sensor: THE acceptance predicate of the jules-flywheel program (issue #1874) — exit 0 ⟺ quota consumed AND landing rate holds AND jules PR debt non-increasing; exit 1 names the failing clause and its owning effector."
+  LIMEN_FLYWHEEL_LAND_FLOOR:
+    default: 0.30
+    env: LIMEN_FLYWHEEL_LAND_FLOOR
+    self_update: none
+    owner: arms-agents
+    note: "Landed/dispatched floor the flywheel's landing clause demands over the throughput window — mirrors LIMEN_THROUGHPUT_FLOOR_RATE, and the clause is skipped below the governor's bootstrap_min so the flywheel never alarms on the ramp the governor deliberately allows."
+  LIMEN_JULES_PR_DEBT_SNAPSHOT:
+    default: ""
+    env: LIMEN_JULES_PR_DEBT_SNAPSHOT
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the flywheel's jules open-PR-count snapshot (default logs/jules-pr-debt-snapshot.json at LIMEN_ROOT) — the non-increasing-debt clause compares against it."
   LIMEN_JULES_ADOPTIONS:
     default: ""
     env: LIMEN_JULES_ADOPTIONS
@@ -2731,6 +2749,24 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Throttled-mode multiplier: cap = max(bootstrap, ramp_mult x landed_in_window), capped at the daily target — landing more work opens more dispatch."
+  LIMEN_OWNER_ROUTE_DRAIN_APPLY:
+    default: "0"
+    env: LIMEN_OWNER_ROUTE_DRAIN_APPLY
+    self_update: none
+    owner: arms-agents
+    note: "Armed valve for owner-route-drain mutations (merge/supersede/close). Default 0: classification + receipts only, until a dry-run day's verdict distribution has been reviewed. A pause marker forces classification-only even when armed."
+  LIMEN_JULES_PR_AUTHOR:
+    default: "app/google-labs-jules"
+    env: LIMEN_JULES_PR_AUTHOR
+    self_update: none
+    owner: arms-agents
+    note: "GitHub author identity of vendor-authored jules PRs, used by owner-route-drain's cohort enumeration."
+  LIMEN_JULES_FLYWHEEL_TIMEOUT:
+    default: 120
+    env: LIMEN_JULES_FLYWHEEL_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Timeout for one jules-flywheel predicate run (board load + one gh search + snapshot write)."
   LIMEN_FUNNEL_INTEGRITY:
     default: "1"
     env: LIMEN_FUNNEL_INTEGRITY
