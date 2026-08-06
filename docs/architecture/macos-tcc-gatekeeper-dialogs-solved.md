@@ -126,6 +126,43 @@ fixed" — see the SCOPE note in `scripts/claude-identity-bundle.py`.
 
 ---
 
+## OPEN QUESTION — did the deleting effector manufacture the TCC leaks a second lever cleans up?
+
+**Status: UNVERIFIED. Recorded here so it is checkable, not so it can be cited as a cause.**
+
+Two levers point at one file from opposite directions. `L-TCC-VERSIONED-CLIENT-LEAK-2-1-222` asks
+the operator to remove two grants that attached to the *rotating* client
+`~/.local/share/claude/versions/2.1.222` on **2026-08-05** (AppleEvents 16:22Z, RemovableVolumes
+17:07Z) and re-land them on the fixed Domus Agent Host. On that same day, the pre-#1848 effector was
+deleting `ClaudeCode.app` on a WatchPaths trigger — and that bundle's own header stated plainly that
+removing it *"drops the mic/apple-events TCC identity it lent the CLI."*
+
+The hypothesis: **with the stable identity deleted out from under a live prompt, consent had nowhere
+to land but the versioned binary** — so the effector was generating the leak the other lever exists
+to clean up, and re-landing the grant would leak again on the next start.
+
+**Why it is not asserted.** The evidence that would settle it is a timestamp correlation, and
+`logs/claude-stub-heal.log` carried **no timestamps** before #1848 — every line in the window reads
+`unregistered + removed` with no time attached. So the correlation is unavailable *for the period
+that matters*, and a plausible mechanism is not evidence. That is the exact error this file's method
+note records three times over; writing it up as a finding would have been the fourth.
+
+**The check, now that it is possible.** #1848 added `date -u` stamps to every effector line, so:
+
+1. `grep 'left in place' logs/claude-stub-heal.log` — the effector's cure times, UTC.
+2. `python3 scripts/tcc-identity-audit.py --json` — when a grant attached, and to which client path.
+3. If a *new* versioned-client grant ever appears with no adjacent removal, the hypothesis is dead.
+   If none appears again at all, that is consistent but not proof — the vendor also stopped being
+   deleted from under itself, which changes several things at once.
+
+**The prediction that makes it falsifiable:** under the inverted effector the bundle is never
+removed, so the stable identity persists across a prompt, so a grant re-landed on the Domus Agent
+Host per `L-TCC-VERSIONED-CLIENT-LEAK-2-1-222` should **stay** there. If a fresh versioned-client
+grant appears after the operator pulls that lever, this hypothesis is wrong and the leak has another
+cause. Record the outcome here either way.
+
+---
+
 ## Method note — the failure this file exists to stop
 
 This lineage has now made the **same** error three times: *a mechanism named from reading vendor
