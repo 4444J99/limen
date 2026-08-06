@@ -1511,7 +1511,8 @@
         "chezmoi add ~/.claude/hooks/allow-trusted-cd-git.sh",
         "chezmoi diff; chezmoi apply && ~/.claude/hooks/guard-liveness-check.sh && git push origin master"
       ],
-      "note": "Candidate template: /tmp/settings.json.tmpl.candidate-611a4757 (render-validated: chezmoi execute-template + jq green; 504->416 lines). If /tmp was cleared, regenerate deterministically: python3 /tmp/tmpl-candidate-611a4757.py against the committed tmpl, or re-derive from memory project-inline-settings-guards-dead.md (records the full fix pattern). After apply, guard-liveness-check.sh must print ALL PASS and the next session's gh-pr-comment probe should inject preflight context. Residual nuance: liturgy line 51 still says the hook blocks all *.plist; the dispatcher denies only LaunchAgents/LaunchDaemons paths and advises on other .plist (that line edit was itself classifier-gated)."
+      "note": "Candidate template: /tmp/settings.json.tmpl.candidate-611a4757 (render-validated: chezmoi execute-template + jq green; 504->416 lines). If /tmp was cleared, regenerate deterministically: python3 /tmp/tmpl-candidate-611a4757.py against the committed tmpl, or re-derive from memory project-inline-settings-guards-dead.md (records the full fix pattern). After apply, guard-liveness-check.sh must print ALL PASS and the next session's gh-pr-comment probe should inject preflight context. Residual nuance: liturgy line 51 still says the hook blocks all *.plist; the dispatcher denies only LaunchAgents/LaunchDaemons paths and advises on other .plist (that line edit was itself classifier-gated).",
+      "issue": 1897
     }
   ]
 }
