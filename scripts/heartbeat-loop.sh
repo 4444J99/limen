@@ -228,6 +228,19 @@ due_voice() {
   expected=$(( cadence * MAX ))
   [ $(( now - last )) -ge "$expected" ]
 }
+# METABOLIZE PASS THROTTLE — wall-clock, not beats: the adaptive tempo swings 120s..1800s, so a
+# beat-modulo cadence would run the metabolize sensor pass anywhere from 48x to 3x its intent.
+# One pass per LIMEN_METABOLIZE_SENSORS_SECS (default hourly — the old 4-hourly cron's spirit at
+# beat granularity). Fail-open like due_voice: an unreadable stamp means due.
+metabolize_pass_due() {
+  local stamp_path="$VOICED/metabolize_pass" now last
+  [ -e "$stamp_path" ] || return 0
+  now="$(date +%s)"
+  last="$(stat -f %m "$stamp_path" 2>/dev/null || echo "")"
+  case "$last" in ''|*[!0-9]*) last="$(stat -c %Y "$stamp_path" 2>/dev/null || echo "")" ;; esac
+  [ -n "$last" ] || return 0
+  [ $(( now - last )) -ge "${LIMEN_METABOLIZE_SENSORS_SECS:-3600}" ]
+}
 # NETWORK REACH — one definition, used by the connectivity gate AND by paused-beat sensing.
 # True when the host the cycle depends on answers; true (fail-open) when the preflight is disabled.
 net_up() {
@@ -432,6 +445,23 @@ while true; do
     # The block itself now lives in run_monitoring() so the paused branch above can call it too.
     run_monitoring
 
+    # METABOLIZE SENSOR PASS — the source:[metabolize] registry sensors (jules-quota/-supply,
+    # dispatch-continuity, lane-fitness, jules-dispatch, capacity refreshes, …) had NO live
+    # caller since metabolize.sh lost its schedulers (unreachable-runners-baseline). This rung
+    # is their runner. Placed ABOVE the observe short-circuit ON PURPOSE: the pass carries the
+    # starvation alarm and the quota/supply gauges, which must fire precisely when the estate
+    # is observing (the 15-day outage was an observe-mode outage) — while dispatch itself stays
+    # impossible in observe because the jules-dispatch rung self-gates on
+    # `autonomy-governor.py dispatch-ok` (logs/autonomy-policy.json is the single valve).
+    # Wall-clock throttled (hourly), per-sensor timeout-bounded by the registry, `|| true`
+    # guarded: a failing sensor never fails the beat. Loop-body edit — effective only after
+    # `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat`.
+    if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ] && metabolize_pass_due; then
+      python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source metabolize \
+        --beat "$c" --loop-max "$MAX" --voice-dir "$VOICED" 2>&1 | tail -5 || true
+      stamp metabolize_pass
+    fi
+
     if [ "$MODE" != "dispatch" ]; then
       echo "autonomy mode=$MODE — telemetry/status only; queue mutation and campaign wake skipped"
       # HANDOFF — even an observe-only beat refreshes the warm-resume packet.  The heartbeat does
@@ -464,7 +494,7 @@ while true; do
       DRAIN_VOICE_DUE=0
       due_voice drain "$C_DRAIN"   && { DRAIN_VOICE_DUE=1
                                        bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
-                                       python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
+                                       python3 -m limen release-stale --hours 24 --apply 2>&1 | tail -1 || true; }
       due_voice heal "$C_HEAL"     && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
 
       # Release the broad heartbeat mutex before producer/planner voices. Those scripts either submit

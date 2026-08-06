@@ -5,6 +5,7 @@ The report is intentionally metadata-only. It reads Git commit metadata, public
 prompt-batch receipts, and the ignored prompt-batch queue index; it never opens
 raw prompt/session source files.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,9 +19,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 BATCH_RESOLUTION_RECEIPTS = ROOT / "docs" / "prompt-batch-resolution-receipts.json"
 BATCH_REVIEW_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
 DOC_PATH = ROOT / "docs" / "session-value-review.md"
@@ -57,6 +56,7 @@ def blocks_when_absent(item: dict[str, Any]) -> bool:
         return True
     return False
 
+
 RECORDED_STATUSES = {"owner-recorded", "non-source-recorded", "superseded-recorded"}
 FOLLOWUP_ROOT_STATUSES = {
     "remote_pr_preserved",
@@ -70,6 +70,7 @@ GATE_EXIT_CODES = {
     "continue_prompt_sweep_watch_followups": 0,
     "continue_current_work": 0,
     "continue_direct_product_work": 0,
+    "bootstrap_idle_dispatch": 0,
     "switch_to_packetization": 10,
     "switch_to_direct_product_work": 10,
     "stop_missing_inputs": 20,
@@ -240,9 +241,7 @@ def batch_receipts(since: dt.datetime, until: dt.datetime) -> list[dict[str, Any
                 "followup_roots": sum(root_statuses.get(status, 0) for status in FOLLOWUP_ROOT_STATUSES),
                 "merged_roots": int(root_statuses.get("remote_pr_merged", 0)),
                 "owner_absent_roots": int(root_statuses.get("owner_repo_routed_absent_branch", 0)),
-                "sensitive_roots": sum(
-                    count for status, count in root_statuses.items() if "sensitive" in status
-                ),
+                "sensitive_roots": sum(count for status, count in root_statuses.items() if "sensitive" in status),
             }
         )
     receipts.sort(key=lambda item: item["generated_at"])
@@ -374,14 +373,61 @@ def prompt_queue_action(next_batch: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+TASKS_PATH = Path(os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
+
+
+def dispatches_in_window(since: dt.datetime, until: dt.datetime) -> int | None:
+    """Count dispatch receipts stamped inside the window; None when the board is unreadable.
+
+    A cheap line-pairing scan, not YAML: tasks.yaml runs to ~150k lines and this gate sits on
+    every dispatch admission (90s budget). Each dispatch_log entry opens with `- timestamp:` and
+    carries exactly one `status:` within a few lines; pairing them bounds the scan. None (not 0)
+    on any read error, so the caller degrades to today's blocking behavior — a broken board must
+    never read as "idle, admit freely".
+    """
+    try:
+        text = TASKS_PATH.read_text()
+    except OSError:
+        return None
+    count = 0
+    stamp: dt.datetime | None = None
+    distance = 0
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("- timestamp:"):
+            raw = stripped.split(":", 1)[1].strip().strip("'\"")
+            try:
+                parsed = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                stamp = None
+                continue
+            stamp = parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.timezone.utc)
+            distance = 0
+            continue
+        if stamp is not None:
+            distance += 1
+            if distance > 12:
+                stamp = None
+                continue
+            if stripped.startswith("status:"):
+                status = stripped.split(":", 1)[1].strip().strip("'\"")
+                if status == "dispatched" and since <= stamp <= until:
+                    count += 1
+                stamp = None
+    return count
+
+
+def decide_gate(
+    snapshot: dict[str, Any],
+    history: list[dict[str, Any]] | None = None,
+    *,
+    dispatch_count: int | None = None,
+) -> dict[str, Any]:
     metrics = snapshot["metrics"]
     queue = snapshot.get("current_queue") or {}
     coverage = queue.get("coverage") if isinstance(queue.get("coverage"), dict) else {}
     packet_queue = snapshot.get("current_packet_queue") or {}
-    packet_coverage = (
-        packet_queue.get("coverage") if isinstance(packet_queue.get("coverage"), dict) else {}
-    )
+    packet_coverage = packet_queue.get("coverage") if isinstance(packet_queue.get("coverage"), dict) else {}
     findings = snapshot.get("findings") if isinstance(snapshot.get("findings"), dict) else {}
     commit_kinds = findings.get("commit_kinds") if isinstance(findings.get("commit_kinds"), dict) else {}
     inputs = snapshot.get("inputs") or {}
@@ -411,9 +457,7 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
         HIGH_MOTION_COMMIT_THRESHOLD,
     )
     receipt_only_motion = (
-        receipts == 0
-        and commits > 0
-        and int(commit_kinds.get("receipt_refresh") or 0) > max(1, commits // 2)
+        receipts == 0 and commits > 0 and int(commit_kinds.get("receipt_refresh") or 0) > max(1, commits // 2)
     )
     no_receipt_run = consecutive_pressure("motion_without_receipts", motion_without_receipts, history_rows)
     high_motion_run = consecutive_pressure("high_motion_no_receipts", high_motion_no_receipts, history_rows)
@@ -441,12 +485,29 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
         next_action = product_action
         next_commands = [str(product_action["command"])]
     elif not has_durable_progress:
-        action = "stop_no_durable_progress"
-        reason = "No landed value commits or prompt-batch receipts were detected in this cadence window."
-        next_commands = [
-            "python3 scripts/session-value-review.py --write --hours 12",
-            "python3 scripts/validate-task-board.py",
-        ]
+        if dispatch_count == 0:
+            # The self-seal this clause breaks (measured 2026-07-19 -> 08-06): dispatch was
+            # refused because nothing landed in the window, and nothing could land because
+            # dispatch was refused. Zero dispatches alongside zero progress is STARVATION
+            # evidence, not runaway evidence — the runaway brake below still fires the moment
+            # >=1 dispatch occurred with nothing landing. dispatch_count None (unreadable
+            # board) keeps the blocking branch: a broken meter never reads as idle.
+            action = "bootstrap_idle_dispatch"
+            reason = (
+                "Zero dispatches occurred in this cadence window — no-durable-progress is "
+                "starvation evidence, not runaway evidence; admit the first bounded batch."
+            )
+            next_commands = [
+                "python3 -m limen dispatch --agent jules --limit 1",
+                "python3 scripts/session-value-review.py --gate --hours 1.5",
+            ]
+        else:
+            action = "stop_no_durable_progress"
+            reason = "No landed value commits or prompt-batch receipts were detected in this cadence window."
+            next_commands = [
+                "python3 scripts/session-value-review.py --write --hours 12",
+                "python3 scripts/validate-task-board.py",
+            ]
     elif motion_without_receipts and no_receipt_run >= 2:
         if next_batch:
             action = "switch_to_packetization"
@@ -520,6 +581,7 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
         "exit_code": GATE_EXIT_CODES[action],
         "reason": reason,
         "pressures": {
+            "window_dispatches": dispatch_count,
             "followup_over_done_or_routed": followup_pressure,
             "consecutive_followup_pressure_reports": pressure_run,
             "followup_roots": followups,
@@ -581,7 +643,9 @@ def build_findings(
             f"Resolved {batch_count} prompt-corpus batches covering {sessions} sessions and {prompt_events} prompt events into durable metadata receipts."
         )
     if merged:
-        value_points.append(f"Linked {merged} roots to already-merged PR evidence instead of leaving them as ambiguous session residue.")
+        value_points.append(
+            f"Linked {merged} roots to already-merged PR evidence instead of leaving them as ambiguous session residue."
+        )
     if recorded_batches:
         value_points.append(
             f"Left the current redacted queue measurable: {recorded_batches} recorded batches and {open_batches} open review batches."
@@ -620,7 +684,9 @@ def build_findings(
             "Throughput was modest for a long session; the review loop likely spent meaningful time on route discovery and verification rather than pure batch burn-down."
         )
     if not commits:
-        critique_points.append("No commits landed in the window; this would be poor value unless the work was deliberately exploratory.")
+        critique_points.append(
+            "No commits landed in the window; this would be poor value unless the work was deliberately exploratory."
+        )
 
     controls.append(
         "At session start and every 90 minutes, run `python3 scripts/session-value-review.py --gate --hours 1.5`; continue only on exit 0."
@@ -694,7 +760,7 @@ def build_snapshot(since: dt.datetime, until: dt.datetime) -> dict[str, Any]:
         "current_queue": queue,
         "current_packet_queue": current_packet_queue(),
     }
-    snapshot["gate"] = decide_gate(snapshot)
+    snapshot["gate"] = decide_gate(snapshot, dispatch_count=dispatches_in_window(since, until))
     return snapshot
 
 
