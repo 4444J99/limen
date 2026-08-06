@@ -105256,15 +105256,16 @@ tasks:
   target_agent: 'jules'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'slow'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/limen/issues/642'
   context: 'GitHub issue organvm/limen#642. Adjudicated throughput of the founding full-stack-review run (Codex session 019f2a04): 182 ledger entries in ~15h of sustained single-lane work ≈ 12 rows/hour. Against 1,778 changed-file candidates + 875 reconstruction roots, single-lane drain is ~6-9 days of continuous wall-clock. PR #638 added the executable depth-queue stop predicate (at merge time: blocked; 257 open of 287 eligible rows at rev'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-26T21:52:55.048Z'
+  updated: '2026-08-06T18:47:40.315Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: 'codex'
@@ -105308,6 +105309,20 @@ tasks:
     conduct_run_id: 'run-f332892c0c0368d843bb40e0e386a5c2'
     conduct_lease_id: 'lease-370-f332892c0c0368d8'
     conduct_generation: 370
+  - timestamp: '2026-08-06T18:47:40.315Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 4
+    conduct_event_id: 'conduct:run-d405fbee3089cc8c2448eddee8000bc8:531:compatibility'
+    conduct_run_id: 'run-d405fbee3089cc8c2448eddee8000bc8'
+    conduct_lease_id: 'lease-531-d405fbee3089cc8c'
+    conduct_generation: 531
   predicate: 'test "$(gh issue view 642 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/642'
   origin: 'system_debt'
