@@ -347,6 +347,18 @@ parameters:
     self_update: none
     owner: vitals
     note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when the VITALS record hasn't been written within VITALS_STALE_BEATS worst-case beats while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+  LIMEN_RUNTIME_LAG:
+    default: "1"
+    env: LIMEN_RUNTIME_LAG
+    self_update: none
+    owner: substrate
+    note: "Gate for the runtime-lag beat sensor (institutio/governance/sensors.yaml section 0o3): scripts/check-runtime-lag.py fails when the scheduled runtime install (~/.local/share/limen/current, receipt schema domus-limen-runtime-receipt.v1) is more than LIMEN_RUNTIME_LAG_MAX_COMMITS behind the default branch. The canary (0g5) proves a lane is alive; this proves the live lane is running CURRENT CODE — a stale install passes its canary while executing week-old code. Silent on any host with no install (CI, containers). Sensing only: the rotator is domus-owned. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+  LIMEN_RUNTIME_LAG_MAX_COMMITS:
+    default: "25"
+    env: LIMEN_RUNTIME_LAG_MAX_COMMITS
+    self_update: none
+    owner: substrate
+    note: "Commits behind the default branch before scripts/check-runtime-lag.py calls the scheduled runtime STALE. 25 is roughly half a day at this repo's merge cadence — low enough that a host-global fix cannot sit unshipped for days (the arc that produced this sensor measured 88), high enough that ordinary merge churn does not flap the rung."
   LIMEN_OPPORTUNITY_STALE:
     default: "1"
     env: LIMEN_OPPORTUNITY_STALE
@@ -951,6 +963,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "tmux session name scripts/open-streams.sh opens stream windows into (one window per stream, named by stream id). tmux rather than background jobs because `limen workstream --agent ...` ends in exec and an interactive agent needs a controlling TTY; the window name is also how a re-run detects an already-open stream."
+  LIMEN_VENDOR_INSIGHTS_DIR:
+    default: "logs/vendor-insights"
+    env: LIMEN_VENDOR_INSIGHTS_DIR
+    self_update: none
+    owner: continuity
+    note: "Working-data root for scripts/vendor-insights.py (the mechanical half of /vendor-insights): per-vendor session index, skill-written facets/narrative, and rendered report HTML. Relative default resolves under LIMEN_ROOT; the whole tree is gitignored because it narrates personal usage (same placement doctrine as the built-in /insights artifact under .agent-runtime/). Override to point a test or a scratch run somewhere else."
   LIMEN_VERIFY_LOCK_FILE:
     default: "${TMPDIR:-/tmp}/limen-verify-whole.lock"
     env: LIMEN_VERIFY_LOCK_FILE

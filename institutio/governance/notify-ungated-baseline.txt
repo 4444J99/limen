@@ -1,0 +1,24 @@
+# notify-ungated-baseline — roots whose scripts/_notify.py predates the effector gate
+# (#1841) and therefore reaches osascript unguarded. Recorded, not accepted: the gate
+# fails on any NEW entry. These drain by rebase (reclaim-worktrees.py) or by domus
+# rotating the runtime install; afterwards run:
+#   python3 scripts/check-notify-gate.py --update
+/Users/4jp/.local/share/limen/runtimes/09bdc2081caa5216253efffb3e5ed216cae294bc/source
+/Users/4jp/.local/share/limen/runtimes/0c2a2bfe33468681e4bb82efee8ec611ee3fe4e6/source
+/Users/4jp/.local/share/limen/runtimes/136dc01fc3627678c490e7ce5095953043e1f15f/source
+/Users/4jp/.local/share/limen/runtimes/4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1/source
+/Users/4jp/.local/share/limen/runtimes/8a59bc2a40afb799dbf6b7a7cc382c552146ba3e/source
+/Users/4jp/.local/share/limen/runtimes/cafae8cf0cf83e51ac53af0a04693eb4a1cbcc15/source
+/Users/4jp/Workspace/.limen-worktrees/danse-deliver
+/Users/4jp/Workspace/.limen-worktrees/quicken-docs-20260805
+/Users/4jp/Workspace/limen/.claude/worktrees/codify-reap-advice
+/Users/4jp/Workspace/limen/.claude/worktrees/heal-estate-chezmoi-clobber
+/Users/4jp/Workspace/limen/.claude/worktrees/plan-heal-notification-estate
+/Users/4jp/Workspace/limen/.claude/worktrees/session-correspondence-jessica
+/Users/4jp/Workspace/limen/.worktrees/charles
+/Users/4jp/Workspace/limen/.worktrees/collaboration-operations-platform-alpha-omega-20260803
+/Users/4jp/Workspace/limen/.worktrees/omega-substrate-literal
+/Volumes/Scratch/limen-worktrees/ship-docs-funnel-healing-record-20260805172226-39557
+/Volumes/Scratch/limen-worktrees/ship-docs-portvs-astra-plan-20260730191734-44905
+/Volumes/Scratch/limen-worktrees/ship-docs-reap-pelican-receipt-20260805171231-98602
+/Volumes/Scratch/limen-worktrees/ship-docs-tcc-fda-atom-20260805221405-15592
