@@ -647,3 +647,39 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   setting, which is a feature trade and therefore the operator's, homed as
   `L-CLAUDE-DEEPLINK-REGISTRATION`.
 - **Owner:** Claude (the enumeration + the effector) · the operator (one vendor setting).
+
+### IF-NOTE-HOMED — a cited note exists; the estate cites nothing into a void
+
+- **Ideal form:** every `[[wikilink]]` in a tracked surface — effector header, sensor registry,
+  lever, ledger, source comment — resolves to a file that exists **and is committed**, so a claim
+  and its refutation are both retrievable by the next session instead of re-derived. What is being
+  held here is not accuracy but **reachability**: a citation that resolves and one that dangles are
+  byte-identical at the call site, so the only thing that can tell them apart is a predicate that
+  asks the filesystem.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** this row is the generalization of [`IF-GATEKEEPER-INERT`](#if-gatekeeper-inert--a-vendor-bundle-is-present-for-exec-absent-from-launchservices)'s
+  root mechanism, not a new idea. That class recurred ~10–15× over six weeks because its root cause
+  was homed in `[[macos-tcc-gatekeeper-dialogs-solved]]` — cited from **five** registry surfaces and
+  written **nowhere**. Every session followed the citation, found nothing, fell back to the
+  effector's header comment, and inherited its false premise. **The false belief propagated because
+  its refutation had no home.**
+  Measured at introduction (2026-08-05, `scripts/check-note-links.py`): **49 of 50** cited note
+  slugs across 3,387 tracked files resolved to nothing. The one that resolved was the note written
+  to close that class. So the six-week loop was not an unlucky one-off — it was the expected
+  outcome of a 98%-dangling citation estate, and nothing anywhere could have reported that, because
+  nothing was measuring it.
+  A citation is deliberately *not* required to be accurate — that is `IF-*`'s own job elsewhere and
+  no text predicate can do it. It is required to be **followable**, which is exactly the property
+  whose absence let five competent cures ship against one false premise.
+- **Scope, stated rather than assumed:** single-token citations (`[[link]]`, `[[redirects]]`, and
+  the `PERSON_1`/`ORG_X` redaction placeholders) are **not** gated — in this estate a note slug is
+  kebab-case with ≥2 segments, and Python's `[[0], [1, 2]]` is live source in `check-danse.py`. They
+  are printed as `unclassified` on every run rather than dropped, because a filter that silently
+  narrows its own scope is precisely the defect `condemnable()` carried for six weeks in the class
+  this row generalizes.
+- **Status:** PARTIAL — the ratchet is shipped, contract-tested (18/18, against a fake repo so they
+  test the gate rather than today's tree), and proven to bite end-to-end; the 49 pre-existing
+  dangling slugs are recorded as a **shrink-only** work-list, not forgiven. A line leaves
+  `note-link-baseline.txt` exactly one way — by writing the note it names — and a stale line fails
+  the gate, so the baseline cannot quietly become permission. `at-ideal` is an empty baseline.
+- **Owner:** Claude (`scripts/check-note-links.py` · `institutio/governance/note-link-baseline.txt`).
