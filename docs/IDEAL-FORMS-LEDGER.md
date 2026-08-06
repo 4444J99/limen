@@ -59,6 +59,18 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   interval (`LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS`, 20h — inside the probe's 3-day tolerance with two
   missed runs of margin), and a `ship-docs.sh` PR **only when `content_sha256` moves**, so a
   PR-debt recorder cannot add to the debt it measures.
+- **Evidence (2026-08-06):** a recorder fixed the *supply* of observations; it did not make the
+  document uncarryable by anything else, and the passenger commits named above stayed possible.
+  `tasks.yaml` had never had that exposure — it has a keeper, SHA compare-and-swap, and
+  `task-writer-audit.py` to catch a bypass writer *before* it can race. The debt ledger had a
+  convention and nothing enforcing it. `scripts/check-ledger-custody.py` (gate `ledger-custody`,
+  registry `institutio/governance/ledger-custody.yaml`) closes that: every commit touching a
+  governed ledger must be a keeper ship (A), every production toucher must be declared (B), and
+  every committed row must be a distinct, correctly-ordered census (C). The five historic
+  passengers are baselined as history; a sixth is a red check. C is the write-side twin of the
+  read-side defect fixed in #1873, where a live uncommitted working copy was counted as a second
+  observation and the resulting window shift reported **+182 from 1111** for a series whose truth
+  was **+234 from 1059** — so the number this ideal is measured by was itself wrong.
 - **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); the trend probe reports distance and
   the producer now feeds it on a cadence. The open distance is the *trend itself*: the last measured
   reading was **+105 over three days**, and the ideal's word is monotonically down.
