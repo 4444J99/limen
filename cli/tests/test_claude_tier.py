@@ -70,6 +70,7 @@ def _clear(monkeypatch):
         "LIMEN_CLAUDE_FABLE_CLASSES",
         "LIMEN_CLAUDE_MAX_INHERITED_TIER",
         "LIMEN_CLAUDE_FABLE_FALLBACK_TIER",
+        "LIMEN_CLAUDE_BUILD_MAX_TIER",
         "LIMEN_CLAUDE_HAIKU_MODEL",
         "LIMEN_CLAUDE_SONNET_MODEL",
         "LIMEN_CLAUDE_OPUS_MODEL",
@@ -430,10 +431,20 @@ def test_all_agent_type_models_are_valid_tier_aliases():
 def test_extracted_ladder_agrees_with_the_per_task_ladder(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": ["chore"]})
-    for cls, expected in (("canon", "opus"), ("kernel", "opus"), ("chore", "sonnet"), ("code", "haiku")):
+    for cls, expected in (
+        ("canon", "opus"),
+        ("kernel", "opus"),
+        ("chore", "sonnet"),
+        ("code", "haiku"),
+        ("mode:plan-only", "opus"),
+    ):
         via_task = D._claude_tier_for(_task(type_=cls))
         via_classes = M.tier_for_classes({cls}, waste_classes=["chore"])
         assert via_task == via_classes == expected, f"{cls}: task={via_task} classes={via_classes}"
+    # The build cap agrees across both entrances too: canon residue on a builder task is capped.
+    via_task = D._claude_tier_for(_task(type_="canon", labels=["mode:build-from-plan"]))
+    via_classes = M.tier_for_classes({"canon", "mode:build-from-plan"}, waste_classes=["chore"])
+    assert via_task == via_classes == "sonnet"
 
 
 def test_extracted_ladder_defaults_to_haiku_not_the_account_default():
@@ -454,3 +465,95 @@ def test_extracted_ladder_never_returns_fable_without_acceptance(monkeypatch):
     monkeypatch.setattr(M, "_claude_fable_acceptance_present", lambda: False)
     for cls in M._claude_fable_classes():
         assert M.tier_for_classes({cls}) != "fable"
+
+
+# ── phase rules: mode:plan-only floors at opus, mode:build-from-plan caps cheap ─────────────
+# docs/fable-allotment.md: "Fable plans, cheaper tiers build. Building on Fable is prohibited."
+# The mode labels are checked explicitly in tier_for_classes — deliberately NOT members of
+# _CLAUDE_OPUS_CLASSES_DEFAULT (that set is work-DOMAIN vocabulary, and an env override of it
+# must not be able to drop the phase guarantee).
+
+
+def test_plan_only_class_derives_opus(tmp_path, monkeypatch):
+    """The plan phase is Opus-reserved: mode:plan-only alone lifts an otherwise-haiku task."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    assert D._claude_model(_task(type_="code", labels=["mode:plan-only"])) == "opus"
+
+
+def test_plan_only_with_fable_class_needs_acceptance(tmp_path, monkeypatch):
+    """Fable planning stays receipted: without acceptance a fable-class plan lands on opus (the
+    plan rung, not the cheap fallback); with a written acceptance it earns fable."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    plan = _task(type_="code", labels=["mode:plan-only", "long-horizon"])
+    assert D._claude_model(plan) == "opus"
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    assert D._claude_model(plan) == "fable"
+
+
+def test_build_from_plan_caps_residual_opus_classes(tmp_path, monkeypatch):
+    """The receipt leak: builder_task_from_receipt strips plan-only/tier:*/claude_tier, but a
+    residual reserved class (canon) used to resolve opus. The build cap closes it."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    assert D._claude_model(_task(type_="code", labels=["mode:build-from-plan", "canon"])) == "sonnet"
+
+
+def test_build_from_plan_keeps_cheapest_first_default(tmp_path, monkeypatch):
+    """The cap is a ceiling, not a floor: an unreserved build task still starts at haiku."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    assert D._claude_model(_task(type_="code", labels=["mode:build-from-plan"])) == "haiku"
+
+
+def test_build_cap_env_is_hard_capped_at_opus(tmp_path, monkeypatch):
+    """LIMEN_CLAUDE_BUILD_MAX_TIER tunes the ceiling but can never grant fable for build."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    build_canon = _task(type_="code", labels=["mode:build-from-plan", "canon"])
+    monkeypatch.setenv("LIMEN_CLAUDE_BUILD_MAX_TIER", "fable")
+    assert D._claude_model(build_canon) == "opus"
+    monkeypatch.setenv("LIMEN_CLAUDE_BUILD_MAX_TIER", "opus")
+    assert D._claude_model(build_canon) == "opus"
+    monkeypatch.setenv("LIMEN_CLAUDE_BUILD_MAX_TIER", "haiku")
+    assert D._claude_model(build_canon) == "haiku"
+
+
+def test_build_from_plan_never_selects_fable_even_with_acceptance(tmp_path, monkeypatch):
+    """Cap-wins over an ACCEPTED fable class: build authorization means execution, and fable is
+    unreachable for build work unconditionally."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    assert D._claude_model(_task(type_="code", labels=["mode:build-from-plan", "long-horizon"])) == "sonnet"
+
+
+def test_build_task_manual_pin_stays_sovereign(tmp_path, monkeypatch):
+    """builder_task_from_receipt sets claude_tier=None, so a pin on a builder task is
+    operator-deliberate — the cap governs DERIVED tiers only (the guard surfaces the run)."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    assert D._claude_tier_for(_task(type_="code", labels=["mode:build-from-plan"], claude_tier="opus")) == "opus"
+
+
+def test_retry_bump_may_exceed_the_build_cap_but_never_to_fable(tmp_path, monkeypatch):
+    """A DETECTED failure ('tried:claude') is exactly where the cheap-tier rationale expires, so
+    the earned bump may exceed the cap to opus — but a build task never bumps onto fable, even
+    with LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE armed and a valid acceptance receipt."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    tried = _task(type_="code", labels=["mode:build-from-plan", "canon", "tried:claude"])
+    assert D._claude_model(tried) == "opus"  # sonnet (capped) + one earned rung
+    monkeypatch.setenv("LIMEN_CLAUDE_BUILD_MAX_TIER", "opus")
+    monkeypatch.setenv("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE", "1")
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    assert D._claude_model(tried) == "opus"  # the fable rung stays unreachable for build
