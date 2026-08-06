@@ -86,4 +86,13 @@ def test_tcc_versioned_client_leak_lever_owns_post_discharge_regression():
     assert rows[0]["owner"] == "yours"
     assert rows[0]["issue"] == 1703
     assert any("domus-agent-host run --" in step for step in rows[0]["steps"])
-    assert any("tcc-identity-audit.py" in step for step in rows[0]["steps"])
+    # The lever must name the audit INSTRUMENT so the operator can verify the removal — that is
+    # the invariant, and it holds. What this line used to pin was a SPELLING: `tcc-identity-audit.py`.
+    # #1864 rewrote the verify step to `scripts/tcc-identity-audit --strict`, the POSIX wrapper
+    # that execs the same module and additionally handles the no-python3 and non-Darwin cases the
+    # bare module does not — a strictly better citation, and the test went red on it.
+    # Pin the path both spellings share, so choosing the wrapper or the module is free and a lever
+    # that stops naming the instrument at all still fails here.
+    audit = "scripts/tcc-identity-audit"
+    assert (ROOT / audit).exists(), "the cited instrument must exist on disk, not merely be spelled"
+    assert any(audit in step for step in rows[0]["steps"])
