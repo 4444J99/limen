@@ -113,7 +113,18 @@ def test_silence_is_not_improvement(mod, repo, capsys, monkeypatch):
     assert "silence is not improvement" in out
     assert mod.PRODUCER in out, "the failure must name the command that ACTUALLY writes the ledger"
     assert "pr-debt" in mod.PRODUCER, "`reconcile` is a dry effector report; it never writes the ledger"
-    assert "GITVS-UNCAPPED-PR-DEBT-0715" in out, "and the owner of record for its being unwired"
+    # ...and the owner of record for the silence. The INVARIANT here is unchanged — a STALE
+    # failure must name who owns fixing it — but the ANSWER moved. This used to pin the board
+    # task GITVS-UNCAPPED-PR-DEBT-0715, whose whole content was "the producer is wired to
+    # nothing". The producer has since been wired to the github-pr-debt sensor, so pinning that
+    # task id made this test assert that the thing it wanted fixed had STAYED broken: it went
+    # red on the fix rather than on the defect, and took main's suite down with it.
+    #
+    # So pin the owner through the module constant (it moves with the wiring) and pin the
+    # sensor by name (so a producer quietly re-orphaned still fails here, which is the whole
+    # point of the row).
+    assert mod.PRODUCER_OWNER in out, "the failure must name the owner of record for the silence"
+    assert "github-pr-debt" in mod.PRODUCER_OWNER, "the owner is the sensor that records the series"
 
 
 def test_a_single_observation_is_unmeasurable_and_that_is_a_failure(mod, repo, capsys, monkeypatch):

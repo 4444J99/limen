@@ -97,12 +97,51 @@ condemnable() {
 }
 
 found=0
+FAST_PATH=""
+
+# 0) FAST PATH — cure the KNOWN path before paying for enumeration. ARMED RUNS ONLY.
+#
+#    Measured on this host 2026-08-05: `lsregister -dump` costs 2.99s; `codesign --verify --strict`
+#    on one known path costs 0.009s. That is 332x, and it sits directly inside the window this
+#    class is judged by — the WatchPaths agent's ThrottleInterval (10s) plus however long this
+#    script takes to reach the unregistration. Enumerating first spends ~3s of that window
+#    rediscovering a path we already know the vendor writes on every start (its own `_jb()` targets
+#    exactly $CLAUDE_SHARE/ClaudeCode.app), so time-to-unregister drops from ~13s to ~10s.
+#
+#    IT IS AN OPTIMIZATION, NEVER A FILTER. The full enumeration still runs and stays
+#    authoritative; anything this misses — a ~/.Trash reseed, a second store, a bundle whose `-u`
+#    errors for some other reason — is caught there exactly as before. Narrowing the *scan* to the
+#    known path would be the same mistake `condemnable()` already made once in this class.
+#
+#    WHY `-u`'s EXIT CODE IS THE FINDING TEST. `condemnable()` answers "is this bundle
+#    unassessable", not "is it registered" — and the steady state is present-and-unassessable-and-
+#    unregistered, so acting on `condemnable()` alone would log a cure on every single beat and
+#    turn the count into noise. Measured 2026-08-05: `lsregister -u` exits 0 when it actually
+#    removed a registration and 1 (`-10814`) when there was none, so the exit code IS the signal.
+#    A non-zero exit here means "nothing was registered, or this needs the slow path" — both of
+#    which are correctly handled by falling through to the enumeration.
+#
+#    DRY RUNS SKIP THIS. A dry run's job is an accurate report, and without a dump it cannot know
+#    whether the bundle is registered; latency does not matter when nothing is being cured. So the
+#    unarmed path stays exactly as it was — the enumeration reports it, once.
+KNOWN="$CLAUDE_SHARE/ClaudeCode.app"
+if [ "$ARMED" = 1 ] && [ -d "$KNOWN" ] && condemnable "$KNOWN"; then
+  if "$LSREG" -u "$KNOWN" 2>/dev/null; then
+    FAST_PATH="$KNOWN"
+    found=$((found + 1))
+    log "claude-lsregister-heal: unregistered (fast path, left in place) $KNOWN"
+  fi
+fi
 
 # 1) Registered unassessable bundles under the safe prefixes — UNREGISTER ONLY, never remove.
 #    The file stays so the vendor's early return holds and the TCC identity survives.
 while IFS= read -r p; do
   [ -n "$p" ] || continue
   condemnable "$p" || continue
+  # Already handled above. Skipping keeps `found` a count of DISTINCT bundles: in a dry run the
+  # enumeration still lists it (nothing was unregistered), and double-counting one bundle as two
+  # findings would make the beat's number a lie in the direction that looks worse.
+  [ -n "$FAST_PATH" ] && [ "$p" = "$FAST_PATH" ] && continue
   found=$((found + 1))
   if [ "$ARMED" = 1 ]; then
     "$LSREG" -u "$p" 2>/dev/null && log "claude-lsregister-heal: unregistered (left in place) $p"
