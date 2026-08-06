@@ -162807,3 +162807,36 @@ tasks:
     conduct_lease_id: 'lease-562-b3c704005a073ed5'
     conduct_generation: 562
   updated: '2026-08-06T19:24:22.864Z'
+- id: 'GH-organvm-limen-1779'
+  title: 'Discharged lever: private collaboration operations platform genesis'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1779'
+  context: 'GitHub issue organvm/limen#1779. Owner authorization receipt for `L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS`. The owner explicitly authorized creation and operation of exactly `organvm-iii-ergon/collaboration-operations-platform` as a private, owner-only repository plus a no-cost hosted ciphertext-only workspace. The authorization includes repository genesis and the reversible no-cost deployment needed by the Universal Collabor'
+  predicate: 'test "$(gh issue view 1779 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1779'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1779'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:28.005Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-2b86881ebbfea600816fbfe3a3943675:563:compatibility'
+    conduct_run_id: 'run-2b86881ebbfea600816fbfe3a3943675'
+    conduct_lease_id: 'lease-563-2b86881ebbfea600'
+    conduct_generation: 563
+  updated: '2026-08-06T19:24:28.005Z'
