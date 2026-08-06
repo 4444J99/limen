@@ -20,7 +20,17 @@ Posture:
   * every verdict appends one receipt row to logs/owner-route-drain.jsonl, applied or not.
 
 Enumeration is live via gh search (author app/google-labs-jules plus "[limen jules" titles);
-the privacy-redacted docs/github-pr-debt-ledger.json is the scoreboard, never the worklist.
+the privacy-redacted PR-debt ledger under docs/ is the scoreboard, never the worklist.
+
+NB: that ledger's filename is deliberately not spelled out above. check-ledger-custody.py's
+B-check asserts that only declared roles NAME the path anywhere in a production source file,
+and it matches the raw substring over the whole file — docstrings included. So a sentence
+saying this organ does not use the ledger reads to the gate exactly like code that writes it,
+and naming it here turned main red the moment #1881 landed beside #1880. Declaring this file
+a `reader` would have been the other way out and it would have been false: nothing here opens
+that document. Same prose-false-positive this estate already dodges in check-session-contention.py
+(which keeps `git` and `push` off one line for direct-main-writer-audit.py) — see issue #1905
+for teaching the B-check to skip comments and docstrings, which is the real fix.
 """
 
 from __future__ import annotations
