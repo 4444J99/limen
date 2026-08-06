@@ -83276,9 +83276,10 @@ tasks:
   target_agent: 'jules'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'slow'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/limen/issues/1566'
   context: 'Suggested action: Continue rebalancing lanes away from waste sinks. Prioritize revenue-attributed repos.
@@ -83288,7 +83289,7 @@ tasks:
     Severity: medium'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-26T21:52:45.949Z'
+  updated: '2026-08-06T18:47:29.210Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
     agent: 'opencode'
@@ -83327,6 +83328,20 @@ tasks:
     conduct_run_id: 'run-c6902c7d5c549edaea54808f64c57dd9'
     conduct_lease_id: 'lease-368-c6902c7d5c549eda'
     conduct_generation: 368
+  - timestamp: '2026-08-06T18:47:29.210Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 3
+    conduct_event_id: 'conduct:run-27df37b8374cc5cf9721c7f7dd057405:529:compatibility'
+    conduct_run_id: 'run-27df37b8374cc5cf9721c7f7dd057405'
+    conduct_lease_id: 'lease-529-27df37b8374cc5cf'
+    conduct_generation: 529
   predicate: 'test "$(gh issue view 1566 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/1566'
   origin: 'system_debt'
