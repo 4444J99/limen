@@ -19,6 +19,7 @@ did — the registry's header says "there is no field to lie in," and there was 
 
 from __future__ import annotations
 
+import datetime
 import importlib.util
 import json
 import re
@@ -284,3 +285,81 @@ def test_the_real_ledger_writes_no_distance_by_hand_on_any_probed_row(tmp_path):
             if "DERIVED" not in line:
                 offenders.append(ident)
     assert not offenders, f"hand-written distances survive on probed rows: {sorted(set(offenders))}"
+
+
+# ---------------------------------------------------------------------------
+# The recorder's change basis and its two clocks. Every test below fails against
+# the first cut (#1854); PR #1859 is what that failure looked like in production —
+# a 2,461-line diff recording 1293 -> 1293, opened fourteen minutes after #1857.
+# ---------------------------------------------------------------------------
+
+
+def _census(count: int, stamp: str, *, untyped: int = 0) -> dict:
+    """The shape gitvs.py actually writes — per-PR records carrying their OWN clock fields.
+
+    Those per-PR stamps are the trap. `content_sha256` excludes only the TOP-LEVEL
+    `generated_at` (gitvs.py:827), so every one of them is inside the ledger's own hash.
+    """
+    return {
+        "open_pr_count": count,
+        "classification_untyped_count": untyped,
+        "generated_at": f"{stamp}Z",
+        "content_sha256": f"sha-of-{stamp}",
+        "pull_requests": [
+            {
+                "number": i,
+                "classification": "active_custody",
+                "age_hours": round(100.0 + i + len(stamp), 2),
+                "disposition_observed_at": f"{stamp}Z",
+            }
+            for i in range(count)
+        ],
+    }
+
+
+def test_only_the_clock_moving_is_not_an_observation(mod):
+    """The defect that shipped noise: two censuses of an identical estate must compare EQUAL."""
+    a = json.dumps(_census(3, "2026-08-06T03:17:46"))
+    b = json.dumps(_census(3, "2026-08-06T03:31:47"))
+    assert a != b, "the raw bytes differ on every run — that is why a byte compare was never an option"
+    assert json.loads(a)["content_sha256"] != json.loads(b)["content_sha256"], (
+        "and so does the ledger's own content_sha256, because the per-PR stamps are inside it — "
+        "which is precisely how judging change by that field opened a PR per census"
+    )
+    assert mod._stable_digest(a) == mod._stable_digest(b), "nothing but time passed; nothing ships"
+
+
+def test_the_estate_moving_IS_an_observation(mod):
+    """The guard against 'fixing' the above by making the digest insensitive to everything."""
+    base = json.dumps(_census(3, "2026-08-06T03:17:46"))
+    moved_level = json.dumps(_census(4, "2026-08-06T03:17:46"))
+    moved_shape = json.dumps(_census(3, "2026-08-06T03:17:46", untyped=7))
+    assert mod._stable_digest(base) != mod._stable_digest(moved_level), "the debt level moved"
+    assert mod._stable_digest(base) != mod._stable_digest(moved_shape), (
+        "the count held but composition moved — still an observation worth recording"
+    )
+
+
+def test_a_recent_observation_blocks_a_checkout_that_has_never_swept(mod, repo, capsys):
+    """The other half of the duplicate. The local receipt is gitignored, so a fresh worktree has
+    no clock of its own — and the first cut read ONLY that clock, so it went straight to census."""
+    recent = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+    (repo / LEDGER_REL).write_text(json.dumps(_census(2, recent)), encoding="utf-8")
+    _git(repo, "add", LEDGER_REL)
+    _git(repo, "commit", "-q", "-m", "someone else recorded an hour ago")
+    assert not (repo / "logs").exists(), "this checkout has never run the sweep"
+
+    assert mod.record(dry_run=True) == 0
+    out = capsys.readouterr().out
+    assert "not due" in out, "a fresh checkout must still see the clock every checkout shares"
+    assert "an observation was recorded" in out
+
+
+def test_a_stale_shared_clock_does_not_block_a_checkout_that_has_never_swept(mod, repo, capsys):
+    """Negative control: the shared clock gates on AGE, not merely on an observation existing."""
+    (repo / LEDGER_REL).write_text(json.dumps(_census(2, "2020-01-01T00:00:00")), encoding="utf-8")
+    _git(repo, "add", LEDGER_REL)
+    _git(repo, "commit", "-q", "-m", "an ancient observation")
+
+    assert mod.record(dry_run=True) == 0
+    assert "DUE" in capsys.readouterr().out
