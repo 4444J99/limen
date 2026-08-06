@@ -162339,3 +162339,37 @@ tasks:
     conduct_lease_id: 'lease-548-5c69959651e51d70'
     conduct_generation: 548
   updated: '2026-08-06T19:23:01.057Z'
+- id: 'GH-organvm-limen-1876'
+  title: 'Universal insights → universal governance: implement all /insights suggestions across every actor'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'plan'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1876'
+  context: 'GitHub issue organvm/limen#1876. Three bodies of insight (built-in /insights Opus report; its audit + first /vendor-insights codex report; a full host census of every agent lane and desktop store) produced a closed suggestion ledger. The problem: rules that exist only in CLAUDE.md bind one lane of seven+, the built-in /insights sees ~10-15% of estate activity, codex natively reads AGENTS.md truncated at byte 32,768 of 44,253, the'
+  predicate: 'test "$(gh issue view 1876 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1876'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1876'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:06.760Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6001e68d4f30cec0d19d79b4f09cfa6e:549:compatibility'
+    conduct_run_id: 'run-6001e68d4f30cec0d19d79b4f09cfa6e'
+    conduct_lease_id: 'lease-549-6001e68d4f30cec0'
+    conduct_generation: 549
+  updated: '2026-08-06T19:23:06.760Z'
