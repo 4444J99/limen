@@ -386,3 +386,22 @@ ideals:
         inode-correct, so unregistration never costs the stable identity it protects
       environment: host
       at_ideal_when: exit_zero
+  IF-NOTE-HOMED:
+    ideal: "Every citation of durable knowledge resolves to a durable home. A `[[wikilink]]` in any\
+      \ tracked surface — effector header, sensor registry, lever, ledger, source comment — names a\
+      \ file that exists and is COMMITTED, so a claim and its refutation are both retrievable by the\
+      \ next session instead of re-derived. The estate cites nothing into a void. What matters here\
+      \ is not whether prose is accurate but whether it is REACHABLE: a citation that resolves and\
+      \ one that dangles are byte-identical at the call site, so the only thing that can tell them\
+      \ apart is a predicate that asks the filesystem — and until one did, nothing ever asked.\n"
+    owner: Claude (scripts/check-note-links.py — the predicate;
+      institutio/governance/note-link-baseline.txt — the shrink-only work-list)
+    probe:
+      command: python3 scripts/check-note-links.py --ideal
+      derives: zero cited note slugs have no home — the count the baseline records, not merely the
+        count the baseline forgives. The bare invocation is the CI RATCHET (exit 0 at the baseline,
+        so inherited debt never blocks a PR); `--ideal` is this probe and exits 0 only when the
+        baseline is EMPTY, because a baselined dangle is still a dangle to the next session that
+        follows it
+      environment: repo
+      at_ideal_when: exit_zero

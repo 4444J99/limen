@@ -1,0 +1,60 @@
+# note-link-baseline.txt — note slugs cited as [[wikilinks]] with no file on disk.
+#
+# Held OUT of scripts/check-note-links.py. The ratchet pattern this registry already
+# uses eight times over: history is recorded, not rewritten; every NEW citation is held.
+#
+# A line leaves this file exactly one way: by WRITING the note it names. The gate FAILS
+# on a stale line, so the baseline can only shrink. Never add a line to silence a fresh
+# dangling citation — that is the failure mode this whole gate exists to stop
+# (see IF-GATEKEEPER-INERT: five cures shipped against a premise whose refutation had
+# no home, because [[macos-tcc-gatekeeper-dialogs-solved]] was cited from five surfaces
+# and existed nowhere).
+alchemical-convergence-method
+autonomous-operation-design
+build-the-repeatable-process-not-the-one-off
+cascade-fallback-principle
+claude-login-flap-credential-race
+close-is-the-cliff
+completeness-claims-need-a-sweep
+credential-durability-organ
+decisions-owned-by-organ-not-chat
+demand-before-rails
+derive-never-pin
+derive-never-pin-hardcodes
+distillation-not-reduction
+education-monolith-canon
+empty-branch-is-a-todo-not-a-delete
+excavate-before-redoing-solved-work
+fleet-model-floor-bleed
+gmail-mutation-cascade-avenues
+his-hand-tasks-hang-in-permanent-registry
+host-is-factory-system-is-cartridge
+human-gated-atom-is-a-valve
+knowledge-corpus-converged
+known-owned-pervasive-then-idgaf
+live-checkout-is-chaotic
+logic-over-inherited-config
+media-suite-convergence
+merge-authority-standing-grant
+meter-lie-and-dead-daemon-incident
+model-tiering-policy
+never-need-him-to-speak-again
+no-never-happens-again
+pillars-platform-convergence
+pr111-daemon-regression-healed
+preserve-user-inputs-as-provenance
+publish-form-rent-operation
+repos-are-inbound-signal-surface
+revenue-ship-order
+self-star-ladder-shipped-live
+sensor-without-effector-defect
+session-center-of-gravity
+sovereign-cash-intake
+stale-base-fork-thicket
+storage-autonomic-solve
+studio-public-face-poiesis
+token-economy-overrides-ultracode
+use-all-vendors-never-serialize
+value-is-discovered-never-assumed
+worktree-lifecycle-blind-spot
+wrangler-login-and-op-ping-disease

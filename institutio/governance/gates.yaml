@@ -548,6 +548,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "DOCS-EXPORTS drift: the cross-repo export program is a shrinking work-list, not a parity claim — every row names a limen doc whose SUBJECT another repo owns, and shipping the move DELETES the row. Without a predicate the two halves drift silently: the file leaves and the row lingers (a phantom work item an agent re-executes), or the row retires and the file stays (a claimed export that never happened). Checks every row's path is still tracked, every target is a real cross-repo destination or DELETE, and every declared patch-consumer is a real path. Scoped to docs/** because deleting a doc that still carries a row is exactly the drift this catches."
+  check-note-links:
+    command: "python3 scripts/check-note-links.py"
+    paths: ["**", "scripts/check-note-links.py", "institutio/governance/note-link-baseline.txt", "cli/tests/test_check_note_links.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "NOTE-LINK drift: a `[[wikilink]]` citation must resolve to a tracked file whose stem is that slug, or be recorded in the shrink-only note-link-baseline.txt. The `**` path implicates the gate on ANY change, the same idiom check-root-manifest uses with `*`: a citation can be introduced in any file, so path-scoping this gate would put the blind spot exactly where the defect lives. It costs ~0.4s, which is what makes always-on affordable — and `scoped: false` would have been WRONG here (that means whole-matrix-only, so a scoped push gate would never run it). Founded on the measured defect behind IF-GATEKEEPER-INERT: the root cause of the six-week `ClaudeCode.app is damaged` loop was homed in `[[macos-tcc-gatekeeper-dialogs-solved]]`, cited from FIVE registry surfaces (dialogs-silenced.sh x2, sensors.yaml, parameters.yaml, his-hand-levers.json x2) and written NOWHERE — so every session followed it, found nothing, and re-derived the root from an effector header carrying a false premise. Five cures shipped against that premise. A citation that resolves and one that dangles are byte-identical at the call site; only the filesystem knows, and nothing was asking it. Measured at introduction: 49 of 50 cited slugs dangled. The baseline can only shrink — a stale line (the note now exists) FAILS, so the ratchet cannot silently accumulate permission."
   check-mail-tiers:
     command: "python3 scripts/check-mail-tiers.py"
     paths: ["institutio/governance/mail-tiers.yaml", "scripts/check-mail-tiers.py"]
