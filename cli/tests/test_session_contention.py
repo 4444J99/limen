@@ -127,9 +127,14 @@ def test_the_caller_sharing_the_occupants_cwd_does_not_mask_it(occupancy):
 
 
 def test_a_service_sharing_the_cwd_does_not_mask_a_session(occupancy):
-    """The session-ness filter is per-process too — stopping at the first pid finds the MCP
-    server sitting in the same directory and calls the checkout free."""
-    occupancy({ROOT: (100, 4242)}, sessions=(4242,))
+    """The session-ness filter is per-process too — stopping at one pid finds the MCP server
+    sitting in the same directory and calls the checkout free.
+
+    The service deliberately holds the HIGHER pid. lsof emits ascending, so under the old
+    one-slot-per-directory table the last writer won and the service was the pid that survived to
+    be tested. A service with the lower pid passes either way and proves nothing.
+    """
+    occupancy({ROOT: (4242, 99999)}, sessions=(4242,))
     assert liveness.live_checkout_occupant(ROOT) == 4242
 
 
