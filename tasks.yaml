@@ -163356,3 +163356,36 @@ tasks:
     conduct_lease_id: 'lease-578-ec86bddd30f3f96e'
     conduct_generation: 578
   updated: '2026-08-06T23:15:37.675Z'
+- id: 'GH-organvm-domus-genoma-364'
+  title: 'Liturgy hygiene: forget dead ~/.claude/skills symlink; fix dead ~/CLAUDE.md reference in CLAUDE.md.tmpl'
+  repo: 'organvm/domus-genoma'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/domus-genoma/issues/364'
+  context: 'GitHub issue organvm/domus-genoma#364. Two dotfiles-source fixes surfaced by the 2026-08-06 `/doctor` run in limen (applied cleanup: organvm/limen#1900): 1. **Forget the dead `~/.claude/skills` symlink.** The deployed symlink pointed at `/Users/4jp/Code/organvm/a-i--skills/distributions/claude/skills` — that whole tree is absent from disk, so the link was dead. The doctor removed the deployed symlink, but `chezmoi managed` still lists'
+  predicate: 'test "$(gh issue view 364 --repo organvm/domus-genoma --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/domus-genoma/issues/364'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/domus-genoma#364'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T23:15:42.920Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-df5ad2f67335ad986132057a17a6f7a8:579:compatibility'
+    conduct_run_id: 'run-df5ad2f67335ad986132057a17a6f7a8'
+    conduct_lease_id: 'lease-579-df5ad2f67335ad98'
+    conduct_generation: 579
+  updated: '2026-08-06T23:15:42.920Z'
