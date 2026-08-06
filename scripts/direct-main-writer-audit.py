@@ -36,7 +36,8 @@ def production_sources() -> list[Path]:
     return sorted(
         path
         for path in paths
-        if "/tests/" not in path.as_posix() and "/templates/" not in path.as_posix()
+        if "/tests/" not in path.as_posix()
+        and "/templates/" not in path.as_posix()
         and path != Path(__file__).resolve()
     )
 
@@ -47,8 +48,7 @@ def counts(path: Path) -> dict[str, int]:
     git_push = sum(
         1
         for line in lines
-        if not line.lstrip().startswith("#")
-        and re.search(r"\b(?:git|_bounded_git)\b.{0,180}\bpush\b", line)
+        if not line.lstrip().startswith("#") and re.search(r"\b(?:git|_bounded_git)\b.{0,180}\bpush\b", line)
     )
     git_push += len(
         re.findall(
@@ -98,8 +98,8 @@ def main() -> int:
     if data.get("protected_repository") != "organvm/limen" or data.get("protected_branch") != "main":
         failures.append("registry must protect organvm/limen main")
     remote = data.get("remote_enforcement") or {}
-    if remote.get("required_rules") != ["pull_request", "merge_queue"] or remote.get("bypass_actors") != []:
-        failures.append("remote enforcement must require pull_request + merge_queue with no bypass actors")
+    if remote.get("required_rules") != ["pull_request"] or remote.get("bypass_actors") != []:
+        failures.append("remote enforcement must require pull_request with no bypass actors")
 
     discovered: dict[str, dict[str, int]] = {}
     for path in production_sources():
@@ -137,8 +137,7 @@ def main() -> int:
             print(f"  - {failure}")
         return 1
     print(
-        "direct-main-writer-audit: PASS — "
-        f"{len(surfaces)} classified surfaces; no unclassified production write seam"
+        f"direct-main-writer-audit: PASS — {len(surfaces)} classified surfaces; no unclassified production write seam"
     )
     return 0
 

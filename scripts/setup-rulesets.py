@@ -9,11 +9,13 @@ For each repo that currently has open author PRs, configure the default branch s
   • delete_branch_on_merge = false  (source branches are retained for receipt-backed reaping)
 
 For organvm/limen only, keep the classic required check to `pr-gate` with
-strict:false/enforce_admins:true, and idempotently ensure a default-branch ruleset containing both
-the native merge queue and a zero-approval pull-request rule. The latter has no bypass actors:
-every mutation, including Tabularius board publication, must enter through a PR. The queue tests
-GitHub's synthetic integration commit instead of asking every concurrent PR to merge a moving main
-and restart its already-green full CI.
+strict:false/enforce_admins:true, and idempotently ensure a default-branch ruleset holding a
+zero-approval pull-request rule with no bypass actors: every mutation, including Tabularius board
+publication, must enter through a PR. The native merge queue was removed 2026-08-06
+(proven-at-submission rail): its serialized re-validation lane re-derived proofs the scoped local
+gates had already produced, and its evict-to-back failure mode turned a GitHub Actions incident
+into a day-long merge outage for green PRs. Direct squash on green required checks is the rail;
+merge-policy.sh / await-pr.sh detect queue absence and use MERGE-MODE: direct automatically.
 
 SAFE: dry-run by default — prints the exact per-repo plan and executes NOTHING. Reversible:
 branch protection can be removed. `--apply` is GATED on the user.
@@ -31,16 +33,10 @@ import sys
 from collections import OrderedDict
 
 MERGE_QUEUE_REPO = "organvm/limen"
+# Historical name retained: this is the live ruleset's identity on GitHub (id 19147990) and
+# renaming it would churn every external reference for zero behavioral gain. The queue rule
+# itself was removed 2026-08-06; only the pull_request rule remains.
 MERGE_QUEUE_RULESET_NAME = "limen-default-merge-queue"
-MERGE_QUEUE_PARAMETERS = {
-    "check_response_timeout_minutes": 60,
-    "grouping_strategy": "HEADGREEN",
-    "max_entries_to_build": 4,
-    "max_entries_to_merge": 1,
-    "merge_method": "SQUASH",
-    "min_entries_to_merge": 1,
-    "min_entries_to_merge_wait_minutes": 0,
-}
 
 APPLY = "--apply" in sys.argv
 EXPLICIT = [sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--repo" and i + 1 < len(sys.argv)]
@@ -173,8 +169,8 @@ def classic_protection_contract_holds(actual, checks):
     )
 
 
-def merge_queue_ruleset_body():
-    """The targeted Limen queue plus a no-bypass, zero-approval PR requirement."""
+def default_ruleset_body():
+    """A no-bypass, zero-approval PR requirement — the queue-free proven-at-submission rail."""
     return {
         "name": MERGE_QUEUE_RULESET_NAME,
         "target": "branch",
@@ -193,10 +189,6 @@ def merge_queue_ruleset_body():
                     "required_review_thread_resolution": False,
                 },
             },
-            {
-                "type": "merge_queue",
-                "parameters": dict(MERGE_QUEUE_PARAMETERS),
-            },
         ],
     }
 
@@ -213,7 +205,7 @@ def _contains_contract(actual, expected):
 
 
 def _ruleset_contract_holds(actual):
-    expected = merge_queue_ruleset_body()
+    expected = default_ruleset_body()
     if not _contains_contract(
         actual,
         {
@@ -226,7 +218,7 @@ def _ruleset_contract_holds(actual):
     ):
         return False
     rules = actual.get("rules") if isinstance(actual, dict) else None
-    if not isinstance(rules, list) or [rule.get("type") for rule in rules] != ["pull_request", "merge_queue"]:
+    if not isinstance(rules, list) or [rule.get("type") for rule in rules] != ["pull_request"]:
         return False
     return all(
         _contains_contract(rule.get("parameters"), wanted.get("parameters"))
@@ -257,19 +249,19 @@ def ensure_actions_pr_permissions(repo):
     return ok
 
 
-def ensure_merge_queue(repo):
-    """Idempotently create/update and read-after-write verify Limen's queue ruleset."""
+def ensure_default_ruleset(repo):
+    """Idempotently create/update and read-after-write verify Limen's default-branch ruleset."""
     if repo != MERGE_QUEUE_REPO:
         return True
     existing, error = gh_json_checked(["api", f"/repos/{repo}/rulesets"])
     if error or not isinstance(existing, list):
-        print("      ✗ limen merge-queue ruleset list: " + (error or "unexpected response"))
+        print("      ✗ limen default ruleset list: " + (error or "unexpected response"))
         return False
     rid = next((r.get("id") for r in existing if r.get("name") == MERGE_QUEUE_RULESET_NAME), None)
     method, path = ("PUT", f"/repos/{repo}/rulesets/{rid}") if rid else ("POST", f"/repos/{repo}/rulesets")
-    result = gh_input(method, path, merge_queue_ruleset_body())
+    result = gh_input(method, path, default_ruleset_body())
     if result.returncode != 0:
-        print("      ✗ limen merge-queue ruleset: " + result.stderr.strip()[:80])
+        print("      ✗ limen default ruleset: " + result.stderr.strip()[:80])
         return False
     if not rid:
         try:
@@ -279,12 +271,12 @@ def ensure_merge_queue(repo):
     if not rid:
         refreshed, error = gh_json_checked(["api", f"/repos/{repo}/rulesets"])
         if error or not isinstance(refreshed, list):
-            print("      ✗ limen merge-queue ruleset id unverified: " + (error or "unexpected response"))
+            print("      ✗ limen default ruleset id unverified: " + (error or "unexpected response"))
             return False
         rid = next((r.get("id") for r in refreshed if r.get("name") == MERGE_QUEUE_RULESET_NAME), None)
     observed, error = gh_json_checked(["api", f"/repos/{repo}/rulesets/{rid}"]) if rid else (None, "missing id")
     ok = not error and _ruleset_contract_holds(observed)
-    print("      " + ("✓ limen merge-queue ruleset verified" if ok else f"✗ limen merge-queue unverified: {error}"))
+    print("      " + ("✓ limen default ruleset verified" if ok else f"✗ limen default ruleset unverified: {error}"))
     return ok
 
 
@@ -367,13 +359,9 @@ def main():
                 f"{'…' if len(checks) > 4 else ''} · no human review · allow_auto_merge=true"
             )
         if repo == MERGE_QUEUE_REPO:
-            p = MERGE_QUEUE_PARAMETERS
             print(
-                "      + default-branch PR-only merge queue (zero approvals, no bypass): "
-                f"{p['merge_method']} · {p['grouping_strategy']} · "
-                f"timeout {p['check_response_timeout_minutes']}m · "
-                f"build {p['max_entries_to_build']} · merge {p['max_entries_to_merge']} · "
-                f"min {p['min_entries_to_merge']}/wait {p['min_entries_to_merge_wait_minutes']}m"
+                "      + default-branch PR-only ruleset (zero approvals, no bypass, squash-only; "
+                "queue-free proven-at-submission rail)"
             )
         if not APPLY:
             continue
@@ -386,8 +374,8 @@ def main():
             if not ensure_actions_pr_permissions(repo):
                 failures.append(f"{repo}:actions-pr-permission")
                 prerequisites_ok = False
-            if not ensure_merge_queue(repo):
-                failures.append(f"{repo}:merge-queue-ruleset")
+            if not ensure_default_ruleset(repo):
+                failures.append(f"{repo}:default-ruleset")
                 prerequisites_ok = False
             if not prerequisites_ok:
                 print("      ✗ refusing weaker repository/classic mutations until prerequisites verify")
