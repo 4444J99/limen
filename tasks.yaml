@@ -163290,3 +163290,36 @@ tasks:
     conduct_lease_id: 'lease-576-3bf75d0c1f434b32'
     conduct_generation: 576
   updated: '2026-08-06T23:15:28.192Z'
+- id: 'GH-organvm-limen-1905'
+  title: 'check-ledger-custody B-check matches prose: a docstring naming a ledger reads as a writer (turned main red)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1905'
+  context: 'GitHub issue organvm/limen#1905. `check_b_touchers` in `scripts/check-ledger-custody.py` decides "is this file an undeclared toucher of the ledger" with a raw substring test over the entire file: ```python if needle in text: ``` A docstring that *mentions* a governed ledger is therefore indistinguishable from code that *writes* one. That is not hypothetical: `main` went red the moment #1881 (`owner-route-drain.py`) landed beside'
+  predicate: 'test "$(gh issue view 1905 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1905'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1905'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T23:15:32.921Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-b6cb90702b16157692ece978e497e776:577:compatibility'
+    conduct_run_id: 'run-b6cb90702b16157692ece978e497e776'
+    conduct_lease_id: 'lease-577-b6cb90702b161576'
+    conduct_generation: 577
+  updated: '2026-08-06T23:15:32.921Z'
