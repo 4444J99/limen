@@ -162540,3 +162540,36 @@ tasks:
     conduct_lease_id: 'lease-554-148a81052bc33167'
     conduct_generation: 554
   updated: '2026-08-06T19:23:35.313Z'
+- id: 'GH-organvm-domus-genoma-363'
+  title: 'session-phases.yaml: record the Phase-2 entry binding, and decide the global defaultMode rollout'
+  repo: 'organvm/domus-genoma'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/domus-genoma/issues/363'
+  context: 'GitHub issue organvm/domus-genoma#363. `dot_config/ai-context/session-phases.yaml` declares the canonical cross-agent phase lifecycle and pins itself at: ```yaml version: 1 phase: 1 # Phase 1 (this version): advisory + warn-only. No phase-mismatch hard-blocks. # Phase 2 gate: 30+ sessions of empirical use → decide which phases warrant … warnings out_of_scope: - "Hard-block on phase mismatch (Phase 2 gate; advisory-only in Phase 1)" ```'
+  predicate: 'test "$(gh issue view 363 --repo organvm/domus-genoma --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/domus-genoma/issues/363'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/domus-genoma#363'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:40.930Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-ad706e31e6ccbea3846a8228bd1a9165:555:compatibility'
+    conduct_run_id: 'run-ad706e31e6ccbea3846a8228bd1a9165'
+    conduct_lease_id: 'lease-555-ad706e31e6ccbea3'
+    conduct_generation: 555
+  updated: '2026-08-06T19:23:40.930Z'
