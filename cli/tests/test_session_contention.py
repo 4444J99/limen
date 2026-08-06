@@ -17,6 +17,7 @@ ideal reopens IF-LIVE-TREE-COHERENCE. So each is tested as its own case, from bo
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -285,3 +286,93 @@ def test_probe_treats_an_unreadable_ledger_as_distance(probe, tmp_path):
     findings, incidents = probe.check_incidents()
     assert incidents == 1
     assert "not valid JSON" in findings[0]
+
+
+# ── the guard, end to end ─────────────────────────────────────────────────────────
+#
+# Everything above tests what the probe ANSWERS. Nothing tested whether sync-release.sh acts on
+# the answer — and that seam is where both of this organ's real defects lived:
+#
+#   the probe never reported an occupant  a lossy process table (one pid per directory) let the
+#                                         probe's own pid evict the session's
+#   the script erased the one it got      `set -o pipefail` propagated the probe's exit 1 — its
+#                                         OCCUPIED verdict, not an error — so the guard's
+#                                         `|| OCCUPANT=""` fallback fired exactly when it had
+#                                         found something
+#
+# Two independent faults, either one sufficient to render the guard inert, and every unit test
+# above plus the check-session-contention gate stayed green through both. They were found by
+# running the script against a live process. These cases are the cheap standing half of that
+# drive: the REAL script, both verdicts, no process required.
+
+SYNC_RELEASE = REPO / "scripts" / "sync-release.sh"
+
+
+def _stub_probe(line: str, code: int) -> str:
+    """session-contention.py's contract as sync-release.sh consumes it: `probe` prints one line
+    and exits 0 free / 1 occupied; `record` is best-effort and says nothing."""
+    return "import sys\nif 'probe' in sys.argv:\n" + f"    print({line!r})\n    sys.exit({code})\n" + "sys.exit(0)\n"
+
+
+def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=True)
+
+
+def _parked_checkout(tmp_path: Path, probe_line: str, probe_exit: int) -> tuple[subprocess.CompletedProcess, str]:
+    """A checkout parked on a work branch + the REAL sync-release.sh, probe stubbed to a verdict.
+
+    Parked-and-clean is the UNPARK valve's precondition, and unpark is the cheapest of the three
+    destructive sites to drive: it fires before the at-release early exit, and its effect is a
+    single observable fact — which branch HEAD ends up on.
+    """
+    origin, repo = tmp_path / "origin.git", tmp_path / "repo"
+    subprocess.run(["git", "init", "--quiet", "--bare", str(origin)], check=True)
+
+    (repo / "scripts").mkdir(parents=True)
+    (repo / "logs").mkdir(parents=True)
+    (repo / "tasks.yaml").write_text("placeholder\n", encoding="utf-8")
+    (repo / "scripts" / "sync-release.sh").write_text(SYNC_RELEASE.read_text(encoding="utf-8"), encoding="utf-8")
+    (repo / "scripts" / "session-contention.py").write_text(_stub_probe(probe_line, probe_exit), encoding="utf-8")
+
+    _git(repo, "init", "--quiet", "-b", "main")
+    _git(repo, "config", "user.email", "drive@local")
+    _git(repo, "config", "user.name", "drive")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "--quiet", "-m", "harness base")
+    _git(repo, "remote", "add", "origin", str(origin))
+    _git(repo, "push", "--quiet", "origin", "main")
+    _git(repo, "checkout", "--quiet", "-b", "work/park")
+    _git(repo, "push", "--quiet", "-u", "origin", "work/park")
+
+    proc = subprocess.run(
+        ["bash", str(repo / "scripts" / "sync-release.sh")],
+        cwd=str(repo),  # load-bearing: the daemon invokes it from inside $ROOT, and the probe
+        capture_output=True,  # process therefore shares the occupant's cwd — the colliding case
+        text=True,
+        check=False,
+        env={**os.environ, "LIMEN_ROOT": str(repo), "HOME": str(tmp_path)},
+    )
+    return proc, _git(repo, "symbolic-ref", "--short", "HEAD").stdout.strip()
+
+
+def test_the_guard_declines_the_unpark_when_a_session_holds_the_tree(tmp_path):
+    """A probe that says OCCUPIED must stop the valve. It exits 1 to say so, and under pipefail
+    that 1 is what used to blank the pid the guard had just parsed."""
+    proc, head = _parked_checkout(tmp_path, "session-contention: /x OCCUPIED by pid 4242", 1)
+
+    assert "declining skipped-unpark" in proc.stdout, proc.stdout + proc.stderr
+    assert "pid 4242" in proc.stdout
+    assert head == "work/park", "HEAD was switched out from under a live session"
+    assert "UNPARKED" not in proc.stdout
+
+
+def test_the_unpark_still_fires_when_the_tree_is_free(tmp_path):
+    """The other half, and not a formality. A guard that fires unconditionally is the failure
+    IF-LIVE-TREE-COHERENCE already records — the live checkout sat 120 commits behind for six
+    days and nothing read the log. Declining to converge is as much a defect as converging over
+    a live session, so both verdicts are pinned."""
+    proc, head = _parked_checkout(tmp_path, "session-contention: /x free", 0)
+
+    assert "UNPARKED" in proc.stdout, proc.stdout + proc.stderr
+    assert head == "main"
+    assert "declining" not in proc.stdout
