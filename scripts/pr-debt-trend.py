@@ -52,9 +52,19 @@ Three things it refuses to do, each because the naive version is worse than noth
     freshly-stamped `disposition_observed_at` and a recomputed `age_hours`. Both are inside the
     hash, so the hash moves on EVERY run, unconditionally.
 
-    PR #1859 is what that cost: a 2,461-line diff recording 1293 -> 1293, opened fourteen minutes
-    after #1857, against the very debt this script exists to measure. The property was asserted
-    from the field's name and its exclusion list and never tested by running the census twice.
+    The property was asserted from the field's name and its exclusion list and never tested by
+    running the census twice. Verified now, against the real 1,293-record ledger: advance only
+    the clock fields and `content_sha256` moves while `_stable_digest` holds, and a single PR
+    leaving the estate still moves the digest.
+
+    ATTRIBUTION, CORRECTED. An earlier version of this paragraph called PR #1859 the receipt for
+    this defect — "a 2,461-line diff recording 1293 -> 1293". The count is right and the reading
+    was wrong: #1858 was OPENED at 03:27:43Z, between the 03:17 and 03:31 censuses, so the PR set
+    genuinely moved and 1293 held only because something merged in the same window. #1859 carried
+    real information. What produced it is the CLOCK below, on its own — two censuses fourteen
+    minutes apart under a twenty-hour interval. The change-basis defect is real, independent, and
+    would ship on every run forever; it just is not what #1859 demonstrates. Saying otherwise was
+    the same move that caused the bug: a confident claim about data nobody had diffed.
   · it does NOT commit to main — the observation goes through scripts/ship-docs.sh like every other
     docs-class write (charter § No side doors). capture.sh cannot serve here: it snapshots a live
     default-branch checkout to a side ref and never commits it, so the observation would land
