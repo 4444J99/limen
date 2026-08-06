@@ -2827,6 +2827,36 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Throttled-mode multiplier: cap = max(bootstrap, ramp_mult x landed_in_window), capped at the daily target — landing more work opens more dispatch."
+  LIMEN_WORK_LOAN_BACKFILL:
+    default: "1"
+    env: LIMEN_WORK_LOAN_BACKFILL
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the work-loan-backfill sensor: loan-less open tasks become dispatchable packets under the docs/repo-predicates.yaml quality bar; refusals counted, never silent."
+  LIMEN_WORK_LOAN_BACKFILL_APPLY:
+    default: "0"
+    env: LIMEN_WORK_LOAN_BACKFILL_APPLY
+    self_update: none
+    owner: arms-agents
+    note: "Armed valve for backfill minting. Default 0 — enrichment rewrites hundreds of real rows' loan fields, so the first armed run follows a reviewed dry-run census (first census 2026-08-06: 168 mintable / 520 refused)."
+  LIMEN_WORK_LOAN_BACKFILL_LIMIT:
+    default: 25
+    env: LIMEN_WORK_LOAN_BACKFILL_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Enrichment tickets per backfill run — the jules-supply per_run_cap, bounding tasks.yaml churn through the tabularius single-writer queue."
+  LIMEN_WORK_LOAN_BACKFILL_RECEIPTS:
+    default: ""
+    env: LIMEN_WORK_LOAN_BACKFILL_RECEIPTS
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the backfill receipt ledger (default logs/work-loan-backfill.jsonl at LIMEN_ROOT)."
+  LIMEN_REPO_PREDICATES:
+    default: ""
+    env: LIMEN_REPO_PREDICATES
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the repo-predicates registry (default docs/repo-predicates.yaml at LIMEN_ROOT) — the work-loan backfill's declarative quality bar."
   LIMEN_JULES_DISPATCH:
     default: "1"
     env: LIMEN_JULES_DISPATCH

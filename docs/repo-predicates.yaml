@@ -1,0 +1,44 @@
+# repo-predicates — the work-loan backfill's declarative quality bar.
+#
+# schema: limen.repo_predicates.v1
+#
+# A task whose repo has NO entry here cannot be mechanically underwritten: a garbage loan
+# wastes a quota slot, so refusal is the default and membership is the permission. Seeded
+# from value-repos.json (the value tier is the only place fleet effort may be spent, and
+# the only place a mechanical value_case is an honest claim).
+#
+# Per entry:
+#   owner_surface       — the durable owner the loan names (defaults to the repo slug).
+#   predicate_template  — the executable done-probe minted when a task carries no PR URL.
+#                         Two placeholders: {repo} {task_id}. The default is the board's own
+#                         merged-PR-search convention (see the organvm/in-my-head rows on
+#                         tasks.yaml): done ⟺ a merged PR referencing the task id exists.
+#                         jules-land titles PRs "[limen jules <task-id>]", so the search
+#                         matches the receipts the fleet actually produces.
+#
+# Adding a repo = adding one entry. scripts/work-loan-backfill.py refuses everything else
+# with a counted reason — never a silent skip.
+
+schema: limen.repo_predicates.v1
+default_predicate_template: >-
+  test "$(gh pr list --repo {repo} --state merged --search {task_id} --json number --jq length)" != 0
+repos:
+  organvm/a-i-chat--exporter: {}
+  organvm/my-knowledge-base: {}
+  organvm/public-record-data-scrapper: {}
+  4444J99/peer-audited--behavioral-blockchain: {}
+  4444J99/your-fit-tailored: {}
+  4444J99/mirror-mirror: {}
+  4444J99/hokage-chess: {}
+  4444J99/content-engine--asset-amplifier: {}
+  organvm/universal-mail--automation: {}
+  organvm/the-invisible-ledger: {}
+  organvm/domus-genoma: {}
+  organvm/limen: {}
+  organvm/session-meta: {}
+  organvm/portfolio: {}
+  organvm/manumissio: {}
+  organvm/cind-and-sol-foundation: {}
+  organvm/sovereign--ground--4444j99: {}
+  organvm/hospes: {}
+  4444J99/micro-tato: {}
