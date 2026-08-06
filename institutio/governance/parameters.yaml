@@ -4114,6 +4114,30 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Override for the launcher symlink whose target names the running Claude Code binary, read by scripts/claude-identity-bundle.py. Unset in production; test-injection sibling of LIMEN_CLAUDE_STORE."
+  LIMEN_CLAUDE_APPLICATIONS_DIR:
+    default: "~/Applications"
+    env: LIMEN_CLAUDE_APPLICATIONS_DIR
+    self_update: none
+    owner: tabularius
+    note: "Override for the directory holding the vendor's deep-link handler bundle ('Claude Code URL Handler.app'), read by scripts/claude-identity-bundle.py when it enumerates the vendor-bundle class for IF-GATEKEEPER-INERT. Unset in production; test-injection sibling of LIMEN_CLAUDE_STORE."
+  LIMEN_CLAUDE_LSREGISTER_DUMP:
+    default: ""
+    env: LIMEN_CLAUDE_LSREGISTER_DUMP
+    self_update: none
+    owner: tabularius
+    note: "Path to a canned `lsregister -dump` capture, read by scripts/claude-identity-bundle.py instead of shelling out. Unset in production; exists so the keeper's contracts can assert registration state without a live LaunchServices. Sibling of LIMEN_TCC_LSREGISTER_DUMP."
+  LIMEN_CLAUDE_LSREGISTER_BIN:
+    default: ""
+    env: LIMEN_CLAUDE_LSREGISTER_BIN
+    self_update: none
+    owner: tabularius
+    note: "Override for the lsregister binary invoked by scripts/heal-claude-lsregister.sh. Unset in production; exists so scripts/tests/heal-claude-lsregister.test.sh can drive the whole production code path against a stub and prove the effector UNREGISTERS without removing."
+  LIMEN_HEAL_SCRIPT_UNDER_TEST:
+    default: ""
+    env: LIMEN_HEAL_SCRIPT_UNDER_TEST
+    self_update: none
+    owner: tabularius
+    note: "Path to the effector revision scripts/tests/heal-claude-lsregister.test.sh should exercise. Unset in production (the test defaults to the shipped script). Exists so the contracts can be pointed at a PRIOR revision and shown to FAIL there — a contract that passes against the version it was written to reject proves nothing, which is the #1837 vacuous-test lesson made runnable."
   LIMEN_CLAUDE_IDENTITY_BUNDLE_TIMEOUT:
     default: 60
     env: LIMEN_CLAUDE_IDENTITY_BUNDLE_TIMEOUT
@@ -5155,7 +5179,31 @@ parameters:
     env: LIMEN_PR_DEBT_MAX_AGE_DAYS
     self_update: none
     owner: gitvs
-    note: "How stale the newest open-PR observation may be before scripts/pr-debt-trend.py fails on the SILENCE itself. The half a naive trend predicate gets wrong: a debt series nobody records is not a debt trend that improved. Measured 2026-08-02 the newest observation was 8 days old because the producer (`gitvs.py pr-debt`) is wired to nothing — owner of record GITVS-UNCAPPED-PR-DEBT-0715, which the diurnal morning page names as the board's critical next action."
+    note: "How stale the newest open-PR observation may be before scripts/pr-debt-trend.py fails on the SILENCE itself. The half a naive trend predicate gets wrong: a debt series nobody records is not a debt trend that improved. Measured 2026-08-02 the newest observation was 8 days old because the producer (`gitvs.py pr-debt`) was wired to nothing — now recorded by the `github-pr-debt` sensor (LIMEN_PR_DEBT_RECORD), which closed owner-of-record GITVS-UNCAPPED-PR-DEBT-0715."
+  LIMEN_PR_DEBT_RECORD:
+    default: "1"
+    env: LIMEN_PR_DEBT_RECORD
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the `github-pr-debt` recorder sensor declared in sensors.yaml — the producer half of IF-AMALGAMATION. 0 disables recording, which makes the probe fail on staleness within LIMEN_PR_DEBT_MAX_AGE_DAYS rather than silently reading as improvement."
+  LIMEN_BEAT_PR_DEBT:
+    default: 12
+    env: LIMEN_BEAT_PR_DEBT
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) at which the recorder's CHEAP due-check runs. Not the census cadence: the beat is adaptive (120s…1800s) so N beats is a wide wall-clock range, and the expensive estate sweep is throttled separately by LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS."
+  LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS:
+    default: 20
+    env: LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS
+    self_update: none
+    owner: gitvs
+    note: "Minimum wall-clock hours between full open-PR censuses. Sits inside LIMEN_PR_DEBT_MAX_AGE_DAYS (3d) with two missed runs of margin, so ordinary jitter never makes the probe read STALE. Clocked from the mtime of the gitignored logs/gitvs-pr-debt-facts.json receipt — the tracked ledger is reverted when a census is unchanged, so its own timestamp would reset the clock and re-run the sweep every cadence."
+  LIMEN_PR_DEBT_RECORD_TIMEOUT:
+    default: 900
+    env: LIMEN_PR_DEBT_RECORD_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
   LIMEN_DIURNAL:
     default: "1"
     env: LIMEN_DIURNAL

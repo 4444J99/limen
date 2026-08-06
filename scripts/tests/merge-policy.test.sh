@@ -52,7 +52,21 @@ NONE='[]'
 SUPERSEDED_OK='[{"name":"review","status":"COMPLETED","conclusion":"CANCELLED","startedAt":"2026-07-18T00:00:00Z"},{"name":"review","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T05:00:00Z"},{"name":"python","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"}]'
 DUP_LATEST_FAIL='[{"name":"review","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"},{"name":"review","status":"COMPLETED","conclusion":"FAILURE","startedAt":"2026-07-18T05:00:00Z"},{"name":"python","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"}]'
 DOC_FILES='[{"path":"docs/x.md"}]'
-WEB_FILES='[{"path":"web/api/main.py"}]'
+# An ARMED rail. This was web/api/main.py until the arming axis landed, at which point every
+# "website-sensitive" case below quietly became a non-deploy case — and two of them kept
+# passing, because they assert merge MODE rather than classification. A fixture that stops
+# meaning what its name says is the failure that does not announce itself, so this points at
+# the dashboard rail, which genuinely deploys (CLOUDFLARE_API_TOKEN is set and its Pages step
+# executes on every main push).
+WEB_FILES='[{"path":"web/app/app/page.tsx"}]'
+# The api deploy builds `--source web/api` and its Dockerfile COPYs four files; nothing under
+# cli/ reaches the image. `cli/**` sat in deploy-api.yml from the original buildout until
+# 2026-08-05, so every cli PR — including a test-only one — was classified WEBSITE-SENSITIVE
+# and made to wait on a FULL green rollup for a deploy that could not happen.
+CLI_FILES='[{"path":"cli/tests/test_notify_gate_estate.py"},{"path":"cli/src/limen/dispatch.py"}]'
+# web/api IS the api rail's build_source — the strongest case for the arming axis. Even the
+# path the deploy job literally builds cannot be website-sensitive while the rail is dormant.
+API_FILES='[{"path":"web/api/main.py"}]'
 
 mkjson() { # state isDraft mss files rollup
   printf '{"number":1,"title":"t","url":"http://x","state":"%s","isDraft":%s,"mergeStateStatus":"%s","baseRefName":"main","headRefName":"f","headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","files":%s,"statusCheckRollup":%s}\n' \
@@ -98,6 +112,22 @@ mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
 check_output "clean non-deploy + green" 0 "MERGE-MODE: direct"
 mkjson OPEN false CLEAN "$WEB_FILES" "$GREEN"
 check_output "clean website-sensitive + green" 0 "MERGE-MODE: direct"
+# Pins the CLASSIFICATION, not just the verdict. Without this the fixture can drift to a
+# non-deploy path and every website-sensitive case below keeps passing while testing nothing.
+check_output "website-sensitive fixture really is sensitive" 0 "WEBSITE-SENSITIVE"
+# The flip the previous revision predicted — reached by a different road than expected. It
+# assumed `cli/**` had to leave deploy-api.yml, which needs a workflow-scoped push this fleet
+# does not hold. But path membership was only half the question: the api rail is DORMANT
+# (GCP_SA_KEY exists nowhere, so every effect-bearing step skips and the run goes green having
+# deployed nothing), and a rail that cannot deploy cannot make any path website-sensitive.
+# So `cli/**` stays in the workflow, check C keeps its byte-parity, and the misclassification
+# is gone anyway. Both of these are now proof the guardrail asks "will merging change what is
+# served?" rather than "does this glob match?" — see gates.yaml deploy_triggers.api.arming,
+# proven by check-gates K.
+mkjson OPEN false CLEAN "$CLI_FILES" "$GREEN"
+check_output "cli-only non-deploy (api rail dormant)" 0 "non-deploy — merging will NOT trigger"
+mkjson OPEN false CLEAN "$API_FILES" "$GREEN"
+check_output "web/api-only non-deploy (api rail dormant)" 0 "non-deploy — merging will NOT trigger"
 mkjson OPEN false HAS_HOOKS "$DOC_FILES" "$GREEN"; check "has_hooks non-deploy + green" 0
 mkjson OPEN false CLEAN "$DOC_FILES" "$SUPERSEDED_OK"; check "superseded CANCELLED, latest SUCCESS" 0
 

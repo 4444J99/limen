@@ -79,6 +79,14 @@ ideals:
     # already committed. gitvs.py writes open_pr_count into docs/github-pr-debt-ledger.json and
     # every write is a commit, so five observations sat in `git log` for eleven days, unread.
     # scripts/pr-debt-trend.py reads them; nothing had to be built first.
+    #
+    # THE READER WAS ONLY HALF OF IT. The probe then read STALE for eleven more days, and the cause
+    # was not that anyone stopped caring: there was never a producer. Every observation in the
+    # series is a side effect of an unrelated feature PR that happened to regenerate the ledger
+    # (#1337, #1503, #1508, #1495, #1541), so the series ended when that work did. `--record`
+    # (2026-08-05) is the writer, wired as the `github-pr-debt` heartbeat sensor: it runs the
+    # census on its own wall-clock interval, ships an observation through ship-docs.sh only when
+    # content_sha256 moves, and therefore cannot add to the debt it measures.
     probe:
       command: "python3 scripts/pr-debt-trend.py --check"
       derives: >
@@ -175,6 +183,17 @@ ideals:
       derives: "reply-owed mail still unanswered"
       environment: host
       at_ideal_when: exit_zero
+      # Same caveat as IF-LIVE-TREE-COHERENCE and IF-HOT-CACHE, and it fired the same way: on
+      # 2026-08-05 this probe read `reply_owed=5 drafted=5 undrafted=0` (exit 0) against a PARTIAL
+      # prose status, and check D called the prose stale. It was not. The ideal is "EVERY reply-owed
+      # email is driven to answered" — a claim about every moment and about the whole loop — while a
+      # green reading says only that the inbox happened to be fully drafted at one instant; the next
+      # message reopens the distance. Worse, the probe counts DRAFTS: it is structurally blind to the
+      # residual the prose is actually reporting, which is that SAFE-tier sending ships DISARMED
+      # (LIMEN_MAIL_SEND=0) and the tier is opt-in and empty. Promoting the prose to DONE here would
+      # have claimed achievement from a snapshot and erased a real operator-valve distance — the
+      # exact overstatement this flag exists to forbid. Distance may fire; achievement may not.
+      instantaneous: true
 
   IF-CONFIG-OWNERSHIP:
     ideal: >
@@ -344,5 +363,26 @@ ideals:
       command: python3 scripts/tcc-identity-audit.py --strict
       derives: zero rotating-identity paths hold live TCC grants against a READABLE database —
         unmeasured and blocked both exit nonzero, so a blind read can never register as at-ideal
+      environment: host
+      at_ideal_when: exit_zero
+  IF-GATEKEEPER-INERT:
+    ideal: "A .app bundle the fleet does not own — one a vendor materializes around a BARE-signed\
+      \ Mach-O — is INERT to Gatekeeper: present and inode-correct where the vendor expects it, and\
+      \ carrying zero LaunchServices registrations, so macOS is never asked to assess a bundle that\
+      \ provably cannot pass. Neither of the two states this class chased for six weeks is reachable:\
+      \ ABSENT is undone by the vendor on every start, and VALID would require re-signing a hardlink\
+      \ to the live Developer-ID binary. Present-and-unregistered is the only fixed point, and it is\
+      \ compatible with IF-AGENT-IDENTITY rather than opposed to it — exec needs no registration,\
+      \ only the dialog does. The count is zero ACROSS EVERY SCANNED DOMAIN, not merely under the\
+      \ Claude store. And it is MEASURED: a run that could not ask LaunchServices reports unknown,\
+      \ never inert — the absence of a dialog is not evidence that nothing is registered.\n"
+    owner: Claude (scripts/claude-identity-bundle.py --strict — the class enumeration; and
+      scripts/heal-claude-lsregister.sh — the unregistration effector) · the operator (one vendor
+      setting, lever L-CLAUDE-DEEPLINK-REGISTRATION)
+    probe:
+      command: python3 scripts/claude-identity-bundle.py --strict
+      derives: no vendor-materialized bundle is BOTH LaunchServices-registered and
+        codesign-unassessable, across every enumerated domain — and the store bundle is present and
+        inode-correct, so unregistration never costs the stable identity it protects
       environment: host
       at_ideal_when: exit_zero
