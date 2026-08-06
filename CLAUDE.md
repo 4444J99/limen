@@ -13,8 +13,8 @@ the script/schema/code rather than trusting memory.
 
 - `AGENTS.md` owns operating modes, task states, the Peer Conductor Contract, budget semantics,
   safety, and receipt/projection rules.
-- `CLAUDE.md` owns Claude-specific execution discipline: closeout, merge cadence, credential
-  handling, output style, worktree isolation, and compliant gate reroutes.
+- `CLAUDE.md` owns Claude-specific execution discipline: session phase entry, closeout, merge
+  cadence, credential handling, output style, worktree isolation, and compliant gate reroutes.
 - `GEMINI.md` owns only Gemini-specific conduct/MCP transport details.
 - `CONTRIBUTING.md` owns human contributor guidance.
 - `docs/agent-instruction-standard.md` owns the rationale and cross-surface standard.
@@ -75,6 +75,58 @@ python -m ruff check cli/src cli/tests web/api mcp   # lint (py311, line-length 
 scripts/verify-whole.sh                              # whole-system predicate (exit 0 ⟺ green)
 limen dispatch --agent jules         # dry-run preview; add --live to dispatch for real
 ```
+
+## Session Phase Entry
+
+**A session opens in the PLAN phase.** `.claude/settings.json` sets `permissions.defaultMode:
+"plan"`, so every interactive session in this repo starts read-only, in stage SHAPE, and reaches
+BUILD by deciding to — not by default. This is the *entry binding* for the canonical cross-agent
+lifecycle declared in `~/.config/ai-context/session-phases.yaml` (`explore → plan → branch → code →
+verify → push → wait → review → amend → merge → closeout`), which shipped advisory-only in its
+Phase 1 and named this as its Phase-2 gate. Every other phase in that registry remains advisory;
+advancing one joint is not a licence to hard-block the lifecycle.
+
+**The fleet is unaffected, structurally.** Headless lanes launch with an explicit
+`--permission-mode dontAsk` that `dispatch.py` *validates* before the provider process starts
+(`ClaudeLaunchContractError`). A CLI flag outranks a settings default, so no beat rung, scheduled
+agent, or dispatched build can be stalled by this. Do not add an exemption mechanism for them.
+
+**"Unless it is illogical" is an exit, not a carve-out list.** A read-only session pays nothing —
+it never needs to leave the phase. A genuinely trivial change leaves in one action (`shift+tab`, or
+ExitPlanMode). Enumerating exempt session shapes would be hand-maintained prose that decays; the
+transcript records every `permissionMode` transition instead, and `scripts/harness-root-probe.py`
+already reads that field. The default binds, the exit is cheap, and the exit is observable.
+
+**A plan carries an issue and a PR — via one command.** The `plan` phase's product is not a file,
+it is a *chain*: plan artifact → labelled GitHub issue → implementing PR. Open it with
+
+```bash
+scripts/session-plan.py open <slug> --title "..." --issue <N>   # plan file + branch + PR
+scripts/session-plan.py close <slug> --pr <N>                   # stamp the implementing PR
+scripts/session-plan.py audit                                    # chain state for every plan
+```
+
+The organ **never writes to GitHub in-process**: `open` without `--issue` prints the exact
+`gh issue create` and exits 2, and `close` prints the `gh issue close`, so every outward write stays
+on the Bash rail where `PreToolUse` hooks can reach it. That is not ceremony — `check-effectors.py`
+Class C failed this organ's first cut for building `gh` argv inside Python, and its baseline is
+shrink-only. Do not "fix" a future Class C finding by moving the call into a shell helper: the
+scanner walks Python only, so that hides the finding without removing the blindness.
+
+Plans live at `docs/plans/YYYY-MM-DD-<slug>.md` (this repo's home; the canonical registry names
+`.claude/plans/`, and the divergence is deliberate — `docs/` is what publishes and what
+`check-session-streams.py` reads). Never overwrite a plan; a same-day re-plan is `-v2`. `Issue:` is
+the tracked issue; `PR:` is the PR that **implements** the plan — not the PR that ships the plan
+document. `PR: (pending)` is a legitimate state between `open` and `close`; a *missing* `PR:` line
+is not, because silence about implementation is what let 18 plans accumulate with no answer to
+"was this built?".
+
+**The predicate decides — not your memory.** `scripts/check-session-phase.py` (gate `session-phase`
+in the GATES registry, so `verify-scoped.sh` runs it on any `docs/plans/**` change) exits `0` ⟺
+every non-baselined dated plan declares `Issue: #N` and a `PR:` state. Plans predating the chain are
+listed in `institutio/governance/session-plan-baseline.txt` — the same ratchet this registry already
+uses six times over. A line leaves that baseline only by retro-fitting a real header, never to
+silence a fresh violation.
 
 ## Closeout Definition
 
