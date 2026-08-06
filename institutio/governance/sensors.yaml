@@ -1096,6 +1096,34 @@ sensors:
         severity: advisory
         escalation: "VITALS gauge silent past VITALS_STALE_BEATS worst-case beats — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia beat` and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
 
+  runtime-lag:
+    section: "0o3"
+    title: "the scheduled runtime carries merged main — a fix is deployed when the thing that RUNS it is rebuilt"
+    gate: LIMEN_RUNTIME_LAG
+    default: "1"
+    source: [metabolize]
+    owner: substrate
+    # The canary (0g5) proves a scheduled lane is ALIVE. It cannot see that a live lane is
+    # running WEEK-OLD CODE: a stale runtime install stamps its voice files on time, passes
+    # its canary, and reports green the whole while. Different axis, invisible from inside
+    # the first — which is why this is a second sensor and not a widened canary.
+    #
+    # Found one level below, from the notify arc: _notify.py's in-tree gate only reached
+    # copies that had rebased, because osascript is a host singleton and the guard is
+    # tree-local. The INSTALL is how merged main reaches this host at all, and nothing
+    # measured it. First measurement: 88 commits / 5.6 days behind — the notify gate had
+    # been merged, shipped, and was running nowhere. Every host-global fix inherits this
+    # latency, so the sensor measures the general condition rather than re-checking notify.
+    #
+    # Sensing only. The rotator is domus-owned and repoints a symlink under a daemon that
+    # executes from it every 300s; limen's authority ends at naming the owner and the exact
+    # command. Silent (exit 0) wherever no runtime install exists — CI, containers, any
+    # machine that schedules nothing.
+    steps:
+      - command: "python3 scripts/check-runtime-lag.py"
+        severity: advisory
+        escalation: "the scheduled limen runtime is further behind the default branch than LIMEN_RUNTIME_LAG_MAX_COMMITS — merged fixes are live on the remote and running nowhere on this host. Rotate with the `domus-limen-runtime install --sha <head>` line the predicate prints (domus owns the rotator); an UNVERIFIED line means the install SHA is unfetched here, not that the runtime is current"
+
   backblaze-exclusions:
     section: "0p"
     title: "backblaze exclusions live — regenerable fleet state is out of the crawl set (organ-owned since 2026-07-16; lever L-BACKBLAZE-EXCLUDE retired)"
