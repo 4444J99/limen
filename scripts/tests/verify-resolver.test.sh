@@ -18,6 +18,13 @@ set -euo pipefail
 #     verify-ci-hardening-test (the resolver's own CI fail-closed contract).
 #   - Executable Git/GitHub writer surfaces now implicate direct-main-writer-contract;
 #     the release parameter implicates the sync-release default-branch regression.
+#   - check-note-links appears in EVERY case. It carries `paths: ["**"]` deliberately: a
+#     `[[wikilink]]` citation can be introduced in any file, so path-scoping it would put the
+#     blind spot exactly where the defect lives (see IF-NOTE-HOMED). At 0.12s that is
+#     affordable. This fixture set is what made the change visible — all 20 cases shifted at
+#     once, and each was verified to be an INSERT ONLY (nothing dropped, nothing else added)
+#     before the expectations were updated. A universal gate is the one kind of gate that can
+#     quietly rewrite every selection, so it should be the one kind that is hardest to add.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERIFY="$ROOT/scripts/verify.py"
@@ -39,7 +46,8 @@ expect() {
 expect docs-only 'syntax-changed
 diff-hygiene
 check-docs-manifest
-check-docs-exports' docs/some-note.md
+check-docs-exports
+check-note-links' docs/some-note.md
 
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
@@ -51,6 +59,7 @@ diff-hygiene
 direct-main-writer-contract
 tasks-parse
 check-params
+check-note-links
 check-effectors
 ruff-lint
 ruff-format
@@ -61,6 +70,7 @@ expect api-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 check-params
+check-note-links
 ruff-lint
 ruff-format
 pytest-api' web/api/main.py
@@ -68,6 +78,7 @@ pytest-api' web/api/main.py
 expect mcp-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
+check-note-links
 check-effectors
 ruff-lint
 ruff-format' mcp/src/limen_mcp/server.py
@@ -79,13 +90,15 @@ merge-queue-contract-test
 direct-main-writer-contract
 await-pr-test
 check-params
-check-gates' scripts/merge-policy.sh
+check-gates
+check-note-links' scripts/merge-policy.sh
 
 expect enactment-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 enactment-test
 check-params
+check-note-links
 check-effectors' scripts/enactment-audit.py
 
 expect board-change 'syntax-changed
@@ -93,22 +106,26 @@ diff-hygiene
 task-board
 tasks-parse
 check-root-manifest
+check-note-links
 check-board-partition' tasks.yaml
 
 expect organs-change 'syntax-changed
 diff-hygiene
-nomenclator' organs/consulting/FUNNEL-ENGINE.md
+nomenclator
+check-note-links' organs/consulting/FUNNEL-ENGINE.md
 
 expect naming-roll-change 'syntax-changed
 diff-hygiene
 nomenclator
+check-note-links
 web-build' spec/index-nominum/roll.yaml
 
 expect charter-change 'syntax-changed
 diff-hygiene
 agent-docs
 check-gates
-check-root-manifest' CLAUDE.md
+check-root-manifest
+check-note-links' CLAUDE.md
 
 # check-runner-coverage is implicated because a workflow is a REACHABILITY ROOT: adding a
 # `run: bash scripts/metabolize.sh` step is exactly what would make an orphaned runner reachable,
@@ -118,26 +135,31 @@ diff-hygiene
 direct-main-writer-contract
 workflow-yaml
 check-gates
-check-runner-coverage' .github/workflows/ci.yml
+check-runner-coverage
+check-note-links' .github/workflows/ci.yml
 
 expect dashboard-change 'syntax-changed
 diff-hygiene
 check-params
+check-note-links
 web-build' web/app/app/page.tsx
 
 expect worker-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 check-params
+check-note-links
 worker-check' web/worker/src/index.ts
 
 expect moneta-change 'syntax-changed
 diff-hygiene
+check-note-links
 moneta-tests' moneta/src/mint.ts
 
 expect spec-change 'syntax-changed
 diff-hygiene
 nomenclator
+check-note-links
 web-build' spec/contracts/readiness.schema.json
 
 # paused-beat-test is implicated because its fixtures assert that each paused-branch escape hatch
@@ -147,14 +169,16 @@ expect params-change 'syntax-changed
 diff-hygiene
 sync-release-test
 check-params
-paused-beat-test' institutio/governance/parameters.yaml
+paused-beat-test
+check-note-links' institutio/governance/parameters.yaml
 
 expect registry-change 'syntax-changed
 diff-hygiene
 merge-policy-test
 verify-resolver-test
 verify-parallel-test
-check-gates' institutio/governance/gates.yaml
+check-gates
+check-note-links' institutio/governance/gates.yaml
 
 expect resolver-change 'syntax-changed
 diff-hygiene
@@ -165,19 +189,22 @@ verify-parallel-test
 verify-ci-hardening-test
 check-params
 check-gates
+check-note-links
 check-effectors' scripts/verify.py
 
 expect parallel-verifier-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 verify-parallel-test
-check-params' scripts/tests/verify-parallel.test.sh
+check-params
+check-note-links' scripts/tests/verify-parallel.test.sh
 
 expect mixed-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 tasks-parse
 check-params
+check-note-links
 check-effectors
 ruff-lint
 ruff-format

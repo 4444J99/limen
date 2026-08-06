@@ -39,10 +39,22 @@ the `github-pr-debt` sensor in institutio/governance/sensors.yaml.
 Three things it refuses to do, each because the naive version is worse than nothing:
   · it does NOT run every beat — the beat is adaptive (120s…1800s), so a `cadence: N` is 16 minutes
     on the busy end, and a full paginated estate census does not belong there. The cheap due-check
-    runs every cadence; the census runs on a wall-clock interval it owns itself.
+    runs every cadence; the census runs on a wall-clock interval, and it is due only when BOTH
+    clocks agree — see `_due_reason`, and the duplicate that proved one clock is not enough.
   · it does NOT ship an unchanged census — a PR-debt recorder that adds a PR per beat refutes
-    itself. Change is judged by `content_sha256`, which the ledger computes with `generated_at`
-    excluded; a byte compare would differ on every single run and ship forever.
+    itself. Change is judged by `_stable_digest`, NOT by the ledger's own `content_sha256`.
+
+    THE FIRST CUT SHIPPED NOISE ANYWAY, and the reason is worth keeping. This file used to say
+    change was judged by `content_sha256`, "which the ledger computes with `generated_at` excluded,
+    precisely so two censuses of an unchanged estate compare equal." That is true of the top-level
+    field and false of the document: gitvs.py:827 excludes only top-level `generated_at` and the
+    hash itself, while every one of the ~1,300 records inside `pull_requests` carries its own
+    freshly-stamped `disposition_observed_at` and a recomputed `age_hours`. Both are inside the
+    hash, so the hash moves on EVERY run, unconditionally.
+
+    PR #1859 is what that cost: a 2,461-line diff recording 1293 -> 1293, opened fourteen minutes
+    after #1857, against the very debt this script exists to measure. The property was asserted
+    from the field's name and its exclusion list and never tested by running the census twice.
   · it does NOT commit to main — the observation goes through scripts/ship-docs.sh like every other
     docs-class write (charter § No side doors). capture.sh cannot serve here: it snapshots a live
     default-branch checkout to a side ref and never commits it, so the observation would land
@@ -56,6 +68,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import hashlib
 import json
 import os
 import subprocess
@@ -64,11 +77,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 LEDGER_REL = "docs/github-pr-debt-ledger.json"
-# The census's private receipt. Gitignored by design (`logs/.gitignore`), which is exactly what
-# makes it the right clock for "when did the census last RUN": unlike the tracked ledger, nothing
-# ever restores or reverts it, so a run that produced no change still leaves a mark. Using the
-# ledger's own timestamp instead would reset the clock whenever an unchanged census is reverted,
-# and the recorder would re-run the expensive estate sweep on every cadence forever.
+# The census's private receipt. Gitignored by design (`logs/.gitignore`), which is what makes it a
+# good clock for "did *this checkout* run the sweep recently": nothing ever restores or reverts it,
+# so a run that produced no change still leaves a mark, and the expensive 169-page sweep is not
+# repeated every cadence just because the estate held still.
+#
+# It is a LOCAL clock, and that is the half the first cut missed. Being gitignored, it is per
+# checkout: the beat runs from the live checkout and a session runs from a worktree, and neither
+# can see the other's mtime. So a manual --record at 03:17 left no mark the beat could read, the
+# beat ran its own census at 03:31, and the "20h interval" throttled nothing across the boundary.
+# The shared half of the clock is _last_recorded_utc(), read from git, which every checkout shares.
 FACTS_REL = "logs/gitvs-pr-debt-facts.json"
 
 # The command that actually writes LEDGER_REL, verified by running it — not by reading a sensor
@@ -147,24 +165,39 @@ def series() -> list[tuple[str, int, str]]:
     return rows
 
 
-def _content_sha(blob: str) -> str | None:
-    """The ledger's own `content_sha256` — the census identity with `generated_at` excluded.
+# Every key whose value moves with the wall clock rather than with the estate. Stripped at any
+# depth before hashing. `disposition_observed_at` and `age_hours` live on each of ~1,300 per-PR
+# records and are re-derived from `now` on every census, which is why the ledger's own
+# `content_sha256` — computed over them — cannot answer "did anything but the clock move?".
+VOLATILE_KEYS = frozenset({"generated_at", "content_sha256", "disposition_observed_at", "age_hours"})
 
-    gitvs computes it over every field except `generated_at` and the hash itself, precisely so two
-    censuses of an unchanged estate compare equal. Change detection MUST use it: the raw bytes carry
-    a fresh timestamp on every run, so a byte compare reports "changed" every time and the recorder
-    would open a pull request per beat — against the very debt it exists to measure.
+
+def _strip_volatile(node: object) -> object:
+    if isinstance(node, dict):
+        return {k: _strip_volatile(v) for k, v in node.items() if k not in VOLATILE_KEYS}
+    if isinstance(node, list):
+        return [_strip_volatile(v) for v in node]
+    return node
+
+
+def _stable_digest(blob: str) -> str | None:
+    """Identity of an observation: the whole ledger minus every clock-driven field.
+
+    This is what `content_sha256` is usually assumed to be and is not (see the module docstring).
+    Hashing the stripped document — rather than a hand-picked summary — keeps composition inside
+    the identity: if the count holds at 1293 but a different set of PRs is open, or the untyped
+    count moves, that IS an observation and it ships. Only time passing is not.
     """
     try:
         data = json.loads(blob)
     except ValueError:
         return None
-    sha = data.get("content_sha256")
-    return sha if isinstance(sha, str) and sha else None
+    canonical = json.dumps(_strip_volatile(data), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _last_census_utc() -> _dt.datetime | None:
-    """When the census last RAN, from the gitignored receipt's mtime. None ⇒ never."""
+    """When THIS CHECKOUT last ran the census, from the gitignored receipt's mtime. None ⇒ never."""
     facts = ROOT / FACTS_REL
     if not facts.is_file():
         return None
@@ -174,26 +207,69 @@ def _last_census_utc() -> _dt.datetime | None:
         return None
 
 
+def _last_recorded_utc() -> _dt.datetime | None:
+    """When an observation was last RECORDED, read from the committed ledger. None ⇒ unknown.
+
+    The shared half of the clock. Read from git rather than from the working tree precisely so a
+    local revert of an unchanged census cannot reset it, and so every checkout — beat, worktree,
+    session — answers "has anyone recorded recently?" identically. Falls back through the local
+    default branch, then HEAD, for a checkout with no `origin` (the test repos, and a clone that
+    has not fetched).
+    """
+    for ref in ("origin/main", "main", "HEAD"):
+        rc, blob = _git("show", f"{ref}:{LEDGER_REL}")
+        if rc != 0 or not blob.strip():
+            continue
+        try:
+            stamp = json.loads(blob).get("generated_at")
+        except ValueError:
+            continue
+        if not isinstance(stamp, str) or not stamp:
+            continue
+        try:
+            return _dt.datetime.fromisoformat(stamp.replace("Z", "+00:00")).astimezone(_dt.timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+def _due_reason(now: _dt.datetime, interval: int) -> str | None:
+    """None ⇒ due. A string ⇒ why not, ready to print.
+
+    Due requires BOTH clocks to be stale: this checkout has not swept recently AND nobody has
+    recorded recently. Either alone is insufficient — the local receipt alone let two checkouts
+    census fourteen minutes apart (#1859), and the committed observation alone would re-run the
+    169-page sweep every cadence for as long as the estate held still.
+    """
+    for label, last in (
+        ("this checkout swept", _last_census_utc()),
+        ("an observation was recorded", _last_recorded_utc()),
+    ):
+        if last is None:
+            continue
+        age_h = (now - last).total_seconds() / 3600.0
+        if age_h < interval:
+            return f"not due — {label} {age_h:.1f}h ago (interval {interval}h)"
+    return None
+
+
 def record(*, dry_run: bool) -> int:
     """Run the census when it is due and ship the observation only if the estate actually moved."""
     interval = _int("LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS", 20)
     now = _dt.datetime.now(_dt.timezone.utc)
-    last = _last_census_utc()
-    if last is not None:
-        age_h = (now - last).total_seconds() / 3600.0
-        if age_h < interval:
-            print(f"pr-debt-record: not due — last census {age_h:.1f}h ago (interval {interval}h)")
-            return 0
+    blocked = _due_reason(now, interval)
+    if blocked is not None:
+        print(f"pr-debt-record: {blocked}")
+        return 0
 
     ledger = ROOT / LEDGER_REL
     before = ledger.read_text(encoding="utf-8") if ledger.is_file() else ""
-    before_sha = _content_sha(before)
+    before_digest = _stable_digest(before)
 
     if dry_run:
-        when = "never" if last is None else f"{(now - last).total_seconds() / 3600.0:.1f}h ago"
-        print(f"pr-debt-record: DUE (last census {when}, interval {interval}h) — would run:")
+        print(f"pr-debt-record: DUE (interval {interval}h, both clocks stale) — would run:")
         print(f"    {' '.join(PRODUCER_ARGV)}")
-        print(f"  then ship {LEDGER_REL} via {SHIP} only if content_sha256 changes from {before_sha}")
+        print(f"  then ship {LEDGER_REL} via {SHIP} only if the stable digest moves from {before_digest}")
         return 0
 
     proc = subprocess.run(PRODUCER_ARGV, cwd=str(ROOT), capture_output=True, text=True, check=False)
@@ -201,18 +277,19 @@ def record(*, dry_run: bool) -> int:
     print(f"pr-debt-record: census -> {census_out[-1] if census_out else f'exit {proc.returncode}'}")
 
     after = ledger.read_text(encoding="utf-8") if ledger.is_file() else ""
-    after_sha = _content_sha(after)
-    if after_sha is None:
-        print("  ✗ the census wrote no readable ledger — nothing to record")
+    after_digest = _stable_digest(after)
+    if after_digest is None:
+        print("  \u2717 the census wrote no readable ledger — nothing to record")
         print((proc.stderr or "").strip()[:500])
         return 1
 
-    if after_sha == before_sha:
-        # Unchanged estate. Restore the tracked file so the live checkout does not carry a
-        # permanently-dirty ledger whose only difference is a timestamp — that dirt is what
+    if after_digest == before_digest:
+        # The estate held still and only the clock moved — the common case, and the one the first
+        # cut got wrong. Restore the tracked file so the live checkout does not carry a
+        # permanently-dirty ledger whose only difference is a timestamp; that dirt is what
         # sync-release.sh and capture.sh would otherwise sweep into an unrelated branch.
         _git("checkout", "--", LEDGER_REL)
-        print(f"  · no change (content_sha256 {after_sha[:12]}) — nothing shipped, ledger restored")
+        print(f"  \u00b7 no change (stable digest {after_digest[:12]}) — nothing shipped, ledger restored")
         return 0
 
     msg = f"docs(gitvs): record open-PR debt observation ({_count_from(after)} open)"
@@ -228,9 +305,9 @@ def record(*, dry_run: bool) -> int:
     # 0 = merged, 2 = PR open awaiting merge-policy. Both mean the observation is preserved on
     # origin, which is what the series needs; only a refusal (1) is a recording failure.
     if ship.returncode in (0, 2):
-        print(f"  ✓ observation recorded ({before_sha and before_sha[:12]} -> {after_sha[:12]})")
+        print(f"  \u2713 observation recorded ({before_digest and before_digest[:12]} -> {after_digest[:12]})")
         return 0
-    print(f"  ✗ ship-docs refused the observation: {(ship.stderr or '').strip()[:300]}")
+    print(f"  \u2717 ship-docs refused the observation: {(ship.stderr or '').strip()[:300]}")
     return 1
 
 

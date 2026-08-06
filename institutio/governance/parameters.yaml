@@ -5197,7 +5197,7 @@ parameters:
     env: LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS
     self_update: none
     owner: gitvs
-    note: "Minimum wall-clock hours between full open-PR censuses. Sits inside LIMEN_PR_DEBT_MAX_AGE_DAYS (3d) with two missed runs of margin, so ordinary jitter never makes the probe read STALE. Clocked from the mtime of the gitignored logs/gitvs-pr-debt-facts.json receipt — the tracked ledger is reverted when a census is unchanged, so its own timestamp would reset the clock and re-run the sweep every cadence."
+    note: "Minimum wall-clock hours between full open-PR censuses. Sits inside LIMEN_PR_DEBT_MAX_AGE_DAYS (3d) with two missed runs of margin, so ordinary jitter never makes the probe read STALE. Applied to TWO clocks and due only when both are stale: the mtime of the gitignored logs/gitvs-pr-debt-facts.json receipt (this checkout swept — keeps an unchanged estate from re-running the 169-page sweep every cadence) AND generated_at in the committed ledger (anyone recorded — shared by every checkout). The receipt alone is per-checkout, so the beat and a worktree cannot see each other's clock, and two censuses ran fourteen minutes apart (#1859)."
   LIMEN_PR_DEBT_RECORD_TIMEOUT:
     default: 900
     env: LIMEN_PR_DEBT_RECORD_TIMEOUT
