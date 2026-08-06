@@ -183,8 +183,18 @@ fi
 # stash push — defer to a live session, because those are the ones that can take work away.
 OCCUPANT=""
 if [ "${LIMEN_SESSION_CONTENTION_GUARD:-1}" = "1" ]; then
-  OCCUPANT="$(python3 "$ROOT/scripts/session-contention.py" probe --root "$ROOT" 2>/dev/null \
-    | sed -n 's/.*OCCUPIED by pid \([0-9][0-9]*\).*/\1/p')" || OCCUPANT=""
+  # CAPTURE AND EXTRACT ARE SEPARATE STEPS, and that is not style. `probe` exits 1 when the tree
+  # is OCCUPIED — that is its verdict, not a failure — and this file runs under `set -o pipefail`
+  # (top), which propagates that 1 out of the pipeline. Written as
+  #     OCCUPANT="$(probe | sed ...)" || OCCUPANT=""
+  # the fallback therefore fired on exactly the branch that had found something, blanking the pid
+  # it had just extracted: the trace reads `OCCUPANT=34598` followed immediately by `OCCUPANT=`.
+  # The guard could not arm in either direction — free left it empty, occupied ALSO left it empty
+  # — so it shipped inert and every gate stayed green. A defensive `||` became an eraser.
+  # `|| true` absorbs the intended non-zero; the sed then reads a variable, where no exit status
+  # of the probe's can reach it. The TEXT is the verdict here, never the status.
+  _probe_out="$(python3 "$ROOT/scripts/session-contention.py" probe --root "$ROOT" 2>/dev/null || true)"
+  OCCUPANT="$(printf '%s\n' "$_probe_out" | sed -n 's/.*OCCUPIED by pid \([0-9][0-9]*\).*/\1/p')"
 fi
 
 # Returns 0 (true) when a live session holds the tree, after logging and recording the incident.
