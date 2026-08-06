@@ -172,11 +172,14 @@ check-params
 paused-beat-test
 check-note-links' institutio/governance/parameters.yaml
 
+# agent-docs joined this set 2026-08-06: check S reads gates.yaml's instruction_surfaces
+# block, so a registry change must re-run the byte-budget ratchet.
 expect registry-change 'syntax-changed
 diff-hygiene
 merge-policy-test
 verify-resolver-test
 verify-parallel-test
+agent-docs
 check-gates
 check-note-links' institutio/governance/gates.yaml
 

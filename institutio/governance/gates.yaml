@@ -30,6 +30,37 @@ ratchets:
   verify_whole_derives: true     # ARMED (PR4): verify-whole.sh has no literal py_compile/bash -n lists
   claude_md_pointer: true        # ARMED (PR4): CLAUDE.md carries the pointer, not the path lists
 
+# The instruction-surface byte budget (G1, 2026-08-06). Codex read AGENTS.md truncated at byte
+# 32,768 of 44,253 — its default project_doc_max_bytes cut the file at ~line 499/731, dropping
+# the Session Rituals and every Agent-Specific Note INCLUDING ITS OWN. A consumer's cap, not the
+# file, decided what got read, and nothing measured it. Enforced by check S in
+# scripts/check-agent-docs.py: S1 budget = min consumer default cap; S2 every surface fits the
+# ceiling (shrink-only ratchet); S3 dead headroom between measured size and ceiling stays within
+# slack, so the ceiling follows the file down; S4 the debt line exists exactly while a surface
+# exceeds the budget, and must be removed the moment it fits (paying the debt retires the line).
+instruction_surfaces:
+  budget_bytes: 32768        # min consumer default cap (codex project_doc_max_bytes default)
+  ceiling_bytes: 48128       # measured 46,083 B (2026-08-06, post-covenant) + slack; shrink-only
+  slack_bytes: 2048          # max dead headroom (S3) — re-measure and lower ceiling when exceeded
+  surfaces:
+    - AGENTS.md
+  consumers:
+    - name: codex
+      default_bytes: 32768   # truncates SILENTLY at this cap when unconfigured
+      host_bytes: 65536      # raised host-side via domus-genoma modify_ config template (2026-08-06)
+    - name: claude
+      default_bytes: null    # loads the whole file; no byte cap
+    - name: gemini
+      default_bytes: null
+    - name: copilot
+      default_bytes: null
+  debt: >
+    AGENTS.md exceeds the 32,768 B budget (~13.3 KB over): an UNCONFIGURED codex still reads a
+    truncated charter. Retirement owner: docs/agents-stratify-tier1 (Branch G of the
+    2026-08-06 universal-insights plan) relocates ~15 KB of doctrine sections to
+    docs/architecture/ with pointer stubs. Check S4 forces this line's removal the moment the
+    surface first fits the budget.
+
 # 1:1 mirror of deploy*.yml `on.push.paths` — check-gates.py enforces exact set equality.
 # A merge to main touching one of these IS a live deploy. Deploy sensitivity is a property
 # of PATHS, not gates: a docs PR touching firebase.json is website-sensitive even though it
@@ -385,9 +416,9 @@ gates:
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
   agent-docs:
     command: "python3 scripts/check-agent-docs.py"
-    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py"]
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py", "institutio/governance/gates.yaml"]
     owner: docs
-    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist."
+    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
   session-phase:
     command: "python3 scripts/check-session-phase.py"
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
