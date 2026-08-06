@@ -20,6 +20,11 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    → `logs/vendor-insights/<v>/index.json`. Pick the window from the ask (default 14d; a lane
    that has been quiet needs a wider window — check `list` first if unsure). Codex note: the
    index groups resumed rollout files by parent session_id — one entry = one logical session.
+   **Read `meta` before anything else**: `meta.total_in_window` is the true in-window population;
+   if `meta.capped` is true, either widen `--max-sessions` or carry the cap into
+   `coverage_notes` — the shown sample is the newest N by `meta.order_key`, and the narrative
+   must never speak as if the sample were the corpus. `meta.notes` carries store-level caveats
+   (pruned blobs, responses-not-captured) that belong in `coverage_notes` verbatim.
 2. **Facet.** For each session worth reading (order by activity; state the sampling cap
    honestly), run `python3 scripts/vendor-insights.py cat-session --vendor <v> --session <id>`
    (bounded; raise `--max-chars` only when needed) and write
@@ -36,8 +41,10 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    description, examples[]}], suggestions[{title, detail}], coverage_notes[]`.
    Ground every claim in the index numbers or a read transcript — the Data Grounding rules in
    `CLAUDE.md` apply in full (state denominators: "N of M sessions read"; a window is not the
-   corpus; speech acts are not events). Put every scope limit in `coverage_notes` — the
-   renderer prints them and adds the unfaceted count itself.
+   corpus; speech acts are not events). **The denominator is `meta.total_in_window`, not
+   `len(sessions)`** — a capped index shows a sample, and every aggregate you quote must say
+   which of the two it counts. Put every scope limit in `coverage_notes` — the renderer prints
+   them and adds the unfaceted count, the index cap, and store notes itself.
 4. **Render.** `python3 scripts/vendor-insights.py render --vendor <v>` → prints the
    `report-<ts>.html` path. Send that file to the requester (render display). Exit 2 means
    facets/narrative are missing — that is sequencing feedback, not an error to suppress.

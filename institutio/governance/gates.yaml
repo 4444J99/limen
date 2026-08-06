@@ -393,6 +393,11 @@ gates:
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
     owner: docs
     note: "The plan→issue→PR chain holds: every non-baselined dated plan declares `Issue: #N` and a `PR:` state (#M, (pending), or a reasoned Status:). Binds the entry joint of session-phases.yaml, which shipped advisory-only in Phase 1 and left this as its named Phase-2 gate. Chain organ: scripts/session-plan.py."
+  ledger-custody:
+    command: "python3 scripts/check-ledger-custody.py"
+    paths: ["docs/github-pr-debt-ledger.json", "scripts/pr-debt-trend.py", "scripts/gitvs.py", "scripts/diurnal.py", "scripts/check-ledger-custody.py", "institutio/governance/ledger-custody.yaml", "institutio/governance/ledger-custody-baseline.txt"]
+    owner: gitvs
+    note: "A governed measurement document is written only by its keeper: every commit touching it is a keeper ship (A), every production toucher is declared (B), every committed row is a distinct correctly-ordered census (C). tasks.yaml had this via task-writer-audit.py; the debt ledger had a convention and nothing enforcing it — five of its six observations rode in as passengers on unrelated feature PRs. Registry: institutio/governance/ledger-custody.yaml; adding a governed document is one entry."
   nomenclator:
     command: "python3 scripts/nomenclator.py"
     paths: ["spec/**", "organs/**", "organ-ladder.json", "scripts/nomenclator.py", "scripts/heartbeat-loop.sh"]
@@ -640,6 +645,18 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
     note: "Env-scrubbed and no-modal: ambient persona tokens and editor configuration must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores. THE NON-cli PATHS ARE NOT DECORATION: cli/tests asserts on root registries it does not live beside, so a change to one of them can break this suite while implicating nothing. Measured 2026-08-06 by shipping exactly that — a one-key edit to his-hand-levers.json passed verify-scoped.sh (the diff implicated no gate that runs pytest) and took main red on test_his_hand_registry.py. The full dependency set is `grep -o 'ROOT / \"<file>\"' cli/tests/*.py`: his-hand-levers.json, cloud-routines.json, and tasks.yaml. tasks.yaml is DELIBERATELY excluded — it is the board fast lane (see deploy_triggers) and publishes constantly; its shape is held by tasks-parse + task-board instead, and routing every board publish through a 10-minute suite would trade this defect for a worse one."
+  vendor-insights-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_vendor_insights.py -q"
+    paths:
+      [
+        "scripts/vendor-insights.py",
+        "scripts/insight-cross-vendor-ingest.py",
+        "cli/tests/test_vendor_insights.py",
+        ".claude/skills/vendor-insights/SKILL.md",
+      ]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: censor
+    note: "The /vendor-insights engine's adapter tests, which NOTHING scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/vendor-insights.py implicated no test at all — the same declared-but-unwired class check-runner-coverage exists to catch. Cheap tier: one file, hermetic, no xdist."
   pytest-api:
     command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]
