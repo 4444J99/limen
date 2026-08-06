@@ -399,7 +399,7 @@ def _index_codex(mod, window_start: datetime, max_sessions: int) -> IndexResult:
         sessions,
         total,
         "newest rollout-file mtime per logical session",
-        extra={"capsule_churn": capsule_churn, "population_count_method": "session-meta header scan (3 lines/file)"},
+        extra={"capsule_churn": capsule_churn, "population_count_method": "rollout header scan (3 lines/file)"},
     )
 
 
