@@ -192,6 +192,37 @@ sensors:
           - {path: scripts/gitvs.py, normalization: raw}
           - {path: logs/omega-owner-receipts/sensor.github.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
+  github-pr-debt:
+    section: "heartbeat"
+    title: "record the estate's open-PR debt observation (the series IF-AMALGAMATION reads)"
+    gate: LIMEN_PR_DEBT_RECORD
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    # THE PRODUCER THAT WAS NEVER WIRED. scripts/pr-debt-trend.py --check is IF-AMALGAMATION's probe
+    # and it read STALE for eleven days, because the thing that writes its ledger — gitvs pr-debt —
+    # was attached to no sensor, no gate and no beat rung. Every observation in the series is a side
+    # effect of an unrelated feature PR (#1337, #1503, #1508, #1495, #1541) that happened to
+    # regenerate the file; when that work stopped, the series stopped, and a debt trend nobody
+    # records reads as a debt trend that improved. This rung is the recorder.
+    #
+    # Note the cadence is a CHEAP due-check, not the census. The beat is adaptive (120s…1800s), so
+    # `cadence: 12` is anywhere from 24 minutes to 6 hours of wall-clock — far too often for a full
+    # paginated open-PR sweep of the estate. --record owns its own wall-clock interval
+    # (LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS, default 20h, inside the probe's 3-day staleness
+    # tolerance with two missed runs of margin) and no-ops until it is due. It also ships nothing
+    # when the census is unchanged, so it cannot add to the debt it measures.
+    cadence:
+      env: LIMEN_BEAT_PR_DEBT
+      default: 12
+    timeout:
+      env: LIMEN_PR_DEBT_RECORD_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/pr-debt-trend.py --record"
+        severity: advisory
+        escalation: "the open-PR debt observation was not recorded — IF-AMALGAMATION's series goes stale at 3d and its probe fails on the silence itself (scripts/pr-debt-trend.py --check)"
+
   github-publish-sweep:
     section: "heartbeat"
     title: "keep every publish candidate's pre-publication sweep receipt green and fresh"
