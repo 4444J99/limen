@@ -48,6 +48,15 @@ ratchets:
 # parity preserved the defect faithfully for months. A note beginning UNJUSTIFIED records a
 # path that cannot defend itself — check J reports those and does not fail on them, the same
 # baseline shape the rest of this estate uses. Two of them are not the same finding as none.
+#
+# `arming` is the OTHER half of the same question. Check J asks whether a path reaches the
+# built artifact; arming asks whether the job can ship that artifact AT ALL. A rail whose
+# every effect-bearing step is conditioned on a secret that does not exist deploys nothing —
+# it runs, prints a skip notice, and goes green. Classification is `path matches AND rail is
+# armed`, because the guardrail's real question was never "does this glob match" but "will
+# merging change what is served". Absent an `arming` block a trigger is ARMED: the default
+# must over-protect. Dormancy is declared here and PROVEN by check-gates K — never inferred
+# at merge time, so the merge decision stays deterministic and offline.
 deploy_triggers:
   dashboard:
     workflow: .github/workflows/deploy.yml
@@ -62,6 +71,24 @@ deploy_triggers:
   api:
     workflow: .github/workflows/deploy-api.yml
     build_source: web/api          # gcloud run deploy --source web/api
+    arming:
+      state: dormant
+      secret: GCP_SA_KEY           # allow-secret: the NAME of the secret, never a value
+      var: GCP_SA_KEY_SET          # job env: ${{ secrets.GCP_SA_KEY != '' }}
+      ungated_steps:
+        - step: actions/checkout@v7
+          note: "checks the repo out onto the runner; nothing leaves the job"
+      note: >-
+        The Cloud Run rail is dormant: GCP_SA_KEY exists nowhere, so EVERY effect-bearing
+        step is skipped and the run reports success having deployed nothing. Observed, not
+        assumed — run 31061094764 printed `GCP_SA_KEY_SET: false` from the runner's own env
+        and took the "Note skipped API deploy" branch; today's other seven main runs are the
+        same. This matches the charter: the live runtime API is the Cloudflare Worker.
+        Check K PROVES the shape offline (every step above is gated on `var`, so no secret
+        ⇒ no effect) and corroborates the STATE from the latest run's step conclusions.
+        Consequence: web/api/** and cli/** stop being website-sensitive, because merging
+        them cannot reach a live surface. Landing GCP_SA_KEY arms the rail — flip `state`
+        to `armed` in the same change, and check K fails the PR if you forget.
     paths:
       - "web/api/**"
       - path: "cli/**"
