@@ -162373,3 +162373,37 @@ tasks:
     conduct_lease_id: 'lease-549-6001e68d4f30cec0'
     conduct_generation: 549
   updated: '2026-08-06T19:23:06.760Z'
+- id: 'GH-organvm-limen-1874'
+  title: 'The jules flywheel: valve chain + throughput loop to a landed 100/day'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'plan'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1874'
+  context: 'GitHub issue organvm/limen#1874. Zero dispatch since 2026-07-19 while 829 tasks sit open and the 100/day jules quota evaporates nightly; when dispatch did run, only ~15% landed and 308 jules PRs sit blocked. Reopen the valve (governor auto-resume, beat rung, admission bootstrap) and close the loop (throughput governor clamped to landed rate, owner-route drain, work-loan backfill, flywheel predicate). Plan artifact: `docs/plans/20'
+  predicate: 'test "$(gh issue view 1874 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1874'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1874'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:12.787Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6f8a2811ad2ef2f2b990496654cdde4e:550:compatibility'
+    conduct_run_id: 'run-6f8a2811ad2ef2f2b990496654cdde4e'
+    conduct_lease_id: 'lease-550-6f8a2811ad2ef2f2'
+    conduct_generation: 550
+  updated: '2026-08-06T19:23:12.787Z'
