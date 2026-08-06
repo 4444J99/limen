@@ -119,6 +119,7 @@ sanctioned:
   - {path: remote-branch-reap-acceptance.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by his-hand-levers.json (+2 more)"}
   - {path: remote-branch-reap-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/reap-remote-branches.py (+1 more)"}
   - {path: removal-acceptance-covenant.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/parameters.yaml (+5 more)"}
+  - {path: repo-predicates.yaml, kind: data, owner: fleet, why: "consumed at this exact path by scripts/work-loan-backfill.py (LIMEN_REPO_PREDICATES default) — the supply underwriter's per-repo overrides"}
   - {path: repo-split-protocol.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/gates.yaml (+1 more)"}
   - {path: repo-surface-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+2 more)"}
   - {path: repository-evacuation-inventory-20260727.json, kind: data, owner: governance, why: "consumed at this exact path by institutio/governance/custody.yaml"}

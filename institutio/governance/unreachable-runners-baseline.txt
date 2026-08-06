@@ -1,5 +1,5 @@
 # unreachable-runners-baseline — declared enforcement artifacts with no runner, known and
 # owned rather than silently tolerated. The gate fails on any NEW finding.
 # Fix the artifact, then run: python3 scripts/check-runner-coverage.py --update
-A runner-unreachable: scripts/metabolize.sh (source 'metabolize', 48 sensor(s)) is invoked by NO tracked launchd plist, CI workflow, or reachable script — those sensors are declared and never execute
+A runner-unreachable: scripts/metabolize.sh (source 'metabolize', 49 sensor(s)) is invoked by NO tracked launchd plist, CI workflow, or reachable script — those sensors are declared and never execute
 E citation-missing: precedent 'PREC-2026-07-10-declared-but-unwired-is-a-defect' cites scripts/trunk-ci-health.py, which does not exist
