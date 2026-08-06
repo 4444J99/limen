@@ -515,7 +515,7 @@ checks.
 - **Fable plans, cheaper tiers build.** Fable's role is PLAN-ONLY: it does the deep analysis, emits a build packet into a worktree, and hands off to a cheaper tier (Opus/Sonnet/Haiku) that builds; building on Fable is prohibited. It is acceptance-gated (`scripts/fable-allotment.py accept ...`, `LIMEN_FABLE_ACCEPTANCE=<receipt>`) AND live runtime-capped against actual weekly tokens burned (40% deliberate / 50% hard, `scripts/fable-allotment.py balance` → `logs/fable-allotment.json`, enforced in `cli/src/limen/model_selection.py`). Full doctrine + caps: `docs/fable-allotment.md`.
 
 ### Gemini
-- You are Gemini CLI (v0.44.1+). Inspect the projection and register your native session at start.
+- You are Gemini CLI (live-verify the version; pins decay). Inspect the projection and register your native session at start.
 - Use `--sandbox $LIMEN_ROOT` if you need repo context.
 - Submit or accept broker-leased packets; never create hidden fanout.
 - Your per-agent budget is tracked separately from Jules.
@@ -590,5 +590,4 @@ checks.
 | Show macro/micro progress | `limen progress` (`--view`, `--scope`, `--all`, or `--json-output`) |
 | Dispatch | `limen dispatch --agent <name> --live` |
 | Harvest | `limen harvest --agent <name>` |
-| Init new | `limen init --root <path>` |
-| Sync with SaaS | `limen sync` |
+| Adopt / cancel / stop | `limen conduct adopt` · `conduct cancel` · `conduct request-stop` |

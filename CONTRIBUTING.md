@@ -11,11 +11,14 @@ and, for Claude Code specifically, `CLAUDE.md` (the operating charter) instead.
 | `cli/` | The `limen` CLI (Python / Click) — dispatch, harvest, status, capacity, converge |
 | `web/api/` | FastAPI runtime adapter |
 | `web/worker/` | Cloudflare Worker — the live runtime (GitHub-Contents storage) |
-| `web/app/` | Next.js dashboard (static export → Firebase Hosting) |
+| `web/app/` | Next.js dashboard (static export → Cloudflare Pages; the Firebase Hosting step is dormant) |
 | `mcp/`, `ianva/` | MCP server + doorway/aggregator |
+| `moneta/` | Self-hosted Bitcoin licence mint (TypeScript; `cd moneta && npm test`) |
+| `apps/`, `studium/` | Product applications (`apps/danse/` has its own `AGENTS.md`) and the study/publishing estate |
 | `spec/contracts/` | Portable JSON Schemas the generated surfaces must satisfy |
 | `scripts/` | The operational fleet (heartbeat, verification, merge policy, organs) |
-| `tasks.yaml` | The single source of truth for the task board |
+| `institutio/governance/` | Declared registries: gates, sensors, session streams (`gates.yaml` owns the gate matrix) |
+| `tasks.yaml` | Local **read-only projection** of the task board — TABVLARIVS is the state authority; never edit it directly |
 
 ## Getting set up
 
@@ -25,14 +28,24 @@ pip install -e mcp/            # MCP server (optional)
 (cd web/app && npm install)    # dashboard (optional)
 ```
 
-## The gate matrix — run before every PR
+## Verification — scoped by default
 
 ```bash
-python -m ruff check cli/src cli/tests web/api mcp     # lint (py311, line-length 120)
+scripts/verify-scoped.sh      # THE default pre-PR gate: runs exactly the gates your diff
+                              # implicates and names the ones it skipped
+python3 scripts/verify.py --explain <path>...   # preview what a change will pay
+```
+
+The gate estate is declared data in `institutio/governance/gates.yaml` — do not run the whole
+matrix by habit; `scripts/verify-whole.sh` (the whole-system predicate, exit 0 ⟺ green) is a
+pre-merge event for deploy-touching diffs, not a per-edit tax. Individual gates, when you want
+one directly:
+
+```bash
+python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva
 python -m pytest web/api/tests cli/tests -q            # tests
 python scripts/check-agent-docs.py                     # agent-doc ↔ code state-vocab drift
 node scripts/validate-contract-schemas.mjs             # surface contracts
-scripts/verify-whole.sh                                # whole-system predicate (exit 0 ⟺ green)
 ```
 
 Run one test file or case:
@@ -56,11 +69,14 @@ python -m pytest cli/tests/test_dispatch.py::test_x
 ## Branching & merging
 
 - Never commit to `main` directly. Branch by intent: `feat/`, `fix/`, `heal/`, `chore/`,
-  `docs/`, `refactor/`. One PR per branch → `main`, squash-merge, delete the branch.
+  `docs/`, `refactor/`. One PR per branch → `main`, squash-merge; branch cleanup is a separate
+  receipt-backed reap, not an automatic delete.
 - A merge to `main` **auto-deploys** the live site/API when the diff touches a deploy-trigger
-  path (`web/app/**`, `web/api/**`, `cli/**`, `tasks.yaml`, the deploy workflows). Those PRs
-  need green CI before merge. See `CLAUDE.md` → **Merge & Branch Protocol** and
-  `scripts/merge-policy.sh` (the predicate that decides each case).
+  path — the trigger list is declared once in `institutio/governance/gates.yaml`
+  (`deploy_triggers`), never restated in prose. Those PRs need green CI before merge.
+  `scripts/merge-policy.sh <PR#>` is the predicate that decides each case, and
+  `scripts/await-pr.sh <PR#> --merge` is the one sanctioned waiter. See `CLAUDE.md` →
+  **Merge & Branch Protocol**.
 
 ## Pull request checklist
 
@@ -72,10 +88,12 @@ python -m pytest cli/tests/test_dispatch.py::test_x
 
 ## Maintaining agent instructions
 
-When changing `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or generated instruction templates, keep
-the root protocol authoritative and run `python scripts/check-agent-docs.py`. Status vocabulary,
-precedence, agent names, and referenced scripts should stay machine-checked rather than manually
-remembered.
+When changing any surface of the instruction estate — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
+this file, `docs/agent-instruction-standard.md`, `.github/copilot-instructions.md` (a pointer
+file, never a second rulebook), directory-scoped `AGENTS.md` files (e.g. `apps/danse/AGENTS.md`),
+or generated instruction templates — keep the root protocol authoritative and run
+`python scripts/check-agent-docs.py`. Status vocabulary, precedence, agent names, and referenced
+scripts should stay machine-checked rather than manually remembered.
 
 ## What we accept
 

@@ -18,6 +18,10 @@ the script/schema/code rather than trusting memory.
 - `GEMINI.md` owns only Gemini-specific conduct/MCP transport details.
 - `CONTRIBUTING.md` owns human contributor guidance.
 - `docs/agent-instruction-standard.md` owns the rationale and cross-surface standard.
+- `.github/copilot-instructions.md` is a deliberate **pointer file** (Copilot reads that path
+  natively) — it defers to `AGENTS.md` and must never grow into a second rulebook.
+- Directory-scoped `AGENTS.md` files (today: `apps/danse/AGENTS.md`) are closest-wins for their
+  subtree — more specific, never higher-ranked than the root contract.
 - If you change task states, precedence, agent names, referenced scripts, or status examples, update
   `scripts/check-agent-docs.py` in the same change. Do not add a competing instruction file unless a
   new tool requires it; link it back to `AGENTS.md`.
@@ -49,16 +53,19 @@ Run/Next.js/FastAPI can be swapped.
 
 | Path | What it is | Build/run |
 |------|-----------|-----------|
-| `cli/` | The `limen` CLI (`limen.cli:main`, Click). Core verbs: `init`, `dispatch`, `release-stale`, `doctor`, `qa`, `status`, `harvest`. Logic in `dispatch.py`, `harvest.py`, `capacity.py`, `model_selection.py`, `converge.py`; data shapes in `models.py`; YAML I/O in `io.py`. The autonomic institution lives under `cli/src/limen/vigilia/`. | `pip install -e 'cli[test]'`; tests in `cli/tests/` |
+| `cli/` | The `limen` CLI (`limen.cli:main`, Click). Core verbs: `dispatch`, `release-stale`, `doctor`, `qa`, `status`, `harvest`, `streams`, plus the `conduct` group (`limen init` is retired — fails closed; the full verb/flag table lives in `README.md`). Logic in `dispatch.py`, `harvest.py`, `capacity.py`, `model_selection.py`, `converge.py`; data shapes in `models.py`; YAML I/O in `io.py`. The autonomic institution lives under `cli/src/limen/vigilia/`. | `pip install -e 'cli[test]'`; tests in `cli/tests/` |
 | `web/api/` | FastAPI runtime adapter (`main.py`). Same HTTP contract as the Worker. | `uvicorn main:app` / Docker; tests in `web/api/tests/` |
 | `web/worker/` | Cloudflare Worker — the **live** runtime, GitHub-Contents storage. Deploys on-demand via wrangler (not on merge). | `npm run dev` / `npm run deploy`; lint `npm run check` |
 | `web/app/` | Next.js dashboard (static export → Cloudflare Pages `limen-dashboard.pages.dev`; the Firebase Hosting step is dormant — its GCP credential exists nowhere, road-not-taken). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
 | `mcp/` | MCP adapter exposing the same authenticated conduct protocol and task-compatibility events (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
 | `ianva/` | MCP doorway/aggregator package. | `pip install -e ianva/` |
 | `moneta/` | **MONETA** — the sovereign cash organ (sibling of `quaestor`: quaestor *finds* money, MONETA *intakes* it). Self-hosted Bitcoin licence mint: takes BTC to an owner-controlled address, confirms against a **keyless** public explorer (mempool.space/Esplora), and signs each product's own offline ECDSA-P256 Pro licence — **no processor in the path**. Unconfigured, it *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set. `Dockerfile`-ready for a $0 deploy. | `cd moneta && npm test` (vitest + `tsc`); tests in `moneta/src/__tests__/` |
-| `spec/contracts/` + `spec/*.schema.json` | Portable JSON Schemas the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
-| `scripts/` (~120 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
+| `spec/contracts/` | Portable JSON Schemas (incl. `spec/contracts/conduct/`) the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
+| `scripts/` (~420 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
 | `organs/`, `organ-ladder.json`, `pillars.yaml`, `his-hand-levers.json` | Declarative registries: the self-* organ ladder, platform pillars, and the owned human-gated lever registry. | data files |
+| `apps/` | Product applications (`danse/`, `vision-board-studio/`). `apps/danse/AGENTS.md` is the one directory-scoped instruction file — closest wins for files under it. | per-app |
+| `studium/` | The study/publishing estate (essays, film, music, rubric, ledger) — the repo's largest component by file count; declarative + content, no build gate. | data/content files |
+| `censor/` | Insight→correction lineage: `censor/precedents.jsonl` is the precedent registry "the registry owns the answer" queries; mirrored to `censor`-labelled issues by `scripts/sync-censor-issues.py`. | data files |
 
 **Storage modes** (`io.py`): local files are development projections; the authenticated Worker
 plus GitHub Contents projection is the durable hosted keeper. Agents never treat a local
@@ -71,7 +78,7 @@ plus GitHub Contents projection is the durable hosted keeper. Agents never treat
 python -m pytest web/api/tests cli/tests -q          # full test suite
 python -m pytest cli/tests/test_dispatch.py -q       # one test file
 python -m pytest cli/tests/test_dispatch.py::test_x  # one test
-python -m ruff check cli/src cli/tests web/api mcp   # lint (py311, line-length 120)
+python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva  # lint (config: root .ruff.toml — py311, line-length 120; version pin: cli/pyproject.toml [test])
 scripts/verify-whole.sh                              # whole-system predicate (exit 0 ⟺ green)
 limen dispatch --agent jules         # dry-run preview; add --live to dispatch for real
 ```
@@ -174,7 +181,7 @@ correction (censor precedent `PREC-2026-07-04-friction-shallow-first`):
 
 Do **not** declare work "done" or "fully done" until verified end-to-end:
 
-- **Run the real gates locally**, never from memory: `python -m ruff check cli/src cli/tests web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.
+- **Run the real gates locally**, never from memory: `python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`. (The GATES registry is the command's source of truth — `scripts/verify.py --list`.)
 - **Read the predicate's OWN exit code, never a pipeline's.** `predicate | tail` makes `$?` report *tail's* status — which is essentially always `0` — so a gate that printed `FAIL` is read as green. Run the predicate bare and filter a saved copy, or use `${PIPESTATUS[0]}`. (2026-08-05: a closeout reported `EXIT=0` from a `scripts/no-tasks-on-me.sh` run that had printed `FAIL` and truly exited `1`.) The committed scripts get this right; the defect enters through **ad-hoc verification shell**, which is precisely where a false green has no second reader to catch it — so this is a standing behavioral rule, not a lint. (Lane-neutral since 2026-08-06: `AGENTS.md` → Session Discipline rule 6.)
 - **Confirm the loop/driver actually runs** — that the entrypoint executes, not merely that files compile.
 - **Check for regressions introduced by merges**: dropped imports, dumped/abandoned lanes, silently overwritten files. After any branch reconcile, diff against the prior green state.
