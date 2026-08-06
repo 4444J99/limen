@@ -162440,3 +162440,36 @@ tasks:
     conduct_lease_id: 'lease-551-0077d522e12c0895'
     conduct_generation: 551
   updated: '2026-08-06T19:23:17.820Z'
+- id: 'GH-organvm-limen-1856'
+  title: 'IDEAL-FORMS: the estate''s ideals outgrew the repo''s observability — give the six null-probe rows an environment they can be measured in'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1856'
+  context: 'GitHub issue organvm/limen#1856. Split out of #1853 (one-concern rule). Not in #1854. ## The finding Six of 21 rows in `institutio/governance/ideal-forms.yaml` carry `probe: null`. Each names an honest `probe_absent_reason`, and check E counts them loudly — the vacuum is declared, not hidden, which is the registry working as designed. But read the six reasons together and they are not six separate problems. They cluster into **fo'
+  predicate: 'test "$(gh issue view 1856 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1856'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1856'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:24.136Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-daf53cbf1498c7632c145f875ac085bc:552:compatibility'
+    conduct_run_id: 'run-daf53cbf1498c7632c145f875ac085bc'
+    conduct_lease_id: 'lease-552-daf53cbf1498c763'
+    conduct_generation: 552
+  updated: '2026-08-06T19:23:24.136Z'
