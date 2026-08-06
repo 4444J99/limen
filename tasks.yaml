@@ -162840,3 +162840,37 @@ tasks:
     conduct_lease_id: 'lease-563-2b86881ebbfea600'
     conduct_generation: 563
   updated: '2026-08-06T19:24:28.005Z'
+- id: 'GH-organvm-limen-1776'
+  title: 'needs-human (L-HEARTBEAT-WORKTREE-VOLUME-GONE): The running heartbeat daemon is configured with LIMEN_WORKTREES=/Volu…'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1776'
+  context: 'GitHub issue organvm/limen#1776. **Owner:** Anthony (human-gated lever `L-HEARTBEAT-WORKTREE-VOLUME-GONE`). Surfaced once, never nagged, never auto-pulled. This issue is the lever''s permanent, individually-closeable home in the graph — the registry `his-hand-levers.json` is its source of truth. The running heartbeat daemon is configured with LIMEN_WORKTREES=/Volumes/Scratch/limen-worktrees, and /Volumes/Scratch is NOT MOUNTED. Ev'
+  predicate: 'test "$(gh issue view 1776 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1776'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1776'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:33.290Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-46a0ce24dc4c6ab7009d4195b5c88cc0:564:compatibility'
+    conduct_run_id: 'run-46a0ce24dc4c6ab7009d4195b5c88cc0'
+    conduct_lease_id: 'lease-564-46a0ce24dc4c6ab7'
+    conduct_generation: 564
+  updated: '2026-08-06T19:24:33.290Z'
