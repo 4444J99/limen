@@ -2731,6 +2731,54 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "merge-drain rotating assessment window per run (raised 30->50 so the jules cohort gets a same-day revisit at 100/day dispatch)."
+  LIMEN_LANE_THROUGHPUT:
+    default: "1"
+    env: LIMEN_LANE_THROUGHPUT
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the lane-throughput sensor (sensors.yaml lane-throughput): per-lane throughput-governor gauge; advisory-red on a clamp sustained across 2+ days."
+  LIMEN_LANE_THROUGHPUT_HISTORY:
+    default: ""
+    env: LIMEN_LANE_THROUGHPUT_HISTORY
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the lane-throughput history ledger (default logs/lane-throughput.jsonl at LIMEN_ROOT) the sustained-clamp check reads."
+  LIMEN_THROUGHPUT_GOVERNOR:
+    default: "1"
+    env: LIMEN_THROUGHPUT_GOVERNOR
+    self_update: none
+    owner: arms-agents
+    note: "Kill-switch for the throughput governor (capacity.lane_throughput_cap enforced in dispatch._remaining_budget). 0 disables the landed-evidence clamp entirely; the per-agent budget caps still bind."
+  LIMEN_THROUGHPUT_WINDOW_DAYS:
+    default: 3
+    env: LIMEN_THROUGHPUT_WINDOW_DAYS
+    self_update: none
+    owner: arms-agents
+    note: "Trailing window (days) over dispatch_log receipts for the throughput governor's dispatched/landed counts."
+  LIMEN_THROUGHPUT_BOOTSTRAP:
+    default: 25
+    env: LIMEN_THROUGHPUT_BOOTSTRAP
+    self_update: none
+    owner: arms-agents
+    note: "Cold-start daily allowance while a lane has too few window dispatches to judge a landing rate. Never 0 — a zero here would recreate the self-sealing starvation deadlock the admission bootstrap removed."
+  LIMEN_THROUGHPUT_BOOTSTRAP_MIN:
+    default: 20
+    env: LIMEN_THROUGHPUT_BOOTSTRAP_MIN
+    self_update: none
+    owner: arms-agents
+    note: "Minimum window dispatches before the governor judges landed rate; below it the lane stays in the bootstrap allowance."
+  LIMEN_THROUGHPUT_FLOOR_RATE:
+    default: 0.30
+    env: LIMEN_THROUGHPUT_FLOOR_RATE
+    self_update: none
+    owner: arms-agents
+    note: "Landed/dispatched floor at which a lane earns its full daily target. Below it the lane is clamped to ramp_mult x landed (never under the bootstrap allowance) with a receipt in logs/throughput-governor.jsonl."
+  LIMEN_THROUGHPUT_RAMP_MULT:
+    default: 3
+    env: LIMEN_THROUGHPUT_RAMP_MULT
+    self_update: none
+    owner: arms-agents
+    note: "Throttled-mode multiplier: cap = max(bootstrap, ramp_mult x landed_in_window), capped at the daily target — landing more work opens more dispatch."
   LIMEN_FUNNEL_INTEGRITY:
     default: "1"
     env: LIMEN_FUNNEL_INTEGRITY
