@@ -36,26 +36,55 @@ ratchets:
 # implicates only cheap gates. tasks.yaml is deliberately NOT a trigger (the board fast
 # lane): the Worker serves the board live at runtime, and deploy.yml's hourly cron rebakes
 # the static dashboard.json when inputs changed — a board publish is data, not a deploy.
+#
+# `build_source` is what the deploy job actually builds and uploads. Check J holds every
+# trigger path to it: a path inside build_source needs no defence, the trigger's own workflow
+# file is self-evident, and ANYTHING ELSE must carry a note saying how it reaches the deployed
+# artifact.
+#
+# That rule exists because `cli/**` sat in the api trigger from the original buildout commit
+# (26b811e7) and misclassified every cli PR as WEBSITE-SENSITIVE. Check C could never catch it:
+# it compares the registry to the workflow, and the WORKFLOW was the thing that was wrong. So
+# parity preserved the defect faithfully for months. A note beginning UNJUSTIFIED records a
+# path that cannot defend itself — check J reports those and does not fail on them, the same
+# baseline shape the rest of this estate uses. Two of them are not the same finding as none.
 deploy_triggers:
   dashboard:
     workflow: .github/workflows/deploy.yml
+    build_source: web/app          # npm ci && npm run build, working-directory: web/app
     paths:
       - "web/app/**"
-      - "scripts/assemble-dashboard-data.py"
-      - "firebase.json"
+      - path: "scripts/assemble-dashboard-data.py"
+        note: "runs as a step inside the deploy job (deploy.yml) to bake the static data"
+      - path: "firebase.json"
+        note: "configures the hosting artifact the job publishes"
       - ".github/workflows/deploy.yml"
   api:
     workflow: .github/workflows/deploy-api.yml
+    build_source: web/api          # gcloud run deploy --source web/api
     paths:
       - "web/api/**"
-      - "cli/**"
-      - "scripts/preflight-cloud-run.sh"
+      - path: "cli/**"
+        note: >-
+          UNJUSTIFIED — recorded, not defended. Nothing under cli/ can reach the deployed
+          artifact: the job runs `gcloud run deploy --source web/api`, web/api/Dockerfile
+          COPYs exactly requirements.txt + main.py + limen_intake.py + limen_work_loan.py,
+          and web/api/main.py imports only stdlib, PyPI, and its two siblings. It rode in
+          with the original buildout (26b811e7) and misclassifies every cli PR as
+          website-sensitive, making it wait on a full green rollup for a deploy that cannot
+          happen. Removal must leave BOTH this file and deploy-api.yml at once (check C is
+          set-equality), and pushing .github/workflows/** needs a `workflow`-scoped
+          credential this fleet does not hold — the push is rejected by GitHub, not skipped.
+          One `gh auth refresh -h github.com -s workflow` unblocks the one-line follow-up.
+      - path: "scripts/preflight-cloud-run.sh"
+        note: "runs as a step inside the deploy job (deploy-api.yml) before the Cloud Run push"
       - ".github/workflows/deploy-api.yml"
   runtime_worker:
     workflow: .github/workflows/deploy-worker.yml
-    paths: []
+    paths: []                      # workflow_dispatch only — merging never deploys the Worker
   danse:
     workflow: .github/workflows/deploy-danse.yml
+    build_source: apps/danse       # wrangler pages deploy apps/danse
     paths:
       - "apps/danse/**"
       - ".github/workflows/deploy-danse.yml"

@@ -53,6 +53,11 @@ SUPERSEDED_OK='[{"name":"review","status":"COMPLETED","conclusion":"CANCELLED","
 DUP_LATEST_FAIL='[{"name":"review","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"},{"name":"review","status":"COMPLETED","conclusion":"FAILURE","startedAt":"2026-07-18T05:00:00Z"},{"name":"python","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-07-18T00:00:00Z"}]'
 DOC_FILES='[{"path":"docs/x.md"}]'
 WEB_FILES='[{"path":"web/api/main.py"}]'
+# The api deploy builds `--source web/api` and its Dockerfile COPYs four files; nothing under
+# cli/ reaches the image. `cli/**` sat in deploy-api.yml from the original buildout until
+# 2026-08-05, so every cli PR — including a test-only one — was classified WEBSITE-SENSITIVE
+# and made to wait on a FULL green rollup for a deploy that could not happen.
+CLI_FILES='[{"path":"cli/tests/test_notify_gate_estate.py"},{"path":"cli/src/limen/dispatch.py"}]'
 
 mkjson() { # state isDraft mss files rollup
   printf '{"number":1,"title":"t","url":"http://x","state":"%s","isDraft":%s,"mergeStateStatus":"%s","baseRefName":"main","headRefName":"f","headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","files":%s,"statusCheckRollup":%s}\n' \
@@ -98,6 +103,13 @@ mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
 check_output "clean non-deploy + green" 0 "MERGE-MODE: direct"
 mkjson OPEN false CLEAN "$WEB_FILES" "$GREEN"
 check_output "clean website-sensitive + green" 0 "MERGE-MODE: direct"
+# PINS THE DEFECT, NOT THE INTENT. A cli-only diff is classified WEBSITE-SENSITIVE today,
+# and this asserts that so the state is measured rather than assumed. When `cli/**` leaves
+# deploy-api.yml + gates.yaml (one workflow-scoped push away — see the UNJUSTIFIED note on
+# deploy_triggers.api), flip the expectation to "non-deploy — merging will NOT trigger" and
+# this line becomes the proof the misclassification is gone.
+mkjson OPEN false CLEAN "$CLI_FILES" "$GREEN"
+check_output "cli-only still classified sensitive (recorded defect)" 0 "WEBSITE-SENSITIVE"
 mkjson OPEN false HAS_HOOKS "$DOC_FILES" "$GREEN"; check "has_hooks non-deploy + green" 0
 mkjson OPEN false CLEAN "$DOC_FILES" "$SUPERSEDED_OK"; check "superseded CANCELLED, latest SUCCESS" 0
 
