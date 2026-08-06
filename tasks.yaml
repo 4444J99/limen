@@ -162573,3 +162573,36 @@ tasks:
     conduct_lease_id: 'lease-555-ad706e31e6ccbea3'
     conduct_generation: 555
   updated: '2026-08-06T19:23:40.930Z'
+- id: 'GH-organvm-limen-1839'
+  title: 'flaky: test_full_relay_exec_proof_closes_while_keepalive_remains_live races the provider pid-file write under parallel load'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1839'
+  context: 'GitHub issue organvm/limen#1839. `cli/tests/test_campaign_relay_effector.py::test_full_relay_exec_proof_closes_while_keepalive_remains_live` fails under parallel load and passes in isolation. Observed 2026-08-05 on a local `scripts/verify-scoped.sh` run (xdist worker `gw4`, 1 failed / 5067 passed): ``` > assert provider_pid_path.is_file() E AssertionError: assert False cli/tests/test_campaign_relay_effector.py:260: AssertionError'
+  predicate: 'test "$(gh issue view 1839 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1839'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1839'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:47.686Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-f3eaca5155a2e16b6f1f46a71eb78d44:556:compatibility'
+    conduct_run_id: 'run-f3eaca5155a2e16b6f1f46a71eb78d44'
+    conduct_lease_id: 'lease-556-f3eaca5155a2e16b'
+    conduct_generation: 556
+  updated: '2026-08-06T19:23:47.686Z'
