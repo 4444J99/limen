@@ -102,7 +102,9 @@ workstream --prompt "objective and constraints" limen my-workstream
 ## Architecture
 
 ```
-tasks.yaml (source of truth)
+TABVLARIVS (deterministic state, lease & budget authority)
+    │ projects
+tasks.yaml (read-only local projection)
     │
     ├── limen CLI (dispatch → harvest → status)
     │
@@ -127,13 +129,16 @@ contract and GitHub Contents storage; it can be checked locally with
 branch. Mutation requests return a typed, retryable `409` owned by TABVLARIVS;
 inline/disposable adapters remain writable for local contract tests.
 
-The Firebase dashboard at `https://device-streaming-067d747a.web.app` is static hosting backed by a deployed Cloudflare Worker runtime:
+The live dashboard is the Cloudflare Pages deploy at `https://limen-dashboard.pages.dev`
+(auto-deployed on merge to `main`), backed by the Cloudflare Worker runtime:
 
 ```text
 https://limen-runtime.ivixivi.workers.dev
 ```
 
-Firebase hosting ships public-safe static shells and public contracts only. Internal, QA, client, readiness, and task-board data load from the runtime after the appropriate bearer token is supplied. The dashboard deploy workflow reads `NEXT_PUBLIC_API_URL` from the repository variable `LIMEN_API_URL`.
+The Firebase mirror at `https://device-streaming-067d747a.web.app` still serves its last
+deploy, but its rail is dormant (no GCP credential exists in CI). Both static hosts ship
+public-safe shells and public contracts only. Internal, QA, client, readiness, and task-board data load from the runtime after the appropriate bearer token is supplied. The dashboard deploy workflow reads `NEXT_PUBLIC_API_URL` from the repository variable `LIMEN_API_URL`.
 
 Published surfaces:
 
