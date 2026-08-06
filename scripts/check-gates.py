@@ -25,6 +25,7 @@ Run directly (``scripts/check-gates.py``) or via pr-gate / verify-whole.
 
 from __future__ import annotations
 
+import importlib.util
 import re
 import shlex
 import subprocess
@@ -32,6 +33,24 @@ import sys
 from pathlib import Path
 
 import yaml
+
+
+def _load_verify():
+    """The registry's own reader, loaded by path — one definition of what a trigger path IS.
+
+    A second copy of the bare-glob-vs-{path,note} normalization here is exactly the shape
+    _root.py was extracted to kill: one wrong answer surviving in two places. verify.py owns
+    the registry semantics; this checker holds the registry to them.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "_limen_verify_for_gates", Path(__file__).resolve().parent / "verify.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+trigger_globs = _load_verify().trigger_globs
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "gates.yaml"
@@ -153,15 +172,50 @@ def main() -> int:
             fail("C", f"deploy_triggers.{name}: workflow {trigger['workflow']} missing")
             continue
         wf_paths = (workflow_doc(wf_path).get("on", {}).get("push") or {}).get("paths") or []
-        if set(wf_paths) != set(trigger.get("paths") or []):
+        if set(wf_paths) != set(trigger_globs(trigger)):
             fail(
                 "C",
-                f"deploy_triggers.{name}: registry paths {sorted(trigger.get('paths') or [])} "
+                f"deploy_triggers.{name}: registry paths {sorted(trigger_globs(trigger))} "
                 f"!= workflow on.push.paths {sorted(wf_paths)}",
             )
     for wf in sorted(WORKFLOWS.glob("deploy*.yml")):
         if wf.name not in registered_workflows:
             fail("C", f"{wf.name} is a deploy workflow but has no deploy_triggers entry")
+
+    # --- J: every deploy-trigger path is justified, not inherited --------------
+    unjustified: list[str] = []
+    # Check C proves the registry MIRRORS the workflow. It cannot prove the workflow is right,
+    # and for `cli/**` in the api trigger it was not: that glob rode in with the original
+    # buildout commit and misclassified every cli PR as website-sensitive for months, because
+    # parity faithfully preserved a path nothing in the build could consume. So each path must
+    # now be inside what the job actually builds, or say in writing how it reaches the artifact.
+    for name, trigger in triggers.items():
+        globs = trigger_globs(trigger)
+        if not globs:
+            continue  # workflow_dispatch-only triggers deploy nothing on merge
+        source = trigger.get("build_source")
+        if not source:
+            fail("J", f"deploy_triggers.{name}: needs `build_source` — what the deploy job builds")
+            continue
+        if not (ROOT / source).exists():
+            fail("J", f"deploy_triggers.{name}: build_source {source!r} does not exist")
+        for entry in trigger.get("paths") or []:
+            path = entry.get("path") if isinstance(entry, dict) else entry
+            if path == trigger["workflow"] or path.startswith(f"{source}/"):
+                continue  # inside the build, or the deploy definition itself
+            note = str(entry.get("note") or "").strip() if isinstance(entry, dict) else ""
+            if not note:
+                fail(
+                    "J",
+                    f"deploy_triggers.{name}: {path!r} is outside build_source {source!r} — "
+                    "give it a `note` saying how it reaches the deployed artifact, or drop it "
+                    "(from the workflow too; check C is set-equality)",
+                )
+            elif note.startswith("UNJUSTIFIED"):
+                # Reported, never failed: the path IS a defect, and the registry now says so
+                # out loud instead of a glob sitting there looking deliberate. Failing here
+                # would only pressure the next author into writing a fictional justification.
+                unjustified.append(f"deploy_triggers.{name}: {path!r} — {note.split('.')[0]}.")
 
     # --- D + E: ci_job resolves; CI filters cover the gate's paths ------------
     for gate_id, gate in gates.items():
@@ -211,7 +265,7 @@ def main() -> int:
             fail("G", "CLAUDE.md must point at institutio/governance/gates.yaml")
     else:
         for trigger in triggers.values():
-            for path_glob in trigger.get("paths") or []:
+            for path_glob in trigger_globs(trigger):
                 if path_glob.rstrip("*/") not in charter:
                     fail("G", f"CLAUDE.md deploy-trigger prose is missing {path_glob!r}")
 
@@ -238,6 +292,13 @@ def main() -> int:
             continue
         if PYTEST_WRAPPER not in shlex.split(command):
             fail("I", f"{gate_id}: pytest command must use {PYTEST_WRAPPER}")
+
+    if unjustified:
+        # Printed on the OK path too — a recorded defect that only shows up when something
+        # else fails is a defect nobody reads.
+        print(f"check-gates: {len(unjustified)} deploy-trigger path(s) recorded UNJUSTIFIED:")
+        for line in unjustified:
+            print(f"  · {line}")
 
     if failures:
         print(f"GATES DRIFT: {len(failures)} finding(s) — registry and repo disagree:")
