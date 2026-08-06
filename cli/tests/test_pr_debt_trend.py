@@ -112,7 +112,15 @@ def test_silence_is_not_improvement(mod, repo, capsys, monkeypatch):
     assert "silence is not improvement" in out
     assert mod.PRODUCER in out, "the failure must name the command that ACTUALLY writes the ledger"
     assert "pr-debt" in mod.PRODUCER, "`reconcile` is a dry effector report; it never writes the ledger"
-    assert "GITVS-UNCAPPED-PR-DEBT-0715" in out, "and the owner of record for its being unwired"
+    # DERIVED, not pinned. This line read `assert "GITVS-UNCAPPED-PR-DEBT-0715" in out` — the
+    # finding that owned the producer being UNWIRED. #1854 wired it, so the message correctly
+    # stopped naming that finding and started naming the sensor that runs it, and the test went
+    # red on main for saying the old thing. The assertion that survives a correct change is the
+    # one that reads the constant instead of copying it.
+    # `"" in out` is vacuously true, so deriving without this guard would trade a stale
+    # assertion for a silent one — the worse of the two.
+    assert mod.PRODUCER_OWNER.strip(), "PRODUCER_OWNER must name a real runner, not be empty"
+    assert mod.PRODUCER_OWNER in out, "and who runs it — an unowned producer is how the series died"
 
 
 def test_a_single_observation_is_unmeasurable_and_that_is_a_failure(mod, repo, capsys, monkeypatch):
