@@ -163323,3 +163323,36 @@ tasks:
     conduct_lease_id: 'lease-577-b6cb90702b161576'
     conduct_generation: 577
   updated: '2026-08-06T23:15:32.921Z'
+- id: 'GH-organvm-limen-1903'
+  title: 'Dual-estate config seam: ~/.claude still carries user-scope MCP/hooks/env/warp absent from the live CLAUDE_CONFIG_DIR root'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1903'
+  context: 'GitHub issue organvm/limen#1903. Surfaced by the 2026-08-06 `/doctor` run (cleanup PR: #1900). Continuation of the harness-root-drift lineage (`docs/plans/2026-07-30-harness-root-drift.md`, `docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md`). **Finding:** the legacy home tree `~/.claude/` still holds user-scope config that the live root (`$CLAUDE_CONFIG_DIR = $LIMEN_AGENT_RUNTIME_ROOT/claude`) does not have: - 4 user-s'
+  predicate: 'test "$(gh issue view 1903 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1903'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1903'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T23:15:37.675Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-ec86bddd30f3f96e7715f44bbfce5e25:578:compatibility'
+    conduct_run_id: 'run-ec86bddd30f3f96e7715f44bbfce5e25'
+    conduct_lease_id: 'lease-578-ec86bddd30f3f96e'
+    conduct_generation: 578
+  updated: '2026-08-06T23:15:37.675Z'
