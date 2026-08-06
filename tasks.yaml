@@ -162273,3 +162273,36 @@ tasks:
     conduct_lease_id: 'lease-546-def75265fda4ef18'
     conduct_generation: 546
   updated: '2026-08-06T19:22:47.397Z'
+- id: 'GH-organvm-limen-1890'
+  title: 'Board: LIMEN_SESSION_CLOSEOUT observe-flip (deliberate second flip after false-closeouts clear)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1890'
+  context: 'GitHub issue organvm/limen#1890. G11 of the universal-insights plan (`docs/plans/2026-08-06-universal-insights-governance.md`, issue #1876). The closeout-reconcile sensor ships dark (`LIMEN_SESSION_CLOSEOUT` observe-only). The plan deliberately does NOT flip it in the same wave that lands the closure covenant: flip it as its own observed decision once the false-closeout class demonstrably clears under the new covenant (AGENTS.md'
+  predicate: 'test "$(gh issue view 1890 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1890'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1890'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:22:52.137Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-3d95486df0ec62fd31ce4a6c92684026:547:compatibility'
+    conduct_run_id: 'run-3d95486df0ec62fd31ce4a6c92684026'
+    conduct_lease_id: 'lease-547-3d95486df0ec62fd'
+    conduct_generation: 547
+  updated: '2026-08-06T19:22:52.137Z'
