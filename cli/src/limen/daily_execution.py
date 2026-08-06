@@ -1086,6 +1086,13 @@ def run_daily_execution(
     if write_receipt:
         try:
             result["receipt_path"] = str(path)
+            if isinstance(prior, dict):
+                replay = dict(prior)
+                replay["completed_at"] = result["completed_at"]
+                if replay == result:
+                    # A replay that differs only by the clock read is the fixed point:
+                    # keep the persisted receipt (state and bytes) instead of re-stamping.
+                    return prior
             _write_receipt(path, result)
         except OSError:
             result["blockers"].append("daily receipt could not be written")
