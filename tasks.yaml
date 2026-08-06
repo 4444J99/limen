@@ -163257,3 +163257,36 @@ tasks:
     conduct_lease_id: 'lease-575-fcaf1ade5ecdabc1'
     conduct_generation: 575
   updated: '2026-08-06T23:15:23.547Z'
+- id: 'GH-organvm-limen-1908'
+  title: 'pr-gate stopped firing on pull_request (~17:28Z 2026-08-06) — every PR is BLOCKED on a required context that never reports'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1908'
+  context: 'GitHub issue organvm/limen#1908. `PR Gate` is *the* always-on required status check for `main` — its own header says so, and says why it carries no path filter: a required check that does not report on some PRs "blocks the PR forever (Expected but never reported)". It has stopped reporting on `pull_request`, so that is now happening to every PR. ### Evidence Last `pull_request`-triggered PR Gate run: **2026-08-06 ~17:28Z**. ``` $'
+  predicate: 'test "$(gh issue view 1908 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1908'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1908'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T23:15:28.192Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-3bf75d0c1f434b32638b426fdb477cf5:576:compatibility'
+    conduct_run_id: 'run-3bf75d0c1f434b32638b426fdb477cf5'
+    conduct_lease_id: 'lease-576-3bf75d0c1f434b32'
+    conduct_generation: 576
+  updated: '2026-08-06T23:15:28.192Z'
