@@ -289,6 +289,10 @@ def test_repeated_completed_run_returns_identical_persisted_state(tmp_path: Path
     )
     monkeypatch.setenv("LIMEN_DAILY_EXECUTION_RECEIPT", str(receipt_path))
     monkeypatch.setenv("LIMEN_DELIVERY_RECEIPTS", str(delivery_path))
+    # Force every clock read onto a distinct second so the replay cannot pass by
+    # luckily landing inside the same wall-clock second as the first run.
+    ticks = iter(range(60))
+    monkeypatch.setattr(daily_execution, "_now", lambda: f"2026-08-03T12:00:{next(ticks):02d}Z")
     calls: list[dict] = []
 
     first = run_daily_execution(

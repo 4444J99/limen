@@ -5174,6 +5174,24 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_NOTIFY_GATE:
+    default: "1"
+    env: LIMEN_NOTIFY_GATE
+    self_update: none
+    owner: diurnal
+    note: "Whether the beat surveys every copy of scripts/_notify.py on this host for the osascript effector gate. Measured 2026-08-05: the gate shipped at 19:20 and four more 'LIMEN · morning — ABSENT' pops landed after it, because a fix in a versioned file cannot reach the 21 other notifier copies on the machine — 14 worktrees plus 7 rotated runtime install trees that launchd runs overnight-watch from. A tree-local guard cannot protect a host-global effector. 0 = stop counting them, which does not stop them popping."
+  LIMEN_BEAT_NOTIFY_GATE:
+    default: 8
+    env: LIMEN_BEAT_NOTIFY_GATE
+    self_update: none
+    owner: diurnal
+    note: "Cadence (every N beats) at which the notifier-copy survey runs. 8 is the hygiene cadence: an ungated copy appears only when a worktree is cut or a runtime tree rotates, so this tracks estate churn rather than the minute. The survey parses ~23 small files and touches no network."
+  LIMEN_NOTIFY_GATE_TIMEOUT:
+    default: 60
+    env: LIMEN_NOTIFY_GATE_TIMEOUT
+    self_update: none
+    owner: diurnal
+    note: "Per-run timeout (seconds) for the notifier-copy survey. Generous for an AST parse of ~23 files; the real cost is the `git worktree list` subprocess and an iterdir over the rotated runtime trees, both of which can stall on a detached /Volumes mount."
   LIMEN_DIURNAL_REAP_MAX:
     default: 3
     env: LIMEN_DIURNAL_REAP_MAX
