@@ -889,7 +889,7 @@ sensors:
             args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_CLAUDE_LSREGISTER_HEAL); registers the deliverable valve
             armed_valve_type: deliverable
         severity: advisory
-        escalation: "malformed ClaudeCode.app stub registered (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat unregisters + removes it, else 'damaged, move to Trash' recurs every launch"
+        escalation: "unassessable ClaudeCode.app registered with LaunchServices (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat UNREGISTERS it (never removes it: the bundle is vendor-materialized every start and deleting it destroys the stable TCC identity sensor 0g8d keeps). Ideal form IF-GATEKEEPER-INERT; corrected root in docs/macos-tcc-gatekeeper-dialogs-solved.md"
       - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         severity: advisory
         escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"
