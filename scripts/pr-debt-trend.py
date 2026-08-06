@@ -139,6 +139,21 @@ def _count_from(blob: str) -> int | None:
     return int(n) if isinstance(n, int) else None
 
 
+def _generated_at(blob: str) -> str | None:
+    """The ledger's own UTC stamp — the only safe basis for ordering two ledgers in time.
+
+    git's `--date=short` is the author's LOCAL date. Comparing it against this one is comparing
+    two different clocks, and the series did exactly that until a run of `--series` showed the
+    same 1,293-PR ledger twice: once as its commit, once as `[worktree]` a calendar day later.
+    """
+    try:
+        data = json.loads(blob)
+    except ValueError:
+        return None
+    stamp = data.get("generated_at")
+    return stamp if isinstance(stamp, str) and stamp else None
+
+
 def series() -> list[tuple[str, int, str]]:
     """Every observation git can show, oldest first, as (date, open_pr_count, source).
 
@@ -148,6 +163,7 @@ def series() -> list[tuple[str, int, str]]:
     """
     rc, out = _git("log", "--format=%H %ad", "--date=short", "--", LEDGER_REL)
     rows: list[tuple[str, int, str]] = []
+    newest_blob = ""
     if rc == 0:
         for line in out.splitlines():
             sha, _, date = line.partition(" ")
@@ -156,22 +172,32 @@ def series() -> list[tuple[str, int, str]]:
             rc2, blob = _git("show", f"{sha}:{LEDGER_REL}")
             n = _count_from(blob) if rc2 == 0 else None
             if n is not None:
+                if not newest_blob:
+                    newest_blob = blob  # git log is newest-first, so the first hit is the newest
                 rows.append((date.strip(), n, sha[:8]))
     rows.reverse()  # git log is newest-first; a series reads forward
 
     # The working tree may hold an observation newer than any commit — gitvs writes the file
     # before anything commits it. Counting it keeps the freshness check honest about what the
     # producer actually did, rather than about when someone last committed its output.
+    #
+    # It counts only when it is a DIFFERENT OBSERVATION than the newest committed one, and both
+    # halves of that test were wrong. Identity was "is its date later?", which re-rendered an
+    # already-committed observation whenever the clock alone had moved; and the comparison put the
+    # ledger's UTC `generated_at` against git's `--date=short`, the author's LOCAL date, so any
+    # census run after ~20:00 local looked a calendar day newer than the commit holding its own
+    # identical bytes. Verification caught it as a phantom `+0` row attributed to `[worktree]`
+    # sitting under the commit it was a copy of. Identity is now the stable digest — the same
+    # basis `record()` ships on — and ordering compares UTC to UTC.
     live = ROOT / LEDGER_REL
     if live.is_file():
-        n = _count_from(live.read_text(encoding="utf-8"))
-        if n is not None:
-            try:
-                stamp = str(json.loads(live.read_text(encoding="utf-8")).get("generated_at") or "")[:10]
-            except ValueError:
-                stamp = ""
-            if stamp and (not rows or stamp > rows[-1][0]):
-                rows.append((stamp, n, "worktree"))
+        blob = live.read_text(encoding="utf-8")
+        n = _count_from(blob)
+        stamp = _generated_at(blob)
+        if n is not None and stamp and _stable_digest(blob) != _stable_digest(newest_blob):
+            newest_stamp = _generated_at(newest_blob)
+            if newest_stamp is None or stamp > newest_stamp:
+                rows.append((stamp[:10], n, "worktree"))
     return rows
 
 
@@ -289,7 +315,13 @@ def record(*, dry_run: bool) -> int:
     after = ledger.read_text(encoding="utf-8") if ledger.is_file() else ""
     after_digest = _stable_digest(after)
     if after_digest is None:
-        print("  \u2717 the census wrote no readable ledger — nothing to record")
+        # Restore for the SAME reason the no-change branch below does, and more urgently: a census
+        # that died mid-write leaves unparseable JSON in a TRACKED file, and leaving it there hands
+        # sync-release.sh and capture.sh a broken ledger to sweep into an unrelated branch. The
+        # first cut restored only on the happy path, so the one case where the file is genuinely
+        # invalid was the one case left dirty — found by running the failure, not by reading it.
+        _git("checkout", "--", LEDGER_REL)
+        print("  \u2717 the census wrote no readable ledger — nothing to record, ledger restored")
         print((proc.stderr or "").strip()[:500])
         return 1
 
