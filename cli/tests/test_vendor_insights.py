@@ -8,6 +8,7 @@ the parent session_meta.session_id and must aggregate, not drop)."""
 import importlib.util
 import json
 import sqlite3
+import sys
 import types
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -623,3 +624,199 @@ def test_ingest_gemini_counts_sessions_and_flags_no_reply(tmp_path, monkeypatch)
     assert packet["sessions_seen"] == 1
     signals = {s["signal"]: s["count"] for s in packet["friction_signals"]}
     assert signals.get("no_reply_sessions") == 1
+
+
+# ─── desktop lanes + cline (Branch B) ────────────────────────────────
+
+
+def test_every_registry_vendor_is_adapter_or_dormant():
+    # "every vendor must appear here; silence is not allowed" cuts both ways:
+    # a registered vendor either has a live adapter or is declared dormant.
+    for vendor, meta in ingest.VENDOR_REGISTRY.items():
+        assert vendor in ingest.ADAPTERS or meta.get("dormant"), f"'{vendor}' has no adapter and is not dormant"
+
+
+def test_every_indexer_has_a_catter():
+    assert set(vi.INDEXERS) == set(vi.CATTERS)
+
+
+def test_dormant_vendors_emit_packets_even_when_targeted(monkeypatch, capsys):
+    # --vendor jules used to emit NOTHING: not in ADAPTERS ("Unknown vendor"),
+    # and the trailing dormant loop skipped it because it WAS targeted.
+    monkeypatch.setattr(sys, "argv", ["insight-cross-vendor-ingest.py", "--vendor", "jules", "--dry-run"])
+    assert ingest.main() == 0
+    out = capsys.readouterr().out
+    packet = json.loads(out)
+    assert packet["vendor"] == "jules"
+    assert any("DORMANT" in note for note in packet["data_quality_notes"])
+
+
+def _claude_desktop_fixture(tmp_path: Path) -> Path:
+    root = tmp_path / "Claude"
+    now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    (root / "claude-code-sessions" / "sess-aaa").mkdir(parents=True)
+    (root / "claude-code-sessions" / "sess-aaa" / "meta.json").write_text('{"k": 1}')
+    (root / "local-agent-mode-sessions" / "sess-bbb").mkdir(parents=True)
+    leveldb = root / "Local Storage" / "leveldb"
+    leveldb.mkdir(parents=True)
+    (leveldb / "000003.log").write_bytes(b"SECRET-CONVERSATION-CONTENT do not surface")
+    (root / "plan-usage-history.json").write_text(
+        json.dumps(
+            {
+                "version": 2,
+                "samples": [
+                    {"org": "o", "t": now_ms - 1000, "u": {"fh": 95, "sd": 40}},
+                    {"org": "o", "t": now_ms, "u": {"fh": 10, "sd": 20}},
+                    {"org": "o", "t": 1, "u": {"fh": 100, "sd": 100}},  # out of window
+                ],
+            }
+        )
+    )
+    return root
+
+
+def test_claude_desktop_never_opens_leveldb(tmp_path, monkeypatch):
+    root = _claude_desktop_fixture(tmp_path)
+    monkeypatch.setitem(ingest.VENDOR_REGISTRY["claude-desktop"], "path", root)
+    mod = _fake_mod(**{"claude-desktop": ingest.VENDOR_REGISTRY["claude-desktop"]})
+
+    res = vi._index_claude_desktop(mod, WINDOW, 10)
+    assert {s["id"] for s in res.sessions} == {"sess-aaa", "sess-bbb"}
+    assert all(s["user_msgs"] == 0 and s["assistant_msgs"] == 0 for s in res.sessions)
+    assert res.extra["plan_usage"]["samples_in_window"] == 2
+    assert res.extra["plan_usage"]["saturated_samples"] == 1
+    assert res.extra["plan_usage"]["peak_five_hour_pct"] == 95
+    assert "SECRET-CONVERSATION-CONTENT" not in json.dumps(res.sessions) + json.dumps(res.extra)
+
+    cat = vi._cat_claude_desktop(mod, "sess-aaa", 10_000)
+    assert "meta.json" in cat
+    assert "never parses" in cat
+    assert "SECRET-CONVERSATION-CONTENT" not in cat
+
+    packet = ingest._ingest_claude_desktop(WINDOW)
+    assert packet["sessions_seen"] == 2
+    signals = {s["signal"]: s["count"] for s in packet["friction_signals"]}
+    assert signals.get("plan_saturation") == 1
+    assert "SECRET-CONVERSATION-CONTENT" not in json.dumps(packet)
+
+
+def test_chatgpt_desktop_never_reads_data_payload(tmp_path, monkeypatch):
+    root = tmp_path / "com.openai.chat"
+    conv = root / "conversations-v3-acct123"
+    conv.mkdir(parents=True)
+    payload = b"SECRET-PAYLOAD user said something private"
+    (conv / "conv-one.data").write_bytes(payload)
+    monkeypatch.setitem(ingest.VENDOR_REGISTRY["chatgpt-desktop"], "path", root)
+    mod = _fake_mod(**{"chatgpt-desktop": ingest.VENDOR_REGISTRY["chatgpt-desktop"]})
+
+    res = vi._index_chatgpt_desktop(mod, WINDOW, 10)
+    assert [s["id"] for s in res.sessions] == ["conv-one"]
+    assert res.sessions[0]["approx_bytes"] == len(payload)
+    assert "SECRET-PAYLOAD" not in json.dumps(res.sessions)
+
+    cat = vi._cat_chatgpt_desktop(mod, "conv-one", 10_000)
+    assert f"{len(payload)}B" in cat
+    assert "never reads" in cat
+    assert "SECRET-PAYLOAD" not in cat
+
+    packet = ingest._ingest_chatgpt_desktop(WINDOW)
+    assert packet["sessions_seen"] == 1
+    assert "SECRET-PAYLOAD" not in json.dumps(packet)
+
+
+def test_cat_cline_does_not_echo_state_values(tmp_path, monkeypatch):
+    root = tmp_path / "cline-data"
+    ws = root / "workspaces" / "ws-alpha"
+    ws.mkdir(parents=True)
+    (ws / "workspaceState.json").write_text('{"apiKey": "SECRET-STATE-VALUE", "taskHistory": "SECRET-TASK"}')
+    monkeypatch.setitem(ingest.VENDOR_REGISTRY["cline"], "path", root)
+    mod = _fake_mod(cline=ingest.VENDOR_REGISTRY["cline"])
+
+    res = vi._index_cline(mod, WINDOW, 10)
+    assert [s["id"] for s in res.sessions] == ["ws-alpha"]
+    assert res.sessions[0]["user_msgs"] == 0
+    assert any("zero message counts are the finding" in n for n in res.notes)
+
+    cat = vi._cat_cline(mod, "ws-alpha", 10_000)
+    assert "workspaceState.json" in cat
+    assert "SECRET-STATE-VALUE" not in cat
+    assert "SECRET-TASK" not in cat
+
+
+def _write_vscode_session(ws_root: Path, sid: str, requests: list, patches: int = 0, version: int = 3):
+    chat_dir = ws_root / "hash-1" / "chatSessions"
+    chat_dir.mkdir(parents=True, exist_ok=True)
+    snapshot = {
+        "version": version,
+        "sessionId": sid,
+        "creationDate": int(datetime.now(timezone.utc).timestamp() * 1000),
+        "requests": requests,
+    }
+    lines = [json.dumps({"kind": 0, "v": snapshot})]
+    lines += [json.dumps({"kind": 1, "v": {"op": i}}) for i in range(patches)]
+    (chat_dir / f"{sid}.jsonl").write_text("\n".join(lines))
+
+
+def test_vscode_chat_reads_v3_snapshot_and_counts_patches(tmp_path, monkeypatch):
+    ws_root = tmp_path / "workspaceStorage"
+    _write_vscode_session(
+        ws_root,
+        "sess-v3",
+        [{"message": {"text": "find the bug"}, "response": {"text": "found it"}}],
+        patches=2,
+    )
+    monkeypatch.setitem(ingest.VENDOR_REGISTRY["vscode-copilot-chat"], "path", ws_root)
+    mod = _fake_mod(**{"vscode-copilot-chat": ingest.VENDOR_REGISTRY["vscode-copilot-chat"]})
+
+    res = vi._index_vscode_chat_stable(mod, WINDOW, 10)
+    assert len(res.sessions) == 1
+    s = res.sessions[0]
+    assert s["id"] == "sess-v3"
+    assert s["user_msgs"] == 1
+    assert s["assistant_msgs"] == 1
+    assert s["patch_lines"] == 2
+
+    cat = vi._cat_vscode_chat_stable(mod, "sess-v3", 10_000)
+    assert "find the bug" in cat
+    assert "found it" in cat
+    assert "not replayed" in cat
+
+    packet = ingest._ingest_vscode_chat_stable(WINDOW)
+    assert packet["sessions_seen"] == 1
+    patterns = set(packet["notable_patterns"])
+    assert "v3_snapshot_headers: 1" in patterns
+    assert "patch_lines_total: 2" in patterns
+
+
+def test_vscode_chat_non_v3_degrades_to_counts_only(tmp_path, monkeypatch):
+    ws_root = tmp_path / "workspaceStorage"
+    _write_vscode_session(ws_root, "sess-v9", [{"message": {"text": "secret future format"}}], version=9)
+    monkeypatch.setitem(ingest.VENDOR_REGISTRY["vscode-copilot-chat"], "path", ws_root)
+    mod = _fake_mod(**{"vscode-copilot-chat": ingest.VENDOR_REGISTRY["vscode-copilot-chat"]})
+
+    res = vi._index_vscode_chat_stable(mod, WINDOW, 10)
+    assert len(res.sessions) == 1
+    assert res.sessions[0]["snapshot"] == "unreadable"
+    assert res.sessions[0]["user_msgs"] == 0
+    assert any("not v3-snapshot-readable" in n for n in res.notes)
+
+    cat = vi._cat_vscode_chat_stable(mod, "sess-v9", 10_000)
+    assert "not v3-readable" in cat
+    assert "secret future format" not in cat
+
+
+def test_aggregate_facets_tolerates_non_numeric_counts():
+    # A model-written facet crashed the render with prose in goal_categories
+    # (2026-08-06) — non-numeric truthy values now count as 'present'.
+    facets = [
+        {
+            "outcome": "achieved",
+            "goal_categories": {"coding": True, "other": "fleet dispatch admission", "research": False},
+            "friction_counts": {"errors": "2"},
+            "user_satisfaction_counts": {"neutral": 1},
+        }
+    ]
+    agg = vi._aggregate_facets(facets)
+    assert agg["goal_categories"] == {"coding": 1, "other": 1, "research": 0}
+    assert agg["friction_counts"] == {"errors": 2}
+    assert agg["satisfaction_counts"] == {"neutral": 1}
