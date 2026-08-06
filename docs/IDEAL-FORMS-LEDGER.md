@@ -304,7 +304,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Ideal form:** every host-pressure axis — memory, CPU load, the backup crawler, test fan-out —
   has an executable gauge and a mechanical valve; no stack of individually-legitimate loads can
   thrash the host because each is gated where it starts, and the gauges themselves are watched.
-- **Distance:** incident 2026-07-15 (16 GB host: swap 6.4/7.2 GiB, load 5.7, 24 min after reboot)
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** incident 2026-07-15 (16 GB host: swap 6.4/7.2 GiB, load 5.7, 24 min after reboot)
   had three stacked loads, all invisible to the armed VITALS memory gate: (a) Backblaze
   `bztransmit` re-crawling ~748 worktree roots / 61 GiB of regenerable state at 95 % CPU,
   (b) one session running FULL `pytest tests/` twice concurrently — the scoped-verification law
@@ -323,6 +324,22 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   `sudo kill` one-liner), onset-deduped macOS notifications (`scripts/_notify.py`, also
   wired into `host-pressure-stale`), and RSS/wall-clock self-bounds in `overnight-watch.py`
   (issue #1148: one tick wedged 51 min at 3.1 GiB).
+- **Evidence (2026-08-06):** this row sat `probe: null` for a reason that was right about live
+  pressure and wrong about the ideal — *"a one-shot repo probe would report the pressure of
+  whatever machine happened to run pr-gate."* True, and a good reason not to measure the
+  **weather**. But the ideal's own sentence is *"every axis **has** an executable gauge and a
+  mechanical valve … and the gauges are watched"* — estate completeness, which is a repo fact.
+  The vacuum was a noun error, not a missing capability. `institutio/governance/host-pressure-axes.yaml`
+  now declares the estate (6 axes + the watcher, read **by capability**, never by sensor id) and
+  `scripts/check-host-pressure-estate.py` derives the distance: every axis must keep a gauge whose
+  named symbol still exists in its source, and a valve that is **armed-by-default** (`default: "1"`
+  on an `args_when` entry carrying `armed_valve_type`). It is a ratchet, not a thermometer — it
+  cannot go red because the operator compiled something, only because a gauge was refactored away
+  or a safety valve was quietly disarmed. That second case is the SILENT-OFF class
+  `armed-valve-audit.py` names, applied to the specific axes that thrash this host. The registry
+  declares six axes where the prose enumerates four: swap is a distinct assessor in `vitals.py`
+  with its own severity, and disk has a full gauge+valve pair — declaring fewer axes than the
+  estate defends would make the ratchet weaker than the system.
 - **Status:** SHIPPED — all four forms mechanical; the operator is no longer the sensor of
   last resort. The only human residue is the pre-formed root-kill one-liner, pushed by
   notification when it exists.

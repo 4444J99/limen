@@ -1,0 +1,128 @@
+# HOST-PRESSURE AXES — the gauge/valve estate behind IF-HOST-PRESSURE.
+#
+# WHY THIS REGISTRY EXISTS. IF-HOST-PRESSURE sat `probe: null` with an honest reason that was
+# aimed at the wrong noun:
+#
+#   "Host pressure is a live condition, not a repo fact ... A one-shot repo probe would report
+#    the pressure of whatever machine happened to run pr-gate, which is not the ideal's subject."
+#
+# Correct about live pressure, and correct that measuring it would be worthless — a probe that
+# goes red because the operator compiled something is reporting WEATHER, not distance from an
+# ideal. But read the ideal's own sentence: "every host-pressure axis ... HAS AN EXECUTABLE GAUGE
+# AND A MECHANICAL VALVE ... and the gauges are watched." The subject is the COMPLETENESS OF THE
+# ESTATE, which is a repo fact and always was. The row was unmeasured because nobody separated
+# the two nouns.
+#
+# So this registry declares the estate, and scripts/check-host-pressure-estate.py derives the
+# distance from it. The probe is a RATCHET, not a thermometer: it is green while every axis keeps
+# a gauge and an armed valve, and it goes red the moment one is deleted or quietly disarmed —
+# which is exactly the 2026-07-15 failure mode, where three legitimate loads stacked while the
+# gauge that should have seen them was not being watched by anything.
+#
+# CONTRACT. Each axis declares:
+#   note    what the axis is, and the incident that put it here
+#   role    axis (default) | watcher — the watcher gauges the GAUGES, closing clause (c)
+#   gauge   EXACTLY ONE of:
+#             {path: <repo-relative file>, symbol: <identifier that must appear in it>}
+#             {sensor: <sensors.yaml id>}
+#   valve   the mechanical relief. EXACTLY ONE of:
+#             {sensor: <id>, env: <LIMEN_*>}   an args_when entry carrying armed_valve_type,
+#                                              whose `default` must be "1" (armed-by-default)
+#             {path: <repo-relative file>}     a hook or script that must exist
+#           or `null` WITH `valve_absent_reason` — a declared vacuum, never an implicit one
+#           (Rule #1: an N/A is never a resting state).
+#
+# Axes are consumed BY CAPABILITY, never by id: a consumer asks "which axes lack a gauge or an
+# armed valve", never "what does the sensor called host-relief do". Renaming an axis changes
+# nothing downstream.
+#
+# The ideal's prose enumerates four axes (memory, CPU load, the backup crawler, test fan-out).
+# This registry carries six, because the estate genuinely covers more than the prose lists: swap
+# is a distinct assessor in vitals.py with its own severity, and disk has a full gauge+valve pair.
+# Declaring fewer axes than the estate defends would make the ratchet weaker than the system.
+
+schema_version: 0.1
+
+axes:
+  memory:
+    note: >-
+      Memory pressure via kern.memorystatus_vm_pressure_level. The 2026-07-15 incident (16 GB
+      host, ~10 claude bg-spare processes) tipped RAM into a swap spiral with nothing shedding.
+    gauge:
+      path: cli/src/limen/vigilia/vitals.py
+      symbol: memory_action
+    valve:
+      sensor: host-relief
+      env: LIMEN_HOST_RELIEF_APPLY
+
+  cpu-load:
+    note: >-
+      1-minute load average per core. Named separately from memory in the ideal because the
+      2026-07-15 stack was CPU-led — bztransmit re-crawling ~748 roots at 95% CPU — while the
+      armed gate watched only memory.
+    gauge:
+      path: cli/src/limen/vigilia/vitals.py
+      symbol: load_action
+    valve:
+      sensor: host-relief
+      env: LIMEN_HOST_RELIEF_APPLY
+
+  swap:
+    note: >-
+      Swap-used/total against RAM. The 2026-07-16 recurrence reached swap 17.3/18 GiB with 94 MB
+      free while jetsam reported only 'warn' for hours — the axis that proved memory level alone
+      was not a sufficient gauge.
+    gauge:
+      path: cli/src/limen/vigilia/vitals.py
+      symbol: swap_action
+    valve:
+      sensor: host-relief
+      env: LIMEN_HOST_RELIEF_APPLY
+
+  backup-crawler:
+    note: >-
+      Backblaze crawling regenerable fleet state. Retired lever L-BACKBLAZE-EXCLUDE: bzinfo.xml
+      proved USER-owned, so exclusions became organ-tended instead of a human chore.
+    gauge:
+      path: scripts/backblaze-exclusions.py
+      symbol: read_excluded_dirs
+    valve:
+      sensor: backblaze-exclusions
+      env: LIMEN_BACKBLAZE_APPLY
+
+  test-fanout:
+    note: >-
+      Full-suite pytest run concurrently by a session while the scoped-verification law was
+      prose-only. The valve is a PreToolUse hook — enforcement at the point of use — and the
+      gauge is the transcript audit that catches what the hook did not stop.
+    gauge:
+      path: scripts/claude-workflow-guard.py
+      symbol: _full_suite_pytest
+    valve:
+      path: scripts/hooks/pytest-scope-guard.sh
+
+  disk:
+    note: >-
+      Free bytes against the declared resource envelope. Not enumerated in the ideal's prose, but
+      a real pressure axis with a shipped gauge and an armed safety valve.
+    gauge:
+      path: scripts/disk-capacity.py
+      symbol: required_gib
+    valve:
+      sensor: disk-capacity
+      env: LIMEN_DISK_CAPACITY_APPLY
+
+  gauge-watcher:
+    role: watcher
+    note: >-
+      Clause (c) of the ideal — "and the gauges are watched". Asserts the VITALS record is fresh,
+      so a silent gauge surfaces as a finding instead of as calm. This is the axis whose absence
+      made 2026-07-15 possible: the loads were individually legitimate and nothing watched the
+      watcher.
+    gauge:
+      sensor: host-pressure-stale
+    valve: null
+    valve_absent_reason: >-
+      A watcher has no valve by construction — its relief IS the escalation it prints, which the
+      beat surfaces and the operator or the per-axis valves act on. Inventing a valve here would
+      mean an organ that silences its own staleness alarm, which is the failure, not the fix.

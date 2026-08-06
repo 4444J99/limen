@@ -231,12 +231,20 @@ ideals:
       executable gauge and a mechanical valve; no stack of individually-legitimate loads can
       thrash the host, because each is gated where it starts and the gauges are watched.
     owner: "Claude (all four forms)"
-    probe: null
-    probe_absent_reason: >
-      Host pressure is a live condition, not a repo fact, and it is already measured
-      continuously by the VITALS axes declared in sensors.yaml — the beat IS its measurement
-      surface. A one-shot repo probe would report the pressure of whatever machine happened to
-      run pr-gate, which is not the ideal's subject.
+    probe:
+      command: "python3 scripts/check-host-pressure-estate.py"
+      derives: "declared pressure axes missing a gauge or an armed-by-default valve"
+      environment: repo
+      extract: "unguarded axes: ([0-9]+)"
+      ideal_value: 0
+      # The vacuum this replaced was right about live pressure and wrong about the ideal. Its
+      # reason — "a one-shot repo probe would report the pressure of whatever machine happened
+      # to run pr-gate" — correctly rejects measuring the WEATHER. But the ideal's own sentence
+      # is "every axis HAS an executable gauge and a mechanical valve ... and the gauges are
+      # watched", which is estate completeness: a repo fact, and stable. So this probe is a
+      # RATCHET, not a thermometer, and needs no `instantaneous:` — it is not a snapshot of a
+      # condition, it is a structural claim that holds until someone deletes a gauge or
+      # disarms a valve. Which is precisely the 2026-07-15 failure it exists to prevent.
 
   IF-LEDGER-OF-IDEALS:
     ideal: >
