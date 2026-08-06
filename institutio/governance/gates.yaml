@@ -40,7 +40,7 @@ ratchets:
 # exceeds the budget, and must be removed the moment it fits (paying the debt retires the line).
 instruction_surfaces:
   budget_bytes: 32768        # min consumer default cap (codex project_doc_max_bytes default)
-  ceiling_bytes: 35840       # measured 34,062 B (2026-08-06, post-stratification) + slack; shrink-only
+  ceiling_bytes: 33792       # measured 32,740 B (2026-08-06, debt paid: Claude note + ritual prose stratified) + slack; shrink-only
   slack_bytes: 2048          # max dead headroom (S3) — re-measure and lower ceiling when exceeded
   surfaces:
     - AGENTS.md
@@ -54,14 +54,6 @@ instruction_surfaces:
       default_bytes: null
     - name: copilot
       default_bytes: null
-  debt: >
-    AGENTS.md exceeds the 32,768 B budget by ~1.3 KB (34,062 B after the 2026-08-06
-    stratification relocated nine doctrine sections, ~15 KB, to docs/architecture/ pointer
-    stubs — the original debt was 13.3 KB). An UNCONFIGURED codex truncates the final ~1.3 KB;
-    the configured host reads it all (host_bytes 65536). Retirement owner: the next
-    instruction-surface trim (candidates: Session Start Ritual and Agent-Specific Notes bodies,
-    both required-heading sections whose prose can stratify the same way). Check S4 forces this
-    line's removal the moment the surface first fits the budget.
 
 # 1:1 mirror of deploy*.yml `on.push.paths` — check-gates.py enforces exact set equality.
 # A merge to main touching one of these IS a live deploy. Deploy sensitivity is a property
