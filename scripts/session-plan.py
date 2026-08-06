@@ -50,9 +50,13 @@ PLANS = ROOT / "docs" / "plans"
 BASELINE = ROOT / "institutio" / "governance" / "session-plan-baseline.txt"
 
 PLAN_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)\.md$")
-ISSUE_RE = re.compile(r"^Issue:\s*#?(\d+|TBD)\s*$", re.MULTILINE)
-PR_RE = re.compile(r"^PR:\s*(?:#(\d+)|\((pending)\)|(TBD))\s*$", re.MULTILINE)
-STATUS_RE = re.compile(r"^Status:\s*(superseded|abandoned|folded)\b\s*(.*)$", re.MULTILINE)
+# `[ \t]*$`, never `\s*$`: under re.MULTILINE, `\s*` is greedy across newlines and `$` happily
+# matches at the end of a later blank line, so a `.sub()` that stamps `PR:` swallows the blank
+# line separating the header from the first `##` heading. Observed on this file's own first
+# stamp. Horizontal whitespace only — the line terminator is a delimiter, not content.
+ISSUE_RE = re.compile(r"^Issue:[ \t]*#?(\d+|TBD)[ \t]*$", re.MULTILINE)
+PR_RE = re.compile(r"^PR:[ \t]*(?:#(\d+)|\((pending)\)|(TBD))[ \t]*$", re.MULTILINE)
+STATUS_RE = re.compile(r"^Status:[ \t]*(superseded|abandoned|folded)\b[ \t]*(.*)$", re.MULTILINE)
 
 PENDING = "(pending)"
 

@@ -1,7 +1,7 @@
 # Bind the session entry phase — every session opens in PLAN, and a plan carries an issue and a PR
 
 Issue: #1843
-PR: (pending)
+PR: #1846
 
 ## Context
 
