@@ -161877,3 +161877,40 @@ tasks:
     conduct_generation: 506
   updated: '2026-08-02T18:29:27.414Z'
   receipt_verified: true
+- id: 'HEAL-rebase-organvm-organvm-engine-105'
+  title: 'rebase/resolve conflicts on organvm/organvm-engine#105'
+  repo: 'organvm/organvm-engine'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'rebase'
+  - 'self-heal'
+  - 'conflict'
+  urls:
+  - 'https://github.com/organvm/organvm-engine/pull/105'
+  context: 'PR organvm/organvm-engine#105 is CONFLICTING with its base branch and merge-drain correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head) against its declared title/body intent: a branch generated from a broken tree can carry mass deletions it never declared, and branch-side deletions the declaration does not name are POISON to restore from base, never intent to preserve (session-meta#148 ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it onto the current base (or merge base in), resolve every conflict preserving the PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE with green CI. After resolving, verify diff-vs-base matches the declared intent; if nothing genuine survives (all absorbed or superseded on base), close the PR as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/organvm-engine/pull/105 [auto-emitted 2026-08-06 by self-heal so merge-drain can land it]'
+  predicate: 'test "$(gh pr view 105 --repo organvm/organvm-engine --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/organvm-engine/pull/105'
+  origin: 'system_debt'
+  horizon: 'past'
+  value_case: 'Resolve the recurring CONFLICT pull-request defect for organvm/organvm-engine#105'
+  owner_surface: 'organvm/organvm-engine'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:12:03.877Z'
+    agent: 'codex'
+    session_id: 'self-heal-emit'
+    logical_agent: 'self-heal'
+    logical_session_id: 'emit'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-a9c615185771c031c1f012b091d2f37e:536:compatibility'
+    conduct_run_id: 'run-a9c615185771c031c1f012b091d2f37e'
+    conduct_lease_id: 'lease-536-a9c615185771c031'
+    conduct_generation: 536
+  updated: '2026-08-06T19:12:03.877Z'
