@@ -16,11 +16,18 @@ Kill-switch: LIMEN_NOTIFY=0 keeps the dedup bookkeeping but never calls osascrip
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
+
+# The liveness guard lives next to this file ON DISK. Resolving it by path rather than by
+# `import _root` is the whole point — see _load_root().
+_ROOT_MODULE_PATH = Path(__file__).resolve().parent / "_root.py"
+_ROOT_MODULE = None
 
 
 def _state_path(root: Path | str) -> Path:
@@ -50,6 +57,28 @@ def _enabled(enabled: bool | None) -> bool:
     return os.environ.get("LIMEN_NOTIFY", "1") not in ("0", "false", "False")
 
 
+def _load_root():
+    """Load the sibling ``_root`` module BY ABSOLUTE PATH, never via ambient ``sys.path``.
+
+    ``import _root`` resolves only when the calling script happened to run
+    ``sys.path.insert(0, scripts/)`` first. Six of the seven ``_notify`` callers do;
+    ``check-effectors.py`` does not. A guard whose availability depends on every caller
+    remembering a convention is exactly the shape of guard a single omission defeats —
+    the founding lesson of this entire lineage (``_root.py``'s own docstring: "a guard
+    that a single write can satisfy is not a guard"). The module sits next to this file
+    on disk, so load it from there and the whole failure mode is gone.
+    """
+    global _ROOT_MODULE
+    if _ROOT_MODULE is None:
+        spec = importlib.util.spec_from_file_location("_limen_root_for_notify", _ROOT_MODULE_PATH)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"cannot load {_ROOT_MODULE_PATH}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _ROOT_MODULE = module
+    return _ROOT_MODULE
+
+
 def _root_may_speak(root: Path | str) -> bool:
     """Only the live organism reaches the phone.
 
@@ -60,15 +89,21 @@ def _root_may_speak(root: Path | str) -> bool:
     per-caller convention (each test remembers LIMEN_NOTIFY=0) is exactly the kind of guard
     a single omission defeats; this gates the EFFECTOR instead, at the one chokepoint every
     notifier shares. Bookkeeping still writes for any root — only the osascript call is
-    withheld. Fail-open: if the predicate itself is unavailable, keep the loud path (the
-    live beat's escalations must not die of an import error).
+    withheld.
+
+    FAIL CLOSED, reversing this function's first shipped form. It fell back to ``return
+    True`` so "the live beat's escalations must not die of an import error" — but with the
+    predicate now loaded by absolute path, an import error means the tree is missing its
+    own ``_root.py``, and a tree that damaged is not the organism. The asymmetry decides
+    it: a withheld notification is recoverable and observable in the beat log, while a
+    false one is neither — it is already on his phone. The unexpected case is announced on
+    stderr rather than swallowed, so silence is never silent about itself.
     """
     try:
-        import _root
-
-        return bool(_root.has_body(Path(root))[0])
-    except Exception:
-        return True
+        return bool(_load_root().has_body(Path(root))[0])
+    except Exception as exc:
+        print(f"_notify: withholding notification — liveness predicate unavailable ({exc})", file=sys.stderr)
+        return False
 
 
 def notify_once(
