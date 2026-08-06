@@ -627,13 +627,13 @@ gates:
     note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint."
   pytest-cli:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
-    paths: ["cli/**"]
+    paths: ["cli/**", "his-hand-levers.json", "cloud-routines.json"]
     tier: heavy
     serialize: true
     timeout_seconds: 1500
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Env-scrubbed and no-modal: ambient persona tokens and editor configuration must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores."
+    note: "Env-scrubbed and no-modal: ambient persona tokens and editor configuration must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores. THE NON-cli PATHS ARE NOT DECORATION: cli/tests asserts on root registries it does not live beside, so a change to one of them can break this suite while implicating nothing. Measured 2026-08-06 by shipping exactly that — a one-key edit to his-hand-levers.json passed verify-scoped.sh (the diff implicated no gate that runs pytest) and took main red on test_his_hand_registry.py. The full dependency set is `grep -o 'ROOT / \"<file>\"' cli/tests/*.py`: his-hand-levers.json, cloud-routines.json, and tasks.yaml. tasks.yaml is DELIBERATELY excluded — it is the board fast lane (see deploy_triggers) and publishes constantly; its shape is held by tasks-parse + task-board instead, and routing every board publish through a 10-minute suite would trade this defect for a worse one."
   pytest-api:
     command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]
