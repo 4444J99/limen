@@ -36,6 +36,7 @@ REQUIRED_META: list[str] = ["implementation_status", "promotion_status"]
 # Rule predicates                                                              #
 # --------------------------------------------------------------------------- #
 
+
 def _validate_one(path: Path, *, strict_graph: bool) -> list[str]:
     """Return a list of violation strings for one seed.yaml (empty = pass)."""
     try:
@@ -77,15 +78,13 @@ def _validate_one(path: Path, *, strict_graph: bool) -> list[str]:
     # Rule 1c — promotion_status must name a recognized office
     if promo_raw not in CURSUS_SET:
         violations.append(
-            f"promotion_status {promo_raw!r} is not a recognized office in the cursus "
-            f"({' → '.join(CURSUS)})"
+            f"promotion_status {promo_raw!r} is not a recognized office in the cursus ({' → '.join(CURSUS)})"
         )
 
     # Rule 1d — implementation_status must name a recognized office
     if impl_raw not in CURSUS_SET:
         violations.append(
-            f"implementation_status {impl_raw!r} is not a recognized office in the cursus "
-            f"({' → '.join(CURSUS)})"
+            f"implementation_status {impl_raw!r} is not a recognized office in the cursus ({' → '.join(CURSUS)})"
         )
 
     if violations:
@@ -110,6 +109,7 @@ def _validate_one(path: Path, *, strict_graph: bool) -> list[str]:
 # --------------------------------------------------------------------------- #
 # Cursus posture report (advisory, not a violation)                           #
 # --------------------------------------------------------------------------- #
+
 
 def _posture(meta: dict) -> str:
     promo = str(meta.get("promotion_status", "")).upper()
@@ -139,10 +139,7 @@ def _validate_cvrsvs_edges(doc: dict[str, Any], violations: list[str]) -> None:
                     violations.append(f"{field}[{idx}] is an empty string")
                 continue
             if not isinstance(item, dict):
-                violations.append(
-                    f"{field}[{idx}] must be a string or mapping with at least "
-                    "'type' and partner keys"
-                )
+                violations.append(f"{field}[{idx}] must be a string or mapping with at least 'type' and partner keys")
                 continue
 
             item_type = item.get("type")
@@ -152,21 +149,14 @@ def _validate_cvrsvs_edges(doc: dict[str, Any], violations: list[str]) -> None:
             if required == "consumers":
                 consumers = item.get("consumers")
                 if not isinstance(consumers, list):
-                    violations.append(
-                        f"{field}[{idx}] requires 'consumers' list (or explicit "
-                        "partner declarations)"
-                    )
+                    violations.append(f"{field}[{idx}] requires 'consumers' list (or explicit partner declarations)")
                     continue
                 if not consumers:
-                    violations.append(
-                        f"{field}[{idx}] requires at least one declared consumer"
-                    )
+                    violations.append(f"{field}[{idx}] requires at least one declared consumer")
                     continue
                 for cidx, consumer in enumerate(consumers):
                     if not isinstance(consumer, str) or not consumer.strip():
-                        violations.append(
-                            f"{field}[{idx}].consumers[{cidx}] must be a non-empty string"
-                        )
+                        violations.append(f"{field}[{idx}].consumers[{cidx}] must be a non-empty string")
             else:
                 source = item.get("source")
                 if not isinstance(source, str) or not source.strip():
@@ -176,6 +166,7 @@ def _validate_cvrsvs_edges(doc: dict[str, Any], violations: list[str]) -> None:
 # --------------------------------------------------------------------------- #
 # CLI                                                                          #
 # --------------------------------------------------------------------------- #
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(

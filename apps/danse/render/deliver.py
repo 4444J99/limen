@@ -236,7 +236,9 @@ def deliver_passage(picture: Path, sound: Path, force: bool) -> Path:
     return dest
 
 
-def deliver_derived(name: str, spec: dict, program: dict, picture: Path, sound: Path, force: bool, start: float = 0.0) -> Path:
+def deliver_derived(
+    name: str, spec: dict, program: dict, picture: Path, sound: Path, force: bool, start: float = 0.0
+) -> Path:
     cap = captures(program)[name]
     span = query_capture_span(name, start=start)
     passage_span = query_capture_span("passage", start=start)

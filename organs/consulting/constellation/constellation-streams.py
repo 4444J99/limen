@@ -115,9 +115,34 @@ ECHO_FLOOR = 11.0
 # Tokens too generic to carry a stream. Derived vocabulary is only as good as
 # what it refuses to count.
 STOPWORDS = {
-    "a", "an", "and", "the", "of", "for", "to", "in", "on", "or", "with", "by",
-    "app", "apps", "system", "systems", "platform", "engine", "tool", "tools",
-    "ai", "web", "site", "page", "data", "new", "my", "os",
+    "a",
+    "an",
+    "and",
+    "the",
+    "of",
+    "for",
+    "to",
+    "in",
+    "on",
+    "or",
+    "with",
+    "by",
+    "app",
+    "apps",
+    "system",
+    "systems",
+    "platform",
+    "engine",
+    "tool",
+    "tools",
+    "ai",
+    "web",
+    "site",
+    "page",
+    "data",
+    "new",
+    "my",
+    "os",
 }
 
 
@@ -143,8 +168,14 @@ def sweep_estate() -> dict[str, Any]:
     for org in ORGS:
         proc = subprocess.run(
             [
-                "gh", "repo", "list", org, "--limit", "1000",
-                "--json", "nameWithOwner,description,visibility,isArchived,pushedAt,repositoryTopics",
+                "gh",
+                "repo",
+                "list",
+                org,
+                "--limit",
+                "1000",
+                "--json",
+                "nameWithOwner,description,visibility,isArchived,pushedAt,repositoryTopics",
             ],
             capture_output=True,
             text=True,
@@ -301,9 +332,7 @@ def analyse(registry: dict[str, Any], census: dict[str, Any]) -> dict[str, Any]:
             pts, hits = score(repo, lane["keywords"])
             conf = confidence(pts, hits)
             if conf in ("likely", "possible"):
-                matches[repo["nameWithOwner"]].append(
-                    {"lane": lane, "points": pts, "hits": hits, "confidence": conf}
-                )
+                matches[repo["nameWithOwner"]].append({"lane": lane, "points": pts, "hits": hits, "confidence": conf})
 
     unclaimed_by_slug: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for full, ms in matches.items():
@@ -386,8 +415,14 @@ def analyse(registry: dict[str, Any], census: dict[str, Any]) -> dict[str, Any]:
                 }
             )
     parallels.sort(
-        key=lambda p: (-p["weight"], -p["rarity"], p["a"]["slug"], str(p["a"]["project"]),
-                       p["b"]["slug"], str(p["b"]["project"]))
+        key=lambda p: (
+            -p["weight"],
+            -p["rarity"],
+            p["a"]["slug"],
+            str(p["a"]["project"]),
+            p["b"]["slug"],
+            str(p["b"]["project"]),
+        )
     )
 
     # ── echoes: different repos circling the same idea ──
@@ -407,11 +442,7 @@ def analyse(registry: dict[str, Any], census: dict[str, Any]) -> dict[str, Any]:
         if _excluded(r["name"]):
             continue
         families[base(r["name"])].append(r)
-    twins = [
-        {"base": k, "repos": sorted(v, key=lambda r: r["name"])}
-        for k, v in families.items()
-        if len(v) > 1
-    ]
+    twins = [{"base": k, "repos": sorted(v, key=lambda r: r["name"])} for k, v in families.items() if len(v) > 1]
     twins.sort(key=lambda t: t["base"])
 
     return {
@@ -498,9 +529,7 @@ def _remoteless_repos() -> list[str]:
     for child in sorted(workspace.iterdir()):
         if not (child / ".git").exists():
             continue
-        remotes = subprocess.run(
-            ["git", "remote"], capture_output=True, text=True, cwd=child, check=False
-        )
+        remotes = subprocess.run(["git", "remote"], capture_output=True, text=True, cwd=child, check=False)
         if remotes.returncode == 0 and not remotes.stdout.strip():
             out.append(child.name)
     return out
@@ -809,8 +838,7 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
         (len(f["echoes"]), "echo families"),
     ]
     figures_html = "".join(
-        f'<div class="figure"><span class="n">{n}</span><span class="k">{E(k)}</span></div>'
-        for n, k in figures
+        f'<div class="figure"><span class="n">{n}</span><span class="k">{E(k)}</span></div>' for n, k in figures
     )
 
     # ── claimed ──
@@ -851,7 +879,7 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
                 f'<div class="rhs"><span class="repo-name">{E(r["name"])}</span>'
                 f'<span class="desc">{E((r.get("description") or "no description")[:190])}</span>'
                 f'<span class="meta">{_pill(r["confidence"], "warn" if r["confidence"] == "likely" else "quiet")}'
-                f'{_vis_pill(r)}{also}{hits}</span></div></div>'
+                f"{_vis_pill(r)}{also}{hits}</span></div></div>"
             )
         unclaimed_html += body
 
@@ -881,7 +909,7 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
             f'<div class="side"><span class="p">{E(p["a"]["person"])}</span>'
             f'<span class="l">{E(str(p["a"]["project"]))}</span></div>'
             f'<div class="link"><span class="n">{p["weight"]} shared'
-            f'{"" if p["kind"] == "strong" else " · faint"}</span>'
+            f"{'' if p['kind'] == 'strong' else ' · faint'}</span>"
             f'<span class="bar" style="width: {width}px"></span></div>'
             f'<div class="side r"><span class="p">{E(p["b"]["person"])}</span>'
             f'<span class="l">{E(str(p["b"]["project"]))}</span></div>'
@@ -907,7 +935,7 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
             items += (
                 f'<div class="echo-row"><span class="repo-name">{E(r["name"])}</span>'
                 f'<span class="desc">{E((r.get("description") or "no description")[:150])}</span>'
-                f'{f"<span class=meta>{marks}</span>" if marks else ""}</div>'
+                f"{f'<span class=meta>{marks}</span>' if marks else ''}</div>"
             )
         echo_html += (
             f'<div class="echo"><div class="echo-head">'
@@ -922,8 +950,8 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
         if len(rows) < 2:
             continue
         items = "".join(
-            f'<li>{E(r["name"])}{" · private" if r.get("visibility") == "PRIVATE" else ""}'
-            f'{" · archived" if r.get("isArchived") else ""}</li>'
+            f"<li>{E(r['name'])}{' · private' if r.get('visibility') == 'PRIVATE' else ''}"
+            f"{' · archived' if r.get('isArchived') else ''}</li>"
             for r in rows
         )
         twin_html += f'<div class="twin"><span class="b">{E(t["base"])}</span><ul>{items}</ul></div>'
@@ -974,8 +1002,7 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
         + _blind_card(
             "Repositories with no description",
             "Matching reads name + description. A repo that never says what it is cannot be "
-            "matched to anyone's lane, however obviously it belongs to one."
-            + withheld(undesc_priv),
+            "matched to anyone's lane, however obviously it belongs to one." + withheld(undesc_priv),
             undesc,
             tone="loud",
         )
@@ -983,18 +1010,13 @@ def render(f: dict[str, Any], *, public_safe: bool) -> str:
             "Working trees with no remote",
             "A gh sweep enumerates remotes. Local-only repositories are invisible to it by "
             "construction — no threshold change reaches them."
-            + (
-                f" {len(blind['remoteless'])} found; names withheld."
-                if public_safe and blind["remoteless"]
-                else ""
-            ),
+            + (f" {len(blind['remoteless'])} found; names withheld." if public_safe and blind["remoteless"] else ""),
             remoteless,
         )
         + _blind_card(
             "Excluded by pattern",
             "Vendor mirrors, contribution trackers, per-org scaffolding, Pages copies and "
-            "superprojects. Deliberate, but a judgment call worth re-reading."
-            + withheld(excl_priv),
+            "superprojects. Deliberate, but a judgment call worth re-reading." + withheld(excl_priv),
             excl,
         )
     )
@@ -1262,9 +1284,7 @@ def main() -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render(findings, public_safe=args.public_safe), encoding="utf-8")
 
-    likely = sum(
-        1 for rows in findings["unclaimed"].values() for r in rows if r["confidence"] == "likely"
-    )
+    likely = sum(1 for rows in findings["unclaimed"].values() for r in rows if r["confidence"] == "likely")
     print(
         f"wrote {out}  ({findings['total_repos']} repos swept / {likely} likely unclaimed / "
         f"{len(findings['crossings'])} crossings / {len(findings['parallels'])} parallels)"
