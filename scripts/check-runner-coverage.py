@@ -184,6 +184,29 @@ def reachable_scripts() -> set[str]:
     return seen
 
 
+def _derive_runner_sources(reachable: set[str]) -> set[str]:
+    """Beat sources whose sensors execute via the derive runner from a reachable script.
+
+    `beat-sensors.py --run --source X` IS the execution path for source-X sensors (it is the
+    same registry-derived pass check-sensors' D check accepts in place of literal gate
+    strings), so a reachable script carrying that call answers "who runs you?" for every
+    source-X sensor even when the legacy monolith (metabolize.sh) itself remains a manual
+    lever with no scheduler — which is the live state since the heartbeat gained its
+    metabolize sensor pass (2026-08-06).
+    """
+    sources: set[str] = set()
+    for rel in reachable:
+        try:
+            text = (ROOT / rel).read_text(errors="replace")
+        except OSError:
+            continue
+        if "beat-sensors.py" not in text:
+            continue
+        for match in re.finditer(r"--source\s+([a-z_-]+)", text):
+            sources.add(match.group(1))
+    return sources
+
+
 def check_runners(findings: list[str]) -> None:
     """A — every beat runner a sensor declares must be reachable from an entrypoint."""
     registry = yaml.safe_load(SENSORS.read_text())
@@ -198,6 +221,7 @@ def check_runners(findings: list[str]) -> None:
             declared.setdefault(str(source).strip(), []).append(sid)
 
     reachable = reachable_scripts()
+    derive_covered = _derive_runner_sources(reachable)
     for source, users in sorted(declared.items()):
         script = BEAT_SOURCE_SCRIPTS.get(source)
         if script is None:
@@ -209,11 +233,12 @@ def check_runners(findings: list[str]) -> None:
         if not (ROOT / script).is_file():
             findings.append(f"A runner-missing: source '{source}' names {script}, which does not exist")
             continue
-        if script not in reachable:
+        if script not in reachable and source not in derive_covered:
             findings.append(
                 f"A runner-unreachable: {script} (source '{source}', {len(users)} sensor(s)) is "
-                f"invoked by NO tracked launchd plist, CI workflow, or reachable script — those "
-                f"sensors are declared and never execute"
+                f"invoked by NO tracked launchd plist, CI workflow, or reachable script — and no "
+                f"reachable script runs `beat-sensors.py --run --source {source}` in its place — "
+                f"those sensors are declared and never execute"
             )
 
 

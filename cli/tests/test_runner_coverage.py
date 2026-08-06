@@ -162,21 +162,23 @@ def test_a_new_finding_fails_even_with_a_populated_baseline(rc, monkeypatch, tmp
     assert rc.main([]) == 1
     out = capsys.readouterr().out
     assert "NEW finding" in out
-    assert "metabolize.sh" in out, "the live defect must be what fails an empty baseline"
+    assert "trunk-ci-health" in out, "the remaining live defect must be what fails an empty baseline"
 
 
-def test_baselined_findings_are_the_two_known_ones(rc):
+def test_baselined_findings_are_the_one_known_one(rc):
     """Named explicitly so silently widening the baseline shows up in review as a test edit.
 
-    Was three. `scripts/preflight-thread-state.py` — the `github.comment` predicate — now exists, so
-    finding C stopped reproducing and the ratchet tightened. Editing this assertion is the intended
-    review signal in BOTH directions: a baseline that grows must be argued for in a diff.
+    Was three, then two, now ONE. `scripts/preflight-thread-state.py` cured finding C; then the
+    heartbeat gained its metabolize sensor pass (`beat-sensors.py --run --source metabolize`,
+    2026-08-06, jules-flywheel PR-E), which is a real runner for every metabolize-source sensor —
+    finding A stopped reproducing and the ratchet tightened again. Editing this assertion is the
+    intended review signal in BOTH directions: a baseline that grows must be argued for in a diff.
     """
     baselined = rc.read_baseline()
-    assert len(baselined) == 2
+    assert len(baselined) == 1
     joined = "\n".join(baselined)
-    assert "scripts/metabolize.sh" in joined
     assert "scripts/trunk-ci-health.py" in joined
+    assert "scripts/metabolize.sh" not in joined, "the metabolize sensors have a live runner; its finding must be gone"
     assert "preflight-thread-state" not in joined, "the predicate exists; its finding must be gone"
 
 
