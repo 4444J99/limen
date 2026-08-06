@@ -393,6 +393,11 @@ gates:
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
     owner: docs
     note: "The plan→issue→PR chain holds: every non-baselined dated plan declares `Issue: #N` and a `PR:` state (#M, (pending), or a reasoned Status:). Binds the entry joint of session-phases.yaml, which shipped advisory-only in Phase 1 and left this as its named Phase-2 gate. Chain organ: scripts/session-plan.py."
+  ledger-custody:
+    command: "python3 scripts/check-ledger-custody.py"
+    paths: ["docs/github-pr-debt-ledger.json", "scripts/pr-debt-trend.py", "scripts/gitvs.py", "scripts/diurnal.py", "scripts/check-ledger-custody.py", "institutio/governance/ledger-custody.yaml", "institutio/governance/ledger-custody-baseline.txt"]
+    owner: gitvs
+    note: "A governed measurement document is written only by its keeper: every commit touching it is a keeper ship (A), every production toucher is declared (B), every committed row is a distinct correctly-ordered census (C). tasks.yaml had this via task-writer-audit.py; the debt ledger had a convention and nothing enforcing it — five of its six observations rode in as passengers on unrelated feature PRs. Registry: institutio/governance/ledger-custody.yaml; adding a governed document is one entry."
   nomenclator:
     command: "python3 scripts/nomenclator.py"
     paths: ["spec/**", "organs/**", "organ-ladder.json", "scripts/nomenclator.py", "scripts/heartbeat-loop.sh"]

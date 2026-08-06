@@ -1,0 +1,54 @@
+# LEDGER CUSTODY — who is allowed to write a measurement document, and how.
+#
+# The repo already had a keeper discipline, but it covered exactly one document. `tasks.yaml`
+# has a sole logical writer, GitHub SHA compare-and-swap, a stable publication branch, and
+# scripts/task-writer-audit.py to catch a new bypass writer before it can race the projection.
+# Every OTHER document that records durable truth had a convention and nothing else.
+#
+# That gap has a receipt. docs/IDEAL-FORMS-LEDGER.md records that the first five observations in
+# docs/github-pr-debt-ledger.json were "a side effect of an unrelated feature PR that happened to
+# regenerate the ledger (#1337, #1503, #1508, #1495, #1541)" — four different concerns, each
+# carrying a rewrite of the measurement document as a passenger, and the series ending when that
+# unrelated work did. A designated writer (`pr-debt-trend.py record`, the `github-pr-debt` sensor)
+# landed in #1863 and fixed the *supply*. It did not make the document uncarryable by anyone else.
+#
+# The custody a MEASUREMENT SERIES needs is not the custody LIVE STATE needs, which is why this is
+# a separate registry and not a second copy of the board audit. `tasks.yaml` is concurrent state
+# with many plausible writers across Python/JS/shell, so its predicate must answer "who wins the
+# race" — hence CAS and a source-wide bypass scanner. An append-only series is not raced; it is
+# *diluted*. Its predicate answers a narrower question: is every row a real, distinct, ordered
+# census written by the declared keeper, and is the set of code that can touch the file declared?
+#
+# Consumer: scripts/check-ledger-custody.py (gate `ledger-custody` in gates.yaml).
+# Adding a governed document = adding one entry here. Do not hardcode a path in the predicate.
+
+schema_version: 0.1
+
+ledgers:
+  github-pr-debt:
+    path: docs/github-pr-debt-ledger.json
+    owner: gitvs
+    note: >-
+      The open-PR debt series behind IF-AMALGAMATION. Its ideal's word is "monotonically down",
+      so a diluted or misordered series does not merely look untidy — it misstates the one number
+      the document exists to carry.
+
+    # The sole authorized writer. `producer` generates the bytes; `keeper` decides whether they
+    # constitute a new observation and is the only thing that may commit them.
+    keeper: scripts/pr-debt-trend.py
+    producer: scripts/gitvs.py
+    readers:
+      - scripts/diurnal.py
+
+    # Check A. Every commit touching `path` must be a keeper ship. The keeper's subject is
+    # constructed at pr-debt-trend.py's ship call site; this mirrors it.
+    commit_subject: '^docs\(gitvs\): record open-PR debt observation \(\d+ open\)'
+    baseline: institutio/governance/ledger-custody-baseline.txt
+
+    # Check C. Two rows may never claim the same census, and a later commit may never carry an
+    # earlier stamp. This is the invariant the phantom-`[worktree]` defect violated from the read
+    # side: `series()` counted a live uncommitted working copy as a second observation, which
+    # shifted `--check`'s 14-day window and reported +182 from 1111 when the truth was +234 from
+    # 1059. The reader is fixed; this holds the *written* series to the same rule.
+    series_key: generated_at
+    count_key: open_pr_count
