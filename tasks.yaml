@@ -162672,3 +162672,36 @@ tasks:
     conduct_lease_id: 'lease-558-6162c2b4856eaaa7'
     conduct_generation: 558
   updated: '2026-08-06T19:23:59.254Z'
+- id: 'GH-organvm-limen-1815'
+  title: 'Make reclaim/reap/host-admission/workstream tests hermetic against host git config + load'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1815'
+  context: 'GitHub issue organvm/limen#1815. ## Problem `scripts/verify-whole.sh` full suite fails 6 tests on this host (16GB, Tahoe/M5) for **environment reasons only** — all pass on CI and in isolation. A red full suite should mean a real regression, not host noise. ## Failures (environment-attributable) 1. **Global XDG gitignore** `~/.config/git/ignore` (chezmoi-managed) contains `node_modules/` and `.venv/`, so `git check-ignore` stays t'
+  predicate: 'test "$(gh issue view 1815 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1815'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1815'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:05.043Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-fef69590a4b8530801ad8e2ab6c2e50f:559:compatibility'
+    conduct_run_id: 'run-fef69590a4b8530801ad8e2ab6c2e50f'
+    conduct_lease_id: 'lease-559-fef69590a4b85308'
+    conduct_generation: 559
+  updated: '2026-08-06T19:24:05.043Z'
