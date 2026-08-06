@@ -162207,3 +162207,36 @@ tasks:
     conduct_lease_id: 'lease-544-d5d7e89cdfa24035'
     conduct_generation: 544
   updated: '2026-08-06T19:22:34.979Z'
+- id: 'GH-organvm-limen-1895'
+  title: 'merge-drain: queue-dropped CLEARED PRs wait out the rotating window — prioritize re-enqueue'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1895'
+  context: 'GitHub issue organvm/limen#1895. ## Observed (2026-08-06, ~16:25–16:42Z) PR #1883 (CLEARED, green, non-deploy) was silently ejected from the merge queue for the 4th time during a GitHub infra-flake window (merge-group runner cancellations / \"Service Unavailable\" action-download failures — the failing groups at 16:01/16:25 belonged to *other* PRs: #1885, #1887). A dropped `mergeQueueEntry` is not re-created by anyone automatical'
+  predicate: 'test "$(gh issue view 1895 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1895'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1895'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:22:41.802Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-a36f5a731f5d624ac468ce7f2ee488d2:545:compatibility'
+    conduct_run_id: 'run-a36f5a731f5d624ac468ce7f2ee488d2'
+    conduct_lease_id: 'lease-545-a36f5a731f5d624a'
+    conduct_generation: 545
+  updated: '2026-08-06T19:22:41.802Z'
