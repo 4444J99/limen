@@ -27,7 +27,11 @@ def _lf(caps: dict, spent: dict, resets: dict) -> LimenFile:
     return LimenFile(portal=Portal(budget=Budget(daily=600, per_agent=caps, track=track)))
 
 
-def test_stale_capped_lane_is_cleared_and_reset_is_reported():
+def test_stale_capped_lane_is_cleared_and_reset_is_reported(monkeypatch):
+    # This test's subject is the RESET heal, not the throughput governor's landed-evidence
+    # clamp (test_throughput_governor.py owns that) — pin the governor off so the assertion
+    # reads the budget gate alone.
+    monkeypatch.setenv("LIMEN_THROUGHPUT_GOVERNOR", "0")
     now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
     stale = (now - timedelta(days=4)).isoformat()  # >> any vendor window (5h / 24h)
     lf = _lf(
