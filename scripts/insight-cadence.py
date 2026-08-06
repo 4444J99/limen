@@ -336,18 +336,22 @@ def _gather_insights():
             signal_key = sig.get("signal", "unknown")
             count = sig.get("count", 0)
             desc = sig.get("description", "")
-            # Threshold: only surface signals with count >= 1 (all of them), but tag
-            # high-count signals as warning vs. info
-            severity = "warning" if count >= 5 else "info"
+            # A packet (or signal) may DECLARE its owner/severity — the health packet
+            # does (owner: censor, severity: warning), and without honoring it every
+            # health finding would strand at the organ inbox below the issue-opening
+            # threshold. Existing packets declare neither, so the fallback keeps the
+            # historical count-threshold behavior byte-identical for them.
+            severity = sig.get("severity") or packet.get("severity") or ("warning" if count >= 5 else "info")
             insights.append(
                 {
                     "id": _gen_id(f"cross-vendor-{vendor}", signal_key),
                     "severity": severity,
                     "title": f"[{vendor}] {signal_key}: {count}",
                     "detail": desc,
-                    "owner": "insight-cadence",
-                    "source": f"insight-cross-vendor/{vendor}.json",
-                    "suggested_action": f"Review {vendor} session logs for {signal_key} pattern",
+                    "owner": packet.get("owner") or "insight-cadence",
+                    "source": f"insight-cross-vendor/{packet_path.name}",
+                    "suggested_action": sig.get("suggested_action")
+                    or f"Review {vendor} session logs for {signal_key} pattern",
                     "healable": True,
                 }
             )

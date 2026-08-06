@@ -1751,6 +1751,23 @@ def cmd_list(mod) -> int:
     return 0
 
 
+def cmd_index_all(mod, window_days: int, max_sessions: int) -> int:
+    """Refresh every lane's index, continuing past a failing lane (the beat's rung:
+    one broken vendor store must not starve the other ten of fresh indexes)."""
+    failures = []
+    for vendor in sorted(INDEXERS):
+        try:
+            rc = cmd_index(mod, vendor, window_days, max_sessions)
+        except Exception as exc:  # noqa: BLE001 — a lane failure is data, not a crash
+            print(f"ERROR: index --all: '{vendor}' raised {type(exc).__name__}: {exc}", file=sys.stderr)
+            rc = 1
+        if rc != 0:
+            failures.append(vendor)
+    if failures:
+        print(f"index --all: {len(failures)} lane(s) failed: {', '.join(failures)}", file=sys.stderr)
+    return 1 if len(failures) == len(INDEXERS) else 0
+
+
 def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
     vendor = _resolve_vendor(vendor)
     if vendor not in INDEXERS:
@@ -1839,7 +1856,9 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list")
     p_idx = sub.add_parser("index")
-    p_idx.add_argument("--vendor", required=True)
+    group = p_idx.add_mutually_exclusive_group(required=True)
+    group.add_argument("--vendor")
+    group.add_argument("--all", action="store_true", help="index every lane, continuing past a failing one")
     p_idx.add_argument("--window-days", type=int, default=DEFAULT_WINDOW_DAYS)
     p_idx.add_argument("--max-sessions", type=int, default=DEFAULT_MAX_SESSIONS)
     p_cat = sub.add_parser("cat-session")
@@ -1854,6 +1873,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "list":
         return cmd_list(mod)
     if args.cmd == "index":
+        if args.all:
+            return cmd_index_all(mod, args.window_days, args.max_sessions)
         return cmd_index(mod, args.vendor, args.window_days, args.max_sessions)
     if args.cmd == "cat-session":
         return cmd_cat(mod, args.vendor, args.session, args.max_chars)

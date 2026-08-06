@@ -2653,11 +2653,47 @@ parameters:
     owner: censor
     note: "Cadence (every N beats) of the insight-cross-vendor sensor — a daily-ish refresh matches the insights-report tempo the packets feed; the scan walks large vendor session stores (codex logs sqlite is GiB-scale), so it stays off the hot path."
   LIMEN_CROSS_VENDOR_TIMEOUT:
-    default: 600
+    default: 900
     env: LIMEN_CROSS_VENDOR_TIMEOUT
     self_update: none
     owner: censor
-    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: seven adapters over multi-GiB sqlite/jsonl stores with a 30-day window; 600 covers the observed manual-run envelope with headroom. The runner kills the command group on overrun and the beat continues fail-open."
+    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: eleven adapters over multi-GiB sqlite/jsonl stores with a 30-day window, PLUS the index --all and --health steps added 2026-08-06 (three ordered steps share this envelope). 900 covers the observed manual-run envelope with headroom; if the rung SIGKILLs (124), shrink --window-days rather than growing this. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS:
+    default: 3
+    env: LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check packet_stale: a vendor packet whose run_at_iso is older than this many days flags its lane (the frozen-packets incident — every packet sat at 2026-07-22 for two weeks before anything noticed). Read by scripts/insight-cross-vendor-ingest.py --health."
+  LIMEN_CROSS_VENDOR_RESET_DROP_PCT:
+    default: 50
+    env: LIMEN_CROSS_VENDOR_RESET_DROP_PCT
+    self_update: none
+    owner: censor
+    note: "Health check store_reset: flag a lane whose sessions_seen fell by at least this percent vs the recent ring-buffer max (state/health-state.json). The opencode wipe (store reset ~2026-08-03 to a single 1-second session) was only discovered by a manual sweep."
+  LIMEN_CROSS_VENDOR_RESET_MIN_BASE:
+    default: 20
+    env: LIMEN_CROSS_VENDOR_RESET_MIN_BASE
+    self_update: none
+    owner: censor
+    note: "Health check store_reset noise floor: the drop check only arms when the recent max sessions_seen is at least this — a 3-session lane halving is noise, a 40-session lane halving is a reset."
+  LIMEN_CROSS_VENDOR_MIN_HORIZON_DAYS:
+    default: 14
+    env: LIMEN_CROSS_VENDOR_MIN_HORIZON_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check retention_horizon: flag a non-empty lane whose oldest locally-surviving record (packet oldest_record_iso) is younger than this many days — the store prunes faster than review happens (antigravity blobs prune at ~10d; 59% of one 30-day window was already structural-only before anything measured it)."
+  LIMEN_VENDOR_CAPSULE_CHURN_MAX:
+    default: 3
+    env: LIMEN_VENDOR_CAPSULE_CHURN_MAX
+    self_update: none
+    owner: censor
+    note: "Health check capsule_churn: flag a lane whose index meta.capsule_churn.mean_files_per_session exceeds this — resume-fragmentation (codex live mean 4.38, max 35 rollout files for one logical session) makes transcripts expensive to reassemble and signals sessions dying/resuming pathologically."
+  LIMEN_VENDOR_NARRATIVE_MAX_LAG_DAYS:
+    default: 7
+    env: LIMEN_VENDOR_NARRATIVE_MAX_LAG_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check index_ahead_of_narrative: flag a lane whose index.json is newer than its narrative.json by more than this many days (or never narrated) — the lane is being measured on the beat but never read, which is how a 25-hour autonomous mission and a 21-day-dark dispatch estate went unreviewed."
 
   LIMEN_JULES_QUOTA:
     default: "1"
