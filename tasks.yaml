@@ -162942,3 +162942,36 @@ tasks:
     conduct_lease_id: 'lease-566-21627e4483a29417'
     conduct_generation: 566
   updated: '2026-08-06T19:24:43.249Z'
+- id: 'GH-organvm-limen-1764'
+  title: 'prompt-corpus control plane is dead: 81,758 raw objects referenced by the journals are missing'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1764'
+  context: 'GitHub issue organvm/limen#1764. ## Condition The prompt-atom control plane cannot advance and cannot self-heal. ``` $ python3 scripts/prompt-atom-ledger.py --check-cursor FAIL: stored source cursor is not bound to the current private checkpoint $ python3 scripts/prompt-atom-ledger.py --scan --days 2 --max-files 80 --write FAIL: cannot scan prompt sources: stored source cursor is not bound to the current private checkpoint $ pyth'
+  predicate: 'test "$(gh issue view 1764 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1764'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1764'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:52.798Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-1b532ebeadf289cdeee7cfc2b0dc5da1:567:compatibility'
+    conduct_run_id: 'run-1b532ebeadf289cdeee7cfc2b0dc5da1'
+    conduct_lease_id: 'lease-567-1b532ebeadf289cd'
+    conduct_generation: 567
+  updated: '2026-08-06T19:24:52.798Z'
