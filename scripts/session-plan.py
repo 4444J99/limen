@@ -252,15 +252,29 @@ def _issue_recipe(*, title: str, objective: str, rel: Path, slug: str) -> str:
 
 
 def _stamp_header(body: str, *, title: str, issue: str) -> str:
-    """Insert/refresh the Issue:/PR: header block just under the plan's H1."""
+    """Insert/refresh the Issue:/PR: header block just under the plan's H1.
+
+    The H1 is SYNTHESIZED when the body has none, and the block always ends with a blank line.
+    Both were defects, found on this organ's second real use by reading the file it had just
+    written (`--body-file`, the path the scaffold never exercises):
+
+      · a body written the natural way — starting at `## Context`, no H1, because `--title` is a
+        required argument and looks like it owns the title — drove `insert_at` to 0. The header
+        landed above everything, the file began with a blank line, and the title was discarded
+        entirely. A required argument must never be silently dropped.
+      · nothing guaranteed a blank line after `PR:`, so the header ran straight into the first
+        `##` heading and every markdown reader concatenated them.
+    """
     body = ISSUE_RE.sub(f"Issue: #{issue}", body, count=1)
     if not ISSUE_RE.search(body):
         lines = body.splitlines()
-        insert_at = 1 if lines and lines[0].startswith("# ") else 0
-        if not lines:
-            lines = [f"# {title}"]
-            insert_at = 1
+        if not lines or not lines[0].startswith("# "):
+            lines = [f"# {title}", *lines]
+        insert_at = 1
         lines[insert_at:insert_at] = ["", f"Issue: #{issue}", f"PR: {PENDING}"]
+        after = insert_at + 3
+        if len(lines) > after and lines[after].strip():
+            lines.insert(after, "")
         body = "\n".join(lines)
     elif not PR_RE.search(body):
         body = body.replace(f"Issue: #{issue}", f"Issue: #{issue}\nPR: {PENDING}", 1)

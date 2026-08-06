@@ -51,8 +51,17 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   no sensor, no gate, no beat rung — so the newest observation is eight days old. Its owner of
   record is `GITVS-UNCAPPED-PR-DEBT-0715`, which the diurnal morning page names as the board's
   critical next action, and which asks for a predicate that already exists.
-- **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); the trend probe now exists and
-  reports distance; the producer that feeds it is still unwired.
+- **Evidence (2026-08-05):** the producer is wired. The reason the series stopped was not neglect —
+  **there was never a recorder.** Every observation in it is a side effect of an unrelated feature
+  PR that happened to regenerate the ledger (#1337, #1503, #1508, #1495, #1541), so it ended when
+  that work did. `pr-debt-trend.py --record` is the writer, running as the `github-pr-debt`
+  heartbeat sensor: a cheap due-check every cadence, a full census only on its own wall-clock
+  interval (`LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS`, 20h — inside the probe's 3-day tolerance with two
+  missed runs of margin), and a `ship-docs.sh` PR **only when `content_sha256` moves**, so a
+  PR-debt recorder cannot add to the debt it measures.
+- **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); the trend probe reports distance and
+  the producer now feeds it on a cadence. The open distance is the *trend itself*: the last measured
+  reading was **+105 over three days**, and the ideal's word is monotonically down.
 - **Owner:** Claude (predicate) + merge daemon.
 
 ### IF-PUBLICATION-ESTATE — every repo's visibility is a judged, enforced decision
@@ -197,6 +206,11 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   arming is the operator's valve.
 - **Status:** PARTIAL (2026-07-14) — registry + sender + sensor + keyed headless path shipped and
   wired; the only open distance is opt-in SAFE-send arming, which is deliberately the operator's valve.
+  *(2026-08-05: check D read this PARTIAL against a green probe and called the prose stale. The prose
+  was right and the row was under-declared — the probe counts DRAFTS at one instant, so it is blind
+  to the DISARMED send valve this status reports, and one green inbox reading cannot prove a claim
+  about every message. The probe is now `instantaneous: true`, which lets distance fire and forbids
+  achievement. The repair was in the contract, not the sentence.)*
 - **Owner:** Claude + mail.
 
 ### IF-CONFIG-OWNERSHIP — every host config path has one declared owner
