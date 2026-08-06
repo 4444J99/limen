@@ -162407,3 +162407,36 @@ tasks:
     conduct_lease_id: 'lease-550-6f8a2811ad2ef2f2'
     conduct_generation: 550
   updated: '2026-08-06T19:23:12.787Z'
+- id: 'GH-organvm-limen-1870'
+  title: 'pr-debt-trend: the due-clock is gitignored and the staleness age is unsigned — both measure the wrong half'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1870'
+  context: 'GitHub issue organvm/limen#1870. Two defects in `scripts/pr-debt-trend.py`, both found by **driving the CLI** (not by reading it) during a `/verify` pass on #1861. Neither is introduced by that PR; both sit in the `--check` staleness path it touches. Same species as the rest of this workstream: **a check measuring the wrong half of its own question.** --- ### 1. The census-due clock is per-worktree and gitignored — the 20h interv'
+  predicate: 'test "$(gh issue view 1870 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1870'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1870'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:17.820Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-0077d522e12c08953c8adccab57e80ee:551:compatibility'
+    conduct_run_id: 'run-0077d522e12c08953c8adccab57e80ee'
+    conduct_lease_id: 'lease-551-0077d522e12c0895'
+    conduct_generation: 551
+  updated: '2026-08-06T19:23:17.820Z'
