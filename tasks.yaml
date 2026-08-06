@@ -162874,3 +162874,38 @@ tasks:
     conduct_lease_id: 'lease-564-46a0ce24dc4c6ab7'
     conduct_generation: 564
   updated: '2026-08-06T19:24:33.290Z'
+- id: 'GH-organvm-limen-1767'
+  title: 'CONST-DAVID-DEMAND-REVIEW — Own the external demand-review obligation'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'persona:david'
+  - 'audit:2026-08-02'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1767'
+  context: 'GitHub issue organvm/limen#1767. ## victoroff.issue-routing.v1 ```yaml source_key: CONST-DAVID-DEMAND-REVIEW aliases: [] persona_owner: david project: limen repository: organvm/limen functional_owner: limen-demand-review consulted_owners: - victoroff-control-integrator authority_holder_or_gate: Limen/TABVLARIVS governance and the repository''s own review authority source_state: external_owner_obligation dependencies: - "4444J99/vi'
+  predicate: 'test "$(gh issue view 1767 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1767'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1767'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:38.521Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-3fbe1608b0b8fd4f8c648e015cd309a2:565:compatibility'
+    conduct_run_id: 'run-3fbe1608b0b8fd4f8c648e015cd309a2'
+    conduct_lease_id: 'lease-565-3fbe1608b0b8fd4f'
+    conduct_generation: 565
+  updated: '2026-08-06T19:24:38.521Z'
