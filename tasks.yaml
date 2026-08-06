@@ -162240,3 +162240,36 @@ tasks:
     conduct_lease_id: 'lease-545-a36f5a731f5d624a'
     conduct_generation: 545
   updated: '2026-08-06T19:22:41.802Z'
+- id: 'GH-organvm-limen-1891'
+  title: 'Board: nested-clone question — carry limen/domus-genoma template parity into domus-genoma''s own predicate?'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1891'
+  context: 'GitHub issue organvm/limen#1891. G10''s deeper half (universal-insights plan, `docs/plans/2026-08-06-universal-insights-governance.md`, issue #1876). `scripts/check-agent-docs.py` guards 8 template checks behind a nested `./domus-genoma` clone that does not exist in the sibling-clone layout — those checks now announce their skip loudly (landed via the covenant branch), but the question of WHERE that parity should live remains: 1.'
+  predicate: 'test "$(gh issue view 1891 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1891'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1891'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:22:47.397Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-def75265fda4ef18c9a49a75180add60:546:compatibility'
+    conduct_run_id: 'run-def75265fda4ef18c9a49a75180add60'
+    conduct_lease_id: 'lease-546-def75265fda4ef18'
+    conduct_generation: 546
+  updated: '2026-08-06T19:22:47.397Z'
