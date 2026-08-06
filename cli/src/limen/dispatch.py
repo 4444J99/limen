@@ -28,6 +28,7 @@ from limen.capacity import (
     capacity_census,
     format_capacity_census,
     github_issue_ref,
+    lane_throughput_cap,
     local_floor_classes,
     local_floor_enabled,
     ollama_model,
@@ -5265,15 +5266,58 @@ def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> bool:
     return cleared_nonzero
 
 
+def _throughput_governor_receipt(cap: dict[str, object], base_remaining: int, clamped_remaining: int) -> None:
+    """Append one JSONL evidence row when the throughput clamp binds — never silent."""
+    try:
+        root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+        path = root / "logs" / "throughput-governor.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        row = {
+            "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "agent": cap.get("agent"),
+            "mode": cap.get("mode"),
+            "cap": cap.get("cap"),
+            "target": cap.get("target"),
+            "dispatched": cap.get("dispatched"),
+            "landed": cap.get("landed"),
+            "rate": cap.get("rate"),
+            "base_remaining": base_remaining,
+            "clamped_remaining": clamped_remaining,
+            "reason": cap.get("reason"),
+        }
+        with open(path, "a") as fh:
+            fh.write(json.dumps(row) + "\n")
+        print(
+            f"  throughput-governor: {cap.get('agent')} clamped {base_remaining} -> {clamped_remaining} "
+            f"({cap.get('mode')}: {cap.get('reason')})"
+        )
+    except Exception:
+        pass
+
+
 def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
     """The per-vendor cadence cap is the binding gate (each refills on its own window); the
-    global daily is only a backstop for agents that have no per-agent cap."""
+    global daily is only a backstop for agents that have no per-agent cap. On top of either,
+    the throughput governor clamps volume to LANDED evidence (capacity.lane_throughput_cap):
+    a lane earns its full daily target only while landing rate holds — raw dispatch at ~15%
+    completion is the 308-blocked-PR failure, not progress."""
     agent = canonical_agent(agent)
     track = limen.portal.budget.track
     agent_limit = limen.portal.budget.per_agent.get(agent)
     if agent_limit is not None:
-        return max(0, agent_limit - track.per_agent.get(agent, 0))
-    return max(0, budget - track.spent)
+        remaining = max(0, agent_limit - track.per_agent.get(agent, 0))
+    else:
+        remaining = max(0, budget - track.spent)
+    if remaining <= 0:
+        return remaining
+    cap = lane_throughput_cap(limen, agent)
+    if cap["mode"] == "disabled":
+        return remaining
+    governed = max(0, int(cap["cap"]) - track.per_agent.get(agent, 0))
+    if governed < remaining:
+        _throughput_governor_receipt(dict(cap), remaining, governed)
+        return governed
+    return remaining
 
 
 DispatchResult = tuple[str, str, bool | str | PlanHandoffResult, str, str]
