@@ -1644,3 +1644,28 @@ sensors:
       - command: "python3 scripts/diurnal.py --phase auto"
         severity: advisory
         escalation: "diurnal emission failed — the day has no briefing; check that LIMEN_ROOT resolves to the LIVE organism (a worktree's logs/ is empty and the organ refuses to emit a false 'all quiet') and inspect logs/diurnal/state.json"
+
+  notify-gate:
+    section: "0h1"
+    title: "notify gate — every copy of the notifier on this host gates osascript on the liveness predicate, not just the one in main"
+    gate: LIMEN_NOTIFY_GATE
+    default: "1"
+    source: [heartbeat]
+    owner: diurnal
+    # The cross-tree half of the guard diurnal already carries in-tree. Measured 2026-08-05:
+    # the effector gate shipped at 19:20 and four more "LIMEN · morning — ABSENT" pops landed
+    # after it, because a fix in a versioned file cannot reach the 21 OTHER copies of the
+    # notifier on this host — 14 worktrees plus 7 rotated runtime install trees launchd runs
+    # overnight-watch from. A tree-local guard cannot protect a host-global effector; this
+    # sensor cannot rewrite those copies either, but it converts them from a surprise on his
+    # phone into a counted, owned condition on the beat. Cheap: it parses ~23 small files.
+    cadence:
+      env: LIMEN_BEAT_NOTIFY_GATE
+      default: 8
+    timeout:
+      env: LIMEN_NOTIFY_GATE_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/check-notify-gate.py"
+        severity: advisory
+        escalation: "one or more notifier copies on this host reach osascript ungated — each can pop a briefing rendered from an empty logs/ ('ABSENT — logs/handoff.json does not exist'). Rebase the copy onto origin/main so it inherits the gate, or reap it via python3 scripts/reclaim-worktrees.py (worktree debt owns the rotated trees)"
