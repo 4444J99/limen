@@ -100,6 +100,61 @@ VENDOR_REGISTRY = {
         "dormant": True,
         "description": "Jules dormant oauth cache — no session data, estate acknowledged",
     },
+    "claude-desktop": {
+        # Recon 2026-08-06: plan-usage-history.json is the one locally-readable spine —
+        # {version, samples: [{org, t, u: {fh, sd}}]} with t=epoch-millis and fh/sd the
+        # five-hour/seven-day rate-limit utilization percentages. Conversation content
+        # lives in the server_side_mirror stores below and is NEVER parsed locally.
+        "path": HOME / "Library" / "Application Support" / "Claude",
+        "server_side_mirror": ["Local Storage", "IndexedDB"],
+        "session_dirs": ["claude-code-sessions", "local-agent-mode-sessions"],
+        "dormant": False,
+        "description": "Claude Desktop: plan-usage-history.json spine + session-dir counts (conversation content is a server-side LevelDB mirror, never parsed)",
+    },
+    "chatgpt-desktop": {
+        # conversations-v3-<account>/<uuid>.data payloads are opaque blobs. The adapter
+        # reads counts/sizes/mtimes ONLY — opaque_payload marks the never-read contract.
+        "path": HOME / "Library" / "Application Support" / "com.openai.chat",
+        "opaque_payload": True,
+        "dormant": False,
+        "description": "ChatGPT.app: opaque .data conversation payloads — counts/sizes/mtimes only, payload bytes never read",
+    },
+    "vscode-copilot-chat": {
+        # workspaceStorage/<hash>/chatSessions/<sid>.jsonl — undocumented v3 delta log:
+        # line 0 is {"kind": 0, "v": {version: 3, sessionId, creationDate, requests, ...}},
+        # subsequent lines are patches. Adapters read the snapshot + count patch lines;
+        # patches are never replayed (version != 3 degrades to counts-only).
+        "path": HOME / "Library" / "Application Support" / "Code" / "User" / "workspaceStorage",
+        "variant": "stable",
+        "dormant": False,
+        "description": "VS Code Copilot Chat (stable): chatSessions v3 delta logs per workspace",
+    },
+    "vscode-copilot-chat-insiders": {
+        "path": HOME / "Library" / "Application Support" / "Code - Insiders" / "User" / "workspaceStorage",
+        "variant": "insiders",
+        "dormant": False,
+        "description": "VS Code Copilot Chat (Insiders): chatSessions v3 delta logs per workspace",
+    },
+    "ollama-desktop": {
+        # db.sqlite carries a chats table — 0 rows at registration (2026-08-06, read-only
+        # probe). Dormancy is a disprovable claim: rows appearing later = store reset signal.
+        "path": HOME / "Library" / "Application Support" / "Ollama",
+        "dormant": True,
+        "description": "Ollama desktop chat db (db.sqlite) — chats table empty at registration, estate acknowledged",
+    },
+    "antigravity-desktop": {
+        # Antigravity.app (Electron; distinct from 'Antigravity IDE' — two apps, two
+        # App Support dirs; the LIVE antigravity session data is the antigravity-cli
+        # estate registered above). No local transcripts found.
+        "path": HOME / "Library" / "Application Support" / "Antigravity",
+        "dormant": True,
+        "description": "Antigravity.app desktop estate — app state only, no local session transcripts, estate acknowledged",
+    },
+    "antigravity-ide": {
+        "path": HOME / "Library" / "Application Support" / "Antigravity IDE",
+        "dormant": True,
+        "description": "Antigravity IDE (VS Code fork) estate — no local chat transcripts found, estate acknowledged",
+    },
 }
 
 
@@ -1127,6 +1182,205 @@ def _ingest_gemini(window_start: datetime) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Adapter: Claude Desktop — plan-usage-history.json spine + session-dir counts
+# (conversation content is a server-side LevelDB mirror this organ NEVER parses)
+# ---------------------------------------------------------------------------
+
+
+def _ingest_claude_desktop(window_start: datetime) -> dict:
+    meta = VENDOR_REGISTRY["claude-desktop"]
+    root = meta["path"]
+    if not root.is_dir():
+        return _empty_packet("claude-desktop", window_start, ["Claude Desktop estate not found"])
+
+    quality_notes = [
+        "Conversation content lives in a server-side mirror (Local Storage LevelDB / IndexedDB) "
+        "and is NEVER parsed — this packet carries plan-usage and session-dir counts only",
+    ]
+    friction_signals = []
+    notable_patterns = []
+
+    # 1. plan-usage-history.json — the rate-limit utilization spine.
+    samples_in_window = 0
+    max_fh = max_sd = 0
+    saturated_samples = 0
+    usage_path = root / "plan-usage-history.json"
+    if usage_path.is_file():
+        try:
+            doc = json.loads(usage_path.read_text(encoding="utf-8"))
+            cutoff_ms = window_start.timestamp() * 1000
+            for sample in doc.get("samples") or []:
+                if not isinstance(sample, dict) or sample.get("t", 0) < cutoff_ms:
+                    continue
+                samples_in_window += 1
+                u = sample.get("u") or {}
+                fh = int(u.get("fh") or 0)
+                sd = int(u.get("sd") or 0)
+                max_fh = max(max_fh, fh)
+                max_sd = max(max_sd, sd)
+                if fh >= 90 or sd >= 90:
+                    saturated_samples += 1
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            quality_notes.append("plan-usage-history.json unreadable — usage spine skipped")
+    else:
+        quality_notes.append("plan-usage-history.json not found — usage spine absent")
+
+    if saturated_samples:
+        friction_signals.append(
+            {
+                "signal": "plan_saturation",
+                "count": saturated_samples,
+                "description": (
+                    f"{saturated_samples} usage samples at >=90% of a rate-limit window "
+                    f"(peak five-hour {max_fh}%, peak seven-day {max_sd}%)"
+                ),
+            }
+        )
+    notable_patterns.append(f"plan_usage_samples_in_window: {samples_in_window}")
+    notable_patterns.append(f"peak_five_hour_pct: {max_fh}")
+    notable_patterns.append(f"peak_seven_day_pct: {max_sd}")
+
+    # 2. Session-dir counts (dir per session; contents stay unread).
+    sessions_seen = 0
+    for dirname in meta.get("session_dirs", []):
+        d = root / dirname
+        if not d.is_dir():
+            continue
+        for child in d.iterdir():
+            if not child.is_dir():
+                continue
+            try:
+                mt = datetime.fromtimestamp(child.stat().st_mtime, tz=timezone.utc)
+            except OSError:
+                continue
+            if mt >= window_start:
+                sessions_seen += 1
+
+    return {
+        "vendor": "claude-desktop",
+        "description": meta["description"],
+        "sessions_seen": sessions_seen,
+        "friction_signals": friction_signals,
+        "notable_patterns": notable_patterns,
+        "data_quality_notes": quality_notes,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Adapter: ChatGPT.app — opaque .data conversation payloads; counts/sizes/mtimes
+# ONLY, payload bytes never read (opaque_payload contract on the registry entry)
+# ---------------------------------------------------------------------------
+
+
+def _ingest_chatgpt_desktop(window_start: datetime) -> dict:
+    meta = VENDOR_REGISTRY["chatgpt-desktop"]
+    root = meta["path"]
+    if not root.is_dir():
+        return _empty_packet("chatgpt-desktop", window_start, ["ChatGPT.app estate not found"])
+
+    total_files = 0
+    in_window = 0
+    in_window_bytes = 0
+    for conv_dir in root.glob("conversations-v3-*"):
+        if not conv_dir.is_dir():
+            continue
+        for p in conv_dir.glob("*.data"):
+            total_files += 1
+            try:
+                st = p.stat()
+            except OSError:
+                continue
+            if datetime.fromtimestamp(st.st_mtime, tz=timezone.utc) >= window_start:
+                in_window += 1
+                in_window_bytes += st.st_size
+
+    return {
+        "vendor": "chatgpt-desktop",
+        "description": meta["description"],
+        "sessions_seen": in_window,
+        "friction_signals": [],
+        "notable_patterns": [
+            f"conversation_files_total: {total_files}",
+            f"conversation_files_in_window: {in_window}",
+            f"in_window_bytes: {in_window_bytes}",
+        ],
+        "data_quality_notes": [
+            "Payloads are opaque .data blobs and are NEVER read — counts/sizes/mtimes only",
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Adapter: VS Code Copilot Chat — chatSessions/<sid>.jsonl v3 delta logs,
+# variant-parameterized (stable + Insiders are separate registry entries)
+# ---------------------------------------------------------------------------
+
+
+def _ingest_vscode_chat(window_start: datetime, vendor_key: str) -> dict:
+    meta = VENDOR_REGISTRY[vendor_key]
+    root = meta["path"]
+    if not root.is_dir():
+        return _empty_packet(vendor_key, window_start, [f"workspaceStorage not found for {meta.get('variant')}"])
+
+    files_in_window = 0
+    v3_headers = 0
+    other_versions = 0
+    snapshot_requests = 0
+    patch_lines = 0
+    for p in root.glob("*/chatSessions/*.jsonl"):
+        try:
+            st = p.stat()
+        except OSError:
+            continue
+        if datetime.fromtimestamp(st.st_mtime, tz=timezone.utc) < window_start:
+            continue
+        files_in_window += 1
+        try:
+            with p.open(encoding="utf-8", errors="replace") as fh:
+                first = fh.readline()
+                extra_lines = sum(1 for _ in fh)
+            head = json.loads(first)
+            snapshot = head.get("v") if isinstance(head, dict) else None
+        except (OSError, json.JSONDecodeError):
+            other_versions += 1
+            continue
+        patch_lines += extra_lines
+        if isinstance(snapshot, dict) and snapshot.get("version") == 3:
+            v3_headers += 1
+            reqs = snapshot.get("requests")
+            snapshot_requests += len(reqs) if isinstance(reqs, list) else 0
+        else:
+            other_versions += 1
+
+    quality_notes = [
+        "v3 delta log: line 0 snapshot read, patch lines counted but never replayed",
+    ]
+    if other_versions:
+        quality_notes.append(f"{other_versions} session files not v3-snapshot-readable — counted only")
+
+    return {
+        "vendor": vendor_key,
+        "description": meta["description"],
+        "sessions_seen": files_in_window,
+        "friction_signals": [],
+        "notable_patterns": [
+            f"v3_snapshot_headers: {v3_headers}",
+            f"snapshot_requests_total: {snapshot_requests}",
+            f"patch_lines_total: {patch_lines}",
+        ],
+        "data_quality_notes": quality_notes,
+    }
+
+
+def _ingest_vscode_chat_stable(window_start: datetime) -> dict:
+    return _ingest_vscode_chat(window_start, "vscode-copilot-chat")
+
+
+def _ingest_vscode_chat_insiders(window_start: datetime) -> dict:
+    return _ingest_vscode_chat(window_start, "vscode-copilot-chat-insiders")
+
+
 ADAPTERS = {
     "claude": _ingest_claude,
     "codex": _ingest_codex,
@@ -1135,6 +1389,10 @@ ADAPTERS = {
     "antigravity": _ingest_antigravity,
     "cline": _ingest_cline,
     "gemini": _ingest_gemini,
+    "claude-desktop": _ingest_claude_desktop,
+    "chatgpt-desktop": _ingest_chatgpt_desktop,
+    "vscode-copilot-chat": _ingest_vscode_chat_stable,
+    "vscode-copilot-chat-insiders": _ingest_vscode_chat_insiders,
 }
 
 
@@ -1157,7 +1415,28 @@ def main() -> int:
 
     target_vendors = [args.vendor] if args.vendor else list(ADAPTERS.keys())
 
+    def _dormant_data(vendor: str, meta: dict) -> dict:
+        return {
+            "vendor": vendor,
+            "description": meta["description"],
+            "sessions_seen": 0,
+            "friction_signals": [],
+            "notable_patterns": [],
+            "data_quality_notes": [
+                "DORMANT: vendor estate exists on host but has no session data to ingest",
+                f"Path: {meta['path']}",
+            ],
+        }
+
     for vendor in target_vendors:
+        # A targeted dormant vendor emits its packet instead of warning "unknown"
+        # (--vendor jules used to yield NO packet: not in ADAPTERS, and the trailing
+        # dormant loop skipped it precisely because it WAS targeted).
+        meta = VENDOR_REGISTRY.get(vendor)
+        if meta is not None and meta.get("dormant"):
+            packets.append(_make_packet(vendor, args.window_days, window_start, now, _dormant_data(vendor, meta)))
+            run_stats[vendor] = "dormant"
+            continue
         if vendor not in ADAPTERS:
             print(f"[WARN] Unknown vendor: {vendor}", file=sys.stderr)
             continue
@@ -1187,28 +1466,14 @@ def main() -> int:
             packets.append(error_packet)
             run_stats[vendor] = f"ERROR: {type(e).__name__}"
 
-    # Record dormant vendors explicitly (no-silent-caps rule)
-    for vendor, meta in VENDOR_REGISTRY.items():
-        if meta.get("dormant") and vendor not in target_vendors:
-            dormant_packet = _make_packet(
-                vendor,
-                args.window_days,
-                window_start,
-                now,
-                {
-                    "vendor": vendor,
-                    "description": meta["description"],
-                    "sessions_seen": 0,
-                    "friction_signals": [],
-                    "notable_patterns": [],
-                    "data_quality_notes": [
-                        "DORMANT: vendor estate exists on host but has no session data to ingest",
-                        f"Path: {meta['path']}",
-                    ],
-                },
-            )
-            packets.append(dormant_packet)
-            run_stats[vendor] = "dormant"
+    # Record dormant vendors explicitly (no-silent-caps rule). Keyed on run_stats,
+    # not target_vendors: a full run reaches here with dormant vendors unemitted,
+    # while a targeted dormant vendor was already emitted in the loop above.
+    if not args.vendor:
+        for vendor, meta in VENDOR_REGISTRY.items():
+            if meta.get("dormant") and vendor not in run_stats:
+                packets.append(_make_packet(vendor, args.window_days, window_start, now, _dormant_data(vendor, meta)))
+                run_stats[vendor] = "dormant"
 
     if args.dry_run:
         for p in packets:
