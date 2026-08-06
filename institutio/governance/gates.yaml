@@ -30,6 +30,39 @@ ratchets:
   verify_whole_derives: true     # ARMED (PR4): verify-whole.sh has no literal py_compile/bash -n lists
   claude_md_pointer: true        # ARMED (PR4): CLAUDE.md carries the pointer, not the path lists
 
+# The instruction-surface byte budget (G1, 2026-08-06). Codex read AGENTS.md truncated at byte
+# 32,768 of 44,253 — its default project_doc_max_bytes cut the file at ~line 499/731, dropping
+# the Session Rituals and every Agent-Specific Note INCLUDING ITS OWN. A consumer's cap, not the
+# file, decided what got read, and nothing measured it. Enforced by check S in
+# scripts/check-agent-docs.py: S1 budget = min consumer default cap; S2 every surface fits the
+# ceiling (shrink-only ratchet); S3 dead headroom between measured size and ceiling stays within
+# slack, so the ceiling follows the file down; S4 the debt line exists exactly while a surface
+# exceeds the budget, and must be removed the moment it fits (paying the debt retires the line).
+instruction_surfaces:
+  budget_bytes: 32768        # min consumer default cap (codex project_doc_max_bytes default)
+  ceiling_bytes: 35840       # measured 34,062 B (2026-08-06, post-stratification) + slack; shrink-only
+  slack_bytes: 2048          # max dead headroom (S3) — re-measure and lower ceiling when exceeded
+  surfaces:
+    - AGENTS.md
+  consumers:
+    - name: codex
+      default_bytes: 32768   # truncates SILENTLY at this cap when unconfigured
+      host_bytes: 65536      # raised host-side via domus-genoma modify_ config template (2026-08-06)
+    - name: claude
+      default_bytes: null    # loads the whole file; no byte cap
+    - name: gemini
+      default_bytes: null
+    - name: copilot
+      default_bytes: null
+  debt: >
+    AGENTS.md exceeds the 32,768 B budget by ~1.3 KB (34,062 B after the 2026-08-06
+    stratification relocated nine doctrine sections, ~15 KB, to docs/architecture/ pointer
+    stubs — the original debt was 13.3 KB). An UNCONFIGURED codex truncates the final ~1.3 KB;
+    the configured host reads it all (host_bytes 65536). Retirement owner: the next
+    instruction-surface trim (candidates: Session Start Ritual and Agent-Specific Notes bodies,
+    both required-heading sections whose prose can stratify the same way). Check S4 forces this
+    line's removal the moment the surface first fits the budget.
+
 # 1:1 mirror of deploy*.yml `on.push.paths` — check-gates.py enforces exact set equality.
 # A merge to main touching one of these IS a live deploy. Deploy sensitivity is a property
 # of PATHS, not gates: a docs PR touching firebase.json is website-sensitive even though it
@@ -325,6 +358,12 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Live-main commit deny matrix (hermetic fixture); transcribed when the hook landed on main in parallel with PR1."
+  no-hand-poll-guard-test:
+    command: "bash scripts/tests/no-hand-poll-guard.test.sh"
+    paths: ["scripts/hooks/no-hand-poll-guard.sh", "scripts/tests/no-hand-poll-guard.test.sh"]
+    scoped: false
+    owner: lifecycle
+    note: "Hand-rolled PR poll-loop deny matrix (G6, 2026-08-06): the charter's `for … gh pr … sleep … done` ban made mechanical — deny requires loop+gh-probe+sleep co-occurring in ONE command string; the sanctioned waiter, bounded retries, build sleeps, and multi-PR iteration all pass (the negative cases are the deliverable). Wired into .claude/settings.json AND .codex/hooks.json — covenant, not Claude rule. Escape hatch LIMEN_ALLOW_PR_POLL."
   outbound-preflight-test:
     command: "bash scripts/tests/outbound-preflight-guard.test.sh && bash scripts/tests/preflight-thread-state.test.sh"
     paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]
@@ -385,9 +424,9 @@ gates:
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
   agent-docs:
     command: "python3 scripts/check-agent-docs.py"
-    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py"]
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py", "institutio/governance/gates.yaml"]
     owner: docs
-    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist."
+    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
   session-phase:
     command: "python3 scripts/check-session-phase.py"
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
@@ -652,17 +691,19 @@ gates:
     owner: verify
     note: "Env-scrubbed and no-modal: ambient persona tokens and editor configuration must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores. THE NON-cli PATHS ARE NOT DECORATION: cli/tests asserts on root registries it does not live beside, so a change to one of them can break this suite while implicating nothing. Measured 2026-08-06 by shipping exactly that — a one-key edit to his-hand-levers.json passed verify-scoped.sh (the diff implicated no gate that runs pytest) and took main red on test_his_hand_registry.py. The full dependency set is `grep -o 'ROOT / \"<file>\"' cli/tests/*.py`: his-hand-levers.json, cloud-routines.json, and tasks.yaml. tasks.yaml is DELIBERATELY excluded — it is the board fast lane (see deploy_triggers) and publishes constantly; its shape is held by tasks-parse + task-board instead, and routing every board publish through a 10-minute suite would trade this defect for a worse one."
   vendor-insights-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_vendor_insights.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_vendor_insights.py cli/tests/test_insight_cross_vendor_health.py -q"
     paths:
       [
         "scripts/vendor-insights.py",
         "scripts/insight-cross-vendor-ingest.py",
+        "scripts/insight-cadence.py",
         "cli/tests/test_vendor_insights.py",
+        "cli/tests/test_insight_cross_vendor_health.py",
         ".claude/skills/vendor-insights/SKILL.md",
       ]
     ci_job: "pr-gate.yml:pr-gate"
     owner: censor
-    note: "The /vendor-insights engine's adapter tests, which NOTHING scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/vendor-insights.py implicated no test at all — the same declared-but-unwired class check-runner-coverage exists to catch. Cheap tier: one file, hermetic, no xdist."
+    note: "The /vendor-insights engine's adapter tests plus the cross-vendor health-sensor tests, which NOTHING scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/vendor-insights.py implicated no test at all — the same declared-but-unwired class check-runner-coverage exists to catch. insight-cadence.py is a path because test_health_packet_is_consumed_by_insight_cadence binds its packet loop to the health packet's declared owner/severity. Cheap tier: two files, hermetic, no xdist."
   pytest-api:
     command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]

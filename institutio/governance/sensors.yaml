@@ -1470,11 +1470,23 @@ sensors:
       default: 24
     timeout:
       env: LIMEN_CROSS_VENDOR_TIMEOUT
-      default: 600
+      default: 900
+    # Three ordered steps (conversion-funnel precedent): ingest refreshes the packets,
+    # index --all refreshes every vendor-insights lane (NOTE: this widens the standing
+    # local PII footprint — session metadata + cwd paths under gitignored
+    # logs/vendor-insights/ — disarm via LIMEN_CROSS_VENDOR_INGEST=0), and --health
+    # watches the pipeline itself (packet staleness, store resets, retention pruning,
+    # capsule churn, narrative lag) writing ONE aggregate censor-owned warning packet.
     steps:
       - command: "python3 scripts/insight-cross-vendor-ingest.py --window-days 30"
         severity: advisory
         escalation: "cross-vendor friction ingest failed — per-vendor packets in logs/insight-cross-vendor/ go stale and insight-cadence reads cold data until it lands"
+      - command: "python3 scripts/vendor-insights.py index --all"
+        severity: advisory
+        escalation: "vendor-insights index refresh failed — per-lane indexes go stale and the health checks (capsule churn, narrative lag) read cold data until it lands"
+      - command: "python3 scripts/insight-cross-vendor-ingest.py --health"
+        severity: advisory
+        escalation: "cross-vendor health evaluation failed — packet staleness, store resets, and retention pruning go unwatched until it lands"
 
   jules-quota:
     section: "0z1"
@@ -1540,6 +1552,72 @@ sensors:
       - command: "python3 scripts/lane-throughput.py"
         severity: advisory
         escalation: "a lane has been throughput-clamped 2+ days — landing is the bottleneck: run drain.sh rungs (jules-land, owner-route-drain, merge-drain) and read logs/throughput-governor.jsonl for the binding evidence"
+
+  jules-dispatch:
+    section: "0z5"
+    title: "jules dispatch valve rung — the beat's governed path to the serial engine"
+    gate: LIMEN_JULES_DISPATCH
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The 2026-07-19 -> 08-06 starvation's wiring cut: the only `limen dispatch --live` call
+    # sites (metabolize.sh 4b, saturate.sh) had no scheduler, so zero autonomous dispatch
+    # existed. This rung is the declared caller: dispatch-beat.py gates SOLELY on
+    # `autonomy-governor.py dispatch-ok` (logs/autonomy-policy.json is the single valve —
+    # LIMEN_DISPATCH stays the his-hand lever for MANUAL metabolize/saturate runs), throttles
+    # itself to one pass per LIMEN_DISPATCH_BEAT_MIN_SECS, and runs the serial engine for
+    # jules only (remote lane, no local load on the 16GB host). Volume is bounded three
+    # deep: per-pass limit, per_agent.jules=100 board cap, and the throughput governor's
+    # landed-evidence clamp. Cite: docs/plans/2026-08-06-jules-flywheel.md (issue #1874).
+    timeout:
+      env: LIMEN_DISPATCH_BEAT_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/dispatch-beat.py"
+        severity: advisory
+        armed_valve_type: deliverable
+        escalation: "the jules dispatch rung failed — read its tail in the beat log; the valve is logs/autonomy-policy.json via autonomy-governor.py dispatch-ok, the engine is `python3 -m limen dispatch --agent jules --live`"
+
+  capacity-fill-refresh:
+    section: "0z6"
+    title: "capacity-fill receipt refresh — the down-lane gate reads live data, not fossils"
+    gate: LIMEN_CAPACITY_FILL_REFRESH
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # docs/capacity-fill.md sat frozen at its 2026-07-10 generation ("jules exhausted
+    # 109/100") for 27 days because nothing regenerated it — and stale depletion receipts
+    # are what the down-lane gating reads. Regenerate on the metabolize pass.
+    cadence:
+      env: LIMEN_BEAT_CAPACITY_FILL
+      default: 4
+    timeout:
+      env: LIMEN_CAPACITY_FILL_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/capacity-fill-ledger.py --write"
+        severity: silent
+        escalation: "capacity-fill ledger refresh failed — docs/capacity-fill.md goes stale and lane gating reads fossil depletion data"
+
+  dispatch-health-refresh:
+    section: "0z7"
+    title: "dispatch-health receipt refresh — the health receipt tracks the live loop"
+    gate: LIMEN_DISPATCH_HEALTH_REFRESH
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # Sibling of capacity-fill-refresh: docs/dispatch-health.md froze 2026-07-10 with
+    # "jules in async skipped down lanes" and was never regenerated.
+    cadence:
+      env: LIMEN_BEAT_DISPATCH_HEALTH
+      default: 8
+    timeout:
+      env: LIMEN_DISPATCH_HEALTH_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/dispatch-health.py --write"
+        severity: silent
+        escalation: "dispatch-health receipt refresh failed — docs/dispatch-health.md goes stale"
 
   funnel-integrity:
     section: 0z3

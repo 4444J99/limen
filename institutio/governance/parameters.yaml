@@ -2556,6 +2556,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Break-glass for scripts/hooks/worktree-commit-guard.sh: 1 disables the PreToolUse deny of git commit in the live checkout on main. Mirrors the LIMEN_ALLOW_OPUS_FANOUT escape-hatch precedent; leave 0 — the deny is the charter's no-direct-main-commit rule made mechanical."
+  LIMEN_ALLOW_PR_POLL:
+    default: "0"
+    env: LIMEN_ALLOW_PR_POLL
+    self_update: none
+    owner: limen-daemon
+    note: "Break-glass for scripts/hooks/no-hand-poll-guard.sh: 1 disables the PreToolUse deny of hand-rolled PR/CI poll loops (loop + gh state probe + sleep in one command). Mirrors LIMEN_ALLOW_LIVE_COMMIT; leave 0 — the deny is the charter's sanctioned-waiter rule (scripts/await-pr.sh; 2026-07-15 endless-watcher incident) made mechanical, for every lane whose hooks run the guard."
   LIMEN_OUTBOUND_REGISTRY:
     default: "institutio/governance/outbound-effectors.yaml"
     env: LIMEN_OUTBOUND_REGISTRY
@@ -2653,11 +2659,47 @@ parameters:
     owner: censor
     note: "Cadence (every N beats) of the insight-cross-vendor sensor — a daily-ish refresh matches the insights-report tempo the packets feed; the scan walks large vendor session stores (codex logs sqlite is GiB-scale), so it stays off the hot path."
   LIMEN_CROSS_VENDOR_TIMEOUT:
-    default: 600
+    default: 900
     env: LIMEN_CROSS_VENDOR_TIMEOUT
     self_update: none
     owner: censor
-    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: seven adapters over multi-GiB sqlite/jsonl stores with a 30-day window; 600 covers the observed manual-run envelope with headroom. The runner kills the command group on overrun and the beat continues fail-open."
+    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: eleven adapters over multi-GiB sqlite/jsonl stores with a 30-day window, PLUS the index --all and --health steps added 2026-08-06 (three ordered steps share this envelope). 900 covers the observed manual-run envelope with headroom; if the rung SIGKILLs (124), shrink --window-days rather than growing this. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS:
+    default: 3
+    env: LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check packet_stale: a vendor packet whose run_at_iso is older than this many days flags its lane (the frozen-packets incident — every packet sat at 2026-07-22 for two weeks before anything noticed). Read by scripts/insight-cross-vendor-ingest.py --health."
+  LIMEN_CROSS_VENDOR_RESET_DROP_PCT:
+    default: 50
+    env: LIMEN_CROSS_VENDOR_RESET_DROP_PCT
+    self_update: none
+    owner: censor
+    note: "Health check store_reset: flag a lane whose sessions_seen fell by at least this percent vs the recent ring-buffer max (state/health-state.json). The opencode wipe (store reset ~2026-08-03 to a single 1-second session) was only discovered by a manual sweep."
+  LIMEN_CROSS_VENDOR_RESET_MIN_BASE:
+    default: 20
+    env: LIMEN_CROSS_VENDOR_RESET_MIN_BASE
+    self_update: none
+    owner: censor
+    note: "Health check store_reset noise floor: the drop check only arms when the recent max sessions_seen is at least this — a 3-session lane halving is noise, a 40-session lane halving is a reset."
+  LIMEN_CROSS_VENDOR_MIN_HORIZON_DAYS:
+    default: 14
+    env: LIMEN_CROSS_VENDOR_MIN_HORIZON_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check retention_horizon: flag a non-empty lane whose oldest locally-surviving record (packet oldest_record_iso) is younger than this many days — the store prunes faster than review happens (antigravity blobs prune at ~10d; 59% of one 30-day window was already structural-only before anything measured it)."
+  LIMEN_VENDOR_CAPSULE_CHURN_MAX:
+    default: 3
+    env: LIMEN_VENDOR_CAPSULE_CHURN_MAX
+    self_update: none
+    owner: censor
+    note: "Health check capsule_churn: flag a lane whose index meta.capsule_churn.mean_files_per_session exceeds this — resume-fragmentation (codex live mean 4.38, max 35 rollout files for one logical session) makes transcripts expensive to reassemble and signals sessions dying/resuming pathologically."
+  LIMEN_VENDOR_NARRATIVE_MAX_LAG_DAYS:
+    default: 7
+    env: LIMEN_VENDOR_NARRATIVE_MAX_LAG_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check index_ahead_of_narrative: flag a lane whose index.json is newer than its narrative.json by more than this many days (or never narrated) — the lane is being measured on the beat but never read, which is how a 25-hour autonomous mission and a 21-day-dark dispatch estate went unreviewed."
 
   LIMEN_JULES_QUOTA:
     default: "1"
@@ -2785,6 +2827,72 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Throttled-mode multiplier: cap = max(bootstrap, ramp_mult x landed_in_window), capped at the daily target — landing more work opens more dispatch."
+  LIMEN_JULES_DISPATCH:
+    default: "1"
+    env: LIMEN_JULES_DISPATCH
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the jules-dispatch sensor (sensors.yaml jules-dispatch): the governed valve rung to the serial dispatch engine. The rung additionally self-gates on autonomy-governor.py dispatch-ok — logs/autonomy-policy.json is the single autonomous valve; LIMEN_DISPATCH stays the manual metabolize/saturate lever."
+  LIMEN_JULES_DISPATCH_LIMIT:
+    default: 10
+    env: LIMEN_JULES_DISPATCH_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Tasks per dispatch-beat pass (serial engine, jules only). ~48 throttled passes/day x this, hard-capped by per_agent.jules=100 and the throughput governor's landed-evidence clamp — the quota drains across the day instead of bursting."
+  LIMEN_DISPATCH_BEAT_MIN_SECS:
+    default: 1800
+    env: LIMEN_DISPATCH_BEAT_MIN_SECS
+    self_update: none
+    owner: arms-agents
+    note: "Wall-clock throttle between dispatch-beat passes — bounds the rung at <=48 passes/day regardless of the adaptive beat tempo (MIN=120s beats would otherwise over-fire it)."
+  LIMEN_DISPATCH_BEAT_TIMEOUT:
+    default: 900
+    env: LIMEN_DISPATCH_BEAT_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Process-group timeout for one dispatch-beat engine run; a hung provider call is terminated and the rung exits 0 (never a red beat)."
+  LIMEN_METABOLIZE_SENSORS_SECS:
+    default: 3600
+    env: LIMEN_METABOLIZE_SENSORS_SECS
+    self_update: none
+    owner: vigilia
+    note: "Wall-clock throttle for the heartbeat's metabolize sensor pass (beat-sensors.py --run --source metabolize) — the live runner for the source:[metabolize] registry sensors that lost their scheduler when metabolize.sh's callers went away. Hourly default: the old 4-hourly cron's spirit at beat granularity."
+  LIMEN_CAPACITY_FILL_REFRESH:
+    default: "1"
+    env: LIMEN_CAPACITY_FILL_REFRESH
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the capacity-fill-refresh sensor: regenerates docs/capacity-fill.md so down-lane gating reads live depletion data, not the 2026-07-10 fossil that kept jules marked exhausted for 27 days."
+  LIMEN_BEAT_CAPACITY_FILL:
+    default: 4
+    env: LIMEN_BEAT_CAPACITY_FILL
+    self_update: none
+    owner: arms-agents
+    note: "Cadence (metabolize passes) for capacity-fill-refresh."
+  LIMEN_CAPACITY_FILL_TIMEOUT:
+    default: 300
+    env: LIMEN_CAPACITY_FILL_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Timeout for one capacity-fill-ledger --write run."
+  LIMEN_DISPATCH_HEALTH_REFRESH:
+    default: "1"
+    env: LIMEN_DISPATCH_HEALTH_REFRESH
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the dispatch-health-refresh sensor: regenerates docs/dispatch-health.md (frozen 2026-07-10 with jules in the skipped down-lanes)."
+  LIMEN_BEAT_DISPATCH_HEALTH:
+    default: 8
+    env: LIMEN_BEAT_DISPATCH_HEALTH
+    self_update: none
+    owner: arms-agents
+    note: "Cadence (metabolize passes) for dispatch-health-refresh."
+  LIMEN_DISPATCH_HEALTH_TIMEOUT:
+    default: 300
+    env: LIMEN_DISPATCH_HEALTH_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Timeout for one dispatch-health --write run."
   LIMEN_FUNNEL_INTEGRITY:
     default: "1"
     env: LIMEN_FUNNEL_INTEGRITY

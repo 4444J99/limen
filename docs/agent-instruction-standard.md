@@ -58,10 +58,13 @@ back to `AGENTS.md` instead.
     environment probes derive the lane and ending. The closeout must print one launch command and
     make the capsule remotely durable. Carry one validated finite configurable runway that successor
     sessions inherit; never hard-code a future model, provider table, task count, or desired terminal
-    verdict into the capsule.
+    verdict into the capsule. Full doctrine (Tier-1 home since the 2026-08-06 stratification):
+    `docs/architecture/continuation-capsules.md` — `AGENTS.md` keeps the binding stub.
 11. Apply `AGENTS.md` → Bounded Composition to campaigns, CI, generated artifacts, and handoffs.
     Aggregate entrypoints are thin fan-in layers over independently runnable modules with finite
     retries, bounded output, and durable receipts; they never duplicate successful children.
+    Full doctrine: `docs/architecture/bounded-composition.md` (Tier-1 home; `AGENTS.md` keeps the
+    binding stub).
 12. Apply `AGENTS.md` → Peer Conductor Contract to every agent surface. Conductor is a temporary
     capability, never a rank; all child work is broker-reserved, authority attenuates, native
     identity survives, protected human sessions are untouchable, hidden fanout is rejected, and
@@ -71,6 +74,14 @@ back to `AGENTS.md` instead.
     queue and its synthetic `merge_group`, not by repeatedly rewriting every branch and rerunning
     successful head CI. Direct `main` writers yield to active integration. The executable contract
     is `AGENTS.md` → Session Discipline rule 5 plus `docs/architecture/concurrent-integration.md`.
+14. Instruction surfaces are byte-budgeted. The weakest consumer's default cap is the budget
+    (codex truncates project docs at 32,768 bytes SILENTLY — the 2026-08-06 incident dropped
+    every AGENTS.md section past ~line 499, including codex's own Agent-Specific Note); the
+    declared registry is `institutio/governance/gates.yaml` → `instruction_surfaces`, and
+    `scripts/check-agent-docs.py` check S enforces it as a shrink-only ratchet with a named
+    debt line while any surface exceeds the budget. Doctrine that outgrows the budget relocates
+    to a Tier-1 home (`docs/architecture/`) behind a pointer stub — the budget law lives HERE,
+    in the uncapped standard, never inside the capped file it governs.
 
 ## Home-scope generated surfaces
 
