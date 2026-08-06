@@ -163191,3 +163191,36 @@ tasks:
     conduct_lease_id: 'lease-573-db0a7a78c83791ae'
     conduct_generation: 573
   updated: '2026-08-06T22:43:16.142Z'
+- id: 'GH-organvm-limen-1913'
+  title: 'Live-fire probe: no-hand-poll-guard deny hook in a fresh session (post-#1909)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1913'
+  context: 'GitHub issue organvm/limen#1913. PR #1909 wired scripts/hooks/no-hand-poll-guard.sh as a PreToolUse deny hook on both rails (.claude/settings.json + codex-hook-runner.sh). The deny matrix is runtime-verified via scripts/tests/no-hand-poll-guard.test.sh (wired into verify-whole.sh), but settings.json hook wiring snapshots at session start — the merging session cannot observe its own hook. One fresh interactive session should type'
+  predicate: 'test "$(gh issue view 1913 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1913'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1913'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T23:15:17.699Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-5f822eeaefebbc91cd8001757d4deaaf:574:compatibility'
+    conduct_run_id: 'run-5f822eeaefebbc91cd8001757d4deaaf'
+    conduct_lease_id: 'lease-574-5f822eeaefebbc91'
+    conduct_generation: 574
+  updated: '2026-08-06T23:15:17.699Z'
