@@ -70,6 +70,10 @@ studium/_converged/converge-log.jsonl
 docs/prompt-atom-ledger.json
 # cross-vendor raw extraction packets (PII-risk; generated locally, fed to synthesis pass)
 logs/insight-cross-vendor/
+# /vendor-insights working data + reports (personal-usage narrative, PII-risk; the tracked
+# deliverable is scripts/vendor-insights.py + the skill, never this data — mirrors how the
+# built-in /insights keeps its artifact under untracked .agent-runtime/)
+logs/vendor-insights/
 # sensitive publication-judgment rationale (shallow-merged into repo_overrides at load; arca-sealed)
 institutio/github/estate.private.yaml
 # whole-PR campaign census receipts (generated locally by scripts/conduct-pr-campaign.py; ~1.5MB

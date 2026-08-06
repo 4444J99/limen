@@ -963,6 +963,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "tmux session name scripts/open-streams.sh opens stream windows into (one window per stream, named by stream id). tmux rather than background jobs because `limen workstream --agent ...` ends in exec and an interactive agent needs a controlling TTY; the window name is also how a re-run detects an already-open stream."
+  LIMEN_VENDOR_INSIGHTS_DIR:
+    default: "logs/vendor-insights"
+    env: LIMEN_VENDOR_INSIGHTS_DIR
+    self_update: none
+    owner: continuity
+    note: "Working-data root for scripts/vendor-insights.py (the mechanical half of /vendor-insights): per-vendor session index, skill-written facets/narrative, and rendered report HTML. Relative default resolves under LIMEN_ROOT; the whole tree is gitignored because it narrates personal usage (same placement doctrine as the built-in /insights artifact under .agent-runtime/). Override to point a test or a scratch run somewhere else."
   LIMEN_VERIFY_LOCK_FILE:
     default: "${TMPDIR:-/tmp}/limen-verify-whole.lock"
     env: LIMEN_VERIFY_LOCK_FILE
