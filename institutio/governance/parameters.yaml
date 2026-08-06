@@ -2683,6 +2683,54 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Beat gate for the jules-supply sensor (sensors.yaml jules-supply): dispatchable-supply-vs-floor gauge; the armed valve LIMEN_JULES_SUPPLY_APPLY owns minting."
+  LIMEN_OWNER_ROUTE_DRAIN:
+    default: "1"
+    env: LIMEN_OWNER_ROUTE_DRAIN
+    self_update: none
+    owner: arms-agents
+    note: "Drain-rung gate for owner-route-drain.py (the 308-blocked-jules-PR debt organ, GITVS-UNCAPPED-PR-DEBT-0715). Classification always runs when gated on; mutations need the separate apply valve."
+  LIMEN_OWNER_ROUTE_DRAIN_APPLY:
+    default: "0"
+    env: LIMEN_OWNER_ROUTE_DRAIN_APPLY
+    self_update: none
+    owner: arms-agents
+    note: "Armed valve for owner-route-drain mutations (merge/supersede/close). Default 0: classification + receipts only, until a dry-run day's verdict distribution has been reviewed. A pause marker forces classification-only even when armed."
+  LIMEN_OWNER_ROUTE_LIMIT:
+    default: 15
+    env: LIMEN_OWNER_ROUTE_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Verdicts per owner-route-drain run (rotating cursor over the jules PR cohort)."
+  LIMEN_OWNER_ROUTE_MERGE_LIMIT:
+    default: 5
+    env: LIMEN_OWNER_ROUTE_MERGE_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Merges per owner-route-drain run — each one still individually gated on merge-policy.sh exit 0 with the exact head pinned."
+  LIMEN_OWNER_ROUTE_MAX_AGE_DAYS:
+    default: 45
+    env: LIMEN_OWNER_ROUTE_MAX_AGE_DAYS
+    self_update: none
+    owner: arms-agents
+    note: "Age horizon past which a red-CI jules PR with no surviving value claim is closed (with the reason as a comment) instead of routed to heal."
+  LIMEN_JULES_PR_AUTHOR:
+    default: "app/google-labs-jules"
+    env: LIMEN_JULES_PR_AUTHOR
+    self_update: none
+    owner: arms-agents
+    note: "GitHub author identity of vendor-authored jules PRs, used by owner-route-drain's cohort enumeration."
+  LIMEN_JULES_LAND_LIMIT:
+    default: 5
+    env: LIMEN_JULES_LAND_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "jules-land landings per drain beat (raised 3->5 for the 100/day throughput program: ~96 drain runs/day x 5 = 480/day landing headroom)."
+  LIMEN_MERGE_SCAN:
+    default: 50
+    env: LIMEN_MERGE_SCAN
+    self_update: none
+    owner: arms-agents
+    note: "merge-drain rotating assessment window per run (raised 30->50 so the jules cohort gets a same-day revisit at 100/day dispatch)."
   LIMEN_FUNNEL_INTEGRITY:
     default: "1"
     env: LIMEN_FUNNEL_INTEGRITY
