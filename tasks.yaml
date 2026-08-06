@@ -163224,3 +163224,36 @@ tasks:
     conduct_lease_id: 'lease-574-5f822eeaefebbc91'
     conduct_generation: 574
   updated: '2026-08-06T23:15:17.699Z'
+- id: 'GH-organvm-limen-1912'
+  title: 'Ruleset limen-default-merge-queue lost its merge_queue rule at 2026-08-06T22:21:32Z — confirm intent or restore'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1912'
+  context: 'GitHub issue organvm/limen#1912. During the GitHub Actions major outage (incident open 16:33Z), the ruleset''s merge_queue rule was removed at 22:21:32Z (ruleset history; actor not reported by the API). This was NOT done by this session — its two edits (22:05, 22:06 UTC) touched only bypass_actors and the queue was observed alive after both. Since removal, main runs on plain auto-merge + the pull_request rule + legacy branch prote'
+  predicate: 'test "$(gh issue view 1912 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1912'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1912'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T23:15:23.547Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-fcaf1ade5ecdabc16ee26e2592066d26:575:compatibility'
+    conduct_run_id: 'run-fcaf1ade5ecdabc16ee26e2592066d26'
+    conduct_lease_id: 'lease-575-fcaf1ade5ecdabc1'
+    conduct_generation: 575
+  updated: '2026-08-06T23:15:23.547Z'
