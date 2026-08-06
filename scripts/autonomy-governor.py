@@ -75,8 +75,10 @@ def maintenance_blocker(policy: dict[str, Any], *, now: datetime.datetime | None
 
     A maintenance window is an executable lifecycle boundary, not decoration. Before its
     expiry the requested observe mode remains intact. After expiry the governor fails loudly
-    toward paused until the declared resume predicate is satisfied and the policy owner
-    explicitly restores dispatch. Ordinary indefinite observe policies are unchanged.
+    toward paused until the declared resume predicate is satisfied; once it is,
+    _try_restore_dispatch flips the policy back to dispatch with a receipt (unless the window
+    declares `restore: manual`). Ordinary indefinite observe policies are unchanged — only a
+    finite window with a passing runnable predicate self-restores.
     """
     if str(policy.get("mode", "")).lower() != "observe":
         return None
@@ -543,6 +545,76 @@ def _marker_expired(marker: Path) -> bool:
     return datetime.datetime.now(datetime.timezone.utc) >= expiry
 
 
+RESTORE_RECEIPT_PATH = ROOT / "logs" / "autonomy-policy-restore.json"
+
+
+def _try_restore_dispatch(policy: dict[str, Any]) -> bool:
+    """Flip a RESUMED finite maintenance window back to dispatch — with a receipt.
+
+    The missing half of _try_complete_maintenance_window: satisfying the resume predicate
+    only cleared the BLOCKER, it never rewrote `mode`, so the policy stayed observe forever
+    (measured 2026-07-21 -> 08-06: predicates all passing since 08-05 while the estate sat
+    at observe with a frozen 8/600 budget and zero dispatch). Restoring is scoped tightly:
+
+      * only `mode: observe` with a finite `maintenance_window` dict — an indefinite
+        observe policy (no window) is an operator statement and is never auto-flipped;
+      * only when the recorded resume receipt covers THIS window (the predicate ran and
+        passed, auditable at logs/autonomy-maintenance-resume.json);
+      * never while the pause marker artifact exists, never when the window declares
+        `restore: manual`, and never under LIMEN_AUTONOMY_WINDOW_RESTORE=0;
+      * fail-closed: a policy file that cannot be rewritten means no flip happened.
+
+    On success the window moves to `completed_maintenance_window` (so the flip can never
+    re-trigger) and a restore receipt lands at logs/autonomy-policy-restore.json.
+    """
+    if os.environ.get("LIMEN_AUTONOMY_WINDOW_RESTORE", "1") == "0":
+        return False
+    if str(policy.get("mode", "")).lower() != "observe":
+        return False
+    window = policy.get("maintenance_window")
+    if not isinstance(window, dict):
+        return False
+    if str(window.get("restore") or "").lower() == "manual":
+        return False
+    if PAUSE_MARKER.exists():
+        return False
+    if not _resume_receipt_matches(window):
+        return False
+
+    restored_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    prior_mode = str(policy.get("mode", "observe"))
+    updated = dict(policy)
+    updated.pop("maintenance_window", None)
+    updated["mode"] = "dispatch"
+    updated["dispatch_enabled"] = True
+    updated["reason"] = (
+        f"auto-restored {restored_at}: finite maintenance window (expired {window.get('expires_at')}) "
+        "resumed via its declared predicate — receipt logs/autonomy-policy-restore.json"
+    )
+    updated["completed_maintenance_window"] = {**window, "restored_at": restored_at}
+    try:
+        POLICY_PATH.write_text(json.dumps(updated, indent=2, sort_keys=True) + "\n")
+    except OSError:
+        return False  # a restore that cannot be recorded did not happen
+    receipt = {
+        "schema_version": "limen.autonomy-policy-restore.v1",
+        "window_expires_at": str(window.get("expires_at") or ""),
+        "prior_mode": prior_mode,
+        "restored_at": restored_at,
+        "resume_receipt": str(MAINTENANCE_RESUME_PATH),
+    }
+    try:
+        RESTORE_RECEIPT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        RESTORE_RECEIPT_PATH.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+    except OSError:
+        pass  # the policy flip is the authoritative state; the receipt is evidence, not a gate
+    print(
+        f"autonomy-governor: dispatch auto-restored — window {window.get('expires_at')} resumed",
+        file=sys.stderr,
+    )
+    return True
+
+
 def current_mode() -> str:
     if PAUSE_MARKER.exists() and os.environ.get("LIMEN_FORCE_AUTONOMY") != "1":
         if _marker_expired(PAUSE_MARKER):
@@ -565,6 +637,8 @@ def current_mode() -> str:
     if blocker is not None:
         _persist_maintenance_blocker(blocker)
         return "paused"
+    if _try_restore_dispatch(policy):
+        return "dispatch"
     return str(policy.get("mode", "observe")).lower()
 
 
