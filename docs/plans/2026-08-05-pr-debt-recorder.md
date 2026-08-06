@@ -1,6 +1,8 @@
+# Wire the PR-debt recorder — the probe exists, the producer never ran
 
 Issue: #1853
-PR: (pending)
+PR: #1854
+
 ## Context
 
 `scripts/check-ideal-forms.py --measure` exits **1** with verdict **DRIFT**. Measured 2026-08-05:
