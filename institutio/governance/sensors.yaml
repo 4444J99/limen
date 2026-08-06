@@ -1522,6 +1522,25 @@ sensors:
         severity: advisory
         escalation: "Dispatchable Jules supply is below floor and minting is unarmed — arm LIMEN_JULES_SUPPLY_APPLY=1 or extend docs/jules-supply-templates.yaml"
 
+  lane-throughput:
+    section: "0z4"
+    title: "throughput governor gauge — each lane's dispatch cap vs its landed evidence"
+    gate: LIMEN_LANE_THROUGHPUT
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The June-July jules era proved raw dispatch volume compounds debt: 90-190 launches/day
+    # at ~15% completion left 308 blocked owner_route PRs (23.8% of estate PR debt). The
+    # governor (capacity.lane_throughput_cap, enforced in dispatch._remaining_budget) makes
+    # the full daily target EARNED: bootstrap 25/day from cold start, full target only while
+    # landed/dispatched holds LIMEN_THROUGHPUT_FLOOR_RATE. This sensor is the gauge — cap
+    # table per run, JSONL history, advisory-red on a clamp sustained across 2+ days (the
+    # fix then belongs to the LANDING organs, never to more dispatch).
+    steps:
+      - command: "python3 scripts/lane-throughput.py"
+        severity: advisory
+        escalation: "a lane has been throughput-clamped 2+ days — landing is the bottleneck: run drain.sh rungs (jules-land, owner-route-drain, merge-drain) and read logs/throughput-governor.jsonl for the binding evidence"
+
   funnel-integrity:
     section: 0z3
     title: "application funnel honesty — the funnel claims nothing it cannot evidence"

@@ -6,9 +6,10 @@ import re
 import shlex
 import shutil
 import subprocess
+import math
 from pathlib import Path
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import TypedDict, TypeVar
 
 from limen import census
@@ -731,6 +732,159 @@ def _dispatch_event_attempts(board: object, agent: str, day: str) -> int:
     return len(touched)
 
 
+class ThroughputCap(TypedDict):
+    agent: str
+    cap: int
+    target: int
+    dispatched: int
+    landed: int
+    rate: float | None
+    mode: str  # "disabled" | "bootstrap" | "earned" | "throttled"
+    reason: str
+
+
+def _throughput_env_int(name: str, default: int) -> int:
+    try:
+        return int(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
+def _throughput_env_float(name: str, default: float) -> float:
+    try:
+        return float(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
+def _entry_is_landed(entry: object) -> bool:
+    """Durable landed evidence in a dispatch_log entry: a done/pr_open transition, or a
+    dispatched receipt that carries a PR URL (the durable open-PR receipt shape)."""
+    status = str(_get(entry, "status", "") or "")
+    if status in {"done", "pr_open"}:
+        return True
+    if status == "dispatched":
+        session = str(_get(entry, "session_id", "") or "")
+        return "/pull/" in session.lower()
+    return False
+
+
+def lane_throughput_window(board: object, agent: str, *, now: datetime | None = None) -> tuple[int, int]:
+    """Count (dispatched, landed) receipts for a lane in the trailing throughput window."""
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    window_days = _throughput_env_int("LIMEN_THROUGHPUT_WINDOW_DAYS", 3)
+    since = now - timedelta(days=max(1, window_days))
+    agent = canonical_agent(agent)
+    dispatched = 0
+    landed = 0
+    tasks = _get(board, "tasks", []) or []
+    if not isinstance(tasks, list):
+        return 0, 0
+    for task in tasks:
+        log = task_value(task, "dispatch_log", []) or []
+        if not isinstance(log, list):
+            continue
+        for entry in log:
+            if canonical_agent(str(_get(entry, "agent", "") or "")) != agent:
+                continue
+            stamp = _parse_dt(_get(entry, "timestamp", None))
+            if stamp is None or stamp < since:
+                continue
+            status = str(_get(entry, "status", "") or "")
+            if status == "dispatched":
+                dispatched += 1
+            if _entry_is_landed(entry):
+                landed += 1
+    return dispatched, landed
+
+
+def lane_throughput_cap(board: object, agent: str, *, now: datetime | None = None) -> ThroughputCap:
+    """Clamp a lane's daily dispatch volume to its LANDED throughput.
+
+    The 2026 June-July jules era proved raw dispatch volume compounds debt, not value:
+    90-190 launches/day at ~15% completion left 308 blocked PRs. This governor makes the
+    full daily target something a lane EARNS with landing evidence:
+
+      - bootstrap: below LIMEN_THROUGHPUT_BOOTSTRAP_MIN dispatches in the window there is
+        no meaningful rate to judge — allow LIMEN_THROUGHPUT_BOOTSTRAP/day, never 0, so a
+        cold start can never self-seal (the admission-gate deadlock class).
+      - earned: landed/dispatched >= LIMEN_THROUGHPUT_FLOOR_RATE -> the full daily target.
+      - throttled: rate below the floor -> max(bootstrap, ramp_mult x landed), capped at
+        the target, with the reason carried for the receipt log.
+
+    Kill-switch LIMEN_THROUGHPUT_GOVERNOR=0 disables the clamp (mode "disabled").
+
+    The full target is the lane's per-agent budget CEILING (what a window may spend), not
+    ``derived_daily_floor`` (a minimum fill expectation): clamping a 2-cap lane to its
+    1-task floor would shrink lanes the governor has no evidence against.
+    """
+    agent = canonical_agent(agent)
+    budget = _budget_from_board(board)
+    per_agent = _get(budget, "per_agent", {}) or {}
+    agent_cap = _int(per_agent.get(agent), 0) if isinstance(per_agent, dict) else 0
+    target = agent_cap if agent_cap > 0 else derived_daily_floor(agent, board)
+    enabled = str(os.environ.get("LIMEN_THROUGHPUT_GOVERNOR", "1") or "1") != "0"
+    if not enabled or target <= 0:
+        return {
+            "agent": agent,
+            "cap": target if target > 0 else 0,
+            "target": target,
+            "dispatched": 0,
+            "landed": 0,
+            "rate": None,
+            "mode": "disabled",
+            "reason": "throughput governor disabled" if not enabled else "lane has no daily target",
+        }
+    bootstrap = max(1, _throughput_env_int("LIMEN_THROUGHPUT_BOOTSTRAP", 25))
+    bootstrap_min = max(1, _throughput_env_int("LIMEN_THROUGHPUT_BOOTSTRAP_MIN", 20))
+    floor_rate = _throughput_env_float("LIMEN_THROUGHPUT_FLOOR_RATE", 0.30)
+    ramp_mult = _throughput_env_float("LIMEN_THROUGHPUT_RAMP_MULT", 3.0)
+    dispatched, landed = lane_throughput_window(board, agent, now=now)
+    if dispatched < bootstrap_min:
+        cap = min(target, bootstrap)
+        return {
+            "agent": agent,
+            "cap": cap,
+            "target": target,
+            "dispatched": dispatched,
+            "landed": landed,
+            "rate": None,
+            "mode": "bootstrap",
+            "reason": (
+                f"{dispatched} dispatches in window < bootstrap_min {bootstrap_min} — "
+                f"no rate to judge; bounded cold-start allowance {cap}/day"
+            ),
+        }
+    rate = landed / dispatched
+    if rate >= floor_rate:
+        return {
+            "agent": agent,
+            "cap": target,
+            "target": target,
+            "dispatched": dispatched,
+            "landed": landed,
+            "rate": round(rate, 3),
+            "mode": "earned",
+            "reason": f"landed rate {rate:.0%} >= floor {floor_rate:.0%} — full target earned",
+        }
+    cap = min(target, max(bootstrap, math.ceil(landed * ramp_mult)))
+    return {
+        "agent": agent,
+        "cap": cap,
+        "target": target,
+        "dispatched": dispatched,
+        "landed": landed,
+        "rate": round(rate, 3),
+        "mode": "throttled",
+        "reason": (
+            f"landed rate {rate:.0%} < floor {floor_rate:.0%} "
+            f"({landed}/{dispatched}) — clamped to {cap}/day until landing recovers"
+        ),
+    }
+
+
 def capacity_fill_snapshot(
     board: object,
     *,
@@ -830,6 +984,28 @@ def capacity_fill_snapshot(
         rows.append(row)
         if status in {"underfilled", "unproductive", "blocked", "no_work"}:
             blockers.append({"id": f"lane-fill-{agent}", "evidence": f"{agent}: {evidence}"})
+
+    jules_row = next((row for row in rows if row["agent"] == "jules"), None)
+    if jules_row is not None and jules_row["productive"] >= jules_row["target"] > 0:
+        starved = [
+            row["agent"]
+            for row in rows
+            if row["agent"] != "jules"
+            and row["reachable"]
+            and row["status"] in {"underfilled", "no_work"}
+            and (row["open_work"] > 0 or row["status"] == "no_work")
+        ]
+        if starved:
+            blockers.append(
+                {
+                    "id": "lane-balance-jules",
+                    "evidence": (
+                        "jules is saturated while reachable lanes sit starved: "
+                        + ", ".join(sorted(starved))
+                        + " — rebalance routing before feeding jules further"
+                    ),
+                }
+            )
 
     overall = "healthy" if not blockers else "blocked"
     return {
