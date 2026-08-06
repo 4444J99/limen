@@ -162909,3 +162909,36 @@ tasks:
     conduct_lease_id: 'lease-565-3fbe1608b0b8fd4f'
     conduct_generation: 565
   updated: '2026-08-06T19:24:38.521Z'
+- id: 'GH-organvm-limen-1765'
+  title: 'LIMEN_RESOURCE_TASK_GRAPH is required, fails closed, and no such file exists in the repo — every local lane is unreachable'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1765'
+  context: 'GitHub issue organvm/limen#1765. ## Condition Every **local-checkout** lane (claude, codex, opencode, agy, gemini) is blocked at worktree admission on a healthy machine: ``` $ limen dispatch --task HEAL-SCRAPPER-MOAT-EVICT --agent claude ── limen dispatch (DRY-RUN) — agent=claude budget_remaining=100 Worktree admission blocked HEAL-SCRAPPER-MOAT-EVICT: disk/resource-envelope unknown (/Volumes/Scratch/limen-worktrees) — failing cl'
+  predicate: 'test "$(gh issue view 1765 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1765'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1765'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:43.249Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-21627e4483a2941752e2f4213508bd47:566:compatibility'
+    conduct_run_id: 'run-21627e4483a2941752e2f4213508bd47'
+    conduct_lease_id: 'lease-566-21627e4483a29417'
+    conduct_generation: 566
+  updated: '2026-08-06T19:24:43.249Z'
