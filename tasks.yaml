@@ -80800,17 +80800,18 @@ tasks:
   workstream: 'contributions'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'typing'
   - 'generated'
   - 'build-out'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/limen/issues/1565'
   context: 'Eliminate the worst untyped hotspots in organvm/limen''s most-imported module (remove `any` / add type hints / fix loose signatures). Keep the build and tests green. [auto-generated 2026-07-03 to keep the stream endless]'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-26T21:52:41.401Z'
+  updated: '2026-08-06T18:47:22.878Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: 'codex'
@@ -80839,6 +80840,20 @@ tasks:
     conduct_run_id: 'run-db6d726cbb042efad348b37a69ec9d89'
     conduct_lease_id: 'lease-367-db6d726cbb042efa'
     conduct_generation: 367
+  - timestamp: '2026-08-06T18:47:22.878Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 3
+    conduct_event_id: 'conduct:run-75b9837a365045bceb596c59575a255b:528:compatibility'
+    conduct_run_id: 'run-75b9837a365045bceb596c59575a255b'
+    conduct_lease_id: 'lease-528-75b9837a365045bc'
+    conduct_generation: 528
   predicate: 'test "$(gh issue view 1565 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/1565'
   origin: 'system_debt'
