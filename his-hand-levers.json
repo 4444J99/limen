@@ -352,7 +352,8 @@
         "Verify: python3 scripts/claude-identity-bundle.py --strict exits 0, and its instances[] shows ls_registered=false for the handler."
       ],
       "source_task": "IF-GATEKEEPER-INERT · the second instance of the vendor-bundle class, surfaced by the keeper's class enumeration (scripts/claude-identity-bundle.py)",
-      "note": "Measured by the keeper, never applied by it — the deliberate split between what this organ can observe and what it has authority to change, same shape as concurrent_version_race_risk. The setting key is the vendor's own: 'Prevent claude-cli:// protocol handler registration with the OS'. Do NOT 'fix' this bundle by re-linking or re-signing it: its symlink already tracks the launcher correctly, and signing it would rewrite the live CLI's Developer ID signature in place. See docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md."
+      "note": "Measured by the keeper, never applied by it — the deliberate split between what this organ can observe and what it has authority to change, same shape as concurrent_version_race_risk. The setting key is the vendor's own: 'Prevent claude-cli:// protocol handler registration with the OS'. Do NOT 'fix' this bundle by re-linking or re-signing it: its symlink already tracks the launcher correctly, and signing it would rewrite the live CLI's Developer ID signature in place. See docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md.",
+      "issue": 1851
     },
     {
       "id": "L-TCC-RECORDER",
