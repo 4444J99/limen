@@ -42,10 +42,32 @@ LOG_REL = "logs/session-contention.jsonl"
 
 #: Every path that can rewrite or remove a tree, with the marker proving it consults occupancy
 #: first. `why` is the evidence: what the path does, and how it is guarded today.
-GUARDED_PATHS: dict[str, dict[str, str]] = {
+#:
+#: PRESENCE IS NOT ARMING, and this registry learned that the hard way. A marker proves the guard
+#: is WIRED IN; it cannot prove the guard ever populates its occupant. On 2026-08-06 the
+#: `_contended` marker was present at all three of sync-release's destructive sites while the
+#: guard was inert — a `pipefail` interaction blanked the pid the instant it was parsed — and this
+#: predicate printed "all occupancy-guarded, contention distance: 0" over code that was driven,
+#: live, into switching HEAD out from under a running session. Green on the defect is worse than
+#: no gate, because it is read as proof.
+#:
+#: So a path may also name `arming`: the test(s) that EXECUTE it and observe the guard firing and
+#: not firing. This predicate cannot run them (they need a git fixture and belong to the pytest
+#: gate), but it can refuse to certify a path whose arming coverage has been deleted or renamed —
+#: which is the failure mode that would silently return the guard to shippable-inert. Structure,
+#: history, and now the existence of a runtime witness.
+GUARDED_PATHS: dict[str, dict[str, object]] = {
     "sync-release": {
         "file": "scripts/sync-release.sh",
         "marker": "_contended",
+        "arming": {
+            "file": "cli/tests/test_session_contention.py",
+            "tests": (
+                "test_the_guard_declines_the_unpark_when_a_session_holds_the_tree",
+                "test_the_unpark_still_fires_when_the_tree_is_free",
+                "test_a_blind_probe_announces_itself_instead_of_passing_for_free",
+            ),
+        },
         # NB: the prose below deliberately does not put `git` and `push` on one line. This file
         # performs no remote write, but direct-main-writer-audit.py matches that pair per line
         # outside comments — so a sentence DESCRIBING a stash push reads to it as performing one,
@@ -90,22 +112,54 @@ def load_ledger() -> dict:
 
 
 def check_exposure() -> tuple[list[str], int]:
-    """Paths that can rewrite a tree without consulting occupancy first."""
+    """Paths that can rewrite a tree without consulting occupancy first, or without a witness."""
     findings: list[str] = []
     unguarded = 0
     for name, spec in GUARDED_PATHS.items():
-        path = ROOT / spec["file"]
+        path = ROOT / str(spec["file"])
         if not path.is_file():
             findings.append(f"[EXPOSURE] {name}: {spec['file']} does not exist — the guard cannot be verified")
             unguarded += 1
             continue
-        if spec["marker"] not in path.read_text(encoding="utf-8"):
+        if str(spec["marker"]) not in path.read_text(encoding="utf-8"):
             findings.append(
                 f"[EXPOSURE] {name}: {spec['file']} no longer contains {spec['marker']!r} — "
                 f"its occupancy guard was removed. This path {spec['why']}"
             )
             unguarded += 1
+            continue
+        arming = _arming_findings(name, spec)
+        findings.extend(arming)
+        unguarded += len(arming)
     return findings, unguarded
+
+
+def _arming_findings(name: str, spec: dict) -> list[str]:
+    """Whether the runtime witness for a guarded path still exists.
+
+    Deliberately narrow: it asserts the named tests are PRESENT, not that they pass — running them
+    is the pytest gate's job, and duplicating a git fixture here would make this predicate slow
+    enough to be skipped, which is its own way of going blind. What it closes is the specific hole
+    measured on 2026-08-06: delete the seam tests and nothing else in the estate notices that the
+    only check able to observe arming is gone.
+    """
+    arming = spec.get("arming")
+    if not arming:
+        return []
+    test_path = ROOT / str(arming["file"])
+    if not test_path.is_file():
+        return [
+            f"[EXPOSURE] {name}: arming witness {arming['file']} is missing — the marker proves the "
+            f"guard is wired in, nothing proves it ever fires"
+        ]
+    body = test_path.read_text(encoding="utf-8")
+    missing = [t for t in arming["tests"] if f"def {t}(" not in body]
+    if missing:
+        return [
+            f"[EXPOSURE] {name}: arming witness lost {len(missing)} test(s) from {arming['file']} "
+            f"({', '.join(missing)}) — a guard with no test that RUNS it can ship inert and green"
+        ]
+    return []
 
 
 def _unshipped_local() -> int:
@@ -169,6 +223,14 @@ def main(argv: list[str] | None = None) -> int:
         for name, spec in GUARDED_PATHS.items():
             print(f"  {name:20} {spec['file']}")
             print(f"  {'':20}   guard marker: {spec['marker']!r}")
+            arming = spec.get("arming")
+            if arming:
+                print(f"  {'':20}   arming witness: {len(arming['tests'])} test(s) in {arming['file']}")
+            else:
+                # Printed, not hidden. These two are guarded by construction rather than by a
+                # runtime valve, so there is no "fires / does not fire" to observe — but a reader
+                # deserves to see which paths have a witness and which rest on the marker alone.
+                print(f"  {'':20}   arming witness: none — marker only")
         return 0
 
     exposure_findings, unguarded = check_exposure()
@@ -187,9 +249,14 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
+    # Say what was actually verified. The previous wording — "all occupancy-guarded" — was read as
+    # a statement about behaviour when it was only ever a statement about text, and it is what let
+    # an inert guard ship under a green gate.
+    witnessed = sum(1 for spec in GUARDED_PATHS.values() if spec.get("arming"))
     print(
-        f"OK: check-session-contention — {len(GUARDED_PATHS)} tree-rewriting paths, all "
-        "occupancy-guarded; no contention incident ever recorded"
+        f"OK: check-session-contention — {len(GUARDED_PATHS)} tree-rewriting paths, each with its "
+        f"occupancy guard wired in; {witnessed}/{len(GUARDED_PATHS)} also have a runtime arming "
+        "witness; no contention incident ever recorded"
     )
     print("contention distance: 0")
     return 0
