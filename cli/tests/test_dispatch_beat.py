@@ -12,8 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "dispatch-beat.py"
 
 
-def _load(tmp_path: Path):
-    os.environ["LIMEN_ROOT"] = str(tmp_path)
+def _load(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     spec = importlib.util.spec_from_file_location("dispatch_beat_uut", SCRIPT)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -34,7 +34,7 @@ class _FakePopen:
 
 
 def test_governor_hold_means_quiet_noop(monkeypatch, tmp_path, capsys):
-    mod = _load(tmp_path)
+    mod = _load(monkeypatch, tmp_path)
     monkeypatch.setattr(
         mod.subprocess,
         "run",
@@ -52,7 +52,7 @@ def test_governor_hold_means_quiet_noop(monkeypatch, tmp_path, capsys):
 
 
 def test_governor_ok_runs_serial_engine_jules_only(monkeypatch, tmp_path, capsys):
-    mod = _load(tmp_path)
+    mod = _load(monkeypatch, tmp_path)
     monkeypatch.setattr(
         mod.subprocess, "run", lambda *a, **k: SimpleNamespace(returncode=0, stdout="dispatch allowed\n", stderr="")
     )
@@ -72,7 +72,7 @@ def test_governor_ok_runs_serial_engine_jules_only(monkeypatch, tmp_path, capsys
 
 
 def test_wall_clock_throttle_skips_within_window(monkeypatch, tmp_path, capsys):
-    mod = _load(tmp_path)
+    mod = _load(monkeypatch, tmp_path)
     mod.STAMP.parent.mkdir(parents=True, exist_ok=True)
     mod.STAMP.write_text("now\n")
     os.utime(mod.STAMP, (time.time(), time.time()))
@@ -87,7 +87,7 @@ def test_wall_clock_throttle_skips_within_window(monkeypatch, tmp_path, capsys):
 
 
 def test_stale_stamp_is_not_a_throttle(monkeypatch, tmp_path):
-    mod = _load(tmp_path)
+    mod = _load(monkeypatch, tmp_path)
     mod.STAMP.parent.mkdir(parents=True, exist_ok=True)
     mod.STAMP.write_text("old\n")
     old = time.time() - 7200
