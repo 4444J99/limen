@@ -14,6 +14,7 @@ two properties that address that, one per axis.
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
 import textwrap
@@ -163,3 +164,129 @@ def test_cli_exits_nonzero_when_a_copy_is_ungated(tmp_path):
         encoding="utf-8",
     )
     assert subprocess.run([sys.executable, str(probe)], capture_output=True).returncode == 1
+
+
+# ── the host axis: the env floor reaches copies the in-tree gate never will ───────────
+
+WRAPPER = ROOT / "scripts" / "run-pytest-hermetic.sh"
+
+# The shape every ungated copy on this host still has: no gate, but it DOES honor the
+# kill-switch. That is the whole reason an environment floor works where a file fix cannot.
+OLD_FORM_NOTIFIER = """
+    import os, subprocess
+
+    def _enabled(enabled=None):
+        if enabled is not None:
+            return enabled
+        return os.environ.get("LIMEN_NOTIFY", "1") not in ("0", "false", "False")
+
+    def notify_once(root, key, message, title="t", enabled=None):
+        if _enabled(enabled):
+            subprocess.run(["osascript", "-e", "display notification"])
+            return True
+        return False
+"""
+
+
+def test_wrapper_arms_the_killswitch_after_the_scrub():
+    """Ordering is the property, not presence.
+
+    The wrapper unsets every LIMEN_* variable so a fixture cannot read the operator's runtime.
+    An `export LIMEN_NOTIFY=0` placed BEFORE that loop would be scrubbed by it and the effector
+    would default back to speaking — silently, and only in the trees that matter.
+    """
+    text = WRAPPER.read_text(encoding="utf-8")
+    scrub = text.index("compgen -A variable LIMEN_")
+    arm = text.index("export LIMEN_NOTIFY=0")
+    assert arm > scrub, "LIMEN_NOTIFY=0 must be re-armed AFTER the LIMEN_* scrub, or it is erased"
+
+
+def test_wrapper_overrides_an_inherited_notify_setting(tmp_path):
+    """End-to-end, not by reading the script: run the real wrapper and observe the env it hands down."""
+    probe = tmp_path / "test_env_probe.py"
+    probe.write_text("import os\ndef test_env():\n    assert os.environ['LIMEN_NOTIFY'] == '0'\n", encoding="utf-8")
+    env = {**os.environ, "LIMEN_NOTIFY": "1"}  # an inherited setting that must not survive
+    done = subprocess.run(
+        ["bash", str(WRAPPER), str(probe), "-q"], capture_output=True, text=True, env=env, cwd=tmp_path
+    )
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_env_floor_silences_a_pre_gate_notifier(tmp_path, monkeypatch):
+    """The copies that predate #1841 cannot be patched — but they still read the environment.
+
+    This pins the property the whole host axis rests on: an OLD-form notifier, with no
+    _root_may_speak anywhere in it, does not reach osascript when LIMEN_NOTIFY=0.
+    """
+    old = tmp_path / "old_notify.py"
+    old.write_text(textwrap.dedent(OLD_FORM_NOTIFIER), encoding="utf-8")
+    mod = _load("old_form_notify", old)
+
+    calls = []
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: calls.append(a))
+
+    monkeypatch.setenv("LIMEN_NOTIFY", "0")
+    assert mod.notify_once(tmp_path, "k", "m") is False
+    assert calls == [], "an ungated copy still reached osascript with the kill-switch set"
+
+    monkeypatch.setenv("LIMEN_NOTIFY", "1")  # and the switch is real, not vacuously true
+    assert mod.notify_once(tmp_path, "k", "m") is True
+    assert len(calls) == 1
+
+
+# ── executor classification: a timer-run copy is not a dormant one ────────────────────
+
+
+def test_classify_separates_the_scheduled_executor(tmp_path, check_gate):
+    live, sched = tmp_path / "live", tmp_path / "rt" / "sha" / "source"
+    dormant = tmp_path / "rt" / "other" / "source"
+    check_gate.INSTALL_RUNTIMES = tmp_path / "rt"
+
+    assert check_gate.classify(sched, live, sched) == "scheduled"
+    assert check_gate.classify(live, live, sched) == "live"
+    assert check_gate.classify(dormant, live, sched) == "dormant-runtime"
+    assert check_gate.classify(tmp_path / "wt", live, sched) == "worktree"
+
+
+def test_scheduled_executor_fails_even_when_baselined(tmp_path, check_gate, monkeypatch):
+    """Recording a live hazard would convert it into an accepted one with a single flag."""
+    sched = tmp_path / "rt" / "sha" / "source"
+    _write_notifier(sched, UNGATED)
+    monkeypatch.setattr(check_gate, "enumerate_roots", lambda _live: [sched])
+    monkeypatch.setattr(check_gate, "scheduled_root", lambda: sched)
+    monkeypatch.setattr(check_gate, "read_baseline", lambda *a, **k: {str(sched)})
+    monkeypatch.setattr(check_gate._root, "resolve", lambda: (sched, "test"))
+
+    assert check_gate.main([]) == 1
+
+
+def test_baselined_dormant_copy_does_not_fail(tmp_path, check_gate, monkeypatch):
+    """The ratchet tolerates what is already draining; it fails on what is NEW."""
+    live, stale = tmp_path / "live", tmp_path / "stale"
+    _write_notifier(live, GATED)
+    _write_notifier(stale, UNGATED)
+    monkeypatch.setattr(check_gate, "enumerate_roots", lambda _live: [live, stale])
+    monkeypatch.setattr(check_gate, "scheduled_root", lambda: None)
+    monkeypatch.setattr(check_gate._root, "resolve", lambda: (live, "test"))
+
+    monkeypatch.setattr(check_gate, "read_baseline", lambda *a, **k: {str(stale)})
+    assert check_gate.main([]) == 0, "a recorded, draining copy must not fail the gate"
+
+    monkeypatch.setattr(check_gate, "read_baseline", lambda *a, **k: set())
+    assert check_gate.main([]) == 1, "an unrecorded ungated copy is a regression"
+
+
+def test_baseline_roundtrip_ignores_comments(tmp_path, check_gate):
+    path = tmp_path / "baseline.txt"
+    check_gate.write_baseline({"/b/root", "/a/root"}, path=path)
+    assert check_gate.read_baseline(path) == {"/a/root", "/b/root"}
+    assert path.read_text(encoding="utf-8").startswith("#"), "the baseline must explain itself"
+
+
+def test_shipped_baseline_excludes_the_scheduled_executor():
+    """The committed file means 'known, draining' — the launchd-run copy is neither."""
+    mod = _load("check_notify_gate_baseline", SCRIPTS / "check-notify-gate.py")
+    sched = mod.scheduled_root()
+    if sched is None:
+        pytest.skip("no runtime install on this host")
+    assert str(sched) not in mod.read_baseline()
