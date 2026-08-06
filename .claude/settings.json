@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "plan",
     "allow": [
       "Bash(launchctl list *)",
       "mcp__claude-in-chrome__tabs_context_mcp",

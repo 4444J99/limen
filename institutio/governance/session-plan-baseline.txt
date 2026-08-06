@@ -1,0 +1,23 @@
+# session-plan-baseline.txt — plans that predate the plan→issue→PR chain.
+#
+# Held OUT of scripts/check-session-phase.py. The ratchet pattern used six times over in
+# this registry: history is recorded, not rewritten; every NEW plan is held to the chain.
+# A line is removed from this file only by retro-fitting that plan with a real Issue:/PR:
+# header — never to silence a fresh violation.
+2026-07-25-iceberg-corpus-harvest-shared-substrate.md
+2026-07-29-atom-homing-and-lift-correction.md
+2026-07-29-custody-dual-estate-semver-lineage.md
+2026-07-29-session-stream-cartridges.md
+2026-07-29-session-streams-alpha-to-omega.md
+2026-07-30-audience-axis-and-meeseeks-jurisdiction.md
+2026-07-30-danse-generative-engine.md
+2026-07-30-docs-subject-ownership-export-program.md
+2026-07-30-harness-root-drift.md
+2026-07-30-portvs-astra-consolidation.md
+2026-07-31-danse-film-and-sound.md
+2026-07-31-danse-theoretical-framework.md
+2026-07-31-diurnal-organ.md
+2026-08-02-diurnal-cut-reach.md
+2026-08-02-diurnal-loop-closure.md
+2026-08-05-application-funnel-healing.md
+2026-08-05-phase-tier-enforcement.md
