@@ -103,3 +103,20 @@ prose, not as covenant + predicate every actor inherits.
   `python3 scripts/reconcile-closeouts.py --doctor` green.
 - Deliverables: 5 lane reports + 1 newly-registered-lanes summary sent as files; every PR merged
   via `merge-policy.sh` → `await-pr.sh --merge`.
+
+## R2 harvest — run-3 per-lane suggestions, folded at build closeout (2026-08-06)
+
+Each row: what the lane's narrative suggested → its disposition. Nothing here is parked; every
+row names a shipped mechanism, a registry owner, or a recorded observation.
+
+| Row | Lane suggestion (run 3) | Disposition |
+|-----|------------------------|-------------|
+| R2-a | opencode: the 1-second fleet capsule-admission probe and the ~Aug-3 store reset went unnoticed | Branch C `store_reset` check (ring-buffer, 50% drop at base≥20) + `packet_stale` watch it structurally |
+| R2-b | copilot: 25h mission self-diagnosed a GitHub secondary-rate-limit and serialized; 11 stubs left unclosed | Serialization already self-applied by the lane; stub-closure discipline is the covenant (AGENTS.md → Full Lifecycle Closure, check Q) — lane-neutral, landed in Branch D |
+| R2-c | gemini: dispatch families dark 21 days, zero replies captured | `packet_stale` (3d) + `index_ahead_of_narrative` (7d) checks make a dark lane a beat finding, not a manual-sweep discovery (Branch C); the store's replies-not-captured limit stays a coverage note (R5 doctrine, Branch A) |
+| R2-d | claude parity: built-in /insights read 28 sessions where 60 existed in-window; worktree-lockout friction ×3 sessions | Denominator honesty shipped estate-wide as `meta.total_in_window` (Branch A); worktree-lockout friction recorded — owner is the harness (session-scoped worktree binding), not a limen surface |
+| R2-e | antigravity: stamp `workspace_uri` at conversation-write time; treat the ~10-day blob horizon as an export deadline; recency views skew toward unsummarized sessions | Vendor-side write-path is not ours to fix — recorded as observation; the horizon became the `retention_horizon` check (14d, Branch C); the skew caveat landed in SKILL.md coverage-note doctrine (Branch A) |
+| R2-f | cline: fold the lane into the health sensor and stop hand-reviewing it | Done as designed: state-only indexer with honest zeros (Branch B) + health-sensor standing watch (Branch C) |
+
+A4 disposition check (2026-08-06): `GITVS-UNCAPPED-PR-DEBT-0715` — zero hits in the debt
+ledger, censor residuals, and open/closed issues; not recurring, nothing to file.
