@@ -73073,19 +73073,20 @@ tasks:
   workstream: 'contributions'
   priority: 'low'
   budget_cost: 1
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'docs'
   - 'generated'
   - 'build-out'
   - 'slow'
   - 'tried:jules'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/a-i-chat--exporter/issues/141'
   context: 'Derive an accurate Usage section in organvm/a-i-chat--exporter''s README from the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented features, no TODOs — only what the code actually does. [auto-generated 2026-06-30 to keep the stream endless]'
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-26T21:52:23.927Z'
+  updated: '2026-08-06T18:47:11.250Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: 'codex'
@@ -73157,6 +73158,20 @@ tasks:
     conduct_run_id: 'run-9e73673e4d8be4b03850f8160bdc34a8'
     conduct_lease_id: 'lease-363-9e73673e4d8be4b0'
     conduct_generation: 363
+  - timestamp: '2026-08-06T18:47:11.250Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 4
+    conduct_event_id: 'conduct:run-b15d01a0308b13faa1b820acc1e5b97b:526:compatibility'
+    conduct_run_id: 'run-b15d01a0308b13faa1b820acc1e5b97b'
+    conduct_lease_id: 'lease-526-b15d01a0308b13fa'
+    conduct_generation: 526
   predicate: 'test "$(gh issue view 141 --repo organvm/a-i-chat--exporter --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/a-i-chat--exporter/issues/141'
   origin: 'system_debt'
