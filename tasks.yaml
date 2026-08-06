@@ -162606,3 +162606,36 @@ tasks:
     conduct_lease_id: 'lease-556-f3eaca5155a2e16b'
     conduct_generation: 556
   updated: '2026-08-06T19:23:47.686Z'
+- id: 'GH-organvm-limen-1834'
+  title: 'diurnal.py: pre-_root.py-fix worktree copies can fire false ''ABSENT — handoff.json'' notifications'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1834'
+  context: 'GitHub issue organvm/limen#1834. ## Symptom macOS Notification Center flood: title "LIMEN · morning", body "ABSENT — logs/handoff.json does not exist", ~10 notifications between 13:07–14:18 EDT on 2026-08-05. Confirmed via `logs/vigilia/relief-state.json`: the live checkout''s own dedup ledger shows exactly ONE "morning" notification fired that day (07:41 EDT, message "STALE (2h) — logs/handoff.json exceeds its 1h tolerance" — a d'
+  predicate: 'test "$(gh issue view 1834 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1834'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1834'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:53.442Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-d7869f8a33acf4f5347f48036b8e2d9a:557:compatibility'
+    conduct_run_id: 'run-d7869f8a33acf4f5347f48036b8e2d9a'
+    conduct_lease_id: 'lease-557-d7869f8a33acf4f5'
+    conduct_generation: 557
+  updated: '2026-08-06T19:23:53.442Z'
