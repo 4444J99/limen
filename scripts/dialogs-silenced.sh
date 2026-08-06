@@ -298,7 +298,13 @@ echo
 # only the dialog does. The "Move to Trash" button still reseeds into ~/.Trash, which IS swept.
 # scripts/heal-claude-lsregister.sh is the effector; this block is its sensor. Agent-curable.
 # Ideal form: IF-GATEKEEPER-INERT. [[macos-tcc-gatekeeper-dialogs-solved]]
-LSREG="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Support/lsregister"
+# Same seam as scripts/heal-claude-lsregister.sh, and for the same reason: this block reimplements
+# condemnable()'s decision in a SECOND file, and both copies narrowed to one exact codesign string
+# for six weeks — so the sensor reported green on precisely the state the effector could not cure.
+# A text assertion can only catch re-introducing that one string; the seam lets the contract in
+# scripts/tests/heal-claude-lsregister.test.sh drive this block against a fixture and check what it
+# actually CONCLUDES. Unset in production.
+LSREG="${LIMEN_CLAUDE_LSREGISTER_BIN:-/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Support/lsregister}"
 stub_bad=""
 if [ -x "$LSREG" ]; then
   while IFS= read -r p; do
