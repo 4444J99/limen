@@ -195,6 +195,16 @@ if [ "${LIMEN_SESSION_CONTENTION_GUARD:-1}" = "1" ]; then
   # of the probe's can reach it. The TEXT is the verdict here, never the status.
   _probe_out="$(python3 "$ROOT/scripts/session-contention.py" probe --root "$ROOT" 2>/dev/null || true)"
   OCCUPANT="$(printf '%s\n' "$_probe_out" | sed -n 's/.*OCCUPIED by pid \([0-9][0-9]*\).*/\1/p')"
+  # A BLIND PROBE MUST NOT BE A QUIET ONE. The capture above swallows the probe's stdout, so on a
+  # host where the probe cannot run — package unimportable, lsof missing — the guard disarms and
+  # this beat says nothing whatsoever about it. Fail-open is correct and unchanged (OCCUPANT stays
+  # empty either way); being unable to tell the two apart in the log is not, and is the same
+  # "silent no" this organ's header exists to prevent. One line, only on the blind path.
+  case "$_probe_out" in
+    *"probe UNAVAILABLE"*)
+      echo "sync-release: session-contention probe UNAVAILABLE — guard DISARMED, proceeding fail-open (IF-SESSION-NON-CONTENTION unverified this beat)"
+      ;;
+  esac
 fi
 
 # Returns 0 (true) when a live session holds the tree, after logging and recording the incident.

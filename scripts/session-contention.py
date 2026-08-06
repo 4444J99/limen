@@ -11,6 +11,11 @@ event. This is that something.
   probe   --root PATH   exit 0 free / 1 occupied. What sync-release.sh consults before it
                         rewrites the live checkout. Reports a FOREIGN live process only, and
                         never counts a session in a nested worktree (isolated by design).
+                        A third VERDICT (not a third exit code) says the probe went blind:
+                        "probe UNAVAILABLE — guard disarmed". It exits 0 like `free`, because
+                        fail-open is the deliberate direction here, but it no longer says
+                        `free` — a disarmed guard that reports itself healthy is how this
+                        organ's own blindness stayed invisible.
   record  --root PATH --pid N --action ACTION
                         append one incident to logs/session-contention.jsonl, ONSET-DEDUPED:
                         a session legitimately sitting in the live checkout for six hours is
@@ -50,13 +55,20 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _occupant(root: Path) -> int | None:
-    """The foreign occupant of the live checkout, or None. Fails OPEN — see liveness.py."""
+def _occupancy(root: Path) -> tuple[int | None, bool]:
+    """`(occupant_pid, probe_available)`. Fails OPEN — see liveness.py.
+
+    Availability is carried separately because all three ways this can go blind — an unimportable
+    package, an unresolvable root, a process table that could not be read at all — otherwise
+    answer `None`, which is also the answer for a genuinely free tree. Fail-open is the right
+    direction; fail-open in the SAME WORDS as success is what let a disarmed guard read as a
+    healthy one on 2026-08-06.
+    """
     try:
-        from limen.conduct.liveness import live_checkout_occupant
+        from limen.conduct.liveness import live_checkout_occupancy
     except ImportError:
-        return None  # fail open: an unimportable probe accuses no one
-    return live_checkout_occupant(root)
+        return None, False  # fail open: an unimportable probe accuses no one — and says so
+    return live_checkout_occupancy(root)
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -76,7 +88,17 @@ def _read_jsonl(path: Path) -> list[dict]:
 
 def cmd_probe(args: argparse.Namespace) -> int:
     root = Path(args.root or ROOT)
-    pid = _occupant(root)
+    pid, available = _occupancy(root)
+    if not available:
+        # EXIT 0, DELIBERATELY. The status is this probe's fail-open direction and nothing else:
+        # "safe to proceed". A distinct non-zero here would read as "stop" to any consumer that
+        # tests the status, silently inverting the guard into fail-CLOSED on exactly the hosts
+        # where it is broken — the outcome liveness.py spends a paragraph refusing. The TEXT is
+        # the verdict (sync-release.sh parses it and ignores the status), so the text is where
+        # blindness is reported. It deliberately contains no "OCCUPIED by pid", so the guard
+        # stays empty and behaviour is byte-identical to before this distinction existed.
+        print(f"session-contention: {root} probe UNAVAILABLE — guard disarmed, proceeding fail-open")
+        return 0
     if pid is None:
         print(f"session-contention: {root} free")
         return 0

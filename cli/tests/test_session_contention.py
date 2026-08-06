@@ -104,6 +104,27 @@ def test_an_unavailable_probe_fails_OPEN(occupancy):
     assert liveness.live_checkout_occupant(ROOT) is None
 
 
+def test_an_unavailable_probe_is_distinguishable_from_a_free_tree(occupancy):
+    """Fail-open is right; fail-open in the same words as success is not.
+
+    Both of these answer `None` — that is the whole point of failing open — so a caller that only
+    reads the pid cannot tell "nobody is here" from "I cannot see." Driving the organ with the
+    package unimportable on 2026-08-06 produced the word `free` from a guard that was disarmed,
+    and no surface anywhere said otherwise. The second value is what makes the difference sayable.
+    """
+    occupancy({Path("/"): -1})
+    assert liveness.live_checkout_occupancy(ROOT) == (None, False)
+
+    occupancy({Path("/elsewhere"): 4242})
+    assert liveness.live_checkout_occupancy(ROOT) == (None, True)
+
+
+def test_an_occupied_tree_reports_the_probe_as_available(occupancy):
+    """The third arm: availability must not be a synonym for emptiness."""
+    occupancy({ROOT: 4242})
+    assert liveness.live_checkout_occupancy(ROOT) == (4242, True)
+
+
 def test_a_process_outside_the_checkout_is_irrelevant(occupancy):
     occupancy({Path("/elsewhere"): 4242})
     assert liveness.live_checkout_occupant(ROOT) is None
@@ -239,6 +260,11 @@ def probe(tmp_path, monkeypatch):
         path = tmp_path / spec_["file"]
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(f"guarded via {spec_['marker']}\n", encoding="utf-8")
+        arming = spec_.get("arming")
+        if arming:
+            witness = tmp_path / arming["file"]
+            witness.parent.mkdir(parents=True, exist_ok=True)
+            witness.write_text("".join(f"def {t}():\n    pass\n" for t in arming["tests"]), encoding="utf-8")
     return m
 
 
@@ -254,6 +280,31 @@ def test_probe_flags_a_path_whose_guard_was_removed(probe, tmp_path):
     findings, unguarded = probe.check_exposure()
     assert unguarded == 1
     assert "occupancy guard was removed" in findings[0]
+
+
+def test_probe_flags_a_guard_whose_arming_witness_is_gone(probe, tmp_path):
+    """The marker can survive the disappearance of everything able to observe arming.
+
+    That is not hypothetical: the marker was present at all three destructive sites while the
+    guard was provably inert, and this predicate certified it. Deleting the witness must therefore
+    cost distance, or the estate is back to grading text.
+    """
+    (tmp_path / "cli/tests/test_session_contention.py").unlink()
+
+    findings, unguarded = probe.check_exposure()
+    assert unguarded == 1
+    assert "arming witness" in findings[0] and "missing" in findings[0]
+
+
+def test_probe_flags_a_single_deleted_arming_test(probe, tmp_path):
+    """Losing one case is the realistic shape — a rename, a delete during a refactor — and it is
+    the one a file-exists check would wave through."""
+    witness = tmp_path / "cli/tests/test_session_contention.py"
+    witness.write_text("def test_the_unpark_still_fires_when_the_tree_is_free():\n    pass\n", encoding="utf-8")
+
+    findings, unguarded = probe.check_exposure()
+    assert unguarded == 1
+    assert "test_the_guard_declines_the_unpark_when_a_session_holds_the_tree" in findings[0]
 
 
 def test_probe_counts_unshipped_local_incidents(probe, tmp_path):
@@ -374,5 +425,25 @@ def test_the_unpark_still_fires_when_the_tree_is_free(tmp_path):
     proc, head = _parked_checkout(tmp_path, "session-contention: /x free", 0)
 
     assert "UNPARKED" in proc.stdout, proc.stdout + proc.stderr
+    assert head == "main"
+    assert "declining" not in proc.stdout
+
+
+def test_a_blind_probe_announces_itself_instead_of_passing_for_free(tmp_path):
+    """A disarmed guard must SAY it is disarmed, and must still fail open.
+
+    The script captures the probe's stdout into a variable and never echoes it, so a host where
+    the probe cannot run — package unimportable, lsof missing — disarmed the guard and left no
+    trace of it anywhere in the beat. Verified by driving the real organ with a broken PYTHONPATH
+    on 2026-08-06: the probe printed `free`, sync-release unparked, and the log was indistinguishable
+    from a healthy beat. Both halves are asserted here, because announcing the disarm while
+    BLOCKING would be the opposite defect — this organ's contract is fail-open in capitals.
+    """
+    proc, head = _parked_checkout(
+        tmp_path, "session-contention: /x probe UNAVAILABLE — guard disarmed, proceeding fail-open", 0
+    )
+
+    assert "DISARMED" in proc.stdout, proc.stdout + proc.stderr
+    assert "UNPARKED" in proc.stdout, "fail-open is the contract — a blind probe must not block"
     assert head == "main"
     assert "declining" not in proc.stdout

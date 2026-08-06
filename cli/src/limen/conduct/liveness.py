@@ -217,8 +217,19 @@ def _is_ignored(root: Path, cwd: Path) -> bool:
         return False
 
 
-def live_checkout_occupant(root: Path) -> int | None:
-    """pid of a foreign interactive session working in the LIVE CHECKOUT itself; None when free.
+def live_checkout_occupancy(root: Path) -> tuple[int | None, bool]:
+    """`(occupant_pid, probe_available)` — the same answer as `live_checkout_occupant`, plus
+    whether the probe could actually see anything.
+
+    THE SECOND VALUE EXISTS BECAUSE FAILING OPEN IS SILENT. Both of this function's unavailability
+    paths — an unresolvable root, and the `-1` sentinel `_process_cwds` returns when it cannot run
+    at all — collapse into `None`, which is the same answer it gives for a genuinely free tree.
+    Failing open is right (see below); failing open INDISTINGUISHABLY is not, because it means a
+    host where the probe is broken reports the ideal upheld in exactly the words it uses when the
+    ideal is upheld. Observed 2026-08-06 by driving the organ with the package unimportable: the
+    probe printed `free`, the guard disarmed, and nothing anywhere said so.
+
+    `live_checkout_occupant` remains the answer-only form for callers that do not care.
 
     Several things make this different from `foreign_worktree_occupant`, and all are load-bearing:
 
@@ -239,12 +250,12 @@ def live_checkout_occupant(root: Path) -> int | None:
     try:
         root = root.resolve()
     except OSError:
-        return None  # fail OPEN — see docstring
+        return None, False  # fail OPEN, and say the probe could not tell — see docstring
     linked = linked_worktree_roots(root)
     lineage = _ancestor_pids()
     for cwd, pids in _process_cwds().items():
         if -1 in pids:
-            return None  # fail OPEN — the probe was unavailable, so it accuses no one
+            return None, False  # fail OPEN — the probe was unavailable, so it accuses no one
         if cwd != root and root not in cwd.parents:
             continue
         if any(cwd == w or w in cwd.parents for w in linked):
@@ -258,5 +269,15 @@ def live_checkout_occupant(root: Path) -> int | None:
         # it was meant to find and report the live checkout free. `sorted` for determinism.
         for pid in sorted(pids - lineage):
             if _is_session(pid):
-                return pid
-    return None
+                return pid, True
+    return None, True
+
+
+def live_checkout_occupant(root: Path) -> int | None:
+    """pid of a foreign interactive session working in the LIVE CHECKOUT itself; None when free.
+
+    The answer-only form of `live_checkout_occupancy`, which see for every reason this differs
+    from `foreign_worktree_occupant`. Callers that must distinguish "free" from "could not tell"
+    — anything that REPORTS, rather than merely proceeds — want the two-value form instead.
+    """
+    return live_checkout_occupancy(root)[0]
