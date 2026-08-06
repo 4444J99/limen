@@ -58,10 +58,13 @@ back to `AGENTS.md` instead.
     environment probes derive the lane and ending. The closeout must print one launch command and
     make the capsule remotely durable. Carry one validated finite configurable runway that successor
     sessions inherit; never hard-code a future model, provider table, task count, or desired terminal
-    verdict into the capsule.
+    verdict into the capsule. Full doctrine (Tier-1 home since the 2026-08-06 stratification):
+    `docs/architecture/continuation-capsules.md` — `AGENTS.md` keeps the binding stub.
 11. Apply `AGENTS.md` → Bounded Composition to campaigns, CI, generated artifacts, and handoffs.
     Aggregate entrypoints are thin fan-in layers over independently runnable modules with finite
     retries, bounded output, and durable receipts; they never duplicate successful children.
+    Full doctrine: `docs/architecture/bounded-composition.md` (Tier-1 home; `AGENTS.md` keeps the
+    binding stub).
 12. Apply `AGENTS.md` → Peer Conductor Contract to every agent surface. Conductor is a temporary
     capability, never a rank; all child work is broker-reserved, authority attenuates, native
     identity survives, protected human sessions are untouchable, hidden fanout is rejected, and
