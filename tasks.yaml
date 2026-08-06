@@ -118300,7 +118300,7 @@ tasks:
   workstream: 'artist'
   priority: 'high'
   budget_cost: 2
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'organ-face'
   - 'pillar:artist'
@@ -118312,12 +118312,13 @@ tasks:
   - 'tried:jules'
   - 'tried:opencode'
   - 'slow'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/limen/issues/1567'
   context: 'In organvm/limen organs/artist/, author the polished MACRO face (a studio/temple platform any artist can hold — 9-chamber toolkit with Curatorial Voice and Provenance Contract frameworks — the platform anyone can hold) AND the MICRO instance (Anthony''s a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE) — all 3/3 validated — his own), grounded in what the organ actually does. Real copy, ready to show. One PR. CONSTRAINT: temple built (70%) chambers filling; Curatorial Voice + Provenance Contract frameworks formalized; macro + micro faces polished; 3/3 chambers validated; no longer subordinate to education. [organ-backlog 2026-07-05: rank 7, maturity 70% stage maturing — convert idle fleet capacity into institutional weight (VLTIMA).]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-26T21:53:08.637Z'
+  updated: '2026-08-06T18:47:58.040Z'
   dispatch_log:
   - timestamp: '2026-07-06T01:26:39.018572Z'
     agent: 'github_actions'
@@ -118384,6 +118385,20 @@ tasks:
     conduct_run_id: 'run-26c7fa675f35d119617c25e93094c6a4'
     conduct_lease_id: 'lease-373-26c7fa675f35d119'
     conduct_generation: 373
+  - timestamp: '2026-08-06T18:47:58.040Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 4
+    conduct_event_id: 'conduct:run-b952dd8abda55b0f74357d74a0bccfa3:534:compatibility'
+    conduct_run_id: 'run-b952dd8abda55b0f74357d74a0bccfa3'
+    conduct_lease_id: 'lease-534-b952dd8abda55b0f'
+    conduct_generation: 534
   predicate: 'test "$(gh issue view 1567 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/1567'
   origin: 'system_debt'
