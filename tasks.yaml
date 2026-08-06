@@ -105337,15 +105337,16 @@ tasks:
   workstream: 'prompt-parity'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'slow'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/limen/issues/641'
   context: 'GitHub issue organvm/limen#641. The full-stack review founding run (Codex session 019f2a04) inventoried only 15 Agy sessions vs ~1,270-1,295 each for Claude/Codex/OpenCode, and only 4 of the 182 deep-review entries at f404f85 name Agy in their headings. The run itself recorded the cause: native Antigravity IDE conversation decoding is unsolved; only Gemini/capfill surfaces and scratch residue are readable today. The ledger''s Rem'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-26T21:52:59.653Z'
+  updated: '2026-08-06T18:47:46.163Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:42:24.102867Z'
     agent: 'opencode'
@@ -105384,6 +105385,20 @@ tasks:
     conduct_run_id: 'run-3478a0ef0334b1d17343236d75622cee'
     conduct_lease_id: 'lease-371-3478a0ef0334b1d1'
     conduct_generation: 371
+  - timestamp: '2026-08-06T18:47:46.163Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 3
+    conduct_event_id: 'conduct:run-19ecca7445a3b452c7cd800927c32a9d:532:compatibility'
+    conduct_run_id: 'run-19ecca7445a3b452c7cd800927c32a9d'
+    conduct_lease_id: 'lease-532-19ecca7445a3b452'
+    conduct_generation: 532
   predicate: 'test "$(gh issue view 641 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/641'
   origin: 'system_debt'
