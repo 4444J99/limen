@@ -162507,3 +162507,36 @@ tasks:
     conduct_lease_id: 'lease-553-2ed78a50ac419db0'
     conduct_generation: 553
   updated: '2026-08-06T19:23:29.547Z'
+- id: 'GH-organvm-limen-1849'
+  title: 'IF-GATEKEEPER-INERT: the ''ClaudeCode.app is damaged'' class has no ideal form'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1849'
+  context: 'GitHub issue organvm/limen#1849. The `"ClaudeCode.app is damaged and can''t be opened"` Gatekeeper dialog has recurred ~10–15× over six weeks and **24 commits** across five cures (#1206, #1219, #1242, #1704, #1837), each reporting green. **The root defect is structural, not technical: the class had an effector, a sensor, a launchd agent, a lever — and no ideal form.** Nothing declared the fixed point the five cures were converging'
+  predicate: 'test "$(gh issue view 1849 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1849'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1849'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:35.313Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-148a81052bc33167c2bdb6ebeb381cbb:554:compatibility'
+    conduct_run_id: 'run-148a81052bc33167c2bdb6ebeb381cbb'
+    conduct_lease_id: 'lease-554-148a81052bc33167'
+    conduct_generation: 554
+  updated: '2026-08-06T19:23:35.313Z'
