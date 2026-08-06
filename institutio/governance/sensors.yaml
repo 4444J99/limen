@@ -1685,11 +1685,16 @@ sensors:
     owner: diurnal
     # The cross-tree half of the guard diurnal already carries in-tree. Measured 2026-08-05:
     # the effector gate shipped at 19:20 and four more "LIMEN · morning — ABSENT" pops landed
-    # after it, because a fix in a versioned file cannot reach the 21 OTHER copies of the
-    # notifier on this host — 14 worktrees plus 7 rotated runtime install trees launchd runs
-    # overnight-watch from. A tree-local guard cannot protect a host-global effector; this
-    # sensor cannot rewrite those copies either, but it converts them from a surprise on his
-    # phone into a counted, owned condition on the beat. Cheap: it parses ~23 small files.
+    # after it, because a fix in a versioned file cannot reach the OTHER copies of the notifier
+    # on this host — 13 worktrees plus 7 rotated runtime install trees. A tree-local guard
+    # cannot protect a host-global effector.
+    #
+    # It does not merely count them. The copies split by HOW THEY GET RUN, and that is the
+    # whole finding: `~/.local/share/limen/current` is executed unattended by launchd every
+    # 300s and was itself ungated with a 5-day-stale symlink, while the rest are inert unless
+    # a test runs inside them. A scheduled executor gets its own stanza and the exact rotation
+    # command; dormant copies ratchet against notify-ungated-baseline.txt so the count can only
+    # shrink. Cheap: it parses ~23 small files.
     cadence:
       env: LIMEN_BEAT_NOTIFY_GATE
       default: 8
@@ -1699,4 +1704,4 @@ sensors:
     steps:
       - command: "python3 scripts/check-notify-gate.py"
         severity: advisory
-        escalation: "one or more notifier copies on this host reach osascript ungated — each can pop a briefing rendered from an empty logs/ ('ABSENT — logs/handoff.json does not exist'). Rebase the copy onto origin/main so it inherits the gate, or reap it via python3 scripts/reclaim-worktrees.py (worktree debt owns the rotated trees)"
+        escalation: "a notifier copy reaches osascript ungated in a way the baseline does not already own — either the launchd-run install (~/.local/share/limen/current, which speaks on a timer and is cleared by `domus-limen-runtime install --sha <merged-main-sha>`) or a NEW copy that is not in institutio/governance/notify-ungated-baseline.txt. For a new one: rebase it onto origin/main so it inherits the gate, or reap it via python3 scripts/reclaim-worktrees.py; if it is legitimately known, record it with check-notify-gate.py --update. Gate-run tests cannot reach osascript regardless — run-pytest-hermetic.sh exports LIMEN_NOTIFY=0, which every copy on this host honors"
