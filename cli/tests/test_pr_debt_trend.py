@@ -419,3 +419,51 @@ def test_a_stale_shared_clock_does_not_block_a_checkout_that_has_never_swept(mod
 
     assert mod.record(dry_run=True) == 0
     assert "DUE" in capsys.readouterr().out
+
+
+def test_a_committed_observation_is_not_re_counted_as_a_worktree_row(mod, repo):
+    """The live ledger IS the newest commit's ledger — one observation, one row.
+
+    Found by RUNNING `--series`, not by reading it: the real repo rendered its 1,293-PR ledger
+    twice, once as `[05366e12]` dated 2026-08-05 and again as `[worktree]` dated 2026-08-06 with
+    `+0`, while `git diff 05366e12 HEAD -- <ledger>` was empty. Same bytes, two rows. Identity was
+    "is its date later?", and the two dates came off different clocks: the ledger's UTC
+    `generated_at` against git's `--date=short`, which is the author's LOCAL date. Every census
+    run after ~20:00 local looked a calendar day newer than the commit that held it.
+
+    It is not cosmetic. `--check` windows back 14 days from the NEWEST row, so the phantom shifted
+    the window a day forward and evicted the oldest real observation from the measurement — the
+    live repo under-reported growth as +182 from 1111 when the truth was +234 from 1059.
+    """
+    _observe(repo, 1059, "2026-07-22")
+    # A census run late in the local evening: 23:17 local on the 5th is 03:17Z on the 6th.
+    (repo / LEDGER_REL).write_text(
+        json.dumps({"open_pr_count": 1293, "generated_at": "2026-08-06T03:17:46Z"}), encoding="utf-8"
+    )
+    _git(repo, "add", LEDGER_REL)
+    _git(repo, "-c", "user.name=t", "commit", "-q", "-m", "obs 1293", "--date=2026-08-05T23:17:46")
+
+    rows = mod.series()
+    assert [src for _, _, src in rows].count("worktree") == 0, "the live file is that commit, not a second one"
+    assert [n for _, n, _ in rows] == [1059, 1293]
+
+
+def test_a_census_that_writes_garbage_leaves_no_invalid_tracked_file(mod, repo, monkeypatch, capsys):
+    """The failure path must restore too — it is the one path where the file is genuinely invalid.
+
+    The first cut restored only when the estate held still, so a census that died mid-write left
+    unparseable JSON in a TRACKED ledger for sync-release.sh and capture.sh to sweep into an
+    unrelated branch. Driving the failure is what surfaced it; reading the branch did not.
+    """
+    _observe(repo, 1293, "2026-08-05")
+    good = (repo / LEDGER_REL).read_text(encoding="utf-8")
+    monkeypatch.setattr(
+        mod,
+        "PRODUCER_ARGV",
+        [sys.executable, "-c", f"open({LEDGER_REL!r}, 'w').write('{{ truncated')"],
+    )
+    monkeypatch.setenv("LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS", "0")
+
+    assert mod.record(dry_run=False) == 1, "a broken census is a recording failure, never an observation"
+    assert (repo / LEDGER_REL).read_text(encoding="utf-8") == good, "a tracked ledger is never left invalid"
+    assert "ledger restored" in capsys.readouterr().out
