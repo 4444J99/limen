@@ -105413,15 +105413,16 @@ tasks:
   workstream: 'prompt-parity'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'slow'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/limen/issues/640'
   context: 'GitHub issue organvm/limen#640. Fable adjudication of Codex session 019f2a04 (full-stack review founding run) found template drift in docs/agent-code-diff-review.md: of 182 entries in the ledger at the session''s last commit (f404f85), only 124 carry the literal `Ideal prompt diff:` section and 123 carry `What was fucked up:` (182/182 have Severity+Evidence; 179 have Verification+Result). Those two lenses are the mandate''s signat'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-26T21:53:04.008Z'
+  updated: '2026-08-06T18:47:51.990Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
     agent: 'codex'
@@ -105465,6 +105466,20 @@ tasks:
     conduct_run_id: 'run-283b185e4cbdeb0ab419d13c221e7531'
     conduct_lease_id: 'lease-372-283b185e4cbdeb0a'
     conduct_generation: 372
+  - timestamp: '2026-08-06T18:47:51.990Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 4
+    conduct_event_id: 'conduct:run-36e3b47c3d0c5588085ba1df11886368:533:compatibility'
+    conduct_run_id: 'run-36e3b47c3d0c5588085ba1df11886368'
+    conduct_lease_id: 'lease-533-36e3b47c3d0c5588'
+    conduct_generation: 533
   predicate: 'test "$(gh issue view 640 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/640'
   origin: 'system_debt'
