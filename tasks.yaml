@@ -162705,3 +162705,38 @@ tasks:
     conduct_lease_id: 'lease-559-fef69590a4b85308'
     conduct_generation: 559
   updated: '2026-08-06T19:24:05.043Z'
+- id: 'GH-organvm-limen-1809'
+  title: 'Quicken residue finishline — relay verification, docs PR, and the two human triage bursts'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  - 'lifecycle:active-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1809'
+  context: 'GitHub issue organvm/limen#1809. ## Objective Bring the Limen `needs_human` residue — the 12 replayed quicken items and the broader human-atom queue — to terminal, so no local-only or hanging state remains when any agent lane picks this up. ## Current ground truth (2026-08-05) - 12 `ASK-quicken-*` items were replayed to `open` through the canonical relay (12 archive tickets, inbox empty, `--require-published` ack''d 12). The local'
+  predicate: 'test "$(gh issue view 1809 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1809'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1809'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:11.268Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-92e50c90212ec8cc707f9c33c8a9272f:560:compatibility'
+    conduct_run_id: 'run-92e50c90212ec8cc707f9c33c8a9272f'
+    conduct_lease_id: 'lease-560-92e50c90212ec8cc'
+    conduct_generation: 560
+  updated: '2026-08-06T19:24:11.268Z'
