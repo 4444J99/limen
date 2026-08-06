@@ -1396,6 +1396,298 @@ ADAPTERS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# oldest_record_iso — cheap per-vendor retention probes. Each returns the ISO
+# timestamp of the OLDEST record locally present, or None when not cheaply
+# derivable (the health check skips None — a skipped probe is announced by the
+# absence of the field, never mistaken for a healthy horizon). The point:
+# antigravity's blob store prunes at ~10 days, and 59% of one 30-day window
+# was already structural-only before anything measured it (2026-08-06).
+# ---------------------------------------------------------------------------
+
+
+def _oldest_mtime_iso(paths) -> str | None:
+    oldest = None
+    for p in paths:
+        try:
+            ts = p.stat().st_mtime
+        except OSError:
+            continue
+        if oldest is None or ts < oldest:
+            oldest = ts
+    return _iso(datetime.fromtimestamp(oldest, tz=timezone.utc)) if oldest else None
+
+
+def _oldest_claude() -> str | None:
+    # Project-DIR mtimes only (a full JSONL walk is the window scan's job) —
+    # an approximation biased young, which for a retention check fails safe.
+    return _oldest_mtime_iso(d for root in claude_estate_roots() for d in root.iterdir() if d.is_dir())
+
+
+def _oldest_codex() -> str | None:
+    roots = [Path(r) for r in VENDOR_REGISTRY["codex"].get("sessions_roots", [])]
+    return _oldest_mtime_iso(p for root in roots if root.is_dir() for p in root.rglob("rollout-*.jsonl"))
+
+
+def _oldest_opencode() -> str | None:
+    db = VENDOR_REGISTRY["opencode"]["path"]
+    if not db.is_file():
+        return None
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=10)
+    try:
+        row = con.execute("SELECT MIN(COALESCE(time_created, time_updated)) FROM session").fetchone()
+    finally:
+        con.close()
+    if not row or not row[0]:
+        return None
+    return _iso(datetime.fromtimestamp(row[0] / 1000, tz=timezone.utc))
+
+
+def _oldest_copilot() -> str | None:
+    root = Path(VENDOR_REGISTRY["copilot"].get("session_state_root", ""))
+    if not root.is_dir():
+        return None
+    return _oldest_mtime_iso(d for d in root.iterdir() if d.is_dir())
+
+
+def _oldest_antigravity() -> str | None:
+    base = VENDOR_REGISTRY["antigravity"]["path"]
+    db = base / "conversation_summaries.db"
+    oldest = None
+    if db.is_file():
+        try:
+            con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=10)
+            try:
+                row = con.execute(
+                    "SELECT MIN(last_modified_time) FROM conversation_summaries WHERE last_modified_time > '0002'"
+                ).fetchone()
+            finally:
+                con.close()
+            if row and row[0]:
+                oldest = str(row[0])
+        except sqlite3.Error:
+            pass
+    blob_oldest = _oldest_mtime_iso((base / "conversations").glob("*")) if (base / "conversations").is_dir() else None
+    candidates = [c for c in (oldest, blob_oldest) if c]
+    return min(candidates) if candidates else None
+
+
+def _oldest_gemini() -> str | None:
+    root = VENDOR_REGISTRY["gemini"]["path"]
+    return _oldest_mtime_iso(root.glob("*/chats/session-*.jsonl")) if root.is_dir() else None
+
+
+def _oldest_cline() -> str | None:
+    ws = VENDOR_REGISTRY["cline"]["path"] / "workspaces"
+    return _oldest_mtime_iso(d for d in ws.iterdir() if d.is_dir()) if ws.is_dir() else None
+
+
+def _oldest_claude_desktop() -> str | None:
+    meta = VENDOR_REGISTRY["claude-desktop"]
+    root = meta["path"]
+    if not root.is_dir():
+        return None
+    dirs = (c for s in meta.get("session_dirs", []) if (root / s).is_dir() for c in (root / s).iterdir())
+    return _oldest_mtime_iso(dirs)
+
+
+def _oldest_chatgpt_desktop() -> str | None:
+    root = VENDOR_REGISTRY["chatgpt-desktop"]["path"]
+    if not root.is_dir():
+        return None
+    return _oldest_mtime_iso(p for d in root.glob("conversations-v3-*") for p in d.glob("*.data"))
+
+
+def _oldest_vscode(vendor_key: str):
+    def probe() -> str | None:
+        root = VENDOR_REGISTRY[vendor_key]["path"]
+        return _oldest_mtime_iso(root.glob("*/chatSessions/*.jsonl")) if root.is_dir() else None
+
+    return probe
+
+
+OLDEST_PROBES = {
+    "claude": _oldest_claude,
+    "codex": _oldest_codex,
+    "opencode": _oldest_opencode,
+    "copilot": _oldest_copilot,
+    "antigravity": _oldest_antigravity,
+    "gemini": _oldest_gemini,
+    "cline": _oldest_cline,
+    "claude-desktop": _oldest_claude_desktop,
+    "chatgpt-desktop": _oldest_chatgpt_desktop,
+    "vscode-copilot-chat": _oldest_vscode("vscode-copilot-chat"),
+    "vscode-copilot-chat-insiders": _oldest_vscode("vscode-copilot-chat-insiders"),
+}
+
+
+def _oldest_record_iso(vendor: str) -> str | None:
+    probe = OLDEST_PROBES.get(vendor)
+    if probe is None:
+        return None
+    try:
+        return probe()
+    except Exception:  # noqa: BLE001 — a failed probe is a None, never a crashed ingest
+        return None
+
+
+# ---------------------------------------------------------------------------
+# --health — the pipeline watches itself. Five checks over the packets, the
+# vendor-insights indexes, and a small run-history ring buffer; output is ONE
+# aggregate warning packet (owner: censor) that insight-cadence consumes like
+# any other packet. State lives in a SUBDIR (state/health-state.json) because
+# the packet consumer globs logs/insight-cross-vendor/*.json — a top-level
+# state file would be read as a vendor packet.
+# ---------------------------------------------------------------------------
+
+HEALTH_STATE_RUNS_KEPT = 8
+
+
+def _env_num(name: str, default: float) -> float:
+    try:
+        return float(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
+def _parse_iso(v) -> datetime | None:
+    if not isinstance(v, str) or not v:
+        return None
+    try:
+        dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def cmd_health() -> int:
+    now = _now()
+    max_packet_age = _env_num("LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS", 3)
+    reset_drop_pct = _env_num("LIMEN_CROSS_VENDOR_RESET_DROP_PCT", 50)
+    reset_min_base = _env_num("LIMEN_CROSS_VENDOR_RESET_MIN_BASE", 20)
+    min_horizon = _env_num("LIMEN_CROSS_VENDOR_MIN_HORIZON_DAYS", 14)
+    churn_max = _env_num("LIMEN_VENDOR_CAPSULE_CHURN_MAX", 3)
+    narrative_lag = _env_num("LIMEN_VENDOR_NARRATIVE_MAX_LAG_DAYS", 7)
+
+    findings: list[str] = []
+    affected: set[str] = set()
+
+    packets: dict[str, dict] = {}
+    for p in sorted(OUT_DIR.glob("*.json")) if OUT_DIR.is_dir() else []:
+        if p.name in ("run-manifest.json", "health.json"):
+            continue
+        try:
+            packets[p.stem] = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            findings.append(f"{p.stem}: packet unreadable")
+            affected.add(p.stem)
+
+    # 1. packet_stale — the ingest stopped landing (the frozen-packets incident:
+    # every packet sat at 2026-07-22 for two weeks before anything noticed).
+    for vendor, pk in packets.items():
+        ran = _parse_iso(pk.get("run_at_iso"))
+        if ran is None or (now - ran) > timedelta(days=max_packet_age):
+            findings.append(f"{vendor}: packet_stale — last ingest {pk.get('run_at_iso') or 'unknown'}")
+            affected.add(vendor)
+
+    # 2. store_reset — sessions_seen collapsed vs recent history (the opencode
+    # wipe: a 1-session store that had held more, reset ~Aug 3 unnoticed).
+    state_path = OUT_DIR / "state" / "health-state.json"
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        state = {"runs": []}
+    prev_max: dict[str, int] = {}
+    for run in state.get("runs", []):
+        for vendor, n in (run.get("sessions") or {}).items():
+            prev_max[vendor] = max(prev_max.get(vendor, 0), int(n))
+    for vendor, pk in packets.items():
+        cur = int(pk.get("sessions_seen") or 0)
+        base = prev_max.get(vendor, 0)
+        if base >= reset_min_base and cur <= base * (100 - reset_drop_pct) / 100:
+            findings.append(f"{vendor}: store_reset — sessions_seen {cur} vs recent max {base}")
+            affected.add(vendor)
+    state["runs"] = (state.get("runs") or [])[-(HEALTH_STATE_RUNS_KEPT - 1) :] + [
+        {"at": _iso(now), "sessions": {v: int(pk.get("sessions_seen") or 0) for v, pk in packets.items()}}
+    ]
+    _atomic_write(state_path, json.dumps(state, indent=2))
+
+    # 3. retention_horizon — the store's oldest surviving record is younger than
+    # the horizon: pruning is eating history faster than review happens.
+    for vendor, pk in packets.items():
+        if int(pk.get("sessions_seen") or 0) == 0:
+            continue  # dormant/empty lanes have no horizon to lose
+        oldest = _parse_iso(pk.get("oldest_record_iso"))
+        if oldest is not None and (now - oldest) < timedelta(days=min_horizon):
+            findings.append(
+                f"{vendor}: retention_horizon — oldest local record {pk.get('oldest_record_iso')} "
+                f"is younger than {min_horizon:g}d; the store prunes faster than review"
+            )
+            affected.add(vendor)
+
+    # 4 + 5 read the vendor-insights indexes (same override the organ itself honors).
+    vi_root = Path(os.environ.get("LIMEN_VENDOR_INSIGHTS_DIR", LIMEN_ROOT / "logs" / "vendor-insights"))
+    for vdir in sorted(vi_root.iterdir()) if vi_root.is_dir() else []:
+        idx_path = vdir / "index.json"
+        if not idx_path.is_file():
+            continue
+        try:
+            meta = (json.loads(idx_path.read_text(encoding="utf-8")) or {}).get("meta") or {}
+        except (OSError, json.JSONDecodeError):
+            continue
+        # 4. capsule_churn — resume-fragmentation: many rollout files per logical session.
+        churn = (meta.get("capsule_churn") or {}).get("mean_files_per_session")
+        if isinstance(churn, (int, float)) and churn > churn_max:
+            findings.append(f"{vdir.name}: capsule_churn — mean {churn:.2f} rollout files/session (max {churn_max:g})")
+            affected.add(vdir.name)
+        # 5. index_ahead_of_narrative — indexes refresh on the beat, narratives are
+        # model-written; a growing gap means the lane is measured but never read.
+        nar_path = vdir / "narrative.json"
+        try:
+            idx_m = idx_path.stat().st_mtime
+            nar_m = nar_path.stat().st_mtime if nar_path.is_file() else 0
+        except OSError:
+            continue
+        if idx_m - nar_m > narrative_lag * 86400:
+            since = (
+                "never narrated" if nar_m == 0 else f"narrative {_iso(datetime.fromtimestamp(nar_m, tz=timezone.utc))}"
+            )
+            findings.append(f"{vdir.name}: index_ahead_of_narrative — index refreshed, {since}")
+            affected.add(vdir.name)
+
+    signals = []
+    if affected:
+        signals.append(
+            {
+                "signal": "vendor_health",
+                "count": len(affected),
+                "severity": "warning",
+                "description": (
+                    f"{len(affected)} vendor lane(s) unhealthy: {', '.join(sorted(affected))} — "
+                    "details in data_quality_notes"
+                ),
+                "suggested_action": "Read logs/insight-cross-vendor/health.json data_quality_notes; "
+                "re-run the ingest or review the flagged store",
+            }
+        )
+    health = {
+        "vendor": "cross-vendor-health",
+        "description": "cross-vendor pipeline health — packet freshness, store resets, retention pruning, capsule churn, narrative lag",
+        "owner": "censor",
+        "severity": "warning",
+        "run_at_iso": _iso(now),
+        "sessions_seen": 0,
+        "friction_signals": signals,
+        "notable_patterns": [f"vendors_checked: {len(packets)}"],
+        "data_quality_notes": findings or ["all checks clean"],
+    }
+    _atomic_write(OUT_DIR / "health.json", json.dumps(health, indent=2))
+    print(f"[insight-cross-vendor-ingest --health] {len(packets)} packets checked, {len(affected)} affected")
+    for line in findings:
+        print(f"  {line}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Cross-vendor friction ingest for insight-cadence organ")
     parser.add_argument(
@@ -1406,7 +1698,15 @@ def main() -> int:
     )
     parser.add_argument("--vendor", help="Run only this vendor adapter (default: all)")
     parser.add_argument("--dry-run", action="store_true", help="Print packets, write nothing")
+    parser.add_argument(
+        "--health",
+        action="store_true",
+        help="Evaluate pipeline health over existing packets/indexes and write health.json (no ingest)",
+    )
     args = parser.parse_args()
+
+    if args.health:
+        return cmd_health()
 
     now = _now()
     window_start = now - timedelta(days=args.window_days)
@@ -1442,6 +1742,7 @@ def main() -> int:
             continue
         try:
             data = ADAPTERS[vendor](window_start)
+            data.setdefault("oldest_record_iso", _oldest_record_iso(vendor))
             packet = _make_packet(vendor, args.window_days, window_start, now, data)
             packets.append(packet)
             sigs = len(data.get("friction_signals", []))
