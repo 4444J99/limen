@@ -163157,3 +163157,37 @@ tasks:
     conduct_lease_id: 'lease-572-d3fab7f5ee6519b1'
     conduct_generation: 572
   updated: '2026-08-06T20:49:02.712Z'
+- id: 'GH-organvm-limen-1898'
+  title: 'Settings-estate leftovers: heal the keystone PR, expand the predicates, evolve the sensors'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'plan'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1898'
+  context: 'GitHub issue organvm/limen#1898. Take the 5 leftovers of the 2026-08-06 settings-estate repair to full heal (un-block + merge PR #1896, the keystone homing the install lever and plansDirectory), expand (plansDirectory parity predicate; merged-advanced branch owner-route), and evolve (install-state beat sensor; cancelled-vs-failed merge-policy classification). Plan artifact: `docs/plans/2026-08-06-settings-estate-leftovers.md` (op'
+  predicate: 'test "$(gh issue view 1898 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1898'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1898'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T22:43:16.142Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-db0a7a78c83791ae187b60d3ff9c07e1:573:compatibility'
+    conduct_run_id: 'run-db0a7a78c83791ae187b60d3ff9c07e1'
+    conduct_lease_id: 'lease-573-db0a7a78c83791ae'
+    conduct_generation: 573
+  updated: '2026-08-06T22:43:16.142Z'
