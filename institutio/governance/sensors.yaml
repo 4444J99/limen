@@ -1553,6 +1553,33 @@ sensors:
         severity: advisory
         escalation: "a lane has been throughput-clamped 2+ days — landing is the bottleneck: run drain.sh rungs (jules-land, owner-route-drain, merge-drain) and read logs/throughput-governor.jsonl for the binding evidence"
 
+  work-loan-backfill:
+    section: "0z8"
+    title: "work-loan backfill — loan-less open tasks become dispatchable packets, refusals counted"
+    gate: LIMEN_WORK_LOAN_BACKFILL
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The candidate-starvation cut of the 07-19 starvation: 738/829 open tasks (89%) fail
+    # WorkLoanV1 readiness, so an open valve found ~8 jules candidates. This organ derives
+    # the missing loan fields mechanically under docs/repo-predicates.yaml's declarative
+    # quality bar (value-tier membership = permission to underwrite; measured first census:
+    # 168 mintable, 520 honestly refused). Enrichments land as preconditioned TABVLARIVS
+    # tickets — never a direct board write. Batch-capped 25/run through the single-writer
+    # queue. Gauge-only until the apply valve arms: review one dry-run census first.
+    steps:
+      - command: "python3 scripts/work-loan-backfill.py"
+        args_when:
+          # DISARMED by default (unlike jules-supply): enrichment rewrites 700+ real rows'
+          # loan fields, so the first armed run follows a reviewed dry-run census, then
+          # LIMEN_WORK_LOAN_BACKFILL_APPLY=1 makes it autonomous.
+          - env: LIMEN_WORK_LOAN_BACKFILL_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "loan-less board tasks exist and minting is unarmed or refused — review the census in logs/work-loan-backfill.jsonl; membership in docs/repo-predicates.yaml is the permission to underwrite a repo"
   jules-dispatch:
     section: "0z5"
     title: "jules dispatch valve rung — the beat's governed path to the serial engine"
