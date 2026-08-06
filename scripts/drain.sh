@@ -87,9 +87,9 @@ python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py" 2>&1 | tail -4 || true
 # Same isolation keystone as local dispatch. The isolated root is retained after PR creation and
 # later reclaimed only by the receipt-backed reclaim/reap organs; set LIMEN_JULES_LAND=0 to disable.
 if [ "${LIMEN_JULES_LAND:-1}" = "1" ]; then
-  echo "[drain] landing completed jules sessions as PRs (limit ${LIMEN_JULES_LAND_LIMIT:-3})…"
+  echo "[drain] landing completed jules sessions as PRs (limit ${LIMEN_JULES_LAND_LIMIT:-5})…"
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/jules-land.py" --apply --recover \
-      --limit "${LIMEN_JULES_LAND_LIMIT:-3}" 2>&1 | tail -4 || true
+      --limit "${LIMEN_JULES_LAND_LIMIT:-5}" 2>&1 | tail -4 || true
 fi
 
 echo "[drain] harvesting…"
@@ -100,10 +100,20 @@ PYTHONPATH="$PY" python3 -m limen harvest --agent jules 2>&1 | tail -4 || true
 # agents (already-merged is counted, not an error). Touches only GitHub, not tasks.yaml/worktrees.
 # On by default for the live daemon (already authorized to open PRs); LIMEN_MERGE_DRAIN=0 disables.
 if [ "${LIMEN_MERGE_DRAIN:-1}" = "1" ]; then
-  echo "[drain] merging READY PRs (scan ${LIMEN_MERGE_SCAN:-30}, limit ${LIMEN_MERGE_LIMIT:-10})…"
+  echo "[drain] merging READY PRs (scan ${LIMEN_MERGE_SCAN:-50}, limit ${LIMEN_MERGE_LIMIT:-10})…"
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/merge-drain.py" \
-      --scan "${LIMEN_MERGE_SCAN:-30}" --limit "${LIMEN_MERGE_LIMIT:-10}" 2>&1 | tail -3 || true
+      --scan "${LIMEN_MERGE_SCAN:-50}" --limit "${LIMEN_MERGE_LIMIT:-10}" 2>&1 | tail -3 || true
   stamp_voice merge
+fi
+
+# OWNER-ROUTE DRAIN — the 308-blocked-jules-PR debt (GITVS-UNCAPPED-PR-DEBT-0715's organ):
+# classify each jules-authored/limen-landed open PR into exactly one of merge / supersede /
+# close / route-to-heal, receipts to logs/owner-route-drain.jsonl. Classification always runs;
+# MUTATIONS are valve-gated (LIMEN_OWNER_ROUTE_DRAIN_APPLY=1) and pause-aware (a pause marker
+# forces classification-only). Merges defer to merge-policy.sh exit 0 — never a second authority.
+if [ "${LIMEN_OWNER_ROUTE_DRAIN:-1}" = "1" ]; then
+  echo "[drain] owner-route drain (limit ${LIMEN_OWNER_ROUTE_LIMIT:-15}, merge-limit ${LIMEN_OWNER_ROUTE_MERGE_LIMIT:-5})…"
+  PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/owner-route-drain.py" 2>&1 | tail -4 || true
 fi
 
 # SELF-HEAL — emit targeted heal tasks for the PRs merge-drain just REFUSED (CI-RED / CONFLICT)
