@@ -162740,3 +162740,37 @@ tasks:
     conduct_lease_id: 'lease-560-92e50c90212ec8cc'
     conduct_generation: 560
   updated: '2026-08-06T19:24:11.268Z'
+- id: 'GH-organvm-limen-1792'
+  title: 'His-hand — approve Danse score direction, synchronized cut, and final public assertions'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1792'
+  context: 'GitHub issue organvm/limen#1792. <!-- lever:L-DANSE-ARTISTIC-APPROVAL --> ## Human-gate owner Cross-repository workstream: [organvm/the-thing-without-a-name#7](https://github.com/organvm/the-thing-without-a-name/issues/7). This issue is the permanent graph owner for the irreducibly human artistic/public assertions in **THE THING WITHOUT A NAME**. It is deliberately **not actionable during the 3 August 2026 pause** and must not be'
+  predicate: 'test "$(gh issue view 1792 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1792'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1792'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:24:17.106Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-cd0f259e3977ee223215e79448c201e6:561:compatibility'
+    conduct_run_id: 'run-cd0f259e3977ee223215e79448c201e6'
+    conduct_lease_id: 'lease-561-cd0f259e3977ee22'
+    conduct_generation: 561
+  updated: '2026-08-06T19:24:17.106Z'
