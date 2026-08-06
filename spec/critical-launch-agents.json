@@ -25,7 +25,7 @@
     },
     {
       "label": "com.limen.claude-stub-heal",
-      "role": "instant effector for the recurring 'ClaudeCode.app is damaged' Gatekeeper dialog — WatchPaths agent that reaps the malformed stub the moment the updater re-drops it (container/launchd/com.limen.claude-stub-heal.plist)",
+      "role": "effector for the recurring 'ClaudeCode.app is damaged' Gatekeeper dialog — WatchPaths agent that UNREGISTERS the unassessable vendor bundle from LaunchServices the moment it lands, leaving the file in place so the stable TCC identity survives (container/launchd/com.limen.claude-stub-heal.plist; ideal form IF-GATEKEEPER-INERT)",
       "probe": { "kind": "launchd_loaded" }
     }
   ]

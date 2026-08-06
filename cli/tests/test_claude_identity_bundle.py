@@ -43,6 +43,15 @@ def _force_darwin(monkeypatch):
     """
     monkeypatch.setattr(KEEPER.platform, "system", lambda: "Darwin")
 
+    # Cut the two HOST probes the class enumeration would otherwise shell out to. `lsregister -dump`
+    # alone costs ~2.85s per call, which turned this suite into a 78s host-dependent integration
+    # run; and a contract that consults the author's real LaunchServices is not a contract. Both
+    # degrade to the third verdict (`None` = unknown), which the tests below assert is never green.
+    # A test that needs a definite answer injects one: LIMEN_CLAUDE_LSREGISTER_DUMP for registration
+    # (the env branch is read first, so it still wins here), or monkeypatching `_assessable`.
+    monkeypatch.setattr(KEEPER, "LSREGISTER", "/nonexistent/lsregister")
+    monkeypatch.setattr(KEEPER.shutil, "which", lambda name: None)
+
 
 def _store(tmp_path: Path, version: str = "2.1.222", *, size: int = 64) -> dict[str, str]:
     """A miniature Claude Code store: one runnable version and a launcher symlink."""
@@ -204,3 +213,98 @@ def test_cli_exit_code_tracks_the_predicate(tmp_path: Path, monkeypatch, capsys)
     assert KEEPER.main(["--repair"]) == 0
     assert KEEPER.main([]) == 0
     capsys.readouterr()
+
+
+# --------------------------------------------------------------------------------------
+# IF-GATEKEEPER-INERT: the class enumeration.
+#
+# The same bundle that carries the TCC identity is what macOS renders as "damaged", because a
+# bare-Mach-O signature seals no resources while bundle-form `codesign --strict` demands a
+# CodeResources it never sealed. Presence is therefore NOT the defect -- registration is. These
+# contracts hold the split: what the keeper repairs (the store bundle) vs what it only measures
+# (a bundle in the LaunchServices-scanned ~/Applications domain, homed on a lever).
+# --------------------------------------------------------------------------------------
+
+
+def _dump(tmp_path: Path, *paths: str) -> str:
+    """A canned `lsregister -dump`, so registration state is asserted without LaunchServices."""
+    capture = tmp_path / "lsregister.txt"
+    capture.write_text("\n".join(f"path:  {p}" for p in paths) + "\n", encoding="utf-8")
+    return str(capture)
+
+
+def test_instances_enumerate_the_whole_vendor_class_not_just_the_store(tmp_path, monkeypatch):
+    """A lens that judges one domain scores the sprawl green (IF-AGENT-IDENTITY's own rule)."""
+    env = _store(tmp_path)
+    env["LIMEN_CLAUDE_LSREGISTER_DUMP"] = _dump(tmp_path)
+    monkeypatch.setattr(KEEPER, "_assessable", lambda path: False)
+
+    paths = [record["path"] for record in KEEPER.inspect(env)["instances"]]
+    assert str(tmp_path / "store" / KEEPER.BUNDLE_NAME) in paths
+    assert str(tmp_path / "Applications" / KEEPER.URL_HANDLER_NAME) in paths
+
+
+def test_registered_and_unassessable_is_class_distance_but_not_repairable_distance(tmp_path, monkeypatch):
+    """The finding must surface under --strict without making the beat step escalate forever."""
+    env = _store(tmp_path)
+    handler = tmp_path / "Applications" / KEEPER.URL_HANDLER_NAME
+    (handler / "Contents/MacOS").mkdir(parents=True)
+    env["LIMEN_CLAUDE_LSREGISTER_DUMP"] = _dump(tmp_path, str(handler))
+    monkeypatch.setattr(KEEPER, "_assessable", lambda path: False)
+
+    KEEPER.repair(env)
+    payload = KEEPER.inspect(env)
+
+    assert payload["findings"] == []
+    assert payload["ok"] is True
+    assert payload["status"] == "at-ideal"
+    assert "registered_unassessable_bundle" in payload["class_findings"]
+    assert payload["strict_ok"] is False
+
+
+def test_repair_never_touches_a_bundle_outside_the_store(tmp_path, monkeypatch):
+    """Measured, never mutated: re-linking or re-signing a vendor bundle is not this authority."""
+    env = _store(tmp_path)
+    handler = tmp_path / "Applications" / KEEPER.URL_HANDLER_NAME
+    (handler / "Contents/MacOS").mkdir(parents=True)
+    (handler / "Contents/Info.plist").write_text("sentinel", encoding="utf-8")
+    env["LIMEN_CLAUDE_LSREGISTER_DUMP"] = _dump(tmp_path, str(handler))
+    monkeypatch.setattr(KEEPER, "_assessable", lambda path: False)
+
+    KEEPER.repair(env)
+
+    assert (handler / "Contents/Info.plist").read_text(encoding="utf-8") == "sentinel"
+    assert not (handler / "Contents/MacOS/claude").exists()
+
+
+def test_unreadable_launchservices_is_never_reported_as_inert(tmp_path, monkeypatch):
+    """A blind read may not register as at-ideal -- absence of a dialog is not evidence.
+
+    This is the defect IF-AGENT-IDENTITY was rewritten to forbid, one domain over: without this,
+    a host where lsregister cannot be run reports zero registrations and the probe goes green.
+    """
+    env = _store(tmp_path)
+    monkeypatch.setattr(KEEPER, "_registered_paths", lambda values: None)
+    monkeypatch.setattr(KEEPER, "_assessable", lambda path: False)
+
+    KEEPER.repair(env)
+    payload = KEEPER.inspect(env)
+
+    assert all(record["ls_registered"] is None for record in payload["instances"])
+    assert "registration_unmeasured" in payload["class_findings"]
+    assert payload["strict_ok"] is False
+    assert payload["ok"] is True  # the repairable half is still honestly green
+
+
+def test_strict_flag_is_what_separates_the_two_exit_codes(tmp_path, monkeypatch):
+    """`--repair` keeps the beat quiet; `--strict` is the ideal-form probe."""
+    env = _store(tmp_path)
+    handler = tmp_path / "Applications" / KEEPER.URL_HANDLER_NAME
+    (handler / "Contents/MacOS").mkdir(parents=True)
+    env["LIMEN_CLAUDE_LSREGISTER_DUMP"] = _dump(tmp_path, str(handler))
+    monkeypatch.setattr(KEEPER, "_assessable", lambda path: False)
+    monkeypatch.setattr(os, "environ", {**os.environ, **env})
+
+    assert KEEPER.main(["--repair"]) == 0
+    assert KEEPER.main([]) == 0
+    assert KEEPER.main(["--strict"]) == 1

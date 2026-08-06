@@ -565,3 +565,56 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   this row and the probe decides. Precedent: the same defect class as the funnel's
   `confirmed = 0`-from-an-unwired-ledger reported as a shortage — an unmeasured condition
   reported as a measured one, in both cases discovered only because the operator got angry.
+
+### IF-GATEKEEPER-INERT — a vendor bundle is present for exec, absent from LaunchServices
+- **Ideal form:** every `.app` bundle a vendor materializes around a **bare-signed** Mach-O is inert
+  to Gatekeeper — present and inode-correct where the vendor expects it, and carrying **zero**
+  LaunchServices registrations, so macOS is never asked to assess a bundle that provably cannot
+  pass. The count is zero **across every scanned domain**, and it is *measured*: a run that could
+  not ask LaunchServices reports `unknown`, never `inert`.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** the `"ClaudeCode.app is damaged and can't be opened"` dialog recurred ~10–15× over
+  six weeks and **24 commits** (#1206 effector → #1219 organ family → #1242 "instant" WatchPaths
+  heal → #1704 TCC audit → #1837 identity keeper) while every cure reported green. Reproduced from
+  scratch 2026-08-05: the CLI is signed as a **bare Mach-O** with `Sealed Resources=none`, so the
+  *same inode* passes `codesign --verify --strict` bare (exit 0) and fails it bundled (exit 1,
+  `code has no resources but signature indicates they must be present`). The bundle is invalid **by
+  construction**, deterministically, every time it is written.
+  **Both attractors the lineage chased are unreachable.** *Absent* is undone by the live binary on
+  every start (the vendor's own `_jb()`: `mkdir` + `writeFile(Info.plist)` + `link(execPath)`).
+  *Valid* would require re-signing a bundle whose `Contents/MacOS/claude` is a **hardlink** to the
+  running `versions/<v>`, rewriting Anthropic's Developer ID signature on the live CLI in place.
+  So the cure was a duty cycle: `lsregister -dump` costs **2.85s** and the WatchPaths agent carries
+  `ThrottleInterval 10`, a **≥12.85s exposure window per start** against a three-syscall write —
+  #1242 named itself "instant" and could not be.
+- **Two shipped organs held contradictory invariants over one file, and nothing adjudicated.**
+  `claude-identity-bundle.py` (0g8d) kept the bundle **present**; `heal-claude-lsregister.sh`
+  declared the steady state **"ZERO registrations … do NOT restore the stub"** and accepted that
+  removal *"drops the mic/apple-events TCC identity."* Both were honest predicates of opposite
+  ideals, both green, with `LIMEN_CLAUDE_LSREGISTER_HEAL=1` armed so the beat *and* the WatchPaths
+  agent deleted what the keeper had just written. The conflict dissolves once the effector
+  **unregisters instead of removing**: `execve` never consults LaunchServices, only the dialog does,
+  so *present* and *unregistered* are two non-overlapping predicates over one file.
+- **Why this row exists at all.** The class had an effector, a sensor, a launchd agent, a lever and
+  24 commits — and **no ideal form**. Nothing declared the fixed point the five cures were
+  converging on, so each optimized a private invariant and none could be wrong. `dialogs-silenced.sh`
+  had printed class 4b since 2026-07-09 into no owner — the same *measured but unregistered* defect
+  `IF-NO-MODAL`'s own Evidence names. Its root cause was homed in `[[macos-tcc-gatekeeper-dialogs-solved]]`,
+  a wikilink cited from **five** registry surfaces that **did not exist on disk**; every session
+  followed it, found nothing, and re-derived the root from the effector header, which carried the
+  false premise. That note now exists (`docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md`).
+- **CORRECTION 2026-08-05 (in-flight, before shipping): the deep-link handler is symlinked, not a
+  stale hardlink.** This row initially claimed `~/Applications/Claude Code URL Handler.app` held a
+  hardlink to bytes from a deleted version (inode `330121218` vs live `560887613`). False. Its
+  `Contents/MacOS/claude` is a **symlink to `~/.local/bin/claude`**, so it tracks the launcher and
+  never goes stale; `ls -i` reports the symlink's own inode while `stat()` follows it, and the two
+  were read as one measurement. Caught only by asking the running system a second way. The finding
+  it actually carries is *registration*, not freshness — it sits in `~/Applications`, a
+  LaunchServices-**scanned** domain, so no unregistration holds there. Same method error this
+  lineage has now made three times; the cheap check falsified it in one command, again.
+- **Status:** PARTIAL — the store bundle converges (effector inverted, contract-tested 17/17, and
+  the contracts fail 5× against the prior logic, so they are not vacuous). The deep-link handler is
+  measured, not repaired: its only convergent cure is the vendor's own `disableDeepLinkRegistration`
+  setting, which is a feature trade and therefore the operator's, homed as
+  `L-CLAUDE-DEEPLINK-REGISTRATION`.
+- **Owner:** Claude (the enumeration + the effector) · the operator (one vendor setting).

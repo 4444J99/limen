@@ -4114,6 +4114,30 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Override for the launcher symlink whose target names the running Claude Code binary, read by scripts/claude-identity-bundle.py. Unset in production; test-injection sibling of LIMEN_CLAUDE_STORE."
+  LIMEN_CLAUDE_APPLICATIONS_DIR:
+    default: "~/Applications"
+    env: LIMEN_CLAUDE_APPLICATIONS_DIR
+    self_update: none
+    owner: tabularius
+    note: "Override for the directory holding the vendor's deep-link handler bundle ('Claude Code URL Handler.app'), read by scripts/claude-identity-bundle.py when it enumerates the vendor-bundle class for IF-GATEKEEPER-INERT. Unset in production; test-injection sibling of LIMEN_CLAUDE_STORE."
+  LIMEN_CLAUDE_LSREGISTER_DUMP:
+    default: ""
+    env: LIMEN_CLAUDE_LSREGISTER_DUMP
+    self_update: none
+    owner: tabularius
+    note: "Path to a canned `lsregister -dump` capture, read by scripts/claude-identity-bundle.py instead of shelling out. Unset in production; exists so the keeper's contracts can assert registration state without a live LaunchServices. Sibling of LIMEN_TCC_LSREGISTER_DUMP."
+  LIMEN_CLAUDE_LSREGISTER_BIN:
+    default: ""
+    env: LIMEN_CLAUDE_LSREGISTER_BIN
+    self_update: none
+    owner: tabularius
+    note: "Override for the lsregister binary invoked by scripts/heal-claude-lsregister.sh. Unset in production; exists so scripts/tests/heal-claude-lsregister.test.sh can drive the whole production code path against a stub and prove the effector UNREGISTERS without removing."
+  LIMEN_HEAL_SCRIPT_UNDER_TEST:
+    default: ""
+    env: LIMEN_HEAL_SCRIPT_UNDER_TEST
+    self_update: none
+    owner: tabularius
+    note: "Path to the effector revision scripts/tests/heal-claude-lsregister.test.sh should exercise. Unset in production (the test defaults to the shipped script). Exists so the contracts can be pointed at a PRIOR revision and shown to FAIL there — a contract that passes against the version it was written to reject proves nothing, which is the #1837 vacuous-test lesson made runnable."
   LIMEN_CLAUDE_IDENTITY_BUNDLE_TIMEOUT:
     default: 60
     env: LIMEN_CLAUDE_IDENTITY_BUNDLE_TIMEOUT

@@ -335,8 +335,24 @@
         "Verify: bash scripts/dialogs-silenced.sh --agent-curable-only prints ALL CLEAR (agent-curable), and python3 scripts/armed-valve-audit.py --check shows the three valves ARMED. Until you arm them they read PARKED (this lever cites them), never SILENT-OFF."
       ],
       "source_task": "dialogs-silenced self-healing organ · R3 (sensors.yaml 0g8b; effectors heal-hook-drift.sh / heal-claude-cask.sh / heal-claude-lsregister.sh; PRs #1206 + #1212)",
-      "note": "The three deliverable valves default OFF because each authorizes an unattended HOST MUTATION (reinstall a hook / uninstall a cask / unregister an app). Off, the beat still DETECTS + reports (advisory); armed, it CURES — the sensor-without-effector defect closed for the whole agent-curable estate. Sibling levers cover the human-gated classes no effector can touch: settings.json self-mod (L-AGENT-BASH-PROMPT #183) and the firewall sudo (L-FIREWALL-PROMPT #289). scripts/dialogs-silenced.sh is the single predicate over the whole estate; --agent-curable-only is the omega rung. See memory: macos-tcc-gatekeeper-dialogs-solved.",
+      "note": "The three deliverable valves default OFF because each authorizes an unattended HOST MUTATION (reinstall a hook / uninstall a cask / unregister an app). Off, the beat still DETECTS + reports (advisory); armed, it CURES — the sensor-without-effector defect closed for the whole agent-curable estate. Sibling levers cover the human-gated classes no effector can touch: settings.json self-mod (L-AGENT-BASH-PROMPT #183) and the firewall sudo (L-FIREWALL-PROMPT #289). scripts/dialogs-silenced.sh is the single predicate over the whole estate; --agent-curable-only is the omega rung. The class-4b effector UNREGISTERS and no longer removes (2026-08-05): the bundle is vendor-materialized every start and deleting it destroyed the stable TCC identity 0g8d keeps. Corrected root: docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md; ideal form IF-GATEKEEPER-INERT.",
       "issue": 289
+    },
+    {
+      "id": "L-CLAUDE-DEEPLINK-REGISTRATION",
+      "label": "Decide whether Claude Code should register its claude-cli:// protocol handler with macOS. The handler bundle (~/Applications/Claude Code URL Handler.app) wraps a bare-signed Mach-O in a hand-written Info.plist, so Gatekeeper can never assess it — and it sits in ~/Applications, a LaunchServices-SCANNED domain, so unregistration does not hold there. The vendor ships the only convergent off-switch.",
+      "owner": "yours",
+      "cost": "one key in ~/.claude/settings.json (~15s), or an explicit decision to keep deep links and accept the finding",
+      "unlocks": "IF-GATEKEEPER-INERT reaches at-ideal across every scanned domain, not just the Claude store — the last registered-but-unassessable vendor bundle on the host goes away",
+      "gate": "Writing ~/.claude/settings.json is classifier-blocked for the agent (the self-modification boundary, same as L-AGENT-BASH-PROMPT). This is ALSO a genuine feature trade, not merely a permission: disabling registration turns off claude-cli:// deep links, so it is a product decision the registry must not make for you.",
+      "steps": [
+        "Decide: do you use claude-cli:// deep links (IDE/desktop 'open in Claude Code' handoffs)? If unsure, leave this lever open — the finding is advisory and costs nothing but a non-green --strict.",
+        "If NOT: add to ~/.claude/settings.json  ->  \"disableDeepLinkRegistration\": \"disable\"",
+        "Remove the now-unmanaged bundle if you wish: rm -rf ~/Applications/'Claude Code URL Handler.app'  (safe — nothing else links it, and the vendor will not recreate it once the setting is set)",
+        "Verify: python3 scripts/claude-identity-bundle.py --strict exits 0, and its instances[] shows ls_registered=false for the handler."
+      ],
+      "source_task": "IF-GATEKEEPER-INERT · the second instance of the vendor-bundle class, surfaced by the keeper's class enumeration (scripts/claude-identity-bundle.py)",
+      "note": "Measured by the keeper, never applied by it — the deliberate split between what this organ can observe and what it has authority to change, same shape as concurrent_version_race_risk. The setting key is the vendor's own: 'Prevent claude-cli:// protocol handler registration with the OS'. Do NOT 'fix' this bundle by re-linking or re-signing it: its symlink already tracks the launcher correctly, and signing it would rewrite the live CLI's Developer ID signature in place. See docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md."
     },
     {
       "id": "L-TCC-RECORDER",

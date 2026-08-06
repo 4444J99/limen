@@ -3,12 +3,17 @@
 #
 # Anthony's standing demand: never be asked for a permission, a fingerprint, or an OS dialog
 # again — across Claude, the fleet, and the whole machine. The recurring dialogs are not random;
-# they come from FOUR classes. Three are security boundaries that (by design) only a human with
-# privilege can lower — a background agent physically cannot turn off the OS firewall, mint a
-# 1Password service account, or widen its own permission gate; that impossibility IS the guardrail.
-# The fourth (Gatekeeper on a duplicate quarantined install) is agent-curable and checked here so it
-# can never silently reseed. This script names each class, reports whether it is silenced, and prints
-# the EXACT one-time cure for any that is not. Each cure is one action, then silent forever.
+# they come from NINE named classes (0, 1, 1b, 1c, 1d, 2, 3, 4, 4b), in two kinds.
+#
+# HUMAN-GATED (1, 1c, 1d, 2, 3): security boundaries only a human with privilege can lower — a
+# background agent physically cannot turn off the OS firewall, mint a 1Password service account, or
+# widen its own permission gate; that impossibility IS the guardrail.
+# AGENT-CURABLE (0, 1b, 4, 4b): each has a shipped beat effector behind a LIMEN_*_HEAL valve, checked
+# here so none can silently reseed. `--agent-curable-only` scores this half alone, which is what lets
+# the beat drive it to a durable HOLDS while a self-mod class keeps the bare predicate red.
+#
+# This script names each class, reports whether it is silenced, and prints the EXACT one-time cure for
+# any that is not. Each cure is one action, then silent forever.
 #
 # Idempotent, read-only, no sudo. Run anytime:  bash scripts/dialogs-silenced.sh
 # Exit 0  ⟺  every recurring dialog class is silenced (the done-predicate).
@@ -281,31 +286,39 @@ else
 fi
 echo
 
-# ── 4b. Gatekeeper — a REGISTERED-but-rejected ClaudeCode.app stub ("damaged, move to Trash"). ──
-# ROOT (3×: 2026-06-24, 2026-07-04, 2026-07-17): an older CLI shipped a URL-handler/TCC helper stub at
-# ~/.local/share/claude/ClaudeCode.app whose bundle seal is inconsistent ("code has no resources but
-# signature indicates they must be present") — Gatekeeper renders that as "ClaudeCode.app is damaged and
-# can't be opened." The dialog's own "Move to Trash" button RESEEDS the loop (LaunchServices keeps the
-# trashed copy registered). Steady state for CLI 2.1.190+ is ZERO ClaudeCode.app registrations.
-# scripts/heal-claude-lsregister.sh is the effector; this block is its sensor. Agent-curable. [[macos-tcc-gatekeeper-dialogs-solved]]
+# ── 4b. Gatekeeper — a REGISTERED, unassessable ClaudeCode.app ("damaged, move to Trash"). ──
+# ROOT — corrected 2026-08-05, reproduced from scratch. The prior text ("an older CLI shipped a stub";
+# "steady state for 2.1.190+ is ZERO registrations") was false on both halves, and that premise is why
+# this recurred ~10-15x across five cures. The LIVE binary materializes the bundle on EVERY start, and
+# the bundle is Gatekeeper-invalid BY CONSTRUCTION: a bare-Mach-O signature seals no resources
+# (`Sealed Resources=none`), while bundle-form `--strict` demands a Contents/_CodeSignature/CodeResources
+# it never sealed. The same inode passes bare and fails bundled, so "absent" and "valid" are BOTH
+# unreachable — the only reachable fixed point is PRESENT (for exec, and for the TCC identity 0g8d
+# keeps) and UNREGISTERED (so Gatekeeper is never asked to assess it). `execve` needs no registration;
+# only the dialog does. The "Move to Trash" button still reseeds into ~/.Trash, which IS swept.
+# scripts/heal-claude-lsregister.sh is the effector; this block is its sensor. Agent-curable.
+# Ideal form: IF-GATEKEEPER-INERT. [[macos-tcc-gatekeeper-dialogs-solved]]
 LSREG="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Support/lsregister"
 stub_bad=""
 if [ -x "$LSREG" ]; then
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     case "$p" in "$HOME"/.local/share/claude/*|"$HOME"/.Trash/*) : ;; *) continue ;; esac
-    out="$(codesign --verify --strict "$p" 2>&1 || true)"
-    case "$out" in *'code has no resources but signature indicates they must be present'*) stub_bad="$stub_bad $p" ;; esac
+    # ANY non-zero verdict, not one exact string. The old exact-string filter missed the mid-write
+    # state ("code object is not signed at all") — which is precisely the state macOS renders as
+    # "damaged" — so the sensor reported green on the condition it exists to catch. Kept in lockstep
+    # with condemnable() in scripts/heal-claude-lsregister.sh; both are contract-tested.
+    codesign --verify --strict "$p" >/dev/null 2>&1 || stub_bad="$stub_bad $p"
   done <<EOF
 $("$LSREG" -dump 2>/dev/null | grep -oE '/[^ ()]*ClaudeCode\.app' | sort -u)
 EOF
 fi
 if [ -z "$stub_bad" ]; then
-  green "Gatekeeper: no registered-but-rejected ClaudeCode.app stub (no 'damaged, move to Trash' reseed loop)"
+  green "Gatekeeper: ClaudeCode.app is inert — 0 unassessable LaunchServices registrations (IF-GATEKEEPER-INERT)"
 else
-  redx "Gatekeeper: LaunchServices-registered ClaudeCode.app fails its code seal → 'damaged, move to Trash' every launch:$stub_bad"
-  cure "LIMEN_CLAUDE_LSREGISTER_HEAL=1 bash scripts/heal-claude-lsregister.sh   # unregister + remove the stub, sweep ~/.Trash, re-verify count 0"
-  note "Never click 'Move to Trash' on the dialog — it reseeds the loop (LaunchServices keeps the trashed copy registered). The healer is the only convergent cure."
+  redx "Gatekeeper: LaunchServices-registered ClaudeCode.app cannot be assessed → 'damaged, move to Trash' on launch:$stub_bad"
+  cure "LIMEN_CLAUDE_LSREGISTER_HEAL=1 bash scripts/heal-claude-lsregister.sh   # UNREGISTER (leaving the bundle in place), sweep ~/.Trash, re-verify count 0"
+  note "Never click 'Move to Trash' — it reseeds the loop into ~/.Trash, where LaunchServices keeps it registered. And never DELETE the bundle: the vendor recreates it every start, and removal destroys the stable TCC identity sensor 0g8d keeps. Unregistration is the convergent cure; removal is a duty cycle."
 fi
 echo
 

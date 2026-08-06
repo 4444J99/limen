@@ -52,6 +52,27 @@ demotes one of them to a versioned identity.
 This organ is idempotent and never edits TCC, never signs anything, and never
 removes a version. It writes exactly what the vendor writes, so a live session
 that runs ``_jb()`` finds its own fast path already satisfied.
+
+SECOND SCOPE -- the Gatekeeper half (``IF-GATEKEEPER-INERT``, added 2026-08-05).
+The same bundle is *also* what macOS renders as "ClaudeCode.app is damaged and
+can't be opened", because a bare-Mach-O signature seals no resources
+(``Sealed Resources=none``) while bundle-form ``codesign --strict`` demands a
+``Contents/_CodeSignature/CodeResources`` it never sealed. The same inode passes
+bare and fails bundled: the bundle is invalid BY CONSTRUCTION, every time it is
+written, and cannot be made valid without re-signing a hardlink to the live
+Developer-ID binary. So this organ keeping the bundle PRESENT is not in tension
+with silencing that dialog -- the dialog needs a LaunchServices *registration*,
+and ``execve`` needs none. ``scripts/heal-claude-lsregister.sh`` unregisters;
+this keeper keeps. Deleting the bundle, which is what that effector used to do,
+destroyed the very identity kept here and guaranteed the next recreate.
+
+``inspect()`` therefore enumerates the whole vendor-bundle CLASS, not just the
+store copy -- per this ledger's own rule that a count is zero "across every
+service ... a lens that judges one service scores the sprawl green." What it
+cannot repair (a bundle in the LaunchServices-scanned ``~/Applications`` domain)
+it reports in ``class_findings`` and surfaces through ``--strict``, homed on
+lever ``L-CLAUDE-DEEPLINK-REGISTRATION``. Never re-link or re-sign a vendor
+bundle to "fix" it.
 """
 
 from __future__ import annotations
@@ -61,6 +82,8 @@ import datetime as _dt
 import json
 import os
 import platform
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Mapping
@@ -68,6 +91,21 @@ from typing import Any, Mapping
 SCHEMA = "limen.claude_identity_bundle.v1"
 BUNDLE_NAME = "ClaudeCode.app"
 BUNDLE_ID = "com.anthropic.claude-code"
+
+# The second bundle the vendor materializes, on a 24h `startBackgroundHousekeeping()` loop rather
+# than per-start. It wraps the SAME bare-signed Mach-O in a hand-written Info.plist, so it carries
+# the same unassessable seal -- but it reaches the binary through a SYMLINK to the launcher
+# (Contents/MacOS/claude -> ~/.local/bin/claude), not a hardlink, so it never goes stale across a
+# vendor update. Its distance is registration, not freshness: it lives in ~/Applications, a
+# LaunchServices-SCANNED domain, so it is permanently registered and no unregistration holds.
+# The cure is the vendor's own `disableDeepLinkRegistration` setting -- lever
+# L-CLAUDE-DEEPLINK-REGISTRATION -- because turning off claude-cli:// is a feature trade.
+URL_HANDLER_NAME = "Claude Code URL Handler.app"
+
+LSREGISTER = (
+    "/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks"
+    "/LaunchServices.framework/Support/lsregister"
+)
 
 # Byte-for-byte what the vendor's `_jb()` writes. Reproduced so a keeper-written
 # bundle is indistinguishable from a vendor-written one -- if these diverged, the
@@ -148,6 +186,114 @@ def _installed_versions(env: Mapping[str, str]) -> list[dict[str, Any]]:
     return found
 
 
+def _applications_dir(env: Mapping[str, str]) -> Path:
+    """Where the vendor materializes its deep-link handler bundle."""
+    if override := env.get("LIMEN_CLAUDE_APPLICATIONS_DIR"):
+        return Path(override)
+    return _home(env) / "Applications"
+
+
+def _registered_paths(env: Mapping[str, str]) -> str | None:
+    """The raw LaunchServices registration dump, or None when it cannot be read.
+
+    None is the third verdict, not a green: a run that could not ask LaunchServices
+    reports `unknown` per instance rather than `not registered`. Absence of an answer
+    is not an answer -- the whole reason this class recurred is that "no dialog fired"
+    was read as "nothing is registered".
+    """
+    if env.get("LIMEN_CLAUDE_LSREGISTER_DUMP"):
+        try:
+            return Path(env["LIMEN_CLAUDE_LSREGISTER_DUMP"]).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            return None
+    if not os.access(LSREGISTER, os.X_OK):
+        return None
+    try:
+        done = subprocess.run([LSREGISTER, "-dump"], capture_output=True, text=True, timeout=60, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return done.stdout or None
+
+
+def _assessable(path: Path) -> bool | None:
+    """True iff Gatekeeper can assess this bundle. None when codesign is unavailable.
+
+    A vendor bundle that wraps a BARE-signed Mach-O can never return True: the
+    signature carries `Sealed Resources=none`, while bundle-form `--strict` demands a
+    Contents/_CodeSignature/CodeResources it never sealed. Same inode, valid bare,
+    invalid bundled. That is measured here rather than assumed.
+    """
+    if shutil.which("codesign") is None:
+        return None
+    try:
+        done = subprocess.run(
+            ["codesign", "--verify", "--strict", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return done.returncode == 0
+
+
+def _instances(env: Mapping[str, str], binary: Path | None) -> list[dict[str, Any]]:
+    """Every .app bundle the vendor materializes around the CLI binary.
+
+    Class-wide by construction, per IF-AGENT-IDENTITY's own rule: the count is zero
+    ACROSS EVERY SCANNED DOMAIN, "not merely across App Management -- a lens that
+    judges one service scores the sprawl green." A keeper that watched only the store
+    would report the estate clean while ~/Applications held a permanently registered,
+    permanently unassessable copy.
+    """
+    dump = _registered_paths(env)
+    candidates = [
+        (_store(env) / BUNDLE_NAME, "vendor:_jb() per start", True),
+        (_applications_dir(env) / URL_HANDLER_NAME, "vendor:startBackgroundHousekeeping() per 24h", False),
+    ]
+    found: list[dict[str, Any]] = []
+    for path, source, repairable in candidates:
+        record: dict[str, Any] = {
+            "path": str(path),
+            "source": source,
+            "repairable": repairable,
+            "present": path.is_dir(),
+        }
+        record["ls_registered"] = None if dump is None else str(path) in dump
+        record["assessable"] = _assessable(path) if record["present"] else None
+        link = path / "Contents/MacOS/claude"
+        if binary is not None and record["present"]:
+            try:
+                record["inode_matches"] = link.stat().st_ino == binary.stat().st_ino
+            except OSError:
+                record["inode_matches"] = False
+        else:
+            record["inode_matches"] = None
+        found.append(record)
+    return found
+
+
+def _class_findings(instances: list[dict[str, Any]]) -> list[str]:
+    """Distance this organ MEASURES but does not have the authority to repair.
+
+    Kept separate from `findings` so the beat step stays quiet about work it cannot
+    do, while the ideal-form probe (`--strict`) still reports the honest distance.
+    Same split as `concurrent_version_race_risk`: reported, never silently repaired.
+
+    Note both operands: `ls_registered` must be exactly True and `assessable` exactly
+    False. `None` on either side means the question could not be asked, and an
+    unasked question is not a clean answer -- the failure mode this whole class was
+    built out of was reading "no dialog fired" as "nothing is registered".
+    """
+    findings: list[str] = []
+    if any(record["ls_registered"] is True and record["assessable"] is False for record in instances):
+        findings.append("registered_unassessable_bundle")
+    if any(record["present"] and record["ls_registered"] is None for record in instances):
+        findings.append("registration_unmeasured")
+    return findings
+
+
 def inspect(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     """Read-only state of the identity bundle. Never mutates."""
     values = os.environ if env is None else env
@@ -159,7 +305,7 @@ def inspect(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         "bundle_id": BUNDLE_ID,
     }
     if not payload["platform_supported"]:
-        payload.update({"ok": True, "status": "not-applicable", "findings": []})
+        payload.update({"ok": True, "status": "not-applicable", "findings": [], "strict_ok": True})
         return payload
 
     binary, error = _current_binary(values)
@@ -167,10 +313,13 @@ def inspect(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     payload["versions"] = _installed_versions(values)
     runnable = [item for item in payload["versions"] if item["runnable"]]
     payload["concurrent_version_race_risk"] = len(runnable) > 1
+    payload["instances"] = _instances(values, binary)
+    payload["class_findings"] = _class_findings(payload["instances"])
 
     findings: list[str] = []
     if error is not None:
         payload.update({"ok": False, "status": "unmeasured", "error": error, "findings": ["launcher_unresolvable"]})
+        payload["strict_ok"] = False
         return payload
 
     assert binary is not None
@@ -199,6 +348,7 @@ def inspect(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     payload["findings"] = findings
     payload["ok"] = not findings
     payload["status"] = "at-ideal" if not findings else "distance-remains"
+    payload["strict_ok"] = not findings and not payload["class_findings"]
     return payload
 
 
@@ -269,6 +419,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--repair", action="store_true", help="make the bundle present and inode-correct")
     parser.add_argument("--json", action="store_true", help="emit the full payload as JSON")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="also fail on class-wide distance this organ measures but cannot repair (the IF-GATEKEEPER-INERT probe)",
+    )
     args = parser.parse_args(argv)
 
     payload = repair() if args.repair else inspect()
@@ -285,11 +440,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  error: {payload['error']}")
         for finding in payload.get("findings", []):
             print(f"  finding: {finding}")
+        for finding in payload.get("class_findings", []):
+            print(f"  class finding: {finding} (measured here, repaired elsewhere)")
+        for record in payload.get("instances", []):
+            print(
+                f"  instance: {record['path']} present={record['present']} "
+                f"registered={record['ls_registered']} assessable={record['assessable']}"
+            )
         for action in payload.get("actions", []):
             print(f"  action: {action}")
         if payload.get("concurrent_version_race_risk"):
             runnable = [item["version"] for item in payload.get("versions", []) if item["runnable"]]
-            print(f"  advisory: {len(runnable)} runnable versions present ({', '.join(runnable)}) — concurrent starts can still race")
+            print(
+                f"  advisory: {len(runnable)} runnable versions present ({', '.join(runnable)}) — concurrent starts can still race"
+            )
+    if args.strict:
+        return 0 if payload.get("strict_ok") else 1
     return 0 if payload.get("ok") else 1
 
 
