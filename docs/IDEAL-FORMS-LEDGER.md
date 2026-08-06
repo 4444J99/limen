@@ -602,7 +602,7 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   `IF-NO-MODAL`'s own Evidence names. Its root cause was homed in `[[macos-tcc-gatekeeper-dialogs-solved]]`,
   a wikilink cited from **five** registry surfaces that **did not exist on disk**; every session
   followed it, found nothing, and re-derived the root from the effector header, which carried the
-  false premise. That note now exists (`docs/macos-tcc-gatekeeper-dialogs-solved.md`).
+  false premise. That note now exists (`docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md`).
 - **CORRECTION 2026-08-05 (in-flight, before shipping): the deep-link handler is symlinked, not a
   stale hardlink.** This row initially claimed `~/Applications/Claude Code URL Handler.app` held a
   hardlink to bytes from a deleted version (inode `330121218` vs live `560887613`). False. Its

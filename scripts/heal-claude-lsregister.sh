@@ -28,7 +28,7 @@
 # non-overlapping predicates over one file, so both organs can be green at once.
 #
 # Ideal form: IF-GATEKEEPER-INERT (docs/IDEAL-FORMS-LEDGER.md). Corrected root cause + provenance:
-# docs/macos-tcc-gatekeeper-dialogs-solved.md.
+# docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md.
 #
 # A bundle that PASSES codesign is left registered — a future vendor bundle that is properly sealed
 # is not this script's business. Never touches /Applications, ~/Applications (the deep-link handler
