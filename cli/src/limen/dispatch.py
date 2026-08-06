@@ -5433,6 +5433,16 @@ def dispatch_tasks(
     now = datetime.now(timezone.utc)
     budget = budget or limen.portal.budget.daily
 
+    if _reset_budget_if_needed(limen, now) and not dry_run:
+        # Persist a cadence reset even when this call then dispatches nothing / bails at the
+        # down-gate — otherwise a stale-counter lane (jules) stays gated to remaining=0 forever.
+        # Committed via fresh reload, not this snapshot: the caller may hold a board loaded
+        # before other writers ran. This runs BEFORE the admission gate on purpose: a blocked
+        # admission used to also freeze the budget clock (track.date sat at 2026-07-26 for 11
+        # days because the reset lived below the admission return), welding the value-gate
+        # deadlock shut. The reset is bookkeeping, not dispatch — admission gates the latter.
+        _commit_dispatch_results(tasks_path, limen, [], now)
+
     admission = dispatch_admission_check(tasks_path, task_id=task_id)
     if not admission.get("allow", False):
         print_dispatch_admission_block("dispatch", admission)
@@ -5442,12 +5452,6 @@ def dispatch_tasks(
     if not run_always_working_before_dispatch(tasks_path, dry_run=dry_run):
         print("Always-working gate blocked dispatch before reservation")
         return
-    if _reset_budget_if_needed(limen, now) and not dry_run:
-        # Persist a cadence reset even when this call then dispatches nothing / bails at the
-        # down-gate — otherwise a stale-counter lane (jules) stays gated to remaining=0 forever.
-        # Committed via fresh reload, not this snapshot: the caller may hold a board loaded
-        # before other writers ran.
-        _commit_dispatch_results(tasks_path, limen, [], now)
     track = limen.portal.budget.track
 
     agent_filter = canonical_agent(agent or resolve_agent())
@@ -6209,6 +6213,11 @@ def dispatch_parallel(
     lane that hits its real rate-limit is cooled (its remaining reserved tasks re-queued)."""
     now = datetime.now(timezone.utc)
     reservation_materialized_local = False
+    if _reset_budget_if_needed(limen, now) and not dry_run:
+        # Same ordering fix as dispatch_tasks: the cadence reset is bookkeeping and must
+        # persist even when admission then blocks, or a gated estate freezes its budget clock
+        # (the 11-day 8/600 corpse). Committed via fresh reload under the queue lock.
+        _commit_dispatch_results(tasks_path, limen, [], now)
     admission = dispatch_admission_check(tasks_path)
     if not admission.get("allow", False):
         print_dispatch_admission_block("dispatch-parallel", admission)
