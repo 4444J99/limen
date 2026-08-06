@@ -464,7 +464,7 @@ while true; do
       DRAIN_VOICE_DUE=0
       due_voice drain "$C_DRAIN"   && { DRAIN_VOICE_DUE=1
                                        bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
-                                       python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
+                                       python3 -m limen release-stale --hours 24 --apply 2>&1 | tail -1 || true; }
       due_voice heal "$C_HEAL"     && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
 
       # Release the broad heartbeat mutex before producer/planner voices. Those scripts either submit

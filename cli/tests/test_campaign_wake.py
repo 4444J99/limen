@@ -390,3 +390,14 @@ def test_heartbeat_scripts_do_not_launch_static_dispatch_engines() -> None:
         assert "dispatch-parallel.py" not in source
         assert "dispatch-async.py" not in source
         assert "python3 -m limen dispatch" not in source
+
+
+def test_heartbeat_release_stale_sweeps_all_agents() -> None:
+    """The beat's stale-lease releaser must carry no --agent pin: stale_tasks filters by
+    target_agent when one is passed, so a jules-scoped sweep left a stale codex in_progress
+    claim (GH-organvm-hospes-9, 2026-07-23 -> 08-06) invisible forever. Jules claims keep
+    their confirmed-remote-absence guard inside release_stale_tasks either way."""
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+    assert "release-stale --hours" in source
+    assert "release-stale --agent" not in source
