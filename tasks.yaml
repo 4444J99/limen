@@ -162173,3 +162173,37 @@ tasks:
     conduct_lease_id: 'lease-543-fe85482aaf1a15de'
     conduct_generation: 543
   updated: '2026-08-06T19:12:45.125Z'
+- id: 'GH-organvm-limen-1897'
+  title: 'needs-human (L-CLAUDE-SETTINGS-ESTATE-INSTALL): Install the validated Claude settings-estate repair'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1897'
+  context: 'GitHub issue organvm/limen#1897. **Owner:** Anthony (human-gated lever `L-CLAUDE-SETTINGS-ESTATE-INSTALL`). Surfaced once, never nagged, never auto-pulled. This issue is the lever''s permanent, individually-closeable home in the graph — the registry `his-hand-levers.json` is its source of truth. Install the validated Claude settings-estate repair: swap the staged settings.json.tmpl candidate into domus-genoma, commit, chezmoi-appl'
+  predicate: 'test "$(gh issue view 1897 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1897'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1897'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:22:34.979Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-d5d7e89cdfa240357e6c222e14820c49:544:compatibility'
+    conduct_run_id: 'run-d5d7e89cdfa240357e6c222e14820c49'
+    conduct_lease_id: 'lease-544-d5d7e89cdfa24035'
+    conduct_generation: 544
+  updated: '2026-08-06T19:22:34.979Z'
