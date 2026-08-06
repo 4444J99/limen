@@ -162473,3 +162473,37 @@ tasks:
     conduct_lease_id: 'lease-552-daf53cbf1498c763'
     conduct_generation: 552
   updated: '2026-08-06T19:23:24.136Z'
+- id: 'GH-organvm-limen-1851'
+  title: 'needs-human (L-CLAUDE-DEEPLINK-REGISTRATION): Decide whether Claude Code should register its claude-cli:// protocol…'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1851'
+  context: 'GitHub issue organvm/limen#1851. **Owner:** Anthony (human-gated lever `L-CLAUDE-DEEPLINK-REGISTRATION`). Surfaced once, never nagged, never auto-pulled. This issue is the lever''s permanent, individually-closeable home in the graph — the registry `his-hand-levers.json` is its source of truth. Decide whether Claude Code should register its claude-cli:// protocol handler with macOS. The handler bundle (~/Applications/Claude Code UR'
+  predicate: 'test "$(gh issue view 1851 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1851'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1851'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-06T19:23:29.547Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-2ed78a50ac419db0b1f6bf225adecc65:553:compatibility'
+    conduct_run_id: 'run-2ed78a50ac419db0b1f6bf225adecc65'
+    conduct_lease_id: 'lease-553-2ed78a50ac419db0'
+    conduct_generation: 553
+  updated: '2026-08-06T19:23:29.547Z'
